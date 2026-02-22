@@ -10,7 +10,6 @@ from thegent.cli.apps.plan import app as plan_app
 from thegent.cli.commands.plan_cmds import plan_verify_workstream_cmd
 
 
-
 def _write_work_stream_with_overlap(base: Path) -> None:
     docs_ref = base / "docs" / "reference"
     docs_ref.mkdir(parents=True, exist_ok=True)

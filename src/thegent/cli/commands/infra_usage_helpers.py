@@ -17,11 +17,11 @@ def build_provider_usage_table(metrics: dict[str, dict[str, Any]]) -> Table:
     table.add_column("Latency p50")
     for provider_name, metric in sorted(metrics.items()):
         cost = metric.get("cost_per_1k_output") or metric.get("cost_per_1k_input") or "-"
-        cost_str = f"${cost:.4f}" if isinstance(cost, (int, float)) else str(cost)
+        cost_str = f"${cost:.4f}" if isinstance(cost, (int | float)) else str(cost)
         success_rate = metric.get("success_rate")
-        success_rate_str = f"{success_rate * 100:.1f}%" if isinstance(success_rate, (int, float)) else "-"
+        success_rate_str = f"{success_rate * 100:.1f}%" if isinstance(success_rate, (int | float)) else "-"
         tps = metric.get("tps_1m", "-")
         latency = metric.get("latency_p50_ms", "-")
-        latency_str = f"{latency}ms" if isinstance(latency, (int, float)) else str(latency)
+        latency_str = f"{latency}ms" if isinstance(latency, (int | float)) else str(latency)
         table.add_row(provider_name, cost_str, success_rate_str, str(tps), latency_str)
     return table

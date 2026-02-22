@@ -1,4 +1,5 @@
 """Integration tests for research_engine end-to-end flow. @trace FR-RES-050"""
+
 import pytest
 from datetime import datetime, timezone
 

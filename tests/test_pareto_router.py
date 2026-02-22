@@ -102,8 +102,8 @@ class TestParetoRouterFrontierSelection:
         """Two non-dominated candidates: the one with better quality/cost wins."""
         router = ParetoRouter()
         # Neither dominates the other (a has higher quality, b has lower cost)
-        a = _candidate("a", cost=2.0, quality=0.9)   # ratio = 0.45
-        b = _candidate("b", cost=0.5, quality=0.6)   # ratio = 1.20
+        a = _candidate("a", cost=2.0, quality=0.9)  # ratio = 0.45
+        b = _candidate("b", cost=0.5, quality=0.6)  # ratio = 1.20
         result = router.select([a, b])
         # b has higher ratio (0.6/0.5 = 1.2 vs 0.9/2.0 = 0.45)
         assert result is b
@@ -111,8 +111,8 @@ class TestParetoRouterFrontierSelection:
     def test_pareto_frontier_with_trade_off(self) -> None:
         """Classic three-way trade-off: low-cost-low-qual, mid, high-cost-high-qual."""
         router = ParetoRouter()
-        cheap = _candidate("cheap", cost=0.1, quality=0.6)    # ratio = 6.0
-        mid = _candidate("mid", cost=0.5, quality=0.8)        # ratio = 1.6
+        cheap = _candidate("cheap", cost=0.1, quality=0.6)  # ratio = 6.0
+        mid = _candidate("mid", cost=0.5, quality=0.8)  # ratio = 1.6
         premium = _candidate("premium", cost=2.0, quality=0.95)  # ratio = 0.475
         # None dominates any other (each trades cost for quality)
         result = router.select([cheap, mid, premium])

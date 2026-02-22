@@ -1,6 +1,7 @@
 """Ensures specs.py uses dynamic paths, not hardcoded user paths.
 @trace FR-SPECS-001
 """
+
 import pytest
 import inspect
 
@@ -18,7 +19,7 @@ def test_specs_no_hardcoded_user_path():
 
     hardcoded = [
         line.strip()
-        for i, line in enumerate(src_code.split('\n'), 1)
-        if '/Users/' in line and not line.strip().startswith('#')
+        for i, line in enumerate(src_code.split("\n"), 1)
+        if "/Users/" in line and not line.strip().startswith("#")
     ]
     assert hardcoded == [], f"Hardcoded paths found: {hardcoded}"

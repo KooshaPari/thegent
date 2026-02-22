@@ -31,8 +31,6 @@ def _parse_entries(queue_path: Path) -> list[tuple[int, dict[str, Any]]]:
     return entries
 
 
-
-
 class PromptQueue:
     """Manages a unified queue of deferred agent prompts."""
 

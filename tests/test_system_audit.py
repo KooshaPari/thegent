@@ -118,11 +118,13 @@ def test_audit_result_to_dict_fields() -> None:
 def test_audit_report_summary_counts() -> None:
     """Traces to: FR-AUDIT-003 -- AuditReport.summary counts per-status."""
     report = AuditReport(timestamp="2026-01-01T00:00:00+00:00")
-    report.add_results([
-        AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
-        AuditResult("hooks", "b", AuditStatus.MISSING, "x", "y"),
-        AuditResult("config", "c", AuditStatus.DRIFT, "1", "2"),
-    ])
+    report.add_results(
+        [
+            AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
+            AuditResult("hooks", "b", AuditStatus.MISSING, "x", "y"),
+            AuditResult("config", "c", AuditStatus.DRIFT, "1", "2"),
+        ]
+    )
     assert report.summary["total"] == 3
     assert report.summary["ok"] == 1
     assert report.summary["missing"] == 1
@@ -132,20 +134,24 @@ def test_audit_report_summary_counts() -> None:
 def test_audit_report_has_drift_false_when_all_ok() -> None:
     """Traces to: FR-AUDIT-004 -- AuditReport.has_drift is False when all results are OK."""
     report = AuditReport(timestamp="2026-01-01T00:00:00+00:00")
-    report.add_results([
-        AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
-        AuditResult("agents", "b", AuditStatus.OK, "y", "y"),
-    ])
+    report.add_results(
+        [
+            AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
+            AuditResult("agents", "b", AuditStatus.OK, "y", "y"),
+        ]
+    )
     assert report.has_drift is False
 
 
 def test_audit_report_has_drift_true_when_any_issue() -> None:
     """Traces to: FR-AUDIT-004 -- AuditReport.has_drift is True when any non-OK result exists."""
     report = AuditReport(timestamp="2026-01-01T00:00:00+00:00")
-    report.add_results([
-        AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
-        AuditResult("hooks", "b", AuditStatus.MISSING, "x", "y"),
-    ])
+    report.add_results(
+        [
+            AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
+            AuditResult("hooks", "b", AuditStatus.MISSING, "x", "y"),
+        ]
+    )
     assert report.has_drift is True
 
 
@@ -243,9 +249,7 @@ def test_audit_agents_missing_agents_dir(tmp_path: Path) -> None:
 
 def test_audit_agents_ok_for_nonempty_md_file(tmp_project: Path) -> None:
     """Traces to: FR-AUDIT-009 -- OK result for a non-empty agent .md file."""
-    (tmp_project / "agents" / "my-agent.md").write_text(
-        "# My Agent\nA capable persona.\n", encoding="utf-8"
-    )
+    (tmp_project / "agents" / "my-agent.md").write_text("# My Agent\nA capable persona.\n", encoding="utf-8")
     auditor = SystemAuditor(project_root=tmp_project)
     results = auditor.audit_agents()
     ok_results = [r for r in results if r.item == "my-agent" and r.status == AuditStatus.OK]
@@ -264,12 +268,8 @@ def test_audit_agents_warn_for_empty_md_file(tmp_project: Path) -> None:
 def test_audit_agents_missing_when_referenced_in_bounded_contexts(tmp_project: Path) -> None:
     """Traces to: FR-AUDIT-010 -- MISSING when bounded-contexts.yaml references absent agent."""
     # Need at least one real .md file so the function doesn't exit early with WARN
-    (tmp_project / "agents" / "real-agent.md").write_text(
-        "# Real Agent\nA working persona.\n", encoding="utf-8"
-    )
-    (tmp_project / "agents" / "bounded-contexts.yaml").write_text(
-        "agents:\n  - nonexistent-agent\n", encoding="utf-8"
-    )
+    (tmp_project / "agents" / "real-agent.md").write_text("# Real Agent\nA working persona.\n", encoding="utf-8")
+    (tmp_project / "agents" / "bounded-contexts.yaml").write_text("agents:\n  - nonexistent-agent\n", encoding="utf-8")
     auditor = SystemAuditor(project_root=tmp_project)
     results = auditor.audit_agents()
     missing = [r for r in results if r.status == AuditStatus.MISSING]
@@ -429,10 +429,12 @@ def test_run_full_audit_timestamp_is_iso_string(tmp_project: Path) -> None:
 def test_format_report_contains_category_headers(tmp_project: Path) -> None:
     """Traces to: FR-AUDIT-018 -- format_report output contains category headers."""
     report = AuditReport(timestamp="2026-01-01T00:00:00+00:00")
-    report.add_results([
-        AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
-        AuditResult("agents", "b", AuditStatus.MISSING, "y", "z", "fix it"),
-    ])
+    report.add_results(
+        [
+            AuditResult("hooks", "a", AuditStatus.OK, "x", "x"),
+            AuditResult("agents", "b", AuditStatus.MISSING, "y", "z", "fix it"),
+        ]
+    )
     auditor = SystemAuditor(project_root=tmp_project)
     text = auditor.format_report(report)
     assert "[HOOKS]" in text
@@ -442,9 +444,11 @@ def test_format_report_contains_category_headers(tmp_project: Path) -> None:
 def test_format_report_shows_fix_suggestion_for_issues(tmp_project: Path) -> None:
     """Traces to: FR-AUDIT-018 -- format_report includes fix_suggestion for non-OK results."""
     report = AuditReport(timestamp="2026-01-01T00:00:00+00:00")
-    report.add_results([
-        AuditResult("hooks", "missing-hook", AuditStatus.MISSING, "x", "y", "Create hooks/missing-hook.sh"),
-    ])
+    report.add_results(
+        [
+            AuditResult("hooks", "missing-hook", AuditStatus.MISSING, "x", "y", "Create hooks/missing-hook.sh"),
+        ]
+    )
     auditor = SystemAuditor(project_root=tmp_project)
     text = auditor.format_report(report)
     assert "Create hooks/missing-hook.sh" in text

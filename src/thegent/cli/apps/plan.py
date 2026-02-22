@@ -156,6 +156,7 @@ def plan_sessions(
         result = harness_interact_impl(harness=harness, action="list_sessions")
     else:
         from thegent.cli.commands.impl import harness_list_actions_impl
+
         result = harness_list_actions_impl()
         console.print("[cyan]Available harnesses:[/cyan] cursor, codex, claude, ante, droid")
         console.print(f"[cyan]Actions:[/cyan] {result.get('actions', [])}")
@@ -163,6 +164,7 @@ def plan_sessions(
 
     if format == "json":
         import json
+
         console.print(json.dumps(result, indent=2))
     elif result.get("success"):
         console.print(result.get("stdout", ""))
@@ -185,6 +187,7 @@ def plan_harness_status(
 
     if format == "json":
         import json
+
         console.print(json.dumps(status, indent=2))
     else:
         console.print("[cyan]Registered Harness Types:[/cyan]")

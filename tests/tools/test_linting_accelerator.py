@@ -157,9 +157,7 @@ class TestRunOxlint:
 
     def test_parses_flat_diagnostic_format(self) -> None:
         payload = json.dumps(
-            [
-                {"filename": "main.ts", "severity": 2, "rule": "eqeqeq", "line": 12, "column": 4, "message": "==="}
-            ]
+            [{"filename": "main.ts", "severity": 2, "rule": "eqeqeq", "line": 12, "column": 4, "message": "==="}]
         )
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/oxlint"):
@@ -404,9 +402,7 @@ class TestLintUnified:
 
         with patch.object(acc, "is_oxlint_available", return_value=False):
             with patch.object(acc, "is_eslint_available", return_value=True):
-                with patch.object(
-                    acc, "run_eslint", side_effect=lambda p, config=None: called.append("eslint") or []
-                ):
+                with patch.object(acc, "run_eslint", side_effect=lambda p, config=None: called.append("eslint") or []):
                     acc.lint([Path()], fast=True)
 
         assert called == ["eslint"]
@@ -417,9 +413,7 @@ class TestLintUnified:
 
         with patch.object(acc, "is_oxlint_available", return_value=True):
             with patch.object(acc, "is_eslint_available", return_value=True):
-                with patch.object(
-                    acc, "run_oxlint", side_effect=lambda p, config=None: called.append("oxlint") or []
-                ):
+                with patch.object(acc, "run_oxlint", side_effect=lambda p, config=None: called.append("oxlint") or []):
                     with patch.object(
                         acc, "run_eslint", side_effect=lambda p, config=None: called.append("eslint") or []
                     ):

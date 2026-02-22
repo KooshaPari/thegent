@@ -329,9 +329,11 @@ def test_default_dex_callback_uses_flash_table_driven(
 def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec() -> None:
     """Regression: direct callback invocation should not hit native exec via OptionInfo defaults."""
     ctx = type("Ctx", (), {"invoked_subcommand": None})()
-    with patch("sys.argv", ["dex"]), patch("thegent.dex_main._exec_native_codex") as exec_native, patch(
-        "thegent.dex_main._run_codex_interactive"
-    ) as run_interactive:
+    with (
+        patch("sys.argv", ["dex"]),
+        patch("thegent.dex_main._exec_native_codex") as exec_native,
+        patch("thegent.dex_main._run_codex_interactive") as run_interactive,
+    ):
         default_dex(ctx, force=False, native=False)  # type: ignore[arg-type]
 
     exec_native.assert_not_called()
@@ -340,9 +342,11 @@ def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec()
 
 def test_default_dex_native_force_includes_force_yolo_for_native_path() -> None:
     ctx = type("Ctx", (), {"invoked_subcommand": None})()
-    with patch("sys.argv", ["dex", "--native", "--force"]), patch(
-        "thegent.dex_main._exec_native_codex"
-    ) as exec_native, patch("thegent.dex_main._run_codex_interactive"):
+    with (
+        patch("sys.argv", ["dex", "--native", "--force"]),
+        patch("thegent.dex_main._exec_native_codex") as exec_native,
+        patch("thegent.dex_main._run_codex_interactive"),
+    ):
         default_dex(ctx, force=True, native=True)  # type: ignore[arg-type]
 
     exec_native.assert_called_once_with(["--force-yolo"])

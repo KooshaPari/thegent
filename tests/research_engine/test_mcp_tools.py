@@ -1,4 +1,5 @@
 """Tests for research_engine.mcp.tools — @trace FR-RES-031"""
+
 from unittest.mock import MagicMock, patch
 
 
@@ -7,6 +8,7 @@ def test_register_tools_returns_tuple():
     mcp = MagicMock()
     mcp.tool = MagicMock(return_value=lambda fn: fn)
     from research_engine.mcp.tools import register_tools
+
     result = register_tools(mcp)
     assert isinstance(result, tuple)
     assert len(result) == 6
@@ -25,6 +27,7 @@ def test_all_tools_registered():
 
     mcp.tool = capture_tool
     from research_engine.mcp.tools import register_tools
+
     register_tools(mcp)
     assert len(calls) == 6
     assert "thegent_research_search" in calls
@@ -42,6 +45,7 @@ def test_tool_search_returns_string(tmp_path):
 
     with patch("research_engine.mcp.tools._GLOBAL_DB", tmp_path / "test.db"):
         from research_engine.mcp.tools import register_tools
+
         funcs = register_tools(mcp)
         search_fn = funcs[0]
 
@@ -60,6 +64,7 @@ def test_tool_recent_returns_string(tmp_path):
 
     with patch("research_engine.mcp.tools._GLOBAL_DB", tmp_path / "test.db"):
         from research_engine.mcp.tools import register_tools
+
         funcs = register_tools(mcp)
         recent_fn = funcs[1]
 
@@ -78,6 +83,7 @@ def test_tool_digest_returns_string(tmp_path):
 
     with patch("research_engine.mcp.tools._GLOBAL_DB", tmp_path / "test.db"):
         from research_engine.mcp.tools import register_tools
+
         funcs = register_tools(mcp)
         digest_fn = funcs[2]
 
@@ -100,6 +106,7 @@ def test_tool_crawl_returns_string(tmp_path):
 
     with patch("research_engine.mcp.tools._GLOBAL_DB", tmp_path / "test.db"):
         from research_engine.mcp.tools import register_tools
+
         funcs = register_tools(mcp)
         crawl_fn = funcs[3]
 
@@ -126,6 +133,7 @@ def test_tool_topics_returns_string(tmp_path):
 
     with patch("research_engine.mcp.tools._GLOBAL_DB", tmp_path / "test.db"):
         from research_engine.mcp.tools import register_tools
+
         funcs = register_tools(mcp)
         topics_fn = funcs[4]
 
@@ -145,6 +153,7 @@ def test_tool_sync_returns_string(tmp_path):
 
     with patch("research_engine.mcp.tools._GLOBAL_DB", tmp_path / "test.db"):
         from research_engine.mcp.tools import register_tools
+
         funcs = register_tools(mcp)
         sync_fn = funcs[5]
 

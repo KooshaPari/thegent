@@ -168,7 +168,6 @@ def _sign_artifact_dict(payload: dict[str, Any], timestamp: str, agent_id: str, 
     return base64.b64encode(signature).decode()
 
 
-
 # ---------------------------------------------------------------------------
 # Storage
 # ---------------------------------------------------------------------------

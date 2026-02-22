@@ -1511,8 +1511,9 @@
       "updated_at": "2026-02-19T08:48:26Z",
       "comments": 8,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 88
+      "thegent_status": "done",
+      "board_id": 88,
+      "thegent_solution": "Already fixed in codebase"
     },
     {
       "id": 3923270437,
@@ -1749,8 +1750,9 @@
       "updated_at": "2026-02-10T03:41:37Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 102
+      "thegent_status": "done",
+      "board_id": 102,
+      "thegent_solution": "Already fixed in codebase"
     },
     {
       "id": 3919110718,
@@ -2157,8 +2159,9 @@
       "updated_at": "2026-02-09T18:40:53Z",
       "comments": 2,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 126
+      "thegent_status": "done",
+      "board_id": 126,
+      "thegent_solution": "Already fixed in codebase"
     },
     {
       "id": 3910817762,

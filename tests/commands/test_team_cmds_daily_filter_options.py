@@ -75,7 +75,9 @@ def test_snapshot_daily_totals_cmd_forwards_trigger_tag_since(monkeypatch, tmp_p
 def test_snapshot_daily_export_cmd_forwards_trigger_tag_since(monkeypatch, tmp_path: Path) -> None:
     seen: dict[str, object] = {}
 
-    def fake_snapshot_daily_export_payload(scraper, out_path: str | None, limit: int = 1000, trigger=None, tag=None, since=None):
+    def fake_snapshot_daily_export_payload(
+        scraper, out_path: str | None, limit: int = 1000, trigger=None, tag=None, since=None
+    ):
         seen["scraper"] = scraper
         seen["out_path"] = out_path
         seen["limit"] = limit

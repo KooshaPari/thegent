@@ -62,7 +62,9 @@ class TestStart:
         assert controller.episode is not None
         assert controller.episode.status == EpisodeStatus.RUNNING
 
-    def test_start_records_audit_entry(self, controller: EpisodeController, shadow: ShadowAuditGit, project_id: str) -> None:
+    def test_start_records_audit_entry(
+        self, controller: EpisodeController, shadow: ShadowAuditGit, project_id: str
+    ) -> None:
         controller.start()
         entries = shadow.get_audit_log(project_id)
         assert len(entries) == 1
@@ -81,7 +83,9 @@ class TestEnd:
         assert controller.episode is not None
         assert controller.episode.status == EpisodeStatus.COMPLETED
 
-    def test_end_records_audit_entry(self, controller: EpisodeController, shadow: ShadowAuditGit, project_id: str) -> None:
+    def test_end_records_audit_entry(
+        self, controller: EpisodeController, shadow: ShadowAuditGit, project_id: str
+    ) -> None:
         controller.start()
         controller.end()
         entries = shadow.get_audit_log(project_id)
@@ -168,7 +172,9 @@ class TestMetadata:
 
 
 class TestPersistence:
-    def test_episode_persists_in_registry(self, controller: EpisodeController, registry: ProjectRegistry, project_id: str) -> None:
+    def test_episode_persists_in_registry(
+        self, controller: EpisodeController, registry: ProjectRegistry, project_id: str
+    ) -> None:
         controller.start()
         controller.end()
         episodes = registry.get_episodes_for_project(project_id)

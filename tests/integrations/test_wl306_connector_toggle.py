@@ -37,9 +37,7 @@ class TestConnectorToggleRegistry:
         assert registry.is_enabled("slack") is True
 
     @pytest.mark.requirement("WL-306")
-    def test_register_duplicate_raises_error(
-        self, registry: ConnectorToggleRegistry
-    ) -> None:
+    def test_register_duplicate_raises_error(self, registry: ConnectorToggleRegistry) -> None:
         """Registering duplicate connector raises ValueError."""
         registry.register("github")
         with pytest.raises(ValueError, match="already registered"):
@@ -53,9 +51,7 @@ class TestConnectorToggleRegistry:
         assert registry.is_enabled("github") is True
 
     @pytest.mark.requirement("WL-306")
-    def test_enable_unregistered_raises_error(
-        self, registry: ConnectorToggleRegistry
-    ) -> None:
+    def test_enable_unregistered_raises_error(self, registry: ConnectorToggleRegistry) -> None:
         """Enabling unregistered connector raises ValueError."""
         with pytest.raises(ValueError, match="not registered"):
             registry.enable("nonexistent")
@@ -68,17 +64,13 @@ class TestConnectorToggleRegistry:
         assert registry.is_enabled("github") is False
 
     @pytest.mark.requirement("WL-306")
-    def test_disable_unregistered_raises_error(
-        self, registry: ConnectorToggleRegistry
-    ) -> None:
+    def test_disable_unregistered_raises_error(self, registry: ConnectorToggleRegistry) -> None:
         """Disabling unregistered connector raises ValueError."""
         with pytest.raises(ValueError, match="not registered"):
             registry.disable("nonexistent")
 
     @pytest.mark.requirement("WL-306")
-    def test_is_enabled_unregistered_returns_false(
-        self, registry: ConnectorToggleRegistry
-    ) -> None:
+    def test_is_enabled_unregistered_returns_false(self, registry: ConnectorToggleRegistry) -> None:
         """is_enabled returns False for unregistered connector."""
         result = registry.is_enabled("unknown")
         assert result is False
@@ -102,9 +94,7 @@ class TestConnectorToggleRegistry:
         assert registry.is_enabled("github") is True
 
     @pytest.mark.requirement("WL-306")
-    def test_toggle_unregistered_raises_error(
-        self, registry: ConnectorToggleRegistry
-    ) -> None:
+    def test_toggle_unregistered_raises_error(self, registry: ConnectorToggleRegistry) -> None:
         """Toggling unregistered connector raises ValueError."""
         with pytest.raises(ValueError, match="not registered"):
             registry.toggle("nonexistent")
@@ -115,7 +105,7 @@ class TestConnectorToggleRegistry:
         registry.register("github", enabled=True)
 
         assert registry.toggle("github") is False  # Now disabled
-        assert registry.toggle("github") is True   # Now enabled
+        assert registry.toggle("github") is True  # Now enabled
         assert registry.toggle("github") is False  # Now disabled
 
         assert registry.is_enabled("github") is False
@@ -162,9 +152,7 @@ class TestConnectorToggleRegistry:
         assert registry.is_enabled("github") is True
 
     @pytest.mark.requirement("WL-306")
-    def test_multiple_connectors_independent(
-        self, registry: ConnectorToggleRegistry
-    ) -> None:
+    def test_multiple_connectors_independent(self, registry: ConnectorToggleRegistry) -> None:
         """Connector states are independent."""
         registry.register("github", enabled=True)
         registry.register("linear", enabled=False)

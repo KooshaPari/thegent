@@ -987,3 +987,35 @@ class RemoteExecutor:
 3. Execute host-native session/isolation and UI capability probes; hard-block desktop acceptance in WSL2.
 4. Run parity regression suites and compare outcome equivalence for execution, isolation, retries, and artifacts.
 5. Approve staged rollout only if tri-OS gates pass and rollback signals remain armed; otherwise block and remediate.
+
+## Platform Drift Signals
+
+- Telemetry divergence: one OS shows >2x timeout/error rate versus the other tier-1 platforms.
+- Capability regression: session/UI probes fail on a platform that passed in the previous release.
+- Transport skew: SSH/WinRM success-rate delta exceeds agreed SLO threshold between platforms.
+- Artifact mismatch: release candidate outputs differ across macOS, Linux, and Windows parity jobs.
+- Policy variance: isolation or permission controls require platform-specific overrides post-cutover.
+
+## Release Coordination Matrix
+
+| Coordination Area | macOS | Linux | Windows | WSL2 |
+|---|---|---|---|---|
+| Gate owner | Platform release lead | Platform release lead | Platform release lead | Compatibility lead |
+| Required pre-release checks | Shell + UI + isolation | Shell + UI + isolation | Shell + UI + isolation + WinRM | Shell + isolation only |
+| Launch decision rule | Must pass tri-OS parity window | Must pass tri-OS parity window | Must pass tri-OS parity window | Informational only |
+| Rollback trigger | SLO breach or capability drift | SLO breach or capability drift | SLO breach or capability drift | Host-impacting regression |
+| Post-release validation window | 24h stability watch | 24h stability watch | 24h stability watch | 24h compatibility watch |
+
+## Compatibility Debt Signals
+
+- Repeated per-OS hotfixes needed to pass the same release gate indicate unresolved platform abstraction debt.
+- Growing exception lists for shell/session/transport checks across macOS, Linux, and Windows indicate parity erosion.
+- Manual operator intervention required to recover one platform more than others indicates unsafe release coupling.
+- WSL2-only workarounds leaking into tier-1 release criteria indicate boundary drift and should trigger debt remediation.
+
+## Parity Exit Criteria
+
+- Release exits parity only after two consecutive cycles with no severity-1/2 cross-platform regressions.
+- macOS, Linux, and Windows must meet the same SLO thresholds for success, timeout, rollback readiness, and isolation checks.
+- All platform-specific temporary overrides must be removed or converted into tested, documented product behavior.
+- WSL2 must remain compute-only with no blocking impact on tier-1 host release decisions.

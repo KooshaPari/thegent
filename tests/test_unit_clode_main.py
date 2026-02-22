@@ -601,6 +601,7 @@ def test_sitback_direct_no_dashboard_flag_always_set_when_passed(
         env_with_flag = run_codex.call_args.args[1]
         assert env_with_flag[SITBACK_ENV_NO_DASHBOARD] == "1"
 
+
 def test_sitback_direct_tmux_flag_propagates_to_env() -> None:
     settings_patch, health_patch = _mock_sitback_health()
     with (

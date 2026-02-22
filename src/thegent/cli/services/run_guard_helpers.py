@@ -11,6 +11,8 @@ from rich.console import Console
 
 from thegent.config import ThegentSettings
 
+_LAST_GUARDRAIL_DIAGNOSTIC: dict[str, Any] = {"status": "not_checked"}
+
 
 def suggest_terminal_reuse(*, settings: ThegentSettings, cwd: Path, console: Console, log: logging.Logger) -> None:
     """Emit lightweight terminal reuse hints for the current cwd."""
@@ -26,7 +28,9 @@ def suggest_terminal_reuse(*, settings: ThegentSettings, cwd: Path, console: Con
             router = task_router(settings)
             existing_pane = router.find_active_terminal_for_path(str(cwd))
             if existing_pane:
-                console.print(f"[bold yellow]Found existing terminal session for this path: {existing_pane}[/bold yellow]")
+                console.print(
+                    f"[bold yellow]Found existing terminal session for this path: {existing_pane}[/bold yellow]"
+                )
                 console.print(f"[dim]You can attach with: thegent terminal attach {existing_pane}[/dim]")
     except Exception as exc:
         log.debug("Terminal discovery failed: %s", exc)
@@ -42,25 +46,67 @@ def enforce_input_guardrails(
     run_id: str | None,
 ) -> dict[str, Any] | None:
     """Validate prompt guardrails and return an error payload when blocked."""
+    global _LAST_GUARDRAIL_DIAGNOSTIC  # noqa: PLW0603
     if not settings.input_guardrails_enabled:
+        _LAST_GUARDRAIL_DIAGNOSTIC = {"status": "disabled"}
         return None
 
     try:
         from thegent.governance.input_guardrails import guardrails_from_env
+    except (ModuleNotFoundError, ImportError) as exc:
+        _LAST_GUARDRAIL_DIAGNOSTIC = {
+            "status": "error",
+            "error_type": "import_error",
+            "detail": str(exc)[:200],
+        }
+        return None
 
+    try:
         guardrails = guardrails_from_env()
+    except (AttributeError, RuntimeError, ValueError) as exc:
+        _LAST_GUARDRAIL_DIAGNOSTIC = {
+            "status": "error",
+            "error_type": "initialization_error",
+            "detail": str(exc)[:200],
+        }
+        return None
+
+    try:
         result = guardrails.check(prompt=prompt, agent=agent or "", model=model, cwd=cwd)
         if not result.passed:
+            _LAST_GUARDRAIL_DIAGNOSTIC = {
+                "status": "blocked",
+                "rail_id": result.rail_id,
+                "reason": result.reason,
+            }
             return {
                 "error": f"Input guardrail failed ({result.rail_id}): {result.reason}",
                 "remediation": result.remediation,
                 "exit_code": 1,
                 "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
             }
-    except Exception:
+        _LAST_GUARDRAIL_DIAGNOSTIC = {"status": "passed"}
+    except (AttributeError, RuntimeError, ValueError) as exc:
+        _LAST_GUARDRAIL_DIAGNOSTIC = {
+            "status": "error",
+            "error_type": "evaluation_error",
+            "detail": str(exc)[:200],
+        }
+        return None
+    except TypeError as exc:
+        _LAST_GUARDRAIL_DIAGNOSTIC = {
+            "status": "error",
+            "error_type": "evaluation_contract_error",
+            "detail": str(exc)[:200],
+        }
         return None
 
     return None
+
+
+def get_last_guardrail_diagnostic() -> dict[str, Any]:
+    """Return machine-readable diagnostics for the last guardrail evaluation."""
+    return dict(_LAST_GUARDRAIL_DIAGNOSTIC)
 
 
 def enforce_concurrency_limit(

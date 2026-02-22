@@ -184,7 +184,7 @@ def main() -> int:
         if snapshot_changed or manifest_changed or digests_changed:
             raise SystemExit(
                 "Governance fixture regeneration check failed: run "
-                "`uv run python scripts/regenerate_governance_fixtures.py --bump-version --note \"...\"`"
+                '`uv run python scripts/regenerate_governance_fixtures.py --bump-version --note "..."`'
             )
         print("governance fixtures are canonical")
         return 0

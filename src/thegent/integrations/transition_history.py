@@ -10,7 +10,6 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -31,7 +30,7 @@ class StatusTransition:
     to_status: str
     timestamp: str
     trigger: str
-    cycle_id: Optional[str] = None
+    cycle_id: str | None = None
 
 
 class TransitionHistoryLog:

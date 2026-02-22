@@ -12,14 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-_MODULE_PATH = (
-    Path(__file__).parents[2]
-    / "src"
-    / "thegent"
-    / "mcp"
-    / "server"
-    / "tools_provider_models.py"
-)
+_MODULE_PATH = Path(__file__).parents[2] / "src" / "thegent" / "mcp" / "server" / "tools_provider_models.py"
 _MODULE_KEY = "thegent.mcp._server_tools_provider_models_test"
 
 

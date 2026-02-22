@@ -79,9 +79,7 @@ def _test_paths_in_snippet(snippet: str) -> list[str]:
 
 def _label_key_tokens(label: str) -> list[str]:
     return [
-        token
-        for token in re.findall(r"[a-z0-9]+", label.lower())
-        if len(token) >= 3 and token not in _LABEL_STOPWORDS
+        token for token in re.findall(r"[a-z0-9]+", label.lower()) if len(token) >= 3 and token not in _LABEL_STOPWORDS
     ]
 
 
@@ -97,11 +95,7 @@ def _normalized_slug_tokens(path: str) -> set[str]:
 
 def _label_file_overlap_tokens(label: str, path: str) -> set[str]:
     slug = "-".join(sorted(_normalized_slug_tokens(path)))
-    return {
-        token
-        for token in _label_key_tokens(label)
-        if _token_matches_slug(token, slug)
-    }
+    return {token for token in _label_key_tokens(label) if _token_matches_slug(token, slug)}
 
 
 def test_direct_single_file_row_label_token_overlap_set_is_non_empty() -> None:
@@ -149,9 +143,7 @@ def test_direct_single_file_row_commands_start_with_pytest_q() -> None:
     assert rows, "README should include direct rows with exactly one tests/e2e file path"
 
     for label, command, _ in rows:
-        assert command.startswith("pytest -q "), (
-            f"README row '{label}' command must start with 'pytest -q ': {command}"
-        )
+        assert command.startswith("pytest -q "), f"README row '{label}' command must start with 'pytest -q ': {command}"
 
 
 def test_direct_single_file_rows_align_with_row_order_expected_direct_goals() -> None:

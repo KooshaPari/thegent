@@ -33,10 +33,7 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
         # macOS doesn't have traditional "virtual desktops" like Linux/Windows
         # But we can use Spaces or simply manage separate processes
         self._accessibility_available = self._check_accessibility_sync()
-        logger.info(
-            f"macOS provider initialized: "
-            f"accessibility={self._accessibility_available}"
-        )
+        logger.info(f"macOS provider initialized: accessibility={self._accessibility_available}")
 
     @property
     def name(self) -> str:
@@ -111,7 +108,8 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
             result = await asyncio.create_subprocess_exec(
                 "screencapture",
                 "-x",  # No sound
-                "-t", "png",
+                "-t",
+                "png",
                 "-",  # Output to stdout
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
@@ -129,7 +127,7 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
                 width=width,
                 height=height,
                 bytes_per_pixel=4,
-                data=stdout[:width*height*4] if len(stdout) > 1000 else b"\x00" * (width * height * 4),
+                data=stdout[: width * height * 4] if len(stdout) > 1000 else b"\x00" * (width * height * 4),
             )
 
         except Exception as e:
@@ -177,7 +175,8 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
         # Use cliclick if available (fastest)
         try:
             result = await asyncio.create_subprocess_exec(
-                "cliclick", f"m:{x},{y}",
+                "cliclick",
+                f"m:{x},{y}",
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -189,7 +188,9 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
         # Fallback to AppleScript
         script = f'tell application "System Events" to set the position of the first process to {{{x}, {y}}}'
         result = await asyncio.create_subprocess_exec(
-            "osascript", "-e", script,
+            "osascript",
+            "-e",
+            script,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL,
         )
@@ -206,7 +207,8 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
         try:
             # Use cliclick
             result = await asyncio.create_subprocess_exec(
-                "cliclick", f"{'ld' if down and btn=='left' else 'lu'}",
+                "cliclick",
+                f"{'ld' if down and btn == 'left' else 'lu'}",
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -227,7 +229,8 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
         for _ in range(amount):
             try:
                 result = await asyncio.create_subprocess_exec(
-                    "cliclick", "wu" if delta > 0 else "wd",
+                    "cliclick",
+                    "wu" if delta > 0 else "wd",
                     stdout=asyncio.subprocess.DEVNULL,
                     stderr=asyncio.subprocess.DEVNULL,
                 )
@@ -244,7 +247,9 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
             action = "keystroke" if down else ""
             script = f'tell application "System Events" to {action} "{key_char}"'
             result = await asyncio.create_subprocess_exec(
-                "osascript", "-e", script,
+                "osascript",
+                "-e",
+                script,
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -255,7 +260,7 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
     async def list_windows(self, desktop_id: str) -> list[dict[str, Any]]:
         """List windows using System Events."""
         try:
-            script = '''
+            script = """
 tell application "System Events"
     set windowList to {}
     repeat with proc in (every process whose background only is false)
@@ -267,9 +272,11 @@ tell application "System Events"
     end repeat
     return windowList
 end tell
-'''
+"""
             result = await asyncio.create_subprocess_exec(
-                "osascript", "-e", script,
+                "osascript",
+                "-e",
+                script,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )

@@ -6,7 +6,9 @@ from pathlib import Path
 from thegent.orchestration.state.session_scraper import SessionScraper
 
 
-def _snapshot_payload(tmp_path: Path, snapshot_id: str, trigger: str, captured_at: str, tags: list[str] | None = None) -> dict:
+def _snapshot_payload(
+    tmp_path: Path, snapshot_id: str, trigger: str, captured_at: str, tags: list[str] | None = None
+) -> dict:
     return {
         "snapshot_id": snapshot_id,
         "trigger": trigger,

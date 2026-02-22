@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-010
 """
+
 from unittest.mock import patch, MagicMock
 from docs_engine.git.cliff import CliffRunner
 
@@ -24,6 +25,7 @@ def test_cliff_runner_run_calls_subprocess(tmp_path):
 
 def test_cliff_runner_indexes_changelog(tmp_path):
     from docs_engine.db.queries import DocQueries
+
     runner = CliffRunner(repo_root=tmp_path, db_path=tmp_path / "test.db")
     (tmp_path / "CHANGELOG.md").write_text("# Changelog\n\n## v0.1.0\n\n- feat: initial\n")
     with patch("subprocess.run") as mock_run:
@@ -36,6 +38,7 @@ def test_cliff_runner_indexes_changelog(tmp_path):
 
 def test_cliff_runner_raises_on_nonzero(tmp_path):
     import pytest
+
     runner = CliffRunner(repo_root=tmp_path, db_path=tmp_path / "test.db")
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = MagicMock(returncode=1, stderr="error")

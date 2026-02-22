@@ -12,7 +12,6 @@ class StrictMappingError(Exception):
     """Raised when strict mapping validation fails."""
 
 
-
 @dataclass
 class StrictMappingConfig:
     """Configuration for strict mapping validation.
@@ -29,8 +28,7 @@ class StrictMappingConfig:
         """Validate configuration."""
         if self.unknown_state_action not in ("fail", "warn", "skip"):
             raise ValueError(
-                f"unknown_state_action must be 'fail', 'warn', or 'skip', "
-                f"got '{self.unknown_state_action}'"
+                f"unknown_state_action must be 'fail', 'warn', or 'skip', got '{self.unknown_state_action}'"
             )
 
 
@@ -45,9 +43,7 @@ class StrictMappingValidator:
         """
         self.config = config or StrictMappingConfig()
 
-    def validate_remote_state(
-        self, state: str, known_states: list[str]
-    ) -> tuple[bool, str | None]:
+    def validate_remote_state(self, state: str, known_states: list[str]) -> tuple[bool, str | None]:
         """Validate that a remote state is in the known states list.
 
         Args:
@@ -76,9 +72,7 @@ class StrictMappingValidator:
         # skip
         return False, None
 
-    def validate_field_value(
-        self, field: str, value: str, allowed_values: list[str]
-    ) -> tuple[bool, str | None]:
+    def validate_field_value(self, field: str, value: str, allowed_values: list[str]) -> tuple[bool, str | None]:
         """Validate that a field value is in the allowed values list.
 
         Args:
@@ -99,10 +93,7 @@ class StrictMappingValidator:
         if not self.config.enabled:
             return True, None
 
-        error_msg = (
-            f"Field '{field}' has invalid value '{value}'. "
-            f"Allowed values: {allowed_values}"
-        )
+        error_msg = f"Field '{field}' has invalid value '{value}'. Allowed values: {allowed_values}"
 
         if self.config.unknown_state_action == "fail":
             raise StrictMappingError(error_msg)

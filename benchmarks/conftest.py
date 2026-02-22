@@ -1,4 +1,5 @@
 """Benchmark conftest — skip entire benchmarks/ suite if pytest-benchmark is not installed."""
+
 from __future__ import annotations
 
 import importlib.util

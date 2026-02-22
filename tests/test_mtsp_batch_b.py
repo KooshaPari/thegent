@@ -58,6 +58,7 @@ async def test_mtsp_02_in_process_runner_cwd_isolation():
         assert any(str(tmp1_path) in cwd for cwd in base_runner.cwds)
         assert any(str(tmp2_path) in cwd for cwd in base_runner.cwds)
 
+
 @pytest.mark.asyncio
 async def test_mtsp_16_port_lease_manager():
     """Test MTSP-16: Port Lease Manager."""
@@ -82,6 +83,7 @@ async def test_mtsp_16_port_lease_manager():
 
         manager.release_port(port2)
         assert not (lease_dir / f"{port2}.lock").exists()
+
 
 @pytest.mark.asyncio
 async def test_mtsp_03_task_worker_pool():

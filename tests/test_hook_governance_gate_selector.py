@@ -269,7 +269,9 @@ def test_selector_single_gate_runs_only_regression_spiral(tmp_path: Path) -> Non
     assert "selected mode gates=regression_spiral_guard" in proc.stdout
     assert "tier-enforcer" not in proc.stdout
 
-    report = json.loads((tmp_path / "project/.claude/verification/regression-spiral-guard.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (tmp_path / "project/.claude/verification/regression-spiral-guard.json").read_text(encoding="utf-8")
+    )
     assert report["policy_band"] == "green"
 
 

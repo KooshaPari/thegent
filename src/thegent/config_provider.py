@@ -6,6 +6,7 @@ Phase 2+: ControlPlaneConfigProvider connects to CP when THGENT_CONTROL_PLANE_UR
 Resolution order: request_overrides → session → tenant → stamp → global.
 """
 
+import logging
 from typing import Any, Protocol
 
 from thegent.config import ThegentSettings
@@ -24,6 +25,8 @@ _RESOLVE_KEYS = [
     "load_surge_threshold",
 ]
 
+logger = logging.getLogger(__name__)
+
 
 def _settings_to_dict(keys: list[str] | None) -> dict[str, Any]:
     """Extract config dict from ThegentSettings. Paths become str via path_utils."""
@@ -40,7 +43,6 @@ def _settings_to_dict(keys: list[str] | None) -> dict[str, Any]:
             else:
                 out[k] = v
     return out
-
 
 
 class ConfigProvider(Protocol):
@@ -90,6 +92,9 @@ def get_config_provider() -> ConfigProvider:
             from thegent.control_plane.client import ControlPlaneConfigProvider
 
             return ControlPlaneConfigProvider(url)
-        except ImportError:
-            pass
+        except ImportError as exc:
+            logger.warning(
+                "Failed to import control-plane config provider from thegent.control_plane.client: %s",
+                exc,
+            )
     return EnvConfigProvider()

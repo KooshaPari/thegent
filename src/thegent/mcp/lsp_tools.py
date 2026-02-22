@@ -66,7 +66,7 @@ class _PythonAstAdapter:
 
         matches: list[dict[str, Any]] = []
         for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == symbol_name:
+            if isinstance(node, (ast.FunctionDef | ast.AsyncFunctionDef)) and node.name == symbol_name:
                 kind = "function" if isinstance(node, ast.FunctionDef) else "async_function"
                 matches.append(
                     {
@@ -236,7 +236,7 @@ def _normalize_diagnostic(
 def _coerce_position_field(raw: Any, *, field: str, index: int, default: int) -> int:
     if isinstance(raw, bool):
         raise ValueError(f"LSP diagnostics[{index}].{field} must be an integer-like value.")
-    if isinstance(raw, (int, float)):
+    if isinstance(raw, (int | float)):
         return int(raw)
     if isinstance(raw, str):
         text = raw.strip()
@@ -264,7 +264,9 @@ def _normalize_symbol_match(
         raise ValueError(f"LSP symbol matches[{index}] must include a non-empty 'kind'.")
 
     file_path_raw = match.get("file_path")
-    file_path = file_path_raw.strip() if isinstance(file_path_raw, str) and file_path_raw.strip() else fallback_file_path
+    file_path = (
+        file_path_raw.strip() if isinstance(file_path_raw, str) and file_path_raw.strip() else fallback_file_path
+    )
     if not isinstance(file_path, str) or not file_path.strip():
         raise ValueError(f"LSP symbol matches[{index}] must include a non-empty 'file_path'.")
 
@@ -329,9 +331,7 @@ def lsp_symbol_lookup(
     for index, match in enumerate(matches):
         if not isinstance(match, dict):
             raise ValueError(f"LSP symbol matches[{index}] must be an object.")
-        normalized_matches.append(
-            _normalize_symbol_match(match, index=index, fallback_file_path=resolved_file)
-        )
+        normalized_matches.append(_normalize_symbol_match(match, index=index, fallback_file_path=resolved_file))
 
     payload: dict[str, Any] = {"symbol_name": symbol, "matches": normalized_matches}
     if resolved_file is not None:

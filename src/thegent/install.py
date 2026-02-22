@@ -1,10 +1,12 @@
 """Install module for managed installation and synchronization of thegent components."""
 
 import json
+import logging
 import platform
 import shutil
 import subprocess
 import sys
+from importlib import import_module
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -95,18 +97,35 @@ __all__ = [
 
 from thegent.mcp.manage import service_install, service_start, service_uninstall
 
+_LOG = logging.getLogger(__name__)
+
 
 def _get_thegent_root() -> Path:
     """Return thegent root (has hooks/, skills/). Works for dev and installed package."""
     # Installed: hooks/skills are force-included at thegent/hooks, thegent/skills
     try:
-        import thegent
-
-        pkg = Path(thegent.__file__).resolve().parent
-        if (pkg / "hooks").exists() or (pkg / "skills").exists():
-            return pkg
-    except Exception:
-        pass
+        module = import_module("thegent")
+    except (ImportError, ModuleNotFoundError) as exc:
+        _LOG.warning(
+            "install_root_detection_fallback",
+            extra={"failure_type": "import_error", "error_type": type(exc).__name__, "error_message": str(exc)[:180]},
+        )
+    else:
+        try:
+            module_file = getattr(module, "__file__", None)
+            if module_file:
+                pkg = Path(module_file).resolve().parent
+                if (pkg / "hooks").exists() or (pkg / "skills").exists():
+                    return pkg
+        except (OSError, RuntimeError, ValueError, TypeError) as exc:
+            _LOG.warning(
+                "install_root_detection_fallback",
+                extra={
+                    "failure_type": "path_resolution_error",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc)[:180],
+                },
+            )
     # Dev: install.py is at src/thegent/install.py -> project root is parent.parent.parent
     return Path(__file__).resolve().parent.parent.parent
 

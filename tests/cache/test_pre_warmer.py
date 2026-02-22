@@ -167,25 +167,19 @@ class TestRegisterStrategy:
 class TestWarmKey:
     """FR-CACHE-003: warm_key fetches data and stores it in cache."""
 
-    def test_warm_key_stores_value_in_cache(
-        self, warmer: CachePreWarmer, cache: MultiLevelCache
-    ) -> None:
+    def test_warm_key_stores_value_in_cache(self, warmer: CachePreWarmer, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003
         result = warmer.warm_key("mykey", lambda: "myvalue")
         assert result is True
         assert cache.get("mykey") == "myvalue"
 
-    def test_warm_key_returns_false_on_none(
-        self, warmer: CachePreWarmer, cache: MultiLevelCache
-    ) -> None:
+    def test_warm_key_returns_false_on_none(self, warmer: CachePreWarmer, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003
         result = warmer.warm_key("k", lambda: None)
         assert result is False
         assert cache.get("k") is None
 
-    def test_warm_key_returns_false_on_exception(
-        self, warmer: CachePreWarmer, cache: MultiLevelCache
-    ) -> None:
+    def test_warm_key_returns_false_on_exception(self, warmer: CachePreWarmer, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003
         def bad_load() -> str:
             raise ValueError("boom")
@@ -219,9 +213,7 @@ class TestWarmAll:
         results = warmer.warm_all()
         assert results == {}
 
-    def test_warm_all_single_strategy(
-        self, warmer: CachePreWarmer, cache: MultiLevelCache
-    ) -> None:
+    def test_warm_all_single_strategy(self, warmer: CachePreWarmer, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003
         warmer.register_strategy(_make_strategy("s", keys=["k1", "k2"]))
         results = warmer.warm_all()
@@ -229,9 +221,7 @@ class TestWarmAll:
         assert cache.get("k1") == "value:k1"
         assert cache.get("k2") == "value:k2"
 
-    def test_warm_all_two_strategies(
-        self, warmer: CachePreWarmer, cache: MultiLevelCache
-    ) -> None:
+    def test_warm_all_two_strategies(self, warmer: CachePreWarmer, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003
         warmer.register_strategy(_make_strategy("s1", keys=["a"]))
         warmer.register_strategy(_make_strategy("s2", keys=["b"]))
@@ -247,16 +237,12 @@ class TestWarmAll:
         results = warmer.warm_all()
         assert results["k"] is False
 
-    def test_warm_all_predict_fn_exception_skips_strategy(
-        self, warmer: CachePreWarmer
-    ) -> None:
+    def test_warm_all_predict_fn_exception_skips_strategy(self, warmer: CachePreWarmer) -> None:
         # @trace FR-CACHE-003
         def bad_predict() -> list[str]:
             raise RuntimeError("predict error")
 
-        warmer.register_strategy(
-            WarmingStrategy(name="bad", predict_fn=bad_predict, load_fn=_noop_load)
-        )
+        warmer.register_strategy(WarmingStrategy(name="bad", predict_fn=bad_predict, load_fn=_noop_load))
         results = warmer.warm_all()
         assert results == {}
 
@@ -266,9 +252,7 @@ class TestWarmAll:
         warmer.warm_all()
         assert warmer.get_stats()["last_run"] is not None
 
-    def test_warm_all_calls_load_fn_with_correct_key(
-        self, warmer: CachePreWarmer
-    ) -> None:
+    def test_warm_all_calls_load_fn_with_correct_key(self, warmer: CachePreWarmer) -> None:
         # @trace FR-CACHE-003
         captured: list[str] = []
 
@@ -315,17 +299,13 @@ class TestGetStats:
 
     def test_stats_strategy_error_count_on_failure(self, warmer: CachePreWarmer) -> None:
         # @trace FR-CACHE-003
-        warmer.register_strategy(
-            _make_strategy("s", keys=["k"], load_fn=_always_fail_load)
-        )
+        warmer.register_strategy(_make_strategy("s", keys=["k"], load_fn=_always_fail_load))
         warmer.warm_all()
         s_stats = warmer.get_stats()["strategy_stats"][0]
         assert s_stats["error_count"] == 1
         assert s_stats["warm_count"] == 0
 
-    def test_stats_strategy_last_run_set_after_warm_all(
-        self, warmer: CachePreWarmer
-    ) -> None:
+    def test_stats_strategy_last_run_set_after_warm_all(self, warmer: CachePreWarmer) -> None:
         # @trace FR-CACHE-003
         warmer.register_strategy(_make_strategy("s"))
         warmer.warm_all()
@@ -365,16 +345,12 @@ class TestBackgroundDaemon:
         finally:
             warmer.stop_background()
 
-    def test_stop_background_without_start_returns_true(
-        self, warmer: CachePreWarmer
-    ) -> None:
+    def test_stop_background_without_start_returns_true(self, warmer: CachePreWarmer) -> None:
         # @trace FR-CACHE-003
         result = warmer.stop_background()
         assert result is True
 
-    def test_background_daemon_warms_keys(
-        self, warmer: CachePreWarmer, cache: MultiLevelCache
-    ) -> None:
+    def test_background_daemon_warms_keys(self, warmer: CachePreWarmer, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003 — daemon runs strategies with schedule_seconds=0 quickly
         warmer.register_strategy(_make_strategy("s", keys=["bg_k1"], schedule_seconds=0.01))
         warmer.start_background()
@@ -387,9 +363,7 @@ class TestBackgroundDaemon:
         warmer.stop_background()
         assert cache.get("bg_k1") == "value:bg_k1"
 
-    def test_background_stats_background_running_field(
-        self, warmer: CachePreWarmer
-    ) -> None:
+    def test_background_stats_background_running_field(self, warmer: CachePreWarmer) -> None:
         # @trace FR-CACHE-003
         assert warmer.get_stats()["background_running"] is False
         warmer.start_background()
@@ -470,9 +444,7 @@ class TestBuiltInStrategies:
         s = session_list_strategy(load_fn=_noop_load, session_keys=["sessions:mine"])
         assert s.predict_fn() == ["sessions:mine"]
 
-    def test_model_list_strategy_warms_cache(
-        self, cache: MultiLevelCache
-    ) -> None:
+    def test_model_list_strategy_warms_cache(self, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003
         warmer = CachePreWarmer(cache)
         warmer.register_strategy(
@@ -485,9 +457,7 @@ class TestBuiltInStrategies:
         assert results.get("models:test") is True
         assert cache.get("models:test") == "data:models:test"
 
-    def test_session_list_strategy_warms_cache(
-        self, cache: MultiLevelCache
-    ) -> None:
+    def test_session_list_strategy_warms_cache(self, cache: MultiLevelCache) -> None:
         # @trace FR-CACHE-003
         warmer = CachePreWarmer(cache)
         warmer.register_strategy(

@@ -2,7 +2,6 @@
 
 from typing import Any
 
-
 class DiscoveryManager:
     @classmethod
     def new(cls) -> "DiscoveryManager": ...

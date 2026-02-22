@@ -62,7 +62,7 @@ class EscalationQueue:
     """Manages the governance escalation queue."""
 
     def __init__(self, settings: Any = None) -> None:
-        if isinstance(settings, (str, Path)):
+        if isinstance(settings, (str | Path)):
             # Legacy/buggy caller passing session_dir Path directly
             from thegent.config import ThegentSettings
 

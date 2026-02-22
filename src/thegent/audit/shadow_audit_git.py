@@ -25,7 +25,7 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -293,7 +293,7 @@ class GitJournal:
         self._current_tree: dict[str, str] = {}
 
         # Parent commit for next micro-commit
-        self._parent_sha: Optional[str] = None
+        self._parent_sha: str | None = None
 
         # Initialize from current HEAD if exists
         self._init_from_head()
@@ -308,7 +308,7 @@ class GitJournal:
             self.audit_ref,
         )
 
-    def _run_git(self, *args: str, input_data: Optional[bytes] = None) -> str:
+    def _run_git(self, *args: str, input_data: bytes | None = None) -> str:
         """Run a git command and return stdout."""
         result = subprocess.run(
             ["git"] + list(args),
@@ -409,7 +409,7 @@ class GitJournal:
         self,
         tree_sha: str,
         message: str,
-        parent: Optional[str] = None,
+        parent: str | None = None,
     ) -> str:
         """Create a commit object, return SHA."""
         # Build commit
@@ -439,10 +439,10 @@ class GitJournal:
     def record_file_change(
         self,
         file_path: str | Path,
-        content: Optional[bytes] = None,
+        content: bytes | None = None,
         *,
         action: str = "modified",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Record a file change as a micro-commit.
 
@@ -824,11 +824,11 @@ class GitJournalEnhanced(GitJournal):
         self._content_registry: dict[str, str] = {}  # dedup key -> blob sha
 
         # Pending changes for batching
-        self._pending_changes: list[tuple[str, Optional[bytes], str, Optional[dict]]] = []
+        self._pending_changes: list[tuple[str, bytes | None, str, dict | None]] = []
         self._attestations: list[dict[str, Any]] = []
 
         # Real-time watching
-        self._watcher: Optional[Any] = None
+        self._watcher: Any | None = None
         if enable_watching:
             self._init_watcher()
 
@@ -1167,10 +1167,10 @@ class GitJournalEnhanced(GitJournal):
     def record_file_change(
         self,
         file_path: str | Path,
-        content: Optional[bytes] = None,
+        content: bytes | None = None,
         *,
         action: str = "modified",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> str:
         """Record a file change with batching and attestation.
 
@@ -1468,7 +1468,7 @@ class GitJournalAsync:
     async def record_file_change(
         self,
         file_path: str | Path,
-        content: Optional[bytes] = None,
+        content: bytes | None = None,
         **kwargs,
     ) -> str:
         """Record file change asynchronously."""

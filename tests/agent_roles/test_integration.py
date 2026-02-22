@@ -1,4 +1,5 @@
 """Integration tests for agent_roles end-to-end flow. @trace FR-AGT-050"""
+
 import pytest
 
 from agent_roles.spec import AgentRoleSpec

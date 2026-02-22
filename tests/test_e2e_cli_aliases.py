@@ -16,7 +16,6 @@ runner = CompatCliRunner()
 
 
 @pytest.mark.e2e
-
 @pytest.mark.e2e
 class TestLogsStderr:
     """E2E tests for logs --stderr option."""

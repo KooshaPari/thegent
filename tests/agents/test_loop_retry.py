@@ -228,9 +228,7 @@ class TestLoopControllerRetryIntegration:
 
         with patch("tenacity.nap.time.sleep"):
             with patch.object(controller.checker, "decide") as mock_decide:
-                mock_decide.return_value = CheckerResult(
-                    decision=CheckerDecision.KILL, reason="Done"
-                )
+                mock_decide.return_value = CheckerResult(decision=CheckerDecision.KILL, reason="Done")
                 state = controller.run_loop("Start prompt", "todo spec")
 
         # Loop completed one iteration successfully after a retry

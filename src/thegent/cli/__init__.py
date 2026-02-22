@@ -132,6 +132,7 @@ from .commands.cli import (
     workstream_query_cmd,
     workstream_stats_cmd,
 )
+
 __all__ = [
     "_serialize_health_report_csv",
     "_serialize_health_report_jsonl",
@@ -227,7 +228,6 @@ __all__ = [
     "purge_cmd",
     "resolve_model_route_cmd",
     "resume_cmd",
-    "session_fork_cmd",
     "retry_cmd",
     "rules_sync_cmd",
     "run_cmd",
@@ -235,8 +235,10 @@ __all__ = [
     "session_contract_health_report_cmd",
     "session_contract_health_trend_cmd",
     "session_contracts_cmd",
+    "session_fork_cmd",
     "session_rollback_cmd",
     "setup_cmd",
+    "sitback_dashboard_cmd",
     "snapshot_daily_export_cmd",
     "snapshot_daily_index_cmd",
     "snapshot_daily_totals_cmd",
@@ -245,7 +247,6 @@ __all__ = [
     "snapshot_list_cmd",
     "snapshot_meta_cmd",
     "snapshot_prune_cmd",
-    "sitback_dashboard_cmd",
     "status_cmd",
     "stop_cmd",
     "summary_cmd",

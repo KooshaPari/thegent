@@ -236,4 +236,4 @@ class TestTenacityIntegration:
 
         # Should be callable and have necessary attributes
         assert callable(decorator)
-        assert hasattr(decorator, "__call__")
+        assert callable(decorator)

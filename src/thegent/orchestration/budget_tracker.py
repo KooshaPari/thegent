@@ -93,9 +93,7 @@ class BudgetTracker:
                 if _BUDGET_TOKENS_KEY in node.metadata:
                     budget = node.metadata[_BUDGET_TOKENS_KEY]
                     if not isinstance(budget, int):
-                        raise TypeError(
-                            f"Node '{node.id}' budget_tokens must be int, got {type(budget).__name__!r}"
-                        )
+                        raise TypeError(f"Node '{node.id}' budget_tokens must be int, got {type(budget).__name__!r}")
                     self._budgets[node.id] = budget
                     self._usage[node.id] = 0
 

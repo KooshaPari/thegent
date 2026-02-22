@@ -76,10 +76,25 @@ class ConversationDumper:
             if tags:
                 lines.append(f"tags: {json.dumps(tags)}")
             if dump_metadata:
-                lines.append(
-                    f"metadata: {json.dumps(dump_metadata, ensure_ascii=False)}"
-                )
-            lines.extend(["---", "", "# Prompt", "", (prompt or ""), "", "# Synthesis", "", (synthesis or content), "", "# Full Output", "", content, ""])
+                lines.append(f"metadata: {json.dumps(dump_metadata, ensure_ascii=False)}")
+            lines.extend(
+                [
+                    "---",
+                    "",
+                    "# Prompt",
+                    "",
+                    (prompt or ""),
+                    "",
+                    "# Synthesis",
+                    "",
+                    (synthesis or content),
+                    "",
+                    "# Full Output",
+                    "",
+                    content,
+                    "",
+                ]
+            )
             dump_path.write_text("\n".join(lines), encoding="utf-8")
             logger.info(f"Conversation dump written to {dump_path}")
             return dump_path
@@ -106,9 +121,7 @@ class ConversationDumper:
         resolved_timestamp = timestamp or datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         target_dir = self.docs_dir / category
         target_dir.mkdir(parents=True, exist_ok=True)
-        dump_path = (
-            target_dir / f"conversation-{conversation_id}-{resolved_timestamp}.json"
-        )
+        dump_path = target_dir / f"conversation-{conversation_id}-{resolved_timestamp}.json"
         payload = {
             "conversation_id": conversation_id,
             "timestamp": resolved_timestamp,
@@ -146,9 +159,7 @@ class ConversationDumper:
         """
         return sorted(self.docs_dir.glob("**/conversation-*.json"), reverse=True)
 
-    def latest_dump(
-        self, category: str | None = None, json_only: bool = False
-    ) -> Path | None:
+    def latest_dump(self, category: str | None = None, json_only: bool = False) -> Path | None:
         """Return the most recently modified dump path.
 
         Args:
@@ -204,7 +215,11 @@ class ConversationDumper:
             return None
         try:
             payload = json.loads(candidate.read_text(encoding="utf-8"))
-        except Exception:
+        except json.JSONDecodeError as exc:
+            logger.warning("Failed to parse JSON companion %s: %s", candidate, exc)
+            return None
+        except OSError as exc:
+            logger.warning("Failed to read JSON companion %s: %s", candidate, exc)
             return None
         if isinstance(payload, dict):
             return payload
@@ -286,18 +301,12 @@ class ConversationDumper:
         if latest_by_category or latest_json_by_category:
             lines.append("| Category | Latest Markdown Dump | Latest JSON Dump |")
             lines.append("| --- | --- | --- |")
-            all_categories = sorted(
-                set(latest_by_category) | set(latest_json_by_category)
-            )
+            all_categories = sorted(set(latest_by_category) | set(latest_json_by_category))
             for category in all_categories:
                 category_latest_md = latest_by_category.get(category)
                 category_latest_json = latest_json_by_category.get(category)
-                md_display = (
-                    f"`{category_latest_md}`" if category_latest_md else "_none_"
-                )
-                json_display = (
-                    f"`{category_latest_json}`" if category_latest_json else "_none_"
-                )
+                md_display = f"`{category_latest_md}`" if category_latest_md else "_none_"
+                json_display = f"`{category_latest_json}`" if category_latest_json else "_none_"
                 lines.append(f"| `{category}` | {md_display} | {json_display} |")
         else:
             lines.append("_No latest dumps by category found._")

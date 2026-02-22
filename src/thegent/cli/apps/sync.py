@@ -517,11 +517,12 @@ def sync_autopilot_status(
     # @trace WL-171
     """
     import json
+    import os
     from datetime import datetime
 
     from rich.table import Table
 
-    status_file = Path("docs/reference/autosync_status.json")
+    status_file = Path(os.getenv("THGENT_AUTOSYNC_STATUS_PATH", "docs/reference/autosync_status.json"))
 
     # Default status structure
     default_status = {

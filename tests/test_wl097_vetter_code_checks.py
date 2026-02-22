@@ -26,29 +26,12 @@ from thegent.govern.vetter.models import VetterCheck, VetterCheckResult
 # ---------------------------------------------------------------------------
 
 _DIFF_TWO_PY = (
-    "--- a/foo.py\n"
-    "+++ b/foo.py\n"
-    "@@ -1,3 +1,4 @@\n"
-    "+x = 1\n"
-    "--- a/bar.py\n"
-    "+++ b/bar.py\n"
-    "@@ -5,2 +5,3 @@\n"
-    "+y = 2\n"
+    "--- a/foo.py\n+++ b/foo.py\n@@ -1,3 +1,4 @@\n+x = 1\n--- a/bar.py\n+++ b/bar.py\n@@ -5,2 +5,3 @@\n+y = 2\n"
 )
 
-_DIFF_NO_PY = (
-    "--- a/README.md\n"
-    "+++ b/README.md\n"
-    "@@ -1 +1,2 @@\n"
-    "+## new section\n"
-)
+_DIFF_NO_PY = "--- a/README.md\n+++ b/README.md\n@@ -1 +1,2 @@\n+## new section\n"
 
-_DIFF_ONE_PY = (
-    "--- a/module.py\n"
-    "+++ b/module.py\n"
-    "@@ -10,3 +10,4 @@\n"
-    "+z = 3\n"
-)
+_DIFF_ONE_PY = "--- a/module.py\n+++ b/module.py\n@@ -10,3 +10,4 @@\n+z = 3\n"
 
 RUN_ID = "run-wl097"
 CONTEXT: dict = {}

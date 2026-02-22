@@ -11,7 +11,7 @@ from thegent.cli.apps.sync import app as sync_app
 from thegent.clode_main import sitback_cmd
 from thegent.ux.compositor import run_compositor_tui
 
-__all__ = ["app", "sync_app", "_install_agent_accelerators"]
+__all__ = ["_install_agent_accelerators", "app", "sync_app"]
 
 
 # Expose sitback on the top-level app (`thegent sitback ...`) in addition to harness-local entry points.

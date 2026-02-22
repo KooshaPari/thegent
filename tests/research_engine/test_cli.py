@@ -1,4 +1,5 @@
 """Tests for research_engine CLI — @trace FR-RES-040"""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -21,8 +22,10 @@ def test_topics_command() -> None:
 
 def test_digest_command() -> None:
     """Test digest command generates markdown digest."""
-    with patch("research_engine.cli.ResearchStore") as mock_store_cls, \
-         patch("research_engine.cli.DigestGenerator") as mock_gen_cls:
+    with (
+        patch("research_engine.cli.ResearchStore") as mock_store_cls,
+        patch("research_engine.cli.DigestGenerator") as mock_gen_cls,
+    ):
         mock_store = MagicMock()
         mock_store_cls.return_value = mock_store
         mock_gen = MagicMock()
@@ -45,8 +48,7 @@ def test_search_command() -> None:
 
 def test_crawl_command() -> None:
     """Test crawl command triggers immediate crawl."""
-    with patch("research_engine.cli.TieredScheduler") as mock_sched_cls, \
-         patch("research_engine.cli.ResearchStore"):
+    with patch("research_engine.cli.TieredScheduler") as mock_sched_cls, patch("research_engine.cli.ResearchStore"):
         mock_sched = MagicMock()
         mock_sched_cls.return_value = mock_sched
         result = runner.invoke(app, ["crawl"])

@@ -20,7 +20,7 @@ def format_context_usage_line(context_usage: object) -> str | None:
         shared_payload = build_context_usage_payload(
             used=used,
             max_tokens=max_val,
-            ratio=context_usage.get("ratio") if isinstance(context_usage.get("ratio"), (float, int)) else None,
+            ratio=context_usage.get("ratio") if isinstance(context_usage.get("ratio"), (float | int)) else None,
         )
         if isinstance(shared_payload, dict):
             display = shared_payload.get("display")

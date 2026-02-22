@@ -1019,3 +1019,32 @@ THEGENT_CACHE_DEBUG=1 python -m thegent.cli query "cache audit probe"
 - Run scoped invalidation first: `python -m thegent.cache invalidate --scope <scope>`.
 - Execute scoped rebuild: `python -m thegent.prewarm run --scope <scope>`.
 - Recheck hit rate, stale-read ratio, and p95 latency; escalate only if still out of SLO.
+
+## Hotspot Detection Rules
+
+- Flag a hotspot when any cache scope exceeds 30% of total misses for 10 minutes.
+- Flag a hotspot when one key prefix contributes >15% of lookup latency at p95.
+- Trigger immediate scoped prewarm if hit rate for a hotspot scope stays <85% for 5 minutes.
+- Open incident escalation if hotspot conditions persist after one prewarm + one scoped invalidate.
+
+## Cache Reset Decision Tree
+
+- **Start:** Run `python -m thegent.cache stats` and identify impacted scope.
+- **If corruption/version mismatch:** Run `python -m thegent.cache invalidate --scope <scope>`, then `python -m thegent.prewarm run --scope <scope>`.
+- **If only cold misses (no corruption):** Run `python -m thegent.prewarm run --scope <scope>` first; do not reset globally.
+- **If scope still out of SLO after 10 minutes:** Repeat scoped invalidate + prewarm once, then escalate to incident owner.
+- **Global reset allowed only if** 2+ scopes are corrupted or key-version drift is system-wide; record before/after stats.
+
+## Cache Drift Triage Steps
+
+1. Capture baseline: `python -m thegent.cache stats` and save timestamp + scope metrics.
+2. Run one deterministic probe twice: `python -m thegent.cli query "cache drift probe"` and compare hash/version fields.
+3. Check for writer/reader mismatch in logs (`cache_key_version`, embed model, chunking version).
+4. If mismatch confirmed, run scoped invalidate + prewarm, then re-check hit rate/stale ratio after 10 minutes.
+
+## Warm Cache Verification
+
+1. Execute warmup: `python -m thegent.prewarm run --scope <scope>`.
+2. Immediately validate cache population: `python -m thegent.cache stats` (hit rate rising, miss rate falling).
+3. Run 3 repeat queries in same scope and confirm stable hashes + lower lookup latency.
+4. Mark warm cache healthy only when stale-read ratio stays <1% for one 15-minute window.

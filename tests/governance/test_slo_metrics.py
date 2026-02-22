@@ -21,6 +21,7 @@ from thegent.governance.slo_metrics import (
 
 # --- Helpers ---
 
+
 def _make_green_metric(**overrides: object) -> SloMetric:
     """Return a metric that is green on all thresholds."""
     defaults = {
@@ -57,6 +58,7 @@ _DEFAULT_THRESHOLDS = SloThresholds()
 
 
 # --- SloMetric dataclass tests ---
+
 
 def test_slo_metric_has_all_schema_fields() -> None:
     """SloMetric must define all schema fields from Wave-1 A4."""
@@ -96,6 +98,7 @@ def test_slo_metric_source_field_set_correctly() -> None:
 
 # --- SloThresholds tests ---
 
+
 def test_slo_thresholds_default_values_match_wave1_spec() -> None:
     """SloThresholds defaults must match Wave-1 A4 artifact thresholds."""
     t = SloThresholds()
@@ -116,6 +119,7 @@ def test_slo_thresholds_default_values_match_wave1_spec() -> None:
 
 
 # --- evaluate() tests ---
+
 
 def test_evaluate_all_green_for_healthy_metric() -> None:
     """evaluate() must return all 'green' for a metric within green bounds."""
@@ -182,6 +186,7 @@ def test_evaluate_returns_dict_with_all_seven_fields() -> None:
 
 
 # --- SloEmitter tests ---
+
 
 def test_emit_writes_valid_jsonl_line(tmp_path: Path) -> None:
     """SloEmitter.emit must append a valid JSONL line to the output file."""

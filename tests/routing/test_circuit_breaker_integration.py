@@ -208,9 +208,7 @@ class TestGetCircuitBreakerStatus:
         for provider, state in status.items():
             assert isinstance(provider, str)
             assert isinstance(state, str)
-            assert state in {"closed", "open", "half-open"}, (
-                f"Unexpected state {state!r} for provider {provider!r}"
-            )
+            assert state in {"closed", "open", "half-open"}, f"Unexpected state {state!r} for provider {provider!r}"
 
     def test_get_circuit_breaker_status_reflects_open_state(self) -> None:
         """An open provider shows as 'open' in the status dict."""

@@ -11,6 +11,7 @@ for strip_think_blocks. Falls back to Python regex otherwise.
 
 import importlib.util
 import json
+import logging
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -18,6 +19,7 @@ from typing import Any
 from thegent.config import ThegentSettings
 
 _thegent_parser: Any = None
+_log = logging.getLogger(__name__)
 
 
 def _get_native_parser() -> Any:
@@ -274,8 +276,8 @@ def _strip_think_blocks(text: str) -> str:
     if native is not None and hasattr(native, "strip_think_blocks"):
         try:
             return native.strip_think_blocks(text)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.debug("Native think-strip failed; using regex fallback: %s", exc)
     # QW-006: Use pre-compiled regex singleton
     return _THINK_RE.sub("", text).strip()
 

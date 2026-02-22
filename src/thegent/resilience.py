@@ -219,11 +219,7 @@ def http_retry(
         exc = retry_state.outcome.exception() if retry_state.outcome else None
         exc_name = type(exc).__name__ if exc else "unknown"
         exc_response = getattr(exc, "response", None) if exc is not None else None
-        status_or_type = (
-            f"HTTP {exc_response.status_code}"
-            if exc_response is not None
-            else exc_name
-        )
+        status_or_type = f"HTTP {exc_response.status_code}" if exc_response is not None else exc_name
         _log.warning(
             "HTTP error (attempt %d/%d): %s. Retrying with exponential backoff...",
             retry_state.attempt_number,

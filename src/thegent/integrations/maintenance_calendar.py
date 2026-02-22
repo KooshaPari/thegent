@@ -39,14 +39,9 @@ class MaintenanceCalendar:
             window: The maintenance window to add.
         """
         self._windows.append(window)
-        logger.debug(
-            f"Added maintenance window for {window.connector}: "
-            f"{window.start} to {window.end}"
-        )
+        logger.debug(f"Added maintenance window for {window.connector}: {window.start} to {window.end}")
 
-    def is_in_maintenance(
-        self, connector: str, at: datetime | None = None
-    ) -> bool:
+    def is_in_maintenance(self, connector: str, at: datetime | None = None) -> bool:
         """Check if a connector has an active maintenance window.
 
         Args:
@@ -59,14 +54,9 @@ class MaintenanceCalendar:
         if at is None:
             at = datetime.now(timezone.utc)
 
-        return any(
-            window.connector == connector and window.start <= at <= window.end
-            for window in self._windows
-        )
+        return any(window.connector == connector and window.start <= at <= window.end for window in self._windows)
 
-    def upcoming_windows(
-        self, connector: str, after: datetime | None = None
-    ) -> list[MaintenanceWindow]:
+    def upcoming_windows(self, connector: str, after: datetime | None = None) -> list[MaintenanceWindow]:
         """Get upcoming maintenance windows for a connector.
 
         Args:
@@ -79,11 +69,7 @@ class MaintenanceCalendar:
         if after is None:
             after = datetime.now(timezone.utc)
 
-        upcoming = [
-            window
-            for window in self._windows
-            if window.connector == connector and window.start >= after
-        ]
+        upcoming = [window for window in self._windows if window.connector == connector and window.start >= after]
 
         return sorted(upcoming, key=lambda w: w.start)
 
@@ -98,13 +84,9 @@ class MaintenanceCalendar:
             ValueError: If config dict is missing required keys or has invalid format.
         """
         for item in config:
-            missing_keys = {"connector", "start", "end", "reason"} - set(
-                item.keys()
-            )
+            missing_keys = {"connector", "start", "end", "reason"} - set(item.keys())
             if missing_keys:
-                raise ValueError(
-                    f"Config item missing required keys: {missing_keys}"
-                )
+                raise ValueError(f"Config item missing required keys: {missing_keys}")
 
             try:
                 start = datetime.fromisoformat(item["start"])

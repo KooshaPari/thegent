@@ -73,17 +73,13 @@ class CheckpointStore:
         checkpoint_path = store_dir / f"{checkpoint_id}.json"
 
         if not checkpoint_path.exists():
-            raise FileNotFoundError(
-                f"Checkpoint {checkpoint_id} not found at {checkpoint_path}"
-            )
+            raise FileNotFoundError(f"Checkpoint {checkpoint_id} not found at {checkpoint_path}")
 
         with open(checkpoint_path) as f:
             checkpoint_dict = json.load(f)
 
         # Parse datetime from ISO string
-        checkpoint_dict["created_at"] = datetime.fromisoformat(
-            checkpoint_dict["created_at"]
-        )
+        checkpoint_dict["created_at"] = datetime.fromisoformat(checkpoint_dict["created_at"])
 
         checkpoint = Checkpoint(**checkpoint_dict)
         logger.debug(f"Loaded checkpoint {checkpoint_id}")
@@ -113,9 +109,7 @@ class CheckpointStore:
                     checkpoint_dict = json.load(f)
 
                 if checkpoint_dict.get("cycle_id") == cycle_id:
-                    checkpoint_dict["created_at"] = datetime.fromisoformat(
-                        checkpoint_dict["created_at"]
-                    )
+                    checkpoint_dict["created_at"] = datetime.fromisoformat(checkpoint_dict["created_at"])
                     checkpoints.append(Checkpoint(**checkpoint_dict))
             except (json.JSONDecodeError, ValueError, KeyError):
                 logger.warning(f"Failed to load checkpoint from {checkpoint_file}")

@@ -441,17 +441,11 @@ def run_harness(args: argparse.Namespace) -> int:
         gate = contract.promotion_gate
         dataset_gate_failures: list[str] = []
         if p95_speedup < float(gate["p95_speedup_vs_python_min"]):
-            dataset_gate_failures.append(
-                "p95_speedup_below_min"
-            )
+            dataset_gate_failures.append("p95_speedup_below_min")
         if p99_regression_pct > float(gate["p99_regression_max_pct"]):
-            dataset_gate_failures.append(
-                "p99_regression_above_max_pct"
-            )
+            dataset_gate_failures.append("p99_regression_above_max_pct")
         if len(correctness_failures) > int(gate["correctness_failures_allowed"]):
-            dataset_gate_failures.append(
-                "correctness_failures_above_allowed"
-            )
+            dataset_gate_failures.append("correctness_failures_above_allowed")
         if dataset_gate_failures:
             gate_failures.append(
                 {
@@ -487,8 +481,7 @@ def run_harness(args: argparse.Namespace) -> int:
     print(f"Wrote benchmark results: {args.output}")
     if total_failures > 0:
         raise RuntimeError(
-            f"Mojo correctness check failed with {total_failures} failing cases. "
-            f"Inspect report: {args.output}"
+            f"Mojo correctness check failed with {total_failures} failing cases. Inspect report: {args.output}"
         )
     if gate_failures and not args.no_enforce_gates:
         raise RuntimeError(

@@ -125,7 +125,9 @@ def _build_payload(*, generated_at: str, dates: list[dt.date], snapshots: list[d
     }
 
 
-def _render_md(report_date: str, artifact_json_path: str, snapshots: list[dict[str, object]], trend: dict[str, object]) -> str:
+def _render_md(
+    report_date: str, artifact_json_path: str, snapshots: list[dict[str, object]], trend: dict[str, object]
+) -> str:
     lines = [
         f"# WL-120/WL-136 LOC Trend Evidence ({report_date})",
         "",

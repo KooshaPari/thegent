@@ -23,11 +23,7 @@ def test_build_report_passes_for_canonical_ci_path() -> None:
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is True
@@ -65,11 +61,7 @@ def test_build_report_fails_when_canonical_invocation_occurs_more_than_once() ->
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is False
@@ -84,11 +76,7 @@ def test_build_report_fails_when_ci_contract_checker_step_is_missing() -> None:
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is False
@@ -103,11 +91,7 @@ def test_build_report_fails_when_wl117_metadata_checker_is_missing() -> None:
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is False
@@ -123,11 +107,7 @@ def test_build_report_fails_when_wl117_checker_runs_after_max_lines() -> None:
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is False
@@ -143,11 +123,7 @@ def test_build_report_fails_when_wl122_checker_runs_after_wl117_checker() -> Non
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is False
@@ -164,11 +140,7 @@ def test_build_report_fails_when_wl117_checker_is_duplicated() -> None:
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is False
@@ -185,11 +157,7 @@ def test_build_report_fails_when_task_setup_action_is_missing() -> None:
         ),
         taskfile_text="tasks:\n  quality:max-lines:\n    cmds:\n      - sh scripts/max-lines-gate.sh\n",
         precommit_text=(
-            "repos:\n"
-            "  - repo: local\n"
-            "    hooks:\n"
-            "      - id: max-lines-gate\n"
-            "        entry: task quality:max-lines\n"
+            "repos:\n  - repo: local\n    hooks:\n      - id: max-lines-gate\n        entry: task quality:max-lines\n"
         ),
     )
     assert report["ok"] is False

@@ -461,7 +461,8 @@ After P0 tasks complete, implement remaining P1 OpenRouter features:
 
 ### [WL-070] Cache LiteLLM Router Instance — Eliminate Per-Request Model List Rebuild
 **Status:** COMPLETED
-**Completed:** 2026-02-20 — 13 Python perf tests. TTLCache(maxsize=1, ttl=300) was already implemented; added public invalidate_router_cache() for external callers.
+**Completed:** 2026-02-20 — 13 Python perf tests. TTLCache was implemented with invalidate_router_cache() for external callers.
+**Regression fix:** 2026-02-22 — policy-keyed cache resized to `maxsize=8` (from `1`) to preserve distinct policy entries within TTL; verified by `tests/test_wl070_litellm_router_cache.py` (7 passed).
 **Priority:** P1
 **Area:** performance
 **Effort:** S
@@ -1731,6 +1732,19 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | deferral-run_a0752f34 | wave10to50 | 2026-02-22T10:38:32.273281+00:00 |
 | deferral-run_def_f33667b2 | wave10to50 | 2026-02-22T10:38:32.337874+00:00 |
 | deferral-run_def_6ea77086 | wave10to50 | 2026-02-22T10:38:32.403838+00:00 |
+
+### Wave70 Claims (2026-02-22)
+
+| ID | Agent | Started | Notes |
+|----|-------|---------|-------|
+| wave70-l1 | child-lane-1 | 2026-02-22T00:00:00Z | WL-293,294,295,296,297,299,300,262,263,264 |
+| wave70-l2 | child-lane-2 | 2026-02-22T00:00:00Z | WL-265,266,267,268,269,270,271,273,274,275 |
+| wave70-l3 | child-lane-3 | 2026-02-22T00:00:00Z | WL-276,277,278,242,243,244,245,246,247,248 |
+| wave70-l4 | child-lane-4 | 2026-02-22T00:00:00Z | WL-249,250,251,252,253,254,255,256,257,258 |
+| wave70-l5 | child-lane-5 | 2026-02-22T00:00:00Z | WL-259,260,222,223,224,225,226,227,228,229 |
+| wave70-l6 | child-lane-6 | 2026-02-22T00:00:00Z | WL-230,231,232,233,234,235,236,237,238,239 |
+| wave70-l7 | parent-lane | 2026-02-22T00:00:00Z | WL-240,203,204,205,206,208,209,210,211,212 |
+
 ## COMPLETED (historical reference)
 
 > All items below were completed by various agents between 2026-02-18 and 2026-02-20. See WORK_STREAM prior version for full entries with completion notes.
@@ -2650,7 +2664,7 @@ Auto-prune stale conflict and dead-letter entries with retention policy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-293] Signed Capability Cache
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** security, connectors
 **Effort:** M
@@ -2661,7 +2675,7 @@ Sign connector capability cache entries and enforce TTL renewal.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-294] Policy What-If Simulation
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** governance, cli
 **Effort:** S
@@ -2672,7 +2686,7 @@ Add policy simulation command for hypothetical sync policy changes.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-295] Pull Pagination Resilience Tests
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** tests, connectors
 **Effort:** M
@@ -2683,7 +2697,7 @@ Test multi-page remote pull behavior with pagination edge cases.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-296] Restore Verifier
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** rollback, reliability
 **Effort:** S
@@ -2694,7 +2708,7 @@ Verify rollback/restore outputs match checkpoint expectations.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-297] Connector Cost Accounting
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** cost, observability
 **Effort:** S
@@ -2705,7 +2719,7 @@ Track per-connector API usage/cost metrics for budgeting.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-298] Enterprise Topology Cookbook
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, architecture
 **Effort:** S
@@ -2713,10 +2727,10 @@ Track per-connector API usage/cost metrics for budgeting.
 
 Document common enterprise deployment topologies for autosync.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Evidence:** `docs/reference/AUTOSYNC_ENTERPRISE_TOPOLOGY_COOKBOOK.md`
 
 ### [WL-299] Reliability Score Targets
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** reliability, analytics
 **Effort:** S
@@ -2727,7 +2741,7 @@ Define reliability score computation and target thresholds over time.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-300] Default-On Guardrail Pack
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** migration, governance
 **Effort:** M
@@ -2738,7 +2752,7 @@ Ship guardrail policy pack and migration script for default-on rollout.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-262] Failure Remediation Suggestions
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** ux, diagnostics
 **Effort:** S
@@ -2749,7 +2763,7 @@ Attach deterministic remediation suggestions to common sync failure classes.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-263] Credential Source Validator
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** auth, config
 **Effort:** S
@@ -2760,7 +2774,7 @@ Validate credential source precedence and reject ambiguous auth configuration.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-264] WL Block Formatter
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** formatting, parser
 **Effort:** S
@@ -2771,7 +2785,7 @@ Add strict formatter for WL block structure and metadata normalization.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-265] Field Mapping Bootstrap Wizard
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** setup, ux
 **Effort:** S
@@ -2782,7 +2796,7 @@ Add first-time setup wizard for connector field/state mapping bootstrap.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-266] Pre-Apply Connector Health Probe
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** reliability, safety
 **Effort:** S
@@ -2793,7 +2807,7 @@ Run health probe before apply cycle and fail early on degraded connectors.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-267] Adaptive Sync Interval Controller
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** performance, scheduler
 **Effort:** M
@@ -2804,7 +2818,7 @@ Adapt loop interval dynamically based on drift rate, error rate, and load.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-268] Incident Snapshot Bundle
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** incident, audit
 **Effort:** S
@@ -2815,7 +2829,7 @@ Produce immutable incident snapshot bundles for postmortem workflows.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-269] Conflict Triage Categories
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** conflicts, governance
 **Effort:** S
@@ -2826,7 +2840,7 @@ Classify conflicts by category/severity and assign owner routing metadata.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-270] Metadata Freshness TTL
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** metadata, sync
 **Effort:** S
@@ -2837,7 +2851,7 @@ Enforce metadata freshness TTL and stale marker behavior.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-271] Split-Brain Remote State Detector
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** integrity, reliability
 **Effort:** M
@@ -2859,7 +2873,7 @@ Append-only history log for all local status transitions caused by sync.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-273] Selective Retry Queue
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** resilience, queue
 **Effort:** M
@@ -2870,7 +2884,7 @@ Queue transient failures for selective retry without replaying successful writes
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-274] Connector Sandbox Project Mode
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** testing, safety
 **Effort:** S
@@ -2881,7 +2895,7 @@ Support sandbox project targets for safe connector validation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-275] CI Benchmark Gates
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** ci, performance
 **Effort:** M
@@ -2892,7 +2906,7 @@ Add CI thresholds that fail on autosync latency/throughput regressions.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-276] Artifact Redaction Pipeline
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** security, compliance
 **Effort:** S
@@ -2903,7 +2917,7 @@ Redact sensitive fields from reports/artifacts using policy-driven rules.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-277] Artifact Format Versioning
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** compatibility, artifacts
 **Effort:** S
@@ -2914,7 +2928,7 @@ Add explicit versioning to export/import/report artifact schemas.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-278] Operator Command Aliases
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** cli, ergonomics
 **Effort:** S
@@ -2925,7 +2939,7 @@ Introduce concise aliases for high-frequency operator workflows.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-279] Troubleshooting Matrix
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, support
 **Effort:** S
@@ -2933,10 +2947,10 @@ Introduce concise aliases for high-frequency operator workflows.
 
 Publish GitHub/Linear failure matrix with causes, diagnostics, and fixes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `docs/reference/AUTOSYNC_TROUBLESHOOTING_MATRIX.md`
 
 ### [WL-280] Multi-Team Enterprise Rollout Checklist
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** release, enterprise
 **Effort:** S
@@ -2944,10 +2958,10 @@ Publish GitHub/Linear failure matrix with causes, diagnostics, and fixes.
 
 Define enterprise rollout checklist for multi-team autosync adoption.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `docs/checklists/AUTOSYNC_ENTERPRISE_ROLLOUT_CHECKLIST.md`
 
 ### [WL-242] Immutable Cycle Manifest
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** audit, reproducibility
 **Effort:** S
@@ -2958,7 +2972,7 @@ Write immutable cycle manifests capturing all inputs/decisions/outputs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-243] Dual-Write Shadow Mode
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** rollout, safety
 **Effort:** M
@@ -2969,7 +2983,7 @@ Add observe-only shadow mode before enabling full external mutation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-244] HTML Diff Artifact
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** reporting, ux
 **Effort:** S
@@ -2980,7 +2994,7 @@ Generate side-by-side HTML diff artifacts for local/remote state comparisons.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-245] Ownership Metadata Propagation
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** metadata, sync
 **Effort:** M
@@ -2991,7 +3005,7 @@ Propagate per-item ownership metadata across local, GitHub, and Linear.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-246] Env Profile Drift Validator
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** config, validation
 **Effort:** S
@@ -3002,7 +3016,7 @@ Validate config parity/drift across dev/staging/prod autosync profiles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-247] Legacy Board ID Migration Tool
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** migration, cli
 **Effort:** M
@@ -3013,7 +3027,7 @@ Add migration command to normalize legacy IDs into WL namespace.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-248] Remote-Orphan Detector
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** S
@@ -3024,7 +3038,7 @@ Detect remote tracker items lacking local workstream representation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-249] Local-Orphan Detector
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** S
@@ -3035,7 +3049,7 @@ Detect local workstream items lacking any remote tracker mapping.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-250] Conflict TTL and Escalation
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** governance, conflicts
 **Effort:** S
@@ -3046,7 +3060,7 @@ Add conflict TTL with automatic escalation actions after timeout.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-251] Retry Class Policy
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** resilience, policy
 **Effort:** M
@@ -3057,7 +3071,7 @@ Implement policy classes for transient versus permanent connector errors.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-252] Offline Simulation Mode
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** testing, ux
 **Effort:** S
@@ -3068,7 +3082,7 @@ Add simulation mode for offline connector verification and dry verification.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-253] Snapshot Compaction
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** storage, ops
 **Effort:** S
@@ -3079,7 +3093,7 @@ Compact/rotate long-lived cycle artifacts to control report directory growth.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-254] Encrypted Artifact Option
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** security, compliance
 **Effort:** M
@@ -3090,7 +3104,7 @@ Add optional encryption-at-rest for sync artifact outputs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-255] Run Correlation IDs
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** observability, tracing
 **Effort:** S
@@ -3101,7 +3115,7 @@ Use shared run-level correlation IDs for all connector calls/events.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-256] No-Op Fast Path
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** performance, sync
 **Effort:** S
@@ -3112,7 +3126,7 @@ Add fast no-op cycle path and explicit telemetry for unchanged runs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-257] Historical Trend Reports
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** analytics, reporting
 **Effort:** M
@@ -3123,7 +3137,7 @@ Produce trend reports for drift/error/latency over long horizons.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-258] Docs Freshness Checker
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** docs, quality
 **Effort:** S
@@ -3134,7 +3148,7 @@ Add automatic checker for stale sync docs and command reference drift.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-259] Operator Acceptance Tests
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** tests, ops
 **Effort:** M
@@ -3145,7 +3159,7 @@ Add operator journey acceptance tests from setup to steady-state operation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-260] Default Enablement Migration Plan
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** migration, release
 **Effort:** S
@@ -3156,7 +3170,7 @@ Define migration plan for enabling autosync by default in existing repos.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-222] Blackout Calendar Support
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** ops, scheduling
 **Effort:** S
@@ -3167,7 +3181,7 @@ Add project-level blackout windows where autosync pauses external mutation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-223] Actor/Impersonation Guardrails
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** security, governance
 **Effort:** S
@@ -3178,7 +3192,7 @@ Validate acting identity and prevent unintended impersonation in connector write
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-224] Workstream Schema Linter
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** validation, parser
 **Effort:** M
@@ -3189,7 +3203,7 @@ Add linter for WORK_STREAM structure consistency and malformed block detection.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-225] WL Sort/Normalize Command
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** cli, hygiene
 **Effort:** S
@@ -3200,7 +3214,7 @@ Add deterministic WL ordering and normalization command for maintenance.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-226] Remote Payload Checksums
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** integrity, sync
 **Effort:** S
@@ -3211,7 +3225,7 @@ Add optional checksums for payload integrity verification during reflection.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-227] Metadata Enrichment
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** docs, sync
 **Effort:** S
@@ -3222,7 +3236,7 @@ Enrich remote items with source links, tags, and structured reference metadata.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-228] Connector Capability Discovery
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** architecture, connectors
 **Effort:** M
@@ -3233,7 +3247,7 @@ Add capability probing and feature flags for connector-specific behavior gates.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-229] Maintenance Banner Propagation
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** ux, ops
 **Effort:** S
@@ -3244,7 +3258,7 @@ Propagate maintenance mode banners to CLI output and report artifacts.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-230] Emergency Stop Switch
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** safety, ops
 **Effort:** S
@@ -3255,7 +3269,7 @@ Add emergency stop file/env switch watched by autopilot loop.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-231] Replay-Safe Mutation IDs
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** idempotency, sync
 **Effort:** M
@@ -3266,7 +3280,7 @@ Assign operation IDs to remote writes to prevent duplicate replay side effects.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-232] Signed Audit Artifact Chain
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** compliance, audit
 **Effort:** M
@@ -3277,7 +3291,7 @@ Add signed audit artifact chaining for compliance-grade provenance evidence.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-233] Connector SLA Tracking
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** observability, sla
 **Effort:** S
@@ -3288,7 +3302,7 @@ Track connector SLAs and emit alerts when latency/error thresholds breach.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-234] Incident Runbook
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** docs, ops
 **Effort:** S
@@ -3299,7 +3313,7 @@ Publish incident response and rollback runbook for autosync failures.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-235] Connector Chaos Tests
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** tests, resilience
 **Effort:** M
@@ -3310,7 +3324,7 @@ Add chaos tests covering connector outages and partial-failure edge cases.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-236] Cold/Warm Benchmark Split
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** perf, benchmarks
 **Effort:** S
@@ -3321,7 +3335,7 @@ Split benchmark reporting between cold-start and warm-cache operation modes.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-237] Hourly Change Digest
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** reporting, ux
 **Effort:** S
@@ -3332,7 +3346,7 @@ Generate compact hourly digest summarizing all local and remote changes.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-238] Remote→Local Annotation Standard
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** docs, formatting
 **Effort:** S
@@ -3343,7 +3357,7 @@ Standardize annotation block format for remote-to-local reflection details.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-239] Staged Rollout Profiles
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** release, config
 **Effort:** M
@@ -3354,7 +3368,7 @@ Add rollout presets for dev/staging/prod with safety defaults.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
 
 ### [WL-240] GA Readiness Criteria
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** release, governance
 **Effort:** S
@@ -3376,7 +3390,7 @@ Introduce hysteresis to prevent rapid status oscillation across cycles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-203] Local Decision Journal
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** audit, replay
 **Effort:** M
@@ -3387,7 +3401,7 @@ Persist replayable journal entries for each sync decision.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-204] Conflict Surface Command
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** cli, ux
 **Effort:** S
@@ -3398,7 +3412,7 @@ Add CLI command to list unresolved sync conflicts and recommended actions.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-205] Manual Conflict Queue
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** governance, sync
 **Effort:** M
@@ -3409,7 +3423,7 @@ Add machine-readable conflict queue file for deterministic manual resolution.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-206] Sync Freeze/Unfreeze Controls
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** ops, cli
 **Effort:** S
@@ -3431,7 +3445,7 @@ Schedule periodic full-rescan passes in addition to incremental cycles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-208] Max-Changes Per Cycle Guardrail
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** safety, sync
 **Effort:** S
@@ -3442,7 +3456,7 @@ Cap per-cycle mutation volume with explicit fail-loud behavior when exceeded.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-209] Connector Health Scoreboard
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** observability, ux
 **Effort:** S
@@ -3453,7 +3467,7 @@ Publish connector health and drift scores in CLI/report artifacts.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-210] Field/Schema Drift Detection
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** M
@@ -3464,7 +3478,7 @@ Detect remote field/schema changes that invalidate current sync mappings.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-211] Required Field Validation Gate
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P1
 **Area:** validation, governance
 **Effort:** S
@@ -3475,7 +3489,7 @@ Add strict validation that required custom fields exist before external writes.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-212] Pull-Only-on-Failure Mode
-**Status:** BACKLOG
+**Status:** IN PROGRESS (Wave70 2026-02-22)
 **Priority:** P2
 **Area:** resilience, config
 **Effort:** S

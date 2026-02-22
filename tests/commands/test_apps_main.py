@@ -258,9 +258,7 @@ def test_install_project_brownfield_routes_to_setup_project_migrate() -> None:
 def test_scaffold_greenfield_routes_to_sys_setup_project_scaffold() -> None:
     """`thegent scaffold greenfield` should delegate to the setup-project scaffold command."""
     with patch("thegent.cli.apps.project.project_scaffold") as mock_project_scaffold:
-        result = runner.invoke(
-            app, ["scaffold", "greenfield", "/tmp/gf", "--profile", "cli_tool", "--name", "name"]
-        )
+        result = runner.invoke(app, ["scaffold", "greenfield", "/tmp/gf", "--profile", "cli_tool", "--name", "name"])
 
     assert result.exit_code == 0
     mock_project_scaffold.assert_called_once_with(
@@ -280,9 +278,7 @@ def test_scaffold_greenfield_routes_to_sys_setup_project_scaffold() -> None:
 def test_scaffold_brownfield_routes_to_sys_setup_project_migrate() -> None:
     """`thegent scaffold brownfield` should delegate to the setup-project migrate command."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
-        result = runner.invoke(
-            app, ["scaffold", "brownfield", "/tmp/proj", "--template", "ag-dd", "--mode", "skip"]
-        )
+        result = runner.invoke(app, ["scaffold", "brownfield", "/tmp/proj", "--template", "ag-dd", "--mode", "skip"])
 
     assert result.exit_code == 0
     mock_project_migrate.assert_called_once_with(

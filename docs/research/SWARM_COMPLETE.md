@@ -725,3 +725,45 @@ print(result)
 - Dispatch 2: Move one idle owner to the oldest starved downstream lane with ready inputs.
 - Dispatch 3: Split oversized tasks (>1 checkpoint estimate) into atomic subtasks and re-queue immediately.
 - Dispatch 4: Reserve one lane for integration risk burn-down before starting new feature lanes.
+
+## Escalation Ownership Map
+
+- Lane Owner: owns execution and must escalate `Blocked` status within one checkpoint with blocker, impact, and needed decision.
+- Swarm Lead: triages all escalations, assigns unblock owner, and sets due time for resolution or reassignment.
+- Domain Reviewer: provides binding technical decision on interface/quality disputes within the same checkpoint.
+- Program Owner: resolves scope/SLA conflicts and approves defer/split actions when lead cannot clear risk.
+
+## Lane Cooldown Policy
+
+- After lane handoff or completion, enforce one checkpoint cooldown before assigning that owner another critical lane.
+- During cooldown, owner may only do review, docs, or unblock support; no new dependency-critical coding starts.
+- Cooldown ends early only if swarm lead records emergency override with reason, risk, and rollback owner.
+- Repeated overrides in two consecutive checkpoints trigger automatic capacity reduction by one active lane.
+
+## Lane Handoff Readiness
+
+- Handoff only when acceptance criteria are met and lane status is `Ready for Handoff`.
+- Attach required packet: changed paths, validation command/output, and known risk notes.
+- Receiver must acknowledge ownership in the same checkpoint with first executable step.
+- If acknowledgement is missing by next checkpoint, lane auto-reverts to sender and is escalated.
+
+## Swarm Exit Checklist
+
+- Confirm every in-scope lane is `Done` or deferred with owner, reason, and next checkpoint date.
+- Run one final integration validation on merged scope and record command plus result.
+- Publish residual risks with severity, owner, and explicit mitigation/rollback action.
+- Close swarm only after lead posts final summary and next-wave first actions.
+
+## Lane Timeout Policy
+
+- Define a per-lane timeout at lane start (default: one checkpoint for blocked work, two checkpoints for active work).
+- If no verifiable progress artifact appears before timeout, lane status changes to `Timed Out` automatically.
+- On timeout, swarm lead must reassign owner or split scope within the same checkpoint.
+- Timed-out lanes cannot return to `Active` until a new owner, next action, and deadline are recorded.
+
+## Escalation Acknowledgement Rules
+
+- Every escalation must be acknowledged by the assigned decision owner within the same checkpoint.
+- Acknowledgement must include: decision owner, decision ETA, and immediate containment action.
+- If acknowledgement is missing by checkpoint close, auto-page swarm lead and program owner.
+- Unacknowledged escalations block new lane starts in the affected dependency chain until acknowledged.

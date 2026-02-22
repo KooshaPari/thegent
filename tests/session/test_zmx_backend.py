@@ -355,22 +355,30 @@ class TestResolveSessionBackend:
         assert result is None
 
     def test_backend_zmx_unavailable_returns_none(self) -> None:
-        with patch("thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: False)):
+        with patch(
+            "thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: False)
+        ):
             result = resolve_session_backend("zmx")
         assert result is None
 
     def test_backend_zmx_available_returns_backend(self) -> None:
-        with patch("thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: True)):
+        with patch(
+            "thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: True)
+        ):
             result = resolve_session_backend("zmx")
         assert isinstance(result, ZmxBackend)
 
     def test_backend_auto_zmx_available(self) -> None:
-        with patch("thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: True)):
+        with patch(
+            "thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: True)
+        ):
             result = resolve_session_backend("auto")
         assert isinstance(result, ZmxBackend)
 
     def test_backend_auto_zmx_unavailable_returns_none(self) -> None:
-        with patch("thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: False)):
+        with patch(
+            "thegent.session.zmx_backend.ZmxBackend.available", new_callable=lambda: property(lambda self: False)
+        ):
             result = resolve_session_backend("auto")
         assert result is None
 

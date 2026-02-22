@@ -986,9 +986,7 @@ class LLMPlangentPlanner(PlangentPlanner):
     # Private
     # ------------------------------------------------------------------
 
-    async def _generate_plan_nodes(
-        self, goal: str, max_depth: int
-    ) -> list[PlanNode] | None:
+    async def _generate_plan_nodes(self, goal: str, max_depth: int) -> list[PlanNode] | None:
         """Call FlashAgent, parse response, and return validated PlanNodes.
 
         Returns ``None`` when the model is unavailable (FlashAgent timeout /
@@ -1008,10 +1006,7 @@ class LLMPlangentPlanner(PlangentPlanner):
 
         # @trace WL-087
         """
-        prompt = (
-            _DECOMPOSITION_SYSTEM_PROMPT.format(max_depth=max(2, max_depth))
-            + f"\n\nGoal to decompose:\n{goal}"
-        )
+        prompt = _DECOMPOSITION_SYSTEM_PROMPT.format(max_depth=max(2, max_depth)) + f"\n\nGoal to decompose:\n{goal}"
 
         config = FlashAgentConfig(
             task_prompt=prompt,
@@ -1026,8 +1021,7 @@ class LLMPlangentPlanner(PlangentPlanner):
         if not result.success:
             # Model unavailable — caller decides on fallback.
             _log.warning(
-                "LLMPlangentPlanner: FlashAgent call unsuccessful "
-                "(agent_id=%s, elapsed=%.2fs)",
+                "LLMPlangentPlanner: FlashAgent call unsuccessful (agent_id=%s, elapsed=%.2fs)",
                 result.agent_id,
                 result.elapsed_s,
             )

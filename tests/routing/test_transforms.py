@@ -24,10 +24,7 @@ def test_extract_transforms_missing() -> None:
 
 @pytest.mark.requirement("FR-REQEXT-041")
 def test_apply_middle_out_short_messages_unchanged() -> None:
-    messages = [
-        {"role": "user", "content": f"msg {i}"}
-        for i in range(5)
-    ]
+    messages = [{"role": "user", "content": f"msg {i}"} for i in range(5)]
     result = apply_middle_out(messages, max_messages=20)
     assert result == messages
 
@@ -41,10 +38,9 @@ def test_apply_middle_out_long_messages_compressed() -> None:
 
 @pytest.mark.requirement("FR-REQEXT-041")
 def test_apply_middle_out_preserves_system_messages() -> None:
-    messages = (
-        [{"role": "system", "content": "You are helpful."}]
-        + [{"role": "user", "content": f"msg {i}"} for i in range(25)]
-    )
+    messages = [{"role": "system", "content": "You are helpful."}] + [
+        {"role": "user", "content": f"msg {i}"} for i in range(25)
+    ]
     result = apply_middle_out(messages, max_messages=10)
     system_msgs = [m for m in result if m.get("role") == "system"]
     assert len(system_msgs) == 1

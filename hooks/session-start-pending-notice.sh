@@ -20,7 +20,7 @@ if [[ -f "$PROJ_HANDOFF" ]]; then
 fi
 if [[ $N -eq 0 && -f "$GLOBAL_HANDOFF" ]]; then
   N=$(grep -c -E '^[0-9]+\.\s' "$GLOBAL_HANDOFF" 2>/dev/null || echo 0)
-  HANDOFF="~/.claude/pending-handoff.md"
+  HANDOFF="${HOME}/.claude/pending-handoff.md"
 fi
 
 if [[ $N -gt 0 && -n "$HANDOFF" ]]; then

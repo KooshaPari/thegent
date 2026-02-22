@@ -363,9 +363,7 @@ class TestSyncReset:
         cmd = _make_cmd(tmp_path)
         op = cmd.reset()
         # work_stream doesn't exist so nothing to reset
-        work_stream_str = str(
-            (tmp_path / "docs" / "reference" / "WORK_STREAM.md").relative_to(tmp_path)
-        )
+        work_stream_str = str((tmp_path / "docs" / "reference" / "WORK_STREAM.md").relative_to(tmp_path))
         assert work_stream_str not in op.details["files_would_reset"]
 
     def test_reset_reports_work_stream_when_present(self, tmp_path: Path) -> None:

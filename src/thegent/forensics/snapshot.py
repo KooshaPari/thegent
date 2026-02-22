@@ -60,7 +60,9 @@ class ForensicSnapshotter:
         """Get git status using native Rust."""
         res = thegent_git.get_status(str(root))
         if res:
-            return f"staged:{res.get('staged', 0)} unstaged:{res.get('unstaged', 0)} untracked:{res.get('untracked', 0)}"
+            return (
+                f"staged:{res.get('staged', 0)} unstaged:{res.get('unstaged', 0)} untracked:{res.get('untracked', 0)}"
+            )
         return "n/a"
 
     def _get_git_diff(self, root: Path) -> str:

@@ -79,24 +79,18 @@ class TestInMemoryStore:
         return _InMemoryStore()
 
     @pytest.mark.asyncio
-    async def test_setnx_bounded_acquires_when_under_limit(
-        self, store: _InMemoryStore
-    ) -> None:  # @trace FR-ORC-002
+    async def test_setnx_bounded_acquires_when_under_limit(self, store: _InMemoryStore) -> None:  # @trace FR-ORC-002
         ok = await store.setnx_bounded("pfx:slot:run1", ttl=60.0, max_count=3)
         assert ok is True
 
     @pytest.mark.asyncio
-    async def test_setnx_bounded_rejects_duplicate_key(
-        self, store: _InMemoryStore
-    ) -> None:  # @trace FR-ORC-002
+    async def test_setnx_bounded_rejects_duplicate_key(self, store: _InMemoryStore) -> None:  # @trace FR-ORC-002
         await store.setnx_bounded("pfx:slot:run1", ttl=60.0, max_count=3)
         ok = await store.setnx_bounded("pfx:slot:run1", ttl=60.0, max_count=3)
         assert ok is False
 
     @pytest.mark.asyncio
-    async def test_setnx_bounded_blocks_at_limit(
-        self, store: _InMemoryStore
-    ) -> None:  # @trace FR-ORC-002
+    async def test_setnx_bounded_blocks_at_limit(self, store: _InMemoryStore) -> None:  # @trace FR-ORC-002
         for i in range(2):
             await store.setnx_bounded(f"pfx:slot:r{i}", ttl=60.0, max_count=2)
         ok = await store.setnx_bounded("pfx:slot:r99", ttl=60.0, max_count=2)
@@ -174,9 +168,7 @@ class TestFallbackMode:
         assert ok is False
 
     @pytest.mark.asyncio
-    async def test_release_frees_slot(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_release_frees_slot(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         for i in range(3):
             await ctrl.acquire(f"run-{i}", timeout=1.0)
         await ctrl.release("run-0")
@@ -184,24 +176,18 @@ class TestFallbackMode:
         assert ok is True
 
     @pytest.mark.asyncio
-    async def test_release_noop_unknown_run(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_release_noop_unknown_run(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         await ctrl.release("nonexistent")  # must not raise
 
     @pytest.mark.asyncio
-    async def test_aget_active_count_correct(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_aget_active_count_correct(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         await ctrl.acquire("run-1", timeout=1.0)
         await ctrl.acquire("run-2", timeout=1.0)
         count = await ctrl.aget_active_count()
         assert count == 2
 
     @pytest.mark.asyncio
-    async def test_alist_active_contains_run_ids(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_alist_active_contains_run_ids(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         await ctrl.acquire("run-alpha", timeout=1.0)
         await ctrl.acquire("run-beta", timeout=1.0)
         active = await ctrl.alist_active()
@@ -209,16 +195,12 @@ class TestFallbackMode:
         assert "run-beta" in active
 
     @pytest.mark.asyncio
-    async def test_alist_active_empty_initially(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_alist_active_empty_initially(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         active = await ctrl.alist_active()
         assert active == []
 
     @pytest.mark.asyncio
-    async def test_acquire_times_out_at_limit(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_acquire_times_out_at_limit(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         for i in range(3):
             await ctrl.acquire(f"run-{i}", timeout=1.0)
         start = time.monotonic()
@@ -227,9 +209,7 @@ class TestFallbackMode:
         assert ok is False
         assert elapsed < 2.0  # sanity: didn't hang
 
-    def test_get_active_count_sync_outside_loop(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    def test_get_active_count_sync_outside_loop(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         count = ctrl.get_active_count()
         assert count == 0
 
@@ -297,9 +277,7 @@ class TestRedisMockMode:
         assert ctrl.is_available() is True
 
     @pytest.mark.asyncio
-    async def test_acquire_redis_under_limit(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_acquire_redis_under_limit(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         ok = await ctrl.acquire("run-r1", timeout=1.0)
         assert ok is True
 
@@ -313,27 +291,21 @@ class TestRedisMockMode:
         assert ok is False
 
     @pytest.mark.asyncio
-    async def test_aget_active_count_redis(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_aget_active_count_redis(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         await ctrl.acquire("run-1", timeout=1.0)
         await ctrl.acquire("run-2", timeout=1.0)
         count = await ctrl.aget_active_count()
         assert count == 2
 
     @pytest.mark.asyncio
-    async def test_release_redis_removes_key(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_release_redis_removes_key(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         await ctrl.acquire("run-1", timeout=1.0)
         await ctrl.release("run-1")
         count = await ctrl.aget_active_count()
         assert count == 0
 
     @pytest.mark.asyncio
-    async def test_alist_active_redis(
-        self, ctrl: RedisConcurrencyController
-    ) -> None:  # @trace FR-ORC-002
+    async def test_alist_active_redis(self, ctrl: RedisConcurrencyController) -> None:  # @trace FR-ORC-002
         await ctrl.acquire("run-x", timeout=1.0)
         active = await ctrl.alist_active()
         assert "run-x" in active
@@ -399,9 +371,7 @@ class TestRedisFallbackOnError:
 class TestFactory:
     """Tests for the factory helper."""
 
-    def test_returns_controller_instance(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:  # @trace FR-ORC-002
+    def test_returns_controller_instance(self, monkeypatch: pytest.MonkeyPatch) -> None:  # @trace FR-ORC-002
         with patch(
             "thegent.orchestration.redis_concurrency._import_redis_asyncio",
             return_value=None,
@@ -409,9 +379,7 @@ class TestFactory:
             ctrl = make_redis_concurrency_controller(max_concurrent=5)
         assert isinstance(ctrl, RedisConcurrencyController)
 
-    def test_max_concurrent_from_env(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:  # @trace FR-ORC-002
+    def test_max_concurrent_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:  # @trace FR-ORC-002
         monkeypatch.setenv("THGENT_REDIS_CONCURRENCY_LIMIT", "42")
         with patch(
             "thegent.orchestration.redis_concurrency._import_redis_asyncio",

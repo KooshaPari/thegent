@@ -1,7 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+{
+  CDPATH=
+  ROOT_DIR="$(cd -- "$(dirname -- "$0")/.." && pwd)"
+}
 MAX_LINES=${MAX_LINES:-2500}
 WARN_LINES=${WARN_LINES:-2000}
 SCOPE=${MAX_LINES_SCOPE:-changed}

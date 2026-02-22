@@ -1,4 +1,5 @@
 """Metrics/cost rendering helpers for model_cmds."""
+
 from __future__ import annotations
 
 import json

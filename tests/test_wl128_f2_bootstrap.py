@@ -1,5 +1,6 @@
 # @trace WL-128 B90-W3-F2
 """Toolchain bootstrap verification tests for WL-128."""
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -12,9 +13,7 @@ def test_f2_report_exists():
 
 def test_f2_report_mentions_pass():
     text = REPORT.read_text()
-    assert "PASS" in text or "pass" in text.lower(), (
-        "Report must mention PASS or pass verdict"
-    )
+    assert "PASS" in text or "pass" in text.lower(), "Report must mention PASS or pass verdict"
 
 
 def test_f2_report_mentions_taskfile():

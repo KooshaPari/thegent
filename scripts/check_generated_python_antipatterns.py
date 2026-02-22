@@ -158,7 +158,12 @@ def to_sarif(findings: list[dict[str, Any]]) -> dict[str, Any]:
         "version": "2.1.0",
         "runs": [
             {
-                "tool": {"driver": {"name": "generated-python-antipatterns", "rules": sorted(rules.values(), key=lambda r: r["id"])}},
+                "tool": {
+                    "driver": {
+                        "name": "generated-python-antipatterns",
+                        "rules": sorted(rules.values(), key=lambda r: r["id"]),
+                    }
+                },
                 "results": results,
             }
         ],

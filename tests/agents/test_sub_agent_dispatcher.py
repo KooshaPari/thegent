@@ -27,6 +27,7 @@ from thegent.agents.sub_agent_dispatcher import (
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_agent_record(
     name: str = "test-agent",
     capabilities: list[str] | None = None,
@@ -567,10 +568,7 @@ async def test_dispatch_many_parallel_execution():
     tasks = [SubAgentTask(prompt=f"parallel {i}") for i in range(3)]
 
     async def _run():
-        flash_coros = [
-            (lambda i: lambda config: _slow_flash(config, task_idx=i))(i)
-            for i in range(3)
-        ]
+        flash_coros = [(lambda i: lambda config: _slow_flash(config, task_idx=i))(i) for i in range(3)]
         call_idx = 0
 
         async def _patched_run(config):

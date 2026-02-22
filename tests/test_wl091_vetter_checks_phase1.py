@@ -127,18 +127,14 @@ def test_schema_vetter_check_reads_stderr_when_target_is_stderr():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item, target="stderr")
     stderr_payload = json.dumps({"name": "err-item", "value": 7})
-    result = asyncio.run(
-        check.check("run-2", "irrelevant-output", {"stdout": "irrelevant", "stderr": stderr_payload})
-    )
+    result = asyncio.run(check.check("run-2", "irrelevant-output", {"stdout": "irrelevant", "stderr": stderr_payload}))
     assert result.passed is True
 
 
 def test_schema_vetter_check_fails_bad_stderr_json():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item, target="stderr")
-    result = asyncio.run(
-        check.check("run-2", "out", {"stdout": "out", "stderr": "bad{"})
-    )
+    result = asyncio.run(check.check("run-2", "out", {"stdout": "out", "stderr": "bad{"}))
     assert result.passed is False
     assert "JSON parse failed" in result.message
 
@@ -153,18 +149,14 @@ def test_schema_vetter_check_combined_concatenates_stdout_stderr():
     check = SchemaVetterCheck(schema_model=_Item, target="combined")
     # combined should concat stdout + stderr; the full JSON is in combined
     payload = json.dumps({"name": "combo", "value": 99})
-    result = asyncio.run(
-        check.check("run-3", "ignored", {"stdout": payload, "stderr": ""})
-    )
+    result = asyncio.run(check.check("run-3", "ignored", {"stdout": payload, "stderr": ""}))
     assert result.passed is True
 
 
 def test_schema_vetter_check_combined_fails_invalid_combined():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item, target="combined")
-    result = asyncio.run(
-        check.check("run-3", "ignored", {"stdout": "bad", "stderr": "garbage"})
-    )
+    result = asyncio.run(check.check("run-3", "ignored", {"stdout": "bad", "stderr": "garbage"}))
     assert result.passed is False
     assert "JSON parse failed" in result.message
 

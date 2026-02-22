@@ -1,5 +1,7 @@
 """Unit tests for ConfigProvider abstraction (control plane Phase 1)."""
 
+import builtins
+
 import pytest
 
 from thegent.config_provider import EnvConfigProvider, get_config_provider
@@ -47,9 +49,17 @@ class TestGetConfigProvider:
         p = get_config_provider()
         assert isinstance(p, EnvConfigProvider)
 
-    def test_returns_env_provider_when_cp_import_fails(self, monkeypatch) -> None:
+    def test_returns_env_provider_when_cp_import_fails(self, monkeypatch, caplog) -> None:
         """When CP URL set but ControlPlaneConfigProvider not available, falls back to Env."""
-        monkeypatch.setenv("THGENT_CONTROL_PLANE_URL", "http://127.0.0.1:3848")
+        monkeypatch.setenv("THGENT_CONTROL_PLANE_URL", "https://control-plane.example")
+        real_import = builtins.__import__
+
+        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "thegent.control_plane.client":
+                raise ImportError("simulated control-plane import failure")
+            return real_import(name, globals, locals, fromlist, level)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
         p = get_config_provider()
-        # ControlPlaneConfigProvider doesn't exist yet; ImportError → EnvConfigProvider
         assert isinstance(p, EnvConfigProvider)
+        assert "Failed to import control-plane config provider" in caplog.text

@@ -40,13 +40,14 @@ def test_execution_engine_generates_artifacts(mock_settings, temp_session_dir):
         owner="test_user",
         agent="test_agent",
         cwd=str(temp_session_dir),
-        started_at_utc="2026-02-20T00:00:00Z"
+        started_at_utc="2026-02-20T00:00:00Z",
     )
 
-    with patch("thegent.execution.Auditor.sign_run") as mock_sign, \
-         patch("thegent.execution.Auditor.generate_maif_artifact") as mock_gen, \
-         patch("thegent.execution.Auditor.persist_maif_artifact") as mock_persist:
-
+    with (
+        patch("thegent.execution.Auditor.sign_run") as mock_sign,
+        patch("thegent.execution.Auditor.generate_maif_artifact") as mock_gen,
+        patch("thegent.execution.Auditor.persist_maif_artifact") as mock_persist,
+    ):
         mock_gen.return_value = {"id": "art_123", "session_id": "run_test_123"}
 
         result = engine.execute(runner, run_meta)

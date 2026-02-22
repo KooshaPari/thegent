@@ -8,6 +8,7 @@ import pytest
 from thegent.agents.cliproxy_manager import (
     _LOGIN_FLAGS,
     _binary_available,
+    _load_json,
     ensure_proxy_running,
     run_login,
     run_login_unified,
@@ -797,3 +798,47 @@ class TestStartProxyManagedFullLifecycle:
         assert proc is mock_proc
         assert base_url == f"http://127.0.0.1:{settings.cliproxy_port}/v1"
         assert mock_sleep.call_count >= 2
+
+
+@pytest.mark.unit
+class TestProviderDefinitionJsonLoading:
+    """Validation coverage for cliproxy provider definition JSON loading."""
+
+    def test_load_json_returns_mapping_for_valid_object(self, tmp_path: Path) -> None:
+        data_dir = tmp_path / "cliproxy_data"
+        data_dir.mkdir(parents=True)
+        f = data_dir / "provider_definitions.json"
+        f.write_text('{"roo": {"model": "roo-1"}}')
+
+        with patch("thegent.agents.cliproxy_manager._CLIPROXY_DATA_DIR", data_dir):
+            parsed = _load_json("provider_definitions.json")
+
+        assert parsed["roo"]["model"] == "roo-1"
+
+    def test_load_json_raises_on_missing_file(self, tmp_path: Path) -> None:
+        data_dir = tmp_path / "cliproxy_data"
+        data_dir.mkdir(parents=True)
+
+        with patch("thegent.agents.cliproxy_manager._CLIPROXY_DATA_DIR", data_dir):
+            with pytest.raises(ValueError, match="missing_file"):
+                _load_json("provider_definitions.json")
+
+    def test_load_json_raises_on_invalid_json(self, tmp_path: Path) -> None:
+        data_dir = tmp_path / "cliproxy_data"
+        data_dir.mkdir(parents=True)
+        f = data_dir / "provider_definitions.json"
+        f.write_text("{not json")
+
+        with patch("thegent.agents.cliproxy_manager._CLIPROXY_DATA_DIR", data_dir):
+            with pytest.raises(ValueError, match="invalid_json"):
+                _load_json("provider_definitions.json")
+
+    def test_load_json_raises_on_non_object_json(self, tmp_path: Path) -> None:
+        data_dir = tmp_path / "cliproxy_data"
+        data_dir.mkdir(parents=True)
+        f = data_dir / "provider_definitions.json"
+        f.write_text('["roo", "kilo"]')
+
+        with patch("thegent.agents.cliproxy_manager._CLIPROXY_DATA_DIR", data_dir):
+            with pytest.raises(ValueError, match="invalid_shape"):
+                _load_json("provider_definitions.json")

@@ -5,6 +5,8 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  schedule:
+    - cron: "30 4 * * *"
   workflow_dispatch:
 
 jobs:
@@ -32,7 +34,8 @@ jobs:
 
       - name: Install project dependencies
         run: |
-          uv sync --all-extras --dev
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Run CI preflight
         run: |
@@ -70,7 +73,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Build PR changed file list
         if: github.event_name == 'pull_request'
@@ -177,7 +181,8 @@ jobs:
 
       - name: Install project dependencies
         run: |
-          uv sync --all-extras --dev
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Sanity check Python runtime
         run: |
@@ -227,6 +232,99 @@ jobs:
         run: |
           task quality:perf:benchmark-gate
 
+  quality-unified:
+    name: Unified Quality Control Plane
+    runs-on: ubuntu-latest
+    needs: [preflight]
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule'
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install uv toolchain
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install Task runner
+        uses: arduino/setup-task@v2
+
+      - name: Install project dependencies
+        run: |
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
+
+      - name: Run unified quality artifact lane
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ]; then
+            export QUALITY_UNIFIED_MODE=nightly
+          else
+            export QUALITY_UNIFIED_MODE=pr
+          fi
+          task quality:ci:unified
+
+      - name: Upload hooks SARIF to code scanning
+        if: always() && hashFiles('artifacts/hooks/hooks-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: artifacts/hooks/hooks-results.sarif
+          category: hooks-quality
+
+      - name: Upload generated-code SARIF to code scanning
+        if: always() && hashFiles('artifacts/quality/generated-python-antipatterns.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: artifacts/quality/generated-python-antipatterns.sarif
+          category: generated-python
+
+      - name: Write unified quality summary to job output
+        if: always() && hashFiles('artifacts/quality/unified-quality-summary.json') != ''
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          summary = Path("artifacts/quality/unified-quality-summary.json")
+          payload = json.loads(summary.read_text(encoding="utf-8"))
+          overall = payload.get("overall_status", "unknown")
+          components = payload.get("components", [])
+          lines = [
+              "## Unified Quality Summary",
+              "",
+              f"- overall_status: `{overall}`",
+              f"- components: `{len(components)}`",
+              "",
+              "| Component | Status | Exists |",
+              "| --- | --- | --- |",
+          ]
+          for row in components:
+              lines.append(
+                  f"| `{row.get('name','?')}` | `{row.get('status','?')}` | `{row.get('exists', False)}` |"
+              )
+          with open("${GITHUB_STEP_SUMMARY}", "a", encoding="utf-8") as fh:
+              fh.write("\n".join(lines) + "\n")
+          PY
+
+      - name: Upload unified quality artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unified-quality-artifacts-${{ github.run_id }}
+          path: |
+            artifacts/hooks/
+            artifacts/quality/
+          retention-days: 14
+
   coverage:
     name: Coverage Gate
     runs-on: ubuntu-latest
@@ -252,7 +350,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Run coverage CI gate
         run: |
@@ -294,7 +393,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Run template-tree collect-only
         run: |
@@ -329,7 +429,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Verify psutil installation
         run: |
@@ -427,7 +528,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
+          bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Run integration tests
         run: |

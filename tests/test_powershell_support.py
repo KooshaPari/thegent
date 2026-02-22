@@ -122,9 +122,7 @@ class TestDetectPowershellProfile:
         result = detect_powershell_profile()
         assert result == expected
 
-    def test_ps5_preferred_over_ps7_when_only_ps5_exists(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_ps5_preferred_over_ps7_when_only_ps5_exists(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         """PS5 path is returned when only PS5 profile exists (PS7 absent)."""
         monkeypatch.delenv("PROFILE", raising=False)
         ps5 = tmp_path / "Documents" / "WindowsPowerShell" / "Microsoft.PowerShell_profile.ps1"

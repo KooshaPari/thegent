@@ -10,6 +10,7 @@ from PIL import Image
 # Initialize FastMCP server
 mcp = FastMCP("OCR Server")
 
+
 @mcp.tool()
 def perform_ocr(image_path: str) -> str:
     """
@@ -25,6 +26,7 @@ def perform_ocr(image_path: str) -> str:
         return text.strip() if text.strip() else "No text found in image."
     except Exception as e:
         return f"Error during OCR: {e!s}"
+
 
 @mcp.tool()
 def perform_ocr_url(url: str) -> str:
@@ -44,6 +46,7 @@ def perform_ocr_url(url: str) -> str:
     except Exception as e:
         return f"Error during OCR from URL: {e!s}"
 
+
 @mcp.tool()
 def perform_ocr_base64(base64_image: str) -> str:
     """
@@ -57,6 +60,7 @@ def perform_ocr_base64(base64_image: str) -> str:
         return text.strip() if text.strip() else "No text found in image."
     except Exception as e:
         return f"Error during OCR: {e!s}"
+
 
 if __name__ == "__main__":
     mcp.run()

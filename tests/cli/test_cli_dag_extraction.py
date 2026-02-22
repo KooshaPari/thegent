@@ -12,6 +12,7 @@ import types
 
 # --- A1: Module import check ---
 
+
 def test_cli_dag_module_imports_cleanly() -> None:
     """cli_dag module must import without errors."""
     mod = importlib.import_module("thegent.cli.commands.cli_dag")
@@ -71,6 +72,7 @@ def test_terminal_statuses_constant_exists() -> None:
 
 # --- A1: __all__ re-export check ---
 
+
 def test_cli_dag_exports_all_dag_cmd_names() -> None:
     """cli_dag.__all__ must include all dag command function names."""
     import thegent.cli.commands.cli_dag as dag_mod
@@ -81,6 +83,7 @@ def test_cli_dag_exports_all_dag_cmd_names() -> None:
 
 
 # --- A1: Import re-export test - cli.py still routes correctly ---
+
 
 def test_cli_dag_functions_reachable_via_original_cli_module() -> None:
     """Functions exist in cli_dag AND cli.py still has dag_*_cmd via its own definitions."""

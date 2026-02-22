@@ -27,10 +27,11 @@ Install:
 
 from __future__ import annotations
 
-import subprocess
 import os
 import re
-from typing import Optional
+import subprocess
+from pathlib import Path
+import logging
 
 
 def get_thegent_status() -> str:
@@ -58,16 +59,19 @@ def get_thegent_status() -> str:
         return "idle"
 
 
-def get_work_stream() -> Optional[str]:
+logger = logging.getLogger(__name__)
+
+
+def get_work_stream() -> str | None:
     """Get current work stream item."""
     try:
         # Check work stream file
-        stream_path = os.path.expanduser("~/thegent/docs/reference/WORK_STREAM.md")
+        stream_path = Path("~/.thegent/docs/reference/WORK_STREAM.md").expanduser()
 
-        if not os.path.exists(stream_path):
+        if not stream_path.exists():
             return None
 
-        with open(stream_path) as f:
+        with stream_path.open() as f:
             content = f.read()
 
         # Find next uncompleted item
@@ -93,7 +97,7 @@ def get_work_stream() -> Optional[str]:
         return None
 
 
-def get_lsp_servers() -> Optional[str]:
+def get_lsp_servers() -> str | None:
     """Get active LSP servers."""
     try:
         # Check for active LSP processes
@@ -132,7 +136,7 @@ def get_lsp_servers() -> Optional[str]:
         return None
 
 
-def get_mcp_status() -> Optional[str]:
+def get_mcp_status() -> str | None:
     """Get MCP server status."""
     try:
         result = subprocess.run(
@@ -161,7 +165,7 @@ def get_context() -> dict:
     }
 
 
-def format_module(status: str, work_stream: Optional[str] = None, lsp: Optional[str] = None, mcp: Optional[str] = None) -> str:
+def format_module(status: str, work_stream: str | None = None, lsp: str | None = None, mcp: str | None = None) -> str:
     """Format the module output."""
     parts = []
 
@@ -186,8 +190,8 @@ def format_module(status: str, work_stream: Optional[str] = None, lsp: Optional[
     return " ".join(parts)
 
 
-# For testing
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     ctx = get_context()
     output = format_module(
         ctx["status"],
@@ -195,13 +199,13 @@ if __name__ == "__main__":
         ctx["lsp"],
         ctx["mcp"],
     )
-    print(f"thegent: {output}")
+    logger.info("thegent: %s", output)
 
     # Detailed output
-    print(f"\nStatus: {ctx['status']}")
+    logger.info("\nStatus: %s", ctx["status"])
     if ctx["work_stream"]:
-        print(f"Work: {ctx['work_stream']}")
+        logger.info("Work: %s", ctx["work_stream"])
     if ctx["lsp"]:
-        print(f"LSP: {ctx['lsp']}")
+        logger.info("LSP: %s", ctx["lsp"])
     if ctx["mcp"]:
-        print(f"MCP: {ctx['mcp']}")
+        logger.info("MCP: %s", ctx["mcp"])

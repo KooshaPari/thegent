@@ -4,15 +4,15 @@ import json
 from typing import Any
 
 __all__ = [
-    "_responses_to_chat_completions",
+    "_chat_completions_to_responses",
+    "_extract_delta_content",
     "_extract_delta_tool_calls",
     "_extract_usage",
-    "_process_sse_line",
-    "build_openrouter_passthrough_body",
-    "_responses_input_to_messages",
     "_map_model_for_backend",
-    "_extract_delta_content",
-    "_chat_completions_to_responses",
+    "_process_sse_line",
+    "_responses_input_to_messages",
+    "_responses_to_chat_completions",
+    "build_openrouter_passthrough_body",
 ]
 
 # GW-42: OpenRouter request field passthrough

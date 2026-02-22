@@ -14,6 +14,7 @@ from thegent.main import app
 
 runner = CompatCliRunner()
 
+
 @pytest.mark.e2e
 class TestListModelsProvider:
     """E2E tests for list-models with provider filter."""
@@ -1201,7 +1202,6 @@ class TestStopGrace:
         result = runner.invoke(app, ["stop", "--grace", "10", "session_unknown_e2e_grace"])
         assert result.exit_code == 2
         assert "Session not found" in result.stderr
-
 
 
 # Preserve legacy monolithic collection parity: these names are redefined later

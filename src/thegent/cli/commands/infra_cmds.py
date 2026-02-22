@@ -1,4 +1,5 @@
 """Thegent CLI infra/system commands domain - extracted from cli.py (WL-124)."""
+
 # @trace WL-124
 from __future__ import annotations
 
@@ -27,6 +28,7 @@ from thegent.cli.commands.infra_interruption_helpers import load_recent_interrup
 from thegent.cli.commands.infra_observe_helpers import build_observe_lines
 from thegent.cli.commands.infra_sitback_helpers import build_dashboard_panels
 from thegent.cli.commands.infra_usage_helpers import build_provider_usage_table
+
 
 def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
     """List recent interruptions (WP-4004)."""
@@ -444,7 +446,6 @@ def cockpit_cmd() -> None:
             console.print(f"  - [cyan]{rid}[/cyan]: {reason}")
 
 
-
 def sitback_dashboard_cmd(
     refresh: int | None = None,
     format: str | None = None,
@@ -490,7 +491,6 @@ def sitback_dashboard_cmd(
             _render(sitback_dashboard_impl(profile=prof))
     except KeyboardInterrupt:
         console.print("[dim]Sitback dashboard stopped by user.[/dim]")
-
 
 
 def archive_cmd(
@@ -808,4 +808,29 @@ def explorer_cmd() -> None:
 
     run_explorer_tui()
 
-__all__ = ['archive_cmd', 'benchmark_cmd', 'cockpit_cmd', 'concurrency_set_cmd', 'concurrency_show_cmd', 'config_check_cmd', 'context_history_cmd', 'cost_status_cmd', 'explorer_cmd', 'forensics_snapshot_cmd', 'interruption_list_cmd', 'interruption_snooze_cmd', 'load_status_cmd', 'modes_cmd', 'monitor_cmd', 'observe_summary_cmd', 'operations_cmd', 'purge_cmd', 'recover_status_cmd', 'release_pack_cmd', 'scratchpad_cmd', 'sitback_dashboard_cmd', 'usage_cmd']
+
+__all__ = [
+    "archive_cmd",
+    "benchmark_cmd",
+    "cockpit_cmd",
+    "concurrency_set_cmd",
+    "concurrency_show_cmd",
+    "config_check_cmd",
+    "context_history_cmd",
+    "cost_status_cmd",
+    "explorer_cmd",
+    "forensics_snapshot_cmd",
+    "interruption_list_cmd",
+    "interruption_snooze_cmd",
+    "load_status_cmd",
+    "modes_cmd",
+    "monitor_cmd",
+    "observe_summary_cmd",
+    "operations_cmd",
+    "purge_cmd",
+    "recover_status_cmd",
+    "release_pack_cmd",
+    "scratchpad_cmd",
+    "sitback_dashboard_cmd",
+    "usage_cmd",
+]

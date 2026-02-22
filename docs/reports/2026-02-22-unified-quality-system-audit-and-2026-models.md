@@ -201,9 +201,32 @@ Gate on these, not only lint/test pass.
    - `scripts/mutation_perf_pilot.py` writes a unified pilot artifact and keeps mutation stage non-blocking when `mutmut` is unavailable.
    - Task wiring: `quality:pilot:mutation-perf`.
 5. Decide control-plane posture:
-   - Sonar-backed hybrid, or
-   - GitHub+SARIF-native only, or
-   - fully in-house UI.
+   - Status (2026-02-22): decided and ratified.
+   - Decision: GitHub+SARIF-native only as default control plane, with optional Sonar downstream adapter.
+   - ADR: `ADR-017` + `docs/reference/ADR-017-unified-quality-control-plane.md`.
+   - Enforced by contract: `contracts/quality-control-plane-v1.json` validated via `schemas/quality-control-plane-v1.schema.json`.
+
+## Execution Addendum: "Do It + 10 More" (2026-02-22)
+- Added control-plane ADR and policy contract validation/report scripts.
+- Added unified quality aggregate lane (`quality:ci:unified`) and explicit contract/report tasks.
+- Added tests for SARIF export, generated-Python checker, mutation/perf pilot, and control-plane scripts.
+- Added canonical unified summary artifact generator:
+  - `scripts/aggregate_unified_quality_summary.py`
+  - `schemas/unified-quality-summary-v1.schema.json`
+  - task: `quality:summary`
+- Added CI wiring in `.github/workflows/ci.yml`:
+  - `quality-unified` job (PR + nightly schedule) running `task quality:ci:unified`
+  - uploads `artifacts/hooks` and `artifacts/quality`
+  - uploads SARIF outputs to GitHub code scanning (`hooks-results.sarif`, `generated-python-antipatterns.sarif`)
+- Added unified gate evaluator:
+  - `scripts/evaluate_unified_quality_gate.py`
+  - `Taskfile.yml` task `quality:gate:unified`
+  - Policy contract: `contracts/unified-quality-gate-policy-v1.json`
+  - Policy schema: `schemas/unified-quality-gate-policy-v1.schema.json`
+  - PR mode: policy profile `pr` (`QUALITY_UNIFIED_MODE=pr`)
+  - Nightly mode: policy profile `nightly` (`QUALITY_UNIFIED_MODE=nightly`)
+- Added workflow contract coverage for unified quality lane:
+  - `tests/e2e/test_unified_quality_ci_contract.py`
 
 ## Sources (for this research pass)
 - SonarQube docs (quality gates): https://docs.sonarsource.com/sonarqube-server/latest/quality-standards-administration/managing-quality-gates/introduction-to-quality-gates/

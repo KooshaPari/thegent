@@ -29,9 +29,7 @@ def _get_wl104_status() -> str:
 def test_wl104_status_is_completed() -> None:
     """WL-104 (embedding protocol) must be COMPLETED before WL-117 can proceed."""
     status_line = _get_wl104_status()
-    assert "COMPLETED" in status_line, (
-        f"WL-104 must be COMPLETED to unblock WL-117, but got: {status_line}"
-    )
+    assert "COMPLETED" in status_line, f"WL-104 must be COMPLETED to unblock WL-117, but got: {status_line}"
 
 
 def test_vscode_extension_directory_exists() -> None:
@@ -50,11 +48,10 @@ def test_vscode_package_json_exists() -> None:
 def test_vscode_package_json_has_correct_name() -> None:
     """extensions/vscode/package.json must name the extension 'thegent-vscode'."""
     import json
+
     pkg = VSCODE_EXT_DIR / "package.json"
     data = json.loads(pkg.read_text(encoding="utf-8"))
-    assert data.get("name") == "thegent-vscode", (
-        f"Extension name must be 'thegent-vscode', got: {data.get('name')}"
-    )
+    assert data.get("name") == "thegent-vscode", f"Extension name must be 'thegent-vscode', got: {data.get('name')}"
 
 
 def test_scaffold_plan_exists() -> None:

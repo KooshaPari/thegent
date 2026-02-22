@@ -2,6 +2,7 @@
 
 # @trace FR-EVAL-074
 """
+
 from __future__ import annotations
 
 import re
@@ -24,6 +25,7 @@ pytestmark = pytest.mark.requirement("FR-EVAL-074")
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_case(case_id: str = "c1", prompt: str = "q", expected: str = "expected") -> EvalCase:
     return EvalCase(id=case_id, prompt=prompt, expected=expected)

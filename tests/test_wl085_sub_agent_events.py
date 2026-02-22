@@ -414,9 +414,7 @@ def test_dispatcher_budget_exceeded_no_completed_event():
     from thegent.orchestration.budget_tracker import BudgetExceededError
 
     mock_budget = MagicMock()
-    mock_budget.check.side_effect = BudgetExceededError(
-        node_id="test-node", budget=0, actual=1
-    )
+    mock_budget.check.side_effect = BudgetExceededError(node_id="test-node", budget=0, actual=1)
 
     q = SubAgentEventQueue()
     dispatcher = SubAgentDispatcher(

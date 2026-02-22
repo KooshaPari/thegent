@@ -9,7 +9,6 @@ def extract(
     limit: int = ...,
     score_cutoff: float = ...,
 ) -> list[tuple[str, float, int]]: ...
-
 def extractOne(
     query: str,
     choices: Sequence[str],

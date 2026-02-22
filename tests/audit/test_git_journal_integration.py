@@ -112,9 +112,13 @@ class TestSessionPruning:
         new_j.record_file_change("new.txt", b"new\n", action="created")
         new_j.finalize_session("new")
 
-        initial_sha = subprocess.run(["git", "rev-list", "--max-parents=0", "HEAD"], cwd=git_repo, capture_output=True, text=True).stdout.strip()
+        initial_sha = subprocess.run(
+            ["git", "rev-list", "--max-parents=0", "HEAD"], cwd=git_repo, capture_output=True, text=True
+        ).stdout.strip()
         if initial_sha:
-            subprocess.run(["git", "update-ref", "refs/audit/old-session", initial_sha], cwd=git_repo, capture_output=True)
+            subprocess.run(
+                ["git", "update-ref", "refs/audit/old-session", initial_sha], cwd=git_repo, capture_output=True
+            )
 
         pruned = GitJournal.prune_old_sessions(git_repo, max_age_days=0)
         assert pruned >= 1
@@ -164,7 +168,9 @@ class TestRealGitOperations:
     def test_git_worktree_operations(self, git_repo: Path) -> None:
         """Test GitJournal works with git worktree operations."""
         worktree_path = git_repo.parent / "test_worktree"
-        subprocess.run(["git", "worktree", "add", str(worktree_path), "HEAD"], cwd=git_repo, check=True, capture_output=True)
+        subprocess.run(
+            ["git", "worktree", "add", str(worktree_path), "HEAD"], cwd=git_repo, check=True, capture_output=True
+        )
         try:
             journal = GitJournal(worktree_path, session_id="worktree-test")
             (worktree_path / "file.txt").write_text("worktree content\n")
@@ -173,7 +179,9 @@ class TestRealGitOperations:
             result = subprocess.run(["git", "show-ref", "refs/audit/worktree-test"], cwd=git_repo, capture_output=True)
             assert result.returncode == 0
         finally:
-            subprocess.run(["git", "worktree", "remove", "--force", str(worktree_path)], cwd=git_repo, capture_output=True)
+            subprocess.run(
+                ["git", "worktree", "remove", "--force", str(worktree_path)], cwd=git_repo, capture_output=True
+            )
 
     def test_file_deletion_tracking(self, git_repo: Path) -> None:
         """Test tracking file deletions."""

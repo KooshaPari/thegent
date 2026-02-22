@@ -90,7 +90,7 @@ def _invalid_params(reason: str) -> JsonRpcError:
 
 
 def _is_valid_request_id(value: Any) -> bool:
-    return isinstance(value, (str, int, float)) or value is None
+    return isinstance(value, (str | int | float)) or value is None
 
 
 def _normalized_non_empty_string(value: Any) -> str | None:
@@ -198,7 +198,9 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
             return _error_response(request_id, _invalid_params("session_id_required")), notifications
         session = SERVER_STATE.sessions.get(session_id)
         if session is None:
-            return _error_response(request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})), notifications
+            return _error_response(
+                request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})
+            ), notifications
         session["status"] = "active"
         return maybe_response({"session": _serialize_session(session)}), notifications
 
@@ -215,7 +217,9 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
             return _error_response(request_id, _invalid_params("session_id_required")), notifications
         session = SERVER_STATE.sessions.get(session_id)
         if session is None:
-            return _error_response(request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})), notifications
+            return _error_response(
+                request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})
+            ), notifications
         turns = [_serialize_turn(SERVER_STATE.turns[turn_id]) for turn_id in session["turn_ids"]]
         return maybe_response({"session": _serialize_session(session), "turns": turns}), notifications
 
@@ -225,7 +229,9 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
             return _error_response(request_id, _invalid_params("session_id_required")), notifications
         session = SERVER_STATE.sessions.get(session_id)
         if session is None:
-            return _error_response(request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})), notifications
+            return _error_response(
+                request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})
+            ), notifications
 
         user_input = params.get("input", "")
         if not isinstance(user_input, str):
@@ -241,7 +247,9 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
             elif "diff" in params:
                 raw_diff = params["diff"]
             else:
-                return _error_response(request_id, _invalid_params("diff_required_when_requires_approval")), notifications
+                return _error_response(
+                    request_id, _invalid_params("diff_required_when_requires_approval")
+                ), notifications
             if not isinstance(raw_diff, str):
                 return _error_response(request_id, _invalid_params("diff_must_be_string")), notifications
             if not raw_diff.strip():
@@ -352,7 +360,9 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
             return _error_response(request_id, _invalid_params("turn_id_required")), notifications
         turn = SERVER_STATE.turns.get(turn_id)
         if turn is None:
-            return _error_response(request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})), notifications
+            return _error_response(
+                request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})
+            ), notifications
         if turn["status"] in TERMINAL_TURN_STATES:
             return _error_response(
                 request_id,
@@ -392,7 +402,9 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
         turn_id = approval["turn_id"]
         turn = SERVER_STATE.turns.get(turn_id)
         if turn is None:
-            return _error_response(request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})), notifications
+            return _error_response(
+                request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})
+            ), notifications
         if turn["status"] in TERMINAL_TURN_STATES:
             return _error_response(
                 request_id,

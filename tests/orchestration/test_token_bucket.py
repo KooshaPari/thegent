@@ -80,9 +80,7 @@ class TestTokenBucketAvailable:
         assert bucket.available() == pytest.approx(10.0, abs=0.01)
 
     def test_initial_tokens_override(self) -> None:  # @trace FR-ORC-TB-008
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=10.0, refill_rate=1.0, initial_tokens=3.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=10.0, refill_rate=1.0, initial_tokens=3.0))
         assert bucket.available() == pytest.approx(3.0, abs=0.01)
 
     def test_available_decreases_after_consume(self) -> None:  # @trace FR-ORC-TB-008
@@ -109,9 +107,7 @@ class TestTokenBucketConsume:
         assert bucket.available() == pytest.approx(4.5, abs=0.01)
 
     def test_exhausted_bucket_returns_false(self) -> None:  # @trace FR-ORC-TB-003
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=2.0, refill_rate=0.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=2.0, refill_rate=0.0, initial_tokens=0.0))
         assert bucket.consume(1.0) is False
 
     def test_partial_exhaustion_then_failure(self) -> None:  # @trace FR-ORC-TB-003
@@ -139,9 +135,7 @@ class TestTokenBucketRefill:
     """Tests for manual and time-based refill. @trace FR-ORC-TB-004"""
 
     def test_manual_refill_adds_tokens(self) -> None:  # @trace FR-ORC-TB-004
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=10.0, refill_rate=0.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=10.0, refill_rate=0.0, initial_tokens=0.0))
         bucket.refill(5.0)
         assert bucket.available() == pytest.approx(5.0, abs=0.01)
 
@@ -157,18 +151,14 @@ class TestTokenBucketRefill:
 
     def test_time_based_refill_via_none(self) -> None:  # @trace FR-ORC-TB-004
         """Calling refill(None) applies time-based refill."""
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=10.0, refill_rate=100.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=10.0, refill_rate=100.0, initial_tokens=0.0))
         time.sleep(0.05)  # 50 ms -> ~5 tokens at 100/s
         bucket.refill()  # explicit time-based refill
         assert bucket.available() > 0.0
 
     def test_time_based_refill_auto_on_consume(self) -> None:  # @trace FR-ORC-TB-004
         """consume() applies time-based refill before checking availability."""
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=5.0, refill_rate=100.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=5.0, refill_rate=100.0, initial_tokens=0.0))
         time.sleep(0.06)  # ~6 tokens generated; capped at 5
         assert bucket.consume(1.0) is True
 
@@ -188,18 +178,14 @@ class TestTokenBucketTryConsume:
         assert wait == 0.0
 
     def test_try_consume_failure_returns_wait_time(self) -> None:  # @trace FR-ORC-TB-007
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=10.0, refill_rate=2.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=10.0, refill_rate=2.0, initial_tokens=0.0))
         success, wait = bucket.try_consume(4.0)
         assert success is False
         assert wait == pytest.approx(2.0, abs=0.01)  # 4 tokens / 2 per sec
 
     def test_try_consume_no_refill_wait_zero(self) -> None:  # @trace FR-ORC-TB-007
         """When refill_rate=0, wait_time is 0.0 (bucket won't auto-refill)."""
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0))
         success, wait = bucket.try_consume(1.0)
         assert success is False
         assert wait == 0.0
@@ -224,9 +210,7 @@ class TestTokenBucketConsumeBlocking:
 
     def test_blocking_consume_waits_for_refill(self) -> None:  # @trace FR-ORC-TB-005
         """Blocking consume waits until refill provides enough tokens."""
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=5.0, refill_rate=50.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=5.0, refill_rate=50.0, initial_tokens=0.0))
         start = time.monotonic()
         result = bucket.consume_blocking(tokens=1.0, timeout_s=1.0)
         elapsed = time.monotonic() - start
@@ -234,9 +218,7 @@ class TestTokenBucketConsumeBlocking:
         assert elapsed < 1.0  # should have been fast
 
     def test_blocking_consume_timeout_returns_false(self) -> None:  # @trace FR-ORC-TB-006
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0))
         start = time.monotonic()
         result = bucket.consume_blocking(tokens=1.0, timeout_s=0.1)
         elapsed = time.monotonic() - start
@@ -244,9 +226,7 @@ class TestTokenBucketConsumeBlocking:
         assert elapsed >= 0.08  # waited approx the timeout
 
     def test_blocking_consume_zero_timeout_no_tokens(self) -> None:  # @trace FR-ORC-TB-006
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0))
         assert bucket.consume_blocking(tokens=1.0, timeout_s=0.0) is False
 
     def test_blocking_consume_zero_timeout_has_tokens(self) -> None:  # @trace FR-ORC-TB-005
@@ -270,9 +250,7 @@ class TestTokenBucketConsumeBlocking:
 
     def test_blocking_consume_wakes_on_manual_refill(self) -> None:  # @trace FR-ORC-TB-005
         """A blocking consumer unblocks when another thread manually refills."""
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=5.0, refill_rate=0.0, initial_tokens=0.0))
         results: list[bool] = []
 
         def consumer() -> None:
@@ -296,9 +274,7 @@ class TestTokenBucketThreadSafety:
 
     def test_concurrent_consume_no_overdraft(self) -> None:  # @trace FR-ORC-TB-009
         capacity = 10.0
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=capacity, refill_rate=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=capacity, refill_rate=0.0))
         successes: list[bool] = []
         lock = threading.Lock()
 
@@ -323,9 +299,7 @@ class TestTokenBucketThreadSafety:
         """Multiple threads block and each eventually consumes exactly one token."""
         n_threads = 5
         capacity = 2.0
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=capacity, refill_rate=100.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=capacity, refill_rate=100.0, initial_tokens=0.0))
         results: list[bool] = []
         lock = threading.Lock()
 
@@ -367,9 +341,7 @@ class TestRateLimitedSwarmRunner:
         assert bucket.available() == pytest.approx(4.0, abs=0.01)
 
     def test_run_raises_timeout_error_when_exhausted(self) -> None:  # @trace FR-ORC-TB-010
-        bucket = TokenBucket(
-            TokenBucketConfig(capacity=1.0, refill_rate=0.0, initial_tokens=0.0)
-        )
+        bucket = TokenBucket(TokenBucketConfig(capacity=1.0, refill_rate=0.0, initial_tokens=0.0))
         runner = RateLimitedSwarmRunner(bucket=bucket, default_timeout_s=0.05)
         with pytest.raises(TimeoutError, match="Rate limit exceeded"):
             runner.run(lambda: None)

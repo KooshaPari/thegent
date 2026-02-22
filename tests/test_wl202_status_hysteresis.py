@@ -71,9 +71,7 @@ def test_cooldown_expires():
     # (In real usage, the cooldown would naturally expire)
     # For testing, we'll create a new gate with fresh state to represent "after cooldown"
     gate2 = HysteresisGate(config)
-    gate2._transition_history["WL-300"] = [
-        gate._transition_history["WL-300"][0]
-    ]
+    gate2._transition_history["WL-300"] = [gate._transition_history["WL-300"][0]]
     # Manually set old timestamp
     old_record = gate2._transition_history["WL-300"][0]
     old_record.timestamp = datetime.now(timezone.utc) - timedelta(seconds=400)

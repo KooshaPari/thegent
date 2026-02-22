@@ -305,6 +305,7 @@ class TestGetPluginManager:
         assert manager1 is manager2
         # Clean up global state for other tests
         import thegent.infra.wasm_plugin as wp
+
         wp._plugin_manager = None
 
 

@@ -16,7 +16,6 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +61,7 @@ class SingleWriterLock:
 
     DEFAULT_LOCK_PATH = Path("docs/reference/autosync.lock")
 
-    def __init__(self, lock_path: Optional[Path] = None):
+    def __init__(self, lock_path: Path | None = None):
         """Initialize the lock.
 
         Args:
@@ -139,7 +138,7 @@ class SingleWriterLock:
         """
         return self.lock_path.exists()
 
-    def get_owner(self) -> Optional[str]:
+    def get_owner(self) -> str | None:
         """Get the current lock owner.
 
         Returns:

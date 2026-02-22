@@ -4,7 +4,10 @@
 # Exits 1 if any file exceeds max_lines_per_file.
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+{
+  CDPATH=
+  ROOT_DIR="$(cd -- "$(dirname -- "$0")/.." && pwd)"
+}
 CONTRACT="$ROOT_DIR/contracts/max_lines.json"
 
 if [ ! -f "$CONTRACT" ]; then
@@ -28,7 +31,7 @@ is_excluded() {
     # Strip leading path separator for relative matching
     rel="${_path#"$ROOT_DIR"/}"
     case "$rel" in
-      $pattern) echo "yes"; return 0 ;;
+      "$pattern") echo "yes"; return 0 ;;
     esac
   done
 }

@@ -9,6 +9,7 @@ from thegent.docgen.api_typescript import TypeScriptAPIGenerator
 def generator():
     return TypeScriptAPIGenerator()
 
+
 def test_parse_typescript_file(generator, tmp_path):
     ts_content = """
 /**
@@ -79,6 +80,7 @@ const multiply = (a: number, b: number): number => a * b;
     assert info["functions"][1]["name"] == "multiply"
     assert info["functions"][1]["args"] == ["a", "b"]
     assert "Multiply two numbers" in info["functions"][1]["docstring"]
+
 
 def test_generate_docs(generator, tmp_path):
     ts_content = """

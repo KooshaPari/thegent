@@ -18,7 +18,7 @@ def test_harvest_routing_metrics(tmp_path):
         output_tokens=50,
         latency_ms=500.0,
         cost_usd=0.003,
-        session_id=session_id
+        session_id=session_id,
     )
 
     output_path = tmp_path / "metrics.json"
@@ -32,6 +32,7 @@ def test_harvest_routing_metrics(tmp_path):
 
     assert output_path.exists()
     import json
+
     saved = json.loads(output_path.read_text())
     assert saved["session_id"] == session_id
     assert saved["total_cost_usd"] == 0.003

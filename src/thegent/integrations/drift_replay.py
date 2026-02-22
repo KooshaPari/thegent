@@ -97,9 +97,7 @@ class DriftReplayEngine:
         """
         manifest_path = archive_dir / f"{manifest_id}.json"
         if not manifest_path.exists():
-            raise FileNotFoundError(
-                f"Manifest not found: {manifest_path}"
-            )
+            raise FileNotFoundError(f"Manifest not found: {manifest_path}")
 
         with open(manifest_path) as f:
             data = json.load(f)

@@ -104,9 +104,7 @@ class SyncAuditor:
         # Check for quota budgets without corresponding enabled connectors
         for connector, budget in self._quota_budgets.items():
             if connector not in self._enabled_connectors:
-                issues.append(
-                    f"Quota budget defined for disabled connector: {connector}"
-                )
+                issues.append(f"Quota budget defined for disabled connector: {connector}")
             if budget <= 0:
                 issues.append(f"Invalid quota budget for {connector}: {budget} (must be > 0)")
 

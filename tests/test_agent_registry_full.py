@@ -156,7 +156,12 @@ class TestCapabilityIndexBuild:
         _write_agent_md(
             tmp_path,
             "python-dev",
-            {"name": "python-dev", "description": "Python developer", "capabilities": ["python", "testing"], "model": "sonnet"},
+            {
+                "name": "python-dev",
+                "description": "Python developer",
+                "capabilities": ["python", "testing"],
+                "model": "sonnet",
+            },
         )
         with patch("thegent.agents.capability_index._glob_agent_dirs", return_value=[]):
             idx = CapabilityIndex.build(extra_dirs=[tmp_path])
@@ -168,7 +173,12 @@ class TestCapabilityIndexBuild:
         _write_agent_md(
             tmp_path,
             "security-agent",
-            {"name": "security-agent", "description": "Security auditing", "capabilities": ["Security", "SAST"], "model": "opus"},
+            {
+                "name": "security-agent",
+                "description": "Security auditing",
+                "capabilities": ["Security", "SAST"],
+                "model": "opus",
+            },
         )
         with patch("thegent.agents.capability_index._glob_agent_dirs", return_value=[]):
             idx = CapabilityIndex.build(extra_dirs=[tmp_path])
@@ -181,8 +191,14 @@ class TestCapabilityIndexBuild:
         dir_b = tmp_path / "b"
         dir_a.mkdir()
         dir_b.mkdir()
-        _write_agent_md(dir_a, "agent-a", {"name": "agent-a", "description": "Agent A", "capabilities": ["python"], "model": "haiku"})
-        _write_agent_md(dir_b, "agent-b", {"name": "agent-b", "description": "Agent B", "capabilities": ["go"], "model": "sonnet"})
+        _write_agent_md(
+            dir_a,
+            "agent-a",
+            {"name": "agent-a", "description": "Agent A", "capabilities": ["python"], "model": "haiku"},
+        )
+        _write_agent_md(
+            dir_b, "agent-b", {"name": "agent-b", "description": "Agent B", "capabilities": ["go"], "model": "sonnet"}
+        )
         with patch("thegent.agents.capability_index._glob_agent_dirs", return_value=[]):
             idx = CapabilityIndex.build(extra_dirs=[dir_a, dir_b])
         assert len(idx.all_agents()) == 2
@@ -193,9 +209,7 @@ class TestCapabilityIndexBuild:
         # Unclosed frontmatter block
         bad_file.write_text("---\nname: broken\n", encoding="utf-8")
         good_file = tmp_path / "good.md"
-        good_file.write_text(
-            "---\nname: good-agent\ndescription: Fine\nmodel: haiku\n---\nBody.", encoding="utf-8"
-        )
+        good_file.write_text("---\nname: good-agent\ndescription: Fine\nmodel: haiku\n---\nBody.", encoding="utf-8")
         with patch("thegent.agents.capability_index._glob_agent_dirs", return_value=[]):
             idx = CapabilityIndex.build(extra_dirs=[tmp_path])
         names = [a.name for a in idx.all_agents()]
@@ -421,7 +435,14 @@ class TestDoctorChecks:
     def test_runner_field_accepted(self, tmp_path: Path) -> None:
         idx = self._make_index(
             tmp_path,
-            [{"name": "runner-agent", "description": "Uses runner field", "capabilities": [], "runner": "custom-runner"}],
+            [
+                {
+                    "name": "runner-agent",
+                    "description": "Uses runner field",
+                    "capabilities": [],
+                    "runner": "custom-runner",
+                }
+            ],
         )
         results = idx.doctor()
         assert results[0].has_runner_config is True

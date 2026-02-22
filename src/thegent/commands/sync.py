@@ -862,9 +862,7 @@ class SyncCommand:
                 self._extract_fragments_from_file(fragments, md_file)
         return fragments
 
-    def sync_board(
-        self, board_id: str | None = None, source: str = "github", dry_run: bool = False
-    ) -> OperationResult:
+    def sync_board(self, board_id: str | None = None, source: str = "github", dry_run: bool = False) -> OperationResult:
         """Synchronize local WORK_STREAM.md with GitHub Projects or Linear board.
 
         Operationalizes repeatable cross-repo board sync using native tooling.

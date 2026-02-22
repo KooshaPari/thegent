@@ -272,7 +272,7 @@ class TraceRecorder:
             for key, value in data.items():
                 if self._is_sensitive_field(key):
                     redacted[key] = self.config.redaction.replace_with
-                elif isinstance(value, (dict, list)):
+                elif isinstance(value, (dict | list)):
                     redacted[key] = self._redact_data(value)
                 else:
                     redacted[key] = value
@@ -284,7 +284,10 @@ class TraceRecorder:
     def _is_sensitive_field(self, field_name: str) -> bool:
         """Check if field name matches sensitive patterns."""
         # Check explicit list first
-        if self.config.redaction.fields_to_always_redact is not None and field_name.lower() in self.config.redaction.fields_to_always_redact:
+        if (
+            self.config.redaction.fields_to_always_redact is not None
+            and field_name.lower() in self.config.redaction.fields_to_always_redact
+        ):
             return True
 
         # Check regex patterns
@@ -299,7 +302,7 @@ class TraceRecorder:
                 full_key = f"{parent_key}.{key}" if parent_key else key
                 if self._is_sensitive_field(key):
                     redacted.append(full_key)
-                elif isinstance(value, (dict, list)):
+                elif isinstance(value, (dict | list)):
                     redacted.extend(self._find_redacted_fields(value, full_key))
 
         return redacted

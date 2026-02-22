@@ -58,8 +58,10 @@ def _make_runner(stdout: str = "done", stderr: str = "", exit_code: int = 0, tim
 @pytest.fixture
 def adapter() -> ACPServerAdapter:
     """Return an ACPServerAdapter with no real agents loaded."""
-    with patch("thegent.adapters.acp_server.get_runner", return_value=None), \
-         patch("thegent.adapters.acp_server.AGENT_NAMES", []):
+    with (
+        patch("thegent.adapters.acp_server.get_runner", return_value=None),
+        patch("thegent.adapters.acp_server.AGENT_NAMES", []),
+    ):
         inst = ACPServerAdapter()
     return inst
 
@@ -68,8 +70,10 @@ def adapter() -> ACPServerAdapter:
 def adapter_with_agent() -> tuple[ACPServerAdapter, AgentRunner]:
     """Return an adapter pre-loaded with a mock 'claude' runner."""
     runner = _make_runner(stdout="Hello from claude")
-    with patch("thegent.adapters.acp_server.get_runner", return_value=None), \
-         patch("thegent.adapters.acp_server.AGENT_NAMES", []):
+    with (
+        patch("thegent.adapters.acp_server.get_runner", return_value=None),
+        patch("thegent.adapters.acp_server.AGENT_NAMES", []),
+    ):
         inst = ACPServerAdapter()
     inst.agents["claude"] = runner
     return inst, runner
@@ -143,9 +147,10 @@ class TestCliEntryPoint:
         assert result.exit_code == 0
 
     def test_default_mode_runs_stdio(self) -> None:
-        with patch("thegent.adapters.acp_server.ACPServerAdapter") as mock_adapter_cls, patch(
-            "thegent.adapters.acp_server.asyncio.run"
-        ) as mock_asyncio_run:
+        with (
+            patch("thegent.adapters.acp_server.ACPServerAdapter") as mock_adapter_cls,
+            patch("thegent.adapters.acp_server.asyncio.run") as mock_asyncio_run,
+        ):
             result = runner.invoke(acp_cli_app, [])
 
         assert result.exit_code == 0
@@ -154,9 +159,10 @@ class TestCliEntryPoint:
         mock_adapter.run_http.assert_not_called()
 
     def test_http_mode_runs_http_server(self) -> None:
-        with patch("thegent.adapters.acp_server.ACPServerAdapter") as mock_adapter_cls, patch(
-            "thegent.adapters.acp_server.asyncio.run"
-        ) as mock_asyncio_run:
+        with (
+            patch("thegent.adapters.acp_server.ACPServerAdapter") as mock_adapter_cls,
+            patch("thegent.adapters.acp_server.asyncio.run") as mock_asyncio_run,
+        ):
             result = runner.invoke(acp_cli_app, ["--http", "--host", "0.0.0.0", "--port", str(ACP_DEFAULT_PORT + 1)])
 
         assert result.exit_code == 0
@@ -175,8 +181,10 @@ class TestAdapterAgentLoading:
 
     def test_agents_dict_populated_from_registry(self) -> None:
         runner = _make_runner()
-        with patch("thegent.adapters.acp_server.AGENT_NAMES", ["claude", "gemini"]), \
-             patch("thegent.adapters.acp_server.get_runner", return_value=runner):
+        with (
+            patch("thegent.adapters.acp_server.AGENT_NAMES", ["claude", "gemini"]),
+            patch("thegent.adapters.acp_server.get_runner", return_value=runner),
+        ):
             inst = ACPServerAdapter()
         assert "claude" in inst.agents
         assert "gemini" in inst.agents
@@ -187,15 +195,19 @@ class TestAdapterAgentLoading:
                 raise RuntimeError("boom")
             return _make_runner()
 
-        with patch("thegent.adapters.acp_server.AGENT_NAMES", ["bad", "claude"]), \
-             patch("thegent.adapters.acp_server.get_runner", side_effect=_bad_runner):
+        with (
+            patch("thegent.adapters.acp_server.AGENT_NAMES", ["bad", "claude"]),
+            patch("thegent.adapters.acp_server.get_runner", side_effect=_bad_runner),
+        ):
             inst = ACPServerAdapter()
         assert "bad" not in inst.agents
         assert "claude" in inst.agents
 
     def test_none_runner_is_excluded(self) -> None:
-        with patch("thegent.adapters.acp_server.AGENT_NAMES", ["claude"]), \
-             patch("thegent.adapters.acp_server.get_runner", return_value=None):
+        with (
+            patch("thegent.adapters.acp_server.AGENT_NAMES", ["claude"]),
+            patch("thegent.adapters.acp_server.get_runner", return_value=None),
+        ):
             inst = ACPServerAdapter()
         assert "claude" not in inst.agents
 
@@ -242,9 +254,7 @@ class TestHandleAcpMessage:
     @pytest.mark.asyncio
     async def test_session_created_in_sessions_dict(self, adapter_with_agent: tuple) -> None:
         inst, _ = adapter_with_agent
-        await inst.handle_acp_message(
-            {"type": "task", "payload": {"agent": "claude", "prompt": "go"}, "agent_id": "c"}
-        )
+        await inst.handle_acp_message({"type": "task", "payload": {"agent": "claude", "prompt": "go"}, "agent_id": "c"})
         assert len(inst.sessions) == 1
 
     @pytest.mark.asyncio
@@ -304,18 +314,14 @@ class TestRpcSpawn:
 
     @pytest.mark.asyncio
     async def test_spawn_unknown_agent_returns_error(self, adapter: ACPServerAdapter) -> None:
-        response = await adapter.handle_jsonrpc(
-            {"id": 2, "method": "agent/spawn", "params": {"agent": "ghost"}}
-        )
+        response = await adapter.handle_jsonrpc({"id": 2, "method": "agent/spawn", "params": {"agent": "ghost"}})
         assert "error" in response
         assert response["error"]["code"] == -32602
 
     @pytest.mark.asyncio
     async def test_spawn_creates_session(self, adapter_with_agent: tuple) -> None:
         inst, _ = adapter_with_agent
-        await inst.handle_jsonrpc(
-            {"id": 2, "method": "agent/spawn", "params": {"agent": "claude", "prompt": "go"}}
-        )
+        await inst.handle_jsonrpc({"id": 2, "method": "agent/spawn", "params": {"agent": "claude", "prompt": "go"}})
         assert len(inst.sessions) == 1
 
     @pytest.mark.asyncio
@@ -354,9 +360,7 @@ class TestRpcMessage:
 
     @pytest.mark.asyncio
     async def test_message_requires_agent_id(self, adapter: ACPServerAdapter) -> None:
-        response = await adapter.handle_jsonrpc(
-            {"id": 3, "method": "agent/message", "params": {"message": "hi"}}
-        )
+        response = await adapter.handle_jsonrpc({"id": 3, "method": "agent/message", "params": {"message": "hi"}})
         assert response["error"]["code"] == -32602
 
     @pytest.mark.asyncio
@@ -414,9 +418,7 @@ class TestRpcStop:
 
     @pytest.mark.asyncio
     async def test_stop_unknown_session(self, adapter: ACPServerAdapter) -> None:
-        response = await adapter.handle_jsonrpc(
-            {"id": 4, "method": "agent/stop", "params": {"agent_id": "ghost"}}
-        )
+        response = await adapter.handle_jsonrpc({"id": 4, "method": "agent/stop", "params": {"agent_id": "ghost"}})
         assert response["error"]["code"] == -32602
 
     @pytest.mark.asyncio
@@ -427,9 +429,7 @@ class TestRpcStop:
         )
         session_id = spawn_resp["result"]["agent_id"]
 
-        stop_resp = await inst.handle_jsonrpc(
-            {"id": 4, "method": "agent/stop", "params": {"agent_id": session_id}}
-        )
+        stop_resp = await inst.handle_jsonrpc({"id": 4, "method": "agent/stop", "params": {"agent_id": session_id}})
         assert stop_resp["result"]["stopped"] is True
         assert stop_resp["result"]["agent_id"] == session_id
 

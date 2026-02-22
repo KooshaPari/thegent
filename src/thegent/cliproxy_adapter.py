@@ -53,6 +53,7 @@ from thegent.routing.cost_calculator import calculate_cost_from_response, format
 
 _log = logging.getLogger(__name__)
 
+
 # Backward-compatible symbol aliases for historical adapter import surface.
 class _LegacyModelsTransformResult(bytes):
     """Legacy test compatibility object that supports both old and new unpack protocols."""
@@ -76,12 +77,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
     try:
         raw = bytes(content) if isinstance(content, memoryview) else content
         parsed = json.loads(raw.decode(errors="replace"))
-        if (
-            isinstance(parsed, dict)
-            and "models" in parsed
-            and parsed.get("object") != "list"
-            and "data" not in parsed
-        ):
+        if isinstance(parsed, dict) and "models" in parsed and parsed.get("object") != "list" and "data" not in parsed:
             return None
 
         transformed = transform_models_response(content, inject_openrouter=inject_openrouter)
@@ -93,9 +89,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
         models = parsed.get("models", [])
         if not isinstance(models, list):
             return None
-        compact_models = [
-            {"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")
-        ]
+        compact_models = [{"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")]
         compact_body = json.dumps({"models": compact_models}).encode()
         return _LegacyModelsTransformResult(compact_body, full_body, etag)
     except (TypeError, json.JSONDecodeError):

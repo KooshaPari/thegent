@@ -124,7 +124,9 @@ def test_activate_skill_returns_error_for_missing_skill() -> None:
 
 
 def test_activate_skill_missing_error_uses_normalized_name() -> None:
-    result = thegent_activate_skill_impl(skill_name="  missing  ", backend=_FakeBackend(), error_result_impl=_error_result)
+    result = thegent_activate_skill_impl(
+        skill_name="  missing  ", backend=_FakeBackend(), error_result_impl=_error_result
+    )
     data = result.structured_content
     assert "error" in data
     assert data["skill_name"] == "missing"

@@ -70,7 +70,6 @@ def test_dump_latest_cmd_blank_category_treated_as_none(monkeypatch, capsys, tmp
         def latest_dump(self, category=None, json_only: bool = False):
             captured["category"] = category
             captured["json_only"] = json_only
-            return None
 
     monkeypatch.setattr(
         "thegent.research.always_write_dumps.ConversationDumper",

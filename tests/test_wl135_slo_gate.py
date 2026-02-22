@@ -41,8 +41,7 @@ def test_slo_gate_exits_0_when_no_jsonl(tmp_path: Path) -> None:
         cwd=str(tmp_path),  # tmp_path has no .quality/ dir
     )
     assert result.returncode == 0, (
-        f"Expected exit 0 for missing JSONL, got {result.returncode}\n"
-        f"stderr: {result.stderr.decode()}"
+        f"Expected exit 0 for missing JSONL, got {result.returncode}\nstderr: {result.stderr.decode()}"
     )
 
 
@@ -53,12 +52,12 @@ def test_slo_gate_exits_0_for_all_green_metric(tmp_path: Path) -> None:
     jsonl_path = quality_dir / "slo-metrics.jsonl"
 
     green_record = {
-        "file_loc": 100.0,           # green_max=1200
-        "function_loc_p95": 20.0,    # green_max=80
-        "impl_importers": 5.0,       # green_max=20
+        "file_loc": 100.0,  # green_max=1200
+        "function_loc_p95": 20.0,  # green_max=80
+        "impl_importers": 5.0,  # green_max=20
         "cross_boundary_import_edges": 3.0,  # green_max=25
-        "cli_help_p95_ms": 100.0,    # green_max=250
-        "run_command_p95_ms": 200.0, # green_max=500
+        "cli_help_p95_ms": 100.0,  # green_max=250
+        "run_command_p95_ms": 200.0,  # green_max=500
         "decomposition_checkpoint_pass_rate": 1.0,  # green_min=1.0
         "timestamp": "2026-02-21T00:00:00+00:00",
         "source": "test",
@@ -71,8 +70,7 @@ def test_slo_gate_exits_0_for_all_green_metric(tmp_path: Path) -> None:
         cwd=str(tmp_path),
     )
     assert result.returncode == 0, (
-        f"Expected exit 0 for all-green metric, got {result.returncode}\n"
-        f"stderr: {result.stderr.decode()}"
+        f"Expected exit 0 for all-green metric, got {result.returncode}\nstderr: {result.stderr.decode()}"
     )
 
 
@@ -83,12 +81,12 @@ def test_slo_gate_exits_1_for_all_red_metric(tmp_path: Path) -> None:
     jsonl_path = quality_dir / "slo-metrics.jsonl"
 
     red_record = {
-        "file_loc": 9999.0,          # red_min=1800 — red
-        "function_loc_p95": 999.0,   # red_min=120 — red
-        "impl_importers": 999.0,     # red_min=35 — red
+        "file_loc": 9999.0,  # red_min=1800 — red
+        "function_loc_p95": 999.0,  # red_min=120 — red
+        "impl_importers": 999.0,  # red_min=35 — red
         "cross_boundary_import_edges": 999.0,  # red_min=40 — red
-        "cli_help_p95_ms": 9999.0,   # red_min=400 — red
-        "run_command_p95_ms": 9999.0, # red_min=800 — red
+        "cli_help_p95_ms": 9999.0,  # red_min=400 — red
+        "run_command_p95_ms": 9999.0,  # red_min=800 — red
         "decomposition_checkpoint_pass_rate": 0.0,  # red_max=0.95 — red
         "timestamp": "2026-02-21T00:00:00+00:00",
         "source": "test",

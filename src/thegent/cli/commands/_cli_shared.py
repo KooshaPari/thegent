@@ -2,6 +2,7 @@
 
 WL-124: Monolith Split shared helpers.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -14,6 +15,7 @@ import typer
 
 from thegent.cli.commands.output import health_export_writers
 from thegent.cli.commands.output import health_serializers as health_output
+
 
 def _get_run_subprocess_optimized():
     from thegent.infra import run_subprocess_optimized
@@ -266,7 +268,6 @@ def _inject_skill_instructions(prompt: str, skills: list[str] | None) -> str:
     return f"{prompt}\n\n# Activated Skills\n\n" + "\n\n".join(sections)
 
 
-
 def _get_health_targets_path(project_dir: Path) -> Path:
     """Find the health-targets.json path relative to project directory."""
     # Try project_dir/contracts/health-targets.json
@@ -287,6 +288,7 @@ def _health_targets_exists(project_dir: Path) -> bool:
         if p.exists():
             return True
     return False
+
 
 _HEALTH_TARGETS_TEMPLATE = """{"version":"1.0.0","dimensions":{"test_coverage":{"weight":0.2,"target":80,"unit":"percent","direction":"higher_is_better","scan_tool":"pytest --cov","priority_class":"critical"},"lint_violations":{"weight":0.15,"target":0,"unit":"count","direction":"lower_is_better","scan_tool":"ruff check","priority_class":"critical"},"complexity_index":{"weight":0.15,"target":10,"unit":"cyclomatic_avg","direction":"lower_is_better","scan_tool":"radon cc -a","priority_class":"medium"},"security_findings":{"weight":0.15,"target":0,"unit":"count","direction":"lower_is_better","scan_tool":"security-pipeline","priority_class":"critical"},"spec_traceability":{"weight":0.1,"target":80,"unit":"percent","direction":"higher_is_better","scan_tool":"grep FR- tests/","priority_class":"medium"},"doc_organization":{"weight":0.1,"target":100,"unit":"percent","direction":"higher_is_better","scan_tool":"structure_audit","priority_class":"low"},"freshness":{"weight":0.1,"target":0,"unit":"stale_items","direction":"lower_is_better","scan_tool":"find -mtime +7","priority_class":"low"},"agent_health":{"weight":0.05,"target":0,"unit":"open_breakers","direction":"lower_is_better","scan_tool":"circuit_breakers.jsonl","priority_class":"critical"}},"bands":{"excellent":{"min":90,"label":"Excellent"},"healthy":{"min":70,"label":"Healthy"},"warning":{"min":40,"label":"Warning"},"critical":{"min":0,"label":"Critical"}},"budget":{"daily_agent_calls":20,"tiers":{"normal":{"max_utilization_pct":50,"description":"All agent types available"},"cautious":{"max_utilization_pct":80,"description":"Prefer cheaper/faster agents"},"restricted":{"max_utilization_pct":95,"description":"Only essential tasks"},"halted":{"max_utilization_pct":100,"description":"No new agent spawns"}}},"cycle":{"interval_s":300,"max_rerolls_per_task":2,"max_tasks_per_cycle":10,"cooldown_after_failure_s":60,"health_threshold":90,"debounce_s":30}}"""
 _METRIC_CONTRACTS_TEMPLATE = """{
@@ -368,6 +370,7 @@ def _bootstrap_metric_contracts(project_dir: Path, force: bool = False) -> tuple
         updated_quality = True
 
     return created_contract, updated_quality
+
 
 def _serialize_health_report_md(result: dict[str, Any]) -> str:
     return health_output.serialize_health_report_md(result)
@@ -455,6 +458,7 @@ def _write_health_trend_export(
         print_error=console.print,
     )
 
+
 def _load_artifact(artifacts: list[Any], p: Path) -> None:
     """Load a single MAIF artifact safely."""
     with contextlib.suppress(Exception):
@@ -462,6 +466,10 @@ def _load_artifact(artifacts: list[Any], p: Path) -> None:
 
 
 __all__ = [
+    "EXIT_HEALTH_GATE_FAILED",
+    "EXIT_TIMEOUT",
+    "_LOG_FOLLOW_POLL_SECONDS",
+    "LazyConsole",
     "_atomic_write",
     "_bootstrap_metric_contracts",
     "_check_dag_cycles",
@@ -487,7 +495,6 @@ __all__ = [
     "_is_pid_running",
     "_lazy_import",
     "_load_artifact",
-    "_LOG_FOLLOW_POLL_SECONDS",
     "_make_load_classifier",
     "_normalize_output_format",
     "_parse_dag_full",
@@ -523,8 +530,5 @@ __all__ = [
     "_write_health_trend_export",
     "_write_report_export",
     "console",
-    "EXIT_HEALTH_GATE_FAILED",
-    "EXIT_TIMEOUT",
     "get_exit_message",
-    "LazyConsole",
 ]

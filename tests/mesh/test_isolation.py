@@ -92,6 +92,7 @@ class TestAllocatePort:
     # @trace TGNT-P10.2
     def test_returns_none_when_no_ports_available(self, isolation: ResourceIsolation) -> None:
         """Returns None when all ports in the range are occupied."""
+
         def always_raise(*_args, **_kwargs):
             raise OSError("port in use")
 

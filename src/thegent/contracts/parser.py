@@ -8,6 +8,7 @@ for extract_xml_tags. Falls back to Python IncrementalXMLParser otherwise.
 """
 
 import importlib.util
+import logging
 from collections.abc import Callable
 from enum import StrEnum
 from typing import Any
@@ -15,6 +16,7 @@ from typing import Any
 from thegent.config import ThegentSettings
 
 _thegent_parser: Any = None
+_log = logging.getLogger(__name__)
 
 
 def _get_native_parser() -> Any:
@@ -221,7 +223,7 @@ def extract_tags(text: str, tags: list[str] | None = None) -> dict[str, str]:
     if native is not None and hasattr(native, "extract_xml_tags"):
         try:
             return native.extract_xml_tags(text, allowed_tags=tags, case_sensitive=False)
-        except Exception:
-            pass
+        except Exception as exc:
+            _log.debug("Native XML parser failed; falling back to Python parser: %s", exc)
     parser = IncrementalXMLParser(allowed_tags=tags)
     return parser.parse(text)

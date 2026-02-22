@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-003
 """
+
 import pytest
 from docs_engine.capture.writer import DocWriter
 from docs_engine.schema.base import DocType

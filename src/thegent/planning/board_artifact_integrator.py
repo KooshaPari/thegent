@@ -36,16 +36,18 @@ class BoardArtifactParser:
                         evidence = row.get("evidence", "").strip()
                         evidence = None if (not evidence or evidence == "-") else evidence
 
-                        items.append({
-                            "id": row.get("id", "").strip(),
-                            "title": row.get("title", "").strip(),
-                            "status": row.get("status", "BACKLOG").upper(),
-                            "priority": row.get("priority", "P2").upper(),
-                            "source": row.get("source", "BOARD").upper(),
-                            "effort": row.get("effort", "M").upper(),
-                            "depends_on": depends_on,
-                            "evidence": evidence,
-                        })
+                        items.append(
+                            {
+                                "id": row.get("id", "").strip(),
+                                "title": row.get("title", "").strip(),
+                                "status": row.get("status", "BACKLOG").upper(),
+                                "priority": row.get("priority", "P2").upper(),
+                                "source": row.get("source", "BOARD").upper(),
+                                "effort": row.get("effort", "M").upper(),
+                                "depends_on": depends_on,
+                                "evidence": evidence,
+                            }
+                        )
         except Exception as e:
             _log.error(f"Failed to parse CSV {file_path}: {e}")
         return items
@@ -73,16 +75,18 @@ class BoardArtifactParser:
             normalized = []
             for item in items:
                 if isinstance(item, dict):
-                    normalized.append({
-                        "id": item.get("id", "").strip(),
-                        "title": item.get("title", "").strip(),
-                        "status": item.get("status", "BACKLOG").upper(),
-                        "priority": item.get("priority", "P2").upper(),
-                        "source": item.get("source", "BOARD").upper(),
-                        "effort": item.get("effort", "M").upper(),
-                        "depends_on": item.get("depends_on") or item.get("dependsOn") or None,
-                        "evidence": item.get("evidence") or None,
-                    })
+                    normalized.append(
+                        {
+                            "id": item.get("id", "").strip(),
+                            "title": item.get("title", "").strip(),
+                            "status": item.get("status", "BACKLOG").upper(),
+                            "priority": item.get("priority", "P2").upper(),
+                            "source": item.get("source", "BOARD").upper(),
+                            "effort": item.get("effort", "M").upper(),
+                            "depends_on": item.get("depends_on") or item.get("dependsOn") or None,
+                            "evidence": item.get("evidence") or None,
+                        }
+                    )
             return normalized
         except Exception as e:
             _log.error(f"Failed to parse JSON {file_path}: {e}")
@@ -134,16 +138,18 @@ class BoardArtifactParser:
                 evidence = parts[7] if len(parts) > 7 else None
                 evidence = None if (not evidence or evidence == "-") else evidence
 
-                items.append({
-                    "id": item_id,
-                    "title": parts[1] if len(parts) > 1 else "",
-                    "status": (parts[2] if len(parts) > 2 else "BACKLOG").upper(),
-                    "priority": (parts[3] if len(parts) > 3 else "P2").upper(),
-                    "source": (parts[4] if len(parts) > 4 else "BOARD").upper(),
-                    "effort": (parts[5] if len(parts) > 5 else "M").upper(),
-                    "depends_on": depends_on,
-                    "evidence": evidence,
-                })
+                items.append(
+                    {
+                        "id": item_id,
+                        "title": parts[1] if len(parts) > 1 else "",
+                        "status": (parts[2] if len(parts) > 2 else "BACKLOG").upper(),
+                        "priority": (parts[3] if len(parts) > 3 else "P2").upper(),
+                        "source": (parts[4] if len(parts) > 4 else "BOARD").upper(),
+                        "effort": (parts[5] if len(parts) > 5 else "M").upper(),
+                        "depends_on": depends_on,
+                        "evidence": evidence,
+                    }
+                )
         except Exception as e:
             _log.error(f"Failed to parse Markdown {file_path}: {e}")
         return items

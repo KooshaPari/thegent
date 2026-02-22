@@ -1,4 +1,5 @@
 """Tests for HookRegistrar — writes AgentRoleSpec entries to hook-config.yaml."""
+
 from __future__ import annotations
 
 from pathlib import Path

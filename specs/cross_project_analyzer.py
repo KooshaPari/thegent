@@ -153,7 +153,7 @@ class CrossProjectAnalyzer:
                 feature_titles[normalized_title].append((project_name, feature_id))
 
         # Find features that appear in multiple projects
-        for normalized_title, occurrences in feature_titles.items():
+        for occurrences in feature_titles.values():
             if len(occurrences) > 1:
                 # Get first occurrence as reference
                 ref_project, ref_feature_id = occurrences[0]

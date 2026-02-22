@@ -54,9 +54,7 @@ class RateLimitConfig:
         if self.initial_wait <= 0:
             raise ValueError(f"initial_wait must be > 0, got {self.initial_wait}")
         if self.max_wait < self.initial_wait:
-            raise ValueError(
-                f"max_wait ({self.max_wait}) must be >= initial_wait ({self.initial_wait})"
-            )
+            raise ValueError(f"max_wait ({self.max_wait}) must be >= initial_wait ({self.initial_wait})")
         if self.multiplier < 1.0:
             raise ValueError(f"multiplier must be >= 1.0, got {self.multiplier}")
 
@@ -111,9 +109,7 @@ class RateLimitBackoffManager:
             return 0.0
 
         # Exponential backoff: initial_wait * (multiplier ** (attempt - 1))
-        base_wait = self.config.initial_wait * (
-            self.config.multiplier ** (attempt - 1)
-        )
+        base_wait = self.config.initial_wait * (self.config.multiplier ** (attempt - 1))
 
         # Add jitter (±10% of base_wait)
         jitter = random.uniform(-0.1, 0.1) * base_wait

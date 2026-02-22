@@ -36,11 +36,7 @@ def _count_loc_ast(path: Path) -> int:
     except OSError:
         return 0
     lines = source.splitlines()
-    return sum(
-        1
-        for line in lines
-        if line.strip() and not line.strip().startswith("#")
-    )
+    return sum(1 for line in lines if line.strip() and not line.strip().startswith("#"))
 
 
 def _collect_oversized_functions(path: Path) -> list[dict]:
@@ -53,18 +49,20 @@ def _collect_oversized_functions(path: Path) -> list[dict]:
 
     oversized = []
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, (ast.FunctionDef | ast.AsyncFunctionDef)):
             start = node.lineno
             end = node.end_lineno or start
             length = end - start + 1
             if length > MAX_FUNCTION_LINES:
-                oversized.append({
-                    "file": str(path.relative_to(ROOT)),
-                    "function": node.name,
-                    "start_line": start,
-                    "end_line": end,
-                    "lines": length,
-                })
+                oversized.append(
+                    {
+                        "file": str(path.relative_to(ROOT)),
+                        "function": node.name,
+                        "start_line": start,
+                        "end_line": end,
+                        "lines": length,
+                    }
+                )
     return oversized
 
 
@@ -112,10 +110,12 @@ def collect_metrics() -> dict:
     file_locs: list[dict] = []
     for path in all_py_files:
         loc = _count_loc_ast(path)
-        file_locs.append({
-            "file": str(path.relative_to(ROOT)),
-            "loc": loc,
-        })
+        file_locs.append(
+            {
+                "file": str(path.relative_to(ROOT)),
+                "loc": loc,
+            }
+        )
 
     total_loc = sum(f["loc"] for f in file_locs)
 

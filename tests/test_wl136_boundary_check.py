@@ -109,17 +109,20 @@ def _find_boundary_violations() -> list[dict[str, str]]:
                         if key in seen:
                             continue
                         seen.add(key)
-                        violations.append({
-                            "file": str(py_file.relative_to(_REPO_ROOT)),
-                            "import": imp,
-                            "violates": tooling_prefix,
-                        })
+                        violations.append(
+                            {
+                                "file": str(py_file.relative_to(_REPO_ROOT)),
+                                "import": imp,
+                                "violates": tooling_prefix,
+                            }
+                        )
                         break  # one violation per import per file
 
     return violations
 
 
 # --- Tests ---
+
 
 def test_core_boundary_config_exists() -> None:
     """Canonical core-boundary config used by this checker must exist."""
@@ -158,9 +161,7 @@ def test_core_module_paths_exist() -> None:
 
 def test_tooling_prefix_list_is_non_empty() -> None:
     """Tooling prefix list must not be empty (guard against accidental clearing)."""
-    assert len(TOOLING_IMPORT_PREFIXES) >= 4, (
-        "WL-136: TOOLING_IMPORT_PREFIXES must define at least cli, mcp, tui, ux"
-    )
+    assert len(TOOLING_IMPORT_PREFIXES) >= 4, "WL-136: TOOLING_IMPORT_PREFIXES must define at least cli, mcp, tui, ux"
 
 
 def test_boundary_check_scans_at_least_one_core_file() -> None:
@@ -169,7 +170,4 @@ def test_boundary_check_scans_at_least_one_core_file() -> None:
     for core_path in CORE_MODULE_PATHS:
         if core_path.exists():
             files_scanned.extend(_collect_python_files(core_path))
-    assert len(files_scanned) > 0, (
-        "WL-136: No core module Python files found to scan. "
-        "Check that _SRC_ROOT is correct."
-    )
+    assert len(files_scanned) > 0, "WL-136: No core module Python files found to scan. Check that _SRC_ROOT is correct."

@@ -64,15 +64,12 @@ def test_wl125_impl_pre_work_gate_wrappers_delegate(monkeypatch) -> None:
         "config.yaml",
     )
     assert impl._evidence_age_minutes(Path("/tmp/evidence.json")) == 5
-    assert (
-        impl._pre_work_governance_block_payload(
-            project_dir=Path("/tmp/project"),
-            thresholds={"max_test_evidence_age_minutes": 15},
-            violations=[{"evidence_type": "test"}],
-            config_source="config.yaml",
-        )
-        == {"governance_blocked": True}
-    )
+    assert impl._pre_work_governance_block_payload(
+        project_dir=Path("/tmp/project"),
+        thresholds={"max_test_evidence_age_minutes": 15},
+        violations=[{"evidence_type": "test"}],
+        config_source="config.yaml",
+    ) == {"governance_blocked": True}
     assert impl._enforce_pre_work_hard_gate(Path("/tmp/project")) == {"governance_blocked": True}
 
     assert called["defaults"] is True
@@ -141,15 +138,12 @@ def test_wl125_work_stream_pre_work_gate_wrappers_delegate(monkeypatch) -> None:
         "defaults",
     )
     assert work_stream_impl._evidence_age_minutes(Path("/tmp/evidence.json")) == 9
-    assert (
-        work_stream_impl._pre_work_governance_block_payload(
-            project_dir=Path("/tmp/project"),
-            thresholds={"max_build_evidence_age_minutes": 30},
-            violations=[{"evidence_type": "build"}],
-            config_source="defaults",
-        )
-        == {"governance_blocked": True}
-    )
+    assert work_stream_impl._pre_work_governance_block_payload(
+        project_dir=Path("/tmp/project"),
+        thresholds={"max_build_evidence_age_minutes": 30},
+        violations=[{"evidence_type": "build"}],
+        config_source="defaults",
+    ) == {"governance_blocked": True}
     assert work_stream_impl._enforce_pre_work_hard_gate(Path("/tmp/project")) is None
 
     assert called["defaults"] is True

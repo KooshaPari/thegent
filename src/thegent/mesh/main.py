@@ -49,8 +49,25 @@ def discover(
     else:
         pattern_list = [p.strip() for p in patterns.split(",")]
         agents = mesh.discover_agents(pattern_list)
-    for _a in agents:
-        pass
+
+    registered_ids: list[str] = []
+    for agent in agents:
+        pid = agent.get("pid", "unknown")
+        name = str(agent.get("name", "agent"))
+        agent_id = f"{name}-{pid}"
+        mesh.register_agent(
+            agent_id,
+            {
+                "pid": pid,
+                "name": name,
+                "source": "auto-detect" if patterns is None else "pattern-filter",
+            },
+        )
+        registered_ids.append(agent_id)
+
+    typer.echo(f"Discovered {len(registered_ids)} agents.")
+    for agent_id in registered_ids:
+        typer.echo(f"- {agent_id}")
 
 
 if __name__ == "__main__":

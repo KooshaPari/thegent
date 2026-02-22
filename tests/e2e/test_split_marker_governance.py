@@ -80,6 +80,4 @@ def test_split_files_import_compat_cli_runner() -> None:
             for node in ast.walk(module)
         )
 
-        assert imports_compat, (
-            f"{path} must import CompatCliRunner from {COMPAT_RUNNER_MODULE}"
-        )
+        assert imports_compat, f"{path} must import CompatCliRunner from {COMPAT_RUNNER_MODULE}"

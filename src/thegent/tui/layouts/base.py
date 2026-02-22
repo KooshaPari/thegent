@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Any
 
 
-
 @dataclass
 class LayoutConfig:
     """Configuration for a layout."""

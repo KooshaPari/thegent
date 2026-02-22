@@ -73,7 +73,11 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
                 if not isinstance(pid, int):
                     _LOG.warning(
                         "shared_mcp_lockfile_invalid_pid",
-                        extra={"failure_type": "invalid_pid_type", "lockfile": str(lockfile), "pid_type": type(pid).__name__},
+                        extra={
+                            "failure_type": "invalid_pid_type",
+                            "lockfile": str(lockfile),
+                            "pid_type": type(pid).__name__,
+                        },
                     )
                     return False, f"Invalid lockfile pid type in {lockfile}: {type(pid).__name__}"
                 # Check if process still alive
@@ -86,7 +90,7 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
                     # Process dead, remove stale lockfile
                     ok, message = _remove_lockfile(lockfile, reason="stale")
                     if not ok:
-                            return False, message
+                        return False, message
         except json.JSONDecodeError as exc:
             ok, message = _remove_lockfile(lockfile, reason="corrupt")
             if not ok:

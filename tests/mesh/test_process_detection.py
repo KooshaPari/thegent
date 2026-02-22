@@ -39,10 +39,7 @@ class TestGetProcesses:
         """On macOS, get_processes parses ps output."""
         mock_platform.system.return_value = "Darwin"
         mock_subprocess.check_output.return_value = (
-            b"  PID COMMAND\n"
-            b"    1 /sbin/launchd\n"
-            b" 1234 /usr/bin/claude-code --project foo\n"
-            b" 5678 cursor-agent serve\n"
+            b"  PID COMMAND\n    1 /sbin/launchd\n 1234 /usr/bin/claude-code --project foo\n 5678 cursor-agent serve\n"
         )
         mock_subprocess.STDOUT = -1
         mock_subprocess.CalledProcessError = Exception

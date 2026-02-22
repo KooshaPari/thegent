@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class DesktopState(Enum):
     """Desktop session state."""
+
     CREATING = auto()
     RUNNING = auto()
     IDLE = auto()
@@ -38,6 +39,7 @@ class DesktopState(Enum):
 @dataclass
 class DesktopConfig:
     """Configuration for a virtual desktop session."""
+
     agent_id: str
     resolution: tuple[int, int] = (1920, 1080)
     color_depth: int = 32
@@ -53,6 +55,7 @@ class DesktopConfig:
 @dataclass
 class ScreenFrame:
     """A single screen frame capture."""
+
     timestamp: float
     width: int
     height: int
@@ -73,6 +76,7 @@ class ScreenFrame:
 @dataclass
 class InputEvent:
     """Input event for injection."""
+
     event_type: str  # key_down, key_up, mouse_move, mouse_down, mouse_up, mouse_wheel
     x: int | None = None
     y: int | None = None
@@ -258,14 +262,17 @@ class VirtualDesktopManager:
 
         if system == "Windows":
             from thegent.automation.providers.windows_virtual_desktop import WindowsVirtualDesktopProvider
+
             return WindowsVirtualDesktopProvider()
 
         if system == "Linux":
             from thegent.automation.providers.linux_virtual_desktop import LinuxVirtualDesktopProvider
+
             return LinuxVirtualDesktopProvider()
 
         if system == "Darwin":
             from thegent.automation.providers.macos_virtual_desktop import MacOSVirtualDesktopProvider
+
             return MacOSVirtualDesktopProvider()
 
         logger.warning("No native virtual desktop provider for '%s'; using fallback provider.", system)
@@ -355,7 +362,7 @@ class _UnsupportedPlatformVirtualDesktopProvider(VirtualDesktopProvider):
     async def capture_screen(self, desktop_id: str) -> ScreenFrame:
         """Return a deterministic black frame."""
         config = self._desktops.get(desktop_id)
-        width, height = (config.resolution if config else (1920, 1080))
+        width, height = config.resolution if config else (1920, 1080)
         return ScreenFrame(
             timestamp=time.time(),
             width=width,

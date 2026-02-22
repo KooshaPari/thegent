@@ -118,8 +118,9 @@ class TestDiscoveryClientInit:
 
     def test_is_native_false_when_binary_absent(self) -> None:
         """When the binary is missing, is_native is False."""
-        with patch("shutil.which", return_value=None), patch.dict(
-            "os.environ", {DiscoveryClient.ENV_VAR: ""}, clear=False
+        with (
+            patch("shutil.which", return_value=None),
+            patch.dict("os.environ", {DiscoveryClient.ENV_VAR: ""}, clear=False),
         ):
             client = DiscoveryClient()
 
@@ -144,11 +145,14 @@ class TestDiscoveryClientInit:
 
     def test_env_var_missing_file_falls_through(self) -> None:
         """THGENT_DISCOVERY_BIN pointing at missing file falls back to which."""
-        with patch.dict(
-            "os.environ",
-            {DiscoveryClient.ENV_VAR: "/does/not/exist/thegent-discovery"},
-            clear=False,
-        ), patch("shutil.which", return_value=None):
+        with (
+            patch.dict(
+                "os.environ",
+                {DiscoveryClient.ENV_VAR: "/does/not/exist/thegent-discovery"},
+                clear=False,
+            ),
+            patch("shutil.which", return_value=None),
+        ):
             client = DiscoveryClient()
 
         assert client.is_native is False
@@ -263,37 +267,39 @@ class TestDiscoveryClientErrorFallback:
 
     def test_sessions_falls_back_on_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
-        with patch.object(client, "_run", return_value=None), patch(
-            "thegent.native.discovery_native._fallback_sessions", return_value=[]
-        ) as mock_fb:
+        with (
+            patch.object(client, "_run", return_value=None),
+            patch("thegent.native.discovery_native._fallback_sessions", return_value=[]) as mock_fb,
+        ):
             result = client.sessions()
         mock_fb.assert_called_once()
         assert result == []
 
     def test_tools_falls_back_on_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
-        with patch.object(client, "_run", return_value=None), patch(
-            "thegent.native.discovery_native._fallback_tools", return_value=[]
-        ) as mock_fb:
+        with (
+            patch.object(client, "_run", return_value=None),
+            patch("thegent.native.discovery_native._fallback_tools", return_value=[]) as mock_fb,
+        ):
             result = client.tools()
         mock_fb.assert_called_once()
 
     def test_processes_falls_back_on_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
-        with patch.object(client, "_run", return_value=None), patch(
-            "thegent.native.discovery_native._fallback_processes", return_value=[]
-        ) as mock_fb:
+        with (
+            patch.object(client, "_run", return_value=None),
+            patch("thegent.native.discovery_native._fallback_processes", return_value=[]) as mock_fb,
+        ):
             result = client.processes()
         mock_fb.assert_called_once()
 
     def test_all_falls_back_on_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
-        with patch.object(client, "_run", return_value=None), patch(
-            "thegent.native.discovery_native._fallback_sessions", return_value=[]
-        ), patch(
-            "thegent.native.discovery_native._fallback_tools", return_value=[]
-        ), patch(
-            "thegent.native.discovery_native._fallback_processes", return_value=[]
+        with (
+            patch.object(client, "_run", return_value=None),
+            patch("thegent.native.discovery_native._fallback_sessions", return_value=[]),
+            patch("thegent.native.discovery_native._fallback_tools", return_value=[]),
+            patch("thegent.native.discovery_native._fallback_processes", return_value=[]),
         ):
             result = client.all()
         assert "sessions" in result
@@ -326,6 +332,16 @@ class TestDiscoveryClientErrorFallback:
         with patch("subprocess.run", return_value=mock_result):
             result = client._run("all")
         assert result is None
+        assert client.last_run_diagnostics is not None
+        assert client.last_run_diagnostics["error_type"] == "nonzero_exit"
+
+    def test_run_launch_failure_records_diagnostics(self, tmp_path: Path) -> None:
+        client = self._make_native_client(tmp_path)
+        with patch("subprocess.run", side_effect=FileNotFoundError("missing")):
+            result = client._run("all")
+        assert result is None
+        assert client.last_run_diagnostics is not None
+        assert client.last_run_diagnostics["error_type"] == "binary_missing"
 
 
 # ---------------------------------------------------------------------------
@@ -338,8 +354,9 @@ class TestDiscoveryClientFallbackPath:
 
     @pytest.fixture
     def fallback_client(self) -> DiscoveryClient:
-        with patch("shutil.which", return_value=None), patch.dict(
-            "os.environ", {DiscoveryClient.ENV_VAR: ""}, clear=False
+        with (
+            patch("shutil.which", return_value=None),
+            patch.dict("os.environ", {DiscoveryClient.ENV_VAR: ""}, clear=False),
         ):
             return DiscoveryClient()
 
@@ -354,26 +371,20 @@ class TestDiscoveryClientFallbackPath:
 
     def test_tools_delegates_to_fallback(self, fallback_client: DiscoveryClient) -> None:
         expected = [{"tool": "git", "available": True, "path": "/usr/bin/git"}]
-        with patch(
-            "thegent.native.discovery_native._fallback_tools", return_value=expected
-        ):
+        with patch("thegent.native.discovery_native._fallback_tools", return_value=expected):
             result = fallback_client.tools()
         assert result == expected
 
     def test_processes_delegates_to_fallback(self, fallback_client: DiscoveryClient) -> None:
-        with patch(
-            "thegent.native.discovery_native._fallback_processes", return_value=[]
-        ) as mock_fb:
+        with patch("thegent.native.discovery_native._fallback_processes", return_value=[]) as mock_fb:
             fallback_client.processes(pattern="custom")
         mock_fb.assert_called_once_with("custom")
 
     def test_all_delegates_to_fallback(self, fallback_client: DiscoveryClient) -> None:
-        with patch(
-            "thegent.native.discovery_native._fallback_sessions", return_value=[]
-        ), patch(
-            "thegent.native.discovery_native._fallback_tools", return_value=[]
-        ), patch(
-            "thegent.native.discovery_native._fallback_processes", return_value=[]
+        with (
+            patch("thegent.native.discovery_native._fallback_sessions", return_value=[]),
+            patch("thegent.native.discovery_native._fallback_tools", return_value=[]),
+            patch("thegent.native.discovery_native._fallback_processes", return_value=[]),
         ):
             result = fallback_client.all()
         assert set(result.keys()) == {"sessions", "tools", "processes"}
@@ -409,11 +420,27 @@ class TestFallbackSessions:
         assert isinstance(sessions, list)
 
     def test_handles_subprocess_exception(self) -> None:
-        with patch(
-            "subprocess.run", side_effect=FileNotFoundError("tmux not found")
-        ):
+        with patch("subprocess.run", side_effect=FileNotFoundError("tmux not found")):
             sessions = _fallback_sessions()
         assert isinstance(sessions, list)
+
+    def test_timeout_metadata(self) -> None:
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="tmux", timeout=5)):
+            payload = _fallback_sessions(include_meta=True)
+        assert payload["sessions"] == []
+        assert payload["fallback"]["status"] == "probe_failed"
+        assert payload["fallback"]["error_type"] == "timeout"
+
+    def test_malformed_output_sets_parse_failed_metadata(self) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "bad-line-no-delimiters\n"
+        mock_result.stderr = ""
+        with patch("subprocess.run", return_value=mock_result):
+            payload = _fallback_sessions(include_meta=True)
+        assert payload["sessions"] == []
+        assert payload["fallback"]["status"] == "parse_failed"
+        assert payload["fallback"]["error_type"] == "malformed_output"
 
 
 class TestFallbackTools:
@@ -514,9 +541,7 @@ class TestFallbackProcesses:
 class TestScanAgentProcessesIntegration:
     """scan_agent_processes() in discovery.py delegates to DiscoveryClient."""
 
-    def test_uses_native_client_when_available(
-        self, fake_processes_json: list[dict]
-    ) -> None:
+    def test_uses_native_client_when_available(self, fake_processes_json: list[dict]) -> None:
         import thegent.discovery as discovery_mod
 
         # Reset the module-level cache
@@ -560,10 +585,13 @@ class TestScanAgentProcessesIntegration:
         fake_discovery_v2 = MagicMock()
         fake_discovery_v2.AgentScanner = mock_scanner_cls
 
-        with patch(
-            "thegent.native.discovery_native.DiscoveryClient",
-            return_value=mock_client,
-        ), patch.dict(sys.modules, {"thegent.infra.discovery_v2": fake_discovery_v2}):
+        with (
+            patch(
+                "thegent.native.discovery_native.DiscoveryClient",
+                return_value=mock_client,
+            ),
+            patch.dict(sys.modules, {"thegent.infra.discovery_v2": fake_discovery_v2}),
+        ):
             result = discovery_mod.scan_agent_processes()
 
         # When native is not active, fallback scan returns psutil results

@@ -181,11 +181,7 @@ def test_python_scan_multiline() -> None:
 
     Traces to: FR-SEC-001
     """
-    content = (
-        "AKIA" + "F" * 16 + "\n"
-        "normal line\n"
-        "ghp_" + "g" * 36 + "\n"
-    )
+    content = "AKIA" + "F" * 16 + "\nnormal line\nghp_" + "g" * 36 + "\n"
     matches = _python_scan(content)
     assert len(matches) == 2
     kinds = {m.kind for m in matches}
@@ -246,13 +242,16 @@ def test_scan_secrets_uses_binary_when_found() -> None:
     Traces to: FR-GOV-006
     """
     expected = [SecretMatch(kind="github_pat", line=1, masked="ghp_****36")]
-    with patch(
-        "thegent.governance.native_secret_scan._find_binary",
-        return_value="/fake/hook-dispatcher",
-    ), patch(
-        "thegent.governance.native_secret_scan._run_binary",
-        return_value=expected,
-    ) as mock_run:
+    with (
+        patch(
+            "thegent.governance.native_secret_scan._find_binary",
+            return_value="/fake/hook-dispatcher",
+        ),
+        patch(
+            "thegent.governance.native_secret_scan._run_binary",
+            return_value=expected,
+        ) as mock_run,
+    ):
         result = scan_secrets("ghp_" + "x" * 36)
     mock_run.assert_called_once()
     assert result == expected
@@ -263,12 +262,15 @@ def test_scan_secrets_falls_back_on_binary_timeout() -> None:
 
     Traces to: FR-GOV-006
     """
-    with patch(
-        "thegent.governance.native_secret_scan._find_binary",
-        return_value="/fake/hook-dispatcher",
-    ), patch(
-        "thegent.governance.native_secret_scan._run_binary",
-        side_effect=subprocess.TimeoutExpired(cmd="hook-dispatcher", timeout=30),
+    with (
+        patch(
+            "thegent.governance.native_secret_scan._find_binary",
+            return_value="/fake/hook-dispatcher",
+        ),
+        patch(
+            "thegent.governance.native_secret_scan._run_binary",
+            side_effect=subprocess.TimeoutExpired(cmd="hook-dispatcher", timeout=30),
+        ),
     ):
         matches = scan_secrets("ghp_" + "y" * 36)
         # Python fallback still detects the secret
@@ -281,12 +283,15 @@ def test_scan_secrets_falls_back_on_json_error() -> None:
 
     Traces to: FR-GOV-006
     """
-    with patch(
-        "thegent.governance.native_secret_scan._find_binary",
-        return_value="/fake/hook-dispatcher",
-    ), patch(
-        "thegent.governance.native_secret_scan._run_binary",
-        side_effect=json.JSONDecodeError("bad", "", 0),
+    with (
+        patch(
+            "thegent.governance.native_secret_scan._find_binary",
+            return_value="/fake/hook-dispatcher",
+        ),
+        patch(
+            "thegent.governance.native_secret_scan._run_binary",
+            side_effect=json.JSONDecodeError("bad", "", 0),
+        ),
     ):
         matches = scan_secrets("ghp_" + "z" * 36)
         assert matches
@@ -311,12 +316,7 @@ def test_scan_secrets_clean_returns_empty() -> None:
 
 
 BINARY_PATH = str(
-    Path(__file__).parent.parent.parent
-    / "hooks"
-    / "hook-dispatcher"
-    / "target"
-    / "release"
-    / "hook-dispatcher"
+    Path(__file__).parent.parent.parent / "hooks" / "hook-dispatcher" / "target" / "release" / "hook-dispatcher"
 )
 
 _binary_available = pytest.mark.skipif(

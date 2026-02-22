@@ -143,19 +143,34 @@ class NetworkMonitor:
         recv_total = sum(s.recv_bps for s in samples)
         return (send_total, recv_total)
 
-    def list_interfaces(self) -> list[str]:
-        """Return the names of all available network interfaces.
+    def list_interfaces(self, *, include_diagnostics: bool = False) -> list[str] | dict[str, object]:
+        """Return interface names, with optional diagnostics payload.
 
         Returns:
-            List of interface name strings.
-            Returns an empty list when psutil is unavailable.
+            If include_diagnostics=False (default): list[str].
+            If include_diagnostics=True: dict with keys:
+              - interfaces: list[str]
+              - status: "ok" | "empty" | "unavailable" | "error"
+              - error: None or {"type": str, "message": str}
         """
+        payload: dict[str, object] = {
+            "interfaces": [],
+            "status": "ok",
+            "error": None,
+        }
         if not _PSUTIL_AVAILABLE or _psutil is None:
-            return []
+            payload["status"] = "unavailable"
+            payload["error"] = {"type": "psutil_unavailable", "message": "psutil is not available"}
+            return payload if include_diagnostics else []
 
         try:
             counters = _psutil.net_io_counters(pernic=True)
-            return list(counters.keys())
-        except Exception:
+            interfaces = list(counters.keys())
+            payload["interfaces"] = interfaces
+            payload["status"] = "empty" if not interfaces else "ok"
+            return payload if include_diagnostics else interfaces
+        except Exception as exc:
             logger.exception("Failed to list network interfaces")
-            return []
+            payload["status"] = "error"
+            payload["error"] = {"type": type(exc).__name__, "message": str(exc)}
+            return payload if include_diagnostics else []

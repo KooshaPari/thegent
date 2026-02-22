@@ -121,6 +121,7 @@ class TestInstanceIsolation:
         # Cleanup
         try:
             import shutil
+
             shutil.rmtree(codex_home)
         except OSError:
             pass
@@ -232,12 +233,14 @@ class TestJsonlParsing:
     def test_parse_token_usage(self) -> None:
         # @trace FR-AGT-003
         """_parse_jsonl_output extracts token usage."""
-        output = json.dumps({
-            "usage": {
-                "prompt_tokens": 42,
-                "completion_tokens": 128,
+        output = json.dumps(
+            {
+                "usage": {
+                    "prompt_tokens": 42,
+                    "completion_tokens": 128,
+                }
             }
-        })
+        )
         text, tokens_in, tokens_out, _ = _parse_jsonl_output(output)
 
         assert tokens_in == 42
@@ -280,13 +283,7 @@ class TestJsonlParsing:
     def test_parse_message_format(self) -> None:
         # @trace FR-AGT-003
         """_parse_jsonl_output handles message format (non-streaming)."""
-        output = json.dumps({
-            "choices": [{
-                "message": {
-                    "content": "This is a response"
-                }
-            }]
-        })
+        output = json.dumps({"choices": [{"message": {"content": "This is a response"}}]})
         text, _, _, _ = _parse_jsonl_output(output)
 
         assert text == "This is a response"
@@ -341,6 +338,7 @@ class TestConfigInjection:
     def test_run_injects_config_file(self, mock_retry, mock_resolve, mock_proxy) -> None:
         # @trace FR-AGT-004
         """run() creates config file and sets CODEX_CONFIG_DIR."""
+
         def capture_env(*args, **kwargs):
             # Capture env dict before cleanup happens
             captured_env = args[4].copy()

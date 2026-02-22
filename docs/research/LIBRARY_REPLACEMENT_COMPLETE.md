@@ -1061,3 +1061,92 @@ Ownership checklist:
 - [ ] Primary and backup owners are named before cutover starts.
 - [ ] Pager/escalation path is verified for all owners.
 - [ ] Decision SLA and execution timestamps are recorded in incident notes.
+
+## Dependency Ownership Map
+
+| Dependency Scope | Primary Owner | Backup Owner | Required Tracking Artifact |
+|---|---|---|---|
+| Core runtime dependency | Service maintainer | Platform maintainer | Linked migration issue with due date |
+| Shared internal wrapper/library | Platform team lead | Repo maintainer | Owner map entry in docs + PR reference |
+| Test/build-only dependency | Module maintainer | CI/tooling owner | Changelog link + validation checklist |
+| Transitive high-risk dependency | Security owner | Service maintainer | Risk note + remediation timeline |
+
+Ownership mapping checklist:
+- [ ] Each in-scope dependency has exactly one primary and one backup owner.
+- [ ] Every owner row links to a single issue/PR tracking artifact.
+- [ ] Owners confirm SLA for upgrade, incident response, and deprecation sign-off.
+
+## Change Freeze Exceptions
+
+| Exception Type | Allowed When | Required Approver | Required Evidence |
+|---|---|---|---|
+| Security patch | Critical vulnerability with active or high-likelihood exploit | Security owner + service owner | CVE/advisory link + rollback plan |
+| Production incident mitigation | Dependency change required to restore service | Incident commander + SRE owner | Incident ID + blast-radius note |
+| Compliance/legal mandate | Regulatory obligation with fixed deadline | Engineering manager + compliance owner | Policy reference + due date |
+
+Exception checklist:
+- [ ] Exception request states scope, risk, and exact expiration date.
+- [ ] Approval is recorded in writing before merge/cutover.
+- [ ] Post-exception review logs outcome and follow-up owner.
+
+## Dependency Risk Scoring
+
+| Risk Factor | Score (0-3) | Quick Rule |
+|---|---:|---|
+| Runtime criticality | 0-3 | 3 if startup/request path breaks without it |
+| Exploitability/security exposure | 0-3 | 3 if known vuln with public exploit path |
+| Upgrade complexity | 0-3 | 3 if API/behavior changes need code migration |
+| Observability/rollback confidence | 0-3 | 3 if weak telemetry or unproven rollback |
+
+Scoring checklist:
+- [ ] Assign a score per factor and compute total (0-12).
+- [ ] Classify total: Low (0-3), Medium (4-7), High (8-12).
+- [ ] Require security + SRE sign-off for all High-risk replacements.
+- [ ] Link scorecard artifact in the migration tracking issue.
+
+## Replacement Freeze Checklist
+
+| Freeze Gate | Verification | Owner |
+|---|---|---|
+| Scope lock | In-scope dependency list is finalized and version-pinned | Service owner |
+| Change controls | Branch protection + required reviewers are enabled | Repo maintainer |
+| Exception path | Emergency exception template and approvers are documented | SRE lead |
+| Exit criteria | Freeze end requires parity, reliability, and rollback evidence | Service owner + SRE |
+
+Execution checklist:
+- [ ] Announce freeze window and impacted repos/channels.
+- [ ] Confirm no non-exception dependency PRs remain open.
+- [ ] Record all approved exceptions with expiry and rollback notes.
+- [ ] Run freeze-exit audit and attach evidence before reopening changes.
+
+## Upgrade Blast Radius Map
+
+| Impact Surface | Failure Mode | Detection Signal | Owner | Containment Step |
+|---|---|---|---|---|
+| Runtime startup path | Service fails to boot after replacement | Startup health check / crash loop alert | Service owner | Revert dependency bump and redeploy last known-good build |
+| Request/response contract | Consumer-facing API behavior drift | Contract tests + 4xx/5xx anomaly alerts | API owner | Roll back release and restore prior schema/serializer behavior |
+| Job/worker execution | Background jobs stall or retry-loop | Queue lag + dead-letter growth alerts | Worker owner | Disable new worker release and replay from stable version |
+| CI/build pipeline | Build/test tooling fails on new version | Required CI gates + failure trend spike | Build owner | Pin previous tool version and rerun full validation |
+| Observability/telemetry | Logging/metrics/traces degrade or vanish | Missing signal SLO breach | SRE owner | Restore prior instrumentation package/config |
+
+Blast-radius checklist:
+- [ ] Enumerate all affected services, jobs, and shared libraries.
+- [ ] Link one primary detector and one fallback detector per surface.
+- [ ] Assign one accountable owner per surface before merge.
+- [ ] Pre-approve rollback command/runbook for every High-risk surface.
+
+## Verification Signoff Matrix
+
+| Verification Gate | Required Signoff | Minimum Evidence | Status |
+|---|---|---|---|
+| Functional parity | Service owner | Passing regression/contract test report | ☐ Pending / ☐ Approved |
+| Reliability guardrails | SRE owner | Error budget + latency/capacity check snapshot | ☐ Pending / ☐ Approved |
+| Security posture | Security owner | Vulnerability scan + advisory review artifact | ☐ Pending / ☐ Approved |
+| Rollback readiness | Incident commander | Successful rollback drill or dry-run record | ☐ Pending / ☐ Approved |
+| Consumer readiness | Product/API owner | Communication artifact + migration notes | ☐ Pending / ☐ Approved |
+
+Signoff checklist:
+- [ ] No gate is marked Approved without linked evidence.
+- [ ] Any Pending gate blocks production cutover.
+- [ ] Approval timestamps and approver identities are recorded.
+- [ ] Final cutover note links to this completed matrix.

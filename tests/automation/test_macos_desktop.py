@@ -23,6 +23,7 @@ from thegent.automation.macos_desktop import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_proc(returncode: int = 0, stdout: str = "", stderr: str = "") -> MagicMock:
     """Create a mock CompletedProcess-like object."""
     proc = MagicMock()

@@ -224,7 +224,9 @@ class TestExtractTags:
         monkeypatch.setattr(parser_module, "_get_native_parser", lambda: _Native())
         assert extract_tags("<STATUS>ok</STATUS>") == {"STATUS": "native-ok"}
 
-    def test_extract_tags_falls_back_when_native_parser_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_extract_tags_falls_back_when_native_parser_raises(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
         # @trace FR-CTR-002
         class _NativeFail:
             @staticmethod
@@ -232,8 +234,10 @@ class TestExtractTags:
                 raise RuntimeError("native failure")
 
         monkeypatch.setattr(parser_module, "_get_native_parser", lambda: _NativeFail())
+        caplog.set_level("DEBUG", logger="thegent.contracts.parser")
         text = "<STATUS>ok</STATUS><SUMMARY>done</SUMMARY>"
         assert extract_tags(text) == {"STATUS": "ok", "SUMMARY": "done"}
+        assert "Native XML parser failed; falling back to Python parser" in caplog.text
 
 
 @pytest.mark.unit

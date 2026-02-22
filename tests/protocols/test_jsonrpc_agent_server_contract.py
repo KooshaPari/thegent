@@ -244,9 +244,7 @@ def test_turn_submit_rejects_blank_diff_when_approval_is_required() -> None:
 
 
 def test_request_with_invalid_id_type_returns_invalid_request() -> None:
-    response = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": {"not": "scalar"}, "method": "health/check"})
-    )
+    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": {"not": "scalar"}, "method": "health/check"}))
     assert response is not None
     assert response["error"]["code"] == -32600
     assert response["error"]["data"]["reason"] == "id"

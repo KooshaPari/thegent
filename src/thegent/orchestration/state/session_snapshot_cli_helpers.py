@@ -337,7 +337,7 @@ def snapshot_prune_payload(scraper: Any, max_keep: int = 500) -> dict[str, int]:
 
     prune_snapshots = getattr(scraper, "prune_snapshots", None)
     if callable(prune_snapshots):
-        prune_snapshots_fn = cast(_PruneSnapshotsCallable, prune_snapshots)
+        prune_snapshots_fn = cast("_PruneSnapshotsCallable", prune_snapshots)
         try:
             return {"deleted": int(prune_snapshots_fn(max_keep=keep))}
         except TypeError:

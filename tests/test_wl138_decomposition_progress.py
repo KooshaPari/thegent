@@ -55,8 +55,7 @@ def test_wl138_progress_script_emits_json(tmp_path: Path) -> None:
     runtime_matrix_checkpoint = next(
         item for item in payload["checkpoints"] if item["checkpoint_id"] == "runtime-matrix-artifacts"
     )
-    matrix_paths = [check["path"] for check in runtime_matrix_checkpoint["checks"]
-    ]
+    matrix_paths = [check["path"] for check in runtime_matrix_checkpoint["checks"]]
     assert "contracts/runtime/runtime-modularization-matrix.json" in matrix_paths
 
     rust_checkpoint = next(item for item in payload["checkpoints"] if item["checkpoint_id"] == "rust-hook-splits")

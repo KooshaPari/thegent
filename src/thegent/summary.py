@@ -1,14 +1,53 @@
 """Summary and audit log implementation for thegent."""
 
 import json
+import logging
 import os
 import subprocess
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
+
+_log = logging.getLogger(__name__)
+
+
+@dataclass
+class GitCommitsResult:
+    commits: list[str]
+    status: str
+    error: dict[str, Any] | None = None
+
+
+@dataclass
+class LogParseStats:
+    malformed_json: int = 0
+    missing_required_key: int = 0
+    invalid_shape: int = 0
+    invalid_timestamp: int = 0
+    out_of_window: int = 0
+    unsupported_type: int = 0
+    sampled_errors: list[str] = field(default_factory=list)
+    sample_limit: int = 5
+
+    def sample(self, kind: str, detail: str, line: str) -> None:
+        if len(self.sampled_errors) >= self.sample_limit:
+            return
+        self.sampled_errors.append(f"{kind}: {detail[:100]} | line={line.strip()[:120]}")
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "malformed_json": self.malformed_json,
+            "missing_required_key": self.missing_required_key,
+            "invalid_shape": self.invalid_shape,
+            "invalid_timestamp": self.invalid_timestamp,
+            "out_of_window": self.out_of_window,
+            "unsupported_type": self.unsupported_type,
+            "sampled_errors": self.sampled_errors,
+        }
 
 
 def get_project_key(project_path: Path) -> str:
@@ -47,64 +86,198 @@ def get_time_range(period: str) -> tuple[datetime, datetime]:
     return start, now
 
 
-def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) -> list[str]:
+def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) -> GitCommitsResult:
     """Fetch git commits within the time range."""
     if not (project_path / ".git").exists():
-        return []
+        error = {"type": "not_repo", "message": f"Missing .git in {project_path}"}
+        _log.warning(
+            "Git commit collection skipped: not a git repo (cwd=%s, cmd=%s)",
+            str(project_path),
+            " ".join(cmd for cmd in ("git", "log")),
+        )
+        return GitCommitsResult(commits=[], status="not_repo", error=error)
+
+    since = start_dt.isoformat()
+    until = end_dt.isoformat()
+    cmd = ["git", "log", f"--since={since}", f"--until={until}", "--pretty=format:%h %ad %s", "--date=short"]
     try:
-        since = start_dt.isoformat()
-        until = end_dt.isoformat()
-        cmd = ["git", "log", f"--since={since}", f"--until={until}", "--pretty=format:%h %ad %s", "--date=short"]
-        res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=True)
-        return [line.strip() for line in res.stdout.splitlines() if line.strip()]
-    except Exception:
-        return []
+        res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
+    except OSError as exc:
+        error = {"type": type(exc).__name__, "message": str(exc)[:200]}
+        _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
+        return GitCommitsResult(commits=[], status="error", error=error)
+
+    if res.returncode != 0:
+        error = {
+            "type": "git_log_failed",
+            "message": (res.stderr.strip() or f"git log exited with status {res.returncode}")[:200],
+            "returncode": res.returncode,
+        }
+        _log.warning(
+            "Git commit collection failed: cwd=%s cmd=%s returncode=%s stderr=%s",
+            str(project_path),
+            " ".join(cmd),
+            res.returncode,
+            (res.stderr or "").strip()[:500],
+        )
+        return GitCommitsResult(commits=[], status="error", error=error)
+
+    commits = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+    return GitCommitsResult(commits=commits, status="empty" if not commits else "ok")
 
 
-def _parse_log_entry(line: str, start_dt: datetime, end_dt: datetime) -> dict[str, Any] | None:
+def _parse_log_entry(
+    line: str, start_dt: datetime, end_dt: datetime, diagnostics: LogParseStats | None = None
+) -> dict[str, Any] | None:
     """Parse a single log entry, returning it if within time range."""
     try:
         data = json.loads(line)
-        if data.get("type") in ("user", "assistant"):
-            ts_str = data.get("timestamp")
-            if ts_str:
-                # handle various timestamp formats
-                ts = datetime.fromisoformat(ts_str)
+    except json.JSONDecodeError as exc:
+        if diagnostics is not None:
+            diagnostics.malformed_json += 1
+            diagnostics.sample("malformed_json", str(exc), line)
+        return None
 
-                if ts.tzinfo is None:
-                    ts = ts.replace(tzinfo=UTC)
+    if not isinstance(data, dict):
+        if diagnostics is not None:
+            diagnostics.invalid_shape += 1
+            diagnostics.sample("invalid_shape", f"type={type(data).__name__}", line)
+        return None
 
-                if start_dt <= ts <= end_dt:
-                    return data
-    except Exception:
-        pass
+    try:
+        if data["type"] in ("user", "assistant"):
+            ts_str = data["timestamp"]
+            # handle various timestamp formats
+            ts = datetime.fromisoformat(ts_str)
+
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=UTC)
+
+            if start_dt <= ts <= end_dt:
+                return data
+            if diagnostics is not None:
+                diagnostics.out_of_window += 1
+        elif diagnostics is not None:
+            diagnostics.unsupported_type += 1
+    except KeyError:
+        if diagnostics is not None:
+            diagnostics.missing_required_key += 1
+            diagnostics.sample("missing_required_key", "required key missing", line)
+    except (TypeError, ValueError) as exc:
+        if diagnostics is not None:
+            diagnostics.invalid_timestamp += 1
+            diagnostics.sample("invalid_timestamp", str(exc), line)
     return None
 
 
-def _read_log_file(log_file: Path, start_dt: datetime, end_dt: datetime) -> list[dict[str, Any]]:
+def _read_log_file(
+    log_file: Path, start_dt: datetime, end_dt: datetime, *, include_diagnostics: bool = False
+) -> list[dict[str, Any]] | dict[str, Any]:
     """Read a single log file and return entries within time range."""
+    parse_stats = LogParseStats()
+    diagnostics: dict[str, Any] = {
+        "path": str(log_file),
+        "status": "ok",
+        "entries": 0,
+        "logs": [],
+        "parse_counts": parse_stats.as_dict(),
+        "error": None,
+    }
     logs = []
     try:
         with log_file.open("r", encoding="utf-8") as f:
             for line in f:
-                entry = _parse_log_entry(line, start_dt, end_dt)
+                entry = _parse_log_entry(line, start_dt, end_dt, parse_stats)
                 if entry is not None:
                     logs.append(entry)
-    except Exception:
-        pass
-    return logs
+    except FileNotFoundError as exc:
+        diagnostics["status"] = "missing"
+        diagnostics["error"] = {"type": type(exc).__name__, "message": str(exc)}
+        return diagnostics if include_diagnostics else logs
+    except PermissionError as exc:
+        diagnostics["status"] = "permission_denied"
+        diagnostics["error"] = {"type": type(exc).__name__, "message": str(exc)}
+        return diagnostics if include_diagnostics else logs
+    except UnicodeDecodeError as exc:
+        diagnostics["status"] = "decode_error"
+        diagnostics["error"] = {"type": type(exc).__name__, "message": str(exc)}
+        return diagnostics if include_diagnostics else logs
+    except OSError as exc:
+        diagnostics["status"] = "io_error"
+        diagnostics["error"] = {"type": type(exc).__name__, "message": str(exc)}
+        return diagnostics if include_diagnostics else logs
+
+    diagnostics["entries"] = len(logs)
+    diagnostics["logs"] = logs
+    diagnostics["parse_counts"] = parse_stats.as_dict()
+    return diagnostics if include_diagnostics else logs
 
 
-def get_chat_logs(session_dir: Path, project_key: str, start_dt: datetime, end_dt: datetime) -> list[dict[str, Any]]:
+def get_chat_logs(
+    session_dir: Path, project_key: str, start_dt: datetime, end_dt: datetime, *, include_diagnostics: bool = False
+) -> list[dict[str, Any]] | dict[str, Any]:
     """Fetch chat logs from project session directory."""
     project_logs_dir = session_dir / "claude-config" / "projects" / project_key
+    payload: dict[str, Any] = {
+        "logs": [],
+        "status": "ok",
+        "diagnostics": {
+            "project_logs_dir": str(project_logs_dir),
+            "files_seen": 0,
+            "files_readable": 0,
+            "files_unreadable": 0,
+            "parse_counts": {
+                "malformed_json": 0,
+                "missing_required_key": 0,
+                "invalid_shape": 0,
+                "invalid_timestamp": 0,
+                "out_of_window": 0,
+                "unsupported_type": 0,
+                "sampled_errors": [],
+            },
+            "file_errors": [],
+        },
+    }
     if not project_logs_dir.exists():
-        return []
+        payload["status"] = "missing_directory"
+        return payload if include_diagnostics else []
 
     logs = []
     for log_file in project_logs_dir.glob("*.jsonl"):
-        logs.extend(_read_log_file(log_file, start_dt, end_dt))
-    return sorted(logs, key=lambda x: x.get("timestamp", ""))
+        payload["diagnostics"]["files_seen"] += 1
+        file_result = _read_log_file(log_file, start_dt, end_dt, include_diagnostics=True)
+        if file_result["status"] == "ok":
+            payload["diagnostics"]["files_readable"] += 1
+        else:
+            payload["diagnostics"]["files_unreadable"] += 1
+            payload["diagnostics"]["file_errors"].append(
+                {
+                    "path": file_result["path"],
+                    "status": file_result["status"],
+                    "error": file_result["error"],
+                }
+            )
+
+        parse_counts = payload["diagnostics"]["parse_counts"]
+        for key, count in file_result["parse_counts"].items():
+            if key == "sampled_errors":
+                existing = parse_counts["sampled_errors"]
+                for sample in count:
+                    if len(existing) >= 5:
+                        break
+                    existing.append(sample)
+            else:
+                parse_counts[key] += count
+
+        if file_result["status"] == "ok":
+            logs.extend(file_result["logs"])
+
+    payload["logs"] = sorted(logs, key=lambda x: x.get("timestamp", ""))
+    if payload["diagnostics"]["files_seen"] == 0:
+        payload["status"] = "empty"
+    elif payload["diagnostics"]["files_unreadable"] > 0:
+        payload["status"] = "partial" if logs else "error"
+    return payload if include_diagnostics else payload["logs"]
 
 
 def summary_impl(
@@ -147,10 +320,12 @@ def summary_impl(
 
     # 2. Chat Logs
     project_key = get_project_key(resolved_path)
-    chat_logs = get_chat_logs(session_dir, project_key, start_dt, end_dt)
+    chat_logs_result = get_chat_logs(session_dir, project_key, start_dt, end_dt, include_diagnostics=True)
+    chat_logs = chat_logs_result["logs"]
 
     # 3. Git Commits
-    commits = get_git_commits(resolved_path, start_dt, end_dt)
+    commit_result = get_git_commits(resolved_path, start_dt, end_dt)
+    commits = commit_result.commits
 
     # Format Audit Log
     audit_lines = [f"# Audit Log for {resolved_path}", f"Period: {period} ({start_dt.date()} to {end_dt.date()})", ""]
@@ -208,6 +383,19 @@ def summary_impl(
             "runs": len(filtered_runs),
             "chats": len(chat_logs),
             "commits": len(commits),
+        },
+        "diagnostics": {
+            "git_commits": {
+                "status": commit_result.status,
+                "error": commit_result.error,
+            },
+            "chat_logs": {
+                "status": chat_logs_result["status"],
+                "files_seen": chat_logs_result["diagnostics"]["files_seen"],
+                "files_unreadable": chat_logs_result["diagnostics"]["files_unreadable"],
+                "parse_counts": chat_logs_result["diagnostics"]["parse_counts"],
+                "file_errors": chat_logs_result["diagnostics"]["file_errors"],
+            },
         },
     }
 

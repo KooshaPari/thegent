@@ -140,6 +140,7 @@ def _resolve_clode_token(provider: str, prefer: str, policy: str) -> str:
 # Minimax clode guidance: only when model-router-harness pairing aligns (clode + minimax/kilo + MiniMax-M2.5)
 MINIMAX_CLODE_GUIDANCE_URL = "https://platform.minimax.io/docs/coding-plan/claude-code"
 
+
 def _model_for_provider(provider: str) -> str:
     """Default model for a provider (derived from model->provider mapping)."""
     return _model_for_provider_impl(provider)
@@ -546,7 +547,18 @@ def create_provider_app(provider: str) -> typer.Typer:
 
         history_cmd(limit=limit, format=format)
 
-    _ = (main, clode_run, clode_bg, clode_ps, clode_logs, clode_status, clode_stop, clode_wait, clode_inspect, clode_history)
+    _ = (
+        main,
+        clode_run,
+        clode_bg,
+        clode_ps,
+        clode_logs,
+        clode_status,
+        clode_stop,
+        clode_wait,
+        clode_inspect,
+        clode_history,
+    )
     return provider_app
 
 

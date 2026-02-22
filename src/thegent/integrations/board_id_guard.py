@@ -81,6 +81,4 @@ def validate_no_collisions(registry: BoardIdRegistry) -> None:
     duplicates = {bid: count for bid, count in board_id_counts.items() if count > 1}
 
     if duplicates:
-        raise BoardIdCollisionError(
-            f"Found duplicate board IDs: {duplicates}"
-        )
+        raise BoardIdCollisionError(f"Found duplicate board IDs: {duplicates}")

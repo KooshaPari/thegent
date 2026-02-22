@@ -5,6 +5,7 @@ no core-to-tooling import violations in the codebase.
 
 # @trace WL-136 B90-W3-C4
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -18,9 +19,7 @@ AUDIT_SCRIPT = ROOT / "scripts" / "audit_boundary_compliance.py"
 # @trace WL-136 B90-W3-C4
 def test_audit_boundary_compliance_script_exists() -> None:
     """scripts/audit_boundary_compliance.py must exist."""
-    assert AUDIT_SCRIPT.exists(), (
-        f"audit_boundary_compliance.py not found at {AUDIT_SCRIPT}."
-    )
+    assert AUDIT_SCRIPT.exists(), f"audit_boundary_compliance.py not found at {AUDIT_SCRIPT}."
 
 
 def _load_audit_module():
@@ -38,9 +37,7 @@ def test_audit_function_returns_list() -> None:
     """audit() from audit_boundary_compliance.py must return a list."""
     mod = _load_audit_module()
     result = mod.audit()
-    assert isinstance(result, list), (
-        f"audit() returned {type(result).__name__}, expected list."
-    )
+    assert isinstance(result, list), f"audit() returned {type(result).__name__}, expected list."
 
 
 # @trace WL-136 B90-W3-C4
@@ -52,10 +49,6 @@ def test_audit_script_exits_zero_no_violations() -> None:
         text=True,
     )
     assert proc.returncode == 0, (
-        f"audit_boundary_compliance.py exited {proc.returncode}.\n"
-        f"stdout: {proc.stdout}\n"
-        f"stderr: {proc.stderr}"
+        f"audit_boundary_compliance.py exited {proc.returncode}.\nstdout: {proc.stdout}\nstderr: {proc.stderr}"
     )
-    assert "PASS" in proc.stdout, (
-        f"Expected 'PASS' in output but got: {proc.stdout}"
-    )
+    assert "PASS" in proc.stdout, f"Expected 'PASS' in output but got: {proc.stdout}"
