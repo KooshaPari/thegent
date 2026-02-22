@@ -2,10 +2,9 @@
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import Optional
 
 from thegent.agents.base import AgentRunner, RunResult
-from thegent.orchestration.tasks import TaskRole, get_role_prompt
+from thegent.orchestration.state.tasks import TaskRole, get_role_prompt
 
 
 class RoleAgentRunner(AgentRunner):

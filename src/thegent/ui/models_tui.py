@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, ClassVar
 
 import yaml
@@ -8,9 +7,18 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Header, Input, Label, ListItem, ListView, Select, Static
+from textual.widgets import Button, Footer, Header, Input, Label, ListItem, ListView, Select
 
 from thegent.config import get_settings
+
+
+class ModelRouteItem(ListItem):
+    """ListItem subclass carrying model_id and route_index metadata."""
+
+    def __init__(self, *children: Any, model_id: str, route_index: int) -> None:
+        super().__init__(*children)
+        self.model_id: str = model_id
+        self.route_index: int = route_index
 
 
 class ModelAddModal(ModalScreen[dict[str, Any]]):
@@ -173,10 +181,7 @@ class ModelsTUI(App):
         for model_id, routes in self.custom_data.items():
             for i, r in enumerate(routes):
                 label = f"{model_id} via {r['provider']} ({r['model_alias']}) - {r['backend_type']} - Prio: {r['priority']} - Cost: {r['cost_weight']}"
-                item = ListItem(Label(label))
-                # Store info on the item for deletion
-                item.model_id = model_id
-                item.route_index = i
+                item = ModelRouteItem(Label(label), model_id=model_id, route_index=i)
                 list_view.append(item)
 
     def action_add_model(self) -> None:

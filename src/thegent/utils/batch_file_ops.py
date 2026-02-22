@@ -1,14 +1,13 @@
 """
 Batch file operations for thegent.
 
-This module provides grouping for file reads and writes to reduce tool call overhead.
+This module provides grouping for file reads and writes using native Rust (thegent-fs).
 It includes transaction-like semantics for atomic batches and progress callbacks.
 """
 
 from __future__ import annotations
 
 import logging
-import shutil
 import tempfile
 import time
 from dataclasses import dataclass
@@ -20,6 +19,12 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 from thegent.utils.path_utils import ensure_dir, normalize_path
+
+# Native Rust extension (required)
+try:
+    import thegent_fs  # type: ignore[reportMissingImports]
+except ImportError:
+    raise ImportError("thegent-fs not available - install with: pip install thegent-fs")
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +80,7 @@ class BatchFileOperations:
         # Create a unique name for the backup file
         relative = str(file_path).replace("/", "_").replace("\\", "_").replace(":", "_")
         backup_path = backup_root / relative
-        shutil.copy2(file_path, backup_path)
+        thegent_fs.fs_copy_file(str(file_path), str(backup_path), True)
         return backup_path
 
     def batch_read(
@@ -162,7 +167,7 @@ class BatchFileOperations:
         """Restore one file from backup during rollback, logging failures."""
         try:
             if backup and backup.exists():
-                shutil.copy2(backup, original)
+                thegent_fs.fs_copy_file(str(backup), str(original), True)
             elif original.exists():
                 # If it didn't exist before, delete it
                 original.unlink()

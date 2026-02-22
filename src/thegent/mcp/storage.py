@@ -310,10 +310,3 @@ def get_mcp_event_store() -> McpEventStore:
     """Return the process-level McpEventStore singleton (thread-safe)."""
     return _registry.get_event_store()
 
-
-def _reset_singletons_for_testing(
-    storage: McpStorage | None = None,
-    event_store: McpEventStore | None = None,
-) -> None:
-    """Replace singletons with test instances.  **For tests only.**"""
-    _registry.reset(storage=storage, event_store=event_store)

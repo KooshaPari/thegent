@@ -3,7 +3,6 @@
 import contextlib
 import os
 import resource
-import subprocess
 from pathlib import Path
 
 

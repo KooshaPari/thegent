@@ -6,7 +6,7 @@ integrating with heliosShield bridge (WP-16003) for task coordination.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from thegent.governance.heliosShield_bridge import heliosShieldBridge
 

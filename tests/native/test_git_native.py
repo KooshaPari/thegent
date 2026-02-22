@@ -1,281 +1,249 @@
-"""Tests for GitNative fallback path (BKM-06).
+"""Tests for GitNative Rust-backed git operations (BKM-06).
 
-These tests exercise the pure-Python git subprocess fallback so they work
-regardless of whether the thegent-git Rust binary is compiled.
+Tests mock thegent_git (Rust PyO3 extension) so they run without a compiled binary.
+The GitNative class requires thegent_git; these tests verify the Python-side logic only.
 
-FR-GIT-001  @trace FR-GIT-001
+@trace FR-GIT-001
 """
 
 from __future__ import annotations
 
-import json
-import subprocess
-import unittest
+import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
-from thegent.native.git_native import (
-    GitNative,
-    _git_diff_stat_fallback,
-    _git_head_fallback,
-    _git_status_fallback,
-    _run_binary,
+# ---------------------------------------------------------------------------
+# Module-level mocks: must be injected BEFORE any thegent imports so that
+# thegent.native.__init__ (which eagerly imports JsonlParser and WatcherDaemon)
+# does not attempt to load absent Rust PyO3 extensions.
+# ---------------------------------------------------------------------------
+_RUST_EXTENSIONS = (
+    "thegent_git",
+    "thegent_jsonl",
+    "thegent_discovery",
+    "thegent_shm",
+    "thegent_crypto",
+    "thegent_zmx",
 )
+_originals: dict[str, object] = {}
+for _ext in _RUST_EXTENSIONS:
+    _originals[_ext] = sys.modules.get(_ext)
+    if _ext not in sys.modules:
+        sys.modules[_ext] = MagicMock()
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+# Configure realistic defaults for thegent_git
+_GIT_MOCK: MagicMock = sys.modules["thegent_git"]  # type: ignore[assignment]
+_GIT_MOCK.get_head_sha.return_value = "a" * 40
+_GIT_MOCK.get_branch_name.return_value = "main"
+_GIT_MOCK.get_status.return_value = {"modified": [], "untracked": [], "staged": []}
 
-REPO_ROOT = Path(__file__).parents[2]  # thegent project root (is a git repo)
+REPO_ROOT = Path(__file__).parents[2]
 REPO_PATH = str(REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
-# Unit: fallback functions against the real git repo
+# Fixtures
 # ---------------------------------------------------------------------------
 
 
-class TestGitHeadFallback:
+@pytest.fixture(scope="module", autouse=True)
+def mock_thegent_git_module() -> MagicMock:  # type: ignore[return]
+    """Return the already-injected thegent_git MagicMock so tests can
+    configure specific return values.  The module-level injection above
+    ensures the mock is in place before any thegent import during collection.
+    """
+    return _GIT_MOCK  # type: ignore[misc]
+
+
+# ---------------------------------------------------------------------------
+# Unit: GitNative.head()
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestGitNativeHead:
     """@trace FR-GIT-001"""
 
-    def test_returns_non_empty_sha(self) -> None:
-        result = _git_head_fallback(REPO_PATH)
-        assert "sha" in result
-        assert len(result["sha"]) == 40, f"Expected 40-char SHA, got: {result['sha']}"
+    def test_returns_sha_and_branch(self, mock_thegent_git_module: MagicMock) -> None:
+        mock_thegent_git_module.get_head_sha.return_value = "a" * 40
+        mock_thegent_git_module.get_branch_name.return_value = "main"
 
-    def test_branch_is_string(self) -> None:
-        result = _git_head_fallback(REPO_PATH)
-        assert "branch" in result
-        assert isinstance(result["branch"], str)
-        assert len(result["branch"]) > 0
+        from thegent.native.git_native import GitNative
 
-    def test_bad_repo_returns_empty_sha(self) -> None:
-        import tempfile
-        with tempfile.TemporaryDirectory() as tmp:
-            result = _git_head_fallback(tmp)
-        assert result["sha"] == ""
-        assert result["branch"] == "HEAD"
-
-
-class TestGitStatusFallback:
-    """@trace FR-GIT-001"""
-
-    def test_returns_required_keys(self) -> None:
-        result = _git_status_fallback(REPO_PATH)
-        assert "modified" in result
-        assert "untracked" in result
-        assert "staged" in result
-
-    def test_lists_are_lists(self) -> None:
-        result = _git_status_fallback(REPO_PATH)
-        assert isinstance(result["modified"], list)
-        assert isinstance(result["untracked"], list)
-        assert isinstance(result["staged"], list)
-
-    def test_bad_repo_returns_empty_lists(self) -> None:
-        import tempfile
-        with tempfile.TemporaryDirectory() as tmp:
-            result = _git_status_fallback(tmp)
-        assert result == {"modified": [], "untracked": [], "staged": []}
-
-    def test_porcelain_parsing_modified(self) -> None:
-        """Porcelain parser correctly identifies 'M ' as modified (unstaged)."""
-        fake_output = " M src/foo.py\nA  src/bar.py\n?? scratch.txt\n"
-        with patch("subprocess.check_output", return_value=fake_output):
-            result = _git_status_fallback(REPO_PATH)
-        assert "src/foo.py" in result["modified"]
-        assert "src/bar.py" in result["staged"]
-        assert "scratch.txt" in result["untracked"]
-
-    def test_porcelain_parsing_deleted(self) -> None:
-        """Porcelain parser correctly identifies ' D' as unstaged deletion."""
-        fake_output = " D old_file.py\n"
-        with patch("subprocess.check_output", return_value=fake_output):
-            result = _git_status_fallback(REPO_PATH)
-        assert "old_file.py" in result["modified"]
-
-
-class TestGitDiffStatFallback:
-    """@trace FR-GIT-001"""
-
-    def test_returns_required_keys(self) -> None:
-        result = _git_diff_stat_fallback(REPO_PATH)
-        assert "files_changed" in result
-        assert "insertions" in result
-        assert "deletions" in result
-
-    def test_values_are_ints(self) -> None:
-        result = _git_diff_stat_fallback(REPO_PATH)
-        assert isinstance(result["files_changed"], int)
-        assert isinstance(result["insertions"], int)
-        assert isinstance(result["deletions"], int)
-
-    def test_values_non_negative(self) -> None:
-        result = _git_diff_stat_fallback(REPO_PATH)
-        assert result["files_changed"] >= 0
-        assert result["insertions"] >= 0
-        assert result["deletions"] >= 0
-
-    def test_bad_repo_returns_zeros(self) -> None:
-        import tempfile
-        with tempfile.TemporaryDirectory() as tmp:
-            result = _git_diff_stat_fallback(tmp)
-        assert result == {"files_changed": 0, "insertions": 0, "deletions": 0}
-
-    def test_stat_line_parsing(self) -> None:
-        """Git stat summary line is parsed correctly."""
-        fake_output = (
-            " src/foo.py | 10 +++++-----\n"
-            " 1 file changed, 5 insertions(+), 5 deletions(-)\n"
-        )
-        with patch("subprocess.check_output", return_value=fake_output):
-            result = _git_diff_stat_fallback(REPO_PATH)
-        assert result["files_changed"] == 1
-        assert result["insertions"] == 5
-        assert result["deletions"] == 5
-
-    def test_stat_insertions_only(self) -> None:
-        fake_output = " 3 files changed, 42 insertions(+)\n"
-        with patch("subprocess.check_output", return_value=fake_output):
-            result = _git_diff_stat_fallback(REPO_PATH)
-        assert result["files_changed"] == 3
-        assert result["insertions"] == 42
-        assert result["deletions"] == 0
-
-
-# ---------------------------------------------------------------------------
-# Unit: _run_binary — binary discovery and delegation
-# ---------------------------------------------------------------------------
-
-
-class TestRunBinary:
-    """@trace FR-GIT-001"""
-
-    def test_returns_none_when_binary_missing(self) -> None:
-        with patch("thegent.native.git_native._find_binary", return_value=None):
-            assert _run_binary("head", REPO_PATH) is None
-
-    def test_returns_none_on_nonzero_exit(self) -> None:
-        mock_result = MagicMock()
-        mock_result.returncode = 2
-        mock_result.stderr = "not a git repository"
-        with patch("thegent.native.git_native._find_binary", return_value="/usr/bin/thegent-git"):
-            with patch("subprocess.run", return_value=mock_result):
-                assert _run_binary("head", REPO_PATH) is None
-
-    def test_returns_parsed_json_on_success(self) -> None:
-        payload = {"sha": "a" * 40, "branch": "main"}
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = json.dumps(payload) + "\n"
-        with patch("thegent.native.git_native._find_binary", return_value="/usr/bin/thegent-git"):
-            with patch("subprocess.run", return_value=mock_result):
-                result = _run_binary("head", REPO_PATH)
-        assert result == payload
-
-    def test_returns_none_on_invalid_json(self) -> None:
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = "not json"
-        with patch("thegent.native.git_native._find_binary", return_value="/usr/bin/thegent-git"):
-            with patch("subprocess.run", return_value=mock_result):
-                assert _run_binary("head", REPO_PATH) is None
-
-    def test_returns_none_on_timeout(self) -> None:
-        with patch("thegent.native.git_native._find_binary", return_value="/usr/bin/thegent-git"):
-            with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("thegent-git", 10)):
-                assert _run_binary("head", REPO_PATH) is None
-
-
-# ---------------------------------------------------------------------------
-# Integration: GitNative class — binary unavailable, all fallback
-# ---------------------------------------------------------------------------
-
-
-class TestGitNativeFallbackPath:
-    """Integration tests for GitNative when binary is unavailable. @trace FR-GIT-001"""
-
-    @pytest.fixture(autouse=True)
-    def force_fallback(self):
-        """Ensure the native binary is not found so the fallback path is exercised."""
-        with patch("thegent.native.git_native._find_binary", return_value=None):
-            yield
-
-    def test_head_returns_sha_and_branch(self) -> None:
         gn = GitNative(REPO_PATH)
         result = gn.head()
-        assert len(result["sha"]) == 40
-        assert isinstance(result["branch"], str)
 
-    def test_status_returns_correct_keys(self) -> None:
+        assert result == {"sha": "a" * 40, "branch": "main"}
+
+    def test_none_sha_becomes_empty_string(
+        self, mock_thegent_git_module: MagicMock
+    ) -> None:
+        mock_thegent_git_module.get_head_sha.return_value = None
+        mock_thegent_git_module.get_branch_name.return_value = "main"
+
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        result = gn.head()
+
+        assert result["sha"] == ""
+
+    def test_none_branch_becomes_HEAD(
+        self, mock_thegent_git_module: MagicMock
+    ) -> None:
+        mock_thegent_git_module.get_head_sha.return_value = "b" * 40
+        mock_thegent_git_module.get_branch_name.return_value = None
+
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        result = gn.head()
+
+        assert result["branch"] == "HEAD"
+
+    def test_calls_rust_with_repo_path(
+        self, mock_thegent_git_module: MagicMock
+    ) -> None:
+        mock_thegent_git_module.get_head_sha.reset_mock()
+        mock_thegent_git_module.get_branch_name.reset_mock()
+        mock_thegent_git_module.get_head_sha.return_value = "c" * 40
+        mock_thegent_git_module.get_branch_name.return_value = "feat/test"
+
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        gn.head()
+
+        mock_thegent_git_module.get_head_sha.assert_called_once_with(REPO_PATH)
+        mock_thegent_git_module.get_branch_name.assert_called_once_with(REPO_PATH)
+
+
+# ---------------------------------------------------------------------------
+# Unit: GitNative.status()
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestGitNativeStatus:
+    """@trace FR-GIT-001"""
+
+    def test_returns_status_from_rust(
+        self, mock_thegent_git_module: MagicMock
+    ) -> None:
+        expected = {"modified": ["a.py"], "untracked": ["b.py"], "staged": []}
+        mock_thegent_git_module.get_status.return_value = expected
+
+        from thegent.native.git_native import GitNative
+
         gn = GitNative(REPO_PATH)
         result = gn.status()
+
+        assert result == expected
+
+    def test_delegates_to_rust_with_path(
+        self, mock_thegent_git_module: MagicMock
+    ) -> None:
+        mock_thegent_git_module.get_status.reset_mock()
+        mock_thegent_git_module.get_status.return_value = {
+            "modified": [],
+            "untracked": [],
+            "staged": [],
+        }
+
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        gn.status()
+
+        mock_thegent_git_module.get_status.assert_called_once_with(REPO_PATH)
+
+    def test_returns_required_keys(self, mock_thegent_git_module: MagicMock) -> None:
+        mock_thegent_git_module.get_status.return_value = {
+            "modified": [],
+            "untracked": [],
+            "staged": [],
+        }
+
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        result = gn.status()
+
         for key in ("modified", "untracked", "staged"):
             assert key in result
             assert isinstance(result[key], list)
 
-    def test_diff_stat_returns_ints(self) -> None:
+
+# ---------------------------------------------------------------------------
+# Unit: GitNative.diff_stat() — stub implementation
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestGitNativeDiffStat:
+    """diff_stat is a stub (TODO in git_native.py) that returns zeros. @trace FR-GIT-001"""
+
+    def test_returns_required_keys(self, mock_thegent_git_module: MagicMock) -> None:
+        from thegent.native.git_native import GitNative
+
         gn = GitNative(REPO_PATH)
         result = gn.diff_stat()
-        for key in ("files_changed", "insertions", "deletions"):
-            assert key in result
-            assert isinstance(result[key], int)
-            assert result[key] >= 0
 
-    def test_default_path_is_current_dir(self) -> None:
+        assert "files_changed" in result
+        assert "insertions" in result
+        assert "deletions" in result
+
+    def test_values_are_non_negative_ints(
+        self, mock_thegent_git_module: MagicMock
+    ) -> None:
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        result = gn.diff_stat()
+
+        assert isinstance(result["files_changed"], int)
+        assert isinstance(result["insertions"], int)
+        assert isinstance(result["deletions"], int)
+        assert all(v >= 0 for v in result.values())
+
+    def test_stub_currently_returns_zeros(
+        self, mock_thegent_git_module: MagicMock
+    ) -> None:
+        """Stub implementation returns zeros. Update this test when diff_stat
+        is implemented in the thegent-git Rust crate."""
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        result = gn.diff_stat()
+
+        assert result == {"files_changed": 0, "insertions": 0, "deletions": 0}
+
+
+# ---------------------------------------------------------------------------
+# Unit: GitNative.__init__
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestGitNativeInit:
+    """@trace FR-GIT-001"""
+
+    def test_default_repo_path_is_dot(self, mock_thegent_git_module: MagicMock) -> None:
+        from thegent.native.git_native import GitNative
+
         gn = GitNative()
         assert gn.repo_path == "."
 
-    def test_path_as_pathlib(self) -> None:
+    def test_accepts_string_path(self, mock_thegent_git_module: MagicMock) -> None:
+        from thegent.native.git_native import GitNative
+
+        gn = GitNative(REPO_PATH)
+        assert gn.repo_path == REPO_PATH
+
+    def test_accepts_pathlib_path(self, mock_thegent_git_module: MagicMock) -> None:
+        from thegent.native.git_native import GitNative
+
         gn = GitNative(REPO_ROOT)
-        result = gn.head()
-        assert len(result["sha"]) == 40
-
-
-# ---------------------------------------------------------------------------
-# Integration: GitNative class — binary present and returns valid JSON
-# ---------------------------------------------------------------------------
-
-
-class TestGitNativeBinaryPath:
-    """Integration tests for GitNative when binary responds correctly. @trace FR-GIT-001"""
-
-    def _mock_binary_result(self, payload: dict) -> MagicMock:
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stdout = json.dumps(payload) + "\n"
-        return mock_result
-
-    def test_head_uses_binary_result(self) -> None:
-        expected = {"sha": "b" * 40, "branch": "feat/bkm-06"}
-        with patch("thegent.native.git_native._run_binary", return_value=expected):
-            gn = GitNative(REPO_PATH)
-            result = gn.head()
-        assert result == expected
-
-    def test_status_uses_binary_result(self) -> None:
-        expected = {"modified": ["a.py"], "untracked": [], "staged": ["b.py"]}
-        with patch("thegent.native.git_native._run_binary", return_value=expected):
-            gn = GitNative(REPO_PATH)
-            result = gn.status()
-        assert result == expected
-
-    def test_diff_stat_uses_binary_result(self) -> None:
-        expected = {"files_changed": 3, "insertions": 7, "deletions": 2}
-        with patch("thegent.native.git_native._run_binary", return_value=expected):
-            gn = GitNative(REPO_PATH)
-            result = gn.diff_stat()
-        assert result == expected
-
-    def test_falls_back_when_binary_fails(self) -> None:
-        """If _run_binary returns None (e.g. binary exits non-zero), GitNative uses git subprocess fallback."""
-        # Patch _run_binary directly to simulate binary failure without
-        # affecting subprocess.check_output (which the fallback uses).
-        with patch("thegent.native.git_native._run_binary", return_value=None):
-            gn = GitNative(REPO_PATH)
-            result = gn.head()
-        # Fallback returns real data from the actual git repository.
-        assert len(result["sha"]) == 40
-        assert isinstance(result["branch"], str)
+        assert gn.repo_path == str(REPO_ROOT)

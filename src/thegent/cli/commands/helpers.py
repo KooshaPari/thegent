@@ -10,6 +10,9 @@ from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
 
 
+__all__ = ["_safe_dict", "_safe_list", "_resolve_run_id", "_resolve_session_id"]
+
+
 def _safe_dict(val: object) -> dict[str, Any]:
     """Return val as dict[str, Any], or empty dict if not a dict."""
     return cast("dict[str, Any]", val) if isinstance(val, dict) else {}

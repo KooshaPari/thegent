@@ -10,7 +10,7 @@ from thegent.cli.apps.main import app
 from thegent.cli.apps.sync import app as sync_app
 from thegent.clode_main import sitback_cmd
 
-__all__ = ["app", "sync_app"]
+__all__ = ["app", "sync_app", "_install_agent_accelerators"]
 
 
 # Expose sitback on the top-level app (`thegent sitback ...`) in addition to harness-local entry points.
@@ -24,13 +24,12 @@ def roid_cmd(
     """Factory Droid-backed interactive harness."""
     typer.echo("Launching roid (Factory Droid harness)...")
     import subprocess
-    import sys
 
     args = ["thegent", "run", "--harness", "droid"]
     if prompt:
         args.append(prompt)
-    result = subprocess.run(args, check=False)
-    raise typer.Exit(result.returncode)
+    proc = subprocess.run(args, check=False)
+    raise typer.Exit(proc.returncode)
 
 
 _SHIM_SCRIPTS: dict[str, str] = {

@@ -3,20 +3,17 @@
 Real-time monitoring dashboard for workstream items, sessions, and auto-launch system.
 """
 
-import asyncio
 import logging
 from datetime import UTC, datetime
-from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any
 
-from textual import on, work
+from textual import work
 from textual.app import App, ComposeResult
-from textual.containers import Container, Grid, Horizontal, ScrollableContainer, Vertical
+from textual.containers import Horizontal, Vertical
 from textual.widgets import DataTable, Footer, Header, ProgressBar, Static, TabbedContent, TabPane
 
 from thegent.config import ThegentSettings
 from thegent.orchestration.resource.load_based_limits import compute_dynamic_limit, sample_resources
-from thegent.planning.auto_launch import AutoLaunchSystem
 from thegent.planning.workstream_db import WorkstreamDB
 
 _log = logging.getLogger(__name__)
@@ -324,11 +321,11 @@ class WorkstreamDashboard(App):
     }
     """
 
-    BINDINGS: ClassVar[tuple[tuple[str, str, str], ...]] = (
+    BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
         ("g", "garden", "Garden"),
-    )
+    ]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -415,20 +412,20 @@ class WorkstreamDashboard(App):
         gardening_table = self.query_one("#gardening-tasks", DataTable)
         gardening_table.add_columns("ID", "Title", "Status", "Priority")
 
-        self.set_timer(self.refresh_interval, self.refresh_data, repeat=True)
+        self.set_interval(self.refresh_interval, self.refresh_data)
         self.refresh_data()
 
     @work(exclusive=False)
     async def action_garden(self) -> None:
         """Run gardening cycle from dashboard."""
-        self.notify("Starting gardening cycle...", severity="info")
+        self.notify("Starting gardening cycle...", severity="information")
         try:
             from thegent.planning.auto_launch import AutoLaunchSystem
 
             launcher = AutoLaunchSystem(self.settings)
             await launcher.run_gardening_cycle()
-            self.notify("Gardening cycle completed", severity="info")
-            await self.refresh_data()
+            self.notify("Gardening cycle completed", severity="information")
+            self.refresh_data()
         except Exception as e:
             self.notify(f"Gardening failed: {e}", severity="error")
 
@@ -442,7 +439,7 @@ class WorkstreamDashboard(App):
             # Get dynamic limit
             snapshot = sample_resources()
             current_running = stats.get("running", 0)
-            dynamic_limit, _details = compute_dynamic_limit(snapshot, running_count=current_running)
+            dynamic_limit, _ = compute_dynamic_limit(snapshot)
             stats["dynamic_limit"] = dynamic_limit
 
             # Update panels
@@ -561,7 +558,7 @@ class WorkstreamDashboard(App):
         """Manual refresh action."""
         self.refresh_data()
 
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         """Quit the dashboard."""
         self.exit()
 

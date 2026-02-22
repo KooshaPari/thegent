@@ -34,7 +34,7 @@ def show_concurrency(
 
     # Get current status
     try:
-        cc = ConcurrencyController(
+        _cc = ConcurrencyController(
             session_dir=session_path,
             max_concurrency=settings.max_concurrency,
             use_load_based=settings.concurrency_load_based,
@@ -61,8 +61,6 @@ def set_concurrency(
     session_dir: str | None = typer.Option(None, "--session-dir", "-d", help="Session directory"),
 ) -> None:
     """Set concurrency limit (persistently in .env)."""
-    import os
-
     from dotenv import set_key
     from rich.console import Console
 

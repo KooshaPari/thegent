@@ -3,7 +3,6 @@ Tracks auto-launch performance and agent usage metrics.
 """
 
 import logging
-from typing import Any
 
 _log = logging.getLogger(__name__)
 

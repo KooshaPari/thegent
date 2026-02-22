@@ -5,14 +5,11 @@ settings before they are used.
 """
 
 from pathlib import Path
-from typing import Any
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from thegent.config import ThegentSettings
-from thegent.infra.enhanced_errors import ConfigurationError, create_config_error
 
 console = Console()
 

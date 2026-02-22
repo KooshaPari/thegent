@@ -1,7 +1,6 @@
 """Enhanced Python API generator (mkdocstrings-like)."""
 
 import ast
-import inspect
 from pathlib import Path
 from typing import Any
 

@@ -2,8 +2,6 @@ import json
 import logging
 import re
 import subprocess
-import urllib.parse
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -13,8 +11,6 @@ DEFAULT_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKi
 
 def run_curl(url: str, user_agent: str = DEFAULT_USER_AGENT) -> str:
     """Run curl with a specific user agent and return the output."""
-    import urllib.parse
-
     # Very simple manual quoting for problematic characters in shell/curl
     safe_url = url.replace(" ", "%20").replace("|", "%7C").replace("^", "%5E")
 
@@ -43,7 +39,7 @@ def ddg_html_search(query: str) -> list[dict[str, str]]:
     # Ideally we'd use BeautifulSoup, but let's check if it's available.
     results = []
     try:
-        from bs4 import BeautifulSoup
+        from bs4 import BeautifulSoup  # type: ignore[reportMissingImports]
 
         soup = BeautifulSoup(html, "html.parser")
         for result in soup.find_all("div", class_="result"):

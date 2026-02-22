@@ -240,7 +240,7 @@ class PaneManager:
 
         if data.get("type") == "branch":
             node = PaneNode(direction=data.get("direction"), parent=parent)
-            node.children = [self._deserialize_node(child, node) for child in data.get("children", [])]
+            node.children = [c for child in data.get("children", []) if (c := self._deserialize_node(child, node)) is not None]
             return node
 
         return None

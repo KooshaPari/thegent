@@ -8,8 +8,9 @@ import json
 import os
 import time
 from pathlib import Path
+from typing import Any
 
-LSP_SERVERS: dict[str, dict[str, any]] = {
+LSP_SERVERS: dict[str, dict[str, Any]] = {
     "python": {
         "command": "pyright-langserver",
         "args": ["--stdio"],
@@ -129,5 +130,5 @@ def ensure_shared_lsp_server(project_root: Path | None = None, language: str = "
         # Return socket path (clients will connect via stdio pipe)
         # For multi-client support, we'd need a proxy/bridge
         return str(socket_path)
-    except Exception as e:
+    except Exception:
         return None

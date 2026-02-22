@@ -196,6 +196,134 @@ def quick_ps(
     )
 
 
+@app.command("list-agents", help="List available agents (OBSERVE operation).")
+def list_agents_cmd_wrapper() -> None:
+    from thegent.cli.commands.model_cmds import list_agents_cmd
+
+    list_agents_cmd()
+
+
+@app.command("list-droids", help="List available droids.")
+def list_droids_cmd_wrapper(
+    cd: str | None = typer.Option(None, "--cd", "-d", help="Project directory"),
+) -> None:
+    from pathlib import Path
+
+    from thegent.cli.commands.model_cmds import list_droids_cmd
+
+    resolved_cd = Path(cd) if cd else None
+    list_droids_cmd(cd=resolved_cd)
+
+
+@app.command("session-contract-health-gate", help="Evaluate session contract health gate.")
+def session_health_gate_wrapper(
+    all_sessions: bool = typer.Option(False, "--all", "-a", help="Include all sessions (not just current owner)"),
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag filter"),
+    strict: bool = typer.Option(False, "--strict", help="Strict health check mode"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich|json|md"),
+    min_healthy_ratio: float = typer.Option(1.0, "--min-healthy-ratio", help="Minimum healthy ratio threshold"),
+    policy_profile: str | None = typer.Option(None, "--policy-profile", help="Health policy profile"),
+    no_worse_than_baseline: bool = typer.Option(False, "--no-worse-than-baseline", help="Check for regression"),
+    regression_tolerance: float = typer.Option(0.0, "--regression-tolerance", help="Tolerance for regression"),
+    output: str | None = typer.Option(None, "--output", help="Export to file"),
+    export_format: str | None = typer.Option(None, "--export-format", help="Export format override"),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite existing export file"),
+) -> None:
+    """Evaluate session contract health gate."""
+    from pathlib import Path
+
+    from thegent.cli.commands.session_cmds import session_contract_health_gate_cmd
+
+    output_path = Path(output) if output else None
+    session_contract_health_gate_cmd(
+        all_sessions=all_sessions,
+        owner=owner,
+        strict=strict,
+        format=format,
+        min_healthy_ratio=min_healthy_ratio,
+        policy_profile=policy_profile,
+        no_worse_than_baseline=no_worse_than_baseline,
+        regression_tolerance=regression_tolerance,
+        output=output_path,
+        export_format=export_format,
+        overwrite=overwrite,
+    )
+
+
+@app.command("session-contract-health-report", help="Generate session contract health report.")
+def session_health_report_wrapper(
+    all_sessions: bool = typer.Option(False, "--all", "-a", help="Include all sessions (not just current owner)"),
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag filter"),
+    strict: bool = typer.Option(False, "--strict", help="Strict health check mode"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich|json|md"),
+    policy_profile: str | None = typer.Option(None, "--policy-profile", help="Health policy profile"),
+    no_worse_than_baseline: bool = typer.Option(False, "--no-worse-than-baseline", help="Check for regression"),
+    regression_tolerance: float = typer.Option(0.0, "--regression-tolerance", help="Tolerance for regression"),
+    output: str | None = typer.Option(None, "--output", help="Export to file"),
+    export_format: str | None = typer.Option(None, "--export-format", help="Export format override"),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite existing export file"),
+) -> None:
+    """Generate session contract health report."""
+    from pathlib import Path
+
+    from thegent.cli.commands.session_cmds import session_contract_health_report_cmd
+
+    output_path = Path(output) if output else None
+    session_contract_health_report_cmd(
+        all_sessions=all_sessions,
+        owner=owner,
+        strict=strict,
+        format=format,
+        policy_profile=policy_profile,
+        no_worse_than_baseline=no_worse_than_baseline,
+        regression_tolerance=regression_tolerance,
+        output=output_path,
+        export_format=export_format,
+        overwrite=overwrite,
+    )
+
+
+@app.command("session-contract-health-trend", help="Session contract health trend analysis.")
+def session_health_trend_wrapper(
+    payload_type: str = typer.Option(
+        "session_contract_health_report",
+        "--payload-type",
+        help="Payload type to trend (session_contract_health_report, session_contract_health_gate)",
+    ),
+    all_sessions: bool = typer.Option(False, "--all", "-a", help="Include all sessions (not just current owner)"),
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag filter"),
+    strict: bool = typer.Option(False, "--strict", help="Strict health check mode"),
+    policy_profile: str | None = typer.Option(None, "--policy-profile", help="Health policy profile"),
+    min_healthy_ratio: float = typer.Option(1.0, "--min-healthy-ratio", help="Minimum healthy ratio threshold"),
+    top_blocked: int = typer.Option(25, "--top-blocked", help="Top N blocked rows to include"),
+    limit: int = typer.Option(20, "--limit", help="Maximum snapshots to analyze"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich|json|md"),
+    output: str | None = typer.Option(None, "--output", help="Export to file"),
+    export_format: str | None = typer.Option(None, "--export-format", help="Export format override"),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite existing export file"),
+) -> None:
+    """Analyze session contract health trends."""
+    from pathlib import Path
+
+    from thegent.cli.commands.session_cmds import session_contract_health_trend_cmd
+
+    output_path = Path(output) if output else None
+    session_contract_health_trend_cmd(
+        payload_type=payload_type,
+        all_sessions=all_sessions,
+        owner=owner,
+        strict=strict,
+        policy_profile=policy_profile,
+        min_healthy_ratio=min_healthy_ratio,
+        top_blocked=top_blocked,
+        limit=limit,
+        format=format,
+        output=output_path,
+        export_format=export_format,
+        overwrite=overwrite,
+    )
+
+
 @app.command("install", help="Compatibility install command (legacy alias).")
 def install_compat(
     target: str = typer.Option(

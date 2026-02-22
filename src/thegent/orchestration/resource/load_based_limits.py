@@ -41,12 +41,9 @@ import psutil
 
 _log = logging.getLogger(__name__)
 
-try:
-    import structlog as _structlog
+import structlog as _structlog
 
-    _slog = _structlog.get_logger(__name__)
-except ModuleNotFoundError:
-    _slog = _log  # type: ignore[assignment]
+_slog = _structlog.get_logger(__name__)
 
 
 @dataclass
@@ -76,39 +73,14 @@ class ResourceSnapshot:
 
 
 def _get_fd_usage() -> tuple[int, int]:
-    """Return (used_fds, limit). Uses psutil (num_fds on Unix, fallback to resource limit)."""
-    used = 0
-    try:
-        proc = psutil.Process()
-        used = proc.num_fds()
-    except (AttributeError, OSError, psutil.NoSuchProcess, psutil.AccessDenied):
-        # Fallback for macOS if psutil fails: use lsof to count open files
-        if platform.system() == "Darwin":
-            try:
-                # lsof -p PID -n (no DNS) -w (no warnings)
-                out = subprocess.run(
-                    ["lsof", "-p", str(os.getpid()), "-n", "-w"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                    check=False,
-                )
-                if out.returncode == 0:
-                    # Count lines and subtract header; ignore txt/cwd/root if desired,
-                    # but typically we just want a rough count.
-                    used = max(0, len(out.stdout.splitlines()) - 1)
-            except (OSError, subprocess.SubprocessError):
-                pass
+    """Return (used_fds, limit). Uses psutil exclusively — psutil is a required dependency."""
+    import resource
 
-    limit = 1024
-    try:
-        import resource
+    proc = psutil.Process()
+    used = proc.num_fds()
 
-        soft, _hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-        if soft != resource.RLIM_INFINITY:
-            limit = soft
-    except (ImportError, AttributeError, ValueError):
-        pass
+    soft, _ = resource.getrlimit(resource.RLIMIT_NOFILE)
+    limit = soft if soft != resource.RLIM_INFINITY else 1024
 
     return used, limit
 
@@ -429,7 +401,6 @@ class LimitGateConfig:
 def compute_dynamic_limit(
     snapshot: ResourceSnapshot,
     config: LimitGateConfig | None = None,
-    running_count: int = 0,
 ) -> tuple[int, dict[str, Any]]:
     """
     Compute max concurrent slots from resource gates. Resource-based scaling:

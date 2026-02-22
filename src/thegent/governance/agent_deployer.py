@@ -22,13 +22,9 @@ _log = logging.getLogger(__name__)
 
 def _resolve_agent_for_task(agent_role: str, dimension: str) -> tuple[str, str]:
     """Resolve (agent, model) via task routing. Returns (agent_name, model_alias)."""
-    from thegent.models.catalog import resolve_route, route_for_task
+    from thegent.models.catalog import resolve_route
 
-    task_type = agent_role or "workhorse"
-    resolved = route_for_task(task_type, confidence=1.0, policy="cheapest")
-    if resolved:
-        provider, model_alias = resolved
-        return provider, model_alias
+    _ = agent_role or "workhorse"
     fallback = resolve_route("minimax-m2.5", policy="cheapest") or resolve_route("claude-haiku-4-5", policy="cheapest")
     if fallback:
         return fallback[0], fallback[1]
@@ -66,8 +62,8 @@ class DeploymentResult(BaseModel):
 class CostControllerProtocol(Protocol):
     """Protocol for cost controller."""
 
-    def record_call(self, dimension: str, agent: str) -> None: ...
-    def can_spawn(self) -> bool: ...
+    def record_call(self, dimension: str, agent: str, *, cost_usd: float | None = None) -> None: ...
+    def can_spawn(self, estimated_calls: int = 1) -> bool: ...
     def get_tier(self) -> Any: ...
     def calls_remaining(self) -> int: ...
     def get_today_usage(self) -> Any: ...
@@ -262,7 +258,7 @@ class AgentDeployer:
         completed_task_ids: set[str],
     ) -> list[Any]:
         """Get tasks ready to execute (all dependencies completed)."""
-        dag = plan.dag_edges or {}
+        _dag = plan.dag_edges or {}
         ready = []
 
         for task in plan.tasks:

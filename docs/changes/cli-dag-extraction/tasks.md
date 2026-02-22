@@ -28,13 +28,13 @@ tags: [wl-120, b90, monolith-split, cli]
 
 ### Wave-3: cli.py monolith further reduction
 
-| ID | Target module | Estimated LOC | Depends on |
-|----|--------------|---------------|------------|
-| W3-A1 | `cli_session.py` — extract all `session_*_cmd` handlers | ~400 | A1 pattern stable |
-| W3-A2 | `cli_infra.py` — extract all infra/compute/sandbox cmd handlers | ~350 | A1 pattern stable |
-| W3-A3 | `cli_plan.py` — extract all plan/workstream cmd handlers | ~300 | A1 pattern stable |
-| W3-A4 | `cli_models.py` — extract all model catalog cmd handlers | ~250 | A1 pattern stable |
-| W3-A5 | `cli_governance.py` — extract governance/team/audit cmd handlers | ~200 | A1 pattern stable |
+| ID | Target module | Estimated LOC | Depends on | Status |
+|----|--------------|---------------|-----------|--------|
+| W3-A1 | `cli_session.py` — extract all `session_*_cmd` handlers | ~400 | A1 pattern stable | DONE (99 LOC final) |
+| W3-A2 | `cli_infra.py` — extract all infra/compute/sandbox cmd handlers | ~350 | A1 pattern stable | DONE |
+| W3-A3 | `cli_plan.py` — extract all plan/workstream cmd handlers | ~300 | A1 pattern stable | DONE |
+| W3-A4 | `cli_models.py` — extract all model catalog cmd handlers | ~250 | A1 pattern stable | DONE |
+| W3-A5 | `cli_governance.py` — extract governance/team/audit cmd handlers | ~200 | A1 pattern stable | DONE |
 
 ### Wave-3: impl.py monolith further reduction
 

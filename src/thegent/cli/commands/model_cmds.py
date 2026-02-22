@@ -2,12 +2,11 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
 import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import typer
 
@@ -47,6 +46,12 @@ from thegent.cli.commands.model_cmds_setup_helpers import (
     configure_providers,
     set_env_line,
 )
+def _assert_str(value: str | None) -> str:
+    """Assert yaml.dump returned str (always true when stream=None)."""
+    assert value is not None, "yaml.dump returned None unexpectedly"
+    return value
+
+
 
 # Copilot: only gpt-5-mini and haiku (no gemini-3.1-pro).
 _COPILOT_ALLOWED_MODELS: tuple[str, ...] = (
@@ -606,7 +611,7 @@ def setup_cmd(
     )
     any_configured = configure_providers(
         providers=all_providers,
-        overrides=overrides,
+        overrides=cast("dict[str, str | None]", overrides),
         wizard=wizard,
         settings=settings,
         provider_login_config=PROVIDER_LOGIN_CONFIG,
@@ -614,7 +619,7 @@ def setup_cmd(
         inject_api_key=_inject_api_key_into_cliproxy,
         run_login=run_login,
         yaml_load=yaml_load,
-        yaml_dump=yaml_dump,
+        yaml_dump=lambda data, **kw: _assert_str(yaml_dump(data, **kw)),
         prompt_key=prompt_key,
         console=console,
     )

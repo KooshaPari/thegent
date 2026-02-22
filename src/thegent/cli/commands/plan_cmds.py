@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
-import time
 from pathlib import Path
 from datetime import datetime
 from typing import Any, cast
@@ -32,8 +30,6 @@ from thegent.cli.commands._cli_shared import (
     _default_owner_tag,
     _ensure_contract_version_header,
     _ensure_dag_file,
-    _get_ready_task_ids,
-    _normalize_output_format,
     _parse_dag_full,
     _parse_dag_session,
     _parse_depends_on,
@@ -41,6 +37,7 @@ from thegent.cli.commands._cli_shared import (
     _resolve_cwd,
     _serialize_dag,
     _session_status_for,
+    _validate_agent,
     _validate_dag,
     _validate_task_id,
     console,

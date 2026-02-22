@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from .seed_detector import SeedDetector, SeedSource
 
 

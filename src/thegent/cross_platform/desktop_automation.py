@@ -3,7 +3,6 @@
 import logging
 import platform
 import subprocess
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

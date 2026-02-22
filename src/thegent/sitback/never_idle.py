@@ -13,7 +13,7 @@ import logging
 import threading
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from thegent.sitback.gardening import GardeningManager
 from thegent.sitback.watchdog import BackgroundTaskWatcher

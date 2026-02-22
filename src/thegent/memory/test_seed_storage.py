@@ -458,35 +458,6 @@ class TestSeedStorageStats:
 class TestSeedStorageExport:
     """Test exporting seeds to markdown."""
 
-    @pytest.fixture
-    def populated_storage(self, storage):
-        """Create storage with multiple seeds."""
-        seeds = [
-            Seed(
-                id="s1",
-                text="Seed 1",
-                source=SeedSource.USER_PROMPT,
-                confidence=0.9,
-                timestamp="2026-02-19T00:00:00Z",
-                tags=["tag1"],
-                status="new",
-            ),
-            Seed(
-                id="s2",
-                text="Seed 2",
-                source=SeedSource.AGENT_OUTPUT,
-                confidence=0.8,
-                timestamp="2026-02-19T00:00:01Z",
-                tags=["tag2"],
-                status="developing",
-            ),
-        ]
-
-        for seed in seeds:
-            storage.store_seed(seed)
-
-        return storage
-
     def test_export_markdown_content(self, populated_storage):
         """Test markdown export content."""
         markdown = populated_storage.export_markdown()

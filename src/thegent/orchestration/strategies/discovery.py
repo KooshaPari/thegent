@@ -24,7 +24,7 @@ class DiscoverySystem:
 
         if self.use_native:
             try:
-                from thegent_discovery import DiscoveryInterface
+                from thegent_discovery import DiscoveryInterface  # type: ignore[import-not-found]
 
                 self._interface = DiscoveryInterface()
                 _log.debug("Initialized native Discovery")

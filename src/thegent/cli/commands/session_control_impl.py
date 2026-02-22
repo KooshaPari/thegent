@@ -49,7 +49,7 @@ def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
         meta_path = _find_session_meta(settings, session_id)
     except typer.BadParameter as e:
         return {"error": str(e), "session_id": session_id}
-    p = _session_paths(meta_path.parent, session_id)
+    p = _session_paths(base=meta_path.parent, session_id=session_id)
     m = _read_session_meta(meta_path)
     pid = int(m.get("pid", 0) or 0)
     start = time.time()
@@ -69,7 +69,7 @@ def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
 
 def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
     """Send a message to a running session by queuing it in the registry (WP-9004)."""
-    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, _session_paths
+    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd
     from thegent.execution import AuditEntry, AuditRegistry, MessageEntry, MessageRegistry
 
     settings = ThegentSettings()
@@ -78,7 +78,6 @@ def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt")
     except Exception as e:
         return False, f"Session {session_id} not found: {e}"
 
-    p = _session_paths(meta_path.parent, session_id)
     msg_path = meta_path.parent / f"{session_id}.messages.jsonl"
 
     registry = MessageRegistry(msg_path)
@@ -205,7 +204,7 @@ def prune_sessions_impl(days: int | None = None) -> dict[str, Any]:
                         continue  # Don't prune running sessions
 
                     session_id = meta_file.stem
-                    p = _session_paths(scope_dir, session_id)
+                    p = _session_paths(base=scope_dir, session_id=session_id)
                     for path in p.values():
                         if path.exists():
                             path.unlink()

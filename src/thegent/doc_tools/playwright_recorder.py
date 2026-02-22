@@ -15,7 +15,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal
 
 from playwright.async_api import (  # type: ignore
     Browser,  # type: ignore
@@ -233,7 +233,11 @@ class PlaywrightRecorder:
         except Exception as e:
             logger.error(f"Error closing browser: {e}")
 
-    async def navigate(self, url: str, wait_until: str = "networkidle") -> None:
+    async def navigate(
+        self,
+        url: str,
+        wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] = "networkidle",
+    ) -> None:
         """Navigate to URL with configurable wait condition.
 
         Args:
@@ -248,7 +252,7 @@ class PlaywrightRecorder:
 
         await self.page.goto(full_url, wait_until=wait_until)
 
-    async def click(self, selector: str, button: str = "left", delay: int = 0) -> None:
+    async def click(self, selector: str, button: Literal["left", "middle", "right"] = "left", delay: int = 0) -> None:
         """Click element."""
         if not self.page:
             raise RuntimeError("Browser not launched")
@@ -580,4 +584,4 @@ async def record_simple_demo(
 
     async with PlaywrightRecorder(config) as recorder:
         result = await recorder.record_feature(feature_name, route=route, interactions=interactions)
-        return result
+    return result

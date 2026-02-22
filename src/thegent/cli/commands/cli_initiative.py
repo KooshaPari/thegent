@@ -3,7 +3,6 @@
 import logging
 import re
 from pathlib import Path
-from typing import Any, Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -73,12 +72,10 @@ def initiative_list_cmd() -> None:
 
 def initiative_audit_cmd() -> None:
     """Audit initiative progress and dependencies."""
-    from thegent.sync.audit_framework import AuditIssue, AuditResult, AuditSeverity
-
     plan_path = Path("PLAN.md")
     initiatives = parse_plan_initiatives(plan_path)
 
-    issues = []
+    _issues: list[object] = []
 
     # 1. Check for stalled initiatives
     # (Simplified logic: if status is IN_PROGRESS but no recent activity in related files)

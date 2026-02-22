@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from textual.css.styles import Styles
 
 
 @dataclass
@@ -60,21 +59,21 @@ class BaseLayout:
         """Reset to default layout."""
         self.config = LayoutConfig(name="default")
 
-    def get_styles(self) -> Styles:
-        """Get CSS styles for the current layout."""
-        styles = Styles()
+    def get_styles(self) -> dict[str, dict[str, str]]:
+        """Get CSS styles for the current layout as selector->property mapping."""
+        result: dict[str, dict[str, str]] = {}
 
         if self.config.sidebar_visible:
-            styles.set("#sidebar", width=f"{self.config.sidebar_width}%", display="block")
+            result["#sidebar"] = {"width": f"{self.config.sidebar_width}%", "display": "block"}
         else:
-            styles.set("#sidebar", display="none")
+            result["#sidebar"] = {"display": "none"}
 
         if self.config.output_maximized:
-            styles.set("#output-pane", width="100%")
+            result["#output-pane"] = {"width": "100%"}
         else:
-            styles.set("#output-pane", width=f"{100 - self.config.sidebar_width}%")
+            result["#output-pane"] = {"width": f"{100 - self.config.sidebar_width}%"}
 
-        return styles
+        return result
 
 
 class LayoutManager:

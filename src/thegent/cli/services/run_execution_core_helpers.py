@@ -4,8 +4,48 @@ These helpers accept an injected impl module namespace to preserve existing
 runtime wiring while avoiding circular imports from impl.py.
 """
 
+import hashlib
+import time
+import uuid
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
+
+import structlog
+from rich.console import Console
+
+from thegent.agents import get_fallback_agents, get_runner, resolve_agent
+from thegent.agents.resilience import is_usage_limit
+from thegent.agents.base import AgentRunner, RunResult
+from thegent.cli.commands.impl import _apply_pareto_routing, _inject_time_constraint
+from thegent.cli.commands.impl import _resolve_agent_model
+from thegent.cli.commands.observability_impl import escalate_add_impl
+from thegent.cli.services import run_session_helpers as _rsh
+from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+from thegent.config import ThegentSettings
+from thegent.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
+from thegent.maif import MAIFRunner
+from thegent.agents.registry import list_agent_names
+from thegent.output_parser import condense_stream_to_display, extract_condensed
+from thegent.cli.commands.session_meta_impl import (
+    _build_continuation_prompt,
+    _save_session_meta,
+)
+from thegent.cli.commands.impl import _spawn_with_eagain_retry
+from thegent.cli.services import run_session_helpers as _rsh_impl
+import os
+import platform
+import socket
+import subprocess
+
+_log = structlog.get_logger(__name__)
+console = Console()
+_default_owner_tag = _rsh.default_owner_tag
+_session_dir = _rsh_impl.session_dir
+_new_session_id = _rsh_impl.new_session_id
+_session_paths = _rsh_impl.session_paths
 
 if TYPE_CHECKING:
     from thegent.config_provider import ConfigProvider
@@ -52,6 +92,12 @@ def run_impl_core(
     remote: str | None = None,
     config_provider: "ConfigProvider | None" = None,
     tenant_id: str | None = None,
+    previous_session_id: str | None = None,
+    reasoning_effort: str | None = None,
+    output_schema: str | None = None,
+    image_paths: list[str] | None = None,
+    audio_files: list[str] | None = None,
+    google_grounding: bool = False,
     impl_ns: Any | None = None,
 ) -> dict[str, Any]:
     """
@@ -219,7 +265,7 @@ def run_impl_core(
         except (TypeError, ValueError):
             pass
 
-    prompt = _inject_time_constraint(prompt, effective_timeout, summary_mode=not full)
+    prompt = _inject_time_constraint(prompt, int(effective_timeout), summary_mode=not full)
 
     # _resolve_cwd() now defaults to Path.cwd() if no project indicators found
     # This removes the need for "cd &&" patterns - thegent works from any directory
@@ -236,8 +282,8 @@ def run_impl_core(
         try:
             import importlib
 
-            routing = importlib.import_module("thegent.routing")
-            TaskRouter = getattr(routing, "TaskRouter", None)
+            routing_mod = importlib.import_module("thegent.routing")
+            TaskRouter = getattr(routing_mod, "TaskRouter", None)
             if TaskRouter:
                 router = TaskRouter(settings)
                 existing_pane = router.find_active_terminal_for_path(str(cwd))
@@ -257,9 +303,9 @@ def run_impl_core(
     settings = ThegentSettings()
     if settings.input_guardrails_enabled:
         try:
-            from thegent.governance.input_guardrails import _guardrails_from_env
+            from thegent.governance.input_guardrails import guardrails_from_env
 
-            guardrails = _guardrails_from_env()
+            guardrails = guardrails_from_env()
             gr = guardrails.check(prompt=prompt, agent=agent or "", model=model, cwd=cwd)
             if not gr.passed:
                 return {
@@ -319,7 +365,7 @@ def run_impl_core(
 
             snapshot = sample_resources()
             config = LimitGateConfig.from_dict(settings.model_dump())
-            effective_limit, _details = compute_dynamic_limit(snapshot, config, 0)
+            effective_limit, _details = compute_dynamic_limit(snapshot, config)
 
             bottlenecks = cc.get_bottlenecks() if hasattr(cc, "get_bottlenecks") else {}
             bottleneck_msg = ""
@@ -409,7 +455,7 @@ def run_impl_core(
     from thegent.execution import FreshnessValidator
 
     fv = FreshnessValidator(settings.session_dir)
-    freshness_issues = fv.validate_action(run_id or "new", [registry.registry_path])
+    freshness_issues = fv.validate_action([registry.registry_path])
     if freshness_issues:
         _log.warning("Freshness issues detected: %s", freshness_issues)
         if lane == "critical":
@@ -429,7 +475,7 @@ def run_impl_core(
 
     # Task-aware execution: Load task metadata if task_id provided
     task_metadata: dict[str, Any] | None = None
-    task_spec: Any = None  # thegent.models.task_io.TaskSpec when available
+    _task_spec: Any = None  # thegent.models.task_io.TaskSpec when available
     if task_id:
         try:
             from pathlib import Path
@@ -448,7 +494,7 @@ def run_impl_core(
                 # requires 'task' so we map 'description' -> 'task' as a
                 # fallback for the common YAML-frontmatter format.
                 raw_prompt = task_metadata.get("description") or task_metadata.get("task") or prompt
-                task_spec = TaskSpec(
+                _task_spec = TaskSpec(
                     task_id=task_id,
                     input=TaskInput(
                         task=raw_prompt,
@@ -644,9 +690,6 @@ def run_impl_core(
         if circuit_breaker.is_open(agent_name):
             _log.warning("Circuit open for %s; skipping", agent_name)
             return None
-        # Import Path in enclosing scope for nested class closure
-        from pathlib import Path as _Path
-
         runner = get_runner(agent_name)
         if runner is None:
             return None
@@ -669,7 +712,7 @@ def run_impl_core(
             def run(
                 self,
                 prompt: str,
-                cwd: _Path | None,
+                cwd: Path | None,
                 mode: str,
                 timeout: int,
                 *,
@@ -678,6 +721,7 @@ def run_impl_core(
                 on_stdout: Callable[[str], None] | None = None,
                 on_stderr: Callable[[str], None] | None = None,
                 env: dict[str, str] | None = None,
+                image_paths: list[str] | None = None,
             ) -> RunResult:
                 return wrapped_run(
                     prompt=prompt,
@@ -689,6 +733,7 @@ def run_impl_core(
                     on_stdout=on_stdout,
                     on_stderr=on_stderr,
                     env=env,
+                    image_paths=image_paths,
                 )
 
         return RunnerProxy()
@@ -717,12 +762,12 @@ def run_impl_core(
     if not use_shadow and lock:
         from thegent.coordination.file_coordination import FileLeaseRegistry
 
-        registry = FileLeaseRegistry(settings.session_dir / "leases")
+        lease_registry = FileLeaseRegistry(settings.session_dir / "leases")
         for resource in lock:
             path = Path(resource)
             if not path.is_absolute():
                 path = original_cwd / path
-            token = registry.claim_lease(path, run_meta.run_id, ttl=effective_timeout)
+            token = lease_registry.claim_lease(path, run_meta.run_id, ttl=int(effective_timeout))
             if token:
                 locked_tokens.append((path, token))
                 _log.info("Acquired lease for %s", resource)
@@ -754,9 +799,9 @@ def run_impl_core(
         if locked_tokens:
             from thegent.coordination.file_coordination import FileLeaseRegistry
 
-            registry = FileLeaseRegistry(settings.session_dir / "leases")
+            lease_registry = FileLeaseRegistry(settings.session_dir / "leases")
             for path, token in locked_tokens:
-                registry.release_lease(path, run_meta.run_id, token)
+                lease_registry.release_lease(path, run_meta.run_id, token)
                 _log.info("Released lease for %s", path)
 
     status = fsm.state.status
@@ -941,8 +986,27 @@ def run_impl_core(
         docs_dir = Path("docs/dumps")
         if not docs_dir.parent.exists():
             docs_dir = settings.session_dir / "dumps"
+        is_error = bool(result.exit_code) or bool(result.timed_out)
         dumper = ConversationDumper(docs_dir=docs_dir)
-        dumper.dump_conversation(run_meta.run_id, stdout)
+        dumper.dump_conversation(
+            run_meta.run_id,
+            stdout,
+            prompt=prompt,
+            synthesis=stdout,
+            category="error" if is_error else "execution",
+            tags=["auto-dump", "session-memory"],
+            metadata={
+                "run_id": run_meta.run_id,
+                "exit_code": result.exit_code,
+                "timed_out": result.timed_out,
+            },
+        )
+        try:
+            from thegent.orchestration.state.session_scraper import SessionScraper
+
+            SessionScraper(cwd).persist_snapshot(trigger="error" if is_error else "tool_use")
+        except Exception as e:
+            _log.debug(f"Failed to persist session snapshot: {e}")
     except Exception as e:
         _log.debug(f"Failed to write conversation dump: {e}")
 
@@ -1111,8 +1175,8 @@ def bg_impl_core(
 
     owner_tag = owner or _default_owner_tag(cwd, include_process_id=True)
     base = _session_dir(settings, owner_tag)
-    session_id = _new_session_id(agent, owner_tag)
-    p = _session_paths(base, session_id)
+    session_id = _new_session_id(agent=agent, owner=owner_tag)
+    p = _session_paths(base=base, session_id=session_id)
 
     # Registry integration
     registry = RunRegistry(settings.session_dir)
@@ -1269,7 +1333,9 @@ def bg_impl_core(
         _log.info(f"Offloading background execution to remote host: {remote}")
 
         # 1. Sync files to remote
-        if not client.transfer_files(cwd, remote_path):
+        if cwd is None:
+            return {"error": "Cannot transfer files: cwd is not set", "exit_code": 1}
+        if not client.transfer_files(cwd, str(remote_path)):
             return {"error": f"Failed to sync project to remote host: {remote}", "exit_code": 1}
 
         # 2. Reconstruct command without --remote to avoid infinite loops
@@ -1327,7 +1393,10 @@ def bg_impl_core(
 
     # Phase P4: holdpty wrapper
     if settings.use_holdpty:
-        socket_path = p.get("in").with_suffix(".sock")
+        in_path = p.get("in")
+        if in_path is None:
+            raise RuntimeError("Session paths missing 'in' key")
+        socket_path = in_path.with_suffix(".sock")
         holdpty_cmd = [
             sys.executable,
             "-m",
@@ -1443,4 +1512,3 @@ def bg_impl_core(
         "log_path": str(p["stdout"]),
         "owner": owner_tag,
     }
-

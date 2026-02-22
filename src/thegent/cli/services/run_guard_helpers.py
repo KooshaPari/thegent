@@ -46,9 +46,9 @@ def enforce_input_guardrails(
         return None
 
     try:
-        from thegent.governance.input_guardrails import _guardrails_from_env
+        from thegent.governance.input_guardrails import guardrails_from_env
 
-        guardrails = _guardrails_from_env()
+        guardrails = guardrails_from_env()
         result = guardrails.check(prompt=prompt, agent=agent or "", model=model, cwd=cwd)
         if not result.passed:
             return {
@@ -137,7 +137,7 @@ def enforce_concurrency_limit(
         if not isinstance(settings_payload, dict):
             settings_payload = {}
         config = LimitGateConfig.from_dict(settings_payload)
-        effective_limit, _details = compute_dynamic_limit(snapshot, config, 0)
+        effective_limit, _ = compute_dynamic_limit(snapshot, config)
 
         bottlenecks = controller.get_bottlenecks() if hasattr(controller, "get_bottlenecks") else {}
         bottleneck_msg = ""

@@ -6,8 +6,8 @@ Reference: docs/research/UNIFIED_AGENT_REGISTRY_API.md
 
 import logging
 from datetime import datetime
-from enum import Enum, StrEnum
-from typing import Any, Optional
+from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -102,7 +102,7 @@ class Agent(BaseModel):
     collaboration_rules: CollaborationRule = Field(default_factory=CollaborationRule)
 
     # Availability
-    availability: Availability = Field(default_factory=lambda: Availability())
+    availability: Availability = Field(default_factory=lambda: Availability(schedule=None))
 
     # State
     status: AgentStatus = AgentStatus.INACTIVE

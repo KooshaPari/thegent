@@ -257,7 +257,7 @@ class ConcurrencyController:
 
             # Compute base dynamic limit (uses 5% min buffer, 15% discretionary buffer)
             config = LimitGateConfig.from_dict(settings.model_dump())
-            effective_limit, details = compute_dynamic_limit(snapshot, config, running_count)
+            effective_limit, details = compute_dynamic_limit(snapshot, config)
 
             # Log per-gate details (swarm-per-gate-logging)
             gate_values = {
@@ -266,7 +266,7 @@ class ConcurrencyController:
                 "mem": details.get("mem_slots", 999),
                 "load": details.get("load_slots", 999),
             }
-            limiting_gate = min(gate_values, key=gate_values.get)
+            limiting_gate = min(gate_values, key=lambda k: gate_values[k])
             _log.info(
                 f"concurrency admission: effective_limit={effective_limit} "
                 f"limiting_gate={limiting_gate} details={gate_values} "
@@ -459,15 +459,16 @@ class ConcurrencyController:
 
     def get_bottlenecks(self) -> dict[str, Any]:
         """Get current bottlenecks and slow points."""
-        if not hasattr(self, "bottleneck_detector"):
-            return []
+        if self.bottleneck_detector is None:
+            return {}
 
         slow_points = self.bottleneck_detector.identify_slow_points()
         from thegent.orchestration.resource.resource_management import sample_extended_resources
 
         snapshot = sample_extended_resources()
+        harness_cards = self.harness_cards if self.harness_cards is not None else {}
         contentions = self.bottleneck_detector.detect_resource_contention(
-            snapshot, self.harness_cards if hasattr(self, "harness_cards") else {}
+            snapshot, harness_cards
         )
 
         return {
@@ -544,7 +545,7 @@ class FreshnessValidator:
         age = time.time() - path.stat().st_mtime
         return age > max_age_s
 
-    def validate_action(self, run_id: str, context_files: list[Path]) -> list[str]:
+    def validate_action(self, context_files: list[Path]) -> list[str]:
         """Validate if the action is safe to perform based on context freshness."""
         issues = []
         for f in context_files:
@@ -633,7 +634,7 @@ class HandoffManager:
         pending = [s for s in snapshots if s["snapshot_id"] not in confirmed]
         return pending[:limit]
 
-    def is_handoff_enforced(self, run_id: str) -> bool:
+    def is_handoff_enforced(self) -> bool:
         """WP-9004: Check if a run is blocked by a pending handoff confirmation."""
         # Simplified: if any snapshot contains this run_id and is not confirmed
         # (This would need more state tracking in a real impl)
@@ -693,7 +694,7 @@ class LoadClassifier:
 
             snapshot = sample_resources()
             config = LimitGateConfig.from_dict(settings.model_dump())
-            effective_limit, _ = compute_dynamic_limit(snapshot, config, running)
+            effective_limit, _ = compute_dynamic_limit(snapshot, config)
 
             # Thresholds based on resource-based limit with buffers
             surge = int(effective_limit * 0.95)  # 95% = 5% minimum buffer
@@ -820,7 +821,7 @@ class ContinuityWatchdog:
                         stale.append(session_id)
         return stale
 
-    def trigger_auto_handoff(self, session_id: str, _backup_owner: str) -> bool:
+    def trigger_auto_handoff(self) -> bool:
         """Automatically trigger a handoff for a stale session (WP-5006)."""
         # Logic to update session owner in metadata
         return True
@@ -843,6 +844,8 @@ class ContinuityWatchdog:
 
             # ROB-012: Only escalate critical lane tasks that are stale
             if lane == "critical" and status == "running":
+                if session_id is None:
+                    raise RuntimeError(f"ROB-012: session entry missing session_id: {s!r}")
                 meta_path = self.session_dir / session_id / "meta.json"
                 if meta_path.exists():
                     mtime = meta_path.stat().st_mtime
@@ -852,9 +855,10 @@ class ContinuityWatchdog:
                         try:
                             from thegent.governance.escalation import EscalationPriority, EscalationQueue
 
+                            run_id = s.get("run_id") or session_id
                             esc_queue = EscalationQueue(self.session_dir)
                             esc_queue.escalate(
-                                run_id=s.get("run_id", session_id),
+                                run_id=run_id,
                                 prompt=s.get("prompt", ""),
                                 reason=f"ROB-012: Critical task stale (idle {int(idle_s)}s > {max_idle_s}s)",
                                 agent=s.get("agent", "unknown"),
@@ -923,7 +927,7 @@ class DLQManager:
                 from thegent.governance.escalation import EscalationPriority
                 from thegent.governance.escalation import EscalationQueue as GovEscalationQueue
 
-                eq = GovEscalationQueue(self.settings if hasattr(self, "settings") else self.session_dir)
+                eq = GovEscalationQueue(self.session_dir)
                 eq.escalate(
                     run_id=run_meta.run_id,
                     prompt=run_meta.prompt or "",
@@ -1409,15 +1413,8 @@ class RunRegistry:
     def __init__(self, session_dir: Path) -> None:
         self.session_dir = session_dir
         self.registry_path = session_dir / "run_registry.jsonl"
-        # OPT-019: Bloom filter for fast negative lookups (O(1) session existence checks)
-        try:
-            from pybloom_live import BloomFilter
-
-            # Bloom filter with capacity for 10k sessions, 0.1% false positive rate
-            self._bloom_filter: BloomFilter | None = BloomFilter(capacity=10000, error_rate=0.001)
-        except ImportError:
-            # Fallback if pybloom_live not available
-            self._bloom_filter = None
+        # OPT-019: Set-based fast negative lookups (O(1) session existence checks)
+        self._bloom_filter: set[str] = set()
         self._ensure_version_marker()
 
     def get_latest_session_id(self) -> str | None:
@@ -1479,11 +1476,10 @@ class RunRegistry:
         run.hash = self._calculate_hash(data)
         with self.registry_path.open("a", encoding="utf-8") as f:
             f.write(run.model_dump_json() + "\n")
-        # OPT-019: Add session_id to bloom filter for fast negative lookups
-        if self._bloom_filter is not None:
-            session_id = run.correlation_id or run.run_id
-            if session_id:
-                self._bloom_filter.add(session_id)
+        # OPT-019: Add session_id to set for fast negative lookups
+        session_id = run.correlation_id or run.run_id
+        if session_id:
+            self._bloom_filter.add(session_id)
 
     def register_end(
         self,
@@ -1580,11 +1576,10 @@ class RunRegistry:
         Returns False if session definitely doesn't exist (bloom filter negative).
         Returns True if session might exist (requires full registry scan for confirmation).
         """
-        # OPT-019: Fast negative lookup - if not in bloom filter, definitely doesn't exist
-        if self._bloom_filter is not None:
-            if session_id not in self._bloom_filter:
-                return False  # Definitely doesn't exist (bloom filter negative)
-        # If in bloom filter or bloom filter unavailable, check registry
+        # OPT-019: Fast negative lookup - if not in set, definitely doesn't exist
+        if session_id not in self._bloom_filter:
+            return False  # Definitely doesn't exist (set negative)
+        # If in set, confirm with full registry scan
         return self._session_exists_in_registry(session_id)
 
     def _session_exists_in_registry(self, session_id: str) -> bool:
@@ -1813,90 +1808,6 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
     except Exception:
         return []
 
-    def find_by_token(self, token: str) -> dict[str, Any] | None:
-        """Find the most recent run with a given idempotency token."""
-        if not self.registry_path.exists():
-            return None
-
-        best: dict[str, Any] | None = None
-        with self.registry_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                best = _process_token_match(line, token, best)
-        return best
-
-    def get_calibration_factor(self, agent: str) -> float:
-        """
-        Calculate calibration factor (avg feedback / avg confidence) for an agent.
-        G-GP-09: Checks CalibrationRegistry first for persisted factor.
-        """
-        cal = CalibrationRegistry(self.session_dir)
-        factor = cal.get_factor(agent)
-        if factor != 1.0:
-            return factor
-
-        if not self.registry_path.exists():
-            return 1.0
-
-        runs: dict[str, dict[str, Any]] = {}
-
-        with self.registry_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                _process_calibration_entry(line, agent, runs)
-
-        relevant_runs = [r for r in runs.values() if r.get("feedback_score") is not None]
-        if not relevant_runs:
-            return 1.0
-
-        avg_feedback = sum(float(r["feedback_score"]) for r in relevant_runs) / len(relevant_runs)
-        avg_confidence = sum(float(r.get("confidence") or 0.5) for r in relevant_runs) / len(relevant_runs)
-
-        if avg_confidence == 0:
-            return 1.0
-
-        # Calibration factor: if we are overconfident (conf > feedback), factor < 1.0
-        return min(2.0, max(0.5, avg_feedback / avg_confidence))
-
-    def purge_expired(
-        self,
-        default_days: int,
-        by_domain: dict[str, int],
-        dry_run: bool = True,
-    ) -> dict[str, int]:
-        """
-        WP-3006: Tiered retention purge (G-GP-07).
-        Removes records exceeding retention period. Returns counts of kept/purged.
-        """
-        if not self.registry_path.exists():
-            return {"kept": 0, "purged": 0}
-
-        now = datetime.now(UTC)
-        run_domains: dict[str, str] = {}
-        kept_lines = []
-        purged_count = 0
-
-        # First pass: map run_id to domain_tag from start events
-        with self.registry_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                rid, domain = _extract_domain_tag(line)
-                if rid and domain:
-                    run_domains[rid] = domain
-
-        # Second pass: filter records
-        with self.registry_path.open("r", encoding="utf-8") as f:
-            for line in f:
-                is_expired, checked_line = _filter_expired_record(line, now, run_domains, default_days, by_domain)
-                if is_expired:
-                    purged_count += 1
-                else:
-                    kept_lines.append(checked_line)
-
-        if not dry_run and purged_count > 0:
-            self.registry_path.write_text("".join(kept_lines), encoding="utf-8")
-
-        return {"kept": len(kept_lines), "purged": purged_count}
-
-    return None
-
 
 class CheckpointRegistry:
     """Manages persistence and retrieval of state checkpoints."""
@@ -2049,9 +1960,9 @@ class PolicyEngine:
 
         # G-GP-02: Input Guardrails (NeMo-style)
         if _as_bool(getattr(self.settings, "input_guardrails_enabled", False), False):
-            from thegent.governance.input_guardrails import _guardrails_from_env
+            from thegent.governance.input_guardrails import guardrails_from_env
 
-            rails = _guardrails_from_env()
+            rails = guardrails_from_env()
             res = rails.check(prompt=run.prompt, agent=run.agent, model=run.model, cwd=run.cwd)
             if not res.passed:
                 return "deny", f"Input guardrail '{res.rail_id}' failed: {res.reason}. {res.remediation}"
@@ -2445,7 +2356,7 @@ class CircuitBreakerRegistry:
                 f_count, ts = _parse_circuit_failure(line, target, category, now, self.window_s)
                 if f_count > 0:
                     failures += f_count
-                    if last_failure is None or ts > last_failure:
+                    if ts is not None and (last_failure is None or ts > last_failure):
                         last_failure = ts
 
         if failures >= self.threshold:

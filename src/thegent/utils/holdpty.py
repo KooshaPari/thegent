@@ -1,16 +1,13 @@
 """PTY holder for headless interactive sessions (WP-9007)."""
 
-import array
-import fcntl
 import os
 import pty
 import select
 import socket
-import struct
 import subprocess
-import termios
 import threading
 from pathlib import Path
+from typing import cast
 
 
 class PTYHolder:
@@ -70,7 +67,8 @@ class PTYHolder:
     def _handle_connection(self, conn: socket.socket):
         """Proxy between the socket and the PTY master."""
         conn.setblocking(False)
-        master_fd = self.master_fd
+        assert self.master_fd is not None, "PTY master_fd must be set before handling connections"
+        master_fd: int = cast(int, self.master_fd)
 
         while not self._stop_event.is_set():
             r, _, _ = select.select([master_fd, conn], [], [], 0.1)
@@ -99,18 +97,21 @@ class PTYHolder:
         """Mirror PTY output to the holder's stdout (so thegent logs work)."""
         import sys
 
+        assert self.master_fd is not None, "PTY master_fd must be set before mirroring stdout"
+        master_fd: int = cast(int, self.master_fd)
+
         while not self._stop_event.is_set():
             try:
                 # Use a small timeout or non-blocking read to allow checking stop_event
                 # but os.read on PTY master is usually blocking.
                 # We can use select here too.
-                r, _, _ = select.select([self.master_fd], [], [], 0.5)
+                r, _, _ = select.select([master_fd], [], [], 0.5)
                 if not r:
                     if self.proc.poll() is not None:
                         break
                     continue
 
-                data = os.read(self.master_fd, 1024)
+                data = os.read(master_fd, 1024)
                 if not data:
                     break
                 # Write to stdout so the launcher (bg_impl) captures it into the log file

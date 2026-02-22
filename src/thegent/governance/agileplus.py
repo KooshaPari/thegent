@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import signal
 from datetime import UTC, datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
@@ -192,7 +192,8 @@ class AgilePlusLoop:
             # Step 3: PLANNING
             self._state = CycleState.PLANNING
             result.state = CycleState.PLANNING
-            budget_remaining = self._cost_controller.calls_remaining()
+            _usage = self._cost_controller.get_today_usage()
+            budget_remaining = _usage.calls_limit - _usage.calls_used
             plan = self._run_planning(findings, budget_remaining)
             result.tasks_planned = len(plan.tasks) if plan else 0
 
@@ -216,8 +217,9 @@ class AgilePlusLoop:
             # Final state
             self._state = CycleState.IDLE
             result.state = CycleState.IDLE
-            result.budget_used = self._cost_controller.get_today_usage().calls_used
-            result.budget_remaining = self._cost_controller.calls_remaining()
+            _final_usage = self._cost_controller.get_today_usage()
+            result.budget_used = _final_usage.calls_used
+            result.budget_remaining = _final_usage.calls_limit - _final_usage.calls_used
 
             _log.info(
                 "Cycle %s completed: score=%.2f, tasks=%d/%d",
@@ -429,6 +431,7 @@ class AgilePlusLoop:
             tasks_count=len(plan.tasks) if plan else 0,
         )
 
+        assert self._cost_controller is not None, "_cost_controller not initialized"
         deployer = AgentDeployer(
             cost_controller=self._cost_controller,
             verification_gate=None,  # Will be used in verification step
@@ -459,6 +462,7 @@ class AgilePlusLoop:
 
         _log.info("Verifying %d task executions", len(deployment_result.executions))
 
+        assert self._scanner is not None, "_scanner not initialized"
         gate = VerificationGate(
             scanner=self._scanner,
             health_computer=self._health_computer,
@@ -490,9 +494,9 @@ class AgilePlusLoop:
                 if gate.should_reroll(task.get("attempts", 0)):
                     self._backlog.increment_attempt(task.finding_id)
                 else:
-                    self._backlog.defer(task.finding_id)
+                    self._backlog.defer(task.finding_id, reason="max_rerolls_exceeded")
             elif verification.verdict.value == "regression":
-                self._backlog.defer(task.finding_id)
+                self._backlog.defer(task.finding_id, reason="regression_detected")
 
         self._evidence_ledger.record(
             event_type="verification_completed",

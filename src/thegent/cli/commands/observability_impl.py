@@ -17,6 +17,14 @@ from thegent.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
+__all__ = [
+    "_append_health_snapshot",
+    "_hash_health_payload",
+    "_health_scope_key",
+    "_load_previous_health_snapshot",
+    "_resolve_health_policy",
+]
+
 # --- Constants ---
 
 HEALTH_PAYLOAD_SCHEMA_VERSION = "health-schema-v1"

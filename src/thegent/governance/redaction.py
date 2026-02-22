@@ -1,7 +1,7 @@
 """Automatic PII and secret redaction for support mode and compliance (WP-15003)."""
 
 import re
-from typing import Any, ClassVar
+from typing import ClassVar
 
 
 class PIIRedactor:

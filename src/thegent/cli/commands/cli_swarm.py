@@ -25,7 +25,7 @@ def swarm_usage(
     """
     from thegent.config import ThegentSettings
     from thegent.execution import ConcurrencyController
-    from thegent.orchestration.load_based_limits import get_usage_tracker
+    from thegent.orchestration.resource.load_based_limits import get_usage_tracker
 
     settings = ThegentSettings()
     session_path = Path(session_dir) if session_dir else Path(settings.session_dir)
@@ -46,7 +46,7 @@ def swarm_usage(
 
     if owner is not None:
         # Filter to requested owner; include even if unseen (zero stats).
-        from thegent.orchestration.load_based_limits import OwnerStats
+        from thegent.orchestration.resource.load_based_limits import OwnerStats
 
         all_stats = {owner: all_stats.get(owner, OwnerStats(owner=owner))}
 

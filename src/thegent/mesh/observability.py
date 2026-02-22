@@ -1,7 +1,6 @@
 """Observability and metrics for the agent mesh."""
 
 import json
-import os
 import time
 from pathlib import Path
 from typing import Any

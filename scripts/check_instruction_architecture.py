@@ -97,6 +97,11 @@ MCP_SERVER_REQUIRED_WIRING_STRINGS: tuple[str, ...] = (
 MCP_SERVER_MAX_TOP_LEVEL_FUNCTIONS = 8
 MCP_SERVER_MAX_MCP_TOOL_DECORATORS = 2
 
+WL125_IMPL_PATH = ROOT / "src" / "thegent" / "cli" / "commands" / "impl.py"
+WL125_IMPL_MAX_LINES = 1300
+WL125_TREND_METADATA_SOURCE_PATH = ROOT / "src" / "thegent" / "cli" / "services" / "run_observe_helpers.py"
+WL125_IMPL_REQUIRED_TREND_METADATA_KEY = "trend_snapshot_health"
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -514,6 +519,62 @@ def validate_mcp_server_boundary(
     return findings
 
 
+def validate_wl125_impl_boundary(
+    *,
+    impl_path: Path = WL125_IMPL_PATH,
+    max_lines: int = WL125_IMPL_MAX_LINES,
+    trend_metadata_source_path: Path = WL125_TREND_METADATA_SOURCE_PATH,
+    required_trend_metadata_key: str = WL125_IMPL_REQUIRED_TREND_METADATA_KEY,
+) -> list[Finding]:
+    findings: list[Finding] = []
+
+    if not impl_path.exists():
+        findings.append(
+            Finding(
+                kind="wl125_impl_missing",
+                path=_display_path(impl_path),
+                message="WL-125 boundary target is missing.",
+            )
+        )
+        return findings
+
+    content = impl_path.read_text(encoding="utf-8")
+    line_count = len(content.splitlines())
+    if line_count > max_lines:
+        findings.append(
+            Finding(
+                kind="wl125_impl_line_ceiling",
+                path=_display_path(impl_path),
+                message=f"impl.py line count {line_count} exceeds WL-125 ceiling {max_lines}.",
+            )
+        )
+
+    if not trend_metadata_source_path.exists():
+        findings.append(
+            Finding(
+                kind="wl125_trend_metadata_source_missing",
+                path=_display_path(trend_metadata_source_path),
+                message="WL-125 trend metadata source file is missing.",
+            )
+        )
+        return findings
+
+    trend_metadata_content = trend_metadata_source_path.read_text(encoding="utf-8")
+    if required_trend_metadata_key not in trend_metadata_content:
+        findings.append(
+            Finding(
+                kind="wl125_trend_metadata_key_missing",
+                path=_display_path(trend_metadata_source_path),
+                message=(
+                    "WL-125 trend warning metadata key missing from trend metadata source: "
+                    f"{required_trend_metadata_key}"
+                ),
+            )
+        )
+
+    return findings
+
+
 def slugify_heading(text: str) -> str:
     normalized = text.strip().lower()
     normalized = re.sub(r"[^a-z0-9\s-]", "", normalized)
@@ -629,6 +690,7 @@ def run_checks() -> list[Finding]:
     findings.extend(validate_pre_work_gate_governance())
     findings.extend(validate_orchestration_wrapper_governance())
     findings.extend(validate_mcp_server_boundary())
+    findings.extend(validate_wl125_impl_boundary())
     return findings
 
 
@@ -648,6 +710,9 @@ def build_summary(findings: list[Finding]) -> dict[str, object]:
                 str(path.relative_to(ROOT)) for path in ORCHESTRATION_WRAPPER_COMMAND_MODULES
             ],
             "mcp_server_boundary_target": str(MCP_SERVER_PATH.relative_to(ROOT)),
+            "wl125_impl_boundary_target": str(WL125_IMPL_PATH.relative_to(ROOT)),
+            "wl125_trend_metadata_source": str(WL125_TREND_METADATA_SOURCE_PATH.relative_to(ROOT)),
+            "wl125_trend_warning_metadata_key": WL125_IMPL_REQUIRED_TREND_METADATA_KEY,
         },
     }
 

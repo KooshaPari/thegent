@@ -6,11 +6,7 @@ to reduce the overhead of spawning separate LSP servers per agent session.
 
 import asyncio
 import logging
-import os
-import signal
-import subprocess
-import time
-from pathlib import Path
+import socket
 
 from thegent.config import ThegentSettings
 
@@ -81,8 +77,6 @@ class PersistentSerenaDaemon:
 
     def is_running(self) -> bool:
         """Check if the Serena daemon is running."""
-        import socket
-
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             try:
                 s.connect((self.host, self.port))

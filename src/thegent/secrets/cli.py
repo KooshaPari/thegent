@@ -1,9 +1,6 @@
 """CLI commands for managing encrypted secrets."""
 
-import json
-import os
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console

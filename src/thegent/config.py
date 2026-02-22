@@ -391,15 +391,19 @@ class ThegentSettings(BaseSettings):
         if not os.access(self.session_dir, os.W_OK):
             raise RuntimeError(f"Session directory not writable: {self.session_dir}")
 
-        # Ensure factory directories exist (warn if not, but don't fail unless critical)
+        # Ensure factory directories exist
         if not self.factory_skills_dir.exists():
-            # This is expected on first install, so we just log or ignore
-            pass
+            raise RuntimeError(
+                f"Factory skills directory does not exist: {self.factory_skills_dir}. "
+                "Run 'thegent setup' to initialize required directories."
+            )
 
         # Validate timeouts
         if self.default_timeout_claude < self.default_timeout:
-            # Mission-Critical Rigor: adjust instead of failing if possible, or warn
-            pass
+            raise RuntimeError(
+                f"default_timeout_claude ({self.default_timeout_claude}s) must be >= "
+                f"default_timeout ({self.default_timeout}s). Fix your configuration."
+            )
 
     retention_days_health: int = Field(
         default=90,

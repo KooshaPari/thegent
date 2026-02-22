@@ -1,4 +1,3 @@
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -14,7 +13,7 @@ def context_history_cmd(
     limit: int = typer.Option(50, "--limit", "-l", help="Number of entries to show"),
 ) -> None:
     """Search and display context-aware shell history."""
-    from thegent.infra.history import ContextHistory, HistoryEntry
+    from thegent.infra.history import ContextHistory
 
     history = ContextHistory()
     results = history.search(query=query, task_id=task_id, cwd=cwd, limit=limit)
@@ -48,7 +47,7 @@ def scratchpad_cmd(
     content: str | None = typer.Argument(None, help="Content to add (for 'add' action)"),
 ) -> None:
     """Manage the AI command drafting scratchpad."""
-    from thegent.tools.scratchpad import AIScratchpad
+    from thegent.skills.scratchpad import AIScratchpad
 
     scratch = AIScratchpad()
 

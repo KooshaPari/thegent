@@ -9,8 +9,8 @@ Harmonized with all thegent components: WorkStreamManager, EvidenceLedger,
 LaneModel, CostEstimator, DeferralManager, TaskRouter, TeamCoordinator, etc.
 """
 
+import json
 import logging
-import os
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
@@ -42,7 +42,7 @@ from thegent.orchestration.resource.load_based_limits import (
 from thegent.orchestration.state.session_watcher import SessionEventWatcher
 from thegent.planning.work_stream import WorkStreamManager
 from thegent.planning.workstream_db import WorkstreamDB
-from thegent.routing.task_router import TaskCategory, TaskRouter
+from thegent.routing.task_router import TaskRouter
 from thegent.security.rbac import Permission, RBACManager, Role
 from thegent.sync import SyncOrchestrator, SyncRegistry
 from thegent.team.coordination import TeamCoordinator
@@ -358,17 +358,13 @@ class AutoLaunchSystem:
         # Get next items and launch if capacity available
         import asyncio
 
-        try:
-            asyncio.run(self._try_launch_next())
-        except RuntimeError:
-            # If already running in an event loop, create a task
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                task = loop.create_task(self._try_launch_next())
-                self._background_tasks.add(task)
-                task.add_done_callback(self._background_tasks.discard)
-            else:
-                loop.run_until_complete(self._try_launch_next())
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            task = loop.create_task(self._try_launch_next())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+        else:
+            loop.run_until_complete(self._try_launch_next())
 
     def sync_database(self) -> None:
         """Sync workstream database with WORK_STREAM.md."""
@@ -388,33 +384,12 @@ class AutoLaunchSystem:
         # Use database-backed dependency resolution
         ready_items = self.db.get_ready_items()
         if not ready_items:
-            # Fallback to do_next_impl if DB is empty or out of sync
-            from thegent.cli.commands.impl import do_next_impl
-
-            result = do_next_impl(limit=10)
-            if result.get("governance_blocked"):
-                self.record_event(
-                    "governance_blocked",
-                    payload={
-                        "surface": "auto_launch.do_next_fallback",
-                        "governance_blocked": True,
-                        "remediation": result.get("remediation"),
-                        "governance_block": result.get("governance_block"),
-                    },
-                )
-                _log.warning(
-                    "Auto-launch fallback blocked by governance gate: %s",
-                    result.get("remediation", result.get("error", "unknown")),
-                )
-                return
-            if "error" in result or not result.get("next_items"):
-                return
-            ready_items = result["next_items"]
+            return
 
         # Check dynamic limit
         current_running = self.db.get_running_count()
         snapshot = sample_resources()
-        dynamic_limit, _details = compute_dynamic_limit(snapshot, running_count=current_running)
+        dynamic_limit, _ = compute_dynamic_limit(snapshot)
         available = dynamic_limit - current_running
 
         if available <= 0:
@@ -460,7 +435,7 @@ class AutoLaunchSystem:
         # Check dynamic limit
         current_running = self.db.get_running_count()
         snapshot = sample_resources()
-        dynamic_limit, _details = compute_dynamic_limit(snapshot, running_count=current_running)
+        dynamic_limit, _ = compute_dynamic_limit(snapshot)
         load_level = current_running / dynamic_limit if dynamic_limit > 0 else 0.0
 
         # Sync components before launch if needed
@@ -528,7 +503,7 @@ class AutoLaunchSystem:
             estimated_cost = self.cost_estimator.estimate(model=model, prompt_length=len(item.get("prompt", "")))
 
             # Check if should delegate to teammate
-            if self._should_delegate_to_teammate(item, str(category)):
+            if self._should_delegate_to_teammate(item):
                 teammate = self._select_teammate(str(category))
                 if teammate:
                     try:
@@ -680,13 +655,11 @@ class AutoLaunchSystem:
                 payload={"lane": lane, "model": launch_model, "estimated_cost": estimated_cost},
             )
 
-    def _should_delegate_to_teammate(self, item: dict[str, Any], category: str) -> bool:
+    def _should_delegate_to_teammate(self, item: dict[str, Any]) -> bool:
         """Decide if an item should be delegated to a teammate."""
         tags = item.get("tags")
         if isinstance(tags, str):
             try:
-                import json
-
                 tags = json.loads(tags)
             except json.JSONDecodeError:
                 tags = []
@@ -802,16 +775,13 @@ class AutoLaunchSystem:
                 if count % 30 == 0:
                     try:
                         # Use a new event loop or the current one if it exists
-                        try:
-                            loop = asyncio.get_event_loop()
-                            if loop.is_running():
-                                task = loop.create_task(self.run_gardening_cycle())
-                                self._background_tasks.add(task)
-                                task.add_done_callback(self._background_tasks.discard)
-                            else:
-                                loop.run_until_complete(self.run_gardening_cycle())
-                        except RuntimeError:
-                            asyncio.run(self.run_gardening_cycle())
+                        loop = asyncio.get_event_loop()
+                        if loop.is_running():
+                            task = loop.create_task(self.run_gardening_cycle())
+                            self._background_tasks.add(task)
+                            task.add_done_callback(self._background_tasks.discard)
+                        else:
+                            loop.run_until_complete(self.run_gardening_cycle())
                         _log.debug("Periodic gardening completed")
                     except Exception as e:
                         _log.warning(f"Periodic gardening failed: {e}")

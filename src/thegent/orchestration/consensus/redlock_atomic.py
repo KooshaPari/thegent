@@ -19,7 +19,6 @@ from __future__ import annotations
 import contextlib
 import importlib
 import logging
-import os
 import threading
 import time
 import uuid

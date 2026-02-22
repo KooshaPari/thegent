@@ -1,7 +1,7 @@
 """Governance escalation queue with DLQ integration."""
 
 import logging
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)

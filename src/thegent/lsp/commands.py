@@ -1,10 +1,12 @@
 """LSP command utilities for listing and managing servers."""
 
+from typing import Any
+
 from thegent.lsp.auto_install import LSP_INSTALL_COMMANDS, check_command_available
 from thegent.lsp.headless_manager import LSP_SERVERS
 
 
-def list_all_lsp_servers() -> dict[str, dict[str, any]]:
+def list_all_lsp_servers() -> dict[str, dict[str, Any]]:
     """List all available LSP servers with installation status.
 
     Returns:

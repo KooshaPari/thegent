@@ -151,12 +151,9 @@ def crew_execute_cmd(
                 task.add_dependency(dep_id)
             crew.add_task(task)
 
-        # Create agent map for resolution
-        agent_map = {agent.id: agent.role for agent in crew.agents}
-
         # Create harness executor
         agent_exec = create_agent_executor(
-            cwd=Path(cwd) if cwd else None, mode=mode, timeout=timeout, model=model, agent_map=agent_map
+            cwd=Path(cwd) if cwd else None, mode=mode, timeout=timeout, model=model
         )
 
         # Setup executor

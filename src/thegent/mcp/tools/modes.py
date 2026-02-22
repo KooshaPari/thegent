@@ -37,16 +37,6 @@ async def _ctx_info(ctx: Any, message: str) -> None:
     _log.info(message)
 
 
-async def _ctx_warning(ctx: Any, message: str) -> None:
-    """Send a warning log message via FastMCP Context if available, else Python logging."""
-    if ctx is not None:
-        try:
-            await ctx.warning(message)
-            return
-        except Exception:
-            pass
-    _log.warning(message)
-
 
 def _get_project_root(cd: Path | None) -> Path | None:
     """Resolve project root from cwd.
@@ -726,6 +716,11 @@ def register_modes(mcp: "FastMCP") -> None:
             meta={"execution_time_ms": elapsed},
         )
 
+    _ = (thegent_plan_status, thegent_plan_get, thegent_plan_save, thegent_plan_approve, thegent_plan_create,
+         thegent_protocol_list, thegent_protocol_get, thegent_discussion_finalize, thegent_research_finalize,
+         thegent_validation_report, thegent_dag_ready, thegent_dag_run, thegent_dag_sync, thegent_dag_recover,
+         thegent_team_create, thegent_team_list, thegent_team_delegate, thegent_discussion_start,
+         thegent_discussion_add_question)
     _log.info(
         "registered mode tools: plan_*, protocol_*, discussion_*, research_finalize, validation_report, dag_ready/run/sync, team_*"
     )

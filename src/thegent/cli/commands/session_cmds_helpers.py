@@ -135,8 +135,7 @@ def follow_log_stream(*, target: Path, pid: int, timeout: int, poll_seconds: flo
                 f"[yellow]Operation timed out: logs follow exceeded {timeout}s. "
                 "Session may have exited; check logs separately.[/yellow]"
             )
-            if msg := get_exit_message(EXIT_TIMEOUT):
-                pass
+            get_exit_message(EXIT_TIMEOUT)
             raise typer.Exit(EXIT_TIMEOUT)
 
         if not target.exists():
@@ -162,8 +161,7 @@ def follow_log_stream(*, target: Path, pid: int, timeout: int, poll_seconds: flo
             console.print(
                 f"[yellow]Operation timed out: logs follow exceeded {timeout}s. Session may still be running.[/yellow]"
             )
-            if msg := get_exit_message(EXIT_TIMEOUT):
-                pass
+            get_exit_message(EXIT_TIMEOUT)
             raise typer.Exit(EXIT_TIMEOUT)
 
         time.sleep(poll_seconds)

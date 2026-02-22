@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Default paths (match harvest-idea-seeds.sh)
 CLAUDE_HISTORY = Path(os.environ.get("CLAUDE_HISTORY", Path("~/.claude/history.jsonl").expanduser()))
@@ -53,25 +53,6 @@ class SessionInfo:
     last_ts: str | None
     prompt_count: int
     path: str | None = None
-
-
-def _resolve_project_root(dir_path: str | Path | None) -> str | None:
-    if not dir_path or not Path(dir_path).exists():
-        return None
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            cwd=str(dir_path),
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
-    except Exception:
-        pass
-    return str(dir_path) if dir_path else None
 
 
 def _parse_line(line: str) -> dict[str, Any] | None:
@@ -170,6 +151,8 @@ def _read_file_safe(f: Path) -> str | None:
 
 def _cursor_project_path(folder: str) -> str | None:
     """Resolve Cursor project folder to workspace path."""
+    if CURSOR_PROJECTS is None:
+        return None
     proj_dir = CURSOR_PROJECTS / folder
     if not proj_dir.exists():
         return None
@@ -570,7 +553,7 @@ def explore_session(session_id: str, source: str | None = None) -> tuple[Session
     sessions = list_sessions(source=source)
     session = next((s for s in sessions if s.session_id == session_id), None)
     if not session:
-        return None, []
+        return None
     entries = explore_prompts(source=session.source, session_id=session_id, limit=2000)
     return session, entries
 

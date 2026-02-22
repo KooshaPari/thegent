@@ -22,8 +22,6 @@ def isolation_share_run(
     role: str | None = typer.Option(None, "--role", help="L1 Role (e.g. frontend_lead)"),
 ):
     """Run a command shared across tenants using CLI-Share debouncing."""
-    from pathlib import Path
-
     from thegent.isolation.sub_user_provider import SubUserIsolationProvider
 
     provider = SubUserIsolationProvider(enable_l1_nesting=bool(role))

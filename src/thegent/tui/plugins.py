@@ -9,7 +9,7 @@ import contextlib
 import importlib
 import importlib.util
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -29,7 +29,7 @@ class PluginInfo:
     author: str
     description: str
     entry_point: str
-    dependencies: list[str] = None
+    dependencies: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {

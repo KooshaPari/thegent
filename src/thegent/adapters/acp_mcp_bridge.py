@@ -23,7 +23,7 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, cast
 
-from thegent.adapters.acp_client import ACPClient, ACPClientError, ACPResult, ACPServerUnreachableError
+from thegent.adapters.acp_client import ACPClient, ACPClientError, ACPResult
 
 if TYPE_CHECKING:
     from fastmcp import FastMCP

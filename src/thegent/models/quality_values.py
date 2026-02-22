@@ -60,7 +60,7 @@ def _default_benchmarks_path() -> Path:
 def _resolve_benchmarks_path(settings: ThegentSettings | None) -> Path:
     """Resolve benchmarks path from config or default."""
     if settings and getattr(settings, "quality_index_benchmarks_path", None):
-        p = settings.quality_index_benchmarks_path
+        p = getattr(settings, "quality_index_benchmarks_path")
         if p and p.exists():
             return p
     return _default_benchmarks_path()

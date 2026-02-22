@@ -133,4 +133,4 @@ class TeamCoordinator:
                 if t["id"] == task_id and t["status"] == "completed":
                     return t
             time.sleep(5)
-        return None
+        raise TimeoutError(f"Task {task_id} did not complete within {timeout}s")

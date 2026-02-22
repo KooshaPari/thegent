@@ -35,7 +35,7 @@ def _serialize_result(result: Any) -> dict[str, Any]:
     return {"value": str(result)}
 
 
-def _dispatch_post_agent_run_hook(
+def dispatch_post_agent_run_hook(
     result: Any,
     run_id: str | None,
     session_id: str | None,

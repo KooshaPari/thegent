@@ -8,6 +8,7 @@ Use this checklist once per week to keep LOC/refactor drift visible across activ
 - [ ] Confirm the command exits zero (or explicitly triage non-zero alerts).
 - [ ] Verify `var/wl137/history.json` has a new run entry.
 - [ ] Verify a report exists at `docs/reports/WL-137-weekly-YYYY-MM-DD.md`.
+- [ ] Verify trend artifacts exist at `docs/reports/artifacts/wl120-wl136-loc-trend-YYYY-MM-DD.{json,md}`.
 
 ## Review
 

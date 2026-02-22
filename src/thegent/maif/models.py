@@ -6,7 +6,7 @@ which capture and cryptographically sign agent actions for replay and auditing.
 
 import hashlib
 import json
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator

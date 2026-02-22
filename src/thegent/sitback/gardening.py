@@ -106,7 +106,7 @@ class GardeningManager:
         Looks for common test output files.
         """
         # Check for pytest failure files, test logs, etc.
-        indicators = []
+        _indicators = []
 
         # Look for .pytest_cache, test output, etc.
         for _pattern in ["**/.pytest_cache/", "**/test-results/", "**/__pycache__/"]:
@@ -265,9 +265,9 @@ class GardeningManager:
         Returns:
             Dict with shadow_removed count and success flag.
         """
-        from thegent.orchestration.pruning.prune import _prune_stale_shadow_and_logs
+        from thegent.orchestration.pruning.prune import prune_stale_shadow_and_logs
 
-        shadow_removed, logs_removed = _prune_stale_shadow_and_logs(
+        shadow_removed, logs_removed = prune_stale_shadow_and_logs(
             dry_run=False,
             shadow_max_age_hours=7 * 24,  # 7 days
             quality_log_max_age_days=7,

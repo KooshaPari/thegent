@@ -149,7 +149,7 @@ class ProjectRegistry:
         foreign_keys_cursor.close()
         self._init_schema()
         self._conn.commit()
-        log.debug("project_registry.init", db_path=str(self._db_path))
+        log.debug("project_registry.init db_path=%s", str(self._db_path))
 
     def _init_schema(self) -> None:
         """Initialize or migrate schema to the current version."""
@@ -196,7 +196,7 @@ class ProjectRegistry:
             (record.id, record.name, record.path, record.created_at, json.dumps(record.metadata)),
         )
         self._conn.commit()
-        log.info("project_registry.register_project", project_id=record.id, name=name)
+        log.info("project_registry.register_project project_id=%s name=%s", record.id, name)
         return record
 
     def get_project(self, project_id: str) -> ProjectRecord | None:
@@ -293,10 +293,10 @@ class ProjectRegistry:
         )
         self._conn.commit()
         log.info(
-            "project_registry.create_episode",
-            episode_id=record.id,
-            project_id=project_id,
-            agent_id=agent_id,
+            "project_registry.create_episode episode_id=%s project_id=%s agent_id=%s",
+            record.id,
+            project_id,
+            agent_id,
         )
         return record
 
@@ -335,9 +335,9 @@ class ProjectRegistry:
         self._conn.commit()
 
         log.info(
-            "project_registry.update_episode",
-            episode_id=episode_id,
-            status=new_status,
+            "project_registry.update_episode episode_id=%s status=%s",
+            episode_id,
+            new_status,
         )
 
         return EpisodeRecord(

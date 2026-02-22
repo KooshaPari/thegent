@@ -4,7 +4,6 @@ Removes stale .git/index.lock files to unblock nix, direnv, and agents.
 Uses mtime + lsof for safe removal (per GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM_USER_PLAN).
 """
 
-import os
 import platform
 import subprocess
 from collections.abc import Iterator

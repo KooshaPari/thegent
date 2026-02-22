@@ -38,11 +38,7 @@ __all__ += [
 
 from pathlib import Path
 
-try:
-    import importlib.resources as pkg_resources
-except ImportError:
-    # Fallback for Python < 3.9
-    import importlib_resources as pkg_resources
+import importlib.resources as pkg_resources
 
 
 def get_resource_path(relative_path: str) -> Path:

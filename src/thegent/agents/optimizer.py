@@ -61,7 +61,6 @@ class PromptOptimizer:
         # 2. In a real DSPy-like implementation, this would use a 'Teacher' agent
         # to rephrase the prompt with more explicit constraints or CoT steps.
 
-        optimization_notes = "Added explicit multi-step reasoning constraints to improve accuracy."
         optimized_prompt = (
             current_prompt
             + "\n\n[Optimizer Update: Always reason step-by-step and verify each tool call result before proceeding.]"

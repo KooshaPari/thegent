@@ -64,6 +64,10 @@ Use this table when choosing harness commands (`clode`, `dex`, `roid`) and clipr
 
 | Alias | Typical model ID | Primary provider route(s) | Login command |
 |-------|------------------|---------------------------|---------------|
+| `clode` (default, no model arg) | `gemini-3-flash` | `gemini` flash path | `thegent cliproxy login gemini` |
+| `dex` (default, no model arg) | `gemini-3-flash` | `gemini` flash path | `thegent cliproxy login gemini` |
+| `dex` (explicit model alias) | `gpt-5.3-codex` | `codex` (non-spark) | `thegent cliproxy login codex` |
+| `high` / `xhigh` | `gpt-5.3-codex-high` / `gpt-5.3-codex-xhigh` | `codex` (available on `clode` + `dex`) | `thegent cliproxy login codex` |
 | `haiku` | `claude-haiku-4.5` | `claude`, `antigravity`, `codex`, `kiro` | `thegent cliproxy login claude` |
 | `opus` | `claude-opus-4.6` | `claude`, `antigravity`, `kiro` | `thegent cliproxy login claude` |
 | `sonnet` | `anthropic/claude-sonnet-4-20250514` | `openrouter` | `thegent cliproxy login claude` (or `openrouter` route config) |
@@ -160,11 +164,24 @@ thegent run "Output only 1" -M claude-haiku-4.5 -R prefer_direct
 ### Interactive
 
 ```bash
+# clode default (no alias) => flash path
+clode
+
+# dex default (no alias) => flash path
+dex
+
 # Claude harness (model alias)
 clode haiku
 
 # Codex harness (model alias)
 dex flash
+
+# clode run dex => codex non-spark (gpt-5.3-codex)
+clode run dex "ship it"
+
+# codex tier aliases available on both clode and dex
+clode high
+dex xhigh
 
 # Droid harness via alias
 roid flash

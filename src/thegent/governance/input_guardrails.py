@@ -120,6 +120,6 @@ def guardrails_from_settings(settings: ThegentSettings | None = None) -> InputGu
     )
 
 
-def _guardrails_from_env() -> InputGuardrails:
+def guardrails_from_env() -> InputGuardrails:
     """Deprecated: Use guardrails_from_settings() instead. Kept for backwards compatibility."""
     return guardrails_from_settings()

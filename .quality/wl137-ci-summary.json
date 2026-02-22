@@ -1,0 +1,117 @@
+{
+  "timestamp_utc": "2026-02-21T14:04:45.374735+00:00",
+  "targets": {
+    "thegent": {
+      "total_code": 495441,
+      "runtime_loc": {
+        "python": 332615,
+        "rust": 30598,
+        "zig": 161,
+        "mojo": 6,
+        "typescript_js": 19042,
+        "other": 31600
+      },
+      "top_files": [
+        {
+          "path": "tests/test_e2e_cli.py",
+          "lines": 5278
+        },
+        {
+          "path": "crates/thegent-hooks/src/main.rs",
+          "lines": 3999
+        },
+        {
+          "path": "hooks/hook-dispatcher/src/main.rs",
+          "lines": 2645
+        },
+        {
+          "path": "hooks/governance-gates.sh",
+          "lines": 2247
+        },
+        {
+          "path": "src/thegent/execution.py",
+          "lines": 2158
+        },
+        {
+          "path": "tests/test_unit_cli_impl_coverage_d.py",
+          "lines": 2108
+        },
+        {
+          "path": "tests/test_unit_cli_coverage_c.py",
+          "lines": 2037
+        },
+        {
+          "path": "src/thegent/doctor.py",
+          "lines": 1815
+        },
+        {
+          "path": "tests/test_unit_cli_commands_a.py",
+          "lines": 1794
+        },
+        {
+          "path": "tests/test_unit_cli_commands_b.py",
+          "lines": 1594
+        }
+      ],
+      "drift": {
+        "total_code_delta": 292,
+        "files_over_high_delta": 0,
+        "files_over_critical_delta": 0
+      }
+    },
+    "trace": {
+      "total_code": 3308,
+      "runtime_loc": {
+        "python": 0,
+        "rust": 0,
+        "zig": 0,
+        "mojo": 0,
+        "typescript_js": 0,
+        "other": 2663
+      },
+      "top_files": [
+        {
+          "path": "scripts/quality/quality-gate.sh",
+          "lines": 591
+        },
+        {
+          "path": "scripts/agent-orchestrator.sh",
+          "lines": 403
+        },
+        {
+          "path": "hooks/suppress-isolated-classes.sh",
+          "lines": 101
+        },
+        {
+          "path": "hooks/suppress-direct-http.sh",
+          "lines": 93
+        },
+        {
+          "path": "hooks/suppress-print-statements.sh",
+          "lines": 91
+        },
+        {
+          "path": "hooks/suppress-hardcoded-strings.sh",
+          "lines": 66
+        },
+        {
+          "path": "hooks/suppress-custom-retry.sh",
+          "lines": 63
+        },
+        {
+          "path": "hooks/suppress-v2-files.sh",
+          "lines": 41
+        },
+        {
+          "path": ".claude/hooks/pre-validate-bash.sh",
+          "lines": 16
+        }
+      ],
+      "drift": {
+        "total_code_delta": 0,
+        "files_over_high_delta": 0,
+        "files_over_critical_delta": 0
+      }
+    }
+  }
+}

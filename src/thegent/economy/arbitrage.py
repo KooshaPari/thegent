@@ -3,8 +3,7 @@ Optimizes task execution cost by finding the cheapest available agent service gl
 """
 
 import logging
-
-from thegent.discovery.market import AgentMarket, TaskBid
+from typing import Any
 
 _log = logging.getLogger(__name__)
 
@@ -12,10 +11,10 @@ _log = logging.getLogger(__name__)
 class ArbitrageEngine:
     """Finds and exploits price differences across regional agent markets."""
 
-    def __init__(self, market: AgentMarket) -> None:
+    def __init__(self, market: Any) -> None:
         self.market = market
 
-    def find_best_value(self, task_id: str, capabilities: list[str], max_budget: float) -> TaskBid | None:
+    def find_best_value(self, task_id: str, capabilities: list[str], max_budget: float) -> Any | None:
         """WP-35001: Run an arbitrage cycle to find the highest value provider."""
         _log.info("Starting compute arbitrage for task: %s", task_id)
 

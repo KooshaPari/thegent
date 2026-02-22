@@ -57,7 +57,7 @@ def migrate_work_stream_entry_to_task(
     # Try to extract more details from WORK_STREAM.md if available
     if work_stream_path and work_stream_path.exists():
         try:
-            text = work_stream_path.read_text(encoding="utf-8")
+            _text = work_stream_path.read_text(encoding="utf-8")
             # Look for task details in the document
             # This is a simple extraction - can be enhanced
             task["description"] = title  # Default to title

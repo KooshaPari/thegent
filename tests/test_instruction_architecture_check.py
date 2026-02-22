@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import importlib.util
 import sys
 from pathlib import Path
@@ -19,6 +20,11 @@ def _load_module():
     return module
 
 
+def _top_level_function_defs(path: Path) -> set[str]:
+    module_ast = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    return {node.name for node in module_ast.body if isinstance(node, ast.FunctionDef)}
+
+
 def test_instruction_doc_map_contains_links() -> None:
     mod = _load_module()
     links = mod.extract_instruction_doc_map_links((ROOT / "CLAUDE.md").read_text(encoding="utf-8"))
@@ -33,6 +39,7 @@ def test_instruction_architecture_contracts_are_clean() -> None:
     findings.extend(mod.validate_pre_work_gate_governance())
     findings.extend(mod.validate_orchestration_wrapper_governance())
     findings.extend(mod.validate_mcp_server_boundary())
+    findings.extend(mod.validate_wl125_impl_boundary())
     assert findings == []
     summary = mod.build_summary(findings)
     assert summary["ok"] is True
@@ -41,6 +48,9 @@ def test_instruction_architecture_contracts_are_clean() -> None:
     assert "pre_work_gate_command_modules" in checked
     assert "orchestration_wrapper_command_modules" in checked
     assert "mcp_server_boundary_target" in checked
+    assert "wl125_impl_boundary_target" in checked
+    assert "wl125_trend_metadata_source" in checked
+    assert checked["wl125_trend_warning_metadata_key"] == "trend_snapshot_health"
 
 
 def test_pre_work_gate_command_module_flags_literal_duplication(tmp_path: Path) -> None:
@@ -230,3 +240,67 @@ def test_mcp_server_boundary_flags_missing_wiring(tmp_path: Path) -> None:
         max_mcp_tool_decorators=100,
     )
     assert any(item.kind == "mcp_server_wiring_missing" for item in findings)
+
+
+def test_wl125_impl_boundary_flags_line_ceiling(tmp_path: Path) -> None:
+    mod = _load_module()
+    impl_path = tmp_path / "impl.py"
+    impl_path.write_text("\n".join(["x = 1"] * 12), encoding="utf-8")
+
+    findings = mod.validate_wl125_impl_boundary(
+        impl_path=impl_path,
+        max_lines=10,
+        required_trend_metadata_key="trend_snapshot_health",
+    )
+    assert any(item.kind == "wl125_impl_line_ceiling" for item in findings)
+
+
+def test_wl125_impl_boundary_flags_missing_trend_warning_metadata_key(tmp_path: Path) -> None:
+    mod = _load_module()
+    impl_path = tmp_path / "impl.py"
+    impl_path.write_text("def noop():\n    return 'ok'\n", encoding="utf-8")
+    trend_metadata_source = tmp_path / "run_observe_helpers.py"
+    trend_metadata_source.write_text("def metadata():\n    return {'x': 1}\n", encoding="utf-8")
+
+    findings = mod.validate_wl125_impl_boundary(
+        impl_path=impl_path,
+        max_lines=100,
+        trend_metadata_source_path=trend_metadata_source,
+        required_trend_metadata_key="trend_snapshot_health",
+    )
+    assert any(item.kind == "wl125_trend_metadata_key_missing" for item in findings)
+
+
+def test_wl125_impl_defines_required_governance_wrapper_function_defs() -> None:
+    mod = _load_module()
+    impl_path = ROOT / "src" / "thegent" / "cli" / "commands" / "impl.py"
+
+    defined_functions = _top_level_function_defs(impl_path)
+    required_wrappers = set(mod.PRE_WORK_GATE_WRAPPER_CONTRACTS) | set(mod.ORCHESTRATION_WRAPPER_CONTRACTS)
+    missing = sorted(required_wrappers - defined_functions)
+    assert missing == []
+
+
+def test_wl125_architecture_check_still_expects_impl_wrapper_contracts() -> None:
+    mod = _load_module()
+    impl_path = ROOT / "src" / "thegent" / "cli" / "commands" / "impl.py"
+
+    assert impl_path in mod.PRE_WORK_GATE_COMMAND_MODULES
+    assert impl_path in mod.ORCHESTRATION_WRAPPER_COMMAND_MODULES
+    assert set(mod.PRE_WORK_GATE_WRAPPER_CONTRACTS) == {
+        "_pre_work_gate_defaults",
+        "_pre_work_gate_thresholds",
+        "_evidence_age_minutes",
+        "_pre_work_governance_block_payload",
+        "_enforce_pre_work_hard_gate",
+    }
+    assert set(mod.ORCHESTRATION_WRAPPER_CONTRACTS) == {
+        "do_next_impl",
+        "wait_next_impl",
+        "spawn_next_impl",
+        "work_stream_claim_impl",
+        "work_stream_complete_impl",
+        "incorporate_impl",
+        "_validate_task_and_record_errors",
+        "continuity_snapshot_impl",
+    }

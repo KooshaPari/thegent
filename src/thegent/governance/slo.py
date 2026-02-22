@@ -1,7 +1,7 @@
 """Service Level Objective (SLO) regulation and monitoring (WP-5001)."""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

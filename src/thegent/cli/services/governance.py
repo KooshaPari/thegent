@@ -99,7 +99,7 @@ def _build_check_registry(policy: VetterPolicy) -> dict[str, Any]:
             name="quality_score",
             judge_model=judge_model,
             pass_threshold=float(policy.thresholds.get("quality_score", 0.75)),
-            min_criterion_score=float(policy.thresholds.get("min_criterion_score", 1.0)),
+            min_criterion_score=int(policy.thresholds.get("min_criterion_score", 1)),
         )
 
     return checks

@@ -1,6 +1,7 @@
 """Codex-backed interactive agent CLI (dex). Model-only routing (no provider filter)."""
 
 import os
+from typing import Any
 import shutil
 import subprocess
 import sys
@@ -21,7 +22,7 @@ from thegent.infra.power import wrap_with_caffeinate
 
 
 class LazyConsole:
-    def __getattr__(self, name) -> object:
+    def __getattr__(self, name: str) -> Any:
         from rich.console import Console
 
         global console

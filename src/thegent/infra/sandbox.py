@@ -6,10 +6,9 @@ Ensures near-native performance with strict memory and capability isolation.
 from __future__ import annotations
 
 import logging
-import os
 import time
 from contextlib import suppress
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -79,7 +78,7 @@ class WasmSandbox:
     def is_available(self) -> bool:
         """Return True if the Extism runtime is importable."""
         try:
-            import extism  # noqa: F401
+            import extism  # noqa: F401  # pyright: ignore[reportUnusedImport]
 
             return True
         except ImportError:

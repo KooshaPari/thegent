@@ -154,7 +154,7 @@ class ResourceMonitor:
                 fd_count = process.num_fds()
             else:
                 # Fallback: count open files and connections
-                fd_count = len(process.open_files()) + len(process.connections())
+                fd_count = len(process.open_files()) + len(process.net_connections())
         except (psutil.AccessDenied, AttributeError, psutil.NoSuchProcess):
             fd_count = 0
 
@@ -166,17 +166,8 @@ class ResourceMonitor:
 
         fd_usage_percent = (fd_count / fd_limit * 100) if fd_limit > 0 else 0
 
-        # Process count - use fast monitor if available
-        try:
-            from thegent.infra.fast_process_monitor import get_fast_monitor
-
-            process_count = get_fast_monitor().get_process_count()
-        except (ImportError, Exception):
-            # Fallback to psutil
-            try:
-                process_count = len(psutil.pids())
-            except Exception:
-                process_count = 0
+        # Process count via psutil
+        process_count = len(psutil.pids())
 
         # Memory using psutil (RSS)
         try:
@@ -219,7 +210,7 @@ class ResourceMonitor:
                 "cpu_percent": proc.cpu_percent(interval=0.1),
                 "num_threads": proc.num_threads(),
                 "open_files": len(proc.open_files()),
-                "connections": len(proc.connections()),
+                "connections": len(proc.net_connections()),
             }
 
             # Add num_fds if available (Linux, macOS)

@@ -156,15 +156,15 @@ class CompositorApp(App):
         with Horizontal(id="main"):
             with Container(id="output-pane"):
                 yield Static("Agent Output", classes="pane-header")
-                yield TimelineWidget(id="timeline-widget")
+                yield TimelineWidget()
                 yield Static("Waiting for agent...\n", id="output-content", classes="agent-output")
-                yield InteractiveInputWidget(on_submit=self._handle_prompt_submit, id="interactive-input-widget")
+                yield InteractiveInputWidget(on_submit=self._handle_prompt_submit)
 
             if self._sidebar_visible:
                 with Container(id="sidebar"):
                     yield Static("Status", classes="pane-header")
                     yield Static(id="status-content", classes="status-content")
-                    yield TableWidget(id="task-table-widget")
+                    yield TableWidget()
 
         yield Footer()
 
@@ -180,12 +180,12 @@ class CompositorApp(App):
         """Initialize dynamic widget contents for WL-017 defaults."""
         with self.app.batch_update():
             try:
-                timeline = self.query_one("#timeline-widget", TimelineWidget)
+                timeline = self.query_one(TimelineWidget)
                 timeline.add_event("Compositor started.")
             except QueryError:
                 pass
             try:
-                table = self.query_one("#task-table-widget", TableWidget)
+                table = self.query_one(TableWidget)
                 table.set_columns(["ID", "State", "Owner"])
                 table.set_rows(
                     [
@@ -200,11 +200,11 @@ class CompositorApp(App):
         """Handle prompt submissions from the interactive input widget."""
         try:
             output = self.query_one("#output-content", Static)
-            output.update(f"{output.renderable}\n> {prompt}")
+            output.update(f"{output.content}\n> {prompt}")
         except QueryError:
             pass
         try:
-            timeline = self.query_one("#timeline-widget", TimelineWidget)
+            timeline = self.query_one(TimelineWidget)
             timeline.add_event(f"Prompt submitted ({len(prompt)} chars)")
         except QueryError:
             pass
@@ -318,7 +318,7 @@ class CompositorApp(App):
         """Append text to output pane."""
         try:
             output = self.query_one("#output-content", Static)
-            current = str(output.renderable) if hasattr(output, "renderable") else str(output)
+            current = str(output.content)
             output.update(current + text)
         except QueryError:
             pass
@@ -328,8 +328,8 @@ class CompositorApp(App):
         self.context.agent_name = agent
         self.update_title()
         try:
-            status = self.query_one("#status-content", Static)
-            status.update(
+            status_widget = self.query_one("#status-content", Static)
+            status_widget.update(
                 f"Session: {self.context.session_id or 'N/A'}\n"
                 f"Agent: {agent}\n"
                 f"CWD: {self.context.cwd}\n"
@@ -366,7 +366,8 @@ async def run_tui(
             await pilot.pause()
             return 0
 
-    return await app.run_async()
+    result = await app.run_async()
+    return result if isinstance(result, int) else 0
 
 
 if __name__ == "__main__":

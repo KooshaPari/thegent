@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Call-count budget management for AgilePlus autonomous governance.
 
 Tracks daily agent trigger counts against a configurable budget (default 20/day)
@@ -10,7 +8,7 @@ are loaded from contracts/health-targets.json.
 import json
 import logging
 from datetime import UTC, datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field

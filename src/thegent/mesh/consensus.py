@@ -2,7 +2,6 @@
 
 import enum
 import json
-import random
 import time
 from pathlib import Path
 

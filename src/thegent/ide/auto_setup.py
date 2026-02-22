@@ -3,13 +3,14 @@
 import logging
 import shutil
 from pathlib import Path
+from typing import Any
 
 from thegent.lsp.jetbrains_cli import JetBrainsCLI
 
 logger = logging.getLogger(__name__)
 
 
-def auto_setup_jetbrains_integration(auto_install: bool = True) -> dict[str, any]:
+def auto_setup_jetbrains_integration(auto_install: bool = True) -> dict[str, Any]:
     """Auto-setup JetBrains integration (detect IDE, verify CLI access, auto-install if needed).
 
     Args:
@@ -76,7 +77,7 @@ def auto_setup_jetbrains_integration(auto_install: bool = True) -> dict[str, any
     }
 
 
-def auto_setup_serena_jetbrains_plugin(auto_install: bool = True) -> dict[str, any]:
+def auto_setup_serena_jetbrains_plugin(auto_install: bool = True) -> dict[str, Any]:
     """Auto-detect and configure Serena JetBrains plugin.
 
     Args:
@@ -139,7 +140,7 @@ def auto_setup_serena_jetbrains_plugin(auto_install: bool = True) -> dict[str, a
     }
 
 
-def auto_setup_ghostty_shell_integration(auto_configure: bool = True) -> dict[str, any]:
+def auto_setup_ghostty_shell_integration(auto_configure: bool = True) -> dict[str, Any]:
     """Auto-setup Ghostty shell integration.
 
     Args:
@@ -222,7 +223,7 @@ fi
     }
 
 
-def auto_setup_all(auto_configure: bool = True, auto_install: bool = True) -> dict[str, any]:
+def auto_setup_all(auto_configure: bool = True, auto_install: bool = True) -> dict[str, Any]:
     """Auto-setup all IDE integrations.
 
     Args:

@@ -62,4 +62,3 @@ __all__ = [
     "merge_files",
 ]
 
-from thegent.mesh.helios_bridge import HeliosShieldBridge

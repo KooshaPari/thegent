@@ -132,7 +132,10 @@ def generate_signing_key() -> tuple[rsa.RSAPrivateKey, rsa.RSAPublicKey]:
 def load_private_key(path: Path, password: bytes | None = None) -> rsa.RSAPrivateKey:
     """Load private key from PEM file."""
     with open(path, "rb") as key_file:
-        return serialization.load_pem_private_key(key_file.read(), password=password)
+        pk = serialization.load_pem_private_key(key_file.read(), password=password)
+    if not isinstance(pk, rsa.RSAPrivateKey):
+        raise ValueError("Only RSA keys are supported for MAIF artifacts")
+    return pk
 
 
 def save_private_key(private_key: rsa.RSAPrivateKey, path: Path, password: bytes | None = None) -> None:
@@ -164,24 +167,6 @@ def _sign_artifact_dict(payload: dict[str, Any], timestamp: str, agent_id: str, 
 
     return base64.b64encode(signature).decode()
 
-
-def _verify_artifact_dict(artifact: dict[str, Any], public_key: rsa.RSAPublicKey) -> bool:
-    """Verify raw artifact dict signature (MAIF internal)."""
-    try:
-        signature = base64.b64decode(artifact["signature"])
-
-        canonical = json.dumps(
-            {"payload": artifact["payload"], "timestamp": artifact["timestamp"], "agent_id": artifact["agent_id"]},
-            sort_keys=True,
-        )
-
-        message_hash = hashlib.sha256(canonical.encode()).digest()
-
-        public_key.verify(signature, message_hash, padding.PKCS1v15(), hashes.SHA256())
-        return True
-    except Exception as e:
-        _log.debug("MAIF verification failed: %s", e)
-        return False
 
 
 # ---------------------------------------------------------------------------
@@ -273,7 +258,7 @@ class MAIFHook:
         artifact_id = str(uuid.uuid4())
         timestamp = datetime.now(UTC).isoformat()
 
-        signature = sign_artifact(payload, timestamp, self.agent_id, self.private_key)
+        signature = _sign_artifact_dict(payload, timestamp, self.agent_id, self.private_key)
 
         artifact = {
             "artifact_id": artifact_id,

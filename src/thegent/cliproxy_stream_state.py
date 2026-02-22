@@ -6,7 +6,7 @@ from typing import Any
 _log = logging.getLogger(__name__)
 
 
-class _ResponsesStreamState:
+class ResponsesStreamState:
     """Stateful transformer: Chat Completions SSE -> Responses API v2 event sequence.
 
     Codex 0.104.0 requires this exact 8-event sequence:

@@ -13,12 +13,10 @@ Architecture:
 
 import asyncio
 import logging
-import os
 import platform
-import subprocess
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Callable
@@ -135,74 +133,6 @@ class VirtualDesktopProvider(ABC):
         """Get window bounds (x, y, width, height)."""
 
 
-class VirtualDesktopManager:
-    """Manages virtual desktop sessions for agents."""
-
-    def __init__(self) -> None:
-        self._desktops: dict[str, VirtualDesktopProvider] = {}
-        self._sessions: dict[str, DesktopSession] = {}
-        self._provider = self._get_provider()
-        self._lock = asyncio.Lock()
-        logger.info(f"Initialized VirtualDesktopManager with provider: {self._provider.name}")
-
-    def _get_provider(self) -> VirtualDesktopProvider:
-        """Get the appropriate provider for this platform."""
-        system = platform.system()
-
-        if system == "Windows":
-            from thegent.automation.providers.windows_virtual_desktop import WindowsVirtualDesktopProvider
-            return WindowsVirtualDesktopProvider()
-
-        if system == "Linux":
-            from thegent.automation.providers.linux_virtual_desktop import LinuxVirtualDesktopProvider
-            return LinuxVirtualDesktopProvider()
-
-        if system == "Darwin":
-            from thegent.automation.providers.macos_virtual_desktop import MacOSVirtualDesktopProvider
-            return MacOSVirtualDesktopProvider()
-
-        raise NotImplementedError(f"No virtual desktop provider for {system}")
-
-    async def create_session(self, agent_id: str, config: DesktopConfig | None = None) -> DesktopSession:
-        """Create a new virtual desktop session for an agent."""
-        if config is None:
-            config = DesktopConfig(agent_id=agent_id)
-
-        async with self._lock:
-            if agent_id in self._sessions:
-                raise ValueError(f"Session already exists for agent {agent_id}")
-
-            desktop_id = await self._provider.create_desktop(config)
-            session = DesktopSession(
-                agent_id=agent_id,
-                desktop_id=desktop_id,
-                provider=self._provider,
-                config=config,
-            )
-            self._sessions[agent_id] = session
-            self._desktops[desktop_id] = self._provider
-
-            logger.info(f"Created virtual desktop {desktop_id} for agent {agent_id}")
-            return session
-
-    async def get_session(self, agent_id: str) -> DesktopSession | None:
-        """Get an existing session."""
-        return self._sessions.get(agent_id)
-
-    async def destroy_session(self, agent_id: str) -> None:
-        """Destroy a session."""
-        async with self._lock:
-            session = self._sessions.pop(agent_id, None)
-            if session:
-                await session.destroy()
-                await self._provider.destroy_desktop(session.desktop_id)
-                logger.info(f"Destroyed session for agent {agent_id}")
-
-    async def list_sessions(self) -> list[DesktopSession]:
-        """List all active sessions."""
-        return list(self._sessions.values())
-
-
 class DesktopSession:
     """Represents a single virtual desktop session."""
 
@@ -309,6 +239,74 @@ class DesktopSession:
     @property
     def last_frame(self) -> ScreenFrame | None:
         return self._last_frame
+
+
+class VirtualDesktopManager:
+    """Manages virtual desktop sessions for agents."""
+
+    def __init__(self) -> None:
+        self._desktops: dict[str, VirtualDesktopProvider] = {}
+        self._sessions: dict[str, DesktopSession] = {}
+        self._provider = self._get_provider()
+        self._lock = asyncio.Lock()
+        logger.info(f"Initialized VirtualDesktopManager with provider: {self._provider.name}")
+
+    def _get_provider(self) -> VirtualDesktopProvider:
+        """Get the appropriate provider for this platform."""
+        system = platform.system()
+
+        if system == "Windows":
+            from thegent.automation.providers.windows_virtual_desktop import WindowsVirtualDesktopProvider
+            return WindowsVirtualDesktopProvider()
+
+        if system == "Linux":
+            from thegent.automation.providers.linux_virtual_desktop import LinuxVirtualDesktopProvider
+            return LinuxVirtualDesktopProvider()
+
+        if system == "Darwin":
+            from thegent.automation.providers.macos_virtual_desktop import MacOSVirtualDesktopProvider
+            return MacOSVirtualDesktopProvider()
+
+        raise NotImplementedError(f"No virtual desktop provider for {system}")
+
+    async def create_session(self, agent_id: str, config: DesktopConfig | None = None) -> DesktopSession:
+        """Create a new virtual desktop session for an agent."""
+        if config is None:
+            config = DesktopConfig(agent_id=agent_id)
+
+        async with self._lock:
+            if agent_id in self._sessions:
+                raise ValueError(f"Session already exists for agent {agent_id}")
+
+            desktop_id = await self._provider.create_desktop(config)
+            session = DesktopSession(
+                agent_id=agent_id,
+                desktop_id=desktop_id,
+                provider=self._provider,
+                config=config,
+            )
+            self._sessions[agent_id] = session
+            self._desktops[desktop_id] = self._provider
+
+            logger.info(f"Created virtual desktop {desktop_id} for agent {agent_id}")
+            return session
+
+    async def get_session(self, agent_id: str) -> DesktopSession | None:
+        """Get an existing session."""
+        return self._sessions.get(agent_id)
+
+    async def destroy_session(self, agent_id: str) -> None:
+        """Destroy a session."""
+        async with self._lock:
+            session = self._sessions.pop(agent_id, None)
+            if session:
+                await session.destroy()
+                await self._provider.destroy_desktop(session.desktop_id)
+                logger.info(f"Destroyed session for agent {agent_id}")
+
+    async def list_sessions(self) -> list[DesktopSession]:
+        """List all active sessions."""
+        return list(self._sessions.values())
 
 
 # Global manager instance

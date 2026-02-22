@@ -4,142 +4,14 @@ from __future__ import annotations
 
 import logging
 import os
-import re
 import time
 from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
-from thegent.infra import run_subprocess_optimized
 
 _log = logging.getLogger(__name__)
 
-
-def _scan_ide_agents() -> list[dict[str, Any]]:
-    """Scan for IDE-managed agent processes (Cursor, Claude CLI, Codex). WP-11XXX."""
-    import subprocess
-
-    from thegent.cli.commands.impl import _default_owner_tag
-
-    rows: list[dict[str, Any]] = []
-
-    agent_patterns = {
-        "cursor": {
-            "proc_pattern": ["cursor-agent", "cursor-shell"],
-            "agent_label": "cursor",
-            "session_id_re": r"--resume=([a-f0-9-]+)",
-            "model_re": r"--model\s+(\S+)",
-        },
-        "claude": {
-            "proc_pattern": ["claude", "claude-code"],
-            "agent_label": "claude",
-            "session_id_re": r"--resume\s+([a-f0-9-]+)",
-            "model_re": r"--model\s+(\S+)",
-        },
-        "codex": {
-            "proc_pattern": ["codex"],
-            "agent_label": "codex",
-            "session_id_re": r"--model\s+(\S+)",
-            "model_re": r"--model\s+(\S+)",
-        },
-    }
-
-    try:
-        result = run_subprocess_optimized(
-            ["ps", "-eo", "pid,ppid,rss,command"],
-            capture_output=True,
-            check=False,
-        )
-        stdout_text = (
-            result.stdout
-            if isinstance(result.stdout, str)
-            else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
-        )
-        lines = stdout_text.strip().splitlines()[1:] if stdout_text else []
-    except Exception:
-        return rows
-
-    for line in lines:
-        if not line.strip():
-            continue
-        parts = line.split(maxsplit=3)
-        if len(parts) < 4:
-            continue
-
-        pid_str, ppid_str, rss_str, cmd = parts[0], parts[1], parts[2], " ".join(parts[3:])
-        pid = int(pid_str)
-
-        if pid == os.getpid() or (ppid_str and int(ppid_str) == os.getpid()):
-            continue
-
-        for patterns in agent_patterns.values():
-            matched = False
-            for proc_pattern in patterns["proc_pattern"]:
-                if proc_pattern in cmd and ("--resume" in cmd or "--model" in cmd or "--dangerously" in cmd):
-                    matched = True
-                    break
-
-            if not matched:
-                continue
-
-            session_id = f"ide-{pid}"
-            session_id_re = patterns.get("session_id_re")
-            if session_id_re:
-                match = re.search(session_id_re, cmd)
-                if match:
-                    session_id = match.group(1)[:20]
-
-            model = "unknown"
-            model_re = patterns.get("model_re")
-            if model_re:
-                match = re.search(model_re, cmd)
-                if match:
-                    model = match.group(1)
-            else:
-                for token in cmd.split():
-                    if token.startswith("--model="):
-                        model = token.split("=")[1].strip("\"'")
-                        break
-
-            owner = "system"
-            try:
-                cwd_result = run_subprocess_optimized(
-                    ["lsof", "-p", str(pid), "-Fn"],
-                    capture_output=True,
-                    check=False,
-                )
-                stdout_text = (
-                    cwd_result.stdout
-                    if isinstance(cwd_result.stdout, str)
-                    else (cwd_result.stdout.decode("utf-8", errors="replace") if cwd_result.stdout else "")
-                )
-                if stdout_text:
-                    for lsof_line in stdout_text.splitlines():
-                        if lsof_line.startswith("n") and lsof_line.find("/") >= 1:
-                            try:
-                                owner = _default_owner_tag()
-                            except Exception:
-                                pass
-                            break
-            except Exception:
-                pass
-
-            prompt_preview = cmd[:40] + "..." if len(cmd) > 40 else cmd
-
-            rows.append(
-                {
-                    "id": session_id,
-                    "agent": patterns["agent_label"],
-                    "owner": owner,
-                    "pid": pid,
-                    "status": "running",
-                    "started_at_utc": "",
-                    "prompt_preview": prompt_preview,
-                    "source": "ide",
-                }
-            )
-
-    return rows
 
 
 def lock_resource_impl(resource_path: str, agent_id: str, ttl: int = 60, cd: Path | None = None) -> dict[str, Any]:
@@ -261,15 +133,12 @@ def concurrency_set_impl(limit: int, load_based: bool = True) -> None:
 
 def monitor_impl(interval: float = 2.0) -> None:
     """Monitor sessions and plan progress in real-time (WP-8001)."""
-    from rich.console import Console
     from rich.layout import Layout
     from rich.live import Live
     from rich.panel import Panel
     from rich.table import Table
 
     from thegent.cli.commands.impl import do_next_impl, ps_impl as _ps_impl
-
-    console = Console()
 
     def generate_monitor_layout() -> Layout:
         layout = Layout()
@@ -332,7 +201,7 @@ def isolation_check_impl(mode: str = "sub-user") -> None:
     table.add_column("Status")
     table.add_column("Details")
 
-    from thegent.infra.shm_manager import HAS_SHM
+    from thegent.infra.worker_node import HAS_SHM
 
     shm_status = "\u2705 ACTIVE" if HAS_SHM else "\u274c INACTIVE (Rust extension missing)"
     table.add_row("SHM Bridge (Rust)", shm_status, "Low-latency IPC")
@@ -342,7 +211,7 @@ def isolation_check_impl(mode: str = "sub-user") -> None:
 
     from thegent.isolation.vfs import VfsAdapter
 
-    vfs = VfsAdapter()
+    _vfs = VfsAdapter()
     vfs_status = "\u2705 READY"
     table.add_row("VFS (OverlayFS/Reflink)", vfs_status, f"Platform: {platform.system()}")
 
@@ -416,14 +285,14 @@ def orchestrate_run_impl(
 
     event_queue = SubAgentEventQueue()
     capability_index = CapabilityIndex()
-    dispatcher = SubAgentDispatcher(
+    _dispatcher = SubAgentDispatcher(
         capability_index=capability_index,
         event_queue=event_queue,
     )
 
     from thegent.cli.commands.impl import run_impl
 
-    executor = PlangentExecutor(dispatcher=dispatcher, fail_fast=fail_fast)
+    executor = PlangentExecutor(fail_fast=fail_fast)
 
     def _sync_runner(node: Any) -> str:
         result = run_impl(
@@ -433,7 +302,7 @@ def orchestrate_run_impl(
             full=True,
             live=False,
         )
-        return str(result.status)
+        return str(result.get("status", ""))
 
     executed_plan = executor.execute(plan, _sync_runner)
 

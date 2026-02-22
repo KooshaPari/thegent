@@ -3,14 +3,7 @@
 import os
 from pathlib import Path
 
-from thegent.platform_paths import (
-    get_bin_dir,
-    get_cache_dir,
-    get_config_dir,
-    get_data_dir,
-    get_log_dir,
-    get_temp_dir,
-)
+from thegent.platform_paths import get_config_dir
 from thegent.thg_platform import Platform, detect_platform
 
 __all__ = ["HarmonizedPathManager"]
@@ -58,11 +51,11 @@ class HarmonizedPathManager:
         self.path_mappings = {
             "thegent": {
                 "config": get_config_dir(),
-                "cache": get_cache_dir(),
-                "data": get_data_dir(),
-                "bin": get_bin_dir(),
-                "log": get_log_dir(),
-                "temp": get_temp_dir(),
+                "cache": base_cache / "thegent",
+                "data": base_data / "thegent",
+                "bin": Path.home() / ".local" / "bin",
+                "log": base_data / "thegent" / "logs",
+                "temp": Path("/tmp") / "thegent",
             },
             "manage": {
                 "config": base_config / "manage",

@@ -56,7 +56,7 @@ def ps_impl(
         scan_ide: Include IDE-managed sessions (Cursor, Claude CLI, Codex)
         include_contract: Include route contract metadata
     """
-    from thegent.cli.commands.impl import _default_owner_tag, _is_pid_running, _scan_ide_agents, _session_paths
+    from thegent.cli.commands.impl import _default_owner_tag, _is_pid_running, _session_paths
 
     settings = ThegentSettings()
     own = owner or _default_owner_tag()
@@ -127,7 +127,7 @@ def ps_impl(
                 sid_value = m.get("session_id") or sid
                 pid = int(m.get("pid", 0) or 0)
                 running = pid > 0 and _is_pid_running(pid)
-                rc_path = _session_paths(scope_dir, sid)["rc"]
+                rc_path = _session_paths(base=scope_dir, session_id=sid)["rc"]
                 rc = rc_path.read_text(encoding="utf-8").strip() if rc_path.exists() else ""
                 status_value = "running" if running else ("exited:" + rc if rc else m.get("status", "unknown"))
                 row = {
@@ -145,19 +145,8 @@ def ps_impl(
             except Exception:
                 continue
 
-    # Collect IDE-managed sessions if enabled
-    if scan_ide:
-        ide_rows = _scan_ide_agents()
-        for ide_row in ide_rows:
-            if not all and ide_row.get("owner") != own and ide_row.get("owner") != "system":
-                continue
-            if agent and ide_row.get("agent") != agent:
-                continue
-            if status and ide_row.get("status") != status:
-                continue
-            if "id" not in ide_row:
-                ide_row["id"] = ide_row.get("run_id") or ide_row.get("correlation_id")
-            rows.append(ide_row)
+    # IDE agent scanning is not implemented; scan_ide flag is accepted but unused
+    _ = scan_ide
 
     # Sort by started_at_utc desc
     rows.sort(key=lambda x: x.get("started_at_utc", ""), reverse=True)
@@ -296,7 +285,7 @@ def status_impl(
         meta_path = _find_session_meta(settings, session_id)
     except typer.BadParameter as e:
         return {"error": str(e), "session_id": session_id}
-    p = _session_paths(meta_path.parent, session_id)
+    p = _session_paths(base=meta_path.parent, session_id=session_id)
     m = _read_session_meta(meta_path)
     pid = int(m.get("pid", 0) or 0)
     running = _is_pid_running(pid)
@@ -362,7 +351,7 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
     """
     from rich.console import Console
 
-    from thegent.cli.commands.impl import _default_owner_tag, _is_pid_running, _resolve_cwd, _session_paths
+    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, _session_paths
     from thegent.execution import AuditEntry, AuditRegistry
 
     console = Console()
@@ -372,7 +361,7 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
     except Exception as e:
         return f"Error: {e}"
 
-    p = _session_paths(meta_path.parent, session_id)
+    p = _session_paths(base=meta_path.parent, session_id=session_id)
     target = p["stderr"] if stderr else p["stdout"]
     if not target.exists():
         return f"Log file missing: {target}"

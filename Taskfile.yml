@@ -412,12 +412,14 @@ tasks:
     desc: "Run smoke harness contract checks"
     cmds:
       - task: quality:harness-model-contracts
+      - task: quality:providers:cheapest-smoke
 
   quality:harness-contracts:quick:
     desc: "Run quick harness contract checks"
     cmds:
       - task: quality:harness-contracts:list-check
       - task: quality:harness-model-contracts
+      - task: quality:providers:cheapest-smoke
 
   quality:harness-contracts:
     desc: "Run canonical harness contract chain"
@@ -425,6 +427,12 @@ tasks:
       - task: quality:harness-contracts:list-check
       - task: quality:sitback-contracts
       - task: quality:harness-model-contracts
+      - task: quality:providers:cheapest-smoke
+
+  quality:providers:cheapest-smoke:
+    desc: "Provider smoke matrix with CLIProxy preflight (cheapest-like model per provider)"
+    cmds:
+      - uv run python scripts/cliproxy_provider_smoke.py
 
   quality:runtime-contracts:zig-abi:
     desc: "Run Zig ABI production contract gates (WL-132)."
@@ -449,6 +457,8 @@ tasks:
     cmds:
       - task: shims:guard
       - task: shims:probe
+      - task: quality:rust:links-conflicts
+      - task: quality:rust:pyo3-drift
       - task: quality:max-lines
       - task: quality:core-boundary:strict
       - task: quality:deprecated-aliases:strict
@@ -482,10 +492,39 @@ tasks:
     cmds:
       - uv run python scripts/emit_wl135_slo_stub.py --metric cli_help_p95_ms --value 0 --threshold 250 --lane fast-lane --jsonl var/metrics/slo_stub_metrics.jsonl
 
+  artifacts:wl120-wl136-loc-trend:
+    desc: "Regenerate WL-120/WL-136 LOC trend artifacts from git day-end snapshots."
+    cmds:
+      - |
+        DATE_UTC=$(date -u +%F)
+        uv run python scripts/generate_wl120_wl136_loc_trend.py \
+          --json-out "docs/reports/artifacts/wl120-wl136-loc-trend-${DATE_UTC}.json" \
+          --md-out "docs/reports/artifacts/wl120-wl136-loc-trend-${DATE_UTC}.md"
+
+  diag:wl137:
+    desc: "Run WL-137 weekly diagnosis and refresh WL-120/WL-136 trend artifacts."
+    cmds:
+      - task: artifacts:wl120-wl136-loc-trend
+      - |
+        DATE_UTC=$(date -u +%F)
+        uv run python scripts/wl137_weekly_diagnosis.py \
+          --report "docs/reports/WL-137-weekly-${DATE_UTC}.md" \
+          --ci-summary .quality/wl137-ci-summary.json
+
   quality:max-lines:
     desc: "Run max-lines gate via canonical developer task path (WL-122)."
     cmds:
       - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} sh scripts/max-lines-gate.sh
+
+  quality:rust:pyo3-drift:
+    desc: "Fail if Rust crates declare drifted pyo3 versions (includes optional dependencies)."
+    cmds:
+      - uv run python scripts/check_rust_pyo3_version_drift.py
+
+  quality:rust:links-conflicts:
+    desc: "Fail if Rust workspace resolves multiple packages for the same native links value."
+    cmds:
+      - uv run python scripts/check_rust_links_conflicts.py
 
   quality:core-boundary:
     desc: "Advisory check for thegent-core import boundary (WL-121)."

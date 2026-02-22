@@ -11,7 +11,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .terminal_pane import TerminalPane
+    from .widgets.terminal_pane import TerminalPane
 
 
 class SplitDirection(Enum):
@@ -113,7 +113,7 @@ class PaneManager:
         split_node = PaneNode(
             id=str(uuid.uuid4())[:8],
             left=old_pane_node,
-            right=PaneNode(id=new_pane.id if hasattr(new_pane, "id") else str(uuid.uuid4())[:8], pane=new_pane),
+            right=PaneNode(id=str(new_pane.id) if hasattr(new_pane, "id") else str(uuid.uuid4())[:8], pane=new_pane),
             direction=direction_enum,
         )
 

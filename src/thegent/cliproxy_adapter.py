@@ -35,24 +35,16 @@ from thegent.cliproxy_header_utils import (
     sanitize_outbound_request_headers,
 )
 from thegent.cliproxy_models_transform import (
-    _OPENROUTER_PROXY_MODELS,
-    _compute_models_etag,
-    _inject_openrouter_proxy_models,
-    _transform_models_response,
+    transform_models_response,
 )
 from thegent.cliproxy_request_transform import (
-    _OR_PASSTHROUGH_FIELDS,
-    _chat_completions_to_responses,
     _extract_delta_content,
     _extract_delta_tool_calls,
     _extract_usage,
-    _map_model_for_backend,
     _process_sse_line,
-    _responses_input_to_messages,
     _responses_to_chat_completions,
-    build_openrouter_passthrough_body,
 )
-from thegent.cliproxy_stream_state import _ResponsesStreamState
+from thegent.cliproxy_stream_state import ResponsesStreamState
 from thegent.routing.cost_calculator import calculate_cost_from_response, format_cost_header_value
 
 _log = logging.getLogger(__name__)
@@ -699,7 +691,7 @@ async def _proxy_stream(
     async def _do_stream(attempt: int):  # noqa: PLR0912 -- streaming state machine; complexity justified
         """Inner generator for a single stream attempt."""
         buffer = b""
-        state = _ResponsesStreamState(model=model) if transform_responses else None
+        state = ResponsesStreamState(model=model) if transform_responses else None
         preamble_emitted = False
         async with httpx.AsyncClient(timeout=120.0) as client:
             async with client.stream("POST", url, content=body, headers=headers) as resp:
@@ -871,7 +863,7 @@ async def proxy_handler(request: Request) -> Response:
         # Codex expects {"models": [...]}; CLIProxy returns {"data": [...], "object": "list"}
         if resp.status_code == 200 and resp.body:
             # OR-15: inject OpenRouter proxy models when the backend is OpenRouter
-            result = _transform_models_response(resp.body, inject_openrouter=_is_openrouter_backend(backend))
+            result = transform_models_response(resp.body, inject_openrouter=_is_openrouter_backend(backend))
             if result is not None:
                 transformed_body, etag = result
                 return Response(
@@ -961,7 +953,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
             headers = extract_websocket_forward_headers(dict(websocket.headers))
 
             model = data.get("model", "proxy")
-            state = _ResponsesStreamState(model=model)
+            state = ResponsesStreamState(model=model)
             preamble_emitted = False
             try:
                 async with client.stream("POST", url, content=body, headers=headers) as resp:

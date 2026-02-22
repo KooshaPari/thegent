@@ -1,8 +1,7 @@
 """Forensic incident replay and post-mortem analysis (WP-15002)."""
 
 import json
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from thegent.governance.ledger import IncidentLedger
 

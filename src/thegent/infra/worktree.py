@@ -3,7 +3,6 @@ Includes worktree creation, branch coordination, and cleanup.
 """
 
 import logging
-import shutil
 import subprocess
 import time
 from pathlib import Path

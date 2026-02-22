@@ -1,6 +1,6 @@
 """Tenant isolation and data leakage protection."""
 
-from typing import Any, Optional
+from typing import Any
 
 
 class AccessDenied(Exception):

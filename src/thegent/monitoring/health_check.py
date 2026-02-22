@@ -1,7 +1,7 @@
 """Health check utilities."""
 
 import logging
-from typing import Any
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -11,9 +11,9 @@ class HealthChecker:
 
     def __init__(self) -> None:
         """Initialize health checker."""
-        self.checks: dict[str, callable] = {}
+        self.checks: dict[str, Callable[[], Any]] = {}
 
-    def register_check(self, name: str, check_fn: callable) -> None:
+    def register_check(self, name: str, check_fn: Callable[[], Any]) -> None:
         """Register a health check.
 
         Args:
@@ -22,7 +22,7 @@ class HealthChecker:
         """
         self.checks[name] = check_fn
 
-    def _run_single_check(self, name: str, check_fn: callable) -> dict[str, Any]:
+    def _run_single_check(self, name: str, check_fn: Callable[[], Any]) -> dict[str, Any]:
         """Run a single health check and return the result."""
         try:
             return {"status": "ok", "result": check_fn()}

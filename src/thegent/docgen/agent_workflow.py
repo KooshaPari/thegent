@@ -1,6 +1,7 @@
 """Agent workflow for auto-populating documentation."""
 
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,7 @@ class AgentWorkflow:
         """Initialize agent workflow."""
         self.steps: list[dict[str, Any]] = []
 
-    def register_step(self, name: str, func: callable, dependencies: list[str] | None = None) -> None:
+    def register_step(self, name: str, func: Callable[..., Any], dependencies: list[str] | None = None) -> None:
         """Register a workflow step.
 
         Args:

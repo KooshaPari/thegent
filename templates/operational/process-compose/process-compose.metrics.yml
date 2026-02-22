@@ -1,0 +1,375 @@
+# Process-Compose Template for Observability & Metrics
+#
+# This template defines standard services for observability: metrics collection,
+# log aggregation, tracing, and visualization.
+#
+# USAGE:
+#   1. Start with process-compose.base.yaml
+#   2. Append or include this file for observability services
+#   3. Customize scrape configs, retention, and alerting rules as needed
+#
+# EXTENDS: process-compose.base.yaml
+# DEPENDENCIES: Prometheus, Grafana, Jaeger, Loki (optional)
+#
+# Port Assignments:
+#   - Prometheus: 9090
+#   - Grafana: 3000
+#   - Jaeger UI: 16686
+#   - Loki: 3100
+#   - Node Exporter: 9100
+#   - Various other exporters: 9100-9200
+
+version: "0.5"
+
+environment:
+  - PROMETHEUS_PORT=9090
+  - GRAFANA_PORT=3000
+  - JAEGER_UI_PORT=16686
+  - LOKI_PORT=3100
+
+processes:
+
+  #############################################################################
+  # Prometheus: Metrics collection & time-series database
+  #############################################################################
+  # Scrapes metrics from exporters and applications.
+  # Stores TSDB at .prometheus/
+  # UI: http://localhost:9090
+  # Supports: hot reload via /-/reload endpoint
+  # Log: .process-compose/logs/prometheus.log
+
+  prometheus:
+    command: |
+      prometheus \
+        --config.file=monitoring/prometheus.yml \
+        --storage.tsdb.path=.prometheus \
+        --web.enable-lifecycle \
+        --web.listen-address=0.0.0.0:9090
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 9090
+        path: /-/ready
+      initial_delay_seconds: 5
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/prometheus.log
+    environment:
+      - "PROMETHEUS_PORT=9090"
+      - "RETENTION=30d"
+
+  #############################################################################
+  # Grafana: Visualization & Dashboarding
+  #############################################################################
+  # Queries Prometheus and Loki; displays dashboards and alerts.
+  # UI: http://localhost:3000 (admin/admin)
+  # Datasources: Prometheus, Loki (auto-configured)
+  # Log: .process-compose/logs/grafana.log
+
+  grafana:
+    command: |
+      grafana-server \
+        --config=monitoring/grafana.ini \
+        --homepath=/usr/local/share/grafana
+    working_dir: .
+    depends_on:
+      prometheus:
+        condition: process_healthy
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: 127.0.0.1
+        port: 3000
+        path: /api/health
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/grafana.log
+    environment:
+      - "GF_SERVER_HTTP_PORT=3000"
+      - "GF_SECURITY_ADMIN_USER=admin"
+      - "GF_SECURITY_ADMIN_PASSWORD=admin"
+      - "GF_INSTALL_PLUGINS=redis-datasource,grafana-piechart-panel"
+
+  #############################################################################
+  # Jaeger: Distributed Tracing
+  #############################################################################
+  # All-in-one Jaeger deployment (local development).
+  # UI: http://localhost:16686
+  # Accepts: OTLP gRPC (4317), OTLP HTTP (4318), Jaeger Thrift (14268)
+  # Log: .process-compose/logs/jaeger.log
+
+  jaeger:
+    command: |
+      jaeger-all-in-one \
+        --collector.otlp.enabled=true \
+        --collector.zipkin.host-port=:9411 \
+        --admin.http.host-port=127.0.0.1:14269
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 3
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 14269
+        path: /status
+      initial_delay_seconds: 5
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/jaeger.log
+    environment:
+      - "COLLECTOR_OTLP_ENABLED=true"
+
+  #############################################################################
+  # Loki: Log Aggregation
+  #############################################################################
+  # Scrapes logs from Promtail; stores indexed logs for fast querying.
+  # Endpoint: http://localhost:3100 (Loki API)
+  # UI: accessed via Grafana
+  # Log: .process-compose/logs/loki.log
+
+  loki:
+    command: |
+      loki \
+        --config.file=monitoring/loki-local.yml \
+        --log.level=info
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 3
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 3100
+        path: /services
+      initial_delay_seconds: 5
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/loki.log
+
+  #############################################################################
+  # Promtail: Log Shipper
+  #############################################################################
+  # Scrapes application logs and ships to Loki.
+  # Configuration: monitoring/promtail-local.yml
+  # Depends on: Loki (healthy)
+  # Log: .process-compose/logs/promtail.log
+
+  promtail:
+    command: |
+      promtail \
+        --config.file=monitoring/promtail-local.yml \
+        --log.level=info
+    working_dir: .
+    depends_on:
+      loki:
+        condition: process_healthy
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 9080
+        path: /ready
+      initial_delay_seconds: 5
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/promtail.log
+
+  #############################################################################
+  # Node Exporter: System Metrics
+  #############################################################################
+  # Collects host-level metrics (CPU, memory, disk, network).
+  # Endpoint: http://localhost:9100/metrics
+  # Scraped by: Prometheus
+  # Log: .process-compose/logs/node-exporter.log
+
+  node-exporter:
+    command: |
+      node_exporter \
+        --collector.filesystem.fs-types-exclude="^(sys|proc|auto)fs" \
+        --collector.filesystem.mount-points-exclude="^/(sys|proc)($|/)" \
+        --collector.netdev.device-exclude="^(veth.*|br.*|docker.*)" \
+        --web.listen-address=:9100
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 9100
+        path: /metrics
+      initial_delay_seconds: 2
+      period_seconds: 10
+      timeout_seconds: 3
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/node-exporter.log
+
+  #############################################################################
+  # Postgres Exporter: Database Metrics (optional)
+  #############################################################################
+  # Collects Postgres-specific metrics.
+  # Depends on: postgres (healthy)
+  # Endpoint: http://localhost:9187/metrics
+  # Scraped by: Prometheus
+  # Log: .process-compose/logs/postgres-exporter.log
+
+  postgres-exporter:
+    command: |
+      postgres_exporter \
+        --web.listen-address=:9187
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 9187
+        path: /metrics
+      initial_delay_seconds: 5
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/postgres-exporter.log
+    environment:
+      - "DATA_SOURCE_NAME=postgresql://user:pass@localhost:5432/mydb?sslmode=disable"
+
+  #############################################################################
+  # Redis Exporter: Cache Metrics (optional)
+  #############################################################################
+  # Collects Redis-specific metrics.
+  # Depends on: redis (healthy)
+  # Endpoint: http://localhost:9121/metrics
+  # Scraped by: Prometheus
+  # Log: .process-compose/logs/redis-exporter.log
+
+  redis-exporter:
+    command: |
+      redis_exporter \
+        -redis.addr=localhost:6379 \
+        -web.listen-address=:9121 \
+        -namespace=redis
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 5
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 9121
+        path: /metrics
+      initial_delay_seconds: 5
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/redis-exporter.log
+
+  #############################################################################
+  # AlertManager: Alert Routing & Aggregation (optional)
+  #############################################################################
+  # Routes Prometheus alerts to notification channels (Slack, PagerDuty, etc.).
+  # Configuration: monitoring/alertmanager.yml
+  # Endpoint: http://localhost:9093
+  # Log: .process-compose/logs/alertmanager.log
+
+  alertmanager:
+    command: |
+      alertmanager \
+        --config.file=monitoring/alertmanager.yml \
+        --storage.path=.alertmanager \
+        --web.listen-address=0.0.0.0:9093
+    working_dir: .
+    availability:
+      restart: on_failure
+      max_restarts: 3
+      backoff_seconds: 2
+    readiness_probe:
+      http_get:
+        host: localhost
+        port: 9093
+        path: /-/ready
+      initial_delay_seconds: 5
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    log_location: .process-compose/logs/alertmanager.log
+
+#############################################################################
+# REFERENCE: Prometheus Scrape Configuration Pattern
+#############################################################################
+#
+# In monitoring/prometheus.yml:
+#
+# global:
+#   scrape_interval: 15s
+#   evaluation_interval: 15s
+#
+# scrape_configs:
+#   - job_name: 'prometheus'
+#     static_configs:
+#       - targets: ['localhost:9090']
+#
+#   - job_name: 'node'
+#     static_configs:
+#       - targets: ['localhost:9100']
+#
+#   - job_name: 'postgres'
+#     static_configs:
+#       - targets: ['localhost:9187']
+#
+#   - job_name: 'redis'
+#     static_configs:
+#       - targets: ['localhost:9121']
+#
+#############################################################################
+# REFERENCE: Grafana Datasource Auto-provisioning
+#############################################################################
+#
+# In monitoring/grafana.ini:
+#
+# [datasources]
+# url = http://prometheus:9090
+#
+# Or via provisioning files (monitoring/provisioning/datasources/):
+#
+# apiVersion: 1
+# datasources:
+# - name: Prometheus
+#   type: prometheus
+#   url: http://prometheus:9090
+#   access: proxy
+#   isDefault: true
+#
+#############################################################################

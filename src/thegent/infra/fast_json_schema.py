@@ -11,13 +11,11 @@ Performance improvements:
 - Cached compiled schemas for repeated validation
 """
 
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import Any, cast
 
 # Library-first (LIBRARY_FIRST_POLICY.md): Using cachetools.LRUCache
 from cachetools import LRUCache
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 try:
     import fastjsonschema
@@ -57,7 +55,7 @@ class FastJSONSchemaValidator:
         if FASTJSONSCHEMA_AVAILABLE:
             self._backend = "fastjsonschema"
             # Compile schema for fast validation
-            self._compiled_validator = fastjsonschema.compile(schema)
+            self._compiled_validator = cast(Callable[[Any], None], fastjsonschema.compile(schema))
         elif JSONSCHEMA_AVAILABLE:
             self._backend = "jsonschema"
             self._validator = jsonschema.Draft202012Validator(schema)

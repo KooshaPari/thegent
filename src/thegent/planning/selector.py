@@ -1,7 +1,7 @@
 """WP-14001: Cost-aware objective selector for multi-objective optimization."""
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from thegent.planning.models_meta import MODEL_METADATA, ModelMetadata
 

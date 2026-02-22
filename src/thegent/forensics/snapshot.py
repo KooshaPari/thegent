@@ -3,20 +3,16 @@
 import json
 import logging
 import os
-import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 
 _log = logging.getLogger(__name__)
 
-# BKM-06: Native Git support
-HAS_NATIVE_GIT = False
+# Native Git support (required)
 try:
     import thegent_git
-
-    HAS_NATIVE_GIT = True
 except ImportError:
-    pass
+    raise ImportError("thegent-git not available - install with: pip install thegent-git")
 
 
 class ForensicSnapshotter:
@@ -56,40 +52,19 @@ class ForensicSnapshotter:
         return path
 
     def _get_git_branch(self, root: Path) -> str:
-        if HAS_NATIVE_GIT:
-            try:
-                res = thegent_git.get_status(str(root))
-                return res.get("branch", "n/a")
-            except Exception as e:
-                _log.debug("native git branch failed: %s", e)
-
-        try:
-            return subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=root).decode().strip()
-        except Exception:
-            return "n/a"
+        """Get git branch using native Rust."""
+        res = thegent_git.get_status(str(root))
+        return str(res.get("branch", "n/a")) if res else "n/a"
 
     def _get_git_status(self, root: Path) -> str:
-        if HAS_NATIVE_GIT:
-            try:
-                # We could return a structured dict, but existing code expects a string summary
-                res = thegent_git.get_status(str(root))
-                return f"staged:{res['staged']} unstaged:{res['unstaged']} untracked:{res['untracked']}"
-            except Exception as e:
-                _log.debug("native git status failed: %s", e)
-
-        try:
-            return subprocess.check_output(["git", "status", "--short"], cwd=root).decode().strip()
-        except Exception:
-            return "n/a"
+        """Get git status using native Rust."""
+        res = thegent_git.get_status(str(root))
+        if res:
+            return f"staged:{res.get('staged', 0)} unstaged:{res.get('unstaged', 0)} untracked:{res.get('untracked', 0)}"
+        return "n/a"
 
     def _get_git_diff(self, root: Path) -> str:
-        if HAS_NATIVE_GIT:
-            try:
-                return thegent_git.get_diff(str(root), "HEAD")
-            except Exception as e:
-                _log.debug("native git diff failed: %s", e)
-
-        try:
-            return subprocess.check_output(["git", "diff", "HEAD"], cwd=root).decode().strip()
-        except Exception:
-            return "n/a"
+        """Get git diff using native Rust."""
+        # Note: get_diff not yet implemented in thegent-git
+        _log.warning("get_diff not implemented in thegent-git yet")
+        return ""

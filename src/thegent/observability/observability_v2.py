@@ -23,7 +23,7 @@ class JSONLFormatter(logging.Formatter):
             "pid": os.getpid(),
         }
         if hasattr(record, "agent_id"):
-            log_obj["agent_id"] = record.agent_id
+            log_obj["agent_id"] = record.__dict__["agent_id"]
         return json.dumps(log_obj)
 
 
@@ -65,4 +65,4 @@ class MeshCLI:
         """Show status of tasks in the mesh."""
         queue_dir = mesh_dir / "queue" / "new"
         if queue_dir.exists():
-            pending = list(queue_dir.iterdir())
+            _pending = list(queue_dir.iterdir())

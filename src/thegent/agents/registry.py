@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING
 
 from thegent.agents.codex_proxy import CodexProxyRunner
 from thegent.agents.cursor_api_runner import CursorApiRunner
@@ -100,7 +100,7 @@ def get_runner(
 
     try:
         return TeammateRunner(agent_name)
-    except Exception as e:
+    except Exception as _e:
         # print(f"DEBUG: TeammateRunner failed for {agent_name}: {e}")
         pass
 

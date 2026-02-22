@@ -1,0 +1,290 @@
+# Canonical Process-Compose Base Template
+#
+# This file defines the standard structure, conventions, and defaults for all
+# process-compose deployments across kush projects.
+#
+# USAGE:
+#   1. Copy this file as your project's process-compose.yaml
+#   2. Use the section markers (Layer 1, Layer 2, etc.) to organize services
+#   3. Extend with project-specific includes or compose files (e.g., process-compose.mcp.yml)
+#   4. All environment variables, restart policies, and probes follow the conventions below
+#
+# CONVENTIONS:
+#   - All logs go to .process-compose/ directory
+#   - Standard restart policy: on_failure with max_restarts and backoff_seconds
+#   - Health probes use HTTP /health or exec-based checks
+#   - Environment vars are defined at global and service level
+#   - Services grouped by layer (infrastructure, application, observability, etc.)
+#
+# EXTENDING:
+#   - Create separate YAML files (e.g., process-compose.mcp.yml) for optional layers
+#   - Include them via 'include' directive or compose them manually
+#   - Override environment vars per service as needed
+#   - Reference specific process-compose.*.yml files in docs/templates/operational/process-compose/
+
+version: "0.5"
+
+# Global logging configuration
+log_location: .process-compose/process-compose.log
+log_level: info
+
+# Shell command configuration
+shell:
+  shell_command: "/bin/bash"
+  shell_argument: "-c"
+
+# Global environment variables — override at service level as needed
+environment:
+  - PYTHONUNBUFFERED=1
+  - PYTHONDONTWRITEBYTECODE=1
+  - LOG_FORMAT=json
+
+# Default process configuration — inherited by all processes unless overridden
+default_process:
+  availability:
+    restart: on_failure
+    max_restarts: 5
+    backoff_seconds: 2
+  readiness_probe:
+    timeout_seconds: 5
+    period_seconds: 10
+    initial_delay_seconds: 2
+    success_threshold: 1
+    failure_threshold: 3
+
+#############################################################################
+# LAYER 1: Infrastructure Services (Database, Cache, Message Queue)
+#############################################################################
+# Typically: Postgres, Redis, Kafka, RabbitMQ, Neo4j, etc.
+# These services should use "if-not-running" wrappers to avoid port conflicts.
+# Health probes should be quick and reliable (pg_isready, redis-cli ping, etc.)
+
+# Example infrastructure process (uncomment and customize):
+# postgres:
+#   command: "bash scripts/shell/postgres-if-not-running.sh"
+#   availability:
+#     restart: on_failure
+#     max_restarts: 5
+#     backoff_seconds: 2
+#   readiness_probe:
+#     exec:
+#       command: "pg_isready -h localhost -p 5432 -U <user>"
+#     initial_delay_seconds: 2
+#     period_seconds: 5
+#     timeout_seconds: 3
+#     success_threshold: 1
+#     failure_threshold: 3
+#   environment:
+#     - "PGDATA=/opt/homebrew/var/postgresql@17"
+
+processes:
+
+#############################################################################
+# LAYER 2: Orchestration & Workflow Services
+#############################################################################
+# Examples: Temporal, Airflow, Dask, Job queues
+# These depend on infrastructure layer (Layer 1)
+
+# Example orchestration process (uncomment and customize):
+# temporal:
+#   command: "bash scripts/shell/temporal-if-not-running.sh"
+#   depends_on:
+#     postgres:
+#       condition: process_healthy
+#   availability:
+#     restart: on_failure
+#     max_restarts: 3
+#   readiness_probe:
+#     exec:
+#       command: "nc -z localhost 7233"
+#     initial_delay_seconds: 5
+#     period_seconds: 5
+
+#############################################################################
+# LAYER 3: Application Services (API, Backend, Worker, etc.)
+#############################################################################
+# Examples: FastAPI/uvicorn, Go backend, Python worker, gRPC service
+# These depend on infrastructure (Layer 1) and orchestration (Layer 2)
+# Standard readiness probes: HTTP /health or custom exec probes
+# Standard log_location: .process-compose/logs/<service>.log
+
+# Example application process (uncomment and customize):
+# api:
+#   command: "python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload"
+#   working_dir: "."
+#   depends_on:
+#     postgres:
+#       condition: process_healthy
+#   availability:
+#     restart: on_failure
+#     max_restarts: 5
+#   readiness_probe:
+#     http_get:
+#       host: localhost
+#       port: 8000
+#       path: /health
+#     initial_delay_seconds: 5
+#     period_seconds: 10
+#     timeout_seconds: 5
+#     success_threshold: 1
+#     failure_threshold: 3
+#   log_location: .process-compose/logs/api.log
+#   environment:
+#     - "PORT=8000"
+#     - "DEBUG=false"
+
+#############################################################################
+# LAYER 4: Observability (Metrics, Tracing, Logging Aggregation)
+#############################################################################
+# Examples: Prometheus, Jaeger, Loki, Grafana, OpenTelemetry Collector
+# These are optional; can be omitted for minimal deployments
+# Standard probes: HTTP endpoints or exec checks
+
+# Example observability process (uncomment and customize):
+# prometheus:
+#   command: "prometheus --config.file=monitoring/prometheus.yml --storage.tsdb.path=.prometheus"
+#   working_dir: "."
+#   availability:
+#     restart: on_failure
+#   readiness_probe:
+#     http_get:
+#       host: localhost
+#       port: 9090
+#       path: /-/ready
+#     initial_delay_seconds: 5
+#     period_seconds: 10
+#   environment:
+#     - "PROMETHEUS_PORT=9090"
+
+#############################################################################
+# LAYER 5: Gateway & Reverse Proxy (Optional)
+#############################################################################
+# Examples: Caddy, Nginx, Envoy
+# Depends on application layer (Layer 3)
+
+# Example gateway process (uncomment and customize):
+# caddy:
+#   command: "caddy run --config Caddyfile.dev --watch"
+#   availability:
+#     restart: on_failure
+#   readiness_probe:
+#     http_get:
+#       host: localhost
+#       port: 80
+#       path: /health
+#     initial_delay_seconds: 2
+#     period_seconds: 5
+
+#############################################################################
+# REFERENCE: Health Probe Patterns
+#############################################################################
+#
+# HTTP probes (most common):
+#   readiness_probe:
+#     http_get:
+#       host: localhost
+#       port: 8000
+#       path: /health
+#     initial_delay_seconds: 5
+#     period_seconds: 10
+#     timeout_seconds: 5
+#     success_threshold: 1
+#     failure_threshold: 3
+#
+# Exec probes (for non-HTTP services, gRPC, databases):
+#   readiness_probe:
+#     exec:
+#       command: "pg_isready -h localhost -p 5432"
+#     initial_delay_seconds: 2
+#     period_seconds: 5
+#     timeout_seconds: 3
+#     success_threshold: 1
+#     failure_threshold: 3
+#
+# TCP probes (simple port checks):
+#   readiness_probe:
+#     exec:
+#       command: "nc -z localhost 5432"
+#
+#############################################################################
+# REFERENCE: Availability Policy Patterns
+#############################################################################
+#
+# Always restart on failure (typical):
+#   availability:
+#     restart: on_failure
+#     max_restarts: 5
+#     backoff_seconds: 2
+#
+# No restart (use for long-running validators, one-time tasks):
+#   availability:
+#     restart: no
+#
+# Exponential backoff (for resilient services):
+#   availability:
+#     restart: on_failure
+#     max_restarts: 10
+#     backoff_seconds: 5   # increases exponentially
+#
+#############################################################################
+# REFERENCE: Dependency Patterns
+#############################################################################
+#
+# Wait for infrastructure to be healthy:
+#   depends_on:
+#     postgres:
+#       condition: process_healthy
+#     redis:
+#       condition: process_healthy
+#
+# Start after service is running (not necessarily healthy):
+#   depends_on:
+#     some-service:
+#       condition: process_started
+#
+#############################################################################
+# REFERENCE: Environment Variables
+#############################################################################
+#
+# Global (applied to all processes unless overridden):
+#   environment:
+#     - PYTHONUNBUFFERED=1
+#     - LOG_FORMAT=json
+#
+# Service-specific (appended to global):
+#   environment:
+#     - "DEBUG=${DEBUG:-false}"
+#     - "PORT=8000"
+#
+# Using defaults:
+#   - "TIMEOUT=${TIMEOUT:-30}"   # Uses TIMEOUT env var if set, else 30
+#
+#############################################################################
+# PORT ALLOCATION CONVENTIONS
+#############################################################################
+#
+# Infrastructure:
+#   - Postgres: 5432
+#   - Redis: 6379
+#   - Kafka: 9092
+#   - Neo4j: 7687 (bolt), 7474 (HTTP)
+#
+# Orchestration:
+#   - Temporal: 7233 (gRPC), 8233 (HTTP)
+#
+# Application:
+#   - API backends: 8000–8099 (Python/FastAPI)
+#   - Go backends: 8100–8199
+#   - gRPC: 9000–9099
+#   - Workers: no fixed port
+#
+# Observability:
+#   - Prometheus: 9090
+#   - Grafana: 3000
+#   - Jaeger: 16686 (UI), 4317 (OTLP gRPC)
+#   - Loki: 3100
+#
+# Gateway:
+#   - Caddy: 80, 443 (HTTP/HTTPS), 4000 (management)
+#
+#############################################################################

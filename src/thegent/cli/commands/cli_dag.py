@@ -15,32 +15,36 @@ from pathlib import Path
 import typer
 from rich.table import Table
 
-# Lazy console — same pattern as cli.py to avoid top-level rich import
-from thegent.cli.commands.cli import (
-    ThegentSettings,
+from rich.console import Console
+
+from thegent.config import ThegentSettings
+from thegent.cli.commands.dag_impl import (
     _atomic_write,
     _check_dag_cycles,
     _dag_path,
     _dag_update_task,
-    _default_owner_tag,
     _ensure_contract_version_header,
     _ensure_dag_file,
     _parse_dag_full,
     _parse_dag_session,
     _parse_depends_on,
-    _resolve_checkpoint_id,
-    _resolve_cwd,
     _serialize_dag,
     _session_status_for,
     _validate_agent,
     _validate_dag,
     _validate_task_id,
-    console,
     dag_ready_impl,
     dag_recover_impl,
     dag_run_impl,
     dag_sync_impl,
 )
+from thegent.cli.commands._cli_shared import _resolve_checkpoint_id
+from thegent.cli.services.run_session_helpers import (
+    default_owner_tag as _default_owner_tag,
+    resolve_cwd as _resolve_cwd,
+)
+
+console = Console()
 
 
 def dag_validate_cmd(cd: Path | None = None) -> None:

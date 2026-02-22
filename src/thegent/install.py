@@ -93,18 +93,7 @@ __all__ = [
     "validate_bundle_manifest",
 ]
 
-try:
-    from thegent.mcp_manage import service_install, service_start, service_uninstall
-except ImportError:
-    # Handle cases where mcp_manage might not be available
-    def service_install() -> tuple[bool, str]:
-        return False, "mcp_manage not available"
-
-    def service_start() -> tuple[bool, str]:
-        return False, "mcp_manage not available"
-
-    def service_uninstall() -> tuple[bool, str]:
-        return False, "mcp_manage not available"
+from thegent.mcp.manage import service_install, service_start, service_uninstall
 
 
 def _get_thegent_root() -> Path:
@@ -238,10 +227,6 @@ def setup_rust_dispatcher(verbose: bool = False) -> bool:
 
 def setup_harness(verbose: bool = False) -> bool:
     """WP-11006: Install/update heliosShield harness."""
-    from thegent.config import ThegentSettings
-
-    settings = ThegentSettings()
-
     # Check if heliosShield/install.sh exists relative to thegent
     root = _get_thegent_root()
     # If root is 'thegent' (installed package), we look for it in parent of project root
@@ -289,7 +274,6 @@ def setup_skills(
     # Targets: ~/.claude/skills, ~/.cursor/rules, project .claude/skills, .cursor/rules
     home = Path.home()
     skill_md = skills_src / "SKILL.md"
-    skill_json = skills_src / "skill.json"
     if not skill_md.exists():
         skill_md = next(skills_src.glob("*.md"), None)
 
@@ -358,18 +342,6 @@ def _sync_cursor_rules(
         counts["errors"] += 1
         if verbose:
             sys.stdout.write(f"  Failed {dst}: {e}\n")
-
-
-def _service_plist_exists() -> bool:
-    """Compatibility helper for wizard preflight paths.
-
-    Some setup paths call this helper directly; keep it available even when
-    wizard flow is simplified.
-    """
-    if platform.system() != "Darwin":
-        return False
-    plist = Path.home() / "Library" / "LaunchAgents" / "com.thegent.mcp.plist"
-    return plist.exists()
 
 
 # --- System Dependencies Installation ---
@@ -476,7 +448,7 @@ def install_mise(
                 else:
                     # File exists, read and update
                     # Backup before modification
-                    backup_path = _backup_shell_config(shell_config_file, console)
+                    _backup_shell_config(shell_config_file, console)
                     # File exists, read and update
                     content = shell_config_file.read_text()
                     if "mise activate" not in content:

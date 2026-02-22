@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class CostSensitivityFramework:
             # Simulate policy lookup overhead
             time.sleep(depth * 0.01)
 
-            res = action_fn()
+            _res = action_fn()
             latency = (time.perf_counter() - start_time) * 1000
 
             # Assume cost is related to model but fixed for simulation

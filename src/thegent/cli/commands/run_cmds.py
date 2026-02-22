@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import json
-import os
-import sys
-import time
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Literal, cast
 
 import typer
 
+from rich.panel import Panel
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
@@ -24,8 +22,6 @@ from thegent.cli.commands._cli_shared import (
     _normalize_output_format,
     _resolve_session_id,
     console,
-    resolve_agent,
-    run_login,
 )
 
 def run_cmd(
@@ -432,7 +428,7 @@ def retry_cmd(
 def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
     """Decision replay and rationale snapshots (WP-4007)."""
     settings = ThegentSettings()
-    from thegent.execution import ReplayManager, RunRegistry
+    from thegent.execution import ReplayManager
 
     rm = ReplayManager(settings.session_dir)
     chain = rm.get_replay_chain(run_id)
@@ -480,7 +476,7 @@ def trace_replay_cmd(run_id: str) -> None:
 
 def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
     """Automatically route a prompt to an active terminal session if matching."""
-    import os
+
 
     from rich.console import Console
 
@@ -559,7 +555,7 @@ def deep_research_cmd(
 
 def takeover_cmd(session_id: str) -> None:
     """Take over an active terminal session via tmux (WP-4008)."""
-    import subprocess
+
 
     from rich.console import Console
 

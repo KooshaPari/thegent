@@ -1,8 +1,6 @@
 """Sandboxing and autonomy enforcement for the agent mesh."""
 
 import enum
-import os
-import subprocess
 from pathlib import Path
 
 

@@ -1183,7 +1183,7 @@ Track-A closeout slice (2026-02-21):
 
 Extraction wave slice (2026-02-21, WL-120 next-cut):
 1. Extracted run pre-flight guard/concurrency logic from `impl.py` into `src/thegent/cli/services/run_guard_helpers.py`, including terminal reuse suggestion, input guardrail gate, and concurrency admission/error payloads.
-2. Reduced `impl.py` line count in baseline from `3776` to `3706` (current baseline artifact refresh below).
+2. Latest rerun baseline collector output shows `impl.py` at `561` lines (`docs/reports/artifacts/wl120-monolith-baseline-2026-02-21.{json,txt}`).
 3. Extracted MCP tool icon map from `src/thegent/mcp/server.py` into `src/thegent/mcp/server_tool_icons.py` and kept server wiring through a single import (`from thegent.mcp.server_tool_icons import TOOL_ICONS`).
 4. Refreshed monolith baseline evidence (`docs/reports/artifacts/wl120-monolith-baseline-2026-02-21.{json,txt}`) and LOC metrics (`.quality/loc-metrics.json`) after the extraction pass.
 5. Extracted duplicated pre-work governance hard-gate logic from both `src/thegent/cli/commands/impl.py` and `src/thegent/cli/commands/work_stream_impl.py` into shared `src/thegent/cli/services/pre_work_gate_helpers.py`, preserving both command modules via wrapper functions for contract stability.
@@ -1193,8 +1193,23 @@ Extraction wave slice (2026-02-21, WL-120 next-cut):
 9. Completed orchestration wrapper-only extraction by delegating `_validate_task_and_record_errors` and `continuity_snapshot_impl` from both command modules to `work_stream_orchestration.py`, and added AST governance checks for orchestration wrapper contracts in `check_instruction_architecture.py`.
 10. Completed WL-126 MCP compaction pass by reducing `src/thegent/mcp/server.py` to `228` LOC while preserving extraction wiring contracts, and added MCP boundary governance checks (line ceiling + wiring contracts + decorator/function ceilings) to `check_instruction_architecture.py`.
 
+Wave-3 final extraction slice (2026-02-21, post-verification):
+1. **W3-A1..A5 (CLI domain extractions)**: Extracted all session/infra/plan/models/governance command handlers from `cli.py` facade into domain modules; `cli.py` final LOC: 49 (baseline: 6870).
+2. **W3-B1..B3 (impl.py backend splits)**:
+   - W3-B1: `dag_impl.py` — DAG backend extraction (completed prior wave)
+   - W3-B2: `session_impl.py` — 1716 LOC, 36 functions extracted (session metadata, health, ops, control)
+   - W3-B3: `infra_impl.py` — 488 LOC, 10 functions extracted
+   - Actual LOC reductions captured in `.quality/loc-metrics.jsonl` with date 2026-02-21
+3. **W3-C1..C5 (MCP server module splits)**:
+   - W3-C1: `server_bootstrap.py` — 28 LOC (auth/lifecycle)
+   - W3-C2: `server_resources.py` — 78 LOC (resource registration)
+   - W3-C3: `server_tool_loader.py` — 218 LOC (tool loading)
+   - W3-C4: `server_middleware.py` — 57 LOC (middleware setup)
+   - W3-C5: `server.py` final form — 228 LOC (core lifespan + delegation)
+4. Evidence: Test suite passes (import checks ✓, re-export checks ✓), LOC metrics recorded in `.quality/loc-metrics.jsonl`, task files updated (cli-dag-extraction/tasks.md + mcp-server-extraction/tasks.md).
+
 **Blockers checklist (explicit):**
-- [x] Delivered (as of 2026-02-21 post-compaction refresh): monolith ceilings are now fully met in rerun baseline collector output (`cli.py` 49 LOC vs `<2000` target met; `impl.py` 1267 LOC vs `<2000` target met; `mcp/server.py` 228 LOC vs `<500` target met; source: `docs/reports/artifacts/wl120-monolith-baseline-2026-02-21.json` + `.txt`).
+- [x] Delivered (as of 2026-02-21 Wave-3 final): monolith ceilings are now fully met in rerun baseline collector output (`cli.py` 49 LOC vs `<2000` target met; `impl.py` 561 LOC vs `<2000` target met; `mcp/server.py` 228 LOC vs `<500` target met; source: `docs/reports/artifacts/wl120-monolith-baseline-2026-02-21.json` + `.txt`).
 - [x] Trend evidence work is migrated to weekly WL-137 diagnosis cadence to avoid day-bound blocking; current baseline evidence remains `122545 -> 117587 -> 117587` (`2026-02-19` through `2026-02-21`, source: `docs/reports/artifacts/wl120-wl136-loc-trend-2026-02-21.md`).
 - [x] Completion criteria status (governance decision, 2026-02-21): **MET** for WL-120 deliverable scope (monolith ceilings + decomposition execution), with trend continuity monitored under WL-137.
 
@@ -1257,6 +1272,10 @@ Split by command domain with contract tests preserving CLI behavior.
 **Source:** [docs/reports/2026-02-21-LIBRARY-REAUDIT-AND-CODEBASE-ATLAS.md]
 
 Extract service modules and domain adapters; preserve output parity and error semantics.
+
+2026-02-21 completion note (baseline refresh):
+1. Reran `scripts/collect_wl_monolith_baselines.py` for JSON/TXT artifacts.
+2. WL-125 evidence shows `impl.py` at `561` lines (`<2000` target remains met).
 
 ---
 
@@ -1448,7 +1467,7 @@ Implement the full decomposition program:
 4. Mojo kernel correctness + benchmark harness with promotion gates.
 
 **Blockers checklist (explicit):**
-- [x] Dependency blocker resolved (2026-02-21): WL-120 decomposition/monolith gate is complete (`cli.py` 49, `impl.py` 1267, `mcp/server.py` 228), and trend continuity is tracked by WL-137 cadence instead of blocking WL-138 closeout.
+- [x] Dependency blocker resolved (2026-02-21): WL-120 decomposition/monolith gate is complete (`cli.py` 49, `impl.py` 561, `mcp/server.py` 228), and trend continuity is tracked by WL-137 cadence instead of blocking WL-138 closeout.
 - [x] Delivered 2026-02-21: decomposition progress artifact now includes execution-level gates for Rust hook decomposition and Zig/Mojo promotion outcomes (`scripts/wl138_decomposition_progress.py`, `tests/test_wl138_decomposition_progress.py`, `docs/reports/artifacts/wl138_decomposition_progress.json`).
 
 ---
@@ -1625,8 +1644,12 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 
 | ID | Completed | Summary |
 |----|-----------|---------|
+| WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
+| WL-155-156-next20-b3 | 2026-02-22 | Executed third next-20 memory/scraper batch: snapshot lifecycle utilities (list/load/latest/filter/export markdown), plus targeted unit tests and plan log updates |
+| WL-155-156-next20-b2 | 2026-02-22 | Executed second next-20 memory/scraper batch: runtime trigger wiring (`tool_use`/`error`/`session_change`), snapshot persistence integration, inferred dump tagging, and targeted test/doc updates |
+| WL-155-156-next20 | 2026-02-22 | Executed next-20 memory/scraper batch: rich session snapshot extraction, structured prompt+synthesis dumps, runtime wiring, and targeted tests/docs (`tests/test_unit_session_scraper.py`, `tests/test_unit_always_write_dumps.py`, `docs/plans/2026-02-21-SESSION_MEMORY_SYSTEM.md`, `docs/plans/2026-02-21-ENHANCED_SESSION_SCRAPER.md`) |
 | docgen-link-checker | 2026-02-20 | scripts/check-docs-links.py exists, integrated in npm as docs:links |
-| WL-120 | 2026-02-21 | Python monolith reduction complete for target files (`cli.py` 49, `impl.py` 1267, `mcp/server.py` 228); trend continuity carried in WL-137 cadence |
+| WL-120 | 2026-02-21 | Python monolith reduction complete for target files (`cli.py` 49, `impl.py` 561, `mcp/server.py` 228); trend continuity carried in WL-137 cadence |
 | WL-136 | 2026-02-21 | Core-vs-tooling boundary reduction plan completed; boundary gates green, trend continuity carried in WL-137 cadence |
 | WL-138 | 2026-02-21 | Decomposition map execution completed; execution gates green and WL-120 dependency resolved |
 | WL-001 | 2026-02-20 | OpenRouter WS Auth header fix; cliproxy_adapter forward_headers |
@@ -1835,3 +1858,143 @@ Ante (by Antigma Labs) is the closest existing product to thegent's vision for a
   - Evidence: `src/thegent/tui/widgets/interactive_input.py`, `src/thegent/tui/widgets/table_widget.py`, `src/thegent/tui/widgets/timeline_widget.py`, `src/thegent/tui/compositor.py`.
 
 *Run `thegent plan incorporate` to refresh from plans, research, specs.*
+
+---
+
+### Desktop Automation & UI Implementation (2026-02-21)
+
+### [WL-149] Virtual Desktop Automation (UFO2 PiP Approach)
+**Status:** COMPLETED
+**Priority:** P1
+**Area:** automation, desktop
+**Effort:** M
+**Blocked by:** none
+
+Implementation of high-performance virtual desktop automation with sub-50ms latency. Uses UFO2 Picture-in-Picture approach for non-colliding agent sessions.
+
+- Created `src/thegent/automation/virtual_desktop.py` with VirtualDesktopManager, DesktopSession
+- Created platform providers: windows_virtual_desktop.py (SendInput), linux_virtual_desktop.py (Xvfb), macos_virtual_desktop.py (CGEvent)
+- 15 tests passing
+
+**Evidence:** `tests/automation/test_virtual_desktop.py`
+
+---
+
+### [WL-150] Screen-to-UI-Tree Parser (OmniParser/UI-TARS)
+**Status:** COMPLETED
+**Priority:** P1
+**Area:** automation, desktop
+**Effort:** M
+**Blocked by:** none
+
+Research and implementation of screen parsing to convert screenshots into structured UI trees.
+
+- Researched OmniParser V2 (Microsoft, 39.6% ScreenSpot Pro), UI-TARS (ByteDance, 98.7% accuracy), ScreenParse (arxiv)
+- Created `src/thegent/automation/screen_parser.py` with AccessibilityParser (fastest native), OmniParserBackend, UITARSBackend
+
+**Evidence:** `src/thegent/automation/screen_parser.py`
+
+---
+
+### [WL-151] Mobile Automation (Appium-based)
+**Status:** COMPLETED
+**Priority:** P2
+**Area:** automation, mobile
+**Effort:** M
+**Blocked by:** none
+
+Appium-based mobile automation with simulator support and auth profiles.
+
+- Created `src/thegent/automation/mobile.py` with DeviceConfig, AuthProfile, MobileAutomationManager
+- Supports Android/iOS, simulator/emulator/real device
+- 5 tests passing
+
+**Evidence:** `tests/automation/test_mobile.py`
+
+---
+
+### [WL-152] Agent Browser with Multi-Profile Auth
+**Status:** COMPLETED
+**Priority:** P2
+**Area:** automation, browser
+**Effort:** M
+**Blocked by:** none
+
+Multi-profile browser automation with auth management.
+
+- Created `src/thegent/automation/agent_browser.py` with BrowserProfile, AuthAgentProvider (OIDC)
+- Integrates with Kernel Browser Profiles, Auth-Agent
+- Supports PlaywrightProvider for CDP automation
+
+**Evidence:** `src/thegent/automation/agent_browser.py`
+
+---
+
+### [WL-153] Tray Application
+**Status:** COMPLETED
+**Priority:** P2
+**Area:** desktop, tray
+**Effort:** S
+**Blocked by:** none
+
+System tray application with menu and notifications.
+
+- Created `src/thegent/tray/__init__.py` with TrayManager, TrayIcon, notification support
+
+**Evidence:** `src/thegent/tray/__init__.py`
+
+---
+
+### [WL-154] Desktop GUI Application (Dual-App Architecture)
+**Status:** COMPLETED
+**Priority:** P1
+**Area:** desktop, gui
+**Effort:** M
+**Blocked by:** none
+
+Native desktop GUI application working in tandem with TUI compositor and tray.
+
+- Created `src/thegent/desktop/__init__.py` with DesktopApp, AgentSession, AppMode (STANDALONE/TUI_TANDEM/TRAY_TANDEM)
+- 8 tests passing
+- Works alongside existing TUI compositor (`src/thegent/tui/`, ~5453 LOC Rust/Python)
+
+**Evidence:** `tests/test_unit_desktop_app.py`
+
+---
+
+### Related Research
+
+See `docs/research/CONVERSATION_DUMP_2026-02-21_DESKTOP_AUTOMATION.md` for comprehensive documentation.
+
+---
+
+### [WL-155] Session Memory & Documentation System
+**Status:** IN PROGRESS
+**Priority:** P1
+**Area:** memory, documentation
+**Effort:** M
+**Blocked by:** none
+
+Harmonize session memory system: every prompt logged with exact text + agent synthesis, research/planning separate, work stream traceable.
+
+- Created PRD: `docs/plans/2026-02-21-SESSION_MEMORY_SYSTEM.md`
+- Existing: `src/thegent/research/always_dumps.py`, `src/thegent/memory/seed_storage.py`
+- Need: Enhance conversation dumper with prompt/synthesis fields, create directory structure, wire into lifecycle
+
+**Evidence:** `docs/plans/2026-02-21-SESSION_MEMORY_SYSTEM.md`
+
+### [WL-156] Enhanced Session Scraper (Rich Extraction)
+**Status:** IN PROGRESS
+**Priority:** P1
+**Area:** memory, scraper
+**Effort:** M
+**Blocked by:** none
+
+Enhanced session scraper with periodic snapshots, rich extraction, tagging.
+
+- Spec: `docs/plans/2026-02-21-ENHANCED_SESSION_SCRAPER.md`
+- Triggers: periodic, tool_use, error, session_change
+- Extract: commands, files, facts, decisions
+- Tags: YAML frontmatter, #tag syntax, JSON sections
+
+**Evidence:** `docs/plans/2026-02-21-ENHANCED_SESSION_SCRAPER.md`

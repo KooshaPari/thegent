@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import platform
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -258,8 +257,6 @@ def _default_port() -> int:
 
 def serve(socket_path: str | None = None, port: int | None = None, host: str = "127.0.0.1") -> None:
     """Run control plane server. Unix: socket or port. Windows: port only."""
-    import os
-
     import uvicorn
 
     is_windows = platform.system() == "Windows"

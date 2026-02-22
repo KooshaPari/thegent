@@ -1,8 +1,7 @@
 """Research: Remote compute implementation."""
 
-from typing import Any
-
 from thegent.compute.offload import ComputeOffload
+from thegent.compute.remote_executor import RemoteResult
 
 
 class CrossPlatformRemoteResearch:
@@ -12,7 +11,7 @@ class CrossPlatformRemoteResearch:
         """Initialize cross-platform remote research."""
         self.offload = ComputeOffload()
 
-    def test_remote_compute(self) -> dict[str, Any]:
+    def test_remote_compute(self) -> RemoteResult:
         """Test remote compute.
 
         Returns:

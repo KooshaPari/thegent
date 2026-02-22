@@ -1,5 +1,6 @@
 """Claude-backed interactive agent CLI (clode)."""
 
+import contextlib
 import os
 import shutil
 import subprocess
@@ -12,17 +13,13 @@ import typer
 
 from thegent.agents.cliproxy_manager import fetch_provider_metrics
 from thegent.clode_args import clode_passthrough_args as _clode_passthrough_args_impl
-from thegent.clode_args import free_extra_args as _free_extra_args_impl
 from thegent.clode_binary_discovery import find_claude as _find_claude_impl
-from thegent.clode_binary_discovery import is_thegent_shim as _is_thegent_shim_impl
 from thegent.clode_config_isolation import ensure_claude_config_isolation as _ensure_claude_config_isolation_impl
 from thegent import clode_glm_policy as _clode_glm_policy
 from thegent import clode_model_routing as _clode_model_routing
 from thegent.clode_glm_policy import (
     InvalidPolicyError,
-    glm_offer_backends as _glm_offer_backends_impl,
     resolve_clode_token as _resolve_clode_token_impl,
-    validate_policy as _validate_policy_impl,
 )
 from thegent.clode_model_routing import (
     model_for_provider as _model_for_provider_impl,
@@ -69,14 +66,6 @@ _MODEL_COUNTER = _clode_model_routing.MODEL_COUNTER
 _MODEL_PROVIDERS = _clode_model_routing.MODEL_PROVIDERS
 _CLODE_PROVIDER_MODEL = _clode_model_routing.CLODE_PROVIDER_MODEL
 _GLM_POLICY_COUNTER: Counter[str] = Counter()
-
-
-def _glm_offer_backends() -> tuple[str, ...]:
-    return _glm_offer_backends_impl()
-
-
-def _is_thegent_shim(path: str) -> bool:
-    return _is_thegent_shim_impl(path)
 
 
 @app.callback(invoke_without_command=True)
@@ -131,14 +120,6 @@ def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> b
 def _resolve_provider_for_model(model_alias: str) -> str:
     """Resolve provider for model-first routing. Round-robin across available providers."""
     return _resolve_provider_for_model_impl(model_alias)
-
-
-def _validate_policy(policy: str) -> str:
-    try:
-        return _validate_policy_impl(policy)
-    except InvalidPolicyError as exc:
-        console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(1) from exc
 
 
 def _resolve_clode_token(provider: str, prefer: str, policy: str) -> str:
@@ -565,6 +546,7 @@ def create_provider_app(provider: str) -> typer.Typer:
 
         history_cmd(limit=limit, format=format)
 
+    _ = (main, clode_run, clode_bg, clode_ps, clode_logs, clode_status, clode_stop, clode_wait, clode_inspect, clode_history)
     return provider_app
 
 
@@ -1037,14 +1019,6 @@ def clode_bg_global(
         full=False,
         model=canonical,
         owner=owner,
-    )
-
-
-def _free_extra_args(resume: str | None, prompt: str | None) -> list[str]:
-    return _free_extra_args_impl(
-        triggered_by_agent=_is_triggered_by_agent_process(),
-        resume=resume,
-        prompt=prompt,
     )
 
 
@@ -1588,14 +1562,12 @@ def sitback_cmd(
         cwd = str(cd.resolve()) if cd else str(PathCls.cwd())
 
         async def launch_tui():
-            from thegent.tui.compositor import TUIContext
-
-            context = TUIContext(
+            await run_tui(
                 session_id=session_id,
                 agent_name=f"sitback-{resolved_harness}",
                 cwd=PathCls(cwd),
+                headless=False,
             )
-            await run_tui(context=context, headless=False)
 
         try:
             asyncio.run(launch_tui())

@@ -14,7 +14,6 @@ from thegent.research.remote_compute import RemoteComputeClient
 
 __all__ = [
     "AgentHierarchyManager",
-    "AutonomousLearningSurface",
     "ConversationDumpWriter",
     "CostSensitivityFramework",
     "EscalationQueueDLQ",

@@ -186,6 +186,7 @@ class Dialog(Container):
     def _dismiss(self) -> None:
         """Close the dialog."""
         if self._on_result:
+            assert self._result is not None
             self._on_result(self._result)
         self.remove()
 
@@ -387,7 +388,7 @@ class DialogManager:
         style: DialogStyle = DialogStyle.DEFAULT,
     ) -> None:
         """Show a toast notification."""
-        toast = Toast(message, duration=duration, style=style)
+        _toast = Toast(message, duration=duration, style=style)
         # Would be added to screen
 
     def close_all(self) -> None:

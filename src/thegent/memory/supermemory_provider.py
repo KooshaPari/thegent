@@ -18,7 +18,7 @@ import json
 import logging
 
 from thegent.execution import ContinuityPacket
-from thegent.memory.supermemory_client import SupermemoryAPIError, SupermemoryClient, SupermemoryConfigError
+from thegent.memory.supermemory_client import SupermemoryClient, SupermemoryConfigError
 
 logger = logging.getLogger(__name__)
 

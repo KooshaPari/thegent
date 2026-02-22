@@ -6,7 +6,7 @@ Inspired by Constitutional AI principles (Anthropic).
 import json
 import logging
 from dataclasses import dataclass, field
-from enum import Enum, StrEnum
+from enum import StrEnum
 from pathlib import Path
 
 _log = logging.getLogger(__name__)

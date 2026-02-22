@@ -8,7 +8,6 @@ import os
 import sys
 import uuid
 from pathlib import Path
-from typing import Any
 
 import typer
 
@@ -20,9 +19,7 @@ from thegent.cli.commands._cli_shared import (
     ThegentSettings,
     _bootstrap_metric_contracts,
     _get_health_targets_path,
-    _health_targets_exists,
     _HEALTH_TARGETS_TEMPLATE,
-    _METRIC_CONTRACTS_TEMPLATE,
     _load_artifact,
     _normalize_output_format,
     _resolve_cwd,

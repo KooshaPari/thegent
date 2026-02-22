@@ -21,17 +21,15 @@ import json
 import re
 import subprocess
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Callable, Literal, cast
+from typing import Any, Callable, Literal, cast
 
 import jsonschema
 import litellm
+from litellm.types.utils import Choices as _LiteLLMChoices
 from litellm.types.utils import ModelResponse as _LiteLLMModelResponse
 from pydantic import BaseModel, StrictInt, ValidationError
 
 from thegent.govern.vetter.models import VetterCheckResult, VetterConfigError  # noqa: TC001
-
-if TYPE_CHECKING:
-    from thegent.governance.semantic_firewall import SemanticFirewall
 
 
 @dataclass
@@ -211,7 +209,7 @@ class LLMJudgeCheck:
             ),
         )
 
-        raw = response.choices[0].message.content or ""
+        raw = cast("_LiteLLMChoices", response.choices[0]).message.content or ""
         judge_data: dict[str, Any] = json.loads(raw)
         scores: dict[str, int] = judge_data.get("scores", {})
         pass_verdict: bool = judge_data.get("pass_verdict", False)
@@ -370,7 +368,7 @@ class QualityScoreVetterCheck:
                 temperature=0.0,
             ),
         )
-        raw = response.choices[0].message.content or ""
+        raw = cast("_LiteLLMChoices", response.choices[0]).message.content or ""
         try:
             decoded = json.loads(raw)
         except json.JSONDecodeError as exc:

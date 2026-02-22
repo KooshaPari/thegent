@@ -246,7 +246,7 @@ class WatcherDaemon:
 
     def __init__(self) -> None:
         self._lock: threading.RLock = threading.RLock()
-        self._observer: Observer = Observer()
+        self._observer: Any = Observer()
         self._running: bool = False
         cleanup_interval = os.getenv("THGENT_WATCHER_CLEANUP_INTERVAL_S", "3600")
         self._cleanup_interval_s = max(int(cleanup_interval), 300)
@@ -468,4 +468,5 @@ __all__ = [
     "WatchSpec",
     "WatcherDaemon",
     "get_watcher_daemon",
+    "_reset_singleton",
 ]

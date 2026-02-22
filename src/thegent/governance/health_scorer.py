@@ -142,7 +142,7 @@ class HealthScorer:
         Returns:
             Complete health report
         """
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         scores = []
         for dim_key, actual_value in measurements.items():

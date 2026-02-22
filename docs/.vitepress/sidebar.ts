@@ -1289,6 +1289,112 @@ export const sidebar = {
       ]
     },
     {
+      "text": "Technical Specs",
+      "collapsed": false,
+      "items": [
+        {
+          "text": "Technical Specs Index",
+          "link": "/SPECS_INDEX.md"
+        },
+        {
+          "text": "Agents Domain",
+          "link": "/specs/agents/README.md"
+        },
+        {
+          "text": "Routing & LLM Selection",
+          "link": "/specs/routing/README.md"
+        },
+        {
+          "text": "MCP Protocol",
+          "link": "/specs/mcp/README.md"
+        },
+        {
+          "text": "Governance & Security",
+          "link": "/specs/governance/README.md"
+        },
+        {
+          "text": "Orchestration",
+          "link": "/specs/orchestration/README.md"
+        },
+        {
+          "text": "Automation",
+          "link": "/specs/automation/README.md"
+        },
+        {
+          "text": "Cross-Platform",
+          "link": "/specs/cross_platform/README.md"
+        },
+        {
+          "text": "Infrastructure",
+          "link": "/specs/infra/README.md"
+        },
+        {
+          "text": "Database & Storage",
+          "link": "/specs/database/README.md"
+        },
+        {
+          "text": "Terminal & ZMX",
+          "link": "/specs/terminal/README.md"
+        },
+        {
+          "text": "Memory",
+          "link": "/specs/memory/README.md"
+        },
+        {
+          "text": "Planning",
+          "link": "/specs/planning/README.md"
+        },
+        {
+          "text": "Discovery",
+          "link": "/specs/discovery/README.md"
+        },
+        {
+          "text": "Observability",
+          "link": "/specs/observability/README.md"
+        },
+        {
+          "text": "Security & Compliance",
+          "link": "/specs/security/README.md"
+        },
+        {
+          "text": "Contracts",
+          "link": "/specs/contracts/README.md"
+        },
+        {
+          "text": "Verification",
+          "link": "/specs/verification/README.md"
+        },
+        {
+          "text": "Cost & Budget",
+          "link": "/specs/cost/README.md"
+        },
+        {
+          "text": "Skills",
+          "link": "/specs/skills/README.md"
+        },
+        {
+          "text": "Mesh & Collaboration",
+          "link": "/specs/mesh/README.md"
+        },
+        {
+          "text": "UI & TUI",
+          "link": "/specs/ui/README.md"
+        },
+        {
+          "text": "Protocols & Adapters",
+          "link": "/specs/protocols/README.md"
+        },
+        {
+          "text": "Evaluation & Benchmarks",
+          "link": "/specs/evals/README.md"
+        },
+        {
+          "text": "Versioning Systems",
+          "link": "/specs/versioning/README.md"
+        }
+      ]
+    },
+    {
       "text": "Reports",
       "collapsed": false,
       "items": [
@@ -3919,6 +4025,112 @@ export const sidebar = {
     {
       "text": "🏁 Project Completion Report: thegent",
       "link": "/reports/PROJECT_COMPLETION_REPORT.md"
+    }
+  ],
+  "/specs/": [
+    {
+      "text": "Technical Specs Index",
+      "link": "/SPECS_INDEX.md"
+    },
+    {
+      "text": "Agents Domain",
+      "link": "/specs/agents/README.md"
+    },
+    {
+      "text": "Routing & LLM Selection",
+      "link": "/specs/routing/README.md"
+    },
+    {
+      "text": "MCP Protocol",
+      "link": "/specs/mcp/README.md"
+    },
+    {
+      "text": "Governance & Security",
+      "link": "/specs/governance/README.md"
+    },
+    {
+      "text": "Orchestration",
+      "link": "/specs/orchestration/README.md"
+    },
+    {
+      "text": "Automation",
+      "link": "/specs/automation/README.md"
+    },
+    {
+      "text": "Cross-Platform",
+      "link": "/specs/cross_platform/README.md"
+    },
+    {
+      "text": "Infrastructure",
+      "link": "/specs/infra/README.md"
+    },
+    {
+      "text": "Database & Storage",
+      "link": "/specs/database/README.md"
+    },
+    {
+      "text": "Terminal & ZMX",
+      "link": "/specs/terminal/README.md"
+    },
+    {
+      "text": "Memory",
+      "link": "/specs/memory/README.md"
+    },
+    {
+      "text": "Planning",
+      "link": "/specs/planning/README.md"
+    },
+    {
+      "text": "Discovery",
+      "link": "/specs/discovery/README.md"
+    },
+    {
+      "text": "Observability",
+      "link": "/specs/observability/README.md"
+    },
+    {
+      "text": "Security & Compliance",
+      "link": "/specs/security/README.md"
+    },
+    {
+      "text": "Contracts",
+      "link": "/specs/contracts/README.md"
+    },
+    {
+      "text": "Verification",
+      "link": "/specs/verification/README.md"
+    },
+    {
+      "text": "Cost & Budget",
+      "link": "/specs/cost/README.md"
+    },
+    {
+      "text": "Skills",
+      "link": "/specs/skills/README.md"
+    },
+    {
+      "text": "Mesh & Collaboration",
+      "link": "/specs/mesh/README.md"
+    },
+    {
+      "text": "UI & TUI",
+      "link": "/specs/ui/README.md"
+    },
+    {
+      "text": "Protocols & Adapters",
+      "link": "/specs/protocols/README.md"
+    },
+    {
+      "text": "Evaluation & Benchmarks",
+      "link": "/specs/evals/README.md"
+    },
+    {
+      "text": "Versioning Systems",
+      "link": "/specs/versioning/README.md"
+    },
+    {
+      "text": "Documentation Handbook",
+      "link": "/specs/documentation/README.md"
     }
   ]
 }

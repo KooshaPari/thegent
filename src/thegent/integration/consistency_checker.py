@@ -108,18 +108,19 @@ class ConsistencyChecker:
 
     def _get_provider_auth_method(self) -> str:
         """Get provider authentication method."""
-        try:
-            from thegent.config import load_config
+        import json
+        from pathlib import Path
 
-            config = load_config()
-            providers = config.get("providers", {})
-
-            # Check if any provider uses API keys (should be OAuth only)
-            for provider_config in providers.values():
-                if isinstance(provider_config, dict) and "api_key" in provider_config:
-                    return "api_key"
-
-            return "oauth_only"
-        except (ImportError, AttributeError, KeyError):
-            # Config not available or doesn't have providers
+        config_path = Path("~/.thegent/config.json").expanduser()
+        if not config_path.exists():
             return "unknown"
+        with config_path.open() as f:
+            config: dict = json.load(f)
+        providers = config.get("providers", {})
+
+        # Check if any provider uses API keys (should be OAuth only)
+        for provider_config in providers.values():
+            if isinstance(provider_config, dict) and "api_key" in provider_config:
+                return "api_key"
+
+        return "oauth_only"

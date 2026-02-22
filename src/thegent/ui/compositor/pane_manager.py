@@ -277,7 +277,7 @@ class PaneManager:
         )
 
         if children_data:
-            node.children = [self._deserialize_node(child) for child in children_data if child]
+            node.children = [n for n in (self._deserialize_node(child) for child in children_data if child) if n is not None]
 
         return node
 

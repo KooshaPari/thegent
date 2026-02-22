@@ -23,13 +23,13 @@ class HybridRouter:
         _log.info("Hybrid routing task: %s (Start: %s)", task_type, start_node)
 
         # 1. Symbolic Safety Check
-        risk_paths = self.symbolic_explorer.explore(start_node)
+        _risk_paths = self.symbolic_explorer.explore(start_node)
         high_risk = self.symbolic_explorer.get_highest_risk_path()
         risk_score = high_risk.risk_score if high_risk else 0.0
 
         # 2. Neural/Standard Route Selection
         # If risk is high, force a higher-quality (more capable/safe) model policy
-        policy: RoutePolicy = "roi"
+        policy: RoutePolicy = "cheapest"
         if risk_score > 0.6:
             _log.warning("High risk detected (score: %s). Escalating to mission_critical policy.", risk_score)
             policy = "pareto"  # Pareto quality-first

@@ -46,14 +46,14 @@ def run(task: str, **kwargs: object) -> AgentResult:
     import dataclasses
 
     from thegent.core.worker_pool import AgentTask
-    from thegent.core.worker_pool import _run_task_in_process as _run
+    from thegent.core.worker_pool import run_task_in_process as _run
 
     agent_task = AgentTask(
         task_id=str(kwargs.get("task_id", "sdk-0")),
         prompt=task,
         cwd=str(kwargs.get("cwd", ".")),
         mode=str(kwargs.get("mode", "write")),
-        timeout=int(kwargs.get("timeout", 600)),
+        timeout=int(str(kwargs.get("timeout", 600))),
         agent_name=str(kwargs.get("agent_name", "default")),
     )
     result_dict = _run(dataclasses.asdict(agent_task))

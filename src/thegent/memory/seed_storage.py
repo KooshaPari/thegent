@@ -6,9 +6,8 @@ Provides read, write, update, and query operations.
 
 import json
 import logging
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 from thegent.memory.seed_detector import Seed, SeedSource
 
@@ -328,7 +327,7 @@ class SeedStorage:
         return Seed(
             id=data.get("id", ""),
             text=data.get("text", ""),
-            source=source_value,  # Pass string; __post_init__ converts to enum
+            source=SeedSource(source_value),  # Convert string to enum explicitly
             confidence=data.get("confidence", 0.5),
             timestamp=data.get("timestamp", ""),
             tags=data.get("tags", []),

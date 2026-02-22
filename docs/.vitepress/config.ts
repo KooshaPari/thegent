@@ -28,6 +28,7 @@ const config = defineConfig({
     'plans/**',
     'research/**',
     'reference/api/**',
+    'context/**',
   ],
 
   // Disable dead link check (links are external or cross-project)
@@ -54,7 +55,7 @@ const config = defineConfig({
       }) as any
     ],
     build: {
-      outDir: '../docs-dist',
+      outDir: './dist',
       assetsDir: 'assets',
       rollupOptions: {
         output: {
@@ -126,6 +127,11 @@ const config = defineConfig({
         text: 'Reference', 
         link: '/reference/',
         activeMatch: '/reference/'
+      },
+      { 
+        text: 'Technical Specs', 
+        link: '/SPECS_INDEX.md',
+        activeMatch: '/specs/'
       },
     ],
 

@@ -8,7 +8,6 @@ import contextlib
 import re
 import subprocess
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Protocol
 
@@ -105,7 +104,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
     try:
         # Check if we're already in an event loop
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
             # If we're in a loop, use ThreadPoolExecutor fallback
             from concurrent.futures import ThreadPoolExecutor, as_completed
 

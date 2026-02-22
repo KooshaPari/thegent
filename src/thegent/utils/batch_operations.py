@@ -77,6 +77,6 @@ def batch_write_files(file_contents: dict[Path, str], batch_size: int = 10) -> N
     items = list(file_contents.items())
     batch_file_operations(
         [item[0] for item in items],
-        lambda p: write_file(next((i for i in items if i[0] == p), None)),
+        lambda p: write_file(next(i for i in items if i[0] == p)),
         batch_size,
     )

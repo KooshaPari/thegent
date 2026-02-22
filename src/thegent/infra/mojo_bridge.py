@@ -8,37 +8,18 @@ compiled Mojo binaries, with future support for C-ABI integration when stable.
 """
 
 import asyncio
-from asyncio import subprocess
 import contextlib
 import json
 import os
 import platform
 import shutil
 import subprocess
-import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from thegent.infra.cache_v2 import CacheV2
-
-# Try to import the IPC module if available
-try:
-    from thegent.infra.ipc import IPCMesh
-
-    IPC_AVAILABLE = True
-except ImportError:
-    IPC_AVAILABLE = False
-
-
-# Try to import the shell module if available
-try:
-    from thegent.infra.shell_injection import run_untrusted_shell_command  # type: ignore[attr-defined]
-
-    SHELL_AVAILABLE = True
-except ImportError:
-    SHELL_AVAILABLE = False
 
 
 class MojoNotAvailableError(Exception):
@@ -188,7 +169,7 @@ class MojoBridge:
         if modular_cmd:
             # Try to get mojo version through modular
             try:
-                result = subprocess.run(
+                _result = subprocess.run(
                     ["modular", "auth"],
                     capture_output=True,
                     timeout=5,
@@ -496,7 +477,7 @@ fn main():
 
         except asyncio.TimeoutError:
             return None
-        except Exception as e:
+        except Exception:
             return None
 
     async def shutdown(self) -> None:
@@ -543,8 +524,6 @@ async def check_mojo_status() -> dict[str, Any]:
 if __name__ == "__main__":
 
     async def main():
-        import sys
-
         bridge = get_bridge()
         status = await check_mojo_status()
 
@@ -559,6 +538,6 @@ if __name__ == "__main__":
                 function="hello",
                 args={"name": "thegent"},
             )
-            result = await bridge.dispatch(test_task)
+            _result = await bridge.dispatch(test_task)
 
     asyncio.run(main())

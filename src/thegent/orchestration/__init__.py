@@ -16,10 +16,6 @@ from thegent.orchestration.consensus.redlock_atomic import (
     RedlockController,
     make_redlock_controller,
 )
-from thegent.orchestration.execution import (
-    dag_prioritization,
-    work_chunking,
-)
 from thegent.orchestration.execution.dag_prioritization import (
     DagCycleError,
     DagPrioritizer,
@@ -40,10 +36,6 @@ from thegent.orchestration.execution.work_chunking import (
     ChunkConfig,
     chunk_work_items,
     compute_optimal_chunk_size,
-)
-from thegent.orchestration.resource import (
-    load_based_limits,
-    resource_management,
 )
 from thegent.orchestration.resource.load_based_limits import (
     DeadlineMonitor,
@@ -66,9 +58,6 @@ from thegent.orchestration.resource.token_bucket import (
     RateLimitedSwarmRunner,
     TokenBucket,
     TokenBucketConfig,
-)
-from thegent.orchestration.strategies import (
-    speculative_strategies,
 )
 from thegent.orchestration.strategies.evidence import PromotionGate
 from thegent.orchestration.strategies.speculative_strategies import (

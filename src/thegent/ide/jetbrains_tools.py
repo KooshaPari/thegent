@@ -6,8 +6,6 @@ They communicate with the JetBrains MCP server running in the IDE.
 
 import json
 import logging
-from pathlib import Path
-from typing import Any
 
 import httpx
 
@@ -19,7 +17,7 @@ _log = logging.getLogger(__name__)
 def _get_jetbrains_mcp_url() -> str:
     """Get the JetBrains MCP server URL."""
     settings = ThegentSettings()
-    return f"http://localhost:{settings.jetbrains_mcp_port}"
+    return f"http://localhost:{settings.serena_jetbrains_port}"
 
 
 async def jetbrains_read_file(path: str, offset: int = 0, limit: int = -1) -> str:
@@ -229,7 +227,7 @@ def check_jetbrains_mcp_available() -> bool:
     import socket
 
     settings = ThegentSettings()
-    port = settings.jetbrains_mcp_port
+    port = settings.serena_jetbrains_port
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1)
     result = sock.connect_ex(("localhost", port))

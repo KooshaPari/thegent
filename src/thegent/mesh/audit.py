@@ -1,6 +1,5 @@
 """Audit trail and recovery for the agent mesh."""
 
-import os
 import shutil
 import subprocess
 import time

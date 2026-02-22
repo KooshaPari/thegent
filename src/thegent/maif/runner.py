@@ -7,11 +7,9 @@ All errors are caught and logged; this module never raises to the caller.
 from __future__ import annotations
 
 import logging
-import os
 import time
 import uuid
 from pathlib import Path
-from typing import Optional
 
 _log = logging.getLogger(__name__)
 
@@ -94,7 +92,6 @@ class MAIFRunner:
         if not self._enabled:
             return None
         try:
-            from thegent.maif.crypto import hash_data
             from thegent.maif.models import ActionType
 
             generator = self._get_generator()

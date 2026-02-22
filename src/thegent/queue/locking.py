@@ -42,6 +42,7 @@ class QueueLock:
 
     def read_entries(self) -> list[dict]:
         """Read entries from the locked file. Call only while holding the lock."""
+        assert self._file is not None, "read_entries called outside lock context"
         self._file.seek(0)
         entries = []
         for line in self._file:

@@ -50,12 +50,6 @@ _DEFAULT_KEY_REGISTRY = Path.home() / ".thegent" / "keys" / "registry.jsonl"
 _DEFAULT_ORG_REGISTRY = Path.home() / ".thegent" / "orgs" / "registry.json"
 
 
-def _get_evidence_store(evidence_path: Path):
-    from thegent.governance.compliance import EvidenceStore
-
-    return EvidenceStore(evidence_path)
-
-
 # ---------------------------------------------------------------------------
 # compliance audit-export
 # ---------------------------------------------------------------------------

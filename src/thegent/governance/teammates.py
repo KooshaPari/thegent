@@ -214,7 +214,7 @@ class TeammateManager:
         role = self._infer_role(teammate_id)
 
         # Register child agent in hierarchy
-        child_node = self.hierarchy.register_agent(
+        self.hierarchy.register_agent(
             agent_id=teammate_id,
             run_id=req_id,
             role=role,
@@ -223,7 +223,7 @@ class TeammateManager:
         )
 
         # Create relationship
-        relationship = self.hierarchy.create_relationship(
+        self.hierarchy.create_relationship(
             parent_id=parent_run_id,
             child_id=req_id,
             relationship_type=relationship_type,

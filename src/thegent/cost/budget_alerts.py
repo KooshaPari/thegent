@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from thegent.config import ThegentSettings
-
 logger = logging.getLogger(__name__)
 
 

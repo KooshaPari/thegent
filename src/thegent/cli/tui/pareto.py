@@ -19,7 +19,6 @@ from typing import Any
 from thegent.routing.route_executor import (
     RouterStatus,
     RoutingOrchestratorBridge,
-    read_routing_audit,
 )
 
 # @trace WL-031

@@ -1,7 +1,7 @@
 """Cost capping, tracking, and budget alerts (WP-5001, WP-5003)."""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

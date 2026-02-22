@@ -18,8 +18,6 @@ def register_harness_tools(
         Tuple of (thegent_harness_interact, thegent_harness_list_actions,
                   thegent_harness_get_command, thegent_harness_register_host)
     """
-    from fastmcp.tools.tool import ToolResult
-
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     async def thegent_harness_interact(
         harness: str,

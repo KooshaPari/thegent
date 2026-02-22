@@ -5,8 +5,6 @@ from typing import Any
 
 import httpx
 
-from thegent.config import ThegentSettings
-
 logger = logging.getLogger(__name__)
 
 

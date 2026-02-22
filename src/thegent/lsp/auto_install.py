@@ -113,28 +113,28 @@ def _download_jdtls_fallback() -> bool:
     import platform
 
     system = platform.system().lower()
-    arch = platform.machine().lower()
+    _arch = platform.machine().lower()
 
     # Determine platform config
     if system == "darwin":
-        config_dir = "config_mac"
+        _config_dir = "config_mac"
     elif system == "linux":
-        config_dir = "config_linux"
+        _config_dir = "config_linux"
     elif system == "windows":
-        config_dir = "config_win"
+        _config_dir = "config_win"
     else:
         logger.error(f"Unsupported platform: {system}")
         return False
 
     # Download latest milestone
-    milestone_url = "http://download.eclipse.org/jdtls/milestones/?d"
+    _milestone_url = "http://download.eclipse.org/jdtls/milestones/?d"
     logger.info("Attempting to download jdtls from Eclipse milestones...")
 
     try:
         # Get latest milestone URL (we'll use a known stable version)
         # Latest stable: 1.56.0 (from Homebrew info)
         version = "1.56.0"
-        base_url = f"http://download.eclipse.org/jdtls/milestones/{version}"
+        _base_url = f"http://download.eclipse.org/jdtls/milestones/{version}"
 
         # Try to download the repository
         # The actual download URL structure may vary, so we'll use Homebrew as primary

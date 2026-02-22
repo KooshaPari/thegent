@@ -2,16 +2,10 @@
 
 import logging
 import os
-import shutil
+import resource
 import subprocess
 from pathlib import Path
 from typing import Any
-
-# Conditional import for POSIX-only features
-try:
-    import resource
-except ImportError:
-    resource = None
 
 from thegent.infra.os_user_manager import OSUserManager
 from thegent.isolation.base_provider import IsolationProvider
@@ -133,6 +127,7 @@ class SubUserIsolationProvider(IsolationProvider):
         """
         try:
             # Build environment with tenant variables
+            assert context.home_dir is not None, f"home_dir must be set for tenant {context.tenant_id}"
             env = os.environ.copy()
             env.update(context.env_vars)
             env["HOME"] = context.home_dir
@@ -152,8 +147,6 @@ class SubUserIsolationProvider(IsolationProvider):
 
             def preexec_fn():
                 """Apply POSIX resource limits before execution."""
-                if resource is None:
-                    return
                 try:
                     # Set process count limit
                     resource.setrlimit(resource.RLIMIT_NPROC, (effective_limits["nproc"], effective_limits["nproc"]))
@@ -194,6 +187,7 @@ class SubUserIsolationProvider(IsolationProvider):
         """
         try:
             # Use VFS for safe cleanup (unmount + remove)
+            assert context.home_dir is not None, f"home_dir must be set for tenant {context.tenant_id}"
             home_dir = Path(context.home_dir)
             self.vfs.cleanup_home_dir(home_dir, context.tenant_id)
 

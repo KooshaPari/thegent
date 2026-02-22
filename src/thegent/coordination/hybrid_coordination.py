@@ -18,7 +18,6 @@ Routing:
 from __future__ import annotations
 
 import logging
-import os
 import random
 from dataclasses import dataclass
 from enum import Enum

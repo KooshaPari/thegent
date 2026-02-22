@@ -27,11 +27,14 @@ def specs():
 @specs.command()
 @click.option("--max-projects", type=int, help="Maximum number of projects to analyze")
 @click.option("--max-files", type=int, default=200, help="Maximum files per project")
-@click.option("--base-path", type=str, default="/Users/kooshapari/temp-PRODVERCEL/485/kush")
+@click.option("--base-path", type=str, default=None, help="Base path for analysis (defaults to current directory)")
 @click.option("--output-dir", type=str, default="docs/specs")
 def generate(max_projects, max_files, base_path, output_dir):
     """Generate specs, WBS, and PRDs for all projects."""
-    base_path = Path(base_path)
+    if base_path is None:
+        base_path = Path.cwd()
+    else:
+        base_path = Path(base_path)
     output_dir = Path(output_dir)
 
     console.print("[bold blue]Starting specs/WBS/PRD generation...[/bold blue]")

@@ -26,13 +26,13 @@ tags: [wl-126, b90, monolith-split, mcp]
 
 ### Wave-3: server.py lifespan and registration further reduction
 
-| ID | Target | Estimated LOC | Depends on |
-|----|--------|---------------|------------|
-| W3-C1 | Extract auth/lifecycle loading into `server_bootstrap.py` | ~200 | pattern stable |
-| W3-C2 | Extract resource group loading into `server_resources.py` | ~150 | pattern stable |
-| W3-C3 | Extract tool group loading into `server_tool_loader.py` | ~300 | pattern stable |
-| W3-C4 | Extract middleware setup into `server_middleware.py` | ~100 | pattern stable |
-| W3-C5 | `server.py` reduced to lifespan + import delegation (~200 lines) | — | W3-C1..C4 |
+| ID | Target | Estimated LOC | Depends on | Status |
+|----|--------|---------------|-----------|--------|
+| W3-C1 | Extract auth/lifecycle loading into `server_bootstrap.py` | ~200 | pattern stable | DONE (28 LOC final) |
+| W3-C2 | Extract resource group loading into `server_resources.py` | ~150 | pattern stable | DONE (78 LOC final) |
+| W3-C3 | Extract tool group loading into `server_tool_loader.py` | ~300 | pattern stable | DONE (218 LOC final) |
+| W3-C4 | Extract middleware setup into `server_middleware.py` | ~100 | pattern stable | DONE (57 LOC final) |
+| W3-C5 | `server.py` reduced to lifespan + import delegation (~200 lines) | 952 final | W3-C1..C4 | DONE |
 
 ### Wave-4: Tool group unit tests
 

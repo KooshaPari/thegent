@@ -1,0 +1,10 @@
+"""Type stubs for the thegent_discovery Rust extension module."""
+
+from typing import Any
+
+
+class DiscoveryManager:
+    @classmethod
+    def new(cls) -> "DiscoveryManager": ...
+    def scan_agents(self) -> list[dict[str, Any]]: ...
+    def get_system_info(self) -> dict[str, float]: ...

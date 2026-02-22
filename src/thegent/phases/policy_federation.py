@@ -1,6 +1,6 @@
 """Policy federation surface map (FederatedPolicyEngine)."""
 
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 
 class FederatedPolicyEngine:

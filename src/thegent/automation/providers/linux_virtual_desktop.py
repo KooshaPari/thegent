@@ -10,10 +10,8 @@ Uses:
 import asyncio
 import logging
 import os
-import platform
 import subprocess
 import time
-from pathlib import Path
 from typing import Any
 
 from ..virtual_desktop import (
@@ -33,9 +31,10 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
     def __init__(self) -> None:
         self._desktops: dict[str, dict] = {}
         self._lock = asyncio.Lock()
-        self._xvfb_available = await self._check_xvfb()
-        self._xdotool_available = await self._check_xdotool()
-        self._xpra_available = await self._check_xpra()
+        # Check availability synchronously - tools are usually installed
+        self._xvfb_available = self._check_xvfb_sync()
+        self._xdotool_available = self._check_xdotool_sync()
+        self._xpra_available = self._check_xpra_sync()
 
         logger.info(
             f"Linux provider initialized: "
@@ -52,6 +51,45 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
     def supports_gpu(self) -> bool:
         # GPU capture is complex on Linux, depends on driver
         return False
+
+    def _check_xvfb_sync(self) -> bool:
+        """Check if Xvfb is available (sync version for __init__)."""
+        try:
+            result = subprocess.run(
+                ["which", "Xvfb"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    def _check_xdotool_sync(self) -> bool:
+        """Check if xdotool is available (sync version for __init__)."""
+        try:
+            result = subprocess.run(
+                ["which", "xdotool"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    def _check_xpra_sync(self) -> bool:
+        """Check if Xpra is available (sync version for __init__)."""
+        try:
+            result = subprocess.run(
+                ["which", "xpra"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=2,
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
 
     async def _check_xvfb(self) -> bool:
         """Check if Xvfb is available."""
@@ -243,7 +281,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
                 cmd = ["xdotool", "--display", display, "mouseup", btn]
             elif event.event_type == "mouse_wheel":
                 delta = event.delta or 120
-                direction = "up" if delta > 0 else "down"
+                _direction = "up" if delta > 0 else "down"
                 cmd = ["xdotool", "--display", display, "click", "--repeat", "1", "4" if delta > 0 else "5"]
             elif event.event_type == "key_down":
                 if event.key_char:

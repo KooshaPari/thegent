@@ -1,6 +1,7 @@
 """Tests for virtual desktop automation module."""
 
 import pytest
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from thegent.automation.virtual_desktop import (
@@ -20,7 +21,7 @@ class TestDesktopConfig:
     def test_default_config(self):
         """Test default configuration values."""
         config = DesktopConfig(agent_id="test-agent")
-        
+
         assert config.agent_id == "test-agent"
         assert config.resolution == (1920, 1080)
         assert config.color_depth == 32
@@ -38,7 +39,7 @@ class TestDesktopConfig:
             memory_mb=4096,
             gpu_enabled=False,
         )
-        
+
         assert config.resolution == (2560, 1440)
         assert config.memory_mb == 4096
         assert config.gpu_enabled is False
@@ -50,7 +51,7 @@ class TestInputEvent:
     def test_mouse_move_event(self):
         """Test mouse move event creation."""
         event = InputEvent(event_type="mouse_move", x=100, y=200)
-        
+
         assert event.event_type == "mouse_move"
         assert event.x == 100
         assert event.y == 200
@@ -58,7 +59,7 @@ class TestInputEvent:
     def test_key_event(self):
         """Test key event creation."""
         event = InputEvent(event_type="key_down", key_code=65, key_char="a")
-        
+
         assert event.event_type == "key_down"
         assert event.key_code == 65
         assert event.key_char == "a"
@@ -66,7 +67,7 @@ class TestInputEvent:
     def test_mouse_wheel_event(self):
         """Test mouse wheel event."""
         event = InputEvent(event_type="mouse_wheel", delta=120)
-        
+
         assert event.event_type == "mouse_wheel"
         assert event.delta == 120
 
@@ -83,14 +84,13 @@ class TestScreenFrame:
             bytes_per_pixel=4,
             data=b"x" * (1920 * 1080 * 4),
         )
-        
+
         assert frame.width == 1920
         assert frame.height == 1080
         assert frame.size_bytes == 1920 * 1080 * 4
 
     def test_latency_calculation(self):
         """Test latency calculation."""
-        import time
         frame = ScreenFrame(
             timestamp=time.time(),
             width=1920,
@@ -98,7 +98,7 @@ class TestScreenFrame:
             bytes_per_pixel=4,
             data=b"x" * 100,
         )
-        
+
         # Should be very small latency since we just created it
         assert frame.latency_ms < 100
 
@@ -132,7 +132,7 @@ class TestDesktopSession:
             provider=mock_provider,
             config=config,
         )
-        
+
         assert session.agent_id == "test-agent"
         assert session.desktop_id == "desktop-1"
         assert session.state == DesktopState.CREATING
@@ -147,10 +147,10 @@ class TestDesktopSession:
             provider=mock_provider,
             config=config,
         )
-        
+
         await session.start()
         assert session.state == DesktopState.RUNNING
-        
+
         await session.stop()
         assert session.state == DesktopState.STOPPED
 
@@ -164,9 +164,9 @@ class TestDesktopSession:
             provider=mock_provider,
             config=config,
         )
-        
+
         frame = await session.capture()
-        
+
         assert frame.width == 1920
         assert frame.height == 1080
         mock_provider.capture_screen.assert_called_once_with("desktop-1")
@@ -181,10 +181,10 @@ class TestDesktopSession:
             provider=mock_provider,
             config=config,
         )
-        
+
         event = InputEvent(event_type="mouse_move", x=100, y=200)
         result = await session.inject(event)
-        
+
         assert result is True
         mock_provider.inject_input.assert_called_once_with("desktop-1", event)
 
@@ -198,9 +198,9 @@ class TestDesktopSession:
             provider=mock_provider,
             config=config,
         )
-        
+
         result = await session.click(100, 200)
-        
+
         # Should inject 3 events: move, down, up
         assert mock_provider.inject_input.call_count == 3
 
@@ -214,7 +214,7 @@ class TestVirtualDesktopManager:
         # This test just verifies the manager can be created
         # The actual provider depends on the platform
         manager = VirtualDesktopManager()
-        
+
         assert manager._provider is not None
         assert manager._provider.name in ["windows", "linux", "darwin"]
 
@@ -222,15 +222,23 @@ class TestVirtualDesktopManager:
     async def test_get_session_not_exists(self):
         """Test getting non-existent session returns None."""
         manager = VirtualDesktopManager()
-        
+
         session = await manager.get_session("non-existent")
-        
+
         assert session is None
 
 
 def test_get_desktop_manager_singleton():
     """Test that get_desktop_manager returns singleton."""
-    manager1 = get_desktop_manager()
-    manager2 = get_desktop_manager()
-    
-    assert manager1 is manager2
+    # Need to reset the global manager first
+    import thegent.automation.virtual_desktop as vd
+    original_manager = vd._manager
+    vd._manager = None
+
+    try:
+        manager1 = get_desktop_manager()
+        manager2 = get_desktop_manager()
+
+        assert manager1 is manager2
+    finally:
+        vd._manager = original_manager
