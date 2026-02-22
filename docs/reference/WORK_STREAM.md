@@ -2789,7 +2789,7 @@ Add strict formatter for WL block structure and metadata normalization.
 **Evidence:** `src/thegent/integrations/wl_block_formatter.py`, `tests/integrations/test_wl264_wl_block_formatter.py`, `docs/reports/2026-02-22-wave70-batch2-wl262-264-299-300.md`
 
 ### [WL-265] Field Mapping Bootstrap Wizard
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** setup, ux
 **Effort:** S
@@ -2797,7 +2797,7 @@ Add strict formatter for WL block structure and metadata normalization.
 
 Add first-time setup wizard for connector field/state mapping bootstrap.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/field_mapping_wizard.py`, `tests/test_wl265_field_mapping_wizard.py`
 
 ### [WL-266] Pre-Apply Connector Health Probe
 **Status:** COMPLETED (2026-02-22)
@@ -2811,7 +2811,7 @@ Run health probe before apply cycle and fail early on degraded connectors.
 **Evidence:** `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-267] Adaptive Sync Interval Controller
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** performance, scheduler
 **Effort:** M
@@ -2819,10 +2819,10 @@ Run health probe before apply cycle and fail early on degraded connectors.
 
 Adapt loop interval dynamically based on drift rate, error rate, and load.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/adaptive_sync_interval.py`, `tests/test_wl267_adaptive_sync_interval.py`
 
 ### [WL-268] Incident Snapshot Bundle
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** incident, audit
 **Effort:** S
@@ -2830,10 +2830,10 @@ Adapt loop interval dynamically based on drift rate, error rate, and load.
 
 Produce immutable incident snapshot bundles for postmortem workflows.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/incident_snapshot.py`, `tests/test_wl268_incident_snapshot.py`
 
 ### [WL-269] Conflict Triage Categories
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** conflicts, governance
 **Effort:** S
@@ -2841,7 +2841,7 @@ Produce immutable incident snapshot bundles for postmortem workflows.
 
 Classify conflicts by category/severity and assign owner routing metadata.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/conflict_triage.py`, `tests/test_wl269_conflict_triage.py`
 
 ### [WL-270] Metadata Freshness TTL
 **Status:** IN PROGRESS (Wave70 2026-02-22)
