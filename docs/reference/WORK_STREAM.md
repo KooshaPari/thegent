@@ -2439,7 +2439,7 @@ Embed policy checksum per cycle and detect drift against expected policy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-313] Confidential Report Mode
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** security, reporting
 **Effort:** S
@@ -2472,7 +2472,7 @@ Create sign-off template for production autosync enablement reviews.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-316] Sandbox Seeding Utility
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** testing, tools
 **Effort:** S
@@ -2483,7 +2483,7 @@ Add utility to seed sandbox trackers for repeatable connector tests.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-317] Drift Replay Tool
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** replay, diagnostics
 **Effort:** M
@@ -2494,7 +2494,7 @@ Replay drift scenarios from archived manifests for deterministic debugging.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-318] Alert Routing Hooks
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** alerts, integrations
 **Effort:** S
