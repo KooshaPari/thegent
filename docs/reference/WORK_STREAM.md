@@ -2844,7 +2844,7 @@ Classify conflicts by category/severity and assign owner routing metadata.
 **Evidence:** `src/thegent/integrations/conflict_triage.py`, `tests/test_wl269_conflict_triage.py`
 
 ### [WL-270] Metadata Freshness TTL
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** metadata, sync
 **Effort:** S
@@ -2877,7 +2877,7 @@ Append-only history log for all local status transitions caused by sync.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-273] Selective Retry Queue
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** resilience, queue
 **Effort:** M
@@ -2888,7 +2888,7 @@ Queue transient failures for selective retry without replaying successful writes
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-274] Connector Sandbox Project Mode
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** testing, safety
 **Effort:** S
@@ -2899,7 +2899,7 @@ Support sandbox project targets for safe connector validation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-275] CI Benchmark Gates
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** ci, performance
 **Effort:** M
