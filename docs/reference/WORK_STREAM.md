@@ -3550,7 +3550,7 @@ Add synthetic load tests for projects with 1k+ WL items.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-217] Tenancy-Safe Namespacing
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tenancy, safety
 **Effort:** M
@@ -3559,9 +3559,10 @@ Add synthetic load tests for projects with 1k+ WL items.
 Namespace caches, locks, and reports by project tenancy to prevent cross-talk.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/tenant_namespace.py` with `TenantNamespace` dataclass and `TenantNamespaceResolver` class (namespace, strip_namespace, is_owned, namespace_dict, strip_dict). Tests: `tests/integrations/test_wl217_tenant_namespace.py` (15 tests).
 
 ### [WL-218] Autosync Onboarding Wizard
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** setup, ux
 **Effort:** S
@@ -3570,6 +3571,7 @@ Namespace caches, locks, and reports by project tenancy to prevent cross-talk.
 Add setup wizard path for autosync environment keys, scopes, and quick verification.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/onboarding_wizard.py` with `OnboardingStep` dataclass and `OnboardingWizard` class (STEPS, get_steps, complete_step, next_incomplete, is_complete, progress). Tests: `tests/integrations/test_wl218_onboarding_wizard.py` (18 tests).
 
 ### [WL-219] VitePress Ops Docset for Autosync
 **Status:** BACKLOG
@@ -3583,7 +3585,7 @@ Add dedicated docset section for autonomous reflection operations and troublesho
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-220] Production Readiness Gate
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** release, governance
 **Effort:** S
@@ -3592,6 +3594,7 @@ Add dedicated docset section for autonomous reflection operations and troublesho
 Define production readiness checklist for enabling autosync by default.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/prod_readiness.py` with `ReadinessCheck` dataclass and `ProductionReadinessGate` class (REQUIRED, add, evaluate, missing_checks, failed_checks, report). Tests: `tests/integrations/test_wl220_prod_readiness.py` (15 tests).
 
 ### [WL-182] Stale Item Detector
 **Status:** COMPLETED
@@ -3618,7 +3621,7 @@ Detect duplicate board IDs across connectors and hard-fail the cycle when collis
 **Implementation:** `src/thegent/integrations/board_id_guard.py` with `BoardIdCollisionError`, `BoardIdRegistry`, and `validate_no_collisions()`. Tests: `tests/test_wl183_board_id_guard.py` (14 tests).
 
 ### [WL-184] WL Header Normalization Pass
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** parser, workstream
 **Effort:** S
@@ -3627,6 +3630,7 @@ Detect duplicate board IDs across connectors and hard-fail the cycle when collis
 Normalize malformed WL headers before reflection to avoid parser split-brain behavior.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/header_normalizer.py` with `NormalizationResult` dataclass and `WLHeaderNormalizer` class (normalize_title, normalize_status, normalize_priority, normalize_record). Tests: `tests/integrations/test_wl184_header_normalizer.py` (24 tests).
 
 ### [WL-185] Reflection Rollback Command
 **Status:** BACKLOG
@@ -8329,7 +8333,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Consolidated Version** | See [CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md](./CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md) for unified guide |
 | **Key Decisions** | Hybrid user isolation, user priority + FIFO coordination, native desktop automation |
 | **Implementation Phases** | 5 phases (9 weeks) |
-| **Performance Targets** | <100ms latency (p95), >95% success rate |
+| **Performance Targets** | &lt;100ms latency (p95), >95% success rate |
 | **BACKLOG Items** | 7 items extracted (see Section 12) |
 | ID | Action | Priority | Depends | Status |
 |----|--------|----------|---------|--------|
@@ -8393,16 +8397,16 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Invalid State** | UI state doesn't match expectation | Validate state, retry or abort | 1 retry, then abort |
 | Action Type | Target Latency (p95) | Warning | Critical | Window |
 |-------------|---------------------|---------|----------|--------|
-| **Click** | < 100ms | > 150ms | > 200ms | 5m |
-| **Type Text** | < 200ms | > 300ms | > 500ms | 5m |
-| **Find Element** | < 500ms | > 750ms | > 1000ms | 5m |
-| **Screenshot** | < 500ms | > 1000ms | > 2000ms | 5m |
-| **Wait for Idle** | < 5s | > 10s | > 15s | 5m |
+| **Click** | &lt; 100ms | > 150ms | > 200ms | 5m |
+| **Type Text** | &lt; 200ms | > 300ms | > 500ms | 5m |
+| **Find Element** | &lt; 500ms | > 750ms | > 1000ms | 5m |
+| **Screenshot** | &lt; 500ms | > 1000ms | > 2000ms | 5m |
+| **Wait for Idle** | &lt; 5s | > 10s | > 15s | 5m |
 | Metric | Target | Warning | Critical |
 |--------|--------|---------|----------|
-| **Automation Success Rate** | > 95% | 90-95% | < 90% |
-| **Element Finding Success** | > 98% | 95-98% | < 95% |
-| **User Interruption Rate** | < 5% | 5-10% | > 10% |
+| **Automation Success Rate** | > 95% | 90-95% | &lt; 90% |
+| **Element Finding Success** | > 98% | 95-98% | &lt; 95% |
+| **User Interruption Rate** | &lt; 5% | 5-10% | > 10% |
 | Operation | Baseline | Optimized Target | Optimization |
 |-----------|----------|------------------|--------------|
 | **Element Find (cached)** | 500ms | 10ms | Element caching |
@@ -8502,31 +8506,31 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | Automation Scope Selection | Guide scope selection | Isolation level, use case complexity |
 | Action Type | Target (p95) | Warning | Critical | Measurement Window |
 |-------------|-------------|---------|----------|-------------------|
-| **Click** | < 100ms | 100-150ms | > 150ms | 5 minutes |
-| **Type Text (10 chars)** | < 200ms | 200-300ms | > 300ms | 5 minutes |
-| **Type Text (100 chars)** | < 500ms | 500-750ms | > 750ms | 5 minutes |
-| **Find Element (cached)** | < 10ms | 10-20ms | > 20ms | 5 minutes |
-| **Find Element (uncached)** | < 500ms | 500-750ms | > 750ms | 5 minutes |
-| **Screenshot (full, 1920x1080)** | < 500ms | 500-1000ms | > 1000ms | 5 minutes |
-| **Screenshot (region, 200x200)** | < 100ms | 100-200ms | > 200ms | 5 minutes |
-| **Wait for User Idle** | < 5s | 5-10s | > 10s | 5 minutes |
-| **Get Active Window** | < 50ms | 50-100ms | > 100ms | 5 minutes |
-| **List Windows** | < 200ms | 200-500ms | > 500ms | 5 minutes |
+| **Click** | &lt; 100ms | 100-150ms | > 150ms | 5 minutes |
+| **Type Text (10 chars)** | &lt; 200ms | 200-300ms | > 300ms | 5 minutes |
+| **Type Text (100 chars)** | &lt; 500ms | 500-750ms | > 750ms | 5 minutes |
+| **Find Element (cached)** | &lt; 10ms | 10-20ms | > 20ms | 5 minutes |
+| **Find Element (uncached)** | &lt; 500ms | 500-750ms | > 750ms | 5 minutes |
+| **Screenshot (full, 1920x1080)** | &lt; 500ms | 500-1000ms | > 1000ms | 5 minutes |
+| **Screenshot (region, 200x200)** | &lt; 100ms | 100-200ms | > 200ms | 5 minutes |
+| **Wait for User Idle** | &lt; 5s | 5-10s | > 10s | 5 minutes |
+| **Get Active Window** | &lt; 50ms | 50-100ms | > 100ms | 5 minutes |
+| **List Windows** | &lt; 200ms | 200-500ms | > 500ms | 5 minutes |
 | Metric | Target | Warning | Critical |
 |--------|--------|---------|----------|
-| **Overall Success Rate** | > 95% | 90-95% | < 90% |
-| **Element Finding Success** | > 98% | 95-98% | < 95% |
-| **Click Success Rate** | > 99% | 97-99% | < 97% |
-| **Type Text Success Rate** | > 98% | 95-98% | < 95% |
-| **Screenshot Success Rate** | > 99% | 97-99% | < 97% |
-| **User Interruption Rate** | < 5% | 5-10% | > 10% |
-| **Permission Denial Rate** | < 1% | 1-3% | > 3% |
+| **Overall Success Rate** | > 95% | 90-95% | &lt; 90% |
+| **Element Finding Success** | > 98% | 95-98% | &lt; 95% |
+| **Click Success Rate** | > 99% | 97-99% | &lt; 97% |
+| **Type Text Success Rate** | > 98% | 95-98% | &lt; 95% |
+| **Screenshot Success Rate** | > 99% | 97-99% | &lt; 97% |
+| **User Interruption Rate** | &lt; 5% | 5-10% | > 10% |
+| **Permission Denial Rate** | &lt; 1% | 1-3% | > 3% |
 | Resource | Target | Warning | Critical |
 |----------|--------|---------|----------|
-| **CPU Usage (during automation)** | < 10% | 10-20% | > 20% |
-| **Memory Usage (per automation)** | < 50MB | 50-100MB | > 100MB |
-| **Screenshot Storage (per action)** | < 2MB | 2-5MB | > 5MB |
-| **Network (if remote)** | < 1Mbps | 1-5Mbps | > 5Mbps |
+| **CPU Usage (during automation)** | &lt; 10% | 10-20% | > 20% |
+| **Memory Usage (per automation)** | &lt; 50MB | 50-100MB | > 100MB |
+| **Screenshot Storage (per action)** | &lt; 2MB | 2-5MB | > 5MB |
+| **Network (if remote)** | &lt; 1Mbps | 1-5Mbps | > 5Mbps |
 | Operation | p50 | p95 | p99 | Notes |
 |-----------|-----|-----|-----|-------|
 | **Click (AppleScript)** | 45ms | 95ms | 150ms | Fast for simple clicks |
