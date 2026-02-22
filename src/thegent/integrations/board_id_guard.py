@@ -9,8 +9,6 @@ from __future__ import annotations
 class BoardIdCollisionError(Exception):
     """Exception raised when board ID collisions are detected."""
 
-    pass
-
 
 class BoardIdRegistry:
     """Registry for tracking board IDs across connectors."""
@@ -76,7 +74,7 @@ def validate_no_collisions(registry: BoardIdRegistry) -> None:
 
     # Count board IDs per connector to detect duplicates
     board_id_counts: dict[str, int] = {}
-    for board_id, _connector in all_ids.items():
+    for board_id in all_ids:
         board_id_counts[board_id] = board_id_counts.get(board_id, 0) + 1
 
     # Check for duplicates (count > 1 would indicate issue)
