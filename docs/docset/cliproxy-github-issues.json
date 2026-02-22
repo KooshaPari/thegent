@@ -2770,8 +2770,9 @@
       "updated_at": "2026-02-04T06:12:22Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 159
+      "thegent_status": "done",
+      "board_id": 159,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3894562165,
@@ -2787,8 +2788,9 @@
       "updated_at": "2026-02-08T15:02:31Z",
       "comments": 2,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 160
+      "thegent_status": "done",
+      "board_id": 160,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3894080239,
@@ -14800,8 +14802,9 @@
       "updated_at": "2025-10-28T16:50:50Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 865
+      "thegent_status": "done",
+      "board_id": 865,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3560088586,
