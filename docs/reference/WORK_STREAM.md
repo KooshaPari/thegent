@@ -3528,7 +3528,7 @@ Add replay command to reprocess dead-letter entries after connector fixes.
 **Implementation:** `src/thegent/integrations/dead_letter_replay.py` with `ReplayResult` dataclass and `DeadLetterReplayEngine` class (replay_one, replay_all, replay_summary). Tests: `tests/integrations/test_wl214_dead_letter_replay.py` (14 tests).
 
 ### [WL-215] Cycle Performance Benchmark Harness
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** perf, benchmarks
 **Effort:** M
@@ -3537,9 +3537,10 @@ Add replay command to reprocess dead-letter entries after connector fixes.
 Build benchmark harness for cycle latency, throughput, and error profile.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/cycle_benchmark.py` with `CycleBenchmark` dataclass and `CycleBenchmarkHarness` class (start_cycle, end_cycle, get_duration_seconds, all_benchmarks). Tests: `tests/test_wl215_cycle_benchmark.py` (10 tests).
 
 ### [WL-216] 1k+ Item Load Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** perf, tests
 **Effort:** M
@@ -3548,6 +3549,7 @@ Build benchmark harness for cycle latency, throughput, and error profile.
 Add synthetic load tests for projects with 1k+ WL items.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/load_test_harness.py` with `LoadTestConfig` dataclass and `LoadTestHarness` class (generate_items, run_batch, summarize). Tests: `tests/test_wl216_load_test_harness.py` (12 tests).
 
 ### [WL-217] Tenancy-Safe Namespacing
 **Status:** COMPLETED
@@ -3574,7 +3576,7 @@ Add setup wizard path for autosync environment keys, scopes, and quick verificat
 **Implementation:** `src/thegent/integrations/onboarding_wizard.py` with `OnboardingStep` dataclass and `OnboardingWizard` class (STEPS, get_steps, complete_step, next_incomplete, is_complete, progress). Tests: `tests/integrations/test_wl218_onboarding_wizard.py` (18 tests).
 
 ### [WL-219] VitePress Ops Docset for Autosync
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, vitepress
 **Effort:** S
@@ -3583,6 +3585,7 @@ Add setup wizard path for autosync environment keys, scopes, and quick verificat
 Add dedicated docset section for autonomous reflection operations and troubleshooting.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/vitepress_ops.py` with `VitePressOpsDocset` class (generate_nav, render_index). Tests: `tests/test_wl219_vitepress_ops.py` (11 tests).
 
 ### [WL-220] Production Readiness Gate
 **Status:** COMPLETED
@@ -3633,7 +3636,7 @@ Normalize malformed WL headers before reflection to avoid parser split-brain beh
 **Implementation:** `src/thegent/integrations/header_normalizer.py` with `NormalizationResult` dataclass and `WLHeaderNormalizer` class (normalize_title, normalize_status, normalize_priority, normalize_record). Tests: `tests/integrations/test_wl184_header_normalizer.py` (24 tests).
 
 ### [WL-185] Reflection Rollback Command
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** safety, cli
 **Effort:** M
@@ -3642,6 +3645,7 @@ Normalize malformed WL headers before reflection to avoid parser split-brain beh
 Add rollback command to restore last known-good local snapshot after bad sync cycles.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/reflection_rollback.py` with `RollbackEntry` dataclass and `ReflectionRollbackStore` class (record, rollback_to, list_entries). Tests: `tests/test_wl185_reflection_rollback.py` (15 tests).
 
 ### [WL-186] Human-Readable Dry-Run Diffs
 **Status:** COMPLETED
