@@ -3010,8 +3010,9 @@
       "updated_at": "2026-02-03T13:42:25Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 173
+      "thegent_status": "done",
+      "board_id": 173,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3889015410,
@@ -3027,8 +3028,9 @@
       "updated_at": "2026-02-03T13:49:46Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 174
+      "thegent_status": "done",
+      "board_id": 174,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3888837574,
@@ -3044,8 +3046,9 @@
       "updated_at": "2026-02-03T03:30:36Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 175
+      "thegent_status": "done",
+      "board_id": 175,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3887459004,
@@ -3061,8 +3064,9 @@
       "updated_at": "2026-02-07T03:23:42Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 176
+      "thegent_status": "done",
+      "board_id": 176,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3887213945,
@@ -3078,8 +3082,9 @@
       "updated_at": "2026-02-06T19:28:50Z",
       "comments": 1,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 177
+      "thegent_status": "done",
+      "board_id": 177,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3887207306,
@@ -3095,8 +3100,9 @@
       "updated_at": "2026-02-03T14:05:23Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 178
+      "thegent_status": "done",
+      "board_id": 178,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3887197605,
@@ -3146,8 +3152,9 @@
       "updated_at": "2026-02-03T14:07:04Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 181
+      "thegent_status": "done",
+      "board_id": 181,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3885924143,
@@ -3163,8 +3170,9 @@
       "updated_at": "2026-02-10T05:14:33Z",
       "comments": 3,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 182
+      "thegent_status": "done",
+      "board_id": 182,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3885840354,
@@ -3180,8 +3188,9 @@
       "updated_at": "2026-02-06T19:29:56Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 183
+      "thegent_status": "done",
+      "board_id": 183,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3885023116,
@@ -3197,8 +3206,9 @@
       "updated_at": "2026-02-02T09:58:19Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 184
+      "thegent_status": "done",
+      "board_id": 184,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3884281087,
@@ -3231,8 +3241,9 @@
       "updated_at": "2026-02-08T18:32:21Z",
       "comments": 1,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 186
+      "thegent_status": "done",
+      "board_id": 186,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3883638801,
@@ -3248,8 +3259,9 @@
       "updated_at": "2026-02-02T08:58:24Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 187
+      "thegent_status": "done",
+      "board_id": 187,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3883539303,
@@ -3265,8 +3277,9 @@
       "updated_at": "2026-02-02T08:59:16Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 188
+      "thegent_status": "done",
+      "board_id": 188,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3889903548,
@@ -3299,8 +3312,9 @@
       "updated_at": "2026-02-01T16:14:34Z",
       "comments": 0,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 190
+      "thegent_status": "done",
+      "board_id": 190,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3882129833,
@@ -3316,8 +3330,9 @@
       "updated_at": "2026-02-06T05:34:06Z",
       "comments": 2,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 191
+      "thegent_status": "done",
+      "board_id": 191,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3882022625,
@@ -3333,8 +3348,9 @@
       "updated_at": "2026-02-01T23:59:27Z",
       "comments": 2,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 192
+      "thegent_status": "done",
+      "board_id": 192,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3881869798,
@@ -3403,8 +3419,9 @@
       "updated_at": "2026-02-05T11:48:55Z",
       "comments": 2,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 196
+      "thegent_status": "done",
+      "board_id": 196,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3880793034,
@@ -3420,8 +3437,9 @@
       "updated_at": "2026-02-01T20:50:51Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 197
+      "thegent_status": "done",
+      "board_id": 197,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3880255809,
@@ -3437,8 +3455,9 @@
       "updated_at": "2026-01-31T22:29:09Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 198
+      "thegent_status": "done",
+      "board_id": 198,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3879486452,
@@ -3454,8 +3473,9 @@
       "updated_at": "2026-02-05T14:49:21Z",
       "comments": 1,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 199
+      "thegent_status": "done",
+      "board_id": 199,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3879395773,
@@ -3471,8 +3491,9 @@
       "updated_at": "2026-01-31T21:57:10Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 200
+      "thegent_status": "done",
+      "board_id": 200,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3879106183,
@@ -3488,8 +3509,9 @@
       "updated_at": "2026-01-31T15:49:17Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 201
+      "thegent_status": "done",
+      "board_id": 201,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3878988809,
@@ -3539,8 +3561,9 @@
       "updated_at": "2026-01-31T21:57:42Z",
       "comments": 1,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 204
+      "thegent_status": "done",
+      "board_id": 204,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3878222487,
@@ -3556,8 +3579,9 @@
       "updated_at": "2026-01-31T07:47:32Z",
       "comments": 1,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 205
+      "thegent_status": "done",
+      "board_id": 205,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3877720306,
@@ -3573,8 +3597,9 @@
       "updated_at": "2026-01-31T01:52:05Z",
       "comments": 3,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 206
+      "thegent_status": "done",
+      "board_id": 206,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3876588540,
@@ -3590,8 +3615,9 @@
       "updated_at": "2026-01-31T22:39:27Z",
       "comments": 3,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 207
+      "thegent_status": "done",
+      "board_id": 207,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3876485804,
@@ -3607,8 +3633,9 @@
       "updated_at": "2026-01-31T10:50:42Z",
       "comments": 2,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 208
+      "thegent_status": "done",
+      "board_id": 208,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3875544258,
@@ -3624,8 +3651,9 @@
       "updated_at": "2026-01-31T01:54:43Z",
       "comments": 2,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 209
+      "thegent_status": "done",
+      "board_id": 209,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3874559531,
@@ -3641,8 +3669,9 @@
       "updated_at": "2026-01-30T10:19:48Z",
       "comments": 1,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 210
+      "thegent_status": "done",
+      "board_id": 210,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3874213674,
@@ -3658,8 +3687,9 @@
       "updated_at": "2026-02-07T01:59:07Z",
       "comments": 1,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 211
+      "thegent_status": "done",
+      "board_id": 211,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3873991498,
@@ -3675,8 +3705,9 @@
       "updated_at": "2026-01-30T15:47:10Z",
       "comments": 1,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 212
+      "thegent_status": "done",
+      "board_id": 212,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3873975561,
@@ -3692,8 +3723,9 @@
       "updated_at": "2026-01-30T06:02:45Z",
       "comments": 0,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 213
+      "thegent_status": "done",
+      "board_id": 213,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3873908869,
@@ -3709,8 +3741,9 @@
       "updated_at": "2026-01-31T02:00:53Z",
       "comments": 1,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 214
+      "thegent_status": "done",
+      "board_id": 214,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3871545791,
@@ -3726,8 +3759,9 @@
       "updated_at": "2026-01-29T20:00:57Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 215
+      "thegent_status": "done",
+      "board_id": 215,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3871009259,
@@ -3743,8 +3777,9 @@
       "updated_at": "2026-01-29T14:32:30Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 216
+      "thegent_status": "done",
+      "board_id": 216,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3870850534,
@@ -3760,8 +3795,9 @@
       "updated_at": "2026-01-29T20:18:51Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 217
+      "thegent_status": "done",
+      "board_id": 217,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3870542776,
@@ -3777,8 +3813,9 @@
       "updated_at": "2026-01-29T20:37:35Z",
       "comments": 2,
       "category": "feature",
-      "thegent_status": "pending",
-      "board_id": 218
+      "thegent_status": "done",
+      "board_id": 218,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3869356550,
@@ -3811,8 +3848,9 @@
       "updated_at": "2026-02-07T01:58:19Z",
       "comments": 2,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 220
+      "thegent_status": "done",
+      "board_id": 220,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3868706797,
@@ -3828,8 +3866,9 @@
       "updated_at": "2026-01-29T04:11:37Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 221
+      "thegent_status": "done",
+      "board_id": 221,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3868543894,
@@ -3845,8 +3884,9 @@
       "updated_at": "2026-01-30T00:43:11Z",
       "comments": 0,
       "category": "other",
-      "thegent_status": "pending",
-      "board_id": 222
+      "thegent_status": "done",
+      "board_id": 222,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3867940032,
@@ -3879,8 +3919,9 @@
       "updated_at": "2026-01-28T20:15:07Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 224
+      "thegent_status": "done",
+      "board_id": 224,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3867209252,
@@ -3896,8 +3937,9 @@
       "updated_at": "2026-01-29T00:36:03Z",
       "comments": 0,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 225
+      "thegent_status": "done",
+      "board_id": 225,
+      "thegent_solution": "Closed/completed"
     },
     {
       "id": 3866612447,
