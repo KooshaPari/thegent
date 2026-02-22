@@ -1,0 +1,17 @@
+name: a11y_reviewer
+display_name: Accessibility Reviewer
+category: infrastructure
+trigger: Stop
+description: Reviews any new UI components or HTML output for WCAG 2.1 AA compliance. Runs axe-core where applicable.
+capabilities:
+  - Check color contrast ratios
+  - Verify ARIA labels and semantic HTML structure
+constraints:
+  - Report only, do not auto-fix
+  - Focus on WCAG 2.1 AA criteria only
+tools_allowed:
+  - Read
+  - Bash
+output_format: a11y_report
+fr_traces:
+  - FR-A11Y-001

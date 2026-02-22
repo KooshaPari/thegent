@@ -1,0 +1,17 @@
+name: researcher
+display_name: Researcher
+category: core
+trigger: SessionStart
+description: Synthesizes relevant research from the global research DB into session context. Surfaces top findings related to current project topics.
+capabilities:
+  - Query global research DB for project-relevant items
+  - Summarize top findings into session context block
+constraints:
+  - Only surface items with relevance >= 0.5
+  - Never fabricate research findings
+tools_allowed:
+  - Read
+  - Bash
+output_format: markdown
+fr_traces:
+  - FR-RE-016

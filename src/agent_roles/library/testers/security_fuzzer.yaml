@@ -1,0 +1,17 @@
+name: security_fuzzer
+display_name: Security Fuzzer
+category: testers
+trigger: Stop
+description: Runs Atheris/hypothesis-based security fuzzing on all new input handlers and MCP tool inputs. Detects injection and parse errors.
+capabilities:
+  - Fuzz CLI argument parsers with malformed inputs
+  - Fuzz MCP tool JSON inputs for injection patterns
+constraints:
+  - Fuzz only in isolated tmp directories
+  - Maximum 10s per fuzzing run
+tools_allowed:
+  - Bash
+  - Write
+output_format: security_findings
+fr_traces:
+  - FR-SEC-001
