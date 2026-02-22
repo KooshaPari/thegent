@@ -28,5 +28,7 @@ if ((${#changed_files[@]} > 0)); then
     export CHANGED_FILES
 fi
 export PROJECT_DIR="$REPO_ROOT"
+mkdir -p "$REPO_ROOT/artifacts/hooks"
+export THEGENT_QUALITY_GATE_RESULT_JSON="$REPO_ROOT/artifacts/hooks/quality-gate-result.json"
 
 exec "$BIN_PATH" quality-gate

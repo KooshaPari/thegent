@@ -829,3 +829,84 @@ Both runtimes could support:
 - Implementation templates
 - Configuration examples
 - Best practices
+
+## Platform Selection Criteria
+
+| Criterion | Prefer Agent Zero | Prefer OpenCode + CLIProxy | Prefer OpenClaw/ClawHub |
+|---|---|---|---|
+| Runtime reliability | Always-on autonomous sessions | Strong when proxy is stable | Depends on desktop/browser stack |
+| Integration priority | Native MCP workflows | OpenAI-compatible provider routing | Skill distribution and discovery |
+| Setup effort | Moderate (runtime + MCP config) | Low (env vars + proxy endpoint) | Moderate-high (UX + packaging) |
+| Best fit | Sitback automation | Multi-provider CLI execution | Team-facing skill sharing |
+
+## Adoption Sequence
+
+- Start with Agent Zero + thegent MCP for durable, always-on sitback runs.
+- Add OpenCode + CLIProxy for provider routing and model flexibility.
+- Publish core skills to ClawHub after format and metadata validation.
+- Keep Claude Code as default until Agent Zero path is fully verified in daily workflows.
+
+## Platform Capability Baseline
+
+| Capability | Agent Zero | OpenCode + CLIProxy | OpenClaw/ClawHub |
+|---|---|---|---|
+| Always-on execution | Strong baseline (persistent runtime) | Session-based baseline | Varies by host UX/runtime |
+| MCP workflow fit | Native-first baseline | Works via proxy + API compatibility | Strong for skill consumption/distribution |
+| Provider/model routing | Limited relative flexibility | Strong baseline (OpenAI-compatible routing) | Medium; depends on configured backend |
+| Operational maturity target | Long-running sitback automation | Multi-provider CLI operations | Team skill catalog and reuse |
+
+## Integration Cost Bands
+
+| Platform path | Initial setup cost | Ongoing ops cost | Recommended use point |
+|---|---|---|---|
+| Agent Zero + thegent MCP | Medium | Low-Medium | First for reliability-critical autonomous runs |
+| OpenCode + CLIProxy | Low | Medium | Add when provider switching is a priority |
+| OpenClaw + ClawHub publishing | Medium-High | Medium | Add after core skills are stable and reusable |
+
+## Vendor Lock-In Signals
+
+- **API portability**: Count OpenAI-only endpoints and proprietary SDK assumptions; fewer assumptions means easier platform exit.
+- **Workflow coupling**: Flag hard dependencies on platform-specific runtimes, auth flows, and skill packaging formats.
+- **Data gravity**: Compare where prompts, logs, evals, and skill metadata live; exportable storage reduces migration risk.
+- **Ops dependencies**: Track critical automations tied to one vendor dashboard or CLI and prioritize neutral interfaces.
+
+## Exit Strategy Checklist
+
+- Maintain a tested second provider path for core agent flows (auth, model calls, tool routing).
+- Keep prompts, skills, and policies in repo-controlled formats with conversion scripts where needed.
+- Run quarterly migration drills: replay a representative workload on an alternate stack and record gaps.
+- Require export coverage for logs, traces, and eval artifacts before expanding vendor-specific features.
+- Define rollback thresholds (cost, latency, incident rate, policy changes) that trigger planned migration.
+
+## Platform Onboarding Checklist
+
+- Define target workflow first (autonomous runtime vs provider routing vs skill distribution) and pick Agent Zero, OpenCode + CLIProxy, or OpenClaw/ClawHub accordingly.
+- Validate a same-task benchmark across at least two platforms (startup time, tool success rate, operator effort) before standardizing.
+- Complete environment readiness gates: auth, MCP/tool connectivity, logging export path, and fallback provider route.
+- Run a 1-week pilot with explicit SLOs (success %, median latency, incident count) and require documented rollback steps.
+- Promote to default only after runbook, ownership, and cost guardrails are approved.
+
+## Decommission Procedure
+
+- Trigger decommission when rollback thresholds are exceeded (cost, latency, incident rate, policy/compliance change).
+- Freeze new feature work on the platform and snapshot critical artifacts (prompts, skills, logs, configs, credential mappings).
+- Execute migration cutover in phases: shadow run, limited production slice, then full traffic transfer with daily verification.
+- Revoke platform secrets/tokens, remove scheduled jobs/webhooks, and archive dashboards with retention metadata.
+- Publish a closure report comparing pre/post KPIs, unresolved gaps, and ownership handoff for the replacement stack.
+
+## Platform SLA Expectations
+
+| SLA dimension | Agent Zero + thegent MCP | OpenCode + CLIProxy | OpenClaw/ClawHub |
+|---|---|---|---|
+| Uptime target | Highest for always-on automation (≥99.9%) | High if proxy/provider redundancy exists (≥99.5%) | Medium-high; depends on host runtime (≥99.0%) |
+| Failover requirement | Local runtime restart + MCP health checks | Secondary provider route + proxy fallback | Alternate access path for skill retrieval and execution |
+| Incident response target | P1 acknowledgment ≤15 min | P1 acknowledgment ≤30 min | P1 acknowledgment ≤30 min |
+| Best workload match | Reliability-critical autonomous runs | Multi-provider CLI workloads | Skill catalog/distribution workflows |
+
+## Portability Verification Steps
+
+- Run the same scripted task on all three paths and compare success rate, median latency, and operator interventions.
+- Validate config portability by moving prompts, skills, and policy files without manual rewrites.
+- Exercise failover: force primary-path failure and confirm secondary execution within the SLA response window.
+- Export logs/traces/artifacts from each platform and verify replayability in a neutral analysis workflow.
+- Record blocking deltas (auth, tool compatibility, packaging) and require mitigation owners before defaulting a platform.

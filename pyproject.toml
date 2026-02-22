@@ -193,7 +193,7 @@ ignore = [
     "ANN204", "ANN002", "S108", "SIM105", "SLF001", "PTH119", "PTH110",
     "SIM108", "S602", "PTH101", "PLW1510", "N807", "N802", "N801", "I001",
     "A001", "A004", "ARG004", "DTZ006", "PLC0206", "RUF005", "RUF006",
-    "PTH207", "PTH211", "PTH108", "PTH115", "PTH104", "PTH109", "PTH112",
+    "PTH207", "PTH108", "PTH115", "PTH104", "PTH109", "PTH112",
     "S105", "S107", "S110", "SIM115", "B905", "B017", "UP031",
     # Final remaining issues
     "N999", "PTH106", "PTH208", "RUF003", "FURB116", "B020", "B018",

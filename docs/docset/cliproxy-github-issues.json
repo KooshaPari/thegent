@@ -80,8 +80,9 @@
       "updated_at": "2026-02-21T13:03:21Z",
       "comments": 1,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 4
+      "thegent_status": "done",
+      "board_id": 4,
+      "thegent_solution": "Fixed in cliproxyapi-plusplus/pkg/llmproxy/translator/codex/claude/codex_claude_request.go - handle custom tool type"
     },
     {
       "id": 3971827308,
@@ -5864,8 +5865,9 @@
       "updated_at": "2026-01-19T23:24:10Z",
       "comments": 1,
       "category": "bug",
-      "thegent_status": "pending",
-      "board_id": 344
+      "thegent_status": "done",
+      "board_id": 344,
+      "thegent_solution": "Fixed in cliproxyapi-plusplus/pkg/llmproxy/translator/openai/openai/responses - emitCompletionEvents on DONE marker"
     },
     {
       "id": 3826309453,

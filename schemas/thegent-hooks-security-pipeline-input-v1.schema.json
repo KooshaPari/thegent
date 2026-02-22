@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://thegent.dev/schemas/thegent-hooks-security-pipeline-input-v1.schema.json",
+  "title": "thegent-hooks security-pipeline input v1",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "semgrep_json": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "fail_on": {
+      "type": "string",
+      "enum": ["info", "warning", "error", "critical"]
+    }
+  },
+  "additionalProperties": false
+}

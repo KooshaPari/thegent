@@ -655,3 +655,59 @@ print(result)
 ### Practical Additions
 - Planning templates
 - Roadmap configurations
+
+## Lane Assignment Rules
+
+- Assign one owner per lane and record explicit deliverable + deadline before execution starts.
+- Keep lanes independent by interface contract; block cross-lane edits unless a dependency handoff is agreed.
+- Cap active lanes to current resource budget; queue overflow lanes instead of parallelizing blindly.
+- Rebalance only at checkpoints (not continuously) using objective signals: blocked status, idle owner, or SLA risk.
+
+## Swarm Completion Signals
+
+- Every lane reports `Done` with: artifact path, validation command, and pass/fail result.
+- All planned lanes are either completed or formally deferred with owner, reason, and next review date.
+- Integration checks pass once on the merged surface (not just per-lane local checks).
+- Final swarm closeout includes a concise summary of outcomes, known risks, and follow-up actions.
+
+## Swarm Bottleneck Indicators
+
+- Queue age exceeds one checkpoint interval for any high-priority lane without progress.
+- One owner holds multiple dependency-critical tasks while other owners are idle.
+- Rework rate rises (same file/component touched repeatedly across two or more handoffs).
+- Validation latency dominates execution time (tests/review wait > implementation time).
+
+## Lane Rebalancing Triggers
+
+- Trigger when a critical lane is blocked for one full checkpoint and an unblocked owner is available.
+- Trigger when lane cycle time is >2x swarm median for two consecutive checkpoints.
+- Trigger when downstream lanes are starved by a single upstream dependency owner.
+- Trigger when SLA/ship date risk appears and scope can be split without breaking interface contracts.
+
+## Concurrency Ceiling Rules
+
+- Set `max_active_lanes = min(ready_owners, dependency_frontier, resource_budget)` at each checkpoint.
+- Never start a new lane when any ceiling is red (CPU/memory/load/test queue); queue it for next checkpoint.
+- Reserve one lane-equivalent for integration/unblock work; do not consume 100% capacity with feature lanes.
+- Increase ceiling by +1 only after one full checkpoint with stable validation latency and zero rollback events.
+
+## Completion Handoff Protocol
+
+- Handoff packet is mandatory: objective, touched paths, test command/result, open risks, and rollback note.
+- Receiver must acknowledge ownership and restate first action before the sender closes the lane.
+- Mark lane `Complete` only after receiver reproduces validation on their branch or merged surface.
+- If acknowledgment or reproduction misses one checkpoint, auto-escalate to swarm lead for reassignment.
+
+## Task Dependency Gate
+
+- A task may start only when all declared upstream dependencies are marked `Done` with artifact path and validation evidence.
+- If any dependency is `Blocked` or missing evidence, keep the task in `Queued` and assign a single unblock owner.
+- At each checkpoint, re-validate dependency status before new lane activation; do not bypass for schedule pressure.
+- Record every gate decision in the swarm log with task ID, dependency IDs, timestamp, and approver.
+
+## Wave Shutdown Criteria
+
+- End the wave only when all in-scope tasks are `Done` or explicitly deferred with owner and next checkpoint date.
+- Require one final integration pass on merged scope with command + result captured in the closeout note.
+- Confirm no unresolved `Critical`/`High` blockers remain; otherwise continue wave in reduced unblock mode.
+- Publish a shutdown summary including completed tasks, deferred tasks, residual risks, and first actions for next wave.

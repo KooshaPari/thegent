@@ -929,3 +929,46 @@ class RemoteExecutor:
 - Enforce SLO-based automatic rollback on sustained error-rate, timeout, or isolation-policy breach.
 - Keep platform-specific runbooks and on-call escalation paths active until two stable release cycles pass.
 - Block expansion to new tenant cohorts until prior cohort health metrics remain stable for 24 hours.
+
+## Platform Risk Register
+
+- **Host/session mismatch:** Desktop flows launched from non-interactive or wrong-user sessions fail unpredictably across macOS/Linux/Windows.
+- **Transport drift:** SSH/WinRM capability differences create silent command divergence and inconsistent retries.
+- **Isolation erosion:** Tenant boundaries weaken when platform-specific account/session controls are skipped under load.
+- **Observability gaps:** Missing per-OS telemetry hides early regression signals and delays rollback decisions.
+
+## Dependency Cut Points
+
+- **Execution adapter boundary:** Keep shell/process invocation behind one interface with strict OS-specific implementations.
+- **Session capability gate:** Hard-stop before run when display/session/user prerequisites are not satisfied on the host OS.
+- **Transport provider seam:** Isolate SSH and WinRM backends so failures and retries remain platform-aware.
+- **Policy enforcement hook:** Centralize isolation, timeout, and rollback policy checks before and after each task phase.
+
+## Platform Test Matrix
+
+| Capability | macOS | Linux | Windows | WSL2 |
+|---|---|---|---|---|
+| Shell command execution | Required | Required | Required | Required (compute only) |
+| Desktop/UI automation | Required | Required | Required | Not supported |
+| Session/user isolation checks | Required | Required | Required | Required (host-derived) |
+| Remote transport validation | SSH | SSH | SSH + WinRM | SSH to Linux context |
+
+## Degradation Boundary Rules
+
+- If shell execution fails on any host OS, stop task start and return actionable diagnostics.
+- If desktop/session capability is missing, degrade to non-UI execution only; never emulate UI flows.
+- If Windows WinRM is unavailable, fallback to SSH where supported; otherwise mark remote step blocked.
+- If WSL2 is detected, allow compute tasks only and hard-block desktop automation and UI acceptance.
+- If isolation-policy checks fail, fail closed and require operator override before retry.
+
+## Environment Parity Checks
+
+- Require the same release candidate to pass smoke and regression suites on macOS, Linux, and Windows within one approval window.
+- Verify equivalent outcomes for shell execution, remote transport, session isolation, and artifact collection across all host OS targets.
+- Enforce host-native validation for desktop and UI-dependent flows; treat WSL2 as non-blocking compute compatibility only.
+
+## Release Blocking Conditions
+
+- Block release if any tier-1 platform (macOS, Linux, Windows) has a failed or missing parity gate result.
+- Block release on unresolved cross-platform severity-1/2 defects affecting execution correctness, isolation, or rollback safety.
+- Block release when observability minimums (per-OS success rate, timeout rate, and rollback signal coverage) are incomplete.

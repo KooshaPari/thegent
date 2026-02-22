@@ -686,3 +686,59 @@ print(f"Allowed: {allowed}, Violations: {violations}")
 ### Practical Additions
 - Planning templates
 - Roadmap configurations
+
+## Resource Pressure Thresholds
+
+- **CPU pressure**: trigger mitigation when `load_1m >= 0.85 * $(sysctl -n hw.ncpu)`; verify with `thegent observe resources`.
+- **Memory pressure**: trigger mitigation when available memory `< 1024 MB`; verify with `thegent observe resources`.
+- **FD pressure**: trigger mitigation when FD usage `>= 80%` of limit; verify with `thegent observe resources`.
+- **Sustained pressure rule**: act only after 3 consecutive samples, 10s apart: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+
+## Recovery Command Set
+
+- Snapshot current state: `thegent observe resources`.
+- Reduce active load quickly: `thegent mcp prune --dry-run && thegent mcp prune`.
+- Inspect and stop overloaded sessions: `thegent ps` then `thegent stop <session_id>`.
+- Re-check stabilization loop: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+
+## Resource Alert Matrix
+
+- **CPU critical** (`load_1m >= cores`): `thegent observe resources` -> `thegent mcp prune`.
+- **Memory critical** (`available_mb < 512`): `thegent ps` -> `thegent stop <session_id>` (largest workloads first).
+- **FD critical** (`fd_used/fd_limit >= 0.9`): `thegent mcp prune --dry-run && thegent mcp prune` -> recheck.
+- **All-clear condition**: 3 clean samples via `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+
+## Stabilization Workflow
+
+- Baseline: run `thegent observe resources` and record CPU/memory/FD.
+- Shed load: run `thegent mcp prune --dry-run && thegent mcp prune`.
+- Triage sessions: run `thegent ps`; stop top offenders with `thegent stop <session_id>`.
+- Verify recovery: run `for i in 1 2 3; do thegent observe resources; sleep 10; done` and confirm thresholds are clear.
+
+## Capacity Planning Cadence
+
+- Daily 09:00: `thegent observe resources >> logs/resource_snapshots.log`.
+- Weekly peak check: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+- Weekly cleanup window: `thegent mcp prune --dry-run && thegent mcp prune`.
+- Capacity drift trigger: if any threshold breaches twice in a week, run `thegent ps` and rebalance with `thegent stop <session_id>`.
+
+## Emergency Throttle Commands
+
+- Immediate baseline: `thegent observe resources`.
+- Fast pressure relief: `thegent mcp prune --dry-run && thegent mcp prune`.
+- Hard throttle active load: `thegent ps` then `thegent stop <session_id>` for largest sessions first.
+- Confirm recovery: `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+
+## Baseline Capture Routine
+
+- Capture point-in-time baseline: `thegent observe resources`.
+- Capture short trend window: `for i in 1 2 3; do date; thegent observe resources; sleep 10; done`.
+- Persist baseline log: `mkdir -p logs && thegent observe resources >> logs/resource_baseline.log`.
+- Snapshot active workload map: `thegent ps`.
+
+## Resource Regression Triggers
+
+- CPU regression: `load_1m >= 0.85 * $(sysctl -n hw.ncpu)` in 3 consecutive samples.
+- Memory regression: available memory `< 1024 MB` across `for i in 1 2 3; do thegent observe resources; sleep 10; done`.
+- FD regression: FD usage `>= 80%` on repeated `thegent observe resources` checks.
+- Trend regression: two threshold breaches in one day from `logs/resource_baseline.log` review.

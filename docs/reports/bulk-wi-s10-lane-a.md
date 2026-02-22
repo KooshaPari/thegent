@@ -87,4 +87,3 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 **Blocked by:** none
 **Source:** [thegent/docs/reports/bulk-wi-b2-lane-a.md:487]
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
-

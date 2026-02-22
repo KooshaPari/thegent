@@ -346,6 +346,46 @@ def sync_audit(
         raise typer.Exit(1)
 
 
+@app.command("rollback", help="Manage work stream snapshots and rollback. (WL-185)")
+def sync_rollback(
+    list_snapshots: bool = typer.Option(False, "--list", "-l", help="List available snapshots."),
+    snapshot_id: str | None = typer.Option(None, "--snapshot", "-s", help="Snapshot ID to restore."),
+    work_stream: Path | None = typer.Option(None, "--work-stream", "-w", help="Path to WORK_STREAM.md (default: docs/reference/WORK_STREAM.md)."),
+):
+    """``thegent sync rollback`` — manage work stream snapshots.
+
+    Use --list to show available snapshots, or --snapshot ID to restore one.
+
+    # @trace WL-185
+    """
+    from thegent.integrations.reflection_rollback import ReflectionRollbackManager
+
+    ws_path = (work_stream or Path("docs/reference/WORK_STREAM.md")).resolve()
+    manager = ReflectionRollbackManager()
+
+    if list_snapshots:
+        snapshots = manager.list_snapshots()
+        if not snapshots:
+            console.print("[yellow]No snapshots available[/yellow]")
+            return
+
+        console.print("[bold]Available snapshots:[/bold]")
+        for snap in snapshots[:10]:  # Show 10 most recent
+            console.print(f"  {snap.snapshot_id:8} {snap.timestamp:26} {snap.cycle_id}")
+        return
+
+    if snapshot_id:
+        try:
+            manager.rollback_to(snapshot_id, ws_path)
+            console.print(f"[green]Restored snapshot {snapshot_id}[/green]")
+        except FileNotFoundError:
+            console.print(f"[red]Snapshot not found: {snapshot_id}[/red]")
+            raise typer.Exit(1)
+        return
+
+    console.print("[yellow]Use --list to show snapshots or --snapshot ID to restore one[/yellow]")
+
+
 @app.command(
     "autopilot",
     help=(
@@ -460,3 +500,83 @@ def sync_autopilot(
             asyncio.run(run_autopilot())
         except KeyboardInterrupt:
             console.print("[yellow]Autopilot stopped[/yellow]")
+
+
+@app.command(
+    "autopilot-status",
+    help="Query autopilot health, lag, and last-cycle summary.",
+)
+def sync_autopilot_status(
+    format: str = typer.Option(
+        "rich",
+        "--format",
+        "-F",
+        help="Output format (rich|json).",
+    ),
+):
+    """``thegent sync autopilot-status`` — query autopilot status.
+
+    Reads from autosync_status.json if it exists and displays health summary.
+
+    # @trace WL-171
+    """
+    import json
+    from datetime import datetime
+
+    from rich.table import Table
+
+    status_file = Path("docs/reference/autosync_status.json")
+
+    # Default status structure
+    default_status = {
+        "last_cycle_at": None,
+        "total_cycles": 0,
+        "last_error": None,
+        "health": "ok",
+    }
+
+    # Try to read status file
+    if status_file.exists():
+        try:
+            with open(status_file) as f:
+                status = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            status = default_status
+    else:
+        status = default_status
+
+    # Output in requested format
+    if format == "json":
+        console.print(json.dumps(status, indent=2, default=str))
+    else:
+        # Create rich table
+        table = Table(title="Autopilot Status")
+        table.add_column("Property", style="cyan")
+        table.add_column("Value", style="magenta")
+
+        # Format last_cycle_at
+        last_cycle = status.get("last_cycle_at")
+        if last_cycle:
+            try:
+                dt = datetime.fromisoformat(last_cycle)
+                last_cycle_str = dt.isoformat()
+            except (ValueError, TypeError):
+                last_cycle_str = str(last_cycle) if last_cycle else "Never"
+        else:
+            last_cycle_str = "Never"
+
+        table.add_row("Last Cycle", last_cycle_str)
+        table.add_row("Total Cycles", str(status.get("total_cycles", 0)))
+
+        # Health status with color
+        health = status.get("health", "ok")
+        health_color = "green" if health == "ok" else "yellow" if health == "degraded" else "red"
+        table.add_row("Health", f"[{health_color}]{health}[/{health_color}]")
+
+        last_error = status.get("last_error")
+        if last_error:
+            table.add_row("Last Error", f"[red]{last_error}[/red]")
+        else:
+            table.add_row("Last Error", "[green]None[/green]")
+
+        console.print(table)

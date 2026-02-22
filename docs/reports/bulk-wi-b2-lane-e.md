@@ -897,4 +897,3 @@ Narrow this broad exception handling to explicit expected failures and add regre
 **Blocked by:** none
 **Source:** [thegent/src/thegent/mesh/cli.py:207]
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
-

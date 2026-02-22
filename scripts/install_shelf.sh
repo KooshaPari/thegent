@@ -41,7 +41,7 @@ detect_platform() {
             PACKAGE_MANAGER="unknown"
             ;;
     esac
-    
+
     # Detect shell
     if [[ -n "${PSVersionTable:-}" ]] || command -v pwsh >/dev/null 2>&1; then
         SHELL_TYPE="powershell"
@@ -103,12 +103,12 @@ install_package_manager() {
 # Install mise (cross-platform)
 install_mise() {
     log_info "Installing mise..."
-    
+
     if command -v mise >/dev/null 2>&1; then
         log_success "mise already installed"
         return
     fi
-    
+
     case "$PLATFORM" in
         macos)
             brew install mise
@@ -124,22 +124,22 @@ install_mise() {
             fi
             ;;
     esac
-    
+
     # Add to PATH
     export PATH="$HOME/.local/bin:$PATH"
-    
+
     log_success "mise installed"
 }
 
 # Install tea (cross-platform)
 install_tea() {
     log_info "Installing tea..."
-    
+
     if command -v tea >/dev/null 2>&1; then
         log_success "tea already installed"
         return
     fi
-    
+
     case "$PLATFORM" in
         macos)
             brew install teaxyz/pkgs/tea-cli
@@ -148,19 +148,19 @@ install_tea() {
             sh <(curl https://tea.xyz)
             ;;
     esac
-    
+
     log_success "tea installed"
 }
 
 # Install chezmoi (cross-platform)
 install_chezmoi() {
     log_info "Installing chezmoi..."
-    
+
     if command -v chezmoi >/dev/null 2>&1; then
         log_success "chezmoi already installed"
         return
     fi
-    
+
     case "$PLATFORM" in
         macos)
             brew install chezmoi
@@ -169,14 +169,14 @@ install_chezmoi() {
             sh -c "$(curl -fsLS get.chezmoi.io)"
             ;;
     esac
-    
+
     log_success "chezmoi installed"
 }
 
 # Install system packages (platform-specific)
 install_system_packages() {
     log_info "Installing system packages for $PLATFORM..."
-    
+
     case "$PACKAGE_MANAGER" in
         homebrew)
             brew install git curl wget zsh bash coreutils fzf ripgrep fd bat exa zoxide starship jq yq gh git-delta rust cargo
@@ -199,39 +199,39 @@ install_system_packages() {
             scoop install git curl wget zsh fzf ripgrep fd bat exa jq yq gh rust cargo bun
             ;;
     esac
-    
+
     log_success "System packages installed"
 }
 
 # Setup mise configuration
 setup_mise() {
     log_info "Setting up mise..."
-    
+
     # Trust mise config
     mise trust ~/.mise.toml 2>/dev/null || true
-    
+
     # Install global tool versions
     mise install python@3.12.9 node@24.13.1 ruby@3.3.7 || true
-    
+
     # Set global versions
     mise use -g python@3.12.9 || true
     mise use -g node@24.13.1 || true
     mise use -g ruby@3.3.7 || true
-    
+
     # Create .tool-versions
     cat > ~/.tool-versions << 'EOF'
 python 3.12.9
 node 24.13.1
 ruby 3.3.7
 EOF
-    
+
     log_success "mise configured"
 }
 
 # Setup shell configuration (cross-platform)
 setup_shell_config() {
     log_info "Setting up shell configuration..."
-    
+
     case "$SHELL_TYPE" in
         powershell)
             # PowerShell profile
@@ -240,9 +240,9 @@ setup_shell_config() {
             else
                 PROFILE_PATH="$HOME/.config/powershell/Microsoft.PowerShell_profile.ps1"
             fi
-            
+
             mkdir -p "$(dirname "$PROFILE_PATH")"
-            
+
             cat >> "$PROFILE_PATH" << 'POWERSHELL_EOF'
 # mise hook for PowerShell
 if (Get-Command mise -ErrorAction SilentlyContinue) {
@@ -274,43 +274,43 @@ if command -v mise >/dev/null 2>&1 && [[ -n "${PS1:-}" || -t 0 ]]; then
 fi
 EOF
             fi
-            
+
             # Set zsh as default if available
             if command -v zsh >/dev/null 2>&1 && [[ "$SHELL" != "$(which zsh)" ]]; then
                 chsh -s "$(which zsh)" || log_warn "Could not change shell"
             fi
             ;;
     esac
-    
+
     log_success "Shell configuration set up"
 }
 
 # Create templates (cross-platform)
 create_templates() {
     log_info "Creating templates..."
-    
+
     mkdir -p ~/.templates
-    
+
     # .tool-versions template
     cat > ~/.templates/.tool-versions << 'EOF'
 python 3.12.9
 node 24.13.1
 ruby 3.3.7
 EOF
-    
+
     # .mise.toml template
     cat > ~/.templates/.mise.toml << 'EOF'
 # mise configuration
 [tools]
 EOF
-    
+
     # tea.yml template
     cat > ~/.templates/tea.yml << 'EOF'
 dependencies:
   python.org: 3.12
   nodejs.org: 20
 EOF
-    
+
     # Shell script template
     if [[ "$PLATFORM" != "windows" ]]; then
         cat > ~/.templates/script.sh << 'EOF'
@@ -324,7 +324,7 @@ EOF
 param()
 EOF
     fi
-    
+
     # README template
     cat > ~/.templates/README.md << 'EOF'
 # Project Name
@@ -337,14 +337,14 @@ mise install
 
 ## Usage
 EOF
-    
+
     log_success "Templates created"
 }
 
 # Setup thegent (cross-platform)
 setup_thegent() {
     log_info "Setting up thegent..."
-    
+
     # Detect thegent directory (try common locations)
     THEGENT_DIRS=(
         "$HOME/temp-PRODVERCEL/485/kush/thegent"
@@ -352,7 +352,7 @@ setup_thegent() {
         "$HOME/projects/thegent"
         "./thegent"
     )
-    
+
     THEGENT_DIR=""
     for dir in "${THEGENT_DIRS[@]}"; do
         if [[ -d "$dir" ]]; then
@@ -360,15 +360,15 @@ setup_thegent() {
             break
         fi
     done
-    
+
     if [[ -z "$THEGENT_DIR" ]]; then
         log_warn "thegent directory not found"
         return
     fi
-    
+
     log_info "Found thegent at $THEGENT_DIR"
     cd "$THEGENT_DIR"
-    
+
     # Install dependencies
     if [[ -f "package.json" ]]; then
         if command -v bun >/dev/null 2>&1; then
@@ -377,12 +377,12 @@ setup_thegent() {
             npm install || log_warn "npm install failed"
         fi
     fi
-    
+
     # Build Rust extensions (if Makefile exists)
     if [[ -f "Makefile" ]] && command -v make >/dev/null 2>&1 && command -v cargo >/dev/null 2>&1; then
         make install || log_warn "make install failed"
     fi
-    
+
     # Setup shell symlinks (Unix-like only)
     if [[ "$PLATFORM" != "windows" ]] && [[ -d "$THEGENT_DIR/shell" ]]; then
         [[ ! -f ~/.zsh_bundle.zsh ]] && ln -sf "$THEGENT_DIR/shell/.zsh_bundle.zsh" ~/.zsh_bundle.zsh || true
@@ -390,7 +390,7 @@ setup_thegent() {
         [[ ! -f ~/.zsh_optimization.zsh ]] && ln -sf "$THEGENT_DIR/shell/.zsh_optimization.zsh" ~/.zsh_optimization.zsh || true
         [[ ! -f ~/.zsh_advanced.zsh ]] && ln -sf "$THEGENT_DIR/shell/.zsh_advanced.zsh" ~/.zsh_advanced.zsh || true
     fi
-    
+
     log_success "thegent setup completed"
 }
 
@@ -399,12 +399,12 @@ setup_wsl2() {
     if [[ "$PLATFORM" != "wsl2" ]]; then
         return
     fi
-    
+
     log_info "Configuring WSL2-specific settings..."
-    
+
     # Install Windows interop tools
     sudo apt-get install -y wslu || true
-    
+
     # Setup Windows PATH integration
     if [[ ! -f ~/.wslconfig ]]; then
         cat > ~/.wslconfig << 'EOF'
@@ -412,7 +412,7 @@ setup_wsl2() {
 interop.appendWindowsPath=true
 EOF
     fi
-    
+
     log_success "WSL2 configured"
 }
 
@@ -420,11 +420,11 @@ EOF
 main() {
     log_info "Starting cross-platform installation..."
     echo ""
-    
+
     detect_platform
     log_info "Detected: $PLATFORM ($PACKAGE_MANAGER, $SHELL_TYPE)"
     echo ""
-    
+
     install_package_manager
     install_mise
     install_tea
@@ -434,11 +434,11 @@ main() {
     setup_shell_config
     create_templates
     setup_thegent
-    
+
     if [[ "$PLATFORM" == "wsl2" ]]; then
         setup_wsl2
     fi
-    
+
     echo ""
     log_success "═══════════════════════════════════════════════════════"
     log_success "Installation Complete!"

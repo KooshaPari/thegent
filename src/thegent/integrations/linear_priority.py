@@ -77,6 +77,9 @@ def local_to_linear(local_prio: LocalPriority | str) -> LinearPriority:
         except KeyError:
             raise ValueError(f"Invalid LocalPriority string: {local_prio}") from None
 
+    if not isinstance(local_prio, LocalPriority):
+        raise ValueError(f"Expected LocalPriority or str, got {type(local_prio)}")
+
     # Map local priorities to Linear priorities
     mapping = {
         LocalPriority.P0: LinearPriority.URGENT,

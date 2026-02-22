@@ -15,4 +15,6 @@ else
 fi
 
 export PROJECT_DIR="$PROJECT_ROOT"
+mkdir -p "$PROJECT_ROOT/artifacts/hooks"
+export THEGENT_SECURITY_PIPELINE_RESULT_JSON="$PROJECT_ROOT/artifacts/hooks/security-pipeline-result.json"
 exec "$BIN_PATH" security-pipeline

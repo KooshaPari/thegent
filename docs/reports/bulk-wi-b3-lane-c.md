@@ -897,4 +897,3 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 **Blocked by:** none
 **Source:** [thegent/docs/changes/research-library-retry/tasks.md:330]
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
-

@@ -122,7 +122,7 @@ class TestReflectionEventLog:
 
         # Verify file was created and contains the decision
         assert log_path.exists()
-        with open(log_path, "r") as f:
+        with open(log_path) as f:
             line = f.readline().strip()
             data = json.loads(line)
             assert data["wl_id"] == "WL-195"
