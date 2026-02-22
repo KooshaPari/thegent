@@ -24,7 +24,7 @@ _log = logging.getLogger(__name__)
 
 
 def _snapshot_payload_kwargs(
-    payload_fn: typing.Callable[..., object],  # noqa: ANN001
+    payload_fn: typing.Callable[..., dict[str, object]],  # noqa: ANN001
     *,
     scraper: object,
     limit: int,
@@ -32,7 +32,7 @@ def _snapshot_payload_kwargs(
     trigger: str | None = None,
     tag: str | None = None,
     since: str | None = None,
-) -> object:
+) -> dict[str, object]:
     """Build a compatible kwargs dict from a payload function signature."""
     signature = inspect.signature(payload_fn)
     params = signature.parameters
