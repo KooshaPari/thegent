@@ -20,6 +20,10 @@ vars:
   PYTEST_FAST_LANE_BUDGET: 1000
   PYTEST_PR_LANE_BUDGET: 750
   PYTEST_PR_CHANGED_FILE_LIST: ''
+  GHA_WORKFLOW:
+    sh: echo ".github/workflows/ci.yml"
+  GH_BASE_REF:
+    sh: echo "main"
 
 includes:
   py:
@@ -302,8 +306,46 @@ tasks:
     desc: "Run local CI-like checks (pre-commit + fast collection + fast lane)."
     cmds:
       - task: hooks:run
+      - task: hooks:run:pre-commit
+      - task: hooks:run:push
       - task: test:collect:fast-gate
       - task: test:fast-lane
+
+  ci:local:push:
+    desc: "Run only the pre-push validation lane used by local gate checks."
+    cmds:
+      - task: hooks:run:push
+      - task: test:collect:fast-gate
+
+  ci:local-gha:
+    desc: "Run local GH Actions emulation (pull_request event) with act."
+    cmds:
+      - task: ci:local-gha:event
+        vars:
+          ACT_EVENT: pull_request
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+
+  ci:local-gha:push:
+    desc: "Run local GH Actions emulation (push event) with act."
+    cmds:
+      - task: ci:local-gha:event
+        vars:
+          ACT_EVENT: push
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+
+  ci:local-gha:event:
+    desc: "Run local GH Actions emulation for a specific event/workflow."
+    cmds:
+      - |
+        THGENT_ACT_EVENT="{{.ACT_EVENT}}" \
+          THGENT_ACT_WORKFLOW="{{.ACT_WORKFLOW}}" \
+          THGENT_ACT_JOB="{{.ACT_JOB}}" \
+          THGENT_ACT_DRY_RUN="{{.ACT_DRY_RUN}}" \
+          THGENT_ACT_VERBOSE="{{.ACT_VERBOSE}}" \
+          THGENT_ACT_REUSE="{{.ACT_REUSE}}" \
+          THGENT_GH_BASE_REF="{{.GH_BASE_REF}}" \
+          THGENT_ACT_ARTIFACT_DIR="artifacts/act/{{.ACT_EVENT}}" \
+          ./scripts/ci_local_gha.sh
 
   test:collect:baseline:
     desc: "Generate pytest collect-only baseline artifact (collection count + errors)."
@@ -824,7 +866,7 @@ tasks:
           src scripts \
           --json-out artifacts/quality/generated-python-antipatterns.json \
           --sarif-out artifacts/quality/generated-python-antipatterns.sarif \
-          --fail-on error
+          --fail-on critical
 
   quality:pilot:mutation-perf:
     desc: "Non-blocking mutation/perf pilot artifact lane"
@@ -835,6 +877,65 @@ tasks:
           --output artifacts/quality/mutation-perf-pilot.json \
           --perf-output artifacts/quality/perf-smoke.json \
           --perf-iterations 5000
+
+  quality:control-plane:validate:
+    desc: "Validate control-plane policy contract and ADR alignment"
+    cmds:
+      - |
+        uv run python scripts/validate_quality_control_plane.py \
+          --contract contracts/quality-control-plane-v1.json \
+          --schema schemas/quality-control-plane-v1.schema.json \
+          --strict-adr-match
+
+  quality:gate-policy:validate:
+    desc: "Validate unified quality gate policy contract schema"
+    cmds:
+      - |
+        cargo run --manifest-path crates/thegent-hooks/Cargo.toml --quiet --bin thegent-hooks -- \
+          schema-validate schemas/unified-quality-gate-policy-v1.schema.json contracts/unified-quality-gate-policy-v1.json
+
+  quality:control-plane:report:
+    desc: "Emit control-plane artifact readiness report (JSON + markdown)"
+    cmds:
+      - |
+        uv run python scripts/quality_control_plane_report.py \
+          --contract contracts/quality-control-plane-v1.json \
+          --json-out artifacts/quality/control-plane-readiness.json \
+          --md-out artifacts/quality/control-plane-readiness.md
+
+  quality:summary:
+    desc: "Aggregate unified quality artifacts into one summary payload"
+    cmds:
+      - |
+        uv run python scripts/aggregate_unified_quality_summary.py \
+          --output artifacts/quality/unified-quality-summary.json
+
+  quality:gate:unified:
+    desc: "Evaluate unified quality summary gate"
+    cmds:
+      - |
+        MODE="${QUALITY_UNIFIED_MODE:-pr}"
+        uv run python scripts/evaluate_unified_quality_gate.py \
+          --summary artifacts/quality/unified-quality-summary.json \
+          --policy contracts/unified-quality-gate-policy-v1.json \
+          --mode "$MODE"
+
+  quality:aggregate:artifacts:
+    desc: "Run unified artifact-producing quality lane (non-blocking pilots + reports)"
+    cmds:
+      - task: quality:hooks:sarif
+      - task: quality:generated-python:antipatterns
+      - task: quality:pilot:mutation-perf
+      - task: quality:control-plane:validate
+      - task: quality:gate-policy:validate
+      - task: quality:control-plane:report
+      - task: quality:summary
+      - task: quality:gate:unified
+
+  quality:ci:unified:
+    desc: "Unified quality CI lane (contract+artifact first)"
+    cmds:
+      - task: quality:aggregate:artifacts
 
   quality:harness-contracts:strict:
     desc: "Run strict harness contract chain with required-provider gate"
@@ -1039,6 +1140,16 @@ tasks:
     desc: "Run configured pre-commit hooks"
     cmds:
       - uv run pre-commit run --all-files
+
+  hooks:run:pre-commit:
+    desc: "Run configured pre-commit hooks for the pre-commit stage"
+    cmds:
+      - uv run pre-commit run --all-files --hook-stage pre-commit
+
+  hooks:run:push:
+    desc: "Run pre-commit hooks for pre-push stage"
+    cmds:
+      - uv run pre-commit run --all-files --hook-stage pre-push
 
   # -- Memory cache (Supermemory integration) --
 

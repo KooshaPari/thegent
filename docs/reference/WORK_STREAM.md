@@ -2406,7 +2406,7 @@ Reject duplicate Board IDs across all local and generated sync artifacts.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-310] Parallel Local Edit Merge Policy
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** merge, reliability
 **Effort:** M
@@ -2417,7 +2417,7 @@ Define deterministic merge policy for parallel local workstream edits.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-311] Versioned Mapping Registry
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** mappings, governance
 **Effort:** M
@@ -2516,7 +2516,7 @@ Publish matrix mapping symptoms to commands and remediation actions.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-320] Enterprise Rollout Scorecard
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** enterprise, release
 **Effort:** S
@@ -2560,7 +2560,7 @@ Create rolling checkpoints so long sync cycles can resume safely.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-285] Mutation Spike Anomaly Detector
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** observability, safety
 **Effort:** S
