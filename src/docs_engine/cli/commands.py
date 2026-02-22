@@ -120,6 +120,19 @@ def semantic_cmd() -> None:
     typer.echo(f"Extracted {count} new KB items from conversation dumps.")
 
 
+@app.command("hub")
+def hub_cmd(
+    hub_dir: str = typer.Option("../docs-hub", "--hub-dir", help="Hub output directory"),
+) -> None:
+    """Generate (or regenerate) the VitePress federation hub."""
+    from docs_engine.hub.generator import HubGenerator
+
+    projects = {"thegent": str(_docs_root())}
+    gen = HubGenerator(hub_dir=Path(hub_dir), projects=projects)
+    gen.generate()
+    typer.echo(f"Hub generated at {hub_dir}")
+
+
 @app.command("sidebar")
 def sidebar_cmd(
     out: str = typer.Option("docs/.vitepress/sidebar-auto.ts", "--out", "-o", help="Output path"),
