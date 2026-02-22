@@ -1,21 +1,26 @@
 """CompositApp - Main Textual application for the TUI compositor."""
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, cast
 
 from rich.panel import Panel
-from rich.traceback import Traceback
 from textual.app import App, ComposeResult
 from textual.containers import Vertical
-from textual.widgets import Footer, Header, RichLog, Static
+from textual.widgets import Footer, Header, Static
 
-from thegent.ui.compositor.pane_manager import PaneManager
+from thegent.ui.compositor.pane_manager import PaneManager, PaneNode
 
 if TYPE_CHECKING:
     from thegent.ui.compositor.session_state import SessionState
     from thegent.ui.compositor.terminal_pane import PanelMounted, PanelUnmounted
 
 logger = logging.getLogger(__name__)
+
+
+class _Closeable(Protocol):
+    """Protocol for widgets that support explicit close."""
+
+    def close(self) -> None: ...
 
 
 class ErrorBoundary(Static):
@@ -51,7 +56,7 @@ class ErrorBoundary(Static):
         self.stack_trace = stack_trace
         self.pane_id = pane_id
 
-    def render(self) -> str:
+    def render(self) -> Panel:
         """Render error panel."""
         title = f"{self.error_type}: {self.pane_id}"
         content = f"{self.error_message}\n\n[dim]Press Ctrl+R to retry[/dim]"
@@ -139,7 +144,7 @@ class CompositApp(App):
     }
     """
 
-    BINDINGS = (
+    BINDINGS = [
         ("ctrl+n", "new_pane", "New Pane"),
         ("ctrl+v", "split_vertical", "Split V"),
         ("ctrl+h", "split_horizontal", "Split H"),
@@ -147,7 +152,7 @@ class CompositApp(App):
         ("ctrl+l", "focus_next", "Focus Next"),
         ("ctrl+r", "retry_pane", "Retry"),
         ("ctrl+q", "quit", "Quit"),
-    )
+    ]
 
     def __init__(self, session_state: "SessionState | None" = None) -> None:
         """Initialize CompositApp.
@@ -302,7 +307,7 @@ class CompositApp(App):
             del self._pane_widgets[message.pane_id]
         self._update_statusbar()
 
-    def _cleanup_panes(self, node: "PaneManager.PaneNode") -> None:
+    def _cleanup_panes(self, node: PaneNode) -> None:
         """Recursively cleanup all pane processes.
 
         Args:
@@ -318,7 +323,7 @@ class CompositApp(App):
                     widget = self._pane_widgets[pane_id]
                     if hasattr(widget, "close"):
                         try:
-                            widget.close()
+                            cast(_Closeable, widget).close()
                             logger.debug(f"Closed pane: {pane_id}")
                         except Exception as e:
                             logger.error(f"Error closing pane {pane_id}: {e}")
@@ -329,13 +334,13 @@ class CompositApp(App):
         except Exception as e:
             logger.error(f"Error during pane cleanup: {e}")
 
-    def _collect_leaf_nodes(self, node: "PaneManager.PaneNode | None") -> list["PaneManager.PaneNode"]:
+    def _collect_leaf_nodes(self, node: "PaneNode | None") -> list["PaneNode"]:
         """Collect pane leaf nodes in depth-first order."""
         if node is None:
             return []
         if node.is_leaf:
             return [node]
-        leaves: list[PaneManager.PaneNode] = []
+        leaves: list[PaneNode] = []
         for child in node.children:
             leaves.extend(self._collect_leaf_nodes(child))
         return leaves
@@ -378,7 +383,7 @@ class CompositApp(App):
             # If we have a root, add as child; otherwise create new root
             if self.pane_manager.root and not self.pane_manager.root.is_leaf:
                 # Add to existing split
-                new_node = self.pane_manager.split_pane("vertical")
+                _new_node = self.pane_manager.split_pane("vertical")
             # Create first split
             elif self.pane_manager.root:
                 old_id = self.pane_manager.root.pane_id
@@ -467,7 +472,7 @@ class CompositApp(App):
             if pane_id and pane_id in self._pane_widgets:
                 widget = self._pane_widgets[pane_id]
                 if hasattr(widget, "close"):
-                    widget.close()
+                    cast(_Closeable, widget).close()
                 del self._pane_widgets[pane_id]
 
             if self.pane_manager.close_pane():

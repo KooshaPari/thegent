@@ -56,9 +56,10 @@ dependencies = [
     "duckduckgo-search>=7.3.2",
     "praw>=7.8.1",
     "playwright>=1.50.0",
-    "extism>=1.0.2",
+    "extism>=1.0.2; platform_system == 'Darwin' and platform_machine == 'arm64'",
     "ujson; implementation_name == 'pypy'",
     "orjson; implementation_name == 'cpython'",
+    "structlog>=24.0.0",
 ]
 
 [project.optional-dependencies]

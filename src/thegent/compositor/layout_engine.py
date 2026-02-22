@@ -6,8 +6,8 @@ nested containers, and responsive sizing.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import Enum, StrEnum
+from dataclasses import dataclass, field
+from enum import StrEnum
 
 
 class Direction(StrEnum):
@@ -121,8 +121,8 @@ class LayoutConstraints:
     max_height: int | None = None
     width: Size | None = None
     height: Size | None = None
-    padding: Padding = None
-    margin: Margin = None
+    padding: Padding = field(default_factory=Padding)
+    margin: Margin = field(default_factory=Margin)
     flex_grow: float = 1.0
 
     def __post_init__(self) -> None:

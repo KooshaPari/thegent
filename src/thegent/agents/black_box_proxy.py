@@ -1,5 +1,3 @@
-from typing import Optional
-
 """WP-33001: Universal External Proxy (Donut Bridge).
 Provides a generic wrapper to intercept and control I/O for black-box agents.
 Supports stdio, HTTP, and LSP interception to enforce thegent's policies externally.

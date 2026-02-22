@@ -10,7 +10,11 @@ class Phase13CostSensitivityResearch:
 
     def __init__(self) -> None:
         """Initialize cost sensitivity research."""
-        self.framework = CostSensitivityFramework()
+        self.framework = CostSensitivityFramework(
+            baseline_config={"policy_depth": 1},
+            experiment_a_config={"policy_depth": 2},
+            experiment_b_config={"policy_depth": 3},
+        )
 
     def run_research_experiment(self) -> dict[str, Any]:
         """Run a research experiment.
@@ -18,5 +22,5 @@ class Phase13CostSensitivityResearch:
         Returns:
             Experiment results
         """
-        result = self.framework.run_experiment(100.0, 80.0)
+        result = self.framework.run_experiment("baseline", lambda: None)
         return result

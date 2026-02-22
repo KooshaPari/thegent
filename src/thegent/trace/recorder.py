@@ -12,7 +12,7 @@ import asyncio
 import json
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -81,8 +81,8 @@ class RecorderConfig:
 
     trace_dir: str = "./traces"
     compression: str | None = "gzip"  # gzip, zstd, or None
-    redaction: RedactionConfig = None
-    truncation: TruncationConfig = None
+    redaction: RedactionConfig = field(default_factory=RedactionConfig)
+    truncation: TruncationConfig = field(default_factory=TruncationConfig)
     async_write: bool = True
     queue_size: int = 1000  # Max pending records
     flush_interval_ms: int = 5000  # Flush every N milliseconds
@@ -284,7 +284,7 @@ class TraceRecorder:
     def _is_sensitive_field(self, field_name: str) -> bool:
         """Check if field name matches sensitive patterns."""
         # Check explicit list first
-        if field_name.lower() in self.config.redaction.fields_to_always_redact:
+        if self.config.redaction.fields_to_always_redact is not None and field_name.lower() in self.config.redaction.fields_to_always_redact:
             return True
 
         # Check regex patterns
@@ -329,7 +329,6 @@ class TraceRecorder:
     async def _write_worker(self) -> None:
         """Async worker that writes records from queue to file."""
         batch = []
-        last_flush = asyncio.get_event_loop().time()
 
         while self.running or not self.write_queue.empty():
             try:
@@ -349,14 +348,12 @@ class TraceRecorder:
                 if len(batch) >= 100:
                     self._flush_batch(batch)
                     batch = []
-                    last_flush = asyncio.get_event_loop().time()
 
             except TimeoutError:
                 # Flush periodically even if no records
                 if batch:
                     self._flush_batch(batch)
                     batch = []
-                last_flush = asyncio.get_event_loop().time()
 
         # Final flush
         if batch:

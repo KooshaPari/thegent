@@ -1,6 +1,5 @@
 """KaTeX math support for documentation."""
 
-from typing import Any
 
 
 class MathSupport:

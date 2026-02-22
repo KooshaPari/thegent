@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Literal, cast, get_args
 
 from thegent.routing.provider_types import normalize_provider_name
+from thegent.infra import get_cache
 
 # Canonical model ID -> list of routes (provider, backend, model_alias, priority)
 # Lower priority = prefer first when using prefer_direct
@@ -165,23 +166,9 @@ def filter_models_for_provider(provider: str, models: list[str]) -> list[str]:
 
 
 # OPT-019: Cache for normalized model IDs (frequently called)
-try:
-    from thegent.infra import get_cache
-
-    _USE_NORMALIZE_CACHE = True
-except (ImportError, NameError):
-
-    def get_cache(*args, **kwargs):
-        return None
-
-    _USE_NORMALIZE_CACHE = False
-
-try:
-    _NORMALIZE_CACHE = get_cache(l1_size=200, l2_size=1000, l3_path=None, default_ttl=3600)
-    if _NORMALIZE_CACHE is None:
-        _USE_NORMALIZE_CACHE = False
-except Exception:
-    _USE_NORMALIZE_CACHE = False
+from thegent.infra import get_cache
+_NORMALIZE_CACHE = get_cache(l1_size=200, l2_size=1000, l3_path=None, default_ttl=3600)
+_USE_NORMALIZE_CACHE = _NORMALIZE_CACHE is not None
 
 
 def normalize_model_id(model_id: str) -> str:
@@ -270,13 +257,8 @@ def _merge_routes(base_routes: list[Route], extra_routes: list[Route]) -> list[R
 _STATIC_CATALOG: dict[str, list[Route]] | None = None
 
 # OPT-019: Multi-tier cache for static catalog (rarely changes, benefits from persistence)
-try:
-    from thegent.infra import MultiTierCache, get_cache
-
-    _CATALOG_CACHE = get_cache(l1_size=1, l2_size=1, l3_path=None, default_ttl=3600)  # 1 hour TTL
-    _USE_CATALOG_CACHE = True
-except (ImportError, NameError):
-    _USE_CATALOG_CACHE = False
+_CATALOG_CACHE = get_cache(l1_size=1, l2_size=1, l3_path=None, default_ttl=3600)
+_USE_CATALOG_CACHE = _CATALOG_CACHE is not None
 
 
 def _get_catalog() -> dict[str, list[Route]]:
@@ -486,15 +468,10 @@ _RR_COUNTER: dict[str, int] = {}
 # OPT-020: Route resolution memo with model ID hash prefix (LRU, 1000 entries)
 # Cache key: hash(model_id + provider_hint + policy + quality_floor + lane) -> (provider, model_alias)
 # Enhanced with multi-tier caching for better performance
-try:
-    from thegent.infra import MultiTierCache, get_cache
-
-    _ROUTE_CACHE = get_cache(l1_size=100, l2_size=1000, l3_path=None, default_ttl=300)
-    _USE_MULTI_TIER_CACHE = True
-except (ImportError, NameError):
-    _ROUTE_RESOLVE_CACHE: OrderedDict[str, tuple[str, str] | None] = OrderedDict()
-    _ROUTE_CACHE_MAX_SIZE = 1000
-    _USE_MULTI_TIER_CACHE = False
+_ROUTE_CACHE = get_cache(l1_size=100, l2_size=1000, l3_path=None, default_ttl=300)
+_USE_MULTI_TIER_CACHE = _ROUTE_CACHE is not None
+_ROUTE_RESOLVE_CACHE: OrderedDict[str, tuple[str, str] | None] = OrderedDict()
+_ROUTE_CACHE_MAX_SIZE = 1000
 
 
 def _make_route_cache_key(

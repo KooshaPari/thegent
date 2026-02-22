@@ -23,19 +23,6 @@ from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
 
 
-# Lazy imports for better startup performance
-def _get_settings():
-    from thegent.config import ThegentSettings
-
-    return ThegentSettings()
-
-
-def _get_httpx():
-    import httpx
-
-    return httpx
-
-
 _CLIPROXY_DATA_DIR = Path(__file__).parent / "cliproxy_data"
 
 _PROXY_READY_TIMEOUT = 5
@@ -57,10 +44,6 @@ def _get_provider_definitions() -> dict[str, Any]:
     """Load provider definitions from internal JSON."""
     return _load_json("provider_definitions.json")
 
-
-def _get_model_definitions() -> dict[str, Any]:
-    """Load model definitions (common aliases) from internal JSON."""
-    return _load_json("model_definitions.json")
 
 
 _PROXY_CHECK_TIMEOUT = 2
@@ -560,7 +543,8 @@ def _start_proxy_and_wait(
     for _ in range(wait_iterations):
         time.sleep(0.5)
         if _is_proxy_reachable(base_url):
-            return proc
+            if not use_adapter or _is_adapter_running(base_url):
+                return proc
         if proc.poll() is not None:
             err_msg = ""
             if stderr_target:
@@ -606,45 +590,55 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
     use_adapter = settings.cliproxy_adapter
     base_url = f"http://127.0.0.1:{port}/v1"
     if _is_proxy_reachable(base_url):
-        # When adapter needed (Codex WebSocket), verify we have adapter not raw proxy
-        if use_adapter and not _is_adapter_running(base_url):
+        # When adapter is requested, enforce adapter semantics and fail closed.
+        if use_adapter:
+            if _is_adapter_running(base_url):
+                return base_url
             kill_proxy(settings)
-            # Fall through to start adapter
         else:
             return base_url
 
     if use_adapter:
-        # Try to start using the adapter script
+        # Start using the adapter script; no silent fallback to raw proxy.
         from thegent.utils import get_resource_path
 
         script_path = get_resource_path("scripts/start_proxy_with_adapter.py")
-        if script_path.exists():
-            import subprocess
-
-            env = os.environ.copy()
-            # If we're installed, we might not need to set PYTHONPATH
-            # but for dev mode it's crucial.
-            from thegent.utils import is_dev_mode
-
-            if is_dev_mode():
-                env["PYTHONPATH"] = str(script_path.parents[1] / "src")
-
-            env.setdefault("THGENT_CLIPROXY_ADAPTER", "1")
-            subprocess.Popen(
-                [sys.executable, str(script_path)],
-                env=env,
-                cwd=str(script_path.parents[1]),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                stdin=subprocess.DEVNULL,
-                start_new_session=True,
+        if not script_path.exists():
+            raise RuntimeError(
+                "CLIProxy adapter is enabled but adapter launcher is missing. "
+                "Expected scripts/start_proxy_with_adapter.py in thegent resources."
             )
-            # Wait for adapter
-            for _ in range(_PROXY_READY_TIMEOUT * 4):  # Increase wait for adapter
-                time.sleep(0.5)
-                if _is_proxy_reachable(base_url):
-                    return base_url
-            # Fallback to direct binary if adapter fails to start
+
+        import subprocess
+
+        env = os.environ.copy()
+        # If we're installed, we might not need to set PYTHONPATH
+        # but for dev mode it's crucial.
+        from thegent.utils import is_dev_mode
+
+        if is_dev_mode():
+            env["PYTHONPATH"] = str(script_path.parents[1] / "src")
+
+        env.setdefault("THGENT_CLIPROXY_ADAPTER", "1")
+        subprocess.Popen(
+            [sys.executable, str(script_path)],
+            env=env,
+            cwd=str(script_path.parents[1]),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            stdin=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        # Wait for adapter and verify it's actually the adapter surface.
+        for _ in range(_PROXY_READY_TIMEOUT * 4):
+            time.sleep(0.5)
+            if _is_proxy_reachable(base_url) and _is_adapter_running(base_url):
+                return base_url
+
+        raise RuntimeError(
+            "CLIProxy adapter is enabled, but /v1/responses adapter surface did not become ready "
+            f"at {base_url}."
+        )
 
     binary = _resolve_binary(settings)
     if not _binary_available(binary):
@@ -652,9 +646,6 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
 
     config_path = _ensure_config(settings)
 
-    # Fallback path: if we tried adapter and it failed, _start_proxy_and_wait will try direct
-    # unless we explicitly tell it to use adapter.
-    # Here we call it without use_adapter=True to ensure a working direct proxy fallback.
     _start_proxy_and_wait(binary, config_path, base_url, settings, use_adapter=False)
     return base_url
 
@@ -667,7 +658,10 @@ def start_proxy_managed(settings: ThegentSettings) -> tuple[subprocess.Popen[byt
     """
     base_url = f"http://127.0.0.1:{settings.cliproxy_port}/v1"
     if _is_proxy_reachable(base_url):
-        return (None, base_url)
+        if settings.cliproxy_adapter and not _is_adapter_running(base_url):
+            kill_proxy(settings)
+        else:
+            return (None, base_url)
 
     binary = _resolve_binary(settings)
     if not _binary_available(binary):
@@ -868,17 +862,6 @@ def run_login_unified(
             base_url = ensure_proxy_running(settings)
             if base_url:
                 pass
-    else:
-        # If not running standalone, it might be managed by process-compose
-        try:
-            from thegent.mcp_manage import mcp_up
-
-            ok, _ = mcp_up(reload=True)
-            if ok:
-                pass
-        except Exception:
-            pass
-
     return 0
 
 
@@ -942,13 +925,6 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
             if kill_proxy(settings):
                 with contextlib.suppress(Exception):
                     ensure_proxy_running(settings)
-            else:
-                try:
-                    from thegent.mcp_manage import mcp_up
-
-                    mcp_up(reload=True)
-                except Exception:
-                    pass
         return proc.returncode
 
     # API-key-only providers

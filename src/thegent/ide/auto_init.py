@@ -59,8 +59,6 @@ def ensure_lsp_servers_ready(languages: list[str] | None = None) -> None:
     if languages is None:
         languages = ["python", "typescript", "rust", "go"]
 
-    from thegent.lsp.auto_install import ensure_lsp_server_installed
-
     for language in languages:
         _ensure_server(language)
 

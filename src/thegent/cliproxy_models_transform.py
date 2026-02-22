@@ -36,7 +36,7 @@ def _inject_openrouter_proxy_models(models: list[dict[str, Any]]) -> list[dict[s
     return models
 
 
-def _transform_models_response(
+def transform_models_response(
     content: bytes | memoryview, *, inject_openrouter: bool = False
 ) -> tuple[bytes, str] | None:
     """Transform CLIProxy models response to Codex-compatible format.

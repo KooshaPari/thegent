@@ -1,7 +1,8 @@
 """MCP configuration and service management for thegent."""
 
+from __future__ import annotations
+
 import json
-import os
 import platform
 import shutil
 import subprocess
@@ -647,3 +648,5 @@ def remove_playwright_from_client(
 ) -> tuple[bool, str]:
     """Shorthand to remove playwright from a single client."""
     return remove_servers_from_client(client, ["playwright"], workspace=workspace)
+
+__all__ = ["_get_mcp_url", "DEFAULT_MCP_URL", "MCP_CLIENT_PATHS"]

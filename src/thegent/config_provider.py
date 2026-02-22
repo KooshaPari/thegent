@@ -6,22 +6,10 @@ Phase 2+: ControlPlaneConfigProvider connects to CP when THGENT_CONTROL_PLANE_UR
 Resolution order: request_overrides → session → tenant → stamp → global.
 """
 
-import os
-from pathlib import Path
 from typing import Any, Protocol
 
 from thegent.config import ThegentSettings
-
-# Import path utilities for normalized path handling
-try:
-    # When running as installed package
-    from scripts.path_utils import normalize_path, path_to_str
-except ImportError:
-    # Fallback for development environments
-    import sys
-
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-    from path_utils import normalize_path, path_to_str
+from thegent.utils.path_utils import normalize_path, path_to_str
 
 # Keys resolvable via ConfigProvider (subset of ThegentSettings used by run/bg)
 _RESOLVE_KEYS = [
@@ -53,33 +41,6 @@ def _settings_to_dict(keys: list[str] | None) -> dict[str, Any]:
                 out[k] = v
     return out
 
-
-def _resolve_tenant_from_cwd(cwd: Path | None = None) -> str:
-    """Read .thegent/tenant or pyproject.toml [tool.thegent.tenant]. Default 'default'."""
-    start_path = cwd or Path.cwd()
-    # Try .thegent/tenant first
-    target = start_path / ".thegent" / "tenant"
-    if target.exists():
-        try:
-            return target.read_text(encoding="utf-8").strip() or "default"
-        except Exception:
-            pass
-
-    # Try pyproject.toml
-    pyproject = start_path / "pyproject.toml"
-    if pyproject.exists():
-        try:
-            import tomllib
-
-            with open(pyproject, "rb") as f:
-                data = tomllib.load(f)
-                tenant = data.get("tool", {}).get("thegent", {}).get("tenant")
-                if tenant:
-                    return str(tenant)
-        except Exception:
-            pass
-
-    return "default"
 
 
 class ConfigProvider(Protocol):

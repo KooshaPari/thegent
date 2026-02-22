@@ -15,7 +15,6 @@ FR-SES-003: All backend methods must return typed results, never raise on
 from __future__ import annotations
 
 import logging
-import os
 import shutil
 import subprocess
 from dataclasses import dataclass, field

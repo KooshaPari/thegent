@@ -2,10 +2,6 @@
 
 import platform
 import shutil
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
 
 
 def wrap_with_caffeinate(cmd: list[str], agent_name: str | None = None) -> list[str]:

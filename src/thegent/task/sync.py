@@ -63,13 +63,13 @@ class WorkStreamSync:
         lines = content.splitlines()
         new_lines = []
         in_backlog = False
-        backlog_start_idx = None
-        backlog_end_idx = None
+        _backlog_start_idx = None
+        _backlog_end_idx = None
 
         for i, line in enumerate(lines):
             if line.strip().startswith("## BACKLOG") or line.strip().startswith("## PENDING"):
                 in_backlog = True
-                backlog_start_idx = i
+                _backlog_start_idx = i
                 new_lines.append(line)
                 # Add header row
                 new_lines.append("| ID | Title | Source | Priority | Depends |")
@@ -78,7 +78,7 @@ class WorkStreamSync:
 
             if in_backlog:
                 if line.strip().startswith("##"):
-                    backlog_end_idx = i
+                    _backlog_end_idx = i
                     in_backlog = False
                     # Insert backlog rows
                     new_lines.extend(backlog_rows)

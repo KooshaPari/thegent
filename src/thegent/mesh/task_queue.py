@@ -10,7 +10,7 @@ import logging
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 _log = logging.getLogger(__name__)
 

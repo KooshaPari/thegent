@@ -3,7 +3,6 @@
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
 
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.codex_proxy import CodexProxyRunner

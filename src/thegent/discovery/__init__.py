@@ -17,6 +17,16 @@ from pydantic import BaseModel, Field
 
 _log = logging.getLogger(__name__)
 
+__all__ = [
+    "DiscoveredAgent",
+    "get_current_agent_id",
+    "register_discovered_agent",
+    "list_discovered_agents",
+    "scan_agent_processes",
+    "scan_harness_agents",
+    "_is_triggered_by_agent_process",
+]
+
 # BKM-08: lazy-loaded native discovery client (avoids import cost when unused)
 _native_client: "Any | None" = None
 _native_checked: bool = False
@@ -161,7 +171,6 @@ def register_discovered_agent(
 
 def list_discovered_agents(session_dir: Path | None = None) -> list[dict[str, Any]]:
     """List all currently active discovered agents."""
-    from thegent.cli.commands.impl import _is_pid_running
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()

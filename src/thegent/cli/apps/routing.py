@@ -1,8 +1,6 @@
 """Logical stream: Routing and LiteLLM control."""
 
-import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console

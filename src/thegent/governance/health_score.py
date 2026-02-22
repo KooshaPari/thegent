@@ -1,5 +1,3 @@
-from typing import Optional
-
 """Composite health score model (0-100) for autonomous codebase governance.
 
 Replaces XP/gamification with a weighted, multi-dimensional health metric.
@@ -11,7 +9,7 @@ score that drives autonomous agent scheduling decisions.
 import json
 import logging
 from datetime import UTC, datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -24,9 +22,9 @@ _log = logging.getLogger(__name__)
 HAS_NATIVE_SHM = False
 if ThegentSettings().use_native_shm:
     try:
-        import thegent_shm
+        import thegent_shm  # type: ignore[import-untyped]
 
-        thegent_shm.py_init_shm()
+        thegent_shm.py_init_shm()  # type: ignore[call-arg]
         HAS_NATIVE_SHM = True
     except ImportError:
         pass
@@ -157,7 +155,7 @@ class HealthScoreComputer:
         score = round(weighted_sum * 100, 2)
         if HAS_NATIVE_SHM:
             try:
-                import thegent_shm
+                import thegent_shm  # type: ignore[import-untyped]
 
                 thegent_shm.set_health_score(score)
             except Exception as e:

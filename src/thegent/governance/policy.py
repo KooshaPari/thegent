@@ -1,7 +1,7 @@
 """Core policy management and evaluation (WP-3001, WP-3002)."""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,6 @@ import logging
 from typing import Any
 
 from thegent.skills.discovery import (
-    SkillInfo,
     _get_thegent_root,
     discover_skills,
     load_skill,
@@ -107,8 +106,6 @@ def validate_skill_tool(skill_name: str) -> str:
     Returns:
         JSON string with validation results.
     """
-    from pathlib import Path
-
     root = _get_thegent_root()
     skills_dir = root / "skills"
     skill_path = skills_dir / skill_name

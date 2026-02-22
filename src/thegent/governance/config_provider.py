@@ -1,7 +1,5 @@
 """WP-10001: ConfigProvider protocol and implementations for Control Plane Phase 1."""
 
-import os
-from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from thegent.config import ThegentSettings

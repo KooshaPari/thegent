@@ -8,7 +8,6 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Any
 
 import typer
 
@@ -17,33 +16,24 @@ from rich.table import Table
 from thegent.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
-    _export_format_from_suffix,
+    _coerce_issue_types,
+    _default_owner_tag,
     _find_session_meta,
-    _infer_export_format,
     _is_pid_running,
     _normalize_output_format,
     _read_session_meta,
-    _resolve_checkpoint_id,
     _resolve_run_id,
     _resolve_session_id,
     _resolve_session_status,
     _safe_dict,
-    _safe_list,
-    _serialize_health_gate_csv,
-    _serialize_health_gate_jsonl,
     _serialize_health_gate_md,
-    _serialize_health_report_csv,
-    _serialize_health_report_jsonl,
     _serialize_health_report_md,
-    _serialize_health_trend_csv,
-    _serialize_health_trend_jsonl,
     _serialize_health_trend_md,
     _session_paths,
     _write_health_gate_export,
     _write_health_trend_export,
     _write_report_export,
     console,
-    get_exit_message,
     EXIT_TIMEOUT,
     EXIT_HEALTH_GATE_FAILED,
     _LOG_FOLLOW_POLL_SECONDS,
@@ -236,7 +226,7 @@ def inbox_wait_cmd(
     """Wait for next inbox event matching filters. Blocks until new event or timeout."""
     from thegent.cli.commands.impl import inbox_wait_impl
 
-    src_tuple = parse_sources_csv(sources)
+    _src_tuple = parse_sources_csv(sources)
     events_result = inbox_wait_impl(
         timeout=int(timeout) if timeout else None,
     )
@@ -490,8 +480,6 @@ def session_contract_health_gate_cmd(
                 f"blocked_delta={trend.get('blocked_count_delta', None)}"
             )
     if not result["pass"]:
-        if msg := get_exit_message(EXIT_HEALTH_GATE_FAILED):
-            pass
         raise typer.Exit(EXIT_HEALTH_GATE_FAILED)
 
 
@@ -823,8 +811,6 @@ def wait_cmd(session_id: str | None = None, timeout: int = 0) -> None:
                 f"[yellow]Operation timed out: wait for session exceeded {timeout}s. "
                 "Session may still be running.[/yellow]"
             )
-            if msg := get_exit_message(EXIT_TIMEOUT):
-                pass
             raise typer.Exit(EXIT_TIMEOUT)
         time.sleep(0.5)
     rc = int(p["rc"].read_text(encoding="utf-8").strip()) if p["rc"].exists() else 0
@@ -878,23 +864,23 @@ def pause_cmd(session_id: str | None = None) -> None:
     registry = RunRegistry(settings.session_dir)
 
     # Verify session exists
-    meta_path = _find_session_meta(settings, session_id)
+    meta_path = _find_session_meta(settings, sid)
     m = _read_session_meta(meta_path)
     run_id = m.get("run_id")
     if not run_id:
-        # Fallback to finding run_id from registry by correlation_id (session_id)
+        # Fallback to finding run_id from registry by correlation_id (sid)
         runs = registry.list_runs(limit=100)
         for r in runs:
-            if r.get("correlation_id") == session_id:
+            if r.get("correlation_id") == sid:
                 run_id = r.get("run_id")
                 break
 
     if not run_id:
-        console.print(f"[red]Could not find run_id for session {session_id}.[/red]")
+        console.print(f"[red]Could not find run_id for session {sid}.[/red]")
         raise typer.Exit(1)
 
     registry.register_pause(run_id, reason="Manual pause")
-    console.print(f"[yellow]Session {session_id} marked as PAUSED in registry.[/yellow]")
+    console.print(f"[yellow]Session {sid} marked as PAUSED in registry.[/yellow]")
 
 
 def resume_cmd(

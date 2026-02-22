@@ -1,7 +1,6 @@
 """Disk I/O queue depth monitoring."""
 
 import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

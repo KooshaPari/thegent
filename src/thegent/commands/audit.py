@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import TYPE_CHECKING, Annotated, Optional
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 

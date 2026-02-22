@@ -50,11 +50,11 @@ class ProjectRegistry:
 
     def update_activity(self, path: Path) -> None:
         """Update last active timestamp for a project."""
-        path = str(path.resolve())
+        path_str = str(path.resolve())
         projects = self.list_projects()
         updated = False
         for p in projects:
-            if p["path"] == path:
+            if p["path"] == path_str:
                 p["last_active"] = datetime.now(UTC).isoformat()
                 updated = True
 

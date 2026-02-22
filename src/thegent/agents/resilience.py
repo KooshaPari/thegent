@@ -3,6 +3,12 @@
 Distinguishes:
 - rate_limit / transient: retry same provider (429, 502/503/504, etc.)
 - usage_limit: subscription/quota exhausted; fallback to different provider.
+
+GOVERNANCE NOTE (Phase 1B Zero-Bloat Refactor):
+For generic retry logic (not agent-specific), prefer thegent.resilience module
+which uses tenacity decorators. This module contains agent-specific failure
+classification and provider fallback strategies (not for generic retry).
+See: src/thegent/resilience.py for unified @transient_retry, @cas_retry, etc.
 """
 
 import contextlib

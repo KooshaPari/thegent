@@ -19,18 +19,18 @@ def register_sitback(mcp: "FastMCP") -> None:
     """Register sitback resource, tool, and prompts with the FastMCP server."""
 
     # --- Resource: unified dashboard ---
-    @mcp.resource(
-        "thegent://sitback/dashboard{?profile}",
-        mime_type="application/json",
-        annotations={"readOnlyHint": True, "idempotentHint": True},
-    )
     def resource_sitback_dashboard(profile: str = "medium") -> str:
         """Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals.
         profile: light, medium (default), full (includes plugin widgets, harness)."""
         return json.dumps(sitback_dashboard_impl(profile=profile), sort_keys=True)
 
+    mcp.resource(
+        "thegent://sitback/dashboard{?profile}",
+        mime_type="application/json",
+        annotations={"readOnlyHint": True, "idempotentHint": True},
+    )(resource_sitback_dashboard)
+
     # --- Tool: dashboard (for tool-only clients) ---
-    @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_sitback_dashboard(profile: str = "medium") -> ToolResult:
         """
         Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals.
@@ -43,8 +43,9 @@ def register_sitback(mcp: "FastMCP") -> None:
             structured_content=data,
         )
 
+    mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})(thegent_sitback_dashboard)
+
     # --- Prompts: startup protocol, spawn sibling ---
-    @mcp.prompt
     def thegent_sitback_startup() -> str:
         """
         Startup protocol for Sitback Agent (when THGENT_SITBACK=1).
@@ -56,7 +57,8 @@ def register_sitback(mcp: "FastMCP") -> None:
 3. Say: "Sitback ready. Awaiting instructions."
 Use MCP tools (thegent_run, thegent_bg, thegent_ps, thegent_terminal_*) as primary; CLI as fallback."""
 
-    @mcp.prompt
+    mcp.prompt(thegent_sitback_startup)
+
     def thegent_sitback_spawn_sibling(agent: str = "minimax") -> str:
         """
         Instructions to spawn a sibling Sitback session with the same protocol.
@@ -64,3 +66,5 @@ Use MCP tools (thegent_run, thegent_bg, thegent_ps, thegent_terminal_*) as prima
         return f"""Start a sibling Sitback session with provider {agent}.
 Run: thegent sitback --agent {agent}
 The new session will have the same dashboard protocol and MCP tools."""
+
+    mcp.prompt(thegent_sitback_spawn_sibling)

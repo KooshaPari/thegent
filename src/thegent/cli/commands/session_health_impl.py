@@ -16,8 +16,6 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-import typer
-
 from thegent.cli.commands.observability_impl import (
     HEALTH_PAYLOAD_SCHEMA_VERSION,
     _append_health_snapshot,
@@ -29,6 +27,15 @@ from thegent.cli.commands.observability_impl import (
 )
 
 _log = logging.getLogger(__name__)
+
+__all__ = [
+    "_extract_blocked_ratio",
+    "list_session_contracts_impl",
+    "session_contract_audit_impl",
+    "session_contract_health_gate_impl",
+    "session_contract_health_report_impl",
+    "session_contract_health_trend_impl",
+]
 
 
 def _extract_blocked_ratio(ratios: list[float], snap: dict[str, Any] | None) -> None:

@@ -12,12 +12,10 @@ Also provides convenience factory methods:
 
 from __future__ import annotations
 
-import uuid
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from dataclasses import dataclass
 from typing import Any
 
-from thegent.agents.plangent import NodeStatus, Plan, PlanNode
+from thegent.agents.plangent import Plan, PlanNode
 
 # Extended metadata keys for OrchestrationPlan
 AGENT_HINT = "agent_hint"

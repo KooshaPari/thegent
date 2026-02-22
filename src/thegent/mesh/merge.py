@@ -1,7 +1,5 @@
 """Smart merge and conflict resolution for the agent mesh."""
 
-import json
-import os
 import subprocess
 from pathlib import Path
 

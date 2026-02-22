@@ -127,8 +127,6 @@ class CursorExecutorManager:
 
         Returns the number of clients that were re-bound.
         """
-        import asyncio
-
         current = self._provider.get_token()
         if current == self._last_token:
             return 0

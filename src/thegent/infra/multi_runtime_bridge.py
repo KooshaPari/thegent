@@ -7,13 +7,10 @@ This module allows a single program to orchestrate tasks across multiple Python 
 import asyncio
 from asyncio import subprocess
 import contextlib
-import json
 import os
 import platform
-import sys
 import tempfile
 import time
-from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -127,7 +124,7 @@ class MultiRuntimeBridge:
             log_forwarder_task = asyncio.create_task(self._forward_logs(runtime, process))
             self._log_forwarder_tasks.add(log_forwarder_task)
             log_forwarder_task.add_done_callback(self._log_forwarder_tasks.discard)
-        except Exception as e:
+        except Exception:
             raise
 
     async def _forward_logs(self, runtime: RuntimeType, process: Any):

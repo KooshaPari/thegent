@@ -563,8 +563,6 @@ class ComputePoolManager:
         Raises:
             RuntimeError: When no local or remote workers are available.
         """
-        from thegent.core.worker_pool import AgentResult
-
         # Try local pool first
         if self._local_pool is not None:
             try:

@@ -5,19 +5,10 @@ WL-124: Monolith Split shared helpers.
 from __future__ import annotations
 
 import contextlib
-import hashlib
 import json
 import os
-import re
-import shutil
-import signal
-import subprocess
-import sys
-import time
-import uuid
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import typer
 
@@ -49,8 +40,6 @@ class LazyConsole:
 
 console = LazyConsole()
 
-# from rich.console import Console  <-- removed to avoid top-level import
-from rich.table import Table
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -472,28 +461,28 @@ def _load_artifact(artifacts: list[Any], p: Path) -> None:
         artifacts.append(json.loads(p.read_text(encoding="utf-8")))
 
 
-# WL-120 Wave-X: Explicit wildcard export contract for cli.py compatibility shim.
-# Keep non-private exports from this module plus the private helper surface that
-# legacy callers import from thegent.cli.commands.cli.
-_CLI_PRIVATE_COMPAT_EXPORTS = [
+__all__ = [
     "_atomic_write",
+    "_bootstrap_metric_contracts",
     "_check_dag_cycles",
     "_coerce_issue_types",
+    "_compose_owner_tag",
     "_dag_path",
     "_dag_update_task",
     "_default_owner_tag",
     "_ensure_contract_version_header",
     "_ensure_dag_file",
+    "_export_format_from_suffix",
     "_find_session_meta",
     "_format_context_usage_line",
     "_format_grounding_sources_lines",
     "_format_transcript_summary_line",
+    "_get_health_targets_path",
     "_get_ready_task_ids",
     "_get_run_subprocess_optimized",
     "_get_yaml_infra",
     "_health_targets_exists",
-    "_get_health_targets_path",
-    "_bootstrap_metric_contracts",
+    "_infer_export_format",
     "_inject_skill_instructions",
     "_is_pid_running",
     "_lazy_import",
@@ -515,7 +504,6 @@ _CLI_PRIVATE_COMPAT_EXPORTS = [
     "_safe_dict",
     "_safe_list",
     "_scope_key",
-    "_compose_owner_tag",
     "_serialize_dag",
     "_serialize_health_gate_csv",
     "_serialize_health_gate_jsonl",
@@ -534,11 +522,9 @@ _CLI_PRIVATE_COMPAT_EXPORTS = [
     "_write_health_gate_export",
     "_write_health_trend_export",
     "_write_report_export",
+    "console",
+    "EXIT_HEALTH_GATE_FAILED",
+    "EXIT_TIMEOUT",
+    "get_exit_message",
+    "LazyConsole",
 ]
-
-__all__ = sorted(
-    {
-        *[name for name in globals() if not name.startswith("_") and name != "__all__"],
-        *_CLI_PRIVATE_COMPAT_EXPORTS,
-    }
-)

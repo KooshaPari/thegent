@@ -14,7 +14,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Protocol
+from typing import Any, Protocol
 
 import typer
 from pydantic import BaseModel

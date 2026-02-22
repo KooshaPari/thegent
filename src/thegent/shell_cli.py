@@ -109,7 +109,6 @@ def shell_profile(
 @shell_app.command("clear-cache")
 def shell_clear_cache() -> None:
     """Clear shell optimization cache (eval cache, tool cache, etc.)."""
-    import os
     import shutil
 
     from thegent.config import ThegentSettings
@@ -276,8 +275,6 @@ def shell_optimize() -> None:
 @shell_app.command("metrics")
 def shell_metrics() -> None:
     """Show shell performance metrics and statistics."""
-    import os
-
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
@@ -368,13 +365,10 @@ def shell_jobs() -> None:
 @shell_app.command("cache-stats")
 def shell_cache_stats() -> None:
     """Show cache statistics (hit/miss rates, sizes)."""
-    import os
-
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
     cache_dir = settings.cache_dir
-    l1_dir = cache_dir / "advanced" / "cache-l1"
     l2_dir = cache_dir / "advanced" / "cache-l2"
     eval_cache_dir = cache_dir / "eval-cache"
 
@@ -411,8 +405,6 @@ def shell_circuit_breaker(
     list_all: bool = typer.Option(False, "--list", help="List all circuit breakers"),
 ) -> None:
     """Manage circuit breakers for error recovery."""
-    import os
-
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import date
+
 from enum import Enum
 from pathlib import Path  # noqa: TC003 -- Path used at runtime
 from typing import Any
@@ -55,7 +55,7 @@ class CostController:
             self._calls_limit = budget.get("daily_agent_calls", 20)
             self._tiers = budget.get("tiers", {})
 
-    def record_call(self, dimension: str, agent: str) -> None:
+    def record_call(self, dimension: str, agent: str, *, cost_usd: float | None = None) -> None:
         """Record a single agent call."""
         self._calls_used += 1
         self._per_dimension[dimension] = self._per_dimension.get(dimension, 0) + 1
@@ -81,6 +81,10 @@ class CostController:
             return BudgetTier.CAUTIOUS
         return BudgetTier.NORMAL
 
-    def can_spawn(self) -> bool:
+    def calls_remaining(self) -> int:
+        """Return number of agent calls remaining in today's budget."""
+        return max(0, self._calls_limit - self._calls_used)
+
+    def can_spawn(self, estimated_calls: int = 1) -> bool:
         """Check if new agent spawns are allowed."""
         return self.get_tier() != BudgetTier.HALTED

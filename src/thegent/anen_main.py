@@ -7,7 +7,6 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import typer
 from rich.console import Console

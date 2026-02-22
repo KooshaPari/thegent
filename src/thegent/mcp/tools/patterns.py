@@ -466,4 +466,8 @@ def register_tool_pattern_tools(mcp: Any) -> None:
             meta={},
         )
 
-    _log.info("registered tool pattern tools: thegent_delete_session, thegent_bulk_operation")
+    _log.info(
+        "registered tool pattern tools: %s, %s",
+        thegent_delete_session.__name__,
+        thegent_bulk_operation.__name__,
+    )

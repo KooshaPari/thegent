@@ -20,15 +20,22 @@ Extraction map:
 from __future__ import annotations
 
 # WL-136 B90-W2-D2: Tooling-surface commands — re-exported from canonical module.
-# These aliases preserve backward compatibility; canonical definitions live in
-# cli_tooling.py (tooling surface, not core runtime).
+# Canonical definitions live in cli_tooling.py (tooling surface, not core runtime).
 from thegent.cli.commands.cli_tooling import (  # noqa: F401
-    audit_verify_cmd as _tooling_audit_verify_cmd,
-    benchmark_cmd as _tooling_benchmark_cmd,
-    deep_research_cmd as _tooling_deep_research_cmd,
-    drift_monitor_cmd as _tooling_drift_monitor_cmd,
-    roadmap_cmd as _tooling_roadmap_cmd,
+    audit_verify_cmd,
+    benchmark_cmd,
+    deep_research_cmd,
+    drift_monitor_cmd,
+    roadmap_cmd,
 )
+
+__all__ = [
+    "audit_verify_cmd",
+    "benchmark_cmd",
+    "deep_research_cmd",
+    "drift_monitor_cmd",
+    "roadmap_cmd",
+]
 
 # Shared infrastructure: public names (wildcard re-export).
 # Exposes: console, ThegentSettings, RunRegistry, get_exit_message,

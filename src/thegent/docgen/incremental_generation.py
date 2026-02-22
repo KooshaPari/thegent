@@ -3,7 +3,8 @@
 import hashlib
 import json
 import logging
-from datetime import UTC, datetime, timezone
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -102,7 +103,7 @@ class IncrementalGenerator:
     def generate_incremental(
         self,
         files: list[Path],
-        generator_func: callable,
+        generator_func: Callable[..., Any],
     ) -> dict[str, Any]:
         """Generate documentation incrementally.
 

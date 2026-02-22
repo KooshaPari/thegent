@@ -35,7 +35,7 @@ __all__ = [
 def _has_filelock() -> bool:
     """Return True if the filelock package is importable."""
     try:
-        import importlib
+        import importlib.util
 
         return importlib.util.find_spec("filelock") is not None
     except Exception:

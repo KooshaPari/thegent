@@ -14,7 +14,10 @@
     "templates": [
       "templates/claude/CLAUDE.md.template",
       "templates/initialize-project/{{ project_name }}/CLAUDE.md"
-    ]
+    ],
+    "wl125_impl_boundary_target": "src/thegent/cli/commands/impl.py",
+    "wl125_trend_metadata_source": "src/thegent/cli/services/run_observe_helpers.py",
+    "wl125_trend_warning_metadata_key": "trend_snapshot_health"
   },
   "finding_count": 0,
   "ok": true

@@ -1,10 +1,8 @@
 """Shell detection and preferred shell strategy for cross-platform execution."""
 
-import os
 import shutil
 import sys
 from enum import Enum
-from pathlib import Path
 
 
 class ShellType(str, Enum):

@@ -102,10 +102,20 @@ class ThemeDefinition:
 
     def to_textual_theme(self) -> Theme:
         """Convert to Textual Theme."""
-        colors = self.colors.to_dict()
+        c = self.colors
         return Theme(
             name=self.name,
-            **colors,
+            primary=c.primary,
+            secondary=c.secondary,
+            accent=c.accent,
+            success=c.success,
+            warning=c.warning,
+            error=c.error,
+            foreground=c.foreground,
+            background=c.background,
+            surface=c.surface,
+            panel=c.panel,
+            dark=self.dark,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -396,18 +406,7 @@ class ThemeManager:
 
     def get_styles(self) -> Styles:
         """Get CSS styles for the current theme."""
-        current = self.get_current()
-        if current is None:
-            return Styles()
-
-        styles = Styles()
-        colors = current.colors.to_dict()
-
-        # Set CSS custom properties
-        for key, value in colors.items():
-            styles.set(f"${key}", value)
-
-        return styles
+        return Styles()
 
     def apply_to_app(self, app) -> None:
         """Apply current theme to a Textual app."""

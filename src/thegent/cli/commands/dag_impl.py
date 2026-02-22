@@ -20,6 +20,12 @@ from typing import Any
 from thegent.agents import list_agent_names, resolve_agent
 from thegent.config import ThegentSettings
 
+__all__ = [
+    "_dag_path",
+    "_ensure_dag_file",
+    "_validate_dag",
+]
+
 
 @dataclass
 class DagDocument:
@@ -259,7 +265,7 @@ def _session_status_for(session_id: str, settings: ThegentSettings) -> str:
 
     try:
         meta_path = _find_session_meta(settings, session_id)
-        p = _session_paths(meta_path.parent, session_id)
+        p = _session_paths(base=meta_path.parent, session_id=session_id)
         m = _read_session_meta(meta_path)
         pid = int(m.get("pid", 0) or 0)
         running = _is_pid_running(pid)
@@ -614,7 +620,7 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
         sid = sids[0]
         try:
             meta_path = _find_session_meta(settings, sid)
-            p = _session_paths(meta_path.parent, sid)
+            p = _session_paths(base=meta_path.parent, session_id=sid)
             m = _read_session_meta(meta_path)
             pid = int(m.get("pid", 0) or 0)
             running = _is_pid_running(pid)

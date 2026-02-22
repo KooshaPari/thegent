@@ -1,7 +1,7 @@
 """System prompts and task-based role definitions for thegent."""
 
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 
 
 class TaskRole(StrEnum):

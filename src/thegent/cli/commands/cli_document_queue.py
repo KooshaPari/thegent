@@ -6,7 +6,6 @@ Uses centralized path utilities for cross-platform consistency.
 """
 
 import json
-import sys
 from pathlib import Path
 
 import typer
@@ -26,13 +25,7 @@ from thegent.agents.document.processor import (
     count_lines,
     extract_metadata,
 )
-
-# Import path utilities for normalized path handling
-try:
-    from scripts.path_utils import normalize_path, safe_join
-except ImportError:
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-    from path_utils import normalize_path, safe_join
+from thegent.utils.path_utils import normalize_path, safe_join
 
 console = Console()
 

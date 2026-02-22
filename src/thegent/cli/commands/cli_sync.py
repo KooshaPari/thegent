@@ -2,15 +2,13 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
 
-import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from thegent.sync.audit_framework import AuditIssue, AuditResult, AuditSeverity, SystemAuditFramework
+from thegent.sync.audit_framework import AuditResult, AuditSeverity, SystemAuditFramework
 from thegent.sync.orchestrator import SyncOrchestrator, SyncResult, SyncStatus
 
 _log = logging.getLogger(__name__)

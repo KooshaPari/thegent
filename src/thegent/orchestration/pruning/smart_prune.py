@@ -10,7 +10,7 @@ import re
 import signal
 import sys
 import time
-from typing import Any, Optional
+from typing import Any
 
 from thegent.skills.terminal import TmuxPane
 
@@ -42,12 +42,11 @@ def get_tty_path(tty: str) -> str | None:
     return f"/dev/{tty}"
 
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from thegent.cli.commands.impl import ps_impl
 from thegent.config import ThegentSettings
-from thegent.execution import RunRegistry
 from thegent.skills.terminal import capture_tmux_pane, list_tmux_panes, send_to_tmux_pane
 
 logger = logging.getLogger(__name__)
@@ -86,7 +85,7 @@ PROTECTED_PROCESS_NAMES: frozenset[str] = frozenset(
 )
 
 
-def _is_protected_process(name: str) -> bool:
+def is_protected_process(name: str) -> bool:
     """Return True if the process name/cmdline matches a protected process."""
     base = os.path.basename(name.split(maxsplit=1)[0]) if name else ""
     return base in PROTECTED_PROCESS_NAMES or any(p in base for p in PROTECTED_PROCESS_NAMES)

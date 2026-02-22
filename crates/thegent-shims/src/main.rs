@@ -334,7 +334,12 @@ fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
                 out.insert(0, "--dangerously-bypass-approvals-and-sandbox".to_string());
             }
             if !out.iter().any(|a| a == "--search") {
-                out.insert(0, "--search".to_string());
+                if out.iter().any(|a| a == "exec") {
+                    let exec_idx = out.iter().position(|a| a == "exec").unwrap_or(1);
+                    out.insert(exec_idx, "--search".to_string());
+                } else {
+                    out.push("--search".to_string());
+                }
             }
         }
         "clode" => {
@@ -344,7 +349,7 @@ fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
                 out.insert(0, "--dangerously-skip-permissions".to_string());
             }
         }
-        "roid" | "droid" | "fanta" => {
+        "roid" | "droid" => {
             if out.first().map(String::as_str) == Some("exec") {
                 let has_skip = out.iter().any(|a| a == "--skip-permissions-unsafe");
                 let has_auto = out.iter().any(|a| a == "--auto");
@@ -358,6 +363,121 @@ fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
     out
 }
 
+fn is_native_command_passthrough(name: &str, token: &str) -> bool {
+    match name {
+        "dex" => matches!(
+            token,
+            "exec"
+                | "review"
+                | "login"
+                | "logout"
+                | "mcp"
+                | "mcp-server"
+                | "app-server"
+                | "app"
+                | "completion"
+                | "sandbox"
+                | "debug"
+                | "apply"
+                | "resume"
+                | "fork"
+                | "cloud"
+                | "features"
+                | "help"
+        ),
+        "roid" | "droid" => {
+            matches!(
+                token,
+                "exec" | "resume" | "continue" | "help" | "login" | "logout" | "version"
+            )
+        }
+        _ => true,
+    }
+}
+
+fn normalize_harness_command_labels(name: &str, args: &[String]) -> Vec<String> {
+    if args.is_empty() {
+        return args.to_vec();
+    }
+
+    let first = args[0].as_str();
+    let rest = &args[1..];
+
+    match (name, first) {
+        ("dex", "continue") => {
+            if rest.is_empty() {
+                vec!["resume".to_string(), "--last".to_string()]
+            } else {
+                let mut out = vec!["resume".to_string()];
+                out.extend(rest.iter().cloned());
+                out
+            }
+        }
+        ("clode", "exec") => rest.to_vec(),
+        ("clode", "continue") => {
+            let mut out = vec!["--continue".to_string()];
+            out.extend(rest.iter().cloned());
+            out
+        }
+        ("clode", "resume") => {
+            if rest.is_empty() {
+                vec!["--continue".to_string()]
+            } else {
+                let mut out = vec!["--resume".to_string()];
+                out.extend(rest.iter().cloned());
+                out
+            }
+        }
+        ("fanta", "exec") => {
+            if rest.is_empty() {
+                return rest.to_vec();
+            }
+            if rest.iter().any(|a| a == "-h" || a == "--help") {
+                return vec!["--help".to_string()];
+            }
+            if rest.iter().any(|a| a == "-p" || a == "--prompt") {
+                return rest.to_vec();
+            }
+            vec!["-p".to_string(), rest.join(" ")]
+        }
+        ("roid", "continue") | ("droid", "continue") => {
+            let mut out = vec!["resume".to_string()];
+            out.extend(rest.iter().cloned());
+            out
+        }
+        ("dex", token) | ("roid", token) | ("droid", token)
+            if !token.starts_with('-') && !is_native_command_passthrough(name, token) =>
+        {
+            let mut out = vec!["exec".to_string()];
+            out.extend(args.iter().cloned());
+            out
+        }
+        _ => args.to_vec(),
+    }
+}
+
+fn normalize_harness_exec_legacy_args(name: &str, args: &[String]) -> Vec<String> {
+    if !matches!(name, "dex" | "roid" | "droid") || args.len() < 4 {
+        return args.to_vec();
+    }
+    if args[0] != "exec" || args[1].starts_with('-') {
+        return args.to_vec();
+    }
+    if args[2] != "-p" && args[2] != "--prompt" {
+        return args.to_vec();
+    }
+
+    let normalized_model = if name == "dex" && args[1] == "max" {
+        "minimax-m2.5".to_string()
+    } else {
+        args[1].clone()
+    };
+
+    let mut out = vec!["exec".to_string(), "-m".to_string(), normalized_model];
+    out.extend(args[3..].iter().cloned());
+    out
+}
+
 fn split_native_flag(args: &[String]) -> (bool, Vec<String>) {
     let native_mode = args.iter().any(|a| a == "--native");
     let filtered = args
@@ -368,9 +488,81 @@ fn split_native_flag(args: &[String]) -> (bool, Vec<String>) {
     (native_mode, filtered)
 }
 
+fn split_force_flag(args: &[String]) -> (bool, Vec<String>) {
+    let force_mode = args.iter().any(|a| a == "--force" || a == "-f");
+    let filtered = args
+        .iter()
+        .filter(|a| a.as_str() != "--force" && a.as_str() != "-f")
+        .cloned()
+        .collect();
+    (force_mode, filtered)
+}
+
+fn dex_proxy_env_defaults() -> (Option<String>, Option<String>) {
+    let base_url = env::var("OPENAI_BASE_URL").ok();
+    let api_key = env::var("OPENAI_API_KEY").ok();
+
+    let default_base = if base_url.as_deref().map(str::is_empty).unwrap_or(true) {
+        Some("http://127.0.0.1:8317/v1".to_string())
+    } else {
+        None
+    };
+
+    let default_key = if api_key.as_deref().map(str::is_empty).unwrap_or(true) {
+        Some("sk-test".to_string())
+    } else {
+        None
+    };
+
+    (default_base, default_key)
+}
+
+fn inject_force_alias(name: &str, args: &[String], force_mode: bool) -> Vec<String> {
+    if !force_mode {
+        return args.to_vec();
+    }
+
+    let mut out = args.to_vec();
+    match name {
+        "dex" => {
+            if !out.iter().any(|a| a == "--dangerously-bypass-approvals-and-sandbox") {
+                out.insert(0, "--dangerously-bypass-approvals-and-sandbox".to_string());
+            }
+        }
+        "clode" => {
+            if !out.iter().any(|a| {
+                a == "--dangerously-skip-permissions" || a == "--allow-dangerously-skip-permissions"
+            }) {
+                out.insert(0, "--dangerously-skip-permissions".to_string());
+            }
+        }
+        "roid" | "droid" => {
+            let has_skip = out.iter().any(|a| a == "--skip-permissions-unsafe");
+            let has_auto = out.iter().any(|a| a == "--auto");
+            if !has_skip && !has_auto {
+                if out.first().map(String::as_str) == Some("exec") {
+                    out.insert(1, "--skip-permissions-unsafe".to_string());
+                } else {
+                    out.insert(0, "--skip-permissions-unsafe".to_string());
+                }
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
 /// Run agent with thegent integration
 fn run_agent(name: &str, args: &[String]) -> ExitCode {
-    let (native_mode, filtered) = split_native_flag(args);
+    let (native_mode, filtered_native) = split_native_flag(args);
+    let (force_mode, filtered) = split_force_flag(&filtered_native);
+    let filtered = normalize_harness_command_labels(name, &filtered);
+    let filtered = normalize_harness_exec_legacy_args(name, &filtered);
+    let filtered = inject_force_alias(name, &filtered, force_mode);
+    if name == "fanta" && filtered.first().map(String::as_str).is_some_and(|cmd| cmd == "continue" || cmd == "resume") {
+        eprintln!("thegent-shims: fanta/ante does not expose resume/continue in native CLI.");
+        return ExitCode::from(2);
+    }
 
     // Resolve the agent binary
     let agent_path = resolve_agent(name);
@@ -399,6 +591,15 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
             cmd.env_remove("MallocStackLogging");
             cmd.env_remove("MallocStackLoggingNoCompact");
             cmd.env_remove("MallocStackLoggingDirectory");
+            if name == "dex" {
+                let (default_base, default_key) = dex_proxy_env_defaults();
+                if let Some(base) = default_base {
+                    cmd.env("OPENAI_BASE_URL", base);
+                }
+                if let Some(key) = default_key {
+                    cmd.env("OPENAI_API_KEY", key);
+                }
+            }
             
             // Execute and propagate exit code
             let status = cmd.status().unwrap_or_else(|e| {
@@ -704,7 +905,12 @@ fn main() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use super::{inject_harness_defaults, split_native_flag};
+    use std::env;
+
+    use super::{
+        dex_proxy_env_defaults, inject_force_alias, inject_harness_defaults, normalize_harness_command_labels,
+        normalize_harness_exec_legacy_args, split_force_flag, split_native_flag,
+    };
 
     fn v(args: &[&str]) -> Vec<String> {
         args.iter().map(|s| s.to_string()).collect()
@@ -725,11 +931,131 @@ mod tests {
     }
 
     #[test]
+    fn split_force_flag_filters_short_and_long_flags() {
+        let (force, filtered) = split_force_flag(&v(&["-f", "resume", "--force", "--last"]));
+        assert!(force);
+        assert_eq!(filtered, v(&["resume", "--last"]));
+    }
+
+    #[test]
+    fn split_force_flag_leaves_other_args_when_not_force() {
+        let (force, filtered) = split_force_flag(&v(&["resume", "--last"]));
+        assert!(!force);
+        assert_eq!(filtered, v(&["resume", "--last"]));
+    }
+
+    #[test]
+    fn inject_force_alias_for_dex_adds_bypass_flag() {
+        let out = inject_force_alias("dex", &v(&["resume"]), true);
+        assert_eq!(out[0], "--dangerously-bypass-approvals-and-sandbox");
+        assert!(out.contains(&"resume".to_string()));
+    }
+
+    #[test]
+    fn inject_force_alias_for_clode_adds_skip_permissions_flag() {
+        let out = inject_force_alias("clode", &v(&["resume"]), true);
+        assert_eq!(out[0], "--dangerously-skip-permissions");
+        assert!(out.contains(&"resume".to_string()));
+    }
+
+    #[test]
+    fn inject_force_alias_for_roid_exec_adds_skip_permissions_unsafe() {
+        let out = inject_force_alias("roid", &v(&["exec", "status"]), true);
+        assert_eq!(out[0], "exec");
+        assert_eq!(out[1], "--skip-permissions-unsafe");
+    }
+
+    #[test]
+    fn inject_force_alias_for_fanta_non_exec_is_noop() {
+        let out = inject_force_alias("fanta", &v(&["--model", "flash"]), true);
+        assert_eq!(out, v(&["--model", "flash"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_dex_continue_without_args_uses_resume_last() {
+        let out = normalize_harness_command_labels("dex", &v(&["continue"]));
+        assert_eq!(out, v(&["resume", "--last"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_dex_continue_with_id_uses_resume_id() {
+        let out = normalize_harness_command_labels("dex", &v(&["continue", "abc123"]));
+        assert_eq!(out, v(&["resume", "abc123"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_clode_continue_to_flag() {
+        let out = normalize_harness_command_labels("clode", &v(&["continue"]));
+        assert_eq!(out, v(&["--continue"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_clode_resume_to_resume_flag() {
+        let out = normalize_harness_command_labels("clode", &v(&["resume", "abc123"]));
+        assert_eq!(out, v(&["--resume", "abc123"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_roid_continue_to_resume() {
+        let out = normalize_harness_command_labels("roid", &v(&["continue", "abc123"]));
+        assert_eq!(out, v(&["resume", "abc123"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_clode_exec_strips_exec_marker() {
+        let out = normalize_harness_command_labels("clode", &v(&["exec", "--print", "hi"]));
+        assert_eq!(out, v(&["--print", "hi"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_dex_defaults_unknown_label_to_exec() {
+        let out = normalize_harness_command_labels("dex", &v(&["max", "-p", "hi"]));
+        assert_eq!(out, v(&["exec", "max", "-p", "hi"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_fanta_defaults_unknown_label_to_exec() {
+        let out = normalize_harness_command_labels("fanta", &v(&["max", "-p", "hi"]));
+        assert_eq!(out, v(&["max", "-p", "hi"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_dex_keeps_native_commands_passthrough() {
+        let out = normalize_harness_command_labels("dex", &v(&["login"]));
+        assert_eq!(out, v(&["login"]));
+    }
+
+    #[test]
+    fn normalize_harness_exec_legacy_args_for_dex_max_prompt_rewrites_to_model_and_prompt() {
+        let out = normalize_harness_exec_legacy_args("dex", &v(&["exec", "max", "-p", "hi"]));
+        assert_eq!(out, v(&["exec", "-m", "minimax-m2.5", "hi"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_fanta_exec_without_prompt_uses_prompt_flag() {
+        let out = normalize_harness_command_labels("fanta", &v(&["exec", "hi there"]));
+        assert_eq!(out, v(&["-p", "hi there"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_fanta_exec_with_prompt_flag_strips_exec_marker() {
+        let out = normalize_harness_command_labels("fanta", &v(&["exec", "-m", "foo", "-p", "hi"]));
+        assert_eq!(out, v(&["-m", "foo", "-p", "hi"]));
+    }
+
+    #[test]
+    fn normalize_harness_labels_for_fanta_exec_with_help_returns_help() {
+        let out = normalize_harness_command_labels("fanta", &v(&["exec", "--help"]));
+        assert_eq!(out, v(&["--help"]));
+    }
+
+    #[test]
     fn inject_defaults_for_dex_includes_search_and_bypass() {
         let out = inject_harness_defaults("dex", &v(&["resume"]));
         assert!(out.contains(&"--search".to_string()));
         assert!(out.contains(&"--dangerously-bypass-approvals-and-sandbox".to_string()));
         assert!(out.contains(&"resume".to_string()));
+        assert_eq!(out.last().map(String::as_str), Some("--search"));
     }
 
     #[test]
@@ -749,6 +1075,20 @@ mod tests {
             .count();
         assert_eq!(search_count, 1);
         assert_eq!(bypass_count, 1);
+    }
+
+    #[test]
+    fn inject_defaults_for_dex_places_search_before_exec_subcommand() {
+        let out = inject_harness_defaults("dex", &v(&["exec", "-m", "minimax-m2.5", "hi"]));
+        let exec_index = out
+            .iter()
+            .position(|a| a == "exec")
+            .expect("exec should be present");
+        let search_index = out
+            .iter()
+            .position(|a| a == "--search")
+            .expect("search should be present");
+        assert!(search_index < exec_index);
     }
 
     #[test]
@@ -781,5 +1121,31 @@ mod tests {
     fn inject_defaults_for_fanta_exec_does_not_add_when_auto_present() {
         let out = inject_harness_defaults("fanta", &v(&["exec", "--auto", "status"]));
         assert!(!out.iter().any(|a| a == "--skip-permissions-unsafe"));
+    }
+
+    #[test]
+    fn dex_proxy_env_defaults_are_populated_when_unset() {
+        unsafe {
+            env::remove_var("OPENAI_BASE_URL");
+            env::remove_var("OPENAI_API_KEY");
+        }
+        let (base, key) = dex_proxy_env_defaults();
+        assert_eq!(base.as_deref(), Some("http://127.0.0.1:8317/v1"));
+        assert_eq!(key.as_deref(), Some("sk-test"));
+    }
+
+    #[test]
+    fn dex_proxy_env_defaults_respect_existing_env() {
+        unsafe {
+            env::set_var("OPENAI_BASE_URL", "https://api.openai.com/v1");
+            env::set_var("OPENAI_API_KEY", "sk-live");
+        }
+        let (base, key) = dex_proxy_env_defaults();
+        assert!(base.is_none());
+        assert!(key.is_none());
+        unsafe {
+            env::remove_var("OPENAI_BASE_URL");
+            env::remove_var("OPENAI_API_KEY");
+        }
     }
 }

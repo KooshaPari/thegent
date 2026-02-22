@@ -4,7 +4,6 @@ import os
 import shutil
 import socket
 from pathlib import Path
-from typing import Any
 
 
 class ResourceIsolation:

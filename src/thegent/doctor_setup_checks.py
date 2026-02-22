@@ -108,7 +108,7 @@ def ensure_mcp_running(*, settings: ThegentSettings, console: Console, timeout: 
 
     console.print("[yellow]MCP server not running. Starting automatically...[/yellow]")
     try:
-        from thegent.mcp_manage import mcp_up
+        from thegent.mcp.manage import mcp_up
 
         success, msg = mcp_up()
         if success:

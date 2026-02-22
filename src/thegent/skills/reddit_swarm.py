@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .deep_research import perform_deep_research, reddit_json_search
+from .deep_research import perform_deep_research
 
 logger = logging.getLogger(__name__)
 

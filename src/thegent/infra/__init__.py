@@ -25,20 +25,10 @@ from thegent.infra.enhanced_errors import (
 from thegent.infra.enhanced_errors import (
     InfraRuntimeError,
 )
-from thegent.infra.fast_cache import MultiTierCache, get_cache
+from thegent.infra.cache_v2 import MultiTierCache, get_cache
 from thegent.infra.fast_file_ops import (
     copy_file,
     copy_tree,
-    move_file,
-)
-from thegent.infra.fast_file_ops import (
-    ensure_directory as ensure_dir,
-)
-from thegent.infra.fast_file_ops import (
-    get_path_size as get_file_size,
-)
-from thegent.infra.fast_file_ops import (
-    remove_path as remove_file,
 )
 from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.fast_yaml_parser import yaml_dump, yaml_load, yaml_loads

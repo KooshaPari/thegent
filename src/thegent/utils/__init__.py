@@ -10,17 +10,6 @@ def strip_ansi(text: str) -> str:
     return Text.from_ansi(text).plain
 
 
-from thegent.utils.edit_links import EditLinksGenerator
-from thegent.utils.helpers import (
-    batch_file_operations,
-    normalize_path,
-    safe_read_file,
-    safe_write_file,
-)
-from thegent.utils.link_checker import LinkChecker
-from thegent.utils.workstream import WorkStreamOps
-
-
 def is_dev_mode() -> bool:
     """Check if thegent is running in development mode.
 
@@ -58,8 +47,3 @@ def get_resource_path(relative_path: str):
     from thegent import resources
 
     return resources.get_resource_path(relative_path)
-
-
-def _strip_ansi(text: str) -> str:
-    """Backward compatibility alias for strip_ansi."""
-    return strip_ansi(text)

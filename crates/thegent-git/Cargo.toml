@@ -28,6 +28,9 @@ clap = { version = "4.5.23", features = ["derive"], optional = true }
 default = []
 cli = ["dep:clap"]
 
+[dev-dependencies]
+tempfile = "3.10"
+
 [profile.release]
 opt-level = 3
 lto = true

@@ -9,13 +9,10 @@ Uses:
 import asyncio
 import ctypes
 import logging
-import os
 import platform
 import subprocess
-import threading
 import time
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from ..virtual_desktop import (
@@ -30,8 +27,6 @@ logger = logging.getLogger(__name__)
 
 # Windows API imports
 if platform.system() == "Windows":
-    from ctypes import wintypes
-
     # Constants
     DESKTOP_SWITCHDESKTOP = 0x0100
     DESKTOP_CREATEDESKTOP = 0x0001
@@ -210,7 +205,7 @@ class WindowsVirtualDesktopProvider(VirtualDesktopProvider):
         # For now, use PowerShell with Add-Type for screenshots
 
         # This is a placeholder - real implementation would use direct API
-        width, height = 1920, 1080
+        _width, _height = 1920, 1080
 
         # Quick GDI capture as fallback
         return await self._capture_gdi(desktop_id)

@@ -37,7 +37,6 @@ from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig
 
 if TYPE_CHECKING:
     from thegent.orchestration.dispatcher import SubAgentDispatcher
-    from thegent.orchestration.plan import OrchestrationPlan
 
 _log = logging.getLogger(__name__)
 

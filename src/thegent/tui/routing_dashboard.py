@@ -84,7 +84,7 @@ class RoutingDashboard(Vertical):
 
     def on_mount(self) -> None:
         """Initialize on mount."""
-        self.set_timer(2.0, self.refresh_data, repeat=True)
+        self.set_timer(2.0, self.refresh_data)
         self.refresh_data()
 
     def refresh_data(self) -> None:

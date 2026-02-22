@@ -392,9 +392,9 @@ def test_session_list_impl_normalizes_contract_strings(tmp_path: Path, monkeypat
 
     mock_settings = MagicMock()
     mock_settings.session_dir = tmp_path
-    monkeypatch.setattr("thegent.cli.commands.session_impl.ThegentSettings", lambda: mock_settings)
+    monkeypatch.setattr("thegent.cli.commands.session_ops_impl.ThegentSettings", lambda: mock_settings)
     monkeypatch.setattr(
-        "thegent.cli.commands.session_impl.RunRegistry",
+        "thegent.cli.commands.session_ops_impl.RunRegistry",
         lambda *_args, **_kwargs: MagicMock(list_runs=lambda **_kw: []),
     )
 

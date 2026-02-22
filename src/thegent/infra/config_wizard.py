@@ -98,7 +98,7 @@ class ConfigWizard:
             if not (1 <= port_int <= 65535):
                 raise ValueError("Port must be between 1 and 65535")
             self.config["THGENT_MCP_PORT"] = port
-        except ValueError as e:
+        except ValueError as _e:
             console.print(f"[yellow]Invalid port, using default: {default_port}[/yellow]")
             self.config["THGENT_MCP_PORT"] = default_port
 

@@ -28,13 +28,6 @@ def _trim_to_n(lines: list[str], n: int) -> list[str]:
     if n <= 0:
         return lines
     return lines[-n:]
-
-
-def _is_tmux_available() -> bool:
-    """Check if tmux is available on the system."""
-    return shutil.which("tmux") is not None
-
-
 def _capture_via_tmux(pane_id: str, n: int) -> CaptureResult | None:
     """Capture terminal output via tmux capture-pane.
 

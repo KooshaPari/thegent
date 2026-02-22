@@ -8,9 +8,8 @@ import json
 import logging
 import uuid
 from datetime import UTC, datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field
 

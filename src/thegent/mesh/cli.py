@@ -2,7 +2,6 @@
 
 import subprocess
 from pathlib import Path
-from typing import Any, Optional
 
 import typer
 from rich.console import Console
@@ -139,8 +138,6 @@ def status(
     table.add_column("Type", style="green")
     table.add_column("Status", style="magenta")
     table.add_column("Workdir", style="dim")
-
-    import yaml
 
     for manifest in agents_dir.glob("agent-*.yaml"):
         _load_mesh_manifest(table, manifest)

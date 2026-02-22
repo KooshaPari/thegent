@@ -1,5 +1,6 @@
 """Provider and Model Management - CLI, MCP, and programmatic CRUD for providers and models."""
-from typing import Any
+from pathlib import Path
+from typing import Any, cast
 
 import httpx
 from rich.console import Console
@@ -479,9 +480,9 @@ def discover_models(provider: str | None = None) -> list[dict[str, Any]]:
     results = []
     settings = ThegentSettings()
     config_path = _ensure_config(settings)
-    config = _load_yaml(config_path)
+    _config = _load_yaml(config_path)
 
-    providers = _load_json(_PROVIDER_DEFINITIONS_PATH)
+    _providers = _load_json(_PROVIDER_DEFINITIONS_PATH)
 
     # Check CLIProxy for available models
     try:
@@ -661,7 +662,7 @@ def _form_update_provider() -> None:
     model = Prompt.ask("[bold]New model[/bold] (leave empty to keep current)", default=provider.get("model", ""))
 
     success, msg = update_provider(
-        name=name,
+        name=cast(str, name),
         base_url=base_url or None,
         model=model or None,
     )
@@ -683,7 +684,7 @@ def _form_delete_provider() -> None:
         return
 
     if Confirm.ask(f"[bold]Delete provider '{provider.get('name')}'?[/bold]", default=False):
-        success, msg = delete_provider(provider.get("name"))
+        success, msg = delete_provider(cast(str, provider.get("name")))
         if success:
             console.print(f"[green]{msg}[/green]")
         else:
@@ -701,7 +702,7 @@ def _form_validate_provider() -> None:
         return
 
     console.print(f"\n[dim]Validating {provider.get('name')}...[/dim]")
-    success, msg, _details = validate_provider(provider.get("name"))
+    success, msg, _details = validate_provider(cast(str, provider.get("name")))
 
     if success:
         console.print(f"[green]✓ {msg}[/green]")
@@ -739,7 +740,7 @@ def _form_add_api_key() -> None:
 
     api_key = Prompt.ask(f"[bold]API Key for {provider.get('name')}[/bold]", password=True)
 
-    success, msg = add_api_key(provider.get("name"), api_key)
+    success, msg = add_api_key(cast(str, provider.get("name")), api_key)
     if success:
         console.print(f"[green]{msg}[/green]")
     else:
@@ -757,7 +758,7 @@ def _form_remove_api_key() -> None:
         return
 
     if Confirm.ask(f"[bold]Remove API key for '{provider.get('name')}'?[/bold]", default=False):
-        success, msg = remove_api_key(provider.get("name"))
+        success, msg = remove_api_key(cast(str, provider.get("name")))
         if success:
             console.print(f"[green]{msg}[/green]")
         else:
@@ -985,10 +986,10 @@ def search_models_by_capability(
             continue
         # Check benchmark scores
         if capability == "swebench":
-            if not m.get("swebench") or m.get("swebench") < 0.4:
+            if not m.get("swebench") or cast(float, m.get("swebench")) < 0.4:
                 continue
         if capability == "termbench":
-            if not m.get("termbench") or m.get("termbench") < 0.45:
+            if not m.get("termbench") or cast(float, m.get("termbench")) < 0.45:
                 continue
 
         # Check filters

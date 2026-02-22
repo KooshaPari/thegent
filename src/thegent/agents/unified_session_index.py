@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from thegent.infra.fast_file_watcher import FastFileWatcher
 
@@ -746,9 +746,10 @@ class HarnessTUIMapper:
             custom_actions: Override or add harness-specific commands.
                            Format: {action: {harness: command_template}}
         """
-        self._actions = dict(self.HARNESS_ACTIONS)
+        self._actions: dict[str, dict[str, str | dict[str, str]]] = dict(self.HARNESS_ACTIONS)
         if custom_actions:
-            self._actions.update(custom_actions)
+            for k, v in custom_actions.items():
+                self._actions[k] = cast(dict[str, str | dict[str, str]], v)
 
     def register_host(
         self,
@@ -828,6 +829,11 @@ class HarnessTUIMapper:
                 f"No command mapping for action={action} harness={harness.value}"
             )
 
+        if not isinstance(cmd_template, str):
+            raise HarnessActionError(
+                f"Command mapping for action={action} harness={harness.value} is not a string"
+            )
+
         # Substitute template variables
         try:
             cmd = cmd_template.format(**kwargs)
@@ -873,7 +879,10 @@ class HarnessTUIMapper:
 
     def get_command(self, harness: HarnessType, action: str) -> str | None:
         """Get the command template for a harness-action pair."""
-        return self._actions.get(action, {}).get(harness.value)
+        value = self._actions.get(action, {}).get(harness.value)
+        if isinstance(value, str):
+            return value
+        return None
 
 
 __all__ = [

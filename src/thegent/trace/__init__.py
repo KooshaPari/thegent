@@ -50,7 +50,6 @@ __all__ = [
     "estimate_trace_overhead",
     "integration",
     "recorder",
-    "replay",
     # Modules
     "schema",
 ]

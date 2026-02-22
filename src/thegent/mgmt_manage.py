@@ -46,7 +46,7 @@ def ensure_proxy(timeout_sec: float = 30.0) -> tuple[bool, str]:
     if _is_proxy_reachable(base_url):
         return True, f"Proxy already running at {base_url}"
 
-    from thegent.mcp_manage import mcp_up
+    from thegent.mcp.manage import mcp_up
 
     ok, msg = mcp_up()
     if not ok:

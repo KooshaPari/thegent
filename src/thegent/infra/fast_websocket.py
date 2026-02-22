@@ -15,8 +15,7 @@ from types import TracebackType
 from typing import Any
 
 try:
-    import websockets
-    from websockets.client import connect as ws_connect
+    from websockets import connect as ws_connect
 
     WEBSOCKETS_AVAILABLE = True
 except ImportError:

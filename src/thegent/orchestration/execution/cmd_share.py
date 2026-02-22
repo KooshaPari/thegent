@@ -7,7 +7,6 @@ under the same L1 project context.
 import hashlib
 import logging
 import os
-import signal
 import subprocess
 import time
 from pathlib import Path
@@ -54,7 +53,8 @@ class CommandSharer:
         # 2. Try to acquire SHM lock
         import thegent_shm  # type: ignore[import-not-found]  # optional native extension
 
-        conflict = thegent_shm.try_acquire_cmd_lock(cmd_hash=cmd_hash, pid=os.getpid(), output_path=str(output_path))
+        _shm: object = thegent_shm
+        conflict = getattr(_shm, "try_acquire_cmd_lock")(cmd_hash=cmd_hash, pid=os.getpid(), output_path=str(output_path))
 
         if conflict:
             # 3. Command is already running! Attach to it.
@@ -65,10 +65,10 @@ class CommandSharer:
         try:
             result = self._run_fresh(command, cwd, env, output_path)
             status = "completed" if result["returncode"] == 0 else "failed"
-            thegent_shm.release_cmd_lock(cmd_hash, status)
+            getattr(_shm, "release_cmd_lock")(cmd_hash, status)
             return result
-        except Exception as e:
-            thegent_shm.release_cmd_lock(cmd_hash, "failed")
+        except Exception as _e:
+            getattr(_shm, "release_cmd_lock")(cmd_hash, "failed")
             raise
 
     def _run_fresh(self, command: list[str], cwd: Path, env: dict | None, output_path: Path) -> dict:

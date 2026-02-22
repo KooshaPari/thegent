@@ -6,7 +6,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
 from thegent.routing.cost_tracker import get_cost_tracker
 
 logger = logging.getLogger(__name__)

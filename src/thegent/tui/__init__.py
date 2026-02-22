@@ -8,7 +8,6 @@ __version__ = "0.1.0"
 
 from .compositor import CompositorApp, TUIContext, run_tui
 from .config import ConfigManager, KeyBinding, TUIConfig, get_config
-from .explorer import run_explorer_tui
 from .layouts.base import BaseLayout, LayoutConfig
 from .layouts.manager import LayoutManager, LayoutState, create_default_layout
 from .plugins import (

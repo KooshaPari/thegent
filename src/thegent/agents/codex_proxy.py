@@ -4,7 +4,6 @@ Runs claude, codex, gemini, copilot, antigravity through CLIProxyAPIPlus.
 Native gemini/copilot swapped to Codex (proxy API).
 """
 
-import json
 import logging
 import os
 import shutil
@@ -24,7 +23,7 @@ from thegent.agents.cliproxy_manager import ensure_proxy_running
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
 from thegent.config import ThegentSettings
 from thegent.discovery import _is_triggered_by_agent_process
-from thegent.governance.post_agent_run_hook import _dispatch_post_agent_run_hook
+from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 from thegent.routing.models import TaskMetadata
 from thegent.routing.provider_types import ExecutionPath, get_execution_path
 from thegent.utils import strip_ansi
@@ -136,48 +135,6 @@ def _create_isolated_home(instance_id: str, base_dir: Path | None = None) -> Pat
     isolated_home.mkdir(parents=True, exist_ok=True)
     return isolated_home
 
-
-def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:
-    """Parse JSONL output from Codex to extract tokens and metadata.
-
-    Returns tuple: (text, tokens_in, tokens_out, model)
-
-    # @trace FR-AGT-003
-    """
-    tokens_in = 0
-    tokens_out = 0
-    model = ""
-    text_parts = []
-
-    for line in output.split("\n"):
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-            # Extract token usage if present
-            if "usage" in obj:
-                usage = obj["usage"]
-                tokens_in = usage.get("prompt_tokens", 0)
-                tokens_out = usage.get("completion_tokens", 0)
-            # Extract model if present
-            if "model" in obj:
-                model = obj["model"]
-            # Extract text content if present
-            if obj.get("choices"):
-                choice = obj["choices"][0]
-                if "text" in choice:
-                    text_parts.append(choice["text"])
-                elif "delta" in choice and "content" in choice["delta"]:
-                    text_parts.append(choice["delta"]["content"])
-                elif "message" in choice and "content" in choice["message"]:
-                    text_parts.append(choice["message"]["content"])
-        except json.JSONDecodeError:
-            # Non-JSON lines are appended as text
-            if line:
-                text_parts.append(line)
-
-    return "".join(text_parts), tokens_in, tokens_out, model
 
 
 def _write_config_override(config_overrides: dict[str, str], temp_dir: Path) -> Path:
@@ -573,7 +530,7 @@ class CodexProxyRunner(AgentRunner):
         # WL-116: Handle audio transcript inputs
         audio_transcript: str | None = None
         if audio_paths:
-            from thegent.agents.audio_inputs import build_codex_audio_include, inject_transcript_into_prompt, load_transcripts
+            from thegent.agents.audio_inputs import inject_transcript_into_prompt, load_transcripts
             audio_transcript, _audio_sources = load_transcripts(audio_paths)
             if audio_transcript:
                 # Inject transcript into prompt for Codex
@@ -738,7 +695,7 @@ class CodexProxyRunner(AgentRunner):
                 )
 
             if run_id is not None or session_id is not None:
-                _dispatch_post_agent_run_hook(
+                dispatch_post_agent_run_hook(
                     result=_inner_result,
                     run_id=run_id,
                     session_id=session_id,

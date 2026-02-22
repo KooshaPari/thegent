@@ -23,7 +23,7 @@ import subprocess
 import uuid
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -650,8 +650,6 @@ class GitJournal:
     @classmethod
     def prune_old_sessions(cls, repo_root: Path | str, max_age_days: int = 30) -> int:
         """Prune audit sessions older than max_age_days."""
-        from datetime import timedelta
-
         repo_root = Path(repo_root).resolve()
         sessions = cls.list_sessions(repo_root)
         pruned = 0
@@ -696,8 +694,6 @@ class GitJournal:
         Returns:
             Dictionary with gc results including success status and statistics
         """
-        from datetime import timedelta
-
         repo_root = Path(repo_root).resolve()
 
         log.info("GitJournal.gc: starting gc on audit refs (aggressive=%s)", aggressive)
@@ -1173,12 +1169,12 @@ class GitJournalEnhanced(GitJournal):
         rel_path = str(Path(file_path).relative_to(self.repo_root) if Path(file_path).is_absolute() else file_path)
 
         # Scrub secrets if content provided
-        content_hash = ""
+        _content_hash = ""
         if content is not None and self.track_secrets:
             content_str = content.decode("utf-8", errors="replace")
             scrubbed = self._scrub_with_native_scanner(content_str)
             content = scrubbed.encode("utf-8")
-            content_hash = hashlib.sha256(content).hexdigest()
+            _content_hash = hashlib.sha256(content).hexdigest()
 
         # Add to pending changes
         self._pending_changes.append((rel_path, content, action, metadata))
@@ -1499,316 +1495,10 @@ class GitJournalAsync:
         return getattr(self._journal, name)
 
 
-# ---------------------------------------------------------------------------
-# GitJournalStreaming: Kafka event streaming for audit events
-# ---------------------------------------------------------------------------
-
-# Try to import kafka-python, fallback to None if not available
-_KAFKA_AVAILABLE = False
-_KafkaProducer = None
-
-try:
-    from kafka import KafkaProducer as _KafkaProducer
-    from kafka.errors import KafkaError
-
-    _KAFKA_AVAILABLE = True
-except ImportError:
-    _KafkaProducer = None
-    KafkaError = Exception  # Placeholder for type hints
-
-
-class GitJournalStreaming(GitJournalEnhanced):
-    """Enhanced GitJournal with Kafka event streaming.
-
-    Streams file_change and snapshot events to a Kafka topic for
-    real-time event processing and downstream consumers.
-
-    Features:
-    - Streams file_change events to Kafka topic
-    - Streams snapshot events to Kafka topic
-    - Event schema: session_id, commit_sha, file_path, action, timestamp
-    - Configurable bootstrap_servers and topic
-    - Graceful degradation if kafka-python not installed
-
-    Usage:
-        journal = GitJournalStreaming(
-            repo_root,
-            session_id,
-            bootstrap_servers="localhost:9092",
-            topic="thegent-audit-events",
-        )
-        journal.record_file_change(path, content, action="modified")
-        journal.finalize_session()
-    """
-
-    def __init__(
-        self,
-        repo_root: Path | str,
-        session_id: str,
-        *,
-        track_secrets: bool = True,
-        auto_commit: bool = True,
-        enable_watching: bool = False,
-        enable_attestation: bool = False,
-        batch_size: int = 10,
-        bootstrap_servers: str = "localhost:9092",
-        topic: str = "thegent-audit-events",
-        enable_streaming: bool = True,
-    ) -> None:
-        """Initialize streaming git journal.
-
-        Args:
-            repo_root: Path to git repository root
-            session_id: Unique session identifier
-            track_secrets: Whether to track/scrub secrets
-            auto_commit: Whether to auto-commit on changes
-            enable_watching: Enable real-time file watching
-            enable_attestation: Enable cryptographic attestation
-            batch_size: Number of changes to batch before commit
-            bootstrap_servers: Kafka broker addresses
-            topic: Kafka topic for streaming events
-            enable_streaming: Whether to enable Kafka streaming
-        """
-        super().__init__(
-            repo_root,
-            session_id,
-            track_secrets=track_secrets,
-            auto_commit=auto_commit,
-            enable_watching=enable_watching,
-            enable_attestation=enable_attestation,
-            batch_size=batch_size,
-        )
-
-        self.bootstrap_servers = bootstrap_servers
-        self.topic = topic
-        self.enable_streaming = enable_streaming and _KAFKA_AVAILABLE
-
-        # Kafka producer (lazy initialization)
-        self._producer: Optional[Any] = None
-        self._streaming_enabled = False
-
-        # Event tracking
-        self._events_streamed = 0
-
-        # Initialize producer if enabled
-        if self.enable_streaming:
-            self._init_producer()
-
-        log.info(
-            "GitJournalStreaming.init session=%s topic=%s kafka=%s",
-            session_id,
-            topic,
-            _KAFKA_AVAILABLE and enable_streaming,
-        )
-
-    def _init_producer(self) -> None:
-        """Initialize Kafka producer with graceful degradation."""
-        if not _KAFKA_AVAILABLE:
-            log.warning("GitJournalStreaming: kafka-python not installed, streaming disabled")
-            self._streaming_enabled = False
-            return
-
-        try:
-            self._producer = _KafkaProducer(
-                bootstrap_servers=self.bootstrap_servers,
-                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-                key_serializer=lambda k: k.encode("utf-8") if k else None,
-                acks="all",
-                retries=3,
-                max_in_flight_requests_per_connection=1,
-            )
-            self._streaming_enabled = True
-            log.info("GitJournalStreaming: connected to Kafka at %s", self.bootstrap_servers)
-        except KafkaError as e:
-            log.warning("GitJournalStreaming: failed to connect to Kafka: %s", e)
-            self._streaming_enabled = False
-            self._producer = None
-
-    def _stream_event(self, event_type: str, event_data: dict[str, Any]) -> None:
-        """Stream an event to Kafka topic.
-
-        Args:
-            event_type: Type of event (file_change, snapshot)
-            event_data: Event payload
-        """
-        if not self._streaming_enabled or self._producer is None:
-            return
-
-        try:
-            # Build event with schema
-            event = {
-                "event_type": event_type,
-                "session_id": self.session_id,
-                "timestamp": datetime.now(UTC).isoformat(),
-                "data": event_data,
-            }
-
-            # Send to Kafka
-            future = self._producer.send(
-                self.topic,
-                key=self.session_id,
-                value=event,
-            )
-
-            # Wait for send to complete (with timeout)
-            future.get(timeout=5)
-            self._events_streamed += 1
-
-            log.debug("GitJournalStreaming: streamed %s event to %s", event_type, self.topic)
-
-        except KafkaError as e:
-            log.warning("GitJournalStreaming: failed to stream event: %s", e)
-        except Exception as e:
-            log.warning("GitJournalStreaming: error streaming event: %s", e)
-
-    def record_file_change(
-        self,
-        file_path: str | Path,
-        content: Optional[bytes] = None,
-        *,
-        action: str = "modified",
-        metadata: Optional[dict[str, Any]] = None,
-    ) -> str:
-        """Record a file change and stream to Kafka.
-
-        Overrides parent to add Kafka streaming.
-        """
-        rel_path = str(Path(file_path).relative_to(self.repo_root) if Path(file_path).is_absolute() else file_path)
-
-        # Call parent implementation
-        commit_sha = super().record_file_change(
-            file_path,
-            content,
-            action=action,
-            metadata=metadata,
-        )
-
-        # Stream event to Kafka (only if we actually committed)
-        if commit_sha and self._streaming_enabled:
-            event_data = {
-                "commit_sha": commit_sha,
-                "file_path": rel_path,
-                "action": action,
-                "repo_root": str(self.repo_root),
-            }
-            if metadata:
-                event_data["metadata"] = metadata
-
-            self._stream_event("file_change", event_data)
-
-        return commit_sha
-
-    def record_snapshot(self, message: str = "snapshot") -> str:
-        """Create a snapshot and stream to Kafka.
-
-        Overrides parent to add Kafka streaming.
-        """
-        commit_sha = super().record_snapshot(message)
-
-        if commit_sha and self._streaming_enabled:
-            # Get file count from tree
-            file_count = len(self._current_tree)
-
-            event_data = {
-                "commit_sha": commit_sha,
-                "message": message,
-                "file_count": file_count,
-                "repo_root": str(self.repo_root),
-            }
-
-            self._stream_event("snapshot", event_data)
-
-        return commit_sha
-
-    def _flush_batch(self) -> str:
-        """Flush pending changes and stream batch event.
-
-        Overrides parent to add Kafka streaming for batch events.
-        """
-        commit_sha = super()._flush_batch()
-
-        if commit_sha and self._streaming_enabled and self._pending_changes:
-            # Stream batch completion event
-            event_data = {
-                "commit_sha": commit_sha,
-                "changes_count": len(self._pending_changes),
-                "changes": [
-                    {"file_path": path, "action": action}
-                    for path, _, action, _ in self._pending_changes
-                ],
-            }
-
-            self._stream_event("batch", event_data)
-
-        return commit_sha
-
-    def finalize_session(self, message: str = "session complete") -> str:
-        """Finalize session with streaming event.
-
-        Overrides parent to add Kafka streaming for session completion.
-        """
-        commit_sha = super().finalize_session(message)
-
-        if commit_sha and self._streaming_enabled:
-            event_data = {
-                "final_commit_sha": commit_sha,
-                "message": message,
-                "events_streamed": self._events_streamed,
-                "total_files": len(self._current_tree),
-            }
-
-            self._stream_event("session_complete", event_data)
-
-        # Flush Kafka producer
-        if self._producer is not None:
-            try:
-                self._producer.flush(timeout=5)
-            except Exception as e:
-                log.warning("GitJournalStreaming: failed to flush producer: %s", e)
-
-        log.info(
-            "GitJournalStreaming.finalize_session sha=%s events_streamed=%d",
-            commit_sha[:8] if commit_sha else "none",
-            self._events_streamed,
-        )
-
-        return commit_sha
-
-    def get_streaming_stats(self) -> dict[str, Any]:
-        """Get streaming statistics."""
-        return {
-            "kafka_available": _KAFKA_AVAILABLE,
-            "streaming_enabled": self._streaming_enabled,
-            "bootstrap_servers": self.bootstrap_servers,
-            "topic": self.topic,
-            "events_streamed": self._events_streamed,
-        }
-
-    def close(self) -> None:
-        """Close Kafka producer connection."""
-        if self._producer is not None:
-            try:
-                self._producer.close(timeout=5)
-                log.info("GitJournalStreaming: closed Kafka producer")
-            except Exception as e:
-                log.warning("GitJournalStreaming: error closing producer: %s", e)
-            finally:
-                self._producer = None
-
-    def __del__(self) -> None:
-        """Ensure producer is closed on deletion."""
-        if self._producer is not None:
-            try:
-                self._producer.close(timeout=1)
-            except Exception:
-                pass
-
-
 __all__ = [
     "AuditEntry",
     "GitJournal",
     "GitJournalAsync",
     "GitJournalEnhanced",
-    "GitJournalStreaming",
     "ShadowAuditGit",
 ]

@@ -37,7 +37,7 @@ def resolve_clode_token(
     prefer: str,
     policy: str,
     policy_counter: Counter[str],
-    fetch_metrics: Callable[[], dict[str, Any]],
+    fetch_metrics: Callable[[], dict[str, Any] | None],
 ) -> str:
     """Resolve provider token for ANTHROPIC_API_KEY."""
     prefer_auth = (prefer or "auto").strip().lower()

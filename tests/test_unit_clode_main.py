@@ -286,34 +286,40 @@ def test_clode_run_bg_accept_codex_tiers() -> None:
 
 def test_clode_run_dex_uses_canonical_model_value() -> None:
     with (
+        patch("thegent.clode_main._resolve_provider_for_model", return_value="codex") as resolve_provider,
         patch(
             "thegent.clode_main._get_claude_env",
             return_value={
                 "ANTHROPIC_MODEL": "gpt-5.3-codex",
                 "CLAUDE_CONFIG_DIR": "/tmp/claude-config",
             },
-        ),
+        ) as get_env,
         patch("thegent.clode_main.run_cmd") as run_cmd,
     ):
         result = runner.invoke(app, ["run", "dex", "ship it"])
         assert result.exit_code == 0
+        resolve_provider.assert_called_once_with("dex")
+        get_env.assert_called_once_with("codex", model_override="gpt-5.3-codex")
         _, kwargs = run_cmd.call_args
         assert kwargs["model"] == "gpt-5.3-codex"
 
 
 def test_clode_bg_dex_uses_canonical_model_value() -> None:
     with (
+        patch("thegent.clode_main._resolve_provider_for_model", return_value="codex") as resolve_provider,
         patch(
             "thegent.clode_main._get_claude_env",
             return_value={
                 "ANTHROPIC_MODEL": "gpt-5.3-codex",
                 "CLAUDE_CONFIG_DIR": "/tmp/claude-config",
             },
-        ),
+        ) as get_env,
         patch("thegent.clode_main.bg_cmd") as bg_cmd,
     ):
         result = runner.invoke(app, ["bg", "dex", "ship it", "--owner", "qa"])
         assert result.exit_code == 0
+        resolve_provider.assert_called_once_with("dex")
+        get_env.assert_called_once_with("codex", model_override="gpt-5.3-codex")
         _, kwargs = bg_cmd.call_args
         assert kwargs["model"] == "gpt-5.3-codex"
         assert kwargs["owner"] == "qa"

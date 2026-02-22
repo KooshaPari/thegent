@@ -1299,4 +1299,547 @@ mod tests {
         assert_eq!(metrics.route_changes, 2);
         assert_eq!(metrics.hysteresis_activations, 1);
     }
+
+    // ========================================================================
+    // CIRCUIT BREAKER TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_circuit_breaker_records_initial_failure() {
+        let (mut shm, _temp) = create_test_shm();
+
+        let result = shm.do_record_failure("service-a".to_string(), 1);
+        assert!(result.is_ok());
+
+        // Read back the breaker state to verify it was recorded
+        let start = BREAKER_OFFSET;
+        let end = start + std::mem::size_of::<BreakerState>();
+        let slot = &shm.mmap[start..end];
+        let state: &BreakerState = unsafe { &*(slot.as_ptr() as *const BreakerState) };
+
+        assert_eq!(state.failures, 1);
+        assert!(state.target.starts_with(b"service-a"));
+        assert_eq!(state.category, 1);
+    }
+
+    #[test]
+    fn test_circuit_breaker_accumulates_failures() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Record multiple failures for same target
+        shm.do_record_failure("service-b".to_string(), 1).unwrap();
+        shm.do_record_failure("service-b".to_string(), 1).unwrap();
+        shm.do_record_failure("service-b".to_string(), 1).unwrap();
+
+        // Read back the breaker state
+        let start = BREAKER_OFFSET;
+        let end = start + std::mem::size_of::<BreakerState>();
+        let slot = &shm.mmap[start..end];
+        let state: &BreakerState = unsafe { &*(slot.as_ptr() as *const BreakerState) };
+
+        assert_eq!(state.failures, 3);
+    }
+
+    #[test]
+    fn test_circuit_breaker_differentiates_by_category() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Record failures for same target but different categories
+        shm.do_record_failure("service-c".to_string(), 1).unwrap();
+        shm.do_record_failure("service-c".to_string(), 2).unwrap();
+
+        // Should occupy two separate slots
+        let start1 = BREAKER_OFFSET;
+        let end1 = start1 + std::mem::size_of::<BreakerState>();
+        let state1: &BreakerState = unsafe { &*(shm.mmap[start1..end1].as_ptr() as *const BreakerState) };
+
+        let start2 = BREAKER_OFFSET + SLOT_SIZE;
+        let end2 = start2 + std::mem::size_of::<BreakerState>();
+        let state2: &BreakerState = unsafe { &*(shm.mmap[start2..end2].as_ptr() as *const BreakerState) };
+
+        assert_eq!(state1.category, 1);
+        assert_eq!(state2.category, 2);
+    }
+
+    #[test]
+    fn test_circuit_breaker_updates_last_failure_timestamp() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_record_failure("service-d".to_string(), 1).unwrap();
+
+        let start = BREAKER_OFFSET;
+        let end = start + std::mem::size_of::<BreakerState>();
+        let state1: BreakerState = unsafe { *(shm.mmap[start..end].as_ptr() as *const BreakerState) };
+        let timestamp1 = state1.last_failure;
+
+        std::thread::sleep(std::time::Duration::from_millis(10));
+
+        shm.do_record_failure("service-d".to_string(), 1).unwrap();
+        let state2: BreakerState = unsafe { *(shm.mmap[start..end].as_ptr() as *const BreakerState) };
+        let timestamp2 = state2.last_failure;
+
+        assert!(timestamp2 > timestamp1);
+    }
+
+    #[test]
+    fn test_circuit_breaker_slots_limited() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Fill up all breaker slots
+        for i in 0..MAX_BREAKERS {
+            let target = format!("service-{}", i);
+            let result = shm.do_record_failure(target, 1);
+            assert!(result.is_ok());
+        }
+
+        // Next failure should fail (slots full)
+        let result = shm.do_record_failure("service-overflow".to_string(), 1);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_circuit_breaker_reuses_existing_slot() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Record first failure
+        shm.do_record_failure("service-e".to_string(), 1).unwrap();
+
+        let start = BREAKER_OFFSET;
+        let end = start + std::mem::size_of::<BreakerState>();
+        let state1: BreakerState = unsafe { *(shm.mmap[start..end].as_ptr() as *const BreakerState) };
+        assert_eq!(state1.failures, 1);
+
+        // Record same failure again - should reuse slot, not fill next one
+        shm.do_record_failure("service-e".to_string(), 1).unwrap();
+        let state2: BreakerState = unsafe { *(shm.mmap[start..end].as_ptr() as *const BreakerState) };
+        assert_eq!(state2.failures, 2);
+
+        // Next slot should be empty
+        let start2 = BREAKER_OFFSET + SLOT_SIZE;
+        let end2 = start2 + std::mem::size_of::<BreakerState>();
+        let state3: BreakerState = unsafe { *(shm.mmap[start2..end2].as_ptr() as *const BreakerState) };
+        assert_eq!(state3.failures, 0);
+    }
+
+    // ========================================================================
+    // THREAD SAFETY TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_concurrent_reads_consistent() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Set initial state
+        shm.do_award_xp(100).unwrap();
+        let expected_xp = shm.do_get_xp_state().total_xp;
+
+        let mmap_path = _temp.path().to_path_buf();
+        let handles: Vec<_> = (0..4)
+            .map(|_| {
+                let path = mmap_path.clone();
+                std::thread::spawn(move || {
+                    let shm = SHMInterface::open(&path).expect("open shm");
+                    let xp = shm.do_get_xp_state();
+                    xp.total_xp
+                })
+            })
+            .collect();
+
+        // All threads should read the same value
+        for handle in handles {
+            let xp = handle.join().unwrap();
+            assert_eq!(xp, expected_xp);
+        }
+    }
+
+    #[test]
+    fn test_concurrent_writes_not_lost() {
+        let (_, _temp) = create_test_shm();
+        let mmap_path = _temp.path().to_path_buf();
+
+        let handles: Vec<_> = (0..4)
+            .map(|_| {
+                let path = mmap_path.clone();
+                std::thread::spawn(move || {
+                    let mut shm = SHMInterface::open(&path).expect("open shm");
+                    shm.do_award_xp(25).expect("award xp");
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        // Total should be 4 * 25 = 100
+        let shm = SHMInterface::open(&mmap_path).expect("open shm");
+        let final_xp = shm.do_get_xp_state().total_xp;
+        assert_eq!(final_xp, 100);
+    }
+
+    #[test]
+    fn test_concurrent_provider_updates() {
+        let (_, _temp) = create_test_shm();
+        let mmap_path = _temp.path().to_path_buf();
+
+        let handles: Vec<_> = (0..3)
+            .map(|i| {
+                let path = mmap_path.clone();
+                std::thread::spawn(move || {
+                    let mut shm = SHMInterface::open(&path).expect("open shm");
+                    let provider = format!("provider-{}", i);
+                    shm.do_update_provider(provider, 100 + i as u64, 90 + i as u64, 50).expect("update provider");
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        // All providers should be recorded
+        let shm = SHMInterface::open(&mmap_path).expect("open shm");
+        for i in 0..3 {
+            let provider = format!("provider-{}", i);
+            let metrics = shm.do_get_provider_metrics(&provider);
+            assert!(metrics.is_some());
+            assert_eq!(metrics.unwrap().request_count, 100 + i as u64);
+        }
+    }
+
+    #[test]
+    fn test_concurrent_command_lock_acquire_release() {
+        let (_, _temp) = create_test_shm();
+        let mmap_path = _temp.path().to_path_buf();
+
+        let handles: Vec<_> = (0..4)
+            .map(|i| {
+                let path = mmap_path.clone();
+                std::thread::spawn(move || {
+                    // Give each thread time to avoid race conditions
+                    std::thread::sleep(std::time::Duration::from_millis(i as u64 * 2));
+
+                    let mut shm = SHMInterface::open(&path).expect("open shm");
+                    let cmd_hash = format!("cmd-{}", i);
+                    let pid = 1000 + i as u32;
+
+                    let idx = shm.do_acquire_command_lock(&cmd_hash, pid).expect("acquire lock");
+                    assert!(idx < CMD_CACHE_COUNT);
+
+                    // Simulate some work
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+
+                    shm.do_release_command_lock(&cmd_hash, pid).expect("release lock");
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        // All locks should be released
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        let shm = SHMInterface::open(&mmap_path).expect("open shm");
+        let locks = shm.do_list_command_locks();
+        assert!(locks.is_empty());
+    }
+
+    #[test]
+    fn test_concurrent_health_score_updates() {
+        let (mut shm, _temp) = create_test_shm();
+        let mmap_path = _temp.path().to_path_buf();
+
+        // Set initial health
+        shm.do_set_health_score(0.5).unwrap();
+
+        let handles: Vec<_> = (0..4)
+            .map(|i| {
+                let path = mmap_path.clone();
+                std::thread::spawn(move || {
+                    let mut shm = SHMInterface::open(&path).expect("open shm");
+                    let score = 0.5 + (i as f64 * 0.05);
+                    shm.do_set_health_score(score).expect("set health");
+                })
+            })
+            .collect();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        // Health score should be one of the written values
+        let shm = SHMInterface::open(&mmap_path).expect("open shm");
+        let final_score = shm.do_get_health_score();
+        assert!(final_score >= 0.5 && final_score <= 0.65);
+    }
+
+    // ========================================================================
+    // SHM STATE PERSISTENCE TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_xp_state_persists_across_reopens() {
+        let temp_file = tempfile::NamedTempFile::new().expect("create temp file");
+        let path = temp_file.path().to_path_buf();
+
+        {
+            let mut shm = SHMInterface::open(&path).expect("open shm");
+            shm.do_award_xp(500).unwrap();
+        }
+
+        {
+            let shm = SHMInterface::open(&path).expect("open shm");
+            let xp = shm.do_get_xp_state();
+            assert_eq!(xp.total_xp, 500);
+        }
+    }
+
+    #[test]
+    fn test_health_score_persists_across_reopens() {
+        let temp_file = tempfile::NamedTempFile::new().expect("create temp file");
+        let path = temp_file.path().to_path_buf();
+
+        {
+            let mut shm = SHMInterface::open(&path).expect("open shm");
+            shm.do_set_health_score(0.75).unwrap();
+        }
+
+        {
+            let shm = SHMInterface::open(&path).expect("open shm");
+            let score = shm.do_get_health_score();
+            assert!((score - 0.75).abs() < 0.001);
+        }
+    }
+
+    #[test]
+    fn test_provider_metrics_persist_across_reopens() {
+        let temp_file = tempfile::NamedTempFile::new().expect("create temp file");
+        let path = temp_file.path().to_path_buf();
+
+        {
+            let mut shm = SHMInterface::open(&path).expect("open shm");
+            shm.do_update_provider("persistent-provider".to_string(), 1000, 950, 120).unwrap();
+        }
+
+        {
+            let shm = SHMInterface::open(&path).expect("open shm");
+            let metrics = shm.do_get_provider_metrics("persistent-provider");
+            assert!(metrics.is_some());
+            let m = metrics.unwrap();
+            assert_eq!(m.request_count, 1000);
+            assert_eq!(m.success_count, 950);
+        }
+    }
+
+    #[test]
+    fn test_race_results_persist_across_reopens() {
+        let temp_file = tempfile::NamedTempFile::new().expect("create temp file");
+        let path = temp_file.path().to_path_buf();
+
+        {
+            let mut shm = SHMInterface::open(&path).expect("open shm");
+            shm.do_record_race_result(
+                "race-persist",
+                "agent-1",
+                "run-1",
+                "completed",
+                2000,
+                0.99,
+            ).unwrap();
+        }
+
+        {
+            let shm = SHMInterface::open(&path).expect("open shm");
+            let (idx, race) = shm.do_find_race_result("race-persist").expect("find race");
+            assert_eq!(idx, 0);
+            assert_eq!(race.duration_ms, 2000);
+            assert!((race.score - 0.99).abs() < 0.001);
+        }
+    }
+
+    // ========================================================================
+    // METRICS CALCULATION TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_xp_level_calculation() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // XP < 1000: level 1
+        shm.do_award_xp(500).unwrap();
+        let state = shm.do_get_xp_state();
+        assert_eq!(state.level, 1);
+
+        // XP = 1000: level 2
+        shm.do_award_xp(500).unwrap();
+        let state = shm.do_get_xp_state();
+        assert_eq!(state.level, 2);
+        assert_eq!(state.total_xp, 1000);
+
+        // XP = 2000: level 3
+        shm.do_award_xp(1000).unwrap();
+        let state = shm.do_get_xp_state();
+        assert_eq!(state.level, 3);
+        assert_eq!(state.total_xp, 2000);
+    }
+
+    #[test]
+    fn test_provider_success_rate_calculation() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // 100 requests, 80 successes = 0.8 success rate
+        shm.do_update_provider("calc-test".to_string(), 100, 80, 100).unwrap();
+
+        let metrics = shm.do_get_provider_metrics("calc-test").unwrap();
+        assert!((metrics.success_rate - 0.8).abs() < 0.001);
+        assert_eq!(metrics.failure_count, 20);
+    }
+
+    #[test]
+    fn test_provider_success_rate_perfect() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_update_provider("perfect-provider".to_string(), 50, 50, 50).unwrap();
+
+        let metrics = shm.do_get_provider_metrics("perfect-provider").unwrap();
+        assert!((metrics.success_rate - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_provider_zero_requests() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // 0 requests: success rate should default to 1.0
+        shm.do_update_provider("zero-requests".to_string(), 0, 0, 0).unwrap();
+
+        let metrics = shm.do_get_provider_metrics("zero-requests").unwrap();
+        assert!((metrics.success_rate - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_router_metrics_cumulative() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_update_router_metrics(10, 20, 5, 2).unwrap();
+        let metrics1 = shm.do_get_router_metrics();
+        assert_eq!(metrics1.total_decisions, 30);
+        assert_eq!(metrics1.lifecycle_count, 10);
+        assert_eq!(metrics1.thegent_count, 20);
+
+        shm.do_update_router_metrics(5, 10, 3, 1).unwrap();
+        let metrics2 = shm.do_get_router_metrics();
+        assert_eq!(metrics2.total_decisions, 45); // 30 + 5 + 10
+        assert_eq!(metrics2.lifecycle_count, 15);
+        assert_eq!(metrics2.thegent_count, 30);
+    }
+
+    // ========================================================================
+    // EDGE CASES AND DATA CONSISTENCY TESTS
+    // ========================================================================
+
+    #[test]
+    fn test_write_then_read_consistency() {
+        let (mut shm, _temp) = create_test_shm();
+
+        let values: Vec<f64> = vec![0.1, 0.5, 0.99, 1.0, 0.0];
+        for &val in &values {
+            shm.do_set_health_score(val).unwrap();
+            let read_val = shm.do_get_health_score();
+            assert!((read_val - val).abs() < 0.001, "Mismatch for value {}", val);
+        }
+    }
+
+    #[test]
+    fn test_multiple_providers_distinct_slots() {
+        let (mut shm, _temp) = create_test_shm();
+
+        shm.do_update_provider("p1".to_string(), 100, 90, 50).unwrap();
+        shm.do_update_provider("p2".to_string(), 200, 180, 60).unwrap();
+        shm.do_update_provider("p3".to_string(), 300, 270, 70).unwrap();
+
+        let m1 = shm.do_get_provider_metrics("p1").unwrap();
+        let m2 = shm.do_get_provider_metrics("p2").unwrap();
+        let m3 = shm.do_get_provider_metrics("p3").unwrap();
+
+        assert_eq!(m1.request_count, 100);
+        assert_eq!(m2.request_count, 200);
+        assert_eq!(m3.request_count, 300);
+    }
+
+    #[test]
+    fn test_empty_slot_detection() {
+        let (shm, _temp) = create_test_shm();
+
+        // Fresh SHM should have no XP
+        let xp = shm.do_get_xp_state();
+        assert_eq!(xp.level, 1);
+        assert_eq!(xp.total_xp, 0);
+    }
+
+    #[test]
+    fn test_command_lock_stress() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Acquire and release many locks
+        for i in 0..50 {
+            let cmd_hash = format!("cmd-stress-{}", i);
+            let idx = shm.do_acquire_command_lock(&cmd_hash, 5000).unwrap();
+            assert!(idx < CMD_CACHE_COUNT);
+
+            shm.do_release_command_lock(&cmd_hash, 5000).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_race_result_update_in_place() {
+        let (mut shm, _temp) = create_test_shm();
+
+        // Record initial race
+        shm.do_record_race_result("race-update-test", "agent-1", "run-1", "running", 100, 0.0).unwrap();
+
+        // Update same race
+        shm.do_record_race_result("race-update-test", "agent-1", "run-1", "completed", 1500, 0.95).unwrap();
+
+        // Should be exactly 1 result (not 2)
+        let results = shm.do_list_race_results();
+        assert_eq!(results.len(), 1);
+
+        let (_, race) = results.first().unwrap();
+        assert_eq!(race.duration_ms, 1500);
+        assert!((race.score - 0.95).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_arc_shared_shm_across_threads() {
+        use std::sync::Arc;
+
+        let temp_file = tempfile::NamedTempFile::new().expect("create temp file");
+        let path = Arc::new(temp_file.path().to_path_buf());
+
+        let mut initial_shm = SHMInterface::open(path.as_ref()).expect("open shm");
+        initial_shm.do_award_xp(250).unwrap();
+        drop(initial_shm);
+
+        let handles: Vec<_> = (0..3)
+            .map(|i| {
+                let path = Arc::clone(&path);
+                std::thread::spawn(move || {
+                    let mut shm = SHMInterface::open(path.as_ref()).expect("open shm");
+                    shm.do_award_xp(50).expect("award xp");
+                    let xp = shm.do_get_xp_state();
+                    (i, xp.total_xp)
+                })
+            })
+            .collect();
+
+        let mut total_xp = 250;
+        for handle in handles {
+            let (_, _xp) = handle.join().unwrap();
+            total_xp += 50;
+        }
+
+        let final_shm = SHMInterface::open(path.as_ref()).expect("open shm");
+        assert_eq!(final_shm.do_get_xp_state().total_xp, total_xp);
+    }
 }

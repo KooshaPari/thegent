@@ -152,7 +152,7 @@ def _capture_via_termitty(raw_bytes: bytes, n: int) -> CaptureResult | None:
     # @trace FR-SES-002, FR-SES-003
     """
     try:
-        from termitty import VirtualTerminal
+        from termitty import VirtualTerminal  # type: ignore[reportMissingImports]
     except ImportError:
         logger.debug("termitty not installed; skipping termitty backend")
         return None

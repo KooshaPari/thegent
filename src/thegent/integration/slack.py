@@ -26,9 +26,9 @@ class IntegrationBot:
 
         # Slack/Discord specific payload mapping
         if self.platform == "slack":
-            data = {"text": payload["text"]}
+            _data = {"text": payload["text"]}
         elif self.platform == "discord":
-            data = {"content": payload["text"]}
+            _data = {"content": payload["text"]}
         else:
             _log.error("Unsupported platform: %s", self.platform)
             return

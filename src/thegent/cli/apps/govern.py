@@ -114,17 +114,14 @@ def govern_resolve_config(
     """Resolve configuration overrides for a tenant or session."""
     from thegent.mcp.server.tools_runtime import config_resolve_impl
 
-    result = config_resolve_impl(
+    result_str = config_resolve_impl(
         tenant_id=tenant_id,
         session_id=session_id,
         overrides={"key": key} if key else {},
+        keys=None,
     )
 
-    import json
-    if result.get("success"):
-        console.print(json.dumps(result.get("config", {}), indent=2))
-    else:
-        console.print(f"[red]Error:[/red] {result.get('error', 'Unknown')}")
+    console.print(result_str)
 
 
 @app.command("negotiate", help="Negotiate a contract version with the agent.")
@@ -135,14 +132,54 @@ def govern_negotiate(
     """Negotiate a contract version."""
     from thegent.mcp.server.tools_runtime import negotiate_contract_impl
 
+    from thegent.cli.commands.session_control_impl import session_contract_negotiate_impl
+
     version_list = [v.strip() for v in versions.split(",")]
-    result = negotiate_contract_impl(
+    result_str = negotiate_contract_impl(
         contract_id=contract_id,
         supported_versions=version_list,
+        session_contract_negotiate_impl=session_contract_negotiate_impl,
     )
 
-    import json
-    if result.get("success"):
-        console.print(json.dumps(result.get("result", {}), indent=2))
-    else:
-        console.print(f"[red]Error:[/red] {result.get('error', 'Unknown')}")
+    console.print(result_str)
+
+
+@app.command("session-contract-health-trend", help="Session contract health trend analysis.")
+def govern_health_trend(
+    payload_type: str = typer.Option(
+        "session_contract_health_report",
+        "--payload-type",
+        help="Payload type to trend (session_contract_health_report, session_contract_health_gate)",
+    ),
+    all_sessions: bool = typer.Option(False, "--all", "-a", help="Include all sessions (not just current owner)"),
+    owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag filter"),
+    strict: bool = typer.Option(False, "--strict", help="Strict health check mode"),
+    policy_profile: str | None = typer.Option(None, "--policy-profile", help="Health policy profile"),
+    min_healthy_ratio: float = typer.Option(1.0, "--min-healthy-ratio", help="Minimum healthy ratio threshold"),
+    top_blocked: int = typer.Option(25, "--top-blocked", help="Top N blocked rows to include"),
+    limit: int = typer.Option(20, "--limit", help="Maximum snapshots to analyze"),
+    format: str = typer.Option("rich", "--format", "-f", help="Output format: rich|json|md"),
+    output: str | None = typer.Option(None, "--output", "-o", help="Export to file"),
+    export_format: str | None = typer.Option(None, "--export-format", help="Export format override"),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Overwrite existing export file"),
+) -> None:
+    """Analyze session contract health trends."""
+    from pathlib import Path
+
+    from thegent.cli.commands.session_cmds import session_contract_health_trend_cmd
+
+    output_path = Path(output) if output else None
+    session_contract_health_trend_cmd(
+        payload_type=payload_type,
+        all_sessions=all_sessions,
+        owner=owner,
+        strict=strict,
+        policy_profile=policy_profile,
+        min_healthy_ratio=min_healthy_ratio,
+        top_blocked=top_blocked,
+        limit=limit,
+        format=format,
+        output=output_path,
+        export_format=export_format,
+        overwrite=overwrite,
+    )

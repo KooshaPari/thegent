@@ -12,7 +12,7 @@ from cachetools import TTLCache
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
 from thegent.config import ThegentSettings
-from thegent.governance.post_agent_run_hook import _dispatch_post_agent_run_hook
+from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 from thegent.infra.power import wrap_with_caffeinate
 from thegent.utils import strip_ansi
 
@@ -154,7 +154,7 @@ class CursorApiRunner(AgentRunner):
                 timed_out=False,
             )
             if run_id is not None or session_id is not None:
-                _dispatch_post_agent_run_hook(
+                dispatch_post_agent_run_hook(
                     result=unreachable_result,
                     run_id=run_id,
                     session_id=session_id,
@@ -210,7 +210,7 @@ class CursorApiRunner(AgentRunner):
                 timed_out=True,
             )
         if run_id is not None or session_id is not None:
-            _dispatch_post_agent_run_hook(
+            dispatch_post_agent_run_hook(
                 result=_result,
                 run_id=run_id,
                 session_id=session_id,

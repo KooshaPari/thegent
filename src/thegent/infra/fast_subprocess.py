@@ -15,12 +15,10 @@ Performance improvements:
 import asyncio
 from asyncio import subprocess
 import os
-import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 
 def _record_history(
@@ -104,31 +102,6 @@ def _validate_command_safety(cmd: list[str]) -> None:
                         f"SECURITY BLOCKED: Command attempts to kill agent processes: {' '.join(cmd)}\n"
                         f"Agents cannot kill other agent processes. Use 'thegent mcp prune' for safe cleanup."
                     )
-
-
-def _wrap_with_caffeinate(cmd: list[str], agent_name: str) -> list[str]:
-    """Wrap command with caffeinate on macOS to keep Mac awake during long runs."""
-    import platform
-
-    if platform.system() != "Darwin":
-        return cmd
-
-    from thegent.config import ThegentSettings
-
-    settings = ThegentSettings()
-    if not settings.mac_keep_awake:
-        return cmd
-
-    # Case-insensitive match against authorized agents
-    if agent_name.lower() not in [a.lower() for a in settings.mac_keep_awake_agents]:
-        return cmd
-
-    caffeinate = shutil.which("caffeinate")
-    if not caffeinate:
-        return cmd
-
-    # -i: prevent idle sleep; -s: prevent system sleep
-    return [caffeinate, "-i", "-s", "--", *cmd]
 
 
 class FastSubprocess:

@@ -5,9 +5,7 @@ across macOS, Linux, and Windows.
 """
 
 import logging
-import os
 import platform
-import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path

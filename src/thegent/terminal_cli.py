@@ -104,9 +104,10 @@ def attach_terminal(
     session_name = target_pane.session_name
     console.print(f"[bold green]Attaching to tmux session: {session_name}[/bold green]")
 
+    assert pane_id is not None  # guaranteed by interactive selection or early return above
     try:
         if "TMUX" in os.environ:
-            subprocess.run(["tmux", "switch-client", "-t", pane_id], check=False)
+            subprocess.run(["tmux", "switch-client", "-t", str(pane_id)], check=False)
         else:
             subprocess.run(["tmux", "attach-session", "-t", session_name], check=False)
     except Exception as e:

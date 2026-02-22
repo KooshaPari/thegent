@@ -7,7 +7,7 @@ improvement, detect regressions, and determine pass/fail verdicts.
 from __future__ import annotations
 
 import logging
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any, Protocol
 
 from pydantic import BaseModel

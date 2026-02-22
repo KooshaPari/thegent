@@ -15,7 +15,6 @@ Usage:
         result = runner.run(prompt, cwd, mode, timeout)
 """
 
-import asyncio
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -265,7 +264,7 @@ def create_traced_agent_runner(
         Tuple of (TraceRecorder, TracedAgentRunner).
     """
     if config is None:
-        config = RecorderConfig(trace_dir=trace_dir)
+        config = RecorderConfig(trace_dir=str(trace_dir))
 
     recorder = TraceRecorder(session_id=session_id, config=config)
     traced_runner = TracedAgentRunner(base_runner, recorder)

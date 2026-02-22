@@ -12,6 +12,7 @@ disabled (never hits) — the caller falls through to a live LLM call.
 
 from __future__ import annotations
 
+import importlib.util
 import logging
 import threading
 import time
@@ -94,12 +95,8 @@ class SentenceTransformerProvider:
     def is_available(self) -> bool:
         """Return True if sentence_transformers is importable."""
         if self._available is None:
-            try:
-                import sentence_transformers  # noqa: F401
-
-                self._available = True
-            except ImportError:
-                self._available = False
+            self._available = importlib.util.find_spec("sentence_transformers") is not None
+            if not self._available:
                 _log.debug("sentence_transformers not available; SentenceTransformerProvider disabled")
         return self._available
 
@@ -137,16 +134,11 @@ class NumpyEmbeddingProvider:
 
     def is_available(self) -> bool:
         """Return True if numpy is importable."""
-        try:
-            import numpy  # noqa: F401
-
-            return True
-        except ImportError:
-            return False
+        return importlib.util.find_spec("numpy") is not None
 
     def embed(self, text: str) -> list[float]:
         """Return a deterministic unit vector for text."""
-        import numpy as np
+        import numpy as np  # type: ignore[import]
 
         seed = abs(hash(text)) % (2**31)
         rng = np.random.default_rng(seed)

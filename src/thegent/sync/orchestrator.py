@@ -4,8 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 _log = logging.getLogger(__name__)
 
@@ -88,10 +87,10 @@ class DagSyncComponent(SyncComponent):
             return SyncResult(self.name, SyncStatus.FAILED, f"Failed: {e}", errors=[str(e)])
 
     async def update(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli import dag_update_cmd
+        from thegent.cli import dag_sync_cmd
 
         try:
-            dag_update_cmd()
+            dag_sync_cmd()
             return SyncResult(self.name, SyncStatus.SUCCESS, "DAG state updated.")
         except Exception as e:
             return SyncResult(self.name, SyncStatus.FAILED, f"Failed: {e}", errors=[str(e)])

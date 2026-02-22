@@ -11,13 +11,13 @@ WL-012 Phase 3.2
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
 import typer
 
 if TYPE_CHECKING:
+    from thegent.config import ThegentSettings
     from thegent.routing.route_executor import RouterStatus
 
 app = typer.Typer(help="Pareto router management commands (Phase 3, WL-012).")
@@ -53,7 +53,7 @@ def router_status(
 ) -> None:
     """Show current routing state: hysteresis config, recent decisions, agent quorum."""
     from thegent.config import ThegentSettings
-    from thegent.routing.route_executor import RouterStatus, read_routing_audit
+    from thegent.routing.route_executor import read_routing_audit
 
     settings = ThegentSettings()
 
@@ -204,8 +204,8 @@ def router_verify(
 
 def _build_status_from_audit(
     records: list[dict],
-    settings: object,
-) -> RouterStatus:
+    settings: "ThegentSettings",
+) -> "RouterStatus":
     """Build a RouterStatus from audit records."""
     from thegent.routing.route_executor import AgentRoutingState, RouterStatus
 
@@ -253,7 +253,7 @@ def _build_status_from_audit(
     )
 
 
-def _echo_config(settings: object) -> None:
+def _echo_config(settings: "ThegentSettings") -> None:
     """Print hysteresis config summary."""
     typer.echo("Hysteresis Configuration:")
     typer.echo(f"  Band width:          {settings.router_band_width} (THGENT_ROUTER_BAND_WIDTH)")

@@ -13,24 +13,15 @@ Performance improvements:
 """
 
 import logging
-import time
 from typing import Any
 
 import tenacity
 
-try:
-    import curl_cffi
+import curl_cffi  # type: ignore[reportMissingImports]
+import httpx
 
-    CURL_CFFI_AVAILABLE = True
-except ImportError:
-    CURL_CFFI_AVAILABLE = False
-
-try:
-    import httpx
-
-    HTTPX_AVAILABLE = True
-except ImportError:
-    HTTPX_AVAILABLE = False
+CURL_CFFI_AVAILABLE = True
+HTTPX_AVAILABLE = True
 
 _log = logging.getLogger(__name__)
 
@@ -92,7 +83,7 @@ class FastHTTPClient:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, _exc_val, _exc_tb):
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         """Context manager exit - close connection pool."""
         self.close()
 

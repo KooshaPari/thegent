@@ -28,10 +28,11 @@ class SHMSystem:
         if self.use_native:
             try:
                 import thegent_shm
+                from thegent_shm import SHMInterface  # type: ignore[import-not-found]
 
                 # BKM-05: Use global init_shm and also instantiate interface if needed for direct calls
                 thegent_shm.py_init_shm(str(self.shm_path))
-                self._interface = thegent_shm.SHMInterface(str(self.shm_path))
+                self._interface = SHMInterface(str(self.shm_path))
                 _log.debug("Initialized native SHM at %s", self.shm_path)
             except ImportError:
                 _log.debug("thegent_shm native extension not found. Falling back to legacy state.")

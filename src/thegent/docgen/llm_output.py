@@ -1,7 +1,6 @@
 """Generate LLM-friendly documentation (.llms.txt)."""
 
 from pathlib import Path
-from typing import Any
 
 
 class LLMOutputGenerator:

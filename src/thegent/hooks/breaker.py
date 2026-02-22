@@ -1,7 +1,7 @@
 """Implement breaker-check/record/reset subcommands (circuit breaker)."""
 
 import logging
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)

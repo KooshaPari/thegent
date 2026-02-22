@@ -3,9 +3,8 @@ Includes /proc scanner with agent patterns, heartbeats, and cleanup.
 """
 
 import logging
-import os
 import time
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from collections.abc import Callable
 from typing import Any, ClassVar

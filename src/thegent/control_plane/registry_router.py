@@ -1,8 +1,5 @@
 """Unified Agent Registry routes for Control Plane."""
 
-import json
-from datetime import datetime
-
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 from starlette.routing import Route
@@ -12,7 +9,6 @@ from thegent.agents.unified_registry import (
     AgentCapability,
     AgentRegistryService,
     AgentStatus,
-    CollaborationRule,
     ProjectAssignment,
 )
 
@@ -48,7 +44,7 @@ async def register_agent(request: Request) -> JSONResponse:
 
 async def get_agent(request: Request) -> JSONResponse:
     """GET /v1/agents/{agent_id} — get agent details."""
-    agent_id = request.path_params.get("agent_id")
+    agent_id: str = request.path_params["agent_id"]
     agent = _registry_service.get_agent(agent_id)
     if agent:
         return JSONResponse(agent.model_dump(mode="json"))
@@ -57,7 +53,7 @@ async def get_agent(request: Request) -> JSONResponse:
 
 async def update_agent(request: Request) -> JSONResponse:
     """PUT /v1/agents/{agent_id} — update agent."""
-    agent_id = request.path_params.get("agent_id")
+    agent_id: str = request.path_params["agent_id"]
     try:
         data = await request.json()
         updated = _registry_service.update_agent(agent_id, data)
@@ -70,7 +66,7 @@ async def update_agent(request: Request) -> JSONResponse:
 
 async def delete_agent(request: Request) -> Response:
     """DELETE /v1/agents/{agent_id} — delete agent."""
-    agent_id = request.path_params.get("agent_id")
+    agent_id: str = request.path_params["agent_id"]
     if _registry_service.delete_agent(agent_id):
         return Response(status_code=204)
     return JSONResponse({"detail": f"Agent {agent_id} not found"}, status_code=404)
@@ -78,7 +74,7 @@ async def delete_agent(request: Request) -> Response:
 
 async def assign_project(request: Request) -> JSONResponse:
     """POST /v1/agents/{agent_id}/projects — assign agent to project."""
-    agent_id = request.path_params.get("agent_id")
+    agent_id: str = request.path_params["agent_id"]
     try:
         data = await request.json()
         assignment = ProjectAssignment(**data)

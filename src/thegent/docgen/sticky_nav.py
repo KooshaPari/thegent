@@ -1,6 +1,5 @@
 """Sticky sidebar and header for documentation."""
 
-from typing import Any
 
 
 class StickyNav:

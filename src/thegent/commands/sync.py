@@ -14,14 +14,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-try:
-    import structlog
+import structlog
 
-    _log = structlog.get_logger(__name__)
-except ModuleNotFoundError:  # structlog not installed — fall back to stdlib
-    import logging as _logging
-
-    _log = _logging.getLogger(__name__)  # type: ignore[assignment]
+_log = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -646,8 +641,6 @@ class SyncCommand:
         Returns:
             OperationResult indicating the push was accepted (or stubbed).
         """
-        import os
-
         t0 = time.monotonic()
         op = "push"
 
@@ -691,8 +684,6 @@ class SyncCommand:
         Returns:
             OperationResult indicating the pull was accepted (or stubbed).
         """
-        import os
-
         t0 = time.monotonic()
         op = "pull"
 

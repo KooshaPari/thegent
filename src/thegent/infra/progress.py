@@ -6,7 +6,6 @@ status updates in a consistent, beautiful way.
 
 import time
 from contextlib import contextmanager
-from typing import Optional
 
 from rich.console import Console
 from rich.progress import (
@@ -57,7 +56,7 @@ def progress_context(
     columns.append(TimeElapsedColumn())
 
     with Progress(*columns, console=console) as progress:
-        task = progress.add_task(description, total=total)
+        _task = progress.add_task(description, total=total)
         yield progress
 
 

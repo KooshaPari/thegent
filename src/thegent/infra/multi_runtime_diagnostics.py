@@ -362,7 +362,7 @@ def check_ipc_mesh(mesh_root: Path) -> dict[str, Any]:
         # Test Queue Latency
         queue = MaildirQueue(mesh_root / "doctor_queue")
         start = time.perf_counter()
-        msg_id = queue.send({"test": "data"})
+        _msg_id = queue.send({"test": "data"})
         results["write_latency_ms"] = (time.perf_counter() - start) * 1000
 
         start = time.perf_counter()

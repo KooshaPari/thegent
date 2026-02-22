@@ -92,12 +92,8 @@ class SessionState:
             }
 
         session_file = self.SESSION_DIR / f"{session_id}.yaml"
-        try:
-            with open(session_file, "w", encoding="utf-8") as f:
-                yaml.dump(session_data, f, default_flow_style=False)
-        except OSError as e:
-            # Log but don't fail
-            pass
+        with open(session_file, "w", encoding="utf-8") as f:
+            yaml.dump(session_data, f, default_flow_style=False)
 
     def save_layout(self, layout_name: str, layout: dict[str, Any]) -> None:
         """Save layout template.
@@ -107,12 +103,8 @@ class SessionState:
             layout: Layout data to save
         """
         layout_file = self.LAYOUTS_DIR / f"{layout_name}.yaml"
-        try:
-            with open(layout_file, "w", encoding="utf-8") as f:
-                yaml.dump(layout, f, default_flow_style=False)
-        except OSError as e:
-            # Log but don't fail
-            pass
+        with open(layout_file, "w", encoding="utf-8") as f:
+            yaml.dump(layout, f, default_flow_style=False)
 
     def load_layout(self, layout_name: str) -> dict[str, Any] | None:
         """Load a saved layout template.

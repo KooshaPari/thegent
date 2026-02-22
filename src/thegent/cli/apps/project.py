@@ -46,14 +46,6 @@ def _slug(name: str) -> str:
     return "".join(c if (c.isalnum() or c in "-_") else "-" for c in name.lower()).strip("-")
 
 
-def _resolve_project_selector(selector: str) -> str:
-    """Resolve --project selector to a project name or path.
-
-    Accepts: name string, tenant_id, or absolute/relative path.
-    Returns the raw selector for lookup (the callers use multi-field lookup).
-    """
-    return selector.strip()
-
 
 _SCAFFOLD_PROFILES: dict[str, dict[str, object]] = {
     "cli_tool": {

@@ -66,12 +66,13 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
 
     # Start new server (system-wide)
     from thegent.mcp.manage import _get_mcp_url, mcp_up
+    from thegent.config import ThegentSettings as _TGSettings
 
     # Start MCP server via process-compose
     try:
         mcp_up()  # Returns None on success, raises on error
         # Get the actual MCP URL (may be different port)
-        mcp_url = _get_mcp_url()
+        mcp_url = _get_mcp_url(_TGSettings())
         if not mcp_url:
             return False, "Failed to get MCP URL after startup"
 

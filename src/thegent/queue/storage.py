@@ -31,12 +31,6 @@ def _parse_entries(queue_path: Path) -> list[tuple[int, dict[str, Any]]]:
     return entries
 
 
-def _write_entries(queue_path: Path, entries: list[dict[str, Any]]) -> None:
-    """Write entries to queue file (atomic via QueueLock)."""
-    queue_path.parent.mkdir(parents=True, exist_ok=True)
-    with queue_path.open("w", encoding="utf-8") as f:
-        for entry in entries:
-            f.write(json.dumps(entry) + "\n")
 
 
 class PromptQueue:

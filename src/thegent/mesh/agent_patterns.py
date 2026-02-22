@@ -1,15 +1,14 @@
 """Regex-based agent detection using agents.conf."""
 
 import configparser
-import os
-import re
 from pathlib import Path
 from typing import Any
 
-try:
-    from .process_detection import detect_agents
-except ImportError:
-    from process_detection import detect_agents
+import structlog
+
+from .process_detection import detect_agents
+
+logger = structlog.get_logger(__name__)
 
 DEFAULT_AGENTS_CONF = """
 [agents]
@@ -44,21 +43,12 @@ def load_agent_patterns() -> dict[str, str]:
     """Load agent regex patterns from agents.conf."""
     config_path = get_config_path()
     config = configparser.ConfigParser()
-
-    try:
-        config.read(config_path)
-        if "agents" in config:
-            return dict(config["agents"])
-    except Exception as e:
-        pass
-
-    return {
-        "claude": r"claude-code|clode",
-        "cursor": r"cursor-agent|cursor",
-        "thegent": r"thegent",
-        "codex": r"codex",
-        "copilot": r"copilot",
-    }
+    config.read(config_path)
+    if "agents" not in config:
+        raise RuntimeError(
+            f"agents.conf at {config_path} is missing required [agents] section"
+        )
+    return dict(config["agents"])
 
 
 def run_detection() -> list[dict[str, Any]]:
@@ -70,11 +60,8 @@ def run_detection() -> list[dict[str, Any]]:
 if __name__ == "__main__":
     # Handle direct execution without relative import issues
     import sys
-    from pathlib import Path
 
     sys.path.append(str(Path(__file__).parent.parent))
     from thegent.mesh.agent_patterns import run_detection
 
-    agents = run_detection()
-    for _a in agents:
-        pass
+    run_detection()

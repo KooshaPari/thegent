@@ -1,7 +1,7 @@
 """Pure Python JIT-friendly routing logic for PyPy and non-native runtimes."""
 
 from dataclasses import dataclass
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 

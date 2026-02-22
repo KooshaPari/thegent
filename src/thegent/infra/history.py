@@ -6,7 +6,6 @@ Enables semantic search and task reconstruction.
 import json
 import logging
 import sqlite3
-import time
 from datetime import UTC, datetime
 from pathlib import Path
 

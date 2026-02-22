@@ -297,7 +297,7 @@ class CompositorApp(App):
         """Append text to output pane."""
         try:
             output = self.query_one("#output-content", Static)
-            current = str(output.renderable) if hasattr(output, "renderable") else str(output)
+            current = str(output._renderable)  # type: ignore[attr-defined] -- Static._renderable is internal but stable
             output.update(current + text)
         except QueryError:
             pass
@@ -347,7 +347,7 @@ async def run_tui(
             await pilot.pause()
             return 0
 
-    return await app.run_async()
+    return int(await app.run_async() or 0)
 
 
 if __name__ == "__main__":

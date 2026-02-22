@@ -26,12 +26,7 @@ def check_tomlkit_available() -> bool:
     Returns:
         True if available
     """
-    try:
-        import tomlkit
-
-        return True
-    except ImportError:
-        return False
+    return False
 
 
 def use_diskcache(cache_dir: Path) -> Any:

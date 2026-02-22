@@ -3,13 +3,11 @@ Audit configuration, dependencies, security, and performance.
 """
 
 import logging
-import platform
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 _log = logging.getLogger(__name__)
 
@@ -144,7 +142,7 @@ class DoctorAuditType(AuditType):
 
         issues = []
 
-        def _run_check(check_func: callable) -> list[AuditIssue]:
+        def _run_check(check_func: Callable[[], list[Any]]) -> list[AuditIssue]:
             """Run a single doctor check and return any issues found."""
             check_issues = []
             try:
@@ -311,6 +309,7 @@ class DagAuditType(AuditType):
         issues = []
         try:
             cwd = _resolve_cwd(None)
+            assert cwd is not None, "_resolve_cwd returned None unexpectedly"
             dag_path = cwd / ".factory" / "dag-session.md"
             if not dag_path.exists():
                 return []

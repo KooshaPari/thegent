@@ -224,7 +224,6 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
     import json
     import time
 
-    @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
     async def thegent_elicit_confirmation(
         message: str,
         ctx: Any = None,
@@ -262,7 +261,8 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             meta={"execution_time_ms": elapsed},
         )
 
-    @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_confirmation)
+
     async def thegent_elicit_choice(
         message: str,
         options: list[str],
@@ -309,7 +309,8 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             meta={"execution_time_ms": elapsed},
         )
 
-    @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_choice)
+
     async def thegent_elicit_text(
         message: str,
         placeholder: str = "",
@@ -348,7 +349,8 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             meta={"execution_time_ms": elapsed},
         )
 
-    @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_text)
+
     async def thegent_elicit_structured(
         message: str,
         schema_json: str,
@@ -406,6 +408,8 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             structured_content=payload4,
             meta={"execution_time_ms": elapsed},
         )
+
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_structured)
 
     _log.info(
         "registered elicitation tools: thegent_elicit_confirmation, thegent_elicit_choice, thegent_elicit_text, thegent_elicit_structured"

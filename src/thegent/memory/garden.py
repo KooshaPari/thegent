@@ -63,7 +63,7 @@ class MemoryGarden:
     def find_best_cluster(self, seed: Seed) -> str:
         """Find the best cluster for a seed based on keyword matching."""
         # Phase 2: Simple keyword matching. Phase 3: Semantic embedding.
-        seed_keywords = set(seed.content.lower().split())
+        seed_keywords = set(seed.text.lower().split())
 
         best_cluster = "general"
         max_overlap = 0

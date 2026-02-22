@@ -10,10 +10,7 @@ emitted by SubAgentDispatcher are consumed and logged by the daemon.
 import asyncio
 import logging
 import signal
-from pathlib import Path  # noqa: F401 -- kept for future path-based config
-
-from thegent.config import ThegentSettings  # noqa: F401 -- kept for settings init
-from thegent.governance.post_agent_run_hook import _dispatch_post_agent_run_hook
+from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 from thegent.lsp.persistent_serena import PersistentSerenaDaemon
 from thegent.orchestration.event_queue import SubAgentEventQueue, get_global_event_queue
 from thegent.orchestration.protocol import SubAgentEventType
@@ -106,7 +103,7 @@ class UnifiedWorkerDaemon:
                 event.payload,
             )
             if event.event_type == SubAgentEventType.COMPLETED:
-                _dispatch_post_agent_run_hook(
+                dispatch_post_agent_run_hook(
                     result=event.payload,
                     run_id=event.request_id,
                     session_id=event.parent_id,

@@ -6,7 +6,7 @@ Critical lane bypasses overload rejection and gets reserved capacity under burst
 
 from __future__ import annotations
 
-from enum import Enum, StrEnum
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Any, ClassVar
 

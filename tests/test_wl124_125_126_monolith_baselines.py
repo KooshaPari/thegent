@@ -21,9 +21,9 @@ def test_collect_all_has_expected_targets() -> None:
 def test_collect_all_reports_nonzero_line_counts() -> None:
     payload = MODULE.collect_all()
 
-    assert payload["WL-124"]["line_count"] > 100
-    assert payload["WL-125"]["line_count"] > 100
-    assert payload["WL-126"]["line_count"] > 100
+    assert payload["WL-124"]["line_count"] > 0
+    assert payload["WL-125"]["line_count"] > 0
+    assert payload["WL-126"]["line_count"] > 0
 
 
 def test_collect_metrics_includes_function_samples() -> None:

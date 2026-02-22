@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+__all__ = ["InsufficientCreditsError", "_RetryableStreamError", "_make_error_body", "_ERROR_MESSAGES", "_RETRY_MAX_ATTEMPTS"]
+
 _ERROR_MESSAGES: dict[int, str] = {
     402: "Payment required — provider credit exhausted",
     408: "Request timeout — provider took too long to respond",

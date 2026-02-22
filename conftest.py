@@ -42,7 +42,7 @@ def _set_testing_mode_for_all_tests(monkeypatch) -> None:
 @pytest.fixture
 def project_root() -> Path:
     """Project root - thegent directory (has .git, pyproject.toml)."""
-    return _THGENT_ROOT
+    return _THGENT_ROOT.parent
 
 
 @pytest.fixture

@@ -16,6 +16,7 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
+from hashlib import sha256
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -29,6 +30,23 @@ _log = logging.getLogger(__name__)
 # Max chars from prior session to inject
 _CONTINUATION_TAIL_CHARS = 8000
 _CONTINUATION_STDERR_CHARS = 2000
+
+__all__ = [
+    "_build_continuation_prompt",
+    "_find_session_meta",
+    "_is_non_empty_contract_string",
+    "_load_prior_session_output",
+    "_normalize_contract_string",
+    "_normalize_output_format",
+    "_parse_contract_timestamp",
+    "_read_session_meta",
+    "_resolve_latest_session_id",
+    "_resolve_session_status",
+    "_run_background_session_observer",
+    "_save_session_meta",
+    "_session_state_path",
+    "_write_session_state",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -80,8 +98,62 @@ def _find_session_meta(settings: ThegentSettings, session_id: str) -> Path:
 
 
 def _session_state_path(settings: ThegentSettings, session_id: str) -> Path:
-    """Stable WL-110 state contract path for a session."""
+    """Stable WL-110 state contract path for a session (read path with mirror fallback)."""
+    primary = _primary_session_state_path(settings, session_id)
+    if primary.exists():
+        return primary
+    mirror = _mirror_session_state_path(settings, session_id)
+    if mirror.exists():
+        return mirror
+    return primary
+
+
+def _primary_session_state_path(settings: ThegentSettings, session_id: str) -> Path:
     return settings.session_dir.expanduser().resolve() / session_id / "state.json"
+
+
+def _state_mirror_root(settings: ThegentSettings) -> Path:
+    return settings.session_dir.expanduser().resolve() / "_state_contracts"
+
+
+def _mirror_session_state_path(settings: ThegentSettings, session_id: str) -> Path:
+    return _state_mirror_root(settings) / f"{session_id}.json"
+
+
+def _state_ledger_path(settings: ThegentSettings) -> Path:
+    return settings.session_dir.expanduser().resolve() / "state_contract_ledger.jsonl"
+
+
+def _state_payload_hash(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256(encoded).hexdigest()
+
+
+def _write_state_with_conflict_branch(path: Path, payload: dict[str, Any], *, branch_label: str) -> tuple[bool, str]:
+    """Write payload and branch conflicting versions without deleting prior artifacts."""
+    payload_text = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    payload_hash = _state_payload_hash(payload)
+    conflict_detected = False
+
+    if path.exists():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            existing = None
+        if isinstance(existing, dict):
+            existing_hash = _state_payload_hash(existing)
+            if existing_hash != payload_hash:
+                conflict_detected = True
+                ts = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
+                stem = path.stem
+                prev_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.prev.json"
+                next_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.next.json"
+                prev_path.write_text(json.dumps(existing, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                next_path.write_text(payload_text, encoding="utf-8")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(payload_text, encoding="utf-8")
+    return conflict_detected, payload_hash
 
 
 def _write_session_state(
@@ -93,9 +165,9 @@ def _write_session_state(
     model: str | None,
     cwd: Path,
 ) -> Path:
-    """Persist stable session state contract for resume flows."""
-    state_path = _session_state_path(settings, session_id)
-    state_path.parent.mkdir(parents=True, exist_ok=True)
+    """Persist stable session state contract for resume flows with dual-redundancy."""
+    primary_path = _primary_session_state_path(settings, session_id)
+    mirror_path = _mirror_session_state_path(settings, session_id)
     payload: dict[str, Any] = {
         "session_id": session_id,
         "run_id": run_id,
@@ -105,15 +177,32 @@ def _write_session_state(
         "status": "running",
         "updated_at_utc": datetime.now(UTC).isoformat(),
     }
-    state_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return state_path
+    primary_conflict, payload_hash = _write_state_with_conflict_branch(primary_path, payload, branch_label="primary")
+    mirror_conflict, _ = _write_state_with_conflict_branch(mirror_path, payload, branch_label="mirror")
+
+    ledger_path = _state_ledger_path(settings)
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    ledger_event = {
+        "event_type": "state_contract_write",
+        "session_id": session_id,
+        "run_id": run_id,
+        "updated_at_utc": payload["updated_at_utc"],
+        "primary_path": str(primary_path),
+        "mirror_path": str(mirror_path),
+        "payload_hash": payload_hash,
+        "conflict_detected": bool(primary_conflict or mirror_conflict),
+    }
+    with ledger_path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(ledger_event, sort_keys=True) + "\n")
+    return primary_path
 
 
 def _resolve_latest_session_id(settings: ThegentSettings) -> str:
     """Resolve most-recent resumable session from state contracts first."""
     root = settings.session_dir.expanduser().resolve()
     latest_state: tuple[datetime, str] | None = None
-    for state_path in sorted(root.glob("*/state.json")):
+    candidates = sorted(root.glob("*/state.json")) + sorted(_state_mirror_root(settings).glob("*.json"))
+    for state_path in candidates:
         try:
             payload = json.loads(state_path.read_text(encoding="utf-8"))
         except Exception:

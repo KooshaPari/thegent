@@ -1,7 +1,4 @@
-import asyncio
-import json
 import logging
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -82,7 +79,7 @@ async def scrape_url(url: str, use_playwright: bool = True) -> dict[str, Any]:
                 )
                 page = await context.new_page()
                 await page.goto(url, wait_until="networkidle", timeout=30000)
-                content = await page.content()
+                _content = await page.content()
                 title = await page.title()
                 text = await page.inner_text("body")
                 await browser.close()

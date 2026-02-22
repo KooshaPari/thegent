@@ -91,10 +91,26 @@ OLLAMA_MODEL_ALIASES: dict[str, str] = {
     "gemma2": "gemma2",
 }
 
+# Case-insensitive alias normalization. Keys must be lowercase.
+_LOWERCASE_BACKEND_MODEL_ALIASES: dict[str, str] = {
+    key.lower(): value for key, value in CODEX_TO_BACKEND_MODEL.items()
+}
+_LOWERCASE_BACKEND_MODEL_ALIASES.update(
+    {
+        "minimax-m2.5": "minimax-m2.5",
+        "minimax/minimax-m2.5": "minimax-m2.5",
+        "minimax/minimax-01": "minimax-m2.5",
+    }
+)
+
 
 def resolve_model_for_backend(model: str) -> str:
     """Map Codex/provider-specific model ID to CLIProxy backend model ID."""
-    return CODEX_TO_BACKEND_MODEL.get(model, model)
+    mapped = CODEX_TO_BACKEND_MODEL.get(model)
+    if mapped:
+        return mapped
+    normalized = _LOWERCASE_BACKEND_MODEL_ALIASES.get(model.lower())
+    return normalized if normalized else model
 
 
 def resolve_openrouter_model(model: str) -> str:

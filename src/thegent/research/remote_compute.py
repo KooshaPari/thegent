@@ -1,7 +1,6 @@
 """Remote compute implementation for thegent run --remote."""
 
 import logging
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -93,7 +92,7 @@ class RemoteComputeClient:
         logger.info(f"Transferring {local_path} to {self.remote_host}:{remote_path}")
 
         try:
-            result = subprocess.run(rsync_cmd, check=True, capture_output=True)
+            subprocess.run(rsync_cmd, check=True, capture_output=True)
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"File transfer failed: {e.stderr.decode()}")

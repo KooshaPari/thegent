@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from thegent.utils.helpers import normalize_path, safe_read_file
+from thegent.utils.helpers import safe_read_file
 
 logger = logging.getLogger(__name__)
 

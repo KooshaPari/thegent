@@ -1,7 +1,6 @@
 """heliosShield: High-performance CLI for agent mesh orchestration."""
 
 from pathlib import Path
-from typing import Optional
 
 import typer
 

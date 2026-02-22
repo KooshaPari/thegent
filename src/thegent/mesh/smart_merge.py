@@ -10,12 +10,10 @@ Also provides the SmartMerger class-based API for integration with WorktreePool
 from __future__ import annotations
 
 import contextlib
-import os
 import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 # File extensions that Mergiraf understands structurally.
 MERGIRAF_EXTENSIONS: frozenset[str] = frozenset(

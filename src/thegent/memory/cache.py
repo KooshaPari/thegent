@@ -7,9 +7,8 @@ L2: Diskcache (persistent, process-safe, SQLite-backed)
 from __future__ import annotations
 
 import logging
-import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from cachetools import TTLCache
 
@@ -123,7 +122,7 @@ class L2Cache:
         """Get cache statistics."""
         total = self.hit_count + self.miss_count
         hit_rate = (self.hit_count / total * 100) if total > 0 else 0
-        size = len(self._cache) if self._cache is not None else 0
+        size = self._cache.__len__() if self._cache is not None else 0
         return {
             "hit_count": self.hit_count,
             "miss_count": self.miss_count,

@@ -9,7 +9,7 @@ This module handles the 'splitting' of code into optimal paths for:
 import logging
 import sys
 from collections.abc import Callable
-from typing import Any, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +153,7 @@ toml_loads_dispatcher.register("python", _pypy_toml_loads)
 
 # 3. Routing (The Core Logic)
 try:
-    import thegent_router
+    import thegent_router  # type: ignore[reportMissingImports]
 
     HAS_RUST_ROUTER = True
 except ImportError:
@@ -208,7 +208,7 @@ if HAS_RUST_ROUTER:
 
     settings = get_settings()
     try:
-        router = thegent_router.PyParetoRouter.with_full_config(
+        router = thegent_router.PyParetoRouter.with_full_config(  # type: ignore[reportAttributeAccessIssue]
             low_threshold=0.35,
             high_threshold=0.65,
             hysteresis_band=settings.router_hysteresis_band,
@@ -218,7 +218,7 @@ if HAS_RUST_ROUTER:
         )
     except AttributeError:
         try:
-            router = thegent_router.ParetoRouter.with_full_config(
+            router = thegent_router.ParetoRouter.with_full_config(  # type: ignore[reportAttributeAccessIssue]
                 low_threshold=0.35,
                 high_threshold=0.65,
                 hysteresis_band=settings.router_hysteresis_band,
@@ -227,7 +227,7 @@ if HAS_RUST_ROUTER:
                 hysteresis_override=settings.router_hysteresis_override,
             )
         except AttributeError:
-            router = thegent_router.ParetoRouter()
+            router = thegent_router.ParetoRouter()  # type: ignore[reportAttributeAccessIssue]
     router_dispatcher.register("native", router)
 router_dispatcher.register("pypy", _python_route_logic)
 router_dispatcher.register("python", _python_route_logic)

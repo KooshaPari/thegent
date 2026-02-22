@@ -1,10 +1,8 @@
 """FastMCP server for thegent."""
-import asyncio
 import json
 import logging
-import time
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, cast
 from fastmcp import FastMCP
 from fastmcp._vendor.docket_di import Depends
 from fastmcp.server.dependencies import CurrentContext
@@ -67,7 +65,6 @@ from thegent.mcp.server_resources import (
     load_workflow_prompts as _load_workflow_prompts,
 )
 from thegent.mcp.server_runtime_helpers import create_event_store, create_http_app, health_response, lifespan_proxy, run_server
-from thegent.mcp.server_tool_icons import TOOL_ICONS
 from thegent.mcp.server_tool_loader import (
     load_handoff_queue_tools as _load_handoff_queue_tools,
     load_queue_mutations_tools as _load_queue_mutations_tools,
@@ -165,13 +162,13 @@ resource_workflow_gardening = _server_workflow_prompts.register_workflow_gardeni
 _registered_workstream_governance_tools = _server_tools_workstream_governance.register_workstream_governance_tools(mcp=mcp, server_tools_governance=_server_tools_governance, govern_approve_impl=govern_approve_impl, govern_reject_impl=govern_reject_impl)
 (thegent_harness_interact, thegent_harness_list_actions, thegent_harness_get_command, thegent_harness_register_host) = _server_tools_harness.register_harness_tools(mcp=mcp, server_tools_harness=_server_tools_harness)
 (thegent_register_tool, thegent_complete_tool_call, thegent_list_dynamic_tools,) = _server_tools_dynamic_registry.register_dynamic_registry_tools(mcp=mcp, server_tools_sessions=_server_tools_sessions, error_result=_error_result)
-(thegent_list_operations, thegent_list_modes, thegent_suggest_mode, thegent_list_agents, thegent_list_models, thegent_resolve_model_route, thegent_session_contracts, thegent_session_contract_health_gate, thegent_session_contract_health_report, thegent_session_contract_health_trend, thegent_observe_summary,) = _server_ops_tools.register_ops_tools(
+(thegent_list_operations, thegent_list_modes, thegent_suggest_mode, thegent_list_agents, thegent_list_models, thegent_resolve_model_route, thegent_session_contracts, _ops_gate_obj, _ops_report_obj, _ops_trend_obj, _ops_observe_obj,) = cast(Any, _server_ops_tools.register_ops_tools(
     mcp=mcp, server_tools_catalog=_server_tools_catalog, server_tools_contract_observe=_server_tools_contract_observe, stable_json=_stable_json, error_result=_error_result,
     list_agents_impl=list_agents_impl, list_models_impl=list_models_impl, observe_summary_impl=observe_summary_impl, session_contract_audit_impl=session_contract_audit_impl,
     session_contract_health_gate_impl=session_contract_health_gate_impl, session_contract_health_report_impl=session_contract_health_report_impl,
     session_contract_health_trend_impl=session_contract_health_trend_impl, session_contract_health_gate_helper=thegent_session_contract_health_gate_helper,
     session_contract_health_report_helper=thegent_session_contract_health_report_helper, coerce_issue_types=_coerce_issue_types,
-)
+))
 def thegent_session_contract_health_gate(owner: str | None = None, all: bool = False, strict: bool = False, min_healthy_ratio: float = 1.0, policy_profile: str | None = None, no_worse_than_baseline: bool = False, regression_tolerance: float = 0.0) -> ToolResult:
     return thegent_session_contract_health_gate_helper(owner=owner, all=all, strict=strict, min_healthy_ratio=min_healthy_ratio, policy_profile=policy_profile, no_worse_than_baseline=no_worse_than_baseline, regression_tolerance=regression_tolerance, session_contract_health_gate_impl=session_contract_health_gate_impl, stable_json=_stable_json)
 def thegent_session_contract_health_report(owner: str | None = None, all: bool = False, strict: bool = False, top_blocked: int = 25, policy_profile: str | None = None, no_worse_than_baseline: bool = False, regression_tolerance: float = 0.0) -> ToolResult:
@@ -225,4 +222,4 @@ mcp.add_transform(PromptsAsTools(cast("Any", mcp)))
 (journal_create_session, journal_record_change, journal_snapshot, journal_get_log, journal_list_sessions, journal_finalize, journal_prune, journal_create_enhanced, journal_start_watching, journal_get_attestations, journal_get_stats, journal_record_async, journal_flush_batch, thegent_orchestration_events,) = _server_journal_tools.register_journal_tools(mcp=mcp, logger=_log)
 (health, _get_event_store, thegent_acp_invoke, http_app, http_app_factory, run) = _server_runtime_entry.register_runtime_entry(mcp=mcp, health_response=health_response, create_event_store=create_event_store, create_http_app=create_http_app, bearer_auth_middleware=BearerAuthMiddleware, log=_log, parse_acp_payload=parse_acp_payload, format_acp_response=format_acp_response, run_server=run_server, settings_factory=ThegentSettings, http_app_factory_import_path="thegent.mcp_server:http_app_factory")
 if __name__ == "__main__":
-    run()
+    cast(Any, run)()

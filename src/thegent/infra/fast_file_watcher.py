@@ -15,20 +15,12 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-try:
-    from watchfiles import Change, watch
+from watchfiles import watch
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
+from watchdog.observers import Observer
 
-    WATCHFILES_AVAILABLE = True
-except ImportError:
-    WATCHFILES_AVAILABLE = False
-
-try:
-    from watchdog.events import FileSystemEvent, FileSystemEventHandler
-    from watchdog.observers import Observer
-
-    WATCHDOG_AVAILABLE = True
-except ImportError:
-    WATCHDOG_AVAILABLE = False
+WATCHFILES_AVAILABLE = True
+WATCHDOG_AVAILABLE = True
 
 
 class FastFileWatcher:
@@ -48,9 +40,9 @@ class FastFileWatcher:
         """
         self.path = Path(path)
         self.recursive = recursive
-        self._backend = None
-        self._observer = None
-        self._handler = None
+        self._backend: str | None = None
+        self._observer: Any = None
+        self._handler: Any = None
 
         # Select backend based on availability
         if WATCHFILES_AVAILABLE:
@@ -84,7 +76,7 @@ class FastFileWatcher:
             if event_handler is None:
                 # Create a simple handler that just logs events
                 class SimpleHandler(FileSystemEventHandler):
-                    def on_any_event(self, event: FileSystemEvent) -> None:
+                    def on_any_event(self, event: FileSystemEvent) -> None:  # noqa: ARG002
                         pass
 
                 event_handler = SimpleHandler()
@@ -105,7 +97,7 @@ class FastFileWatcher:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, _exc_val, _exc_tb):
+    def __exit__(self, _exc_type, _exc_val, _exc_tb):
         """Context manager exit."""
         if self._backend == "watchdog":
             self.stop()

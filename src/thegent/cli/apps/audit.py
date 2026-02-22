@@ -1,7 +1,6 @@
 """Logical stream: System Integrity and Health Audit."""
 
 import asyncio
-import json
 from pathlib import Path
 
 import typer

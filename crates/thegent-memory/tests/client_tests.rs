@@ -1,7 +1,10 @@
 //! Integration tests for SupermemoryClient
+//!
+//! Combined tests from both supermemory-rs and thegent-memory implementations.
 
 use thegent_memory::*;
 
+// Tests from thegent-memory
 #[tokio::test]
 async fn test_client_initialization() {
     let auth = AuthMethod::ApiKey("test_key".to_string());
@@ -90,4 +93,25 @@ fn test_query_result_last_page() {
     };
 
     assert!(!result.has_more());
+}
+
+// Tests from supermemory-rs (now in thegent-memory)
+#[test]
+fn test_memory_data_builder() {
+    let data = MemoryData::new("hello")
+        .with_source("test")
+        .with_context("context");
+
+    assert_eq!(data.content, "hello");
+    assert_eq!(data.source, Some("test".to_string()));
+    assert_eq!(data.context, Some("context".to_string()));
+}
+
+#[test]
+fn test_operation_type_display() {
+    assert_eq!(OperationType::Store.to_string(), "store");
+    assert_eq!(OperationType::Update.to_string(), "update");
+    assert_eq!(OperationType::Retrieve.to_string(), "retrieve");
+    assert_eq!(OperationType::Delete.to_string(), "delete");
+    assert_eq!(OperationType::Search.to_string(), "search");
 }

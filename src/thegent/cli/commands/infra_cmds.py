@@ -117,7 +117,7 @@ def concurrency_show_cmd(format: str | None = None) -> None:
     # WP-5001: Resource-aware dynamic limits
     snapshot = sample_resources()
     config = LimitGateConfig.from_dict(settings.model_dump())
-    dynamic_limit, gate_details = compute_dynamic_limit(snapshot, config, running_count)
+    dynamic_limit, gate_details = compute_dynamic_limit(snapshot, config)
 
     limit = settings.max_concurrency
     utilization_pct = (running_count / limit * 100) if limit > 0 else 0
@@ -364,11 +364,10 @@ def cockpit_cmd() -> None:
     from thegent.cli.commands.impl import ps_impl
     from thegent.contracts.telemetry import ContractTelemetry
     from thegent.cost.aggregator import CostAggregator
-    from thegent.execution import CheckpointRegistry, CircuitBreakerRegistry
+    from thegent.execution import CircuitBreakerRegistry
 
     registry = RunRegistry(settings.session_dir)
     circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
-    ckpt_registry = CheckpointRegistry(settings.session_dir)
     ct = ContractTelemetry(settings.session_dir)
     agg = CostAggregator(settings.session_dir)
 
@@ -684,7 +683,6 @@ def benchmark_cmd() -> None:
 
 def release_pack_cmd(version: str = "2.0") -> None:
     """Automated release documentation packaging (WP-12009)."""
-    settings = ThegentSettings()
     from thegent.utils.release_packager import ReleasePackager
 
     packager = ReleasePackager(Path.cwd())
@@ -738,7 +736,7 @@ def context_history_cmd(
     limit: int = typer.Option(50, "--limit", "-l", help="Number of entries to show"),
 ) -> None:
     """Search and display context-aware shell history."""
-    from thegent.infra.history import ContextHistory, HistoryEntry
+    from thegent.infra.history import ContextHistory
 
     history = ContextHistory()
     results = history.search(query=query, task_id=task_id, cwd=cwd, limit=limit)
@@ -806,7 +804,7 @@ def scratchpad_cmd(
 
 def explorer_cmd() -> None:
     """Launch the terminal explorer TUI."""
-    from thegent.tui import run_explorer_tui
+    from thegent.tui.explorer import run_explorer_tui
 
     run_explorer_tui()
 

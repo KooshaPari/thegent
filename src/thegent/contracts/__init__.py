@@ -50,9 +50,7 @@ from thegent.contracts.registry import (
 # This allows existing code to work while deferring adapter registration until needed
 
 __all__ = [
-    "ADAPTER_REGISTRY",
     "CONTRACT_SCHEMA_VERSION",
-    "AdapterResult",
     "CSMPhase",
     "CSMStatus",
     "CanonicalStructuredMessage",
@@ -60,8 +58,6 @@ __all__ = [
     "ContractRegistry",
     "ContractVersion",
     "EvidenceEvent",
-    "OutputAdapter",
     "PolicyEvent",
     "get_registry",
-    "normalize_output",
 ]

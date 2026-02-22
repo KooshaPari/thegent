@@ -198,7 +198,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
                     seed.tags = tags
             else:
                 # Create manual seed
-                from datetime import datetime, timezone
+                from datetime import datetime
 
                 from thegent.memory.seed_detector import Seed
 
@@ -484,3 +484,6 @@ def register_seed_tools(mcp: "FastMCP") -> None:
                 structured_content={"error": str(e), "stats": {}},
                 meta={"execution_time_ms": 0},
             )
+
+    _ = (thegent_seed_detect, thegent_seed_store, thegent_seed_list, thegent_seed_update,
+         thegent_seed_export, thegent_seed_stats)

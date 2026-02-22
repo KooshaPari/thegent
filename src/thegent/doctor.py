@@ -1,13 +1,12 @@
 """Doctor module for comprehensive health and preflight checks of thegent environment."""
 
 import os
-import platform
 import re
 import shutil
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import httpx
 import yaml
@@ -23,19 +22,25 @@ from thegent.doctor_setup_checks import (
     check_configuration as _check_configuration_impl,
     check_connectivity as _check_connectivity_impl,
     check_isolation as _check_isolation_impl,
-    ensure_mcp_running as _ensure_mcp_running_impl,
 )
 from thegent.doctor_shell_nix import (
     check_nix as _check_nix_impl,
-    check_nix_daemon_status as _check_nix_daemon_status_impl,
     check_shell as _check_shell_impl,
 )
 from thegent.infra import run_subprocess_optimized
 
-if TYPE_CHECKING:
-    import psutil
+import psutil
 
-    from thegent.infra.fast_process_monitor import ProcessInfo
+
+@dataclass
+class ProcessInfo:
+    """Lightweight process information."""
+
+    pid: int
+    name: str
+    cmdline: str
+    create_time: float
+    status: str = "unknown"
 
 console = Console()
 _project_root_cache: Path | None = None
@@ -156,8 +161,6 @@ def run_doctor(
     if memory:
         console.print("\n[bold cyan]Memory Diagnostics[/bold cyan]")
         try:
-            import psutil
-
             mem = psutil.virtual_memory()
             console.print(f"Total Memory: {mem.total / (1024**3):.2f} GB")
             console.print(f"Available Memory: {mem.available / (1024**3):.2f} GB")
@@ -199,9 +202,6 @@ def _check_configuration() -> list[CheckResult]:
 def _check_isolation() -> list[CheckResult]:
     return _check_isolation_impl(check_result_cls=CheckResult)
 
-
-def _ensure_mcp_running(settings: ThegentSettings, timeout: int = 30) -> bool:
-    return _ensure_mcp_running_impl(settings=settings, console=console, timeout=timeout)
 
 
 def _check_connectivity(auto_start: bool = True) -> list[CheckResult]:
@@ -489,10 +489,6 @@ def _check_shell() -> list[CheckResult]:
     return _check_shell_impl(check_result_cls=CheckResult)
 
 
-def _check_nix_daemon_status() -> tuple[bool, str]:
-    return _check_nix_daemon_status_impl()
-
-
 def _check_nix() -> list[CheckResult]:
     return _check_nix_impl(check_result_cls=CheckResult, project_root=_project_root_cache or Path.cwd())
 
@@ -750,8 +746,6 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
     - Process is long-running (>1 hour) - assumed active (user's chats run for hours)
     """
     try:
-        import psutil
-
         proc = psutil.Process(pid)
 
         # Check process status
@@ -766,7 +760,7 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
             # For long-running processes, be more lenient - assume active unless clearly stuck
             # Check for network connections as a sign of activity
             try:
-                connections = proc.connections()
+                connections = proc.net_connections()
                 if connections:
                     return (
                         True,
@@ -786,20 +780,22 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             pass
 
-        # Check I/O counters
+        # Check I/O counters (io_counters is Linux/Windows only; not available on macOS)
         try:
-            io_counters = proc.io_counters()
-            if io_counters:
-                read_bytes = io_counters.read_bytes
-                write_bytes = io_counters.write_bytes
-                if read_bytes > min_io_bytes or write_bytes > min_io_bytes:
-                    return True, f"I/O active (R:{read_bytes} W:{write_bytes})"
+            io_getter = getattr(proc, "io_counters", None)
+            if io_getter is not None:
+                io_counters = io_getter()
+                if io_counters:
+                    read_bytes = io_counters.read_bytes
+                    write_bytes = io_counters.write_bytes
+                    if read_bytes > min_io_bytes or write_bytes > min_io_bytes:
+                        return True, f"I/O active (R:{read_bytes} W:{write_bytes})"
         except (psutil.AccessDenied, psutil.NoSuchProcess, AttributeError):
             pass
 
         # Check if process has network connections (indicates activity)
         try:
-            connections = proc.connections()
+            connections = proc.net_connections()
             if connections:
                 return True, f"network active ({len(connections)} connections)"
         except (psutil.AccessDenied, psutil.NoSuchProcess):
@@ -831,55 +827,25 @@ def _find_stuck_processes(command_patterns: list[str], max_age_seconds: int = 30
     - Show no recent activity (CPU, I/O, network)
     """
     stuck = []
-    try:
-        from thegent.infra.fast_process_monitor import get_fast_monitor
+    now = time.time()
 
-        monitor = get_fast_monitor()
-        now = time.time()
-
-        # Use fast process finder
-        matching_processes = monitor.find_by_command(command_patterns)
-
-        for info in matching_processes:
-            try:
-                runtime = now - info.create_time
-
-                # Only check processes that have been running for a while
-                if runtime < max_age_seconds:
-                    continue
-
-                # Check if process is actively working
-                is_active, reason = _is_process_actively_working(info.pid)
-                if not is_active:
-                    stuck.append((info.pid, info.cmdline[:100], reason))
-            except Exception:
-                continue
-    except ImportError:
-        # Fallback to psutil if fast monitor not available
+    for proc in psutil.process_iter(["pid", "name", "cmdline", "create_time"]):
         try:
-            import psutil
+            cmdline = " ".join(proc.info["cmdline"] or [])
+            if not any(pattern in cmdline for pattern in command_patterns):
+                continue
 
-            for proc in psutil.process_iter(["pid", "name", "cmdline", "create_time"]):
-                try:
-                    cmdline = " ".join(proc.info["cmdline"] or [])
-                    if not any(pattern in cmdline for pattern in command_patterns):
-                        continue
+            pid = proc.info["pid"]
+            runtime = now - proc.info["create_time"]
 
-                    pid = proc.info["pid"]
-                    runtime = time.time() - proc.info["create_time"]
+            if runtime < max_age_seconds:
+                continue
 
-                    if runtime < max_age_seconds:
-                        continue
-
-                    is_active, reason = _is_process_actively_working(pid)
-                    if not is_active:
-                        stuck.append((pid, cmdline[:100], reason))
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-        except ImportError:
-            pass  # No monitoring available
-    except Exception:
-        pass  # Ignore errors in process enumeration
+            is_active, reason = _is_process_actively_working(pid)
+            if not is_active:
+                stuck.append((pid, cmdline[:100], reason))
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
 
     return stuck
 
@@ -1044,6 +1010,8 @@ def _check_headless() -> list[CheckResult]:
         try:
             # Try a simple droid exec test
             droid_cmd = droid_shim or roid_shim
+            if droid_cmd is None:
+                raise RuntimeError("Neither droid nor roid shim is configured")
             process = run_subprocess_optimized(
                 [droid_cmd, "exec", "--help"],
                 capture_output=True,
@@ -1085,10 +1053,6 @@ def _check_headless() -> list[CheckResult]:
 
 def _extract_process_info(proc: "psutil.Process") -> "ProcessInfo | None":
     """Extract ProcessInfo from psutil.Process. WP-P2: Fix PERF203."""
-    import psutil
-
-    from thegent.infra.fast_process_monitor import ProcessInfo
-
     try:
         info = proc.info
         return ProcessInfo(
@@ -1110,8 +1074,6 @@ def _check_process_health_v2(
     orphaned_processes: list,
 ) -> int:
     """Check health of a single process. Returns 1 if zombie, else 0. WP-P2: Fix PERF203."""
-    import psutil
-
     try:
         # Get detailed info using psutil
         proc = psutil.Process(info.pid)
@@ -1127,7 +1089,7 @@ def _check_process_health_v2(
 
         # Check file descriptors
         try:
-            num_fds = proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.connections())
+            num_fds = proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.net_connections())
             if num_fds > 100:  # > 100 FDs
                 high_fd_processes.append((info.pid, info.name, num_fds, info.cmdline[:80]))
         except (psutil.AccessDenied, AttributeError):
@@ -1158,30 +1120,20 @@ def _check_process_leaks() -> list[CheckResult]:
     # Process Leak Analysis
     r = CheckResult("Process Leak Analysis", "Process Analysis & Leak Detection")
     try:
-        import psutil
-
         issues = []
-        suspicious_processes = []
         zombie_count = 0
         high_memory_processes = []
         high_fd_processes = []
         orphaned_processes = []
 
         # Analyze processes
-        try:
-            from thegent.infra.fast_process_monitor import get_fast_monitor
-
-            monitor = get_fast_monitor()
-            process_infos = list(monitor.iter_processes(use_cache=False))
-        except Exception:
-            # Fallback to psutil
-            process_infos = []
-            for proc in psutil.process_iter(
-                ["pid", "name", "cmdline", "status", "memory_info", "num_fds", "create_time"]
-            ):
-                info = _extract_process_info(proc)
-                if info:
-                    process_infos.append(info)
+        process_infos = []
+        for proc in psutil.process_iter(
+            ["pid", "name", "cmdline", "status", "memory_info", "num_fds", "create_time"]
+        ):
+            info = _extract_process_info(proc)
+            if info:
+                process_infos.append(info)
 
         current_time = time.time()
 
@@ -1404,8 +1356,6 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
     # Process Registry
     r = CheckResult("Process Registry", "Runtime Infrastructure")
     try:
-        import psutil
-
         from thegent.infra.process_registry import get_registry
 
         registry = get_registry()
@@ -1525,19 +1475,8 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
 
     # psutil Availability
     r = CheckResult("psutil Library", "Runtime Infrastructure")
-    try:
-        import psutil
-
-        version = psutil.__version__
-        r.status = "ok"
-        r.message = f"psutil {version} available"
-    except ImportError:
-        r.status = "fail"
-        r.message = "psutil not installed"
-        r.fix_hint = "Install psutil: pip install psutil>=5.9.0 or uv sync"
-    except Exception as e:
-        r.status = "warn"
-        r.message = f"Could not check psutil: {e}"
+    r.status = "ok"
+    r.message = f"psutil {psutil.__version__} available"
     res_list.append(r)
 
     return res_list
@@ -1552,7 +1491,6 @@ def _check_mcp_tools() -> list[CheckResult]:
     r = CheckResult("MCP Tools", "MCP Tools & Sessions")
     try:
         # Check if MCP server is reachable (already checked in connectivity, but verify tools work)
-        mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/mcp"
         try:
             resp = httpx.get(f"http://{settings.mcp_host}:{settings.mcp_port}/health", timeout=2.0)
             if resp.status_code == 200:
@@ -1660,22 +1598,12 @@ def _check_project_hints() -> list[CheckResult]:
 def _check_performance() -> list[CheckResult]:
     """Check for performance optimizations."""
     res_list = []
-    import sys
-
     # 1. Shell Strategy
     r = CheckResult("Shell Strategy", "Performance")
     settings = ThegentSettings()
     agent_shell = settings.agent_shell
 
-    if sys.platform == "win32":
-        if agent_shell == "cmd":
-            r.status = "ok"
-            r.message = "Using high-performance 'cmd' for Windows execution"
-        else:
-            r.status = "warn"
-            r.message = f"Currently using '{agent_shell or 'default'}' shell; 'cmd' is faster for Windows"
-            r.fix_hint = "Run: thegent config set agent_shell cmd"
-    elif agent_shell == "dash":
+    if agent_shell == "dash":
         r.status = "ok"
         r.message = "Using high-performance 'dash' for Unix execution"
     elif shutil.which("dash"):
@@ -1704,8 +1632,6 @@ def _apply_fixes(results: list[CheckResult], dry_run: bool = False) -> list[dict
     fix_report: list[dict] = []
     fixes_applied = 0
     fixes_failed = 0
-
-    from rich.progress import Progress, SpinnerColumn, TextColumn
 
     mode_text = "Would apply (dry-run)" if dry_run else "Attempting automatic fixes"
     console.print(f"\n[bold cyan]{mode_text}...[/bold cyan]\n")

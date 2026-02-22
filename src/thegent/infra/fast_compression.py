@@ -13,19 +13,11 @@ Performance improvements:
 
 import gzip
 
-try:
-    import brotli
+import brotli  # type: ignore[reportMissingImports]
+import zstandard as zstd  # type: ignore[reportMissingImports]
 
-    BROTLI_AVAILABLE = True
-except ImportError:
-    BROTLI_AVAILABLE = False
-
-try:
-    import zstandard as zstd
-
-    ZSTD_AVAILABLE = True
-except ImportError:
-    ZSTD_AVAILABLE = False
+BROTLI_AVAILABLE = True
+ZSTD_AVAILABLE = True
 
 
 class FastCompression:

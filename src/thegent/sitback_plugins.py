@@ -42,7 +42,7 @@ class SitbackPluginRegistry:
         """Register harness status provider (e.g. heliosShield). Returns None if unavailable."""
         self._harness_status_fn = fn
 
-    def _run_widget(self, name: str, fn: callable) -> dict[str, Any] | None:
+    def _run_widget(self, name: str, fn: Callable[[], Any]) -> dict[str, Any] | None:
         """Run a single widget, returning result or None on failure."""
         try:
             return fn()

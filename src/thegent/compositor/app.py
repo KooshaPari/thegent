@@ -6,7 +6,7 @@ header, footer, and pane management.
 
 from typing import ClassVar
 
-from textual.app import ComposeResult
+from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical
 from textual.widgets import Footer, Header, Static
 
@@ -201,9 +201,16 @@ class CompositApp(Vertical):
         self.session_state.save_session(layout)
 
 
+class _CompositRunner(App):  # type: ignore[type-arg]
+    """Minimal App shell to host CompositApp widget."""
+
+    def compose(self) -> ComposeResult:
+        yield CompositApp()
+
+
 def run() -> None:
     """Run the CompositApp."""
-    app = CompositApp()
+    app = _CompositRunner()
     app.run()
 
 

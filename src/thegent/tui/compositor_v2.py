@@ -217,21 +217,21 @@ class CompositorApp(App):
 
     def action_new_pane(self) -> None:
         """Create a new terminal pane."""
-        pane = self.pane_manager.create_pane()
+        _pane = self.pane_manager.create_pane()
         self.update_title()
         self.update_status()
         _log.info("New pane created")
 
     def action_split_vertical(self) -> None:
         """Split current pane vertically."""
-        pane = self.pane_manager.split_pane("vertical")
+        _pane = self.pane_manager.split_pane("vertical")
         self.update_title()
         self.update_status()
         _log.info("Vertical split created")
 
     def action_split_horizontal(self) -> None:
         """Split current pane horizontally."""
-        pane = self.pane_manager.split_pane("horizontal")
+        _pane = self.pane_manager.split_pane("horizontal")
         self.update_title()
         self.update_status()
         _log.info("Horizontal split created")
@@ -343,7 +343,7 @@ class CompositorApp(App):
         """Append text to output pane."""
         try:
             output = self.query_one("#output-content", Static)
-            current = str(output.renderable) if hasattr(output, "renderable") else str(output)
+            current = str(output._renderable)  # type: ignore[attr-defined] -- Static._renderable is internal but stable
             output.update(current + text)
         except QueryError:
             pass
@@ -393,7 +393,7 @@ async def run_tui(
             await pilot.pause()
             return 0
 
-    return await app.run_async()
+    return int(await app.run_async() or 0)
 
 
 if __name__ == "__main__":

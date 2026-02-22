@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from thegent.governance.post_agent_run_hook import _dispatch_post_agent_run_hook
+from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 
 _log = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class InProcessAgentRunner:
                 forward_kwargs["session_id"] = session_id
             result = self.base_runner.run(prompt=prompt, cd=cd, mode=mode, timeout=timeout, **forward_kwargs)
             if run_id is not None or session_id is not None:
-                _dispatch_post_agent_run_hook(
+                dispatch_post_agent_run_hook(
                     result=result,
                     run_id=run_id,
                     session_id=session_id,

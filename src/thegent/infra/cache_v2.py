@@ -1,14 +1,25 @@
 """Phase 9: Request Coalescing v2 implementation.
-Includes Singleflight, inotify cache invalidation, and heat-based LRU.
+Includes Singleflight, inotify cache invalidation, heat-based LRU, and multi-tier cache.
 """
 
 import collections
+import contextlib
 import logging
 import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+# Library-first (LIBRARY_FIRST_POLICY.md): Using cachetools for in-memory caching
+from cachetools import LRUCache, TTLCache
+
+try:
+    import diskcache
+
+    DISKCACHE_AVAILABLE = True
+except ImportError:
+    DISKCACHE_AVAILABLE = False
 
 try:
     import watchdog.events
@@ -247,3 +258,124 @@ class CacheInvalidator:
         if self.observer:
             self.observer.stop()
             self.observer.join()
+
+
+class MultiTierCache:
+    """Multi-tier caching system with automatic tier management.
+
+    Tiers:
+    1. L1: cachetools TTLCache (fastest, automatic TTL, smallest)
+    2. L2: cachetools LRUCache (medium-term, configurable size)
+    3. L3: diskcache (persistent, survives restarts)
+    """
+
+    def __init__(
+        self,
+        l1_size: int = 100,
+        l2_size: int = 1000,
+        l3_path: str | None = None,
+        default_ttl: float | None = None,
+    ) -> None:
+        self.l1: TTLCache = TTLCache(maxsize=l1_size, ttl=default_ttl or 60)
+        self.l1_size = l1_size
+        self.l2: LRUCache = LRUCache(maxsize=l2_size)
+        self.l2_size = l2_size
+        if l3_path and DISKCACHE_AVAILABLE:
+            self.l3: "diskcache.Cache | None" = diskcache.Cache(l3_path)
+        else:
+            self.l3 = None
+        self.default_ttl = default_ttl
+
+    def get(self, key: str) -> Any | None:
+        if key in self.l1:
+            return self.l1[key]
+        if key in self.l2:
+            value = self.l2[key]
+            self.l1[key] = value
+            return value
+        if self.l3:
+            value = self.l3.get(key)
+            if value is not None:
+                self.l2[key] = value
+                self.l1[key] = value
+                return value
+        return None
+
+    def set(self, key: str, value: Any, ttl: float | None = None) -> None:
+        ttl = ttl or self.default_ttl
+        self.l1[key] = value
+        self.l2[key] = value
+        if self.l3:
+            with contextlib.suppress(Exception):
+                self.l3.set(key, value, expire=ttl)
+
+    def delete(self, key: str) -> None:
+        self.l1.pop(key, None)
+        self.l2.pop(key, None)
+        if self.l3:
+            with contextlib.suppress(Exception):
+                self.l3.delete(key)
+
+    def clear(self) -> None:
+        self.l1.clear()
+        self.l2.clear()
+        if self.l3:
+            with contextlib.suppress(Exception):
+                self.l3.clear()
+
+    def stats(self) -> dict[str, Any]:
+        stats: dict[str, Any] = {
+            "l1_size": len(self.l1),
+            "l1_max": self.l1_size,
+            "l2_size": len(self.l2),
+            "l2_max": self.l2_size,
+        }
+        if self.l3:
+            try:
+                stats["l3_size"] = sum(1 for _ in self.l3.iterkeys()) if hasattr(self.l3, "iterkeys") else 0
+                stats["l3_volume"] = self.l3.volume()
+            except Exception:
+                stats["l3_size"] = 0
+                stats["l3_volume"] = 0
+        else:
+            stats["l3_size"] = 0
+            stats["l3_volume"] = 0
+        return stats
+
+    def get_with_fetch(self, key: str, fetch_func: Any, ttl: float | None = None) -> Any:
+        """Get value from cache, or fetch and store if missing (Singleflight coalescing)."""
+        value = self.get(key)
+        if value is not None:
+            return value
+
+        if not hasattr(self, "_singleflight"):
+            self._singleflight = Singleflight()
+
+        def _fetch_and_store():
+            res = fetch_func()
+            if res is not None:
+                self.set(key, res, ttl=ttl)
+            return res
+
+        return self._singleflight.do(key, _fetch_and_store)
+
+    def enable_invalidation(self, directory: str | Path) -> None:
+        """Enable real-time cache invalidation based on file changes."""
+        self.invalidator = CacheInvalidator(self)
+        self.invalidator.watch(Path(directory))
+
+
+_global_cache: MultiTierCache | None = None
+
+
+def get_cache(
+    l1_size: int = 100,
+    l2_size: int = 1000,
+    l3_path: str | None = None,
+    default_ttl: float | None = None,
+) -> MultiTierCache:
+    """Get global multi-tier cache instance."""
+    global _global_cache
+    if _global_cache is None:
+        _global_cache = MultiTierCache(l1_size=l1_size, l2_size=l2_size, l3_path=l3_path, default_ttl=default_ttl)
+    return _global_cache

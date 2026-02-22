@@ -3,18 +3,14 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
-import time
 from pathlib import Path
-from typing import Any
 
 import typer
 
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _normalize_output_format,
     _resolve_run_id,
@@ -42,6 +38,9 @@ def summary_cmd(
         project_path = project or Path.cwd()
         scraper = SessionScraper(project_path)
         system = MemorySystem(project_path)
+        snapshot_path = scraper.persist_snapshot(trigger="session_change")
+        snapshot_index_path = scraper.persist_snapshot_index()
+        snapshot_index_md_path = scraper.export_snapshot_index_markdown()
 
         prompts = scraper.collect_all_recent_prompts()
         recent = system.get_recent(limit=50, category=MemoryCategory.USER_PROMPT)
@@ -49,7 +48,17 @@ def summary_cmd(
 
         for p in prompts:
             if p not in recent_contents:
-                system.record(p, MemoryCategory.USER_PROMPT, "auto-scrape", metadata={"scraped": True})
+                system.record(
+                    p,
+                    MemoryCategory.USER_PROMPT,
+                    "auto-scrape",
+                    metadata={
+                        "scraped": True,
+                        "snapshot_path": str(snapshot_path),
+                        "snapshot_index_path": str(snapshot_index_path),
+                        "snapshot_index_md_path": str(snapshot_index_md_path),
+                    },
+                )
     except Exception:
         pass  # Silent failure for auto-scrape
 
@@ -98,12 +107,12 @@ def explain_cmd(run_id: str | None = None) -> None:
 
     from thegent.cli.commands.impl import history_impl
 
-    rid = _resolve_run_id(run_id)
+    _rid = _resolve_run_id(run_id)
     runs = history_impl(limit=1000)
-    run = next((r for r in runs if r.get("run_id") == rid), None)
+    run = next((r for r in runs if r.get("run_id") == _rid), None)
 
     if not run:
-        console.print(f"[red]Run ID {rid} not found.[/red]")
+        console.print(f"[red]Run ID {_rid} not found.[/red]")
         return
 
     lines = [
@@ -126,13 +135,13 @@ def explain_cmd(run_id: str | None = None) -> None:
     if run.get("policy_result"):
         lines.append(f"\n[bold]Policy:[/bold] {run.get('policy_result')} ({run.get('policy_reason')})")
 
-    panel = Panel("\n".join(lines), title=f"Run Explanation: {rid}", border_style="blue")
+    panel = Panel("\n".join(lines), title=f"Run Explanation: {_rid}", border_style="blue")
     console.print(panel)
 
 
 def fallbacks_cmd(run_id: str | None = None) -> None:
     """Show safe fallback options for a failed or blocked run (WP-4003)."""
-    rid = _resolve_run_id(run_id)
+    _rid = _resolve_run_id(run_id)
     settings = ThegentSettings()
     from thegent.agents.state_machine import FallbackStateMachine
     from thegent.execution import RunRegistry
@@ -189,12 +198,12 @@ def handoff_cmd(owner: str) -> None:
     past_sla = escalate_list_impl(past_sla_only=True, limit=50)
 
     # WP-4006: State, evidence, next steps
-    state_summary = {
+    _state_summary = {
         "running_count": len(run_ids),
         "escalation_backlog": len(escalation_run_ids),
         "past_sla_count": len(past_sla),
     }
-    evidence_summary = [
+    _evidence_summary = [
         {"run_id": r.get("run_id"), "status": r.get("status"), "agent": r.get("agent")}
         for r in (completed[-5:] + failed[-5:])
     ]

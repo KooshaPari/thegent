@@ -10,8 +10,6 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any
-
 import typer
 
 # Ensure we can import thegent
@@ -20,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from thegent.infra.ipc import MaildirQueue
 
 try:
-    from thegent_shm import init_shm, record_resource_usage
+    from thegent_shm import init_shm, record_resource_usage  # type: ignore[reportMissingImports]
 
     HAS_SHM = True
 except ImportError:

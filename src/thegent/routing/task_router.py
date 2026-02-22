@@ -349,7 +349,7 @@ class TaskRouter:
             sorted_providers = sorted(char_scores.items(), key=lambda x: x[1], reverse=True)
             # Map top providers back to known model IDs (simplified)
             mapping = {"codex": "gpt-5.3-codex", "claude": "claude-sonnet-4.5", "gemini": "gemini-3.1-pro"}
-            return [mapping[p] for p, s in sorted_providers if p in mapping]
+            return [mapping[p] for p, _s in sorted_providers if p in mapping]
 
         if category == TaskCategory.FAST:
             return ["gemini-3-flash", "claude-haiku-4.5"]

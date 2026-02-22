@@ -7,6 +7,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+import structlog
+
+logger = structlog.get_logger(__name__)
+
 
 class HLCTimestamp:
     """Hybrid Logical Clock (HLC) (SCLI-P6.2)."""
@@ -99,14 +103,11 @@ class FileClaimsRegistry:
 
         # Check if already held by someone else and not expired
         if claim_file.exists():
-            try:
-                with open(claim_file) as f:
-                    data = json.load(f)
-                if time.time() < data["expires_at"]:
-                    if data["agent_id"] != agent_id:
-                        return False
-            except Exception:
-                pass
+            with open(claim_file) as f:
+                data = json.load(f)
+            if time.time() < data["expires_at"]:
+                if data["agent_id"] != agent_id:
+                    return False
 
         # Write new/renew lease (SCLI-P6.4)
         lease_data = {
@@ -116,12 +117,9 @@ class FileClaimsRegistry:
             "timestamp": str(HLCTimestamp().update()),
         }
 
-        try:
-            with open(claim_file, "w") as f:
-                json.dump(lease_data, f)
-            return True
-        except Exception:
-            return False
+        with open(claim_file, "w") as f:
+            json.dump(lease_data, f)
+        return True
 
     def release_lease(self, file_path: Path, agent_id: str) -> bool:
         """Release a lease on a file."""
@@ -129,27 +127,21 @@ class FileClaimsRegistry:
         claim_file = self.claims_dir / f"{file_id}.lock"
 
         if claim_file.exists():
-            try:
-                with open(claim_file) as f:
-                    data = json.load(f)
-                if data["agent_id"] == agent_id:
-                    claim_file.unlink()
-                    return True
-            except Exception:
-                pass
+            with open(claim_file) as f:
+                data = json.load(f)
+            if data["agent_id"] == agent_id:
+                claim_file.unlink()
+                return True
 
         return False
 
     def _cleanup_expired_lock(self, lock_file: Path, now: float) -> int:
         """Clean up a single expired lock file. Returns 1 if deleted, 0 otherwise."""
-        try:
-            with open(lock_file) as f:
-                data = json.load(f)
-            if now > data["expires_at"]:
-                lock_file.unlink()
-                return 1
-        except Exception:
-            pass
+        with open(lock_file) as f:
+            data = json.load(f)
+        if now > data["expires_at"]:
+            lock_file.unlink()
+            return 1
         return 0
 
     def cleanup_expired(self) -> int:
@@ -219,32 +211,26 @@ class IntentRegistry:
 
     def _load_intent(self, intent_file: Path, agent_id: str | None) -> EditIntent | None:
         """Load an intent from file, optionally filtering by agent_id."""
-        try:
-            with open(intent_file) as f:
-                data = json.load(f)
-            if agent_id is None or data["agent_id"] == agent_id:
-                return EditIntent(
-                    agent_id=data["agent_id"],
-                    file_path=data["file_path"],
-                    operation=data["operation"],
-                    line_ranges=data.get("line_ranges", []),
-                    new_content=data.get("new_content"),
-                    timestamp=data.get("timestamp"),
-                )
-        except Exception:
-            pass
+        with open(intent_file) as f:
+            data = json.load(f)
+        if agent_id is None or data["agent_id"] == agent_id:
+            return EditIntent(
+                agent_id=data["agent_id"],
+                file_path=data["file_path"],
+                operation=data["operation"],
+                line_ranges=data.get("line_ranges", []),
+                new_content=data.get("new_content"),
+                timestamp=data.get("timestamp"),
+            )
         return None
 
     def _delete_intent_if_owned(self, intent_file: Path, agent_id: str) -> bool:
         """Delete an intent file if owned by the specified agent. Returns True if deleted."""
-        try:
-            with open(intent_file) as f:
-                data = json.load(f)
-            if data["agent_id"] == agent_id:
-                intent_file.unlink()
-                return True
-        except Exception:
-            pass
+        with open(intent_file) as f:
+            data = json.load(f)
+        if data["agent_id"] == agent_id:
+            intent_file.unlink()
+            return True
         return False
 
     def get_intents(self, agent_id: str | None = None) -> list[EditIntent]:

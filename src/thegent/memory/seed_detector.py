@@ -187,7 +187,7 @@ class SeedDetector:
             Seed object
         """
         import uuid
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         # Extract tags from text (simple heuristic)
         tags = self._extract_tags(text)

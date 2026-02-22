@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_json_schema import FastJSONSchemaValidator, get_schema_validator
+from thegent.infra.fast_json_schema import FastJSONSchemaValidator
 from thegent.task.parser import TaskParseError, parse_task_file
 
 _log = logging.getLogger(__name__)

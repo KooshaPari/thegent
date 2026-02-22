@@ -1,14 +1,12 @@
 """Agent Registry TUI using Textual (WP-9000)."""
 
 import asyncio
-import json
 import logging
-from datetime import UTC, datetime
 from typing import Any, ClassVar
 
 from textual import on, work
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Horizontal, Vertical
 from textual.widgets import (
     DataTable,
     Footer,
@@ -21,7 +19,6 @@ from textual.widgets import (
 )
 
 from thegent.cli.commands.impl import logs_impl, ps_impl, session_send_impl
-from thegent.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -116,14 +113,12 @@ class RegistryTUI(App):
         table.cursor_type = "row"
         table.add_columns("Agent", "Status", "ID")
         self.refresh_data()
-        self.set_timer(3.0, self.refresh_data, repeat=True)
+        self.set_interval(3.0, self.refresh_data)
 
     @work(exclusive=True)
     async def refresh_data(self) -> None:
         """Poll registry for session updates."""
         try:
-            from thegent.cli.commands.impl import ps_impl
-
             self.sessions = ps_impl(all=self.show_all)
             table = self.query_one("#session-list", DataTable)
 
@@ -145,7 +140,7 @@ class RegistryTUI(App):
                 )
 
             if current_row is not None and current_row < len(self.sessions):
-                table.cursor_row = current_row
+                table.move_cursor(row=current_row)
         except Exception as e:
             _log.error("Failed to refresh sessions: %s", e)
 

@@ -11,15 +11,17 @@ members = [
     "thegent-hooks",
     "thegent-docs",
     "thegent-utils",
-    "thegent-router", "supermemory-rs",
+    "thegent-router",
     "thegent-maif",
     "thegent-shims",
     "thegent-zmx-interop",
     "thegent-zmx",
     "thegent-jsonl",
+    "thegent-fs",
     "thegent-offload",
     "harness-native",
     "thegent-tui",
+    "thegent-memory",
 ]
 exclude = ["thegent-watcher"]
 

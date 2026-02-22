@@ -3,9 +3,7 @@ Provides a persistent buffer for drafting complex multi-line CLI commands.
 Integration layer between agents and the shell buffer.
 """
 
-import json
 import logging
-import os
 from pathlib import Path
 
 from pydantic import BaseModel

@@ -64,7 +64,6 @@ __all__ += [
     "OverrideExpiryMonitor",
 ]
 
-from thegent.governance.native_scanner import NativeGovernanceScanner
 from thegent.governance.vetter import (
     RuffVetterCheck,
     TestPassVetterCheck,

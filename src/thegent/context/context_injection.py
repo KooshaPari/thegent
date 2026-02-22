@@ -6,7 +6,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +52,7 @@ Shared Resources: {shared_resources}
 
         if agent_type in rules_map:
             target_name, source_name = rules_map[agent_type]
-            source_path = agent_dir / source_name
+            _source_path = agent_dir / source_name
             target_path = agent_dir / target_name
 
             if not target_path.exists():

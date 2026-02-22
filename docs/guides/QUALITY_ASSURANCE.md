@@ -192,9 +192,7 @@ task test:gate
 
 # WL-135 dashboard pipeline
 task metrics:loc
-uv run python scripts/wl137_weekly_diagnosis.py \
-  --report docs/reports/wl137-weekly.md \
-  --ci-summary .quality/wl137-ci-summary.json
+task diag:wl137
 uv run python scripts/render_slo_dashboard.py
 task metrics:slo:emit-stub
 ```
@@ -202,6 +200,8 @@ task metrics:slo:emit-stub
 Expected artifacts:
 - `.quality/loc-metrics.json` (collector output)
 - `.quality/wl137-ci-summary.json` (CI summary envelope with runtime buckets + drift)
+- `docs/reports/WL-137-weekly-YYYY-MM-DD.md` (weekly diagnosis report)
+- `docs/reports/artifacts/wl120-wl136-loc-trend-YYYY-MM-DD.{json,md}` (trend evidence artifacts)
 - `.quality/slo-dashboard.md` (rendered markdown dashboard)
 - `var/metrics/slo_stub_metrics.jsonl` (stub SLO metric rows)
 

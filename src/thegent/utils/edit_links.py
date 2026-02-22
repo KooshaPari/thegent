@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Any
 
 from thegent.utils.helpers import normalize_path, safe_read_file, safe_write_file
 
