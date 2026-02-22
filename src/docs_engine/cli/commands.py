@@ -86,27 +86,14 @@ def index_cmd(action: str = typer.Argument("rebuild", help="Action: rebuild")) -
 
 @app.command("export")
 def export_cmd(
-    output_dir: str = typer.Option(".vitepress/data", help="Output dir for JSON data files"),
+    out_dir: str = typer.Option(".vitepress/data", "--out-dir", help="Output dir for JSON data files"),
 ) -> None:
     """Export SQLite data as JSON for VitePress data loaders."""
-    import orjson
+    from docs_engine.export.json_export import JsonExporter
 
-    out = _docs_root() / output_dir
-    out.mkdir(parents=True, exist_ok=True)
-    q = DocQueries(_db_path())
-
-    audit = q.get_by_type("worklog") + q.get_by_type("test-log") + q.get_by_type("completion-report")
-    audit.sort(key=lambda x: x.get("date", ""), reverse=True)
-    (out / "audit-log.json").write_bytes(orjson.dumps(audit))
-
-    kb_docs: list[dict] = []
-    for dtype in ("kb-extract", "research", "adr", "design-doc"):
-        kb_docs.extend(q.get_by_type(dtype))
-    (out / "kb-graph.json").write_bytes(orjson.dumps(kb_docs))
-
-    sprints = q.get_by_type("sprint-plan")
-    (out / "sprint-board.json").write_bytes(orjson.dumps(sprints))
-    typer.echo(f"Exported data loaders to {out}")
+    out = _docs_root() / out_dir
+    JsonExporter(db_path=_db_path(), out_dir=out).export_all()
+    typer.echo(f"Exported audit-log, kb-graph, sprint-board to {out}")
 
 
 @app.command("sidebar")
