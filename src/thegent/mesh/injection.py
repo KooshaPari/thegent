@@ -1,6 +1,5 @@
 """Shell and context injection for the agent mesh."""
 
-import os
 import subprocess
 import time
 from pathlib import Path
