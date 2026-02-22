@@ -2664,7 +2664,7 @@ Auto-prune stale conflict and dead-letter entries with retention policy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-293] Signed Capability Cache
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** security, connectors
 **Effort:** M
