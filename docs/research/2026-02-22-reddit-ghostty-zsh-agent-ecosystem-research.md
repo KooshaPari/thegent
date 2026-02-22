@@ -134,4 +134,3 @@ Scope: Consolidated research from the long mixed list of Reddit threads, Google-
 4. Gemini CLI proxy repo: https://github.com/valerka1292/gemini-cli-proxy
 5. Claude usage limits tracking: https://github.com/cruzanstx/cclimits
 6. Ghostty feature/config docs for baseline setup: https://ghostty.org/docs/features and https://ghostty.org/docs/config/reference
-

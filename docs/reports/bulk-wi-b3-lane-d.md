@@ -899,7 +899,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4590] worklog line 7 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -908,7 +909,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4591] worklog line 9 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -917,7 +919,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4592] worklog line 10 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -926,7 +929,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4593] worklog line 12 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -935,7 +939,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4594] worklog line 13 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -944,7 +949,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4595] init line 1 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -953,7 +959,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4596] init line 4 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -962,7 +969,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4597] init line 11 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -971,7 +979,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4598] init line 6 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -980,7 +989,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4599] export line 8 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S

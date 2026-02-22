@@ -17,7 +17,6 @@ class CredentialSources:
     keychain_profile: str | None = None
 
 
-
 def resolve_credential_source(sources: CredentialSources) -> str:
     """Resolve credential source with strict ambiguity rejection.
 

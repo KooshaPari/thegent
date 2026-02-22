@@ -26,7 +26,6 @@ class ReliabilityTargets:
     excellent: int = 95
 
 
-
 def _bounded(value: float) -> float:
     if not 0.0 <= value <= 1.0:
         raise ValueError("reliability inputs must be within [0,1]")

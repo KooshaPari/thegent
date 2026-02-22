@@ -102,10 +102,14 @@ def test_validate_provider_connect_failure_classifies_error(tmp_path: Path) -> N
 
     with (
         patch("thegent.provider_model_manager._ensure_config", return_value=config_path),
-        patch("thegent.provider_model_manager._load_yaml", return_value={"openai-compatibility": [
-            {"name": "roo", "api-key-entries": [{"api-key": "abc123"}]}
-        ]}),
-        patch("thegent.provider_model_manager._load_json", return_value={"roo": {"base_url": "https://cli.example", "model": "roo model"}}),
+        patch(
+            "thegent.provider_model_manager._load_yaml",
+            return_value={"openai-compatibility": [{"name": "roo", "api-key-entries": [{"api-key": "abc123"}]}]},
+        ),
+        patch(
+            "thegent.provider_model_manager._load_json",
+            return_value={"roo": {"base_url": "https://cli.example", "model": "roo model"}},
+        ),
         patch("thegent.provider_model_manager.httpx.post", side_effect=httpx.ConnectError("refused")),
     ):
         success, _, details = validate_provider("roo")
@@ -122,10 +126,14 @@ def test_validate_provider_timeout_classifies_error(tmp_path: Path) -> None:
 
     with (
         patch("thegent.provider_model_manager._ensure_config", return_value=config_path),
-        patch("thegent.provider_model_manager._load_yaml", return_value={"openai-compatibility": [
-            {"name": "roo", "api-key-entries": [{"api-key": "abc123"}]}
-        ]}),
-        patch("thegent.provider_model_manager._load_json", return_value={"roo": {"base_url": "https://cli.example", "model": "roo model"}}),
+        patch(
+            "thegent.provider_model_manager._load_yaml",
+            return_value={"openai-compatibility": [{"name": "roo", "api-key-entries": [{"api-key": "abc123"}]}]},
+        ),
+        patch(
+            "thegent.provider_model_manager._load_json",
+            return_value={"roo": {"base_url": "https://cli.example", "model": "roo model"}},
+        ),
         patch("thegent.provider_model_manager.httpx.post", side_effect=httpx.TimeoutException("timed out")),
     ):
         success, _, details = validate_provider("roo")

@@ -8,7 +8,9 @@ import pytest
 from thegent.infra import fast_file_ops
 
 
-def test_sendfile_failure_falls_back_and_emits_telemetry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+def test_sendfile_failure_falls_back_and_emits_telemetry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
     src = tmp_path / "src.bin"
     dst = tmp_path / "dst.bin"
     payload = b"abc123"

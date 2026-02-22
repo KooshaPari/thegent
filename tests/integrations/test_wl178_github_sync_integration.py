@@ -143,9 +143,13 @@ def test_wl178_sync_to_github_fails_fast_on_missing_status_field(
         if args[:3] == ["project", "item-list", "42"]:
             return 0, json.dumps([]), ""
         if args[:3] == ["project", "field-list", "42"]:
-            return 0, json.dumps(
-                [{"id": "F_PRIORITY", "name": "Priority", "options": [{"id": "P1", "name": "P1"}]}],
-            ), ""
+            return (
+                0,
+                json.dumps(
+                    [{"id": "F_PRIORITY", "name": "Priority", "options": [{"id": "P1", "name": "P1"}]}],
+                ),
+                "",
+            )
         raise AssertionError(f"unexpected gh args: {args}")
 
     monkeypatch.setattr("thegent.integrations.gh_project_sync._run_gh_command", fake_run)

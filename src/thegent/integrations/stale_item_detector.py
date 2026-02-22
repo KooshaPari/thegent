@@ -75,10 +75,7 @@ class StaleItemDetector:
                         item_id=item.item_id,
                         stale_local_days=local_age.total_seconds() / 86400,
                         stale_remote_days=remote_age.total_seconds() / 86400,
-                        reason=(
-                            "No local or remote movement past thresholds: "
-                            f"local={local_age}, remote={remote_age}"
-                        ),
+                        reason=(f"No local or remote movement past thresholds: local={local_age}, remote={remote_age}"),
                     )
                 )
 

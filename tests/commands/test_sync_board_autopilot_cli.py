@@ -195,7 +195,20 @@ def test_sync_board_passes_wl_range_and_batch_size(monkeypatch: pytest.MonkeyPat
 
     result = CliRunner().invoke(
         app,
-        ["board", "--board", "42", "--source", "github", "--dry-run", "--wl-start", "184", "--wl-end", "188", "--write-batch-size", "3"],
+        [
+            "board",
+            "--board",
+            "42",
+            "--source",
+            "github",
+            "--dry-run",
+            "--wl-start",
+            "184",
+            "--wl-end",
+            "188",
+            "--write-batch-size",
+            "3",
+        ],
     )
 
     assert result.exit_code == 0

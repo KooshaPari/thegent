@@ -250,5 +250,50 @@
     "occurred_at": "2026-02-22T23:33:17.169644+00:00",
     "retry_class": "permanent",
     "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-22T23:47:01.621086+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-b5995404f2cc",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "github/write timed out after 0.010s",
+    "occurred_at": "2026-02-22T23:47:24.406283+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-3c6741b3a620",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "boom",
+    "occurred_at": "2026-02-22T23:47:24.429842+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-b895a8b395b8",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "github/write blocked by open connector circuit breaker",
+    "occurred_at": "2026-02-22T23:47:24.434088+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-22T23:48:09.670928+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
   }
 ]

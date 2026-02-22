@@ -141,4 +141,3 @@ For macOS performance:
 3. Terminal: pick for rendering/input UX (Ghostty, iTerm2, Kitty class), then tune shell startup separately.
 4. Tooling: adopt `rg` + `fd` + `bat` + `eza` for interactive speed.
 5. Stability: monitor process limits and runaway jobs to avoid `fork failed` incidents.
-

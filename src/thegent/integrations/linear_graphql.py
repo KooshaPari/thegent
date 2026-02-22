@@ -175,9 +175,7 @@ def build_linear_state_mapping(states_nodes: list[dict[str, Any]]) -> dict[str, 
 
     missing = sorted(REQUIRED_LINEAR_STATE_TYPES - set(states_by_type.keys()))
     if missing:
-        raise LinearGraphQLError(
-            "Linear workflow is missing required state type mappings: " + ", ".join(missing)
-        )
+        raise LinearGraphQLError("Linear workflow is missing required state type mappings: " + ", ".join(missing))
     return states_by_type
 
 

@@ -79,4 +79,3 @@ class ConflictQueueStore:
             json.dump(payload, handle, indent=2, sort_keys=True)
             handle.write("\n")
         temp_path.replace(self._queue_path)
-

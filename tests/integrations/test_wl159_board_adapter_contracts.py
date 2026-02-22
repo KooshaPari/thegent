@@ -104,9 +104,10 @@ def test_linear_adapter_sync_payload_mapping(monkeypatch: pytest.MonkeyPatch) ->
     created: list[tuple[str, str, str]] = []
     updated: list[tuple[str, str, str]] = []
 
-    monkeypatch.setattr("thegent.sync.board_adapters.os.getenv", lambda key, default=None: {
-        "THGENT_LINEAR_API_KEY": "token"
-    }.get(key, default))
+    monkeypatch.setattr(
+        "thegent.sync.board_adapters.os.getenv",
+        lambda key, default=None: {"THGENT_LINEAR_API_KEY": "token"}.get(key, default),
+    )
     monkeypatch.setattr(
         "thegent.sync.board_adapters.LinearBoardAdapter._resolve_team_id",
         lambda self, token, team_key: "team-id",

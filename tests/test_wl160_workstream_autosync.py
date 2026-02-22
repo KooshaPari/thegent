@@ -9,12 +9,14 @@ Tests cover:
 - Autosync command-line interface
 """
 
+import os
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
 
 import pytest
 
 from thegent.docgen.code_annotation import CodeAnnotationGenerator
+from thegent.execution import EscalationQueue
 from thegent.integrations.reflection_event_log import ReflectionDecision, ReflectionEventLog
 from thegent.integrations.workstream_autosync import (
     SyncDirection,
@@ -648,6 +650,100 @@ class TestWorkstreamAutosyncRunner:
         assert runner.last_operation.direction == "read"
 
     @pytest.mark.asyncio
+    async def test_sync_from_github_closes_issue_on_completion_transition(self, valid_github_config, tmp_path):
+        """Remote completion transition should trigger GitHub issue auto-close flow."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-160] Test
+**Status:** IN PROGRESS
+"""
+        )
+        valid_github_config.work_stream_path = work_stream
+        valid_github_config.github_auto_close_issues = True
+        valid_github_config.github_auto_close_comment = "Closed via autosync."
+
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        items = WorkstreamParser.parse_items(work_stream)
+
+        with (
+            patch(
+                "thegent.integrations.workstream_autosync.extract_github_issue_refs",
+                return_value=["owner/repo#123"],
+            ),
+            patch(
+                "thegent.integrations.workstream_autosync.gh_sync_from_github",
+                return_value={
+                    "items": [
+                        {
+                            "item_id": "WL-160",
+                            "status": "COMPLETED",
+                            "body": "Completes owner/repo#123",
+                        }
+                    ],
+                    "errors": [],
+                },
+            ),
+            patch(
+                "thegent.integrations.workstream_autosync.close_or_comment_github_issue_refs",
+                return_value={
+                    "items_processed": 1,
+                    "items_updated": 1,
+                    "items_commented": 1,
+                    "issues": [
+                        {
+                            "issue_ref": "owner/repo#123",
+                            "commented": True,
+                            "closed": True,
+                            "status": "ok",
+                        }
+                    ],
+                    "errors": [],
+                },
+            ) as close_mock,
+        ):
+            await runner._sync_from_github(items, work_stream)
+
+        updated = work_stream.read_text(encoding="utf-8")
+        assert "**Status:** COMPLETED" in updated
+        close_mock.assert_called_once_with(["owner/repo#123"], close_comment="Closed via autosync.")
+
+    @pytest.mark.asyncio
+    async def test_finalize_incident_snapshot_enqueues_slo_escalation(self, valid_github_config, tmp_path):
+        """Snapshot with stale age and budget breach should enqueue escalation entry."""
+        status_path = tmp_path / "autosync_status.json"
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+        snapshot_path = status_path.parent / "autosync_snapshot_old.json"
+        snapshot_path.write_text("{}", encoding="utf-8")
+        old_time = datetime.now().timestamp() - 3_600
+        os.utime(snapshot_path, (old_time, old_time))
+
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            status_file_path=status_path,
+            error_budget_max_consecutive_failures=1,
+            error_budget_max_failure_rate=0.1,
+            error_budget_escalation_after=1,
+            autosync_stale_snapshot_seconds=1,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        runner._current_run_correlation_id = "run-123"
+        runner._error_budget.record_failure()
+
+        runner._finalize_incident_snapshot(items_count=3, metadata_state={"status": "fresh", "age_seconds": 0})
+
+        snapshot = runner._latest_incident_snapshot
+        assert any("autosync snapshot stale" in reason for reason in snapshot["slo_alerts"])
+        assert any("error budget" in reason for reason in snapshot["slo_alerts"])
+
+        queue = EscalationQueue(status_path.parent)
+        pending = queue.list_pending()
+        assert any("autosync snapshot stale" in str(item.get("reason", "")) for item in pending)
+
+    @pytest.mark.asyncio
     async def test_sync_to_linear(self, valid_linear_config):
         """Test Linear sync operation."""
         runner = WorkstreamAutosyncRunner(valid_linear_config)
@@ -852,6 +948,27 @@ class TestLoadAutosyncConfigFromEnv:
             assert config.scope_priorities == ["P0", "P1"]
             assert config.scope_wl_ranges == ["WL-160..WL-168"]
             assert config.remote_missing_item_policy == RemoteMissingItemPolicy.ARCHIVE
+
+    def test_load_slo_and_stale_snapshot_env(self):
+        """Load error budget thresholds and stale snapshot threshold from environment."""
+        with patch.dict(
+            "os.environ",
+            {
+                "THGENT_WORKSTREAM_AUTOSYNC_ENABLED": "true",
+                "THGENT_GITHUB_ENABLED": "true",
+                "THGENT_GITHUB_OWNER": "test-owner",
+                "THGENT_GITHUB_PROJECT_NUMBER": "1",
+                "THGENT_AUTOSYNC_ERROR_BUDGET_MAX_CONSECUTIVE_FAILURES": "2",
+                "THGENT_AUTOSYNC_ERROR_BUDGET_MAX_FAILURE_RATE": "0.2",
+                "THGENT_AUTOSYNC_ERROR_BUDGET_ESCALATION_AFTER": "4",
+                "THGENT_AUTOSYNC_STALE_SNAPSHOT_SECONDS": "1200",
+            },
+        ):
+            config = load_autosync_config_from_env()
+            assert config.error_budget_max_consecutive_failures == 2
+            assert config.error_budget_max_failure_rate == 0.2
+            assert config.error_budget_escalation_after == 4
+            assert config.autosync_stale_snapshot_seconds == 1200
 
 
 class TestStandaloneMode:

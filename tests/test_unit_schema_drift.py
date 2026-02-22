@@ -24,4 +24,3 @@ def test_detect_schema_drift_no_drift():
     assert report.missing_fields == []
     assert report.unexpected_fields == []
     assert report.has_drift is False
-

@@ -33,4 +33,3 @@ class ConnectorHealth:
 def render_health_scoreboard(rows: list[ConnectorHealth]) -> list[str]:
     ordered = sorted(rows, key=lambda row: row.score, reverse=True)
     return [f"{row.connector} score={row.score} band={row.band} drift={row.drift_count}" for row in ordered]
-

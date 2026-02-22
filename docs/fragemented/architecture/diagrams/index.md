@@ -6,4 +6,3 @@
 * `package-structure.md`
 
 ## Subdirectories
-

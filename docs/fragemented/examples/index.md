@@ -9,4 +9,3 @@
 * `tooltip-example.md`
 
 ## Subdirectories
-

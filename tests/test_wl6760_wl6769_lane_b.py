@@ -144,9 +144,7 @@ def test_wl6767_registry_malformed_json_sets_corrupt_meta(tmp_path: Path) -> Non
 
 
 @pytest.mark.unit
-def test_wl6767_registry_permission_error_sets_unreadable_meta(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_wl6767_registry_permission_error_sets_unreadable_meta(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     reg_file = tmp_path / "registry.json"
     reg_file.write_text("{}", encoding="utf-8")
     original_read_text = Path.read_text
@@ -190,7 +188,9 @@ def test_wl6769_poll_session_messages_unreadable_message_log(monkeypatch: pytest
 
     from thegent import execution as execution_mod
 
-    monkeypatch.setattr(execution_mod.MessageRegistry, "list_pending", lambda _self: (_ for _ in ()).throw(PermissionError("denied")))
+    monkeypatch.setattr(
+        execution_mod.MessageRegistry, "list_pending", lambda _self: (_ for _ in ()).throw(PermissionError("denied"))
+    )
 
     payload = poll_session_messages(session_id, include_meta=True)
 
@@ -211,7 +211,9 @@ def test_wl6769_poll_session_messages_parser_failure(monkeypatch: pytest.MonkeyP
 
     from thegent import execution as execution_mod
 
-    monkeypatch.setattr(execution_mod.MessageRegistry, "list_pending", lambda _self: (_ for _ in ()).throw(ValueError("parse")))
+    monkeypatch.setattr(
+        execution_mod.MessageRegistry, "list_pending", lambda _self: (_ for _ in ()).throw(ValueError("parse"))
+    )
 
     payload = poll_session_messages(session_id, include_meta=True)
 

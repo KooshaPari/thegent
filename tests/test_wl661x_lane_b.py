@@ -205,6 +205,7 @@ class TestWL6613HarnessProbeStatus:
         assert status["status"] == "error"
         assert status["reason"] == "runtime_failure"
 
+
 @pytest.mark.unit
 class TestWL6614MojoDispatchScripts:
     def test_builds_module_function_targeted_dispatch_script(self) -> None:
@@ -216,7 +217,9 @@ class TestWL6614MojoDispatchScripts:
 
     def test_unknown_module_and_function_raise_actionable_errors(self) -> None:
         with pytest.raises(ValueError, match="Unknown module"):
-            build_dispatch_script(MojoTask(task_id="wl6614-missing-module", module="missing_mod_zzz", function="run", args={}))
+            build_dispatch_script(
+                MojoTask(task_id="wl6614-missing-module", module="missing_mod_zzz", function="run", args={})
+            )
         with pytest.raises(ValueError, match="Unknown function"):
             build_dispatch_script(MojoTask(task_id="wl6614-missing-fn", module="json", function="missing_fn", args={}))
 
@@ -281,7 +284,9 @@ class TestWL6617ShimDetectionDiagnostics:
         link.symlink_to(tmp_path / "missing-target")
         assert is_thegent_shim(str(link)) is False
 
-    def test_permission_error_returns_false_and_logs(self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+    def test_permission_error_returns_false_and_logs(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
         caplog.set_level("WARNING")
         monkeypatch.setattr(Path, "is_symlink", lambda self: True)
         monkeypatch.setattr(Path, "readlink", lambda self: (_ for _ in ()).throw(PermissionError("denied")))
@@ -311,14 +316,16 @@ class TestWL6618BottleneckStatusPayload:
                 return [{"component": "cpu"}]
 
             @staticmethod
-            def detect_resource_contention(snapshot: dict[str, object], harness_cards: dict[str, object]) -> list[dict[str, str]]:
+            def detect_resource_contention(
+                snapshot: dict[str, object], harness_cards: dict[str, object]
+            ) -> list[dict[str, str]]:
                 return [{"resource": "memory"}]
 
         controller.bottleneck_detector = _Detector()
         controller.harness_cards = {}
         monkeypatch.setattr(
             "thegent.orchestration.resource.resource_management.sample_extended_resources",
-            lambda: {},
+            dict,
         )
         payload = controller.get_bottlenecks()
         assert set(payload.keys()) == {"slow_points", "resource_contention"}

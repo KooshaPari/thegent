@@ -26,4 +26,3 @@ def test_render_scoreboard_sorted_by_score_desc():
     lines = render_health_scoreboard(rows)
     assert lines[0].startswith("github")
     assert lines[1].startswith("linear")
-

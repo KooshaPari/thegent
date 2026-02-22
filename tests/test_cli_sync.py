@@ -66,5 +66,4 @@ def test_sync_ga_readiness_returns_nonzero_when_not_ready(tmp_path, monkeypatch)
     monkeypatch.chdir(tmp_path)
     result = runner.invoke(app, ["sync", "ga-readiness", "--format", "json"])
     assert result.exit_code == 1
-    assert "\"ready\": false" in result.stdout
-
+    assert '"ready": false' in result.stdout

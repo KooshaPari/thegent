@@ -6,4 +6,3 @@
 * `02-configuration.md`
 
 ## Subdirectories
-

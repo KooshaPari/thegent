@@ -58,9 +58,7 @@ def load_all_resources() -> dict[str, Any]:
     # Tool loaders
     resources["_server_session_tools"] = _load_session_tools(_load_server_module_shared)
     resources["_server_handoff_queue_tools"] = _load_handoff_queue_tools(_load_server_module_shared)
-    resources["_server_queue_mutations_tools"] = _load_queue_mutations_tools(
-        _load_server_module_shared
-    )
+    resources["_server_queue_mutations_tools"] = _load_queue_mutations_tools(_load_server_module_shared)
     resources["_server_tools_sessions"] = _load_tools_sessions(_load_server_module_shared)
     resources["_server_tools_queue"] = _load_tools_queue(_load_server_module_shared)
     resources["_server_tools_terminal"] = _load_tools_terminal(_load_server_module_shared)
@@ -68,26 +66,16 @@ def load_all_resources() -> dict[str, Any]:
     resources["_server_tools_governance"] = _load_tools_governance(_load_server_module_shared)
     resources["_server_tools_research"] = _load_tools_research(_load_server_module_shared)
     resources["_server_tools_planning"] = _load_tools_planning(_load_server_module_shared)
-    resources["_server_tools_contract_observe"] = _load_tools_contract_observe(
-        _load_server_module_shared
-    )
-    resources["_server_tools_locking_planning"] = _load_tools_locking_planning(
-        _load_server_module_shared
-    )
+    resources["_server_tools_contract_observe"] = _load_tools_contract_observe(_load_server_module_shared)
+    resources["_server_tools_locking_planning"] = _load_tools_locking_planning(_load_server_module_shared)
     resources["_server_tools_skills"] = _load_tools_skills(_load_server_module_shared)
     resources["_server_tools_coordination"] = _load_tools_coordination(_load_server_module_shared)
     resources["_server_tools_runtime"] = _load_tools_runtime(_load_server_module_shared)
     resources["_server_tools_batch4"] = _load_tools_batch4(_load_server_module_shared)
     resources["_server_tools_workstream_lsp"] = _load_tools_workstream_lsp(_load_server_module_shared)
-    resources["_server_tools_workstream_governance"] = _load_tools_workstream_governance(
-        _load_server_module_shared
-    )
-    resources["_server_tools_prompt_and_handoff"] = _load_tools_prompt_and_handoff(
-        _load_server_module_shared
-    )
-    resources["_server_tools_dynamic_registry"] = _load_tools_dynamic_registry(
-        _load_server_module_shared
-    )
+    resources["_server_tools_workstream_governance"] = _load_tools_workstream_governance(_load_server_module_shared)
+    resources["_server_tools_prompt_and_handoff"] = _load_tools_prompt_and_handoff(_load_server_module_shared)
+    resources["_server_tools_dynamic_registry"] = _load_tools_dynamic_registry(_load_server_module_shared)
     resources["_server_tools_provider_models"] = _load_tools_provider_models(_load_server_module_shared)
 
     # Load harness tools

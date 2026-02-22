@@ -35,7 +35,9 @@ def test_wl6872_get_git_commits_git_command_failure_reports_error(
     monkeypatch.setattr(
         summary.subprocess,
         "run",
-        lambda *_args, **_kwargs: subprocess.CompletedProcess(["git", "log"], 128, stdout="", stderr="fatal: bad revision"),
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(
+            ["git", "log"], 128, stdout="", stderr="fatal: bad revision"
+        ),
     )
 
     result = summary.get_git_commits(tmp_path, start, end)

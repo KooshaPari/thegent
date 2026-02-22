@@ -15,9 +15,7 @@ def runner() -> CliRunner:
     return CliRunner()
 
 
-def test_shell_reload_exits_nonzero_on_source_failure(
-    monkeypatch: pytest.MonkeyPatch, runner: CliRunner
-) -> None:
+def test_shell_reload_exits_nonzero_on_source_failure(monkeypatch: pytest.MonkeyPatch, runner: CliRunner) -> None:
     def _failed_run(*args, **kwargs):  # noqa: ANN002, ANN003
         return subprocess.CompletedProcess(
             args=["zsh", "-c", "source ~/.zshrc"],
@@ -100,7 +98,9 @@ def test_shell_platform_probe_success(monkeypatch: pytest.MonkeyPatch, runner: C
     _set_platform_stubs(monkeypatch)
 
     def _version_run(*args, **kwargs):  # noqa: ANN002, ANN003
-        return subprocess.CompletedProcess(args=args[0], returncode=0, stdout="zsh 5.9 (x86_64-apple-darwin)\n", stderr="")
+        return subprocess.CompletedProcess(
+            args=args[0], returncode=0, stdout="zsh 5.9 (x86_64-apple-darwin)\n", stderr=""
+        )
 
     monkeypatch.setattr(shell_cli_module.subprocess, "run", _version_run)
 

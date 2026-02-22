@@ -28,4 +28,3 @@ def test_max_changes_rejects_non_positive_config():
     config = SyncEngineConfig(max_changes_per_cycle=0)
     with pytest.raises(ValueError, match="must be positive"):
         enforce_max_changes_per_cycle(attempted_changes=1, config=config)
-

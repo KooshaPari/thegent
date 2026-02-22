@@ -33,4 +33,3 @@ def evaluate_ga_readiness(checks: dict[str, bool]) -> GAReadinessResult:
         else:
             failed.append(check)
     return GAReadinessResult(passed=passed, failed=failed)
-

@@ -59,4 +59,3 @@ def test_queue_rejects_duplicate_conflict_id(tmp_path):
     store.add(entry)
     with pytest.raises(ValueError, match="conflict already exists"):
         store.add(entry)
-

@@ -475,6 +475,7 @@ def _prepare_github_status_mapping(
 ) -> dict[str, str]:
     status_option_by_id: dict[str, str] = {}
     missing_statuses: set[str] = set()
+    enforce_mapping = bool(status_options)
 
     for item in workstream_data:
         item_id = str(item.get("item_id") or item.get("id") or "").strip()
@@ -487,7 +488,7 @@ def _prepare_github_status_mapping(
             continue
         status_option_by_id[item_id] = status_option_id
 
-    if missing_statuses:
+    if missing_statuses and enforce_mapping:
         missing = ", ".join(sorted(missing_statuses))
         raise GHProjectSyncError(f"GitHub schema drift: missing required status option mappings for [{missing}]")
 

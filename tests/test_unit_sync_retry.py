@@ -27,4 +27,3 @@ def test_should_retry_respects_max_attempts():
     policy = RetryPolicy(max_attempts=2, pull_only_on_failure=False)
     assert should_retry(attempt=1, policy=policy) is True
     assert should_retry(attempt=2, policy=policy) is False
-

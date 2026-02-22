@@ -159,7 +159,9 @@ def test_wl6902_get_git_commits_command_failure_reports_error(monkeypatch: pytes
     assert payload.error["type"] == "git_log_failed"
 
 
-def test_wl6902_get_git_commits_empty_window_keeps_empty_status(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_wl6902_get_git_commits_empty_window_keeps_empty_status(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     (tmp_path / ".git").mkdir()
     start = datetime.now(UTC) - timedelta(days=1)
     end = datetime.now(UTC)
@@ -317,9 +319,13 @@ def test_wl6908_shared_mcp_cleans_only_stale_lockfile(monkeypatch: pytest.Monkey
     monkeypatch.setattr(shared_mcp_manager.Path, "home", lambda: tmp_path)
     _scope, lockfile = shared_mcp_manager.get_server_scope()
     lockfile.write_text(json.dumps({"pid": 424242, "port": 3847}), encoding="utf-8")
-    monkeypatch.setattr(shared_mcp_manager.os, "kill", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError(ESRCH, "")))
+    monkeypatch.setattr(
+        shared_mcp_manager.os, "kill", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError(ESRCH, ""))
+    )
 
-    fake_manage = SimpleNamespace(mcp_up=lambda: (True, "started"), _get_mcp_url=lambda *_args, **_kwargs: "http://127.0.0.1:3847/mcp")
+    fake_manage = SimpleNamespace(
+        mcp_up=lambda: (True, "started"), _get_mcp_url=lambda *_args, **_kwargs: "http://127.0.0.1:3847/mcp"
+    )
     monkeypatch.setitem(sys.modules, "thegent.mcp.manage", fake_manage)
 
     is_new, url = shared_mcp_manager.ensure_shared_mcp_server()

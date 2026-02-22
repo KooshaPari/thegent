@@ -26,11 +26,9 @@ class GuardrailMigrationResult:
     added_keys: list[str]
 
 
-
 def build_default_guardrail_pack() -> dict[str, Any]:
     """Return a copy of the canonical default-on guardrail pack."""
     return dict(_DEFAULT_PACK)
-
 
 
 def migrate_to_default_on_pack(existing: dict[str, Any]) -> GuardrailMigrationResult:

@@ -1,12 +1,12 @@
 {
-  "last_cycle_at": "2026-02-22T13:58:20.896918+00:00",
+  "last_cycle_at": "2026-02-22T23:48:09.624280+00:00",
   "total_cycles": 1,
   "last_error": null,
   "health": "ok",
   "runner": {
     "enabled": true,
     "is_running": false,
-    "last_sync_time": "2026-02-22T13:58:18.766407+00:00",
+    "last_sync_time": "2026-02-22T23:48:06.895328+00:00",
     "github_enabled": true,
     "linear_enabled": false,
     "last_operation": {
@@ -17,15 +17,15 @@
       "items_successful": 0,
       "items_failed": 2,
       "errors": [],
-      "correlation_id": "f87ab294-5881-4b2e-b2ca-beb44e7f0424",
-      "started_at": "2026-02-22T13:58:18.767274+00:00",
-      "completed_at": "2026-02-22T13:58:20.895287+00:00",
-      "duration_seconds": 2.128013
+      "correlation_id": "5cd4080a-65b9-4dfe-a63d-4b9e65e97d58",
+      "started_at": "2026-02-22T23:48:06.896924+00:00",
+      "completed_at": "2026-02-22T23:48:09.620548+00:00",
+      "duration_seconds": 2.723624
     },
     "open_blockers": [
       "WL-160:Full Automatic Workstream Reflection -> external credentials"
     ],
-    "failure_queue_size": 17,
+    "failure_queue_size": 32,
     "next_cycle_interval_seconds": 300,
     "connector_health": [
       {
@@ -38,7 +38,7 @@
       "status": "fresh",
       "age_seconds": 0
     },
-    "correlation_id": "f87ab294-5881-4b2e-b2ca-beb44e7f0424",
+    "correlation_id": "5cd4080a-65b9-4dfe-a63d-4b9e65e97d58",
     "local_orphan_report": {
       "local_ids": [
         "WL-160",
@@ -59,7 +59,7 @@
   "open_blockers": [
     "WL-160:Full Automatic Workstream Reflection -> external credentials"
   ],
-  "failure_queue_size": 17,
+  "failure_queue_size": 32,
   "checkpoint": null,
   "connector_health": [
     {
@@ -70,8 +70,18 @@
   ],
   "next_cycle_interval_seconds": 300,
   "incident_snapshot": {
-    "captured_at": "2026-02-22T13:58:20.896268+00:00",
+    "captured_at": "2026-02-22T23:48:09.623517+00:00",
     "items_count": 2,
+    "snapshot_age_seconds": 2,
+    "snapshot_stale": false,
+    "slo_alerts": [],
+    "error_budget": {
+      "success_count": 1,
+      "failure_count": 0,
+      "consecutive_failures": 0,
+      "total_operations": 1,
+      "current_failure_rate": 0.0
+    },
     "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
     "connector_health": [
       {
@@ -85,7 +95,7 @@
       "age_seconds": 0
     },
     "last_error": null,
-    "failure_queue_size": 17,
+    "failure_queue_size": 32,
     "mutation_summary": {
       "operation_id": "gh-read-f7886328c220",
       "platform": "github",
@@ -94,13 +104,13 @@
       "items_successful": 0,
       "items_failed": 2,
       "errors": [],
-      "correlation_id": "f87ab294-5881-4b2e-b2ca-beb44e7f0424",
-      "started_at": "2026-02-22T13:58:18.767274+00:00",
-      "completed_at": "2026-02-22T13:58:20.895287+00:00",
-      "duration_seconds": 2.128013
+      "correlation_id": "5cd4080a-65b9-4dfe-a63d-4b9e65e97d58",
+      "started_at": "2026-02-22T23:48:06.896924+00:00",
+      "completed_at": "2026-02-22T23:48:09.620548+00:00",
+      "duration_seconds": 2.723624
     }
   },
-  "correlation_id": "f87ab294-5881-4b2e-b2ca-beb44e7f0424",
+  "correlation_id": "5cd4080a-65b9-4dfe-a63d-4b9e65e97d58",
   "local_orphan_report": {
     "local_ids": [
       "WL-160",
