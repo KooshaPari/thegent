@@ -162,7 +162,7 @@ resource_workflow_gardening = _server_workflow_prompts.register_workflow_gardeni
 _registered_workstream_governance_tools = _server_tools_workstream_governance.register_workstream_governance_tools(mcp=mcp, server_tools_governance=_server_tools_governance, govern_approve_impl=govern_approve_impl, govern_reject_impl=govern_reject_impl)
 (thegent_harness_interact, thegent_harness_list_actions, thegent_harness_get_command, thegent_harness_register_host) = _server_tools_harness.register_harness_tools(mcp=mcp, server_tools_harness=_server_tools_harness)
 (thegent_register_tool, thegent_complete_tool_call, thegent_list_dynamic_tools,) = _server_tools_dynamic_registry.register_dynamic_registry_tools(mcp=mcp, server_tools_sessions=_server_tools_sessions, error_result=_error_result)
-(thegent_list_operations, thegent_list_modes, thegent_suggest_mode, thegent_list_agents, thegent_list_models, thegent_resolve_model_route, thegent_session_contracts, _ops_gate_obj, _ops_report_obj, _ops_trend_obj, _ops_observe_obj,) = cast(Any, _server_ops_tools.register_ops_tools(
+(thegent_list_operations, thegent_list_modes, thegent_suggest_mode, thegent_list_agents, thegent_list_models, thegent_resolve_model_route, thegent_session_contracts, _ops_gate_obj, _ops_report_obj, _ops_trend_obj, _ops_observe_obj,) = cast("Any", _server_ops_tools.register_ops_tools(
     mcp=mcp, server_tools_catalog=_server_tools_catalog, server_tools_contract_observe=_server_tools_contract_observe, stable_json=_stable_json, error_result=_error_result,
     list_agents_impl=list_agents_impl, list_models_impl=list_models_impl, observe_summary_impl=observe_summary_impl, session_contract_audit_impl=session_contract_audit_impl,
     session_contract_health_gate_impl=session_contract_health_gate_impl, session_contract_health_report_impl=session_contract_health_report_impl,
@@ -222,6 +222,8 @@ mcp.add_transform(PromptsAsTools(cast("Any", mcp)))
 (journal_create_session, journal_record_change, journal_snapshot, journal_get_log, journal_list_sessions, journal_finalize, journal_prune, journal_create_enhanced, journal_start_watching, journal_get_attestations, journal_get_stats, journal_record_async, journal_flush_batch, thegent_orchestration_events,) = _server_journal_tools.register_journal_tools(mcp=mcp, logger=_log)
 from docs_engine.mcp.tools import register_tools as _register_doc_tools
 (_doc_new, _doc_search, _doc_list, _doc_export, _doc_sidebar, _doc_semantic, _doc_changelog) = _register_doc_tools(mcp)
+from research_engine.mcp.tools import register_tools as _register_research_tools
+(_research_search, _research_recent, _research_digest, _research_crawl, _research_topics, _research_sync) = _register_research_tools(mcp)
 (health, _get_event_store, thegent_acp_invoke, http_app, http_app_factory, run) = _server_runtime_entry.register_runtime_entry(mcp=mcp, health_response=health_response, create_event_store=create_event_store, create_http_app=create_http_app, bearer_auth_middleware=BearerAuthMiddleware, log=_log, parse_acp_payload=parse_acp_payload, format_acp_response=format_acp_response, run_server=run_server, settings_factory=ThegentSettings, http_app_factory_import_path="thegent.mcp_server:http_app_factory")
 if __name__ == "__main__":
-    cast(Any, run)()
+    cast("Any", run)()

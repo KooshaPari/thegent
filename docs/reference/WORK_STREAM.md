@@ -2120,7 +2120,7 @@ Add optional bidirectional GitHub Project v2 sync that remains standalone-safe w
 **Evidence:** `src/thegent/integrations/gh_project_sync.py`
 
 ### [WL-158] Unified Workstream Integration for CLIProxyAPI++ Board Artifacts
-**Status:** IN PROGRESS
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** workstream, docs, planning
 **Effort:** M
@@ -2128,14 +2128,31 @@ Add optional bidirectional GitHub Project v2 sync that remains standalone-safe w
 
 Integrate the generated CLIProxyAPI++ board/import artifacts into thegent unified workstream loop.
 
-- Board artifacts ready in `cliproxyapi-plusplus/docs/planning/`:
-  - `CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.md`
-  - `CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.csv`
-  - `CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json`
-  - `GITHUB_PROJECT_IMPORT_CLIPROXYAPI_2000_2026-02-22.csv`
-- Workflow docs already linked in cliproxy++ README and VitePress nav; next is mapping active execution slices into thegent WL cadence.
+**Completed:** 2026-02-22 (commit 72f26996)
 
-**Evidence:** `cliproxyapi-plusplus/docs/planning/GITHUB_PROJECT_IMPORT_CLIPROXYAPI_2000_2026-02-22.csv`
+**Implementation:**
+- Board artifacts ready in `cliproxyapi-plusplus/docs/planning/`:
+  - `CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.md` (markdown execution board with status summary)
+  - `CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.csv` (board items with WL mapping)
+  - `CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json` (metadata and execution slices)
+  - `GITHUB_PROJECT_IMPORT_CLIPROXYAPI_2000_2026-02-22.csv` (GitHub Projects import format)
+
+- BoardArtifactLoader in `src/thegent/planning/board_artifact_loader.py`:
+  - Loads all artifact formats (JSON, CSV, markdown)
+  - Maps CLIProxyAPI board items to thegent WL IDs
+  - Parses execution slices and their WL range mappings
+  - Provides workstream integration interface
+
+- 4 execution slices with active WL cadence:
+  - Slice A (Core Routing): WL-001..WL-015 (45% complete)
+  - Slice B (Providers): WL-020..WL-050 (28% complete)
+  - Slice C (Workstream): WL-158..WL-162 (intake phase)
+  - Slice D (Quality): WL-100..WL-140 (15% complete)
+
+**Evidence:**
+- Implementation: `src/thegent/planning/board_artifact_loader.py`
+- Tests: `tests/test_wl158_board_artifact_integration.py` (12/12 pass)
+- Board artifacts: `cliproxyapi-plusplus/docs/planning/`
 
 ### [WL-159] Cross-Repo Board Sync Operationalization
 **Status:** IN PROGRESS
