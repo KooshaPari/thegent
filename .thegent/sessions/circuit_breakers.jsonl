@@ -75,3 +75,4 @@
 {"target": "summarizer", "category": "agent", "event": "failure", "timestamp": "2026-02-22T12:19:21.361888+00:00", "error_hash": null}
 {"target": "cliproxy", "category": "agent", "event": "failure", "timestamp": "2026-02-22T13:07:23.326523+00:00", "error_hash": null}
 {"target": "cliproxy", "category": "agent", "event": "failure", "timestamp": "2026-02-22T13:07:40.731500+00:00", "error_hash": null}
+{"target": "cliproxy", "category": "agent", "event": "failure", "timestamp": "2026-02-22T13:08:17.856331+00:00", "error_hash": null}
