@@ -5,15 +5,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 
 class QuotaExhaustedError(Exception):
     """Raised when a connector's daily quota budget is exhausted."""
-
-    pass
 
 
 @dataclass

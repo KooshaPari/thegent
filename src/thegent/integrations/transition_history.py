@@ -7,7 +7,7 @@ persisted to JSONL format for deterministic replay and compliance.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Optional

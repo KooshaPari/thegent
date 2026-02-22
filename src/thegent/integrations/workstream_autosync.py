@@ -18,7 +18,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -61,9 +61,9 @@ class WorkstreamAutosyncConfig:
         """Check if config has at least one platform enabled."""
         if not self.enabled:
             return False
-        return (self.github_enabled and self.github_owner and self.github_project_number > 0) or (
-            self.linear_enabled and self.linear_api_key and self.linear_team_key
-        )
+        github_valid = bool(self.github_enabled and self.github_owner and self.github_project_number > 0)
+        linear_valid = bool(self.linear_enabled and self.linear_api_key and self.linear_team_key)
+        return github_valid or linear_valid
 
     def should_sync_github(self) -> bool:
         """Check if GitHub sync is enabled and configured."""
@@ -169,7 +169,7 @@ class SyncOperation:
     items_successful: int = 0
     items_failed: int = 0
     errors: list[str] = field(default_factory=list)
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     duration_seconds: Optional[float] = None
 
@@ -356,7 +356,7 @@ class WorkstreamAutosyncRunner:
                 logger.debug("No work stream items to sync")
                 return
 
-            self.last_sync_time = datetime.utcnow()
+            self.last_sync_time = datetime.now(timezone.utc)
             logger.debug("Performing sync cycle for %d items", len(items))
 
             # Sync to GitHub if enabled
@@ -401,7 +401,7 @@ class WorkstreamAutosyncRunner:
                     self.config.github_project_number,
                 )
 
-            op.completed_at = datetime.utcnow()
+            op.completed_at = datetime.now(timezone.utc)
             op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
             self.last_operation = op
 
@@ -436,7 +436,7 @@ class WorkstreamAutosyncRunner:
 
             logger.debug("Read status from GitHub project (stub)")
 
-            op.completed_at = datetime.utcnow()
+            op.completed_at = datetime.now(timezone.utc)
             op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
             self.last_operation = op
 
@@ -469,7 +469,7 @@ class WorkstreamAutosyncRunner:
             if not self.config.dry_run:
                 logger.info("Would sync %d items to Linear team %s", len(items), self.config.linear_team_key)
 
-            op.completed_at = datetime.utcnow()
+            op.completed_at = datetime.now(timezone.utc)
             op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
             self.last_operation = op
 
@@ -504,7 +504,7 @@ class WorkstreamAutosyncRunner:
 
             logger.debug("Read status from Linear (stub)")
 
-            op.completed_at = datetime.utcnow()
+            op.completed_at = datetime.now(timezone.utc)
             op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
             self.last_operation = op
 

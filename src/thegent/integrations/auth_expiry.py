@@ -83,7 +83,7 @@ class AuthExpiryDetector:
         return AuthExpiryInfo(
             status=status,
             expires_at=expires_at,
-            hours_remaining=hours_remaining if hours_remaining > 0 else 0,
+            hours_remaining=max(0, hours_remaining),
             is_critical=is_critical,
         )
 
