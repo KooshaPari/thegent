@@ -233,7 +233,7 @@ class TestSyncToGithub:
         assert mock_run.call_count == 0
 
     @patch("thegent.integrations.gh_project_sync._run_gh_command")
-    def test_write_only_config_allows_sync(self, _mock_run, _valid_config):
+    def test_write_only_config_allows_sync(self, mock_run):
         """Write-only config should allow write."""
         config = GHProjectConfig(
             enabled=True,
