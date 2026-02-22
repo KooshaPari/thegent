@@ -379,7 +379,7 @@ def _run_with_retry(
     return result
 
 
-def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:
+def _parse_jsonl_output(output: str) -> tuple[str, int, int, str]:  # pyright: ignore[reportUnusedFunction]
     """Parse JSONL output from Codex. Returns (text, tokens_in, tokens_out, model).
 
     Handles:
