@@ -60,7 +60,7 @@ class ReflectionEventLog:
             return
 
         try:
-            with open(self.log_path, "r") as f:
+            with open(self.log_path) as f:
                 for line in f:
                     if line.strip():
                         event_dict = json.loads(line)

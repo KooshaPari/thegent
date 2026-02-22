@@ -18,7 +18,7 @@ class LinearPriority(IntEnum):
     LOW = 4
 
 
-class LocalPriority(str, IntEnum):
+class LocalPriority(IntEnum):
     """thegent local priority levels."""
 
     P0 = 0
