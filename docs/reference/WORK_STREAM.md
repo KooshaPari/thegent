@@ -2054,7 +2054,11 @@ Enhanced session scraper with periodic snapshots, rich extraction, tagging.
 - Extract: commands, files, facts, decisions
 - Tags: YAML frontmatter, #tag syntax, JSON sections
 
-**Evidence:** `docs/plans/2026-02-21-ENHANCED_SESSION_SCRAPER.md`
+**Evidence:**
+- Spec: `docs/plans/2026-02-21-ENHANCED_SESSION_SCRAPER.md`
+- Completed: 2026-02-22 (commit bbf8aa26)
+- Tests: 10/10 pass (test_unit_session_scraper.py) + 6/6 pass (test_unit_session_scraper_batch6.py)
+- Implementation: SessionSnapshotCreatedEvent and SessionSnapshotFailedEvent payload schema validation, request_event_id propagation, trigger normalization
 
 ### [WL-157] GitHub Projects Bidirectional Sync (Standalone Optional)
 **Status:** IN PROGRESS
@@ -26487,3 +26491,49 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Duplication** | ✅ Clean | DRY followed | Minor extraction opportunities |
 | **Neo4j** | ? Unknown | Not detected | Confirm requirement |
 | **MSW GraphQL** | N/A | Frontend | Defer to TS analysis |
+
+
+---
+
+## CLIProxyAPI Issue Board Work Items (2026-02-22)
+
+### High Priority
+
+- [ ] **CLIPROXY-001**: OAuth flow fixes - Qwen, Kiro, codex auth issues (~15 issues)
+  - Related: #1658, #1612, #1611, #232, #177
+  - Bundle: cliproxy_oauth
+
+- [ ] **CLIPROXY-002**: Streaming translation fixes (~5 critical issues)
+  - Related: #1609, #1592, #1478, #1407, #1085
+  - Bundle: cliproxy_streaming
+
+- [ ] **CLIPROXY-003**: Claude Models in Codex CLI bug fix
+  - Related: #1671
+  - Bundle: cliproxy_codex
+
+- [ ] **CLIPROXY-004**: variant parameter fallback for reasoning_effort
+  - Related: #258
+  - Status: ✅ DONE (in thegent routing/reasoning_transform.py)
+  - Bundle: cliproxy_routing
+
+### Medium Priority
+
+- [ ] **CLIPROXY-005**: Model support expansion (~40 issues)
+  - New model additions, deprecation handling
+  - Bundle: cliproxy_models
+
+- [ ] **CLIPROXY-006**: Docker/ARM deployment improvements
+  - Related: #147, #1267
+  - Bundle: cliproxy_deployment
+
+- [ ] **CLIPROXY-007**: UI/Dashboard enhancements
+  - Account rotation, provider visibility
+  - Bundle: cliproxy_ui
+
+- [ ] **CLIPROXY-008**: Session-aware hybrid routing strategy
+  - Related: #1617
+  - Bundle: cliproxy_routing
+
+### Reference
+- Full issue board: docs/docset/CLIProxyAPI_ISSUE_BOARD.md
+- Consolidation matrix: docs/docset/CLIProxyAPI_ISSUE_CONSOLIDATION.md
