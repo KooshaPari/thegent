@@ -2318,7 +2318,7 @@ Verify status/priority consistency across all connectors per cycle.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-302] Compliance Evidence Snapshot Scheduler
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** compliance, scheduler
 **Effort:** S
@@ -2340,7 +2340,7 @@ Capture stage timings and percentile summaries for each sync cycle.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-304] Conflict Growth Guardrails
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** safety, conflicts
 **Effort:** S
@@ -2351,7 +2351,7 @@ Add hard controls for runaway conflict queue growth.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-305] Capability Mismatch Alerts
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** connectors, alerts
 **Effort:** S
@@ -2384,7 +2384,7 @@ Add allocator for reserving WL ranges for upcoming planning waves.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-308] Remote Write Receipts
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** audit, connectors
 **Effort:** S
