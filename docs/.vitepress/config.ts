@@ -17,6 +17,7 @@ const hasAlgolia = Boolean(algoliaAppId && algoliaApiKey && algoliaIndexName)
 const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'thegent'
 const isPagesBuild = process.env.GITHUB_ACTIONS === 'true' || process.env.GITHUB_PAGES === 'true'
 const docsBaseOverride = process.env.VITEPRESS_BASE
+// Touchpoint marker: this assignment keeps docs base behavior explicit for pages redeploys.
 const docsBase = docsBaseOverride ?? (isPagesBuild ? `/${repoName}/` : '/')
 
 const config = defineConfig({
