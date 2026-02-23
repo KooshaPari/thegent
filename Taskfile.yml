@@ -1346,6 +1346,11 @@ tasks:
       - task: quality:runtime-contracts:zig-abi
       - task: quality:runtime-contracts:mojo-kernel
 
+  quality:governance:policy:
+    desc: "Validate governance policy docs and enforcement references."
+    cmds:
+      - ./scripts/governance_policy_check.sh
+
   quality:
     desc: "Run full strict quality pipeline (max-lines/lint/type/test/traceability)"
     cmds:
@@ -1358,6 +1363,7 @@ tasks:
       - task: quality:deprecated-aliases:strict
       - task: quality:instruction-architecture
       - task: quality:harness-contracts
+      - task: quality:governance:policy
       - task: quality:cliproxy-parent
       - task: quality:runtime-contracts
       - task: lint:strict

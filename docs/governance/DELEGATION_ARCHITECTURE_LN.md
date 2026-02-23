@@ -61,4 +61,3 @@ Every delegated task must include:
 3. Rework rate (`superseded pkg rate`).
 4. First-pass validation success.
 5. Mean time from task start to verified merge.
-
