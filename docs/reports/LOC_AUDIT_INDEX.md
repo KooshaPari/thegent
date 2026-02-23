@@ -1,6 +1,6 @@
 # Comprehensive LOC Audit - Index & Quick Start
 
-**Audit Date**: 2026-02-22  
+**Audit Date**: 2026-02-22
 **Total Python LOC**: 245,255 across 1,289 files in 98 modules
 
 ---
@@ -39,7 +39,7 @@
 
 **Problem**: No formal proof of correctness; no performance benchmarks at scale (1K-10K tasks/sec).
 
-**Action**: 
+**Action**:
 1. Prove algorithm correctness (mathematically or via property-based testing)
 2. Benchmark at 1K, 5K, 10K ops/sec before production
 3. Extract to Rust library for 60% LOC reduction + performance gain
@@ -59,7 +59,7 @@
 
 **Problem**: Critical modules have insufficient test coverage; no FR traceability.
 
-**Action**: 
+**Action**:
 - routing → 95% (Pareto frontier branch coverage)
 - agents → 90% (agent-provider parity)
 - cli → 80% (per-command coverage)
@@ -166,17 +166,17 @@ Impact: -2K LOC (splitting, not deletion), +50% test coverage
 ## Module Classification (How to Use This Audit)
 
 ### Strategic Consolidation
-**Move to CLIProxy**: routing, governance, integrations.auth  
-**Keep in thegent**: agents, cli, mcp, orchestration, planning, ui  
+**Move to CLIProxy**: routing, governance, integrations.auth
+**Keep in thegent**: agents, cli, mcp, orchestration, planning, ui
 
 ### Performance Optimization
-**Rewrite to Rust**: routing, policy_engine, planning.pert, audit.git  
-**Rewrite to Go**: mesh, compute, infra.dispatcher  
+**Rewrite to Rust**: routing, policy_engine, planning.pert, audit.git
+**Rewrite to Go**: mesh, compute, infra.dispatcher
 
 ### Test Coverage Improvement
-**Priority 1 (>90%)**: routing, agents, contracts  
-**Priority 2 (80-90%)**: cli, governance, orchestration  
-**Priority 3 (70-80%)**: mcp, planning, mesh  
+**Priority 1 (>90%)**: routing, agents, contracts
+**Priority 2 (80-90%)**: cli, governance, orchestration
+**Priority 3 (70-80%)**: mcp, planning, mesh
 
 ---
 
@@ -228,7 +228,6 @@ Impact: -2K LOC (splitting, not deletion), +50% test coverage
 
 ---
 
-**Audit Status**: Complete  
-**Last Updated**: 2026-02-22  
+**Audit Status**: Complete
+**Last Updated**: 2026-02-22
 **Next Review**: 2026-03-22 (post-Phase 1)
-

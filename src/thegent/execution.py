@@ -1230,8 +1230,7 @@ class KPIManager:
         )
         freshness = (len(recent_runs) / run_count) if run_count else 0.0
         fallback_rate = float(stats.get("fallback_rate", 0.0) or 0.0)
-        interruption_tracker = FatigueTracker(self.session_dir)
-        interruption_rate = interruption_tracker.get_fatigue_score(window_s=3600)
+        interruption_rate = float(stats.get("interruption_rate", 0.0) or 0.0)
         cost_per_run = (sum(cost_values) / len(cost_values)) if cost_values else 0.0
         knowledge_coverage = sum(1 for r in runs if r.get("agent") and r.get("model")) / run_count if run_count else 0.0
         rollback_sla = routing_accuracy
@@ -2077,8 +2076,8 @@ def poll_session_messages(
 
     if not session_id:
         _LAST_POLL_MESSAGES_META = {"status": "missing_session_id"}
-        payload = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
-        return payload if include_meta else []
+        missing_payload: dict[str, Any] = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
+        return missing_payload if include_meta else []
 
     from thegent.cli.commands.impl import _find_session_meta
     from thegent.config import ThegentSettings
@@ -2095,8 +2094,8 @@ def poll_session_messages(
             "pending_count": len(messages),
             "messages_path": str(msg_path),
         }
-        payload = {"messages": messages, "meta": dict(_LAST_POLL_MESSAGES_META)}
-        return payload if include_meta else messages
+        ok_payload: dict[str, Any] = {"messages": messages, "meta": dict(_LAST_POLL_MESSAGES_META)}
+        return ok_payload if include_meta else messages
     except FileNotFoundError as exc:
         _LAST_POLL_MESSAGES_META = {
             "status": "meta_missing",
@@ -2126,8 +2125,8 @@ def poll_session_messages(
             "detail": str(exc)[:200],
         }
 
-    payload = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
-    return payload if include_meta else []
+    empty_payload: dict[str, Any] = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
+    return empty_payload if include_meta else []
 
 
 def get_last_poll_session_messages_meta() -> dict[str, Any]:

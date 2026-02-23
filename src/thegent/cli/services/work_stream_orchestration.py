@@ -58,18 +58,18 @@ def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
     except Exception as e:
         _log.debug("DB primary failed, falling back to direct sources: %s", e)
 
-    next_items: list[dict[str, Any]] = []
+    aggregated_items: list[dict[str, Any]] = []
     sources_checked: list[str] = []
     queued, q_sources = run_workstream_helpers.collect_queued_items(settings, limit)
-    next_items.extend(queued)
+    aggregated_items.extend(queued)
     sources_checked.extend(q_sources)
     ws_items, ws_sources = run_workstream_helpers.collect_work_stream_items(work_stream_path, limit)
-    next_items.extend(ws_items)
+    aggregated_items.extend(ws_items)
     sources_checked.extend(ws_sources)
-    next_items.sort(
+    aggregated_items.sort(
         key=lambda x: (x.pop("_sort_order", 5), run_workstream_helpers.priority_sort_key(x.get("priority", "P2")))
     )
-    next_items = next_items[:limit]
+    next_items = aggregated_items[:limit]
 
     if not next_items:
         example_task_path = cwd / "tasks" / "example-task.md"

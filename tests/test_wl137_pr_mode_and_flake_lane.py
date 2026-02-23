@@ -18,6 +18,7 @@ ROOT = Path(__file__).parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
 TASKFILE = ROOT / "Taskfile.yml"
 SCRIPT = ROOT / "scripts" / "test_pytest_wave_artifacts.py"
+FR_TRACE_EXTRACTOR_SCRIPT = ROOT / "scripts" / "fr_trace_extractor.py"
 PR_GUIDE = ROOT / "docs" / "guides" / "PR_TEST_IMPACT_REDUCTION.md"
 PR_INI = ROOT / "pytest-pr.ini"
 PR_FLAKE_INI = ROOT / "pytest-pr-flake.ini"
@@ -276,6 +277,45 @@ def test_requirements_map_includes_uncovered_requirements(tmp_path: Path) -> Non
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert "FR-TEST-001" in payload["requirement_to_tests"]
     assert "FR-TEST-002" in payload["requirement_coverage"]["uncovered_requirements"]
+
+
+def test_fr_trace_extractor_generates_requirements_map_artifact(tmp_path: Path) -> None:
+    """Dedicated FR extractor entrypoint should emit requirements-map/v1 output."""
+    tests_dir, _ = _build_minimal_pytest_tree(tmp_path)
+    tracker = tmp_path / "FR_TRACKER.md"
+    tracker.write_text("| FR-TEST-001 |\n| FR-TEST-002 |\n", encoding="utf-8")
+    output = tmp_path / "requirements-map.json"
+    csv_output = tmp_path / "requirements-map.csv"
+    summary = tmp_path / "requirements-map.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(FR_TRACE_EXTRACTOR_SCRIPT),
+            "--input-dir",
+            str(tests_dir),
+            "--fr-tracker",
+            str(tracker),
+            "--output",
+            str(output),
+            "--csv-output",
+            str(csv_output),
+            "--summary",
+            str(summary),
+        ],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "requirements-map/v1"
+    assert "FR-TEST-001" in payload["requirement_to_tests"]
+    assert payload["requirement_coverage"]["uncovered_requirements"] == ["FR-TEST-002"]
+    assert csv_output.exists()
+    assert summary.exists()
 
 
 def test_requirements_map_treats_trace_comments_as_secondary_evidence(tmp_path: Path) -> None:

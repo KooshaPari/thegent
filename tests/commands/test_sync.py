@@ -22,6 +22,7 @@ from thegent.commands.sync import (
     SyncResult,
 )
 from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
+from thegent.integrations.sync_policy_contract import ConnectorPolicy, SyncPolicyContract
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -206,6 +207,28 @@ class TestSyncStatus:
         )
         op = cmd.status()
         assert any("unregistered" in c for c in op.changes)
+
+
+@pytest.mark.unit
+class TestSyncBoardPolicyResolution:
+    def test_connector_policy_for_source_returns_none_without_contract(self) -> None:
+        assert SyncCommand._connector_policy_for_source(None, "github") is None
+
+    def test_connector_policy_for_source_uses_contract_mapping(self) -> None:
+        policy = SyncPolicyContract(
+            connectors={
+                "github": ConnectorPolicy(
+                    enabled=True,
+                    mode="enforce",
+                    direction="bidirectional",
+                    quota_daily=100,
+                    board_id="42",
+                )
+            }
+        )
+        resolved = SyncCommand._connector_policy_for_source(policy, "github")
+        assert resolved is not None
+        assert resolved.board_id == "42"
 
 
 # ---------------------------------------------------------------------------

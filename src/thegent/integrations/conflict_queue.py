@@ -15,7 +15,7 @@ def classify_conflict(*, field: str, connector: str, wl_id: str) -> tuple[str, s
     """Classify conflict routing fields deterministically."""
     normalized_field = field.strip().lower()
     normalized_connector = connector.strip().lower()
-    normalized_wl = wl_id.strip().upper()
+    _ = wl_id.strip().upper()
 
     if normalized_field in {"status", "state", "priority"}:
         category = "state_divergence"

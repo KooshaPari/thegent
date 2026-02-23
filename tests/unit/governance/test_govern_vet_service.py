@@ -63,3 +63,44 @@ def test_govern_vet_impl_raises_for_missing_run(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Run not found"):
         governance_service.govern_vet_impl(run_id="run_missing", session=str(tmp_path))
+
+
+def test_govern_vet_impl_forwards_federation_namespace_context(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _seed_run(tmp_path, "run_fed", stdout_text="safe output")
+    captured_context: dict[str, object] = {}
+
+    class _FakeOrchestrator:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        async def evaluate(self, *, result: object, policy: object, run_context: dict[str, object]) -> object:
+            del result, policy
+            captured_context.update(run_context)
+            return type(
+                "FakeVetterResult",
+                (),
+                {
+                    "verdict": type("FakeVerdict", (), {"value": "approved"})(),
+                    "check_results": [],
+                    "duration_ms": 1,
+                    "revision_prompt": None,
+                    "escalation_reason": None,
+                },
+            )()
+
+    monkeypatch.setattr(governance_service, "VetterOrchestrator", _FakeOrchestrator)
+
+    result = governance_service.govern_vet_impl(
+        run_id="run_fed",
+        session=str(tmp_path),
+        org="acme",
+        project="thegent",
+        environment="production",
+        policy_id="vetter_default",
+    )
+
+    assert result["verdict"] == "approved"
+    assert captured_context["org"] == "acme"
+    assert captured_context["project"] == "thegent"
+    assert captured_context["environment"] == "production"
+    assert captured_context["policy_id"] == "vetter_default"

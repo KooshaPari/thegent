@@ -217,6 +217,10 @@ def govern_vet_impl(
     policy: str = "default",
     session: str | None = None,
     dry_run: bool = False,
+    org: str | None = None,
+    project: str | None = None,
+    environment: str | None = None,
+    policy_id: str | None = None,
 ) -> dict[str, Any]:
     """WL-098: Vet a recorded run by run_id using VetterOrchestrator."""
     session_dir = _resolve_session_dir(session)
@@ -262,6 +266,14 @@ def govern_vet_impl(
         "agent": run_record.get("agent"),
         "model": run_record.get("model"),
     }
+    if org:
+        run_context["org"] = org
+    if project:
+        run_context["project"] = project
+    if environment:
+        run_context["environment"] = environment
+    if policy_id:
+        run_context["policy_id"] = policy_id
     output_text = f"{stdout_text}\n{stderr_text}" if stderr_text else stdout_text
     result_obj = SimpleNamespace(output=output_text)
     vetter_result = asyncio.run(orchestrator.evaluate(result=result_obj, policy=policy_config, run_context=run_context))

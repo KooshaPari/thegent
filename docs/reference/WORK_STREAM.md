@@ -1659,51 +1659,36 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | ~~swarm-dag-prioritization~~ | codex-30449 | 2026-02-23T01:36:42.271806+00:00 |
 | ~~resource-network-bandwidth~~ | codex-26970 | 2026-02-23T01:36:45.032668+00:00 |
 | _none_ | codex-30449 | 2026-02-23T01:36:52.712383+00:00 |
-| SCLI-P1.4 | codex-26970 | 2026-02-23T01:36:55.773169+00:00 |
 | wave70-l4 | codex-30449 | 2026-02-23T01:37:05.303313+00:00 |
 | docs-cli-reference | codex-26970 | 2026-02-23T01:37:08.225371+00:00 |
 | ~~borrow-heliosguard-backlog~~ | codex-26970 | 2026-02-23T01:37:18.852120+00:00 |
-| CLIP-BUG-01 | codex-26970 | 2026-02-23T01:37:30.298312+00:00 |
 | wave70-l2 | codex-26970 | 2026-02-23T01:37:44.388215+00:00 |
 | ~~docs-claudemd-reference~~ | codex-26970 | 2026-02-23T01:37:56.908952+00:00 |
-| CLIP-BUG-10 | codex-26970 | 2026-02-23T01:38:08.306248+00:00 |
 | ~~SCLI-P7.1~~ | codex-26970 | 2026-02-23T01:38:24.452951+00:00 |
 | sharecli-smart-merge | codex-26970 | 2026-02-23T01:38:41.297906+00:00 |
 | sharecli-git-parallelism | codex-26970 | 2026-02-23T01:38:55.428057+00:00 |
 | ~~audit-delegation-friction~~ | codex-26970 | 2026-02-23T01:39:24.692432+00:00 |
-| CLIP-BUG-12 | codex-26970 | 2026-02-23T01:39:44.301338+00:00 |
 | escalation-index-file-indexing | codex-26970 | 2026-02-23T01:39:58.712689+00:00 |
 | docs-mcp-tool-docs | codex-26970 | 2026-02-23T01:40:12.286713+00:00 |
-| CLIP-BUG-03 | codex-26970 | 2026-02-23T01:40:24.793675+00:00 |
-| SCLI-P13.2 | codex-26970 | 2026-02-23T01:40:36.320359+00:00 |
-| CLIP-BUG-08 | codex-26970 | 2026-02-23T01:40:48.784390+00:00 |
 | TGNT-P16.2 | codex-smoke | 2026-02-23T01:40:58.247759+00:00 |
-| CLIP-BUG-02 | codex-smoke | 2026-02-23T01:40:59.250106+00:00 |
-| CLIP-BUG-07 | codex-smoke | 2026-02-23T01:40:59.793977+00:00 |
 | research-smart-robust-strategies | codex-smoke | 2026-02-23T01:41:00.119425+00:00 |
 | ~~borrow-heliosguard-priority~~ | codex-smoke | 2026-02-23T01:41:00.259408+00:00 |
 | TGNT-P18.3 | codex-36397 | 2026-02-23T01:41:24.684994+00:00 |
 | ~~audit-teammate-collaboration~~ | codex-36397 | 2026-02-23T01:42:13.232032+00:00 |
 | ~~TGNT-P14.1~~ | codex-36397 | 2026-02-23T01:46:47.270912+00:00 |
-| CLIP-BUG-06 | codex-self-wave10 | 2026-02-23T01:48:37.624266+00:00 |
 | ~~TGNT-P11.1~~ | codex-self-wave10 | 2026-02-23T01:48:38.010029+00:00 |
 | sharecli-task-queue | codex-self-wave10 | 2026-02-23T01:48:38.385069+00:00 |
 | TGNT-P18.2 | codex-self-wave10 | 2026-02-23T01:48:38.684327+00:00 |
-| CLIP-BUG-09 | codex-self-wave10 | 2026-02-23T01:48:38.962637+00:00 |
 | rollout-hook-rust-phase2 | codex-self-wave10 | 2026-02-23T01:48:39.121995+00:00 |
 | docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 |
 | wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 |
 | ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.797259+00:00 |
-| CLIP-BUG-11 | codex-self-wave10 | 2026-02-23T01:48:40.064125+00:00 |
 | wave70-l1 | codex-self-wave-next2 | 2026-02-23T01:50:21.485463+00:00 |
-| SCLI-P1.2 | codex-self-wave-next2 | 2026-02-23T01:50:21.659021+00:00 |
-| CLIP-BUG-04 | codex-self-wave-next2 | 2026-02-23T01:50:21.811749+00:00 |
 | wp-16002-async-delegation | codex-self-wave-next2 | 2026-02-23T01:50:21.967715+00:00 |
 | ~~TGNT-P16.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.105584+00:00 |
 | wave70-l7 | codex-self-wave-next2 | 2026-02-23T01:50:22.231318+00:00 |
 | wave70-l3 | codex-self-wave-next2 | 2026-02-23T01:50:22.365737+00:00 |
 | TGNT-P17.1 | codex-self-wave-next2 | 2026-02-23T01:50:22.490878+00:00 |
-| CLIP-BUG-05 | codex-self-wave-next2 | 2026-02-23T01:50:22.618446+00:00 |
 ## COMPLETED (historical reference)
 
 > All items below were completed by various agents between 2026-02-18 and 2026-02-20. See WORK_STREAM prior version for full entries with completion notes.
@@ -1882,6 +1867,21 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 
 ---
 
+| CLIP-BUG-01 | codex-closeout | 2026-02-23T02:44:17.396127+00:00 |
+| CLIP-BUG-02 | codex-closeout | 2026-02-23T02:44:18.755867+00:00 |
+| CLIP-BUG-03 | codex-closeout | 2026-02-23T02:44:19.746595+00:00 |
+| CLIP-BUG-04 | codex-closeout | 2026-02-23T02:44:20.571724+00:00 |
+| CLIP-BUG-05 | codex-closeout | 2026-02-23T02:44:21.576003+00:00 |
+| CLIP-BUG-06 | codex-closeout | 2026-02-23T02:44:22.525598+00:00 |
+| CLIP-BUG-07 | codex-closeout | 2026-02-23T02:44:23.791120+00:00 |
+| CLIP-BUG-08 | codex-closeout | 2026-02-23T02:44:24.681246+00:00 |
+| CLIP-BUG-09 | codex-closeout | 2026-02-23T02:44:25.224764+00:00 |
+| CLIP-BUG-10 | codex-closeout | 2026-02-23T02:44:25.745853+00:00 |
+| CLIP-BUG-11 | codex-closeout | 2026-02-23T02:44:26.139078+00:00 |
+| CLIP-BUG-12 | codex-closeout | 2026-02-23T02:44:26.526508+00:00 |
+| SCLI-P1.2 | codex-closeout | 2026-02-23T02:44:26.999466+00:00 |
+| SCLI-P1.4 | codex-closeout | 2026-02-23T02:44:27.340791+00:00 |
+| SCLI-P13.2 | codex-closeout | 2026-02-23T02:44:27.691853+00:00 |
 ## STRATEGIC DIRECTION: Turn Codex into Ante
 
 > Added: 2026-02-20 | Reference: docs/context/ante.md

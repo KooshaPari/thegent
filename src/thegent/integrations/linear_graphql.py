@@ -166,8 +166,6 @@ def build_linear_state_mapping(states_nodes: list[dict[str, Any]]) -> dict[str, 
     """Build explicit Linear state ID mapping table with fail-fast validation."""
     states_by_type: dict[str, str] = {}
     for state in states_nodes:
-        if not isinstance(state, dict):
-            continue
         state_type = str(state.get("type") or "").strip().lower()
         state_id = str(state.get("id") or "").strip()
         if state_type in REQUIRED_LINEAR_STATE_TYPES and state_id and state_type not in states_by_type:

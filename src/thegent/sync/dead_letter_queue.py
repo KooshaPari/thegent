@@ -27,7 +27,7 @@ def _parse_timestamp(value: str | None) -> datetime | None:
         return None
 
 
-def _parse_int(value: object, default: int) -> int:
+def _parse_int(value: Any, default: int) -> int:
     try:
         parsed = int(value)
     except (TypeError, ValueError):
@@ -35,7 +35,7 @@ def _parse_int(value: object, default: int) -> int:
     return parsed
 
 
-def _parse_float(value: object, default: float) -> float:
+def _parse_float(value: Any, default: float) -> float:
     try:
         parsed = float(value)
     except (TypeError, ValueError):

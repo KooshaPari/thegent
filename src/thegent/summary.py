@@ -7,7 +7,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
@@ -111,7 +111,11 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
     try:
         res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
     except subprocess.TimeoutExpired as exc:
-        error = {"type": type(exc).__name__, "message": str(exc)[:200], "returncode": getattr(exc, "returncode", None)}
+        error: dict[str, Any] = {
+            "type": type(exc).__name__,
+            "message": str(exc)[:200],
+            "returncode": getattr(exc, "returncode", None),
+        }
         _log.warning(
             "Git commit collection failed: cwd=%s cmd=%s timeout=%s",
             str(project_path),
@@ -120,11 +124,11 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
         )
         return GitCommitsResult(commits=[], status="error", error=error)
     except subprocess.SubprocessError as exc:
-        error = {"type": type(exc).__name__, "message": str(exc)[:200]}
+        error: dict[str, Any] = {"type": type(exc).__name__, "message": str(exc)[:200]}
         _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
         return GitCommitsResult(commits=[], status="error", error=error)
     except OSError as exc:
-        error = {"type": type(exc).__name__, "message": str(exc)[:200]}
+        error: dict[str, Any] = {"type": type(exc).__name__, "message": str(exc)[:200]}
         _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
         return GitCommitsResult(commits=[], status="error", error=error)
 
@@ -135,7 +139,7 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
         if not stdout and any(marker in stderr_l for marker in _NO_COMMIT_STMTS):
             return GitCommitsResult(commits=[], status="empty", error=None)
 
-        error = {
+        error: dict[str, Any] = {
             "type": "git_log_failed",
             "message": (stderr or f"git log exited with status {res.returncode}")[:200],
             "returncode": res.returncode,
@@ -273,7 +277,7 @@ def get_chat_logs(
     logs = []
     for log_file in project_logs_dir.glob("*.jsonl"):
         payload["diagnostics"]["files_seen"] += 1
-        file_result = _read_log_file(log_file, start_dt, end_dt, include_diagnostics=True)
+        file_result = cast("dict[str, Any]", _read_log_file(log_file, start_dt, end_dt, include_diagnostics=True))
         if file_result["status"] == "ok":
             payload["diagnostics"]["files_readable"] += 1
         else:
@@ -286,10 +290,10 @@ def get_chat_logs(
                 }
             )
 
-        parse_counts = payload["diagnostics"]["parse_counts"]
+        parse_counts = cast("dict[str, Any]", payload["diagnostics"]["parse_counts"])
         for key, count in file_result["parse_counts"].items():
             if key == "sampled_errors":
-                existing = parse_counts["sampled_errors"]
+                existing = cast("list[str]", parse_counts["sampled_errors"])
                 for sample in count:
                     if len(existing) >= 5:
                         break
@@ -348,8 +352,10 @@ def summary_impl(
 
     # 2. Chat Logs
     project_key = get_project_key(resolved_path)
-    chat_logs_result = get_chat_logs(session_dir, project_key, start_dt, end_dt, include_diagnostics=True)
-    chat_logs = chat_logs_result["logs"]
+    chat_logs_result = cast(
+        "dict[str, Any]", get_chat_logs(session_dir, project_key, start_dt, end_dt, include_diagnostics=True)
+    )
+    chat_logs = cast("list[dict[str, Any]]", chat_logs_result["logs"])
 
     # 3. Git Commits
     commit_result = get_git_commits(resolved_path, start_dt, end_dt)

@@ -55,11 +55,11 @@ def detect_agents(patterns: dict[str, str]) -> list[dict[str, Any]]:
         patterns: Dict of agent name -> regex pattern
     """
     compiled_patterns: list[tuple[str, re.Pattern[str]]] = []
-    for name, pattern in patterns.items():
+    for name, raw_pattern in patterns.items():
         try:
-            compiled_patterns.append((name, re.compile(pattern, re.IGNORECASE)))
+            compiled_patterns.append((name, re.compile(raw_pattern, re.IGNORECASE)))
         except re.error as exc:
-            raise ValueError(f"Invalid regex for agent pattern '{name}': {pattern}") from exc
+            raise ValueError(f"Invalid regex for agent pattern '{name}': {raw_pattern}") from exc
 
     processes = get_processes()
     detected: list[dict[str, Any]] = []

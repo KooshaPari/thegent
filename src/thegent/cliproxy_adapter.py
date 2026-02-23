@@ -133,8 +133,7 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
                 if (
                     idx < len(collapse_text_content)
                     and collapse_text_content[idx]
-                    and
-                    len(content) == 1
+                    and len(content) == 1
                     and isinstance(content[0], dict)
                     and content[0].get("type") == "text"
                     and "text" in content[0]

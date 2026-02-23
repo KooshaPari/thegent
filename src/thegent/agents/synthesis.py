@@ -43,6 +43,7 @@ class CodeGenerationProvider(Protocol):
 
     def generate_code(self, prompt: str, formal_spec: str | None = None) -> GenerationResponse:
         """Generate source code for prompt + optional formal specification."""
+        ...
 
 
 class ConfiguredCodeGenerationProvider:

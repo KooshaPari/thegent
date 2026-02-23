@@ -19,6 +19,7 @@ class BoardSyncAdapter(Protocol):
 
     def sync(self, board_id: str, work_stream_items: list[dict[str, str]]) -> dict[str, Any]:
         """Sync local work-stream items to a remote board."""
+        ...
 
     def fetch_remote_status(
         self,
@@ -26,6 +27,7 @@ class BoardSyncAdapter(Protocol):
         work_stream_items: list[dict[str, str]],
     ) -> dict[str, str]:
         """Fetch remote status mapping for local work-stream item ids."""
+        ...
 
 
 @dataclass(slots=True)
@@ -116,6 +118,7 @@ class GitHubBoardAdapter:
                 raise ValueError(
                     "GitHub board ID must be 'owner:number' or set THGENT_GITHUB_OWNER/GITHUB_REPOSITORY for numeric IDs."
                 )
+            assert owner is not None
             return owner, int(raw)
 
         raise ValueError("Invalid GitHub board ID format. Use owner:number, owner/number, or numeric project number.")

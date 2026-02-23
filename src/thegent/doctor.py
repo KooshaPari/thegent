@@ -1979,6 +1979,7 @@ def _display_results(results: list[CheckResult]) -> bool:
 
     def _normalize_hint_for_dedupe(raw_hint: str) -> str:
         collapsed = " ".join(raw_hint.split()).casefold().strip()
+        collapsed = re.sub(r"^(?:[-*]\s+|\d+[.)]\s+)", "", collapsed)
         return collapsed.rstrip(" .;:!?")
 
     for r in results:

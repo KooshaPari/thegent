@@ -68,20 +68,7 @@ def add_filtered_interactive_args(cmd: list[str], extra_args: list[str] | None, 
 
 def extract_dex_command_args(argv: list[str]) -> list[str]:
     """Extract arguments after the dex command token from argv."""
-    if not isinstance(argv, list):
-        _LOG.warning(
-            "dex_command_parse_failed",
-            extra={"failure_type": "invalid_argv_container", "argv_type": type(argv).__name__},
-        )
-        raise TypeError(f"argv must be a list[str], got {type(argv).__name__}")
-
     for index, arg in enumerate(argv):
-        if not isinstance(arg, str):
-            _LOG.warning(
-                "dex_command_parse_failed",
-                extra={"failure_type": "invalid_argv_entry", "argv_index": index, "entry_type": type(arg).__name__},
-            )
-            raise TypeError(f"argv[{index}] must be str, got {type(arg).__name__}")
         if "dex" in arg and (arg.endswith("dex") or arg == "dex" or "/dex" in arg):
             return argv[index + 1 :] if index + 1 < len(argv) else []
     return []

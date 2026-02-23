@@ -225,8 +225,6 @@ def _parse_github_issue_references(raw: str) -> list[str]:
 
 def extract_github_issue_refs(raw_item: dict[str, Any]) -> list[str]:
     """Extract issue references from a GitHub project item payload."""
-    if not isinstance(raw_item, dict):
-        return []
     references: set[str] = set()
 
     content = raw_item.get("content")

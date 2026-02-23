@@ -88,11 +88,11 @@ def _normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
             converted["strict"] = tool["strict"]
         return converted
     if tool_type == "function":
-        function = tool.get("function")
-        if isinstance(function, dict) and "parameters" in function:
+        function_payload = tool.get("function")
+        if isinstance(function_payload, dict) and "parameters" in function_payload:
             converted = dict(tool)
-            converted_function = dict(function)
-            converted_function["parameters"] = _normalize_schema_for_provider(function.get("parameters"))
+            converted_function = dict(function_payload)
+            converted_function["parameters"] = _normalize_schema_for_provider(function_payload.get("parameters"))
             converted["function"] = converted_function
             return converted
     return tool
@@ -209,11 +209,13 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
     input_items = body.get("input", [])
     if not isinstance(input_items, list):
         input_items = []
-    messages = _responses_input_to_messages(input_items)
+    messages: list[dict[str, Any]] = _responses_input_to_messages(input_items)
     if not messages and isinstance(body.get("messages"), list):
         # CLIP-BUG-11: preserve existing chat envelope payloads (including
         # thinking/signature blocks) when callers provide messages directly.
-        messages = body.get("messages")
+        raw_messages = body.get("messages")
+        if isinstance(raw_messages, list):
+            messages = [item for item in raw_messages if isinstance(item, dict)]
     if not messages:
         messages = [{"role": "user", "content": ""}]
     raw_model = body.get("model", "")

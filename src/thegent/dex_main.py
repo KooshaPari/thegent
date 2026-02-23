@@ -10,7 +10,7 @@ from pathlib import Path
 
 import typer
 
-from thegent.agents.routing_contracts import GEMINI_FLASH_MODEL, GEMINI_FLASH_PROVIDER
+from thegent.agents.routing_contracts import GEMINI_FLASH_MODEL
 from thegent.dex_cli_helpers import (
     add_filtered_interactive_args,
     build_codex_exec_command,
