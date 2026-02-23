@@ -26,7 +26,7 @@ class EventAdapter(AdapterPort):
     @abstractmethod
     def subscribe(self, event: str, handler): ...
 
-class StorageAdapter(Port):
+class StorageAdapter(AdapterPort):
     """Storage abstraction"""
     @abstractmethod
     def save(self, key: str, value: Any): ...
@@ -39,12 +39,29 @@ class AdapterRegistry:
     
     @classmethod
     def register(cls, name: str, adapter: AdapterPort):
+        """Register an adapter by name"""
         cls._adapters[name] = adapter
     
     @classmethod
     def get(cls, name: str) -> AdapterPort:
+        """Get adapter by name"""
         return cls._adapters.get(name)
     
     @classmethod
     def all(cls) -> dict[str, AdapterPort]:
+        """Get all registered adapters"""
         return cls._adapters.copy()
+    
+    @classmethod
+    def unregister(cls, name: str):
+        """Unregister an adapter"""
+        cls._adapters.pop(name, None)
+
+
+# Decorator for easy adapter registration
+def register_adapter(name: str):
+    """Decorator to register an adapter class"""
+    def decorator(cls):
+        AdapterRegistry.register(name, cls)
+        return cls
+    return decorator

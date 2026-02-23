@@ -185,7 +185,9 @@ class TestMCPToolOutputFormat:
         # @trace FR-MCP-001
         """list_agents_impl serialized to JSON matches MCP tool contract."""
         agents = list_agents_impl()
-        result = json.dumps(agents).decode().decode()
+        result = json.dumps(agents)
+        if isinstance(result, bytes):
+            result = result.decode()
         data = json.loads(result)
         assert isinstance(data, list)
         assert all("name" in item and "backend" in item for item in data)

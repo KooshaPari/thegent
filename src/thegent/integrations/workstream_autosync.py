@@ -26,10 +26,12 @@ from uuid import uuid4
 
 from thegent.infra.identity_proxy import SSHIdentityProxy
 from thegent.integrations.adapters import (
+    CheckpointAdapter,
     ConnectorConfigAdapter,
     MetricsAdapter,
     SLAAdapter,
     StateAdapter,
+    SyncAdapter,
     xor_encrypt,
     xor_decrypt,
     compute_artifact_key,
@@ -497,14 +499,9 @@ class WorkstreamAutosyncRunner:
             merged_updates[item_id] = policy_status
         return merged_updates
 
-    @staticmethod
-    def _classify_retry(message: str) -> RetryClass:
-        lowered = message.lower()
-        if "429" in lowered or "rate limit" in lowered or "quota" in lowered:
-            return RetryClass.RATE_LIMIT
-        if "timeout" in lowered or "temporar" in lowered or "network" in lowered or "connection reset" in lowered:
-            return RetryClass.TRANSIENT
-        return RetryClass.PERMANENT
+    def _classify_retry(self, message: str) -> RetryClass:
+        from thegent.integrations.workstream_retry import RetryClassifier
+        return RetryClassifier.classify(message)
 
     def _compute_cycle_fingerprint(self, items: list[WorkstreamItem]) -> str:
         canonical = "|".join(
