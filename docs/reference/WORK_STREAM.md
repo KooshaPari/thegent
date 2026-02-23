@@ -1730,6 +1730,8 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | WL-9527 | 2026-02-23 | Added no-op regression for empty workflow execution path (`_build_execution_plan()` and `execute()`) |
 | WL-9528 | 2026-02-23 | Added regression for stage-result map replacement semantics in `execute_stage()` |
 | WL-9529 | 2026-02-23 | Added regression ensuring dependency validation happens before any stage execution side effects |
+| wave80-pr23-merge | 2026-02-23 | PR #23 merged as `a1b56700ef5f716cda77280901454b3f0ddd7d82`; follow-up evidence captured in `docs/reports/2026-02-23-wave80-followup.md` including GitHub check runs (`Test` matrix + CI/Build/Benchmark gates) |
+| wave80-wl007-checkpoint | 2026-02-23 | Wave80 follow-up checkpoint updated for WL-007-related validation evidence after PR #23 merge; no new WL-007 closure claim added |
 | wave70-l5 | 2026-02-22 | Implemented WL-224 (workstream schema linter), WL-225 (wl sort/normalize), WL-226 (remote payload checksums), WL-227 (metadata enrichment), plus WL-259,260,222,223,228,229 with comprehensive test coverage (76 tests) |
 | wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
