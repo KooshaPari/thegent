@@ -1793,9 +1793,9 @@ class TestListDroidsCmdImpl:
 
         with (
             patch("thegent.cli._resolve_cwd", return_value=Path("/tmp/project")),
-            patch("thegent.cli._resolve_droids_dir", return_value=Path("/tmp/project/.factory/droids")),
+            patch("thegent.cli._resolve_droids_dir", return_value=Path("/tmp/project/.factory/droids")) as mock_droids_dir,
             patch("thegent.cli.list_droid_names", return_value=["alpha"]),
-        ) as mock_droids_dir:
+        ):
             list_droids_cmd(cd=None)
 
         mock_droids_dir.assert_called_once_with(Path("/tmp/project"), mock_settings_cls.return_value)
@@ -1809,9 +1809,9 @@ class TestListDroidsCmdImpl:
 
         with (
             patch("thegent.cli._resolve_cwd", return_value=None),
-            patch("thegent.cli._resolve_droids_dir", return_value=Path("/tmp/fallback/droids")),
+            patch("thegent.cli._resolve_droids_dir", return_value=Path("/tmp/fallback/droids")) as mock_droids_dir,
             patch("thegent.cli.list_droid_names", return_value=[]),
-        ) as mock_droids_dir:
+        ):
             list_droids_cmd(cd=None)
 
         mock_droids_dir.assert_called_once_with(None, mock_settings_cls.return_value)

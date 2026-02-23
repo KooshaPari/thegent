@@ -265,7 +265,7 @@ def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved"
     if ok:
         console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
     else:
-        console.print(f"[red]Escalation {rid} not pending.[/red]")
+        console.print(f"[red]Escalation {rid} has no pending item.[/red]")
 
 
 def escalate_approve_cmd(run_id: str | None = None) -> None:
