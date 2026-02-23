@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-from thegent_agents.base import AgentRunner, RunResult
+from thegent.agents.base import AgentRunner, RunResult
 from thegent.execution import RunMeta
 
 if TYPE_CHECKING:
