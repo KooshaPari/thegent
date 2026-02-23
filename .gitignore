@@ -87,3 +87,6 @@ hooks/zig/
 .factory/closure_pack_*.md
 =======
 >>>>>>> codex/provider-plane-wave1
+
+# Safari/ browser data
+data/safari/
