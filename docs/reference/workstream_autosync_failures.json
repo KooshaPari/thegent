@@ -313,5 +313,14 @@
     "occurred_at": "2026-02-22T23:51:08.737748+00:00",
     "retry_class": "permanent",
     "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:06:45.570173+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
   }
 ]

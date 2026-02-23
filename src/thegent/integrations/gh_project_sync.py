@@ -602,6 +602,10 @@ def sync_to_github(
         priority_field_id, priority_options = _load_priority_field(config)
         if not status_field_id:
             raise GHProjectSyncError("GitHub schema drift: required single-select field 'status' is missing")
+        if not status_options:
+            raise GHProjectSyncError(
+                "GitHub schema drift: required status option mappings for field 'status' are missing"
+            )
         status_option_by_id = _prepare_github_status_mapping(workstream_data, status_options)
 
         items_created = 0

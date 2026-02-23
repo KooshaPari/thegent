@@ -164,6 +164,78 @@ def test_wl6814_gateway_exec_success_unknown_server_tool_and_transport_failure(m
     assert fail.error.startswith("transport_error")
 
 
+def test_wl6897_gateway_exec_accepts_transport_and_invalid_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured = {}
+
+    def _transport(
+        *,
+        command: list[str],
+        request_payload: str,
+        env: dict[str, str],
+        timeout_sec: float,
+    ) -> tuple[int, str, str]:
+        captured["command"] = command
+        captured["request_payload"] = request_payload
+        captured["timeout_sec"] = timeout_sec
+        return (0, '{"jsonrpc":"2.0","result":{"ok":true}}\n', "")
+
+    gw = McpGateway()
+    gw.register_server(
+        McpServerConfig(
+            server_id="fs",
+            command="fake-cmd",
+            env={},
+            transport=_transport,
+        )
+    )
+
+    ok = gw.execute(McpToolCall(server_id="fs", tool="read_file", arguments={"path": "/tmp/a"}))
+    assert ok.error == ""
+    assert ok.result == {"ok": True}
+    assert captured["command"] == ["fake-cmd"]
+    assert json.loads(captured["request_payload"])["params"]["name"] == "read_file"
+
+    def _invalid_transport(
+        *,
+        command: list[str],
+        request_payload: str,
+        env: dict[str, str],
+        timeout_sec: float,
+    ) -> tuple[int, str, str]:
+        return (0, "not-json", "")
+
+    gw.register_server(
+        McpServerConfig(
+            server_id="invalid",
+            command="fake-cmd",
+            env={},
+            transport=_invalid_transport,
+        )
+    )
+    bad = gw.execute(McpToolCall(server_id="invalid", tool="read_file", arguments={"path": "/tmp/a"}))
+    assert "transport_error: invalid or empty MCP response" in bad.error
+
+    def _transport_exception(
+        *,
+        command: list[str],
+        request_payload: str,
+        env: dict[str, str],
+        timeout_sec: float,
+    ) -> tuple[int, str, str]:
+        raise RuntimeError("transport down")
+
+    gw.register_server(
+        McpServerConfig(
+            server_id="raise",
+            command="fake-cmd",
+            env={},
+            transport=_transport_exception,
+        )
+    )
+    raised = gw.execute(McpToolCall(server_id="raise", tool="read_file", arguments={}))
+    assert "transport_error: RuntimeError: transport down" in raised.error
+
+
 def test_wl6815_dispatcher_execute_task_success_failure_and_approval_block(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Index:
         def recommend(self, *_args, **_kwargs):
@@ -198,6 +270,56 @@ def test_wl6815_dispatcher_execute_task_success_failure_and_approval_block(monke
     blocked = SimpleNamespace(id="n2", task="secure", metadata={"require_approval": True, "approval_granted": False})
     with pytest.raises(RuntimeError):
         asyncio.run(dispatcher._check_hitl_gate(blocked, None))
+
+
+def test_wl6898_dispatcher_execute_task_respects_hitl_policy_on_execution(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _Index:
+        def recommend(self, *_args, **_kwargs):
+            return []
+
+    class _Policy:
+        def await_approval(self, **_kwargs):
+            return None
+
+    node = SimpleNamespace(id="n1", task="secure", metadata={"require_approval": True, "approval_granted": False})
+    dispatcher = SubAgentDispatcher(_Index(), policy_engine=_Policy(), config=DispatchConfig(hitl_enabled=True))
+
+    with pytest.raises(RuntimeError):
+        asyncio.run(dispatcher._execute_task(node, None))
+
+
+def test_wl6898_dispatcher_execute_task_blocks_without_runner(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _Index:
+        def recommend(self, *_args, **_kwargs):
+            return []
+
+    node = SimpleNamespace(id="n1", task="do something", metadata={})
+    dispatcher = SubAgentDispatcher(_Index(), config=DispatchConfig(hitl_enabled=False))
+    monkeypatch.setattr("thegent.agents.registry.get_runner", lambda _n: None)
+
+    output, success, error = asyncio.run(dispatcher._execute_task(node, None))
+    assert output == ""
+    assert success is False
+    assert "No runner resolved for node n1" in (error or "")
+
+
+def test_wl6898_dispatcher_execute_task_propagates_runner_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _Index:
+        def recommend(self, *_args, **_kwargs):
+            return []
+
+    class _Runner:
+        def run(self, **_kwargs) -> None:
+            raise RuntimeError("runner crash")
+
+    node = SimpleNamespace(id="n2", task="fail", metadata={})
+    dispatcher = SubAgentDispatcher(_Index(), config=DispatchConfig(hitl_enabled=False))
+    monkeypatch.setattr("thegent.agents.registry.get_runner", lambda _n: _Runner())
+
+    output, success, error = asyncio.run(dispatcher._execute_task(node, "bad-runner"))
+    assert output == ""
+    assert success is False
+    assert "RuntimeError: runner crash" in (error or "")
 
 
 def test_wl6816_design_language_apply_to_cli_requires_tokens() -> None:

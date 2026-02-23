@@ -1,128 +1,72 @@
 {
-  "last_cycle_at": "2026-02-22T23:58:19.568662+00:00",
+  "last_cycle_at": "2026-02-23T00:06:45.508832+00:00",
   "total_cycles": 1,
-  "last_error": null,
-  "health": "ok",
+  "last_error": "Emergency stop active; autosync external mutation is paused",
+  "health": "degraded",
   "runner": {
     "enabled": true,
     "is_running": false,
-    "last_sync_time": "2026-02-22T23:58:19.556539+00:00",
+    "last_sync_time": null,
     "github_enabled": true,
     "linear_enabled": false,
-    "last_operation": {
-      "operation_id": "gh-read-f7886328c220",
-      "platform": "github",
-      "direction": "read",
-      "items_processed": 2,
-      "items_successful": 1,
-      "items_failed": 1,
-      "errors": [],
-      "correlation_id": "e4bec83f-6fb1-4fb0-b0f4-16d62c0aa34f",
-      "started_at": "2026-02-22T23:58:19.560015+00:00",
-      "completed_at": "2026-02-22T23:58:19.562669+00:00",
-      "duration_seconds": 0.002654
-    },
-    "open_blockers": [
-      "WL-160:Full Automatic Workstream Reflection -> external credentials"
-    ],
+    "last_operation": null,
+    "open_blockers": [],
     "failure_queue_size": 35,
     "next_cycle_interval_seconds": 300,
-    "connector_health": [
-      {
-        "connector": "github",
-        "status": "healthy",
-        "reason": null
-      }
-    ],
+    "connector_health": [],
     "metadata": {
       "status": "fresh",
       "age_seconds": 0
     },
-    "correlation_id": "e4bec83f-6fb1-4fb0-b0f4-16d62c0aa34f",
+    "correlation_id": null,
     "local_orphan_report": {
-      "local_ids": [
-        "WL-160",
-        "WL-161"
-      ],
+      "local_ids": [],
       "mapped_remote_ids": [],
-      "local_orphan_ids": [
-        "WL-160",
-        "WL-161"
-      ],
-      "orphan_count": 2
+      "local_orphan_ids": [],
+      "orphan_count": 0
     },
     "ignored_wl_ids": [],
     "scope_filtered_wl_ids": [],
     "no_op_summary": null,
     "trend_sample": null
   },
-  "open_blockers": [
-    "WL-160:Full Automatic Workstream Reflection -> external credentials"
-  ],
+  "open_blockers": [],
   "failure_queue_size": 35,
   "checkpoint": null,
-  "connector_health": [
-    {
-      "connector": "github",
-      "status": "healthy",
-      "reason": null
-    }
-  ],
+  "connector_health": [],
   "next_cycle_interval_seconds": 300,
   "incident_snapshot": {
-    "captured_at": "2026-02-22T23:58:19.566000+00:00",
-    "items_count": 2,
-    "snapshot_age_seconds": 430,
+    "captured_at": "2026-02-23T00:06:45.507177+00:00",
+    "items_count": 0,
+    "snapshot_age_seconds": 0,
     "snapshot_stale": false,
-    "slo_alerts": [],
+    "slo_alerts": [
+      "autosync error budget hard-fail threshold reached"
+    ],
     "error_budget": {
-      "success_count": 1,
-      "failure_count": 0,
-      "consecutive_failures": 0,
+      "success_count": 0,
+      "failure_count": 1,
+      "consecutive_failures": 1,
       "total_operations": 1,
-      "current_failure_rate": 0.0
+      "current_failure_rate": 1.0
     },
     "connector_sla": {},
     "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
-    "connector_health": [
-      {
-        "connector": "github",
-        "status": "healthy",
-        "reason": null
-      }
-    ],
+    "connector_health": [],
     "metadata": {
       "status": "fresh",
       "age_seconds": 0
     },
-    "last_error": null,
+    "last_error": "Emergency stop active; autosync external mutation is paused",
     "failure_queue_size": 35,
-    "mutation_summary": {
-      "operation_id": "gh-read-f7886328c220",
-      "platform": "github",
-      "direction": "read",
-      "items_processed": 2,
-      "items_successful": 1,
-      "items_failed": 1,
-      "errors": [],
-      "correlation_id": "e4bec83f-6fb1-4fb0-b0f4-16d62c0aa34f",
-      "started_at": "2026-02-22T23:58:19.560015+00:00",
-      "completed_at": "2026-02-22T23:58:19.562669+00:00",
-      "duration_seconds": 0.002654
-    }
+    "mutation_summary": null
   },
-  "correlation_id": "e4bec83f-6fb1-4fb0-b0f4-16d62c0aa34f",
+  "correlation_id": null,
   "local_orphan_report": {
-    "local_ids": [
-      "WL-160",
-      "WL-161"
-    ],
+    "local_ids": [],
     "mapped_remote_ids": [],
-    "local_orphan_ids": [
-      "WL-160",
-      "WL-161"
-    ],
-    "orphan_count": 2
+    "local_orphan_ids": [],
+    "orphan_count": 0
   },
   "ignored_wl_ids": [],
   "scope_filtered_wl_ids": [],

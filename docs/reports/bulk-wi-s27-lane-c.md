@@ -38,10 +38,11 @@
 **Title:** Emit observable diagnostics when optimized sendfile copy falls back
 **Source:** [thegent/src/thegent/infra/fast_file_ops.py:63]
 **Acceptance checklist:**
-- [ ] Record fallback reason when optimized `sendfile` transfer fails.
-- [ ] Preserve correctness and metadata behavior across fallback copy paths.
-- [ ] Add tests that force `sendfile` failure and assert diagnostics plus successful copy.
+- [x] Record fallback reason when optimized `sendfile` transfer fails.
+- [x] Preserve correctness and metadata behavior across fallback copy paths.
+- [x] Add tests that force `sendfile` failure and assert diagnostics plus successful copy.
 **Notes:** Silent fallback behavior can hide performance regressions under load.
+- **Evidence:** `src/thegent/infra/fast_file_ops.py`, `tests/test_unit_fast_file_ops_wl6716.py` (`test_sendfile_failure_falls_back_and_emits_telemetry`, `test_sendfile_unexpected_failure_falls_back_and_records_exception_name`)
 
 ### [WL-6895]
 **Title:** Replace startup endpoint reachability stub with deterministic network probes
@@ -57,10 +58,11 @@
 **Title:** Replace GitHub Project sync mock write response with real item upsert flow
 **Source:** [thegent/src/thegent/integrations/gh_project_sync.py:202]
 **Acceptance checklist:**
-- [ ] Replace placeholder write response with real project item create and update behavior.
-- [ ] Validate required outbound field mappings before write attempts.
-- [ ] Add tests for created-versus-updated counts and API failure propagation.
+- [x] Replace placeholder write response with real project item create and update behavior.
+- [x] Validate required outbound field mappings before write attempts.
+- [x] Add tests for created-versus-updated counts and API failure propagation.
 **Notes:** Mock success paths hide whether synchronization actually occurred.
+- **Evidence:** `src/thegent/integrations/gh_project_sync.py`, `tests/test_wl157_gh_project_sync.py` (`test_create_and_update_counts_reflect_upsert_path`, `test_missing_status_options_fails_before_item_mutations`, `test_api_failure_during_upsert_is_propagated_in_strict_mode`), `tests/integrations/test_wl178_github_sync_integration.py`
 
 ### [WL-6897]
 **Title:** Replace MCP gateway stub executor with transport-backed tool execution

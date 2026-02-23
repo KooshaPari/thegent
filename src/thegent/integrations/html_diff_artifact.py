@@ -56,10 +56,7 @@ class HtmlDiffArtifact:
             if line in added_lines:
                 lines.append(DiffLine(line_no=i + 1, kind="added", content=line))
 
-        logger.debug(
-            f"Computed diff: {len(before)} before, {len(after)} after, "
-            f"{len(lines)} total diff lines"
-        )
+        logger.debug(f"Computed diff: {len(before)} before, {len(after)} after, {len(lines)} total diff lines")
         return lines
 
     @staticmethod
@@ -77,11 +74,7 @@ class HtmlDiffArtifact:
         html_lines = ['<div style="font-family: monospace; white-space: pre-wrap;">']
         for line in lines:
             color = color_map.get(line.kind, "#FFFFFF")
-            escaped_content = (
-                line.content.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-            )
+            escaped_content = line.content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
             html_line = f'<span style="background-color: {color};">{escaped_content}</span><br/>'
             html_lines.append(html_line)
 

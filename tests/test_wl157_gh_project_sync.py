@@ -243,7 +243,34 @@ class TestSyncToGithub:
             standalone_mode=True,
         )
         workstream = [{"id": "WL-001", "title": "Task"}]
-        mock_run.return_value = (0, json.dumps({"id": "item-1"}), "")
+
+        def side_effect(args: list[str], capture: bool = True) -> tuple[int, str, str]:
+            _ = capture
+            if args[:3] == ["project", "view", "1"]:
+                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+            if args[:3] == ["project", "item-list", "1"]:
+                return 0, json.dumps([]), ""
+            if args[:3] == ["project", "field-list", "1"]:
+                return (
+                    0,
+                    json.dumps(
+                        [
+                            {
+                                "id": "F_STATUS",
+                                "name": "Status",
+                                "options": [{"id": "OPT_TODO", "name": "Todo"}],
+                            }
+                        ]
+                    ),
+                    "",
+                )
+            if args[:3] == ["project", "item-create", "1"]:
+                return 0, json.dumps({"id": "item-1"}), ""
+            if args[:3] == ["project", "item-edit", "--id"]:
+                return 0, "", ""
+            raise AssertionError(f"Unexpected gh args: {args}")
+
+        mock_run.side_effect = side_effect
         result = sync_to_github(config, workstream)
         # Should not raise and should return result
         assert "items_created" in result or "items_synced" in result
@@ -263,6 +290,150 @@ class TestSyncToGithub:
         workstream = [{"id": "WL-001", "title": "Task"}]
         result = sync_to_github(valid_config, workstream)
         assert result["status"] == "auth_required"
+
+    @patch("thegent.integrations.gh_project_sync._run_gh_command")
+    def test_create_and_update_counts_reflect_upsert_path(self, mock_run):
+        """Real write flow returns created/updated counts for mixed workstreams."""
+        config = GHProjectConfig(
+            enabled=True,
+            owner="kooshapari",
+            number=1,
+            direction="write_only",
+            standalone_mode=False,
+        )
+        calls: list[list[str]] = []
+
+        def side_effect(args: list[str], capture: bool = True) -> tuple[int, str, str]:
+            calls.append(args)
+            _ = capture
+            if args[:3] == ["project", "view", "1"]:
+                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+            if args[:3] == ["project", "item-list", "1"]:
+                return (0, json.dumps([{"id": "ITM_1", "content": {"title": "[WL-6896] Existing issue"}}]), "")
+            if args[:3] == ["project", "field-list", "1"]:
+                return (
+                    0,
+                    json.dumps(
+                        [
+                            {
+                                "id": "F_STATUS",
+                                "name": "Status",
+                                "options": [
+                                    {"id": "OPT_TODO", "name": "Todo"},
+                                    {"id": "OPT_DONE", "name": "Done"},
+                                ],
+                            },
+                            {
+                                "id": "F_PRIORITY",
+                                "name": "Priority",
+                                "options": [{"id": "P1", "name": "P1"}, {"id": "P2", "name": "P2"}],
+                            },
+                        ]
+                    ),
+                    "",
+                )
+            if args[:3] == ["project", "item-create", "1"]:
+                return 0, json.dumps({"id": "ITM_CREATED"}), ""
+            if args[:2] == ["project", "item-edit"]:
+                return 0, "", ""
+            raise AssertionError(f"Unexpected gh args: {args}")
+
+        mock_run.side_effect = side_effect
+
+        result = sync_to_github(
+            config,
+            [
+                {"item_id": "WL-6896", "title": "Existing issue", "status": "DONE", "priority": "P2"},
+                {"item_id": "WL-6897", "title": "New item", "status": "BACKLOG", "priority": "P1"},
+            ],
+        )
+
+        assert result["items_updated"] == 1
+        assert result["items_created"] == 1
+        assert result["items_synced"] == 2
+        assert result["errors"] == []
+        assert any(cmd[:3] == ["project", "item-create", "1"] for cmd in calls)
+        assert any(
+            cmd[:3] == ["project", "item-edit", "--id"] and "--field-id" in cmd for cmd in calls
+        )
+        assert mock_run.call_count > 0
+
+    @patch("thegent.integrations.gh_project_sync._run_gh_command")
+    def test_missing_status_options_fails_before_item_mutations(self, mock_run, valid_config):
+        """Missing status option mapping should fail before attempting item create/update."""
+        calls: list[list[str]] = []
+
+        def side_effect(args: list[str], capture: bool = True) -> tuple[int, str, str]:
+            calls.append(args)
+            _ = capture
+            if args[:3] == ["project", "view", "1"]:
+                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+            if args[:3] == ["project", "item-list", "1"]:
+                return 0, json.dumps([]), ""
+            if args[:3] == ["project", "field-list", "1"]:
+                return 0, json.dumps([{"id": "F_STATUS", "name": "Status", "options": []}]), ""
+            raise AssertionError(f"Unexpected gh args: {args}")
+
+        mock_run.side_effect = side_effect
+        with pytest.raises(GHProjectSyncError, match="status option mappings"):
+            sync_to_github(
+                valid_config,
+                [{"item_id": "WL-6896", "title": "Needs status mapping", "status": "BACKLOG"}],
+            )
+
+        assert not any(cmd[:3] == ["project", "item-create", "1"] for cmd in calls)
+        assert not any(cmd[:3] == ["project", "item-edit", "--id"] for cmd in calls)
+
+    @patch("thegent.integrations.gh_project_sync._run_gh_command")
+    def test_api_failure_during_upsert_is_propagated_in_strict_mode(self, mock_run, valid_config):
+        """A downstream gh API error should surface to callers in strict mode."""
+        call_count = 0
+
+        def side_effect(args: list[str], capture: bool = True) -> tuple[int, str, str]:
+            nonlocal call_count
+            _ = capture
+            if args[:3] == ["project", "view", "1"]:
+                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+            if args[:3] == ["project", "item-list", "1"]:
+                return 0, json.dumps([]), ""
+            if args[:3] == ["project", "field-list", "1"]:
+                return (
+                    0,
+                    json.dumps(
+                        [
+                            {
+                                "id": "F_STATUS",
+                                "name": "Status",
+                                "options": [{"id": "OPT_TODO", "name": "Todo"}, {"id": "OPT_DONE", "name": "Done"}],
+                            }
+                        ]
+                    ),
+                    "",
+                )
+            if args[:3] == ["project", "item-create", "1"]:
+                if call_count == 0:
+                    call_count += 1
+                    return 0, json.dumps({"id": f"ITM_{call_count}"}), ""
+                raise GHProjectSyncError("gh API failure")
+            if args[:3] == ["project", "item-edit", "--id"]:
+                return 0, "", ""
+            raise AssertionError(f"Unexpected gh args: {args}")
+
+        mock_run.side_effect = side_effect
+        strict_config = GHProjectConfig(
+            enabled=True,
+            owner="kooshapari",
+            number=1,
+            direction="write_only",
+            standalone_mode=False,
+        )
+        workstream = [
+            {"item_id": "WL-6896", "title": "First", "status": "BACKLOG"},
+            {"item_id": "WL-6897", "title": "Second", "status": "BACKLOG"},
+        ]
+
+        with pytest.raises(GHProjectSyncError, match="gh API failure"):
+            sync_to_github(strict_config, workstream)
 
 
 class TestSyncFromGithub:

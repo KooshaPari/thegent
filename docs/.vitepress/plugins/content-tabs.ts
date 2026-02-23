@@ -25,8 +25,8 @@ function parseTabsContent(content: string): { tabs: Array<{id: string, label: st
   let currentId = ''
   let currentContent: string[] = []
 
-  const tabStart = /^:::\s*tab\s+(.+?)\s*$/
-  const tabEnd = /^:::\s*$/
+  const tabStart = /^\s*:::\s*tab\s+(.+?)\s*$/
+  const tabEnd = /^\s*:::\s*$/
 
   for (const line of lines) {
     const startMatch = line.match(tabStart)
@@ -79,9 +79,9 @@ export function contentTabsPlugin(md: MarkdownIt) {
     eMarks: number[]
     tShift: number[]
   }, startLine: number, endLine: number) => {
-    const tabStart = /^:::\s*tab\s+(.+?)\s*$/
-    const tabsStart = /^:::\s*tabs\s*$/
-    const tabsEnd = /^:::\s*$/
+    const tabStart = /^\s*:::\s*tab\s+(.+?)\s*$/
+    const tabsStart = /^\s*:::\s*tabs\s*$/
+    const tabsEnd = /^\s*:::\s*$/
 
     let closingLine = -1
     let line = startLine + 1
@@ -139,7 +139,7 @@ export function contentTabsPlugin(md: MarkdownIt) {
     const line = state.src.slice(start, max)
 
     // Check for ::: tabs opening
-    if (!line.match(/^:::\s*tabs\s*$/)) {
+    if (!line.match(/^\s*:::\s*tabs\s*$/)) {
       return false
     }
 

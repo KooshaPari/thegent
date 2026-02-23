@@ -499,7 +499,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4650] lifecycle line 139 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -508,7 +509,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4651] lifecycle line 150 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -517,7 +519,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4652] lifecycle line 173 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -526,7 +529,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4653] lifecycle line 184 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -535,7 +539,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4654] lifecycle line 193 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -544,7 +549,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4655] resources_workstream line 34 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -553,7 +559,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4656] resources_workstream line 78 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -562,7 +569,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4657] tools_escalation line 51 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -571,7 +579,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4658] tools_research line 112 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -580,7 +589,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4659] tools_workstream_governance line 41 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -589,7 +599,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4660] tools_workstream_governance line 79 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -598,7 +609,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4661] tools_workstream_lsp line 61 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -607,7 +619,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4662] tools_workstream_lsp line 82 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -616,7 +629,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4663] tools_workstream_lsp line 104 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -625,7 +639,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4664] server_execution_tools line 357 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -634,7 +649,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Resolve this backlog marker with concrete implementation and add targeted assertions to lock behavior.
 
 ### [WL-4665] server_execution_tools line 541 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -643,7 +659,8 @@ Resolve this backlog marker with concrete implementation and add targeted assert
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4666] server_journal_tools line 345 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -652,7 +669,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4667] server_optional_tools line 134 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -661,7 +679,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4668] server_optional_tools line 140 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -670,7 +689,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4669] server_optional_tools line 146 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -679,7 +699,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4670] server_optional_tools line 184 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -688,7 +709,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4671] server_optional_tools line 190 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -697,7 +719,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4672] server_optional_tools line 207 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -706,7 +729,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4673] elicitation line 391 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -715,7 +739,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4674] modes line 35 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -724,7 +749,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4675] modes line 36 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -733,7 +759,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4676] modes line 54 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -742,7 +769,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4677] modes line 78 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -751,7 +779,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4678] modes line 601 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -760,7 +789,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4679] modes line 646 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -769,7 +799,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4680] patterns line 178 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -778,7 +809,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4681] patterns line 187 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -787,7 +819,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4682] seeds line 36 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -796,7 +829,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4683] seeds line 37 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -805,7 +839,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4684] seeds line 47 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -814,7 +849,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4685] seeds line 48 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -823,7 +859,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4686] seeds line 59 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -832,7 +869,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4687] seeds line 77 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -841,7 +879,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Resolve this backlog marker with concrete implementation and add targeted assertions to lock behavior.
 
 ### [WL-4688] seeds line 130 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -850,7 +889,8 @@ Resolve this backlog marker with concrete implementation and add targeted assert
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4689] seeds line 232 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -859,7 +899,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4690] seeds line 300 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -868,7 +909,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4691] seeds line 375 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -877,7 +919,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4692] seeds line 429 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -886,7 +929,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4693] seeds line 480 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -895,7 +939,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4694] audit line 53 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -904,7 +949,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4695] cli line 177 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -913,7 +959,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4696] cli line 181 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -922,7 +969,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4697] cli line 207 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -931,7 +979,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4698] cli line 232 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -940,7 +989,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4699] git_parallelism line 55 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S

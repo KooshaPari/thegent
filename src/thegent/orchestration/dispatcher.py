@@ -284,7 +284,11 @@ class SubAgentDispatcher:
             await self._check_hitl_gate(node, recommendation)
 
         # Execute the task (placeholder - integrate with actual runner)
-        output, success, error = await self._execute_task(node, runner_name)
+        output, success, error = await self._execute_task(
+            node=node,
+            runner_name=runner_name,
+            recommendation=recommendation,
+        )
 
         elapsed = time.monotonic() - start_time
 
@@ -381,6 +385,7 @@ class SubAgentDispatcher:
         self,
         node: PlanNode,
         runner_name: str | None,
+        recommendation: AgentRecommendation | None = None,
     ) -> tuple[str, bool, str | None]:
         """Execute the task via the selected runner.
 
@@ -393,14 +398,21 @@ class SubAgentDispatcher:
 
         # @trace WL-082
         """
-        if not runner_name:
+        if self._config.hitl_enabled and self._policy_engine is not None:
+            await self._check_hitl_gate(node, recommendation)
+
+        resolved_runner_name = runner_name
+        if resolved_runner_name is None and recommendation is not None:
+            resolved_runner_name = recommendation.runner
+
+        if not resolved_runner_name:
             return "", False, f"No runner resolved for node {node.id}"
 
         from thegent.agents.registry import get_runner
 
-        runner = get_runner(runner_name)
+        runner = get_runner(resolved_runner_name)
         if runner is None:
-            return "", False, f"Runner '{runner_name}' not found"
+            return "", False, f"Runner '{resolved_runner_name}' not found"
 
         timeout = int(node.metadata.get("timeout_seconds", self._config.default_timeout))
         cwd_raw = node.metadata.get("cwd")

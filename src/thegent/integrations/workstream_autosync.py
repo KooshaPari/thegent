@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any
 from uuid import uuid4
 
 from thegent.config_defaults import autosync_phase1_enabled
@@ -1224,6 +1224,7 @@ class WorkstreamAutosyncRunner:
                 "item_count": len(items),
                 "item_ids": sorted(item.item_id for item in items),
                 "shadow_mode": self.config.shadow_mode,
+                "run_id": self._current_run_correlation_id,
             },
             decisions=decisions,
             outputs=outputs,
@@ -1761,6 +1762,7 @@ class WorkstreamAutosyncRunner:
             "items_count": items_count,
             "snapshot_age_seconds": snapshot_age_seconds,
             "snapshot_stale": snapshot_stale,
+            "correlation_id": self._current_run_correlation_id,
             "slo_alerts": slo_alerts,
             "error_budget": self._error_budget.get_stats(),
             "connector_sla": self._connector_sla_snapshot(),
@@ -2042,8 +2044,9 @@ class WorkstreamAutosyncRunner:
 
             if self.config.simulation_mode:
                 no_op_reason = "simulation_mode"
+                no_op = True
                 self._no_op_summary = {
-                    "no_op": False,
+                    "no_op": True,
                     "reason": "simulation_mode",
                     "skipped_connectors": int(self.config.should_sync_github()) + int(self.config.should_sync_linear()),
                 }
@@ -2406,7 +2409,7 @@ class WorkstreamAutosyncRunner:
         try:
             op.items_processed = len(items)
             local_status_by_id = {item.item_id: item.status.upper() for item in items}
-            status_updates: dict[str, str] = {}
+            gh_status_updates: dict[str, str] = {}
             if self.config.dry_run:
                 logger.info("Dry-run: skip GitHub read reflection (%d items)", len(items))
             else:
@@ -2427,7 +2430,7 @@ class WorkstreamAutosyncRunner:
                         self.config.expected_payload_checksum,
                     )
                 target_ids = {item.item_id for item in items}
-                status_updates: dict[str, str] = {}
+                remote_status_updates: dict[str, str] = {}
                 close_failures = 0
                 if isinstance(remote_items, list):
                     for remote_item in remote_items:
@@ -2436,7 +2439,7 @@ class WorkstreamAutosyncRunner:
                         remote_item_id = str(remote_item.get("item_id") or "").strip()
                         remote_status = str(remote_item.get("status") or "").strip().upper()
                         if remote_item_id in target_ids and remote_status:
-                            status_updates[remote_item_id] = remote_status
+                            remote_status_updates[remote_item_id] = remote_status
                             if remote_status == "COMPLETED" and local_status_by_id.get(remote_item_id) != "COMPLETED":
                                 if self.config.github_auto_close_issues:
                                     issue_refs = extract_github_issue_refs(remote_item)
@@ -2450,16 +2453,16 @@ class WorkstreamAutosyncRunner:
                                             close_failures += len(close_errors)
                                             op.errors.extend(str(error) for error in close_errors)
 
-                status_updates = self._build_remote_reflection_status_updates(
+                gh_status_updates = self._build_remote_reflection_status_updates(
                     local_items=items,
-                    remote_status_updates=status_updates,
+                    remote_status_updates=remote_status_updates,
                 )
-                if status_updates:
+                if gh_status_updates:
                     content = work_stream_path.read_text(encoding="utf-8")
-                    updated_content = WorkstreamParser.sync_status_annotations(content, statuses=status_updates)
+                    updated_content = WorkstreamParser.sync_status_annotations(content, statuses=gh_status_updates)
                     if updated_content != content:
                         work_stream_path.write_text(updated_content, encoding="utf-8")
-                op.items_successful = len(status_updates)
+                op.items_successful = len(gh_status_updates)
                 op.items_failed = max(0, op.items_processed - op.items_successful) + close_failures
                 errors = result.get("errors", [])
                 if isinstance(errors, list):
@@ -2467,7 +2470,7 @@ class WorkstreamAutosyncRunner:
             self._log_remote_reflection_events(
                 connector="github",
                 local_items=items,
-                status_updates=status_updates,
+                status_updates=gh_status_updates,
             )
             if self.config.standalone_mode and close_failures:
                 await self._record_failure(
@@ -2657,7 +2660,7 @@ class WorkstreamAutosyncRunner:
 
         try:
             op.items_processed = len(items)
-            status_updates: dict[str, str] = {}
+            linear_status_updates: dict[str, str] = {}
             if self.config.dry_run:
                 logger.info("Dry-run: skip Linear read reflection (%d items)", len(items))
             else:
@@ -2676,7 +2679,7 @@ class WorkstreamAutosyncRunner:
                         self.config.expected_payload_checksum,
                     )
                 target_ids = {item.item_id for item in items}
-                status_updates: dict[str, str] = {}
+                remote_status_updates: dict[str, str] = {}
                 if isinstance(remote_items, list):
                     for remote_item in remote_items:
                         if not isinstance(remote_item, dict):
@@ -2684,25 +2687,28 @@ class WorkstreamAutosyncRunner:
                         remote_item_id = str(remote_item.get("item_id") or "").strip()
                         remote_status = str(remote_item.get("status") or "").strip().upper()
                         if remote_item_id in target_ids and remote_status:
-                            status_updates[remote_item_id] = remote_status
+                            remote_status_updates[remote_item_id] = remote_status
 
-                status_updates = self._build_remote_reflection_status_updates(
+                linear_status_updates = self._build_remote_reflection_status_updates(
                     local_items=items,
-                    remote_status_updates=status_updates,
+                    remote_status_updates=remote_status_updates,
                 )
-                if status_updates:
+                if linear_status_updates:
                     content = work_stream_path.read_text(encoding="utf-8")
-                    updated_content = WorkstreamParser.sync_status_annotations(content, statuses=status_updates)
+                    updated_content = WorkstreamParser.sync_status_annotations(
+                        content,
+                        statuses=linear_status_updates,
+                    )
                     if updated_content != content:
                         work_stream_path.write_text(updated_content, encoding="utf-8")
-                op.items_successful = len(status_updates)
+                op.items_successful = len(linear_status_updates)
                 errors = result.get("errors", [])
                 if isinstance(errors, list):
                     op.errors.extend(str(error) for error in errors)
             self._log_remote_reflection_events(
                 connector="linear",
                 local_items=items,
-                status_updates=status_updates,
+                status_updates=linear_status_updates,
             )
             op.items_failed = max(0, op.items_processed - op.items_successful)
 
@@ -3169,25 +3175,33 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
             def _parse_iso_pair(raw: str) -> tuple[datetime, datetime, str] | None:
                 if not raw:
                     return None
-                for start_split in range(1, len(raw)):
-                    if raw[start_split] != ":":
-                        continue
-                    start_raw = raw[:start_split]
-                    try:
-                        start_utc = datetime.fromisoformat(start_raw.replace("Z", "+00:00"))
-                    except (TypeError, ValueError):
-                        continue
-                    remainder = raw[start_split + 1 :]
-                    for end_split in range(1, len(remainder)):
-                        if remainder[end_split] != ":":
-                            continue
-                        end_raw = remainder[:end_split]
-                        try:
-                            end_utc = datetime.fromisoformat(end_raw.replace("Z", "+00:00"))
-                        except (TypeError, ValueError):
-                            continue
-                        return start_utc, end_utc, remainder[end_split + 1 :]
-                return None
+                iso_pattern = re.compile(
+                    r"^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+\\-]\\d{2}:\\d{2}))"
+                )
+                start_match = iso_pattern.match(raw)
+                if not start_match:
+                    return None
+                start_raw = start_match.group(0)
+                cursor = len(start_raw)
+                if cursor >= len(raw) or raw[cursor] != ":":
+                    return None
+                cursor += 1
+
+                end_raw_remainder = raw[cursor:]
+                end_match = iso_pattern.match(end_raw_remainder)
+                if not end_match:
+                    return None
+                end_raw = end_match.group(0)
+                cursor += len(end_raw)
+                metadata = end_raw_remainder[len(end_raw) :]
+                metadata = metadata.removeprefix(":")
+
+                try:
+                    start_utc = datetime.fromisoformat(start_raw.replace("Z", "+00:00"))
+                    end_utc = datetime.fromisoformat(end_raw.replace("Z", "+00:00"))
+                except (TypeError, ValueError):
+                    return None
+                return start_utc, end_utc, metadata
 
             parsed_window = _parse_iso_pair(remainder)
             if parsed_window is None:
@@ -3289,10 +3303,19 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                 continue
             p95_latency_ms = value.get("p95_latency_ms")
             max_failure_rate = value.get("max_failure_rate")
+            if p95_latency_ms is None or max_failure_rate is None:
+                logger.debug(
+                    "Skipping malformed connector SLA threshold for %s: missing p95_latency_ms or max_failure_rate: %s",
+                    connector,
+                    value,
+                )
+                continue
             try:
+                p95_latency_value = float(p95_latency_ms)
+                max_failure_value = float(max_failure_rate)
                 normalized[connector.strip().lower()] = ConnectorSLAThresholds(
-                    p95_latency_ms=float(p95_latency_ms),
-                    max_failure_rate=float(max_failure_rate),
+                    p95_latency_ms=p95_latency_value,
+                    max_failure_rate=max_failure_value,
                 )
             except (TypeError, ValueError):
                 logger.debug("Skipping malformed connector SLA threshold for %s: %s", connector, value)

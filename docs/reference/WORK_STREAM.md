@@ -3108,7 +3108,7 @@ Add optional encryption-at-rest for sync artifact outputs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-255] Run Correlation IDs
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** observability, tracing
 **Effort:** S
@@ -3119,7 +3119,7 @@ Use shared run-level correlation IDs for all connector calls/events.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-256] No-Op Fast Path
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** performance, sync
 **Effort:** S
@@ -3130,7 +3130,7 @@ Add fast no-op cycle path and explicit telemetry for unchanged runs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-257] Historical Trend Reports
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** analytics, reporting
 **Effort:** M
@@ -3141,7 +3141,7 @@ Produce trend reports for drift/error/latency over long horizons.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-258] Docs Freshness Checker
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, quality
 **Effort:** S
