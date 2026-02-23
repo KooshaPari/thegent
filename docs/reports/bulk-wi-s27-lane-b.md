@@ -56,18 +56,18 @@
 **Title:** Surface provider model-discovery probe failures as explicit degraded outcomes.
 **Source Path+Line:** [thegent/src/thegent/provider_model_manager.py:507]
 **Acceptance Checklist:**
-- [ ] Replace broad exception swallowing with warning-level, bounded failure diagnostics.
-- [ ] Differentiate transport/protocol failures from legitimately empty provider catalogs.
-- [ ] Add tests for malformed payload, transport failure, and successful discovery branches.
+- [x] Replace broad exception swallowing with warning-level, bounded failure diagnostics.
+- [x] Differentiate transport/protocol failures from legitimately empty provider catalogs.
+- [x] Add tests for malformed payload, transport failure, and successful discovery branches.
 **Notes:** Hidden discovery errors can be misinterpreted as valid empty model sets.
 
 ### [WL-6887]
 **Title:** Preserve subagent enumeration failure signals in session detail rendering.
 **Source Path+Line:** [thegent/src/thegent/ux/session_tui.py:103]
 **Acceptance Checklist:**
-- [ ] Replace catch-all empty-list fallback with explicit degraded-state signaling.
-- [ ] Keep UI resilient while surfacing non-fatal subagent collection warnings.
-- [ ] Add tests for successful enumeration and exception paths.
+- [x] Replace catch-all empty-list fallback with explicit degraded-state signaling.
+- [x] Keep UI resilient while surfacing non-fatal subagent collection warnings.
+- [x] Add tests for successful enumeration and exception paths.
 **Notes:** Silent fallback to empty subagent lists can misrepresent active runtime state.
 
 ### [WL-6888]
