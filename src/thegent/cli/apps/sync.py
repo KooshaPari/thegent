@@ -1180,7 +1180,7 @@ def _run_autopilot_doctor(*, config: Any, output_format: str) -> None:
     }
 
     if output_format == "json":
-        typer.echo(json.dumps(payload, indent=2), sort_keys=True).decode())
+        typer.echo(json.dumps(payload, indent=2, sort_keys=True).decode())
         return
 
     color = "green" if payload["ok"] else "red"
