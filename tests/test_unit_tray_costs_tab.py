@@ -252,9 +252,6 @@ class TestTabsPackage:
 
     def test_tabs_package_exports_costs(self):
         """tabs package exports costs tab items."""
-        import os
-from pathlib import Path
-        import sys
 
         # Add src to path
         src_path = Path(__file__).parent.parent.parent / "src"
