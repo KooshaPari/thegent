@@ -341,6 +341,7 @@ def dag_run_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
+    from thegent.cli.commands._cli_shared import dag_run_impl
     res = dag_run_impl(
         cd=cd,
         dry_run=dry_run,
