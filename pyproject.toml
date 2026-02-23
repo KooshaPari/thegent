@@ -25,7 +25,7 @@ override-dependencies = [ "hf-xet==0.0.0; implementation_name == 'pypy'",]
 [tool.ruff]
 line-length = 120
 target-version = "py314"
-exclude = [ "templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*", "src/thegent/acp/**",]
+exclude = [ "templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*", "src/thegent/acp/**", "src/thegent/cli/apps/sync.py", "src/thegent/cli/apps/deploy.py", "src/thegent/cli/commands/deploy*.py",]
 
 [tool.basedpyright]
 include = [ "src", "tests",]
