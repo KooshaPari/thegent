@@ -66,4 +66,3 @@ Implement policy-driven multi-agent governance that avoids rigid `1 agent = 1 wo
 8. C1.1 + D1.3 -> E1.1 -> E1.2 -> E1.3
 9. A1.3 + C1.3 + E1.2 -> F1.1 -> F1.2 -> F1.3
 10. F1.2 + E1.3 -> G1.1 -> G1.2 -> G1.3
-

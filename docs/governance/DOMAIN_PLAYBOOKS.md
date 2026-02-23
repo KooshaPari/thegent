@@ -50,4 +50,3 @@
 
 1. Use integration worktree and merge train.
 2. Gate on smoke tests, rollback readiness, and change audit completeness.
-
