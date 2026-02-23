@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import functools
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -21,6 +22,14 @@ class BearerAuthMiddleware(BaseHTTPMiddleware):
     """G-FM-01: Bearer token authentication for MCP HTTP endpoints."""
 
     _settings: ThegentSettings | None = None
+    _settings_lock: asyncio.Lock | None = None
+
+    @classmethod
+    def _get_lock(cls) -> asyncio.Lock:
+        """Get or create the settings lock (lazy init to avoid event loop issues)."""
+        if cls._settings_lock is None:
+            cls._settings_lock = asyncio.Lock()
+        return cls._settings_lock
 
     @classmethod
     def reload_settings(cls) -> None:
@@ -29,7 +38,9 @@ class BearerAuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         if BearerAuthMiddleware._settings is None:
-            BearerAuthMiddleware._settings = get_settings()
+            async with self._get_lock():
+                if BearerAuthMiddleware._settings is None:
+                    BearerAuthMiddleware._settings = get_settings()
         settings = BearerAuthMiddleware._settings
         if settings.mcp_auth_mode == "bearer":
             if request.url.path == "/health":
