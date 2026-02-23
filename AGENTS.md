@@ -15,11 +15,14 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 Preferred helper:
 
 ```bash
-thg_new_worktree <branch> [start-point] [worktree-path]
+./scripts/worktree_governance.sh new <branch> [start-point]
 ```
 
-When operating through bootstrap and shell-managed dotfiles, this helper is installed via
-`~/.zsh_worktree_governance.zsh`.
+Required layout for non-primary worktrees:
+
+- Root: `${THGENT_WORKTREE_ROOT:-<repo>/.worktrees}`
+- Naming: `<repo-name>--<branch-slug>`
+- Enforcement command: `./scripts/worktree_governance.sh check`
 
 Canonical policy docs for this model:
 
