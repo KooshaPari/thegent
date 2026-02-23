@@ -15,14 +15,13 @@ class ChatEntry(BaseModel):
 
 class ChatHistory:
     """Manages chat history."""
-    
+
     def __init__(self, chat_path: Path) -> None:
         self.chat_path = chat_path
-    
+
     def append(self, entry: ChatEntry) -> None:
         """Append entry."""
-        pass
-    
+
     def load(self, limit: int | None = None):
         """Load entries."""
         return []
@@ -36,14 +35,13 @@ class MessageEntry(BaseModel):
 
 class MessageRegistry:
     """Manages message registry."""
-    
+
     def __init__(self, messages_path: Path) -> None:
         self.messages_path = messages_path
-    
+
     def push(self, entry: MessageEntry) -> None:
         """Push entry."""
-        pass
-    
+
     def list_pending(self):
         """List pending."""
         return []

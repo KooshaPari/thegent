@@ -146,8 +146,13 @@ class IncrementalXMLParser:
         incomplete_tag: str | None = None
         
         if last_lt != -1:
-            # Check if there's an unclosed tag (last < is after last >, or no > at all)
-            if last_lt > last_gt or last_gt == -1:
+            # Check if there's an unclosed tag:
+            # 1. Last < is after last >, OR
+            # 2. No > at all, OR  
+            # 3. There's content after the last > (potential incomplete/streaming state)
+            has_content_after_last_gt = last_gt != -1 and last_gt < len(buf) - 1
+            
+            if last_lt > last_gt or last_gt == -1 or has_content_after_last_gt:
                 is_truncated = True
                 # Extract tag name after the last <
                 tag_start = last_lt + 1
@@ -163,16 +168,18 @@ class IncrementalXMLParser:
                         open_tag = None
                     else:
                         tag_name = tag_content[:tag_end].strip()
-                        # Check if it's a self-closing tag or has content
-                        if tag_content.startswith("/"):
+                        # Check if it's a closing tag (starts with /)
+                        if tag_name.startswith("/"):
                             # Closing tag
+                            open_tag = None
+                        elif tag_name.startswith("?"):
+                            # XML declaration or processing instruction
                             open_tag = None
                         else:
                             open_tag = tag_name
-                            # Get content after the tag
-                            content_start = tag_end + 1
-                            if content_start < len(buf):
-                                partial_content = buf[content_start:]
+                            # Get content after the LAST closing >, not after the tag name
+                            if last_gt != -1 and last_gt + 1 < len(buf):
+                                partial_content = buf[last_gt + 1:]
         
         return {
             "open_tag": open_tag,

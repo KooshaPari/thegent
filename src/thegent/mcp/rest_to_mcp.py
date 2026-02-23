@@ -150,10 +150,10 @@ from thegent.adapters.ports import AdapterRegistry
 
 class McpAdapter:
     """MCP adapter wrapper for registry"""
-    
+
     def __init__(self):
         self._adapter = RestToMcpAdapter()
-    
+
     def call(self, **kwargs) -> dict:
         return {"status": "mcp_adapter_ready"}
 
