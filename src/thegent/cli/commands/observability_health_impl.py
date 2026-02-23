@@ -3,12 +3,37 @@
 from __future__ import annotations
 
 import hashlib
+<<<<<<< HEAD
+<<<<<<< HEAD
 import orjson as json
+=======
+import json
+import logging
+>>>>>>> fix/ci-remove-macos
+=======
+import orjson as json
+>>>>>>> main
 from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> main
+_log = logging.getLogger(__name__)
+
+# --- Constants ---
+
+<<<<<<< HEAD
+>>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
+>>>>>>> merge/fixes-layer2
 HEALTH_PAYLOAD_SCHEMA_VERSION = "health-schema-v1"
 HEALTH_PAYLOAD_TYPES = (
     "session_contract_health_gate",
@@ -16,11 +41,37 @@ HEALTH_PAYLOAD_TYPES = (
     "session_contract_health_trend",
 )
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 HEALTH_POLICY_PROFILES: dict[str, dict[str, Any]] = {
     "strict_ci": {"strict": True, "min_healthy_ratio": 1.0},
     "warn_only": {"strict": False, "min_healthy_ratio": 0.0},
     "prod_release": {"strict": True, "min_healthy_ratio": 0.98},
 }
+<<<<<<< HEAD
+=======
+__all__ = [
+    "HEALTH_PAYLOAD_SCHEMA_VERSION",
+    "HEALTH_PAYLOAD_TYPES",
+    "HEALTH_POLICY_PROFILES",
+    "_append_health_snapshot",
+    "_coerce_issue_types",
+    "_compact_health_snapshot_log",
+    "_hash_health_payload",
+    "_health_scope_key",
+    "_health_snapshot_log_path",
+    "_health_snapshot_max_lines",
+    "_load_previous_health_snapshot",
+    "_resolve_health_policy",
+]
+
+
+# --- Helper Functions ---
+>>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 
 
 def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
@@ -28,7 +79,15 @@ def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
+<<<<<<< HEAD
+<<<<<<< HEAD
     body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
+=======
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":"))
+>>>>>>> fix/ci-remove-macos
+=======
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
+>>>>>>> main
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode()).hexdigest()}
 
 
@@ -178,11 +237,23 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
     }
     try:
         with path.open("a", encoding="utf-8") as fh:
+<<<<<<< HEAD
+<<<<<<< HEAD
             fh.write(json.dumps(rec, sort_keys=True).decode().decode())
+=======
+            fh.write(json.dumps(rec, sort_keys=True))
+>>>>>>> fix/ci-remove-macos
+=======
+            fh.write(json.dumps(rec, sort_keys=True).decode().decode())
+>>>>>>> main
             fh.write("\n")
     except OSError:
         return
     _compact_health_snapshot_log()
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 
 
 __all__ = [
@@ -199,3 +270,8 @@ __all__ = [
     "_load_previous_health_snapshot",
     "_resolve_health_policy",
 ]
+<<<<<<< HEAD
+=======
+>>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main

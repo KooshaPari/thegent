@@ -146,22 +146,33 @@ class IncrementalXMLParser:
         incomplete_tag: str | None = None
         
         if last_lt != -1:
-            # Check if there's an unclosed tag
-            if last_lt > last_gt or (last_gt == -1 and last_lt != -1):
+            # Check if there's an unclosed tag (last < is after last >, or no > at all)
+            if last_lt > last_gt or last_gt == -1:
                 is_truncated = True
-                # Extract tag name
+                # Extract tag name after the last <
                 tag_start = last_lt + 1
                 if tag_start < len(buf):
-                    tag_end = buf.find(">", tag_start)
+                    tag_content = buf[tag_start:]
+                    # Find the end of the tag name (space or >)
+                    tag_end = tag_content.find(" ")
                     if tag_end == -1:
-                        # No closing >, incomplete tag
-                        incomplete_tag = buf[tag_start:].strip()
+                        tag_end = tag_content.find(">")
+                    if tag_end == -1:
+                        # No > or space, this is an incomplete tag
+                        incomplete_tag = tag_content.strip()
                         open_tag = None
                     else:
-                        # Has closing >, check if there's content after
-                        open_tag = buf[tag_start:tag_end].strip()
-                        if tag_end + 1 < len(buf):
-                            partial_content = buf[tag_end + 1:]
+                        tag_name = tag_content[:tag_end].strip()
+                        # Check if it's a self-closing tag or has content
+                        if tag_content.startswith("/"):
+                            # Closing tag
+                            open_tag = None
+                        else:
+                            open_tag = tag_name
+                            # Get content after the tag
+                            content_start = tag_end + 1
+                            if content_start < len(buf):
+                                partial_content = buf[content_start:]
         
         return {
             "open_tag": open_tag,

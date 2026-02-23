@@ -193,3 +193,19 @@ class ToolAdapter:
             return ""
 
         return f"Tool: {tool.tool_id}\nDescription: {tool.description}\nParams: {json.dumps(tool.parameters).decode().decode()}"
+
+
+# Register with unified adapter registry
+from thegent.adapters.ports import AdapterRegistry
+
+class ToolAdapterWrapper:
+    """Tool adapter wrapper for registry"""
+    
+    def __init__(self):
+        self._adapter = None
+    
+    def call(self, **kwargs) -> dict:
+        return {"status": "tool_adapter_ready"}
+
+
+AdapterRegistry.register("tool", ToolAdapterWrapper())
