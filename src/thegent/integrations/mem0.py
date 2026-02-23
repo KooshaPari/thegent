@@ -47,17 +47,20 @@ class Mem0Client:
     @property
     def is_enabled(self): return self._config.enabled
 
-    async def add_memory(self, user_id: str, content: str, metadata: dict = None):
-        if not self.is_enabled: return None
+    async def add_memory(self, user_id: str, content: str, metadata: dict | None = None):
+        if not self.is_enabled:
+            return None
         return {"id": "mock"}
 
     async def search(self, user_id: str, query: str):
-        if not self.is_enabled: return []
+        if not self.is_enabled:
+            return []
         return []
 
 
 _mem0 = None
 def get_mem0():
     global _mem0
-    if _mem0 is None: _mem0 = Mem0Client()
+    if _mem0 is None:
+        _mem0 = Mem0Client()
     return _mem0

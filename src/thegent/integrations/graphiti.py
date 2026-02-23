@@ -8,7 +8,7 @@ import asyncio
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -55,7 +55,7 @@ class MemoryFact:
 
     def __post_init__(self):
         if not self.timestamp:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(tz=timezone.utc).isoformat()
 
 
 @dataclass
@@ -153,7 +153,7 @@ class GraphitiMemoryStore:
                 "target": target,
                 "namespace": self._config.namespace,
                 "metadata": metadata or {},
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             }
 
             headers = {"Content-Type": "application/json"}

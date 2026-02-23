@@ -48,7 +48,7 @@ class HumanLayerClient:
     @property
     def is_enabled(self): return self._config.enabled
 
-    async def request_approval(self, prompt: str, context: dict = None):
+    async def request_approval(self, prompt: str, context: dict | None = None):
         """Request human approval for an action."""
         if not self.is_enabled:
             return {"approved": False, "reason": "HumanLayer not enabled"}
@@ -65,5 +65,6 @@ class HumanLayerClient:
 _humanlayer = None
 def get_humanlayer():
     global _humanlayer
-    if _humanlayer is None: _humanlayer = HumanLayerClient()
+    if _humanlayer is None:
+        _humanlayer = HumanLayerClient()
     return _humanlayer

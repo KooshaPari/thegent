@@ -35,18 +35,22 @@ class BeadsWrapper:
         binary = self._config.binary_path or "bd"
         try:
             result = subprocess.run([binary, "version"], capture_output=True, timeout=5)
-            if result.returncode == 0: self._status = BeadsStatus.AVAILABLE
-        except: pass
+            if result.returncode == 0:
+                self._status = BeadsStatus.AVAILABLE
+        except:
+            pass
 
     @property
     def is_enabled(self): return self._config.enabled and self._status == BeadsStatus.AVAILABLE
 
     async def get_ready_beads(self):
-        if not self.is_enabled: return {"success": False, "beads": []}
+        if not self.is_enabled:
+            return {"success": False, "beads": []}
         return {"success": True, "beads": []}
 
 _beads = None
 def get_beads_wrapper():
     global _beads
-    if _beads is None: _beads = BeadsWrapper()
+    if _beads is None:
+        _beads = BeadsWrapper()
     return _beads

@@ -1,0 +1,101 @@
+{
+  "version": "1.0.0",
+  "name": "thegent-mcp-contracts",
+  "description": "MCP protocol contracts for thegent sub-project split",
+  "contracts": {
+    "cli_to_agents": {
+      "tools": [
+        {
+          "name": "execute_task",
+          "description": "Execute a task in the agents sub-project",
+          "parameters": {
+            "task_id": {"type": "string", "required": true},
+            "command": {"type": "string", "required": true},
+            "env": {"type": "object", "required": false}
+          }
+        },
+        {
+          "name": "list_tasks",
+          "description": "List all tasks in the agents queue",
+          "parameters": {
+            "status": {"type": "string", "required": false, "enum": ["pending", "running", "completed", "failed"]}
+          }
+        },
+        {
+          "name": "get_task_status",
+          "description": "Get status of a specific task",
+          "parameters": {
+            "task_id": {"type": "string", "required": true}
+          }
+        },
+        {
+          "name": "cancel_task",
+          "description": "Cancel a running task",
+          "parameters": {
+            "task_id": {"type": "string", "required": true}
+          }
+        },
+        {
+          "name": "get_agent_logs",
+          "description": "Get logs from an agent execution",
+          "parameters": {
+            "task_id": {"type": "string", "required": true},
+            "lines": {"type": "integer", "required": false, "default": 100}
+          }
+        },
+        {
+          "name": "invoke_agent",
+          "description": "Invoke a specific agent with input",
+          "parameters": {
+            "agent_type": {"type": "string", "required": true, "enum": ["general", "coder", "researcher", "reviewer"]},
+            "input": {"type": "string", "required": true},
+            "context": {"type": "object", "required": false}
+          }
+        }
+      ],
+      "resources": [
+        {
+          "uri": "task://queue",
+          "description": "Current task queue status",
+          "mimeType": "application/json"
+        },
+        {
+          "uri": "agent://status",
+          "description": "Agent pool status and availability",
+          "mimeType": "application/json"
+        }
+      ]
+    },
+    "agents_to_mcp": {
+      "tool_invocation": {
+        "contract": "tool_invoke",
+        "parameters": {
+          "tool_name": {"type": "string", "required": true},
+          "arguments": {"type": "object", "required": true},
+          "request_id": {"type": "string", "required": true}
+        },
+        "response": {
+          "success": {"type": "boolean"},
+          "result": {"type": "object"},
+          "error": {"type": "string"}
+        }
+      }
+    }
+  },
+  "error_codes": {
+    "E1001": {"message": "Task not found", "http_status": 404},
+    "E1002": {"message": "Task already running", "http_status": 409},
+    "E1003": {"message": "Task cancelled", "http_status": 200},
+    "E1004": {"message": "Agent unavailable", "http_status": 503},
+    "E1005": {"message": "Invalid task state", "http_status": 400},
+    "E2001": {"message": "MCP tool not found", "http_status": 404},
+    "E2002": {"message": "MCP tool invocation failed", "http_status": 500},
+    "E2003": {"message": "MCP timeout", "http_status": 504}
+  },
+  "slo": {
+    "task_creation": {"target_ms": 100, "p95_ms": 500},
+    "task_status": {"target_ms": 50, "p95_ms": 200},
+    "agent_invocation": {"target_ms": 1000, "p95_ms": 10000},
+    "mcp_tool_invoke": {"target_ms": 500, "p95_ms": 5000}
+  }
+}

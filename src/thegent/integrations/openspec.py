@@ -40,7 +40,8 @@ class OpenSpecAdapter:
     def is_enabled(self): return self._config.enabled
 
     def run(self, args):
-        if not self.is_enabled: return None
+        if not self.is_enabled:
+            return None
         try:
             result = subprocess.run(
                 [self._config.binary_path] + args,
@@ -53,5 +54,6 @@ class OpenSpecAdapter:
 _openspec = None
 def get_openspec_adapter():
     global _openspec
-    if _openspec is None: _openspec = OpenSpecAdapter()
+    if _openspec is None:
+        _openspec = OpenSpecAdapter()
     return _openspec

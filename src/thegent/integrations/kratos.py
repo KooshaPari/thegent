@@ -1,7 +1,8 @@
 """
 Ory Kratos Auth Integration - Self-hosted identity management.
 """
-import logging, os
+import logging
+import os
 from dataclasses import dataclass
 from enum import Enum
 
@@ -33,11 +34,13 @@ class KratosAuthProvider:
     def is_enabled(self): return self._config.enabled
 
     async def validate_session(self, session_token):
-        if not self.is_enabled: return {"success": False}
+        if not self.is_enabled:
+            return {"success": False}
         return {"success": True, "roles": ["user"]}
 
 _kratos = None
 def get_kratos_provider():
     global _kratos
-    if _kratos is None: _kratos = KratosAuthProvider()
+    if _kratos is None:
+        _kratos = KratosAuthProvider()
     return _kratos

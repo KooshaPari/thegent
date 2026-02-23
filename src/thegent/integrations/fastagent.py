@@ -46,13 +46,15 @@ class FastAgentClient:
     @property
     def is_enabled(self): return self._config.enabled
 
-    def run(self, workflow: str, input_data: dict = None):
-        if not self.is_enabled: return None
+    def run(self, workflow: str, input_data: dict | None = None):
+        if not self.is_enabled:
+            return None
         return {"result": {}}
 
 
 _fastagent = None
 def get_fastagent():
     global _fastagent
-    if _fastagent is None: _fastagent = FastAgentClient()
+    if _fastagent is None:
+        _fastagent = FastAgentClient()
     return _fastagent

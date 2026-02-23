@@ -47,12 +47,14 @@ class OpenCodeClient:
     def is_enabled(self): return self._config.enabled
 
     def complete(self, prompt: str):
-        if not self.is_enabled: return None
+        if not self.is_enabled:
+            return None
         return {"completion": ""}
 
 
 _opencode = None
 def get_opencode():
     global _opencode
-    if _opencode is None: _opencode = OpenCodeClient()
+    if _opencode is None:
+        _opencode = OpenCodeClient()
     return _opencode

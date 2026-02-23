@@ -35,11 +35,13 @@ class HumanifyPatterns:
     def is_enabled(self): return self._config.enabled
 
     def add_human_delay(self):
-        if not self.is_enabled: return 0
+        if not self.is_enabled:
+            return 0
         return random.uniform(100, 500) * self._config.variability / 1000
 
 _humanify = None
 def get_humanify():
     global _humanify
-    if _humanify is None: _humanify = HumanifyPatterns()
+    if _humanify is None:
+        _humanify = HumanifyPatterns()
     return _humanify
