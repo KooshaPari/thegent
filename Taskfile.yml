@@ -67,6 +67,12 @@ tasks:
       - task --list
     silent: true
 
+  changelog:check:
+    desc: "Validate root CHANGELOG.md has Keep-a-Changelog Unreleased section"
+    cmds:
+      - test -f CHANGELOG.md
+      - rg -n '^## \[Unreleased\]$' CHANGELOG.md >/dev/null
+
   # -- Project setup --
 
   nix:setup:
