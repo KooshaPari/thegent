@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-import orjson as jsonimport uuid
+import orjson as json
+import uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path

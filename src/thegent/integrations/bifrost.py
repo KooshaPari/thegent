@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from thegent.integrations.base import DataclassConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,8 +31,7 @@ class BifrostStatus(Enum):
 
 
 @dataclass
-class BifrostConfig:
-    enabled: bool = False
+class BifrostConfig(DataclassConfig):
     gateway_url: str = "http://localhost:8080"
     secret_key: str = ""
     api_key: str = ""
@@ -123,14 +124,9 @@ class BifrostClient:
             self._validator = ClaimsValidator(self._config)
 
     def _load_config(self):
-        return BifrostConfig(
-            enabled=os.getenv("THEGENT_ENABLE_BIFROST", "").lower() in ("1", "true", "yes"),
-            gateway_url=os.getenv("BIFROST_GATEWAY_URL", "http://localhost:8080"),
-            secret_key=os.getenv("BIFROST_SECRET_KEY", ""),
-            api_key=os.getenv("BIFROST_API_KEY", ""),
-            rate_limit=int(os.getenv("BIFROST_RATE_LIMIT", "1000")),
-            timeout=int(os.getenv("BIFROST_TIMEOUT", "30")),
-        )
+        config = BifrostConfig.from_env("BIFROST_")
+        config.enabled = os.environ.get("THEGENT_ENABLE_BIFROST", "").lower() in ("1", "true", "yes")
+        return config
 
     @property
     def is_enabled(self) -> bool:

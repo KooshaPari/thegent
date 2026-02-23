@@ -155,7 +155,7 @@ class TraceFile:
         data = record.to_dict() if hasattr(record, "to_dict") else record
         data["__type__"] = record.__class__.__name__
 
-        line = json.dumps(data, default=str).decode().decode() + "\n"
+        line = json.dumps(data, default=str).decode() + "\n"
 
         if self.compression == "gzip":
             with gzip.open(self.path, "at", encoding="utf-8") as f:

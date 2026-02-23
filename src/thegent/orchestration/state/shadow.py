@@ -1,7 +1,6 @@
 import logging
 import shutil
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -30,7 +29,7 @@ class ShadowWorkspace:
                 branch_name = branch or f"shadow-{self.shadow_id}"
 
                 # Ensure we are not on the branch already
-                current_branch = shim_run(
+                current_branch = subprocess.run(
                     ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                     cwd=self.project_root,
                     capture_output=True,
@@ -43,11 +42,11 @@ class ShadowWorkspace:
                     return False
 
                 # Create branch if it doesn't exist
-                shim_run(["git", "branch", branch_name], cwd=self.project_root, capture_output=True, check=False)
+                subprocess.run(["git", "branch", branch_name], cwd=self.project_root, capture_output=True, check=False)
 
                 # Add worktree
                 # MTSP-12: Use --no-checkout for faster creation if needed, but here we usually want the files
-                res = shim_run(
+                res = subprocess.run(
                     ["git", "worktree", "add", str(self.shadow_root), branch_name],
                     cwd=self.project_root,
                     capture_output=True,
@@ -58,8 +57,8 @@ class ShadowWorkspace:
                     logger.error(f"Failed to add worktree: {res.stderr}")
                     # Try to repair if it's an "already registered" error
                     if "already registered" in res.stderr:
-                        shim_run(["git", "worktree", "prune"], cwd=self.project_root, check=False)
-                        res = shim_run(
+                        subprocess.run(["git", "worktree", "prune"], cwd=self.project_root, check=False)
+                        res = subprocess.run(
                             ["git", "worktree", "add", str(self.shadow_root), branch_name],
                             cwd=self.project_root,
                             capture_output=True,
@@ -100,11 +99,11 @@ class ShadowWorkspace:
         try:
             if (self.project_root / ".git").exists():
                 # Remove git worktree
-                shim_run(
+                subprocess.run(
                     ["git", "worktree", "remove", "--force", str(self.shadow_root)], cwd=self.project_root, check=True
                 )
                 # Optionally delete the branch
-                # shim_run(["git", "branch", "-D", f"shadow-{self.shadow_id}"], cwd=self.project_root, check=False)
+                # subprocess.run(["git", "branch", "-D", f"shadow-{self.shadow_id}"], cwd=self.project_root, check=False)
             else:
                 shutil.rmtree(self.shadow_root)
             return True
@@ -117,7 +116,7 @@ class ShadowWorkspace:
 
     def run(self, cmd: list[str]) -> subprocess.CompletedProcess:
         """Run a command within the shadow workspace."""
-        return shim_run(cmd, cwd=self.shadow_root, capture_output=True, text=True, check=False)
+        return subprocess.run(cmd, cwd=self.shadow_root, capture_output=True, text=True, check=False)
 
     def merge_back(self) -> bool:
         """Merge changes from the shadow workspace back to the main project."""
@@ -139,7 +138,7 @@ class ShadowWorkspace:
                 # We proceed anyway, maybe there were no changes
 
             # In the main project, merge the branch
-            res = shim_run(
+            res = subprocess.run(
                 ["git", "merge", branch_name], cwd=self.project_root, capture_output=True, text=True, check=False
             )
             if res.returncode == 0:

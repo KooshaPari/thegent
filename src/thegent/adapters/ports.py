@@ -4,8 +4,8 @@ Adapter Port Interface - Unified Adapter Pattern
 Defines port interfaces for all adapters in thegent.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Protocol
+from abc import abstractmethod
+from typing import Any, ClassVar, Protocol
 
 class AdapterPort(Protocol):
     """Protocol all adapters must implement"""
@@ -35,7 +35,7 @@ class StorageAdapter(AdapterPort):
 
 # Unified adapter registry
 class AdapterRegistry:
-    _adapters: dict[str, AdapterPort] = {}
+    _adapters: ClassVar[dict[str, AdapterPort]] = {}
 
     @classmethod
     def register(cls, name: str, adapter: AdapterPort) -> None:

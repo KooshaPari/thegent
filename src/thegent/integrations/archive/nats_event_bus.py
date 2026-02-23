@@ -4,8 +4,7 @@ NATS Event Bus Integration - Event bus for thegent orchestration.
 Full implementation for Phase 3 Spike Batch B.
 """
 
-import orjson as json
-import logging
+import orjson as jsonimport logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -18,13 +17,13 @@ from thegent.integrations.base import DataclassConfig
 logger = logging.getLogger(__name__)
 
 try:
-    import nats
-    from nats.js import JetStreamContext
+    import nats  # type: ignore[import-not-found]
+    from nats.js import JetStreamContext  # type: ignore[import-not-found]
     NATS_AVAILABLE = True
 except ImportError:
     NATS_AVAILABLE = False
     nats = None
-    JetStreamContext = None
+    JetStreamContext = None  # type: ignore[assignment,misc]
 
 
 class NATSError(Exception):
@@ -87,7 +86,7 @@ class NATSEventBus:
     - task.failed
     """
 
-    def __init__(self, config: NATSConfig = None):
+    def __init__(self, config: NATSConfig | None = None):
         self._config = config or self._load_config()
         self._status = NATSStatus.DISCONNECTED
         self._nc = None

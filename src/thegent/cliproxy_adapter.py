@@ -1234,14 +1234,14 @@ def create_adapter_app(backend_url: str) -> Starlette:
 # Register with unified adapter registry
 class CliproxyAdapter:
     """HTTP proxy adapter for cliproxy"""
-    
+
     def __init__(self, backend_url: str = "http://127.0.0.1:8318/v1"):
         self._app = create_adapter_app(backend_url)
-    
+
     def call(self, request=None, **kwargs) -> dict:
         """Proxy request through adapter"""
         return {"status": "ready", "backend": self._app.state.backend_url}
-    
+
     @property
     def app(self):
         return self._app
