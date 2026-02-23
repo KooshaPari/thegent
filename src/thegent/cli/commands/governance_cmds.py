@@ -4,7 +4,6 @@ This module re-exports all governance commands from:
 - governance_audit_compliance_cmds: Audit, compliance, data protection
 - governance_escalation_hitl_cmds: Escalation and HITL approval handling
 - governance_policy_health_cmds: Policies, contracts, health scoring, drift
-- governance_agileplus_cmds: AgilePlus health cycling and watching
 - governance_discovery_guardrails_cmds: Discovery and guardrails
 
 Direct imports from submodules preserve all public names for CLI registration.
@@ -35,81 +34,25 @@ from thegent.cli.commands.governance_escalation_hitl_cmds import (
     govern_approve_cmd,
     govern_list_pending_cmd,
     govern_reject_cmd,
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     sweep_cmd,
->>>>>>> fix/ci-remove-macos
-=======
-    sweep_cmd,
->>>>>>> main
->>>>>>> merge/fixes-layer2
 )
 
 # Re-export all policy & health commands
 from thegent.cli.commands.governance_policy_health_cmds import (
-<<<<<<< HEAD
-<<<<<<< HEAD
-    HEALTH_POLICY_PROFILES,
-=======
->>>>>>> fix/ci-remove-macos
     contracts_conformance_cmd,
     contracts_registry_cmd,
     drift_cmd,
     govern_configure_cmd,
     govern_cost_cmd,
-<<<<<<< HEAD
-    migration_cmd,
-    policy_check_cmd,
-    policy_purge_cmd,
-    policy_show_cmd,
-    sweep_cmd,
-)
-
-# Re-export all AgilePlus commands
-from thegent.cli.commands.governance_agileplus_cmds import (
-=======
->>>>>>> fix/ci-remove-macos
     govern_go_cycle_cmd,
     govern_go_health_cmd,
     govern_go_status_cmd,
     govern_go_watch_cmd,
-<<<<<<< HEAD
-=======
     migration_cmd,
     policy_check_cmd,
     policy_purge_cmd,
     policy_show_cmd,
->>>>>>> fix/ci-remove-macos
 )
-=======
-    HEALTH_POLICY_PROFILES,
-    contracts_conformance_cmd,
-    contracts_registry_cmd,
-    drift_cmd,
-    govern_configure_cmd,
-    govern_cost_cmd,
-    migration_cmd,
-    policy_check_cmd,
-    policy_purge_cmd,
-    policy_show_cmd,
-    sweep_cmd,
-)
-
-# Re-export all AgilePlus commands
-from thegent.cli.commands.governance_agileplus_cmds import (
-    govern_go_cycle_cmd,
-    govern_go_health_cmd,
-    govern_go_status_cmd,
-<<<<<<< HEAD
-    govern_go_watch_cmd,
-)
-=======
-    govern_go_watch_cmd,)
->>>>>>> main
->>>>>>> merge/fixes-layer2
 
 # Re-export discovery & guardrails commands
 from thegent.cli.commands.governance_discovery_guardrails_cmds import (
@@ -121,25 +64,11 @@ from thegent.cli.commands.governance_discovery_guardrails_cmds import (
 )
 
 __all__ = [
-<<<<<<< HEAD
-<<<<<<< HEAD
-    # Audit & compliance
-<<<<<<< HEAD
-=======
-=======
->>>>>>> fix/ci-remove-macos
->>>>>>> merge/fixes-layer2
     "audit_verify_cmd",
     "compliance_plugin_check_cmd",
     "compliance_redact_cmd",
     "compliance_report_cmd",
     "compliance_siem_test_cmd",
-<<<<<<< HEAD
-    "data_protection_cmd",
-    "signatures_list_cmd",
-    "signatures_verify_cmd",
-    "trust_status_cmd",
-=======
     "contracts_conformance_cmd",
     "contracts_registry_cmd",
     "data_protection_cmd",
@@ -170,45 +99,4 @@ __all__ = [
     "signatures_verify_cmd",
     "sweep_cmd",
     "trust_status_cmd",
-<<<<<<< HEAD
->>>>>>> merge/fixes-layer2
-    # Escalation & HITL
-    "escalate_add_cmd",
-    "escalate_approve_cmd",
-    "escalate_list_cmd",
-    "escalate_resolve_cmd",
-    "govern_approve_cmd",
-    "govern_list_pending_cmd",
-    "govern_reject_cmd",
-    # Policies & health
-    "HEALTH_POLICY_PROFILES",
-    "contracts_conformance_cmd",
-    "contracts_registry_cmd",
-    "drift_cmd",
-    "govern_configure_cmd",
-    "govern_cost_cmd",
-    "migration_cmd",
-    "policy_check_cmd",
-    "policy_purge_cmd",
-    "policy_show_cmd",
-    "sweep_cmd",
-    # AgilePlus
-    "govern_go_cycle_cmd",
-    "govern_go_health_cmd",
-    "govern_go_status_cmd",
-    "govern_go_watch_cmd",
-    # Discovery & guardrails
-    "discovery_parse_cmd",
-    "discovery_register_cmd",
-    "discovery_scan_cmd",
-    "guardrails_check_cmd",
-    "guardrails_show_cmd",
-<<<<<<< HEAD
-=======
-=======
->>>>>>> fix/ci-remove-macos
-=======
-    # Audit & compliance
->>>>>>> main
->>>>>>> merge/fixes-layer2
 ]

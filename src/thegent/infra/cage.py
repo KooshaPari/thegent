@@ -50,7 +50,7 @@ class AgentCage:
         import subprocess
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 cwd=self.root,
                 capture_output=True,

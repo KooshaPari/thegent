@@ -16,6 +16,7 @@ import atexit
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +34,7 @@ def _cleanup_orphaned_shadows(repo_root: Path) -> int:
     cleaned = 0
 
     # Get list of active worktrees
-    result = subprocess.run(
+    result = shim_run(
         ["git", "worktree", "list", "--porcelain"],
         cwd=repo_root,
         capture_output=True,
@@ -101,7 +102,7 @@ class ShadowWorkspace:
         """
         try:
             # Check if we're in a git repo
-            result = subprocess.run(  # noqa: PLW1510 -- returncode checked manually
+            result = shim_run(  # noqa: PLW1510 -- returncode checked manually
                 ["git", "rev-parse", "--git-dir"],
                 cwd=self.original_cwd,
                 capture_output=True,
@@ -116,7 +117,7 @@ class ShadowWorkspace:
             shadow_dir = self.original_cwd / self._worktree_name
 
             # Create worktree
-            result = subprocess.run(  # noqa: PLW1510 -- returncode checked manually
+            result = shim_run(  # noqa: PLW1510 -- returncode checked manually
                 ["git", "worktree", "add", "--detach", str(shadow_dir), "HEAD"],
                 cwd=self.original_cwd,
                 capture_output=True,
@@ -164,7 +165,7 @@ class ShadowWorkspace:
 
         try:
             # Stage all changes in shadow
-            subprocess.run(  # noqa: PLW1510 -- returncode checked manually
+            shim_run(  # noqa: PLW1510 -- returncode checked manually
                 ["git", "add", "-A"],
                 cwd=self.shadow_root,
                 capture_output=True,
@@ -172,7 +173,7 @@ class ShadowWorkspace:
             )
 
             # Commit if there are changes
-            result = subprocess.run(  # noqa: PLW1510 -- returncode checked manually
+            result = shim_run(  # noqa: PLW1510 -- returncode checked manually
                 ["git", "diff", "--cached", "--quiet"],
                 cwd=self.shadow_root,
                 capture_output=True,
@@ -181,7 +182,7 @@ class ShadowWorkspace:
 
             if result.returncode != 0:
                 # There are staged changes, commit them
-                subprocess.run(  # noqa: PLW1510 -- returncode checked manually
+                shim_run(  # noqa: PLW1510 -- returncode checked manually
                     ["git", "commit", "-m", f"Shadow workspace changes for {self.run_id}"],
                     cwd=self.shadow_root,
                     capture_output=True,
@@ -203,7 +204,7 @@ class ShadowWorkspace:
         try:
             if self.shadow_root and self.shadow_root.exists():
                 # Remove worktree
-                subprocess.run(  # noqa: PLW1510 -- returncode checked manually
+                shim_run(  # noqa: PLW1510 -- returncode checked manually
                     ["git", "worktree", "remove", "--force", str(self.shadow_root)],
                     cwd=self.original_cwd,
                     capture_output=True,
@@ -252,7 +253,7 @@ def get_shadow_stats(repo_root: Path) -> dict[str, Any]:
     }
 
     # Get active worktrees
-    result = subprocess.run(
+    result = shim_run(
         ["git", "worktree", "list", "--porcelain"],
         cwd=repo_root,
         capture_output=True,

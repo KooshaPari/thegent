@@ -4,7 +4,7 @@ from pathlib import Path
 class CircuitBreakerRegistry:
     def __init__(self, session_dir: Path, threshold: int = 5, window_s: int = 300, recovery_s: int = 60) -> None:
         self.session_dir = session_dir
-    def record_failure(self, target: str, category: str = "agent", error_message: str = None) -> None:
+    def record_failure(self, target: str, category: str = "agent", error_message: str | None = None) -> None:
         pass
     def is_open(self, target: str, category: str = "agent") -> bool:
         return False

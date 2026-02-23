@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from pathlib import Path
 
@@ -97,7 +98,7 @@ def _run_droid_with_alias(alias: str, passthrough_args: list[str]) -> None:
     else:
         cmd = [droid_cmd, "--model", model, *passthrough_args]
     try:
-        proc = subprocess.run(cmd, check=False)
+        proc = shim_run(cmd, check=False)
     except FileNotFoundError:
         console.print(
             "[red]droid CLI not found.[/red] Install via: [dim]curl -fsSL https://app.factory.ai/Union[cli, sh][/dim]"

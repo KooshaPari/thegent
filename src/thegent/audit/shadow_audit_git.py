@@ -20,6 +20,7 @@ import os
 import re
 import sqlite3
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import uuid
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
@@ -310,7 +311,7 @@ class GitJournal:
 
     def _run_git(self, *args: str, input_data: bytes | None = None) -> str:
         """Run a git command and return stdout."""
-        result = subprocess.run(
+        result = shim_run(
             ["git"] + list(args),
             cwd=self.repo_root,
             capture_output=True,
@@ -379,7 +380,7 @@ class GitJournal:
 
     def _hash_object(self, content: bytes) -> str:
         """Store content in git object database, return SHA."""
-        result = subprocess.run(
+        result = shim_run(
             ["git", "hash-object", "-w", "--stdin"],
             cwd=self.repo_root,
             input=content,
@@ -396,7 +397,7 @@ class GitJournal:
             lines.append(f"100644 blob {sha}\t{path}")
 
         tree_input = "\n".join(lines).encode()
-        result = subprocess.run(
+        result = shim_run(
             ["git", "mktree"],
             cwd=self.repo_root,
             input=tree_input,
@@ -423,7 +424,7 @@ class GitJournal:
         if parent:
             cmd.extend(["-p", parent])
 
-        result = subprocess.run(
+        result = shim_run(
             cmd,
             cwd=self.repo_root,
             capture_output=True,
@@ -497,7 +498,7 @@ class GitJournal:
         representing the current state, useful for periodic snapshots.
         """
         # Get all tracked files
-        result = subprocess.run(
+        result = shim_run(
             ["git", "ls-files", "-z"],
             cwd=self.repo_root,
             capture_output=True,
@@ -625,7 +626,7 @@ class GitJournal:
         repo_root = Path(repo_root).resolve()
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [
                     "git",
                     "for-each-ref",
@@ -674,7 +675,7 @@ class GitJournal:
                 last_commit = datetime.fromisoformat(session["last_commit"].replace(" ", "T"))
                 if last_commit.replace(tzinfo=UTC) < cutoff:
                     # Delete the ref
-                    subprocess.run(
+                    shim_run(
                         ["git", "update-ref", "-d", session["ref"]],
                         cwd=repo_root,
                         capture_output=True,
@@ -729,7 +730,7 @@ class GitJournal:
                 cmd.append("--aggressive")
             cmd.extend(["--prune=now"])
 
-            gc_result = subprocess.run(
+            gc_result = shim_run(
                 cmd,
                 cwd=repo_root,
                 capture_output=True,
@@ -847,7 +848,7 @@ class GitJournalEnhanced(GitJournal):
     def _check_native_scanner(self) -> bool:
         """Check if native secret scanner is available."""
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["hook-dispatcher", "scan-secrets", "--help"],
                 capture_output=True,
                 timeout=5,
@@ -862,7 +863,7 @@ class GitJournalEnhanced(GitJournal):
             return _scrub_secrets(content)
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["hook-dispatcher", "scan-secrets", "--stdin", "--format", "json"],
                 input=content.encode(),
                 capture_output=True,
@@ -890,7 +891,7 @@ class GitJournalEnhanced(GitJournal):
         """Initialize real-time file watcher."""
         try:
             # Try watchman first
-            result = subprocess.run(
+            result = shim_run(
                 ["watchman", "watch", str(self.repo_root)],
                 capture_output=True,
                 timeout=5,
@@ -904,7 +905,7 @@ class GitJournalEnhanced(GitJournal):
 
         try:
             # Try fswatch as fallback
-            result = subprocess.run(
+            result = shim_run(
                 ["fswatch", "--version"],
                 capture_output=True,
                 timeout=5,
@@ -918,7 +919,7 @@ class GitJournalEnhanced(GitJournal):
 
         # Try FSMonitor (Git 2.37+)
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["git", "fsmonitor--daemon", "start"],
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1032,7 +1033,7 @@ class GitJournalEnhanced(GitJournal):
     def _start_fsmonitor(self) -> None:
         """Start Git FSMonitor daemon."""
         try:
-            subprocess.run(
+            shim_run(
                 ["git", "fsmonitor--daemon", "start"],
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1310,7 +1311,7 @@ class GitJournalEnhanced(GitJournal):
                 cmd.append("--aggressive")
             cmd.extend(["--prune=now", "--quiet"])
 
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1361,7 +1362,7 @@ class GitJournalEnhanced(GitJournal):
 
         try:
             # Step 1: Run git repack
-            repack_result = subprocess.run(
+            repack_result = shim_run(
                 ["git", "repack", "-ad", "--quiet"],
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1374,7 +1375,7 @@ class GitJournalEnhanced(GitJournal):
             results["gc_success"] = gc_result.get("success", False)
 
             # Step 3: Prune unreachable objects
-            prune_result = subprocess.run(
+            prune_result = shim_run(
                 ["git", "prune", "--expire=now", "--verbose"],
                 cwd=self.repo_root,
                 capture_output=True,

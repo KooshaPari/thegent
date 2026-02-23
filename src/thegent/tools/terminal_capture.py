@@ -10,6 +10,7 @@ import os
 import platform
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from dataclasses import dataclass, field
 
@@ -44,7 +45,7 @@ def _capture_via_tmux(pane_id: str, n: int) -> CaptureResult | None:
         return None
     cmd = ["tmux", "capture-pane", "-p", "-S", f"-{n}", "-t", pane_id]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
+        result = shim_run(cmd, capture_output=True, text=True, timeout=5, check=False)
     except OSError:
         return None
     if result.returncode != 0:

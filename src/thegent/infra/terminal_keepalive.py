@@ -205,7 +205,7 @@ def _send_keepalive_via_tmux() -> bool:
             # We can use session_id or try to detect current pane
             try:
                 # Try to get current pane from tmux
-                result = subprocess.run(
+                result = shim_run(
                     ["tmux", "display-message", "-p", "#{pane_id}"],
                     capture_output=True,
                     text=True,
@@ -222,7 +222,7 @@ def _send_keepalive_via_tmux() -> bool:
 
     # Send Enter key to tmux pane
     try:
-        result = subprocess.run(
+        result = shim_run(
             ["tmux", "send-keys", "-t", tmux_pane, "C-m"],
             capture_output=True,
             timeout=1.0,

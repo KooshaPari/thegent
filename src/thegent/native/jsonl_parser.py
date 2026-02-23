@@ -10,6 +10,7 @@ import orjson as json
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -46,7 +47,7 @@ def _run_binary_lines(args: list[str]) -> list[str] | None:
     binary = _find_binary()
     if not binary:
         return None
-    proc = subprocess.run([binary, *args], check=False, capture_output=True, text=True)
+    proc = shim_run([binary, *args], check=False, capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError((proc.stderr or proc.stdout).strip() or f"thegent-jsonl failed: {proc.returncode}")
     return proc.stdout.splitlines()

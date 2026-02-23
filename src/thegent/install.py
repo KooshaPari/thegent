@@ -5,6 +5,7 @@ import logging
 import platform
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from importlib import import_module
 from datetime import UTC, datetime
@@ -222,7 +223,7 @@ def setup_rust_dispatcher(verbose: bool = False) -> bool:
     try:
         if verbose:
             sys.stdout.write(f"  Compiling Rust dispatcher in {dispatcher_dir}...\n")
-        subprocess.run(["cargo", "build", "--release"], cwd=str(dispatcher_dir), check=True, capture_output=not verbose)
+        shim_run(["cargo", "build", "--release"], cwd=str(dispatcher_dir), check=True, capture_output=not verbose)
 
         # Binary is at target/release/hook-dispatcher
         # Copy or symlink to hooks/bin/hook-dispatcher for easier access
@@ -268,7 +269,7 @@ def setup_harness(verbose: bool = False) -> bool:
     try:
         if verbose:
             sys.stdout.write(f"  Running harness install: {install_sh}\n")
-        subprocess.run(["bash", str(install_sh)], check=True)
+        shim_run(["bash", str(install_sh)], check=True)
         return True
     except subprocess.CalledProcessError as e:
         if verbose:

@@ -16,6 +16,7 @@ import logging
 import os
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import tempfile
 import time
 from contextlib import contextmanager, suppress
@@ -60,7 +61,7 @@ def _atomic_write(path: Path, content: str) -> None:
 
 def _run(cmd: list[str], cwd: Path, env: dict | None = None, check: bool = True) -> subprocess.CompletedProcess:
     """Run a subprocess, returning the CompletedProcess."""
-    return subprocess.run(
+    return shim_run(
         cmd,
         cwd=str(cwd),
         env=env,

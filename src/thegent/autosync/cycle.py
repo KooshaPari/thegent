@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 async def run_sync_cycle(runner) -> dict[str, Any]:
     """Execute one complete sync cycle.
-    
+
     This is the main cycle logic - extracted to reduce runner size.
     """
     result = {

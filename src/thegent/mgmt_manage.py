@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 
 from thegent.config import ThegentSettings
@@ -90,7 +91,7 @@ def verify_codex_cliproxy(
     env["OPENAI_BASE_URL"] = base_url
     env["OPENAI_API_KEY"] = "sk-dummy"
 
-    result = subprocess.run(
+    result = shim_run(
         [
             codex,
             "exec",

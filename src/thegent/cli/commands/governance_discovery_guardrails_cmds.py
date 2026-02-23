@@ -1,41 +1,12 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-"""Thegent CLI governance discovery and guardrails commands.
-
-Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
-"""
-<<<<<<< HEAD
-=======
 """Governance discovery and guardrails commands (WL-124).
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
 
+This module handles guardrails enforcement and discovery of external agents
+and governance-relevant code patterns.
+"""
+
+# @trace WL-124
 from __future__ import annotations
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-import os
-import sys
-from pathlib import Path
-from typing import Any
-
-import orjson as json
-import typer
-from rich.console import Console
-from rich.table import Table
-
-from thegent.cli.commands._cli_shared import (
-    _normalize_output_format,
-    console,
-)
-
-<<<<<<< HEAD
-=======
 from pathlib import Path
 
 import typer
@@ -83,9 +54,6 @@ def guardrails_show_cmd() -> None:
 
     console.print(table)
 
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
 
 def discovery_register_cmd(
     agent: str = typer.Option("?", "--agent", "-a", help="Agent name"),
@@ -99,19 +67,8 @@ def discovery_register_cmd(
     mcp_errors: list[str] | None = typer.Option(None, "--mcp-error", help="MCP startup error(s)"),
 ) -> None:
     """Register or update a discovered external agent (WP-4008)."""
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     import json
 
->>>>>>> fix/ci-remove-macos
-=======
-    import json
-
->>>>>>> main
->>>>>>> merge/fixes-layer2
     from thegent.discovery import register_discovered_agent
 
     token_usage = None
@@ -140,19 +97,6 @@ def discovery_parse_cmd(
     ppid: int = typer.Option(0, "--ppid", help="Force PPID for all discovered sessions"),
 ) -> None:
     """Parse CLI output for session information and register them."""
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-    from thegent.discovery import register_discovered_agent
-    from thegent.parser import parse_cli_output
-
-    console_obj = Console()
-    if text is None:
-        if sys.stdin.isatty():
-            console_obj.print("[yellow]Waiting for input on stdin (Ctrl+D to finish)...[/yellow]")
-<<<<<<< HEAD
-=======
     import sys
 
     from rich.console import Console
@@ -165,22 +109,11 @@ def discovery_parse_cmd(
     if text is None:
         if sys.stdin.isatty():
             console.print("[yellow]Waiting for input on stdin (Ctrl+D to finish)...[/yellow]")
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
         text = sys.stdin.read()
 
     sessions = parse_cli_output(text)
     if not sessions:
-<<<<<<< HEAD
-<<<<<<< HEAD
-        console_obj.print("[yellow]No sessions found in output.[/yellow]")
-=======
         console.print("[yellow]No sessions found in output.[/yellow]")
->>>>>>> fix/ci-remove-macos
-=======
-        console_obj.print("[yellow]No sessions found in output.[/yellow]")
->>>>>>> main
         return
 
     table = Table(title="Discovered Sessions")
@@ -195,18 +128,10 @@ def discovery_parse_cmd(
         table.add_row(s.agent, s.session_id, tokens, errors)
 
         if register:
-<<<<<<< HEAD
-<<<<<<< HEAD
-            target_ppid = ppid or os.getpid()
-=======
             # If PPID is not given, we use current PID as a placeholder
             # but ideally the user should provide the PPID of the agent.
             # If PPID is not given, we use the current shell's parent PID for best effort attribution.
             target_ppid = ppid or os.getppid()
->>>>>>> fix/ci-remove-macos
-=======
-            target_ppid = ppid or os.getpid()
->>>>>>> main
             register_discovered_agent(
                 pid=0,
                 ppid=target_ppid,
@@ -217,21 +142,9 @@ def discovery_parse_cmd(
                 mcp_errors=s.mcp_errors,
             )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-    console_obj.print(table)
-    if register:
-        console_obj.print(f"[green]Registered {len(sessions)} session(s).[/green]")
-=======
     console.print(table)
     if register:
         console.print(f"[green]Registered {len(sessions)} session(s).[/green]")
->>>>>>> fix/ci-remove-macos
-=======
-    console_obj.print(table)
-    if register:
-        console_obj.print(f"[green]Registered {len(sessions)} session(s).[/green]")
->>>>>>> main
 
 
 def discovery_scan_cmd(
@@ -243,24 +156,12 @@ def discovery_scan_cmd(
     extracts session IDs from --resume= when present, and registers them
     for introspection via thegent ps, terminal takeover, and inbox.
     """
-<<<<<<< HEAD
-<<<<<<< HEAD
-    from thegent.discovery import list_discovered_agents, scan_agent_processes
-
-    console_obj = Console()
-=======
     from rich.console import Console
     from rich.table import Table
 
     from thegent.discovery import list_discovered_agents, scan_agent_processes
 
     console = Console()
->>>>>>> fix/ci-remove-macos
-=======
-    from thegent.discovery import list_discovered_agents, scan_agent_processes
-
-    console_obj = Console()
->>>>>>> main
     registered = scan_agent_processes()
 
     if not format or format == "rich":
@@ -277,60 +178,6 @@ def discovery_scan_cmd(
                     r.get("session_id") or "—",
                     r.get("cwd", "?")[:50],
                 )
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-            console_obj.print(table)
-            console_obj.print(f"[green]Registered {len(registered)} agent session(s).[/green]")
-        else:
-            console_obj.print("[dim]No cursor-agent, claude-code, or codex processes found.[/dim]")
-        existing = list_discovered_agents()
-        if existing:
-            console_obj.print(f"\n[dim]Total discovered agents: {len(existing)}[/dim]")
-    elif format == "json":
-        console_obj.print_json(data={"registered": registered, "count": len(registered)})
-
-
-def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
-    """Check a prompt against active guardrails (FR-GOV-003..006)."""
-    from thegent.governance.input_guardrails import InputGuardrails
-
-    rails = InputGuardrails()
-    results = rails.check(prompt, agent=agent, model=model)
-
-    if not results:
-        console.print("[green]Prompt passed all guardrails.[/green]")
-        return
-
-    console.print("[red]Prompt FAILED guardrail checks:[/red]")
-    for res in results:
-        console.print(f"- [bold]{res.rail_id}[/bold]: {res.violation}")
-        if res.remediation:
-            console.print(f"  [dim]Remediation: {res.remediation}[/dim]")
-
-
-def guardrails_show_cmd() -> None:
-    """Show active guardrail configuration (FR-GOV-007)."""
-    from thegent.governance.input_guardrails import InputGuardrails
-
-    rails = InputGuardrails()
-
-    table = Table(title="Input Guardrails Configuration")
-    table.add_column("Parameter")
-    table.add_column("Value")
-
-    table.add_row("Max Chars", str(rails.prompt_max_chars))
-    table.add_row("Blocklist Patterns", str(len(rails.prompt_blocklist_patterns)))
-    table.add_row("Agent Allowlist", ", ".join(rails.agent_allowlist) if rails.agent_allowlist else "None")
-    table.add_row("Model Allowlist", ", ".join(rails.model_allowlist) if rails.model_allowlist else "None")
-    table.add_row(
-        "CWD Allowed Prefixes", ", ".join(rails.cwd_allowed_prefixes) if rails.cwd_allowed_prefixes else "None"
-    )
-
-    console.print(table)
-<<<<<<< HEAD
-=======
             console.print(table)
             console.print(f"[green]Registered {len(registered)} agent session(s).[/green]")
         else:
@@ -350,9 +197,6 @@ __all__ = [
     "guardrails_check_cmd",
     "guardrails_show_cmd",
 ]
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
 
 
 __all__ = [

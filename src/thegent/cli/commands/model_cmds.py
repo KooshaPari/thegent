@@ -8,6 +8,7 @@ import re
 import os
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from pathlib import Path
 from typing import Any, cast

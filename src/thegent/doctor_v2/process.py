@@ -21,7 +21,7 @@ def is_process_working(pid: int, min_cpu: float = 0.1, min_io: int = 1024) -> tu
         proc = psutil.Process(pid)
         cpu = proc.cpu_percent(interval=0.1)
         io = proc.io_counters().read_bytes if proc.io_counters() else 0
-        
+
         if cpu > min_cpu or io > min_io:
             return True, f"cpu={cpu}%"
         return False, "idle"
@@ -53,4 +53,4 @@ def extract_process_info(proc: psutil.Process) -> ProcessInfo | None:
         return None
 
 
-__all__ = ["ProcessInfo", "is_process_working", "find_stuck_processes", "extract_process_info"]
+__all__ = ["ProcessInfo", "extract_process_info", "find_stuck_processes", "is_process_working"]

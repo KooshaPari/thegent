@@ -337,7 +337,7 @@ class AutoLaunchSystem:
         import subprocess
 
         try:
-            subprocess.run(
+            shim_run(
                 [
                     "bash",
                     "hooks/notify-agent-event.sh",
@@ -811,7 +811,7 @@ class AutoLaunchSystem:
         _log.info(f"Awarding {xp_amount} XP to {agent} for {item_id}")
 
         try:
-            subprocess.run(
+            shim_run(
                 [
                     "bash",
                     "hooks/gardener-xp.sh",

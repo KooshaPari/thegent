@@ -42,9 +42,9 @@ def build_scaffold_data(project_name: str, template: str) -> dict[str, Any]:
 
 
 __all__ = [
-    "scaffold_greenfield",
+    "build_scaffold_data",
     "scaffold_brownfield",
     "scaffold_brownfield_agdd",
-    "scaffold_brownfield_none", 
-    "build_scaffold_data",
+    "scaffold_brownfield_none",
+    "scaffold_greenfield",
 ]

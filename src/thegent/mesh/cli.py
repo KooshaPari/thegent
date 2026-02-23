@@ -1,6 +1,7 @@
 """CLI commands for agent mesh coordination."""
 
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 import typer
@@ -340,7 +341,7 @@ def run_agent(
     console.print(f"Launching {agent_type} in managed mesh session...")
 
     try:
-        result = subprocess.run(
+        result = shim_run(
             ["bash", str(script_path), agent_type, prompt, str(workdir)], capture_output=True, text=True, check=True
         )
         console.print(result.stdout)

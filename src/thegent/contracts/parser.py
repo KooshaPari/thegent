@@ -118,11 +118,14 @@ class IncrementalXMLParser:
 
         pattern = re.compile(r"<([A-Za-z0-9_\-]+)>(.*?)</\1>", re.DOTALL)
         tags: dict[str, str] = {}
+        # Normalize allowed_tags for case-insensitive matching
+        allowed_tags_lower = [t.lower() for t in self.allowed_tags] if self.allowed_tags else None
         for m in pattern.finditer(self._buffer):
             key = m.group(1)
             val = m.group(2).strip()
             # OPT-007: Early-exit if we detect invalid tag name (structural failure)
-            if self.allowed_tags and key not in self.allowed_tags:
+            # Case-insensitive matching for allowed_tags
+            if allowed_tags_lower and key.lower() not in allowed_tags_lower:
                 if self.strict:
                     # In strict mode, disallowed tag = structural failure, exit early
                     return {}
@@ -130,28 +133,31 @@ class IncrementalXMLParser:
                 continue
             tags[key] = val
         self._committed_tags = tags.copy()
+        # Normalize keys to uppercase if allowed_tags are uppercase
+        if self.allowed_tags:
+            tags = {k.upper(): v for k, v in tags.items()}
         return tags
 
     def get_partial_state(self, text: str) -> dict[str, any]:
         """Return partial parse state with tag name, content, and truncation status."""
         buf = text or ""
-        
+
         # Find last '<' and '>'
         last_lt = buf.rfind("<")
         last_gt = buf.rfind(">")
-        
+
         open_tag: str | None = None
         partial_content = ""
         is_truncated = False
         incomplete_tag: str | None = None
-        
+
         if last_lt != -1:
             # Check if there's an unclosed tag:
             # 1. Last < is after last >, OR
-            # 2. No > at all, OR  
+            # 2. No > at all, OR
             # 3. There's content after the last > (potential incomplete/streaming state)
             has_content_after_last_gt = last_gt != -1 and last_gt < len(buf) - 1
-            
+
             if last_lt > last_gt or last_gt == -1 or has_content_after_last_gt:
                 is_truncated = True
                 # Extract tag name after the last <
@@ -180,7 +186,7 @@ class IncrementalXMLParser:
                             # Get content after the LAST closing >, not after the tag name
                             if last_gt != -1 and last_gt + 1 < len(buf):
                                 partial_content = buf[last_gt + 1:]
-        
+
         return {
             "open_tag": open_tag,
             "partial_content": partial_content,

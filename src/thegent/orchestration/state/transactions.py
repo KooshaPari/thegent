@@ -5,6 +5,7 @@ MTSP-13/14: Ensure multi-step agent actions are atomic or revertible.
 import asyncio
 import logging
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import tempfile
 import uuid
 from collections.abc import Callable
@@ -117,13 +118,13 @@ def apply_multi_file_transaction(
             tmp_path.replace(target)
         if git_commit and (cwd / ".git").exists():
             for _, target in temp_files:
-                subprocess.run(
+                shim_run(
                     ["git", "add", str(target.relative_to(cwd))],
                     cwd=cwd,
                     capture_output=True,
                     check=False,
                 )
-            subprocess.run(
+            shim_run(
                 ["git", "commit", "-m", commit_message],
                 cwd=cwd,
                 capture_output=True,

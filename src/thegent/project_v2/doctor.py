@@ -26,7 +26,7 @@ def doctor_fix(project_path: str, tenant_id: str) -> list[str]:
 
 
 __all__ = [
-    "project_doctor",
     "doctor_check",
     "doctor_fix",
+    "project_doctor",
 ]

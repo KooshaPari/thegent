@@ -127,9 +127,9 @@ def attach_terminal(
     assert pane_id is not None  # guaranteed by interactive selection or early return above
     try:
         if "TMUX" in os.environ:
-            subprocess.run(["tmux", "switch-client", "-t", str(pane_id)], check=False)
+            shim_run(["tmux", "switch-client", "-t", str(pane_id)], check=False)
         else:
-            subprocess.run(["tmux", "attach-session", "-t", session_name], check=False)
+            shim_run(["tmux", "attach-session", "-t", session_name], check=False)
     except Exception as e:
         console.print(f"[red]Error attaching: {e}[/red]")
 

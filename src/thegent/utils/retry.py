@@ -2,7 +2,7 @@
 
 Usage:
     from thegent.utils.retry import retry, CircuitBreaker
-    
+
     @retry(max_attempts=3, backoff=2.0)
     def flaky_function():
         ...
