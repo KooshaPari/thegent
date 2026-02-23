@@ -171,6 +171,93 @@ class SerializableMixin:
 
 
 # ---------------------------------------------------------------------------
+# Singleton Mixin
+# ---------------------------------------------------------------------------
+
+import threading
+from typing import ClassVar
+
+
+class SingletonMixin:
+    """Thread-safe singleton mixin for classes.
+    
+    Provides a consistent singleton pattern with:
+    - Thread-safe initialization (double-checked locking)
+    - Lazy instantiation
+    - Reset capability for testing
+    
+    Usage:
+        class MyService(SingletonMixin):
+            def __init__(self, config: str = "default"):
+                self.config = config
+        
+        # Get singleton instance
+        service = MyService.get_instance()
+        
+        # Get with custom args (only used on first call)
+        service = MyService.get_instance(config="custom")
+        
+        # Reset for testing
+        MyService.reset_instance()
+    
+    Note:
+        - First call to get_instance() creates the instance
+        - Subsequent calls return the same instance
+        - Args passed after first call are ignored
+        - Use reset_instance() to clear for testing
+    """
+    
+    _instances: ClassVar[dict[type, Any]] = {}
+    _locks: ClassVar[dict[type, threading.Lock]] = {}
+    _global_lock = threading.Lock()
+    
+    @classmethod
+    def _get_lock(cls) -> threading.Lock:
+        """Get or create lock for this class."""
+        with SingletonMixin._global_lock:
+            if cls not in SingletonMixin._locks:
+                SingletonMixin._locks[cls] = threading.Lock()
+            return SingletonMixin._locks[cls]
+    
+    @classmethod
+    def get_instance(cls, *args, **kwargs) -> "SingletonMixin":
+        """Get the singleton instance, creating it if necessary.
+        
+        Args:
+            *args: Positional arguments for __init__ (only used on first call)
+            **kwargs: Keyword arguments for __init__ (only used on first call)
+            
+        Returns:
+            The singleton instance
+        """
+        if cls not in SingletonMixin._instances:
+            lock = cls._get_lock()
+            with lock:
+                # Double-checked locking
+                if cls not in SingletonMixin._instances:
+                    instance = cls(*args, **kwargs)
+                    SingletonMixin._instances[cls] = instance
+        return SingletonMixin._instances[cls]
+    
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset the singleton instance.
+        
+        Useful for testing to get a fresh instance.
+        Warning: Not thread-safe during reset.
+        """
+        lock = cls._get_lock()
+        with lock:
+            if cls in SingletonMixin._instances:
+                del SingletonMixin._instances[cls]
+    
+    @classmethod
+    def has_instance(cls) -> bool:
+        """Check if an instance exists."""
+        return cls in SingletonMixin._instances
+
+
+# ---------------------------------------------------------------------------
 # Config Loading Utilities
 # ---------------------------------------------------------------------------
 
@@ -358,6 +445,7 @@ __all__ = [
     "IntegrationInfo",
     "IntegrationStatus",
     "SerializableMixin",
+    "SingletonMixin",
     "feature",
     "load_env_config",
     "load_file_config",
