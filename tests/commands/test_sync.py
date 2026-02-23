@@ -10,7 +10,7 @@ Traces to: FR-SYNC-021 through FR-SYNC-040
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -24,17 +24,27 @@ from thegent.commands.sync import (
 from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
 from thegent.integrations.sync_policy_contract import ConnectorPolicy, SyncPolicyContract
 
-if TYPE_CHECKING:
-    from pathlib import Path
-
 # ---------------------------------------------------------------------------
 # Shared fixtures / helpers
 # ---------------------------------------------------------------------------
 
 
-def _make_cmd(tmp_path: Path, **kwargs: object) -> SyncCommand:
+def _make_cmd(
+    tmp_path: Path,
+    *,
+    agents_dir: Path | None = None,
+    hooks_dir: Path | None = None,
+    hook_config_path: Path | None = None,
+    work_stream_path: Path | None = None,
+) -> SyncCommand:
     """Return a SyncCommand rooted at a throwaway temp directory."""
-    return SyncCommand(project_root=tmp_path, **kwargs)
+    return SyncCommand(
+        project_root=tmp_path,
+        agents_dir=agents_dir,
+        hooks_dir=hooks_dir,
+        hook_config_path=hook_config_path,
+        work_stream_path=work_stream_path,
+    )
 
 
 def _agent_dir(tmp_path: Path, names: list[str]) -> Path:
@@ -229,6 +239,23 @@ class TestSyncBoardPolicyResolution:
         resolved = SyncCommand._connector_policy_for_source(policy, "github")
         assert resolved is not None
         assert resolved.board_id == "42"
+
+    def test_connector_policy_for_source_returns_none_for_missing_connector(self) -> None:
+        policy = SyncPolicyContract(
+            connectors={
+                "linear": ConnectorPolicy(
+                    enabled=True,
+                    mode="monitor",
+                    direction="bidirectional",
+                    quota_daily=50,
+                )
+            }
+        )
+        assert SyncCommand._connector_policy_for_source(policy, "github") is None
+
+    def test_connector_policy_for_source_returns_none_for_empty_connector_map(self) -> None:
+        policy = SyncPolicyContract(connectors={})
+        assert SyncCommand._connector_policy_for_source(policy, "github") is None
 
 
 # ---------------------------------------------------------------------------
@@ -667,12 +694,17 @@ class TestSyncCLIRegistration:
 
         from thegent.main import sync_app
 
+        class _BootstrapModule:
+            @staticmethod
+            def bootstrap_sync_workflow_project(**kwargs: object) -> dict[str, int]:
+                _ = kwargs
+                return {
+                    "prepared_count": 10,
+                    "project_number": 7,
+                }
+
         runner = CliRunner()
-        fake_module = type("BootstrapModule", (), {})()
-        fake_module.bootstrap_sync_workflow_project = lambda **kwargs: {
-            "prepared_count": 10,
-            "project_number": 7,
-        }
+        fake_module = _BootstrapModule()
 
         with patch("thegent.cli.apps.sync._load_bootstrap_sync_module", return_value=fake_module):
             result = runner.invoke(

@@ -23,6 +23,7 @@ parity assertion is also run.
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 import pytest
@@ -41,6 +42,23 @@ def _try_import_rust_parser() -> Any:
         return thegent_parser
     except ImportError:
         return None
+
+
+PARSER_PARITY_STRICT = os.environ.get("THEGENT_PARSER_PARITY_REQUIRED", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _require_rust_parser(reason: str) -> Any:
+    parser = _try_import_rust_parser()
+    if parser is None:
+        if PARSER_PARITY_STRICT:
+            pytest.fail(
+
+                    "Parser-touching CI profile requires the `thegent_parser` extension, but it could not be imported. "
+                    "Run `uv pip install crates/thegent-parser` or `cd crates/thegent-parser && maturin develop --release --features python` before rerunning parity tests."
+
+            )
+        pytest.skip(reason)
+    return parser
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +95,7 @@ def _python_extract_xml_tags(text: str) -> dict[str, str]:
         return result
 
 
-@pytest.mark.parametrize("text,expected", EXTRACT_XML_TAG_CASES)
+@pytest.mark.parametrize(("text", "expected"), EXTRACT_XML_TAG_CASES)
 def test_python_extract_xml_tags(text: str, expected: dict[str, str]) -> None:
     """Python extract_tags must match documented expected output."""
     result = _python_extract_xml_tags(text)
@@ -86,8 +104,8 @@ def test_python_extract_xml_tags(text: str, expected: dict[str, str]) -> None:
 
 def test_rust_extract_xml_tags_parity_if_available() -> None:
     """When Rust extension available, Python and Rust must agree on all cases."""
-    parser = _try_import_rust_parser()
-    if parser is None or not hasattr(parser, "extract_xml_tags"):
+    parser = _require_rust_parser("thegent_parser.extract_xml_tags not available; skipping cross-language parity")
+    if not hasattr(parser, "extract_xml_tags"):
         pytest.skip("thegent_parser.extract_xml_tags not available; skipping cross-language parity")
 
     for text, _expected in EXTRACT_XML_TAG_CASES:
@@ -126,7 +144,7 @@ def _python_parse_model_suffixes(model: str) -> dict[str, Any]:
     }
 
 
-@pytest.mark.parametrize("model_str,expected_base,expected_suffixes", EXTRA_MODEL_SUFFIX_CASES)
+@pytest.mark.parametrize(("model_str", "expected_base", "expected_suffixes"), EXTRA_MODEL_SUFFIX_CASES)
 def test_python_extended_model_suffix_cases(model_str: str, expected_base: str, expected_suffixes: list[str]) -> None:
     """Python parse_model_suffixes must match expected output for extended cases."""
     result = _python_parse_model_suffixes(model_str)
@@ -141,8 +159,8 @@ def test_python_extended_model_suffix_cases(model_str: str, expected_base: str, 
 
 def test_rust_extended_model_suffix_parity_if_available() -> None:
     """When Rust extension available, verify parity for extended suffix cases."""
-    parser = _try_import_rust_parser()
-    if parser is None or not hasattr(parser, "parse_model_suffixes"):
+    parser = _require_rust_parser("thegent_parser.parse_model_suffixes not available")
+    if not hasattr(parser, "parse_model_suffixes"):
         pytest.skip("thegent_parser.parse_model_suffixes not available")
 
     for model_str, _expected_base, _expected_suffixes in EXTRA_MODEL_SUFFIX_CASES:
@@ -189,7 +207,7 @@ def _python_parse_checkpoint_by_id(line: str, checkpoint_id: str) -> Any:
         return obj
 
 
-@pytest.mark.parametrize("line,cid,expect_match", CHECKPOINT_CASES)
+@pytest.mark.parametrize(("line", "cid", "expect_match"), CHECKPOINT_CASES)
 def test_python_parse_checkpoint_by_id(line: str, cid: str, expect_match: bool) -> None:
     """Python parse_checkpoint_by_id must match/not-match based on checkpoint_id."""
     result = _python_parse_checkpoint_by_id(line, cid)
@@ -203,8 +221,8 @@ def test_python_parse_checkpoint_by_id(line: str, cid: str, expect_match: bool) 
 
 def test_rust_parse_checkpoint_by_id_parity_if_available() -> None:
     """When Rust extension available, Python and Rust must agree on checkpoint parsing."""
-    parser = _try_import_rust_parser()
-    if parser is None or not hasattr(parser, "parse_checkpoint_by_id"):
+    parser = _require_rust_parser("thegent_parser.parse_checkpoint_by_id not available")
+    if not hasattr(parser, "parse_checkpoint_by_id"):
         pytest.skip("thegent_parser.parse_checkpoint_by_id not available")
 
     for line, cid, _expect_match in CHECKPOINT_CASES:
@@ -256,7 +274,7 @@ def _python_parse_dlq_item(line: str, status: str | None, run_id: str | None) ->
         return obj
 
 
-@pytest.mark.parametrize("line,status,run_id,expect_match", DLQ_CASES)
+@pytest.mark.parametrize(("line", "status", "run_id", "expect_match"), DLQ_CASES)
 def test_python_parse_dlq_item(line: str, status: str | None, run_id: str | None, expect_match: bool) -> None:
     """Python parse_dlq_item must filter correctly on status and run_id."""
     result = _python_parse_dlq_item(line, status, run_id)
@@ -268,8 +286,8 @@ def test_python_parse_dlq_item(line: str, status: str | None, run_id: str | None
 
 def test_rust_parse_dlq_item_parity_if_available() -> None:
     """When Rust extension available, Python and Rust must agree on DLQ filtering."""
-    parser = _try_import_rust_parser()
-    if parser is None or not hasattr(parser, "parse_dlq_item"):
+    parser = _require_rust_parser("thegent_parser.parse_dlq_item not available")
+    if not hasattr(parser, "parse_dlq_item"):
         pytest.skip("thegent_parser.parse_dlq_item not available")
 
     for line, status, run_id, _expect_match in DLQ_CASES:

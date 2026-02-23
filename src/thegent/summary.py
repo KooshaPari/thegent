@@ -111,7 +111,7 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
     try:
         res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
     except subprocess.TimeoutExpired as exc:
-        error: dict[str, Any] = {
+        timeout_error: dict[str, Any] = {
             "type": type(exc).__name__,
             "message": str(exc)[:200],
             "returncode": getattr(exc, "returncode", None),
@@ -122,15 +122,15 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
             " ".join(cmd),
             getattr(exc, "timeout", None),
         )
-        return GitCommitsResult(commits=[], status="error", error=error)
+        return GitCommitsResult(commits=[], status="error", error=timeout_error)
     except subprocess.SubprocessError as exc:
-        error: dict[str, Any] = {"type": type(exc).__name__, "message": str(exc)[:200]}
+        subprocess_error: dict[str, Any] = {"type": type(exc).__name__, "message": str(exc)[:200]}
         _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
-        return GitCommitsResult(commits=[], status="error", error=error)
+        return GitCommitsResult(commits=[], status="error", error=subprocess_error)
     except OSError as exc:
-        error: dict[str, Any] = {"type": type(exc).__name__, "message": str(exc)[:200]}
+        os_error: dict[str, Any] = {"type": type(exc).__name__, "message": str(exc)[:200]}
         _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
-        return GitCommitsResult(commits=[], status="error", error=error)
+        return GitCommitsResult(commits=[], status="error", error=os_error)
 
     stdout = (res.stdout or "").strip()
     stderr = (res.stderr or "").strip()

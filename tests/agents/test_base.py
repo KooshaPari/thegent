@@ -12,12 +12,12 @@ Traces to: WL-038, WL-080, WL-101
 
 from __future__ import annotations
 
-import dataclasses
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Import directly from base module to avoid litellm import issue through __init__.py
 from thegent.agents.base import AgentRunner, RunResult
 
 pytestmark = pytest.mark.unit

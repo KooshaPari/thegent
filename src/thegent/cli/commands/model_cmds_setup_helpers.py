@@ -78,6 +78,8 @@ def configure_providers(
                 rc = run_login(settings, provider, prompt_func=prompt_key, force=False)
                 if rc == 0:
                     any_configured = True
+                else:
+                    console.print(f"[yellow]  setup for {provider} exited with code {rc}.[/yellow]")
             except (ValueError, FileNotFoundError) as exc:
                 console.print(f"[dim]  {exc}[/dim]")
 

@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Import directly from registry module to avoid litellm import issue through __init__.py
 from thegent.agents.registry import (
     AGENT_LABELS,
     AGENT_NAMES,
@@ -212,7 +213,7 @@ class TestGetRunner:
 
     def test_get_runner_returns_none_for_unknown_agent(self) -> None:
         """get_runner returns None for completely unknown agents."""
-        with patch("thegent.agents.registry.TeammateRunner") as mock_teammate:
+        with patch("thegent.agents.teammate_runner.TeammateRunner") as mock_teammate:
             mock_teammate.side_effect = ValueError("no teammate")
             result = get_runner("completely-unknown-agent-xyz")
             assert result is None
@@ -479,9 +480,11 @@ class TestLearningRegistry:
         registry = LearningRegistry()
         registry.register_canary("canary-v1", "baseline-v1")
         registry.record_feedback("canary-v1", success=True, quality_score=0.8)
+        # Calibration: (0 + 0.8) / 2 = 0.4
+        assert registry.canaries["canary-v1"].calibration == 0.4
         registry.record_feedback("canary-v1", success=True, quality_score=0.9)
-        # Calibration is average of quality scores
-        assert registry.canaries["canary-v1"].calibration == 0.85
+        # Calibration: (0.4 + 0.9) / 2 = 0.65
+        assert registry.canaries["canary-v1"].calibration == 0.65
 
     def test_record_feedback_unknown_model_does_nothing(self) -> None:
         """record_feedback for unknown model does nothing."""

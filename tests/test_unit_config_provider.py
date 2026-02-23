@@ -1,9 +1,12 @@
 """Unit tests for ConfigProvider abstraction (control plane Phase 1)."""
 
 import builtins
+import sys
+import types
 
 import pytest
 
+from thegent import config_provider
 from thegent.config_provider import EnvConfigProvider, get_config_provider, get_last_provider_metadata
 
 
@@ -49,6 +52,7 @@ class TestGetConfigProvider:
         p = get_config_provider()
         assert isinstance(p, EnvConfigProvider)
         metadata = get_last_provider_metadata()
+        assert p.provider_metadata == metadata
         assert metadata["control_plane_configured"] is False
 
     def test_returns_env_provider_when_cp_import_fails(self, monkeypatch, caplog) -> None:
@@ -65,6 +69,63 @@ class TestGetConfigProvider:
         p = get_config_provider()
         assert isinstance(p, EnvConfigProvider)
         metadata = get_last_provider_metadata()
+        assert p.provider_metadata == metadata
         assert metadata["control_plane_configured"] is True
         assert metadata["dependency_missing"] is True
         assert "provider import failed" in caplog.text
+
+    def test_attach_provider_metadata_tolerates_non_extensible_provider(self) -> None:
+        class _SlottedProvider:
+            __slots__ = ()
+
+            def resolve(
+                self,
+                tenant_id: str | None = None,
+                session_id: str | None = None,
+                request_overrides: dict[str, object] | None = None,
+                keys: list[str] | None = None,
+            ) -> dict[str, object]:
+                _ = (tenant_id, session_id, request_overrides, keys)
+                return {}
+
+            def get_tenant_config(self, tenant_id: str) -> dict[str, object] | None:
+                _ = tenant_id
+                return None
+
+        provider = _SlottedProvider()
+        attached = config_provider._attach_provider_metadata(provider, {"source": "env"})
+        assert attached is provider
+
+    def test_returns_control_plane_provider_with_attached_metadata(self, monkeypatch) -> None:
+        monkeypatch.setenv("THGENT_CONTROL_PLANE_URL", "https://control-plane.example")
+        fake_module = types.ModuleType("thegent.control_plane.client")
+
+        class _FakeControlPlaneProvider:
+            def __init__(self, url: str) -> None:
+                self.url = url
+
+            def resolve(
+                self,
+                tenant_id: str | None = None,
+                session_id: str | None = None,
+                request_overrides: dict[str, object] | None = None,
+                keys: list[str] | None = None,
+            ) -> dict[str, object]:
+                _ = (tenant_id, session_id, request_overrides, keys)
+                return {}
+
+            def get_tenant_config(self, tenant_id: str) -> dict[str, object] | None:
+                _ = tenant_id
+                return None
+
+        fake_module.ControlPlaneConfigProvider = _FakeControlPlaneProvider
+        monkeypatch.setitem(sys.modules, "thegent.control_plane.client", fake_module)
+
+        provider = get_config_provider()
+        metadata = get_last_provider_metadata()
+        assert isinstance(provider, _FakeControlPlaneProvider)
+        assert provider.url == "https://control-plane.example"
+        assert provider.provider_metadata == metadata
+        assert metadata["source"] == "control_plane"
+        assert metadata["control_plane_configured"] is True
+        assert metadata["dependency_missing"] is False

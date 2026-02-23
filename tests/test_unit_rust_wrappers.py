@@ -122,3 +122,58 @@ def test_droid_wrapper_execs_shim(monkeypatch: pytest.MonkeyPatch) -> None:
         "exec",
         "status",
     ]
+
+
+def test_anen_wrapper_execs_shim(monkeypatch: pytest.MonkeyPatch) -> None:
+    called: dict[str, object] = {}
+
+    monkeypatch.setattr(rust_wrappers.shutil, "which", lambda _: "/tmp/thegent-shims")
+    monkeypatch.setattr(rust_wrappers.sys, "argv", ["anen", "exec", "-p", "status"])
+
+    def _fake_execv(path: str, argv: list[str]) -> None:
+        called["path"] = path
+        called["argv"] = argv
+        raise SystemExit(0)
+
+    monkeypatch.setattr(rust_wrappers.os, "execv", _fake_execv)
+
+    with pytest.raises(SystemExit) as exc:
+        rust_wrappers.anen()
+
+    assert exc.value.code == 0
+    assert called["path"] == "/tmp/thegent-shims"
+    assert called["argv"] == [
+        "thegent-shims",
+        "agent",
+        "anen",
+        "exec",
+        "-p",
+        "status",
+    ]
+
+
+def test_antigma_wrapper_execs_shim(monkeypatch: pytest.MonkeyPatch) -> None:
+    called: dict[str, object] = {}
+
+    monkeypatch.setattr(rust_wrappers.shutil, "which", lambda _: "/tmp/thegent-shims")
+    monkeypatch.setattr(rust_wrappers.sys, "argv", ["antigma", "--model", "flash"])
+
+    def _fake_execv(path: str, argv: list[str]) -> None:
+        called["path"] = path
+        called["argv"] = argv
+        raise SystemExit(0)
+
+    monkeypatch.setattr(rust_wrappers.os, "execv", _fake_execv)
+
+    with pytest.raises(SystemExit) as exc:
+        rust_wrappers.antigma()
+
+    assert exc.value.code == 0
+    assert called["path"] == "/tmp/thegent-shims"
+    assert called["argv"] == [
+        "thegent-shims",
+        "agent",
+        "antigma",
+        "--model",
+        "flash",
+    ]
