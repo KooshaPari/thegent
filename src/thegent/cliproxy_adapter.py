@@ -20,6 +20,7 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response, StreamingResponse
 from starlette.routing import Route, WebSocketRoute
+from starlette.types import Send
 
 from thegent.config import ThegentSettings
 from thegent.cliproxy_error_utils import (
@@ -801,6 +802,43 @@ async def _proxy_stream(
 
     import httpx
 
+    # Track the routed model discovered from upstream SSE model field.
+    routed_model = model
+
+    class _StreamingResponseWithModel(StreamingResponse):
+        """StreamingResponse that refreshes the openai-model header from upstream SSE."""
+
+        async def stream_response(self, send: Send) -> None:  # noqa: PLR0912 -- stream startup state machine
+            try:
+                first_chunk = await self.body_iterator.__anext__()
+            except StopAsyncIteration:
+                await send(
+                    {
+                        "type": "http.response.start",
+                        "status": self.status_code,
+                        "headers": self.raw_headers,
+                    }
+                )
+                await send({"type": "http.response.body", "body": b"", "more_body": False})
+                return
+
+            self.headers["openai-model"] = routed_model
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": self.status_code,
+                    "headers": self.raw_headers,
+                }
+            )
+            if not isinstance(first_chunk, bytes | memoryview):
+                first_chunk = first_chunk.encode(self.charset)
+            await send({"type": "http.response.body", "body": first_chunk, "more_body": True})
+            async for chunk in self.body_iterator:
+                if not isinstance(chunk, bytes | memoryview):
+                    chunk = chunk.encode(self.charset)
+                await send({"type": "http.response.body", "body": chunk, "more_body": True})
+            await send({"type": "http.response.body", "body": b"", "more_body": False})
+
     if transform_responses:
         try:
             data = json.loads(body)
@@ -818,6 +856,7 @@ async def _proxy_stream(
 
     async def _do_stream(attempt: int):  # noqa: PLR0912 -- streaming state machine; complexity justified
         """Inner generator for a single stream attempt."""
+        nonlocal routed_model
         buffer = b""
         state = ResponsesStreamState(model=model) if transform_responses else None
         preamble_emitted = False
@@ -871,6 +910,7 @@ async def _proxy_stream(
                             chunk_model = obj.get("model")
                             if chunk_model and chunk_model != state.model:
                                 state.model = chunk_model
+                                routed_model = chunk_model
                             usage = _extract_usage(obj)
                             if usage:
                                 state.set_usage(usage)
@@ -945,14 +985,14 @@ async def _proxy_stream(
         async for chunk in _stream_with_retries(0):
             yield chunk
 
-    return StreamingResponse(
+    return _StreamingResponseWithModel(
         stream(),
         status_code=200,
         headers={
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "openai-model": model,
+            "openai-model": routed_model,
         },
     )
 
