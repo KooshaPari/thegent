@@ -1,0 +1,61 @@
+# Code Owners
+# https://help.github.com/articles/about-code-owners/
+
+# Default owners for everything in the repo
+* @kooshapari
+
+# Core CLI and main entry points
+/src/thegent/main.py @kooshapari
+/src/thegent/cli/ @kooshapari
+
+# MCP Server
+/sub-projects/thegent-mcp/ @kooshapari
+
+# Agent orchestration
+/src/thegent/orchestration/ @kooshapari
+/src/thegent/agents/ @kooshapari
+
+# Governance and policy
+/src/thegent/governance/ @kooshapari
+
+# Storage and persistence
+/src/thegent/storage/ @kooshapari
+
+# TUI components
+/src/thegent/tui/ @kooshapari
+
+# Integration with external services
+/src/thegent/integrations/ @kooshapari
+
+# Configuration
+/src/thegent/config* @kooshapari
+
+# Rust crates
+/crates/ @kooshapari
+
+# CI/CD
+/.github/workflows/ @kooshapari
+
+# Documentation
+/docs/ @kooshapari
+
+# Tests - same owners as the code they test
+/tests/ @kooshapari
+
+# Scripts
+/scripts/ @kooshapari
+
+# CLIProxyAPI-related code (targeted for migration to cliproxyapi-plusplus)
+/src/thegent/cliproxy_adapter.py @kooshapari
+/src/thegent/cliproxy_*.py @kooshapari
+/src/thegent/*cliproxy*.py @kooshapari
+/src/thegent/utils/routing_impl/ @kooshapari
+
+# Execution and hot paths (priority for Rust migration)
+/src/thegent/execution.py @kooshapari
+/src/thegent/doctor.py @kooshapari
+/src/thegent/infra/ @kooshapari
+
+# Planning and workstream
+/src/thegent/planning/ @kooshapari
+/src/thegent/sync/ @kooshapari

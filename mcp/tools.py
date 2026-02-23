@@ -3,18 +3,18 @@
 
 class ToolRegistry:
     """Registry for MCP tools."""
-    
+
     def __init__(self):
         self.tools = {}
-        
+
     def register(self, name: str, handler):
         """Register a tool handler."""
         self.tools[name] = handler
-        
+
     def get(self, name: str):
         """Get a tool by name."""
         return self.tools.get(name)
-    
+
     def list_tools(self):
         """List all registered tools."""
         return list(self.tools.keys())

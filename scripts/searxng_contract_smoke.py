@@ -19,12 +19,12 @@ def main() -> int:
         raise RuntimeError(f"THEGENT_ENABLE_SEARXNG is not set, got: {enabled}")
 
     server_url = os.getenv("SEARXNG_URL", "http://localhost:8888").rstrip("/")
-    
+
     # Try health endpoint first
     try:
         import httpx
         import asyncio
-        
+
         async def check():
             async with httpx.AsyncClient() as client:
                 # Try health or search endpoint
@@ -39,12 +39,12 @@ def main() -> int:
                     except Exception:
                         continue
                 return 503
-        
+
         status = asyncio.run(check())
-        
+
         if status != 200:
             raise RuntimeError(f"SearXNG health check returned non-200 status: {status}")
-            
+
     except ImportError:
         import urllib.request
         url = f"{server_url}/search"

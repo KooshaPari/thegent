@@ -24,24 +24,24 @@ async def _check_nats() -> dict:
     """Check NATS connection."""
     try:
         import nats
-        
+
         servers = _require_env("NATS_SERVERS")
         server_list = [s.strip() for s in servers.split(",")]
-        
+
         nc = await nats.connect(
             server_list,
             max_reconnect_attempts=2,
             reconnect_time_wait=1,
         )
-        
+
         # Publish a ping to verify connection
         await nc.publish("thegent.health.check", b"ping")
         await nc.flush()
-        
+
         await nc.close()
-        
+
         return {"ok": True, "target": "nats", "servers": server_list, "status": "connected"}
-        
+
     except ImportError:
         return {"ok": False, "target": "nats", "error": "nats-py not installed"}
     except Exception as exc:
@@ -55,12 +55,12 @@ def main() -> int:
 
     import asyncio
     result = asyncio.run(_check_nats())
-    
+
     print(json.dumps(result))
-    
+
     if not result.get("ok"):
         raise RuntimeError(f"NATS health check failed: {result.get('error')}")
-    
+
     return 0
 
 

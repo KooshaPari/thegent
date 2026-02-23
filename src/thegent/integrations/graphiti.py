@@ -4,13 +4,11 @@ Graphiti Memory Integration - Persistent memory with graph semantics.
 Full implementation for Phase 3 Spike Batch B.
 """
 
-import asyncio
 import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

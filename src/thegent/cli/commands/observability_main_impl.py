@@ -18,6 +18,8 @@ from thegent.config import ThegentSettings
 _log = logging.getLogger(__name__)
 
 __all__ = [
+    "_REVIEW_ALLOWED_TOOLS",
+    "_REVIEW_SCHEMA_PREAMBLE",
     "_append_observe_summary_snapshot",
     "_extract_agent_from_line",
     "_extract_review_json_payload",

@@ -3,11 +3,9 @@
 
 def main():
     """Main CLI entry point."""
-    pass
 
 def run(command: str, **kwargs):
     """Run a CLI command."""
-    pass
 
 def list_commands():
     """List available commands."""
