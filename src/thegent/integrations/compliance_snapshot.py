@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import orjson as json
 import logging
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

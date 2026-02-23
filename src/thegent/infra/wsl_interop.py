@@ -3,7 +3,6 @@
 import os
 import platform
 import re
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from hashlib import sha256
 

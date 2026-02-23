@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import orjson as json
 from collections.abc import Iterable
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Protocol, cast
 

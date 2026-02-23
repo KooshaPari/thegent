@@ -137,7 +137,7 @@ def resume_impl(
 
     state_payload["status"] = "running"
     state_payload["updated_at_utc"] = datetime.now(UTC).isoformat()
-    state_path.write_text(json.dumps(state_payload, indent=2, sort_keys=True).decode() + "\n", encoding="utf-8")
+    state_path.write_text(json.dumps(state_payload, indent=2, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
 
     return {
         "session_id": sid,

@@ -5,7 +5,7 @@ Functions:
 - list_credentials, add_api_key, remove_api_key
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 
 def list_credentials() -> list[dict[str, Any]]:

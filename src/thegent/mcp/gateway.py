@@ -31,7 +31,6 @@ import orjson as json
 import logging
 import os
 import shlex
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import threading
 import time

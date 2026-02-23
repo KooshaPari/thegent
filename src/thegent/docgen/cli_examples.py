@@ -1,6 +1,5 @@
 """Auto-generate CLI examples."""
 
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from typing import Any
 

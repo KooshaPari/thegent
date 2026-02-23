@@ -6,7 +6,6 @@ Includes automatic interface adaptation for foreign tool protocols.
 import orjson as json
 import logging
 import shlex
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from collections.abc import Callable
 from importlib import import_module

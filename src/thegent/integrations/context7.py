@@ -7,6 +7,8 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+from thegent.integrations.base import DataclassConfig
+
 logger = logging.getLogger(__name__)
 
 class Context7Status(Enum):
@@ -14,8 +16,7 @@ class Context7Status(Enum):
     ENABLED = "enabled"
 
 @dataclass
-class Context7Config:
-    enabled: bool = False
+class Context7Config(DataclassConfig):
     api_endpoint: str = "https://api.context7.io/v1"
     api_key: str = ""
 
@@ -32,10 +33,9 @@ class Context7Provider:
             self._status = Context7Status.ENABLED
 
     def _load_config(self):
-        return Context7Config(
-            enabled=os.getenv("THEGENT_ENABLE_CONTEXT7", "").lower() in ("1", "true", "yes"),
-            api_key=os.getenv("CONTEXT7_API_KEY", ""),
-        )
+        config = Context7Config.from_env("CONTEXT7_")
+        config.enabled = os.environ.get("THEGENT_ENABLE_CONTEXT7", "").lower() in ("1", "true", "yes")
+        return config
 
     @property
     def is_enabled(self): return self._config.enabled

@@ -15,9 +15,6 @@ import typer
 from rich.table import Table
 
 from thegent.cli.commands.plan_output_helpers import (
-    render_dag_list,
-    render_dag_ready,
-    render_dag_status,
     render_plan_next_items,
     resolve_output_format,
 )
@@ -25,28 +22,10 @@ from thegent.cli.commands.plan_output_helpers import (
 from thegent.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
-    _atomic_write,
-    _check_dag_cycles,
-    _dag_path,
-    _dag_update_task,
     _default_owner_tag,
-    _ensure_contract_version_header,
-    _ensure_dag_file,
     _parse_dag_full,
-    _parse_dag_session,
-    _parse_depends_on,
-    _resolve_checkpoint_id,
     _resolve_cwd,
-    _serialize_dag,
-    _session_status_for,
-    _validate_agent,
-    _validate_dag,
-    _validate_task_id,
     console,
-    dag_ready_impl,
-    dag_recover_impl,
-    dag_run_impl,
-    dag_sync_impl,
 )
 
 _log = logging.getLogger(__name__)

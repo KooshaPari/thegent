@@ -5,7 +5,7 @@ Functions:
 - list_providers, get_provider, add_provider, update_provider, delete_provider
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 
 def list_providers(include_credentials: bool = False) -> list[dict[str, Any]]:

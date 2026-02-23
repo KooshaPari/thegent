@@ -3,12 +3,8 @@
 # @trace WL-124
 from __future__ import annotations
 
-import orjson as json
 import logging
-import sys
 from pathlib import Path
-from datetime import datetime
-from typing import Any, cast
 
 import typer
 
@@ -18,12 +14,10 @@ from thegent.cli.commands.plan_output_helpers import (
     render_dag_list,
     render_dag_ready,
     render_dag_status,
-    render_plan_next_items,
     resolve_output_format,
 )
 
 from thegent.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _atomic_write,
     _check_dag_cycles,
@@ -51,8 +45,6 @@ from thegent.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent.cli.commands.run_cmds import bg_cmd
-from thegent.cli.commands.session_cmds import history_cmd
 
 
 """DAG-related CLI commands for plan/workflow management.

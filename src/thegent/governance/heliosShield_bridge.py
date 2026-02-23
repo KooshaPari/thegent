@@ -118,7 +118,6 @@ class SmartMerge:
 
     def merge_files(self, base: Path, ours: Path, theirs: Path, output: Path) -> bool:
         """Attempt an AST-aware merge using Mergiraf or standard git merge-file."""
-        import subprocess
 
         if self.mergiraf_path:
             # Mergiraf: mergiraf merge --git %O %A %B -s %S -p %P

@@ -1,3 +1,4 @@
+# MIGRATION NOTE: Migrate to cliproxyapi-plusplus Go SDK
 """CLIProxy config helpers for provider/model manager."""
 
 from __future__ import annotations

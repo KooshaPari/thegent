@@ -8,7 +8,7 @@ from __future__ import annotations
 import orjson as json
 import uuid
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 

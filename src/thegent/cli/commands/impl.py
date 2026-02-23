@@ -227,13 +227,9 @@ __all__ = [
 
 import logging
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
-import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from thegent.config_provider import ConfigProvider
 
 from rich.console import Console
 
@@ -508,6 +504,12 @@ def list_agent_names() -> list[str]:
 
 def resolve_agent(agent_name: str | None) -> str | None:
     return base_resolve_agent(agent_name)
+
+
+def list_agents_impl() -> list[dict[str, Any]]:
+    """List available agents with metadata."""
+    agent_names = list_agent_names()
+    return [{"name": name} for name in agent_names]
 
 
 def _inject_time_constraint(prompt: str, timeout: int, *, summary_mode: bool = True) -> str:

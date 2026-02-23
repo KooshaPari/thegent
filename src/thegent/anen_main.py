@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 
 import typer

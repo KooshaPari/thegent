@@ -4,7 +4,6 @@ MTSP-13/14: Ensure multi-step agent actions are atomic or revertible.
 
 import asyncio
 import logging
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import tempfile
 import uuid
