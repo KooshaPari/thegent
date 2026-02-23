@@ -21,7 +21,7 @@
     "@orama/plugin-vitepress": "^3.1.18",
     "@playwright/test": "^1.58.2",
     "markdown-it-emoji": "^3.0.0",
-    "markdown-it-katex": "^3.0.0",
+    "markdown-it-katex": "^2.0.3",
     "mermaid": "^11.12.3",
     "puppeteer": "^24.37.4",
     "vite-imagetools": "^9.0.3",

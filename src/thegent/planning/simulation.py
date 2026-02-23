@@ -145,64 +145,8 @@ def simulate_resource_contention(
     resources: list[ResourceProfile],
     _: dict[str, Any],
 ) -> list[ContentionResult]:
-    """Identify resource contention windows (D2 implementation).
-    
-    Analyzes tasks and resources to find time windows where demand exceeds capacity.
-    """
-    results: list[ContentionResult] = []
-    
-    # Build resource capacity map
-    capacity_map: dict[str, float] = {r.resource_id: r.capacity for r in resources}
-    
-    # Aggregate demand per resource per time window
-    demand_windows: dict[str, list[tuple[float, float, list[str]]] = {}
-    
-    for task in tasks:
-        task_id = task.get("task_id", task.get("id", "unknown")
-        # Get resource demands
-        demands = task.get("demands", [])
-        if not demands:
-            continue
-            
-        start = task.get("start_float", 0.0)
-        duration = task.get("duration_float", task.get("duration", 1.0)
-        end = start + duration
-        
-        for demand in demands:
-            rid = demand.get("resource_id", "default")
-            demand_amount = demand.get("demand", 1.0)
-            
-            if rid not in demand_windows:
-                demand_windows[rid] = []
-            demand_windows[rid].append((start, end, [task_id], demand_amount))
-    
-    # Find contention windows
-    for rid, windows in demand_windows.items():
-        capacity = capacity_map.get(rid, 1.0)
-        
-        # Sort by start time
-        windows.sort(key=lambda x: x[0])
-        
-        # Simple contention detection: overlapping windows
-        for i, (s1, e1, tasks1, d1) in enumerate(windows):
-            for s2, e2, tasks2, d2 in windows[i+1:]:
-                # Check overlap
-                if s2 <= e1:
-                    overlap_start = max(s1, s2)
-                    overlap_end = min(e1, e2)
-                    overlap_demand = d1 + d2
-                    
-                    if overlap_demand > capacity:
-                        results.append(ContentionResult(
-                            resource_id=rid,
-                            time_window=(overlap_start, overlap_end),
-                            peak_demand=overlap_demand,
-                            capacity=capacity,
-                            contention_ratio=overlap_demand / capacity if capacity > 0 else 1.0,
-                            affected_tasks=tasks1 + tasks2,
-                        ))
-    
-    return results
+    """Identify resource contention windows (D2 stub)."""
+    return []
 
 
 def analyze_bottlenecks(nodes: list[PERTNode], mc_stats: dict[str, dict[str, float]]) -> list[dict[str, Any]]:

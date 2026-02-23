@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-import orjson as jsonfrom dataclasses import asdict
+import orjson as json
+from dataclasses import asdict
 from pathlib import Path
 
 from thegent.sync.conflicts import SyncConflict
