@@ -1,26 +1,22 @@
-"""Re-export facade for DAG run/sync/recovery CLI commands (WL-124)."""
+"""Re-export facade for DAG orchestration commands."""
 from __future__ import annotations
 
-from thegent.cli.commands.cli_dag_state_cmds import (
-    dag_update_cmd,
-    dag_cancel_cmd,
-    dag_status_cmd,
+from thegent.cli.commands.plan_dag_ready_run_cmds import (
     dag_ready_cmd,
+    dag_reconcile_cmd,
 )
 
-from thegent.cli.commands.cli_dag_exec_cmds import (
-    dag_reconcile_cmd,
+from thegent.cli.commands.plan_dag_sync_recover_cmds import (
     dag_run_cmd,
     dag_sync_cmd,
     dag_checkpoint_cmd,
-    dag_rollback_cmd,
     dag_checkpoints_cmd,
+    dag_rollback_cmd,
     dag_recover_cmd,
     dag_probe_cmd,
 )
 
 __all__ = [
-    "dag_cancel_cmd",
     "dag_checkpoint_cmd",
     "dag_checkpoints_cmd",
     "dag_probe_cmd",
@@ -29,7 +25,5 @@ __all__ = [
     "dag_recover_cmd",
     "dag_rollback_cmd",
     "dag_run_cmd",
-    "dag_status_cmd",
     "dag_sync_cmd",
-    "dag_update_cmd",
 ]

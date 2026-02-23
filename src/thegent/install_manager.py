@@ -18,8 +18,6 @@ from rich.prompt import Prompt
 from thegent.infra import copy_file, copy_tree
 from thegent.install_models import ConfigManifest, FileManifest, InstallManifest, InstallMode
 
-if TYPE_CHECKING:
-    pass
 
 
 def get_home_dir() -> Path:
