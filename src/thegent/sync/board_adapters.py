@@ -113,13 +113,12 @@ class GitHubBoardAdapter:
                 return owner, int(number)
 
         if raw.isdigit():
-            owner = os.getenv("THGENT_GITHUB_OWNER") or self._owner_from_repository_env()
-            if not owner:
+            resolved_owner = os.getenv("THGENT_GITHUB_OWNER") or self._owner_from_repository_env()
+            if not resolved_owner:
                 raise ValueError(
                     "GitHub board ID must be 'owner:number' or set THGENT_GITHUB_OWNER/GITHUB_REPOSITORY for numeric IDs."
                 )
-            assert owner is not None
-            return owner, int(raw)
+            return resolved_owner, int(raw)
 
         raise ValueError("Invalid GitHub board ID format. Use owner:number, owner/number, or numeric project number.")
 
