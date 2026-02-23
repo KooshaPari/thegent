@@ -1,0 +1,12 @@
+# Fragmented Index
+
+## Source Files (2026)
+
+- agent-organization.md
+- memory.md
+- model-catalog.md
+- offline-mode.md
+- preferences.md
+- skills.md
+- sub-agents.md
+- tools.md

@@ -1,0 +1,533 @@
+# Phase 5: Advanced Features - Specification & Planning
+
+**Date:** 2026-02-19
+**Status:** Planning
+**Phases:** 5A (Conflict Resolution) + 5B (Agent Memory) + 5C (Dashboards)
+**Estimated Duration:** 2.5-3 hours
+**Confidence:** 80% (new domains, well-defined scope)
+
+---
+
+## Executive Summary
+
+Phase 5 adds three advanced capabilities to the civilization framework:
+
+1. **5A: Conflict Resolution Protocol** - Handle agent disagreements, dual registrations, state conflicts
+2. **5B: Agent Memory Persistence** - Store and retrieve agent execution history, decisions, learnings
+3. **5C: Civilization-wide Dashboards** - Real-time monitoring and status visualization
+
+---
+
+## Phase 5A: Conflict Resolution Protocol
+
+### Objectives
+1. Detect registration conflicts (same agent, multiple entries)
+2. Implement conflict resolution strategies (last-write-wins, voting, merge)
+3. Handle state divergence (heartbeat inconsistencies)
+4. Log conflict history for audit trail
+
+### Problem Space
+**Scenarios:**
+- Agent registered twice under different IDs
+- Registry inconsistency (in-memory vs disk)
+- Duplicate L2 agents for same work
+- Stale parent references
+- Circular relationships
+
+### Resolution Strategies
+
+#### 1. Last-Write-Wins (LWW)
+```python
+def resolve_duplicate_agents(agent_id1, agent_id2):
+    """Keep newer registration, discard older."""
+    a1 = registry.get_agent(agent_id1)
+    a2 = registry.get_agent(agent_id2)
+
+    if a1.last_heartbeat > a2.last_heartbeat:
+        registry.unregister_agent(agent_id2)
+        return agent_id1
+    else:
+        registry.unregister_agent(agent_id1)
+        return agent_id2
+```
+
+#### 2. Voting-Based
+```python
+def resolve_with_voting(conflicting_agents):
+    """Ask other agents which registration is correct."""
+    votes = {}
+    for agent_id in conflicting_agents:
+        # Send conflict resolution message to peers
+        # Collect votes
+        pass
+    # Winner is agent with most votes
+```
+
+#### 3. Merge Strategy
+```python
+def merge_agents(agent_id1, agent_id2):
+    """Combine child_agent_ids, capabilities, scope_tags."""
+    a1 = registry.get_agent(agent_id1)
+    a2 = registry.get_agent(agent_id2)
+
+    merged = AgentIdentity(
+        agent_id=agent_id1,  # Keep first
+        child_agent_ids=list(set(a1.child_agent_ids + a2.child_agent_ids)),
+        capabilities=list(set(a1.capabilities + a2.capabilities)),
+        scope_tags={**a1.scope_tags, **a2.scope_tags}
+    )
+    return merged
+```
+
+### Implementation Plan
+
+**5A.1: Conflict Detection (30 min)**
+- Duplicate agent ID detection (same project:uuid:L:role)
+- Parent reference validation
+- Circular relationship detection
+- State consistency checks
+
+**5A.2: Conflict Log (20 min)**
+- Store conflicts in `~/.claude/civilization/conflicts.json`
+- Log conflict time, type, resolution, outcome
+- Support queries by agent, time, type
+
+**5A.3: Resolution Engine (40 min)**
+- Implement LWW strategy
+- Implement voting protocol
+- Implement merge strategy
+- Auto-select strategy based on conflict type
+
+**5A.4: Testing & Integration (30 min)**
+- Unit tests for each strategy
+- Integration tests with Phase 1-4
+- Regression tests
+
+---
+
+## Phase 5B: Agent Memory Persistence
+
+### Objectives
+1. Store agent execution history (tasks completed, decisions made)
+2. Persist agent learnings (patterns, optimizations)
+3. Support memory queries (what has agent done?)
+4. Enable agent self-improvement (learn from history)
+
+### Memory Model
+
+#### AgentMemory Structure
+```python
+@dataclass
+class AgentMemory:
+    agent_id: str
+    memory_type: str  # "execution" | "learning" | "decision"
+    timestamp: float
+    content: Dict[str, Any]
+
+    # Metadata
+    context: Dict[str, str]  # Tags, session_id, project
+    importance: float  # 0.0-1.0 (for pruning)
+    verified: bool  # Validated by human or peer?
+```
+
+#### Memory Types
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| `execution` | Task completion | "Ran 500 tests, 10 failures" |
+| `learning` | Pattern learned | "Cache improves perf 3x" |
+| `decision` | Decision made | "Chose redis over memcached" |
+| `error` | Error encountered | "Network timeout, retried" |
+| `interaction` | Agent communication | "L1 asked for status" |
+| `milestone` | Achievement | "1000 tasks completed" |
+
+### Storage Backend
+
+#### Option 1: File-based (MVP)
+```
+~/.claude/civilization/
+├── agents/
+│   ├── {agent_id}/
+│   │   ├── memory.jsonl  (line-delimited JSON)
+│   │   └── stats.json    (aggregate stats)
+```
+
+#### Option 2: SQLite (Phase 5+)
+```sql
+CREATE TABLE agent_memory (
+    id TEXT PRIMARY KEY,
+    agent_id TEXT,
+    memory_type TEXT,
+    timestamp REAL,
+    content JSON,
+    context JSON,
+    importance REAL,
+    verified BOOL,
+    FOREIGN KEY(agent_id) REFERENCES agents(id)
+);
+```
+
+### Implementation Plan
+
+**5B.1: Memory Model (25 min)**
+- Define AgentMemory dataclass
+- Implement memory serialization
+- Create file-based storage
+
+**5B.2: Memory Operations (35 min)**
+- `store_memory()` - Save execution/learning
+- `query_memory()` - Retrieve by type, time, agent
+- `get_agent_stats()` - Aggregate stats (tasks, errors, learnings)
+- `purge_old_memories()` - Delete old entries (configurable TTL)
+
+**5B.3: Memory Queries (25 min)**
+- What has this agent done? (task history)
+- What has it learned? (pattern detection)
+- What decisions has it made? (decision history)
+- How reliable is it? (error rate, success rate)
+
+**5B.4: Integration (30 min)**
+- Hook into task completion (store execution)
+- Hook into error handling (store errors)
+- Expose memory queries via MCP tools
+- Update agent dashboard with history
+
+---
+
+## Phase 5C: Civilization-wide Dashboards
+
+### Objectives
+1. Create real-time status dashboard
+2. Show agent health, load, activity
+3. Display project-level metrics
+4. Enable problem detection and alerting
+
+### Dashboard Components
+
+#### 1. Overview Dashboard
+```
+┌─────────────────────────────────────┐
+│ CIVILIZATION STATUS                 │
+├─────────────────────────────────────┤
+│ Total Agents: 100                   │
+│ Active: 98      Stale: 2            │
+│                                     │
+│ By Level:                           │
+│ ├─ L1: 10 (healthy)                │
+│ ├─ L2: 50 (48 healthy, 2 stale)    │
+│ └─ L3: 40 (all healthy)            │
+│                                     │
+│ By Project:                         │
+│ ├─ Project Alpha: 25 agents        │
+│ ├─ Project Beta: 35 agents         │
+│ └─ Project Gamma: 40 agents        │
+└─────────────────────────────────────┘
+```
+
+#### 2. Project Dashboard
+```
+┌─────────────────────────────────────┐
+│ PROJECT: Alpha (25 agents)          │
+├─────────────────────────────────────┤
+│ Hierarchy:                          │
+│ └─ L1 (healthy)                     │
+│    ├─ L2 researcher (active)        │
+│    │  └─ L3 executor (active)       │
+│    ├─ L2 builder (active)           │
+│    │  └─ L3 executor (active)       │
+│    └─ L2 integrator (stale!)       │
+│                                     │
+│ Recent Activity:                    │
+│ • L3 completed 10 tasks             │
+│ • L2 researcher processed 5 queries │
+│ • Conflict detected: duplicate L2   │
+└─────────────────────────────────────┘
+```
+
+#### 3. Agent Detail Dashboard
+```
+┌─────────────────────────────────────┐
+│ AGENT: project:uuid:L2:builder      │
+├─────────────────────────────────────┤
+│ Status: ACTIVE                      │
+│ Last Heartbeat: 2s ago              │
+│ Created: 2h 30m ago                 │
+│                                     │
+│ Metrics:                            │
+│ • Tasks: 42 completed               │
+│ • Errors: 2 (success rate: 95%)     │
+│ • Average task time: 2.5s           │
+│ • Children: 3 L3 executors          │
+│                                     │
+│ Recent Activity:                    │
+│ • Completed "analyze_data"          │
+│ • Learned: "caching improves perf"  │
+│ • Sent message: "status_query"      │
+│                                     │
+│ Relationships:                      │
+│ • Parent: project:uuid:L1:coord     │
+│ • Peers: 2 other L2 workers         │
+│ • Children: 3 L3 executors          │
+└─────────────────────────────────────┘
+```
+
+### Dashboard Implementation
+
+#### Backend (Python)
+```python
+class DashboardService:
+    """Generate dashboard data."""
+
+    def get_overview_dashboard(self) -> Dict:
+        """Civilization-wide overview."""
+        return {
+            "total_agents": len(registry.agents),
+            "active_count": len([a for a in registry.agents.values() if a.is_active]),
+            "stale_count": len([a for a in registry.agents.values() if a.is_stale]),
+            "by_level": {...},
+            "by_project": {...}
+        }
+
+    def get_project_dashboard(self, project: str) -> Dict:
+        """Project-specific dashboard."""
+        agents = registry.get_agents_by_project(project)
+        return {
+            "project": project,
+            "agent_count": len(agents),
+            "hierarchy": self._build_hierarchy(agents),
+            "recent_activity": self._get_recent_activity(project),
+            "conflicts": self._get_conflicts(project)
+        }
+
+    def get_agent_dashboard(self, agent_id: str) -> Dict:
+        """Agent-specific dashboard."""
+        agent = registry.get_agent(agent_id)
+        memory = memory_service.query_memory(agent_id)
+        return {
+            "agent_id": agent_id,
+            "status": "active" if agent.is_active else "stale",
+            "metrics": self._get_agent_metrics(agent_id),
+            "memory": {
+                "task_count": len(memory.executions),
+                "learnings": memory.learnings,
+                "recent_errors": memory.errors[-5:]
+            },
+            "relationships": {...}
+        }
+```
+
+#### Frontend (optional - Web UI)
+```html
+<!-- Real-time dashboard using WebSocket -->
+<div id="civilization-dashboard">
+    <section id="overview">
+        <!-- Overview stats -->
+    </section>
+    <section id="projects">
+        <!-- Project list with status -->
+    </section>
+    <section id="agents">
+        <!-- Agent detail view -->
+    </section>
+</div>
+
+<script>
+ws = new WebSocket("ws://civilization-server/dashboard");
+ws.onmessage = (e) => {
+    data = JSON.parse(e.data);
+    updateDashboard(data);
+};
+</script>
+```
+
+### Implementation Plan
+
+**5C.1: Dashboard Service (35 min)**
+- Implement DashboardService class
+- Overview dashboard generation
+- Project dashboard generation
+- Agent dashboard generation
+
+**5C.2: Metrics Computation (25 min)**
+- Task completion metrics
+- Error rate calculation
+- Activity timeline
+- Health scoring
+
+**5C.3: Conflict Display (20 min)**
+- Show detected conflicts
+- Display resolution status
+- Link to conflict log
+
+**5C.4: Real-time Updates (20 min)**
+- MCP tool for dashboard data
+- Heartbeat stream integration
+- WebSocket support (optional)
+- Refresh rate optimization
+
+---
+
+## Implementation Sequence
+
+### Day 1: Phase 5A (Conflict Resolution)
+
+**Timeline:**
+- 5A.1 Conflict Detection: 30 min
+- 5A.2 Conflict Log: 20 min
+- 5A.3 Resolution Engine: 40 min
+- 5A.4 Testing: 30 min
+- **Subtotal: 120 min (2 hours)**
+
+### Day 1: Phase 5B (Agent Memory)
+
+**Timeline:**
+- 5B.1 Memory Model: 25 min
+- 5B.2 Memory Operations: 35 min
+- 5B.3 Memory Queries: 25 min
+- 5B.4 Integration: 30 min
+- **Subtotal: 115 min (1.9 hours)**
+
+### Day 1: Phase 5C (Dashboards)
+
+**Timeline:**
+- 5C.1 Dashboard Service: 35 min
+- 5C.2 Metrics: 25 min
+- 5C.3 Conflict Display: 20 min
+- 5C.4 Real-time Updates: 20 min
+- **Subtotal: 100 min (1.7 hours)**
+
+**Total Phase 5: ~5.5 hours**
+(Can be split across multiple sessions)
+
+---
+
+## Files to Create/Modify
+
+### New Files (Phase 5A)
+- `scripts/civilization_conflict_resolver.py` - Conflict detection & resolution
+- `scripts/test_civilization_conflict_resolver.py` - Tests
+- `~/.claude/civilization/conflicts.json` - Conflict log (auto-created)
+
+### New Files (Phase 5B)
+- `scripts/civilization_agent_memory.py` - Memory model & storage
+- `scripts/test_civilization_agent_memory.py` - Tests
+- `~/.claude/civilization/agents/{agent_id}/memory.jsonl` - Per-agent memory
+
+### New Files (Phase 5C)
+- `scripts/civilization_dashboard_service.py` - Dashboard generation
+- `scripts/test_civilization_dashboard_service.py` - Tests
+- `web/dashboard.html` - Optional web UI
+
+### Modified Files
+- `scripts/civilization_mcp_server.py` - Add new MCP tools for conflict/memory/dashboard
+- `scripts/swarm_controller.py` - Hook into task completion for memory storage
+- `docs/reference/CODE_ENTITY_MAP.md` - Update with new classes
+
+---
+
+## Dependencies & Assumptions
+
+### Required
+- ✅ Phase 1: Agent Identity System
+- ✅ Phase 2: SwarmController Integration
+- ✅ Phase 3: Stale Agent Cleanup
+- ✅ Phase 4: MCP Transport
+
+### Assumptions
+- Conflict resolution happens asynchronously (doesn't block heartbeats)
+- Memory storage is non-critical (can fail without breaking registry)
+- Dashboards are for observation only (read-only)
+- Dashboard refresh rate is 1-5 seconds (not 1 Hz like heartbeats)
+
+---
+
+## Success Criteria
+
+### Phase 5A: Conflict Resolution
+- [ ] Duplicate agents detected correctly
+- [ ] LWW resolution strategy works
+- [ ] Voting protocol working
+- [ ] Merge strategy working
+- [ ] Conflict log accurate
+- [ ] All Phase 1-4 tests still passing
+- [ ] <50ms resolution latency
+
+### Phase 5B: Agent Memory
+- [ ] Memory stored successfully
+- [ ] Queries return correct results
+- [ ] Old memories purged
+- [ ] Stats computed correctly
+- [ ] All Phase 1-4 tests still passing
+- [ ] <5ms memory operation latency
+
+### Phase 5C: Dashboards
+- [ ] Overview dashboard shows correct counts
+- [ ] Project dashboards show hierarchies
+- [ ] Agent dashboards show metrics
+- [ ] Conflict display working
+- [ ] All Phase 1-4 tests still passing
+- [ ] Dashboard refresh <500ms
+
+### Overall Phase 5
+- [ ] All 17 Phase 1-3 tests still passing (100% backward compatible)
+- [ ] 50+ new Phase 5 tests passing
+- [ ] Total: 67/67 tests passing
+- [ ] Syntax valid (py_compile clean)
+- [ ] ~1,200+ new LOC
+- [ ] Production-ready
+
+---
+
+## Known Risks & Mitigations
+
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|-----------|
+| Conflict detection false positives | Medium | Medium | Implement voting protocol |
+| Memory storage bloats disk | Low | High | Implement TTL and purge |
+| Dashboard queries slow | Low | Medium | Add caching layer |
+| Memory consistency issues | Low | High | Use atomic writes |
+
+---
+
+## Optional Enhancements
+
+If time permits:
+- [ ] Conflict resolution visualization
+- [ ] Memory export (CSV/JSON)
+- [ ] Dashboard alerts/notifications
+- [ ] Agent recommendations (based on memory)
+- [ ] Performance predictions (based on history)
+
+---
+
+## Deliverables Summary
+
+### Phase 5A: Conflict Resolution
+- ConflictResolver class (detection + resolution)
+- 3 resolution strategies (LWW, voting, merge)
+- Conflict log storage
+- 10+ unit tests
+
+### Phase 5B: Agent Memory
+- AgentMemory dataclass
+- MemoryService (store, query, purge)
+- Memory stats calculation
+- 10+ unit tests
+
+### Phase 5C: Dashboards
+- DashboardService class
+- 3 dashboard types (overview, project, agent)
+- Metrics calculation
+- 10+ unit tests
+
+### Total Phase 5 Deliverables
+- 3 new Python modules (~800 LOC)
+- 30+ unit tests
+- 1 specification document (this file)
+- 1 completion report (to be written)
+
+---
+
+**Status:** Ready to implement
+**Next Step:** User confirms to "proceed" with Phase 5A implementation
+**Confidence:** 80%

@@ -5,7 +5,7 @@ process-compose to reduce overhead of repeatedly spawning task processes.
 """
 
 import asyncio
-import orjson as json
+import json
 import logging
 import os
 import subprocess
@@ -118,9 +118,11 @@ class TaskWorkerPool:
                     duration_s=duration,
                 )
 
-                # Write result
+                # Write result atomically to a temp file, then rename
                 result_file = self.results / f"{task.id}.json"
-                result_file.write_text(json.dumps(result.__dict__).decode().decode())
+                temp_file = self.results / f"{task.id}.tmp"
+                temp_file.write_text(json.dumps(result.__dict__))
+                temp_file.rename(result_file)
                 _log.info("Worker %d completed task %s with exit code %d", worker_id, task.id, result.exit_code)
 
             except Exception as e:
@@ -132,7 +134,7 @@ class TaskWorkerPool:
     def submit_task(self, task: TaskRequest) -> Path:
         """Submit a task to the queue (client-side)."""
         task_file = self.inbox / f"{task.id}.json"
-        task_file.write_text(json.dumps(task.__dict__).decode().decode())
+        task_file.write_text(json.dumps(task.__dict__))
         return task_file
 
     def get_result(self, task_id: str, timeout: int = 60) -> TaskResult | None:

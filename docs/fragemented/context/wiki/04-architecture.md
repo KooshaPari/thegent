@@ -1,0 +1,263 @@
+# Architecture
+
+> Generated from Ante documentation webarchive
+
+Skip to main content
+
+[Ante home page![light logo](https://mintcdn.com/antigmalabs/cvR1z2_cg6Q1RLzi/assets/ante.png?fit=max&auto=format&n=cvR1z2_cg6Q1RLzi&q=85&s=827303a37dd6c12ec797767e55c94972)![dark logo](https://mintcdn.com/antigmalabs/cvR1z2_cg6Q1RLzi/assets/ante.png?fit=max&auto=format&n=cvR1z2_cg6Q1RLzi&q=85&s=827303a37dd6c12ec797767e55c94972)](/)
+
+Search...
+
+⌘K
+
+##### Getting Started
+
+  * [Overview](/start/overview)
+  * [Quickstart](/start/quickstart)
+  * [Eval & Benchmark](/start/eval)
+
+##### Concepts
+
+  * [Core Concepts & Protocol](/concepts/core-concepts)
+  * [Architecture](/concepts/architecture)
+
+##### Agent Org
+
+  * [Agent Organization (Experimental)](/agent-org)
+
+##### Offline Mode
+
+  * [Offline Mode (Experimental)](/offline)
+
+##### Usage
+
+  * [Interactive TUI](/usage/tui)
+  * [Headless Mode](/usage/headless)
+
+##### Extensibility
+
+  * [Skills](/extend/skills)
+  * [Sub-Agents](/extend/subagents)
+
+##### Configuration
+
+  * [Model & Provider Catalog](/configuration/catalog)
+  * [Preferences](/configuration/preference)
+  * [Adding a 3rd Party Provider](/configuration/third-party-provider)
+
+##### Memory
+
+  * [Memory](/memory)
+
+##### Reference
+
+  * [Tools](/tools)
+
+  * [Website](https://antigma.ai)
+  * [Discord](https://discord.gg/pqhj3DNGz2)
+  * [GitHub](https://github.com/AntigmaLabs/ante-preview)
+  *   * Log Out
+  * 
+
+[Ante home page![light logo](https://mintcdn.com/antigmalabs/cvR1z2_cg6Q1RLzi/assets/ante.png?fit=max&auto=format&n=cvR1z2_cg6Q1RLzi&q=85&s=827303a37dd6c12ec797767e55c94972)![dark logo](https://mintcdn.com/antigmalabs/cvR1z2_cg6Q1RLzi/assets/ante.png?fit=max&auto=format&n=cvR1z2_cg6Q1RLzi&q=85&s=827303a37dd6c12ec797767e55c94972)](/)
+
+Search...
+
+⌘KAsk AI
+
+  * [Website](https://antigma.ai)
+  * [Discord](https://discord.gg/pqhj3DNGz2)
+  * [GitHub](https://github.com/AntigmaLabs/ante-preview)
+  * Log Out
+
+Search...
+
+Navigation
+
+Concepts
+
+Architecture
+
+[Ante Preview](/start/overview)
+
+[Ante Preview](/start/overview)
+
+Concepts
+
+# Architecture
+
+Ante’s client-daemon architecture, provider system, and tool framework
+
+## 
+
+​
+
+Overview
+
+Ante follows a clean separation of concerns with a client-daemon architecture. The UI and core logic are decoupled through message passing, making it possible to swap frontends (TUI, headless) without changing the underlying engine.
+
+![Architecture diagram](/_mintlify/image/antigmalabs/assets/architecture.png)
+
+## 
+
+​
+
+Client-Daemon split
+
+Copy
+
+Ask AI
+    
+    
+    ┌────────────────┐          ┌─────────────────────────────┐
+    │     Client      │    Op    │          Daemon              │
+    │                 │ ───────▶ │                              │
+    │  TUI (ratatui)  │          │  Session ─▶ Turn ─▶ Step    │
+    │  or Headless    │ ◀─────── │                              │
+    │                 │    Evt   │  Tools    Providers   Store  │
+    └────────────────┘          └─────────────────────────────┘
+    
+
+  * **Client** — The user-facing layer. Either the ratatui-based TUI or the headless CLI runner. Sends `Op` operations and renders `Evt` events.
+  * **Daemon** — The core engine. Receives operations, manages sessions, dispatches to LLM providers, schedules tool execution, and emits events.
+  * **Transport** — Bounded async channels (Tokio) connect client and daemon within the same process. Message IDs enable tracing across the boundary.
+
+## 
+
+​
+
+LLM providers
+
+Ante is provider-agnostic. Each provider implements a common interface for sending prompts and receiving streaming responses.
+
+Provider| Wire Format| Models  
+---|---|---  
+Anthropic| Messages API| Claude family  
+OpenAI| Chat Completions / Responses| GPT-4o, o1, etc.  
+Gemini| Gemini API| Gemini family  
+Grok| OpenAI-compatible| Grok models  
+Open Router| OpenAI-compatible| Multiple providers  
+Local| llama.cpp| GGUF models  
+  
+Providers are resolved from a catalog at session init time. The user can override via CLI flags (`--provider`, `--model`) or persistent settings.
+
+### 
+
+​
+
+Authentication
+
+  * **API keys** — Set via environment variables (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`)
+  * **OAuth** — Interactive OAuth flow supported for Anthropic and OpenAI, handled through the TUI
+
+## 
+
+​
+
+Tool system
+
+Tools are the agent’s hands. Each tool implements the `Tool` trait:
+
+Copy
+
+Ask AI
+    
+    
+    #[async_trait]
+    pub trait Tool: Send + Sync {
+        fn metadata(&self) -> &ToolMetadata;
+        async fn call(&self, input: ToolCallInput) -> Result<ToolCallOutput>;
+    }
+    
+
+### 
+
+​
+
+Built-in tools
+
+Tool| Category| Approval| Description  
+---|---|---|---  
+`Read`| File I/O| No| Read file contents  
+`Write`| File I/O| Yes| Create or overwrite files  
+`Edit`| File I/O| Yes| Exact string replacement in files  
+`Glob`| File I/O| No| Find files by pattern  
+`Grep`| File I/O| No| Search file contents with regex  
+`Bash`| Shell| Yes| Execute shell commands  
+`BashOutput`| Shell| No| Read output from background shells  
+`KillShell`| Shell| No| Terminate background shells  
+`Task`| Builtin| No| Spawn sub-agent for complex tasks  
+`TodoWrite`| Builtin| No| Manage task lists  
+`WebFetch`| Builtin| No| Fetch and process web content  
+`WebSearch`| Builtin| No| Search the web  
+  
+### 
+
+​
+
+Tool filtering
+
+Tools can be filtered at session level:
+
+  * **Allowed list** (`--allowed-tools`) — Only these tools are available
+  * **Disallowed list** (`--disallowed-tools`) — These tools are removed
+  * Supports ToolMatcher syntax: `Bash(ls -la)`, `Task(explore)`
+  * Names are matched case-insensitively
+
+## 
+
+​
+
+Session lifecycle
+
+  1. Client sends `Op::NewSession` with model, provider, and policy
+  2. Daemon resolves the provider, authenticates, discovers skills and sub-agents
+  3. Daemon creates a `Session` and emits `Evt::SessionInit`
+  4. User sends `Op::UserInput` to start a task
+  5. Session spawns a `Turn` which communicates with the LLM
+  6. Turn executes tools, requests approvals, and eventually completes
+  7. When the context budget nears the limit, auto-compaction summarizes the history
+
+## 
+
+​
+
+Storage
+
+Ante stores configuration and state across several locations:
+
+Location| Purpose  
+---|---  
+`~/.ante/settings.json`| User preferences (model, provider, theme)  
+`~/.ante/skills/`| User-level skills  
+`~/.ante/agents/`| User-level sub-agents  
+`.ante/`| Project-local configuration  
+`.claude/`| Claude.ai compatibility directory  
+`/tmp/ante/`| Temporary files scoped per project  
+  
+The `ANTE_HOME` environment variable can override the home config directory.
+
+[Previous](/concepts/core-concepts)[Agent Organization (Experimental)Multi-agent architecture patterns for orchestrating collaborative AI agentsNext](/agent-org)
+
+[Powered by](https://www.mintlify.com?utm_campaign=poweredBy&utm_medium=referral&utm_source=antigmalabs)
+
+On this page
+
+  * Overview
+  * Client-Daemon split
+  * LLM providers
+  * Authentication
+  * Tool system
+  * Built-in tools
+  * Tool filtering
+  * Session lifecycle
+  * Storage
+
+Assistant
+
+Responses are generated using AI and may contain mistakes.
+
+Architecture - Ante
+
+![Architecture diagram](https://docs.antigma.ai/_mintlify/image/antigmalabs/assets/architecture.png)
+

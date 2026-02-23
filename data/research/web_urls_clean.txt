@@ -1,0 +1,10 @@
+https://dev.to/voltagent/100-claude-code-subagent-collection-1eb0
+https://github.blog/news-insights/company-news/pick-your-agent-use-claude-and-codex-on-agent-hq/
+https://github.com/lawrenced/Claude_code_SAFe
+https://learn.ryzlabs.com/ai-coding-assistants/github-copilot-vs-claude-code-a-developer-s-decision-in-2026
+https://medium.com/@fruitful2007/agent-harness-understanding-claude-codes-superpower-engine-85e35a7ec764
+https://superprompt.com/blog/best-claude-code-agents-and-use-cases
+https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
+https://www.eesel.ai/blog/claude-code-multiple-agent-systems-complete-2026-guide
+https://www.scriptbyai.com/claude-code-resource-list/
+https://www.vtrivedy.com/posts/claude-code-sdk-haas-harness-as-a-service

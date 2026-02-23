@@ -1,39 +1,19 @@
-# Reference
+# Consolidated Index
 
-Welcome to the thegent reference section.
+## Files
 
-## Overview
+* `AGENTS_ACTIVE.md`
+* `COORDINATION.md`
+* `COORDINATION_INDEX.md`
+* `EXECUTION_KICKOFF_2026-02-18.md`
+* `FAILURE_RECOVERY_PLAYBOOK.md`
+* `PHASE_1_AGENT_IDENTITY_IMPLEMENTATION.md`
+* `PHASE_1_MATERIALS_INDEX.md`
+* `PHASE_1_QUICK_REFERENCE.md`
+* `RESILIENCE_PATTERN_COMPARISON.md`
+* `TUI_DASHBOARD_DESIGN.md`
+* `WORK_STREAM.md`
 
-This section contains detailed reference documentation for various aspects of thegent.
+## Subdirectories
 
-For a complete listing of available reference documents, see [Integration Index](/reference/INTEGRATION_INDEX.md) or [Model Routing Index](/reference/MODEL_ROUTING_INDEX.md).
-
-
----
-## See also
-
-- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
-- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index
-
-
-
----
-
-## EXTENSION_SUMMARY
-
-**Extended on:** 2026-02-17
-**Extended by:** Claude Code
-
-### Changes Made
-1. Added practical implementation patterns
-2. Added configuration examples
-3. Enhanced cross-references to related documentation
-
-### Cross-References Added
-- Related research and implementation guides
-- WORK_STREAM.md for tracking
-
-### Practical Additions
-- Implementation templates
-- Configuration examples
-- Best practices
+* _No subdirectories_

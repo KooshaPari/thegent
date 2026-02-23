@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import pytest
+
+pytest.importorskip("PySide6")
+
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-import pytest
 from PySide6.QtWidgets import QApplication
 
 from thegent.tray.plugins.thegent.api_client import GamificationStats, ThegentAPIClient

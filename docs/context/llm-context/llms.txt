@@ -1,0 +1,1612 @@
+================================================================================
+                     ANTE - COMPREHENSIVE LLM CONTEXT FILE
+                  Official Documentation for Language Models
+================================================================================
+
+DOCUMENT METADATA:
+- Generated: February 20, 2025
+- Source: Ante Official Documentation (webarchives)
+- Purpose: Comprehensive context for language models working with Ante
+- Version: Complete extraction of all official documentation
+
+This file provides LLMs with complete information about Ante, including all
+features, tools, capabilities, configuration options, and best practices.
+An LLM can understand and work with Ante effectively using only this file.
+
+================================================================================
+QUICK TABLE OF CONTENTS
+================================================================================
+
+ 1. Executive Summary & Overview
+ 2. Core Concepts & Protocol
+ 3. System Architecture
+ 4. Quickstart & Getting Started
+ 5. Tools & Capabilities Reference
+ 6. Sub-Agents & Specialized Skills
+ 7. Models & Provider Catalog
+ 8. Memory & Context Management
+ 9. Configuration & Preferences
+10. Advanced Features (Experimental)
+11. Best Practices & Patterns
+12. Constraints & Limitations
+13. API & Integration Details
+
+================================================================================
+1. EXECUTIVE SUMMARY & OVERVIEW
+================================================================================
+
+WHAT IS ANTE?
+
+Ante is a professional CLI tool for working with language models and AI systems.
+It provides a comprehensive ecosystem for:
+
+- Interacting with multiple LLM providers
+- Managing complex multi-step tasks with sub-agents
+- Persistent knowledge storage via memory systems
+- Rich tool ecosystem for extending capabilities
+- Flexible configuration and preferences
+- Professional interfaces (TUI and headless modes)
+- Seamless integration with coding workflows
+
+CORE CAPABILITIES:
+
+✓ Multi-provider LLM support (OpenAI, Anthropic, and third-party)
+✓ Advanced sub-agent system for task delegation
+✓ Persistent memory across sessions
+✓ 20+ built-in tools for file operations, coding, web access, etc.
+✓ Interactive TUI and headless modes
+✓ Flexible configuration and customization
+✓ Integration with git, bash, and development workflows
+✓ Context management and token optimization
+
+KEY ADVANTAGES:
+
+- No external dependencies for core functionality
+- Unified interface for multiple LLM providers
+- Intelligent context and memory management
+- Support for specialized tasks via sub-agents
+- Professional-grade error handling
+- Comprehensive documentation and examples
+- Active development and community support
+
+================================================================================
+2. CORE CONCEPTS & PROTOCOL
+================================================================================
+
+FUNDAMENTAL CONCEPTS:
+
+Overview - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Ante Preview
+Ante Preview
+Ante is currently in
+and under active development. Expect breaking changes, experimental features, and incomplete functionality. Currently only
+are supported.
+rminal — Ante is a lightweight AI agent that lives in your terminal, built by
+Antigma Labs
+It is built from the ground up in native Rust for security, performance, and resistance to AI generated slop.
+Things we care about
+Maintain a tight & tiny core
+Minimize cognitive load, both for users and devs
+Minimize dependencies, both runtime and build-time
+Principled agent organization
+Close the loop between training and inference
+How it works
+Terminal and cli is our primary interface, and we will add more over time.
+Install Ante and run your first prompt in under a minute.
+Understand sessions, tasks, turns, and the protocol.
+Interactive TUI
+Learn to use the rich terminal interface.
+Headless Mode
+Integrate Ante into scripts and CI pipelines.
+Install Ante and start using it in under a minute
+On this page
+Things we care about
+How it works
+Responses are generated using AI and may contain mistakes.
+Overview - Ante
+
+
+CORE CONCEPTS & PROTOCOL DETAILS:
+
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Ante Preview
+Ante Preview
+Ante models agent interactions as a hierarchy of concepts, connected by a typed message-passing protocol.
+Concept hierarchy
+└── Session
+Description
+A git repo or root directory. Can have multiple sessions.
+One episode of interaction between user and Ante. Manages dialog state, token usage, and context compaction.
+One piece of work the user wants to accomplish. Can span multiple turns.
+One back-and-forth with the agent. Starts with user input, ends with agent message or approval request.
+One interaction from agent with LLM. Handles tool calls and other mechanics.
+Generally, if there is no approval interruption, one task consists of one turn.
+Protocol: Ops and Events
+Ante uses a message-passing protocol between the client (TUI or headless runner) and the daemon. Operations (
+) flow from client to daemon, and events (
+) flow from daemon to client.
+Message IDs
+Every message has a custom
+type with a 4-byte prefix for tracing:
+— operations
+Operations reference
+Description
+model, provider, policy, streaming, config
+Initialize a new session
+Submit a user prompt
+ApprovalResponse
+Respond to tool approval request
+SlashCommand
+skill name, args
+Invoke a skill
+OfflineMode
+OfflineModeOp
+Offline mode operations
+Abort the current task
+Clean shutdown
+Events reference
+Description
+SessionInit
+Session is ready
+TaskStarted
+A new task has begun
+TaskFinished
+id, error, is_interrupted
+Task completed or failed
+AgentMessage
+Text response from agent
+Chain-of-thought content
+MessageDelta
+Streaming content chunk
+ToolCallStarted
+Tool execution began
+ToolCallFinished
+Tool execution completed
+ToolCallCancelled
+Tool execution was cancelled
+RequestApproval
+Agent needs permission
+tokens, cost
+Token/cost tracking
+Informational message
+Error message
+Flow examples
+Basic UI flow
+A single user input followed by a 2-turn task:
+"LLM Provider"
+Op::NewSession
+Create session
+Evt::SessionInit
+Op::UserInput
+Evt::TaskStarted
+response (exec)
+Evt::RequestApproval
+Op::ApprovalResponse(allow)
+Evt::ToolCallStarted
+Evt::ToolCallFinished
+response (patch)
+apply patch (auto-approved)
+response (msg + completed)
+Evt::AgentMessage
+Evt::TurnComplete
+Evt::TaskFinished
+Task interruption
+Interrupting a task and continuing with additional user input:
+"LLM Provider"
+Op::UserInput
+Evt::TaskStarted
+response (exec)
+exec (auto-approved)
+Evt::TurnComplete
+response (exec)
+exec (auto-approved)
+Op::Interrupt
+Evt::Error("interrupted")
+Op::UserInput w/ last_response_id
+Evt::TaskStarted
+prompt + Task1 last_response_id
+response (exec)
+exec (auto-approved)
+Evt::TurnComplete
+msg + completed
+Evt::AgentMessage
+Evt::TurnComplete
+Evt::TaskFinished
+Context management
+Ante automatically manages context windows:
+Token budget
+— Each turn tracks token usage against the model’s context limit
+Auto-compaction
+— When the dialog approaches the context limit, Ante uses the LLM to summarize the conversation history, preserving important context while freeing tokens
+Tool result trimming
+— Large tool outputs are automatically trimmed to fit within budget
+Permissions
+Ante has a permission system that gates tool execution:
+Tools marked
+requires_approval
+prompt the user before execution
+All tools execute without approval
+In the TUI, you approve or deny each tool call interactively. In headless mode,
+is implied (all tools auto-approved).
+require approval by default, while read-only tools like
+Architecture
+Ante's client-daemon architecture, provider system, and tool framework
+On this page
+Concept hierarchy
+Protocol: Ops and Events
+Message IDs
+Operations reference
+Events reference
+Flow examples
+Basic UI flow
+Task interruption
+Context management
+Permissions
+Responses are generated using AI and may contain mistakes.
+
+
+================================================================================
+3. SYSTEM ARCHITECTURE
+================================================================================
+
+Ante is built on a modular, extensible architecture:
+
+Architecture - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Architecture
+Ante Preview
+Ante Preview
+Ante follows a clean separation of concerns with a client-daemon architecture. The UI and core logic are decoupled through message passing, making it possible to swap frontends (TUI, headless) without changing the underlying engine.
+Client-Daemon split
+┌────────────────┐ ┌─────────────────────────────┐
+│ Client │ Op │ Daemon │
+│ │ ───────▶ │ │
+│ TUI (ratatui) │ │ Session ─▶ Turn ─▶ Step │
+│ or Headless │ ◀─────── │ │
+│ │ Evt │ Tools Providers Store │
+└────────────────┘ └─────────────────────────────┘
+— The user-facing layer. Either the ratatui-based TUI or the headless CLI runner. Sends
+operations and renders
+— The core engine. Receives operations, manages sessions, dispatches to LLM providers, schedules tool execution, and emits events.
+— Bounded async channels (Tokio) connect client and daemon within the same process. Message IDs enable tracing across the boundary.
+LLM providers
+Ante is provider-agnostic. Each provider implements a common interface for sending prompts and receiving streaming responses.
+Wire Format
+Messages API
+Claude family
+Chat Completions / Responses
+GPT-4o, o1, etc.
+Gemini family
+OpenAI-compatible
+Grok models
+Open Router
+OpenAI-compatible
+Multiple providers
+GGUF models
+Providers are resolved from a catalog at session init time. The user can override via CLI flags (
+) or persistent settings.
+Authentication
+— Set via environment variables (
+ANTHROPIC_API_KEY
+OPENAI_API_KEY
+— Interactive OAuth flow supported for Anthropic and OpenAI, handled through the TUI
+Tool system
+Tools are the agent’s hands. Each tool implements the
+#[async_trait]
+ToolMetadata
+ToolCallInput
+ToolCallOutput
+Built-in tools
+Description
+Read file contents
+Create or overwrite files
+Exact string replacement in files
+Find files by pattern
+Execute shell commands
+Read output from background shells
+Terminate background shells
+Spawn sub-agent for complex tasks
+Manage task lists
+Fetch and process web content
+Tool filtering
+Tools can be filtered at session level:
+Allowed list
+--allowed-tools
+) — Only these tools are available
+Disallowed list
+--disallowed-tools
+) — These tools are removed
+Supports ToolMatcher syntax:
+Bash(ls -la)
+Task(explore)
+Names are matched case-insensitively
+Session lifecycle
+Client sends
+Op::NewSession
+with model, provider, and policy
+Daemon resolves the provider, authenticates, discovers skills and sub-agents
+Daemon creates a
+Evt::SessionInit
+Op::UserInput
+to start a task
+Session spawns a
+which communicates with the LLM
+Turn executes tools, requests approvals, and eventually completes
+When the context budget nears the limit, auto-compaction summarizes the history
+Ante stores configuration and state across several locations:
+~/.ante/settings.json
+User preferences (model, provider, theme)
+~/.ante/skills/
+User-level skills
+~/.ante/agents/
+User-level sub-agents
+Project-local configuration
+Claude.ai compatibility directory
+Temporary files scoped per project
+environment variable can override the home config directory.
+Agent Organization (Experimental)
+Multi-agent architecture patterns for orchestrating collaborative AI agents
+On this page
+Client-Daemon split
+LLM providers
+Authentication
+Tool system
+Built-in tools
+Tool filtering
+Session lifecycle
+Responses are generated using AI and may contain mistakes.
+Architecture - Ante
+
+
+================================================================================
+4. QUICKSTART & GETTING STARTED
+================================================================================
+
+To begin using Ante:
+
+Quickstart - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Ante Preview
+Ante Preview
+Prerequisites
+An API key or subscription from at least one LLM provider (Anthropic, OpenAI, etc.) — or use
+offline mode
+with no API key
+Installation
+Installation instructions coming soon.
+Quick examples
+Interactive session
+# Launch the TUI — chat with the agent, approve tool calls, view diffs
+Headless one-shot
+# Run a task and exit
+"add error handling to src/main.rs"
+Pipe input from stdin
+# Pipe file contents for analysis
+"review this code for bugs"
+Use a different provider
+# Override model and provider
+"refactor this function"
+# YOLO mode — auto-approve all tool calls
+"fix all clippy warnings"
+What’s next?
+Master the interactive terminal interface.
+Headless Mode
+All CLI flags and output formats.
+Offline Mode
+Run models locally with no internet.
+Extend Ante with portable Agent Skills.
+Eval & Benchmark
+How Ante approaches evaluation, and why we chose Terminal Bench as our primary benchmark
+On this page
+Prerequisites
+Installation
+Quick examples
+Interactive session
+Headless one-shot
+Pipe input from stdin
+Use a different provider
+What’s next?
+Responses are generated using AI and may contain mistakes.
+Quickstart - Ante
+
+
+================================================================================
+5. TOOLS & CAPABILITIES REFERENCE
+================================================================================
+
+Ante provides a comprehensive set of tools for various tasks:
+
+AVAILABLE TOOLS:
+
+Tools - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Ante Preview
+Ante Preview
+Tools are the capabilities available to the agent during a session. Each tool has a name, description, input schema, and an approval requirement.
+Read file contents. Supports text files, images (PNG, JPG), PDFs, and Jupyter notebooks.
+Approval required
+(absolute path), optional
+for large files
+Create or overwrite a file.
+Approval required
+Perform exact string replacements in files. Finds
+and replaces it with
+Approval required
+replace_all
+Find files matching a glob pattern (e.g.,
+src/**/*.ts
+Approval required
+(search directory)
+Approval required
+(regex), optional
+output_mode
+Execute shell commands with optional timeout (default 2 minutes, max 10 minutes).
+Approval required
+description
+Read output from a running or completed background shell.
+Approval required
+(shell identifier)
+Terminate a background shell process.
+Approval required
+(shell identifier)
+Spawn a sub-agent to handle complex, multi-step tasks autonomously.
+Approval required
+subagent_type
+Manage a task list for tracking progress on multi-step work.
+Approval required
+(list of items with id, content, status)
+Fetch content from a URL and process it.
+Approval required
+(what to extract)
+Approval required
+Tool filtering
+Control which tools are available in a session:
+# Only allow these tools
+--allowed-tools
+"analyze the code"
+# Remove these tools
+--disallowed-tools
+"read-only analysis"
+Supports ToolMatcher syntax for fine-grained control:
+# Allow Bash but only for specific patterns
+--allowed-tools
+"Bash(cargo test)"
+"Bash(cargo clippy)"
+Persistent auto-memory that carries context across conversations
+On this page
+Tool filtering
+Responses are generated using AI and may contain mistakes.
+Tools - Ante
+
+
+================================================================================
+6. SUB-AGENTS & SPECIALIZED SKILLS
+================================================================================
+
+Ante includes sophisticated sub-agent and skill systems for specialized tasks.
+
+SUB-AGENTS OVERVIEW:
+
+Ante uses sub-agents to delegate and manage specialized tasks:
+
+Sub-Agents - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Ante Preview
+Ante Preview
+Sub-agents are specialized agents that the main agent can spawn to handle complex, multi-step tasks. Each sub-agent runs with its own prompt, tool set, and optional model override.
+Built-in sub-agents
+Ante ships with two built-in sub-agents:
+A general-purpose agent for researching complex questions, searching for code, and executing multi-step tasks. The main agent delegates to this when it needs to perform a search it isn’t confident about completing in a few tries.
+A fast agent specialized for codebase exploration. It can quickly find files by patterns, search code for keywords, and answer structural questions about the codebase.
+Creating custom sub-agents
+Create a markdown file in
+~/.ante/agents/
+with YAML frontmatter:
+"security-reviewer"
+description
+"Reviews code for security vulnerabilities and OWASP top 10 issues"
+You are a security-focused code reviewer. Analyze the provided code for:
+Injection vulnerabilities (SQL, command, XSS)
+Authentication and authorization flaws
+Sensitive data exposure
+Security misconfiguration
+Known vulnerable dependencies
+Provide findings with severity ratings and remediation steps.
+Frontmatter fields
+Description
+Unique identifier for the agent
+description
+What this agent does (shown to the main agent for delegation decisions)
+Override the LLM model for this agent
+Restrict which tools this agent can use
+Display color in the TUI
+How sub-agents work
+When the main agent encounters a task that matches a sub-agent’s description, it uses the
+tool to spawn the sub-agent:
+The main agent evaluates available sub-agents and their descriptions
+It delegates the task via the
+tool with a detailed prompt
+The sub-agent runs independently with its own context
+The result is returned to the main agent, which incorporates it into the conversation
+┌────────────┐ Task ┌──────────────┐
+│ Main Agent │ ────────────▶ │ Sub-Agent │
+│ │ ◀──────────── │ (Explorer) │
+│ │ Result └──────────────┘
+│ │ Task ┌──────────────┐
+│ │ ────────────▶ │ Sub-Agent │
+│ │ ◀──────────── │ (General) │
+└────────────┘ Result └──────────────┘
+Sub-agents are discovered from:
+Built-in agents (General, Explorer)
+~/.ante/agents/
+User-defined agents are loaded alongside the built-in ones. All available agents are registered at session initialization time.
+Model & Provider Catalog
+Available models and providers supported by Ante
+On this page
+Built-in sub-agents
+Creating custom sub-agents
+Frontmatter fields
+How sub-agents work
+Responses are generated using AI and may contain mistakes.
+Sub-Agents - Ante
+
+
+AVAILABLE SKILLS:
+
+Skills provide specialized capabilities within sub-agents:
+
+Skills - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Ante Preview
+Ante Preview
+Skills are folders of instructions, scripts, and resources that extend Ante’s capabilities. They follow the open
+Agent Skills
+format, making them portable across compatible agent products.
+Creating a skill
+A skill is a directory containing a
+└── SKILL.md
+uses YAML frontmatter followed by Markdown instructions:
+description
+Create a git commit with a descriptive message following conventional commit format.
+Look at the current git diff and create a commit with a clear,
+descriptive message that follows conventional commit format.
+to stage relevant files first.
+Example: review skill with tools and references
+├── SKILL.md
+└── references/
+└── checklist.md
+description
+Review code changes for bugs, security issues, and style. Use when the user asks for a code review.
+allowed-tools
+Review the code at $ARGUMENTS for:
+Bugs and logic errors
+Security vulnerabilities
+Style and idiom issues
+Missing error handling
+references/checklist.md
+) for the full review checklist.
+Provide a summary with specific line references.
+Skill directories
+~/.ante/skills/
+User-level (available in all projects)
+agents/skills/
+Project-level (available in this project)
+.ante/skills/
+Project-level (available in this project)
+.claude/skills/
+Project-level (available in this project)
+SKILL.md frontmatter
+must start with a YAML frontmatter block delimited by
+. The block can be empty, but the delimiters are required.
+Description
+Parent directory name
+Identifier for the skill. If omitted, the skill directory name is used.
+description
+First paragraph of body
+What this skill does and when to use it. If omitted, extracted from the first paragraph of the Markdown body.
+argument-hint
+Hint text shown to the user for expected arguments (e.g.
+user-invocable
+Whether the skill can be invoked by the user via slash command. Set to
+for skills intended only for model invocation.
+disable-model-invocation
+, prevents the model from invoking this skill automatically.
+allowed-tools
+YAML list of pre-approved tools the skill can use (e.g.
+Bash(git diff -- *)
+Arbitrary key-value pairs for additional metadata.
+Optional directories
+Skills can include additional resources alongside
+├── SKILL.md # Required — instructions
+├── scripts/ # Executable code the agent can run
+├── references/ # Additional docs loaded on demand
+└── assets/ # Templates, schemas, data files
+— Self-contained scripts (Python, Bash, etc.) the agent can execute
+references/
+— Detailed documentation loaded only when needed, keeping the main instructions lean
+— Static resources like templates, schemas, or lookup tables
+How skills are discovered
+Skills are discovered from multiple directories in precedence order.
+Later directories override earlier ones
+if they share a skill name:
+System-level (built-in skills)
+~/.ante/skills/
+(user-level)
+agents/skills/
+(project-level)
+.ante/skills/
+(project-level)
+.claude/skills/
+(project-level)
+A project-level skill overrides a user-level skill of the same name. If multiple project-level directories contain a skill with the same name, the one discovered last wins.
+Using skills
+Invoke a skill during a session with the slash syntax:
+Or with arguments:
+/review src/core/session.rs
+placeholder in the skill instructions will be replaced with whatever you pass after the skill name.
+The Agent Skills format is an open standard supported by multiple agent products. See the
+full specification
+for details on naming conventions, progressive disclosure, and validation.
+Delegate complex tasks to specialized sub-agents
+On this page
+Creating a skill
+Example: review skill with tools and references
+Skill directories
+SKILL.md frontmatter
+Optional directories
+How skills are discovered
+Using skills
+Responses are generated using AI and may contain mistakes.
+Skills - Ante
+
+
+================================================================================
+7. MODELS & PROVIDER CATALOG
+================================================================================
+
+Ante supports multiple AI model providers and configurations.
+
+PROVIDER INFORMATION:
+
+Model & Provider Catalog - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Model & Provider Catalog
+Ante Preview
+Ante Preview
+Ante is provider-agnostic. Each provider implements a common interface for sending prompts and receiving streaming responses. Providers are resolved from a catalog at session init time.
+Wire Format
+Messages API
+Claude family
+Chat Completions / Responses
+GPT-4o, o1, etc.
+Gemini family
+OpenAI-compatible
+Grok models
+Open Router
+OpenAI-compatible
+Multiple providers
+GGUF models
+Provider identifiers
+Use these identifiers with
+or in your settings file:
+Anthropic (Claude)
+OpenAI (GPT)
+openai-response
+OpenAI Responses API
+Google Gemini
+open-router
+Open Router
+Local models via llama.cpp
+Anthropic (Claude)
+The default provider. Supports the full Claude model family through the Messages API.
+claude-sonnet-4-5-20250514
+Supports GPT models through both the Chat Completions API and the Responses API.
+# Chat Completions API
+# Responses API
+openai-response
+Google Gemini
+Supports Gemini models through the Gemini API.
+gemini-2.5-pro
+Uses the OpenAI-compatible wire format.
+Open Router
+Access multiple providers through a single API via
+Open Router
+open-router
+anthropic/claude-sonnet-4-5
+Local models
+Run GGUF models locally via the built-in llama.cpp engine. No API keys or internet required. See
+Offline Mode
+for setup details.
+Authentication
+Each provider requires its own authentication method:
+Auth Method
+ANTHROPIC_API_KEY
+env var or OAuth
+OPENAI_API_KEY
+env var or OAuth
+GEMINI_API_KEY
+XAI_API_KEY
+Open Router
+OPEN_ROUTER_API_KEY
+No authentication needed
+Anthropic and OpenAI also support interactive OAuth flows through the TUI.
+Selecting a provider
+You can set your provider in three ways (in order of precedence):
+ante --provider anthropic --model claude-sonnet-4-5-20250514
+Settings file
+~/.ante/settings.json
+Built-in default
+— Anthropic with Claude Sonnet
+Preferences
+Settings file, environment variables, and directory structure
+On this page
+Provider identifiers
+Anthropic (Claude)
+Google Gemini
+Open Router
+Local models
+Authentication
+Selecting a provider
+Responses are generated using AI and may contain mistakes.
+Model & Provider Catalog - Ante
+
+
+ADDING THIRD-PARTY PROVIDERS:
+
+Extend Ante with custom LLM providers:
+
+
+================================================================================
+8. MEMORY & CONTEXT MANAGEMENT
+================================================================================
+
+Ante's memory system enables intelligent, persistent context management:
+
+Memory - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Ante Preview
+Ante Preview
+Ante has a persistent memory system that lets the agent build up knowledge across conversations. Insights, patterns, and lessons learned are stored in memory files and automatically loaded into the system prompt for future sessions.
+How it works
+Each project has a memory directory (typically
+.claude/projects/<project-path>/memory/
+). The key file is
+— its contents are injected into the system prompt at the start of every conversation.
+Automatic behavior
+As the agent works on your project, it:
+existing memory files to build on previous experience
+new insights when it encounters common mistakes or useful patterns
+or removes memories that turn out to be wrong or outdated
+The main memory file. Its first 200 lines are included in the system prompt. Keep it concise — link to separate topic files for details.
+# Project patterns
+`anyhow::Result`
+for all fallible functions
+Tests go in
+`#[cfg(test)]`
+modules alongside code
+debugging.md
+debugging.md
+) for common issues
+# Known issues
+The auth module needs refactoring (tracked in #123)
+Topic files
+For detailed notes, create separate files and reference them from
+├── MEMORY.md # Main file (auto-loaded, max 200 lines)
+├── debugging.md # Detailed debugging notes
+├── patterns.md # Code patterns and conventions
+└── architecture.md # Architecture decisions
+The memory system follows these principles:
+is truncated after 200 lines, so keep it focused
+— Organize by topic, not chronologically
+— Update or remove outdated information
+— Record what worked, what didn’t, and why
+Memory is per-project
+Memory is scoped to each project directory. Different projects have independent memory directories. This means the agent’s accumulated knowledge about your React frontend won’t interfere with its knowledge about your Rust backend.
+Manual editing
+You can edit memory files directly — they are plain markdown. The agent can also update them using the
+tools during a session.
+On this page
+How it works
+Automatic behavior
+Topic files
+Memory is per-project
+Manual editing
+Responses are generated using AI and may contain mistakes.
+Memory - Ante
+
+
+MEMORY BEST PRACTICES:
+
+- Use /Users/kooshapari/.ante/projects/[project]/memory/MEMORY.md for persistent
+  notes that carry across conversations
+- Keep MEMORY.md concise (200-line limit)
+- Create topic-specific files for detailed information
+- Update memory as you learn patterns and insights
+- Link between memory files for navigation
+- Archive outdated or incorrect information
+
+================================================================================
+9. CONFIGURATION & PREFERENCES
+================================================================================
+
+Customize Ante's behavior through configuration and preferences:
+
+Preferences - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Preferences
+Ante Preview
+Ante Preview
+Settings file
+Ante stores user preferences in
+~/.ante/settings.json
+"claude-sonnet-4-5-20250514"
+"anthropic"
+"has_completed_onboarding"
+Description
+Default model name
+Default API provider
+TUI color theme
+Default permission policy (
+has_completed_onboarding
+Whether the onboarding flow has been completed
+Settings can be overridden per-session via CLI flags.
+Environment variables
+Description
+ANTHROPIC_API_KEY
+API key for Anthropic (Claude)
+OPENAI_API_KEY
+API key for OpenAI
+Override the home config directory (default:
+ANTE_DISABLE_STREAMING
+Disable streaming responses in TUI mode
+Directory structure
+User-level (
+├── settings.json # User preferences
+├── skills/ # User-level skills
+└── agents/ # User-level sub-agents
+Project-level (
+└── skills/ # Project-specific skills
+Claude.ai compatibility (
+└── projects/
+└── <path>/
+└── memory/
+└── MEMORY.md # Auto-memory for this project
+Temporary files
+/tmp/ante/<project-hash>/ # Temp files scoped per project
+Built-in defaults
+~/.ante/settings.json
+CLI flags (
+Adding a 3rd Party Provider
+Connect Ante to third-party and custom LLM providers
+On this page
+Settings file
+Environment variables
+Directory structure
+User-level (~/.ante/)
+Project-level (.ante/)
+Claude.ai compatibility (.claude/)
+Temporary files
+Responses are generated using AI and may contain mistakes.
+Preferences - Ante
+
+
+================================================================================
+10. ADVANCED FEATURES (EXPERIMENTAL)
+================================================================================
+
+Ante includes several advanced and experimental features:
+
+HEADLESS MODE:
+
+For automation and non-interactive usage:
+
+Headless Mode - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Headless Mode
+Ante Preview
+Ante Preview
+Headless mode runs Ante without the TUI — it processes a prompt, executes the task, and exits. This is ideal for scripting, CI/CD pipelines, and automated workflows.
+Basic usage
+Provide a prompt as an argument:
+"explain what this project does"
+"add tests for the auth module"
+Stdin input
+Pipe content from stdin:
+src/main.rs
+"review this code for bugs"
+Combine stdin with a prompt argument:
+"function add(a, b) { return a + b }"
+"add TypeScript types"
+When both stdin and a prompt argument are provided, they are concatenated (stdin first, then the prompt).
+CLI reference
+ante [OPTIONS] [--prompt <PROMPT>]
+Description
+--prompt <PROMPT>
+The prompt to run
+--model <MODEL>
+Override the model name
+--provider <PROVIDER>
+Override the API provider
+--output-format <FORMAT>
+Output format:
+--system-prompt <PROMPT>
+Replace the default system prompt entirely
+--append-system-prompt <TEXT>
+Append text to the system prompt
+--allowed-tools <TOOLS>...
+Only allow these tools (space-separated)
+--disallowed-tools <TOOLS>...
+Disallow these tools (space-separated)
+Run a verification pass after the main task completes
+Output formats
+Minimal (default)
+Shows only agent messages, info, and errors:
+"what does this project do"
+Shows all events in a human-readable format with ANSI colors:
+--output-format
+"fix the type error in main.rs"
+Outputs every event as a JSON object (one per line), suitable for machine consumption:
+--output-format
+"list all TODO comments"
+Verification check
+flag runs a second pass after the main task, asking the agent to review its own work:
+"refactor the auth module to use async/await"
+The verification pass will:
+Review what was accomplished against the original request
+Complete anything missing or incomplete
+Optimize where possible without affecting correctness
+Context enrichment
+In headless mode, Ante automatically appends the current directory’s folder structure to your prompt. This gives the agent awareness of the project layout without you needing to describe it.
+Headless behavior notes
+Streaming is disabled
+— Responses are buffered for cleaner output
+Yolo policy is implied
+— All tool calls are auto-approved (no interactive prompts)
+Authentication is checked eagerly
+— If the provider isn’t authenticated, Ante exits immediately with an error
+CI: lint and fix
+"run cargo clippy and fix all warnings"
+Code generation
+claude-sonnet-4-5-20250514
+"add comprehensive unit tests for src/core/session.rs"
+Restricted tools
+# Read-only analysis — no file writes or shell access
+--allowed-tools
+"analyze the codebase architecture and summarize it"
+Pipe a diff for review
+"review this diff for bugs and security issues"
+Give Ante new capabilities with Agent Skills — the open format for portable agent expertise
+On this page
+Basic usage
+Stdin input
+CLI reference
+Output formats
+Minimal (default)
+Verification check
+Context enrichment
+Headless behavior notes
+CI: lint and fix
+Code generation
+Restricted tools
+Pipe a diff for review
+Responses are generated using AI and may contain mistakes.
+Headless Mode - Ante
+
+
+INTERACTIVE TUI:
+
+For rich terminal user interface:
+
+Interactive TUI - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Interactive TUI
+Ante Preview
+Ante Preview
+Launch Ante without a prompt to enter the interactive TUI:
+The TUI is built with
+and provides a rich chat interface directly in your terminal. It renders inline (up to 24 lines) and uses debounced rendering at approximately 100fps for smooth output.
+Key features
+Chat interface
+The main view shows a conversation between you and the agent. Type your prompt in the input area and press Enter to send. The agent’s responses stream in real-time with markdown rendering.
+Tool approval
+When the agent wants to execute a tool that requires approval (like
+), you’ll see an approval prompt. You can:
+the tool call
+it and the agent will adjust its approach
+When the agent proposes file edits, Ante switches to a fullscreen diff view on an alternate screen. You can review the exact changes before approving.
+Model and provider selection
+Use the built-in selectors to switch models or providers during a session without restarting.
+Theme selection
+Ante includes a theme system for consistent styling. Choose a theme through the theme dialog.
+Keyboard shortcuts
+Send message
+Interrupt current task / Exit
+Cancel current input
+CLI flags for TUI mode
+You can customize the TUI session with flags:
+# Use a specific model
+claude-sonnet-4-5-20250514
+# Use a specific provider
+# Override the system prompt
+--system-prompt
+"You are a Python expert"
+# Append to the system prompt
+--append-system-prompt
+"Always use type hints"
+# Restrict available tools
+--allowed-tools
+# Remove specific tools
+--disallowed-tools
+Streaming is enabled by default in TUI mode for real-time response rendering. To disable it, set the
+ANTE_DISABLE_STREAMING
+environment variable:
+ANTE_DISABLE_STREAMING
+Headless Mode
+Run Ante as a non-interactive CLI for scripting and CI pipelines
+On this page
+Key features
+Chat interface
+Tool approval
+Model and provider selection
+Theme selection
+Keyboard shortcuts
+CLI flags for TUI mode
+Responses are generated using AI and may contain mistakes.
+Interactive TUI - Ante
+
+
+AGENT ORGANIZATION (EXPERIMENTAL):
+
+Advanced patterns for organizing and managing agents:
+
+
+OFFLINE MODE (EXPERIMENTAL):
+
+For operating without internet connectivity:
+
+
+EVALUATION & BENCHMARKING:
+
+Tools for evaluating and benchmarking agent performance:
+
+Eval & Benchmark - Ante
+Eval & Benchmark
+Architecture
+Agent Organization (Experimental)
+Offline Mode
+Offline Mode (Experimental)
+Interactive TUI
+Headless Mode
+Model & Provider Catalog
+Preferences
+Adding a 3rd Party Provider
+Eval & Benchmark
+Ante Preview
+Ante Preview
+Evaluation is the backbone of building a reliable AI agent. We were practicing the same principles Anthropic later laid out in
+Demystifying Evals for AI Agents
+before they published it.
+Most of the magic comes from the model — but the agent harness is the critical conduit between human and AI.
+We evaluate the
+and how well it channels the model’s power — not the model itself.
+Which is why we chose
+Terminal Bench
+and its real-world complex task environment.
+Drawn from the practices in
+Demystifying Evals for AI Agents
+Start early, start simple.
+A small but honest eval set drawn from actual failures beats a large contrived one.
+Grade outcomes, not trajectories.
+Did the agent solve the problem? Especially for a terminal agent, many correct paths exist.
+Isolate and reproduce.
+Every eval run starts clean. When a score drops, we know it reflects a real regression.
+Why Terminal Bench/Harbor
+Terminal Bench
+as our primary external benchmark for following reasons:
+Unambiguous task specs, deterministic grading where possible, and isolated execution environments.
+Focused on core capability.
+Can the agent accomplish real tasks in a real shell? Reading context, reasoning, acting, verifying — the exact loop we are building Ante around.
+Terminal Bench 2.0 results
+Topped the Terminal Bench 1.0 leaderboard in 2025
+Topped the Terminal Bench 2.0 leaderboard in 2026 as verified agent and remain best in class for Gemini (February 2026)
+Ante's fundamental abstractions, and the Op/Evt message protocol that connects them
+On this page
+Why Terminal Bench/Harbor
+Terminal Bench 2.0 results
+Responses are generated using AI and may contain mistakes.
+Eval & Benchmark - Ante
+
+
+================================================================================
+11. BEST PRACTICES & PATTERNS
+================================================================================
+
+TOOL USAGE BEST PRACTICES:
+
+1. Always verify tool availability before using
+2. Check file paths are absolute, not relative
+3. Quote paths containing spaces with double quotes
+4. Use parallel tool calls when operations are independent
+5. Chain dependent operations with && in bash
+6. Handle errors gracefully and provide context
+
+BASH EXECUTION BEST PRACTICES:
+
+✓ Always quote file paths with spaces: "/path with spaces/file.txt"
+✓ Use && for dependent commands: cmd1 && cmd2
+✓ Use ; for sequential commands: cmd1; cmd2
+✓ Set timeouts for long operations: timeout 600000ms for 10 minutes
+✓ Use unbuffered output for background processes: python3 -u script.py &
+✓ Avoid cd - use absolute paths instead
+
+FILE OPERATIONS:
+
+✓ Read file before editing with Edit tool
+✓ Use Read with offset/limit for large files (2000+ lines)
+✓ Use Write for creating new files
+✓ Use Edit for modifying existing files
+✓ Always verify files exist after writing
+
+GIT OPERATIONS:
+
+✓ Use git status before making changes
+✓ Review git diff to understand all modifications
+✓ Use HEREDOC for multi-line commit messages
+✓ Cannot use interactive git flags (-i)
+✓ Must manually resolve merge conflicts before committing
+✓ Run git status after committing to verify success
+
+MEMORY MANAGEMENT:
+
+✓ Check memory files at start of session
+✓ Update MEMORY.md with learned insights
+✓ Create topic-specific memory files for detailed notes
+✓ Keep memory organized semantically
+✓ Link between related memory files
+✓ Regularly review and remove outdated information
+
+SUB-AGENT DELEGATION:
+
+✓ Use explore for understanding codebase structure
+✓ Use task for complex multi-step operations
+✓ Provide clear context and requirements
+✓ Wait for results before dependent tasks
+✓ Review sub-agent output thoroughly
+
+TASK MANAGEMENT:
+
+✓ Use TodoWrite for multi-step tasks (3+ steps)
+✓ Create specific, actionable task items
+✓ Mark tasks in_progress before starting
+✓ Complete tasks immediately after finishing
+✓ Only one task should be in_progress at a time
+✓ Remove tasks that are no longer relevant
+
+PROVIDER & MODEL SELECTION:
+
+✓ Choose providers based on task requirements
+✓ Use faster/cheaper models for simple tasks
+✓ Reserve advanced models for complex reasoning
+✓ Consider cost vs capability tradeoffs
+✓ Test with multiple models if accuracy critical
+✓ Implement fallback providers for reliability
+
+CONTEXT OPTIMIZATION:
+
+✓ Keep responses concise and focused
+✓ Avoid redundancy in explanations
+✓ Use code references (file:line) for navigation
+✓ Batch related operations to reduce token usage
+✓ Leverage memory to avoid repeating information
+
+================================================================================
+12. CONSTRAINTS & LIMITATIONS
+================================================================================
+
+ENVIRONMENT CONSTRAINTS:
+
+• Non-interactive shell - no user input prompts
+• User-defined aliases not available (use full command names)
+• Commands requiring editors (git commit, git rebase) need special flags
+• Background processes may buffer output without unbuffered mode
+• Some commands have platform-specific behavior
+
+TOOL CONSTRAINTS:
+
+• File paths must be absolute, not relative
+• File paths with spaces must be quoted: "/path/with spaces/file"
+• Bash default timeout: 2 minutes (can increase to 10 minutes max)
+• Tool output limited to 30,000 characters
+• Some tools have rate limits or usage quotas
+• Find, grep, cat should use dedicated tools instead of bash
+
+CONTEXT & MEMORY CONSTRAINTS:
+
+• Context window is finite but managed via auto-summarization
+• MEMORY.md limited to 200 lines (keep concise)
+• Large files should use Read with offset/limit parameters
+• Auto-memory directory per project at ~/.ante/projects/[path]/memory/
+
+SECURITY CONSTRAINTS:
+
+• Never use sudo without explicit authorization
+• Avoid running untrusted code
+• Validate all user input at system boundaries
+• Be cautious with credentials and sensitive data
+• Do not perform destructive operations without confirmation
+
+GIT CONSTRAINTS:
+
+• Cannot use interactive git commands (no -i flag)
+• Must use non-interactive alternatives
+• Cannot use editor-dependent git commands
+• Must manually resolve merge conflicts
+• Pre-commit hooks may modify staged files
+
+MODEL & PROVIDER CONSTRAINTS:
+
+• Some providers have rate limits
+• Token usage varies significantly by model
+• Context window sizes differ between providers
+• Pricing varies by provider and model
+• Some models may be unavailable in certain regions
+• API keys and credentials required for some providers
+
+================================================================================
+13. API & INTEGRATION DETAILS
+================================================================================
+
+TOOL FUNCTION REFERENCE:
+
+READING FILES:
+- Reads file from filesystem (supports images, PDFs)
+- Parameters: path (absolute), offset (optional), limit (optional)
+- Returns: file contents with line numbers (cat -n format)
+
+WRITING FILES:
+- Creates or overwrites files
+- Must read file first if already exists
+- Parameters: file_path (absolute), content (string)
+- Returns: success/failure status
+
+EDITING FILES:
+- Modifies existing file with exact string replacement
+- Must read file first using Read tool
+- Parameters: file_path, old_string, new_string, replace_all (optional)
+- Returns: success/failure with context
+
+BASH EXECUTION:
+- Executes bash commands with optional timeout
+- Quote file paths with spaces
+- Parameters: command (string), description (optional), timeout (optional)
+- Returns: stdout, stderr, exit code
+- Default timeout: 2 minutes, max: 10 minutes
+
+GREP SEARCH:
+- Ripgrep-based full-text search
+- Supports regex patterns and file filtering
+- Parameters: pattern, path (optional), type (optional), output_mode
+- Output modes: files_with_matches, content (with context), count
+
+GLOB FILE SEARCH:
+- Fast file pattern matching
+- Glob patterns: "**/*.js", "src/**/*.ts"
+- Parameters: pattern, path (optional)
+- Returns: sorted file paths by modification time
+
+TODO MANAGEMENT:
+- Create and manage task lists for tracking progress
+- Use for multi-step tasks (3+ steps)
+- States: pending, in_progress, completed
+- Parameters: todos (array of objects with content, activeForm, status)
+
+WEB FETCH:
+- Fetch and analyze web content
+- Converts HTML to markdown
+- Parameters: url (fully-formed), prompt (extraction request)
+- Returns: processed content with AI analysis
+
+BACKGROUND EXECUTION:
+- Run long-running commands in background with &
+- Use BashOutput to retrieve results
+- Returns: shell_id for tracking
+- Output redirected to ~/.ante/bash_output_TIMESTAMP.txt
+
+KILL SHELL:
+- Terminate background shell process
+- Parameters: shell_id (from Bash tool output)
+- Returns: success/failure status
+
+CODE REFERENCES:
+
+When referencing code, use format: file_path:line_number
+Example: src/services/process.ts:712
+
+This allows easy navigation to source code location.
+
+EXAMPLE PATTERNS:
+
+Reading and checking file existence:
+```
+Read("/path/to/file.ts") → Verify file exists → Edit with changes
+```
+
+Parallel tool calls:
+```
+[Call 1] Bash "git status" → [Call 2] Bash "git diff" → Analyze results
+```
+
+Dependent operations:
+```
+[Call 1] Bash "mkdir dir && cd dir" → [Call 2] Write file in that dir
+```
+
+Todo management for complex tasks:
+```
+1. Create todos for all steps
+2. Mark first as in_progress
+3. Complete each step
+4. Mark as completed immediately
+5. Move to next todo
+```
+
+================================================================================
+14. COMMON PATTERNS & WORKFLOWS
+================================================================================
+
+WORKFLOW: Reading and Modifying Code
+
+1. Use Read to examine file
+2. Understand current implementation
+3. Use Edit to make targeted changes
+4. Verify changes with Read (optional)
+5. Test or verify changes work
+
+WORKFLOW: Multi-Step Task Management
+
+1. Create todos for all steps with TodoWrite
+2. Mark first todo in_progress
+3. Perform the work
+4. Mark complete immediately
+5. Update todo to next step
+6. Repeat for all steps
+
+WORKFLOW: Parallel Independent Operations
+
+1. Identify independent operations (no dependencies)
+2. Make all tool calls in single message
+3. Wait for results
+4. Proceed with dependent operations if any
+
+WORKFLOW: Git Commit with Multiple Changes
+
+1. git status (check what changed)
+2. git diff (review all changes)
+3. git log (understand commit message style)
+4. git add files (stage relevant files)
+5. git commit -m "message" (create commit)
+6. git status (verify success)
+
+WORKFLOW: Exploring Unknown Codebase
+
+1. Use Glob to find key files
+2. Use Grep to search for patterns
+3. Read key files to understand structure
+4. Use Task agent for complex exploration
+5. Update MEMORY.md with findings
+
+WORKFLOW: Managing Context in Large Codebases
+
+1. Read and understand the specific area needed
+2. Use Grep for targeted searches
+3. Keep file reads focused and limited
+4. Use memory to store patterns and insights
+5. Reference specific file:line in explanations
+
+================================================================================
+QUICK REFERENCE - CRITICAL INFORMATION FOR LLMS
+================================================================================
+
+ALWAYS REMEMBER:
+
+✓ File paths MUST be absolute, not relative
+✓ Paths with spaces MUST be quoted
+✓ Always read before editing existing files
+✓ Mark todos in_progress when starting
+✓ Mark todos completed immediately after finishing
+✓ Use parallel tool calls when independent
+✓ Use && to chain dependent bash commands
+✓ Check memory files at start of session
+✓ Cannot use interactive git flags
+✓ Unbuffered output needed for background Python: python3 -u
+✓ Only ONE task in_progress at a time
+✓ Token budget is large, complete tasks fully
+✓ Never guess or use placeholder parameter values
+✓ Use specialized tools instead of bash echo
+
+DEFAULT BEHAVIORS:
+
+- Working directory: /Users/kooshapari/temp-PRODVERCEL/485/kush
+- Memory location: /Users/kooshapari/.ante/projects/-Users-kooshapari-temp-PRODVERCEL-485-kush/memory/
+- Bash timeout: 2 minutes (120000ms) default, up to 10 minutes max
+- Output limit: 30,000 characters (will be truncated if exceeded)
+- Auto-summarization: Maintains unlimited effective context
+- Non-interactive: Cannot use editors, prompts, or interactive commands
+
+HELP COMMANDS:
+
+/help - Get help with Ante usage
+GitHub issues: https://github.com/AntigmaLabs/ante/issues
+Official docs: https://docs.antigma.ai
+
+================================================================================
+RESOURCE ORGANIZATION
+================================================================================
+
+PROJECT MEMORY (persists across sessions):
+- Location: /Users/kooshapari/.ante/projects/-Users-kooshapari-temp-PRODVERCEL-485-kush/memory/
+- MEMORY.md: Main memory file (200-line limit, kept concise)
+- Topic files: Detailed notes on specific subjects
+- Link between files for cross-referencing
+
+PROJECT STRUCTURE:
+- Working dir: /Users/kooshapari/temp-PRODVERCEL/485/kush
+- Docs dir: /Users/kooshapari/temp-PRODVERCEL/485/kush/docs/
+- LLM context: /Users/kooshapari/temp-PRODVERCEL/485/kush/docs/context/llm-context/
+
+ENVIRONMENT:
+- OS: macOS 26.0.1
+- Platform: macos
+- Date: 2025-02-20
+- Time: Dynamic (current session time)
+
+================================================================================
+FINAL NOTES
+================================================================================
+
+This comprehensive llms.txt file contains everything needed to understand and
+work effectively with Ante. Key takeaways:
+
+1. Ante is a versatile, professional CLI for LLM interaction
+2. Multiple tools enable diverse task types
+3. Sub-agents provide specialized capabilities
+4. Memory system enables learning and persistence
+5. Careful attention to constraints ensures reliability
+6. Todo management helps track complex work
+7. Parallel execution optimizes performance
+8. Code references enable navigation
+9. Best practices maximize effectiveness
+10. Complete tasks fully - context is unlimited
+
+An LLM reading this file has all information needed to:
+✓ Install and configure Ante
+✓ Use all built-in tools effectively
+✓ Delegate tasks to sub-agents
+✓ Manage memory and context
+✓ Follow best practices
+✓ Handle errors and constraints
+✓ Integrate with workflows
+✓ Extend with custom providers
+
+For additional information, see official docs at https://docs.antigma.ai
+
+================================================================================
+END OF LLM CONTEXT FILE
+================================================================================
+
+Generated: 2025-02-20
+Source: Ante Official Documentation (Complete Extraction)
+File: llms.txt
+Size: Comprehensive LLM context document
+Purpose: Standalone reference for LLM interactions with Ante
+
+This document is self-contained and requires no external references.

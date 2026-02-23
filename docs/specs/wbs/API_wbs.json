@@ -1,0 +1,49 @@
+{
+  "project": "API",
+  "wbs_elements": 16,
+  "tree": {
+    "API-wbs-5": {
+      "id": "API-wbs-5",
+      "name": "min: Create and merge PR",
+      "description": "### Q: What's the priority order for implementation?\n\n**A:** Recommended priority:\n1. **Phase 1 (High):** Remove empty dirs, improve .gitignore\n2. **Phase 2 (Medium):** Consolidate configuration files\n3. **Phase 3 (Low):** Archive and reorganize documentation\n\n### Q: Who should implement these changes?\n\n**A:** Recommended roles:\n- DevOps/Infrastructure owner: Phase 1-2 (config consolidation)\n- Technical lead: Approval and oversight\n- Documentation owner: Phase 3 (doc organization)\n\n### Q: Are",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "API-wbs-5.": {
+          "id": "API-wbs-5.",
+          "name": "**Cost-Optimized Router** - Budget-aware fallback logic",
+          "description": "**Supporting Infrastructure:**\n- Unified Feature Extraction Layer\n- Single Classification System\n- Consolidated Budget Manager\n- Shared Model Ranking Service\n- Byzantine Consensus Engine (6 voters with weighted confidence)\n\n### Timeline & Effort\n\n**Total Duration:** 12 weeks\n**Estimated Effort:** 480-600 hours\n**Team Size:** 2-3 engineers\n\n---\n\n## Phase 0: Discovery & Planning \u2705 COMPLETED\n\n**Duration:** 1 week\n**Status:** Completed\n\n### Deliverables\n- [x] MIRT-BERT research paper analysis\n- [x] NVIDIA classifier technical specification\n- [x] Current architecture duplication analysis\n- [x] DISCUSSION_REVIEW.md strategic positioning\n- [x] This WBS document\n\n---\n\n## Phase 1: Consolidate Feature Extraction Layer\n\n**Duration:** 1.5 weeks (60 hours)\n**Priority:** CRITICAL - Eliminates 30% code duplication\n**Dependencies:** None\n\n### Problem Statement\n\nCurrently, feature extraction is duplicated 5+ times per request:\n- Text extraction from messages (3 implementations)\n- Token counting (2 implementations)\n- Complexity signal calculation (4 implementations)\n- Message-to-prompt conversion (3 implementations)\n\n### Tasks\n\n#### Task 1.1: Create Unified FeatureExtractor Service\n**Duration:** 3 days\n**Assignee:** Backend Engineer\n\n**Subtasks:**\n- [ ] Design FeatureExtractor interface with caching\n- [ ] Implement message text extraction (single source of truth)\n- [ ] Implement token counting with tiktoken\n- [ ] Add complexity signal calculation\n- [ ] Create prompt conversion utilities\n- [ ] Add request-scoped caching (in-memory)\n\n**Deliverable:** `router_core/features/feature_extractor.py`\n\n**Acceptance Criteria:**\n- All features extracted once per request\n- Cache hit rate > 95% for repeated extractions\n- Latency < 10ms for full feature extraction\n\n#### Task 1.2: Integrate FeatureExtractor into Routers\n**Duration:** 4 days\n**Assignee:** Backend Engineer\n\n**Subtasks:**\n- [ ] Inject FeatureExtractor into RouteLLM router\n- [ ] Inject FeatureExtractor into MIRT router\n- [ ] Inject FeatureExtractor into Ensemble router\n- [ ] Remove duplicate extraction code from each router\n- [ ] Update unit tests to use FeatureExtractor\n- [ ] Verify no regression in routing decisions\n\n**Deliverable:** Updated router implementations\n\n**Acceptance Criteria:**\n- Zero duplication in feature extraction code\n- All routers use shared FeatureExtractor\n- Performance tests pass (no latency increase)\n\n#### Task 1.3: Performance Testing & Optimization\n**Duration:** 1 day\n**Assignee:** QA Engineer\n\n**Subtasks:**\n- [ ] Benchmark before vs after consolidation\n- [ ] Measure cache hit rates\n- [ ] Profile memory usage\n- [ ] Load test with 1000 req/s\n\n**Deliverable:** Performance report\n\n**Acceptance Criteria:**\n- Latency reduction: 20-30% (less duplicate work)\n- Memory usage stable or reduced\n- Cache hit rate > 95%\n\n---\n\n## Phase 2: Unify Classification System\n\n**Duration:** 1 week (40 hours)\n**Priority:** HIGH - Eliminates 3 classification systems\n**Dependencies:** Phase 1\n\n### Problem Statement\n\nCurrently 3 separate classification systems:",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    },
+    "API-wbs-10": {
+      "id": "API-wbs-10",
+      "name": "min: Test locally",
+      "description": "",
+      "level": 1,
+      "estimated_hours": null,
+      "deliverables": [],
+      "dependencies": [],
+      "children": {
+        "API-wbs-10.": {
+          "id": "API-wbs-10.",
+          "name": "**tests/unit/runtime/test_core.py** (10 \u2192 18 tests)",
+          "description": "- Current: 10 tests\n    - Goal: Add 8 more tests\n    - Focus: Session management, cleanup\n\n---\n\n## Implementation Task Breakdown\n\n### Task 1: Enhance test_namespace.py\n**Goal**: Add 7 tests for edge cases and error conditions\n**Estimated Time**: 30 minutes\n**Test Cases**:\n- test_build_namespace_with_no_components\n- test_build_namespace_with_all_components\n- test_tool_wrapping_with_exception\n- test_scope_api_isolation\n- test_mcp_api_error_handling\n- test_skills_api_injection\n- test_namespace",
+          "level": 2,
+          "estimated_hours": null,
+          "deliverables": [],
+          "dependencies": [],
+          "children": {}
+        }
+      }
+    }
+  },
+  "total_estimated_hours": 0
+}

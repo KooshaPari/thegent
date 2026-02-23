@@ -1,7 +1,12 @@
 # Tach Configuration — Architecture Enforcement
 # https://github.com/tach-org/tach
 
-source_roots = ["src"]
+source_roots = [
+  "src",
+  "packages/thegent-sdk/src",
+  "packages/thegent-mcp/src",
+  "packages/thegent-agents/src",
+]
 
 exclude = [
   "**/__pycache__",
@@ -21,6 +26,10 @@ root_module = "ignore"
 unused_ignore_directives = "error"
 require_ignore_directive_reasons = "error"
 
+# ============================================================================
+# LAYER 0: Shared (no internal dependencies)
+# ============================================================================
+
 [[modules]]
 path = "thegent.config"
 depends_on = []
@@ -38,16 +47,36 @@ path = "thegent.contracts"
 depends_on = ["thegent.output_parser", "thegent.config"]
 
 [[modules]]
+path = "thegent.observability"
+depends_on = ["thegent.config"]
+
+# ============================================================================
+# LAYER 1: Models & Core Infrastructure
+# ============================================================================
+
+[[modules]]
 path = "thegent.models"
-depends_on = ["thegent.config", "thegent.agents", "thegent.utils.routing_impl"]
+depends_on = ["thegent.config", "thegent.agents", "thegent.routing"]
+
+# ============================================================================
+# LAYER 2: Execution & Routing
+# ============================================================================
 
 [[modules]]
 path = "thegent.execution"
 depends_on = [ "thegent.contracts", "thegent.cli", "thegent.config"]
 
 [[modules]]
+path = "thegent.routing"
+depends_on = [ "thegent.execution", "thegent.config", "thegent.contracts", "thegent.models"]
+
+# ============================================================================
+# LAYER 3: Existing monolith modules (kept during transition)
+# ============================================================================
+
+[[modules]]
 path = "thegent.agents"
-depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.cli", "thegent.execution", "thegent.utils.routing_impl"]
+depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.cli", "thegent.execution", "thegent.routing"]
 
 [[modules]]
 path = "thegent.operations"
@@ -59,15 +88,7 @@ depends_on = []
 
 [[modules]]
 path = "thegent.planning"
-depends_on = [ "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
-
-[[modules]]
-path = "thegent.utils.routing_impl"
-depends_on = []
-
-[[modules]]
-path = "thegent.observability"
-depends_on = ["thegent.config"]
+depends_on = ["thegent.routing", "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
 
 [[modules]]
 path = "thegent.cli"
@@ -81,50 +102,31 @@ depends_on = [
     "thegent.orchestration_modes",
     "thegent.planning",
     "thegent.exit_codes",
-    "thegent.utils.routing_impl"
-, "thegent.output_parser", "thegent.observability"]
+    "thegent.routing",
+    "thegent.output_parser",
+    "thegent.observability",
+]
 
 [[modules]]
 path = "thegent.mcp_server"
 depends_on = []
 
-# Track 4: Sub-project Split
-# Phase 1: Infrastructure (P1.3)
-
-# thegent-cli sub-project
-[[modules]]
-path = "thegent.cli.commands"
-depends_on = ["thegent.config", "thegent.cli.parser"]
-
-# thegent-agents sub-project  
-[[modules]]
-path = "thegent.agents.pool"
-depends_on = ["thegent.config", "thegent.agents.executor"]
-
-[[modules]]
-path = "thegent.agents.executor"
-depends_on = ["thegent.config", "thegent.contracts"]
-
-# thegent-mcp sub-project
-[[modules]]
-path = "thegent.mcp.providers"
-depends_on = ["thegent.config"]
-
-[[modules]]
-path = "thegent.mcp.tools"
-depends_on = ["thegent.config", "thegent.mcp.providers"]
-
-# Contracts module (new)
-[[modules]]
-path = "thegent.contracts.mcp"
-depends_on = []
-
-[[modules]]
-path = "thegent.contracts.ipc"
-depends_on = []
-
 [[modules]]
 path = "thegent.main"
-depends_on = [
-    "thegent.cli"
-]
+depends_on = ["thegent.cli"]
+
+# ============================================================================
+# LAYER 4: Sub-Projects (independent, communicate via MCP)
+# ============================================================================
+
+[[modules]]
+path = "thegent_cli"
+depends_on = []
+
+[[modules]]
+path = "thegent_agents"
+depends_on = []
+
+[[modules]]
+path = "thegent_mcp"
+depends_on = []
