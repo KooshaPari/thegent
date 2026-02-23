@@ -223,6 +223,10 @@ ignore = [
 ]
 "scripts/*" = ["ANN", "T201", "S603", "S607", "BLE001", "E402", "PLC0415", "PLR0912", "PLR0915", "FBT001", "FBT002", "S110"]
 "src/thegent/governance/heliosShield_bridge.py" = ["N999"]
+"contracts/ipc.py" = ["RUF013"]
+"test_discovery.py" = ["C401"]
+"test_implementation.py" = ["C401", "PTH100", "PTH107"]
+"typings/oyaml/__init__.pyi" = ["N803"]
 
 [tool.ty]
 [tool.ty.src]
