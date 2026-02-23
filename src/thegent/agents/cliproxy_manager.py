@@ -1037,16 +1037,21 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
             raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
         config_path = _ensure_config(settings)
         flag = _LOGIN_FLAGS[provider_lower]
-        proc = subprocess.run(
-            [binary, "-config", str(config_path), flag],
-            check=False,
-            env=os.environ.copy(),
-            timeout=None,
-            close_fds=True,
-            capture_output=True,
-            text=True,
-        )
-        return proc.returncode
+        login_timeout = int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        try:
+            proc = subprocess.run(
+                [binary, "-config", str(config_path), flag],
+                check=False,
+                env=os.environ.copy(),
+                timeout=login_timeout,
+                close_fds=True,
+                capture_output=True,
+                text=True,
+            )
+            return proc.returncode
+        except subprocess.TimeoutExpired:
+            _LOG.warning("Login timed out for provider=%s after %ss", provider_lower, login_timeout)
+            return 124
 
     # API-key-only providers
     if provider_lower in PROVIDER_LOGIN_CONFIG:

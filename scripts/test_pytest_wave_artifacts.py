@@ -101,6 +101,11 @@ LANE_MARKER_MAP = {
     "ci-flake": "flake_lane_marker",
 }
 
+PARSER_PARITY_TARGET_NAMES = {
+    "test_wl131_parser_parity.py",
+    "test_wl131_rust_python_parity.py",
+}
+
 # Quarterly cleanup cadence and debt windows are intentionally explicit for deterministic governance.
 TRACEABILITY_STALE_WINDOW_DAYS = 90
 
@@ -1630,6 +1635,10 @@ def run_pr_targets(config: PrTargetConfig) -> dict[str, object]:
     return payload
 
 
+def _targets_require_parser_parity(targets: Sequence[Path]) -> bool:
+    return any(target.name in PARSER_PARITY_TARGET_NAMES for target in targets)
+
+
 def run_pr_lane(config: RunPrLaneConfig) -> int:
     changed: list[Path] = []
     if config.changed_files:
@@ -1656,8 +1665,12 @@ def run_pr_lane(config: RunPrLaneConfig) -> int:
         command.extend(["-m", lane_expr])
     command.append("--strict-markers")
 
+    env = os.environ.copy()
+    if _targets_require_parser_parity(resolved_targets):
+        env["THEGENT_PARSER_PARITY_REQUIRED"] = "1"
+
     started = datetime.now().timestamp()
-    proc = subprocess.run(command, capture_output=True, text=True)
+    proc = subprocess.run(command, env=env, capture_output=True, text=True)
     ended = datetime.now().timestamp()
 
     payload = {

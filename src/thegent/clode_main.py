@@ -282,7 +282,7 @@ def _run_claude_print(
     cmd = wrap_with_caffeinate(cmd, "claude")
 
     console.print(f"[bold green]Claude print (headless) via {provider}...[/bold green]")
-    timeout_seconds = int(env.get("THGENT_CLODE_PRINT_TIMEOUT", "45"))
+    timeout_seconds = int(env.get("THGENT_CLODE_PRINT_TIMEOUT", "15"))
     try:
         result = subprocess.run(cmd, env=env, check=False, timeout=timeout_seconds)
     except subprocess.TimeoutExpired:

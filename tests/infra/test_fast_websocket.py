@@ -4,7 +4,8 @@ Tests the async WebSocket client with automatic backend selection,
 including the websocket-client fallback for async operations.
 """
 
-from unittest.mock import AsyncMock, MagicMock
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -403,7 +404,6 @@ class TestFastWebSocketErrorHandling:
         ws._ws = None
 
         with pytest.raises(RuntimeError):
-            import asyncio
             asyncio.run(ws.recv_async())
 
     @pytest.mark.asyncio

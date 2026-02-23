@@ -510,7 +510,14 @@ def main_welcome(ctx: typer.Context):
                 "  [green]thegent run[/green]       Execute agent tasks\n"
                 "  [green]thegent sync[/green]      Synchronize system state\n"
                 "  [green]thegent audit[/green]     Check system health/risk\n"
-                "  [green]thegent plan[/green]      Manage the roadmap\n",
+                "  [green]thegent plan[/green]      Manage the roadmap\n"
+                "\n"
+                "Team Discovery:\n"
+                "  [green]thegent team teammates list[/green] Discover teammate personas\n"
+                "\n"
+                "Support Commands:\n"
+                "  [green]thegent setup[/green]       Run setup wizard\n"
+                "  [green]thegent doctor[/green]      Run system doctor checks\n",
                 title="thegent",
                 border_style="blue",
             )

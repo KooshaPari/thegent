@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 from pathlib import Path
 from typing import Any
@@ -596,3 +597,41 @@ def test_sync_serialize_model_data_supports_pydantic_shapes() -> None:
 
     assert sync_app._serialize_model_data(_PydanticV2()) == {"source": "v2"}
     assert sync_app._serialize_model_data(_PydanticV1()) == {"source": "v1"}
+
+
+@pytest.mark.unit
+def test_sync_serialize_model_data_supports_dataclass_instance() -> None:
+    @dataclass
+    class _DataclassPayload:
+        source: str
+        count: int
+
+    payload = _DataclassPayload(source="dataclass", count=2)
+    assert sync_app._serialize_model_data(payload) == {"source": "dataclass", "count": 2}
+
+
+@pytest.mark.unit
+def test_sync_serialize_model_data_supports_plain_dict_passthrough() -> None:
+    payload = {"source": "dict", "ok": True}
+    assert sync_app._serialize_model_data(payload) == payload
+
+
+@pytest.mark.unit
+def test_sync_serialize_model_data_rejects_non_mapping_model_dump() -> None:
+    class _BadPydanticV2:
+        def model_dump(self, mode: str = "python") -> list[str]:
+            assert mode == "python"
+            return ["not-a-mapping"]
+
+    with pytest.raises(TypeError, match="model_dump\\(\\) must return a mapping"):
+        sync_app._serialize_model_data(_BadPydanticV2())
+
+
+@pytest.mark.unit
+def test_sync_serialize_model_data_rejects_non_mapping_dict_method() -> None:
+    class _BadPydanticV1:
+        def dict(self) -> list[str]:
+            return ["not-a-mapping"]
+
+    with pytest.raises(TypeError, match="dict\\(\\) must return a mapping"):
+        sync_app._serialize_model_data(_BadPydanticV1())

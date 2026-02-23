@@ -360,6 +360,7 @@ def _run_codex_exec(
         bypass_approved=_should_bypass_approvals(),
         bypass_flag=_DEX_BYPASS_FLAG,
     )
+    cmd.extend(["--output-last-message", "/dev/stdout"])
 
     # Wrap with caffeinate to prevent sleep on macOS
     cmd = wrap_with_caffeinate(cmd, "codex")

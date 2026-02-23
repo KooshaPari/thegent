@@ -45,7 +45,7 @@ enum ShimCommand {
     },
     /// agent: Agent invocation shim
     Agent {
-        /// Agent name (codex, dex, claude, cursor, clode, roid, droid, fanta, cline, roocode)
+        /// Agent name (codex, dex, claude, cursor, clode, roid, droid, fanta, anen, antigma, cline, roocode)
         name: String,
         /// Arguments to pass to the agent
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
@@ -289,14 +289,22 @@ fn resolve_nonshim_binary(name: &str) -> Option<PathBuf> {
     None
 }
 
+fn canonical_harness_name(name: &str) -> &str {
+    match name {
+        "anen" | "antigma" => "fanta",
+        _ => name,
+    }
+}
+
 fn resolve_agent(name: &str) -> Option<PathBuf> {
     // Prefer canonical target binaries for alias wrappers before resolving the alias name itself.
-    let candidates: &[&str] = match name.to_lowercase().as_str() {
+    let lowered = name.to_lowercase();
+    let candidates: &[&str] = match lowered.as_str() {
         "dex" => &["codex"],
         "clode" => &["claude"],
         "roid" => &["droid"],
         "droid" => &["droid"],
-        "fanta" => &["ante"],
+        "fanta" | "anen" | "antigma" => &["ante"],
         "cline" => &["cline", "cursor-agent", "cursor"],
         "roocode" => &["roocode", "roo", "cursor-agent", "cursor"],
         "cursor" => &["cursor-agent", "cursor"],
@@ -312,7 +320,7 @@ fn resolve_agent(name: &str) -> Option<PathBuf> {
     }
 
     // Home-local fallback for ante.
-    if matches!(name.to_lowercase().as_str(), "fanta") {
+    if matches!(lowered.as_str(), "fanta" | "anen" | "antigma") {
         if let Ok(home) = env::var("HOME") {
             let candidate = PathBuf::from(home).join(".ante").join("bin").join("ante");
             if candidate.is_file() {
@@ -398,6 +406,7 @@ fn normalize_harness_command_labels(name: &str, args: &[String]) -> Vec<String> 
         return args.to_vec();
     }
 
+    let name = canonical_harness_name(name);
     let first = args[0].as_str();
     let rest = &args[1..];
 
@@ -538,7 +547,7 @@ fn dex_proxy_env_defaults() -> (Option<String>, Option<String>) {
 fn should_inject_proxy_env_defaults(name: &str) -> bool {
     matches!(
         name,
-        "dex" | "clode" | "claude" | "codex" | "roid" | "droid" | "fanta"
+        "dex" | "clode" | "claude" | "codex" | "roid" | "droid" | "fanta" | "anen" | "antigma"
     )
 }
 
@@ -579,26 +588,33 @@ fn inject_force_alias(name: &str, args: &[String], force_mode: bool) -> Vec<Stri
 
 /// Run agent with thegent integration
 fn run_agent(name: &str, args: &[String]) -> ExitCode {
+    let lowered_name = name.to_lowercase();
+    let canonical_name = canonical_harness_name(lowered_name.as_str());
     let (native_mode, filtered_native) = split_native_flag(args);
     let (force_mode, filtered) = split_force_flag(&filtered_native);
-    let filtered = normalize_harness_command_labels(name, &filtered);
-    let filtered = normalize_harness_exec_legacy_args(name, &filtered);
-    let filtered = inject_force_alias(name, &filtered, force_mode);
-    if name == "fanta" && filtered.first().map(String::as_str).is_some_and(|cmd| cmd == "continue" || cmd == "resume") {
+    let filtered = normalize_harness_command_labels(canonical_name, &filtered);
+    let filtered = normalize_harness_exec_legacy_args(canonical_name, &filtered);
+    let filtered = inject_force_alias(canonical_name, &filtered, force_mode);
+    if canonical_name == "fanta"
+        && filtered
+            .first()
+            .map(String::as_str)
+            .is_some_and(|cmd| cmd == "continue" || cmd == "resume")
+    {
         eprintln!("thegent-shims: fanta/ante does not expose resume/continue in native CLI.");
         return ExitCode::from(2);
     }
 
     // Resolve the agent binary
-    let agent_path = resolve_agent(name);
+    let agent_path = resolve_agent(canonical_name);
 
     match agent_path {
         Some(path) => {
             let mut cmd = safe_command(path.to_str().unwrap_or(name));
             let passthrough_args: Vec<String> = if native_mode {
-                inject_native_force_alias(name, &filtered, force_mode)
-            } else if matches!(name, "dex" | "clode" | "roid" | "droid" | "fanta") {
-                inject_harness_defaults(name, &filtered)
+                inject_native_force_alias(canonical_name, &filtered, force_mode)
+            } else if matches!(canonical_name, "dex" | "clode" | "roid" | "droid" | "fanta") {
+                inject_harness_defaults(canonical_name, &filtered)
             } else {
                 filtered
             };
@@ -616,7 +632,7 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
             cmd.env_remove("MallocStackLogging");
             cmd.env_remove("MallocStackLoggingNoCompact");
             cmd.env_remove("MallocStackLoggingDirectory");
-            if should_inject_proxy_env_defaults(name) {
+            if should_inject_proxy_env_defaults(canonical_name) {
                 let (default_base, default_key) = dex_proxy_env_defaults();
                 if let Some(base) = default_base {
                     cmd.env("OPENAI_BASE_URL", base);
@@ -818,6 +834,8 @@ fn main() -> ExitCode {
         || program_name == "roid"
         || program_name == "droid"
         || program_name == "fanta"
+        || program_name == "anen"
+        || program_name == "antigma"
         || program_name == "cline"
         || program_name == "roocode"
     {
@@ -842,7 +860,18 @@ fn main() -> ExitCode {
         let agent = program_name.strip_prefix("thegent-").unwrap();
         if matches!(
             agent,
-            "codex" | "dex" | "claude" | "cursor" | "clode" | "roid" | "droid" | "fanta" | "cline" | "roocode"
+            "codex"
+                | "dex"
+                | "claude"
+                | "cursor"
+                | "clode"
+                | "roid"
+                | "droid"
+                | "fanta"
+                | "anen"
+                | "antigma"
+                | "cline"
+                | "roocode"
         ) {
             return run_agent(agent, &args[1..].to_vec());
         }
@@ -1095,6 +1124,12 @@ mod tests {
     }
 
     #[test]
+    fn normalize_harness_labels_for_antigma_exec_without_prompt_uses_prompt_flag() {
+        let out = normalize_harness_command_labels("antigma", &v(&["exec", "hi there"]));
+        assert_eq!(out, v(&["-p", "hi there"]));
+    }
+
+    #[test]
     fn inject_defaults_for_dex_includes_search_and_bypass() {
         let out = inject_harness_defaults("dex", &v(&["resume"]));
         assert!(out.contains(&"--search".to_string()));
@@ -1218,6 +1253,8 @@ mod tests {
         assert!(should_inject_proxy_env_defaults("roid"));
         assert!(should_inject_proxy_env_defaults("droid"));
         assert!(should_inject_proxy_env_defaults("fanta"));
+        assert!(should_inject_proxy_env_defaults("antigma"));
+        assert!(should_inject_proxy_env_defaults("anen"));
         assert!(!should_inject_proxy_env_defaults("copilot"));
         assert!(!should_inject_proxy_env_defaults("opencode"));
         assert!(!should_inject_proxy_env_defaults("cursor"));
