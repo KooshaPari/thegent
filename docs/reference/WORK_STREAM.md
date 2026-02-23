@@ -3075,7 +3075,7 @@ Add conflict TTL with automatic escalation actions after timeout.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-251] Retry Class Policy
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** resilience, policy
 **Effort:** M
@@ -3085,8 +3085,10 @@ Implement policy classes for transient versus permanent connector errors.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
+**Completed:** 2026-02-22 — RetryClassPolicy + RetryClassifier with three error classes (TRANSIENT, PERMANENT, RATE_LIMITED) and substring-based matching. 17 tests passing.
+
 ### [WL-252] Offline Simulation Mode
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** testing, ux
 **Effort:** S
@@ -3096,8 +3098,10 @@ Add simulation mode for offline connector verification and dry verification.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
+**Completed:** 2026-02-22 — OfflineSimulationMode + SimulatedResponse for mocking API responses without network calls. Enable/disable toggles and per-endpoint response registration. 17 tests passing.
+
 ### [WL-253] Snapshot Compaction
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** storage, ops
 **Effort:** S
@@ -3107,8 +3111,10 @@ Compact/rotate long-lived cycle artifacts to control report directory growth.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
+**Completed:** 2026-02-22 — SnapshotCompactor with registration, compaction tracking, and savings calculation. Tracks original vs compacted size. Query methods for compacted/uncompacted snapshots. 22 tests passing.
+
 ### [WL-254] Encrypted Artifact Option
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** security, compliance
 **Effort:** M
@@ -3117,6 +3123,8 @@ Compact/rotate long-lived cycle artifacts to control report directory growth.
 Add optional encryption-at-rest for sync artifact outputs.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
+
+**Completed:** 2026-02-22 — EncryptedArtifactStore with ArtifactEncryptionConfig. Store/retrieve/list artifacts with per-artifact encryption metadata. Default AES-256 algorithm with configurable key_id. 23 tests passing.
 
 ### [WL-255] Run Correlation IDs
 **Status:** COMPLETED
