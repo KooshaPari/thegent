@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 
@@ -64,9 +64,9 @@ class TestMetadataFreshnessTTL:
     @pytest.mark.requirement("WL-270")
     def test_init_invalid_ttl(self) -> None:
         """Raises ValueError for invalid TTL values."""
-        with pytest.raises(ValueError, match="ttl_seconds must be > 0.0"):
+        with pytest.raises(ValueError, match=r"ttl_seconds must be > 0\.0"):
             MetadataFreshnessTTL(ttl_seconds=0.0)
-        with pytest.raises(ValueError, match="ttl_seconds must be > 0.0"):
+        with pytest.raises(ValueError, match=r"ttl_seconds must be > 0\.0"):
             MetadataFreshnessTTL(ttl_seconds=-1.0)
 
     @pytest.mark.requirement("WL-270")
@@ -168,7 +168,7 @@ class TestMetadataFreshnessTTL:
     def test_ttl_boundary_condition(self) -> None:
         """Records expire at exactly TTL boundary."""
         ttl = MetadataFreshnessTTL(ttl_seconds=0.2)
-        record = ttl.put("boundary", "value")
+        _ = ttl.put("boundary", "value")
         time.sleep(0.21)
 
         result = ttl.get("boundary")
