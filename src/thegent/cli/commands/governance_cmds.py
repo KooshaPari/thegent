@@ -4,6 +4,7 @@ This module re-exports all governance commands from:
 - governance_audit_compliance_cmds: Audit, compliance, data protection
 - governance_escalation_hitl_cmds: Escalation and HITL approval handling
 - governance_policy_health_cmds: Policies, contracts, health scoring, drift
+- governance_agileplus_cmds: AgilePlus health cycling and watching
 - governance_discovery_guardrails_cmds: Discovery and guardrails
 
 Direct imports from submodules preserve all public names for CLI registration.
@@ -44,15 +45,19 @@ from thegent.cli.commands.governance_policy_health_cmds import (
     drift_cmd,
     govern_configure_cmd,
     govern_cost_cmd,
-    govern_go_cycle_cmd,
-    govern_go_health_cmd,
-    govern_go_status_cmd,
-    govern_go_watch_cmd,
     migration_cmd,
     policy_check_cmd,
     policy_purge_cmd,
     policy_show_cmd,
     sweep_cmd,
+)
+
+# Re-export all AgilePlus commands
+from thegent.cli.commands.governance_agileplus_cmds import (
+    govern_go_cycle_cmd,
+    govern_go_health_cmd,
+    govern_go_status_cmd,
+    govern_go_watch_cmd,
 )
 
 # Re-export discovery & guardrails commands
@@ -90,15 +95,16 @@ __all__ = [
     "drift_cmd",
     "govern_configure_cmd",
     "govern_cost_cmd",
-    "govern_go_cycle_cmd",
-    "govern_go_health_cmd",
-    "govern_go_status_cmd",
-    "govern_go_watch_cmd",
     "migration_cmd",
     "policy_check_cmd",
     "policy_purge_cmd",
     "policy_show_cmd",
     "sweep_cmd",
+    # AgilePlus
+    "govern_go_cycle_cmd",
+    "govern_go_health_cmd",
+    "govern_go_status_cmd",
+    "govern_go_watch_cmd",
     # Discovery & guardrails
     "discovery_parse_cmd",
     "discovery_register_cmd",
