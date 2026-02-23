@@ -78,8 +78,6 @@ class ResourceLease(SerializableMixin):
     def is_expired(self) -> bool:
         """Return True when the lease has passed its expiry time."""
         return time.time() >= self.expires_at
-        """Serialise to a plain dictionary."""
-        return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> ResourceLease:
