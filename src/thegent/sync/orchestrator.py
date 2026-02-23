@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
+from thegent.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ class SyncStatus(Enum):
 
 
 @dataclass
-class SyncResult:
+class SyncResult(SerializableMixin):
     component: str
     status: SyncStatus
     message: str = ""
@@ -28,17 +29,6 @@ class SyncResult:
     errors: list[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "component": self.component,
-            "status": self.status.value,
-            "message": self.message,
-            "duration": self.duration,
-            "details": self.details,
-            "changes": self.changes,
-            "errors": self.errors,
-            "timestamp": self.timestamp,
-        }
 
 
 class SyncComponent(ABC):
