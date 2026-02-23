@@ -7,6 +7,7 @@ import os
 import platform
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 from typing import Any
@@ -594,7 +595,7 @@ def prune_periodic_install() -> tuple[bool, str]:
 </plist>
 """
             _PRUNE_PLIST_PATH.write_text(plist)
-            subprocess.run(
+            shim_run(
                 ["launchctl", "load", str(_PRUNE_PLIST_PATH)],
                 check=False,
                 capture_output=True,
@@ -613,7 +614,7 @@ ExecStart=thegent mcp prune
 WantedBy=default.target
 """
             _PRUNE_SYSTEMD_PATH.write_text(unit)
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "enable", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -629,14 +630,14 @@ def prune_periodic_start() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            subprocess.run(
+            shim_run(
                 ["launchctl", "start", _PRUNE_LAUNCHD_LABEL],
                 check=False,
                 capture_output=True,
             )
             return True, "Periodic prune started"
         if system == "Linux":
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "start", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -652,14 +653,14 @@ def prune_periodic_stop() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            subprocess.run(
+            shim_run(
                 ["launchctl", "stop", _PRUNE_LAUNCHD_LABEL],
                 check=False,
                 capture_output=True,
             )
             return True, "Periodic prune stopped"
         if system == "Linux":
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "stop", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -675,7 +676,7 @@ def prune_periodic_status() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            result = subprocess.run(
+            result = shim_run(
                 ["launchctl", "list", _PRUNE_LAUNCHD_LABEL],
                 check=False,
                 capture_output=True,
@@ -685,7 +686,7 @@ def prune_periodic_status() -> tuple[bool, str]:
                 return True, f"Periodic prune loaded: {result.stdout.strip()}"
             return False, "Periodic prune not loaded"
         if system == "Linux":
-            result = subprocess.run(
+            result = shim_run(
                 ["systemctl", "--user", "is-active", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -703,7 +704,7 @@ def prune_periodic_uninstall() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            subprocess.run(
+            shim_run(
                 ["launchctl", "unload", str(_PRUNE_PLIST_PATH)],
                 check=False,
                 capture_output=True,
@@ -712,7 +713,7 @@ def prune_periodic_uninstall() -> tuple[bool, str]:
                 _PRUNE_PLIST_PATH.unlink()
             return True, "Periodic prune uninstalled"
         if system == "Linux":
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "disable", "--now", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,

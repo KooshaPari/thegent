@@ -4,6 +4,7 @@ Beads Task Tracking Integration - Persistent dependency tracking.
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from enum import Enum
 
@@ -34,7 +35,7 @@ class BeadsWrapper:
     def _check_availability(self):
         binary = self._config.binary_path or "bd"
         try:
-            result = subprocess.run([binary, "version"], capture_output=True, timeout=5)
+            result = shim_run([binary, "version"], capture_output=True, timeout=5)
             if result.returncode == 0:
                 self._status = BeadsStatus.AVAILABLE
         except (subprocess.SubprocessError, OSError):

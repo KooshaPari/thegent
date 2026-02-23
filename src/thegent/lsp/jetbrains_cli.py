@@ -2,6 +2,7 @@
 
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -94,7 +95,7 @@ class JetBrainsCLI:
         cmd.extend([str(f) for f in files])
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -128,7 +129,7 @@ class JetBrainsCLI:
             cmd.extend(["--profile", profile])
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -160,7 +161,7 @@ class JetBrainsCLI:
         cmd = [str(self.ide_path), "diff", str(file1), str(file2)]
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -201,7 +202,7 @@ class JetBrainsCLI:
         ]
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,

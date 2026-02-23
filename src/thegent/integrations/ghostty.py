@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -162,7 +163,7 @@ def _run_ghostty_open_tab(command: str | None) -> subprocess.CompletedProcess[st
     cmd: list[str] = [_GHOSTTY_OPEN_TAB_CMD, "+open-tab"]
     if command:
         cmd += ["--", command]
-    return subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)
+    return shim_run(cmd, check=False, capture_output=True, text=True, timeout=10)
 
 
 def _run_osascript_notification(title: str, body: str) -> subprocess.CompletedProcess[str]:
@@ -179,7 +180,7 @@ def _run_osascript_notification(title: str, body: str) -> subprocess.CompletedPr
         CompletedProcess with returncode, stdout, stderr.
     """
     script = f'display notification "{body}" with title "{title}"'
-    return subprocess.run(
+    return shim_run(
         [_OSASCRIPT_CMD, "-e", script],
         check=False,
         capture_output=True,

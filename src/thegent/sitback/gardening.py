@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -54,7 +55,7 @@ class GardeningManager:
             Dict with health check results.
         """
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["thegent", "govern", "go", "health"],
                 capture_output=True,
                 text=True,
@@ -115,7 +116,7 @@ class GardeningManager:
 
         # Run quick test to see if there are failures
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["python", "-m", "pytest", "--tb=no", "-q", "--co"],
                 capture_output=True,
                 text=True,
@@ -160,7 +161,7 @@ class GardeningManager:
             Dict with escalation status.
         """
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["thegent", "govern", "escalate", "list", "--past-sla"],
                 capture_output=True,
                 text=True,
@@ -190,7 +191,7 @@ class GardeningManager:
         """
         # Try running quality task if available
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["task", "quality"],
                 capture_output=True,
                 text=True,
@@ -217,7 +218,7 @@ class GardeningManager:
             Dict with DAG sync status.
         """
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["thegent", "dag", "sync"],
                 capture_output=True,
                 text=True,

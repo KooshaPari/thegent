@@ -13,6 +13,7 @@ from __future__ import annotations
 import abc
 import re
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -236,8 +237,8 @@ class TestPassVetterCheck:
     RunResult.stdout).  If no Python files are found in the diff, runs pytest
     with no file arguments (i.e., the full suite).
 
-    Uses subprocess.run (not asyncio.create_subprocess_exec) so that tests can
-    mock subprocess.run without an asyncio harness.
+    Uses shim_run (not asyncio.create_subprocess_exec) so that tests can
+    mock shim_run without an asyncio harness.
 
     Fail fast: non-zero exit code -> passed=False, message contains the
     truncated test output.  No silent error handling.
@@ -265,7 +266,7 @@ class TestPassVetterCheck:
             cmd.extend(changed_files)
 
         try:
-            proc = subprocess.run(
+            proc = shim_run(
                 cmd,
                 capture_output=True,
                 timeout=self.timeout_seconds,
@@ -298,8 +299,8 @@ class RuffVetterCheck:
     RunResult.stdout).  If no Python files are found in the diff, returns
     passed=True (nothing to lint).
 
-    Uses subprocess.run (not asyncio.create_subprocess_exec) so that tests can
-    mock subprocess.run without an asyncio harness.
+    Uses shim_run (not asyncio.create_subprocess_exec) so that tests can
+    mock shim_run without an asyncio harness.
 
     fix_mode=True passes --fix to ruff (auto-fix enabled).
     select_rules limits which rules are evaluated via --select.
@@ -337,7 +338,7 @@ class RuffVetterCheck:
             cmd.extend(["--select", ",".join(self.select_rules)])
         cmd.extend(changed_files)
 
-        proc = subprocess.run(
+        proc = shim_run(
             cmd,
             capture_output=True,
             cwd=self.cwd or context.get("cwd"),

@@ -3,6 +3,7 @@
 import logging
 import platform
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class DesktopAutomationProvider:
             # macOS: Use AppleScript via osascript
             script = f'tell application "System Events" to click at {{{x}, {y}}}'
             try:
-                subprocess.run(["osascript", "-e", script], check=True)
+                shim_run(["osascript", "-e", script], check=True)
                 return True
             except Exception as e:
                 logger.error(f"macOS click failed: {e}")
@@ -64,7 +65,7 @@ class DesktopAutomationProvider:
             $type::mouse_event(0x0004, 0, 0, 0, 0) # left up
             """
             try:
-                subprocess.run(["powershell", "-Command", script], check=True)
+                shim_run(["powershell", "-Command", script], check=True)
                 return True
             except Exception as e:
                 logger.error(f"Windows click failed: {e}")
@@ -87,7 +88,7 @@ class DesktopAutomationProvider:
             # macOS: Use AppleScript
             script = f'tell application "System Events" to keystroke "{text}"'
             try:
-                subprocess.run(["osascript", "-e", script], check=True)
+                shim_run(["osascript", "-e", script], check=True)
                 return True
             except Exception as e:
                 logger.error(f"macOS type failed: {e}")
@@ -97,7 +98,7 @@ class DesktopAutomationProvider:
             # Windows: Use PowerShell SendKeys
             script = f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("{text}")'
             try:
-                subprocess.run(["powershell", "-Command", script], check=True)
+                shim_run(["powershell", "-Command", script], check=True)
                 return True
             except Exception as e:
                 logger.error(f"Windows type failed: {e}")
@@ -115,7 +116,7 @@ class DesktopAutomationProvider:
             # macOS: Use system_profiler or AppleScript
             script = 'tell application "Finder" to get bounds of window of desktop'
             try:
-                result = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, check=True)
+                result = shim_run(["osascript", "-e", script], capture_output=True, text=True, check=True)
                 # Output like: 0, 0, 1920, 1080
                 parts = result.stdout.strip().split(", ")
                 if len(parts) >= 4:
@@ -128,7 +129,7 @@ class DesktopAutomationProvider:
             # Windows: Use PowerShell
             script = "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height"
             try:
-                result = subprocess.run(["powershell", "-Command", script], capture_output=True, text=True, check=True)
+                result = shim_run(["powershell", "-Command", script], capture_output=True, text=True, check=True)
                 lines = result.stdout.strip().splitlines()
                 if len(lines) >= 2:
                     return (int(lines[0]), int(lines[1]))
@@ -140,7 +141,7 @@ class DesktopAutomationProvider:
             # Linux: Use xdotool or xrandr
             try:
                 # Try xrandr first (more reliable)
-                result = subprocess.run(
+                result = shim_run(
                     ["xrandr", "--current"],
                     capture_output=True,
                     text=True,
@@ -157,7 +158,7 @@ class DesktopAutomationProvider:
 
             # Fallback to xdotool
             try:
-                result = subprocess.run(
+                result = shim_run(
                     ["xdotool", "getdisplaygeometry"],
                     capture_output=True,
                     text=True,
@@ -185,7 +186,7 @@ class DesktopAutomationProvider:
         if self.system == "Darwin":
             script = f'tell application "System Events" to key code {self._key_to_mac_code(key)}'
             try:
-                subprocess.run(["osascript", "-e", script], check=True)
+                shim_run(["osascript", "-e", script], check=True)
                 return True
             except Exception as e:
                 logger.error(f"macOS key press failed: {e}")
@@ -194,7 +195,7 @@ class DesktopAutomationProvider:
         elif self.system == "Windows":
             script = f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("{{{key}}}")'
             try:
-                subprocess.run(["powershell", "-Command", script], check=True)
+                shim_run(["powershell", "-Command", script], check=True)
                 return True
             except Exception as e:
                 logger.error(f"Windows key press failed: {e}")
@@ -202,7 +203,7 @@ class DesktopAutomationProvider:
 
         elif self.system == "Linux":
             try:
-                subprocess.run(["xdotool", "key", key], check=True)
+                shim_run(["xdotool", "key", key], check=True)
                 return True
             except Exception as e:
                 logger.error(f"Linux key press failed: {e}")

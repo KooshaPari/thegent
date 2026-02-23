@@ -113,7 +113,7 @@ def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt")
             import subprocess
 
             try:
-                subprocess.run(["tmux", "send-keys", "-t", tmux_pane, message, "C-m"], check=False)
+                shim_run(["tmux", "send-keys", "-t", tmux_pane, message, "C-m"], check=False)
                 sent_via.append("tmux")
             except Exception as exc:
                 _log.warning("TMUX send failed for session %s: %s", session_id, exc)

@@ -104,3 +104,19 @@ class StateAdapter:
 
 
 __all__ = ["StateAdapter"]
+
+
+# Register with unified adapter registry
+from thegent.adapters.ports import AdapterRegistry
+
+class StateAdapterWrapper:
+    """State adapter wrapper for registry"""
+    
+    def __init__(self):
+        self._adapter = StateAdapter()
+    
+    def call(self, **kwargs) -> dict:
+        return {"status": "state_adapter_ready"}
+
+
+AdapterRegistry.register("state", StateAdapterWrapper())

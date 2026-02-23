@@ -5,6 +5,7 @@ from __future__ import annotations
 import orjson as json
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -257,7 +258,7 @@ def browser_launch_cmd(
         cmd.extend(["--url", url])
 
     console.print(f"[cyan]Launching:[/cyan] {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+    shim_run(cmd, check=True)
 
 
 def browser_journey_add_cmd(

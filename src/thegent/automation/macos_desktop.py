@@ -2,6 +2,7 @@
 
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from dataclasses import dataclass, field
 
@@ -52,7 +53,7 @@ class MacOSDesktopAutomation:
             return AutomationResult(success=False, output="", error="Not macOS")
 
         try:
-            proc = subprocess.run(
+            proc = shim_run(
                 ["osascript", "-e", script],
                 capture_output=True,
                 text=True,
@@ -87,7 +88,7 @@ class MacOSDesktopAutomation:
             return AutomationResult(success=False, output="", error="Not macOS")
 
         try:
-            proc = subprocess.run(
+            proc = shim_run(
                 ["osascript", "-l", "JavaScript", "-e", script],
                 capture_output=True,
                 text=True,

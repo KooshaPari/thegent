@@ -3,6 +3,7 @@
 import logging
 import platform
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -41,12 +42,12 @@ class DualShellStrategy:
         try:
             if self.shell == "powershell":
                 # PowerShell-specific execution
-                result = subprocess.run(
+                result = shim_run(
                     ["powershell", "-Command", command], capture_output=capture_output, text=True, check=False
                 )
             else:
                 # POSIX shell execution (bash/zsh)
-                result = subprocess.run(
+                result = shim_run(
                     ["/bin/sh", "-c", command], capture_output=capture_output, text=True, check=False
                 )
 

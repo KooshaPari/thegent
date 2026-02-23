@@ -7,6 +7,7 @@ import re
 import signal
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 from typing import Any
@@ -401,4 +402,4 @@ def show_interactive_prune_menu(pid: int, cmd: str, tty: str, pane: Any):
     ]
 
     with contextlib.suppress(BaseException):
-        subprocess.run(menu_cmd, check=False)
+        shim_run(menu_cmd, check=False)

@@ -32,6 +32,7 @@ import logging
 import os
 import shlex
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import threading
 import time
 from dataclasses import dataclass
@@ -241,7 +242,7 @@ class McpGateway:
         env: dict[str, str],
         timeout_sec: float,
     ) -> TransportResult:
-        completed = subprocess.run(
+        completed = shim_run(
             command,
             input=request_payload,
             capture_output=True,
