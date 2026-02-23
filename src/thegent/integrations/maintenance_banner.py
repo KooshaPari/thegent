@@ -8,7 +8,7 @@ FR traceability: WL-229 (Maintenance Banner Propagation)
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
