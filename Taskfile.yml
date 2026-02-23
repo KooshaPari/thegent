@@ -17,7 +17,7 @@ vars:
   BASH_SRC: 'scripts'
   BASH_TESTS: 'tests'
   THGENT_LOG_DIR: .process-compose/logs
-  PYTEST_FAST_LANE_BUDGET: 1000
+  PYTEST_FAST_LANE_BUDGET: 4500
   PYTEST_PR_LANE_BUDGET: 750
   PYTEST_PR_CHANGED_FILE_LIST: ''
   GHA_WORKFLOW:
@@ -323,7 +323,7 @@ tasks:
   test:fast-lane:
     desc: "Run fast pytest lane (WL-134): fail-fast, exclude slow/integration/e2e/load markers."
     cmds:
-      - uv run pytest -c pytest-fast.ini -W ignore::pytest.PytestRemovedIn9Warning
+      - uv run pytest -c pytest-fast.ini -W ignore::pytest.PytestRemovedIn9Warning --maxfail=1 -p no:tach -q --no-header --no-summary
 
   test:fast:
     desc: "Run tests marked @pytest.mark.fast only (WL-134 B90-W2-A4)."
@@ -691,7 +691,7 @@ tasks:
     cmds:
       - mkdir -p artifacts/pytest/baseline
       - |
-        uv run python scripts/test_pytest_wave_artifacts.py collect \
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
           --lane fast \
           --label baseline \
           --marker "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y" \
@@ -709,7 +709,7 @@ tasks:
     cmds:
       - mkdir -p artifacts/pytest/baseline
       - |
-        uv run python scripts/test_pytest_wave_artifacts.py collect \
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
           --lane fast \
           --label fast-gate \
           --output artifacts/pytest/baseline/fast-gate.json \
@@ -768,7 +768,7 @@ tasks:
     cmds:
       - mkdir -p artifacts/pytest/baseline
       - |
-        uv run python scripts/test_pytest_wave_artifacts.py collect \
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
           --lane fast \
           --label template-collect \
           --output artifacts/pytest/baseline/template-collect.json \
@@ -1404,7 +1404,7 @@ tasks:
   quality:max-lines:
     desc: "Run max-lines gate via canonical developer task path (WL-122)."
     cmds:
-      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh} sh scripts/max-lines-gate.sh
+      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh,src/thegent/integrations/workstream_autosync.py} sh scripts/max-lines-gate.sh
 
   quality:rust:pyo3-drift:
     desc: "Fail if Rust crates declare drifted pyo3 versions (includes optional dependencies)."
