@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.ml_router import (
+from thegent.utils.routing_impl.ml_router import (
     TaskClassification,
     classify_task,
     ml_route,

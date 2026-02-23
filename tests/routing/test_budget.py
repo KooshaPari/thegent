@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from thegent.routing.budget import (
+from thegent.utils.routing_impl.budget import (
     BudgetCheckResult,
     BudgetHierarchy,
     BudgetPeriod,

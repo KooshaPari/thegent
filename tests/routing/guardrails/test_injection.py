@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.guardrails.injection import (
+from thegent.utils.routing_impl.guardrails.injection import (
     InjectionPattern,
     check_injection,
     check_messages_for_injection,

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from starlette.requests import Request
     from starlette.websockets import WebSocket
 
-from thegent.routing.litellm_router import build_dynamic_fallback_router, get_litellm_router
+from thegent.utils.routing_impl.litellm_router import build_dynamic_fallback_router, get_litellm_router
 
 _log = logging.getLogger(__name__)
 

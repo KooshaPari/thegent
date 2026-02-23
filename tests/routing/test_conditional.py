@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.conditional import (
+from thegent.utils.routing_impl.conditional import (
     ConditionalRoute,
     build_routing_context,
     evaluate_condition,

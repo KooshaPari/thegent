@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.guardrails.json_schema import (
+from thegent.utils.routing_impl.guardrails.json_schema import (
     SchemaValidationResult,
     extract_llm_response_content,
     extract_response_schema,

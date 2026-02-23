@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from thegent.routing.cost_calculator import (
+from thegent.utils.routing_impl.cost_calculator import (
     ModelPricing,
     calculate_cost,
     calculate_cost_from_response,

@@ -19,7 +19,7 @@ class TestCostTracker:
 
     def test_track_single_call(self, tmp_path: Path) -> None:
         """Test tracking a single LLM call."""
-        from thegent.routing.cost_tracker import CostTracker
+        from thegent.utils.routing_impl.cost_tracker import CostTracker
 
         tracker = CostTracker(log_path=tmp_path / "costs.jsonl")
         entry = tracker.track(
@@ -39,7 +39,7 @@ class TestCostTracker:
 
     def test_budget_exceeded(self, tmp_path: Path) -> None:
         """Test budget exceeded detection."""
-        from thegent.routing.cost_tracker import CostTracker
+        from thegent.utils.routing_impl.cost_tracker import CostTracker
 
         tracker = CostTracker(log_path=tmp_path / "costs.jsonl", daily_budget=0.01)
 
@@ -65,7 +65,7 @@ class TestCostTracker:
 
     def test_get_stats(self, tmp_path: Path) -> None:
         """Test getting statistics summary."""
-        from thegent.routing.cost_tracker import CostTracker
+        from thegent.utils.routing_impl.cost_tracker import CostTracker
 
         tracker = CostTracker(log_path=tmp_path / "costs.jsonl", daily_budget=1.0)
 
@@ -82,7 +82,7 @@ class TestCostTracker:
 
     def test_log_file_written(self, tmp_path: Path) -> None:
         """Test that cost entries are written to JSONL file."""
-        from thegent.routing.cost_tracker import CostTracker
+        from thegent.utils.routing_impl.cost_tracker import CostTracker
 
         log_path = tmp_path / "costs.jsonl"
         tracker = CostTracker(log_path=log_path)
@@ -105,7 +105,7 @@ class TestCostTrackerGlobals:
 
     def test_get_cost_tracker_singleton(self) -> None:
         """Test that get_cost_tracker returns singleton."""
-        from thegent.routing import cost_tracker
+        from thegent.utils.routing_impl import cost_tracker
 
         cost_tracker.reset_cost_tracker()
         tracker1 = cost_tracker.get_cost_tracker()
@@ -124,7 +124,7 @@ class TestAlert:
 
     def test_alert_to_json(self) -> None:
         """Test alert serialization."""
-        from thegent.routing.alerting import Alert
+        from thegent.utils.routing_impl.alerting import Alert
 
         alert = Alert(
             alert_type="budget_exceeded",
@@ -144,7 +144,7 @@ class TestAlertManager:
 
     def test_severity_threshold_filtering(self) -> None:
         """Test that low severity alerts are filtered."""
-        from thegent.routing.alerting import AlertManager
+        from thegent.utils.routing_impl.alerting import AlertManager
 
         manager = AlertManager(webhook_url="http://example.com/webhook", min_severity="warning")
 
@@ -159,7 +159,7 @@ class TestAlertManager:
 
     def test_pending_alerts_without_webhook(self) -> None:
         """Test that alerts are queued when no webhook configured."""
-        from thegent.routing.alerting import AlertManager
+        from thegent.utils.routing_impl.alerting import AlertManager
 
         manager = AlertManager(webhook_url=None)
         manager.send_alert(manager.alert_budget_exceeded(daily_spend=10.0, budget=5.0))
@@ -170,7 +170,7 @@ class TestAlertManager:
 
     def test_alert_budget_exceeded(self) -> None:
         """Test budget exceeded alert creation."""
-        from thegent.routing.alerting import AlertManager
+        from thegent.utils.routing_impl.alerting import AlertManager
 
         manager = AlertManager(webhook_url=None)
         alert = manager.alert_budget_exceeded(daily_spend=10.0, budget=5.0)
@@ -181,7 +181,7 @@ class TestAlertManager:
 
     def test_alert_high_latency(self) -> None:
         """Test high latency alert creation."""
-        from thegent.routing.alerting import AlertManager
+        from thegent.utils.routing_impl.alerting import AlertManager
 
         manager = AlertManager(webhook_url=None)
         alert = manager.alert_high_latency(
@@ -197,7 +197,7 @@ class TestAlertManager:
 
     def test_alert_provider_error(self) -> None:
         """Test provider error alert creation."""
-        from thegent.routing.alerting import AlertManager
+        from thegent.utils.routing_impl.alerting import AlertManager
 
         manager = AlertManager(webhook_url=None)
         alert = manager.alert_provider_error(
@@ -213,7 +213,7 @@ class TestAlertManager:
 
     def test_alert_provider_error_critical(self) -> None:
         """Test critical provider error alert."""
-        from thegent.routing.alerting import AlertManager
+        from thegent.utils.routing_impl.alerting import AlertManager
 
         manager = AlertManager(webhook_url=None)
         alert = manager.alert_provider_error(
@@ -231,7 +231,7 @@ class TestAlertManagerGlobals:
 
     def test_get_alert_manager_singleton(self) -> None:
         """Test that get_alert_manager returns singleton."""
-        from thegent.routing import alerting
+        from thegent.utils.routing_impl import alerting
 
         alerting.reset_alert_manager()
         manager1 = alerting.get_alert_manager()
@@ -250,7 +250,7 @@ class TestRoutingStats:
 
     def test_routing_stats_defaults(self) -> None:
         """Test default values."""
-        from thegent.routing.donut_adapter import RoutingStats
+        from thegent.utils.routing_impl.donut_adapter import RoutingStats
 
         stats = RoutingStats()
         assert stats.total_requests == 0
@@ -263,7 +263,7 @@ class TestRoutingDonutAdapter:
 
     def test_read_model_preference_from_queue(self, tmp_path: Path) -> None:
         """Test reading model preference from queue file."""
-        from thegent.routing.donut_adapter import RoutingDonutAdapter
+        from thegent.utils.routing_impl.donut_adapter import RoutingDonutAdapter
 
         queue_path = tmp_path / "prompt_queue.jsonl"
         queue_path.write_text(
@@ -284,7 +284,7 @@ class TestRoutingDonutAdapter:
 
     def test_read_model_preference_empty_queue(self, tmp_path: Path) -> None:
         """Test reading from non-existent queue returns None."""
-        from thegent.routing.donut_adapter import RoutingDonutAdapter
+        from thegent.utils.routing_impl.donut_adapter import RoutingDonutAdapter
 
         adapter = RoutingDonutAdapter(queue_path=tmp_path / "nonexistent.jsonl")
         preference = adapter.read_model_preference_from_queue()
@@ -293,7 +293,7 @@ class TestRoutingDonutAdapter:
 
     def test_record_request(self) -> None:
         """Test recording a routing request."""
-        from thegent.routing.donut_adapter import RoutingDonutAdapter
+        from thegent.utils.routing_impl.donut_adapter import RoutingDonutAdapter
 
         adapter = RoutingDonutAdapter()
         adapter.record_request(
@@ -313,7 +313,7 @@ class TestRoutingDonutAdapter:
 
     def test_harvest_on_stop(self, tmp_path: Path) -> None:
         """Test harvesting stats on stop."""
-        from thegent.routing.donut_adapter import RoutingDonutAdapter
+        from thegent.utils.routing_impl.donut_adapter import RoutingDonutAdapter
 
         harvest_path = tmp_path / "routing_harvest.jsonl"
         adapter = RoutingDonutAdapter(harvest_path=harvest_path)
@@ -327,7 +327,7 @@ class TestRoutingDonutAdapter:
 
     def test_get_team_router_config(self) -> None:
         """Test getting team router config."""
-        from thegent.routing.donut_adapter import RoutingDonutAdapter
+        from thegent.utils.routing_impl.donut_adapter import RoutingDonutAdapter
 
         adapter = RoutingDonutAdapter()
         config = adapter.get_team_router_config()
@@ -344,7 +344,7 @@ class TestDonutAdapterGlobals:
 
     def test_get_donut_adapter_singleton(self) -> None:
         """Test that get_donut_adapter returns singleton."""
-        from thegent.routing import donut_adapter
+        from thegent.utils.routing_impl import donut_adapter
 
         donut_adapter._adapter = None
         adapter1 = donut_adapter.get_donut_adapter()
@@ -363,7 +363,7 @@ class TestContextWindowValidation:
 
     def test_get_context_window_known_model(self) -> None:
         """Test getting context window for known models."""
-        from thegent.routing.litellm_router import get_context_window
+        from thegent.utils.routing_impl.litellm_router import get_context_window
 
         assert get_context_window("claude-opus-4.6") == 200000
         assert get_context_window("gpt-4o") == 128000
@@ -371,20 +371,20 @@ class TestContextWindowValidation:
 
     def test_get_context_window_unknown_model(self) -> None:
         """Test getting context window for unknown models returns default."""
-        from thegent.routing.litellm_router import get_context_window
+        from thegent.utils.routing_impl.litellm_router import get_context_window
 
         assert get_context_window("unknown-model") == 8192  # Default
 
     def test_validate_context_window_within_limit(self) -> None:
         """Test validation when prompt fits."""
-        from thegent.routing.litellm_router import validate_context_window
+        from thegent.utils.routing_impl.litellm_router import validate_context_window
 
         # 5000 tokens should fit in any model's context window
         assert validate_context_window("gpt-4o", 5000)
 
     def test_validate_context_window_exceeds_limit(self) -> None:
         """Test validation when prompt exceeds limit."""
-        from thegent.routing.litellm_router import validate_context_window
+        from thegent.utils.routing_impl.litellm_router import validate_context_window
 
         # 500000 tokens exceeds gpt-4o's context (128K * 0.75 = 96K effective)
         assert not validate_context_window("gpt-4o", 500000)
@@ -395,7 +395,7 @@ class TestFallbackChains:
 
     def test_build_fallback_chains(self) -> None:
         """Test that fallback chains are built correctly in LiteLLM format."""
-        from thegent.routing.litellm_router import build_fallback_chains
+        from thegent.utils.routing_impl.litellm_router import build_fallback_chains
 
         chains = build_fallback_chains()
 
@@ -421,7 +421,7 @@ class TestRoutingResult:
 
     def test_routing_result_defaults(self) -> None:
         """Test default values."""
-        from thegent.routing.litellm_router import RoutingResult
+        from thegent.utils.routing_impl.litellm_router import RoutingResult
 
         result = RoutingResult(success=True, model="gpt-4o", provider="openai")
 
@@ -437,7 +437,7 @@ class TestRouterConfig:
 
     def test_router_config_defaults(self) -> None:
         """Test default values."""
-        from thegent.routing.litellm_router import RouterConfig
+        from thegent.utils.routing_impl.litellm_router import RouterConfig
 
         config = RouterConfig()
 
@@ -453,7 +453,7 @@ class TestEnhancedRouterGlobals:
 
     def test_get_enhanced_router_singleton(self) -> None:
         """Test that get_enhanced_router returns singleton."""
-        from thegent.routing import litellm_router
+        from thegent.utils.routing_impl import litellm_router
 
         # Mock the model list to avoid catalog dependency issues
         mock_model_list = [

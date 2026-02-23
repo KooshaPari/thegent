@@ -27,17 +27,17 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 from thegent.models.catalog import Route, _get_catalog
-from thegent.routing.circuit_breaker import (
+from thegent.utils.routing_impl.circuit_breaker import (
     ProviderCircuitBreakerRegistry,
     get_healthy_deployments,
 )
-from thegent.routing.harness_model_mapping import CANONICAL_TO_OPENROUTER
-from thegent.routing.model_metadata import (
+from thegent.utils.routing_impl.harness_model_mapping import CANONICAL_TO_OPENROUTER
+from thegent.utils.routing_impl.model_metadata import (
     get_all_models_with_metadata,
     get_model_metadata,
     has_model_metadata,
 )
-from thegent.routing.provider_types import (
+from thegent.utils.routing_impl.provider_types import (
     NATIVE_CLI_PROVIDERS,
     ExecutionPath,
     get_execution_path,
@@ -592,7 +592,7 @@ def build_dynamic_fallback_router(models: list[str], base_policy: str = "cost-ba
 def get_pareto_preferred_model(complexity_tier: str = "moderate") -> str | None:
     """Pre-select model via Pareto for LiteLLM when policy=pareto. Returns provider/model or None."""
     try:
-        from thegent.routing.pareto_router import select_offer
+        from thegent.utils.routing_impl.pareto_router import select_offer
 
         route = select_offer(complexity_tier=complexity_tier)
         if route:
@@ -637,7 +637,7 @@ class EnhancedRouter:
         """Get cost tracker (lazy initialization)."""
         if self._cost_tracker is None and self._config.enable_cost_tracking:
             try:
-                from thegent.routing.cost_tracker import get_cost_tracker
+                from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
 
                 self._cost_tracker = get_cost_tracker()
             except Exception as e:
@@ -649,7 +649,7 @@ class EnhancedRouter:
         """Get alert manager (lazy initialization)."""
         if self._alert_manager is None and self._config.alert_webhook:
             try:
-                from thegent.routing.alerting import get_alert_manager
+                from thegent.utils.routing_impl.alerting import get_alert_manager
 
                 self._alert_manager = get_alert_manager()
             except Exception as e:
@@ -661,7 +661,7 @@ class EnhancedRouter:
         """Get Donut adapter (lazy initialization)."""
         if self._donut_adapter is None:
             try:
-                from thegent.routing.donut_adapter import get_donut_adapter
+                from thegent.utils.routing_impl.donut_adapter import get_donut_adapter
 
                 self._donut_adapter = get_donut_adapter()
             except Exception as e:
@@ -939,7 +939,7 @@ class EnhancedRouter:
         This prevents warnings from Codex CLI about missing model metadata.
         """
         try:
-            from thegent.routing.model_metadata import has_model_metadata
+            from thegent.utils.routing_impl.model_metadata import has_model_metadata
 
             # Check all models in router and ensure they have metadata
             for entry in self._router.model_list:

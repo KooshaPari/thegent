@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.prompt_rewriter import (
+from thegent.utils.routing_impl.prompt_rewriter import (
     RewriteConfig,
     RewriteResult,
     RewriteRule,

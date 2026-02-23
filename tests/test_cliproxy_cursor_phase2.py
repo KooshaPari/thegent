@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from thegent.routing.cursor_provider import (
+from thegent.utils.routing_impl.cursor_provider import (
     CursorExecutorManager,
     CursorProviderConfig,
     CursorTokenProvider,

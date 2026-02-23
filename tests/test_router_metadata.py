@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
-from thegent.routing.litellm_router import EnhancedRouter
-from thegent.routing.model_metadata import (
+from thegent.utils.routing_impl.litellm_router import EnhancedRouter
+from thegent.utils.routing_impl.model_metadata import (
     mark_metadata_stale,
     stamp_metadata_freshness,
     validate_metadata_freshness,

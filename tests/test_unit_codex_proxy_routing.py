@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from thegent.agents.codex_proxy import CodexProxyRunner
-from thegent.routing.models import TaskCategory, TaskMetadata
+from thegent.utils.routing_impl.models import TaskCategory, TaskMetadata
 
 
 class TestCodexProxyRunnerRouting:

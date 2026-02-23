@@ -50,7 +50,7 @@ class TestModelsArraySetsPrimaryModel:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_models_array_sets_primary_model(self) -> None:
         """When request has models: [gpt-4o, claude-sonnet-4.6], primary model is gpt-4o."""
-        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
 
         body = _make_responses_body(
             model="gpt-4o",
@@ -63,7 +63,7 @@ class TestModelsArraySetsPrimaryModel:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_models_array_primary_overrides_empty_model(self) -> None:
         """When model is absent but models[] is present, first models[] entry becomes model."""
-        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
 
         body = {
             "model": "",
@@ -77,7 +77,7 @@ class TestModelsArraySetsPrimaryModel:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_single_model_in_models_array(self) -> None:
         """A single-entry models[] still sets the primary model correctly."""
-        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
 
         body = _make_responses_body(model="gpt-4o", models=["gpt-4o"])
         result = _responses_to_chat_completions(body)
@@ -98,7 +98,7 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_responses_to_chat_completions_extracts_models(self) -> None:
         """Verify _responses_to_chat_completions stores _models in output."""
-        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
 
         body = _make_responses_body(
             model="gpt-4o",
@@ -111,7 +111,7 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_no_models_array_no_underscore_models_key(self) -> None:
         """When models[] is absent, _models key is not present in output."""
-        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
 
         body = _make_responses_body(model="gpt-4o")
         result = _responses_to_chat_completions(body)
@@ -120,7 +120,7 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_empty_models_array_produces_no_underscore_models(self) -> None:
         """An empty models[] list must not produce _models in output."""
-        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
 
         body = _make_responses_body(model="gpt-4o", models=[])
         result = _responses_to_chat_completions(body)
@@ -129,7 +129,7 @@ class TestResponsesToChatCompletionsExtractsModels:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_models_key_not_forwarded_as_plain_models(self) -> None:
         """The raw 'models' key must not appear in the output (it becomes _models)."""
-        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+        from thegent.utils.routing_impl.litellm_responses_handler import _responses_to_chat_completions
 
         body = _make_responses_body(
             model="gpt-4o",
@@ -157,7 +157,7 @@ class TestBuildDynamicFallbackRouter:
         """Calling build_dynamic_fallback_router with valid models returns a LiteLLM Router."""
         from litellm import Router
 
-        from thegent.routing.litellm_router import build_dynamic_fallback_router
+        from thegent.utils.routing_impl.litellm_router import build_dynamic_fallback_router
 
         # Patch build_litellm_model_list to avoid real catalog dependency
         minimal_model_list = [
@@ -189,7 +189,7 @@ class TestBuildDynamicFallbackRouter:
         """The returned Router has fallbacks configured with primary -> rest."""
         from litellm import Router
 
-        from thegent.routing.litellm_router import build_dynamic_fallback_router
+        from thegent.utils.routing_impl.litellm_router import build_dynamic_fallback_router
 
         minimal_model_list = [
             {
@@ -221,7 +221,7 @@ class TestBuildDynamicFallbackRouter:
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_build_dynamic_fallback_router_empty_list_raises(self) -> None:
         """Passing an empty models list must raise ValueError immediately."""
-        from thegent.routing.litellm_router import build_dynamic_fallback_router
+        from thegent.utils.routing_impl.litellm_router import build_dynamic_fallback_router
 
         with pytest.raises(ValueError, match="models list must not be empty"):
             build_dynamic_fallback_router([])
@@ -231,7 +231,7 @@ class TestBuildDynamicFallbackRouter:
         """Unknown models not in catalog get a minimal passthrough config, not a silent skip."""
         from litellm import Router
 
-        from thegent.routing.litellm_router import build_dynamic_fallback_router
+        from thegent.utils.routing_impl.litellm_router import build_dynamic_fallback_router
 
         # Empty catalog — all models unknown
         with patch(
@@ -264,7 +264,7 @@ class TestSingleModelUsesDefaultRouter:
         """Single model[] or no models[] uses get_litellm_router, not build_dynamic_fallback_router."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "response from single model"
@@ -313,7 +313,7 @@ class TestSingleModelUsesDefaultRouter:
         """When models[] is absent entirely, get_litellm_router is used."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "plain response"
@@ -373,7 +373,7 @@ class TestMultiModelUsesDynamicRouter:
         """Request with models: [A, B, C] invokes build_dynamic_fallback_router."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "multi-model response"
@@ -426,7 +426,7 @@ class TestMultiModelUsesDynamicRouter:
         """router.acompletion receives fallbacks= kwarg when models[] has 2+ entries."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "ok"
@@ -483,28 +483,28 @@ class TestBuildFallbackChainExtra:
 
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_two_models_returns_fallbacks_dict(self) -> None:
-        from thegent.routing.litellm_responses_handler import _build_fallback_chain_extra
+        from thegent.utils.routing_impl.litellm_responses_handler import _build_fallback_chain_extra
 
         result = _build_fallback_chain_extra(["gpt-4o", "claude-sonnet-4.6"], "gpt-4o")
         assert result == {"fallbacks": [{"gpt-4o": ["claude-sonnet-4.6"]}]}
 
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_three_models_fallbacks_contains_all_non_primary(self) -> None:
-        from thegent.routing.litellm_responses_handler import _build_fallback_chain_extra
+        from thegent.utils.routing_impl.litellm_responses_handler import _build_fallback_chain_extra
 
         result = _build_fallback_chain_extra(["gpt-4o", "claude-sonnet-4.6", "deepseek-v3.2"], "gpt-4o")
         assert result == {"fallbacks": [{"gpt-4o": ["claude-sonnet-4.6", "deepseek-v3.2"]}]}
 
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_single_model_returns_empty_dict(self) -> None:
-        from thegent.routing.litellm_responses_handler import _build_fallback_chain_extra
+        from thegent.utils.routing_impl.litellm_responses_handler import _build_fallback_chain_extra
 
         result = _build_fallback_chain_extra(["gpt-4o"], "gpt-4o")
         assert result == {}
 
     @pytest.mark.requirement("FR-ROUTE-012")
     def test_empty_models_returns_empty_dict(self) -> None:
-        from thegent.routing.litellm_responses_handler import _build_fallback_chain_extra
+        from thegent.utils.routing_impl.litellm_responses_handler import _build_fallback_chain_extra
 
         result = _build_fallback_chain_extra([], "gpt-4o")
         assert result == {}

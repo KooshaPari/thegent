@@ -697,7 +697,7 @@ def _check_ollama() -> list[CheckResult]:
     # Now check if the daemon is running
     r = CheckResult("Ollama Daemon", "Providers")
     try:
-        from thegent.routing.ollama_provider import is_ollama_available, get_available_models
+        from thegent.utils.routing_impl.ollama_provider import is_ollama_available, get_available_models
 
         if is_ollama_available():
             r.status = "ok"

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.guardrails.moderation import (
+from thegent.utils.routing_impl.guardrails.moderation import (
     DEFAULT_CATEGORIES,
     ModerationConfig,
     check_moderation,

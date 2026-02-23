@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.mirror import MirrorConfig, MirrorResult, should_mirror
+from thegent.utils.routing_impl.mirror import MirrorConfig, MirrorResult, should_mirror
 
 
 @pytest.mark.requirement("FR-AROUTE-059")

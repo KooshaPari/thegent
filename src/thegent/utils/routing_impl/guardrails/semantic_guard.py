@@ -11,7 +11,7 @@ Uses the same EmbeddingProvider protocol as semantic_cache.py.
 import logging
 from dataclasses import dataclass, field
 
-from thegent.routing.semantic_cache import EmbeddingProvider, NumpyEmbeddingProvider, cosine_similarity
+from thegent.utils.routing_impl.semantic_cache import EmbeddingProvider, NumpyEmbeddingProvider, cosine_similarity
 
 _log = logging.getLogger(__name__)
 

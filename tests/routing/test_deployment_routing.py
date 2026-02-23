@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.cost_aware_router import (
+from thegent.utils.routing_impl.cost_aware_router import (
     DeploymentConfig,
     DeploymentPool,
     DeploymentPoolManager,

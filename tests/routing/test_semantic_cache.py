@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from thegent.routing.semantic_cache import (
+from thegent.utils.routing_impl.semantic_cache import (
     NumpyEmbeddingProvider,
     SemanticCache,
     SemanticCacheConfig,

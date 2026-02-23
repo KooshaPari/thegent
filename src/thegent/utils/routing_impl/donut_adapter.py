@@ -95,7 +95,7 @@ class RoutingDonutAdapter:
             Configured LiteLLM Router instance
         """
         if policy not in self._routers:
-            from thegent.routing.litellm_router import get_litellm_router
+            from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
             logger.debug("Creating new LiteLLM router with policy=%s", policy)
             self._routers[policy] = get_litellm_router(policy)
@@ -254,7 +254,7 @@ class RoutingDonutAdapter:
         }
 
         try:
-            from thegent.routing.cost_tracker import get_cost_tracker
+            from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
 
             tracker = get_cost_tracker()
             stats = tracker.get_stats()

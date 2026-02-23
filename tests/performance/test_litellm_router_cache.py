@@ -13,14 +13,14 @@ class TestLiteLLMRouterCache:
 
     def _clear_caches(self):
         """Reset module-level caches between tests."""
-        from thegent.routing import litellm_router as mod
+        from thegent.utils.routing_impl import litellm_router as mod
 
         mod._router_cache.clear()
         mod._model_list_cache.clear()
 
     def test_second_call_returns_same_object(self):
         """Cache hit: two consecutive calls return the identical Router object."""
-        from thegent.routing.litellm_router import get_litellm_router
+        from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
         self._clear_caches()
 
@@ -36,7 +36,7 @@ class TestLiteLLMRouterCache:
 
     def test_invalidate_forces_rebuild(self):
         """After invalidate_router_cache(), the next call rebuilds."""
-        from thegent.routing.litellm_router import (
+        from thegent.utils.routing_impl.litellm_router import (
             get_litellm_router,
             invalidate_router_cache,
         )
@@ -57,8 +57,8 @@ class TestLiteLLMRouterCache:
 
     def test_ttl_expiry_forces_rebuild(self):
         """When the TTL cache expires, a new Router is built."""
-        from thegent.routing import litellm_router as mod
-        from thegent.routing.litellm_router import get_litellm_router
+        from thegent.utils.routing_impl import litellm_router as mod
+        from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
         self._clear_caches()
 

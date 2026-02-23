@@ -42,7 +42,7 @@ from thegent.orchestration.resource.load_based_limits import (
 from thegent.orchestration.state.session_watcher import SessionEventWatcher
 from thegent.planning.work_stream import WorkStreamManager
 from thegent.planning.workstream_db import WorkstreamDB
-from thegent.routing.task_router import TaskRouter
+from thegent.utils.routing_impl.task_router import TaskRouter
 from thegent.security.rbac import Permission, RBACManager, Role
 from thegent.sync import SyncOrchestrator, SyncRegistry
 from thegent.team.coordination import TeamCoordinator

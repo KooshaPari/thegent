@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.guardrails.semantic_guard import (
+from thegent.utils.routing_impl.guardrails.semantic_guard import (
     SemanticGuardConfig,
     check_semantic_guard,
 )
-from thegent.routing.semantic_cache import NumpyEmbeddingProvider
+from thegent.utils.routing_impl.semantic_cache import NumpyEmbeddingProvider
 
 pytestmark = pytest.mark.requirement("FR-GUARD-055")
 

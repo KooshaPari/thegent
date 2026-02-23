@@ -16,7 +16,7 @@ from thegent.integrations.workstream_autosync import (
     WorkstreamItem,
     load_autosync_config_from_env,
 )
-from thegent.routing.circuit_breaker import ProviderCircuitBreakerRegistry
+from thegent.utils.routing_impl.circuit_breaker import ProviderCircuitBreakerRegistry
 
 
 @pytest.fixture(autouse=True)

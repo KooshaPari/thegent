@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.context_validator import (
+from thegent.utils.routing_impl.context_validator import (
     CONTEXT_WINDOW_LIMITS,
     ContextWindowCheckResult,
     check_context_window,

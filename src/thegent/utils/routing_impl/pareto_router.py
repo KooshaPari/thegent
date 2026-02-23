@@ -290,7 +290,7 @@ def _get_role(role: str | None) -> RoleConfig | None:
 def _is_degraded_mode() -> bool:
     """True when budget burn >= 85%. Prefer cheap offers, disable premium."""
     try:
-        from thegent.routing.cost_tracker import get_cost_tracker
+        from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
 
         tracker = get_cost_tracker()
         ratio = tracker.get_budget_burn_ratio()
@@ -303,7 +303,7 @@ def _get_shadow_multiplier() -> float:
     """Budget shadow: 1 / max(remaining_ratio, ε). Higher when budget depleting."""
     try:
         from thegent.config import ThegentSettings
-        from thegent.routing.cost_tracker import get_cost_tracker
+        from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
 
         tracker = get_cost_tracker()
         settings = ThegentSettings()

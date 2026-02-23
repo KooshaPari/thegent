@@ -20,7 +20,7 @@ from thegent.agents.provider_loop import (
     ProviderLoopTimeout,
     run_with_provider_loop_timeout,
 )
-from thegent.routing.circuit_breaker import (
+from thegent.utils.routing_impl.circuit_breaker import (
     CircuitOpenError,
     ProviderCircuitBreaker,
     ProviderCircuitBreakerConfig,

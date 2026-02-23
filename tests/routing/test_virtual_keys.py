@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.virtual_keys import (
+from thegent.utils.routing_impl.virtual_keys import (
     VirtualKeyConfig,
     VirtualKeyStore,
     VirtualKeyValidator,

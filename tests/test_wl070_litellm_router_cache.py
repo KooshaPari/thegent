@@ -17,7 +17,7 @@ class TestGetLitellmRouterCaching:
     """WL-070: get_litellm_router() is cached via TTLCache for 5 minutes."""
 
     def _clear_cache(self):
-        from thegent.routing.litellm_router import _router_cache
+        from thegent.utils.routing_impl.litellm_router import _router_cache
 
         _router_cache.clear()
 
@@ -27,7 +27,7 @@ class TestGetLitellmRouterCaching:
         sentinel = MagicMock(name="router_sentinel")
 
         with patch("thegent.routing.litellm_router._build_litellm_router", return_value=sentinel) as mock_build:
-            from thegent.routing.litellm_router import get_litellm_router
+            from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
             r1 = get_litellm_router("cost-based-routing")
             r2 = get_litellm_router("cost-based-routing")
@@ -41,7 +41,7 @@ class TestGetLitellmRouterCaching:
         sentinel = MagicMock(name="router_once")
 
         with patch("thegent.routing.litellm_router._build_litellm_router", return_value=sentinel) as mock_build:
-            from thegent.routing.litellm_router import get_litellm_router
+            from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
             for _ in range(10):
                 get_litellm_router("latency-based-routing")
@@ -60,7 +60,7 @@ class TestGetLitellmRouterCaching:
             return router_a if policy == "cost-based-routing" else router_b
 
         with patch("thegent.routing.litellm_router._build_litellm_router", side_effect=fake_build):
-            from thegent.routing.litellm_router import get_litellm_router
+            from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
             r1 = get_litellm_router("cost-based-routing")
             r2 = get_litellm_router("latency-based-routing")
@@ -82,7 +82,7 @@ class TestGetLitellmRouterCaching:
         responses = [first, second]
 
         with patch("thegent.routing.litellm_router._build_litellm_router", side_effect=responses) as mock_build:
-            from thegent.routing.litellm_router import _router_cache, get_litellm_router
+            from thegent.utils.routing_impl.litellm_router import _router_cache, get_litellm_router
 
             r1 = get_litellm_router("cost-based-routing")
             # Manually expire the cache entry to simulate TTL elapse
@@ -103,7 +103,7 @@ class TestGetLitellmRouterCaching:
             return MagicMock(name=f"router_{build_count['n']}")
 
         with patch("thegent.routing.litellm_router._build_litellm_router", side_effect=fake_build):
-            from thegent.routing.litellm_router import get_litellm_router
+            from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
             results = []
 
@@ -123,12 +123,12 @@ class TestGetLitellmRouterCaching:
 
     def test_build_litellm_router_private_function_exists(self):
         """# @trace WL-070 — _build_litellm_router is a callable private function."""
-        from thegent.routing.litellm_router import _build_litellm_router
+        from thegent.utils.routing_impl.litellm_router import _build_litellm_router
 
         assert callable(_build_litellm_router)
 
     def test_router_cache_module_level_object_has_correct_ttl(self):
         """# @trace WL-070 — _router_cache has TTL of 300 seconds."""
-        from thegent.routing.litellm_router import _router_cache
+        from thegent.utils.routing_impl.litellm_router import _router_cache
 
         assert _router_cache.ttl == 300

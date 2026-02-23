@@ -64,7 +64,7 @@ def create_http_app(
         app.add_middleware(bearer_auth_middleware)
 
     if hasattr(app, "add_route") and hasattr(app, "add_websocket_route"):
-        from thegent.routing.litellm_responses_handler import (
+        from thegent.utils.routing_impl.litellm_responses_handler import (
             handle_responses_request,
             handle_responses_websocket,
         )

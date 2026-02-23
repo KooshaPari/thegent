@@ -80,7 +80,7 @@ class TestExtractForwardHeaders:
         from starlette.datastructures import Headers
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import _extract_forward_headers
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_forward_headers
 
         captured: dict[str, str] = {}
 
@@ -103,7 +103,7 @@ class TestExtractForwardHeaders:
         from starlette.routing import Route
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import _extract_forward_headers
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_forward_headers
 
         captured: dict[str, str] = {}
 
@@ -122,7 +122,7 @@ class TestExtractForwardHeaders:
         from starlette.routing import Route
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import _extract_forward_headers
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_forward_headers
 
         captured: dict[str, str] = {}
 
@@ -141,7 +141,7 @@ class TestExtractForwardHeaders:
         from starlette.routing import Route
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import _extract_forward_headers
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_forward_headers
 
         captured: dict[str, str] = {}
 
@@ -171,7 +171,7 @@ class TestExtractForwardHeaders:
         from starlette.routing import Route
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import _extract_forward_headers
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_forward_headers
 
         captured: dict[str, str] = {}
 
@@ -190,7 +190,7 @@ class TestExtractForwardHeaders:
         from starlette.routing import Route
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import _extract_forward_headers
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_forward_headers
 
         captured: dict[str, str] = {}
 
@@ -217,7 +217,7 @@ class TestOR17HeadersForwardedToRouter:
         """x-session-id from request must appear in extra_headers kwarg to acompletion."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "response text"
@@ -260,7 +260,7 @@ class TestOR17HeadersForwardedToRouter:
         """x-anthropic-beta from request must appear in extra_headers kwarg to acompletion."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "ok"
@@ -301,7 +301,7 @@ class TestOR17HeadersForwardedToRouter:
         """Streaming-Options from request must appear in extra_headers for streaming call."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         chunks = [_make_chat_chunk("Hi")]
         captured_kwargs: dict[str, Any] = {}
@@ -341,7 +341,7 @@ class TestOR17HeadersForwardedToRouter:
         """When no whitelisted headers present, extra_headers must NOT appear in acompletion."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "ok"
@@ -384,17 +384,17 @@ class TestIsNativeResponsesCapable:
     """@trace OR-18"""
 
     def test_openrouter_is_capable(self) -> None:
-        from thegent.routing.litellm_responses_handler import _is_native_responses_capable
+        from thegent.utils.routing_impl.litellm_responses_handler import _is_native_responses_capable
 
         assert _is_native_responses_capable("openrouter") is True
 
     def test_openrouter_case_insensitive(self) -> None:
-        from thegent.routing.litellm_responses_handler import _is_native_responses_capable
+        from thegent.utils.routing_impl.litellm_responses_handler import _is_native_responses_capable
 
         assert _is_native_responses_capable("OpenRouter") is True
 
     def test_other_providers_not_capable(self) -> None:
-        from thegent.routing.litellm_responses_handler import _is_native_responses_capable
+        from thegent.utils.routing_impl.litellm_responses_handler import _is_native_responses_capable
 
         for provider in ("gpt-4o", "anthropic", "cursor", "gemini", "litellm", ""):
             assert _is_native_responses_capable(provider) is False, f"Expected False for provider={provider!r}"
@@ -409,22 +409,22 @@ class TestExtractProviderFromModel:
     """@trace OR-18"""
 
     def test_slash_notation_extracts_provider(self) -> None:
-        from thegent.routing.litellm_responses_handler import _extract_provider_from_model
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_provider_from_model
 
         assert _extract_provider_from_model("openrouter/gpt-4o") == "openrouter"
 
     def test_nested_slash_extracts_first_segment(self) -> None:
-        from thegent.routing.litellm_responses_handler import _extract_provider_from_model
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_provider_from_model
 
         assert _extract_provider_from_model("openrouter/anthropic/claude-opus-4-6") == "openrouter"
 
     def test_no_slash_returns_empty_string(self) -> None:
-        from thegent.routing.litellm_responses_handler import _extract_provider_from_model
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_provider_from_model
 
         assert _extract_provider_from_model("gpt-4o") == ""
 
     def test_empty_string_returns_empty_string(self) -> None:
-        from thegent.routing.litellm_responses_handler import _extract_provider_from_model
+        from thegent.utils.routing_impl.litellm_responses_handler import _extract_provider_from_model
 
         assert _extract_provider_from_model("") == ""
 
@@ -442,7 +442,7 @@ class TestOR18NativeResponsesForwarding:
         """When model is 'openrouter/...', the request must bypass LiteLLM and call httpx directly."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock()
@@ -490,7 +490,7 @@ class TestOR18NativeResponsesForwarding:
         """Direct native forward must include Authorization, HTTP-Referer and X-Title headers."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_router = MagicMock()
         mock_httpx_resp = MagicMock()
@@ -530,7 +530,7 @@ class TestOR18NativeResponsesForwarding:
         """Whitelisted headers (x-session-id) must be forwarded in the native path."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_router = MagicMock()
         mock_httpx_resp = MagicMock()
@@ -572,7 +572,7 @@ class TestOR18NativeResponsesForwarding:
         """When model is NOT openrouter/..., the LiteLLM path must still be used."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         mock_choice = MagicMock()
         mock_choice.message.content = "ok from litellm"
@@ -616,7 +616,7 @@ class TestAppendGenerationId:
     """@trace OR-19"""
 
     def test_creates_store_file_and_appends_record(self, tmp_path) -> None:
-        from thegent.routing.litellm_responses_handler import _append_generation_id
+        from thegent.utils.routing_impl.litellm_responses_handler import _append_generation_id
 
         store = tmp_path / ".thegent" / "generation_id_store.jsonl"
 
@@ -629,7 +629,7 @@ class TestAppendGenerationId:
         assert records[0] == {"request_id": "req-001", "generation_id": "gen-abc"}
 
     def test_appends_multiple_records(self, tmp_path) -> None:
-        from thegent.routing.litellm_responses_handler import _append_generation_id
+        from thegent.utils.routing_impl.litellm_responses_handler import _append_generation_id
 
         store = tmp_path / ".thegent" / "generation_id_store.jsonl"
 
@@ -645,7 +645,7 @@ class TestAppendGenerationId:
         assert records[2]["generation_id"] == "gen-ccc"
 
     def test_creates_parent_directories(self, tmp_path) -> None:
-        from thegent.routing.litellm_responses_handler import _append_generation_id
+        from thegent.utils.routing_impl.litellm_responses_handler import _append_generation_id
 
         store = tmp_path / "deep" / "nested" / "dir" / "store.jsonl"
 
@@ -655,7 +655,7 @@ class TestAppendGenerationId:
         assert store.exists()
 
     def test_record_is_valid_json(self, tmp_path) -> None:
-        from thegent.routing.litellm_responses_handler import _append_generation_id
+        from thegent.utils.routing_impl.litellm_responses_handler import _append_generation_id
 
         store = tmp_path / "store.jsonl"
 
@@ -680,7 +680,7 @@ class TestOR19GenerationIdCaptureFromStream:
         """When a chunk contains openrouter-generation-id, it must be appended to the store."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         store = tmp_path / "store.jsonl"
 
@@ -717,7 +717,7 @@ class TestOR19GenerationIdCaptureFromStream:
         """When a chunk contains x-generation-id, it must also be appended to the store."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         store = tmp_path / "store.jsonl"
 
@@ -752,7 +752,7 @@ class TestOR19GenerationIdCaptureFromStream:
         """When chunks contain no generation_id fields, the store file must not be written."""
         from starlette.testclient import TestClient
 
-        from thegent.routing.litellm_responses_handler import handle_responses_request
+        from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
         store = tmp_path / "store.jsonl"
 

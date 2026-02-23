@@ -150,7 +150,7 @@ def run_impl_core(
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
         try:
-            from thegent.routing.auto_router import auto_route
+            from thegent.utils.routing_impl.auto_router import auto_route
 
             ar = auto_route(
                 prompt=prompt,
@@ -1097,7 +1097,7 @@ def bg_impl_core(
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
         try:
-            from thegent.routing.auto_router import auto_route
+            from thegent.utils.routing_impl.auto_router import auto_route
 
             ar = auto_route(
                 prompt=prompt,

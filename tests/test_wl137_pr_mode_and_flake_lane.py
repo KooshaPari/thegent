@@ -40,6 +40,9 @@ def test_pr_lane_ini_files_exist() -> None:
     assert PR_INI.is_file(), "pytest-pr.ini missing"
     assert PR_FLAKE_INI.is_file(), "pytest-pr-flake.ini missing"
     assert "--maxfail" in PR_FLAKE_INI.read_text(encoding="utf-8")
+    pr_ini_text = PR_INI.read_text(encoding="utf-8")
+    assert "--strict-config" in pr_ini_text
+    assert "xfail_strict = true" in pr_ini_text
 
 
 def test_taskfile_pr_aliases_exist() -> None:

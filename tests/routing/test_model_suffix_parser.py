@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.model_suffix_parser import (
+from thegent.utils.routing_impl.model_suffix_parser import (
     ModelSuffix,
     apply_suffix_to_request,
     parse_model_suffixes,

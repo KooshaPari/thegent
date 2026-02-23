@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.semantic_lb import (
+from thegent.utils.routing_impl.semantic_lb import (
     ModelCapability,
     SemanticLbResult,
     SemanticLoadBalancer,

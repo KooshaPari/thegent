@@ -85,3 +85,67 @@ def test_drift_detector_sweep_cleans_overrides(mock_settings):
     assert results["overrides_cleaned"] == 1
     assert not (overrides_dir / "expired.json").exists()
     assert (overrides_dir / "valid.json").exists()
+
+
+def test_drift_detector_establishes_policy_baseline(mock_settings):
+    contracts_dir = mock_settings.session_dir / "contracts"
+    contracts_dir.mkdir()
+    (contracts_dir / "policy.json").write_text(json.dumps({"allow": True}), encoding="utf-8")
+
+    detector = DriftDetector(mock_settings)
+    report = detector.detect_drift()
+
+    assert report["baseline_established"] is True
+    assert report["drift_detected"] is False
+    baseline_path = mock_settings.session_dir / "policy_contracts_baseline.json"
+    assert baseline_path.exists()
+
+
+def test_drift_detector_detects_policy_contract_change(mock_settings):
+    contracts_dir = mock_settings.session_dir / "contracts"
+    contracts_dir.mkdir()
+    contract_path = contracts_dir / "policy.json"
+    contract_path.write_text(json.dumps({"allow": True}), encoding="utf-8")
+
+    detector = DriftDetector(mock_settings)
+    first_report = detector.detect_drift()
+    assert first_report["baseline_established"] is True
+
+    contract_path.write_text(json.dumps({"allow": False}), encoding="utf-8")
+    second_report = detector.detect_drift()
+
+    assert second_report["drift_detected"] is True
+    assert second_report["policy_mismatches"][0]["contract"] == "policy.json"
+    assert second_report["policy_mismatches"][0]["type"] == "changed"
+    assert "baseline/policy.json" in second_report["policy_mismatches"][0]["diff"]
+    assert "current/policy.json" in second_report["policy_mismatches"][0]["diff"]
+
+
+def test_drift_detector_detects_policy_contract_add_and_remove(mock_settings):
+    contracts_dir = mock_settings.session_dir / "contracts"
+    contracts_dir.mkdir()
+    first = contracts_dir / "first.json"
+    second = contracts_dir / "second.json"
+    first.write_text(json.dumps({"a": 1}), encoding="utf-8")
+    second.write_text(json.dumps({"b": 2}), encoding="utf-8")
+
+    detector = DriftDetector(mock_settings)
+    detector.detect_drift()
+
+    second.unlink()
+    (contracts_dir / "third.json").write_text(json.dumps({"c": 3}), encoding="utf-8")
+
+    report = detector.detect_drift()
+    assert report["drift_detected"] is True
+    mismatch_types = {(item["contract"], item["type"]) for item in report["policy_mismatches"]}
+    assert ("second.json", "removed") in mismatch_types
+    assert ("third.json", "added") in mismatch_types
+
+
+def test_drift_detector_raises_on_invalid_baseline(mock_settings):
+    baseline = mock_settings.session_dir / "policy_contracts_baseline.json"
+    baseline.write_text(json.dumps({"generated_at_utc": "2026-02-23T00:00:00+00:00", "contracts": []}), encoding="utf-8")
+
+    detector = DriftDetector(mock_settings)
+    with pytest.raises(ValueError, match="Invalid policy baseline format"):
+        detector.detect_drift()

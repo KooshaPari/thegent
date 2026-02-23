@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from thegent.routing.cache import (
+from thegent.utils.routing_impl.cache import (
     CacheEntry,
     DiskCache,
     DualCache,

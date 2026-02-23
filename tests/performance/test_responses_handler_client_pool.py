@@ -11,13 +11,13 @@ class TestResponsesHandlerClientPool:
 
     def _reset_client(self):
         """Reset the module-level client between tests."""
-        from thegent.routing import litellm_responses_handler as mod
+        from thegent.utils.routing_impl import litellm_responses_handler as mod
 
         mod._http_client = None
 
     def test_two_calls_return_same_client(self):
         """Two calls to _get_http_client() return the same instance."""
-        from thegent.routing.litellm_responses_handler import _get_http_client
+        from thegent.utils.routing_impl.litellm_responses_handler import _get_http_client
 
         self._reset_client()
 
@@ -30,8 +30,8 @@ class TestResponsesHandlerClientPool:
     @pytest.mark.asyncio
     async def test_close_shared_client_resets_singleton(self):
         """close_http_client() sets the module-level client back to None."""
-        from thegent.routing import litellm_responses_handler as mod
-        from thegent.routing.litellm_responses_handler import (
+        from thegent.utils.routing_impl import litellm_responses_handler as mod
+        from thegent.utils.routing_impl.litellm_responses_handler import (
             _get_http_client,
             close_http_client,
         )

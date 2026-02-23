@@ -21,7 +21,7 @@ from thegent.cliproxy_adapter import (
     extract_special_headers,
     inject_proxy_models,
 )
-from thegent.routing import harness_model_mapping
+from thegent.utils.routing_impl import harness_model_mapping
 
 
 # ---------------------------------------------------------------------------
