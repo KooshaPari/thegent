@@ -14,6 +14,7 @@ use crate::utils::{exec_command, resolve_binary};
 use std::path::PathBuf;
 use std::process::{Command, ExitCode};
 
+#[allow(dead_code)]
 const READ_ONLY_CMDS: &[&str] = &[
     "diff",
     "status",
@@ -50,6 +51,7 @@ impl GitShim {
     }
 
     /// Check if command is read-only
+    #[allow(dead_code)]
     fn is_read_only(&self, cmd: &str) -> bool {
         READ_ONLY_CMDS.contains(&cmd)
     }

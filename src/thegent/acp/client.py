@@ -1,6 +1,6 @@
 """ACP client adapter for spawning external ACP agents."""
 
-import json
+from thegent.utils.json_utils import json_dumps, json_loads
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
@@ -77,13 +77,13 @@ class ACPClientAdapter(AgentRunner):
                     "capabilities": {},
                 },
             }
-            self.process.stdin.write(json.dumps(init_request) + "\n")
+            self.process.stdin.write(json_dumps(init_request) + "\n")
             self.process.stdin.flush()
 
             # Read initialize response
             init_response_line = self.process.stdout.readline()
             if init_response_line:
-                init_response = json.loads(init_response_line.strip())
+                init_response = json_loads(init_response_line.strip())
                 if "error" in init_response:
                     return RunResult(
                         exit_code=1,
@@ -102,7 +102,7 @@ class ACPClientAdapter(AgentRunner):
                     "cwd": str(cwd) if cwd else None,
                 },
             }
-            self.process.stdin.write(json.dumps(spawn_request) + "\n")
+            self.process.stdin.write(json_dumps(spawn_request) + "\n")
             self.process.stdin.flush()
 
             # Read responses
@@ -114,7 +114,7 @@ class ACPClientAdapter(AgentRunner):
                 if not line.strip():
                     continue
                 try:
-                    response = json.loads(line.strip())
+                    response = json_loads(line.strip())
                     if "result" in response:
                         result = response["result"]
                         if "stdout" in result:

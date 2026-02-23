@@ -35,7 +35,6 @@ def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
     import json
     import sys
 
-    from thegent.cli.commands._cli_shared import _normalize_output_format
     from thegent.execution import DLQManager
 
     settings = ThegentSettings()

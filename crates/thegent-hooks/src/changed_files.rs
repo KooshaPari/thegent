@@ -521,7 +521,7 @@ impl ChangedFilesDetector {
     /// Handles common patterns: Python imports, TypeScript imports, Rust use statements, etc.
     fn extract_imports(content: &str, source_file: &Path) -> HashSet<PathBuf> {
         let mut imports = HashSet::new();
-        let source_dir = source_file.parent().unwrap_or_else(|| Path::new("."));
+        let _source_dir = source_file.parent().unwrap_or_else(|| Path::new("."));
 
         // Python imports: from X import Y, import X
         if let Ok(re) = Regex::new(r"^(?:from|import)\s+([.\w]+)") {

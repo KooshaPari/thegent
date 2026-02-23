@@ -2,12 +2,13 @@
 
 import contextlib
 import hashlib
-import json
 import logging
 import os
 import socket
 import time
 import uuid
+
+from thegent.utils.json_utils import json_dumps, json_loads
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
@@ -603,7 +604,7 @@ class InterruptionTracker:
             "severity": severity,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def get_fatigue_score(self, window_s: int = 3600) -> float:
         """Calculate fatigue score based on recent interruptions (0.0-1.0)."""
@@ -675,7 +676,7 @@ class HandoffManager:
             "confirmed": False,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
         return snapshot_id
 
     def confirm_handoff(self, snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> bool:
@@ -691,7 +692,7 @@ class HandoffManager:
                 "reason": "snapshot_not_found",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event) + "\n")
+                f.write(json_dumps(invalid_event) + "\n")
             return False
 
         if confidence < 0.0 or confidence > 1.0:
@@ -705,7 +706,7 @@ class HandoffManager:
                 "reason": "confidence_out_of_range",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event) + "\n")
+                f.write(json_dumps(invalid_event) + "\n")
             return False
 
         snapshot = self.get_snapshot(snapshot_id)
@@ -720,7 +721,7 @@ class HandoffManager:
                 "reason": "invalid_snapshot_shape",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event) + "\n")
+                f.write(json_dumps(invalid_event) + "\n")
             return False
 
         confidence_state = "high"
@@ -742,7 +743,7 @@ class HandoffManager:
                 "run_count": len(snapshot.get("run_ids", [])),
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(low_confidence_event) + "\n")
+                f.write(json_dumps(low_confidence_event) + "\n")
 
         self._confirmed_handoffs.add(snapshot_id)
         # Update registry record (simplified: append confirmation event)
@@ -758,7 +759,7 @@ class HandoffManager:
             "continuity_envelope_version": "v2.0",  # WP-12005
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
         return True
 
     def get_snapshot(self, snapshot_id: str) -> dict[str, Any] | None:
@@ -770,7 +771,7 @@ class HandoffManager:
                 line = line.strip()
                 if not line:
                     continue
-                data = json.loads(line)
+                data = json_loads(line)
                 if data.get("snapshot_id") == snapshot_id and data.get("event_type") != "handoff_confirmed":
                     return data
         return None
@@ -786,7 +787,7 @@ class HandoffManager:
                 line = line.strip()
                 if not line:
                     continue
-                data = json.loads(line)
+                data = json_loads(line)
                 if data.get("event_type") == "handoff_confirmed":
                     confirmed.add(data["snapshot_id"])
                 elif "snapshot_id" in data:
@@ -909,7 +910,7 @@ class DeferralQueue:
             "status": "deferred",
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def list_deferred(self) -> list[dict[str, Any]]:
         """List all currently deferred tasks."""
@@ -921,7 +922,7 @@ class DeferralQueue:
                 line = line.strip()
                 if not line:
                     continue
-                data = json.loads(line)
+                data = json_loads(line)
                 if data.get("status") == "deferred":
                     items.append(data)
         return items
@@ -938,11 +939,11 @@ class DeferralQueue:
                 if not stripped:
                     lines.append(line)
                     continue
-                data = json.loads(stripped)
+                data = json_loads(stripped)
                 if data.get("run_id") == run_id and data.get("status") == "deferred":
                     data["status"] = "resumed"
                     found = True
-                lines.append(json.dumps(data) + "\n")
+                lines.append(json_dumps(data) + "\n")
         if found:
             with self.path.open("w", encoding="utf-8") as f:
                 f.writelines(lines)
@@ -1075,7 +1076,7 @@ class DLQManager:
             event["poison_pill_count"] = existing[0].get("poison_pill_count", 0) + 1
 
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
         # WP-3008: Integrate EscalationQueue with DLQ (Option C)
         try:
@@ -1284,7 +1285,7 @@ class ProviderScorer:
                 "orchestration": {"claude": 0.96, "gemini": 0.88, "codex": 0.80},
             }
         try:
-            return json.loads(self.path.read_text(encoding="utf-8"))
+            return json_loads(self.path.read_text(encoding="utf-8"))
         except Exception:
             return {}
 
@@ -1311,7 +1312,7 @@ class ProviderScorer:
         scores[characteristic][provider] = (current * 0.9) + (quality_score * 0.1)
 
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(scores, indent=2), encoding="utf-8")
+        self.path.write_text(json_dumps(scores, indent=2), encoding="utf-8")
         return {"status": "updated", "new_score": scores[characteristic][provider]}
 
 
@@ -1469,7 +1470,7 @@ class CalibrationRegistry:
         if not self.path.exists():
             return 1.0
         try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
+            data = json_loads(self.path.read_text(encoding="utf-8"))
             return data.get(agent, {}).get("factor", 1.0)
         except Exception:
             return 1.0
@@ -1479,14 +1480,14 @@ class CalibrationRegistry:
         data = {}
         if self.path.exists():
             with contextlib.suppress(Exception):
-                data = json.loads(self.path.read_text(encoding="utf-8"))
+                data = json_loads(self.path.read_text(encoding="utf-8"))
         data[agent] = {
             "factor": factor,
             "sample_size": sample_size,
             "updated_at_utc": datetime.now(UTC).isoformat(),
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self.path.write_text(json_dumps(data, indent=2), encoding="utf-8")
 
 
 class LaneController:
@@ -1664,7 +1665,7 @@ class RunRegistry:
             marker = build_schema_marker_event(self.SCHEMA_VERSION)
             marker["hash"] = self._calculate_hash(marker)
             with self.registry_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(marker) + "\n")
+                f.write(json_dumps(marker) + "\n")
 
     def _get_last_hash(self) -> str | None:
         """Return the hash of the last record in the registry."""
@@ -1690,7 +1691,7 @@ class RunRegistry:
                     }
                     return None
 
-                data = json.loads(last_line)
+                data = json_loads(last_line)
                 if not isinstance(data, dict):
                     self._last_hash_status = {
                         "status": "invalid_record_type",
@@ -1779,7 +1780,7 @@ class RunRegistry:
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def register_feedback(self, run_id: str, score: float, note: str | None = None) -> None:
         """Record operator feedback for a run with hash chaining."""
@@ -1791,7 +1792,7 @@ class RunRegistry:
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def register_pause(
         self,
@@ -1809,7 +1810,7 @@ class RunRegistry:
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def register_resume(self, run_id: str) -> None:
         """Record run resume for state-aware orchestration (G-KD-03)."""
@@ -1817,7 +1818,7 @@ class RunRegistry:
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def get_run_state(self, run_id: str) -> RunState | None:
         """Return current run state from registry events (G-KD-03)."""
@@ -2027,7 +2028,7 @@ class MessageRegistry:
             "event": "update",
         }
         with self.messages_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(update) + "\n")
+            f.write(json_dumps(update) + "\n")
 
 
 class AuditEntry(BaseModel):
@@ -2213,7 +2214,7 @@ class PolicyEngine:
         }
         try:
             with path.open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps(event, sort_keys=True))
+                fh.write(json_dumps(event, sort_keys=True))
                 fh.write("\n")
         except OSError as exc:
             _log.warning("failed to write governance await_approval event: %s", exc)
@@ -2433,7 +2434,7 @@ class TrustBoundaryValidator:
         if not self.state_path.exists():
             return None
         try:
-            data = json.loads(self.state_path.read_text(encoding="utf-8"))
+            data = json_loads(self.state_path.read_text(encoding="utf-8"))
             return data.get("last_environment")
         except Exception:
             return None
@@ -2442,7 +2443,7 @@ class TrustBoundaryValidator:
         """Record current environment after successful run."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         data = {"last_environment": env, "updated_at": datetime.now(UTC).isoformat()}
-        self.state_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self.state_path.write_text(json_dumps(data, indent=2), encoding="utf-8")
 
     def validate_transition(self, from_env: str | None, to_env: str) -> tuple[bool, str]:
         """
@@ -2535,7 +2536,7 @@ class Auditor:
         path = artifacts_dir / f"{run_id}.maif.json"
 
         if isinstance(artifact, dict):
-            path.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
+            path.write_text(json_dumps(artifact, indent=2), encoding="utf-8")
         else:
             path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
         return path
@@ -2559,7 +2560,7 @@ class Auditor:
                 if not line.strip():
                     continue
                 try:
-                    data = json.loads(line)
+                    data = json_loads(line)
                     rid = data.get("run_id", "unknown")
                     stored_hash = data.get("hash")
                     prev_hash = data.get("prev_hash")
@@ -2674,7 +2675,7 @@ class CircuitBreakerRegistry:
             "error_hash": error_hash,
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def is_open(self, target: str, category: str = "agent") -> bool:
         """Check if the circuit for a target in a category is open (blocked)."""
@@ -2720,7 +2721,7 @@ class OverrideRegistry:
             "expires_at_utc": datetime.fromtimestamp(expires_at, tz=UTC).isoformat(),
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def has_unexpired(self, owner: str) -> bool:
         """True if owner has an override that has not yet expired."""
@@ -2768,7 +2769,7 @@ class EscalationQueue:
             "status": "pending",
         }
         with self.queue_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json_dumps(event) + "\n")
 
     def list_pending(self, past_sla_only: bool = False, limit: int = 50) -> list[dict[str, Any]]:
         """List escalation items. If past_sla_only, return only items past escalate_by."""
@@ -2782,7 +2783,7 @@ class EscalationQueue:
                 if not line:
                     continue
                 try:
-                    data = json.loads(line)
+                    data = json_loads(line)
                     if data.get("status") != "pending":
                         continue
                     exp = data.get("escalate_by_utc")
@@ -2809,12 +2810,12 @@ class EscalationQueue:
             if not line.strip():
                 continue
             try:
-                data = json.loads(line)
+                data = json_loads(line)
                 if data.get("run_id") == run_id and data.get("status") == "pending":
                     data["status"] = resolution
                     data["resolved_at_utc"] = datetime.now(UTC).isoformat()
                     updated = True
-                new_lines.append(json.dumps(data))
+                new_lines.append(json_dumps(data))
             except Exception:
                 new_lines.append(line)
         if updated:

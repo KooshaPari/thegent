@@ -7,9 +7,6 @@ and governance-relevant code patterns.
 # @trace WL-124
 from __future__ import annotations
 
-import json
-import sys
-import uuid
 from pathlib import Path
 
 import typer
@@ -17,8 +14,6 @@ import typer
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
-    _normalize_output_format,
-    ThegentSettings,
     console,
 )
 

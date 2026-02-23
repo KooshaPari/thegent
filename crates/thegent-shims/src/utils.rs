@@ -74,7 +74,7 @@ pub fn exec_command(cmd: &str, args: &[String]) -> ExitCode {
 pub fn get_repo_root() -> std::path::PathBuf {
     if let Some(path) = resolve_binary("git") {
         if let Ok(output) = Command::new(&path)
-            .args(&["rev-parse", "--show-toplevel"])
+            .args(["rev-parse", "--show-toplevel"])
             .output()
         {
             if output.status.success() {
