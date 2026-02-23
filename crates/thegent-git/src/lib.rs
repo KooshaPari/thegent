@@ -464,6 +464,14 @@ fn thegent_git(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(update_ref, m)?)?;
     m.add_function(wrap_pyfunction!(merge_base, m)?)?;
 
+    // New operations - expanded API
+    m.add_function(wrap_pyfunction!(list_branches, m)?)?;
+    m.add_function(wrap_pyfunction!(list_remotes, m)?)?;
+    m.add_function(wrap_pyfunction!(get_log, m)?)?;
+    m.add_function(wrap_pyfunction!(fetch, m)?)?;
+    m.add_function(wrap_pyfunction!(get_head_ref, m)?)?;
+    m.add_function(wrap_pyfunction!(has_changes, m)?)?;
+
     Ok(())
 }
 
