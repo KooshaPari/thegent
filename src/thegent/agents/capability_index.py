@@ -50,16 +50,6 @@ class AgentRecommendation(SerializableMixin):
     capabilities: list[str]
     runner: str | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "name": self.name,
-            "path": str(self.path),
-            "score": self.score,
-            "description": self.description,
-            "capabilities": self.capabilities,
-            "runner": self.runner,
-        }
 
 
 @dataclass

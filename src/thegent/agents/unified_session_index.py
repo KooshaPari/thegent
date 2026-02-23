@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any, Callable, ClassVar, cast
 
 from thegent.infra.fast_file_watcher import FastFileWatcher
+from thegent.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class HarnessType(Enum):
 
 
 @dataclass
-class AgentSession:
+class AgentSession(SerializableMixin):
     """Unified agent session representation."""
 
     session_id: str
@@ -47,19 +48,6 @@ class AgentSession:
     metadata: dict[str, Any] = field(default_factory=dict)
     summary: str | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "session_id": self.session_id,
-            "harness": self.harness.value,
-            "project_path": self.project_path,
-            "started_at": self.started_at.isoformat(),
-            "ended_at": self.ended_at.isoformat() if self.ended_at else None,
-            "prompt_tokens": self.prompt_tokens,
-            "completion_tokens": self.completion_tokens,
-            "messages": self.messages,
-            "metadata": self.metadata,
-            "summary": self.summary,
-        }
 
 
 class UnifiedSessionIndex:
@@ -653,6 +641,7 @@ if __name__ == "__main__":
 import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import shlex
+from thegent.integrations.base import SerializableMixin
 
 
 class HarnessActionError(Exception):
