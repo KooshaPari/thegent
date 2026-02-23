@@ -1,17 +1,27 @@
 """Rust wrapper stubs for CLI entry points.
 
-These are placeholder implementations until the Rust binaries are built.
-For now, delegate to the main CLI with appropriate subcommands.
+These are standalone stubs that don't import the main thegent package
+to avoid version requirements. They delegate to shell commands.
 """
 
-import sys
 import subprocess
+import sys
+
+
+def _run_thegent(subcommand: str):
+    """Run thegent CLI with given subcommand."""
+    # Try thegent CLI first, fall back to python
+    result = subprocess.run(
+        ["thegent"] + subcommand.split(),
+        capture_output=False,
+        env={**subprocess.os.environ, "PYTHONPATH": "src"}
+    )
+    sys.exit(result.returncode)
 
 
 def droid():
-    """Droid agent runner - delegates to thegent CLI."""
-    # Import and run thegent with droid subcommand
-    sys.exit(subprocess.call(["thegent", "run", "--agent", "droid"] + sys.argv[1:]))
+    """Droid agent runner."""
+    _run_thegent("run --agent droid")
 
 
 def clode():

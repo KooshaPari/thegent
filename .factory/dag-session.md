@@ -16,8 +16,18 @@
 
 
 
+
+
+
+
 | id | agent | prompt | depends_on | status | evidence | retry_count | max_retries | quorum | confidence |
 |---|---|---|---|---|---|---|---|---|---|
+
+
+
+
+
+
 
 
 

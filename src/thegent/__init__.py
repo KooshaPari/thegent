@@ -6,11 +6,11 @@ import shutil
 import subprocess
 import sys
 
-# Python version requirements: CPython 3.10+ or PyPy 3.10+
-if sys.implementation.name == "cpython" and sys.version_info < (3, 10):
-    raise RuntimeError("thegent requires CPython 3.10+. For PyPy, use PyPy 3.10+")
-if sys.implementation.name == "pypy" and sys.version_info < (3, 10):
-    raise RuntimeError("thegent requires PyPy 3.10+. For CPython, use 3.10+")
+# Python version requirements: CPython 3.14+ or PyPy 3.11+
+if sys.implementation.name == "cpython" and sys.version_info < (3, 14):
+    raise RuntimeError("thegent requires CPython 3.14+. For PyPy, use PyPy 3.11+")
+if sys.implementation.name == "pypy" and sys.version_info < (3, 11):
+    raise RuntimeError("thegent requires PyPy 3.11+. For CPython, use 3.14+")
 
 
 def _get_tool_version(cmd: str) -> tuple[int, ...] | None:
