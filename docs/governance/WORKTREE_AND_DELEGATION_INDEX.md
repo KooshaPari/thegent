@@ -9,6 +9,8 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 3. `docs/governance/TASK_CLASSIFIER_SCHEMA.yaml`
 4. `docs/governance/DOMAIN_PLAYBOOKS.md`
 5. `docs/governance/GOVERNANCE_ROADMAP_DAG.md`
+6. `docs/governance/MCP_A2A_CONTROL_PLANE_BOUNDARY.md`
+7. `docs/governance/ROLLOUT_PHASES_CHECKLIST.md`
 
 ## Adoption Order
 
@@ -18,3 +20,13 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 4. Enforce in hooks and CI.
 5. Roll out by lane percentages.
 
+## Enforced Commands
+
+1. `./scripts/worktree_governance.sh new <branch> [start-point]`
+2. `./scripts/worktree_governance.sh check`
+
+## Non-Negotiables
+
+1. Keep the primary checkout on `main` and retain `.thegent-primary-main`.
+2. Route feature/refactor development through dedicated, policy-compliant worktrees.
+3. Prevent legacy bypass in policy checks (`THGENT_WORKTREE_ALLOW_LEGACY=1` is not accepted by strict gates).

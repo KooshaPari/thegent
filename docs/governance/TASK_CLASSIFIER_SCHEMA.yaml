@@ -84,4 +84,3 @@ escalation_rules:
   - if: "risk in [high, critical]"
     then:
       required_gates: [lint, unit, integration, security]
-

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """DAG-based quality runner with configurable fail mode.
 
-Uses config/quality-dag.yaml to run steps in dependency order. Parallel within each tier.
-In soft mode, if a step fails, dependents are skipped but other branches continue.
-In hard mode, execution stops after the first failing tier and remaining steps are marked blocked.
-Writes .quality/logs/<step>.log, .quality/logs/<step>.exit, .quality/last-run.json, .quality/summary.md.
+Uses config/quality-dag.yaml to run steps in dependency order. Parallel within each
+tier. In soft mode, if a step fails, dependents are skipped but other branches
+continue. In hard mode, execution stops after the first failing tier and remaining
+steps are marked blocked.
+
+Writes .quality/logs/<step>.log, .quality/logs/<step>.exit,
+.quality/last-run.json, .quality/summary.md.
 
 Run from project root. Uses cwd as ROOT. Requires PyYAML.
 """
@@ -26,6 +29,7 @@ LAST_RUN_JSON: Path = Path(".quality") / "last-run.json"
 PROGRESS_JSON: Path = Path(".quality") / "progress.json"
 DAG_CONFIG: Path = Path("config") / "quality-dag.yaml"
 SUMMARY_MD: Path = Path(".quality") / "summary.md"
+LANGUAGE_PROFILE_CONFIG: Path = Path("config") / "quality-language-profiles.yaml"
 
 
 def _resolve_paths(root: Path | None = None, config: Path | None = None) -> None:
@@ -46,44 +50,202 @@ def _resolve_paths(root: Path | None = None, config: Path | None = None) -> None
     SUMMARY_MD = ROOT / ".quality" / "summary.md"
 
 
-def _detect_stacks(root: Path) -> list[str]:
-    """Detect project stacks from root (py, ts, go, bash)."""
-    stacks = []
-    # py: root or backend/
-    if (root / "pyproject.toml").exists() or (root / "setup.py").exists() or (root / "backend" / "pyproject.toml").exists():
-        stacks.append("py")
-    # ts: frontend/ dir or package.json at root (exclude py-primary with docs package.json)
-    if (root / "frontend").is_dir() or ((root / "package.json").exists() and not (root / "pyproject.toml").exists()):
-        stacks.append("ts")
-    if (root / "go.mod").exists():
-        stacks.append("go")
-    if (root / "scripts").is_dir() or (root / "hooks").is_dir():
-        stacks.append("bash")
-    return stacks
+def _detect_py(root: Path) -> bool:
+    return (
+        (root / "pyproject.toml").exists()
+        or (root / "setup.py").exists()
+        or (root / "backend" / "pyproject.toml").exists()
+    )
+
+
+def _py_steps(root: Path) -> dict[str, dict]:
+    py_prefix = "backend:" if (root / "backend" / "pyproject.toml").exists() else "py:"
+    return {
+        "py-lint": {"deps": [], "command": f"task {py_prefix}lint", "display": "Python lint"},
+        "py-type": {"deps": [], "command": f"task {py_prefix}typecheck", "display": "Python type"},
+        "py-test": {"deps": ["py-lint", "py-type"], "command": f"task {py_prefix}test", "display": "Python test"},
+    }
+
+
+def _detect_ts(root: Path) -> bool:
+    package_json = root / "package.json"
+    if not package_json.exists():
+        return False
+    indicators = ["tsconfig.json", "extensions/vscode/package.json"]
+    if any((root / p).exists() for p in indicators):
+        return True
+    extension_dir = root / "extensions" / "vscode"
+    if extension_dir.is_dir() and any(extension_dir.glob("*.ts")):
+        return True
+    return False
+
+
+def _ts_steps(_: Path) -> dict[str, dict]:
+    return {
+        "ts-lint": {"deps": [], "command": "task typescript:lint", "display": "Frontend lint"},
+        "ts-type": {"deps": [], "command": "task typescript:typecheck", "display": "Frontend type"},
+        "ts-build": {"deps": ["ts-lint", "ts-type"], "command": "task typescript:build", "display": "Frontend build"},
+        "ts-test": {"deps": ["ts-build"], "command": "task typescript:test", "display": "Frontend test"},
+    }
+
+
+def _detect_go(root: Path) -> bool:
+    return (root / "go.mod").exists() or (root / "go.work").exists()
+
+
+def _go_steps(_: Path) -> dict[str, dict]:
+    return {
+        "go-lint": {"deps": [], "command": "task go:lint", "display": "Go lint"},
+        "go-build": {"deps": ["go-lint"], "command": "task go:build", "display": "Go build"},
+        "go-test": {"deps": ["go-build"], "command": "task go:test", "display": "Go test"},
+    }
+
+
+def _detect_bash(root: Path) -> bool:
+    return (root / "scripts").is_dir() or (root / "hooks").is_dir() or (root / ".github").is_dir()
+
+
+def _bash_steps(_: Path) -> dict[str, dict]:
+    return {"bash-lint": {"deps": [], "command": "task bash:lint", "display": "Bash lint"}}
+
+
+def _detect_rust(root: Path) -> bool:
+    return (root / "Cargo.toml").exists() or (root / "crates" / "Cargo.toml").exists()
+
+
+def _rust_steps(_: Path) -> dict[str, dict]:
+    return {
+        "rust-fmt-check": {"deps": [], "command": "task rust:fmt:check", "display": "Rust format check"},
+        "rust-check": {"deps": ["rust-fmt-check"], "command": "task rust:check", "display": "Rust check"},
+        "rust-clippy": {"deps": ["rust-check"], "command": "task rust:lint", "display": "Rust clippy"},
+        "rust-test": {"deps": ["rust-clippy"], "command": "task rust:test", "display": "Rust test"},
+        "rust-security": {"deps": ["rust-test"], "command": "task rust:security", "display": "Rust security"},
+    }
+
+
+def _detect_zig(root: Path) -> bool:
+    return (root / "build.zig").exists() or any(root.glob("*.zig"))
+
+
+def _zig_steps(_: Path) -> dict[str, dict]:
+    return {
+        "zig-fmt-check": {"deps": [], "command": "task zig:fmt:check", "display": "Zig format check"},
+        "zig-build": {"deps": ["zig-fmt-check"], "command": "task zig:build", "display": "Zig build"},
+        "zig-test": {"deps": ["zig-build"], "command": "task zig:test", "display": "Zig test"},
+    }
+
+
+def _detect_mojo(root: Path) -> bool:
+    return bool(list(root.glob("*.mojo")) or list((root / "src").glob("**/*.mojo")))
+
+
+def _mojo_steps(_: Path) -> dict[str, dict]:
+    return {
+        "mojo-contracts": {
+            "deps": [],
+            "command": "task quality:runtime-contracts:mojo-kernel",
+            "display": "Mojo runtime contract checks",
+        }
+    }
+
+
+DEFAULT_LANGUAGE_PROFILES = {
+    "py": {"detect": _detect_py, "steps_fn": _py_steps},
+    "ts": {"detect": _detect_ts, "steps_fn": _ts_steps},
+    "go": {"detect": _detect_go, "steps_fn": _go_steps},
+    "bash": {"detect": _detect_bash, "steps_fn": _bash_steps},
+    "rust": {"detect": _detect_rust, "steps_fn": _rust_steps},
+    "zig": {"detect": _detect_zig, "steps_fn": _zig_steps},
+    "mojo": {"detect": _detect_mojo, "steps_fn": _mojo_steps},
+}
+
+
+def _normalize_list(value) -> list[str]:
+    if not value:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, (list, tuple)):
+        return [str(v) for v in value]
+    return []
+
+
+def _build_custom_detector(spec: dict):
+    globs = _normalize_list(spec.get("match_globs") or spec.get("match") or spec.get("patterns"))
+    files = _normalize_list(spec.get("match_files") or spec.get("files"))
+    dirs = _normalize_list(spec.get("match_dirs") or spec.get("dirs"))
+    if not (globs or files or dirs):
+        return None
+
+    def detect(root: Path) -> bool:
+        for path in files:
+            if (root / path).exists():
+                return True
+        for path in dirs:
+            if (root / path).is_dir():
+                return True
+        for pattern in globs:
+            if any(root.glob(pattern)):
+                return True
+        return False
+
+    return detect
+
+
+def _load_custom_language_profiles(root: Path) -> dict[str, dict]:
+    if not LANGUAGE_PROFILE_CONFIG.exists():
+        return {}
+    try:
+        import yaml
+    except ImportError:
+        return {}
+
+    try:
+        data = yaml.safe_load(LANGUAGE_PROFILE_CONFIG.read_text())
+    except Exception as exc:
+        print(f"Ignoring {LANGUAGE_PROFILE_CONFIG}: {exc}", file=sys.stderr)
+        return {}
+
+    languages = data.get("languages") or {}
+    custom_profiles: dict[str, dict] = {}
+    for name, spec in languages.items():
+        if not isinstance(spec, dict):
+            continue
+        detect = _build_custom_detector(spec)
+        steps_cfg = spec.get("steps")
+        if not detect or not isinstance(steps_cfg, dict):
+            continue
+
+        def steps_fn(_: Path, steps=steps_cfg) -> dict:
+            return {step: dict(cfg) for step, cfg in steps.items()}
+
+        custom_profiles[name] = {"detect": detect, "steps_fn": steps_fn}
+    return custom_profiles
+
+
+def _detect_stacks(root: Path) -> dict[str, dict]:
+    profiles = dict(DEFAULT_LANGUAGE_PROFILES)
+    profiles.update(_load_custom_language_profiles(root))
+
+    matched: dict[str, dict] = {}
+    for name, profile in profiles.items():
+        detect = profile.get("detect")
+        if not callable(detect):
+            continue
+        try:
+            if detect(root):
+                matched[name] = profile
+        except Exception as exc:
+            print(f"Error detecting '{name}': {exc}", file=sys.stderr)
+    return matched
 
 
 def _generate_dag_config(root: Path) -> dict:
     """Generate quality-dag steps from detected project structure."""
     stacks = _detect_stacks(root)
     steps: dict[str, dict] = {}
-    py_prefix = "backend:" if (root / "backend" / "pyproject.toml").exists() else "py:"
-    fe_prefix = "frontend:" if (root / "frontend").is_dir() else "ts:"
-
-    if "py" in stacks:
-        steps["py-lint"] = {"deps": [], "command": f"task {py_prefix}lint", "display": "Python lint"}
-        steps["py-type"] = {"deps": [], "command": f"task {py_prefix}typecheck", "display": "Python type"}
-        steps["py-test"] = {"deps": ["py-lint", "py-type"], "command": f"task {py_prefix}test", "display": "Python test"}
-    if "ts" in stacks:
-        steps["fe-lint"] = {"deps": [], "command": f"task {fe_prefix}lint", "display": "Frontend lint"}
-        steps["fe-type"] = {"deps": [], "command": f"task {fe_prefix}typecheck", "display": "Frontend type"}
-        steps["fe-build"] = {"deps": ["fe-lint", "fe-type"], "command": f"task {fe_prefix}build", "display": "Frontend build"}
-        steps["fe-test"] = {"deps": ["fe-build"], "command": f"task {fe_prefix}test", "display": "Frontend test"}
-    if "go" in stacks:
-        steps["go-lint"] = {"deps": [], "command": "task go:lint", "display": "Go lint"}
-        steps["go-build"] = {"deps": ["go-lint"], "command": "task go:build", "display": "Go build"}
-        steps["go-test"] = {"deps": ["go-build"], "command": "task go:test", "display": "Go test"}
-    if "bash" in stacks:
-        steps["bash-lint"] = {"deps": [], "command": "task bash:lint", "display": "Bash lint"}
+    for profile in stacks.values():
+        steps.update(profile["steps_fn"](root))
 
     if not steps:
         steps["lint"] = {"deps": [], "command": "task lint", "display": "Lint"}

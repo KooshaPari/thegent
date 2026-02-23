@@ -178,6 +178,7 @@ if thegent doctor; then
     repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
     if [ -n "$repo_root" ]; then
       marker="$repo_root/.thegent-primary-main"
+      mkdir -p "${THGENT_WORKTREE_ROOT:-$repo_root/.worktrees}"
       if [ ! -f "$marker" ]; then
         cat > "$marker" <<'EOF'
 # thegent primary checkout policy marker
@@ -185,6 +186,7 @@ if thegent doctor; then
 # Use dedicated worktrees for branch development.
 EOF
         echo "Created policy marker: $marker"
+        echo "Governance docs: docs/governance/WORKTREE_AND_DELEGATION_INDEX.md"
       fi
     fi
   fi

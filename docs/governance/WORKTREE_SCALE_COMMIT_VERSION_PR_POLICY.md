@@ -11,6 +11,15 @@ Define a single policy model for how work is placed, committed, versioned, and m
 3. Use policy-driven worktree placement, not `1 agent = 1 worktree`.
 4. Use integration worktrees to merge/cherry-pick back to `main`.
 
+## Enforced Worktree Layout
+
+1. Non-primary worktrees must live under `${THGENT_WORKTREE_ROOT:-<repo>/.worktrees}`.
+2. Non-primary worktree names must match `<repo-name>--<branch-slug>`.
+3. Create worktrees via `./scripts/worktree_governance.sh new <branch> [start-point]`.
+4. Validate layout via `./scripts/worktree_governance.sh check`.
+5. Legacy worktrees are blocked by default. Temporary migration override:
+   `THGENT_WORKTREE_ALLOW_LEGACY=1`.
+
 ## Task Scale Taxonomy
 
 1. `XS`: single-file, low-risk, narrow change.
@@ -68,4 +77,3 @@ Define a single policy model for how work is placed, committed, versioned, and m
 1. Use file-claim/ownership checks before edits.
 2. On conflict, fork/branch both outcomes and retain both artifacts.
 3. Never destructively overwrite concurrent work.
-

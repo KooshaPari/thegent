@@ -82,10 +82,10 @@ repos:
 
       - id: max-lines-gate
         name: Canonical Max-Lines Gate
-        stages: [pre-push]
-        entry: scripts/max-lines-gate.sh
+        stages: [pre-commit, pre-push]
+        entry: task quality:max-lines
         language: system
-        pass_filenames: true
+        pass_filenames: false
 
       - id: ty
         name: Fast Type Check (ty) (Gate 3)
@@ -102,6 +102,13 @@ repos:
         language: system
         pass_filenames: true
         types: [python]
+
+      - id: governance-policy-check
+        name: Governance Policy Check
+        stages: [pre-push]
+        entry: scripts/governance_policy_check.sh
+        language: system
+        pass_filenames: false
 
       - id: shellcheck
         name: Shellcheck (project scripts)
