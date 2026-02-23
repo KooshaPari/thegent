@@ -558,7 +558,7 @@ def get_data_protection_status_impl() -> dict[str, Any]:
 
 def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
     """Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals."""
-    from thegent.cli.commands.impl import ps_impl
+    from thegent.cli.commands.session_ops_list_impl import ps_impl
 
     settings = ThegentSettings()
     session_dir = settings.session_dir.expanduser().resolve()

@@ -109,7 +109,7 @@ def dag_list_cmd(cd: Path | None = None, format: str | None = None) -> None:
     if not dag_path.exists():
         console.print(f"[red]DAG session not found: {dag_path}[/red]")
         raise typer.Exit(1)
-    _frontmatter, tasks = _parse_dag_session(dag_path)
+    _, tasks = _parse_dag_session(dag_path)
     settings = ThegentSettings()
     fmt = resolve_output_format(format, settings)
     render_dag_list(tasks, fmt, console=console)
