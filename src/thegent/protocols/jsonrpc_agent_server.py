@@ -952,31 +952,100 @@ def _build_turn_submit_response_phase(
     }
 
 
-def _validate_turn_submit_approval_payload(approval_payload: dict[str, Any]) -> None:
+def _extract_turn_submit_response_request_has_id(response_phase: dict[str, Any]) -> bool:
+    request_has_id = response_phase.get("request_has_id")
+    if not isinstance(request_has_id, bool):
+        raise ValueError("Turn submit response target unresolved")
+    return request_has_id
+
+
+def _extract_turn_submit_response_request_id(response_phase: dict[str, Any], request_has_id: bool) -> Any:
+    request_id = response_phase.get("request_id")
+    if request_has_id and (request_id is None or not _is_valid_request_id(request_id)):
+        raise ValueError("Turn submit response target unresolved")
+    return request_id
+
+
+def _extract_turn_submit_response_turn(response_phase: dict[str, Any]) -> dict[str, Any]:
+    turn = response_phase.get("turn")
+    if not isinstance(turn, dict):
+        raise ValueError("Turn submit response target unresolved")
+    return turn
+
+
+def _extract_turn_submit_response_approval_payload(
+    response_phase: dict[str, Any],
+) -> dict[str, Any] | None:
+    approval_payload = response_phase.get("approval_payload")
+    if approval_payload is not None and not isinstance(approval_payload, dict):
+        raise ValueError("Turn submit response target unresolved")
+    return approval_payload
+
+
+def _extract_turn_submit_approval_payload_id(approval_payload: dict[str, Any]) -> str:
     approval_id = approval_payload.get("id")
-    approval_status = approval_payload.get("status")
     if not isinstance(approval_id, str) or not approval_id:
         raise ValueError("Turn submit response target unresolved")
+    return approval_id
+
+
+def _extract_turn_submit_approval_payload_status(approval_payload: dict[str, Any]) -> str:
+    approval_status = approval_payload.get("status")
     if not isinstance(approval_status, str) or not approval_status:
         raise ValueError("Turn submit response target unresolved")
+    return approval_status
+
+
+def _extract_turn_submit_approval_payload_diff(approval_payload: dict[str, Any]) -> str | None:
     approval_diff = approval_payload.get("diff")
     if approval_diff is not None and not isinstance(approval_diff, str):
         raise ValueError("Turn submit response target unresolved")
+    return approval_diff
+
+
+def _extract_turn_submit_response_approval_id(approval_payload: dict[str, Any] | None) -> str | None:
+    if approval_payload is None:
+        return None
+    return _extract_turn_submit_approval_payload_id(approval_payload)
+
+
+def _extract_turn_submit_response_approval_status(approval_payload: dict[str, Any] | None) -> str | None:
+    if approval_payload is None:
+        return None
+    return _extract_turn_submit_approval_payload_status(approval_payload)
+
+
+def _extract_turn_submit_response_approval_diff(approval_payload: dict[str, Any] | None) -> str | None:
+    if approval_payload is None:
+        return None
+    return _extract_turn_submit_approval_payload_diff(approval_payload)
+
+
+def _resolve_turn_submit_response_approval_fields(
+    approval_payload: dict[str, Any] | None,
+) -> tuple[str | None, str | None, str | None]:
+    approval_id = _extract_turn_submit_response_approval_id(approval_payload)
+    approval_status = _extract_turn_submit_response_approval_status(approval_payload)
+    approval_diff = _extract_turn_submit_response_approval_diff(approval_payload)
+    return approval_id, approval_status, approval_diff
+
+
+def _validate_turn_submit_approval_payload(approval_payload: dict[str, Any]) -> None:
+    _extract_turn_submit_approval_payload_id(approval_payload)
+    _extract_turn_submit_approval_payload_status(approval_payload)
+    _extract_turn_submit_approval_payload_diff(approval_payload)
 
 
 def _resolve_turn_submit_response_target(
     response_phase: dict[str, Any],
 ) -> tuple[bool, Any, dict[str, Any], dict[str, Any] | None]:
-    request_has_id = response_phase.get("request_has_id")
-    turn = response_phase.get("turn")
-    approval_payload = response_phase.get("approval_payload")
-    if not isinstance(request_has_id, bool) or not isinstance(turn, dict):
-        raise ValueError("Turn submit response target unresolved")
-    if approval_payload is not None and not isinstance(approval_payload, dict):
-        raise ValueError("Turn submit response target unresolved")
+    request_has_id = _extract_turn_submit_response_request_has_id(response_phase)
+    request_id = _extract_turn_submit_response_request_id(response_phase, request_has_id)
+    turn = _extract_turn_submit_response_turn(response_phase)
+    approval_payload = _extract_turn_submit_response_approval_payload(response_phase)
     if isinstance(approval_payload, dict):
-        _validate_turn_submit_approval_payload(approval_payload)
-    return request_has_id, response_phase.get("request_id"), turn, approval_payload
+        _resolve_turn_submit_response_approval_fields(approval_payload)
+    return request_has_id, request_id, turn, approval_payload
 
 
 def _handle_turn_submit_request(
