@@ -159,7 +159,6 @@ def contracts_registry_cmd(format: str | None = None) -> None:
     console.print(table)
 
 
-=======
 def migration_cmd(contract_id: str, version: str, format: str | None = None) -> None:
     """Evaluate migration status for a contract version."""
     from rich.console import Console
@@ -237,7 +236,6 @@ def drift_cmd(
         console.print(panel)
 
 
->>>>>>> fix/ci-remove-macos
 def contracts_conformance_cmd(
     format: str | None = None,
     check_drift: bool = False,

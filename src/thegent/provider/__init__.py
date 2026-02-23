@@ -44,7 +44,7 @@ from .models import (
 __all__ = [
     # CRUD
     "add_provider",
-    "delete_provider", 
+    "delete_provider",
     "get_provider",
     "list_providers",
     "update_provider",

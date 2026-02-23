@@ -35,9 +35,7 @@ from thegent.cli.commands.governance_escalation_hitl_cmds import (
     govern_approve_cmd,
     govern_list_pending_cmd,
     govern_reject_cmd,
-=======
     sweep_cmd,
->>>>>>> fix/ci-remove-macos
 )
 
 # Re-export all policy & health commands

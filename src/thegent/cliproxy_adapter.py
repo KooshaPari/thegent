@@ -1020,7 +1020,7 @@ async def proxy_handler(request: Request) -> Response:
                 status_code=403,
                 headers={"Content-Type": "application/json"},
             )
-    
+
     backend = getattr(request.app.state, "backend_url", "http://127.0.0.1:8318/v1")
     path = request.url.path or "/v1/models"
 
