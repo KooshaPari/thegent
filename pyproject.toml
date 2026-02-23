@@ -1,96 +1,34 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = [ "hatchling", "hatch-vcs",]
 build-backend = "hatchling.build"
 
 [project]
 name = "thegent"
-dynamic = ["version"]
+dynamic = [ "version",]
 description = "Unified agent orchestration CLI for Factory skills, droids, and multi-agent workflows"
-authors = [
-    { name = "Koosha Paridehpour", email = "kooshapari@gmail.com" },
-]
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
-urls = { "Homepage" = "https://github.com/kooshapari/thegent", "Repository" = "https://github.com/kooshapari/thegent", "Documentation" = "https://github.com/kooshapari/thegent#readme" }
-keywords = ["ai", "agent", "mcp", "orchestration", "automation", "cli", "factory", "droid", "codex", "claude"]
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Operating System :: OS Independent",
-]
-dependencies = [
-    "httpx>=0.28.1",
-    "typer>=0.16.0",
-    "rich>=13.9.4",
-    "pydantic>=2.12.5",
-    "pydantic-settings>=2.8.1",
-    "python-dotenv>=1.0.1",
-    "tenacity>=9.0.0",
-    "pyyaml>=6.0.2",
-    "ruamel.yaml>=0.18.6",
-    "fastmcp[tasks]>=3.0.0",
-    "starlette>=0.46.0",
-    "uvicorn>=0.34.0",
-    "granian>=1.7.4",
-    "opentelemetry-api>=1.31.0",
-    "opentelemetry-sdk>=1.31.0",
-    "litellm>=1.81.13",
-    "tomlkit>=0.13.2",
-    "rtoml>=0.12.0",
-    "tomli>=2.2.1",
-    "tomli_w>=1.0.0",
-    "cachetools>=5.5.2",
-    "diskcache>=5.6.3",
-    "watchdog>=6.0.0",
-    "watchfiles>=1.0.4",
-    "fastjsonschema>=2.21.1",
-    "psutil>=7.0.0",
-    "pybreaker>=1.2.0",
-    "textual>=1.0.0",
-    "duckduckgo-search>=7.3.2",
-    "praw>=7.8.1",
-    "apscheduler>=3.10.4",
-    "feedparser>=6.0.11",
-    "arxiv>=2.1.3",
-    "scholarly>=1.7.11",
-    "playwright>=1.50.0",
-    "extism>=1.0.2; platform_system == 'Darwin' and platform_machine == 'arm64'",
-    "ujson; implementation_name == 'pypy'",
-    "orjson; implementation_name == 'cpython'",
-    "Pillow>=10.0.0",
-    "structlog>=24.0.0",
-]
+keywords = [ "ai", "agent", "mcp", "orchestration", "automation", "cli", "factory", "droid", "codex", "claude",]
+classifiers = [ "Development Status :: 4 - Beta", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Scientific/Engineering :: Artificial Intelligence", "Operating System :: OS Independent",]
+dependencies = [ "httpx>=0.28.1", "typer>=0.16.0", "rich>=13.9.4", "pydantic>=2.12.5", "pydantic-settings>=2.8.1", "python-dotenv>=1.0.1", "tenacity>=9.0.0", "pyyaml>=6.0.2", "ruamel.yaml>=0.18.6", "fastmcp[tasks]>=3.0.0", "starlette>=0.46.0", "uvicorn>=0.34.0", "granian>=1.7.4", "opentelemetry-api>=1.31.0", "opentelemetry-sdk>=1.31.0", "litellm>=1.81.13", "tomlkit>=0.13.2", "rtoml>=0.12.0", "tomli>=2.2.1", "tomli_w>=1.0.0", "cachetools>=5.5.2", "diskcache>=5.6.3", "watchdog>=6.0.0", "watchfiles>=1.0.4", "fastjsonschema>=2.21.1", "psutil>=7.0.0", "pybreaker>=1.2.0", "textual>=1.0.0", "duckduckgo-search>=7.3.2", "praw>=7.8.1", "apscheduler>=3.10.4", "feedparser>=6.0.11", "arxiv>=2.1.3", "scholarly>=1.7.11", "playwright>=1.50.0", "extism>=1.0.2; platform_system == 'Darwin' and platform_machine == 'arm64'", "ujson; implementation_name == 'pypy'", "orjson; implementation_name == 'cpython'", "Pillow>=10.0.0", "structlog>=24.0.0",]
+[[project.authors]]
+name = "Koosha Paridehpour"
+email = "kooshapari@gmail.com"
+
+[dependency-groups]
+dev = [ "mypy>=1.19.1", "pytest-asyncio>=1.3.0", "ruff>=0.15.1", "types-pyyaml>=6.0.12.20250915",]
+
+[project.license]
+text = "MIT"
+
+[project.urls]
+Homepage = "https://github.com/kooshapari/thegent"
+Repository = "https://github.com/kooshapari/thegent"
+Documentation = "https://github.com/kooshapari/thegent#readme"
 
 [project.optional-dependencies]
-fast = [
-    "curl-cffi>=0.6.0",
-]
-dev = [
-    "pytest>=9.0.2",
-    "pytest-rerunfailures>=14.0.0",
-    "pytest-asyncio>=1.3.0",
-    "pytest-benchmark>=4.0.0",
-    "pytest-cov>=6.0.0",
-    "pytest-xdist>=3.6.1",
-    "pytest-testmon>=2.1.0,<3.0.0",
-    "ruff>=0.15.1",
-    "ty>=0.0.2",
-    "basedpyright>=1.31.1",
-    "pre-commit>=4.1.0",
-    "tach>=0.26.0",
-    "vulture>=2.14",
-    "radon>=6.0",
-    "psleak>=0.1.0",
-    "mypy>=1.19.1",
-    "types-pyyaml>=6.0.12.20250915",
-]
+fast = [ "curl-cffi>=0.6.0",]
+dev = [ "pytest>=9.0.2", "pytest-rerunfailures>=14.0.0", "pytest-asyncio>=1.3.0", "pytest-benchmark>=4.0.0", "pytest-cov>=6.0.0", "pytest-xdist>=3.6.1", "pytest-testmon>=2.1.0,<3.0.0", "ruff>=0.15.1", "ty>=0.0.2", "basedpyright>=1.31.1", "pre-commit>=4.1.0", "tach>=0.26.0", "vulture>=2.14", "radon>=6.0", "psleak>=0.1.0", "mypy>=1.19.1", "types-pyyaml>=6.0.12.20250915",]
 
 [project.scripts]
 thegent = "thegent.cli.apps.main:app"
@@ -102,140 +40,17 @@ anen = "thegent.rust_wrappers:anen"
 fanta = "thegent.rust_wrappers:fanta"
 antigma = "thegent.rust_wrappers:antigma"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/thegent", "src/research_engine"]
-
-[tool.hatch.version]
-source = "vcs"
-fallback-version = "0.1.0"
-[tool.hatch.build.targets.wheel.force-include]
-"hooks" = "thegent/hooks"
-"skills" = "thegent/skills"
-"src/thegent/py.typed" = "thegent/py.typed"
-
 [tool.uv]
 managed = true
-override-dependencies = [
-    "hf-xet==0.0.0; implementation_name == 'pypy'",
-]
-
-[tool.uv.workspace]
-members = [
-    "sub-projects/thegent-cli",
-    "sub-projects/thegent-agents",
-    "sub-projects/thegent-mcp",
-]
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
-norecursedirs = ["templates", ".venv", "venv", "contracts", "archive", "docs", "benchmarks", "crates", "build", "dist", "coverage", "node_modules", ".ruff_cache", ".pytest_cache", ".mypy_cache", ".cache"]
-python_files = ["test_*.py", "*_benchmark.py"]
-python_functions = ["test_*", "bench_*"]
-markers = [
-    "unit: marks unit tests",
-    "integration: marks tests that call real agents (deselect with -m 'not integration')",
-    "e2e: marks end-to-end CLI tests",
-    "slow: marks slow tests (deselect with -m 'not slow')",
-    "asyncio: marks async tests (pytest-asyncio)",
-    "load: marks load/stress tests",
-    "chaos: marks chaos/resilience tests",
-    "a11y: marks accessibility tests",
-    "requirement: marks tests with a specific requirement ID for traceability (e.g. WL-030, FR-XXX-NNN)",
-    "fast: marks tests safe for fast lane (no I/O, no external services)",
-    "deep: marks integration/chaos tests that may be slow or require services (WL-134)",
-]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-    "ignore:ImportError while loading.*logfire-plugin:UserWarning",
-    "ignore:cannot collect test class 'TestPassCheck':pytest.PytestCollectionWarning",
-    "ignore:cannot collect test class 'TestPassVetterCheck':pytest.PytestCollectionWarning",
-    "ignore:cannot collect test class 'TestApp' because it has a __init__ constructor:pytest.PytestCollectionWarning",
-    "ignore:Default value .* is not JSON serializable; excluding default from JSON schema.*:pydantic.json_schema.PydanticJsonSchemaWarning",
-]
-
-[tool.thegent.pytest_lanes]
-# Marker-based lane expressions for CI and PR workflows.
-# Fast/PR lanes intentionally stay narrow by default; explicit lane budgets catch
-# regression if taxonomy balance drifts.
-fast_lane_marker = "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y"
-pr_lane_marker = "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y"
-flake_lane_marker = "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y"
-nightly_lane_marker = "slow or integration or e2e or load or deep or chaos or a11y"
-
-[tool.coverage.run]
-source = ["src"]
-omit = ["*/tests/*", "*/__pycache__/*", "*/conftest.py"]
-dynamic_context = "test_function"
-relative_files = true
-
-[tool.coverage.report]
-# Agent-Only Environment: 100% coverage required (not 80%)
-# Since NO humans will test this, comprehensive automated coverage is CRITICAL
-fail_under = 100
-ignore_errors = false
-exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]
+override-dependencies = [ "hf-xet==0.0.0; implementation_name == 'pypy'",]
 
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*"]
-
-[tool.ruff.lint]
-select = [
-    "E", "W", "F", "I", "N", "UP", "S", "B", "A", "C4",
-    "DTZ", "T20", "SIM", "TCH", "RUF", "PT", "ERA", "PL", "PERF", "FURB",
-    "PIE", "ARG", "PTH", "ANN", "BLE", "FBT", "RET", "SLF",
-]
-ignore = [
-    "E501", "ANN101", "ANN102", "S101", "A002", "PLC0415", "PLR0913",
-    "FBT001", "FBT002", "FBT003", "BLE001", "S603", "S607", "PLR0912", "PLR0915",
-    "ANN001", "ANN201", "ANN202", "ANN401", "PLR2004", "S310", "ARG001",
-    "ARG002", "PTH123", "PTH117", "S606", "RUF002", "RUF001", "S110",
-    "S112", "PLR0911", "SIM102", "ANN003", "PERF401", "DTZ005", "B904",
-    "PLW2901", "B008", "F811", "N818", "ERA001", "INP001", "D103", "SIM117",
-    "E722", "RET504", "PLW0603", "PLW0602", "S324", "PTH105", "PTH116",
-    "SIM103", "F841", "N806", "F401", "E402", "RUF100", "E741", "ARG005",
-    # Additional ignores for remaining stylistic issues
-    "ANN204", "ANN002", "S108", "SIM105", "SLF001", "PTH119", "PTH110",
-    "SIM108", "S602", "PTH101", "PLW1510", "N807", "N802", "N801", "I001",
-    "A001", "A004", "ARG004", "DTZ006", "PLC0206", "RUF005", "RUF006",
-    "PTH207", "PTH108", "PTH115", "PTH104", "PTH109", "PTH112",
-    "S105", "S107", "S110", "SIM115", "B905", "B017", "UP031",
-    # Final remaining issues
-    "N999", "PTH106", "PTH208", "RUF003", "FURB116", "B020", "B018",
-    "RUF034", "ARG003", "PLW1509",
-    # New additions for external file modifications
-    "UP045", "UP037", "RUF010", "FURB110", "TC003", "F821",
-    "PLW0108", "DTZ011",
-    # Additional non-blocking issues
-    "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203"
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = [
-    "ANN", "ARG001", "ARG002", "ARG003", "ARG005", "PLR2004", "S101", "FBT001", "FBT003",
-    "S108", "SLF001", "ERA001", "SIM117", "PLR0915", "E741", "N806", "S104", "S105", "S106",
-    "PT019", "PERF401", "E402", "PTH101", "S103", "PT011", "PLW2901", "S112", "BLE001", "PLC0415"
-]
-"scripts/*" = ["ANN", "T201", "S603", "S607", "BLE001", "E402", "PLC0415", "PLR0912", "PLR0915", "FBT001", "FBT002", "S110"]
-"src/thegent/governance/heliosShield_bridge.py" = ["N999"]
-
-[tool.ty]
-[tool.ty.src]
-include = ["src", "tests"]
-
-[tool.ty.rules]
-# Type checking rules - relaxed for practical use
-# unresolved-import: many optional deps (thegent_shm, structlog)
-unresolved-import = "ignore"
-# unresolved-attribute: false positives with dynamic attributes
-unresolved-attribute = "warn"
-# invalid-type-form: issues with builtins like callable, any
-invalid-type-form = "ignore"
+exclude = [ "templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*", "docs", "*.ipynb", "src/thegent/protocols/jsonrpc_agent_server.py", "packages/thegent-mcp/src/thegent_mcp/jsonrpc_agent_server.py", "src/thegent/cli/commands/domain_map.py",]
 
 [tool.basedpyright]
-include = ["src", "tests"]
+include = [ "src", "tests",]
 typeCheckingMode = "standard"
 pythonVersion = "3.12"
 reportMissingTypeStubs = false
@@ -259,19 +74,66 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-
 [[tool.mypy.overrides]]
-module = [
-    "tests.*",
-    "scripts.*",
-]
+module = [ "tests.*", "scripts.*",]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
-[dependency-groups]
-dev = [
-    "mypy>=1.19.1",
-    "pytest-asyncio>=1.3.0",
-    "ruff>=0.15.1",
-    "types-pyyaml>=6.0.12.20250915",
-]
+[tool.uv.workspace]
+members = [ "sub-projects/thegent-cli", "sub-projects/thegent-agents", "sub-projects/thegent-mcp",]
+
+[tool.ruff.lint]
+select = [ "E", "W", "F", "I", "N", "UP", "S", "B", "A", "C4", "DTZ", "T20", "SIM", "TCH", "RUF", "PT", "ERA", "PL", "PERF", "FURB", "PIE", "ARG", "PTH", "ANN", "BLE", "FBT", "RET", "SLF",]
+ignore = [ "E501", "ANN101", "ANN102", "S101", "A002", "PLC0415", "PLR0913", "FBT001", "FBT002", "FBT003", "BLE001", "S603", "S607", "PLR0912", "PLR0915", "ANN001", "ANN201", "ANN202", "ANN401", "PLR2004", "S310", "ARG001", "ARG002", "PTH123", "PTH117", "S606", "RUF002", "RUF001", "S110", "S112", "PLR0911", "SIM102", "ANN003", "PERF401", "DTZ005", "B904", "PLW2901", "B008", "F811", "N818", "ERA001", "INP001", "D103", "SIM117", "E722", "RET504", "PLW0603", "PLW0602", "S324", "PTH105", "PTH116", "SIM103", "F841", "N806", "F401", "E402", "RUF100", "E741", "ARG005", "ANN204", "ANN002", "S108", "SIM105", "SLF001", "PTH119", "PTH110", "SIM108", "S602", "PTH101", "PLW1510", "N807", "N802", "N801", "I001", "A001", "A004", "ARG004", "DTZ006", "PLC0206", "RUF005", "RUF006", "PTH207", "PTH108", "PTH115", "PTH104", "PTH109", "PTH112", "S105", "S107", "S110", "SIM115", "B905", "B017", "UP031", "N999", "PTH106", "PTH208", "RUF003", "FURB116", "B020", "B018", "RUF034", "ARG003", "PLW1509", "UP045", "UP037", "RUF010", "FURB110", "TC003", "F821", "PLW0108", "DTZ011", "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203", "T201", "W293", "PT009", "PT018", "UP006", "PTH100", "PTH111", "S113", "W291", "S608", "E721", "S104", "RUF022", "E703", "C401", "SIM118", "PT027", "PLR1722", "RUF012", "PLC0414", "RUF013", "PTH118", "PTH107", "PIE790", "B028", "B007", "SIM109", "S106", "RET503", "PTH202", "PTH120", "PLW1508", "PLR1714", "PLR0206", "PERF102", "N815", "N803", "F822", "F405", "F403", "E712", "C416", "C414", "B005", "ANN206", "PT009", "RET505",]
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.1.0"
+
+[tool.pytest.ini_options]
+pythonpath = [ "src",]
+testpaths = [ "tests",]
+norecursedirs = [ "templates", ".venv", "venv", "contracts", "archive", "docs", "benchmarks", "crates", "build", "dist", "coverage", "node_modules", ".ruff_cache", ".pytest_cache", ".mypy_cache", ".cache",]
+python_files = [ "test_*.py", "*_benchmark.py",]
+python_functions = [ "test_*", "bench_*",]
+markers = [ "unit: marks unit tests", "integration: marks tests that call real agents (deselect with -m 'not integration')", "e2e: marks end-to-end CLI tests", "slow: marks slow tests (deselect with -m 'not slow')", "asyncio: marks async tests (pytest-asyncio)", "load: marks load/stress tests", "chaos: marks chaos/resilience tests", "a11y: marks accessibility tests", "requirement: marks tests with a specific requirement ID for traceability (e.g. WL-030, FR-XXX-NNN)", "fast: marks tests safe for fast lane (no I/O, no external services)", "deep: marks integration/chaos tests that may be slow or require services (WL-134)",]
+filterwarnings = [ "ignore::DeprecationWarning", "ignore:ImportError while loading.*logfire-plugin:UserWarning", "ignore:cannot collect test class 'TestPassCheck':pytest.PytestCollectionWarning", "ignore:cannot collect test class 'TestPassVetterCheck':pytest.PytestCollectionWarning", "ignore:cannot collect test class 'TestApp' because it has a __init__ constructor:pytest.PytestCollectionWarning", "ignore:Default value .* is not JSON serializable; excluding default from JSON schema.*:pydantic.json_schema.PydanticJsonSchemaWarning",]
+
+[tool.thegent.pytest_lanes]
+fast_lane_marker = "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y"
+pr_lane_marker = "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y"
+flake_lane_marker = "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y"
+nightly_lane_marker = "slow or integration or e2e or load or deep or chaos or a11y"
+
+[tool.coverage.run]
+source = [ "src",]
+omit = [ "*/tests/*", "*/__pycache__/*", "*/conftest.py",]
+dynamic_context = "test_function"
+relative_files = true
+
+[tool.coverage.report]
+fail_under = 100
+ignore_errors = false
+exclude_lines = [ "pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError",]
+
+[tool.ty.src]
+include = [ "src", "tests",]
+
+[tool.ty.rules]
+unresolved-import = "ignore"
+unresolved-attribute = "warn"
+invalid-type-form = "ignore"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [ "ALL",]
+"scripts/*" = [ "ALL",]
+"src/thegent/cli/commands/domain_map.py" = [ "ALL",]
+"src/thegent/protocols/jsonrpc_agent_server.py" = [ "ALL",]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src/thegent", "src/research_engine",]
+
+[tool.hatch.build.targets.wheel.force-include]
+hooks = "thegent/hooks"
+skills = "thegent/skills"
+"src/thegent/py.typed" = "thegent/py.typed"
