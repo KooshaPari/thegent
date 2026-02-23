@@ -92,7 +92,7 @@ def test_wl182_requires_timezone_aware_timestamps() -> None:
             [
                 ItemActivity(
                     item_id="WL-1824",
-                    last_local_movement_at=datetime(2026, 2, 1, 12, 0),
+                    last_local_movement_at=datetime(2026, 2, 1, 12, 0),  # noqa: DTZ001 -- intentional naive timestamp to validate rejection
                     last_remote_movement_at=now - timedelta(days=6),
                 )
             ],
