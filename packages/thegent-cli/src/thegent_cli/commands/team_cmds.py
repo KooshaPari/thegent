@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-import json
+import orjson as json
 import inspect
 import sys
 import typing
@@ -108,7 +108,7 @@ def summary_cmd(
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         return
 
     if fmt == "md":
@@ -160,7 +160,7 @@ def snapshot_list_cmd(
     )
 
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[bold cyan]Snapshots[/bold cyan]: {payload.get('count', 0)}")
     for item in payload.get("items", []):
@@ -179,7 +179,7 @@ def snapshot_index_cmd(
     project_path = project or Path.cwd()
     payload = snapshot_index_payload(SessionScraper(project_path), limit=limit)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[bold cyan]Snapshot Index[/bold cyan]: {payload.get('total_snapshots', 0)} snapshots")
     console.print(f"[dim]Top tags: {', '.join(payload.get('top_tags', [])) or '(none)'}[/dim]")
@@ -202,7 +202,7 @@ def snapshot_export_cmd(
         out_path=str(out_path) if out_path else None,
     )
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[green]Exported[/green] {payload['source']} -> {payload['output']}")
 
@@ -219,7 +219,7 @@ def snapshot_prune_cmd(
     project_path = project or Path.cwd()
     payload = snapshot_prune_payload(SessionScraper(project_path), max_keep=max_keep)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[yellow]Pruned[/yellow] {payload.get('deleted', 0)} snapshot(s)")
 
@@ -236,7 +236,7 @@ def snapshot_meta_cmd(
     project_path = project or Path.cwd()
     payload = snapshot_triggers_tags_payload(SessionScraper(project_path), limit=limit)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[bold]Triggers[/bold]: {', '.join(payload.get('triggers', [])) or '(none)'}")
     console.print(f"[bold]Tags[/bold]: {', '.join(payload.get('tags', [])) or '(none)'}")
@@ -266,7 +266,7 @@ def snapshot_daily_index_cmd(
     )
     payload = cast("dict[str, typing.Any]", payload_raw)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     days_list = cast("list[Any]", payload.get("days", []))
     console.print(f"[bold cyan]Snapshot Daily Index[/bold cyan]: {len(days_list)} day(s)")
@@ -300,7 +300,7 @@ def snapshot_daily_totals_cmd(
         since=since,
     )
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     payload_dict = cast("dict[str, Any]", payload)
     console.print(
@@ -340,7 +340,7 @@ def snapshot_daily_export_cmd(
         since=since,
     )
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(
         f"[green]Daily index exported[/green] json={payload.get('source_json')} md={payload.get('source_md')}"
@@ -357,7 +357,7 @@ def dump_index_cmd(project: Path | None = None, format: str | None = None) -> No
     markdown_path = dumper.export_dump_index_markdown()
     payload = {"index_path": str(index_path), "markdown_path": str(markdown_path)}
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[green]Dump index[/green] json={payload['index_path']} md={payload['markdown_path']}")
 
@@ -377,7 +377,7 @@ def dump_latest_cmd(
     latest = dumper.latest_dump(category=normalized_category or None, json_only=json_only)
     payload = {"latest": str(latest) if latest else None}
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(payload["latest"] or "(none)")
 
@@ -391,7 +391,7 @@ def dump_categories_cmd(project: Path | None = None, format: str | None = None) 
     categories = dumper.list_dump_categories()
     payload = {"categories": categories, "count": len(categories)}
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[bold cyan]Dump Categories[/bold cyan]: {payload['count']}")
     console.print(", ".join(categories) if categories else "(none)")
@@ -535,7 +535,7 @@ def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
         raise typer.Exit(1)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(snap, indent=2) + "\n")
+        sys.stdout.write(json.dumps(snap, indent=2).decode().decode() + "\n")
         return
     lines = [
         f"[bold]Handoff Snapshot:[/bold] {snapshot_id}",
@@ -568,7 +568,7 @@ def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
     snapshots = hm.list_pending_snapshots(limit=limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(snapshots) + "\n")
+        sys.stdout.write(json.dumps(snapshots).decode().decode() + "\n")
         return
     if not snapshots:
         console.print("[dim]No pending handoffs.[/dim]")
@@ -637,7 +637,7 @@ def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
     if format == "json":
         import sys
 
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode().decode() + "\n")
         return
 
     if not items:

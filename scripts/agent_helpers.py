@@ -548,12 +548,12 @@ if __name__ == "__main__":
 
     if args.command == "next":
         next_items = get_next_items(limit=args.limit, priority=args.priority)
-        print(json.dumps(next_items, indent=2))
+        print(json.dumps(next_items, indent=2).decode().decode())
     elif args.command == "log-friction":
         ok = log_friction(args.category, args.description, impact=args.impact)
         print("Logged." if ok else "Failed to log friction point.")
     elif args.command == "quality":
         result = run_quality_check()
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2).decode().decode())
     else:
         parser.print_help()

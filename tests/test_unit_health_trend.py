@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -156,7 +156,7 @@ class TestHealthPolicyAndTrend:
         assert trend["payload_type"] == "session_contract_health_trend"
         assert trend["trend_payload_type"] == "session_contract_health_gate"
         assert trend["scope_payload_type"] == "session_contract_health_gate"
-        assert trend["scope_key_json"] == json.dumps(trend["scope_key"], sort_keys=True)
+        assert trend["scope_key_json"] == json.dumps(trend["scope_key"], sort_keys=True).decode().decode()
         assert trend["scope_policy_profile"] == "warn_only"
         assert trend["scope_min_healthy_ratio"] == 0.0
         assert trend["scope_top_blocked"] is None
@@ -169,7 +169,7 @@ class TestHealthPolicyAndTrend:
         assert trend["latest_blocked_ratio"] == (trend.get("latest") or {}).get("blocked_ratio", None)
         assert trend["latest_blocked_count"] == (trend.get("latest") or {}).get("blocked_count", None)
         assert trend["latest_issue_types_count"] == len((trend.get("latest") or {}).get("issue_types", []) or [])
-        assert trend["latest_issue_types_json"] == json.dumps((trend.get("latest") or {}).get("issue_types", []) or [])
+        assert trend["latest_issue_types_json"] == json.dumps((trend.get("latest").decode().decode() or {}).get("issue_types", []) or [])
         assert (
             trend["latest_issue_types_hash"]
             == hashlib.sha256(trend["latest_issue_types_json"].encode("utf-8")).hexdigest()
@@ -222,7 +222,7 @@ class TestHealthPolicyAndTrend:
         assert trend["delta_summary"]["blocked_ratio_delta"] == pytest.approx(0.2)
         assert trend["blocked_count_delta"] == trend["delta_summary"]["blocked_count_delta"]
         assert trend["blocked_ratio_delta"] == trend["delta_summary"]["blocked_ratio_delta"]
-        assert trend["delta_summary_json"] == json.dumps(trend["delta_summary"], sort_keys=True)
+        assert trend["delta_summary_json"] == json.dumps(trend["delta_summary"], sort_keys=True).decode().decode()
         assert trend["snapshot_retention_max_lines"] >= 100
 
         lines = snapshot_path.read_text(encoding="utf-8").splitlines()
@@ -349,7 +349,7 @@ class TestHealthPolicyAndTrend:
             "issue_types": {"left": 1, "right": 1},
             "issue_counts": {"left": 3, "right": 3},
         }
-        snapshot_path.write_text("\n".join([json.dumps(oldest), json.dumps(latest)]) + "\n", encoding="utf-8")
+        snapshot_path.write_text("\n".join([json.dumps(oldest).decode().decode(), json.dumps(latest).decode().decode()]) + "\n", encoding="utf-8")
 
         trend = cli_impl.session_contract_health_trend_impl(
             payload_type="session_contract_health_report",
@@ -359,7 +359,7 @@ class TestHealthPolicyAndTrend:
         assert trend["snapshot_count"] == 2
         assert trend["latest_issue_types_count"] == 2
         assert trend["latest_issue_types_csv"] == "left, right"
-        assert trend["latest_issue_types_json"] == json.dumps(["left", "right"])
+        assert trend["latest_issue_types_json"] == json.dumps(["left", "right"]).decode().decode()
         assert (
             trend["latest_issue_types_hash"]
             == hashlib.sha256(trend["latest_issue_types_json"].encode("utf-8")).hexdigest()
@@ -481,7 +481,7 @@ class TestHealthPolicyAndTrend:
             "payload_signature": {},
         }
         snapshot_path.write_text(
-            "\n".join([json.dumps(previous_snapshot), json.dumps(latest_snapshot)]) + "\n",
+            "\n".join([json.dumps(previous_snapshot).decode().decode(), json.dumps(latest_snapshot).decode().decode()]) + "\n",
             encoding="utf-8",
         )
         monkeypatch.setattr(
@@ -524,7 +524,7 @@ class TestHealthSnapshotRetention:
 
         lines = []
         for i in range(160):
-            lines.append(json.dumps({"record_type": "health_snapshot", "i": i}))
+            lines.append(json.dumps({"record_type": "health_snapshot", "i": i}).decode().decode())
         snapshot_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
         cli_impl._compact_health_snapshot_log()

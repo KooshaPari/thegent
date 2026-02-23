@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 from tests.e2e.test_split_hygiene import REQUIRED_E2E_GOVERNANCE_FILES
@@ -20,7 +20,7 @@ def _inventory_payload() -> dict[str, object]:
 def test_governance_inventory_artifact_schema(tmp_path: Path) -> None:
     payload = _inventory_payload()
     out = tmp_path / "e2e-governance-inventory.json"
-    out.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+    out.write_text(json.dumps(payload, sort_keys=True).decode().decode(), encoding="utf-8")
 
     loaded = json.loads(out.read_text(encoding="utf-8"))
     assert loaded["schema_version"] == "e2e-governance-inventory-v1"

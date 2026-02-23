@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from typing import Any
 
@@ -18,12 +18,12 @@ def render_dag_list(tasks: list[dict[str, str]], fmt: str, *, console: Any) -> N
     """Render `dag list` output for json/md/rich formats."""
     if not tasks:
         if fmt == "json":
-            sys.stdout.write(json.dumps({"tasks": []}) + "\n")
+            sys.stdout.write(json.dumps({"tasks": []}).decode().decode() + "\n")
         else:
             console.print("[dim]No tasks in DAG.[/dim]")
         return
     if fmt == "json":
-        sys.stdout.write(json.dumps({"tasks": tasks}) + "\n")
+        sys.stdout.write(json.dumps({"tasks": tasks}).decode().decode() + "\n")
         return
     if fmt == "md":
         console.print("## DAG Session\n")
@@ -55,7 +55,7 @@ def render_dag_list(tasks: list[dict[str, str]], fmt: str, *, console: Any) -> N
 def render_dag_status(rows: list[dict[str, str]], fmt: str, *, console: Any) -> None:
     """Render `dag status` output for json/md/rich formats."""
     if fmt == "json":
-        sys.stdout.write(json.dumps({"tasks": rows}) + "\n")
+        sys.stdout.write(json.dumps({"tasks": rows}).decode().decode() + "\n")
         return
     if not rows:
         console.print("[dim]No tasks with session_id.[/dim]")
@@ -86,7 +86,7 @@ def render_dag_ready(ready_ids: list[str], tasks: list[dict[str, str]], fmt: str
         console.print("\n".join(ready_ids))
         return
     if fmt == "json":
-        sys.stdout.write(json.dumps({"ready_task_ids": ready_ids}) + "\n")
+        sys.stdout.write(json.dumps({"ready_task_ids": ready_ids}).decode().decode() + "\n")
         return
     if fmt == "md":
         console.print("| id | agent | prompt |")

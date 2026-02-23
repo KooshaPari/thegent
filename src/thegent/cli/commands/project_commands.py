@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,7 +19,7 @@ def project_register_cmd(*, path: Path, name: str | None = None, console: Any) -
     projects_file = settings.session_dir / "projects.jsonl"
     project = {"path": str(path.resolve()), "name": name or path.name, "registered_at": datetime.now(UTC).isoformat()}
     with projects_file.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(project) + "\n")
+        fh.write(json.dumps(project).decode().decode() + "\n")
     console.print(f"Project registered: [bold green]{project['name']}[/bold green] at {project['path']}")
 
 
@@ -32,7 +32,7 @@ def project_list_cmd(*, format: str | None = None, console: Any) -> None:
     projects_file = settings.session_dir / "projects.jsonl"
     if not projects_file.exists():
         if _fmt == "json":
-            sys.stdout.write(json.dumps([]) + "\n")
+            sys.stdout.write(json.dumps([]).decode().decode() + "\n")
         else:
             console.print("No projects registered.")
         return
@@ -45,7 +45,7 @@ def project_list_cmd(*, format: str | None = None, console: Any) -> None:
                 if not line:
                     continue
                 rows.append(json.loads(line))
-        sys.stdout.write(json.dumps(rows) + "\n")
+        sys.stdout.write(json.dumps(rows).decode().decode() + "\n")
         return
 
     table = Table(title="Registered Projects")

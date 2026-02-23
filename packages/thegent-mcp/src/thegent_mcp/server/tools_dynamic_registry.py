@@ -15,7 +15,7 @@ so that server.py can assign them to module-level names for backward compat.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -103,7 +103,7 @@ def register_dynamic_registry_tools(
             success=success,
         )
         event = server_tools_sessions._dynamic_registry.tool_call_completed_event(result)
-        return json.dumps({"success": True, "event": event}, indent=2)
+        return json.dumps({"success": True, "event": event}, indent=2).decode().decode()
 
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     async def thegent_list_dynamic_tools(
@@ -125,6 +125,6 @@ def register_dynamic_registry_tools(
                 ],
             },
             indent=2,
-        )
+        ).decode()
 
     return thegent_register_tool, thegent_complete_tool_call, thegent_list_dynamic_tools

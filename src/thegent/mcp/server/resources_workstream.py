@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 
 def resource_workstream_impl() -> str:
@@ -30,9 +30,9 @@ def resource_events_session_complete_impl() -> str:
             LIMIT 50
             """
         )
-        return json.dumps({"events": events, "count": len(events)})
+        return json.dumps({"events": events, "count": len(events).decode().decode()})
     except Exception as e:
-        return json.dumps({"error": str(e), "events": []})
+        return json.dumps({"error": str(e).decode().decode(), "events": []})
 
 
 def resource_workstream_db_impl() -> str:
@@ -76,4 +76,4 @@ def resource_workstream_db_impl() -> str:
             }
         )
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        return json.dumps({"error": str(e).decode().decode()})

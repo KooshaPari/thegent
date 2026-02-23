@@ -7,7 +7,7 @@ Queues failed remote writes to JSONL for deterministic replay after fixes.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -69,7 +69,7 @@ class DeadLetterQueue:
                 "operation": entry.operation,
                 "payload": entry.payload,
                 "error": entry.error,
-                "created_at": entry.created_at.isoformat(),
+                "created_at": entry.created_at.isoformat().decode(),
                 "retry_count": entry.retry_count,
             }
         )
@@ -145,7 +145,7 @@ class DeadLetterQueue:
                         "operation": entry.operation,
                         "payload": entry.payload,
                         "error": entry.error,
-                        "created_at": entry.created_at.isoformat(),
+                        "created_at": entry.created_at.isoformat().decode(),
                         "retry_count": entry.retry_count,
                     }
                 )
@@ -172,7 +172,7 @@ class DeadLetterQueue:
                         "operation": entry.operation,
                         "payload": entry.payload,
                         "error": entry.error,
-                        "created_at": entry.created_at.isoformat(),
+                        "created_at": entry.created_at.isoformat().decode(),
                         "retry_count": entry.retry_count,
                     }
                 )

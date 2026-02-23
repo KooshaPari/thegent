@@ -1,6 +1,6 @@
 """Enhance config-get: YAML support, hook-config.yaml, qa-local.json."""
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 from typing import Any

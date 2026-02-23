@@ -7,7 +7,7 @@ performed manually by the operator after reviewing the advisor output.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import typer
 
@@ -50,7 +50,7 @@ def domain_map_cmd(
             "tunnel_name": tunnel_name,
             "steps": steps,
         }
-        typer.echo(json.dumps(payload))
+        typer.echo(json.dumps(payload).decode().decode())
     elif format == "md":
         typer.echo(f"# Domain Mapping: {domain}\n")
         for i, step in enumerate(steps, 1):

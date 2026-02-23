@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import subprocess
 from datetime import datetime, timezone
@@ -424,7 +424,7 @@ def run_health(
     }
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if summary:
         lines = [

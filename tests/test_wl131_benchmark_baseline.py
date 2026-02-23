@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
-import json
+import orjson as json
 import sys
 from pathlib import Path
 

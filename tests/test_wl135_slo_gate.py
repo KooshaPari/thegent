@@ -11,7 +11,7 @@ Verifies:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from pathlib import Path
 
@@ -62,7 +62,7 @@ def test_slo_gate_exits_0_for_all_green_metric(tmp_path: Path) -> None:
         "timestamp": "2026-02-21T00:00:00+00:00",
         "source": "test",
     }
-    jsonl_path.write_text(json.dumps(green_record) + "\n", encoding="utf-8")
+    jsonl_path.write_text(json.dumps(green_record).decode().decode() + "\n", encoding="utf-8")
 
     result = subprocess.run(
         ["uv", "run", "python", str(_GATE_SCRIPT)],
@@ -91,7 +91,7 @@ def test_slo_gate_exits_1_for_all_red_metric(tmp_path: Path) -> None:
         "timestamp": "2026-02-21T00:00:00+00:00",
         "source": "test",
     }
-    jsonl_path.write_text(json.dumps(red_record) + "\n", encoding="utf-8")
+    jsonl_path.write_text(json.dumps(red_record).decode().decode() + "\n", encoding="utf-8")
 
     result = subprocess.run(
         ["uv", "run", "python", str(_GATE_SCRIPT)],

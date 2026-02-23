@@ -10,7 +10,7 @@ Fields: timestamp, prompt, project_path, status (pending/claimed/done), id (ulid
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import os
 import time
@@ -178,7 +178,7 @@ class PromptQueueManager:
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
         with self.queue_path.open("w", encoding="utf-8") as fh:
             for item in items:
-                fh.write(json.dumps(item.to_dict()) + "\n")
+                fh.write(json.dumps(item.to_dict().decode().decode()) + "\n")
 
     # ------------------------------------------------------------------
     # Public API
@@ -213,7 +213,7 @@ class PromptQueueManager:
         )
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
         with self.queue_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(item.to_dict()) + "\n")
+            fh.write(json.dumps(item.to_dict().decode().decode()) + "\n")
         logger.debug("PromptQueueManager.enqueue: id=%r prompt=%r", item.id, prompt[:80])
         return item
 

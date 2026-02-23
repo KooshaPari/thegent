@@ -21,7 +21,7 @@ import argparse
 import ast
 import csv
 import hashlib
-import json
+import orjson as json
 import os
 import re
 import shlex
@@ -673,7 +673,7 @@ def run_collect(
     }
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if summary_output:
         _write_collect_summary(marker_label, payload, summary_output)
@@ -812,7 +812,7 @@ def run_trace_scan(records: list[TestRecord], output: Path) -> None:
         "trace_only_warnings": trace_only_rows,
     }
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
 
 def run_heavy_untagged(records: list[TestRecord], output: Path, min_loc: int) -> None:
@@ -839,7 +839,7 @@ def run_heavy_untagged(records: list[TestRecord], output: Path, min_loc: int) ->
     }
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
 
 def _normalize_requirement_id(value: str) -> str:
@@ -919,7 +919,7 @@ def run_requirements_map(
     }
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if csv_output is not None:
         csv_output.parent.mkdir(parents=True, exist_ok=True)
@@ -1161,12 +1161,12 @@ def run_trace_cleanup(
         }
         issue_output.parent.mkdir(parents=True, exist_ok=True)
         issue_output.write_text(
-            json.dumps(issue_payload, indent=2) + "\n",
+            json.dumps(issue_payload, indent=2).decode().decode() + "\n",
             encoding="utf-8",
         )
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if summary is None:
         return
@@ -1431,7 +1431,7 @@ def run_requirements_promotion_criteria(
         acceptable_fail_budget=acceptable_fail_budget,
     )
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
 
 def run_lane_promotion(config: LanePromotionConfig) -> None:
@@ -1470,7 +1470,7 @@ def run_lane_promotion(config: LanePromotionConfig) -> None:
     payload["actual"]["stable_runs_required"] = config.min_runs
 
     config.output.parent.mkdir(parents=True, exist_ok=True)
-    config.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    config.output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
 
 def _load_changed_paths(changed_file: Path) -> list[Path]:
@@ -1555,7 +1555,7 @@ def run_requirements_gate(
             "untestable_files": [str(item) for item in untestable_files],
         }
         config.output.parent.mkdir(parents=True, exist_ok=True)
-        config.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        config.output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
         if config.summary:
             config.summary.write_text(
                 "# PR Requirement Mapping Gate\n\nNo test targets discovered from changed files.\n",
@@ -1577,7 +1577,7 @@ def run_requirements_gate(
             "untestable_files": [str(item) for item in untestable_files],
         }
         config.output.parent.mkdir(parents=True, exist_ok=True)
-        config.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        config.output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
         if config.summary:
             config.summary.write_text(
                 "# PR Requirement Mapping Gate\n\nNo parsable tests found for discovered targets.\n",
@@ -1618,7 +1618,7 @@ def run_requirements_gate(
     }
 
     config.output.parent.mkdir(parents=True, exist_ok=True)
-    config.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    config.output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if config.summary:
         lines = [
@@ -1663,7 +1663,7 @@ def run_pr_targets(config: PrTargetConfig) -> dict[str, object]:
     }
 
     config.output.parent.mkdir(parents=True, exist_ok=True)
-    config.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    config.output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     return payload
 
@@ -1742,7 +1742,7 @@ def run_pr_lane(config: RunPrLaneConfig) -> int:
     }
 
     config.output.parent.mkdir(parents=True, exist_ok=True)
-    config.output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    config.output.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if config.summary:
         config.summary.write_text(

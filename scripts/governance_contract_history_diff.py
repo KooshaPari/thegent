@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 from pathlib import Path
 
 
@@ -90,7 +90,7 @@ def main() -> int:
     md_out = Path(args.md_out)
     json_out.parent.mkdir(parents=True, exist_ok=True)
     md_out.parent.mkdir(parents=True, exist_ok=True)
-    json_out.write_text(json.dumps(diff, indent=2) + "\n", encoding="utf-8")
+    json_out.write_text(json.dumps(diff, indent=2).decode().decode() + "\n", encoding="utf-8")
     md_out.write_text(_render_md(diff), encoding="utf-8")
     print(md_out)
     return 0

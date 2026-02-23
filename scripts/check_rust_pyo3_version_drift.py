@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 from typing import Any
@@ -196,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
 
     report = build_report(Path.cwd())
     if args == ["--json"]:
-        print(json.dumps(report, indent=2, sort_keys=True))
+        print(json.dumps(report, indent=2, sort_keys=True).decode().decode())
     else:
         _print_text_report(report)
 

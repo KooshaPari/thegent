@@ -10,7 +10,7 @@ Usage: python scripts/build_coverage_index.py [--output PATH]
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 

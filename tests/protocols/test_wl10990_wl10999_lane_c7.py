@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import pytest
 
@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -100,8 +100,7 @@ def test_wl10994_handle_turn_submit_request_without_id_notifies_approval_request
                     "unified_diff": "--- a\n+++ b\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert response is None
     assert notifications[0]["method"] == "turn/started"
     assert notifications[1]["method"] == "item/agentMessage/delta"
@@ -144,8 +143,7 @@ def test_wl10997_handle_turn_submit_request_preserves_numeric_request_id() -> No
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "numeric-request-id"},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["id"] == 7
 

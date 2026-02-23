@@ -108,7 +108,7 @@ def registry_list(
 
     if not records:
         if format == "json":
-            sys.stdout.write(json.dumps([]) + "\n")
+            sys.stdout.write(json.dumps([]).decode().decode() + "\n")
         else:
             console.print("[yellow]Registry is empty. Run 'thegent registry register <dir>' first.[/yellow]")
         return
@@ -123,7 +123,7 @@ def registry_list(
             }
             for r in sorted(records, key=lambda x: (str(x.project_root), x.name))
         ]
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
 
     table = Table(title="Cross-Project Persona Registry")

@@ -1,6 +1,6 @@
 """CLI commands for crew management."""
 
-import json
+import orjson as json
 from pathlib import Path
 
 import typer
@@ -45,8 +45,7 @@ def crew_create_cmd(
                     "tasks": [],
                 },
                 indent=2,
-            )
-        )
+            )).decode()
         console.print(f"[green]✓[/green] Created crew: {crew.name} ({crew.id})")
         console.print(f"[dim]Saved to: {output_path}[/dim]")
     else:

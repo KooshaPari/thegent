@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 from tests.e2e.test_split_hygiene import REPO_ROOT
@@ -61,7 +61,7 @@ def test_governance_delta_report_added_removed_deterministic_ordering(
     }
 
     output_path = tmp_path / "e2e-governance-delta-report.json"
-    output_path.write_text(json.dumps(report, sort_keys=True), encoding="utf-8")
+    output_path.write_text(json.dumps(report, sort_keys=True).decode().decode(), encoding="utf-8")
     loaded = json.loads(output_path.read_text(encoding="utf-8"))
 
     assert loaded["added"] == [

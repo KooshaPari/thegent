@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import sys
 from pathlib import Path
@@ -28,7 +28,7 @@ def test_governance_contract_history_diff_handles_missing_previous(tmp_path: Pat
                     {"name": "b", "ok": True, "details": "ok"},
                 ],
             }
-        )
+        ).decode()
         + "\n",
         encoding="utf-8",
     )
@@ -76,7 +76,7 @@ def test_governance_contract_history_diff_reports_changed_checks(tmp_path: Path)
                     {"name": "b", "ok": True, "details": "ok"},
                 ],
             }
-        )
+        ).decode()
         + "\n",
         encoding="utf-8",
     )
@@ -91,7 +91,7 @@ def test_governance_contract_history_diff_reports_changed_checks(tmp_path: Path)
                     {"name": "b", "ok": True, "details": "ok"},
                 ],
             }
-        )
+        ).decode()
         + "\n",
         encoding="utf-8",
     )

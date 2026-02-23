@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import pytest
 
@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -104,8 +104,7 @@ def test_wl10959_turn_submit_requires_approval_response_preserves_id_and_payload
                     "unified_diff": "--- a\n+++ b\n@@\n-old\n+new\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["id"] == "submit-c3"
     approval_payload = response["result"]["approval"]

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import time
 from pathlib import Path
@@ -55,7 +55,7 @@ def write_report_export(
     elif fmt == "jsonl":
         payload = health_serializers.serialize_health_report_jsonl(report)
     else:
-        payload = json.dumps(report, indent=2, sort_keys=True)
+        payload = json.dumps(report, indent=2, sort_keys=True).decode().decode()
     _atomic_write(output, payload)
     return fmt
 
@@ -75,7 +75,7 @@ def write_health_gate_export(
     elif fmt == "jsonl":
         payload = health_serializers.serialize_health_gate_jsonl(report)
     else:
-        payload = json.dumps(report, indent=2, sort_keys=True)
+        payload = json.dumps(report, indent=2, sort_keys=True).decode().decode()
     _atomic_write(output, payload)
     return fmt
 
@@ -112,6 +112,6 @@ def write_health_trend_export(
     elif normalized == "jsonl":
         payload = health_serializers.serialize_health_trend_jsonl(result)
     else:
-        payload = json.dumps(result, indent=2, sort_keys=True)
+        payload = json.dumps(result, indent=2, sort_keys=True).decode().decode()
     _atomic_write(output, payload)
     return normalized

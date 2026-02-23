@@ -7,7 +7,7 @@ Aggregates sessions from multiple agent harnesses with dual-redundancy:
 Harnesses: Cursor, Codex, Claude, Ante, Droid
 """
 
-import json
+import orjson as json
 import logging
 import sqlite3
 import threading
@@ -434,8 +434,8 @@ class UnifiedSessionIndex:
                         session.ended_at.isoformat() if session.ended_at else None,
                         session.prompt_tokens,
                         session.completion_tokens,
-                        json.dumps(session.messages),
-                        json.dumps(session.metadata),
+                        json.dumps(session.messages).decode().decode(),
+                        json.dumps(session.metadata).decode().decode(),
                         session.summary,
                         datetime.now(UTC).isoformat(),
                     ),

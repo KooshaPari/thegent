@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any, Callable
 
 
@@ -22,8 +22,7 @@ def resource_session_contracts_impl(
             missing_only=missing_only,
             summary_only=summary_only,
             strict=strict,
-        )
-    )
+        )).decode()
 
 
 def resource_session_contract_health_gate_impl(

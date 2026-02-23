@@ -11,7 +11,7 @@ No fallbacks, no silent errors, no legacy compatibility shims.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -133,4 +133,4 @@ def serialize_trend(trend: SloTrend) -> str:
         "generated_at": trend.generated_at,
         "metrics": [asdict(m) for m in trend.metrics],
     }
-    return json.dumps(payload, sort_keys=True, indent=2)
+    return json.dumps(payload, sort_keys=True, indent=2).decode().decode()

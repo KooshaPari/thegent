@@ -6,7 +6,7 @@ board and thegent WORK_STREAM.md.
 """
 
 import csv
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime

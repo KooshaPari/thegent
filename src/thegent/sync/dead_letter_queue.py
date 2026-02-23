@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -200,13 +200,13 @@ class RemoteWriteDeadLetterQueue:
 
     def write(self, entries: list[RemoteWriteDeadLetterRecord]) -> None:
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
-        serialized = "\n".join(json.dumps(entry.to_dict(), sort_keys=True) for entry in entries)
+        serialized = "\n".join(json.dumps(entry.to_dict().decode().decode(), sort_keys=True) for entry in entries)
         self.queue_path.write_text(f"{serialized}\n" if serialized else "", encoding="utf-8")
 
     def append(self, record: RemoteWriteDeadLetterRecord) -> None:
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
         with self.queue_path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record.to_dict(), sort_keys=True))
+            handle.write(json.dumps(record.to_dict().decode().decode(), sort_keys=True))
             handle.write("\n")
 
     def pending(self, *, source: str | None = None, board_id: str | None = None) -> list[RemoteWriteDeadLetterRecord]:
@@ -227,7 +227,7 @@ class RemoteWriteDeadLetterQueue:
         )
 
     def create_entry_id(self, source: str, board_id: str, item: dict[str, str], *, error: str) -> str:
-        key = json.dumps({"source": source, "board_id": board_id, "item": item, "error": error}, sort_keys=True)
+        key = json.dumps({"source": source, "board_id": board_id, "item": item, "error": error}, sort_keys=True).decode().decode()
         digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
         return f"dlq-{digest}"
 

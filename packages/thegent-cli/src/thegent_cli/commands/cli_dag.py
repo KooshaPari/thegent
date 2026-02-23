@@ -8,7 +8,7 @@ and print results. No business logic lives here.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 
@@ -99,12 +99,12 @@ def dag_list_cmd(cd: Path | None = None, format: str | None = None) -> None:
     fmt = (format or settings.output_format or "rich").lower()
     if not tasks:
         if fmt == "json":
-            sys.stdout.write(json.dumps({"tasks": []}) + "\n")
+            sys.stdout.write(json.dumps({"tasks": []}).decode().decode() + "\n")
         else:
             console.print("[dim]No tasks in DAG.[/dim]")
         return
     if fmt == "json":
-        sys.stdout.write(json.dumps({"tasks": tasks}) + "\n")
+        sys.stdout.write(json.dumps({"tasks": tasks}).decode().decode() + "\n")
         return
     if fmt == "md":
         console.print("## DAG Session\n")
@@ -227,7 +227,7 @@ def dag_status_cmd(cd: Path | None = None, format: str | None = None) -> None:
     settings = ThegentSettings()
     fmt = (format or settings.output_format or "rich").lower()
     if fmt == "json":
-        sys.stdout.write(json.dumps({"tasks": rows}) + "\n")
+        sys.stdout.write(json.dumps({"tasks": rows}).decode().decode() + "\n")
         return
     if not rows:
         console.print("[dim]No tasks with session_id.[/dim]")
@@ -330,7 +330,7 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
     if fmt == "ids":
         console.print("\n".join(ready_ids))
     elif fmt == "json":
-        sys.stdout.write(json.dumps({"ready_task_ids": ready_ids}) + "\n")
+        sys.stdout.write(json.dumps({"ready_task_ids": ready_ids}).decode().decode() + "\n")
         return
     elif fmt == "md":
         console.print("| id | agent | prompt |")

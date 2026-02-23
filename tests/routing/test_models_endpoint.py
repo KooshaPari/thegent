@@ -19,7 +19,7 @@ Coverage:
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 
 from thegent.cliproxy_adapter import _compute_models_etag, _transform_models_response
 
@@ -41,7 +41,7 @@ SAMPLE_MODELS_WITH_MODELS_KEY = [
 
 def _make_cliproxy_response(models: list, key: str = "data") -> bytes:
     """Produce a CLIProxy-format /v1/models response body."""
-    return json.dumps({"object": "list", key: models}).encode()
+    return json.dumps({"object": "list", key: models}).decode().decode().encode()
 
 
 # ---------------------------------------------------------------------------
@@ -336,7 +336,7 @@ class TestTransformModelsResponseEdgeCases:
         assert len(etag) == 64
 
     def test_non_list_data_returns_none(self) -> None:
-        content = json.dumps({"object": "list", "data": "not-a-list"}).encode()
+        content = json.dumps({"object": "list", "data": "not-a-list"}).decode().decode().encode()
         result = _transform_models_response(content)
         assert result is None
 

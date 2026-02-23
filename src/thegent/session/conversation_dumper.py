@@ -8,7 +8,7 @@ with timestamp, model, prompt, and response to configurable locations.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -51,7 +51,7 @@ class ConversationRecord:
         meta = f"**Timestamp:** {self.timestamp.isoformat()}\n"
         meta += f"**Model:** {self.model}\n"
         if self.metadata:
-            meta += f"**Metadata:** {json.dumps(self.metadata, indent=2)}\n"
+            meta += f"**Metadata:** {json.dumps(self.metadata, indent=2).decode().decode()}\n"
         meta += "\n## Prompt\n\n"
         prompt_block = f"{self.prompt}\n\n"
         response_block = f"## Response\n\n{self.response}\n\n"
@@ -208,7 +208,7 @@ class ConversationDumper:
         dump_path = self.dumps_dir / filename
 
         try:
-            content = json.dumps(record.to_json(), indent=2, ensure_ascii=False)
+            content = json.dumps(record.to_json().decode().decode(), indent=2, ensure_ascii=False)
             dump_path.write_text(content, encoding="utf-8")
             logger.info("Conversation dump (JSON) written to %s", dump_path)
             return dump_path

@@ -101,7 +101,7 @@ class TestWorker:
             "duration_ms": 42.0,
             "worker_pid": 12345,
         }
-        proc.stdout.readline = AsyncMock(return_value=(json.dumps(expected_result) + "\n").encode())
+        proc.stdout.readline = AsyncMock(return_value=(json.dumps(expected_result).decode().decode() + "\n").encode())
 
         w = Worker(pid=12345, proc=proc)
         result = await w.execute(task)
@@ -116,7 +116,7 @@ class TestWorker:
         import json
 
         proc = _make_fake_proc(returncode=None)
-        proc.stdout.readline = AsyncMock(return_value=(json.dumps({"error": "bad json"}) + "\n").encode())
+        proc.stdout.readline = AsyncMock(return_value=(json.dumps({"error": "bad json"}).decode().decode() + "\n").encode())
         w = Worker(pid=12345, proc=proc)
         with pytest.raises(RuntimeError, match="task error"):
             await w.execute(_make_task())
@@ -211,7 +211,7 @@ class TestPersistentWorkerPool:
             "duration_ms": 10.0,
             "worker_pid": workers[0].pid,
         }
-        workers[0]._proc.stdout.readline = AsyncMock(return_value=(json.dumps(payload) + "\n").encode())
+        workers[0]._proc.stdout.readline = AsyncMock(return_value=(json.dumps(payload).decode().decode() + "\n").encode())
         result = await pool.submit(task)
         assert result.exit_code == 0
         assert result.stdout == "ok"

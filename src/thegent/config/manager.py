@@ -1,6 +1,6 @@
 """Configuration management."""
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 from typing import Any
@@ -83,4 +83,4 @@ class ConfigManager:
 
     def _save_config(self) -> None:
         """Save config to file."""
-        self.config_path.write_text(json.dumps(self.config, indent=2))
+        self.config_path.write_text(json.dumps(self.config, indent=2).decode().decode())

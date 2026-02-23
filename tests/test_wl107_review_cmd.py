@@ -16,7 +16,7 @@ Covers:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from unittest.mock import patch
 
 import pytest
@@ -52,7 +52,7 @@ _ISSUE_RESPONSE = {
                 }
             ],
         }
-    ),
+    ).decode(),
 }
 
 _FAILED_RESPONSE = {

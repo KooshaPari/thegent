@@ -1,6 +1,6 @@
 """Tests for reusable_helpers module."""
 
-import json
+import orjson as json
 from pathlib import Path
 
 import pytest
@@ -54,7 +54,7 @@ class TestReusableHelpers:
         """Test load_config with JSON."""
         config_path = tmp_path / "config.json"
         data = {"key": "value", "int": 1}
-        config_path.write_text(json.dumps(data))
+        config_path.write_text(json.dumps(data).decode().decode())
 
         config = ReusableHelpers.load_config(config_path)
         assert config == data

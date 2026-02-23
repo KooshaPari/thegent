@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import re
 import sys
 from pathlib import Path
@@ -157,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     report = build_report(args.extensions_root)
 
     if args.format == "json":
-        print(json.dumps(report, indent=2, sort_keys=True))
+        print(json.dumps(report, indent=2, sort_keys=True).decode().decode())
     else:
         print("WL-117 extension package metadata check")
         print(f"- ok: {report['ok']}")

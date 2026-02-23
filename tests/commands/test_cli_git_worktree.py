@@ -9,7 +9,7 @@ if importlib.util.find_spec("thegent_git") is None:
 
     pytest.skip("thegent-git native extension not installed", allow_module_level=True)
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

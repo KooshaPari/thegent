@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -210,7 +210,7 @@ class TestJsonlParsing:
     def test_parse_simple_json_line(self) -> None:
         # @trace FR-AGT-003
         """_parse_jsonl_output extracts text from simple JSON line."""
-        output = json.dumps({"choices": [{"text": "hello world"}]})
+        output = json.dumps({"choices": [{"text": "hello world"}]}).decode().decode()
         text, tokens_in, tokens_out, _ = _parse_jsonl_output(output)
 
         assert text == "hello world"
@@ -221,9 +221,9 @@ class TestJsonlParsing:
         # @trace FR-AGT-003
         """_parse_jsonl_output concatenates streaming delta chunks."""
         lines = [
-            json.dumps({"choices": [{"delta": {"content": "hello"}}]}),
-            json.dumps({"choices": [{"delta": {"content": " "}}]}),
-            json.dumps({"choices": [{"delta": {"content": "world"}}]}),
+            json.dumps({"choices": [{"delta": {"content": "hello"}}]}).decode().decode(),
+            json.dumps({"choices": [{"delta": {"content": " "}}]}).decode().decode(),
+            json.dumps({"choices": [{"delta": {"content": "world"}}]}).decode().decode(),
         ]
         output = "\n".join(lines)
         text, _, _, _ = _parse_jsonl_output(output)
@@ -249,7 +249,7 @@ class TestJsonlParsing:
     def test_parse_model_name(self) -> None:
         # @trace FR-AGT-003
         """_parse_jsonl_output extracts model name."""
-        output = json.dumps({"model": "gpt-5.3-codex-spark"})
+        output = json.dumps({"model": "gpt-5.3-codex-spark"}).decode().decode()
         _, _, _, model = _parse_jsonl_output(output)
 
         assert model == "gpt-5.3-codex-spark"
@@ -258,9 +258,9 @@ class TestJsonlParsing:
         # @trace FR-AGT-003
         """_parse_jsonl_output handles mixed JSON and plain text lines."""
         lines = [
-            json.dumps({"choices": [{"text": "line1\n"}]}),
+            json.dumps({"choices": [{"text": "line1\n"}]}).decode().decode(),
             "This is plain stderr text",
-            json.dumps({"choices": [{"text": "line2"}]}),
+            json.dumps({"choices": [{"text": "line2"}]}).decode().decode(),
         ]
         output = "\n".join(lines)
         text, _, _, _ = _parse_jsonl_output(output)
@@ -283,7 +283,7 @@ class TestJsonlParsing:
     def test_parse_message_format(self) -> None:
         # @trace FR-AGT-003
         """_parse_jsonl_output handles message format (non-streaming)."""
-        output = json.dumps({"choices": [{"message": {"content": "This is a response"}}]})
+        output = json.dumps({"choices": [{"message": {"content": "This is a response"}}]}).decode().decode()
         text, _, _, _ = _parse_jsonl_output(output)
 
         assert text == "This is a response"

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -65,7 +65,7 @@ class ResearchStore:
                     item.title,
                     item.summary,
                     item.score,
-                    json.dumps(item.tags),
+                    json.dumps(item.tags).decode().decode(),
                     item.fetched_at.isoformat(),
                     item.relevance,
                 ),

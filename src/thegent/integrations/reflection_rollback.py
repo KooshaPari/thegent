@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import ClassVar
 from uuid import uuid4
-import json
+import orjson as json
 from typing import Any
 
 
@@ -150,7 +150,7 @@ class ReflectionRollbackManager:
             work_stream_content=snapshot.work_stream_content,
             cycle_id=snapshot.cycle_id,
         )
-        snapshot_file.write_text(json.dumps(ordered), encoding="utf-8")
+        snapshot_file.write_text(json.dumps(ordered).decode().decode(), encoding="utf-8")
         return snapshot
 
     def list_snapshots(self) -> list[RollbackSnapshot]:

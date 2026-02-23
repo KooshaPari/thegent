@@ -8,7 +8,7 @@ observe_summary_impl, cockpit_cmd, feedback_cmd, _observe_summary_freshness_buck
 and health serialization helpers.
 """
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -1002,7 +1002,7 @@ class TestHealthTrendImpl:
             "blocked_count": 0,
             "issue_types": [],
         }
-        snap_path.write_text(json.dumps(snapshot, sort_keys=True) + "\n", encoding="utf-8")
+        snap_path.write_text(json.dumps(snapshot, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
         mock_path.return_value = snap_path
 
         from thegent.cli.commands.impl import session_contract_health_trend_impl
@@ -1042,7 +1042,7 @@ class TestLoadPreviousHealthSnapshot:
             "scope_key": scope_key,
             "blocked_ratio": 0.1,
         }
-        snap_path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+        snap_path.write_text(json.dumps(record, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
         mock_path.return_value = snap_path
 
         result = _load_previous_health_snapshot(scope_key)
@@ -1058,7 +1058,7 @@ class TestLoadPreviousHealthSnapshot:
             "scope_key": {"payload_type": "gate", "owner": "alice"},
             "blocked_ratio": 0.5,
         }
-        snap_path.write_text(json.dumps(record, sort_keys=True) + "\n", encoding="utf-8")
+        snap_path.write_text(json.dumps(record, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
         mock_path.return_value = snap_path
 
         result = _load_previous_health_snapshot({"payload_type": "gate", "owner": "bob"})

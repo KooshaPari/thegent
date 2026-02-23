@@ -8,7 +8,7 @@ pydantic models consumable by the health-score computer.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import re
 import subprocess

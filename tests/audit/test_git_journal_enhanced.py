@@ -6,7 +6,7 @@ FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import subprocess
 from pathlib import Path
@@ -227,7 +227,7 @@ class TestScrubWithNativeScanner:
             ]
             mock_run.return_value = MagicMock(
                 returncode=0,
-                stdout=json.dumps(findings).encode(),
+                stdout=json.dumps(findings).decode().decode().encode(),
                 stderr=b"",
             )
 

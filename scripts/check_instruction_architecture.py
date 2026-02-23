@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 import ast
-import json
+import orjson as json
 import re
 import sys
 from dataclasses import dataclass
@@ -730,14 +730,14 @@ def main(argv: list[str] | None = None) -> int:
     summary = build_summary(findings)
 
     args.summary_json.parent.mkdir(parents=True, exist_ok=True)
-    args.summary_json.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    args.summary_json.write_text(json.dumps(summary, json.OPT_INDENT_2).decode("utf-8"), encoding="utf-8")
 
     if args.format == "json":
         payload = {
             "summary": summary,
             "findings": [finding.__dict__ for finding in findings],
         }
-        print(json.dumps(payload, indent=2, sort_keys=True))
+        print(json.dumps(payload, json.OPT_INDENT_2).decode("utf-8"))
     else:
         print("Instruction architecture check")
         print(f"- findings: {len(findings)}")

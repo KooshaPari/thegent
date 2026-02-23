@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 import hashlib
-import json
+import orjson as json
 from typing import Any, ClassVar
 
 
@@ -129,7 +129,7 @@ class CrossConnectorVerifier:
     def state_fingerprint(self, connector_state: dict[str, Any]) -> str:
         """Build canonical fingerprint for connector state."""
         canonical = {field: connector_state.get(field) for field in self.FINGERPRINT_FIELDS}
-        payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"))
+        payload = json.dumps(canonical, sort_keys=True, separators=(",", ":").decode().decode())
         return hashlib.sha1(payload.encode("utf-8")).hexdigest()
 
     def detect_split_brain(self, states: list[dict[str, Any]]) -> list[SplitBrainFinding]:

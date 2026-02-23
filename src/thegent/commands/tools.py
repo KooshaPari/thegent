@@ -5,7 +5,7 @@ Subcommands for managing and borrowing thegent MCP tools in other projects.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 from typing import Annotated
@@ -49,7 +49,7 @@ def tools_list(
             raise typer.Exit(1)
 
     if output_json:
-        sys.stdout.write(json.dumps([t.to_dict() for t in tools], indent=2) + "\n")
+        sys.stdout.write(json.dumps([t.to_dict().decode().decode() for t in tools], indent=2) + "\n")
         raise typer.Exit(0)
 
     console = Console()
@@ -202,7 +202,7 @@ def tools_show(
         raise typer.Exit(1)
 
     if output_json:
-        sys.stdout.write(json.dumps(manifest.to_dict(), indent=2) + "\n")
+        sys.stdout.write(json.dumps(manifest.to_dict().decode().decode(), indent=2) + "\n")
         raise typer.Exit(0)
 
     console = Console()

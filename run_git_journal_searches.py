@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the specific ddgr searches requested for GitJournal research."""
 
-import json
+import orjson as json
 import sys
 import logging
 from pathlib import Path

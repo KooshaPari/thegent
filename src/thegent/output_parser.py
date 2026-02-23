@@ -10,7 +10,7 @@ for strip_think_blocks. Falls back to Python regex otherwise.
 """
 
 import importlib.util
-import json
+import orjson as json
 import logging
 import re
 from dataclasses import dataclass

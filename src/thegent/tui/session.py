@@ -5,7 +5,7 @@ Saves and restores session state including layouts, history, and settings.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -73,7 +73,7 @@ class SessionPersistence:
             "layout_name": session.layout_name,
             "state": session.state,
         }
-        (sessions_dir / f"{session.session_id}.json").write_text(json.dumps(data, indent=2))
+        (sessions_dir / f"{session.session_id}.json").write_text(json.dumps(data, indent=2).decode().decode())
 
     def create_session(
         self,

@@ -4,7 +4,7 @@ Shared MCP Server Manager (System-Wide First)
 Manages system-wide shared MCP servers, scoping down to per-project only when needed.
 """
 
-import json
+import orjson as json
 import logging
 import os
 import time
@@ -140,7 +140,7 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
         lockfile.write_text(
             json.dumps(
                 {
-                    "pid": pid or os.getpid(),
+                    "pid": pid or os.getpid().decode(),
                     "port": port,
                     "url": mcp_url,
                     "scope": scope_type,

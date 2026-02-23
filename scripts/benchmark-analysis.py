@@ -7,7 +7,7 @@ trends, and optimization recommendations.
 """
 
 import argparse
-import json
+import orjson as json
 import statistics
 import sys
 from dataclasses import dataclass
@@ -325,7 +325,7 @@ def main():
 
     # Generate and save summary
     summary = analyzer.generate_json_summary()
-    args.summary_path.write_text(json.dumps(summary, indent=2))
+    args.summary_path.write_text(json.dumps(summary, indent=2).decode().decode())
     print(f"Summary: {args.summary_path}")
 
     # Print to stdout

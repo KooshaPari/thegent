@@ -5,7 +5,7 @@ Extracted from observability_impl.py as part of CLI refactoring.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -411,7 +411,7 @@ def _append_observe_summary_snapshot(
     path = _health_snapshot_log_path()
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, sort_keys=True))
+            fh.write(json.dumps(record, sort_keys=True).decode().decode())
             fh.write("\n")
     except OSError:
         return

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
+import orjson as json
 import os
 import re
 import subprocess
@@ -317,7 +317,7 @@ def _update_duration_history(
         "samples": samples,
     }
     cache_dir.mkdir(parents=True, exist_ok=True)
-    _duration_cache_path(cache_dir).write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
+    _duration_cache_path(cache_dir).write_text(json.dumps(merged, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     return {
         test_id: value["duration"]
@@ -392,7 +392,7 @@ def _prune_cache(cache_dir: Path, max_days: int) -> list[str]:
 
 def _write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
 
 def _serialize_artifact(artifact: PytestArtifact) -> dict[str, object]:

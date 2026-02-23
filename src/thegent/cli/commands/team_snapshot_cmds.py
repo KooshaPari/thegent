@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import inspect
-import json
+import orjson as json
 import sys
 import typing
 from pathlib import Path
@@ -68,7 +68,7 @@ def snapshot_list_cmd(
     )
 
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[bold cyan]Snapshots[/bold cyan]: {payload.get('count', 0)}")
     for item in payload.get("items", []):
@@ -87,7 +87,7 @@ def snapshot_index_cmd(
     project_path = project or Path.cwd()
     payload = snapshot_index_payload(SessionScraper(project_path), limit=limit)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[bold cyan]Snapshot Index[/bold cyan]: {payload.get('total_snapshots', 0)} snapshots")
     console.print(f"[dim]Top tags: {', '.join(payload.get('top_tags', [])) or '(none)'}[/dim]")
@@ -110,7 +110,7 @@ def snapshot_export_cmd(
         out_path=str(out_path) if out_path else None,
     )
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[green]Exported[/green] {payload['source']} -> {payload['output']}")
 
@@ -127,7 +127,7 @@ def snapshot_prune_cmd(
     project_path = project or Path.cwd()
     payload = snapshot_prune_payload(SessionScraper(project_path), max_keep=max_keep)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[yellow]Pruned[/yellow] {payload.get('deleted', 0)} snapshot(s)")
 
@@ -144,7 +144,7 @@ def snapshot_meta_cmd(
     project_path = project or Path.cwd()
     payload = snapshot_triggers_tags_payload(SessionScraper(project_path), limit=limit)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(f"[bold]Triggers[/bold]: {', '.join(payload.get('triggers', [])) or '(none)'}")
     console.print(f"[bold]Tags[/bold]: {', '.join(payload.get('tags', [])) or '(none)'}")
@@ -174,7 +174,7 @@ def snapshot_daily_index_cmd(
     )
     payload = cast("dict[str, typing.Any]", payload_raw)
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     days_list = cast("list[Any]", payload.get("days", []))
     console.print(f"[bold cyan]Snapshot Daily Index[/bold cyan]: {len(days_list)} day(s)")
@@ -208,7 +208,7 @@ def snapshot_daily_totals_cmd(
         since=since,
     )
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     payload_dict = cast("dict[str, Any]", payload)
     console.print(
@@ -248,7 +248,7 @@ def snapshot_daily_export_cmd(
         since=since,
     )
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload) + "\n")
+        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
         return
     console.print(
         f"[green]Daily index exported[/green] json={payload.get('source_json')} md={payload.get('source_md')}"

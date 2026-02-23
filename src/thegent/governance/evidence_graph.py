@@ -3,7 +3,7 @@
 Builds a closed-loop graph of all evidence artifacts and provides deterministic export bundling.
 """
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 
@@ -29,5 +29,5 @@ class EvidenceGraph:
             "artifact_count": len(self._graph),
             "checksum": "sha256_val",
         }
-        target_path.write_text(json.dumps(manifest, indent=2))
+        target_path.write_text(json.dumps(manifest, indent=2).decode().decode())
         return manifest

@@ -1,6 +1,6 @@
 """Implement prewarm and report subcommands (caching + JSON reports)."""
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 from typing import Any
@@ -56,6 +56,6 @@ class PrewarmReportSubcommands:
             "cached_items": len(list(self.cache_dir.glob("*.cache"))),
         }
 
-        output_file.write_text(json.dumps(report, indent=2))
+        output_file.write_text(json.dumps(report, indent=2).decode().decode())
         logger.info(f"Generated report: {output_file}")
         return output_file

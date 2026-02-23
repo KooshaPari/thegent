@@ -5,7 +5,7 @@ Traces to: FR-AUDIT-001 through FR-AUDIT-020
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import textwrap
 from typing import TYPE_CHECKING

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import time
 from pathlib import Path
 from typing import Any
@@ -72,7 +72,7 @@ def main() -> int:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if args.output.exists() and not args.overwrite:
         raise FileExistsError(f"Refusing to overwrite existing benchmark output: {args.output} (use --overwrite)")
-    args.output.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    args.output.write_text(json.dumps(payload, indent=2).decode().decode(), encoding="utf-8")
     print(f"Wrote benchmark report: {args.output}")
     return 0
 

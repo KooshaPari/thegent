@@ -9,7 +9,7 @@ Tests cover:
 - CSV export/import
 """
 
-import json
+import orjson as json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -188,7 +188,7 @@ class TestGetProjectStatus:
                 {"id": "2", "title": "Task 2"},
             ],
         }
-        mock_run.return_value = (0, json.dumps(mock_data), "")
+        mock_run.return_value = (0, json.dumps(mock_data).decode().decode(), "")
 
         result = get_project_status(valid_config)
 
@@ -247,9 +247,9 @@ class TestSyncToGithub:
         def side_effect(args: list[str], capture: bool = True) -> tuple[int, str, str]:
             _ = capture
             if args[:3] == ["project", "view", "1"]:
-                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+                return 0, json.dumps({"id": "PVT_1", "items": []}).decode().decode(), ""
             if args[:3] == ["project", "item-list", "1"]:
-                return 0, json.dumps([]), ""
+                return 0, json.dumps([]).decode().decode(), ""
             if args[:3] == ["project", "field-list", "1"]:
                 return (
                     0,
@@ -265,7 +265,7 @@ class TestSyncToGithub:
                     "",
                 )
             if args[:3] == ["project", "item-create", "1"]:
-                return 0, json.dumps({"id": "item-1"}), ""
+                return 0, json.dumps({"id": "item-1"}).decode().decode(), ""
             if args[:3] == ["project", "item-edit", "--id"]:
                 return 0, "", ""
             raise AssertionError(f"Unexpected gh args: {args}")
@@ -307,9 +307,9 @@ class TestSyncToGithub:
             calls.append(args)
             _ = capture
             if args[:3] == ["project", "view", "1"]:
-                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+                return 0, json.dumps({"id": "PVT_1", "items": []}).decode().decode(), ""
             if args[:3] == ["project", "item-list", "1"]:
-                return (0, json.dumps([{"id": "ITM_1", "content": {"title": "[WL-6896] Existing issue"}}]), "")
+                return (0, json.dumps([{"id": "ITM_1", "content": {"title": "[WL-6896] Existing issue"}}]).decode().decode(), "")
             if args[:3] == ["project", "field-list", "1"]:
                 return (
                     0,
@@ -333,7 +333,7 @@ class TestSyncToGithub:
                     "",
                 )
             if args[:3] == ["project", "item-create", "1"]:
-                return 0, json.dumps({"id": "ITM_CREATED"}), ""
+                return 0, json.dumps({"id": "ITM_CREATED"}).decode().decode(), ""
             if args[:2] == ["project", "item-edit"]:
                 return 0, "", ""
             raise AssertionError(f"Unexpected gh args: {args}")
@@ -365,11 +365,11 @@ class TestSyncToGithub:
             calls.append(args)
             _ = capture
             if args[:3] == ["project", "view", "1"]:
-                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+                return 0, json.dumps({"id": "PVT_1", "items": []}).decode().decode(), ""
             if args[:3] == ["project", "item-list", "1"]:
-                return 0, json.dumps([]), ""
+                return 0, json.dumps([]).decode().decode(), ""
             if args[:3] == ["project", "field-list", "1"]:
-                return 0, json.dumps([{"id": "F_STATUS", "name": "Status", "options": []}]), ""
+                return 0, json.dumps([{"id": "F_STATUS", "name": "Status", "options": []}]).decode().decode(), ""
             raise AssertionError(f"Unexpected gh args: {args}")
 
         mock_run.side_effect = side_effect
@@ -391,9 +391,9 @@ class TestSyncToGithub:
             nonlocal call_count
             _ = capture
             if args[:3] == ["project", "view", "1"]:
-                return 0, json.dumps({"id": "PVT_1", "items": []}), ""
+                return 0, json.dumps({"id": "PVT_1", "items": []}).decode().decode(), ""
             if args[:3] == ["project", "item-list", "1"]:
-                return 0, json.dumps([]), ""
+                return 0, json.dumps([]).decode().decode(), ""
             if args[:3] == ["project", "field-list", "1"]:
                 return (
                     0,
@@ -411,7 +411,7 @@ class TestSyncToGithub:
             if args[:3] == ["project", "item-create", "1"]:
                 if call_count == 0:
                     call_count += 1
-                    return 0, json.dumps({"id": f"ITM_{call_count}"}), ""
+                    return 0, json.dumps({"id": f"ITM_{call_count}"}).decode().decode(), ""
                 raise GHProjectSyncError("gh API failure")
             if args[:3] == ["project", "item-edit", "--id"]:
                 return 0, "", ""
@@ -444,7 +444,7 @@ class TestSyncFromGithub:
             {"id": "GHID-1", "title": "GitHub Task 1", "status": "Open"},
             {"id": "GHID-2", "title": "GitHub Task 2", "status": "In Progress"},
         ]
-        mock_run.return_value = (0, json.dumps(mock_items), "")
+        mock_run.return_value = (0, json.dumps(mock_items).decode().decode(), "")
 
         result = sync_from_github(valid_config)
 
@@ -595,7 +595,7 @@ class TestImportFromCsv:
         with tempfile.TemporaryDirectory() as tmpdir:
             csv_path = Path(tmpdir) / "import.csv"
             csv_path.write_text("id,title\n1,Task\n")
-            _mock_run.return_value = (0, json.dumps({"id": "item-1"}), "")
+            _mock_run.return_value = (0, json.dumps({"id": "item-1"}).decode().decode(), "")
             result = import_from_csv(config, csv_path)
 
             # Should not raise; may have zero items or some items
@@ -616,7 +616,7 @@ class TestImportFromCsv:
         def side_effect(args, capture=True):
             _ = capture
             if args[:3] == ["project", "view", "1"]:
-                return (0, json.dumps({"id": "PVT_123"}), "")
+                return (0, json.dumps({"id": "PVT_123"}).decode().decode(), "")
             if args[:3] == ["project", "item-list", "1"]:
                 return (0, "[]", "")
             if args[:3] == ["project", "field-list", "1"]:
@@ -624,9 +624,9 @@ class TestImportFromCsv:
                     {"id": "F_STATUS", "name": "Status", "options": [{"id": "OPT_IN_PROGRESS", "name": "In Progress"}]},
                     {"id": "F_PRIORITY", "name": "Priority", "options": [{"id": "OPT_HIGH", "name": "High"}]},
                 ]
-                return (0, json.dumps(payload), "")
+                return (0, json.dumps(payload).decode().decode(), "")
             if args[:3] == ["project", "item-create", "1"]:
-                return (0, json.dumps({"id": "ITEM_1"}), "")
+                return (0, json.dumps({"id": "ITEM_1"}).decode().decode(), "")
             if args[:3] == ["project", "item-edit", "--id"]:
                 return (0, "", "")
             raise AssertionError(f"Unexpected gh call: {args}")

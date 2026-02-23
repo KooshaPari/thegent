@@ -258,7 +258,7 @@ def main():
     if args.json:
         import json
 
-        print(json.dumps(results, indent=2))
+        print(json.dumps(results, indent=2).decode().decode())
     else:
         print_report(results)
 

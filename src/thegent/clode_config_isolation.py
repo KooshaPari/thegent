@@ -1,7 +1,7 @@
 """Claude config isolation helpers for clode."""
 
 import contextlib
-import json
+import orjson as json
 import logging
 import shutil
 from pathlib import Path
@@ -111,7 +111,7 @@ def ensure_claude_config_isolation(config_dir: Path) -> None:
             if global_settings.exists():
                 try:
                     data = json.loads(global_settings.read_text())
-                    target_settings.write_text(json.dumps(data, indent=2))
+                    target_settings.write_text(json.dumps(data, indent=2).decode().decode())
                     _isolation_diagnostics["settings_copy"] = {
                         "status": "copied",
                         "error_type": None,

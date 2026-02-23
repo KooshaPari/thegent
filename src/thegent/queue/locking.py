@@ -1,7 +1,7 @@
 """Advisory file locking for queue operations (atomic claim, release, extend_lease)."""
 
 import fcntl
-import json
+import orjson as json
 import logging
 from pathlib import Path
 
@@ -60,5 +60,5 @@ class QueueLock:
         self._file.seek(0)
         self._file.truncate()
         for entry in entries:
-            self._file.write(json.dumps(entry) + "\n")
+            self._file.write(json.dumps(entry).decode().decode() + "\n")
         self._file.flush()

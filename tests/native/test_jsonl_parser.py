@@ -8,7 +8,7 @@ FR-JSONL-001  @trace FR-JSONL-001
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -39,7 +39,7 @@ def _write_jsonl(lines: list[dict | str], tmp_dir: Path) -> Path:
     with p.open("w", encoding="utf-8") as fh:
         for line in lines:
             if isinstance(line, dict):
-                fh.write(json.dumps(line) + "\n")
+                fh.write(json.dumps(line).decode().decode() + "\n")
             else:
                 fh.write(line + "\n")  # raw/invalid line
     return p

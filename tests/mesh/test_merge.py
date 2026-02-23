@@ -7,7 +7,7 @@ FR traceability:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from typing import TYPE_CHECKING
 from unittest import mock
@@ -134,8 +134,8 @@ class TestMergeStructuralJSON:
         b = tmp_path / "b.json"
         out = tmp_path / "out.json"
 
-        a.write_text(json.dumps({"x": 1}))
-        b.write_text(json.dumps({"y": 2}))
+        a.write_text(json.dumps({"x": 1}).decode().decode())
+        b.write_text(json.dumps({"y": 2}).decode().decode())
 
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(returncode=0)
@@ -154,8 +154,8 @@ class TestMergeStructuralJSON:
         b = tmp_path / "b.json"
         out = tmp_path / "out.json"
 
-        a.write_text(json.dumps({"x": 1}))
-        b.write_text(json.dumps({"y": 2}))
+        a.write_text(json.dumps({"x": 1}).decode().decode())
+        b.write_text(json.dumps({"y": 2}).decode().decode())
 
         with mock.patch(
             "subprocess.run",
@@ -171,8 +171,8 @@ class TestMergeStructuralJSON:
         b = tmp_path / "b.json"
         out = tmp_path / "out.json"
 
-        a.write_text(json.dumps({"x": 1}))
-        b.write_text(json.dumps({"y": 2}))
+        a.write_text(json.dumps({"x": 1}).decode().decode())
+        b.write_text(json.dumps({"y": 2}).decode().decode())
 
         with mock.patch(
             "subprocess.run",

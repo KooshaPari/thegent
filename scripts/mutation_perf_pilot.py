@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import shutil
 import subprocess
 import sys
@@ -110,7 +110,7 @@ def main() -> int:
         "phases": phases,
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(artifact, indent=2).decode().decode() + "\n", encoding="utf-8")
     print(f"Wrote pilot artifact: {args.output}")
 
     if args.strict and failed:

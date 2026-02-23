@@ -11,7 +11,7 @@ Verifies that:
 from __future__ import annotations
 
 import importlib.util
-import json
+import orjson as json
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
@@ -89,7 +89,7 @@ class TestLocCollectorOutput:
         """collect_metrics() output must be JSON-serializable."""
         mod = _import_collect_module()
         result = mod.collect_metrics()
-        serialized = json.dumps(result)
+        serialized = json.dumps(result).decode().decode()
         reparsed = json.loads(serialized)
         assert reparsed["total_loc"] == result["total_loc"]
 

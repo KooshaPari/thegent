@@ -4,7 +4,7 @@ Enhanced Quality Matrix System
 Expanded with 50+ metrics, deeper analysis, trend tracking, and benchmarking.
 """
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime

@@ -12,7 +12,7 @@ Tests cover:
 import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-import json
+import orjson as json
 from unittest.mock import patch
 
 import pytest

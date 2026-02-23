@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import typer
 from rich.console import Console
@@ -81,7 +81,7 @@ def govern_vet(
             policy_id=policy_id,
         )
         if json_output:
-            typer.echo(json.dumps(result, indent=2))
+            typer.echo(json.dumps(result, indent=2).decode().decode())
             return
 
         console.print(f"[cyan]Run:[/cyan] {result['run_id']}")

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 import yaml
@@ -32,7 +32,7 @@ class SidebarGenerator:
         """Return TypeScript source for sidebar-auto.ts."""
         groups = self.generate()
         items_json = json.dumps(
-            {key: [{"text": e["text"], "link": e["link"]} for e in entries] for key, entries in groups.items()},
+            {key: [{"text": e["text"], "link": e["link"]} for e in entries] for key, entries in groups.items().decode()},
             indent=2,
         )
         return f"export const sidebar = {items_json};\n"

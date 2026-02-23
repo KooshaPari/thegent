@@ -1,6 +1,6 @@
 """Task validation implementation."""
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass
 from pathlib import Path

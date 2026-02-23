@@ -16,7 +16,7 @@ Traces to: FR-ACP-001 (ACP Server Adapter)
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch

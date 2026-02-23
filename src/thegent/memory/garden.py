@@ -1,6 +1,6 @@
 """WP-11002: Gardener Synthesis Phase 2 - Memory Garden implementation."""
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass
 from pathlib import Path

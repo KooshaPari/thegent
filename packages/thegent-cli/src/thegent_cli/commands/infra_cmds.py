@@ -3,7 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import shutil
 import sys
@@ -42,7 +42,7 @@ def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
     items = load_recent_interruptions(it.path, limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode().decode() + "\n")
         return
     if not items:
         console.print("[dim]No interruptions in window.[/dim]")
@@ -76,7 +76,7 @@ def config_check_cmd(format: str | None = None) -> None:
             loc = ".".join(str(x) for x in err.get("loc", []))
             issues.append(f"Config error: {loc} — {err.get('msg', 'invalid')}")
         if format == "json":
-            sys.stdout.write(json.dumps({"ok": False, "issues": issues}) + "\n")
+            sys.stdout.write(json.dumps({"ok": False, "issues": issues}).decode().decode() + "\n")
             raise typer.Exit(1)
         for i in issues:
             console.print(f"[red]{i}[/red]")
@@ -91,14 +91,14 @@ def config_check_cmd(format: str | None = None) -> None:
 
     if issues:
         if format == "json":
-            sys.stdout.write(json.dumps({"ok": False, "issues": issues}) + "\n")
+            sys.stdout.write(json.dumps({"ok": False, "issues": issues}).decode().decode() + "\n")
             raise typer.Exit(1)
         for i in issues:
             console.print(f"[yellow]{i}[/yellow]")
         raise typer.Exit(1)
 
     if format == "json":
-        sys.stdout.write(json.dumps({"ok": True, "issues": []}) + "\n")
+        sys.stdout.write(json.dumps({"ok": True, "issues": []}).decode().decode() + "\n")
         return
     console.print("[green]Config OK.[/green]")
 
@@ -135,7 +135,7 @@ def concurrency_show_cmd(format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data, indent=2) + "\n")
+        sys.stdout.write(json.dumps(data, indent=2).decode().decode() + "\n")
         return
 
     table = Table(title="Concurrency Status (WP-5001)")
@@ -215,7 +215,7 @@ def load_status_cmd(format: str | None = None) -> None:
     }
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
     table = Table(title="Load Status (WP-5002)")
     table.add_column("Metric")
@@ -250,7 +250,7 @@ def cost_status_cmd(format: str | None = None) -> None:
     }
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
     table = Table(title="Cost Status (WP-5003)")
     table.add_column("Metric")
@@ -291,7 +291,7 @@ def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
 
     if metrics:
@@ -350,7 +350,7 @@ def observe_summary_cmd(
     )
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         return
 
     lines = build_observe_lines(result, provider)
@@ -465,7 +465,7 @@ def sitback_dashboard_cmd(
 
     def _render(data: dict) -> None:
         if format == "json":
-            sys.stdout.write(json.dumps(data, sort_keys=True) + "\n")
+            sys.stdout.write(json.dumps(data, sort_keys=True).decode().decode() + "\n")
             return
 
         if prof == "light":
@@ -582,7 +582,7 @@ def modes_cmd(
         data = list_modes()
 
     if format == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
 
     table = Table(title="Multi-Agent Orchestration Modes")
@@ -704,7 +704,7 @@ def release_pack_cmd(version: str = "2.0") -> None:
 
     # Write manifest to disk
     out_path = Path.cwd() / f"release_manifest_v{version}.json"
-    out_path.write_text(json.dumps(manifest, indent=2))
+    out_path.write_text(json.dumps(manifest, indent=2).decode().decode())
     console.print(f"[dim]Manifest written to {out_path}[/dim]")
 
 

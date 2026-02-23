@@ -17,7 +17,7 @@ No silent fallbacks, no legacy shims.
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 import re
 import subprocess
 from dataclasses import dataclass, field

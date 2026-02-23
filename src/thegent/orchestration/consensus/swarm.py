@@ -1,6 +1,6 @@
 """Swarm coordination and shared memory for thegent (WP-1006)."""
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from typing import Any, Literal
@@ -70,7 +70,7 @@ class ConsensusManager:
         proposal_map: dict[str, dict[str, Any]] = {}
 
         for p in proposals:
-            val_str = json.dumps(p.get("value"), sort_keys=True)
+            val_str = json.dumps(p.get("value").decode().decode(), sort_keys=True)
             counts[val_str] = counts.get(val_str, 0) + 1
             proposal_map[val_str] = p
 

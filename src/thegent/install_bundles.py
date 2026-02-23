@@ -1,6 +1,6 @@
 """Bundle manifest loading and path resolution helpers for install workflows."""
 
-import json
+import orjson as json
 import os
 from pathlib import Path
 from typing import Any

@@ -8,7 +8,7 @@ Verifies SHA256 checksum computation, storage, and verification for payload inte
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 
 import pytest
 
@@ -83,7 +83,7 @@ class TestRemotePayloadChecksumVerifier:
         data = {"key": "value"}
         record = verifier.compute("payload_1", data)
 
-        expected_hash = hashlib.sha256(json.dumps(data, sort_keys=True).encode("utf-8")).hexdigest()
+        expected_hash = hashlib.sha256(json.dumps(data, sort_keys=True).decode().decode().encode("utf-8")).hexdigest()
 
         assert record.checksum == expected_hash
 

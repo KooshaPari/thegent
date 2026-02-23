@@ -16,7 +16,7 @@ Opt-in extensions:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -267,7 +267,7 @@ class VetterOrchestrator:
         events_file: Path = self.session_dir / "governance_events.jsonl"
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with events_file.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(event) + "\n")
+            fh.write(json.dumps(event).decode().decode() + "\n")
         if self.event_log is not None:
             self.event_log.emit(event)
 

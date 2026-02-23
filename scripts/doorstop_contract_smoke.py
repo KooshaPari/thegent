@@ -8,7 +8,7 @@ Required env:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import sys
 
@@ -43,7 +43,7 @@ def main() -> int:
         "target": "doorstop",
         "version": version,
         "status": "available"
-    }))
+    })).decode()
     return 0
 
 
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print(json.dumps({"ok": False, "target": "doorstop", "error": str(exc)}))
+        print(json.dumps({"ok": False, "target": "doorstop", "error": str(exc).decode().decode()}))
         raise

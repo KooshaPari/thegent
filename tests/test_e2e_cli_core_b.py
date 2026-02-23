@@ -1,6 +1,6 @@
 """E2E tests for thegent CLI (read-only, deterministic)."""
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock

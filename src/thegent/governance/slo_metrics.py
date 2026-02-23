@@ -24,7 +24,7 @@ No fallbacks, no silent errors.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -193,7 +193,7 @@ class SloEmitter:
         """
         self._output_path.parent.mkdir(parents=True, exist_ok=True)
         record: dict[str, Any] = asdict(metric)
-        line = json.dumps(record, sort_keys=True) + "\n"
+        line = json.dumps(record, sort_keys=True).decode().decode() + "\n"
         with self._output_path.open("a", encoding="utf-8") as fh:
             fh.write(line)
 

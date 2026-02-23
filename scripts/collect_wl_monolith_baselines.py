@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
-import json
+import orjson as json
 import sys
 from pathlib import Path
 
@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = collect_all()
 
     if args.format == "json":
-        rendered = json.dumps(payload, indent=2, sort_keys=True)
+        rendered = json.dumps(payload, indent=2, sort_keys=True).decode().decode()
     else:
         rendered = _render_text(payload)
 

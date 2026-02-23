@@ -1,6 +1,6 @@
 """Unit tests for thegent.contracts.telemetry -- ContractTelemetry, drift detection."""
 
-import json
+import orjson as json
 
 import pytest
 

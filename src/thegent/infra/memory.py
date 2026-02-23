@@ -5,7 +5,7 @@ Implements a triple-tier memory architecture:
 3. Semantic Memory (Persistent Knowledge Graph / Mem0 pattern)
 """
 
-import json
+import orjson as json
 import logging
 import sqlite3
 from datetime import UTC, datetime
@@ -115,7 +115,7 @@ class MemoryMeshV2:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 "INSERT INTO episodic_log (task_id, timestamp, event_type, content, outcome, metadata) VALUES (?, ?, ?, ?, ?, ?)",
-                (task_id, ts, event_type, content, outcome, json.dumps(metadata or {})),
+                (task_id, ts, event_type, content, outcome, json.dumps(metadata or {}).decode().decode()),
             )
             return cursor.lastrowid or 0
 
@@ -143,7 +143,7 @@ class MemoryMeshV2:
                     metadata=excluded.metadata,
                     timestamp=excluded.timestamp
                 """,
-                (node.id, node.type, node.content, json.dumps(node.metadata), node.timestamp),
+                (node.id, node.type, node.content, json.dumps(node.metadata).decode().decode(), node.timestamp),
             )
             # Add edges
             for edge in relations:

@@ -4,7 +4,7 @@ Tests the ActionType enum and MAIFArtifact dataclass with validators.
 """
 
 import hashlib
-import json
+import orjson as json
 import uuid
 from datetime import datetime
 

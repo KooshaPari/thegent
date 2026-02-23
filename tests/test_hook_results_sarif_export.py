@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import sys
 from pathlib import Path
@@ -17,7 +17,7 @@ def test_export_hook_results_to_sarif(tmp_path: Path) -> None:
                 "status": "failed",
                 "exit_code": 1,
                 "summary": {"duration_ms": 100},
-                "checks": [{"name": "Python (ruff)", "status": "failed"}],
+                "checks": [{"name": "Python (ruff).decode()", "status": "failed"}],
             }
         ),
         encoding="utf-8",
@@ -34,7 +34,7 @@ def test_export_hook_results_to_sarif(tmp_path: Path) -> None:
                 "summary": {"total_findings": 1},
                 "checks": [{"name": "Layer 1 - Secrets", "status": "warn", "findings": 1}],
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
     output = tmp_path / "hooks.sarif"

@@ -8,7 +8,7 @@ If CLIProxy is not reachable, this script starts it with the configured binary/c
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import os
 import subprocess
 import time
@@ -203,7 +203,7 @@ def main() -> int:
         result = _run_matrix(args.base_url, args.api_key, args.input)
         if required_providers:
             result["required_provider_gate"] = _evaluate_required_provider_gate(result, required_providers)
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, json.OPT_INDENT_2).decode("utf-8"))
         if args.strict and result["failed"] > 0:
             return 1
         if args.strict_required_providers and required_providers:

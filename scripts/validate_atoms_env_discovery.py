@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -219,7 +219,7 @@ def main() -> int:
                     "missing": findings["missing"],
                 },
                 indent=2,
-            )
+            ).decode()
             + "\n",
             encoding="utf-8",
         )

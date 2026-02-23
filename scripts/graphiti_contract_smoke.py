@@ -8,7 +8,7 @@ Required env:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import sys
 import urllib.error
@@ -43,7 +43,7 @@ def main() -> int:
     if status != 200:
         raise RuntimeError(f"Graphiti health check returned non-200 status: {status}")
 
-    print(json.dumps({"ok": True, "target": "graphiti", "url": url, "status": status, "body": body[:120]}))
+    print(json.dumps({"ok": True, "target": "graphiti", "url": url, "status": status, "body": body[:120]}).decode().decode())
     return 0
 
 
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:  # noqa: BLE001 -- spike contract must fail loudly with explicit reason
-        print(json.dumps({"ok": False, "target": "graphiti", "error": str(exc)}))
+        print(json.dumps({"ok": False, "target": "graphiti", "error": str(exc).decode().decode()}))
         raise

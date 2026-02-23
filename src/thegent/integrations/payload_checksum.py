@@ -9,7 +9,7 @@ Computes, stores, and verifies SHA256 checksums for payload integrity.
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 from dataclasses import dataclass
 from typing import Any
 
@@ -39,7 +39,7 @@ class RemotePayloadChecksumVerifier:
         Returns:
             A ChecksumRecord with the payload_id and computed checksum.
         """
-        json_str = json.dumps(data, sort_keys=True)
+        json_str = json.dumps(data, sort_keys=True).decode().decode()
         checksum = hashlib.sha256(json_str.encode("utf-8")).hexdigest()
         return ChecksumRecord(payload_id=payload_id, checksum=checksum)
 

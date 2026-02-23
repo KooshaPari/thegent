@@ -1,6 +1,6 @@
 """WP-Y8-rel: Provider scoring with learning."""
 
-import json
+import orjson as json
 import logging
 
 from thegent.config import ThegentSettings
@@ -45,4 +45,4 @@ class ProviderScorer:
 
     def _save_scores(self):
         self.settings.session_dir.mkdir(parents=True, exist_ok=True)
-        self.scores_file.write_text(json.dumps(self.scores, indent=2), encoding="utf-8")
+        self.scores_file.write_text(json.dumps(self.scores, indent=2).decode().decode(), encoding="utf-8")

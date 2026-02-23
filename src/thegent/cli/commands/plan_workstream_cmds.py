@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 import time
 from pathlib import Path
@@ -128,7 +128,7 @@ def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None
     fmt = resolve_output_format(format, settings)
 
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
     else:
         counts = result.get("counts", {})
         console.print(
@@ -165,7 +165,7 @@ def plan_wait_next_cmd(
     settings = ThegentSettings()
     fmt = (format or settings.output_format or "rich").lower()
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         return
     if result.get("action") is None:
         console.print("[dim]Timeout: no next action found.[/dim]")
@@ -194,7 +194,7 @@ def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None 
     fmt = resolve_output_format(format, settings)
     if result.get("governance_blocked"):
         if fmt == "json":
-            sys.stdout.write(json.dumps(result) + "\n")
+            sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         else:
             console.print(f"[red]{result['error']}[/red]")
             if result.get("remediation"):
@@ -204,7 +204,7 @@ def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None 
         console.print(f"[red]{result['error']}[/red]")
         raise typer.Exit(1)
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         return
     items = result.get("next_items", [])
     if not items:
@@ -223,7 +223,7 @@ def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None
     fmt = (format or "plain").lower()
     if result.get("governance_blocked"):
         if fmt == "json":
-            sys.stdout.write(json.dumps(result) + "\n")
+            sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         else:
             typer.echo(result["error"], err=True)
             if result.get("remediation"):
@@ -237,7 +237,7 @@ def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None
         raise typer.Exit(1)
     item = items[0]
     if fmt == "json":
-        sys.stdout.write(json.dumps(item) + "\n")
+        sys.stdout.write(json.dumps(item).decode().decode() + "\n")
     else:
         sys.stdout.write((item.get("prompt_suggestion") or "") + "\n")
 
@@ -320,7 +320,7 @@ def plan_analyze_cmd(
     settings = ThegentSettings()
     fmt = (format or settings.output_format or "rich").lower()
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         return
     if pert and "pert" in result:
         tbl = Table(title="PERT Milestone Confidence")

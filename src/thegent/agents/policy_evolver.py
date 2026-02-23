@@ -2,7 +2,7 @@
 Analyzes run failures and evolves policy thresholds automatically.
 """
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -76,5 +76,5 @@ class PolicyEvolver:
         self.proposals_path.parent.mkdir(parents=True, exist_ok=True)
         event = {"timestamp": datetime.now(UTC).isoformat(), "proposal": proposal}
         with self.proposals_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json.dumps(event).decode().decode() + "\n")
         _log.info("Policy evolution proposal recorded: %s", proposal["principle_id"])

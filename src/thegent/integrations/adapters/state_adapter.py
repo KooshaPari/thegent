@@ -3,7 +3,7 @@
 Handles local state persistence, checkpoints, and trends.
 """
 
-import json
+import orjson as json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -43,7 +43,7 @@ class StateAdapter:
         try:
             self._trend_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self._trend_path, "a") as f:
-                f.write(json.dumps(sample) + "\n")
+                f.write(json.dumps(sample).decode().decode() + "\n")
         except Exception:
             pass
     
@@ -61,7 +61,7 @@ class StateAdapter:
         """Write status to file."""
         try:
             self._status_path.parent.mkdir(parents=True, exist_ok=True)
-            self._status_path.write_text(json.dumps(status, indent=2))
+            self._status_path.write_text(json.dumps(status, indent=2).decode().decode())
         except Exception:
             pass
 

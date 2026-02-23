@@ -9,7 +9,7 @@ The cache persists to docs/reference/idempotency_cache.json for durability
 across process restarts.
 """
 
-import json
+import orjson as json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -114,7 +114,7 @@ class IdempotencyCache:
                 "records": [record.to_dict() for record in self._records.values()],
             }
             self.cache_path.write_text(
-                json.dumps(data, indent=2, sort_keys=True),
+                json.dumps(data, indent=2, sort_keys=True).decode().decode(),
                 encoding="utf-8",
             )
         except Exception as e:

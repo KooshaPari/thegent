@@ -6,7 +6,7 @@ Supports latency p99 calculation, success rate tracking, and storage.
 """
 
 import asyncio
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path

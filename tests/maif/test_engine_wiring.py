@@ -1,6 +1,6 @@
 """Tests for ExecutionEngine and MAIFAgentRunner wiring."""
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 

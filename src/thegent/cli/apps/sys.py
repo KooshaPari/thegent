@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 import typer
@@ -216,7 +216,7 @@ def sys_shadow(
 
     elif action == "stats":
         stats = get_shadow_stats(repo_path)
-        console.print(json.dumps(stats, indent=2))
+        console.print(json.dumps(stats, indent=2).decode().decode())
 
     else:
         console.print(f"[red]Unknown action: {action}[/red]")

@@ -9,7 +9,7 @@ Implements:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -252,7 +252,7 @@ class KeyRotationWebhook:
         _log.info("Posting key rotation event for key_id=%s to %s", key_id, self.webhook_url)
         response = httpx.post(
             self.webhook_url,
-            content=json.dumps(payload).encode(),
+            content=json.dumps(payload).decode().decode().encode(),
             headers={"Content-Type": "application/json"},
             timeout=self.timeout_seconds,
         )

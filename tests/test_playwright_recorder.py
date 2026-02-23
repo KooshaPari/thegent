@@ -8,7 +8,7 @@ Tests cover:
 - Result serialization
 """
 
-import json
+import orjson as json
 import tempfile
 from pathlib import Path
 

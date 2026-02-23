@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 from tests.e2e.test_governance_health_artifact import test_governance_health_artifact_schema_and_counts

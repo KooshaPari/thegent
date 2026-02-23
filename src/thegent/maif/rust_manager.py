@@ -1,6 +1,6 @@
 """MAIF Artifact Manager using Rust binary."""
 
-import json
+import orjson as json
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -44,7 +44,7 @@ class RustMAIFManager:
         """Create and sign a MAIF artifact using the Rust binary."""
         self.ensure_keys()
 
-        payload_json = json.dumps(payload)
+        payload_json = json.dumps(payload).decode().decode()
 
         subprocess.run(
             [

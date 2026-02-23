@@ -136,6 +136,7 @@ _hook_runtime_apply_exports() {
   local line key value
   while IFS= read -r line; do
     [[ -n "$line" && "$line" == *=* ]] || continue
+    line="${line#export }"  # Strip "export " prefix if present
     key="${line%%=*}"
     value="${line#*=}"
     case "$key" in

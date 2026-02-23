@@ -8,7 +8,7 @@ FR traceability: WL-302 (Compliance Evidence Snapshot Scheduler)
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path

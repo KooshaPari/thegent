@@ -16,7 +16,7 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -56,7 +56,7 @@ def _write_skill_md(directory: Path, content: str) -> Path:
 
 def _write_skill_json(directory: Path, data: dict[str, Any]) -> Path:
     path = directory / "skill.json"
-    path.write_text(json.dumps(data), encoding="utf-8")
+    path.write_text(json.dumps(data).decode().decode(), encoding="utf-8")
     return path
 
 
@@ -81,7 +81,7 @@ def _error_result(
     }
     if extra:
         payload.update(extra)
-    return ToolResult(content=json.dumps(payload), structured_content=payload, meta={"execution_time_ms": 0})
+    return ToolResult(content=json.dumps(payload).decode().decode(), structured_content=payload, meta={"execution_time_ms": 0})
 
 
 # ---------------------------------------------------------------------------

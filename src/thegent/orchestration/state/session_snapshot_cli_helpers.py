@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -283,7 +283,7 @@ def snapshot_daily_export_payload(
 
     json_path.parent.mkdir(parents=True, exist_ok=True)
     md_path.parent.mkdir(parents=True, exist_ok=True)
-    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    json_path.write_text(json.dumps(payload, indent=2).decode().decode(), encoding="utf-8")
 
     lines = [
         "# Snapshot Daily Index",

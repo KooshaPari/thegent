@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory

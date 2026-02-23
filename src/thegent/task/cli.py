@@ -99,7 +99,7 @@ def parse(
         if output:
             import json
 
-            output.write_text(json.dumps(task, indent=2, default=str))
+            output.write_text(json.dumps(task, indent=2, default=str).decode().decode())
             console.print(f"[green]Saved to {output}[/green]")
         else:
             # Display task summary

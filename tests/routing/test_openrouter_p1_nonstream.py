@@ -7,7 +7,7 @@ Coverage:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -57,7 +57,7 @@ async def test_proxy_request_402_no_retry_normalized_error() -> None:
     mock_request = AsyncMock(
         return_value=httpx.Response(
             402,
-            content=json.dumps({"error": {"message": "insufficient credits"}}).encode(),
+            content=json.dumps({"error": {"message": "insufficient credits"}}).decode().decode().encode(),
             headers={"content-type": "application/json"},
         )
     )
@@ -76,22 +76,22 @@ async def test_proxy_request_503_retries_then_returns_normalized_error() -> None
         side_effect=[
             httpx.Response(
                 503,
-                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).encode(),
+                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).decode().decode().encode(),
                 headers={"content-type": "application/json"},
             ),
             httpx.Response(
                 503,
-                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).encode(),
+                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).decode().decode().encode(),
                 headers={"content-type": "application/json"},
             ),
             httpx.Response(
                 503,
-                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).encode(),
+                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).decode().decode().encode(),
                 headers={"content-type": "application/json"},
             ),
             httpx.Response(
                 503,
-                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).encode(),
+                content=json.dumps({"error": {"metadata": {"provider": "openrouter"}}}).decode().decode().encode(),
                 headers={"content-type": "application/json"},
             ),
         ]
@@ -113,7 +113,7 @@ async def test_proxy_request_502_retry_then_success() -> None:
         side_effect=[
             httpx.Response(
                 502,
-                content=json.dumps({"error": {"message": "temporary upstream"}}).encode(),
+                content=json.dumps({"error": {"message": "temporary upstream"}}).decode().decode().encode(),
                 headers={"content-type": "application/json"},
             ),
             httpx.Response(

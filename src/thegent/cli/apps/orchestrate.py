@@ -9,7 +9,7 @@ LLMPlangentPlanner -> PlangentExecutor -> SubAgentDispatcher pipeline.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import typer
 from rich.console import Console
@@ -55,7 +55,7 @@ def plan_cmd(
     )
 
     if json_output:
-        typer.echo(json.dumps(result, indent=2))
+        typer.echo(json.dumps(result, indent=2).decode().decode())
         return
 
     console.print(f"[bold cyan]Plan:[/bold cyan] {result['plan_id']}")
@@ -118,7 +118,7 @@ def run_cmd(
     )
 
     if json_output:
-        typer.echo(json.dumps(result, indent=2))
+        typer.echo(json.dumps(result, indent=2).decode().decode())
         raise typer.Exit(0 if result["all_passed"] else 1)
 
     console.print(f"[bold cyan]Plan:[/bold cyan] {result['plan_id']}")

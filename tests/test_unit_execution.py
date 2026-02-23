@@ -1,6 +1,6 @@
 """Unit tests for execution registry and state-aware orchestration (G-KD-03)."""
 
-import json
+import orjson as json
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -472,7 +472,7 @@ class TestOverrideRegistry:
             "expires_at_utc": "2020-01-01T00:01:00+00:00",
         }
         with oreg.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(expired_event) + "\n")
+            f.write(json.dumps(expired_event).decode().decode() + "\n")
         assert oreg.has_unexpired("user2") is False
 
 
@@ -563,7 +563,7 @@ class TestAuditorVerifyRegistry:
         if len(lines) >= 2:
             data = json.loads(lines[1])
             data["hash"] = "tampered_hash_value"
-            lines[1] = json.dumps(data)
+            lines[1] = json.dumps(data).decode().decode()
             reg.registry_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         auditor = Auditor(reg.registry_path)
         result = auditor.verify_registry()
@@ -794,7 +794,7 @@ class TestRunRegistryFindByToken:
             "idempotency_token": "tok-fin",
         }
         with reg.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(finish_event) + "\n")
+            f.write(json.dumps(finish_event).decode().decode() + "\n")
         result = reg.find_by_token("tok-fin")
         assert result is not None
         assert result["status"] == "completed"
@@ -812,7 +812,7 @@ class TestRunRegistryFindByToken:
             "idempotency_token": "tok-fb",
         }
         with reg.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(feedback_event) + "\n")
+            f.write(json.dumps(feedback_event).decode().decode() + "\n")
         result = reg.find_by_token("tok-fb")
         assert result is not None
         assert result.get("feedback_score") == 0.9
@@ -1004,7 +1004,7 @@ class TestEscalationQueueSLAExpiry:
         }
         eq.session_dir.mkdir(parents=True, exist_ok=True)
         with eq.queue_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(past_sla) + "\n")
+            f.write(json.dumps(past_sla).decode().decode() + "\n")
         items = eq.list_pending(past_sla_only=True)
         assert len(items) == 1
         assert items[0]["past_sla"] is True
@@ -1207,7 +1207,7 @@ class TestPurgeExpiredExceptionPaths:
         # Write a record with no timestamp fields
         no_ts = {"run_id": "run_nots", "event": "custom"}
         with reg.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(no_ts) + "\n")
+            f.write(json.dumps(no_ts).decode().decode() + "\n")
         result = reg.purge_expired(default_days=30, by_domain={}, dry_run=True)
         assert result["kept"] >= 1
 
@@ -1218,7 +1218,7 @@ class TestPurgeExpiredExceptionPaths:
         # Write a record with a naive timestamp (no timezone info)
         naive_ts_record = {"run_id": "run_naive", "started_at_utc": "2020-01-01T00:00:00"}
         with reg.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(naive_ts_record) + "\n")
+            f.write(json.dumps(naive_ts_record).decode().decode() + "\n")
         result = reg.purge_expired(default_days=30, by_domain={}, dry_run=False)
         # Old record should be purged
         assert result["purged"] >= 1
@@ -1230,7 +1230,7 @@ class TestPurgeExpiredExceptionPaths:
         # Write a record with invalid timestamp format to trigger exception
         bad_record = {"run_id": "run_bad", "started_at_utc": "not-a-date"}
         with reg.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(bad_record) + "\n")
+            f.write(json.dumps(bad_record).decode().decode() + "\n")
         result = reg.purge_expired(default_days=30, by_domain={}, dry_run=True)
         assert result["kept"] >= 1
 
@@ -1330,7 +1330,7 @@ class TestAuditorVerifyRegistryDetailedPaths:
             data = json.loads(lines[1])
             data["prev_hash"] = "wrong_hash"
             data["hash"] = "recalculated_but_wrong"
-            lines[1] = json.dumps(data)
+            lines[1] = json.dumps(data).decode().decode()
             reg.registry_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         auditor = Auditor(reg.registry_path)
         result = auditor.verify_registry()
@@ -1341,7 +1341,7 @@ class TestAuditorVerifyRegistryDetailedPaths:
         """verify_registry counts records with missing hash as corrupt (lines 686-687)."""
         reg_path = tmp_path / "registry.jsonl"
         record = {"run_id": "run_no_hash", "event": "start"}
-        reg_path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+        reg_path.write_text(json.dumps(record).decode().decode() + "\n", encoding="utf-8")
         auditor = Auditor(reg_path)
         result = auditor.verify_registry()
         assert result["corrupt_count"] >= 1
@@ -1362,14 +1362,14 @@ class TestAuditorVerifyRegistryDetailedPaths:
         }
         # Calculate correct hash
         d = {k: v for k, v in record.items() if k != "hash"}
-        body = json.dumps(d, sort_keys=True, separators=(",", ":"))
+        body = json.dumps(d, sort_keys=True, separators=(",", ":").decode().decode())
         record["hash"] = _hl.sha256(body.encode()).hexdigest()
         # Recalculate after adding hash (to make hash valid but sig wrong)
         d2 = {k: v for k, v in record.items() if k != "hash"}
-        body2 = json.dumps(d2, sort_keys=True, separators=(",", ":"))
+        body2 = json.dumps(d2, sort_keys=True, separators=(",", ":").decode().decode())
         record["hash"] = _hl.sha256(body2.encode()).hexdigest()
 
-        reg_path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+        reg_path.write_text(json.dumps(record).decode().decode() + "\n", encoding="utf-8")
         auditor = Auditor(reg_path)
         result = auditor.verify_registry()
         # Either hash or sig mismatch is detected
@@ -1421,7 +1421,7 @@ class TestOverrideRegistryExceptionPaths:
         no_expiry = {"owner": "user1", "reason": "test", "timestamp": "2026-01-01T00:00:00+00:00"}
         oreg.session_dir.mkdir(parents=True, exist_ok=True)
         with oreg.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(no_expiry) + "\n")
+            f.write(json.dumps(no_expiry).decode().decode() + "\n")
         assert oreg.has_unexpired("user1") is False
 
     def test_has_unexpired_skips_corrupt_json(self, tmp_path: Path) -> None:
@@ -1455,7 +1455,7 @@ class TestEscalationQueueExceptionPaths:
         no_sla = {"run_id": "run_nosla", "status": "pending", "reason": "test", "priority": 0}
         eq.session_dir.mkdir(parents=True, exist_ok=True)
         with eq.queue_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(no_sla) + "\n")
+            f.write(json.dumps(no_sla).decode().decode() + "\n")
         items = eq.list_pending()
         assert len(items) == 0
 

@@ -6,7 +6,7 @@ TGNT-P15.3 (worktree cleanup / orphan detection / health monitor).
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import time
 from typing import TYPE_CHECKING

@@ -5,7 +5,7 @@ Runs on specialized runtimes (PyPy, CPython 3.14) and executes dispatched tasks.
 
 import asyncio
 import importlib
-import json
+import orjson as json
 import os
 import sys
 import time
@@ -95,12 +95,11 @@ async def worker_loop(mesh_root: Path, runtime_name: str):
                                 "implementation": sys.implementation.name,
                                 "version": sys.version,
                             }
-                        )
-                    )
+                        )).decode()
 
                 except Exception as e:
                     result_path = mesh_root / "results" / f"{task_id}.json"
-                    result_path.write_text(json.dumps({"status": "error", "error": str(e), "runtime": runtime_name}))
+                    result_path.write_text(json.dumps({"status": "error", "error": str(e).decode().decode(), "runtime": runtime_name}))
 
         # 3. Sleep with low-latency responsiveness
         await asyncio.sleep(0.1)

@@ -5,7 +5,7 @@ following the RunRegistry pattern from execution.py.
 """
 
 import hashlib
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -70,7 +70,7 @@ class EvidenceLedger:
             }
             marker["hash"] = self._calculate_hash(marker)
             with self.ledger_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(marker) + "\n")
+                f.write(json.dumps(marker).decode().decode() + "\n")
 
     def _get_last_hash(self) -> str | None:
         """Return the hash of the last record in the ledger."""
@@ -93,7 +93,7 @@ class EvidenceLedger:
     def _calculate_hash(self, data: dict[str, Any]) -> str:
         """Calculate a stable SHA-256 hash for a record, excluding the hash field itself."""
         d = {k: v for k, v in data.items() if k != "hash"}
-        body = json.dumps(d, sort_keys=True, separators=(",", ":"))
+        body = json.dumps(d, sort_keys=True, separators=(",", ":").decode().decode())
         return hashlib.sha256(body.encode()).hexdigest()
 
     def record(self, event_type: str, cycle_id: str, payload: dict[str, Any] | None = None, **kwargs: Any) -> str:

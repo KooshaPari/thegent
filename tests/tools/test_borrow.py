@@ -18,7 +18,7 @@ Tests cover:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -319,7 +319,7 @@ class TestGenerateMcpJson:
 
         existing_config = {"mcpServers": {"other-server": {"type": "stdio", "command": "other"}}}
         mcp_file = StdPath(tmp_path) / "mcp.json"
-        mcp_file.write_text(json.dumps(existing_config), encoding="utf-8")
+        mcp_file.write_text(json.dumps(existing_config).decode().decode(), encoding="utf-8")
 
         borrower = ToolBorrower()
         borrower.generate_mcp_json(["thegent_run"], tmp_path, merge=True)
@@ -333,7 +333,7 @@ class TestGenerateMcpJson:
 
         existing_config = {"mcpServers": {"only-this": {"type": "stdio", "command": "x"}}}
         mcp_file = StdPath(tmp_path) / "mcp.json"
-        mcp_file.write_text(json.dumps(existing_config), encoding="utf-8")
+        mcp_file.write_text(json.dumps(existing_config).decode().decode(), encoding="utf-8")
 
         borrower = ToolBorrower()
         borrower.generate_mcp_json(["thegent_run"], tmp_path, merge=False)

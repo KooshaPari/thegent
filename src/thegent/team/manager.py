@@ -1,6 +1,6 @@
 """WP-6008: Multi-agent team management and task coordination."""
 
-import json
+import orjson as json
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -29,7 +29,7 @@ class TeamManager:
             "created_at": datetime.now(UTC).isoformat(),
             "status": "active",
         }
-        (self.teams_dir / f"{team_id}.json").write_text(json.dumps(team_meta), encoding="utf-8")
+        (self.teams_dir / f"{team_id}.json").write_text(json.dumps(team_meta).decode().decode(), encoding="utf-8")
 
         # Initialize empty task list
         (self.teams_dir / f"{team_id}_tasks.jsonl").touch()
@@ -51,7 +51,7 @@ class TeamManager:
             "created_at": datetime.now(UTC).isoformat(),
         }
         with (self.teams_dir / f"{team_id}_tasks.jsonl").open("a", encoding="utf-8") as f:
-            f.write(json.dumps(task) + "\n")
+            f.write(json.dumps(task).decode().decode() + "\n")
         return task_id
 
     def list_tasks(self, team_id: str) -> list[dict[str, Any]]:
@@ -87,5 +87,5 @@ class TeamManager:
         if updated:
             with (self.teams_dir / f"{team_id}_tasks.jsonl").open("w", encoding="utf-8") as f:
                 for t in new_tasks:
-                    f.write(json.dumps(t) + "\n")
+                    f.write(json.dumps(t).decode().decode() + "\n")
         return updated

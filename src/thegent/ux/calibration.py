@@ -1,6 +1,6 @@
 """WP-4008: Feedback loops and confidence calibration."""
 
-import json
+import orjson as json
 import logging
 
 from thegent.config import ThegentSettings
@@ -64,4 +64,4 @@ class ConfidenceCalibrator:
 
     def _save_calibration(self):
         self.settings.session_dir.mkdir(parents=True, exist_ok=True)
-        self.calibration_file.write_text(json.dumps(self.bias_map, indent=2), encoding="utf-8")
+        self.calibration_file.write_text(json.dumps(self.bias_map, indent=2).decode().decode(), encoding="utf-8")

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any
 
 __all__ = [
@@ -384,13 +384,13 @@ def _process_sse_line(line: bytes, transform: bool) -> bytes | None:
                 usage_chunk["choices"] = []
                 usage_chunk["usage"] = usage
 
-                first = f"data: {json.dumps(chunk_without_usage)}\n\n".encode()
-                second = f"data: {json.dumps(usage_chunk)}\n\n".encode()
+                first = f"data: {json.dumps(chunk_without_usage).decode().decode()}\n\n".encode()
+                second = f"data: {json.dumps(usage_chunk).decode().decode()}\n\n".encode()
                 return first + second
             return line + b"\n"
         transformed = _chat_completions_to_responses(obj)
         if transformed is None:
             return None  # Skip empty deltas; don't emit Chat Completions format to Responses client
-        return f"data: {json.dumps(transformed)}\n\n".encode()
+        return f"data: {json.dumps(transformed).decode().decode()}\n\n".encode()
     except (json.JSONDecodeError, KeyError, UnicodeDecodeError):
         return line + b"\n"

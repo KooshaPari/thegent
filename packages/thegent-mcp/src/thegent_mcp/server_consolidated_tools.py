@@ -1,6 +1,6 @@
 """Consolidated MCP tools with intuitive parameter-based actions to reduce tool count."""
 
-import json
+import orjson as json
 import logging
 from typing import Any, Literal
 
@@ -229,13 +229,13 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
 
         if action == "do-next":
             result = do_next_impl(cd=cwd, limit=limit)
-            return ToolResult(content=json.dumps(result, indent=2))
+            return ToolResult(content=json.dumps(result, indent=2).decode().decode())
         if action == "claim":
             result = work_stream_claim_impl(item_id=item_id, agent_id=agent_id, cd=cwd)
-            return ToolResult(content=json.dumps(result, indent=2))
+            return ToolResult(content=json.dumps(result, indent=2).decode().decode())
         if action == "complete":
             result = work_stream_complete_impl(item_id=item_id, agent_id=agent_id, cd=cwd)
-            return ToolResult(content=json.dumps(result, indent=2))
+            return ToolResult(content=json.dumps(result, indent=2).decode().decode())
         if action == "progress":
             return ToolResult(content="Use 'thegent plan progress' CLI command")
         return ToolResult(content=f"Unknown action: {action}")

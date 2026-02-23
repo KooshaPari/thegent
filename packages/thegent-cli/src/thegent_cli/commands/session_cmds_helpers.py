@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 from pathlib import Path
 from typing import Any
@@ -45,8 +45,8 @@ def render_ps_markdown(*, console: Any, rows: list[dict[str, Any]], include_cont
         if include_contract:
             route_request = row.get("route_request")
             route_contract = row.get("route_contract")
-            base += f" {json.dumps(route_request) if route_request is not None else '—'} | "
-            base += f"{json.dumps(route_contract) if route_contract is not None else '—'} |"
+            base += f" {json.dumps(route_request).decode().decode() if route_request is not None else '—'} | "
+            base += f"{json.dumps(route_contract).decode().decode() if route_contract is not None else '—'} |"
         console.print(base)
 
 

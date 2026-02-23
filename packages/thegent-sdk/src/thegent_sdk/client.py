@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 from collections.abc import AsyncIterator, Iterator
 from typing import Any, Literal
 
@@ -79,13 +79,13 @@ def _extract_error_detail(response: httpx.Response) -> tuple[str, Any]:
                     detail = extracted
                     break
             else:
-                detail = json.dumps(body, separators=(",", ":"))
+                detail = json.dumps(body, separators=(",", ":").decode().decode())
         elif isinstance(body, list):
             extracted = _extract_message_from_list(body)
             if extracted:
                 detail = extracted
             else:
-                detail = json.dumps(body, separators=(",", ":"))
+                detail = json.dumps(body, separators=(",", ":").decode().decode())
     if not detail:
         detail = f"HTTP {response.status_code}"
     return detail, body

@@ -11,7 +11,7 @@ Tests cover:
 - Backup and recovery
 """
 
-import json
+import orjson as json
 import sys
 import tempfile
 from pathlib import Path
@@ -346,7 +346,7 @@ class TestBatchOperationResult:
         result_dict = result.to_dict()
 
         # Should not raise
-        json_str = json.dumps(result_dict)
+        json_str = json.dumps(result_dict).decode().decode()
         assert len(json_str) > 0
 
 

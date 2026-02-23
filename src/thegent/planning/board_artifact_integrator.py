@@ -7,7 +7,7 @@ WL-158: Unified Workstream Integration for CLIProxyAPI++ Board Artifacts
 """
 
 import csv
-import json
+import orjson as json
 import logging
 from pathlib import Path
 from typing import Any

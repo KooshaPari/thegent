@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import errno
-import json
+import orjson as json
 import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -183,7 +183,7 @@ def test_wl6755_read_log_file_tracks_malformed_json_and_timestamp_errors(tmp_pat
     path = tmp_path / "chat.jsonl"
     valid = {"type": "user", "timestamp": "2026-01-10T12:00:00+00:00", "message": {"content": "ok"}}
     bad_ts = {"type": "assistant", "timestamp": "not-a-date", "message": {"content": "bad"}}
-    path.write_text(json.dumps(valid) + "\nnot-json\n" + json.dumps(bad_ts) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(valid).decode().decode() + "\nnot-json\n" + json.dumps(bad_ts).decode().decode() + "\n", encoding="utf-8")
 
     payload = summary._read_log_file(path, start, end, include_diagnostics=True)
     assert payload["entries"] == 1

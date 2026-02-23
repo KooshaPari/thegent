@@ -1,6 +1,6 @@
 """Forensic incident replay and post-mortem analysis (WP-15002)."""
 
-import json
+import orjson as json
 from typing import Any
 
 from thegent.governance.ledger import IncidentLedger
@@ -57,6 +57,6 @@ class IncidentReplayer:
 
         for i, action in enumerate(trace["actions"]):
             report.append(f"{i + 1}. {action['type']} (Hash: {action['hash'][:8]}...)")
-            report.append(f"   Payload: {json.dumps(action['payload'])}")
+            report.append(f"   Payload: {json.dumps(action['payload']).decode().decode()}")
 
         return "\n".join(report)

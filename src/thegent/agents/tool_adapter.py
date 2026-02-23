@@ -3,7 +3,7 @@ Enables agents to discover, wrap, and use new tools dynamically at runtime.
 Includes automatic interface adaptation for foreign tool protocols.
 """
 
-import json
+import orjson as json
 import logging
 import shlex
 import subprocess
@@ -192,4 +192,4 @@ class ToolAdapter:
         if not tool:
             return ""
 
-        return f"Tool: {tool.tool_id}\nDescription: {tool.description}\nParams: {json.dumps(tool.parameters)}"
+        return f"Tool: {tool.tool_id}\nDescription: {tool.description}\nParams: {json.dumps(tool.parameters).decode().decode()}"

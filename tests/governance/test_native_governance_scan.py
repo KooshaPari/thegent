@@ -17,7 +17,7 @@ Traces to: FR-GOV-007 (governance violation detection), FR-GOV-006 (native binar
 from __future__ import annotations
 
 import dataclasses
-import json
+import orjson as json
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
@@ -390,7 +390,7 @@ def test_parse_binary_output_empty_violations() -> None:
 
     Traces to: FR-GOV-006
     """
-    payload = json.dumps({"violation_count": 0, "violations": []})
+    payload = json.dumps({"violation_count": 0, "violations": []}).decode().decode()
     assert _parse_binary_output(payload) == []
 
 

@@ -6,7 +6,7 @@ Monitors all active sessions, using wait commands with auto-timeout handling.
 Automatically retries wait commands every 2 minutes to prevent Cursor timeout.
 """
 
-import json
+import orjson as json
 import subprocess
 import sys
 import time

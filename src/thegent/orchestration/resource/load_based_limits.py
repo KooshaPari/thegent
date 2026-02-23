@@ -24,7 +24,7 @@ Soft deadline support (swarm-soft-deadlines):
   Soft deadlines NEVER cancel tasks — they only warn and record state.
 """
 
-import json
+import orjson as json
 import logging
 import multiprocessing
 import os

@@ -8,7 +8,7 @@ Contains:
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -16,7 +16,7 @@ from typing import Any, cast
 import typer
 
 from thegent.cli.commands.session_health_impl import _extract_blocked_ratio
-from thegent.cli.commands.session_health_helpers import HEALTH_PAYLOAD_TYPES
+from thegent.cli.commands.observability_health_impl import HEALTH_PAYLOAD_TYPES  # pyright: ignore[reportMissingImports]
 
 _log = logging.getLogger(__name__)
 
@@ -187,7 +187,7 @@ def session_contract_health_trend_impl(
         "schema_compat_mode": "compat",
         "trend_payload_type": payload_type,
         "scope_key": scope_key,
-        "scope_key_json": json.dumps(scope_key, sort_keys=True),
+        "scope_key_json": json.dumps(scope_key, sort_keys=True).decode().decode(),
         "scope_payload_type": scope_key.get("payload_type", ""),
         "scope_owner": scope_key.get("owner", ""),
         "scope_all": scope_key.get("all", False),
@@ -218,10 +218,10 @@ def session_contract_health_trend_impl(
         "latest_blocked_ratio": (latest or {}).get("blocked_ratio", None),
         "latest_blocked_count": (latest or {}).get("blocked_count", None),
         "latest_issue_types_count": len(_coerce_issue_types((latest or {}).get("issue_types", []))),
-        "latest_issue_types_json": json.dumps(_coerce_issue_types((latest or {}).get("issue_types", []))),
+        "latest_issue_types_json": json.dumps(_coerce_issue_types((latest or {}).decode().decode().get("issue_types", []))),
         "latest_issue_types_csv": ", ".join(str(v) for v in _coerce_issue_types((latest or {}).get("issue_types", []))),
         "latest_issue_types_hash": hashlib.sha256(
-            json.dumps(_coerce_issue_types((latest or {}).get("issue_types", []))).encode("utf-8")
+            json.dumps(_coerce_issue_types((latest or {}).decode().decode().get("issue_types", []))).encode("utf-8")
         ).hexdigest(),
         "oldest": oldest,
         "delta_summary": {
@@ -234,7 +234,7 @@ def session_contract_health_trend_impl(
                 "blocked_ratio_delta": delta_ratio,
             },
             sort_keys=True,
-        ),
+        ).decode(),
         "blocked_ratio_delta": delta_ratio,
         "blocked_count_delta": delta_count,
         "snapshot_retention_max_lines": _health_snapshot_max_lines(),

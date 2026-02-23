@@ -3,7 +3,7 @@
 Deep audit for legacy/older tools and modern alternatives
 """
 import re
-import json
+import orjson as json
 from pathlib import Path
 from collections import defaultdict
 
@@ -323,7 +323,7 @@ def generate_report():
 
     # Save report
     report_path = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush/LEGACY_AUDIT_REPORT.json")
-    report_path.write_text(json.dumps(report, indent=2))
+    report_path.write_text(json.dumps(report, indent=2).decode().decode())
     print(f"\n✅ Report saved to: {report_path}")
 
     # Summary

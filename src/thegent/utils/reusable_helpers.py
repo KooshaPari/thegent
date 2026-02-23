@@ -198,7 +198,7 @@ class ReusableHelpers:
         import json
 
         try:
-            file_path.write_text(json.dumps(data, indent=2))
+            file_path.write_text(json.dumps(data, indent=2).decode().decode())
             return True
         except Exception as e:
             logger.error(f"Error writing JSON {file_path}: {e}")

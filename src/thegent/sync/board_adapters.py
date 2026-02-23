@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -292,7 +292,7 @@ class LinearBoardAdapter:
             raise RuntimeError("Linear issueUpdate returned success=false.")
 
     def _graphql(self, token: str, query: str, variables: dict[str, Any]) -> dict[str, Any]:
-        payload = json.dumps({"query": query, "variables": variables}).encode("utf-8")
+        payload = json.dumps({"query": query, "variables": variables}).decode().decode().encode("utf-8")
         request = Request(
             self.endpoint,
             data=payload,

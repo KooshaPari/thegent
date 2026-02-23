@@ -27,7 +27,7 @@ Response:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import os
 import shlex
@@ -130,7 +130,7 @@ class McpGateway:
         command = shlex.split(config.command)
         env = os.environ.copy()
         env.update(config.env)
-        payload = json.dumps(request)
+        payload = json.dumps(request).decode().decode()
         try:
             if config.transport is None:
                 returncode, stdout, stderr = self._run_subprocess_transport(

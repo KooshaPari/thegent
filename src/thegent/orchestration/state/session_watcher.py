@@ -4,7 +4,7 @@ Watches session directories for completion events using FastFileWatcher.
 Harmonized with BackgroundTaskWatcher and NeverIdleLoop.
 """
 
-import json
+import orjson as json
 import logging
 from collections.abc import Callable
 from pathlib import Path

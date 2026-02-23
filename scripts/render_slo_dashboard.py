@@ -11,7 +11,7 @@ WL-135 B90-W2-E1
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path

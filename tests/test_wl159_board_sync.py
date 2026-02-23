@@ -3,7 +3,7 @@
 # @trace WL-159
 """
 
-import json
+import orjson as json
 import tempfile
 from collections.abc import Generator
 from pathlib import Path

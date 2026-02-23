@@ -12,7 +12,7 @@ Features:
 - Work chunking and parallelization
 """
 
-import json
+import orjson as json
 import logging
 import statistics
 import time

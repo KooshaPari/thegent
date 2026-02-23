@@ -7,7 +7,7 @@ Defines JSONL trace format with three core record types:
 """
 
 import gzip
-import json
+import orjson as json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -155,7 +155,7 @@ class TraceFile:
         data = record.to_dict() if hasattr(record, "to_dict") else record
         data["__type__"] = record.__class__.__name__
 
-        line = json.dumps(data, default=str) + "\n"
+        line = json.dumps(data, default=str).decode().decode() + "\n"
 
         if self.compression == "gzip":
             with gzip.open(self.path, "at", encoding="utf-8") as f:

@@ -1,7 +1,7 @@
 """Item transformation helpers for workstream DB."""
 
 import contextlib
-import json
+import orjson as json
 from typing import Any
 
 

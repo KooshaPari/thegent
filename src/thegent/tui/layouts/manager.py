@@ -5,7 +5,7 @@ Provides multi-pane layout management with save/restore functionality.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -88,7 +88,7 @@ class LayoutManager:
             "updated_at": state.updated_at,
             "metadata": state.metadata,
         }
-        (self._storage_dir / f"{state.name}.json").write_text(json.dumps(data, indent=2))
+        (self._storage_dir / f"{state.name}.json").write_text(json.dumps(data, indent=2).decode().decode())
 
     def _serialize_config(self, config: SplitConfig | PaneConfig) -> dict:
         """Serialize a config to dict."""

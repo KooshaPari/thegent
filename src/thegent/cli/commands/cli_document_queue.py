@@ -5,7 +5,7 @@ Integrates document queue management into thegent's typer-based CLI.
 Uses centralized path utilities for cross-platform consistency.
 """
 
-import json
+import orjson as json
 from pathlib import Path
 
 import typer
@@ -258,7 +258,7 @@ def process_cmd(
         console.print("[green]✓ Processed successfully[/green]")
         console.print(f"  Processing time: [dim]{result.processing_time:.2f}s[/dim]")
         if result.metadata:
-            console.print(f"  Metadata: {json.dumps(result.metadata, indent=2)}")
+            console.print(f"  Metadata: {json.dumps(result.metadata, indent=2).decode().decode()}")
 
         # Mark as processed in queue
         if queue_file:

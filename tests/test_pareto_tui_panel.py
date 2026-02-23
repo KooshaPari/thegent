@@ -11,7 +11,7 @@ Covers:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import textwrap
 from pathlib import Path
 
@@ -48,7 +48,7 @@ def _write_audit_file(tmp_path: Path, records: list[dict]) -> Path:
     audit = tmp_path / "routing_audit.jsonl"
     with audit.open("w", encoding="utf-8") as f:
         for rec in records:
-            f.write(json.dumps(rec) + "\n")
+            f.write(json.dumps(rec).decode().decode() + "\n")
     return audit
 
 
@@ -163,7 +163,7 @@ class TestParetoTuiSession:
     def test_get_audit_history_non_strict_skips_malformed_rows(self, tmp_path: Path) -> None:
         """Non-strict mode skips malformed JSON lines instead of raising."""
         audit = tmp_path / "routing_audit.jsonl"
-        audit.write_text("{not valid json}\n" + json.dumps(_make_audit_record()) + "\n", encoding="utf-8")
+        audit.write_text("{not valid json}\n" + json.dumps(_make_audit_record().decode().decode()) + "\n", encoding="utf-8")
         session = ParetoTuiSession(audit_path=audit)
         history = session.get_audit_history(strict=False)
         assert len(history) == 1
@@ -171,7 +171,7 @@ class TestParetoTuiSession:
     def test_get_pareto_data_non_strict_returns_parse_errors(self, tmp_path: Path) -> None:
         """Non-strict mode surfaces parse_errors for malformed JSON rows."""
         audit = tmp_path / "routing_audit.jsonl"
-        audit.write_text("{not valid json}\n" + json.dumps(_make_audit_record()) + "\n", encoding="utf-8")
+        audit.write_text("{not valid json}\n" + json.dumps(_make_audit_record().decode().decode()) + "\n", encoding="utf-8")
         session = ParetoTuiSession(audit_path=audit)
         data = session.get_pareto_data(strict=False)
         assert len(data["history"]) == 1

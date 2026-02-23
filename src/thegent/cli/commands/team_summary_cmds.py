@@ -3,7 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import sys
 from pathlib import Path
@@ -73,7 +73,7 @@ def summary_cmd(
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         return
 
     if fmt == "md":

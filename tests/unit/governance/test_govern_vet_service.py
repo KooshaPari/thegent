@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 import pytest
@@ -25,7 +25,7 @@ def _seed_run(session_dir: Path, run_id: str, *, stdout_text: str, stderr_text: 
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
     }
-    registry_path.write_text(json.dumps(start) + "\n", encoding="utf-8")
+    registry_path.write_text(json.dumps(start).decode().decode() + "\n", encoding="utf-8")
 
 
 def test_govern_vet_impl_rejects_on_safety_violation(tmp_path: Path) -> None:

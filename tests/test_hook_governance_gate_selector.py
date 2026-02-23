@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import re
 import subprocess
@@ -205,7 +205,7 @@ def _run_governance_selected(
 
     if async_results_payload is not None:
         (home_dir / ".claude" / ".async-test-results.json").write_text(
-            json.dumps(async_results_payload) + "\n",
+            json.dumps(async_results_payload).decode().decode() + "\n",
             encoding="utf-8",
         )
 
@@ -222,7 +222,7 @@ def _run_governance_selected(
             },
             "security": {"signed_attestation_present": True, "slsa_provenance_present": True},
         }
-        (verify_dir / "qa-attestation.json").write_text(json.dumps(attestation) + "\n", encoding="utf-8")
+        (verify_dir / "qa-attestation.json").write_text(json.dumps(attestation).decode().decode() + "\n", encoding="utf-8")
 
     subprocess.run(["git", "init", "-q"], cwd=project, check=True)
     subprocess.run(["git", "config", "user.email", "a@b.c"], cwd=project, check=True)

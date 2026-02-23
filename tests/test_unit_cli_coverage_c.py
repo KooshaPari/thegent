@@ -6,7 +6,7 @@ formatting code that tests_a and tests_b do not exercise.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch

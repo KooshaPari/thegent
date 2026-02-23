@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import typer
 from rich.console import Console
@@ -44,7 +44,7 @@ def session_list(
     sessions = session_list_impl(all_sessions=all_sessions, owner=owner, limit=limit)
 
     if output_format == "json":
-        console.print_json(json.dumps(sessions))
+        console.print_json(json.dumps(sessions).decode().decode())
         return
 
     if not sessions:

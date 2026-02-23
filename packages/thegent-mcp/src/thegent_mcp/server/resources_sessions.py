@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any, Callable
 
 
@@ -11,7 +11,7 @@ def resource_sessions_impl(
     include_contract: bool,
     ps_impl: Callable[..., list[dict[str, Any]]],
 ) -> str:
-    return json.dumps(ps_impl(owner=None, all=True, include_contract=include_contract))
+    return json.dumps(ps_impl(owner=None, all=True, include_contract=include_contract).decode().decode())
 
 
 def resource_session_meta_impl(
@@ -20,7 +20,7 @@ def resource_session_meta_impl(
     include_contract: bool,
     status_impl: Callable[..., dict[str, Any]],
 ) -> str:
-    return json.dumps(status_impl(session_id=session_id, include_contract=include_contract))
+    return json.dumps(status_impl(session_id=session_id, include_contract=include_contract).decode().decode())
 
 
 def resource_session_logs_impl(

@@ -1,6 +1,6 @@
 """Integration tests for cliproxy_adapter: Responses API bridge."""
 
-import json
+import orjson as json
 from unittest.mock import patch
 
 import pytest

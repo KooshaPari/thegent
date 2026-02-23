@@ -8,7 +8,7 @@ Required env:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import sys
 
@@ -56,7 +56,7 @@ def main() -> int:
     import asyncio
     result = asyncio.run(_check_nats())
 
-    print(json.dumps(result))
+    print(json.dumps(result).decode().decode())
 
     if not result.get("ok"):
         raise RuntimeError(f"NATS health check failed: {result.get('error')}")
@@ -68,5 +68,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:  # noqa: BLE001 -- spike contract must fail loudly with explicit reason
-        print(json.dumps({"ok": False, "target": "nats", "error": str(exc)}))
+        print(json.dumps({"ok": False, "target": "nats", "error": str(exc).decode().decode()}))
         raise

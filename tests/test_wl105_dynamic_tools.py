@@ -41,7 +41,7 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 
 import pytest
 
@@ -442,14 +442,14 @@ class TestSessionSendImplDynamicTools:
 
     def test_register_returns_success(self):
         # @trace WL-105
-        payload = json.dumps({"name": "calc", "description": "a calculator", "input_schema": {"type": "object"}})
+        payload = json.dumps({"name": "calc", "description": "a calculator", "input_schema": {"type": "object"}}).decode().decode()
         result = self._send("sess-1", payload, "dynamic_tool_register")
         assert result["success"] is True
         assert result["registered"]["name"] == "calc"
 
     def test_list_returns_registered_tools(self):
         # @trace WL-105
-        reg_payload = json.dumps({"name": "t1", "description": "t1", "input_schema": {}})
+        reg_payload = json.dumps({"name": "t1", "description": "t1", "input_schema": {}}).decode().decode()
         self._send("sess-1", reg_payload, "dynamic_tool_register")
         result = self._send("sess-1", "{}", "dynamic_tool_list")
         assert result["success"] is True
@@ -457,9 +457,9 @@ class TestSessionSendImplDynamicTools:
 
     def test_invoke_creates_pending_call_event(self):
         # @trace WL-105
-        reg_payload = json.dumps({"name": "lookup", "description": "lookup", "input_schema": {}})
+        reg_payload = json.dumps({"name": "lookup", "description": "lookup", "input_schema": {}}).decode().decode()
         self._send("sess-1", reg_payload, "dynamic_tool_register")
-        invoke_payload = json.dumps({"name": "lookup", "arguments": {"q": "hello"}})
+        invoke_payload = json.dumps({"name": "lookup", "arguments": {"q": "hello"}}).decode().decode()
         result = self._send("sess-1", invoke_payload, "dynamic_tool_invoke")
         assert result["success"] is True
         assert result["event"]["event"] == "tool_call_requested"
@@ -467,12 +467,12 @@ class TestSessionSendImplDynamicTools:
 
     def test_complete_resolves_pending_call(self):
         # @trace WL-105
-        reg_payload = json.dumps({"name": "fetch", "description": "fetch", "input_schema": {}})
+        reg_payload = json.dumps({"name": "fetch", "description": "fetch", "input_schema": {}}).decode().decode()
         self._send("sess-1", reg_payload, "dynamic_tool_register")
-        invoke_payload = json.dumps({"name": "fetch", "arguments": {}})
+        invoke_payload = json.dumps({"name": "fetch", "arguments": {}}).decode().decode()
         invoke_result = self._send("sess-1", invoke_payload, "dynamic_tool_invoke")
         call_id = invoke_result["event"]["callId"]
-        complete_payload = json.dumps({"callId": call_id, "output": "fetched!", "success": True})
+        complete_payload = json.dumps({"callId": call_id, "output": "fetched!", "success": True}).decode().decode()
         result = self._send("sess-1", complete_payload, "dynamic_tool_complete")
         assert result["success"] is True
         assert result["event"]["event"] == "tool_call_completed"
@@ -480,18 +480,18 @@ class TestSessionSendImplDynamicTools:
 
     def test_complete_empty_call_id_raises(self):
         # @trace WL-105
-        payload = json.dumps({"callId": "", "output": "x", "success": True})
+        payload = json.dumps({"callId": "", "output": "x", "success": True}).decode().decode()
         with pytest.raises(ValueError, match="callId"):
             self._send("sess-1", payload, "dynamic_tool_complete")
 
     def test_complete_failed_no_error_raises(self):
         # @trace WL-105
-        reg_payload = json.dumps({"name": "bad_tool", "description": "bad", "input_schema": {}})
+        reg_payload = json.dumps({"name": "bad_tool", "description": "bad", "input_schema": {}}).decode().decode()
         self._send("sess-1", reg_payload, "dynamic_tool_register")
-        invoke_payload = json.dumps({"name": "bad_tool", "arguments": {}})
+        invoke_payload = json.dumps({"name": "bad_tool", "arguments": {}}).decode().decode()
         invoke_result = self._send("sess-1", invoke_payload, "dynamic_tool_invoke")
         call_id = invoke_result["event"]["callId"]
-        complete_payload = json.dumps({"callId": call_id, "success": False})
+        complete_payload = json.dumps({"callId": call_id, "success": False}).decode().decode()
         with pytest.raises(ValueError):
             self._send("sess-1", complete_payload, "dynamic_tool_complete")
 

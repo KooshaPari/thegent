@@ -28,7 +28,7 @@ Independently startable::
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 import logging
 import os
 import sys
@@ -616,17 +616,17 @@ class ACPServerAdapter:
                 else:
                     response = await self.handle_jsonrpc(raw)
 
-                sys.stdout.write(json.dumps(response) + "\n")
+                sys.stdout.write(json.dumps(response).decode().decode() + "\n")
                 sys.stdout.flush()
 
             except json.JSONDecodeError as exc:
                 err = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": f"Parse error: {exc}"}}
-                sys.stdout.write(json.dumps(err) + "\n")
+                sys.stdout.write(json.dumps(err).decode().decode() + "\n")
                 sys.stdout.flush()
             except Exception as exc:
                 logger.error("Unexpected error in stdio loop: %s", exc, exc_info=True)
                 err = {"jsonrpc": "2.0", "id": None, "error": {"code": -32603, "message": f"Internal error: {exc}"}}
-                sys.stdout.write(json.dumps(err) + "\n")
+                sys.stdout.write(json.dumps(err).decode().decode() + "\n")
                 sys.stdout.flush()
 
     def build_starlette_app(self) -> Starlette:

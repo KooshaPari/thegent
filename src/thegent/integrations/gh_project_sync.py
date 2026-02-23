@@ -12,7 +12,7 @@ Key Principles:
 
 import csv
 import io
-import json
+import orjson as json
 import logging
 import shutil
 import subprocess

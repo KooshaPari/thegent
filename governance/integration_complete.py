@@ -12,7 +12,7 @@ Orchestrates the entire governance system:
 7. Creates task lists for completion
 """
 
-import json
+import orjson as json
 import logging
 import sys
 from datetime import datetime, timezone

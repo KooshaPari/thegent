@@ -8,7 +8,7 @@ prompt functions, operations/modes tools, and suggest_prompt.
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any

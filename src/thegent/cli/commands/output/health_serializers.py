@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +32,7 @@ def serialize_health_report_md(result: dict[str, Any]) -> str:
     lines.append(f"schema_version: {result['schema_version']}")
     lines.append(f"schema_compat_mode: {result.get('schema_compat_mode', 'compat')}")
     lines.append(f"compat_mode: {_safe_dict(result.get('compat')).get('mode', 'compat')}")
-    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat')).get('aliases', {}), sort_keys=True)}")
+    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode().decode()).get('aliases', {}), sort_keys=True)}")
     lines.append(f"payload_type: {result['payload_type']}")
     if result.get("payload_signature"):
         signature = result["payload_signature"]
@@ -44,12 +44,12 @@ def serialize_health_report_md(result: dict[str, Any]) -> str:
     lines.append(f"unhealthy_sessions: {result['unhealthy_sessions']}")
     lines.append(f"blocked_sessions_count: {result['blocked_sessions_count']}")
     lines.append(f"blocked_ratio: {result['blocked_ratio']}")
-    lines.append(f"health: {json.dumps(result['health'])}")
+    lines.append(f"health: {json.dumps(result['health']).decode().decode()}")
     lines.append(f"strict_checks_enabled: {result['strict_checks_enabled']}")
     if result.get("generated_at_utc"):
         lines.append(f"generated_at_utc: {result['generated_at_utc']}")
     if result.get("generated_query"):
-        lines.append(f"generated_query: {json.dumps(result['generated_query'])}")
+        lines.append(f"generated_query: {json.dumps(result['generated_query']).decode().decode()}")
     lines.append("")
 
     issue_rows = result["issue_breakdown"]
@@ -107,7 +107,7 @@ def serialize_health_gate_md(result: dict[str, Any]) -> str:
     )
     lines.append(f"strict_checks_enabled={result['strict_checks_enabled']}")
     lines.append(f"generated_at_utc: {result['generated_at_utc']}")
-    lines.append(f"generated_query: {json.dumps(result['generated_query'])}")
+    lines.append(f"generated_query: {json.dumps(result['generated_query']).decode().decode()}")
     if result["blocked_sessions"]:
         lines.append("")
         lines.append("### Blocked Sessions")
@@ -128,7 +128,7 @@ def serialize_health_trend_md(result: dict[str, Any]) -> str:
     latest_issue_types = _coerce_issue_types(_safe_dict(result.get("latest")).get("issue_types", []))
     latest_issue_types_json = result.get(
         "latest_issue_types_json",
-        json.dumps(latest_issue_types),
+        json.dumps(latest_issue_types).decode().decode(),
     )
     latest_issue_types_hash = result.get(
         "latest_issue_types_hash",
@@ -182,7 +182,7 @@ def serialize_health_trend_md(result: dict[str, Any]) -> str:
     lines.append(f"schema_version: {result['schema_version']}")
     lines.append(f"schema_compat_mode: {result.get('schema_compat_mode', 'compat')}")
     lines.append(f"compat_mode: {_safe_dict(result.get('compat')).get('mode', 'compat')}")
-    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat')).get('aliases', {}), sort_keys=True)}")
+    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode().decode()).get('aliases', {}), sort_keys=True)}")
     lines.append(f"compat_aliases_count: {compat_aliases_count}")
     lines.append(f"payload_type: {result['payload_type']}")
     lines.append(f"trend_payload_type: {result['trend_payload_type']}")
@@ -236,13 +236,13 @@ def serialize_health_trend_md(result: dict[str, Any]) -> str:
         f"scope_top_blocked: {result.get('scope_top_blocked', _safe_dict(result.get('scope_key')).get('top_blocked', ''))}"
     )
     lines.append(
-        f"scope_key_json: {result.get('scope_key_json', json.dumps(result.get('scope_key', {}), sort_keys=True))}"
+        f"scope_key_json: {result.get('scope_key_json', json.dumps(result.get('scope_key', {}).decode().decode(), sort_keys=True))}"
     )
-    lines.append(f"scope_key: {json.dumps(result.get('scope_key', {}))}")
+    lines.append(f"scope_key: {json.dumps(result.get('scope_key', {}).decode().decode())}")
     lines.append(
-        f"delta_summary_json: {result.get('delta_summary_json', json.dumps(result.get('delta_summary', {}), sort_keys=True))}"
+        f"delta_summary_json: {result.get('delta_summary_json', json.dumps(result.get('delta_summary', {}).decode().decode(), sort_keys=True))}"
     )
-    lines.append(f"delta_summary: {json.dumps(result.get('delta_summary', {}))}")
+    lines.append(f"delta_summary: {json.dumps(result.get('delta_summary', {}).decode().decode())}")
     if result.get("payload_signature"):
         sig = result["payload_signature"]
         lines.append(f"payload_signature: {sig.get('algorithm', 'sha256')}:{sig.get('value', '')}")

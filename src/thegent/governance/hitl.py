@@ -6,7 +6,7 @@ Traces to: G-GP-05, FR-GOV-HITL (WL-019)
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -79,7 +79,7 @@ class GovernanceEventLog:
         """Append a governance event to the log."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.events_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json.dumps(event).decode().decode() + "\n")
 
     def list_pending_approvals(self, run_id: str | None = None) -> list[dict[str, Any]]:
         """Return all await_approval events that are not yet resolved."""
@@ -126,7 +126,7 @@ class GovernanceEventLog:
                     if reason is not None:
                         ev["resolution_reason"] = reason
                     updated = True
-                new_lines.append(json.dumps(ev))
+                new_lines.append(json.dumps(ev).decode().decode())
             except json.JSONDecodeError:
                 new_lines.append(line)
         if updated:

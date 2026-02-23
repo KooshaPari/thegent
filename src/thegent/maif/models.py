@@ -5,7 +5,7 @@ which capture and cryptographically sign agent actions for replay and auditing.
 """
 
 import hashlib
-import json
+import orjson as json
 from enum import StrEnum
 from typing import Optional
 
@@ -119,7 +119,7 @@ class MAIFArtifact(BaseModel):
             JSON bytes with sorted keys, no whitespace.
         """
         artifact_dict = self.model_dump(exclude={"signature"})
-        return json.dumps(artifact_dict, sort_keys=True, separators=(",", ":")).encode()
+        return json.dumps(artifact_dict, sort_keys=True, separators=(",", ":").decode().decode()).encode()
 
     def get_hash(self) -> str:
         """Compute SHA-256 hash of this artifact.

@@ -12,7 +12,7 @@ Traces to:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import tempfile
 from pathlib import Path
 
@@ -304,7 +304,7 @@ def fed_manager(fed_base: Path) -> FederatedPolicyManager:
 def _write_fed_policy(base_dir: Path, org: str, project: str, env: str, policy_id: str, data: dict) -> None:
     d = base_dir / org / project / env
     d.mkdir(parents=True, exist_ok=True)
-    (d / f"{policy_id}.json").write_text(json.dumps(data), encoding="utf-8")
+    (d / f"{policy_id}.json").write_text(json.dumps(data).decode().decode(), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------

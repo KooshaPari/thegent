@@ -1,6 +1,6 @@
 """Automated compliance reporting."""
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -36,7 +36,7 @@ class ComplianceReporter:
         }
 
         if format == "json":
-            return json.dumps(report, indent=2)
+            return json.dumps(report, indent=2).decode().decode()
         if format == "markdown":
             return self._generate_markdown(report)
         if format == "html":

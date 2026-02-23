@@ -9,7 +9,7 @@ enforced inside review_impl(); this module is the presentation layer only.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import typer
 from rich.console import Console
@@ -64,7 +64,7 @@ def review_run(
         }
         if isinstance(context_usage, dict):
             payload["context_usage"] = context_usage
-        console.print(json.dumps(payload, indent=2))
+        console.print(json.dumps(payload, indent=2).decode().decode())
     else:
         console.print(f"[bold]Summary:[/bold] {result['summary']}")
         console.print(f"[bold]Overall Rating:[/bold] {result['overall_rating']}")

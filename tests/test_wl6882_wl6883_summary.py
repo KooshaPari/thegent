@@ -1,6 +1,6 @@
 """WL-6882/WL-6883 closeout tests for summary diagnostics."""
 
-import json
+import orjson as json
 import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -76,9 +76,9 @@ def test_wl6883_read_log_file_tracks_mixed_valid_and_malformed_lines(tmp_path: P
     path.write_text(
         "\n".join(
             [
-                json.dumps(valid),
+                json.dumps(valid).decode().decode(),
                 "not-json",
-                json.dumps(valid),
+                json.dumps(valid).decode().decode(),
                 "also-bad-json",
             ]
         )

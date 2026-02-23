@@ -65,7 +65,7 @@ def queue_dequeue(
 
     task_id = envelope["id"]
     console.print(f"[bold green]Task dequeued![/bold green] ID: [cyan]{task_id}[/cyan]")
-    console.print(json.dumps(envelope, indent=2))
+    console.print(json.dumps(envelope, indent=2).decode().decode())
 
     if ack:
         queue.ack(task_id)

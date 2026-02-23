@@ -14,7 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
@@ -306,14 +306,14 @@ def main() -> None:
 
     report = introspect()
     if "error" in report:
-        print(json.dumps(report) if args.json else report["error"], file=sys.stderr)
+        print(json.dumps(report).decode().decode() if args.json else report["error"], file=sys.stderr)
         sys.exit(1)
 
     if args.optimize:
         report["strategies"] = _optimization_strategies()
 
     if args.json:
-        print(json.dumps(report, indent=2))
+        print(json.dumps(report, indent=2).decode().decode())
         return
 
     # Human-readable output

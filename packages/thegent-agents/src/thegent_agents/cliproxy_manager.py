@@ -5,7 +5,7 @@ existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
 """
 
-import json
+import orjson as json
 import logging
 import os
 import shutil

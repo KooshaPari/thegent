@@ -1,6 +1,6 @@
 """Headless LSP Server Manager - Full-featured LSP infrastructure."""
 
-import json
+import orjson as json
 import logging
 import shutil
 import subprocess
@@ -259,4 +259,4 @@ class HeadlessLSPManager:
             },
             "updated_at": time.time(),
         }
-        self.lockfile.write_text(json.dumps(state, indent=2))
+        self.lockfile.write_text(json.dumps(state, indent=2).decode().decode())

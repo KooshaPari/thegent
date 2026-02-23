@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ def targets_path(tmp_path: Path) -> Path:
     Traces to: FR-GOV-002
     """
     p = tmp_path / "health-targets.json"
-    p.write_text(json.dumps(_TARGETS_DATA))
+    p.write_text(json.dumps(_TARGETS_DATA).decode().decode())
     return p
 
 

@@ -3,7 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 
@@ -46,7 +46,7 @@ def modes_cmd(
         data = list_modes()
 
     if format == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
 
     table = Table(title="Multi-Agent Orchestration Modes")
@@ -163,7 +163,7 @@ def release_pack_cmd(version: str = "2.0") -> None:
     console.print(f"\n[bold]Package Checksum:[/] {manifest['package_checksum']}")
 
     out_path = Path.cwd() / f"release_manifest_v{version}.json"
-    out_path.write_text(json.dumps(manifest, indent=2))
+    out_path.write_text(json.dumps(manifest, indent=2).decode().decode())
     console.print(f"[dim]Manifest written to {out_path}[/dim]")
 
 

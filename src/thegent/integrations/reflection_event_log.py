@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -101,7 +101,7 @@ class ReflectionEventLog:
                     "timestamp": decision.timestamp,
                 }
             )
-            f.write(json.dumps(event_dict) + "\n")
+            f.write(json.dumps(event_dict).decode().decode() + "\n")
 
     def read_all(self) -> list[ReflectionDecision]:
         """Read all logged decisions.

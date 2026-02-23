@@ -7,7 +7,7 @@ All subprocess calls are mocked — no zmx binary required.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -187,7 +187,7 @@ class TestZmxBackendList:
                     {"name": "agent-1", "state": "running", "pid": 1234, "cmd": "claude"},
                     {"name": "agent-2", "state": "detached", "pid": 5678, "cmd": "codex"},
                 ]
-            ),
+            ).decode(),
             stderr="",
         ),
     )

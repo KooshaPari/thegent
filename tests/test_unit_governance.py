@@ -1,6 +1,6 @@
 """Unit tests for governance modules (G-GP)."""
 
-import json
+import orjson as json
 import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -268,7 +268,7 @@ class TestCostAggregatorDailyTotal:
         ]
         with reg_path.open("w", encoding="utf-8") as f:
             for ev in events:
-                f.write(json.dumps(ev) + "\n")
+                f.write(json.dumps(ev).decode().decode() + "\n")
         agg = CostAggregator(session_dir=tmp_path)
         total = agg.daily_total("user1")
         assert total == pytest.approx(3.75)
@@ -286,7 +286,7 @@ class TestCostAggregatorDailyTotal:
         ]
         with reg_path.open("w", encoding="utf-8") as f:
             for ev in events:
-                f.write(json.dumps(ev) + "\n")
+                f.write(json.dumps(ev).decode().decode() + "\n")
         agg = CostAggregator(session_dir=tmp_path)
         assert agg.daily_total("user1") == 0.0
 
@@ -302,7 +302,7 @@ class TestCostAggregatorDailyTotal:
         ]
         with reg_path.open("w", encoding="utf-8") as f:
             for ev in events:
-                f.write(json.dumps(ev) + "\n")
+                f.write(json.dumps(ev).decode().decode() + "\n")
         agg = CostAggregator(session_dir=tmp_path)
         assert agg.daily_total("user1") == 0.0
 
@@ -375,7 +375,7 @@ class TestCostAggregatorMtdTotal:
         ]
         with reg_path.open("w", encoding="utf-8") as f:
             for ev in events:
-                f.write(json.dumps(ev) + "\n")
+                f.write(json.dumps(ev).decode().decode() + "\n")
         agg = CostAggregator(session_dir=tmp_path)
         total = agg.get_mtd_total()
         assert total == pytest.approx(5.75)
@@ -394,7 +394,7 @@ class TestCostAggregatorMtdTotal:
         ]
         with reg_path.open("w", encoding="utf-8") as f:
             for ev in events:
-                f.write(json.dumps(ev) + "\n")
+                f.write(json.dumps(ev).decode().decode() + "\n")
         agg = CostAggregator(session_dir=tmp_path)
         assert agg.get_mtd_total() == 0.0
 
@@ -411,7 +411,7 @@ class TestCostAggregatorMtdTotal:
         ]
         with reg_path.open("w", encoding="utf-8") as f:
             for ev in events:
-                f.write(json.dumps(ev) + "\n")
+                f.write(json.dumps(ev).decode().decode() + "\n")
         agg = CostAggregator(session_dir=tmp_path)
         assert agg.get_mtd_total() == 0.0
 
@@ -491,7 +491,7 @@ class TestCostAggregatorBlankAndCorruptedLines:
             f.write("\n")
             f.write("\n")
             f.write(
-                json.dumps({"event": "finish", "run_id": "r1", "cost_usd": 1.0, "ended_at_utc": f"{today}T10:00:00Z"})
+                json.dumps({"event": "finish", "run_id": "r1", "cost_usd": 1.0, "ended_at_utc": f"{today}T10:00:00Z"}).decode().decode()
                 + "\n"
             )
             f.write("\n")
@@ -509,7 +509,7 @@ class TestCostAggregatorBlankAndCorruptedLines:
             f.write("this is not json\n")
             f.write("{broken json\n")
             f.write(
-                json.dumps({"event": "finish", "run_id": "r1", "cost_usd": 2.0, "ended_at_utc": f"{today}T10:00:00Z"})
+                json.dumps({"event": "finish", "run_id": "r1", "cost_usd": 2.0, "ended_at_utc": f"{today}T10:00:00Z"}).decode().decode()
                 + "\n"
             )
         agg = CostAggregator(session_dir=tmp_path)
@@ -543,7 +543,7 @@ class TestCostAggregatorBlankAndCorruptedLines:
                         "cost_usd": 3.0,
                         "ended_at_utc": f"{current_month}-05T10:00:00Z",
                     }
-                )
+                ).decode()
                 + "\n"
             )
             f.write("\n")

@@ -1,5 +1,5 @@
 """Thegent implementation layer: functions that return dict/str instead of printing."""
-import json
+import orjson as json
 import logging
 import subprocess
 import sys

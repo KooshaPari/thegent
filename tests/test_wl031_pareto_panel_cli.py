@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -35,8 +35,8 @@ def test_routing_pareto_panel_json_output(tmp_path: Path) -> None:
     _write_audit(
         audit,
         [
-            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 15, 0.002)),
-            json.dumps(_audit_record("thegent", "claude-sonnet-4.6", 40, 0.010)),
+            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 15, 0.002).decode().decode()),
+            json.dumps(_audit_record("thegent", "claude-sonnet-4.6", 40, 0.010).decode().decode()),
         ],
     )
 
@@ -55,8 +55,8 @@ def test_routing_pareto_panel_rich_output(tmp_path: Path) -> None:
     _write_audit(
         audit,
         [
-            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 10, 0.001)),
-            json.dumps(_audit_record("thegent", "claude-sonnet-4.6", 25, 0.005)),
+            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 10, 0.001).decode().decode()),
+            json.dumps(_audit_record("thegent", "claude-sonnet-4.6", 25, 0.005).decode().decode()),
         ],
     )
 
@@ -74,7 +74,7 @@ def test_routing_pareto_panel_strict_rejects_malformed_row(tmp_path: Path) -> No
         audit,
         [
             "{not-json}",
-            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 12, 0.0012)),
+            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 12, 0.0012).decode().decode()),
         ],
     )
 
@@ -94,7 +94,7 @@ def test_routing_pareto_panel_non_strict_skips_malformed_row(tmp_path: Path) -> 
         audit,
         [
             "{not-json}",
-            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 14, 0.0014)),
+            json.dumps(_audit_record("lifecycle", "gemini-3-flash", 14, 0.0014).decode().decode()),
         ],
     )
 

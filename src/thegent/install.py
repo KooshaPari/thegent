@@ -1,6 +1,6 @@
 """Install module for managed installation and synchronization of thegent components."""
 
-import json
+import orjson as json
 import logging
 import platform
 import shutil
@@ -1040,7 +1040,7 @@ class InstallManager:
 
         curr[parts[-1]] = value
 
-        config_path.write_text(json.dumps(config, indent=2))
+        config_path.write_text(json.dumps(config, indent=2).decode().decode())
 
         # Register in manifest
         self.manifest.configs.append(
@@ -1069,7 +1069,7 @@ class InstallManager:
                         curr[parts[-1]] = cfg.original_value
 
                     if not self.dry_run:
-                        path.write_text(json.dumps(data, indent=2))
+                        path.write_text(json.dumps(data, indent=2).decode().decode())
                     counts["reverted"] += 1
                 except Exception:
                     counts["errors"] += 1
@@ -1345,7 +1345,7 @@ def run_install_project(
         "ownership.json": json.dumps(
             {"tenant_id": record.tenant_id, "owner": "default", "project_id": record.project_id},
             indent=2,
-        )
+        ).decode()
         + "\n",
         "templates.lock": json.dumps(
             {
@@ -1354,7 +1354,7 @@ def run_install_project(
                 "locked_at": record.created_at,
             },
             indent=2,
-        )
+        ).decode()
         + "\n",
     }
 

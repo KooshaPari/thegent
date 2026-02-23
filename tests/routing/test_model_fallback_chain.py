@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -277,7 +277,7 @@ class TestSingleModelUsesDefaultRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", models=["gpt-4o"])).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", models=["gpt-4o"]).decode().decode()).encode()
 
         dynamic_router_call_count = 0
 
@@ -326,7 +326,7 @@ class TestSingleModelUsesDefaultRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
 
         dynamic_router_call_count = 0
 
@@ -390,8 +390,7 @@ class TestMultiModelUsesDynamicRouter:
             _make_responses_body(
                 model="gpt-4o",
                 models=["gpt-4o", "claude-sonnet-4.6", "deepseek-v3.2"],
-            )
-        ).encode()
+            )).decode().encode()
 
         captured_models: list[list[str]] = []
 
@@ -443,8 +442,7 @@ class TestMultiModelUsesDynamicRouter:
             _make_responses_body(
                 model="gpt-4o",
                 models=["gpt-4o", "claude-sonnet-4.6"],
-            )
-        ).encode()
+            )).decode().encode()
 
         with (
             patch(

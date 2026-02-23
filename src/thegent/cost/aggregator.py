@@ -6,7 +6,7 @@ See docs/governance/COST_GOVERNANCE_DESIGN.md.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime

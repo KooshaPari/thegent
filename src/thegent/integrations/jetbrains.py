@@ -12,7 +12,7 @@ FR traceability: FR-IDE-001 (JetBrains MCP integration)
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import platform
 from dataclasses import dataclass, field
@@ -247,7 +247,7 @@ class JetBrainsIntegration:
         output = {**existing, "mcpServers": mcp_servers}
 
         config.mcp_config_path.write_text(
-            json.dumps(output, indent=2) + "\n",
+            json.dumps(output, indent=2).decode().decode() + "\n",
             encoding="utf-8",
         )
         logger.info("Wrote MCP config to %s", config.mcp_config_path)

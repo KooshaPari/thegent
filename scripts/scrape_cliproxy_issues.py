@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Scrape GitHub issues from CLIProxyAPI and CLIProxyAPIPlus repos."""
 
-import json
+import orjson as json
 import os
 import time
 from datetime import datetime

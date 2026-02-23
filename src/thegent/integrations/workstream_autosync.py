@@ -15,7 +15,7 @@ Key Principles:
 import asyncio
 import base64
 import hashlib
-import json
+import orjson as json
 import logging
 import os
 import time
@@ -25,6 +25,14 @@ from typing import Any
 from uuid import uuid4
 
 from thegent.infra.identity_proxy import SSHIdentityProxy
+from thegent.integrations.adapters import (
+    ConnectorConfigAdapter,
+    MetricsAdapter,
+    StateAdapter,
+    xor_encrypt,
+    xor_decrypt,
+    compute_artifact_key,
+)
 from thegent.integrations.capability_alerts import (
     CapabilityMismatchDetector,
     ConnectorCapabilityDiscovery,
@@ -160,6 +168,12 @@ class WorkstreamAutosyncRunner:
                 escalation_after=self.config.error_budget_escalation_after,
             ),
         )
+        
+        # Initialize adapters
+        self._metrics_adapter = MetricsAdapter(config)
+        self._state_adapter = StateAdapter(config)
+        self._connector_config_adapter = ConnectorConfigAdapter(config)
+        
         self._metrics = get_metrics_collector()
         self._breaker_registry = ProviderCircuitBreakerRegistry.get_instance()
         self._current_run_correlation_id: str | None = None
@@ -182,34 +196,14 @@ class WorkstreamAutosyncRunner:
         self._reflection_event_log = ReflectionEventLog(log_path=self.config.reflection_event_log_path)
         self._no_op_summary: dict[str, Any] | None = None
         self._last_trend_sample: dict[str, Any] | None = None
-        self._rate_limit_backoff = RateLimitBackoffManager(
-            RateLimitConfig(
-                max_retries=max(0, int(self.config.rate_limit_max_retries)),
-                initial_wait=max(0.01, float(self.config.rate_limit_initial_wait)),
-                max_wait=max(0.01, float(self.config.rate_limit_max_wait)),
-                multiplier=max(1.0, float(self.config.rate_limit_multiplier)),
-            )
-        )
+        self._rate_limit_backoff = self._connector_config_adapter.create_rate_limiter()
         self._writer_lock = SingleWriterLock(lock_path=self._writer_lock_path())
 
     def _connector_breaker(self, connector: str) -> Any:
-        config = ProviderCircuitBreakerConfig(
-            failure_threshold=max(1, self.config.connector_circuit_breaker_failure_threshold),
-            success_threshold=max(1, self.config.connector_circuit_breaker_success_threshold),
-            timeout_sec=max(0.1, self.config.connector_circuit_breaker_timeout_seconds),
-        )
-        return self._breaker_registry.get(connector, config=config)
+        return self._connector_config_adapter.get_connector_breaker(connector)
 
     def _connector_timeout_seconds(self, connector: str, direction: str) -> float:
-        if connector == "github" and direction == "write":
-            return max(0.001, self.config.github_write_timeout_seconds)
-        if connector == "github" and direction == "read":
-            return max(0.001, self.config.github_read_timeout_seconds)
-        if connector == "linear" and direction == "write":
-            return max(0.001, self.config.linear_write_timeout_seconds)
-        if connector == "linear" and direction == "read":
-            return max(0.001, self.config.linear_read_timeout_seconds)
-        raise ValueError(f"Unsupported connector timeout target: {connector}/{direction}")
+        return self._connector_config_adapter.get_connector_timeout(connector, direction)
 
     def _autosync_metrics_export_path(self) -> Path:
         default_path = Path("docs/reference/workstream_autosync_metrics.prom")
@@ -375,7 +369,7 @@ class WorkstreamAutosyncRunner:
         path = self._cycle_manifest_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(manifest.to_dict(), sort_keys=True) + "\n")
+            handle.write(json.dumps(manifest.to_dict().decode().decode(), sort_keys=True) + "\n")
 
     @staticmethod
     def _build_operation_id(platform: str, direction: str, items: list[WorkstreamItem]) -> str:
@@ -395,7 +389,7 @@ class WorkstreamAutosyncRunner:
     def _normalize_for_checksum_payload(payload: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Return a deterministic remote payload representation for checksum verification."""
         normalized = [{key: item[key] for key in sorted(item)} for item in payload]
-        return sorted(normalized, key=lambda item: json.dumps(item, sort_keys=True))
+        return sorted(normalized, key=lambda item: json.dumps(item, sort_keys=True).decode().decode())
 
     def _enforce_write_guards(self, *, connector: str, items: list[WorkstreamItem]) -> None:
         """Fail-fast guard for write-capable sync entrypoints."""
@@ -426,19 +420,6 @@ class WorkstreamAutosyncRunner:
             checksum_payload = [item.to_dict() for item in items]
             verify_payload_checksum(checksum_payload, self.config.expected_payload_checksum)
 
-    @staticmethod
-    def _xor_encrypt(data: bytes, key: str) -> str:
-        key_bytes = key.encode("utf-8")
-        encrypted = bytes(data[index] ^ key_bytes[index % len(key_bytes)] for index in range(len(data)))
-        return base64.b64encode(encrypted).decode("utf-8")
-
-    @staticmethod
-    def _xor_decrypt(payload: str, key: str) -> str:
-        key_bytes = key.encode("utf-8")
-        raw = base64.b64decode(payload.encode("utf-8"))
-        decrypted = bytes(raw[index] ^ key_bytes[index % len(key_bytes)] for index in range(len(raw)))
-        return decrypted.decode("utf-8")
-
     def _artifact_encryption_key(self) -> str:
         key = self.config.artifact_encryption_key or os.getenv("THGENT_AUTOSYNC_ARTIFACT_KEY", "")
         if self.config.artifact_encryption_enabled and not key:
@@ -448,16 +429,16 @@ class WorkstreamAutosyncRunner:
         return key
 
     def _serialize_artifact_payload(self, payload: Any) -> str:
-        text = json.dumps(payload, indent=2)
+        text = json.dumps(payload, indent=2).decode().decode()
         if not self.config.artifact_encryption_enabled:
             return text
         key = self._artifact_encryption_key()
         encrypted = {
             "encrypted": True,
             "algorithm": "xor-v1",
-            "ciphertext_b64": self._xor_encrypt(text.encode("utf-8"), key),
+            "ciphertext_b64": xor_encrypt(text.encode("utf-8"), key),
         }
-        return json.dumps(encrypted, indent=2)
+        return json.dumps(encrypted, indent=2).decode().decode()
 
     def _deserialize_artifact_payload(self, raw_text: str) -> Any:
         payload = json.loads(raw_text)
@@ -561,7 +542,7 @@ class WorkstreamAutosyncRunner:
         path = self._trend_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(sample, sort_keys=True) + "\n")
+            handle.write(json.dumps(sample, sort_keys=True).decode().decode() + "\n")
         self._last_trend_sample = sample
 
     def _record_change_event(
@@ -598,7 +579,7 @@ class WorkstreamAutosyncRunner:
         path = self._change_digest_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+            handle.write(json.dumps(payload, sort_keys=True).decode().decode() + "\n")
 
     def _finalize_change_digest(self) -> dict[str, Any]:
         """Finalize and persist the current cycle's digest."""
@@ -741,7 +722,7 @@ class WorkstreamAutosyncRunner:
         path = self._cycle_metrics_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+            handle.write(json.dumps(payload, sort_keys=True).decode().decode() + "\n")
 
     def _compact_snapshots(self, status_path: Path) -> None:
         retention = max(1, int(self.config.snapshot_retention_count))
@@ -921,7 +902,7 @@ class WorkstreamAutosyncRunner:
         path = self.config.incident_bundle_path or Path("docs/reference/workstream_incident_snapshots.jsonl")
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(snapshot, sort_keys=True) + "\n")
+            handle.write(json.dumps(snapshot, sort_keys=True).decode().decode() + "\n")
 
     def _connector_sla_snapshot(self) -> dict[str, Any]:
         snapshot: dict[str, Any] = {}

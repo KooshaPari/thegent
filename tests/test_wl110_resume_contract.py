@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -71,7 +71,7 @@ def test_resume_impl_rejects_session_id_mismatch_in_state(tmp_path: Path, monkey
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -110,7 +110,7 @@ def test_resume_impl_registers_resume_and_sends_prompt(tmp_path: Path, monkeypat
                 "run_id": "run-2",
                 "agent": "codex",
                 "model": "gpt-5-codex",
-                "cwd": str(tmp_path),
+                "cwd": str(tmp_path).decode(),
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
@@ -146,7 +146,7 @@ def test_resume_impl_rejects_whitespace_prompt(tmp_path: Path, monkeypatch: pyte
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -177,7 +177,7 @@ def test_resume_impl_does_not_register_when_prompt_delivery_fails(
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -209,7 +209,7 @@ def test_resume_impl_without_session_id_uses_most_recent_state(tmp_path: Path, m
                 "status": "running",
                 "updated_at_utc": "2026-02-20T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -223,7 +223,7 @@ def test_resume_impl_without_session_id_uses_most_recent_state(tmp_path: Path, m
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -254,7 +254,7 @@ def test_resume_impl_without_session_id_skips_latest_invalid_contract(
                 "status": "running",
                 "updated_at_utc": "2026-02-20T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -268,7 +268,7 @@ def test_resume_impl_without_session_id_skips_latest_invalid_contract(
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -298,7 +298,7 @@ def test_resume_impl_without_session_id_handles_mixed_timezone_timestamps(
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -312,7 +312,7 @@ def test_resume_impl_without_session_id_handles_mixed_timezone_timestamps(
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:01+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -342,7 +342,7 @@ def test_resume_impl_without_session_id_normalizes_whitespace_contract_strings(
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 
@@ -386,7 +386,7 @@ def test_session_list_impl_normalizes_contract_strings(tmp_path: Path, monkeypat
                 "status": "running",
                 "updated_at_utc": "2026-02-21T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 

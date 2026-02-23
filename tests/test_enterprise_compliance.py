@@ -13,7 +13,7 @@ Covers:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -131,7 +131,7 @@ class TestEvidenceStore:
         lines = store_path.read_text().splitlines()
         first = json.loads(lines[0])
         first["actor"] = "TAMPERED"
-        lines[0] = json.dumps(first)
+        lines[0] = json.dumps(first).decode().decode()
         store_path.write_text("\n".join(lines) + "\n")
 
         store2 = EvidenceStore(store_path)

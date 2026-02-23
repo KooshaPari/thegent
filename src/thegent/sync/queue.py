@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict
 from pathlib import Path
 

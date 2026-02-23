@@ -2,7 +2,7 @@
 Includes Mergiraf integration, conflict prediction, and structural merge.
 """
 
-import json
+import orjson as json
 import logging
 import subprocess
 from pathlib import Path
@@ -70,7 +70,7 @@ class SmartMerger:
                 local = json.loads(local_file.read_text())
                 remote = json.loads(remote_file.read_text())
                 merged = self._deep_merge(base, local, remote)
-                output_file.write_text(json.dumps(merged, indent=2))
+                output_file.write_text(json.dumps(merged, indent=2).decode().decode())
                 return True
             if ext in (".yaml", ".yml"):
                 base = yaml.safe_load(base_file.read_text())

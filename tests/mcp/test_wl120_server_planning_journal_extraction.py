@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import inspect
-import json
+import orjson as json
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import ANY, MagicMock

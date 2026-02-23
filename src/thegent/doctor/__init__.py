@@ -1,20 +1,34 @@
-"""Doctor module - health checks and diagnostics for thegent.
+"""Doctor module - re-exports symbols from doctor.py (flat file) for backward compat."""
 
-This module organizes doctor.py functions into logical domains:
-- Core: run_doctor, ProcessInfo
-- Checks: _check_* functions organized by category
-- Fixes: _apply_fixes, _display_*
+from __future__ import annotations
 
-For a full modular refactor, consider splitting into:
-- doctor/checks.py - All _check_* functions
-- doctor/display.py - _display_* functions
-- doctor/fixes.py - _apply_fixes
-"""
+import importlib.util
+import sys
+from pathlib import Path
+from typing import Any
 
-# Re-export the main entry point
-from thegent.doctor import ProcessInfo, run_doctor
+_DOCTOR_PY = Path(__file__).parent.parent / "doctor.py"
+_MODULE_NAME = "thegent._doctor_flat"
 
-__all__ = [
-    "ProcessInfo",
-    "run_doctor",
-]
+if _MODULE_NAME not in sys.modules:
+    _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _DOCTOR_PY)
+    if _spec is None or _spec.loader is None:
+        raise ImportError(f"Cannot load {_DOCTOR_PY}")
+    _mod = importlib.util.module_from_spec(_spec)
+    sys.modules[_MODULE_NAME] = _mod
+    _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+
+_flat = sys.modules[_MODULE_NAME]
+
+_PUBLIC = [name for name in dir(_flat) if not name.startswith("_")]
+for _name in _PUBLIC:
+    globals()[_name] = getattr(_flat, _name)
+
+__all__ = _PUBLIC
+
+
+def __getattr__(name: str) -> Any:
+    try:
+        return getattr(_flat, name)
+    except AttributeError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None

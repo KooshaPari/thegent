@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
@@ -181,7 +181,7 @@ def test_wl6903_read_log_file_tracks_malformed_json_and_out_of_window(tmp_path: 
     path = tmp_path / "chat.jsonl"
     valid = {"type": "user", "timestamp": "2026-01-10T12:00:00+00:00", "message": {"content": "ok"}}
     old = {"type": "assistant", "timestamp": "2025-12-10T12:00:00+00:00", "message": {"content": "old"}}
-    path.write_text(json.dumps(valid) + "\nnot-json\n" + json.dumps(old) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(valid).decode().decode() + "\nnot-json\n" + json.dumps(old).decode().decode() + "\n", encoding="utf-8")
 
     payload = summary._read_log_file(path, start, end, include_diagnostics=True)
 
@@ -318,7 +318,7 @@ def test_wl6907_check_connectivity_cliproxy_categorizes_failures(
 def test_wl6908_shared_mcp_cleans_only_stale_lockfile(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(shared_mcp_manager.Path, "home", lambda: tmp_path)
     _scope, lockfile = shared_mcp_manager.get_server_scope()
-    lockfile.write_text(json.dumps({"pid": 424242, "port": 3847}), encoding="utf-8")
+    lockfile.write_text(json.dumps({"pid": 424242, "port": 3847}).decode().decode(), encoding="utf-8")
     monkeypatch.setattr(
         shared_mcp_manager.os, "kill", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError(ESRCH, ""))
     )
@@ -353,7 +353,7 @@ def test_wl6908_shared_mcp_malformed_json_does_not_delete_lockfile(
 def test_wl6908_shared_mcp_read_error_does_not_delete_lockfile(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(shared_mcp_manager.Path, "home", lambda: tmp_path)
     _scope, lockfile = shared_mcp_manager.get_server_scope()
-    lockfile.write_text(json.dumps({"pid": 1, "port": 3847}), encoding="utf-8")
+    lockfile.write_text(json.dumps({"pid": 1, "port": 3847}).decode().decode(), encoding="utf-8")
 
     import builtins
 

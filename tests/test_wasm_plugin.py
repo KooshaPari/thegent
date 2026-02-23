@@ -7,7 +7,7 @@ These tests verify the Wasm plugin functionality including:
 - Fallback handling
 """
 
-import json
+import orjson as json
 import tempfile
 from pathlib import Path
 
@@ -257,7 +257,7 @@ class TestCreatePluginFromManifest:
                 "version": "0.1.0",
             }
             manifest_path = Path(tmpdir) / "manifest.json"
-            manifest_path.write_text(json.dumps(manifest_data))
+            manifest_path.write_text(json.dumps(manifest_data).decode().decode())
 
             # No wasm file, so should fail
             result = create_plugin_from_manifest(manifest_path)
@@ -284,7 +284,7 @@ class TestCreatePluginFromManifest:
                 },
             }
             manifest_path = Path(tmpdir) / "manifest.json"
-            manifest_path.write_text(json.dumps(manifest_data))
+            manifest_path.write_text(json.dumps(manifest_data).decode().decode())
 
             result = create_plugin_from_manifest(manifest_path)
             assert result is not None

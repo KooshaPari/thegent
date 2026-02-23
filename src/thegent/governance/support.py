@@ -27,7 +27,7 @@ class SupportRedactor:
         """Recursively redact strings within a nested dictionary payload."""
         import json
 
-        dumped = json.dumps(payload)
+        dumped = json.dumps(payload).decode().decode()
         redacted_json = self.redact_text(dumped)
         return json.loads(redacted_json)
 

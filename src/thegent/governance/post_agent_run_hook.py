@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import subprocess
 from pathlib import Path
@@ -60,7 +60,7 @@ def dispatch_post_agent_run_hook(
 
     proc = subprocess.run(
         ["hook-dispatcher", "postagentrun"],
-        input=json.dumps(payload),
+        input=json.dumps(payload).decode().decode(),
         capture_output=True,
         text=True,
         check=False,

@@ -8,7 +8,7 @@ Sub-commands for the SimulationReplayEngine:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Annotated
 
@@ -57,7 +57,7 @@ def replay_list(
     sessions = engine.list_sessions()
 
     if output_json:
-        typer.echo(json.dumps([str(p) for p in sessions], indent=2))
+        typer.echo(json.dumps([str(p).decode().decode() for p in sessions], indent=2))
         return
 
     if not sessions:
@@ -147,8 +147,7 @@ def replay_run(
                         "event_type": event.event_type,
                         "data": event.data,
                     }
-                )
-            )
+                )).decode()
         else:
             console.print(f"[dim]{event.timestamp:.3f}[/dim] [bold cyan]{event.event_type}[/bold cyan]: {event.data}")
 
@@ -200,7 +199,7 @@ def replay_diff(
     diff = engine.compare_sessions(sess_a, sess_b)
 
     if output_json:
-        typer.echo(json.dumps(diff, indent=2, default=str))
+        typer.echo(json.dumps(diff, indent=2, default=str).decode().decode())
         return
 
     console = Console()

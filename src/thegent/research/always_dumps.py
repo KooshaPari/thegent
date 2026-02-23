@@ -1,6 +1,6 @@
 """Always write conversation dumps to docs/."""
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path

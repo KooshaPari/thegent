@@ -1,6 +1,6 @@
 """MAIF Artifact Store implementation for thegent."""
 
-import json
+import orjson as json
 import sqlite3
 from pathlib import Path
 
@@ -46,7 +46,7 @@ class MAIFArtifactStore:
                 (
                     artifact.artifact_id,
                     artifact.action_type,
-                    json.dumps(artifact.payload),
+                    json.dumps(artifact.payload).decode().decode(),
                     artifact.signature,
                     artifact.timestamp,
                     artifact.agent_id,

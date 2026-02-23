@@ -4,7 +4,7 @@ Comprehensive Audit Framework
 Provides automated auditing capabilities for projects with multiple audit types.
 """
 
-import json
+import orjson as json
 import logging
 import re
 import subprocess

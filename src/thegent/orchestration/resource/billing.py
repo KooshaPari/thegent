@@ -2,7 +2,7 @@
 Enforces resource quotas (runs, tokens, storage) per team/tenant.
 """
 
-import json
+import orjson as json
 import logging
 import threading
 from pathlib import Path
@@ -77,7 +77,7 @@ class TeamBillingManager:
             elif resource == "usd":
                 quotas[team_id]["used_usd"] += amount
 
-            self.quotas_path.write_text(json.dumps(quotas, indent=2), encoding="utf-8")
+            self.quotas_path.write_text(json.dumps(quotas, indent=2).decode().decode(), encoding="utf-8")
         _log.info("Recorded %s usage for team %s: %s", resource, team_id, amount)
 
     def get_billing_report(self, team_id: str) -> dict[str, Any]:

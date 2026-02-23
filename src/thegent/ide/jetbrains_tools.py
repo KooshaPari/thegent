@@ -4,7 +4,7 @@ These tools provide a clean interface to JetBrains IDE features via MCP protocol
 They communicate with the JetBrains MCP server running in the IDE.
 """
 
-import json
+import orjson as json
 import logging
 
 import httpx
@@ -144,10 +144,10 @@ async def jetbrains_find_usages(symbol: str, file_path: str | None = None) -> st
             response = await client.post(url, json=payload)
             response.raise_for_status()
             result = response.json()
-            return json.dumps(result.get("result", {}), indent=2)
+            return json.dumps(result.get("result", {}).decode().decode(), indent=2)
         except Exception as e:
             _log.error(f"JetBrains find_usages failed: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e).decode().decode()})
 
 
 async def jetbrains_go_to_definition(symbol: str, file_path: str | None = None) -> str:
@@ -176,10 +176,10 @@ async def jetbrains_go_to_definition(symbol: str, file_path: str | None = None) 
             response = await client.post(url, json=payload)
             response.raise_for_status()
             result = response.json()
-            return json.dumps(result.get("result", {}), indent=2)
+            return json.dumps(result.get("result", {}).decode().decode(), indent=2)
         except Exception as e:
             _log.error(f"JetBrains go_to_definition failed: {e}")
-            return json.dumps({"error": str(e)})
+            return json.dumps({"error": str(e).decode().decode()})
 
 
 async def jetbrains_list_tools() -> str:
@@ -215,7 +215,7 @@ async def jetbrains_list_tools() -> str:
             "parameters": ["symbol", "file_path"],
         },
     ]
-    return json.dumps({"tools": tools, "count": len(tools)}, indent=2)
+    return json.dumps({"tools": tools, "count": len(tools).decode().decode()}, indent=2)
 
 
 def check_jetbrains_mcp_available() -> bool:

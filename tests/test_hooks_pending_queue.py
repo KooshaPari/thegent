@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -30,7 +30,7 @@ def _run_prompt_guard(
         env["PROJECT_DIR"] = str(project_dir)
     if env_override:
         env.update(env_override)
-    stdin = json.dumps({"tool_input": {"prompt": prompt}, "cwd": str(project_dir or ".")})
+    stdin = json.dumps({"tool_input": {"prompt": prompt}, "cwd": str(project_dir or ".").decode().decode()})
     return subprocess.run(
         [str(script)],
         input=stdin,
@@ -202,7 +202,7 @@ class TestHarvestIdeaSeedsDefer:
         line = json.dumps(
             {
                 "display": "Add OAuth flow $defer",
-                "project": str(project),
+                "project": str(project).decode(),
                 "timestamp": 1739620800000,
                 "sessionId": "test-session",
             }

@@ -5,7 +5,7 @@ Provides command-line interface for governance setup, quality assessment,
 auditing, and reporting.
 """
 
-import json
+import orjson as json
 from pathlib import Path
 
 import click
@@ -57,7 +57,7 @@ def analyze_project(project_path: str, output: str | None, format: str):
                 yaml.dump(result, f, default_flow_style=False)
         click.echo(f"Results saved to: {output_path}")
     else:
-        click.echo(json.dumps(result, indent=2))
+        click.echo(json.dumps(result, indent=2).decode())
 
 
 @governance_cmd.command("setup")

@@ -14,7 +14,7 @@ Traces to: WP-3001
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import tempfile
 from pathlib import Path
 

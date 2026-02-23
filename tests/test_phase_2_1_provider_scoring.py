@@ -8,7 +8,7 @@ Tests cover:
 See: docs/changes/research-economic-governance/tasks.md § Phase 2.1
 """
 
-import json
+import orjson as json
 import tempfile
 from pathlib import Path
 

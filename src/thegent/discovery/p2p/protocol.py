@@ -1,6 +1,6 @@
 """WP-13001: P2P Agent Discovery and Peer-to-Peer Orchestration."""
 
-import json
+import orjson as json
 import logging
 import socket
 import threading

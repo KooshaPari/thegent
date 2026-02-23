@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 
@@ -52,7 +52,7 @@ def swarm_usage(
 
     if format == "json":
         payload = {o: s.to_dict() for o, s in all_stats.items()}
-        typer.echo(json.dumps(payload, indent=2))
+        typer.echo(json.dumps(payload, indent=2).decode().decode())
         return
 
     # Rich table output

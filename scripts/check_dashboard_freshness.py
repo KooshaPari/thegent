@@ -9,7 +9,7 @@ Exits 1 if the file is stale, missing, or has an invalid timestamp.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path

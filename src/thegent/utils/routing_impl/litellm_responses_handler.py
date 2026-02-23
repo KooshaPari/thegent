@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 import inspect
@@ -114,7 +114,7 @@ def _append_generation_id(request_id: str, generation_id: str) -> None:
     Creates the parent directory if it does not exist.
     """
     _GENERATION_ID_STORE.parent.mkdir(parents=True, exist_ok=True)
-    record = json.dumps({"request_id": request_id, "generation_id": generation_id})
+    record = json.dumps({"request_id": request_id, "generation_id": generation_id}).decode().decode()
     with _GENERATION_ID_STORE.open("a", encoding="utf-8") as fh:
         fh.write(record + "\n")
 
@@ -195,7 +195,7 @@ def _error_response(exc: Exception) -> Response:
                     error_obj["metadata"] = upstream_err["metadata"]
             except (json.JSONDecodeError, ValueError):
                 pass
-    body = json.dumps({"error": error_obj})
+    body = json.dumps({"error": error_obj}).decode().decode()
     return Response(
         content=body,
         status_code=status,
@@ -638,7 +638,7 @@ async def handle_responses_request(request: Request) -> Response:
                 responses_data["usage"]["cost"] = total_cost
 
         return Response(
-            content=json.dumps(responses_data),
+            content=json.dumps(responses_data).decode().decode(),
             status_code=200,
             headers={"Content-Type": "application/json"},
         )
@@ -758,11 +758,11 @@ async def handle_responses_stream(
                     _append_generation_id(request_id, str(gen_id))
                 responses_event = _chat_completions_to_responses(chunk_dict)
                 if responses_event:
-                    yield f"data: {json.dumps(responses_event)}\n\n"
+                    yield f"data: {json.dumps(responses_event).decode().decode()}\n\n"
 
             # OR-12: include actual_model in completed event
             completed = {"type": "response.completed"}
-            yield f"data: {json.dumps(completed)}\n\n"
+            yield f"data: {json.dumps(completed).decode().decode()}\n\n"
 
         except Exception as e:
             _log.error("Error in Responses API stream: %s", e, exc_info=True)
@@ -772,7 +772,7 @@ async def handle_responses_stream(
                 {
                     "error": {
                         "code": status,
-                        "message": str(e),
+                        "message": str(e).decode(),
                         "type": type(e).__name__,
                     }
                 }

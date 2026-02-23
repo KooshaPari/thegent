@@ -1,4 +1,4 @@
-import json
+import orjson as json
 import logging
 import time
 from dataclasses import dataclass, field
@@ -73,7 +73,7 @@ class MemorySystem:
                         "msg": fragment.content,
                         "meta": fragment.metadata,
                     }
-                )
+                ).decode()
                 + "\n"
             )
 

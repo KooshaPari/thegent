@@ -1,4 +1,4 @@
-import json
+import orjson as json
 import os
 import subprocess
 import time

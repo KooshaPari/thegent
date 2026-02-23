@@ -3,7 +3,7 @@
 import csv
 import hashlib
 import io
-import json
+import orjson as json
 
 import pytest
 

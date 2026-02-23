@@ -3,7 +3,7 @@
 # @trace heliosShield-task-queue
 """
 
-import json
+import orjson as json
 import os
 import time
 from pathlib import Path

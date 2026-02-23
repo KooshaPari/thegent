@@ -1,6 +1,6 @@
 """Implement incremental-check/record subcommands (manifest-based)."""
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 from typing import Any
@@ -80,4 +80,4 @@ class IncrementalSubcommands:
 
     def _save_manifest(self) -> None:
         """Save manifest."""
-        self.manifest_path.write_text(json.dumps(self.manifest, indent=2))
+        self.manifest_path.write_text(json.dumps(self.manifest, indent=2).decode().decode())

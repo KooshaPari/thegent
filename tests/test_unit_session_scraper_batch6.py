@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 from thegent.orchestration.state.session_scraper import SessionScraper
@@ -31,7 +31,7 @@ def _snapshot_payload(
 
 def _write_snapshot(path: Path, payload: dict, mtime: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload), encoding="utf-8")
+    path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
     import os
 
     os.utime(path, (mtime, mtime))

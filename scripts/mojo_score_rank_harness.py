@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import math
 import random
 import resource
@@ -213,7 +213,7 @@ def generate_fixtures(args: argparse.Namespace) -> int:
             "cases": cases,
         }
         out_path = args.output_root / _fixture_name(dataset_id)
-        out_path.write_text(json.dumps(fixture, sort_keys=True) + "\n", encoding="utf-8")
+        out_path.write_text(json.dumps(fixture, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
         generated[dataset_id] = str(out_path)
 
     manifest = {
@@ -223,7 +223,7 @@ def generate_fixtures(args: argparse.Namespace) -> int:
         "fixtures": generated,
     }
     manifest_path = args.output_root / "manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
     print(f"Wrote deterministic fixtures: {args.output_root}")
     print(f"Wrote manifest: {manifest_path}")
     return 0
@@ -269,7 +269,7 @@ def _rss_mb(kind: int) -> float:
 
 def _run_mojo_once(mojo_bin: str, kernel_file: Path, payload: dict[str, Any]) -> dict[str, Any]:
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as tmp:
-        tmp.write(json.dumps(payload))
+        tmp.write(json.dumps(payload).decode().decode())
         tmp_path = Path(tmp.name)
     try:
         result = subprocess.run(
@@ -477,7 +477,7 @@ def run_harness(args: argparse.Namespace) -> int:
         },
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(output_payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(output_payload, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
     print(f"Wrote benchmark results: {args.output}")
     if total_failures > 0:
         raise RuntimeError(

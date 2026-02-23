@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from dataclasses import dataclass, field
 from typing import Any, TextIO
@@ -1357,9 +1357,9 @@ def serve_stdio(in_stream: TextIO | None = None, out_stream: TextIO | None = Non
 
         response, notifications = process_jsonrpc_line_full(raw)
         if response is not None:
-            sink.write(json.dumps(response, separators=(",", ":")) + "\n")
+            sink.write(json.dumps(response, separators=(",", ":").decode().decode()) + "\n")
         for notification in notifications:
-            sink.write(json.dumps(notification, separators=(",", ":")) + "\n")
+            sink.write(json.dumps(notification, separators=(",", ":").decode().decode()) + "\n")
 
         if response is not None or notifications:
             sink.flush()

@@ -12,7 +12,7 @@ Fail-fast: every public method raises on malformed data; no silent fallbacks.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 

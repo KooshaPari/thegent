@@ -3,7 +3,7 @@ Provides high-level, human-aligned rules (constitution) for all agent operations
 Inspired by Constitutional AI principles (Anthropic).
 """
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -94,7 +94,7 @@ class MetaGovernance:
                 "metadata": rule.metadata,
             }
             data.append(r_dict)
-        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self.path.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
 
     def validate_action(self, action_description: str, tags: set[str]) -> tuple[bool, str | None]:
         """Validate an agent's intended action against the constitution."""

@@ -1,6 +1,6 @@
 """Implement learning-record/should-skip subcommands (learning-based)."""
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 from typing import Any
@@ -81,4 +81,4 @@ class LearningSubcommands:
 
     def _save_db(self) -> None:
         """Save learning database."""
-        self.learning_db_path.write_text(json.dumps(self.learning_db, indent=2))
+        self.learning_db_path.write_text(json.dumps(self.learning_db, indent=2).decode().decode())

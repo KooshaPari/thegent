@@ -9,7 +9,7 @@ Harmonized with all thegent components: WorkStreamManager, EvidenceLedger,
 LaneModel, CostEstimator, DeferralManager, TaskRouter, TeamCoordinator, etc.
 """
 
-import json
+import orjson as json
 import logging
 import sqlite3
 from datetime import UTC, datetime
@@ -221,7 +221,7 @@ class AutoLaunchSystem:
                 session_id,
                 item_id,
                 datetime.now(UTC).isoformat(),
-                json.dumps(payload) if payload else None,
+                json.dumps(payload).decode().decode() if payload else None,
                 evidence_hash,
             ),
         )

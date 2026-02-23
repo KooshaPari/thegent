@@ -2,7 +2,7 @@
 
 import getpass
 import hashlib
-import json
+import orjson as json
 import os
 import socket
 import subprocess
@@ -185,7 +185,7 @@ class TestMCPToolOutputFormat:
         # @trace FR-MCP-001
         """list_agents_impl serialized to JSON matches MCP tool contract."""
         agents = list_agents_impl()
-        result = json.dumps(agents)
+        result = json.dumps(agents).decode().decode()
         data = json.loads(result)
         assert isinstance(data, list)
         assert all("name" in item and "backend" in item for item in data)
@@ -340,7 +340,7 @@ class TestCLIImplBackground:
             "pid": 99999999,
             "started_at_utc": "2026-02-14T00:00:00+00:00",
         }
-        (scoped / f"{sid}.json").write_text(json.dumps(meta), encoding="utf-8")
+        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
         (scoped / f"{sid}.rc").write_text("3\n", encoding="utf-8")
 
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
@@ -380,7 +380,7 @@ class TestCLIImplBackground:
             "started_at_utc": "2026-02-14T00:00:00+00:00",
             "paths": paths,
         }
-        (scoped / f"{sid}.json").write_text(json.dumps(meta), encoding="utf-8")
+        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
         (scoped / f"{sid}.rc").write_text("0\n", encoding="utf-8")
 
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
@@ -676,7 +676,7 @@ class TestMCPHealthPolicyTrendContract:
             "compat_aliases_count": 1,
             "snapshots": [],
         }
-        expected_latest_issue_types_json = json.dumps(["abc"])
+        expected_latest_issue_types_json = json.dumps(["abc"]).decode().decode()
         expected_latest_issue_types_hash = hashlib.sha256(expected_latest_issue_types_json.encode("utf-8")).hexdigest()
         with patch("thegent.mcp.server.session_contract_health_trend_impl", return_value=payload):
             result = thegent_session_contract_health_trend(payload_type="session_contract_health_report")

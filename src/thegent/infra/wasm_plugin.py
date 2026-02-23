@@ -11,7 +11,7 @@ Key features:
 - Graceful fallback if Wasm not available
 """
 
-import json
+import orjson as json
 import logging
 import threading
 import time

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 from thegent.mcp.server.tools_locking_planning import thegent_plan_incorporate_impl

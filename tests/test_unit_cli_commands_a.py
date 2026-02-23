@@ -5,7 +5,7 @@ covering the actual function bodies rather than routing through CliRunner.
 """
 
 import io
-import json
+import orjson as json
 import signal
 from pathlib import Path
 from unittest.mock import MagicMock, patch

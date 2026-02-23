@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import re
 import sys
 from pathlib import Path
@@ -197,7 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.format == "json":
-        print(json.dumps(report, indent=2, sort_keys=True))
+        print(json.dumps(report, indent=2, sort_keys=True).decode().decode())
     elif args.format == "migration":
         print("WL-123 alias migration suggestions")
         if report["replacement_suggestions"]:
@@ -227,12 +227,12 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print("| _None_ |")
     elif args.format == "migration-json":
-        print(json.dumps(build_migration_payload(report), indent=2, sort_keys=True))
+        print(json.dumps(build_migration_payload(report).decode().decode(), indent=2, sort_keys=True))
     elif args.format == "migration-jsonl":
         for entry in build_migration_entries(report):
-            print(json.dumps(entry, sort_keys=True))
+            print(json.dumps(entry, sort_keys=True).decode().decode())
     elif args.format == "summary-json":
-        print(json.dumps(build_summary_payload(report), sort_keys=True))
+        print(json.dumps(build_summary_payload(report).decode().decode(), sort_keys=True))
     else:
         print("WL-123 alias audit")
         print(f"- deprecated aliases present: {report['deprecated_count']}")

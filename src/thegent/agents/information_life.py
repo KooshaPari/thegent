@@ -4,7 +4,7 @@ information format. Allows for migration between model architectures or digital-
 """
 
 import base64
-import json
+import orjson as json
 import logging
 
 _log = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class InformationPersona:
         }
 
         # 1. JSON Serialize
-        raw_json = json.dumps(payload)
+        raw_json = json.dumps(payload).decode().decode()
 
         # 2. Base64 encode for transport
         encoded = base64.b64encode(raw_json.encode()).decode()

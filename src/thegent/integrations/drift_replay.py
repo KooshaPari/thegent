@@ -6,7 +6,7 @@ Replays drift scenarios from archived manifests for deterministic debugging.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path

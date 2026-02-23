@@ -2,7 +2,7 @@
 Integration tests for document queue system.
 """
 
-import json
+import orjson as json
 import logging
 import tempfile
 from datetime import datetime, timezone

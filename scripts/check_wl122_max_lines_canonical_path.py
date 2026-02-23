@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import re
 import sys
 from pathlib import Path
@@ -98,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if args.format == "json":
-        print(json.dumps(report, indent=2, sort_keys=True))
+        print(json.dumps(report, indent=2, sort_keys=True).decode().decode())
     else:
         print("WL-122 canonical max-lines CI path check")
         print(f"- ok: {report['ok']}")

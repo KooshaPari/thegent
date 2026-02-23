@@ -4,7 +4,7 @@ Shared LSP Server Manager (System-Wide First)
 Manages system-wide shared LSP servers, scoping down to per-project only when needed.
 """
 
-import json
+import orjson as json
 import os
 import time
 from pathlib import Path
@@ -120,7 +120,7 @@ def ensure_shared_lsp_server(project_root: Path | None = None, language: str = "
                     "language": language,
                     "command": command,
                     "scope": scope_type,
-                    "project_root": str(project_root) if project_root else None,
+                    "project_root": str(project_root).decode() if project_root else None,
                     "started_at": time.time(),
                     "socket_path": str(socket_path),
                 }
