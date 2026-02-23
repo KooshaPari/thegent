@@ -533,6 +533,8 @@ def setup_cmd(
     settings = ThegentSettings()
     env_path = Path(".env")
 
+    from rich.prompt import Confirm
+
     # Harness setup
     if harness or full:
         console.print("\n[bold cyan]Setting up heliosShield Harness...[/bold cyan]")
@@ -546,12 +548,18 @@ def setup_cmd(
         except Exception as e:
             console.print(f"[yellow]Harness setup error: {e}[/yellow]")
 
-    # Full setup: install, shims, lock-cleanup, MCP service
-    if full:
-        run_subprocess_optimized = _get_run_subprocess_optimized()
-        from rich.prompt import Confirm
+    run_install_actions = full
+    if not full and wizard:
+        run_install_actions = Confirm.ask(
+            "Run install/bootstrap actions too (install targets, shims, services)?",
+            default=False,
+        )
 
-        console.print("\n[bold cyan]Full setup: installing to all targets...[/bold cyan]")
+    # Install/bootstrap actions: install, shims, lock-cleanup, MCP service
+    if run_install_actions:
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+
+        console.print("\n[bold cyan]Setup: installing to all targets...[/bold cyan]")
         try:
             from thegent.install import run_install
 
@@ -588,10 +596,7 @@ def setup_cmd(
         except Exception as e:
             console.print(f"[yellow]Lock-cleanup: {e}[/yellow]")
 
-        console.print("\n[bold green]Full setup complete.[/bold green]")
-        if not wizard:
-            console.print("[dim]Run thegent setup (without --full) to configure providers.[/dim]")
-            return
+        console.print("\n[bold green]Install/bootstrap actions complete.[/bold green]")
     lines = env_path.read_text().splitlines() if env_path.exists() else []
 
     def prompt_key(msg: str) -> str:
@@ -747,6 +752,18 @@ def setup_cmd(
                 console.print("[dim]Start MCP: thegent mcp up[/dim]")
             except Exception as e:
                 console.print(f"[yellow]Playwright removal: {e}[/yellow]")
+
+    console.print("\n[bold cyan]Running doctor checks...[/bold cyan]")
+    try:
+        from thegent.doctor import run_doctor
+
+        doctor_ok = run_doctor(fix=False, dry_run=False)
+        if doctor_ok:
+            console.print("[green]✓[/green] Doctor checks passed.")
+        else:
+            console.print("[yellow]! Doctor reported issues. Run: thegent doctor --fix[/yellow]")
+    except Exception as e:
+        console.print(f"[yellow]Doctor run failed: {e}[/yellow]")
 
     console.print("\n[bold green]Setup complete![/bold green]")
     console.print("Try: [blue]claudeglm[/blue] | [blue]claudemax[/blue] | [blue]dex[/blue] | [blue]dexmax[/blue]")
