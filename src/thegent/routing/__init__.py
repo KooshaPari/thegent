@@ -1,6 +1,27 @@
-"""Routing package compatibility surface."""
+"""Task routing and categorization for thegent.
 
-from .models import TaskMetadata
-from .provider_types import ExecutionPath, get_execution_path
+Implements Pareto frontier routing based on Terminal Bench 2.0 benchmarks.
+Routes tasks to optimal models based on complexity, cost constraints, and quality requirements.
 
-__all__ = ["ExecutionPath", "TaskMetadata", "get_execution_path"]
+Key components:
+- TaskRouter: Main routing engine with constraint validation
+- TaskClassifier: Categorizes tasks (FAST/NORMAL/COMPLEX/HIGH_COMPLEX)
+- ConstraintValidator: Validates hard constraints (quality, cost, speed)
+- Pareto router: Hard constraints → Pareto frontier → lexicographic selection
+- Auto router: Gemini Flash classifier + Pareto routing for agent/model="auto"
+"""
+
+from thegent.routing.models import RoutingConstraint, TaskCategory, TaskMetadata
+from thegent.routing.pareto_router import ParetoRouter, RouteCandidate
+from thegent.routing.task_router import ConstraintValidator, TaskClassifier, TaskRouter
+
+__all__ = [
+    "ConstraintValidator",
+    "ParetoRouter",
+    "RouteCandidate",
+    "RoutingConstraint",
+    "TaskCategory",
+    "TaskClassifier",
+    "TaskMetadata",
+    "TaskRouter",
+]
