@@ -1583,6 +1583,21 @@ tasks:
     cmds:
       - uv run python scripts/beads_contract_smoke.py
 
+  integration:graphiti:smoke:
+    desc: "Fail-fast Graphiti endpoint contract smoke for Spike Batch B."
+    cmds:
+      - uv run python scripts/graphiti_contract_smoke.py
+
+  integration:nats:smoke:
+    desc: "Fail-fast NATS event bus contract smoke for Spike Batch B."
+    cmds:
+      - uv run python scripts/nats_contract_smoke.py
+
+  integration:lmcache:smoke:
+    desc: "Fail-fast LMCache endpoint contract smoke for Spike Batch B."
+    cmds:
+      - uv run python scripts/lmcache_contract_smoke.py
+
   hooks:run:full:
     desc: "Run both local pre-commit and pre-push stages across all files."
     cmds:
