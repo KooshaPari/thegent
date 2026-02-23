@@ -1001,24 +1001,18 @@ class TestDagRunCmdImpl:
         dag_run_cmd(cd=None, dry_run=False)
         assert any("No ready" in str(c) for c in mock_console.print.call_args_list)
 
-    @patch("thegent.cli._get_ready_task_ids", return_value=["T1"])
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._resolve_cwd")
+    @patch("thegent.cli.commands.plan_dag_cmds.dag_run_impl")
     @patch("thegent.cli.console")
-    def test_dry_run(self, mock_console, mock_cwd, mock_parse, mock_ready, tmp_path) -> None:
+    def test_dry_run(self, mock_console, mock_impl, tmp_path) -> None:
         # @trace FR-CLI-352
-        dag_file = tmp_path / ".factory" / "dag-session.md"
-        dag_file.parent.mkdir(parents=True)
-        dag_file.touch()
-        mock_cwd.return_value = tmp_path
-        mock_parse.return_value = _make_dag_doc(
-            tasks=[{"id": "T1", "agent": "claude", "prompt": "Run tests", "depends_on": "-", "status": "pending"}],
-        )
+        mock_impl.return_value = {
+            "would_run": [{"task_id": "T1", "agent": "claude", "prompt_preview": "Run tests"}],
+            "dry_run": True,
+        }
 
-        with patch("thegent.cli._resolve_prompt", return_value="Run tests"):
-            from thegent.cli import dag_run_cmd
+        from thegent.cli import dag_run_cmd
 
-            dag_run_cmd(cd=None, dry_run=True)
+        dag_run_cmd(cd=None, dry_run=True)
         assert any("Would run" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli._resolve_cwd")
