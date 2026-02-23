@@ -7,7 +7,7 @@ import platform
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from opentelemetry import trace
 from starlette.applications import Starlette
 from starlette.requests import Request

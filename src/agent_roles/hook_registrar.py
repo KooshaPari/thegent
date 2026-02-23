@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 if TYPE_CHECKING:
     from agent_roles.spec import AgentRoleSpec

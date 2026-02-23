@@ -8,7 +8,7 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 from docs_engine.db.indexer import DocIndexer
 from docs_engine.schema.base import DocFrontmatter, DocStatus, DocType

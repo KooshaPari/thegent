@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 
 _SCHEMA_PATH = Path(__file__).resolve().parents[3] / "docs" / "governance" / "TASK_CLASSIFIER_SCHEMA.yaml"
