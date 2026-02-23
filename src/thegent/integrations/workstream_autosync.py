@@ -15,7 +15,7 @@ Key Principles:
 import asyncio
 import base64
 import hashlib
-import orjson as json
+import json
 import logging
 import os
 import time
@@ -25,17 +25,6 @@ from typing import Any
 from uuid import uuid4
 
 from thegent.infra.identity_proxy import SSHIdentityProxy
-from thegent.integrations.adapters import (
-    CheckpointAdapter,
-    ConnectorConfigAdapter,
-    MetricsAdapter,
-    SLAAdapter,
-    StateAdapter,
-    SyncAdapter,
-    xor_encrypt,
-    xor_decrypt,
-    compute_artifact_key,
-)
 from thegent.integrations.capability_alerts import (
     CapabilityMismatchDetector,
     ConnectorCapabilityDiscovery,
@@ -72,7 +61,7 @@ from thegent.integrations.pipeline_percentiles import PipelinePercentileTracker
 from thegent.observability.prometheus import get_metrics_collector
 from thegent.execution import EscalationQueue
 from research_engine.digest import build_hourly_change_digest
-from thegent.utils.routing_impl.circuit_breaker import (
+from thegent.routing.circuit_breaker import (
     CircuitOpenError,
     ProviderCircuitBreakerConfig,
     ProviderCircuitBreakerRegistry,
@@ -171,12 +160,6 @@ class WorkstreamAutosyncRunner:
                 escalation_after=self.config.error_budget_escalation_after,
             ),
         )
-
-        # Initialize adapters
-        self._metrics_adapter = MetricsAdapter(config)
-        self._state_adapter = StateAdapter(config)
-        self._connector_config_adapter = ConnectorConfigAdapter(config)
-
         self._metrics = get_metrics_collector()
         self._breaker_registry = ProviderCircuitBreakerRegistry.get_instance()
         self._current_run_correlation_id: str | None = None
@@ -199,23 +182,56 @@ class WorkstreamAutosyncRunner:
         self._reflection_event_log = ReflectionEventLog(log_path=self.config.reflection_event_log_path)
         self._no_op_summary: dict[str, Any] | None = None
         self._last_trend_sample: dict[str, Any] | None = None
-        self._rate_limit_backoff = self._connector_config_adapter.create_rate_limiter()
+        self._rate_limit_backoff = RateLimitBackoffManager(
+            RateLimitConfig(
+                max_retries=max(0, int(self.config.rate_limit_max_retries)),
+                initial_wait=max(0.01, float(self.config.rate_limit_initial_wait)),
+                max_wait=max(0.01, float(self.config.rate_limit_max_wait)),
+                multiplier=max(1.0, float(self.config.rate_limit_multiplier)),
+            )
+        )
+        self._cycle_throttle_retry_attempts = 0
+        self._cycle_throttle_wait_seconds = 0.0
         self._writer_lock = SingleWriterLock(lock_path=self._writer_lock_path())
 
     def _connector_breaker(self, connector: str) -> Any:
-        return self._connector_config_adapter.get_connector_breaker(connector)
+        config = ProviderCircuitBreakerConfig(
+            failure_threshold=max(1, self.config.connector_circuit_breaker_failure_threshold),
+            success_threshold=max(1, self.config.connector_circuit_breaker_success_threshold),
+            timeout_sec=max(0.1, self.config.connector_circuit_breaker_timeout_seconds),
+        )
+        return self._breaker_registry.get(connector, config=config)
 
     def _connector_timeout_seconds(self, connector: str, direction: str) -> float:
-        return self._connector_config_adapter.get_connector_timeout(connector, direction)
+        if connector == "github" and direction == "write":
+            return max(0.001, self.config.github_write_timeout_seconds)
+        if connector == "github" and direction == "read":
+            return max(0.001, self.config.github_read_timeout_seconds)
+        if connector == "linear" and direction == "write":
+            return max(0.001, self.config.linear_write_timeout_seconds)
+        if connector == "linear" and direction == "read":
+            return max(0.001, self.config.linear_read_timeout_seconds)
+        raise ValueError(f"Unsupported connector timeout target: {connector}/{direction}")
 
     def _autosync_metrics_export_path(self) -> Path:
-        return self._state_adapter.get_autosync_metrics_path()
+        default_path = Path("docs/reference/workstream_autosync_metrics.prom")
+        return self.config.autosync_prometheus_export_path or default_path
 
     def _cycle_metrics_path(self) -> Path:
-        return self._state_adapter.get_cycle_metrics_path()
+        default_cycle_metrics_path = Path("docs/reference/workstream_autosync_cycle_metrics.jsonl")
+        return self.config.cycle_metrics_path or default_cycle_metrics_path
 
     def _change_digest_path(self) -> Path:
-        return self._state_adapter.get_change_digest_path()
+        default_change_digest_path = Path("artifacts/workstream_autosync_change_digest.jsonl")
+        return self.config.change_digest_path or default_change_digest_path
+
+    def _dry_run_diff_artifact_path(self) -> Path:
+        return Path("artifacts/workstream_autosync_dry_run_diff.txt")
+
+    def _connector_diff_workflow_output(self) -> dict[str, Any]:
+        return {
+            "dry_run_diff_artifact_path": str(self._dry_run_diff_artifact_path()),
+        }
 
     def _writer_lock_path(self) -> Path:
         if self.config.writer_lock_path is not None:
@@ -327,7 +343,8 @@ class WorkstreamAutosyncRunner:
         self._metrics.export_text_file(self._autosync_metrics_export_path())
 
     def _cycle_manifest_path(self) -> Path:
-        return self._state_adapter.get_cycle_manifest_path()
+        default_cycle_manifest_path = Path("artifacts/workstream_autosync_cycle_manifest.jsonl")
+        return self.config.cycle_manifest_path or default_cycle_manifest_path
 
     def _read_last_manifest_hash(self) -> str:
         path = self._cycle_manifest_path()
@@ -368,7 +385,7 @@ class WorkstreamAutosyncRunner:
         path = self._cycle_manifest_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(manifest.to_dict().decode().decode(), sort_keys=True) + "\n")
+            handle.write(json.dumps(manifest.to_dict(), sort_keys=True) + "\n")
 
     @staticmethod
     def _build_operation_id(platform: str, direction: str, items: list[WorkstreamItem]) -> str:
@@ -388,7 +405,7 @@ class WorkstreamAutosyncRunner:
     def _normalize_for_checksum_payload(payload: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Return a deterministic remote payload representation for checksum verification."""
         normalized = [{key: item[key] for key in sorted(item)} for item in payload]
-        return sorted(normalized, key=lambda item: json.dumps(item, sort_keys=True).decode().decode())
+        return sorted(normalized, key=lambda item: json.dumps(item, sort_keys=True))
 
     def _enforce_write_guards(self, *, connector: str, items: list[WorkstreamItem]) -> None:
         """Fail-fast guard for write-capable sync entrypoints."""
@@ -419,6 +436,19 @@ class WorkstreamAutosyncRunner:
             checksum_payload = [item.to_dict() for item in items]
             verify_payload_checksum(checksum_payload, self.config.expected_payload_checksum)
 
+    @staticmethod
+    def _xor_encrypt(data: bytes, key: str) -> str:
+        key_bytes = key.encode("utf-8")
+        encrypted = bytes(data[index] ^ key_bytes[index % len(key_bytes)] for index in range(len(data)))
+        return base64.b64encode(encrypted).decode("utf-8")
+
+    @staticmethod
+    def _xor_decrypt(payload: str, key: str) -> str:
+        key_bytes = key.encode("utf-8")
+        raw = base64.b64decode(payload.encode("utf-8"))
+        decrypted = bytes(raw[index] ^ key_bytes[index % len(key_bytes)] for index in range(len(raw)))
+        return decrypted.decode("utf-8")
+
     def _artifact_encryption_key(self) -> str:
         key = self.config.artifact_encryption_key or os.getenv("THGENT_AUTOSYNC_ARTIFACT_KEY", "")
         if self.config.artifact_encryption_enabled and not key:
@@ -428,16 +458,16 @@ class WorkstreamAutosyncRunner:
         return key
 
     def _serialize_artifact_payload(self, payload: Any) -> str:
-        text = json.dumps(payload, indent=2).decode().decode()
+        text = json.dumps(payload, indent=2)
         if not self.config.artifact_encryption_enabled:
             return text
         key = self._artifact_encryption_key()
         encrypted = {
             "encrypted": True,
             "algorithm": "xor-v1",
-            "ciphertext_b64": xor_encrypt(text.encode("utf-8"), key),
+            "ciphertext_b64": self._xor_encrypt(text.encode("utf-8"), key),
         }
-        return json.dumps(encrypted, indent=2).decode().decode()
+        return json.dumps(encrypted, indent=2)
 
     def _deserialize_artifact_payload(self, raw_text: str) -> Any:
         payload = json.loads(raw_text)
@@ -449,7 +479,7 @@ class WorkstreamAutosyncRunner:
         if not isinstance(ciphertext, str):
             raise WorkstreamAutosyncConfigError("Encrypted artifact is missing ciphertext_b64.")
         key = self._artifact_encryption_key()
-        decrypted_text = xor_decrypt(ciphertext, key)
+        decrypted_text = self._xor_decrypt(ciphertext, key)
         return json.loads(decrypted_text)
 
     def _compute_local_orphan_report(self, items: list[WorkstreamItem]) -> dict[str, Any]:
@@ -499,9 +529,14 @@ class WorkstreamAutosyncRunner:
             merged_updates[item_id] = policy_status
         return merged_updates
 
-    def _classify_retry(self, message: str) -> RetryClass:
-        from thegent.integrations.workstream_retry import RetryClassifier
-        return RetryClassifier.classify(message)
+    @staticmethod
+    def _classify_retry(message: str) -> RetryClass:
+        lowered = message.lower()
+        if "429" in lowered or "rate limit" in lowered or "quota" in lowered:
+            return RetryClass.RATE_LIMIT
+        if "timeout" in lowered or "temporar" in lowered or "network" in lowered or "connection reset" in lowered:
+            return RetryClass.TRANSIENT
+        return RetryClass.PERMANENT
 
     def _compute_cycle_fingerprint(self, items: list[WorkstreamItem]) -> str:
         canonical = "|".join(
@@ -512,7 +547,7 @@ class WorkstreamAutosyncRunner:
         return hashlib.sha1(canonical.encode("utf-8")).hexdigest()
 
     def _trend_path(self) -> Path:
-        return self._state_adapter.get_trend_path()
+        return self.config.trend_file_path or Path("docs/reference/autosync_trend.jsonl")
 
     def _append_trend_sample(
         self,
@@ -536,7 +571,7 @@ class WorkstreamAutosyncRunner:
         path = self._trend_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(sample, sort_keys=True).decode().decode() + "\n")
+            handle.write(json.dumps(sample, sort_keys=True) + "\n")
         self._last_trend_sample = sample
 
     def _record_change_event(
@@ -573,7 +608,7 @@ class WorkstreamAutosyncRunner:
         path = self._change_digest_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, sort_keys=True).decode().decode() + "\n")
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
 
     def _finalize_change_digest(self) -> dict[str, Any]:
         """Finalize and persist the current cycle's digest."""
@@ -712,14 +747,21 @@ class WorkstreamAutosyncRunner:
             "next_cycle_interval_seconds": self._next_cycle_interval_seconds,
             "connector_health": [probe.to_dict() for probe in self._last_connector_probe],
             "correlation_id": self._current_run_correlation_id,
+            "throttle_retry_attempts": self._cycle_throttle_retry_attempts,
+            "throttle_wait_seconds": self._cycle_throttle_wait_seconds,
         }
         path = self._cycle_metrics_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(payload, sort_keys=True).decode().decode() + "\n")
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
 
     def _compact_snapshots(self, status_path: Path) -> None:
-        self._state_adapter.compact_snapshots(max(1, int(self.config.snapshot_retention_count)))
+        retention = max(1, int(self.config.snapshot_retention_count))
+        snapshots = sorted(status_path.parent.glob("autosync_snapshot_*.json"))
+        if len(snapshots) <= retention:
+            return
+        for snapshot in snapshots[: len(snapshots) - retention]:
+            snapshot.unlink(missing_ok=True)
 
     @staticmethod
     def simulate_connector_chaos(
@@ -891,7 +933,7 @@ class WorkstreamAutosyncRunner:
         path = self.config.incident_bundle_path or Path("docs/reference/workstream_incident_snapshots.jsonl")
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(snapshot, sort_keys=True).decode().decode() + "\n")
+            handle.write(json.dumps(snapshot, sort_keys=True) + "\n")
 
     def _connector_sla_snapshot(self) -> dict[str, Any]:
         snapshot: dict[str, Any] = {}
@@ -958,6 +1000,8 @@ class WorkstreamAutosyncRunner:
         cycle_items: list[WorkstreamItem] = []
         cycle_change_digest: dict[str, Any] = {"bucket": "hourly", "hours": {}}
         self._cycle_failure_recorded = False
+        self._cycle_throttle_retry_attempts = 0
+        self._cycle_throttle_wait_seconds = 0.0
         writer_lock_owner: str | None = None
         writer_lock_acquired = False
         cycle_decisions: dict[str, Any] = {
@@ -1053,7 +1097,11 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=[],
                     decisions={**cycle_decisions, "reason": "no_items"},
-                    outputs={"total_cycles": self.total_cycles, "change_digest": cycle_change_digest},
+                    outputs={
+                        "total_cycles": self.total_cycles,
+                        "change_digest": cycle_change_digest,
+                        "connector_diff_workflow": self._connector_diff_workflow_output(),
+                    },
                 )
                 _record_cycle_status("success")
                 return
@@ -1131,7 +1179,12 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=items,
                     decisions={**cycle_decisions, "reason": no_op_reason},
-                    outputs={"total_cycles": self.total_cycles, "no_op": True, "change_digest": cycle_change_digest},
+                    outputs={
+                        "total_cycles": self.total_cycles,
+                        "no_op": True,
+                        "change_digest": cycle_change_digest,
+                        "connector_diff_workflow": self._connector_diff_workflow_output(),
+                    },
                 )
                 _record_cycle_status("success")
                 return
@@ -1248,6 +1301,7 @@ class WorkstreamAutosyncRunner:
                     "last_operation": self.last_operation.to_dict() if self.last_operation else None,
                     "failure_queue_size": len(self._failure_queue.snapshot()),
                     "change_digest": cycle_change_digest,
+                    "connector_diff_workflow": self._connector_diff_workflow_output(),
                 },
             )
             _record_cycle_status("success")
@@ -1296,6 +1350,7 @@ class WorkstreamAutosyncRunner:
                     "total_cycles": self.total_cycles,
                     "last_error": self.last_error,
                     "change_digest": cycle_change_digest,
+                    "connector_diff_workflow": self._connector_diff_workflow_output(),
                 },
             )
             _record_cycle_status("failed")
@@ -1965,6 +2020,8 @@ class WorkstreamAutosyncRunner:
                         return
 
                     backoff_seconds = self._rate_limit_backoff.compute_wait(partition_attempt)
+                    self._cycle_throttle_retry_attempts += 1
+                    self._cycle_throttle_wait_seconds += backoff_seconds
                     logger.warning(
                         "Retrying %s/%s partition=%d attempt=%d/%d in %.3fs after %s",
                         connector,
@@ -1990,7 +2047,9 @@ class WorkstreamAutosyncRunner:
         self._clear_checkpoint(connector, direction)
 
     def _failure_queue_path(self) -> Path:
-        return self._state_adapter.get_failure_queue_path()
+        """Get failure queue persistence path."""
+        default_failure_queue_path = Path("docs/reference/workstream_autosync_failures.json")
+        return self.config.failure_queue_path or default_failure_queue_path
 
     def _load_failure_queue(self) -> None:
         """Load persisted failure queue entries."""
@@ -2058,7 +2117,9 @@ class WorkstreamAutosyncRunner:
         return 0
 
     def _checkpoint_path(self) -> Path:
-        return self._state_adapter.get_checkpoint_path("default")
+        """Get checkpoint persistence path."""
+        default_checkpoint_path = Path("docs/reference/workstream_autosync_checkpoint.json")
+        return self.config.checkpoint_file_path or default_checkpoint_path
 
     def _checkpoint_key(self) -> Path:
         """Compatibility alias for checkpoint naming."""
@@ -2149,6 +2210,7 @@ class WorkstreamAutosyncRunner:
             "scope_filtered_wl_ids": self._last_scope_filtered_item_ids,
             "no_op_summary": self._no_op_summary,
             "trend_sample": self._last_trend_sample,
+            "connector_diff_workflow": self._connector_diff_workflow_output(),
         }
 
 
