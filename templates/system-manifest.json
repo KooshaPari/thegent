@@ -1,0 +1,215 @@
+{
+  "$schema": "https://schema.thegent.dev/system-manifest/v1",
+  "version": "1.0.0",
+  "name": "thegent-system",
+  "description": "Comprehensive system configuration manifest - Nix-like declarative system management",
+  
+  "targets": {
+    "harnesses": {
+      "claude-code": {
+        "config_paths": ["~/.claude"],
+        "files": {
+          "skills": "~/.claude/skills",
+          "hooks": "~/.claude/hooks",
+          "commands": "~/.claude/commands"
+        }
+      },
+      "claude-desktop": {
+        "config_paths": ["~/.config/Claude", "~/Library/Application Support/Claude"],
+        "platforms": ["darwin", "linux"]
+      },
+      "cursor": {
+        "config_paths": ["~/.cursor"],
+        "files": {
+          "skills": "~/.cursor/skills-cursor"
+        }
+      },
+      "codex": {
+        "config_paths": ["~/.codex", "~/.config/codex"],
+        "files": {
+          "mcp": "~/.codex/mcp.json"
+        }
+      },
+      "droid": {
+        "config_paths": ["~/.factory"],
+        "description": "Factory Droid"
+      },
+      "ante": {
+        "config_paths": ["~/.ante"],
+        "description": "Ante CLI"
+      },
+      "helios": {
+        "config_paths": ["~/.helios"],
+        "description": "Helios harness"
+      }
+    },
+    
+    "shells": {
+      "zsh": {
+        "config_files": [
+          "~/.zshenv",
+          "~/.zshrc",
+          "~/.zsh_bundle.zsh",
+          "~/.zsh_safeguards.zsh",
+          "~/.zsh_optimization.zsh",
+          "~/.zsh_advanced.zsh",
+          "~/.zsh_worktree_governance.zsh"
+        ],
+        "source": "thegent/shell"
+      },
+      "bash": {
+        "config_files": ["~/.bashrc", "~/.bash_profile"],
+        "source": "thegent/templates/bash"
+      },
+      "fish": {
+        "config_files": ["~/.config/fish"],
+        "source": "thegent/templates/fish"
+      },
+      "powershell": {
+        "config_files": ["~/.config/powershell"],
+        "source": "thegent/shell"
+      }
+    },
+    
+    "tools": {
+      "git": {
+        "config_files": ["~/.gitconfig", "~/.config/git"],
+        "source": "thegent/templates/shared/git"
+      },
+      "gh": {
+        "config_files": ["~/.config/gh"],
+        "source": "thegent/templates/shared/gh"
+      },
+      "direnv": {
+        "config_files": ["~/.envrc", "~/.config/direnv"],
+        "source": "thegent/templates/shared/direnv"
+      },
+      "atuin": {
+        "config_files": ["~/.config/atuin"],
+        "source": "thegent/templates/shared/atuin"
+      },
+      "starship": {
+        "config_files": ["~/.config/starship.toml"],
+        "source": "thegent/shell/starship"
+      },
+      "karabiner": {
+        "config_files": ["~/.config/karabiner"],
+        "source": "thegent/templates/shared/karabiner",
+        "platforms": ["darwin"]
+      },
+      "mise": {
+        "config_files": ["~/.config/mise"],
+        "source": "thegent/templates/shared/mise"
+      },
+      "tmux": {
+        "config_files": ["~/.tmux.conf", "~/.config/tmux"],
+        "source": "thegent/templates/shared/tmux"
+      },
+      "ghostty": {
+        "config_files": ["~/.config/ghostty"],
+        "source": "thegent/templates/shared/ghostty",
+        "platforms": ["darwin", "linux"]
+      },
+      "alacritty": {
+        "config_files": ["~/.config/alacritty"],
+        "source": "thegent/templates/shared/alacritty"
+      },
+      "wezterm": {
+        "config_files": ["~/.config/wezterm"],
+        "source": "thegent/templates/shared/wezterm"
+      },
+      "vscode": {
+        "config_files": ["~/.config/Code/User", "~/Library/Application Support/Code/User"],
+        "source": "thegent/templates/ide/vscode"
+      },
+      "vim": {
+        "config_files": ["~/.vimrc", "~/.config/nvim"],
+        "source": "thegent/templates/shared/vim"
+      },
+      "ssh": {
+        "config_files": ["~/.ssh"],
+        "source": "thegent/templates/shared/ssh",
+        "sensitive": true
+      },
+      "gpg": {
+        "config_files": ["~/.gnupg"],
+        "source": "thegent/templates/shared/gpg",
+        "sensitive": true
+      }
+    },
+    
+    "runtimes": {
+      "python": {
+        "install_method": "pyenv",
+        "config_files": ["~/.python-version", "~/.config/pyenv"]
+      },
+      "node": {
+        "install_method": "nvm",
+        "config_files": ["~/.nvm"]
+      },
+      "go": {
+        "install_method": "mise",
+        "config_files": ["~/.go"]
+      },
+      "rust": {
+        "install_method": "rustup",
+        "config_files": ["~/.cargo"]
+      },
+      "ruby": {
+        "install_method": "rbenv",
+        "config_files": ["~/.rbenv"]
+      },
+      "java": {
+        "install_method": "mise",
+        "config_files": ["~/.jdk"]
+      }
+    }
+  },
+  
+  "bundles": {
+    "core": {
+      "description": "Core shell and harness configurations",
+      "includes": ["shells.zsh", "harnesses.claude-code", "harnesses.codex", "harnesses.droid"]
+    },
+    "dev": {
+      "description": "Development tools and runtimes",
+      "includes": ["tools.git", "tools.gh", "tools.direnv", "runtimes.python", "runtimes.node", "runtimes.rust"]
+    },
+    "terminal": {
+      "description": "Terminal emulator configurations",
+      "includes": ["tools.ghostty", "tools.wezterm", "tools.alacritty", "tools.tmux", "tools.starship"]
+    },
+    "productivity": {
+      "description": "Productivity tool configs",
+      "includes": ["tools.karabiner", "tools.atuin", "tools.vscode"]
+    },
+    "security": {
+      "description": "Security-sensitive configs",
+      "includes": ["tools.ssh", "tools.gpg"],
+      "sensitive": true
+    },
+    "all": {
+      "description": "Everything",
+      "includes": ["core", "dev", "terminal", "productivity"]
+    }
+  },
+  
+  "install_scripts": {
+    "pre_install": [
+      "thegent/scripts/pre-install-checks.sh"
+    ],
+    "post_install": [
+      "thegent/scripts/post-install-setup.sh"
+    ],
+    "verify": [
+      "thegent/scripts/verify-install.sh"
+    ]
+  },
+  
+  "defaults": {
+    "auto_detect": true,
+    "backup_before_install": true,
+    "symlink_preference": true,
+    "verbose": false
+  }
+}
