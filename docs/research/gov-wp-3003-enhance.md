@@ -1,3 +1,4 @@
+<DONE>
 # Governance Override Expired Event - Implementation Status
 
 > **WORK_STREAM ID:** gov-wp-3003-enhance

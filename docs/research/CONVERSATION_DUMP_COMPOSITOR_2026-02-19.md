@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump: TUI Compositor Research
 
 **Date**: 2026-02-19

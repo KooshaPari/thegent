@@ -1,3 +1,4 @@
+<DONE>
 # ChatGPT Pareto Router Deep Research — Part 2: Indices & Economics
 
 **Source**: chatgpt3.md, chatgpt4.md

@@ -1,3 +1,4 @@
+<DONE>
 # Audit and Plan: CLIProxy Accuracy, Release Infra, Domain Mapping (2026-02-20)
 
 ## Scope

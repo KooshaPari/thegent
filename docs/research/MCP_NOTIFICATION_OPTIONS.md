@@ -1,3 +1,4 @@
+<DONE>
 # MCP and Client Features for Session Notifications
 
 **Date:** 2026-02-15

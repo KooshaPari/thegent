@@ -1,3 +1,4 @@
+<DONE>
 # thegent: Pending Plans & Roadmap (2026 Integrated)
 
 This document outlines the pending development tasks for `thegent` framework, integrating the **AGSLAG (2025)** research swathes and **Feb 2026 Deep Research Protocol (DRP)** updates.

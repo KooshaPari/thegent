@@ -1,3 +1,4 @@
+<DONE>
 # DX/UX/AX Friction Improvements - Session 4 (2026-02-18)
 
 ## Summary

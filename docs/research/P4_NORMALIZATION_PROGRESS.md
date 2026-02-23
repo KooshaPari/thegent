@@ -1,3 +1,4 @@
+<DONE>
 # P4 Normalization Progress — All MD Docs
 
 > **Status**: In Progress | **Date**: 2026-02-17

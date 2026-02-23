@@ -1,3 +1,4 @@
+<DONE>
 # Java LSP Auto-Install Complete
 
 **Date**: 2026-02-18

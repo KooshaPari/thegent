@@ -1,3 +1,4 @@
+<DONE>
 # Ghostty Setup Guide: Features, Plugins, and Configuration (2026-02-18)
 
 ## Table of Contents

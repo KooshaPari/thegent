@@ -1,3 +1,4 @@
+<DONE>
 # Smart & Robust Process Strategies — Research & Plan
 
 > **Purpose**: Research and plan for smarter, more robust process management strategies for multi-agent, multi-tenant, multi-project local swarms.

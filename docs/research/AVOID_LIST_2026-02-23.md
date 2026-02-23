@@ -1,3 +1,4 @@
+<DONE>
 # Avoid List - Repos to Avoid
 
 Date: February 23, 2026

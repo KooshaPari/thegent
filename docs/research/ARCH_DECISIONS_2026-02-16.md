@@ -1,3 +1,4 @@
+<DONE>
 ## Decision Change Log Template
 - Record every accepted ADR update as one entry in this document immediately after merge.
 - Include: decision ID (for example `ADR-015`), change date (`YYYY-MM-DD`), author, and approval owner.

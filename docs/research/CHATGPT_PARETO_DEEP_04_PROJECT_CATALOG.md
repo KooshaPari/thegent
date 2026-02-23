@@ -1,3 +1,4 @@
+<DONE>
 # ChatGPT Pareto Router Deep Research — Part 4: Project Catalog & Ground Truths
 
 **Source**: chatgpt3.md, chatgpt4.md

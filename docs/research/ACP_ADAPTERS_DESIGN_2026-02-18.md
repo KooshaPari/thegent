@@ -1,3 +1,4 @@
+<DONE>
 # ACP Adapters for thegent: Design & Implementation Plan
 
 **Date**: 2026-02-18

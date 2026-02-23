@@ -1,3 +1,4 @@
+<DONE>
 # Swarm Optimization, Management & Scheduling — Deep Research
 
 > **Purpose**: Deep dive into optimization, management, and scheduling systems relevant to multi-agent, multi-tenant, multi-project local swarms.

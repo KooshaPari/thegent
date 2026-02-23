@@ -1,3 +1,4 @@
+<DONE>
 # zsh & Starship Setup Guide: Plugins, Themes, and Optimization (2026-02-18)
 
 ## Table of Contents

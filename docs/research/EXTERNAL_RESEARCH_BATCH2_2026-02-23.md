@@ -1,3 +1,4 @@
+<DONE>
 # EXTERNAL RESEARCH BATCH 2 - 2025-2026
 
 **Generated:** 2026-02-23  

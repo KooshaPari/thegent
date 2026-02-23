@@ -1,3 +1,4 @@
+<DONE>
 # User Queue + TUI: Editable Prompts While Agent Runs
 
 **Goal:** User queues prompts in a separate TUI while the agent runs other work. Agent periodically checks the queue, picks up items, and processes them. User can add, edit, and view state (queued → in_progress → done) of each item.

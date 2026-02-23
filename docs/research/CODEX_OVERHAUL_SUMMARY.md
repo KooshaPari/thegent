@@ -1,3 +1,4 @@
+<DONE>
 # Codex Overhaul Design — Executive Summary
 
 **Date:** 2026-02-20

@@ -1,3 +1,4 @@
+<DONE>
 # User Prompts — Last 12 hours
 
 # Generated: placeholder — run `thegent prompts last --hours 12` to populate

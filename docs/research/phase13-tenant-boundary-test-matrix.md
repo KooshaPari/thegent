@@ -1,3 +1,4 @@
+<DONE>
 # Phase 13: Tenant Boundary Test Matrix
 
 > **Purpose:** Verify strict isolation between federated namespaces; prevent cross-tenant policy leakage.

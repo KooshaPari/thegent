@@ -1,3 +1,4 @@
+<DONE>
 # Agent Access and Optimization — Audit and Plan
 
 > **Purpose**: Audit file reads, web search/scrape, other accesses; research kilo, roo, OpenCode, batch edits; propose optimizations and enhanced baseline strategy.

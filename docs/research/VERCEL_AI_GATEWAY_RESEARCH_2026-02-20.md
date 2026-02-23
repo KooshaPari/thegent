@@ -1,3 +1,4 @@
+<DONE>
 # Vercel AI Gateway — Deep Research Report
 
 **Date:** 2026-02-20

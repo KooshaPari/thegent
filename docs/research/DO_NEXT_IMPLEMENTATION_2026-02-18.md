@@ -1,3 +1,4 @@
+<DONE>
 # do_next_impl and wait_next_impl Implementation (2026-02-18)
 
 ## Problem

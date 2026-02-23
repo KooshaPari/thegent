@@ -1,3 +1,4 @@
+<DONE>
 # TheGent Unified Master Specification: Tooling, Infra & AX (v1.0)
 
 **Date**: 2026-02-19

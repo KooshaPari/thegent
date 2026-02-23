@@ -1,3 +1,4 @@
+<DONE>
 # JetBrains & Serena Auto-Install Complete
 
 **Date**: 2026-02-18

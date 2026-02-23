@@ -1,3 +1,4 @@
+<DONE>
 # Quick Start: Ghostty + zsh + Starship Setup (2026-02-18)
 
 ## One-Line Installation

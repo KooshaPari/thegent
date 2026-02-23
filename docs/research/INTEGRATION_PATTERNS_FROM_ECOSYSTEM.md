@@ -1,3 +1,4 @@
+<DONE>
 # Integration Patterns: Applicable Techniques from ruvnet/bar181 Ecosystem
 
 **Date**: 2026-02-23

@@ -1,3 +1,4 @@
+<DONE>
 # GitJournal Enhancement Plan
 
 **Date:** 2026-02-20

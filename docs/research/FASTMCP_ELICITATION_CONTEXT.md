@@ -1,3 +1,4 @@
+<DONE>
 # FastMCP Elicitation & Context API Summary
 
 > **Source:** FastMCP Python implementation (aligns with [gofastmcp.com/servers/elicitation](https://gofastmcp.com/servers/elicitation) and [gofastmcp.com/servers/context](https://gofastmcp.com/servers/context)). Extracted from `fastmcp.server.context`, `fastmcp.server.elicitation`, `fastmcp.server.dependencies`, and `mcp.server.elicitation`.

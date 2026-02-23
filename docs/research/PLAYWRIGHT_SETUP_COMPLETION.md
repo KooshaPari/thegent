@@ -1,3 +1,4 @@
+<DONE>
 # Playwright VitePress Recording Setup - Completion Report
 
 ## Summary

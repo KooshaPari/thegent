@@ -1,3 +1,4 @@
+<DONE>
 # Smart Contract System — thegent, trace, heliosShield Roles
 
 **Purpose:** Handoff doc explaining how thegent, trace, and heliosShield participate in the smart contract QA governance system.

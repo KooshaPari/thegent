@@ -1,3 +1,4 @@
+<DONE>
 # Zig vs Rust: Ecosystem, Interop, and Comparison Matrix — Deep Research
 
 > **Status**: Research complete | **Date**: 2026-02-19

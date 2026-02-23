@@ -1,3 +1,4 @@
+<DONE>
 # FastMCP Progress & Tasks API Summary
 
 Extracted from FastMCP 3.0 source (gofastmcp.com/servers/progress, gofastmcp.com/servers/tasks) and `fastmcp` package in thegent venv.

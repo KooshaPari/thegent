@@ -1,3 +1,4 @@
+<DONE>
 # Cursor API Integration: Phase 2 Necessity Evaluation
 
 **WL-061 — Research Output**
