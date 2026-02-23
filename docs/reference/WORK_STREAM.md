@@ -3267,7 +3267,7 @@ Enrich remote items with source links, tags, and structured reference metadata.
 
 Add capability probing and feature flags for connector-specific behavior gates.
 
-**Evidence:** `src/thegent/integrations/maintenance_calendar.py`, `tests/integrations/test_wl282_maintenance_calendar.py`, `tests/test_wl159_board_sync.py`
+**Evidence:** `src/thegent/integrations/connector_capability_discovery.py`, `tests/test_wl228_connector_capability_discovery.py`
 
 ### [WL-229] Maintenance Banner Propagation
 **Status:** COMPLETED (2026-02-22)
@@ -3278,7 +3278,7 @@ Add capability probing and feature flags for connector-specific behavior gates.
 
 Propagate maintenance mode banners to CLI output and report artifacts.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/maintenance_banner.py`, `tests/test_wl229_maintenance_banner.py`
 
 ### [WL-230] Emergency Stop Switch
 **Status:** COMPLETED (2026-02-22)
@@ -3311,7 +3311,7 @@ Assign operation IDs to remote writes to prevent duplicate replay side effects.
 
 Add signed audit artifact chaining for compliance-grade provenance evidence.
 
-**Evidence:** `src/thegent/integrations/sync_auditor.py`, `tests/test_wl261_sync_audit.py`
+**Evidence:** `src/thegent/integrations/signed_audit_chain.py`, `tests/test_wl232_signed_audit_chain.py`
 
 ### [WL-233] Connector SLA Tracking
 **Status:** COMPLETED (2026-02-22)
@@ -3322,7 +3322,7 @@ Add signed audit artifact chaining for compliance-grade provenance evidence.
 
 Track connector SLAs and emit alerts when latency/error thresholds breach.
 
-**Evidence:** `src/thegent/integrations/capability_alerts.py`, `src/thegent/integrations/pipeline_percentiles.py`, `src/thegent/integrations/error_budget.py`, `tests/integrations/test_wl306_connector_toggle.py`, `tests/test_wl160_workstream_autosync.py`
+**Evidence:** `src/thegent/integrations/connector_sla.py`, `tests/test_wl233_connector_sla.py`
 
 ### [WL-234] Incident Runbook
 **Status:** COMPLETED (2026-02-22)
