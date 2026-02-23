@@ -211,7 +211,8 @@ ignore = [
 "tests/*" = [
     "ANN", "ARG001", "ARG002", "ARG003", "ARG005", "PLR2004", "S101", "FBT001", "FBT003",
     "S108", "SLF001", "ERA001", "SIM117", "PLR0915", "E741", "N806", "S104", "S105", "S106",
-    "PT019", "PERF401", "E402", "PTH101", "S103", "PT011", "PLW2901", "S112", "BLE001", "PLC0415"
+    "PT019", "PERF401", "E402", "PTH101", "S103", "PT011", "PLW2901", "S112", "BLE001", "PLC0415",
+    "PT018", "PTH118", "PTH120"
 ]
 "scripts/*" = ["ANN", "T201", "S603", "S607", "BLE001", "E402", "PLC0415", "PLR0912", "PLR0915", "FBT001", "FBT002", "S110"]
 "src/thegent/governance/heliosShield_bridge.py" = ["N999"]
