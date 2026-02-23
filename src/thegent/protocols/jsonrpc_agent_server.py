@@ -1,5 +1,7 @@
 """In-memory JSON-RPC 2.0 agent server over stdio."""
 
+# pyright: reportUnusedFunction = false
+
 from __future__ import annotations
 
 import json

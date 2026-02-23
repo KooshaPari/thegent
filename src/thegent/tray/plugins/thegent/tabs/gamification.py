@@ -9,8 +9,6 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
-    QDialogButtonBox,
-    QFormLayout,
     QFrame,
     QHBoxLayout,
     QLabel,
