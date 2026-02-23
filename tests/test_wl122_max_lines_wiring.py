@@ -26,6 +26,9 @@ def test_wl122_max_lines_gate_wiring_is_canonical() -> None:
     local_hooks = next(repo for repo in pre_commit["repos"] if repo["repo"] == "local")["hooks"]
     hook = next(h for h in local_hooks if h["id"] == "max-lines-gate")
     assert hook["entry"] == "task quality:max-lines"
+    assert "pre-commit" in hook["stages"]
+    assert "pre-push" in hook["stages"]
+    assert hook["stages"] == ["pre-commit", "pre-push"]
     assert "task quality:max-lines" in qa_guide
 
 
