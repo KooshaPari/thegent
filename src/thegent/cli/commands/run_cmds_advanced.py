@@ -1,4 +1,30 @@
+"""Thegent CLI run commands domain - extracted from cli.py (WL-124)."""
 
+# @trace WL-124
+from __future__ import annotations
+
+import orjson as json
+from pathlib import Path
+from typing import Annotated, Literal, cast
+
+import typer
+from typer.models import OptionInfo
+
+from rich.panel import Panel
+from rich.table import Table
+
+from thegent.cli.commands._cli_shared import (
+    RunRegistry,
+    ThegentSettings,
+    _format_context_usage_line,
+    _format_grounding_sources_lines,
+    _format_transcript_summary_line,
+    _get_run_subprocess_optimized,
+    _inject_skill_instructions,
+    _normalize_output_format,
+    _resolve_session_id,
+    console,
+)
 
 def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
     """Decision replay and rationale snapshots (WP-4007)."""
@@ -247,7 +273,6 @@ def run_diff_cmd(run_a: str, run_b: str) -> None:
                 console.print(f"[red]{line}[/red]")
             else:
                 console.print(line)
-
 __all__ = [
     "deep_research_cmd",
     "replay_cmd",
