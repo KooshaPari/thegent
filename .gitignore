@@ -1,5 +1,8 @@
 # Documentation assets
 docs/public/assets/demos/*.gif
+docs/public/assets/**/*.js
+docs/public/assets/**/*.css
+docs/public/assets/**/*.map
 docs-dist/
 
 # Rust build artifacts (1.5GB+)
@@ -74,3 +77,10 @@ logs/
 # Local GH Actions emulation artifacts
 .github/act-events/
 .worktrees/
+
+# Workspace noise and generated diagnostics
+wt/
+docs/dumps/
+hooks/zig/
+.serena/memories/
+.factory/closure_pack_*.md
