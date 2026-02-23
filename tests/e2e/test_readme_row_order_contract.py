@@ -154,7 +154,7 @@ def test_governance_block_row_count_matches_expected_order_length() -> None:
 
 
 def test_every_governance_row_command_starts_with_pytest_q() -> None:
-    command_by_goal = {goal: command for goal, command in _command_table_rows()}
+    command_by_goal = dict(_command_table_rows())
 
     for goal in EXPECTED_GOVERNANCE_ROW_ORDER:
         assert goal in command_by_goal, f"README governance row is missing from command table: '{goal}'"
@@ -229,20 +229,22 @@ def test_governance_block_is_bounded_by_expected_first_and_last_rows() -> None:
 
 
 def test_governance_rows_use_direct_backticked_pytest_commands() -> None:
-    command_by_goal = {goal: command for goal, command in _command_table_rows()}
+    command_by_goal = dict(_command_table_rows())
 
     for goal in EXPECTED_GOVERNANCE_ROW_ORDER:
         assert goal in command_by_goal, f"README governance row is missing from command table: '{goal}'"
         command_cell = command_by_goal[goal]
 
-        assert command_cell.startswith("`") and command_cell.endswith("`"), (
+        assert command_cell.startswith("`"), (
+            f"README governance row '{goal}' command must be a single backticked snippet: {command_cell}"
+        )
+        assert command_cell.endswith("`"), (
             f"README governance row '{goal}' command must be a single backticked snippet: {command_cell}"
         )
 
         snippet = command_cell[1:-1].strip()
-        assert "\n" not in snippet and "\r" not in snippet, (
-            f"README governance row '{goal}' command must be single-line: {snippet!r}"
-        )
+        assert "\n" not in snippet, f"README governance row '{goal}' command must be single-line: {snippet!r}"
+        assert "\r" not in snippet, f"README governance row '{goal}' command must be single-line: {snippet!r}"
         assert snippet.startswith("pytest -q "), (
             f"README governance row '{goal}' must present a direct `pytest -q` command: {snippet}"
         )
@@ -339,7 +341,7 @@ def test_alias_governance_trio_rows_exist_in_stable_relative_order() -> None:
 
 
 def test_alias_governance_trio_direct_paths_follow_canonical_increasing_order() -> None:
-    command_by_goal = {goal: command for goal, command in _command_table_rows()}
+    command_by_goal = dict(_command_table_rows())
     alias_goals = (
         "Alias rewrite contract unit (direct)",
         "Alias rewrite real-app contract unit (direct)",
