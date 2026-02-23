@@ -9,6 +9,8 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 3. `docs/governance/TASK_CLASSIFIER_SCHEMA.yaml`
 4. `docs/governance/DOMAIN_PLAYBOOKS.md`
 5. `docs/governance/GOVERNANCE_ROADMAP_DAG.md`
+6. `docs/governance/MCP_A2A_CONTROL_PLANE_BOUNDARY.md`
+7. `docs/governance/ROLLOUT_PHASES_CHECKLIST.md`
 
 ## Adoption Order
 

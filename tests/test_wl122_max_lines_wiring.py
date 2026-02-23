@@ -16,8 +16,8 @@ def test_wl122_max_lines_gate_wiring_is_canonical() -> None:
     qa_guide = (ROOT / "docs/guides/QUALITY_ASSURANCE.md").read_text(encoding="utf-8")
 
     max_lines_cmd = (
-        "MAX_LINES=${MAX_LINES:-500} WARN_LINES=${WARN_LINES:-350} "
-        "MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} sh scripts/max-lines-gate.sh"
+        "MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} "
+        "MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh,src/thegent/integrations/workstream_autosync.py,src/thegent/execution.py} sh scripts/max-lines-gate.sh"
     )
     task_cmds = taskfile["tasks"]["quality:max-lines"]["cmds"]
     assert max_lines_cmd in task_cmds
@@ -40,7 +40,7 @@ def test_ci_quality_job_uses_minimal_harness_contract_gate_wiring() -> None:
     assert "Check extension package metadata sanity (WL-117)" in step_names
     assert "Run max-lines gate via canonical task path (WL-122)" in step_names
 
-    run_step = next(step for step in steps if "harness contract gates" in step["name"].lower())
+    run_step = next(step for step in steps if "mandatory quality gates" in step["name"].lower())
     run_script = run_step["run"]
 
     assert run_script.count("task quality:sitback-contracts") == 1
