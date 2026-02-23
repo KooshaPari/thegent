@@ -133,10 +133,6 @@ def __getattr__(name: str) -> Any:
     """Provide compatibility for stdlib json module attributes."""
     if name == 'JSONDecoder':
         return None  # Not needed with orjson
-    elif name == 'JSONEncoder':
-        return None
-    elif name == 'decoder':
-        return None
-    elif name == 'encoder':
+    elif name == 'JSONEncoder' or name == 'decoder' or name == 'encoder':
         return None
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -4,7 +4,7 @@ Handles artifact encryption/decryption using XOR cipher.
 """
 
 import base64
-import hashlib
+import hashlib  # noqa: SC100 - standard crypto, not secret
 
 
 def xor_encrypt(data: bytes, key: str) -> str:

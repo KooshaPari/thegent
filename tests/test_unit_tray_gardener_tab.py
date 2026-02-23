@@ -280,9 +280,6 @@ class TestGardenerTabPackage:
 
     def test_tabs_package_exports_gardener(self):
         """tabs package exports gardener tab."""
-        import os
-from pathlib import Path
-        import sys
 
         # Add src to path
         src_path = Path(__file__).parent.parent.parent / "src"
