@@ -17,7 +17,7 @@ import pytest
 from thegent.orchestration.resource.billing import TeamBillingManager
 
 
-@pytest.fixture()
+@pytest.fixture
 def billing_manager(tmp_path: Path) -> TeamBillingManager:
     """Fresh TeamBillingManager with pre-seeded quota."""
     mgr = TeamBillingManager(tmp_path)

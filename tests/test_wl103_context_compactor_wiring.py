@@ -33,7 +33,7 @@ def test_wl103_litellm_run_result_surfaces_context_usage_ratio(monkeypatch) -> N
         message = _Message()
 
     class _Response:
-        choices = [_Choice()]
+        choices = (_Choice(),)
 
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     monkeypatch.setattr("litellm.completion", lambda **_kwargs: _Response())
@@ -63,7 +63,7 @@ def test_wl103_litellm_run_result_clamps_context_usage_ratio_to_one(monkeypatch)
         message = _Message()
 
     class _Response:
-        choices = [_Choice()]
+        choices = (_Choice(),)
 
     monkeypatch.setenv("MINIMAX_API_KEY", "test-key")
     monkeypatch.setattr("litellm.completion", lambda **_kwargs: _Response())

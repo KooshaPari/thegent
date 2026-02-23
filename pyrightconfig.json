@@ -40,7 +40,7 @@
     "**/src/thegent/sync/dead_letter_queue.py",
     "**/src/thegent/summary.py",
     "**/src/thegent/mcp/gateway.py",
-    "**/src/thegent/routing/litellm_responses_handler.py",
+    "**/src/thegent/utils/routing_impl/litellm_responses_handler.py",
     "**/src/thegent/infra/multi_runtime_diagnostics.py",
     "**/src/thegent/discovery/mesh.py",
     "**/src/thegent/config_provider.py",

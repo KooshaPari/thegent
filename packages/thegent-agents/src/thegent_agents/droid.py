@@ -186,7 +186,7 @@ class DroidRunner(AgentRunner):
     ) -> RunResult:
         """Run via LiteLLM Router for Droid compatibility."""
         try:
-            from thegent.routing.litellm_router import get_enhanced_router
+            from thegent.utils.routing_impl.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
 
@@ -405,7 +405,7 @@ class CodexRunner(AgentRunner):
     ) -> RunResult:
         """Run via LiteLLM Router for Codex/Droid compatibility."""
         try:
-            from thegent.routing.litellm_router import get_enhanced_router
+            from thegent.utils.routing_impl.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
 

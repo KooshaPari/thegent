@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from urllib.parse import urlsplit
 
-from thegent.routing.grounding import normalize_grounding_source_url
+from thegent.utils.routing_impl.grounding import normalize_grounding_source_url
 
 
 def format_context_usage_line(context_usage: object) -> str | None:

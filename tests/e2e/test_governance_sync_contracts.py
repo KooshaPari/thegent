@@ -526,7 +526,9 @@ def test_readme_full_bundle_command_text_matches_split_constant_after_whitespace
     )
     assert readme_full_bundle_command is not None, "README missing Full e2e governance unit bundle (direct) row"
 
-    collapse = lambda text: re.sub(r"\s+", " ", text).strip()
+    def collapse(text: str) -> str:
+        return re.sub(r"\s+", " ", text).strip()
+
     assert collapse(readme_full_bundle_command) == collapse(
         test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND
     ), (

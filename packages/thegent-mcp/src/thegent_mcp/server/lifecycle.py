@@ -186,7 +186,7 @@ async def run_lifespan(
             logger.info("stopped bundled proxy")
 
         try:
-            from thegent.routing.litellm_responses_handler import close_http_client
+            from thegent.utils.routing_impl.litellm_responses_handler import close_http_client
 
             await close_http_client()
             logger.info("closed persistent HTTP client")

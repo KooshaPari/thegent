@@ -201,7 +201,7 @@ class TestTransformModelsResponseEtag:
 class TestTransformModelsResponseCodexSchema:
     """@trace FR-PROXY-003 - All required Codex schema fields"""
 
-    REQUIRED_CODEX_FIELDS = [
+    REQUIRED_CODEX_FIELDS = (
         "slug",
         "display_name",
         "shell_type",
@@ -213,7 +213,7 @@ class TestTransformModelsResponseCodexSchema:
         "apply_patch_tool_type",
         "supports_parallel_tool_calls",
         "input_modalities",
-    ]
+    )
 
     def test_all_required_codex_fields_present(self) -> None:
         """Every model must have the full Codex metadata schema."""

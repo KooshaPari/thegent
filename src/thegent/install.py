@@ -1414,9 +1414,16 @@ def run_install_system(
     var_dir = Path("/var/lib/thegent")
 
     if not dry_run:
-        bin_dir.mkdir(parents=True, exist_ok=True)
-        hooks_dir.mkdir(parents=True, exist_ok=True)
-        etc_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            bin_dir.mkdir(parents=True, exist_ok=True)
+            hooks_dir.mkdir(parents=True, exist_ok=True)
+            etc_dir.mkdir(parents=True, exist_ok=True)
+        except PermissionError as e:
+            counts["errors"] = 1
+            sys.stderr.write(f"Permission denied: Cannot create system directories under {prefix}.\n")
+            sys.stderr.write(f"  Error: {e}\n")
+            sys.stderr.write("  Hint: Use --scope user for user-local installation, or run with sudo for system-wide install.\n")
+            return counts
         try:  # noqa: SIM105 -- explicit try/except preferred for clarity
             var_dir.mkdir(parents=True, exist_ok=True)
         except OSError:

@@ -11,7 +11,6 @@ def test_set_limits_calls_expected_rlimit(monkeypatch) -> None:
 
     def fake_setrlimit(resource_name, limits):  # type: ignore[no-redef]
         seen.append((resource_name, limits))
-        return None
 
     monkeypatch.setattr("thegent.mesh.resources.resource.setrlimit", fake_setrlimit)
     manager = ResourceManager("agent-1")

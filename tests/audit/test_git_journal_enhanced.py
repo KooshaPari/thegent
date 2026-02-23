@@ -338,7 +338,7 @@ class TestRecordFileChangeBatching:
         journal_enhanced._flush_batch()
 
         # Verify secrets are not in pending changes
-        for rel_path, content_bytes, action, _metadata in journal_enhanced._pending_changes:
+        for _rel_path, content_bytes, _action, _metadata in journal_enhanced._pending_changes:
             if content_bytes:
                 decoded = content_bytes.decode("utf-8", errors="replace")
                 assert "sk-1234567890" not in decoded

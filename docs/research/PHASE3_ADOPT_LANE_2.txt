@@ -1,0 +1,4 @@
+https://github.com/LMCache/LMCache
+https://github.com/errata-ai/vale
+https://github.com/ory/kratos
+https://github.com/steveyegge/beads

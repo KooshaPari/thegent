@@ -211,7 +211,7 @@ class TestJsonlParsing:
         # @trace FR-AGT-003
         """_parse_jsonl_output extracts text from simple JSON line."""
         output = json.dumps({"choices": [{"text": "hello world"}]})
-        text, tokens_in, tokens_out, model = _parse_jsonl_output(output)
+        text, tokens_in, tokens_out, _ = _parse_jsonl_output(output)
 
         assert text == "hello world"
         assert tokens_in == 0
@@ -241,7 +241,7 @@ class TestJsonlParsing:
                 }
             }
         )
-        text, tokens_in, tokens_out, _ = _parse_jsonl_output(output)
+        _, tokens_in, tokens_out, _ = _parse_jsonl_output(output)
 
         assert tokens_in == 42
         assert tokens_out == 128
@@ -250,7 +250,7 @@ class TestJsonlParsing:
         # @trace FR-AGT-003
         """_parse_jsonl_output extracts model name."""
         output = json.dumps({"model": "gpt-5.3-codex-spark"})
-        text, _, _, model = _parse_jsonl_output(output)
+        _, _, _, model = _parse_jsonl_output(output)
 
         assert model == "gpt-5.3-codex-spark"
 
