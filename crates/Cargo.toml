@@ -17,6 +17,8 @@ members = [
     "thegent-zmx-interop",
     "thegent-zmx",
     "thegent-jsonl",
+    "thegent-policy",
+    "thegent-metrics",
     "thegent-fs",
     "thegent-offload",
     "harness-native",
