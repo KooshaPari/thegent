@@ -26,13 +26,8 @@ pyo3 = { version = "0.23.4", features = ["extension-module"], optional = true }
 libc = "0.2"
 
 [features]
-<<<<<<< HEAD
 default = ["pyo3"]
 pyo3 = ["dep:pyo3"]
 
 [dev-dependencies]
 tempfile = "3"
-=======
-default = ["python"]
-python = ["dep:pyo3"]
->>>>>>> chore/thegent-provider-plane-pr3
