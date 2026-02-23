@@ -11,7 +11,7 @@ def test_bubblewrap_args_for_worktree_tier(tmp_path: Path) -> None:
     args = sandbox.get_bubblewrap_args(AutonomyTier.WORKTREE)
 
     assert "bwrap" in args
-    assert str((tmp_path / ".mesh" / "worktrees" / "agent-agent-1")) in args
+    assert str(tmp_path / ".mesh" / "worktrees" / "agent-agent-1") in args
     assert "--unshare-net" in args
 
 

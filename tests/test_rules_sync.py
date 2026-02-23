@@ -89,7 +89,7 @@ class TestParseFrontmatter:
     def test_parses_list_field(self) -> None:
         # @trace FR-HAX-002
         text = "---\nplatforms: [cursor, claude]\n---\nContent."
-        meta, body = _parse_frontmatter(text)
+        meta, _ = _parse_frontmatter(text)
         assert meta["platforms"] == ["cursor", "claude"]
 
     def test_unclosed_frontmatter_raises(self) -> None:
@@ -101,7 +101,7 @@ class TestParseFrontmatter:
     def test_strips_quotes_from_string_value(self) -> None:
         # @trace FR-HAX-002
         text = '---\nid: "quoted-id"\n---\nBody.'
-        meta, body = _parse_frontmatter(text)
+        meta, _ = _parse_frontmatter(text)
         assert meta["id"] == "quoted-id"
 
 

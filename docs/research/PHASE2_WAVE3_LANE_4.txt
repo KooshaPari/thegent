@@ -1,0 +1,5 @@
+https://github.com/jehna/humanify
+https://github.com/ruvnet/agentic-security
+https://github.com/SomeOddCodeGuy/WilmerAI
+https://github.com/Nordlys-Labs/nordlys
+https://github.com/ChrisRoyse/Pheromind

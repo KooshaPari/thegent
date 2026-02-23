@@ -54,6 +54,9 @@ jobs:
           - os: self-hosted
             python-version: '3.12'
 
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,6 +81,9 @@ jobs:
         run: |
           bash ./scripts/ci_uv_sync.sh
         shell: bash
+
+      - name: Prepare uv cache dir
+        run: mkdir -p .cache/uv
 
       - name: Build PR changed file list
         if: github.event_name == 'pull_request'
@@ -163,6 +169,8 @@ jobs:
     name: Quality Checks
     runs-on: self-hosted
     needs: [preflight]
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
 
     steps:
       - name: Checkout repository
@@ -186,6 +194,9 @@ jobs:
         run: |
           bash ./scripts/ci_uv_sync.sh
         shell: bash
+
+      - name: Prepare uv cache dir
+        run: mkdir -p .cache/uv
 
       - name: Sanity check Python runtime
         run: |
@@ -414,6 +425,8 @@ jobs:
   leak-detection:
     name: Leak Detection (Comprehensive)
     runs-on: self-hosted
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
 
     steps:
       - name: Checkout code
@@ -434,6 +447,9 @@ jobs:
         run: |
           bash ./scripts/ci_uv_sync.sh
         shell: bash
+
+      - name: Prepare uv cache dir
+        run: mkdir -p .cache/uv
 
       - name: Verify psutil installation
         run: |
@@ -513,6 +529,8 @@ jobs:
     name: Integration Tests
     runs-on: self-hosted
     needs: [coverage]
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
 
     steps:
       - name: Checkout code
@@ -533,6 +551,9 @@ jobs:
         run: |
           bash ./scripts/ci_uv_sync.sh
         shell: bash
+
+      - name: Prepare uv cache dir
+        run: mkdir -p .cache/uv
 
       - name: Run integration tests
         run: |

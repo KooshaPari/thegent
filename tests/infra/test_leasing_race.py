@@ -15,7 +15,7 @@ import pytest
 from thegent.orchestration.resource.leasing import EditLeaseManager
 
 
-@pytest.fixture()
+@pytest.fixture
 def lease_manager(tmp_path: Path) -> EditLeaseManager:
     """Fresh EditLeaseManager backed by a temp dir."""
     return EditLeaseManager(tmp_path)

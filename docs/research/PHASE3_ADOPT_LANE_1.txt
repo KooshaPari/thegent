@@ -1,0 +1,4 @@
+https://github.com/Fission-AI/OpenSpec
+https://github.com/doorstop-dev/doorstop
+https://github.com/nats-io/nats-server
+https://github.com/sitbon/magg

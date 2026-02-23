@@ -4,6 +4,12 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+if [ -z "${UV_CACHE_DIR:-}" ]; then
+  UV_CACHE_DIR="$REPO_ROOT/.cache/uv"
+fi
+mkdir -p "$UV_CACHE_DIR"
+export UV_CACHE_DIR
+
 ACT_EVENT="${THGENT_ACT_EVENT:-${ACT_EVENT:-push}}"
 ACT_WORKFLOW="${THGENT_ACT_WORKFLOW:-${ACT_WORKFLOW:-.github/workflows/ci.yml}}"
 ACT_JOB="${THGENT_ACT_JOB:-${ACT_JOB:-}}"

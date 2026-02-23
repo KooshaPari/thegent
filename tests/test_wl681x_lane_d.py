@@ -263,7 +263,7 @@ def test_wl6815_dispatcher_execute_task_success_failure_and_approval_block(monke
     assert err is None
 
     monkeypatch.setattr("thegent.agents.registry.get_runner", lambda _n: _RunnerBad())
-    out2, success2, err2 = asyncio.run(dispatcher._execute_task(node, "claude"))
+    _, success2, err2 = asyncio.run(dispatcher._execute_task(node, "claude"))
     assert success2 is False
     assert "boom" in (err2 or "")
 

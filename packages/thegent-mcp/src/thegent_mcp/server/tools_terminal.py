@@ -131,7 +131,7 @@ def terminal_route_impl(
     cd: str | None,
 ) -> ToolResult:
     from thegent.config import ThegentSettings
-    from thegent.routing.task_router import TaskRouter
+    from thegent.utils.routing_impl.task_router import TaskRouter
     from thegent.skills.terminal import send_to_tmux_pane
 
     settings = ThegentSettings()

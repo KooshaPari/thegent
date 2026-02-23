@@ -1,0 +1,10 @@
+https://github.com/browserbase/stagehand
+https://github.com/f/mcptools
+https://github.com/superagent-ai/vibekit
+https://github.com/steveyegge/beads
+https://github.com/exo-explore/exo
+https://github.com/microsoft/BitNet
+https://github.com/LMCache/LMCache
+https://github.com/bgauryy/octocode-mcp
+https://github.com/GongRzhe/Human-In-the-Loop-MCP-Server
+https://github.com/bar181/ai-toolkit
