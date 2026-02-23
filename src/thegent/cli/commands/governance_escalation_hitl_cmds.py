@@ -7,9 +7,10 @@ approval workflows for policy enforcement.
 # @trace WL-124
 from __future__ import annotations
 
-from thegent.utils.json_utils import json_loads, json_dumps
 import sys
+from typing import Any
 
+import orjson as json
 import typer
 
 from rich.panel import Panel
@@ -59,7 +60,7 @@ def escalate_list_cmd(
     items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode() + "\n")
         return
     if not items:
         console.print("[dim]No escalation items.[/dim]")
@@ -203,7 +204,7 @@ def govern_list_pending_cmd(format: str | None = None) -> None:
     items = govern_list_pending_impl()
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode() + "\n")
         return
     if not items:
         console.print("[dim]No pending HITL approval requests.[/dim]")
