@@ -16,6 +16,7 @@ from typing import Any, cast
 import typer
 
 from thegent.cli.commands.session_health_impl import _extract_blocked_ratio
+from thegent.cli.commands.session_health_helpers import HEALTH_PAYLOAD_TYPES
 
 _log = logging.getLogger(__name__)
 

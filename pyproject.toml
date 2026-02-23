@@ -137,6 +137,3 @@ packages = [ "src/thegent", "src/research_engine",]
 hooks = "thegent/hooks"
 skills = "thegent/skills"
 "src/thegent/py.typed" = "thegent/py.typed"
-"test_discovery.py" = ["T201", "ANN101", "ANN102", "ANN201", "ANN206"]
-"src/thegent/cli/commands/observability_impl.py" = ["ANN101"]
-"src/thegent/cli/commands/session_ops_impl.py" = ["ANN101"]

@@ -5,7 +5,6 @@ Handles artifact encryption/decryption using XOR cipher.
 
 import base64
 import hashlib
-from typing import Any
 
 
 def xor_encrypt(data: bytes, key: str) -> str:
