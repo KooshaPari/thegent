@@ -35,6 +35,8 @@ Parameters:
 Advisor mode:
 
 1. Validates domain shape and target URL.
+   - Domain must be a valid FQDN (`example.com`, `app.example.com`).
+   - Target must be an absolute URL (`http://localhost:3847`).
 2. Emits deterministic steps:
    - registrar nameserver handoff to Cloudflare
    - tunnel creation and auth
@@ -56,3 +58,4 @@ Outputs:
 - Step-by-step checklist
 - Recommended `cloudflared` commands
 - Readiness checks for later automation
+- Structured metadata in JSON mode: `registrar`, `dns_provider`, `assumptions`

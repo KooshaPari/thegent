@@ -1,0 +1,43 @@
+# Release Supply Chain Controls
+
+This document is the operator contract for release-time supply chain checks in `.github/workflows/release.yml`.
+
+## Required Release Artifacts
+
+The release job must produce these artifacts in `dist/` before publishing:
+
+- Python build artifacts (`uv build` output)
+- `pip-audit.json` (Python vulnerability report)
+- `cargo-audit.json` (Rust vulnerability report)
+- `sbom.spdx.json` (Syft SPDX SBOM)
+- `SHA256SUMS.txt` (checksums for all dist artifacts)
+- `governance-control-plane-attestation.json` (governance contract attestation)
+- `control-plane-readiness.json` (governance control-plane report)
+- `control-plane-readiness.md` (human-readable governance report)
+
+## Verification Gates (Fail-Closed)
+
+Release must fail when any of these checks fail:
+
+1. Governance report generation:
+   - `scripts/quality_control_plane_report.py`
+2. Governance attestation generation:
+   - `scripts/attest_governance_contract_report.py`
+3. Governance attestation verification:
+   - `scripts/verify_governance_contract_attestation.py`
+4. SBOM presence check:
+   - `test -s dist/sbom.spdx.json`
+
+No fallback path is allowed for missing report, missing attestation, or empty SBOM.
+
+## Provenance
+
+GitHub release publishing runs `actions/attest-build-provenance@v2` over `dist/*` and uploads the generated assets into the tagged release.
+
+## Operator Quick Check
+
+After a release run, verify:
+
+- Release workflow succeeded on the tagged commit.
+- The GitHub release contains SBOM, checksum file, governance report, and attestation JSON.
+- Provenance attestation job completed successfully.
