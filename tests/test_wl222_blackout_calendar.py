@@ -7,9 +7,14 @@ Verifies blackout window management, membership testing, and active window queri
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 import pytest
+
+
+def _utc_dt(year: int, month: int, day: int, hour: int, minute: int) -> datetime:
+    return datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
+
 
 
 @pytest.mark.requirement("WL-222")
@@ -21,8 +26,8 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 10, 0)
-        end = datetime(2026, 2, 22, 12, 0)
+        start = _utc_dt(2026, 2, 22, 10, 0)
+        end = _utc_dt(2026, 2, 22, 12, 0)
 
         window = cal.add("maint", start, end)
 
@@ -35,8 +40,8 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 10, 0)
-        end = datetime(2026, 2, 22, 12, 0)
+        start = _utc_dt(2026, 2, 22, 10, 0)
+        end = _utc_dt(2026, 2, 22, 12, 0)
 
         cal.add("maint", start, end)
 
@@ -48,8 +53,8 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 12, 0)
-        end = datetime(2026, 2, 22, 10, 0)
+        start = _utc_dt(2026, 2, 22, 12, 0)
+        end = _utc_dt(2026, 2, 22, 10, 0)
 
         with pytest.raises(ValueError, match="after start time"):
             cal.add("bad", start, end)
@@ -59,7 +64,7 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        dt = datetime(2026, 2, 22, 10, 0)
+        dt = _utc_dt(2026, 2, 22, 10, 0)
 
         with pytest.raises(ValueError, match="after start time"):
             cal.add("bad", dt, dt)
@@ -69,11 +74,11 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 10, 0)
-        end = datetime(2026, 2, 22, 12, 0)
+        start = _utc_dt(2026, 2, 22, 10, 0)
+        end = _utc_dt(2026, 2, 22, 12, 0)
         cal.add("maint", start, end)
 
-        test_dt = datetime(2026, 2, 22, 11, 0)
+        test_dt = _utc_dt(2026, 2, 22, 11, 0)
 
         assert cal.is_blacked_out(test_dt) is True
 
@@ -82,11 +87,11 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 10, 0)
-        end = datetime(2026, 2, 22, 12, 0)
+        start = _utc_dt(2026, 2, 22, 10, 0)
+        end = _utc_dt(2026, 2, 22, 12, 0)
         cal.add("maint", start, end)
 
-        test_dt = datetime(2026, 2, 22, 13, 0)
+        test_dt = _utc_dt(2026, 2, 22, 13, 0)
 
         assert cal.is_blacked_out(test_dt) is False
 
@@ -95,11 +100,11 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 10, 0)
-        end = datetime(2026, 2, 22, 12, 0)
+        start = _utc_dt(2026, 2, 22, 10, 0)
+        end = _utc_dt(2026, 2, 22, 12, 0)
         cal.add("maint", start, end)
 
-        test_dt = datetime(2026, 2, 22, 9, 0)
+        test_dt = _utc_dt(2026, 2, 22, 9, 0)
 
         assert cal.is_blacked_out(test_dt) is False
 
@@ -108,8 +113,8 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 10, 0)
-        end = datetime(2026, 2, 22, 12, 0)
+        start = _utc_dt(2026, 2, 22, 10, 0)
+        end = _utc_dt(2026, 2, 22, 12, 0)
         cal.add("maint", start, end)
 
         assert cal.is_blacked_out(start) is True
@@ -119,8 +124,8 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        start = datetime(2026, 2, 22, 10, 0)
-        end = datetime(2026, 2, 22, 12, 0)
+        start = _utc_dt(2026, 2, 22, 10, 0)
+        end = _utc_dt(2026, 2, 22, 12, 0)
         cal.add("maint", start, end)
 
         assert cal.is_blacked_out(end) is False
@@ -130,22 +135,22 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        cal.add("maint1", datetime(2026, 2, 22, 10, 0), datetime(2026, 2, 22, 12, 0))
-        cal.add("maint2", datetime(2026, 2, 22, 14, 0), datetime(2026, 2, 22, 16, 0))
+        cal.add("maint1", _utc_dt(2026, 2, 22, 10, 0), _utc_dt(2026, 2, 22, 12, 0))
+        cal.add("maint2", _utc_dt(2026, 2, 22, 14, 0), _utc_dt(2026, 2, 22, 16, 0))
 
-        assert cal.is_blacked_out(datetime(2026, 2, 22, 11, 0)) is True
-        assert cal.is_blacked_out(datetime(2026, 2, 22, 15, 0)) is True
-        assert cal.is_blacked_out(datetime(2026, 2, 22, 13, 0)) is False
+        assert cal.is_blacked_out(_utc_dt(2026, 2, 22, 11, 0)) is True
+        assert cal.is_blacked_out(_utc_dt(2026, 2, 22, 15, 0)) is True
+        assert cal.is_blacked_out(_utc_dt(2026, 2, 22, 13, 0)) is False
 
     def test_active_windows_returns_matching_windows(self):
         """# @trace WL-222 — active_windows() returns windows containing dt."""
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        cal.add("maint1", datetime(2026, 2, 22, 10, 0), datetime(2026, 2, 22, 12, 0))
-        cal.add("maint2", datetime(2026, 2, 22, 14, 0), datetime(2026, 2, 22, 16, 0))
+        cal.add("maint1", _utc_dt(2026, 2, 22, 10, 0), _utc_dt(2026, 2, 22, 12, 0))
+        cal.add("maint2", _utc_dt(2026, 2, 22, 14, 0), _utc_dt(2026, 2, 22, 16, 0))
 
-        active = cal.active_windows(datetime(2026, 2, 22, 11, 0))
+        active = cal.active_windows(_utc_dt(2026, 2, 22, 11, 0))
 
         assert len(active) == 1
         assert active[0].name == "maint1"
@@ -155,9 +160,9 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        cal.add("maint", datetime(2026, 2, 22, 10, 0), datetime(2026, 2, 22, 12, 0))
+        cal.add("maint", _utc_dt(2026, 2, 22, 10, 0), _utc_dt(2026, 2, 22, 12, 0))
 
-        active = cal.active_windows(datetime(2026, 2, 22, 13, 0))
+        active = cal.active_windows(_utc_dt(2026, 2, 22, 13, 0))
 
         assert active == []
 
@@ -167,11 +172,11 @@ class TestBlackoutCalendar:
 
         cal = BlackoutCalendar()
         # Add in non-chronological order
-        cal.add("maint3", datetime(2026, 2, 22, 10, 0), datetime(2026, 2, 22, 14, 0))
-        cal.add("maint1", datetime(2026, 2, 22, 10, 30), datetime(2026, 2, 22, 12, 0))
-        cal.add("maint2", datetime(2026, 2, 22, 11, 0), datetime(2026, 2, 22, 13, 0))
+        cal.add("maint3", _utc_dt(2026, 2, 22, 10, 0), _utc_dt(2026, 2, 22, 14, 0))
+        cal.add("maint1", _utc_dt(2026, 2, 22, 10, 30), _utc_dt(2026, 2, 22, 12, 0))
+        cal.add("maint2", _utc_dt(2026, 2, 22, 11, 0), _utc_dt(2026, 2, 22, 13, 0))
 
-        active = cal.active_windows(datetime(2026, 2, 22, 11, 30))
+        active = cal.active_windows(_utc_dt(2026, 2, 22, 11, 30))
 
         names = [w.name for w in active]
         # Should be sorted by start time: maint3 (10:00), maint1 (10:30), maint2 (11:00)
@@ -182,9 +187,9 @@ class TestBlackoutCalendar:
         from thegent.integrations.blackout_calendar import BlackoutCalendar
 
         cal = BlackoutCalendar()
-        cal.add("maint1", datetime(2026, 2, 22, 10, 0), datetime(2026, 2, 22, 12, 0))
-        cal.add("maint2", datetime(2026, 2, 22, 14, 0), datetime(2026, 2, 22, 16, 0))
-        cal.add("maint3", datetime(2026, 2, 22, 18, 0), datetime(2026, 2, 22, 20, 0))
+        cal.add("maint1", _utc_dt(2026, 2, 22, 10, 0), _utc_dt(2026, 2, 22, 12, 0))
+        cal.add("maint2", _utc_dt(2026, 2, 22, 14, 0), _utc_dt(2026, 2, 22, 16, 0))
+        cal.add("maint3", _utc_dt(2026, 2, 22, 18, 0), _utc_dt(2026, 2, 22, 20, 0))
 
         all_windows = cal.all_windows()
 
@@ -196,9 +201,9 @@ class TestBlackoutCalendar:
 
         cal = BlackoutCalendar()
         # Add in non-chronological order
-        cal.add("maint3", datetime(2026, 2, 22, 18, 0), datetime(2026, 2, 22, 20, 0))
-        cal.add("maint1", datetime(2026, 2, 22, 10, 0), datetime(2026, 2, 22, 12, 0))
-        cal.add("maint2", datetime(2026, 2, 22, 14, 0), datetime(2026, 2, 22, 16, 0))
+        cal.add("maint3", _utc_dt(2026, 2, 22, 18, 0), _utc_dt(2026, 2, 22, 20, 0))
+        cal.add("maint1", _utc_dt(2026, 2, 22, 10, 0), _utc_dt(2026, 2, 22, 12, 0))
+        cal.add("maint2", _utc_dt(2026, 2, 22, 14, 0), _utc_dt(2026, 2, 22, 16, 0))
 
         all_windows = cal.all_windows()
 
