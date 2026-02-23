@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from thegent.operations import OPERATION_MAP, Operation
+from thegent.adapters.ports import AdapterRegistry
 
 
 class UniversalToolAdapter:
@@ -32,6 +33,10 @@ class UniversalToolAdapter:
             return {"status": "success", "operation": entry.operation, "command": command}
 
         return adapter(**kwargs)
+
+
+# Register with global adapter registry
+AdapterRegistry.register("universal_tool", UniversalToolAdapter)
 
 
 def validate_tool_schema(operation: Operation, payload: dict[str, Any]) -> list[str]:

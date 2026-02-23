@@ -505,6 +505,26 @@ def list_agent_names() -> list[str]:
     return base_list_agent_names()
 
 
+
+def list_agents_impl() -> list[dict[str, str]]:
+    """List available agents. Returns list of {name, backend}."""
+    agents = list_agent_names()
+    backends = {
+        "minimax": "cliproxy",
+        "glm": "cliproxy",
+        "roo": "cliproxy",
+        "kilo": "cliproxy",
+        "gemini": "codex",
+        "codex": "codex",
+        "copilot": "codex",
+        "claude": "codex",
+        "antigravity": "codex",
+        "cursor-agent": "Direct",
+        "cursor-api": "cursor-api",
+    }
+    from thegent.agents.registry import AGENT_LABELS
+    return [{"name": AGENT_LABELS.get(n, n), "backend": backends.get(n, "Direct")} for n in agents]
+
 def resolve_agent(agent_name: str | None) -> str | None:
     return base_resolve_agent(agent_name)
 
