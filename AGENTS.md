@@ -50,6 +50,19 @@ Execution model constraint:
 - Use policy-driven placement (shared lane, burst isolated, integration).
 - Escalate to dedicated worktrees only on overlap-risk, high-risk refactors, or isolation requirements.
 
+Canonical policy docs for this model:
+
+- `docs/governance/WORKTREE_AND_DELEGATION_INDEX.md`
+- `docs/governance/WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md`
+- `docs/governance/DELEGATION_ARCHITECTURE_LN.md`
+- `docs/governance/TASK_CLASSIFIER_SCHEMA.yaml`
+
+Execution model constraint:
+
+- Do not assume `1 agent = 1 worktree`.
+- Use policy-driven placement (shared lane, burst isolated, integration).
+- Escalate to dedicated worktrees only on overlap-risk, high-risk refactors, or isolation requirements.
+
 ---
 
 # 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
