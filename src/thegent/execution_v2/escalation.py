@@ -15,4 +15,4 @@ class DLQManager:
     def enqueue(self, run_meta, error: str) -> None:
         pass
 
-__all__ = ["EscalationQueue", "DLQManager"]
+__all__ = ["DLQManager", "EscalationQueue"]

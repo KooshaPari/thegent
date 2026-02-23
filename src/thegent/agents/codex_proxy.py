@@ -1246,10 +1246,10 @@ from thegent.adapters.ports import AdapterRegistry
 
 class CodexProxyAdapter:
     """Codex proxy adapter for agent execution"""
-    
+
     def __init__(self):
         self._runner = CodexProxyRunner
-    
+
     def call(self, **kwargs) -> dict:
         """Execute via Codex proxy"""
         return {"status": "ready", "adapter": "codex_proxy"}
