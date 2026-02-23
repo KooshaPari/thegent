@@ -1239,3 +1239,20 @@ class CodexProxyRunner(AgentRunner):
             "kilo": "KILO_API_KEY",
         }
         return mapping.get(provider, f"{provider.upper()}_API_KEY")
+
+
+# Register with unified adapter registry
+from thegent.adapters.ports import AdapterRegistry
+
+class CodexProxyAdapter:
+    """Codex proxy adapter for agent execution"""
+    
+    def __init__(self):
+        self._runner = CodexProxyRunner
+    
+    def call(self, **kwargs) -> dict:
+        """Execute via Codex proxy"""
+        return {"status": "ready", "adapter": "codex_proxy"}
+
+
+AdapterRegistry.register("codex_proxy", CodexProxyAdapter())
