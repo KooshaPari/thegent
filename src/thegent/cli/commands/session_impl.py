@@ -4,7 +4,8 @@ Extracted from impl.py as part of WL-120 LOC Reduction Program (Wave-3, W3-B2).
 Split into sub-modules as part of WL-120 max-lines enforcement:
 - session_meta_impl.py        — meta I/O, state contracts, output helpers, continuation
 - session_health_impl.py      — contract listing, audit, health gate
-- session_health_report_impl.py — health report, health trend
+- session_health_report_impl.py — health report with issue taxonomy
+- session_health_trend_impl.py  — health trend snapshots and deltas
 - session_ops_impl.py         — ps, list, status, inspect, logs
 - session_control_impl.py     — wait, stop, send, history, metrics, prune, events,
                                 meta, negotiate, purge, explain
@@ -31,10 +32,8 @@ from thegent.cli.commands.session_health_impl import (
     session_contract_audit_impl,
     session_contract_health_gate_impl,
 )
-from thegent.cli.commands.session_health_report_impl import (
-    session_contract_health_report_impl,
-    session_contract_health_trend_impl,
-)
+from thegent.cli.commands.session_health_report_impl import session_contract_health_report_impl
+from thegent.cli.commands.session_health_trend_impl import session_contract_health_trend_impl
 from thegent.cli.commands.session_meta_impl import (
     _build_continuation_prompt,
     _find_session_meta,
@@ -54,9 +53,11 @@ from thegent.cli.commands.session_meta_impl import (
 from thegent.cli.commands.session_ops_impl import (
     inspect_impl,
     logs_impl,
+    status_impl,
+)
+from thegent.cli.commands.session_ops_list_impl import (
     ps_impl,
     session_list_impl,
-    status_impl,
 )
 
 __all__ = [
