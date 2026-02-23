@@ -181,7 +181,7 @@ exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedE
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*", "tests/test_unit_tray_*.py"]
+exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*"]
 
 [tool.ruff.lint]
 select = [
