@@ -1,4 +1,30 @@
+"""Thegent CLI run commands domain - extracted from cli.py (WL-124)."""
 
+# @trace WL-124
+from __future__ import annotations
+
+import orjson as json
+from pathlib import Path
+from typing import Annotated, Literal, cast
+
+import typer
+from typer.models import OptionInfo
+
+from rich.panel import Panel
+from rich.table import Table
+
+from thegent.cli.commands._cli_shared import (
+    RunRegistry,
+    ThegentSettings,
+    _format_context_usage_line,
+    _format_grounding_sources_lines,
+    _format_transcript_summary_line,
+    _get_run_subprocess_optimized,
+    _inject_skill_instructions,
+    _normalize_output_format,
+    _resolve_session_id,
+    console,
+)
 
 def loop_cmd(
     prompt: str,
@@ -59,7 +85,6 @@ def loop_stop_cmd(session_id: str | None = None) -> None:
     stop_file = session_dir / "STOP"
     stop_file.write_text("STOP")
     console.print(f"[green]Stop signal sent to loop session {sid}.[/green]")
-
 __all__ = [
     "loop_cmd",
     "loop_send_cmd",
