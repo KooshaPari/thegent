@@ -217,6 +217,7 @@ thegent skill select missing-skill
 - **[Changelog](./CHANGELOG.md)** — Keep-a-Changelog release history with active `Unreleased` section.
 - **[Changelog Process](./docs/guides/CHANGELOG_PROCESS.md)** — How to add, classify, and release changelog entries.
 - **[Changelog Entry Template](./docs/reference/CHANGELOG_ENTRY_TEMPLATE.md)** — Copy/paste template and writing guidance for entries.
+- **[Project Setup Style](./docs/guides/PROJECT_SETUP_STYLE.md)** — Standardized command/process baseline inspired by vercel/ai.
 - **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
 - **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
 
