@@ -8,7 +8,6 @@ contract conformance checking, and governance cycles.
 from __future__ import annotations
 
 import json
-import os
 import sys
 import uuid
 from pathlib import Path
@@ -19,7 +18,6 @@ from rich.panel import Panel
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _bootstrap_metric_contracts,
     _get_health_targets_path,
@@ -27,7 +25,6 @@ from thegent.cli.commands._cli_shared import (
     _load_artifact,
     _normalize_output_format,
     _resolve_cwd,
-    _resolve_run_id,
     console,
 )
 from thegent.cli.commands.governance_health_helpers import (

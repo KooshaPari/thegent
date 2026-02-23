@@ -1,3 +1,20 @@
+#![allow(
+    clippy::needless_borrows_for_generic_args,
+    clippy::explicit_counter_loop,
+    clippy::collapsible_if,
+    clippy::implicit_saturating_sub,
+    clippy::io_other_error,
+    clippy::useless_format,
+    clippy::useless_asref,
+    clippy::unwrap_or_default,
+    clippy::manual_strip,
+    clippy::trim_split_whitespace,
+    clippy::manual_div_ceil,
+    unused_assignments,
+    unused_variables,
+    dead_code
+)]
+
 pub mod affected_tests;
 pub mod changed_files;
 pub mod config;

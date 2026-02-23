@@ -12,7 +12,6 @@ import uuid
 from pathlib import Path
 
 import typer
-from rich.panel import Panel
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (

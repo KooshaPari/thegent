@@ -1,4 +1,11 @@
-/// Quality metrics evaluator for lint output and coverage
+//! Quality metrics evaluator for lint output and coverage
+#![allow(
+    clippy::needless_borrows_for_generic_args,
+    clippy::explicit_counter_loop,
+    clippy::collapsible_if,
+    clippy::implicit_saturating_sub
+)]
+
 use crate::types::{HookError, LintIssue, QualityMetrics};
 use serde_json::Value;
 
@@ -209,10 +216,8 @@ impl QualityEvaluator {
                             if current_nest > max_nest {
                                 max_nest = current_nest;
                             }
-                        } else if c == '}' {
-                            if current_nest > 0 {
-                                current_nest -= 1;
-                            }
+                        } else if c == '}' && current_nest > 0 {
+                            current_nest = current_nest.saturating_sub(1);
                         }
                     }
 

@@ -10,7 +10,6 @@ import typing
 from pathlib import Path
 from typing import Any, cast
 
-import typer
 
 from thegent.cli.commands._cli_shared import (
     _normalize_output_format,

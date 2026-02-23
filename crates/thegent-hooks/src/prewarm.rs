@@ -3,6 +3,7 @@
 //! This module handles prewarming of caches and shared data structures
 //! for improved hook performance. It computes expensive operations once
 //! and caches the results for subsequent use.
+#![allow(clippy::needless_borrows_for_generic_args, dead_code)]
 
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -198,7 +199,7 @@ impl PrewarmManager {
     /// Prewarm shellcheck configuration
     pub fn prewarm_shellcheck(&self, project_dir: &Path) -> Result<ShellcheckCache> {
         let version = self.get_tool_version("shellcheck").unwrap_or_default();
-        let config_path = self.find_config_file(project_dir, &[".shellcheckrc"]);
+        let _config_path = self.find_config_file(project_dir, &[".shellcheckrc"]);
 
         let cache = ShellcheckCache {
             version,

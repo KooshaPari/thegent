@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-import json
+from thegent.utils.json_utils import json_dumps, json_loads
 import sys
 from dataclasses import dataclass, field
 from typing import Any, TextIO
@@ -1331,7 +1331,7 @@ def process_jsonrpc_line_full(raw_line: str) -> tuple[dict[str, Any] | None, lis
     if not raw_line.strip():
         return None, []
     try:
-        payload = json.loads(raw_line)
+        payload = json_loads(raw_line)
     except json.JSONDecodeError as exc:
         return _error_response(None, JsonRpcError(-32700, "Parse error", {"detail": str(exc)})), []
 
@@ -1359,9 +1359,9 @@ def serve_stdio(in_stream: TextIO | None = None, out_stream: TextIO | None = Non
 
         response, notifications = process_jsonrpc_line_full(raw)
         if response is not None:
-            sink.write(json.dumps(response, separators=(",", ":")) + "\n")
+            sink.write(json_dumps(response, separators=(",", ":")) + "\n")
         for notification in notifications:
-            sink.write(json.dumps(notification, separators=(",", ":")) + "\n")
+            sink.write(json_dumps(notification, separators=(",", ":")) + "\n")
 
         if response is not None or notifications:
             sink.flush()
