@@ -48,7 +48,7 @@ def get_model_pricing(model: str) -> ModelPricing | None:
     """
     # Try model_metadata first — only succeeds if the metadata entry has a 'pricing' dict
     try:
-        from thegent.routing.model_metadata import get_model_metadata, has_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata, has_model_metadata
 
         if has_model_metadata(model):
             meta = get_model_metadata(model)

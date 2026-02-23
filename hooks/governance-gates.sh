@@ -2046,9 +2046,8 @@ gate_formal_methods() {
     return 0
   fi
 
-  # Has formal specs but stub cannot run TLC/Dafny/Alloy
-  printf '{"generated_at":"%s","status":"stub_not_evaluated","checks":[],"pass":true,"error_count":0,"warn_count":0,"warn":"Stub: install real qa-formal-methods-gate for TLC/Dafny/Alloy"}\n' "$now" > "$report"
-  _gate_pass "$name"
+  write_fail_report "$report" "$name" 1 "formal specs detected but no formal-methods evaluator is configured"
+  _gate_fail "$name" "formal specs detected but evaluator unavailable (TLC/Dafny/Alloy)" "${QA_FORMAL_FAIL_CLOSED:-true}"
   return 0
 }
 

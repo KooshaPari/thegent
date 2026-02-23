@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from thegent.routing.litellm_router import (
+from thegent.utils.routing_impl.litellm_router import (
     _route_to_litellm_config,
     build_litellm_model_list,
     get_litellm_router,

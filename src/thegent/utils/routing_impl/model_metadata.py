@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from thegent.routing.harness_model_mapping import resolve_model_for_backend
+from thegent.utils.routing_impl.harness_model_mapping import resolve_model_for_backend
 
 # Comprehensive model metadata registry
 MODEL_METADATA: dict[str, dict[str, Any]] = {

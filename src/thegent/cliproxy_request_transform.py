@@ -111,7 +111,7 @@ def _normalize_tool_choice(chat_body: dict[str, Any]) -> None:
 
 def _map_model_for_backend(model: str) -> str:
     """Map Codex/provider model IDs to backend (CLIProxyAPIPlus) model IDs."""
-    from thegent.routing.harness_model_mapping import resolve_model_for_backend
+    from thegent.utils.routing_impl.harness_model_mapping import resolve_model_for_backend
 
     return resolve_model_for_backend(model)
 

@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from thegent.routing.cost_tracker import get_cost_tracker
-from thegent.routing.harvest import harvest_routing_metrics
+from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
+from thegent.utils.routing_impl.harvest import harvest_routing_metrics
 
 
 def test_harvest_routing_metrics(tmp_path):

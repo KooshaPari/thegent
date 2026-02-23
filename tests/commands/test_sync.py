@@ -337,6 +337,16 @@ class TestSyncPush:
         assert op.ok is False
         assert "unreachable target" in op.message.lower()
 
+    def test_push_fails_without_local_artifacts(self, tmp_path: Path) -> None:
+        # @trace FR-SYNC-031
+        cmd = _make_cmd(tmp_path)
+        target = tmp_path / "remote"
+        target.mkdir()
+        op = cmd.push(target=str(target))
+        assert op.ok is False
+        assert "no local agent or hook artifacts found" in op.message.lower()
+        assert op.details["transfers"] == []
+
     def test_push_message_contains_file_count(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-031
         _agent_dir(tmp_path, ["agent-a"])

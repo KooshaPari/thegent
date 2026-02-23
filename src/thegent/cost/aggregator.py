@@ -56,7 +56,7 @@ class CostEstimator:
         # Try to get from metadata registry first
         if model:
             try:
-                from thegent.routing.model_metadata import get_model_metadata
+                from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
                 metadata = get_model_metadata(model)
                 if metadata and "cost_per_mtok" in metadata:

@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 
 from thegent.models.catalog import Route, resolve_route
-from thegent.routing.litellm_router import _route_to_litellm_config
-from thegent.routing.provider_types import normalize_provider_name
+from thegent.utils.routing_impl.litellm_router import _route_to_litellm_config
+from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
 
 @pytest.mark.parametrize("alias", ["ollama-local", "local-ollama", "ollama-localhost", "ollama@localhost"])

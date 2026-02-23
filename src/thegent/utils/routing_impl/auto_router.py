@@ -12,7 +12,7 @@ import json
 import logging
 from dataclasses import dataclass
 
-from thegent.routing.pareto_router import (
+from thegent.utils.routing_impl.pareto_router import (
     RouteTrace,
     select_offer_with_trace,
 )

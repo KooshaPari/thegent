@@ -135,7 +135,7 @@ EXTRA_MODEL_SUFFIX_CASES: list[tuple[str, str, list[str]]] = [
 
 def _python_parse_model_suffixes(model: str) -> dict[str, Any]:
     """Return dict matching Rust output shape: base_model, suffixes (str list), raw."""
-    from thegent.routing.model_suffix_parser import parse_model_suffixes
+    from thegent.utils.routing_impl.model_suffix_parser import parse_model_suffixes
 
     parsed = parse_model_suffixes(model)
     return {

@@ -21,7 +21,7 @@ from typing import Any
 
 import pytest
 
-from thegent.routing import ParetoRouter, RouteCandidate
+from thegent.utils.routing_impl import ParetoRouter, RouteCandidate
 
 _log = logging.getLogger(__name__)
 

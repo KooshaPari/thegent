@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.circuit_breaker import (
+from thegent.utils.routing_impl.circuit_breaker import (
     CircuitOpenError,
     ProviderCircuitBreakerConfig,
     ProviderCircuitBreakerRegistry,
@@ -19,7 +19,7 @@ from thegent.routing.circuit_breaker import (
     record_deployment_success,
     with_circuit_breaker,
 )
-from thegent.routing.litellm_router import get_circuit_breaker_status
+from thegent.utils.routing_impl.litellm_router import get_circuit_breaker_status
 
 # ---------------------------------------------------------------------------
 # Fixtures

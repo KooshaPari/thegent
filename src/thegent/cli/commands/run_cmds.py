@@ -513,7 +513,7 @@ def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
     from rich.console import Console
 
     from thegent.config import ThegentSettings
-    from thegent.routing.task_router import TaskRouter
+    from thegent.utils.routing_impl.task_router import TaskRouter
     from thegent.skills.terminal import send_to_tmux_pane
 
     console = Console()

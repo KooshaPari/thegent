@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.transforms import apply_middle_out, apply_transforms, extract_transforms
+from thegent.utils.routing_impl.transforms import apply_middle_out, apply_transforms, extract_transforms
 
 
 @pytest.mark.requirement("FR-REQEXT-041")

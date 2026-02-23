@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.routing.guardrails.webhook import (
+from thegent.utils.routing_impl.guardrails.webhook import (
     WebhookGuardrailConfig,
     WebhookVerdict,
     call_webhook_guardrail,

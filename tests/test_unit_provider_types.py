@@ -2,7 +2,7 @@
 
 import pytest
 
-from thegent.routing.provider_types import (
+from thegent.utils.routing_impl.provider_types import (
     NATIVE_CLI_PROVIDERS,
     ExecutionPath,
     get_execution_path,

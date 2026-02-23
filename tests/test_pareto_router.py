@@ -5,7 +5,7 @@ Traces to: FR-ROUTER-001 (Pareto-optimal route selection)
 
 import pytest
 
-from thegent.routing import ParetoRouter, RouteCandidate
+from thegent.utils.routing_impl import ParetoRouter, RouteCandidate
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -229,25 +229,25 @@ class TestGetQuality:
     """Tests for _get_quality helper."""
 
     def test_known_model_returns_proxy(self) -> None:
-        from thegent.routing.pareto_router import _get_quality
+        from thegent.utils.routing_impl.pareto_router import _get_quality
 
         q = _get_quality("claude-opus-4.6")
         assert q == 0.95
 
     def test_partial_match_returns_proxy(self) -> None:
-        from thegent.routing.pareto_router import _get_quality
+        from thegent.utils.routing_impl.pareto_router import _get_quality
 
         q = _get_quality("claude-haiku-4.5")
         assert q == 0.75
 
     def test_unknown_returns_default(self) -> None:
-        from thegent.routing.pareto_router import _get_quality
+        from thegent.utils.routing_impl.pareto_router import _get_quality
 
         q = _get_quality("completely-unknown-model-xyz-9999")
         assert q == 0.5
 
     def test_empty_string_returns_some_quality(self) -> None:
-        from thegent.routing.pareto_router import _get_quality
+        from thegent.utils.routing_impl.pareto_router import _get_quality
 
         # Empty string matches any model via substring, so it returns some quality value
         q = _get_quality("")
@@ -259,7 +259,7 @@ class TestResolveRoleParams:
     """Tests for _resolve_role_params internal function."""
 
     def test_no_role_uses_tier_minimum(self) -> None:
-        from thegent.routing.pareto_router import _resolve_role_params
+        from thegent.utils.routing_impl.pareto_router import _resolve_role_params
 
         effective_min, _order, mult = _resolve_role_params(
             role=None,
@@ -271,7 +271,7 @@ class TestResolveRoleParams:
         assert mult == 1.0
 
     def test_complex_tier_sets_higher_min_quality(self) -> None:
-        from thegent.routing.pareto_router import _resolve_role_params
+        from thegent.utils.routing_impl.pareto_router import _resolve_role_params
 
         effective_min, _, _ = _resolve_role_params(
             role=None,
@@ -282,7 +282,7 @@ class TestResolveRoleParams:
         assert effective_min == 0.75  # tier_min for "complex"
 
     def test_user_min_quality_overrides_tier_when_higher(self) -> None:
-        from thegent.routing.pareto_router import _resolve_role_params
+        from thegent.utils.routing_impl.pareto_router import _resolve_role_params
 
         effective_min, _, _ = _resolve_role_params(
             role=None,
@@ -293,7 +293,7 @@ class TestResolveRoleParams:
         assert effective_min == 0.9
 
     def test_unknown_tier_defaults_to_moderate(self) -> None:
-        from thegent.routing.pareto_router import _resolve_role_params
+        from thegent.utils.routing_impl.pareto_router import _resolve_role_params
 
         effective_min, _, _ = _resolve_role_params(
             role=None,
@@ -308,19 +308,19 @@ class TestSelectOfferFunctions:
     """Tests for select_offer and select_offer_with_fallbacks module-level functions."""
 
     def test_select_offer_returns_tuple_or_none(self) -> None:
-        from thegent.routing.pareto_router import select_offer
+        from thegent.utils.routing_impl.pareto_router import select_offer
 
         result = select_offer(complexity_tier="moderate")
         assert result is None or (isinstance(result, tuple) and len(result) == 2)
 
     def test_select_offer_with_trace_returns_trace_or_none(self) -> None:
-        from thegent.routing.pareto_router import RouteTrace, select_offer_with_trace
+        from thegent.utils.routing_impl.pareto_router import RouteTrace, select_offer_with_trace
 
         result = select_offer_with_trace(complexity_tier="moderate")
         assert result is None or isinstance(result, RouteTrace)
 
     def test_select_offer_with_fallbacks_returns_list(self) -> None:
-        from thegent.routing.pareto_router import select_offer_with_fallbacks
+        from thegent.utils.routing_impl.pareto_router import select_offer_with_fallbacks
 
         result = select_offer_with_fallbacks(complexity_tier="moderate", k=3)
         assert isinstance(result, list)
@@ -328,7 +328,7 @@ class TestSelectOfferFunctions:
 
     def test_select_offer_with_trace_trace_has_required_fields(self) -> None:
         """If a trace is returned, it must have all required fields."""
-        from thegent.routing.pareto_router import RouteTrace, select_offer_with_trace
+        from thegent.utils.routing_impl.pareto_router import RouteTrace, select_offer_with_trace
 
         result = select_offer_with_trace(complexity_tier="complex")
         if result is None:
@@ -345,7 +345,7 @@ class TestIsDegradedMode:
     """Tests for _is_degraded_mode."""
 
     def test_returns_bool(self) -> None:
-        from thegent.routing.pareto_router import _is_degraded_mode
+        from thegent.utils.routing_impl.pareto_router import _is_degraded_mode
 
         result = _is_degraded_mode()
         assert isinstance(result, bool)
@@ -355,7 +355,7 @@ class TestGetShadowMultiplier:
     """Tests for _get_shadow_multiplier."""
 
     def test_returns_float_at_least_one(self) -> None:
-        from thegent.routing.pareto_router import _get_shadow_multiplier
+        from thegent.utils.routing_impl.pareto_router import _get_shadow_multiplier
 
         result = _get_shadow_multiplier()
         assert isinstance(result, float)
@@ -366,7 +366,7 @@ class TestLoadRolesAndGetRole:
     """Tests for _load_roles and _get_role."""
 
     def test_load_roles_returns_dict(self) -> None:
-        import thegent.routing.pareto_router as pr
+        import thegent.utils.routing_impl.pareto_router as pr
 
         # Reset cache to ensure fresh load
         pr._ROLES_CACHE = None
@@ -376,7 +376,7 @@ class TestLoadRolesAndGetRole:
         assert pr._ROLES_CACHE is not None
 
     def test_load_roles_cached_second_call(self) -> None:
-        import thegent.routing.pareto_router as pr
+        import thegent.utils.routing_impl.pareto_router as pr
 
         pr._ROLES_CACHE = None
         first = pr._load_roles()
@@ -384,24 +384,24 @@ class TestLoadRolesAndGetRole:
         assert first is second  # Same object from cache
 
     def test_get_role_none_returns_none(self) -> None:
-        from thegent.routing.pareto_router import _get_role
+        from thegent.utils.routing_impl.pareto_router import _get_role
 
         assert _get_role(None) is None
 
     def test_get_role_empty_returns_none(self) -> None:
-        from thegent.routing.pareto_router import _get_role
+        from thegent.utils.routing_impl.pareto_router import _get_role
 
         assert _get_role("") is None
 
     def test_get_role_unknown_returns_default_or_none(self) -> None:
-        from thegent.routing.pareto_router import _get_role
+        from thegent.utils.routing_impl.pareto_router import _get_role
 
         result = _get_role("nonexistent_role_xyz_12345")
         # Either None or the "default" role if defined
         assert result is None or hasattr(result, "name")
 
     def test_roles_config_path_returns_path(self) -> None:
-        from thegent.routing.pareto_router import _roles_config_path
+        from thegent.utils.routing_impl.pareto_router import _roles_config_path
 
         path = _roles_config_path()
         from pathlib import Path
@@ -413,31 +413,31 @@ class TestOffersFromCatalog:
     """Tests for _offers_from_catalog function."""
 
     def test_returns_list(self) -> None:
-        from thegent.routing.pareto_router import _offers_from_catalog
+        from thegent.utils.routing_impl.pareto_router import _offers_from_catalog
 
         result = _offers_from_catalog()
         assert isinstance(result, list)
 
     def test_high_quality_floor_may_return_empty(self) -> None:
-        from thegent.routing.pareto_router import _offers_from_catalog
+        from thegent.utils.routing_impl.pareto_router import _offers_from_catalog
 
         result = _offers_from_catalog(min_quality=0.999)
         assert isinstance(result, list)
 
     def test_zero_max_cost_returns_empty_or_free_only(self) -> None:
-        from thegent.routing.pareto_router import _offers_from_catalog
+        from thegent.utils.routing_impl.pareto_router import _offers_from_catalog
 
         result = _offers_from_catalog(max_cost_weight=0.0)
         assert isinstance(result, list)
 
     def test_simple_tier_returns_offers(self) -> None:
-        from thegent.routing.pareto_router import _offers_from_catalog
+        from thegent.utils.routing_impl.pareto_router import _offers_from_catalog
 
         result = _offers_from_catalog(complexity_tier="simple")
         assert isinstance(result, list)
 
     def test_complex_tier_returns_offers(self) -> None:
-        from thegent.routing.pareto_router import _offers_from_catalog
+        from thegent.utils.routing_impl.pareto_router import _offers_from_catalog
 
         result = _offers_from_catalog(complexity_tier="complex")
         assert isinstance(result, list)
@@ -447,7 +447,7 @@ class TestParetoCatalogFunctions:
     """Test _pareto_frontier on Offer objects (internal function)."""
 
     def test_pareto_frontier_of_offers(self) -> None:
-        from thegent.routing.pareto_router import Offer, _pareto_frontier
+        from thegent.utils.routing_impl.pareto_router import Offer, _pareto_frontier
 
         a = Offer(provider="p", model_alias="a", cost_weight=0.1, quality=0.9, speed_score=1.0)
         b = Offer(provider="p", model_alias="b", cost_weight=0.5, quality=0.7, speed_score=1.0)
@@ -461,7 +461,7 @@ class TestParetoCatalogFunctions:
         assert "a" in aliases
 
     def test_is_dominated_offer(self) -> None:
-        from thegent.routing.pareto_router import Offer, _is_dominated
+        from thegent.utils.routing_impl.pareto_router import Offer, _is_dominated
 
         worse = Offer(provider="p", model_alias="worse", cost_weight=1.0, quality=0.5)
         better = Offer(provider="p", model_alias="better", cost_weight=0.5, quality=0.9)
@@ -473,7 +473,7 @@ class TestLexicographicSelect:
     """Tests for _lexicographic_select function."""
 
     def test_select_highest_quality(self) -> None:
-        from thegent.routing.pareto_router import Offer, _lexicographic_select
+        from thegent.utils.routing_impl.pareto_router import Offer, _lexicographic_select
 
         a = Offer(provider="p", model_alias="a", cost_weight=0.1, quality=0.9, speed_score=1.0)
         b = Offer(provider="p", model_alias="b", cost_weight=0.2, quality=0.8, speed_score=1.0)
@@ -481,12 +481,12 @@ class TestLexicographicSelect:
         assert result is a
 
     def test_empty_returns_none(self) -> None:
-        from thegent.routing.pareto_router import _lexicographic_select
+        from thegent.utils.routing_impl.pareto_router import _lexicographic_select
 
         assert _lexicographic_select([]) is None
 
     def test_select_lowest_cost_when_cost_order(self) -> None:
-        from thegent.routing.pareto_router import Offer, _lexicographic_select
+        from thegent.utils.routing_impl.pareto_router import Offer, _lexicographic_select
 
         a = Offer(provider="p", model_alias="a", cost_weight=0.5, quality=0.9, speed_score=1.0)
         b = Offer(provider="p", model_alias="b", cost_weight=0.1, quality=0.8, speed_score=1.0)

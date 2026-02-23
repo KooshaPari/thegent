@@ -3,8 +3,8 @@
 import pytest
 
 from thegent.config import ThegentSettings
-from thegent.routing.models import TaskCategory
-from thegent.routing.task_router import TaskRouter
+from thegent.utils.routing_impl.models import TaskCategory
+from thegent.utils.routing_impl.task_router import TaskRouter
 
 
 class TestFullRoutingFlow:

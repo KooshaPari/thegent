@@ -15,8 +15,8 @@ Provider dict schema::
 
 from __future__ import annotations
 
-from thegent.routing.pareto_router import ParetoRouter as _CoreRouter
-from thegent.routing.pareto_router import RouteCandidate
+from thegent.utils.routing_impl.pareto_router import ParetoRouter as _CoreRouter
+from thegent.utils.routing_impl.pareto_router import RouteCandidate
 
 
 class ParetoRouter:

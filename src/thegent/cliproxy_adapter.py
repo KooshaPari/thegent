@@ -50,7 +50,7 @@ from thegent.cliproxy_request_transform import (
     _process_sse_line,
 )
 from thegent.cliproxy_stream_state import ResponsesStreamState
-from thegent.routing.cost_calculator import calculate_cost_from_response, format_cost_header_value
+from thegent.utils.routing_impl.cost_calculator import calculate_cost_from_response, format_cost_header_value
 
 _log = logging.getLogger(__name__)
 
@@ -315,7 +315,7 @@ def inject_usage_cost(response_body: dict) -> dict:
     # @trace FR-REQEXT-048
     """
     try:
-        from thegent.routing.cost_calculator import calculate_cost_from_response
+        from thegent.utils.routing_impl.cost_calculator import calculate_cost_from_response
 
         cost = calculate_cost_from_response(response_body)
         if cost <= 0.0:
@@ -625,7 +625,7 @@ def enrich_model_entry(entry: dict) -> dict:
     # @trace FR-REQEXT-046
     """
     try:
-        from thegent.routing.model_metadata import get_model_metadata, has_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata, has_model_metadata
 
         model_id = entry.get("id", "")
         if not has_model_metadata(model_id):
@@ -659,7 +659,7 @@ def inject_proxy_models(models_list: list[dict]) -> list[dict]:
     # @trace FR-REQEXT-047
     """
     try:
-        from thegent.routing.harness_model_mapping import CANONICAL_TO_OPENROUTER
+        from thegent.utils.routing_impl.harness_model_mapping import CANONICAL_TO_OPENROUTER
 
         existing_ids = {m.get("id", "") for m in models_list}
         result = list(models_list)
@@ -1023,7 +1023,7 @@ async def proxy_handler(request: Request) -> Response:
     # Route Responses API to LiteLLM Router if enabled
     if use_litellm and path == "/v1/responses" and request.method == "POST":
         try:
-            from thegent.routing.litellm_responses_handler import handle_responses_request
+            from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_request
 
             return await handle_responses_request(request)
         except Exception as e:
@@ -1084,7 +1084,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
 
     if use_litellm:
         try:
-            from thegent.routing.litellm_responses_handler import handle_responses_websocket
+            from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_websocket
 
             await handle_responses_websocket(websocket)
             return

@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from thegent.routing.rate_limiter import (
+from thegent.utils.routing_impl.rate_limiter import (
     MultiKeyRateLimiter,
     RateLimitConfig,
     SlidingWindowRateLimiter,

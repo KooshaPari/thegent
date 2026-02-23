@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.latency_tracker import (
+from thegent.utils.routing_impl.latency_tracker import (
     EWMAConfig,
     EWMALatencyTracker,
     get_latency_tracker,

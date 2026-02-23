@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.provider_preferences import (
+from thegent.utils.routing_impl.provider_preferences import (
     PriceConstraint,
     ProviderOptions,
     ProviderPreferences,
@@ -16,7 +16,7 @@ from thegent.routing.provider_preferences import (
     filter_models_by_preferences,
     to_openrouter_provider_body,
 )
-from thegent.routing.route_config import (
+from thegent.utils.routing_impl.route_config import (
     CacheConfig,
     CircuitBreakerConfig,
     RetryConfig,

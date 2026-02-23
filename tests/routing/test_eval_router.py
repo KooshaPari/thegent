@@ -9,7 +9,7 @@ import threading
 
 import pytest
 
-from thegent.routing.eval_router import (
+from thegent.utils.routing_impl.eval_router import (
     EvalRouter,
     EvalRouteResult,
     EvalScore,

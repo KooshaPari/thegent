@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.guardrails.pii import (
+from thegent.utils.routing_impl.guardrails.pii import (
     mask_messages,
     mask_pii,
     unmask_content,

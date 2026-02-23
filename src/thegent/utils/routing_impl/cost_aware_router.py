@@ -16,8 +16,8 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Literal
 
-from thegent.routing.pareto_router import ParetoRouter
-from thegent.routing.pareto_router import RouteCandidate as _ParetoRouteCandidate
+from thegent.utils.routing_impl.pareto_router import ParetoRouter
+from thegent.utils.routing_impl.pareto_router import RouteCandidate as _ParetoRouteCandidate
 
 _log = logging.getLogger(__name__)
 

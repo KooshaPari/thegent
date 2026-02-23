@@ -7,7 +7,7 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import DataTable, Static
 
-from thegent.routing.cost_tracker import get_cost_tracker
+from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
 
 _log = logging.getLogger(__name__)
 

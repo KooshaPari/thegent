@@ -7,7 +7,7 @@ from pathlib import Path
 
 from thegent.cli.commands.impl import _build_run_event_details, _resolve_grounding_sources_for_output
 from thegent.execution import RunRegistry
-from thegent.routing.grounding import (
+from thegent.utils.routing_impl.grounding import (
     extract_grounding_sources,
     extract_grounding_sources_from_payload,
     normalize_grounding_source_url,

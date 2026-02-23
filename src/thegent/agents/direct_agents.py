@@ -321,7 +321,7 @@ class DirectAgentRunner(AgentRunner):
     ) -> RunResult:
         """Run via LiteLLM Router for direct CLI compatibility."""
         try:
-            from thegent.routing.litellm_router import get_enhanced_router
+            from thegent.utils.routing_impl.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
             # Map provider if possible

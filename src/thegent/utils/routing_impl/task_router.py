@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any
 
-from thegent.routing.models import TaskCategory, TaskMetadata
+from thegent.utils.routing_impl.models import TaskCategory, TaskMetadata
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings

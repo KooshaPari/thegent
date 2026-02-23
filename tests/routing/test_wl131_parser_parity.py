@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.model_suffix_parser import parse_model_suffixes
+from thegent.utils.routing_impl.model_suffix_parser import parse_model_suffixes
 
 
 # ---------------------------------------------------------------------------

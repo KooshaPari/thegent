@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.reasoning_transform import (
+from thegent.utils.routing_impl.reasoning_transform import (
     THINKING_BUDGET,
     ReasoningEffort,
     apply_anthropic_reasoning,

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.tag_router import TagRoute, TagRouter, extract_request_tags
+from thegent.utils.routing_impl.tag_router import TagRoute, TagRouter, extract_request_tags
 
 
 @pytest.mark.requirement("FR-AROUTE-058")

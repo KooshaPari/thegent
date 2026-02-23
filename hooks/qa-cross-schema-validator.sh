@@ -40,7 +40,7 @@ echo "  [PASS] Evidence linkage verified"
 
 # 3. Policy Check: Evidence kind satisfies Requirement's evidence_policy
 # We check if the evidence kind is listed in the requirement's required evidence
-REQUIRED_KINDS=$(jq -r '.evidence_policy.required[].kind // empty' "$REQ_FILE")
+REQUIRED_KINDS=$(jq -r '.evidence_policy.required[]?.kind // empty' "$REQ_FILE")
 if [[ -n "$REQUIRED_KINDS" ]]; then
     FOUND=0
     while read -r KIND; do
@@ -56,7 +56,8 @@ if [[ -n "$REQUIRED_KINDS" ]]; then
     fi
     echo "  [PASS] Evidence kind ($EVIDENCE_KIND) satisfies policy"
 else
-    echo "  [SKIP] No evidence policy found in requirement"
+    echo "  [FAIL] Requirement is missing evidence_policy.required kinds"
+    exit 2
 fi
 
 # 4. Attestation Coverage Check

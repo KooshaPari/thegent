@@ -921,11 +921,6 @@ fn cmd_governance(args: &[String]) -> ExitCode {
                     Ok(c) => c,
                     Err(e) => {
                         eprintln!("governance scan: cannot read {path:?}: {e}");
-                        let out = GovernanceScanOutput {
-                            violation_count: 0,
-                            violations: vec![],
-                        };
-                        println!("{}", serde_json::to_string(&out).unwrap());
                         return ExitCode::from(1);
                     }
                 }

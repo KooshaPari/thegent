@@ -5,7 +5,7 @@ Traces to: FR-COST-001, FR-COST-002, FR-COST-003
 
 import pytest
 
-from thegent.routing.cost_aware_router import (
+from thegent.utils.routing_impl.cost_aware_router import (
     BudgetExceededError,
     CostAwareRouter,
     CostBudget,

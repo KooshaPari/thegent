@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.cel_router import (
+from thegent.utils.routing_impl.cel_router import (
     CelEvalResult,
     CelEvaluator,
     CelRoute,

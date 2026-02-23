@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.routing.pareto_router import ParetoRouter, RouteCandidate
+from thegent.utils.routing_impl.pareto_router import ParetoRouter, RouteCandidate
 
 # ---------------------------------------------------------------------------
 # Helpers / constants
@@ -304,7 +304,7 @@ class TestParetoRouterUnit:
         """RouteCandidate objects built from real catalog entries yield a valid ParetoRouter selection."""
         # @trace FR-ROU-001
         from thegent.models.catalog import _get_catalog
-        from thegent.routing.pareto_router import QUALITY_PROXY
+        from thegent.utils.routing_impl.pareto_router import QUALITY_PROXY
 
         catalog = _get_catalog()
         candidates = []

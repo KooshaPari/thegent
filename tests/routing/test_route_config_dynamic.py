@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from thegent.routing.route_config import BudgetLimitRoute, PercentageSplit
+from thegent.utils.routing_impl.route_config import BudgetLimitRoute, PercentageSplit
 
 
 # ---------------------------------------------------------------------------

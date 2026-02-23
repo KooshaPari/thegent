@@ -216,7 +216,7 @@ class ResponsesStreamState:
             usage_block["cost"] = total_cost
             # Wire into cost tracker so budget enforcement sees actual spend
             try:
-                from thegent.routing.cost_tracker import get_cost_tracker
+                from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
 
                 get_cost_tracker().track(
                     provider="openrouter",

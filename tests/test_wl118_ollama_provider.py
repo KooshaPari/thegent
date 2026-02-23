@@ -30,7 +30,7 @@ class TestIsOllamaAvailable:
     def test_returns_true_on_http_200(self) -> None:
         """is_ollama_available returns True when daemon responds 200."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import is_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import is_ollama_available
 
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -40,7 +40,7 @@ class TestIsOllamaAvailable:
     def test_returns_false_on_non_200(self) -> None:
         """is_ollama_available returns False when daemon returns non-200."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import is_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import is_ollama_available
 
         mock_resp = MagicMock()
         mock_resp.status_code = 503
@@ -50,7 +50,7 @@ class TestIsOllamaAvailable:
     def test_returns_false_on_connect_error(self) -> None:
         """is_ollama_available returns False when daemon is not reachable."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import is_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import is_ollama_available
 
         with patch("thegent.routing.ollama_provider.httpx.get", side_effect=httpx.ConnectError("refused")):
             assert is_ollama_available() is False
@@ -58,7 +58,7 @@ class TestIsOllamaAvailable:
     def test_returns_false_on_timeout(self) -> None:
         """is_ollama_available returns False on timeout."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import is_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import is_ollama_available
 
         with patch(
             "thegent.routing.ollama_provider.httpx.get",
@@ -69,7 +69,7 @@ class TestIsOllamaAvailable:
     def test_probes_correct_endpoint(self) -> None:
         """is_ollama_available probes /api/tags at localhost:11434."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import OLLAMA_TAGS_ENDPOINT, is_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import OLLAMA_TAGS_ENDPOINT, is_ollama_available
 
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -94,7 +94,7 @@ class TestGetAvailableModels:
     def test_returns_sorted_model_names(self) -> None:
         """get_available_models returns sorted model names."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import get_available_models
+        from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [{"name": "mistral:latest"}, {"name": "llama3.3:latest"}])
         with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
@@ -104,7 +104,7 @@ class TestGetAvailableModels:
     def test_strips_tag_suffix(self) -> None:
         """get_available_models strips :tag suffix (e.g. 'llama3.3:latest' -> 'llama3.3')."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import get_available_models
+        from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [{"name": "qwen2.5-coder:7b"}])
         with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
@@ -114,7 +114,7 @@ class TestGetAvailableModels:
     def test_returns_empty_list_when_no_models(self) -> None:
         """get_available_models returns [] when models array is empty."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import get_available_models
+        from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [])
         with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
@@ -123,7 +123,7 @@ class TestGetAvailableModels:
     def test_raises_on_connect_error(self) -> None:
         """get_available_models raises OllamaUnavailableError on ConnectError."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import OllamaUnavailableError, get_available_models
+        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, get_available_models
 
         with patch(
             "thegent.routing.ollama_provider.httpx.get",
@@ -135,7 +135,7 @@ class TestGetAvailableModels:
     def test_raises_on_non_200(self) -> None:
         """get_available_models raises OllamaUnavailableError on non-200 response."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import OllamaUnavailableError, get_available_models
+        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, get_available_models
 
         resp = MagicMock()
         resp.status_code = 500
@@ -147,7 +147,7 @@ class TestGetAvailableModels:
     def test_deduplicates_model_names(self) -> None:
         """get_available_models deduplicates when same base name appears multiple times."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import get_available_models
+        from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [{"name": "mistral:latest"}, {"name": "mistral:7b"}])
         with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
@@ -161,7 +161,7 @@ class TestAssertOllamaAvailable:
     def test_does_not_raise_when_available(self) -> None:
         """assert_ollama_available does not raise when is_ollama_available returns True."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import assert_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import assert_ollama_available
 
         with patch("thegent.routing.ollama_provider.is_ollama_available", return_value=True):
             assert_ollama_available()  # should not raise
@@ -169,7 +169,7 @@ class TestAssertOllamaAvailable:
     def test_raises_when_unavailable(self) -> None:
         """assert_ollama_available raises OllamaUnavailableError when daemon is down."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import OllamaUnavailableError, assert_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, assert_ollama_available
 
         with patch("thegent.routing.ollama_provider.is_ollama_available", return_value=False):
             with pytest.raises(OllamaUnavailableError):
@@ -178,7 +178,7 @@ class TestAssertOllamaAvailable:
     def test_error_message_mentions_ollama_serve(self) -> None:
         """assert_ollama_available error message includes actionable instructions."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import OllamaUnavailableError, assert_ollama_available
+        from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, assert_ollama_available
 
         with patch("thegent.routing.ollama_provider.is_ollama_available", return_value=False):
             with pytest.raises(OllamaUnavailableError, match="ollama serve"):
@@ -191,28 +191,28 @@ class TestResolveOllamaModel:
     def test_strips_ollama_prefix(self) -> None:
         """resolve_ollama_model strips 'ollama/' prefix."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import resolve_ollama_model
+        from thegent.utils.routing_impl.ollama_provider import resolve_ollama_model
 
         assert resolve_ollama_model("ollama/llama3.3") == "llama3.3"
 
     def test_returns_alias_for_known_model(self) -> None:
         """resolve_ollama_model returns canonical name for known aliases."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import resolve_ollama_model
+        from thegent.utils.routing_impl.ollama_provider import resolve_ollama_model
 
         assert resolve_ollama_model("mistral") == "mistral"
 
     def test_passthrough_for_unknown_model(self) -> None:
         """resolve_ollama_model passes through unknown model names unchanged."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import resolve_ollama_model
+        from thegent.utils.routing_impl.ollama_provider import resolve_ollama_model
 
         assert resolve_ollama_model("some-custom-model:tag") == "some-custom-model:tag"
 
     def test_known_aliases_include_qwen_coder(self) -> None:
         """resolve_ollama_model knows about qwen2.5-coder alias."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import resolve_ollama_model
+        from thegent.utils.routing_impl.ollama_provider import resolve_ollama_model
 
         assert resolve_ollama_model("qwen2.5-coder") == "qwen2.5-coder"
 
@@ -223,7 +223,7 @@ class TestBuildLitellmEntry:
     def test_model_name_set_to_canonical(self) -> None:
         """build_litellm_entry sets model_name to canonical Ollama model name."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import build_litellm_entry
+        from thegent.utils.routing_impl.ollama_provider import build_litellm_entry
 
         entry = build_litellm_entry("llama3.3")
         assert entry["model_name"] == "llama3.3"
@@ -231,7 +231,7 @@ class TestBuildLitellmEntry:
     def test_litellm_model_has_ollama_prefix(self) -> None:
         """build_litellm_entry sets litellm_params.model to 'ollama/<name>'."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import build_litellm_entry
+        from thegent.utils.routing_impl.ollama_provider import build_litellm_entry
 
         entry = build_litellm_entry("mistral")
         assert entry["litellm_params"]["model"] == "ollama/mistral"  # type: ignore[index]
@@ -239,7 +239,7 @@ class TestBuildLitellmEntry:
     def test_api_base_points_to_localhost(self) -> None:
         """build_litellm_entry sets api_base to http://localhost:11434/v1."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import OLLAMA_OPENAI_BASE, build_litellm_entry
+        from thegent.utils.routing_impl.ollama_provider import OLLAMA_OPENAI_BASE, build_litellm_entry
 
         entry = build_litellm_entry("llama3.3")
         assert entry["litellm_params"]["api_base"] == OLLAMA_OPENAI_BASE  # type: ignore[index]
@@ -248,7 +248,7 @@ class TestBuildLitellmEntry:
     def test_api_key_is_sentinel(self) -> None:
         """build_litellm_entry uses a sentinel api_key (Ollama needs no real key)."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import build_litellm_entry
+        from thegent.utils.routing_impl.ollama_provider import build_litellm_entry
 
         entry = build_litellm_entry("llama3.3")
         key = entry["litellm_params"]["api_key"]  # type: ignore[index]
@@ -258,7 +258,7 @@ class TestBuildLitellmEntry:
     def test_strips_prefix_before_building(self) -> None:
         """build_litellm_entry strips 'ollama/' prefix when resolving model name."""
         # @trace WL-118
-        from thegent.routing.ollama_provider import build_litellm_entry
+        from thegent.utils.routing_impl.ollama_provider import build_litellm_entry
 
         entry_with_prefix = build_litellm_entry("ollama/mistral")
         entry_plain = build_litellm_entry("mistral")
@@ -276,42 +276,42 @@ class TestOllamaModelAliasesMapping:
     def test_llama33_alias_present(self) -> None:
         """OLLAMA_MODEL_ALIASES includes llama3.3."""
         # @trace WL-118
-        from thegent.routing.harness_model_mapping import OLLAMA_MODEL_ALIASES
+        from thegent.utils.routing_impl.harness_model_mapping import OLLAMA_MODEL_ALIASES
 
         assert "llama3.3" in OLLAMA_MODEL_ALIASES
 
     def test_qwen_coder_alias_present(self) -> None:
         """OLLAMA_MODEL_ALIASES includes qwen2.5-coder."""
         # @trace WL-118
-        from thegent.routing.harness_model_mapping import OLLAMA_MODEL_ALIASES
+        from thegent.utils.routing_impl.harness_model_mapping import OLLAMA_MODEL_ALIASES
 
         assert "qwen2.5-coder" in OLLAMA_MODEL_ALIASES
 
     def test_mistral_alias_present(self) -> None:
         """OLLAMA_MODEL_ALIASES includes mistral."""
         # @trace WL-118
-        from thegent.routing.harness_model_mapping import OLLAMA_MODEL_ALIASES
+        from thegent.utils.routing_impl.harness_model_mapping import OLLAMA_MODEL_ALIASES
 
         assert "mistral" in OLLAMA_MODEL_ALIASES
 
     def test_resolve_ollama_model_alias_strips_prefix(self) -> None:
         """resolve_ollama_model_alias strips 'ollama/' prefix before lookup."""
         # @trace WL-118
-        from thegent.routing.harness_model_mapping import resolve_ollama_model_alias
+        from thegent.utils.routing_impl.harness_model_mapping import resolve_ollama_model_alias
 
         assert resolve_ollama_model_alias("ollama/llama3.3") == "llama3.3"
 
     def test_resolve_ollama_model_alias_passthrough_unknown(self) -> None:
         """resolve_ollama_model_alias passes through unregistered model names."""
         # @trace WL-118
-        from thegent.routing.harness_model_mapping import resolve_ollama_model_alias
+        from thegent.utils.routing_impl.harness_model_mapping import resolve_ollama_model_alias
 
         assert resolve_ollama_model_alias("my-custom-model") == "my-custom-model"
 
     def test_get_ollama_models_returns_list(self) -> None:
         """get_ollama_models returns a non-empty list of string aliases."""
         # @trace WL-118
-        from thegent.routing.harness_model_mapping import get_ollama_models
+        from thegent.utils.routing_impl.harness_model_mapping import get_ollama_models
 
         models = get_ollama_models()
         assert isinstance(models, list)
@@ -330,7 +330,7 @@ class TestOllamaModelMetadata:
     def test_llama33_metadata_has_zero_cost(self) -> None:
         """llama3.3 metadata has cost_per_mtok == 0.0 (zero-cost local execution)."""
         # @trace WL-118
-        from thegent.routing.model_metadata import get_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
         meta = get_model_metadata("llama3.3")
         assert meta is not None
@@ -339,7 +339,7 @@ class TestOllamaModelMetadata:
     def test_llama33_metadata_provider_is_ollama(self) -> None:
         """llama3.3 metadata identifies provider as 'ollama'."""
         # @trace WL-118
-        from thegent.routing.model_metadata import get_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
         meta = get_model_metadata("llama3.3")
         assert meta is not None
@@ -348,7 +348,7 @@ class TestOllamaModelMetadata:
     def test_mistral_metadata_has_zero_cost(self) -> None:
         """mistral metadata has cost_per_mtok == 0.0."""
         # @trace WL-118
-        from thegent.routing.model_metadata import get_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
         meta = get_model_metadata("mistral")
         assert meta is not None
@@ -357,7 +357,7 @@ class TestOllamaModelMetadata:
     def test_qwen_coder_metadata_registered(self) -> None:
         """qwen2.5-coder metadata is registered."""
         # @trace WL-118
-        from thegent.routing.model_metadata import has_model_metadata
+        from thegent.utils.routing_impl.model_metadata import has_model_metadata
 
         assert has_model_metadata("qwen2.5-coder")
 
@@ -367,7 +367,7 @@ class TestModelMetadataAliases:
 
     def test_codex_minimax_alias_resolves_to_minimax_metadata(self) -> None:
         """Backend aliases like codex-MiniMax-M2.5 resolve to minimax metadata."""
-        from thegent.routing.model_metadata import get_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
         assert get_model_metadata("codex-MiniMax-M2.5") is not None
         meta = get_model_metadata("codex-MiniMax-M2.5")
@@ -376,7 +376,7 @@ class TestModelMetadataAliases:
 
     def test_codex_minimax_alias_with_provider_prefix_resolves(self) -> None:
         """Provider wrapper prefixes like custom:codex-MiniMax-M2.5 resolve too."""
-        from thegent.routing.model_metadata import get_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
         meta = get_model_metadata("custom:codex-MiniMax-M2.5")
         assert meta is not None
@@ -384,7 +384,7 @@ class TestModelMetadataAliases:
 
     def test_codex_lowercase_minimax_alias_resolves(self) -> None:
         """Lowercase codex minimax alias resolves to minimax metadata."""
-        from thegent.routing.model_metadata import get_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
         meta = get_model_metadata("codex-minimax-m2.5")
         assert meta is not None
@@ -402,42 +402,42 @@ class TestOllamaProviderTypes:
     def test_normalize_ollama_local_alias(self) -> None:
         """normalize_provider_name maps 'ollama-local' to 'ollama'."""
         # @trace WL-118
-        from thegent.routing.provider_types import normalize_provider_name
+        from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
         assert normalize_provider_name("ollama-local") == "ollama"
 
     def test_normalize_local_ollama_alias(self) -> None:
         """normalize_provider_name maps 'local-ollama' to 'ollama'."""
         # @trace WL-118
-        from thegent.routing.provider_types import normalize_provider_name
+        from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
         assert normalize_provider_name("local-ollama") == "ollama"
 
     def test_normalize_ollama_localhost_alias(self) -> None:
         """normalize_provider_name maps 'ollama-localhost' to 'ollama'."""
         # @trace WL-118
-        from thegent.routing.provider_types import normalize_provider_name
+        from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
         assert normalize_provider_name("ollama-localhost") == "ollama"
 
     def test_normalize_ollama_at_localhost_alias(self) -> None:
         """normalize_provider_name maps 'ollama@localhost' to 'ollama'."""
         # @trace WL-118
-        from thegent.routing.provider_types import normalize_provider_name
+        from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
         assert normalize_provider_name("ollama@localhost") == "ollama"
 
     def test_ollama_execution_path_is_litellm_api(self) -> None:
         """get_execution_path returns LITELLM_API for 'ollama'."""
         # @trace WL-118
-        from thegent.routing.provider_types import ExecutionPath, get_execution_path
+        from thegent.utils.routing_impl.provider_types import ExecutionPath, get_execution_path
 
         assert get_execution_path("ollama") == ExecutionPath.LITELLM_API
 
     def test_ollama_in_api_key_providers_set(self) -> None:
         """'ollama' appears in API_KEY_PROVIDERS (routes via LiteLLM, not CLIProxy)."""
         # @trace WL-118
-        from thegent.routing.provider_types import API_KEY_PROVIDERS
+        from thegent.utils.routing_impl.provider_types import API_KEY_PROVIDERS
 
         assert "ollama" in API_KEY_PROVIDERS
 
@@ -453,8 +453,8 @@ class TestLitellmRouterOllama:
     def test_ollama_route_sets_api_base(self) -> None:
         """_route_to_litellm_config sets api_base to http://127.0.0.1:11434/v1 for ollama."""
         # @trace WL-118
-        from thegent.routing.litellm_router import _route_to_litellm_config
-        from thegent.routing.provider_types import normalize_provider_name
+        from thegent.utils.routing_impl.litellm_router import _route_to_litellm_config
+        from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
         # Import Route directly to avoid circular-import via __init__
         from thegent.models.catalog import Route
@@ -470,8 +470,8 @@ class TestLitellmRouterOllama:
     def test_ollama_route_litellm_model_prefix(self) -> None:
         """_route_to_litellm_config sets litellm model as 'ollama/llama3.3'."""
         # @trace WL-118
-        from thegent.routing.litellm_router import _route_to_litellm_config
-        from thegent.routing.provider_types import normalize_provider_name
+        from thegent.utils.routing_impl.litellm_router import _route_to_litellm_config
+        from thegent.utils.routing_impl.provider_types import normalize_provider_name
 
         from thegent.models.catalog import Route
 

@@ -61,7 +61,7 @@ from thegent.integrations.pipeline_percentiles import PipelinePercentileTracker
 from thegent.observability.prometheus import get_metrics_collector
 from thegent.execution import EscalationQueue
 from research_engine.digest import build_hourly_change_digest
-from thegent.routing.circuit_breaker import (
+from thegent.utils.routing_impl.circuit_breaker import (
     CircuitOpenError,
     ProviderCircuitBreakerConfig,
     ProviderCircuitBreakerRegistry,

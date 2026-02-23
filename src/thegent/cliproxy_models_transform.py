@@ -111,7 +111,7 @@ def transform_models_response(
         # Enrich each model with the full Codex metadata schema.
         # Codex 0.104.0 removed the `remote_models` feature flag, so all metadata must come
         # from the /v1/models response — any missing field triggers "Model metadata not found."
-        from thegent.routing.model_metadata import get_model_metadata
+        from thegent.utils.routing_impl.model_metadata import get_model_metadata
 
         for m in models:
             if not isinstance(m, dict):

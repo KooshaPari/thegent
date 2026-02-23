@@ -9,7 +9,7 @@ from thegent.agents.base import AgentRunner, RunResult
 from thegent.config import ThegentSettings
 from thegent.execution import Auditor, RunMeta
 from thegent.maif import MAIFRunner
-from thegent.routing.route_executor import (
+from thegent.utils.routing_impl.route_executor import (
     RoutingDecision,
     RoutingOrchestratorBridge,
     make_routing_decision_from_factors,

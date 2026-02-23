@@ -689,7 +689,7 @@ def _apply_pareto_routing(
 
     try:
         from thegent.models.catalog import _get_catalog
-        from thegent.routing.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
+        from thegent.utils.routing_impl.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
 
         catalog = _get_catalog()
         candidates: list[RouteCandidate] = []

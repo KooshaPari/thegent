@@ -9,7 +9,7 @@ from thegent.execution import RunMeta
 
 if TYPE_CHECKING:
     from thegent.orchestration.execution.engine import ExecutionEngine
-    from thegent.routing.route_executor import RoutingDecision
+    from thegent.utils.routing_impl.route_executor import RoutingDecision
 
 _log = logging.getLogger(__name__)
 
