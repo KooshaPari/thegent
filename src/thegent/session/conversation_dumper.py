@@ -8,7 +8,8 @@ with timestamp, model, prompt, and response to configurable locations.
 
 from __future__ import annotations
 
-import orjson as jsonimport logging
+import orjson as json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
