@@ -18,29 +18,29 @@ class StateAdapter:
         self._trend_path = config.trend_path or Path("docs/reference/workstream_autosync_trend.jsonl")
         self._cycle_metrics_path = config.cycle_metrics_path or Path("docs/reference/workstream_autosync_cycle_metrics.jsonl")
         self._change_digest_path = config.change_digest_path or Path("artifacts/workstream_autosync_change_digest.jsonl")
-    
+
     # Path methods
     def get_status_path(self) -> Path:
         return self._status_path
-    
+
     def get_trend_path(self) -> Path:
         return self._trend_path
-    
+
     def get_cycle_metrics_path(self) -> Path:
         return self._cycle_metrics_path
-    
+
     def get_change_digest_path(self) -> Path:
         return self._change_digest_path
-    
+
     def get_autosync_metrics_path(self) -> Path:
         return self.config.autosync_prometheus_export_path or Path("docs/reference/workstream_autosync_metrics.prom")
-    
+
     def get_cycle_manifest_path(self) -> Path:
         return self._status_path.parent / "autosync_cycle_manifest.jsonl"
-    
+
     def get_failure_queue_path(self) -> Path:
         return self._status_path.parent / "autosync_failure_queue.json"
-    
+
     def get_checkpoint_path(self, checkpoint_id: str) -> Path:
         """Get path for checkpoint file."""
         return self._status_path.parent / f"autosync_checkpoint_{checkpoint_id}.json"
@@ -88,7 +88,7 @@ class StateAdapter:
             self._status_path.write_text(json.dumps(status, indent=2).decode().decode())
         except Exception:
             pass
-    
+
     def compact_snapshots(self, keep_count: int = 10) -> None:
         """Compact old snapshots, keeping only the most recent."""
         try:

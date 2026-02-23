@@ -18,12 +18,7 @@ from typing import Any
 
 import typer
 
-<<<<<<< HEAD
 from thegent.cli.commands.session_ops_list_impl import ps_impl as ps_impl
-=======
-from thegent.cli.commands.session_ops_list_impl import ps_impl
->>>>>>> fix/ci-remove-macos
-
 _log = logging.getLogger(__name__)
 
 _LOG_FOLLOW_POLL_SECONDS = 0.5

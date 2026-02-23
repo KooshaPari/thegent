@@ -5,11 +5,7 @@
 
 from __future__ import annotations
 
-<<<<<<< HEAD
-import orjson as json
-=======
->>>>>>> fix/ci-remove-macos
-from dataclasses import asdict
+import orjson as jsonfrom dataclasses import asdict
 from pathlib import Path
 
 from thegent.sync.conflicts import SyncConflict

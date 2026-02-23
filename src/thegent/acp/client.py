@@ -1,11 +1,15 @@
 """ACP client adapter for spawning external ACP agents."""
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import orjson as json
 =======
 from thegent.utils.json_utils import json_dumps, json_loads
 >>>>>>> fix/ci-remove-macos
 import subprocess
+=======
+import orjson as jsonimport subprocess
+>>>>>>> main
 from collections.abc import Callable
 from pathlib import Path
 
@@ -82,11 +86,15 @@ class ACPClientAdapter(AgentRunner):
                 },
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.process.stdin.write(json.dumps(init_request).decode().decode() + "\n")
 =======
             self.process.stdin.write(json_dumps(init_request) + "\n")
 >>>>>>> fix/ci-remove-macos
             self.process.stdin.flush()
+=======
+            self.process.stdin.write(json.dumps(init_request).decode().decode() + "\n")            self.process.stdin.flush()
+>>>>>>> main
 
             # Read initialize response
             init_response_line = self.process.stdout.readline()
@@ -111,11 +119,15 @@ class ACPClientAdapter(AgentRunner):
                 },
             }
 <<<<<<< HEAD
+<<<<<<< HEAD
             self.process.stdin.write(json.dumps(spawn_request).decode().decode() + "\n")
 =======
             self.process.stdin.write(json_dumps(spawn_request) + "\n")
 >>>>>>> fix/ci-remove-macos
             self.process.stdin.flush()
+=======
+            self.process.stdin.write(json.dumps(spawn_request).decode().decode() + "\n")            self.process.stdin.flush()
+>>>>>>> main
 
             # Read responses
             stdout_lines = []

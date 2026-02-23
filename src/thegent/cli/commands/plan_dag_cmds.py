@@ -3,18 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-<<<<<<< HEAD
 import orjson as json
-=======
->>>>>>> fix/ci-remove-macos
-import logging
-from pathlib import Path
-<<<<<<< HEAD
-from datetime import datetime
-from typing import Any, cast
-=======
->>>>>>> fix/ci-remove-macos
-
 import typer
 
 from rich.table import Table

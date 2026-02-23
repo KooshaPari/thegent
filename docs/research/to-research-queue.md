@@ -71,6 +71,20 @@
 ### NEW: External Research Batch 5 - 2024-2025 Edition (2026-02-23)
 - [EXTERNAL_RESEARCH_BATCH5_2024_2025.md](./EXTERNAL_RESEARCH_BATCH5_2024_2025.md) - 500+ established 2024-2025 items
 
+<<<<<<< HEAD
+=======
+### NEW: External Research Batch 6 - Supplementary (2026-02-23)
+- [EXTERNAL_RESEARCH_BATCH6_SUPPLEMENTARY.md](./EXTERNAL_RESEARCH_BATCH6_SUPPLEMENTARY.md) - 500+ additional items (VS Code, extensions, tools)
+
+### TheGent, CLIProxyAPI, AgentPai & Related Projects (2026-02-23)
+- [THEGENT_CLIPROXY_AGENTPAI_RELATED.md](./THEGENT_CLIPROXY_AGENTPAI_RELATED.md) - 60+ related projects:
+  - thegent & Gent ecosystem (10+)
+  - CLIProxyAPI & variants (15+)
+  - AgentPai & similar frameworks (15+)
+  - Agent protocols (MCP, A2A) (10+)
+  - Related infrastructure (15+)
+
+>>>>>>> main
 
 
 

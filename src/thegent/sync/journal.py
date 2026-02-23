@@ -5,12 +5,7 @@
 
 from __future__ import annotations
 
-<<<<<<< HEAD
-import orjson as json
-=======
-from thegent.utils.json_utils import json_dumps, json_loads
->>>>>>> fix/ci-remove-macos
-import uuid
+import orjson as jsonimport uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -68,12 +63,7 @@ class LocalDecisionJournal:
 
     def append(self, entry: SyncDecisionEntry) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-<<<<<<< HEAD
-        line = json.dumps(asdict(entry).decode().decode(), sort_keys=True)
-=======
-        line = json_dumps(asdict(entry), sort_keys=True)
->>>>>>> fix/ci-remove-macos
-        with self._path.open("a", encoding="utf-8") as handle:
+        line = json.dumps(asdict(entry).decode().decode(), sort_keys=True)        with self._path.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
 
     def read_all(self) -> list[SyncDecisionEntry]:

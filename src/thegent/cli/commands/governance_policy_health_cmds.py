@@ -1,11 +1,17 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 """Thegent CLI governance policies, contracts, health, and drift detection commands.
 
 Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
 """
+<<<<<<< HEAD
 =======
 """Governance policy, contracts, and health scoring commands (WL-124).
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 
 This module handles policy configuration, health score computation, drift detection,
 contract conformance checking, and governance cycles.
@@ -15,12 +21,16 @@ contract conformance checking, and governance cycles.
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 import sys
 from pathlib import Path
 from typing import Any
 
 import orjson as json
 import typer
+<<<<<<< HEAD
 =======
 import hashlib
 import json
@@ -31,10 +41,13 @@ from pathlib import Path
 import typer
 
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 from rich.panel import Panel
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
+<<<<<<< HEAD
 <<<<<<< HEAD
     _get_health_targets_path,
 =======
@@ -44,11 +57,17 @@ from thegent.cli.commands._cli_shared import (
     _HEALTH_TARGETS_TEMPLATE,
     _load_artifact,
 >>>>>>> fix/ci-remove-macos
+=======
+    _get_health_targets_path,
+>>>>>>> main
     _normalize_output_format,
     _resolve_cwd,
     console,
 )
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 
 # Health policy profiles matching observability_health_impl.py
 HEALTH_POLICY_PROFILES: dict[str, dict[str, Any]] = {
@@ -56,6 +75,7 @@ HEALTH_POLICY_PROFILES: dict[str, dict[str, Any]] = {
     "warn_only": {"strict": False, "min_healthy_ratio": 0.0},
     "prod_release": {"strict": True, "min_healthy_ratio": 0.98},
 }
+<<<<<<< HEAD
 =======
 from thegent.cli.commands.governance_health_helpers import (
     build_cycle_json_output,
@@ -68,6 +88,8 @@ from thegent.cli.commands.governance_health_helpers import (
     resolve_band_value,
 )
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 
 
 def govern_configure_cmd(cd: Path | None = None, force: bool = False) -> None:
@@ -80,6 +102,9 @@ def govern_configure_cmd(cd: Path | None = None, force: bool = False) -> None:
         return
     contracts_dir.mkdir(parents=True, exist_ok=True)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
     from thegent.cli.commands._cli_shared import _HEALTH_TARGETS_TEMPLATE
 
     health_targets.write_text(_HEALTH_TARGETS_TEMPLATE, encoding="utf-8")
@@ -90,6 +115,7 @@ def policy_show_cmd() -> None:
     """Show active governance policies and thresholds."""
     from thegent.config import ThegentSettings
 
+<<<<<<< HEAD
 =======
     health_targets.write_text(_HEALTH_TARGETS_TEMPLATE, encoding="utf-8")
     _bootstrap_metric_contracts(project_dir, force=force)
@@ -302,6 +328,8 @@ def govern_go_watch_cmd(
 def policy_show_cmd() -> None:
     """Show active governance policies and thresholds."""
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
     settings = ThegentSettings()
     console.print(f"[bold]Active Governance Policies[/bold] (Environment: [cyan]{settings.environment}[/cyan])")
 
@@ -326,15 +354,21 @@ def policy_show_cmd() -> None:
 def policy_purge_cmd(dry_run: bool = True) -> None:
     """Purge expired history based on tiered retention (WP-3006)."""
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
     from thegent.execution import RunRegistry
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
+<<<<<<< HEAD
 =======
     settings = ThegentSettings()
     from thegent.execution import RunRegistry
 
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
     registry = RunRegistry(settings.session_dir)
     res = registry.purge_expired(
         default_days=settings.retention_default_days,
@@ -348,6 +382,9 @@ def policy_purge_cmd(dry_run: bool = True) -> None:
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard", confidence: float = 1.0) -> None:
     """Evaluate a hypothetical run against governance policies (WP-3001)."""
     import uuid
@@ -382,6 +419,7 @@ def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard
 
 def contracts_registry_cmd(format: str | None = None) -> None:
     """Show the contract registry and compatibility matrix."""
+<<<<<<< HEAD
 =======
 def contracts_registry_cmd(format: str | None = None) -> None:
     """Show the contract registry and compatibility matrix."""
@@ -389,11 +427,14 @@ def contracts_registry_cmd(format: str | None = None) -> None:
     from rich.table import Table
 
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
     from thegent.contracts.registry import get_registry
 
     registry = get_registry()
     versions = registry.list_versions()
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     if format == "json":
 =======
@@ -401,6 +442,9 @@ def contracts_registry_cmd(format: str | None = None) -> None:
     if format == "json":
         # Handle both Pydantic models and mock/dict objects for testing
 >>>>>>> fix/ci-remove-macos
+=======
+    if format == "json":
+>>>>>>> main
         data = []
         for v in versions:
             model_dump = getattr(v, "model_dump", None)
@@ -411,10 +455,14 @@ def contracts_registry_cmd(format: str | None = None) -> None:
             else:
                 data.append(v)
 <<<<<<< HEAD
+<<<<<<< HEAD
         sys.stdout.write(json.dumps(data).decode().decode() + "\n")
 =======
         sys.stdout.write(json.dumps(data) + "\n")
 >>>>>>> fix/ci-remove-macos
+=======
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
+>>>>>>> main
         return
 
     table = Table(title="Contract Registry")
@@ -433,7 +481,10 @@ def contracts_registry_cmd(format: str | None = None) -> None:
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> main
 def migration_cmd(contract_id: str, version: str, format: str | None = None) -> None:
     """Evaluate migration status for a contract version."""
     from rich.console import Console
@@ -511,7 +562,10 @@ def drift_cmd(
         console.print(panel)
 
 
+<<<<<<< HEAD
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 def contracts_conformance_cmd(
     format: str | None = None,
     check_drift: bool = False,
@@ -519,6 +573,9 @@ def contracts_conformance_cmd(
 ) -> None:
     """Run provider adapter conformance tests."""
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
     from thegent.contracts.conformance import run_conformance_suite
     from thegent.config import ThegentSettings
 
@@ -528,6 +585,7 @@ def contracts_conformance_cmd(
 
     if format == "json":
         sys.stdout.write(json.dumps(report).decode().decode() + "\n")
+<<<<<<< HEAD
 =======
     from rich.console import Console
     from rich.table import Table
@@ -543,6 +601,8 @@ def contracts_conformance_cmd(
         import typer
 
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
         if report.get("drift_issues") or report["failed"] > 0:
             raise typer.Exit(1)
         return
@@ -572,6 +632,9 @@ def contracts_conformance_cmd(
 
     if report["failed"] > 0 or report.get("drift_issues"):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
         raise typer.Exit(1)
 
 
@@ -686,6 +749,7 @@ def sweep_cmd(
     if parts:
         console.print(Panel("\n".join(parts), title="Policy Drift Sweep (WP-3005)", border_style="red"))
     raise typer.Exit(1)
+<<<<<<< HEAD
 =======
         import typer
 
@@ -873,20 +937,28 @@ def compliance_redact_cmd(text: str) -> None:
     console.print("\n[bold]Redacted:[/bold]")
     console.print(redacted)
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 
 
 def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None = None) -> None:
     """Show daily cost aggregation (FR-GOV-002)."""
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
     from thegent.cost.aggregator import CostAggregator
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
+<<<<<<< HEAD
 =======
     settings = ThegentSettings()
     from thegent.cost.aggregator import CostAggregator
 
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
     agg = CostAggregator(settings.session_dir)
     total = agg.daily_total(owner=owner, days=days)
 
@@ -900,10 +972,14 @@ def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None 
     fmt = _normalize_output_format(format)
     if fmt == "json":
 <<<<<<< HEAD
+<<<<<<< HEAD
         sys.stdout.write(json.dumps(res).decode().decode() + "\n")
 =======
         sys.stdout.write(json.dumps(res) + "\n")
 >>>>>>> fix/ci-remove-macos
+=======
+        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
+>>>>>>> main
         return
 
     console.print("[bold]Daily Cost Aggregation (FR-GOV-002)[/bold]")
@@ -912,6 +988,7 @@ def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None 
     console.print(f"Total: [green]${total:.4f} USD[/green]")
 
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 __all__ = [
     "HEALTH_POLICY_PROFILES",
@@ -990,10 +1067,15 @@ __all__ = [
     "compliance_redact_cmd",
     "compliance_siem_test_cmd",
 >>>>>>> fix/ci-remove-macos
+=======
+__all__ = [
+    "HEALTH_POLICY_PROFILES",
+>>>>>>> main
     "contracts_conformance_cmd",
     "contracts_registry_cmd",
     "drift_cmd",
     "govern_configure_cmd",
+<<<<<<< HEAD
     "govern_cost_cmd",
 <<<<<<< HEAD
 =======
@@ -1015,4 +1097,11 @@ __all__ = [
     "signatures_verify_cmd",
     "trust_status_cmd",
 >>>>>>> fix/ci-remove-macos
+=======
+    "govern_cost_cmd",    "migration_cmd",
+    "policy_check_cmd",
+    "policy_purge_cmd",
+    "policy_show_cmd",
+    "sweep_cmd",
+>>>>>>> main
 ]
