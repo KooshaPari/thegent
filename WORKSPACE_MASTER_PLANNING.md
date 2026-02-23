@@ -23,30 +23,80 @@
 
 **Status**: Active - Multiple workstreams
 
-### 3. PARPOUR
+### 3. TRACE
+**Path**: `trace/`
+
+**Planning Files**:
+- `docs/reference/FRONTEND_TEST_INVENTORY_2026-02-06.md`
+- `docs/reference/TEST_PLAN_QUICK_REFERENCE.md`
+- `docs/reference/STUB_ENDPOINTS_IMPLEMENTATION_PLAN.md`
+- `docs/reference/ITEM_SPEC_ENHANCEMENT_PLAN.md`
+- `docs/reference/TRANSFORMATION_PLAN.md`
+- `docs/reference/SPRINT_PLAN.md`
+
+**Status**: Active - 261 reference docs
+
+### 4. 4SGM
+**Path**: `4sgm/`
+
+**Planning Files**:
+- `docs/reference/PLAN_STATUS.md`
+- `docs/reference/INDEX.md`
+- `docs/reference/CODE_ENTITY_MAP.md`
+
+**Status**: Active - 7 reference files
+
+### 5. HELIOS HARNESS
+**Path**: `heliosHarness/`
+
+**Planning Files**:
+- `docs/reference/PLAN_STATUS.md`
+- `docs/reference/INDEX.md`
+
+**Status**: Active - 8 reference files
+
+### 6. PARPOUR
 **Path**: `parpour/`
 
 **Planning Files**:
 - `docs/reference/WORK_STREAM.md`
+- `docs/reference/ECOSYSTEM_MAP.md`
+- `docs/reference/INTERFACE_CONTRACTS.md`
 
-**Status**: Active
+**Status**: Active - 16 reference files
 
-### 4. CIV
+### 7. CIV
 **Path**: `civ/`
 
 **Planning Files**:
 - `docs/reference/WORK_STREAM.md`
+- `docs/reference/PLAN_STATUS.md`
 
-**Status**: Active
+**Status**: Active - 12 reference files
+
+### 8. PLANGENT
+**Path**: `plangent/`
+
+**Planning Files**:
+- `docs/planning/PHASE_1_COMPLETE.md`
+- `docs/planning/PHASE_2_REQUIREMENTS.md`
+- `docs/planning/PHASE_3_TESTING.md`
+- `docs/planning/PHASE_5_ROADMAP.md`
+
+**Status**: Active - 9 planning files
 
 ## Project Summary
 
 | Project | Planning Files | Status |
 |---------|---------------|--------|
-| CLIPROXYAPI PlusPlus | 2 boards, 1 master | Active |
+| CLIPROXYAPI PlusPlus | 2 boards, master | Active - 2,000+ |
 | THEGENT | WORK_STREAM based | Active |
-| PARPOUR | WORK_STREAM.md | Active |
-| CIV | WORK_STREAM.md | Active |
+| TRACE | 8+ plan docs | Active |
+| 4SGM | PLAN_STATUS, FR/PR | Active |
+| HELIOS HARNESS | PLAN_STATUS | Active |
+| PARPOUR | WORK_STREAM, MAPS | Active |
+| CIV | WORK_STREAM | Active |
+| PLANGENT | PHASE docs | Active |
 
 ## Cross-Project Sync
 - WORK_STREAM references in: thegent, parpour, civ
