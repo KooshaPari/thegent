@@ -14,13 +14,9 @@ from fastmcp._vendor.docket_di import Depends
 from fastmcp.server.dependencies import CurrentContext
 from fastmcp.server.tasks.config import TaskConfig
 from fastmcp.tools.tool import ToolResult
+from opentelemetry import trace
 
-# OPT-021: OpenTelemetry span attributes
-try:
-    from opentelemetry import trace
-    _tracer = trace.get_tracer(__name__)
-except ImportError:
-    _tracer = None
+_tracer = trace.get_tracer(__name__)
 
 
 def register_execution_tools(
@@ -236,14 +232,14 @@ def register_execution_tools(
             return error_result("Provide agent or model for routing.", "Run: thegent list-agents")
 
         # OPT-021: Add OpenTelemetry span attributes for observability
-        if _tracer is not None:
-            span = trace.get_current_span()
-            if span and span.is_recording():
-                span.set_attribute("agent", agent)
+        span = trace.get_current_span()
+        if span and span.is_recording():
+            span.set_attribute("agent", agent)
+            if model is not None:
                 span.set_attribute("model", model)
-                span.set_attribute("provider", provider or "auto")
-                span.set_attribute("mode", mode)
-                span.set_attribute("timeout_seconds", timeout)
+            span.set_attribute("provider", provider or "auto")
+            span.set_attribute("mode", mode)
+            span.set_attribute("timeout_seconds", timeout)
 
         await ctx.info(f"thegent_run agent={agent} cd={cd} timeout={timeout}")
         cd_path = Path(cd) if cd else default_cwd
@@ -527,15 +523,20 @@ def register_execution_tools(
             owner_tag = default_owner_tag(cwd)
 
         # OPT-021: Add OpenTelemetry span attributes for observability
-        if _tracer is not None:
-            span = trace.get_current_span()
-            if span and span.is_recording():
-                span.set_attribute("agent", agent or "auto")
-                span.set_attribute("model", model or "auto")
-                span.set_attribute("provider", provider or requested_provider or "auto")
-                span.set_attribute("mode", mode)
-                span.set_attribute("timeout_seconds", timeout)
-                span.set_attribute("owner", owner_tag or "unknown")
+        span = trace.get_current_span()
+        if span and span.is_recording():
+            span.set_attribute("agent", agent or "auto")
+            if model is not None:
+                span.set_attribute("model", model)
+            else:
+                span.set_attribute("model", "auto")
+            span.set_attribute("provider", provider or requested_provider or "auto")
+            span.set_attribute("mode", mode)
+            span.set_attribute("timeout_seconds", timeout)
+            if owner_tag is not None:
+                span.set_attribute("owner", owner_tag)
+            else:
+                span.set_attribute("owner", "unknown")
 
         if include_contract and model:
             try:
