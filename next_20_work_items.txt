@@ -18,3 +18,5 @@ research-library-diskcache|Replace scrapers cache with diskcache (1 file)|P2|✅
 research-library-psutil|Add psutil for resource monitoring (2 files)|P2|✅ Complete
 research-always-write-dumps|CLAUDE.md: always write conversation dumps to docs/|P2|✅ Complete
 scratch-doctor-fix|Proactive doctor --fix for detected environment issues|P2|✅ Complete
+lane-b-open-items-artifact-repair|Restore missing OPEN_ITEMS validation artifact path and record factual lane status|P0|✅ Complete (2026-02-23)
+lane-b-harness-parity-contracts|Validate and fix anen/antigma/fanta shim alias parity + hook YAML threshold regression coverage|P0|✅ Complete (2026-02-23)

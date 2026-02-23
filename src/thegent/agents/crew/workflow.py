@@ -38,20 +38,39 @@ class WorkflowEngine:
         """Add a stage to the workflow."""
         self.stages.append(stage)
 
-    def resolve_stage_dependencies(self) -> list[CrewStage]:
-        """
-        Resolve stage dependencies using topological sort.
+    def _build_stage_graph(self) -> tuple[dict[str, CrewStage], dict[str, int], dict[str, list[str]]]:
+        """Build and validate stage graph structures.
 
-        Returns stages in execution order.
+        Validation is intentionally strict: duplicate stage IDs, unknown
+        dependencies, and self-dependencies fail fast before execution starts.
         """
-        stage_map = {stage.id: stage for stage in self.stages}
-        in_degree = {stage.id: len(stage.depends_on) for stage in self.stages}
-        graph: dict[str, list[str]] = {stage.id: [] for stage in self.stages}
+        stage_map: dict[str, CrewStage] = {}
+        for stage in self.stages:
+            if stage.id in stage_map:
+                raise ValueError(f"Duplicate stage id: {stage.id}")
+            stage_map[stage.id] = stage
+
+        in_degree = dict.fromkeys(stage_map, 0)
+        graph: dict[str, list[str]] = {stage_id: [] for stage_id in stage_map}
 
         for stage in self.stages:
             for dep_id in stage.depends_on:
-                if dep_id in graph:
-                    graph[dep_id].append(stage.id)
+                if dep_id not in stage_map:
+                    raise ValueError(f"Unknown dependency {dep_id!r} for stage {stage.id!r}")
+                if dep_id == stage.id:
+                    raise ValueError(f"Stage {stage.id!r} cannot depend on itself")
+                graph[dep_id].append(stage.id)
+                in_degree[stage.id] += 1
+
+        return stage_map, in_degree, graph
+
+    def resolve_stage_dependencies(self) -> list[CrewStage]:
+        """
+        Resolve stage dependencies using topological sort on a validated graph.
+
+        Returns stages in execution order.
+        """
+        stage_map, in_degree, graph = self._build_stage_graph()
 
         # Topological sort
         queue = [stage_id for stage_id, degree in in_degree.items() if degree == 0]

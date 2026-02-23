@@ -252,7 +252,7 @@ class TestAgentAssigner:
         assigner = AgentAssigner()
         with pytest.raises(
             TypeError,
-            match="AgentAssigner.assign\\(\\) is abstract and must be implemented by a concrete AgentAssigner subclass",
+            match=r"AgentAssigner.assign\(\) is abstract and must be implemented by a concrete AgentAssigner subclass",
         ):
             assigner.assign([], [])
 
@@ -310,6 +310,92 @@ class TestWorkflowEngine:
         ordered = engine.resolve_stage_dependencies()
         assert ordered[0].id == "stage1"
         assert ordered[1].id == "stage2"
+
+    def test_wl9470_resolve_three_stage_chain(self):
+        # @trace WL-9470
+        engine = WorkflowEngine()
+        s1 = CrewStage(id="s1", name="S1")
+        s2 = CrewStage(id="s2", name="S2", depends_on=["s1"])
+        s3 = CrewStage(id="s3", name="S3", depends_on=["s2"])
+        engine.add_stage(s3)
+        engine.add_stage(s1)
+        engine.add_stage(s2)
+        assert [stage.id for stage in engine.resolve_stage_dependencies()] == ["s1", "s2", "s3"]
+
+    def test_wl9471_unknown_dependency_fails_fast(self):
+        # @trace WL-9471
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="s1", name="S1", depends_on=["missing"]))
+        with pytest.raises(ValueError, match="Unknown dependency"):
+            engine.resolve_stage_dependencies()
+
+    def test_wl9472_self_dependency_fails_fast(self):
+        # @trace WL-9472
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="s1", name="S1", depends_on=["s1"]))
+        with pytest.raises(ValueError, match="cannot depend on itself"):
+            engine.resolve_stage_dependencies()
+
+    def test_wl9473_duplicate_stage_id_fails_fast(self):
+        # @trace WL-9473
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="dup", name="A"))
+        engine.add_stage(CrewStage(id="dup", name="B"))
+        with pytest.raises(ValueError, match="Duplicate stage id"):
+            engine.resolve_stage_dependencies()
+
+    def test_wl9474_cycle_detection_still_enforced(self):
+        # @trace WL-9474
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="a", name="A", depends_on=["b"]))
+        engine.add_stage(CrewStage(id="b", name="B", depends_on=["a"]))
+        with pytest.raises(ValueError, match="Circular dependency"):
+            engine.resolve_stage_dependencies()
+
+    def test_wl9475_independent_stages_allowed(self):
+        # @trace WL-9475
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="a", name="A"))
+        engine.add_stage(CrewStage(id="b", name="B"))
+        ordered = {stage.id for stage in engine.resolve_stage_dependencies()}
+        assert ordered == {"a", "b"}
+
+    def test_wl9476_execute_empty_stage(self):
+        # @trace WL-9476
+        engine = WorkflowEngine()
+        stage = CrewStage(id="empty", name="Empty")
+        assert engine.execute_stage(stage) == {}
+        assert engine.results["empty"] == {}
+
+    def test_wl9477_execute_populates_stage_result_map(self):
+        # @trace WL-9477
+        engine = WorkflowEngine()
+        stage = CrewStage(id="s1", name="S1")
+        engine.execute_stage(stage)
+        assert "s1" in engine.results
+
+    def test_wl9478_dependency_order_respected_for_branches(self):
+        # @trace WL-9478
+        engine = WorkflowEngine()
+        root = CrewStage(id="root", name="Root")
+        left = CrewStage(id="left", name="Left", depends_on=["root"])
+        right = CrewStage(id="right", name="Right", depends_on=["root"])
+        engine.add_stage(left)
+        engine.add_stage(root)
+        engine.add_stage(right)
+        ordered_ids = [stage.id for stage in engine.resolve_stage_dependencies()]
+        assert ordered_ids[0] == "root"
+        assert set(ordered_ids[1:]) == {"left", "right"}
+
+    def test_wl9479_execute_uses_resolved_stage_order(self):
+        # @trace WL-9479
+        engine = WorkflowEngine()
+        first = CrewStage(id="first", name="First")
+        second = CrewStage(id="second", name="Second", depends_on=["first"])
+        engine.add_stage(second)
+        engine.add_stage(first)
+        results = engine.execute()
+        assert list(results.keys()) == ["first", "second"]
 
 
 class TestRouterManager:

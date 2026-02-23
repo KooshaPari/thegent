@@ -10,17 +10,24 @@
 
 This audit identifies gaps and opportunities to make thegent feel like a **quality-first, popular third-party tool** — installable, discoverable, and delightful to use. Focus: first-run success, discoverability, error recovery, and polish.
 
+### 2026-02-23 Status Refresh
+
+- `thegent doctor` is now available at the top level in `src/thegent/cli/apps/main.py`.
+- Typer completion flags are already enabled (`--install-completion` / `--show-completion`).
+- The welcome panel content includes `setup`, `doctor`, and teammate discovery (`thegent team teammates list`) guidance.
+- Remaining high-priority work from this plan should focus on bootstrap error handling and broader documentation alignment.
+
 ---
 
 ## 1. Critical UX Gaps (Fix First)
 
-### 1.1 `thegent doctor` Not in Main CLI
+### 1.1 `thegent doctor` in Main CLI (Completed)
 
-**Issue:** Docs say "run `thegent doctor`" but the main app has no top-level `doctor` command. It exists only in `clode doctor`, `dex doctor`, `roid doctor`, `thegent shell doctor`.
+**Previous issue:** Docs said "run `thegent doctor`" but main CLI lacked top-level `doctor`.
 
-**Impact:** New users following INSTALLATION.md get "Unknown command" or similar.
+**Current state:** `thegent doctor` is wired and covered by command-surface tests.
 
-**Fix:** Add `app.command("doctor")(doctor_cmd)` to `main.py`:
+**Follow-up:** Keep docs and onboarding examples aligned with the now-available top-level command.
 
 ```python
 @app.command("doctor")
@@ -31,7 +38,7 @@ def doctor_cmd(fix: bool = typer.Option(False, "--fix", help="Attempt to fix det
     raise typer.Exit(0 if success else 1)
 ```
 
-**Priority:** P0
+**Priority:** Closed
 
 ---
 
@@ -48,13 +55,15 @@ def doctor_cmd(fix: bool = typer.Option(False, "--fix", help="Attempt to fix det
 
 ---
 
-### 1.3 Shell Completion
+### 1.3 Shell Completion (Completed)
 
-**Issue:** No `thegent --generate-completion` or similar. Typer supports it; thegent may not expose it.
+**Previous issue:** Completion support availability was uncertain.
 
-**Fix:** Ensure `thegent --install-completion zsh` (or bash/fish) works. Typer has `--install-completion` / `--show-completion`. Add to INSTALLATION.md.
+**Current state:** Main Typer app already uses `add_completion=True`, exposing standard completion options.
 
-**Priority:** P1
+**Follow-up:** Make completion setup more visible in install docs and quickstart surfaces.
+
+**Priority:** Closed
 
 ---
 
@@ -245,9 +254,9 @@ def doctor_cmd(fix: bool = typer.Option(False, "--fix", help="Attempt to fix det
 
 | ID | Item | Priority | Effort | Impact |
 |----|------|----------|--------|--------|
-| 1 | Add `thegent doctor` to main CLI | P0 | S | H |
+| 1 | Add `thegent doctor` to main CLI | Closed | S | H |
 | 2 | Bootstrap error handling (no silent fail) | P0 | S | H |
-| 3 | Shell completion (--install-completion) | P1 | S | M |
+| 3 | Shell completion (--install-completion) | Closed | S | M |
 | 4 | First-run hint (post-install) | P1 | S | M |
 | 5 | Actionable error messages | P1 | M | H |
 | 6 | doctor --fix completeness | P2 | M | M |
@@ -267,7 +276,6 @@ def doctor_cmd(fix: bool = typer.Option(False, "--fix", help="Attempt to fix det
 ## 9. Suggested Implementation Order
 
 **Phase 1 (1–2 days):** Critical UX
-- Add `thegent doctor` to main
 - Bootstrap: fail loudly, suggest doctor on error
 
 **Phase 2 (2–3 days):** Discoverability

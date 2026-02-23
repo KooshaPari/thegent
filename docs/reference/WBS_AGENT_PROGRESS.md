@@ -100,6 +100,23 @@
 
 ---
 
+## Wave-76 Lane-D Package
+
+| Item | Scope | Status | Evidence Location |
+|----|----|----|----|
+| D1 | `thegent crew create` command surface enabled on top-level CLI | DONE | `src/thegent/cli/apps/crew.py`, `src/thegent/cli/apps/main.py`, `tests/e2e/test_crew_commands_top_level.py` |
+| D2 | `thegent crew execute` command surface enabled on top-level CLI | DONE | `src/thegent/cli/apps/crew.py`, `src/thegent/cli/apps/main.py`, `tests/e2e/test_crew_commands_top_level.py` |
+| D3 | `thegent crew list` command surface enabled on top-level CLI | DONE | `src/thegent/cli/apps/crew.py`, `src/thegent/cli/apps/main.py`, `tests/e2e/test_crew_commands_top_level.py` |
+| D4 | `thegent crew show` command surface enabled on top-level CLI | DONE | `src/thegent/cli/apps/crew.py`, `src/thegent/cli/apps/main.py`, `tests/e2e/test_crew_commands_top_level.py` |
+| D5 | `thegent crew status` command surface enabled on top-level CLI | DONE | `src/thegent/cli/apps/crew.py`, `src/thegent/cli/apps/main.py`, `tests/e2e/test_crew_commands_top_level.py` |
+| D6 | TaskExecutor dependency-resolution coverage verified | DONE | `tests/test_crew.py` |
+| D7 | CrewExecutor execution-mode coverage verified | DONE | `tests/test_crew.py` |
+| D8 | WorkflowEngine stage-dependency coverage verified | DONE | `tests/test_crew.py` |
+| D9 | RouterManager routing-strategy coverage verified | DONE | `tests/test_crew.py` |
+| D10 | MonitoringEngine metrics coverage verified | DONE | `tests/test_crew.py` |
+
+---
+
 ## CLAIMED (in progress — do not pick)
 
 | WP | Agent | Started |
@@ -134,21 +151,21 @@
 | wave70-l2 | codex-26970 | 2026-02-23T01:37:44.423705+00:00 |
 | ~~docs-claudemd-reference~~ | codex-26970 | 2026-02-23T01:37:56.932719+00:00 |
 | ~~SCLI-P7.1~~ | codex-26970 | 2026-02-23T01:38:24.486723+00:00 |
-| sharecli-smart-merge | codex-26970 | 2026-02-23T01:38:41.336182+00:00 |
-| sharecli-git-parallelism | codex-26970 | 2026-02-23T01:38:55.476511+00:00 |
+| ~~sharecli-smart-merge~~ | codex-26970 | 2026-02-23T01:38:41.336182+00:00 |
+| ~~sharecli-git-parallelism~~ | codex-26970 | 2026-02-23T01:38:55.476511+00:00 |
 | ~~audit-delegation-friction~~ | codex-26970 | 2026-02-23T01:39:24.735614+00:00 |
-| escalation-index-file-indexing | codex-26970 | 2026-02-23T01:39:58.744060+00:00 |
-| docs-mcp-tool-docs | codex-26970 | 2026-02-23T01:40:12.332895+00:00 |
-| TGNT-P16.2 | codex-smoke | 2026-02-23T01:40:58.480970+00:00 |
-| research-smart-robust-strategies | codex-smoke | 2026-02-23T01:41:00.155637+00:00 |
+| ~~escalation-index-file-indexing~~ | codex-26970 | 2026-02-23T01:39:58.744060+00:00 |
+| ~~docs-mcp-tool-docs~~ | codex-26970 | 2026-02-23T01:40:12.332895+00:00 |
+| ~~TGNT-P16.2~~ | codex-smoke | 2026-02-23T01:40:58.480970+00:00 |
+| ~~research-smart-robust-strategies~~ | codex-smoke | 2026-02-23T01:41:00.155637+00:00 |
 | ~~borrow-heliosguard-priority~~ | codex-smoke | 2026-02-23T01:41:00.298403+00:00 |
-| TGNT-P18.3 | codex-36397 | 2026-02-23T01:41:24.733601+00:00 |
+| ~~TGNT-P18.3~~ | codex-36397 | 2026-02-23T01:41:24.733601+00:00 |
 | ~~audit-teammate-collaboration~~ | codex-36397 | 2026-02-23T01:42:13.304865+00:00 |
 | ~~TGNT-P14.1~~ | codex-36397 | 2026-02-23T01:46:47.662490+00:00 |
 | ~~TGNT-P11.1~~ | codex-self-wave10 | 2026-02-23T01:48:38.082874+00:00 |
-| sharecli-task-queue | codex-self-wave10 | 2026-02-23T01:48:38.430608+00:00 |
-| TGNT-P18.2 | codex-self-wave10 | 2026-02-23T01:48:38.754110+00:00 |
-| rollout-hook-rust-phase2 | codex-self-wave10 | 2026-02-23T01:48:39.160507+00:00 |
+| ~~sharecli-task-queue~~ | codex-self-wave10 | 2026-02-23T01:48:38.430608+00:00 |
+| ~~TGNT-P18.2~~ | codex-self-wave10 | 2026-02-23T01:48:38.754110+00:00 |
+| ~~rollout-hook-rust-phase2~~ | codex-self-wave10 | 2026-02-23T01:48:39.160507+00:00 |
 | docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.371943+00:00 |
 | wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.631792+00:00 |
 | ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.849268+00:00 |
@@ -162,11 +179,31 @@
 
 | WP | Agent | Completed |
 |----|-------|-----------|
+| WL-9470 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9471 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9472 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9473 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9474 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9475 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9476 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9477 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9478 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
+| WL-9479 | codex-wave76-lane-f | 2026-02-23T03:30:51Z |
 | SCLI-P7.1 | codex-wave-next30-d | 2026-02-23T02:00:47Z |
 | SCLI-P7.3 | codex-wave-next30-d | 2026-02-23T02:00:47Z |
 | TGNT-P11.1 | codex-wave-next30-d | 2026-02-23T02:00:47Z |
 | TGNT-P14.1 | codex-wave-next30-d | 2026-02-23T02:00:47Z |
 | TGNT-P16.1 | codex-wave-next30-d | 2026-02-23T02:00:47Z |
+| sharecli-smart-merge | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| sharecli-git-parallelism | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| escalation-index-file-indexing | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| docs-mcp-tool-docs | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| TGNT-P16.2 | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| research-smart-robust-strategies | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| TGNT-P18.3 | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| sharecli-task-queue | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| TGNT-P18.2 | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
+| rollout-hook-rust-phase2 | codex-wave76-lane-e | 2026-02-23T03:29:47Z |
 | WP-3007 | agent-test | 2026-02-16T14:37:34.135237+00:00 |
 | WP-4002 | agent-free | 2026-02-16T14:41:03.605095+00:00 |
 | WP-4003 | agent-free | 2026-02-16T14:42:06.822554+00:00 |
