@@ -7,6 +7,7 @@ contract conformance checking, and governance cycles.
 # @trace WL-124
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import uuid
@@ -118,8 +119,6 @@ def govern_go_status_cmd(cd: Path | None = None) -> None:
         max_tasks_per_cycle=settings.agileplus_max_tasks_per_cycle,
         max_rerolls=settings.agileplus_max_rerolls,
     )
-
-    from rich.table import Table
 
     table = Table(title="AgilePlus Status")
     table.add_column("Property")
@@ -745,6 +744,9 @@ def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard
 
 
 __all__ = [
+    "compliance_plugin_check_cmd",
+    "compliance_redact_cmd",
+    "compliance_siem_test_cmd",
     "contracts_conformance_cmd",
     "contracts_registry_cmd",
     "drift_cmd",
@@ -754,8 +756,13 @@ __all__ = [
     "govern_go_health_cmd",
     "govern_go_status_cmd",
     "govern_go_watch_cmd",
+    "guardrails_check_cmd",
+    "guardrails_show_cmd",
     "migration_cmd",
     "policy_check_cmd",
     "policy_purge_cmd",
     "policy_show_cmd",
+    "signatures_list_cmd",
+    "signatures_verify_cmd",
+    "trust_status_cmd",
 ]
