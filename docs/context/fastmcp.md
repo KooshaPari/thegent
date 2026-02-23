@@ -1,6 +1,6 @@
 # FastMCP Context
 
-> Definitive technical reference for implementing FastMCP servers in thegent and trace.
+> Reference for implementing FastMCP servers in thegent and trace.
 > Sources: gofastmcp.com/changelog, jlowin.dev/blog/fastmcp-3-whats-new, jlowin.dev/blog/fastmcp-3-launch, github.com/jlowin/fastmcp (fetched 2026-02-20).
 > **Version covered: FastMCP 3.0.0 (GA, 2026-02-18)**
 
@@ -13,8 +13,8 @@
 - **Declarative API**: Decorators (`@mcp.tool()`, `@mcp.resource()`, `@mcp.prompt()`) for defining server capabilities
 - **Composable Architecture**: Providers, Transforms, and Middleware form a three-layer pipeline
 - **Context API**: User input elicitation, progress reporting, structured logging, LLM sampling, session state
-- **Multiple Transports**: STDIO (default), Streamable HTTP (production), SSE (legacy)
-- **Production Features**: OpenTelemetry tracing, background tasks, granular auth, component versioning
+- **Multiple Transports**: STDIO (default), Streamable HTTP (recommended for deployed services), SSE (legacy)
+- **Operational Features**: OpenTelemetry tracing, background tasks, granular auth, component versioning
 
 **Why FastMCP over raw MCP SDK?** FastMCP turns multi-hundred-line protocol boilerplate into 5-10 lines. Pydantic auto-generates tool schemas from type hints; the decorator pattern matches Python idioms.
 
@@ -90,7 +90,7 @@ FastMCP 3.0 is built on three composable primitives:
 | Transport | Use Case | Status |
 |-----------|----------|--------|
 | **STDIO** | Local CLI, Claude Desktop, Cursor | Default |
-| **Streamable HTTP** | Remote, web dashboards | Production-ready |
+| **Streamable HTTP** | Remote, web dashboards | Recommended |
 | **SSE** | Legacy clients | Deprecated |
 
 ---

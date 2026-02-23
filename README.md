@@ -1,13 +1,13 @@
-# thegent 🎩 🚀
+# thegent
 
 [![PyPI version](https://badge.fury.io/py/thegent.svg)](https://badge.fury.io/py/thegent)
 [![Rust](https://img.shields.io/badge/built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**Unified Agent Orchestration, Governance, and Lifecycle Management.**
+**CLI and framework for agent orchestration, governance, and lifecycle management.**
 
-`thegent` is a production-ready CLI and framework for managing AI agent workflows, droids, and multi-agent swarms. Built with a "Library-First" philosophy and optimized with high-performance Rust extensions, it provides a fast, reliable, and governed environment for agentic operations.
+`thegent` is a CLI and framework for managing AI agent workflows, droids, and multi-agent swarms. It follows a library-first design and uses Rust extensions for performance-sensitive paths.
 
 ---
 
@@ -29,13 +29,13 @@
 
 ## ✨ Key Features
 
-- ⚡ **Performance First**: Rust-powered tool detection and PATH resolution (<1ms) — 10-100x faster than traditional shell implementations.
+- ⚡ **Performance**: Rust-backed tool detection and PATH resolution (<1ms) with 10-100x speedup over shell baselines.
 - 🔒 **Agent Governance**: Built-in policy enforcement, cost caps, and automated quality gates.
-- 🌍 **Multi-Provider Routing**: Smart routing across Claude, Gemini, OpenAI, and custom local proxies.
+- 🌍 **Multi-Provider Routing**: Routing across Claude, Gemini, OpenAI, and custom local proxies.
 - 🛠️ **Unified Work Stream**: Single source of truth for task management across multiple agents and projects.
 - 📦 **MCP Native**: Full support for Model Context Protocol (MCP) servers and resources.
 - 🔄 **Continuous Autonomy**: Background execution and session management via `thegent plan loop`.
-- 🔍 **Deep Research Protocol**: Systematic multi-source investigation (Reddit, Google, GitHub) with stealth scraping.
+- 🔍 **Deep Research Protocol**: Multi-source investigation workflows (Reddit, Google, GitHub).
 
 ---
 
@@ -70,7 +70,7 @@ thegent run "Analyze the current directory structure" free
 
 ### Prerequisites
 - Python 3.12+
-- Rust (required for building high-performance extensions)
+- Rust (required for building performance-sensitive extensions)
 - Homebrew (recommended for system dependencies)
 
 ### For Developers (From Source)
@@ -231,7 +231,7 @@ task sync:autopilot:once
 
 ## 🔐 Security & Hardening
 
-**Hardened for enterprise agentic operations:**
+**Security controls for agentic operations:**
 - **Minimal Surface**: Core logic isolated in Rust for performance and security.
 - **Stealth Scrapers**: Built-in mechanisms to bypass scraping blocks and protect agent anonymity.
 - **Path Isolation**: Strict control over the execution environment via optimized shims.
