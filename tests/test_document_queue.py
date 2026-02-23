@@ -5,13 +5,14 @@ Integration tests for document queue system.
 import json
 import logging
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
 from thegent.agents.document import (
     DocumentAnalyzer,
+    DocumentCategory,
     DocumentProcessor,
     MarkdownScanner,
     ProcessingPipeline,
@@ -56,7 +57,7 @@ Some content here.
 def sample_queue_file(temp_dir):
     """Create a sample queue file."""
     queue_data = {
-        "scan_date": datetime.now().isoformat(),
+        "scan_date": datetime.now(timezone.utc).isoformat(),
         "scan_params": {},
         "summary": {"2026-02": {"total": 1, "by_location": {"test": 1}}},
         "queue": [
@@ -198,8 +199,8 @@ def test_document_analyzer(sample_md_file):
     analysis = analyzer.analyze(sample_md_file)
 
     assert analysis.category in [
-        analyzer.DocumentCategory.DOCUMENTATION,
-        analyzer.DocumentCategory.UNKNOWN,
+        DocumentCategory.DOCUMENTATION,
+        DocumentCategory.UNKNOWN,
     ]
     assert analysis.word_count > 0
     assert analysis.section_count >= 2  # At least # and ##

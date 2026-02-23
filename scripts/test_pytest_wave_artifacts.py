@@ -1198,6 +1198,31 @@ def _coerce_artifact_status(payload: dict[str, object]) -> str:
     return "passed" if _int_or_zero(payload.get("returncode")) == 0 else "failed"
 
 
+def _safe_load_artifact(path: Path) -> dict[str, object]:
+    if not path.exists():
+        msg = f"artifact does not exist: {path}"
+        raise SystemExit(msg)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        msg = f"artifact payload must be a JSON object: {path}"
+        raise SystemExit(msg)
+    return payload
+
+
+def _int_or_zero(value: object) -> int:
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.isdigit():
+            return int(stripped)
+    return 0
+
+
 def _collect_run_metrics(run_artifacts: list[Path] | None) -> dict[str, object]:
     artifacts = run_artifacts or []
     entries = [_safe_load_artifact(path) for path in artifacts]
