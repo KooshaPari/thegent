@@ -8,7 +8,11 @@ with timestamp, model, prompt, and response to configurable locations.
 
 from __future__ import annotations
 
+<<<<<<< HEAD
 import orjson as json
+=======
+from thegent.utils.json_utils import json_dumps, json_loads
+>>>>>>> fix/ci-remove-macos
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -51,7 +55,11 @@ class ConversationRecord:
         meta = f"**Timestamp:** {self.timestamp.isoformat()}\n"
         meta += f"**Model:** {self.model}\n"
         if self.metadata:
+<<<<<<< HEAD
             meta += f"**Metadata:** {json.dumps(self.metadata, indent=2).decode().decode()}\n"
+=======
+            meta += f"**Metadata:** {json_dumps(self.metadata, indent=2)}\n"
+>>>>>>> fix/ci-remove-macos
         meta += "\n## Prompt\n\n"
         prompt_block = f"{self.prompt}\n\n"
         response_block = f"## Response\n\n{self.response}\n\n"
@@ -208,7 +216,11 @@ class ConversationDumper:
         dump_path = self.dumps_dir / filename
 
         try:
+<<<<<<< HEAD
             content = json.dumps(record.to_json().decode().decode(), indent=2, ensure_ascii=False)
+=======
+            content = json_dumps(record.to_json(), indent=2, ensure_ascii=False)
+>>>>>>> fix/ci-remove-macos
             dump_path.write_text(content, encoding="utf-8")
             logger.info("Conversation dump (JSON) written to %s", dump_path)
             return dump_path
@@ -278,7 +290,7 @@ class ConversationDumper:
 
             # Try JSON first
             if dump_path.suffix == ".json":
-                data = json.loads(content)
+                data = json_loads(content)
                 return ConversationRecord(
                     conversation_id=data["conversation_id"],
                     timestamp=datetime.fromisoformat(data["timestamp"]),

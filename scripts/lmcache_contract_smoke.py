@@ -78,7 +78,11 @@ def main() -> int:
     import asyncio
     result = asyncio.run(_check_lmcache())
 
+<<<<<<< HEAD
     print(json.dumps(result).decode().decode())
+=======
+    print(json.dumps(result))
+>>>>>>> fix/ci-remove-macos
 
     if not result.get("ok"):
         raise RuntimeError(f"LMCache health check failed: {result.get('error')}")

@@ -1,0 +1,53 @@
+name: Thegent Hooks CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/thegent-hooks/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/thegent-hooks/**'
+
+jobs:
+  test:
+    name: Test Hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        
+      - name: Build
+        working-directory: crates
+        run: cargo build -p thegent-hooks --bins
+        
+      - name: Run unit tests
+        working-directory: crates
+        run: cargo test -p thegent-hooks --lib
+        
+      - name: Run clippy
+        working-directory: crates
+        run: cargo clippy -p thegent-hooks -- -D warnings
+        
+      - name: Run cargo audit
+        run: cargo audit -p thegent-hooks || true
+
+  test-macos:
+    name: Test Hooks (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        
+      - name: Build
+        working-directory: crates
+        run: cargo build -p thegent-hooks --bins
+        
+      - name: Run unit tests
+        working-directory: crates
+        run: cargo test -p thegent-hooks --lib

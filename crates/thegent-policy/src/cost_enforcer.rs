@@ -14,7 +14,10 @@ impl CostEnforcer {
     }
 
     pub fn check_budget_available(&self, amount: f64) -> Result<bool, PolicyBudgetError> {
-        let spent = *self.spent.lock().map_err(|_| PolicyBudgetError::LockPoisoned)?;
+        let spent = *self
+            .spent
+            .lock()
+            .map_err(|_| PolicyBudgetError::LockPoisoned)?;
         Ok(spent + amount <= self.daily_limit)
     }
 

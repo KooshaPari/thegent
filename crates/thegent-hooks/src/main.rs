@@ -1,19 +1,19 @@
+use chrono::{DateTime, Utc};
+use futures::future::join_all;
+use ignore::WalkBuilder;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::env;
 use std::fs;
 use std::io::{self, Read, Write};
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio, exit};
 use std::os::unix::process::ExitStatusExt;
+use std::path::{Path, PathBuf};
+use std::process::{exit, Command, Stdio};
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
-use chrono::{DateTime, Utc};
-use regex::Regex;
-use tokio::runtime::Runtime;
-use tokio::process::Command as TokioCommand;
 use tokio::io::AsyncWriteExt;
-use futures::future::join_all;
-use ignore::WalkBuilder;
+use tokio::process::Command as TokioCommand;
+use tokio::runtime::Runtime;
 
 mod cmd;
 mod eval;
@@ -21,15 +21,15 @@ mod out;
 mod scan;
 
 // Library re-export for binary use
-use thegent_hooks::{
-    PolicyEngine, CostCalculator, QualityEvaluator, ConfigLoader, HookConfig,
-    ChangedFilesDetector, ChangedFile, ChangeStatus, ImpactType, FilterOptions, DependencyGraph,
-    ChangedFilesError, DetectionStrategy, HookReport, ReportManager, AffectedTestsAnalyzer, PrewarmManager,
-};
 use crate::cmd::cmd_init;
 use crate::eval::json_dotted_number;
 use crate::out::{print_help, print_version};
 use crate::scan::{compute_blake3_hash, compute_file_hash, read_input};
+use thegent_hooks::{
+    AffectedTestsAnalyzer, ChangeStatus, ChangedFile, ChangedFilesDetector, ChangedFilesError,
+    ConfigLoader, CostCalculator, DependencyGraph, DetectionStrategy, FilterOptions, HookConfig,
+    HookReport, ImpactType, PolicyEngine, PrewarmManager, QualityEvaluator, ReportManager,
+};
 
 const VERSION: &str = "0.1.0";
 const CACHE_DIR: &str = "/tmp/thegent-hooks-cache";
@@ -81,16 +81,19 @@ enum Error {
 }
 
 impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self { Error::Io(e) }
+    fn from(e: io::Error) -> Self {
+        Error::Io(e)
+    }
 }
 
 impl From<serde_json::Error> for Error {
-    fn from(e: serde_json::Error) -> Self { Error::Json(e) }
+    fn from(e: serde_json::Error) -> Self {
+        Error::Json(e)
+    }
 }
 
 fn ensure_cache_dir() -> PathBuf {
-    let dir = env::var("THEGENT_CACHE_DIR")
-        .unwrap_or_else(|_| CACHE_DIR.to_string());
+    let dir = env::var("THEGENT_CACHE_DIR").unwrap_or_else(|_| CACHE_DIR.to_string());
     let path = PathBuf::from(dir);
     fs::create_dir_all(&path).unwrap_or_else(|_| {
         eprintln!("Failed to create cache directory: {}", path.display());
@@ -142,7 +145,8 @@ fn cmd_quality_gate() {
         let _ = io::stdin().read_to_end(&mut input_buffer);
         let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-        let project_dir = input.get("project_dir")
+        let project_dir = input
+            .get("project_dir")
             .and_then(|v| v.as_str())
             .map(PathBuf::from)
             .or_else(|| env::var("PROJECT_DIR").ok().map(PathBuf::from))
@@ -179,8 +183,16 @@ fn cmd_quality_gate() {
 
         // --- 2. Bucket changed files by language ---
         // Skip docs/, shadow dirs (.shadow-*), node_modules, .venv, __pycache__, target
-        let skip_prefixes = ["docs/", "node_modules/", ".venv/", "__pycache__/",
-                              "target/", ".shadow", "crates/target/", ".thegent/"];
+        let skip_prefixes = [
+            "docs/",
+            "node_modules/",
+            ".venv/",
+            "__pycache__/",
+            "target/",
+            ".shadow",
+            "crates/target/",
+            ".thegent/",
+        ];
         let mut py_files: Vec<PathBuf> = Vec::new();
         let mut js_files: Vec<PathBuf> = Vec::new();
 
@@ -276,14 +288,21 @@ fn cmd_quality_gate() {
             } else {
                 // Too many files: run ruff on src/ only (scoped, fast)
                 let src_dir = project_dir.join("src");
-                let target = if src_dir.exists() { src_dir } else { project_dir.clone() };
+                let target = if src_dir.exists() {
+                    src_dir
+                } else {
+                    project_dir.clone()
+                };
                 let cmd_str = ruff_cmd.clone();
                 let dl = deadline;
                 futures.push(tokio::spawn(async move {
                     let mut cmd = TokioCommand::new(&cmd_str);
                     cmd.arg("check").arg(&target).arg("--output-format=concise");
                     let out = tokio::time::timeout(dl, cmd.output()).await;
-                    ("Python (ruff/src)".to_string(), out.ok().and_then(|r| r.ok()))
+                    (
+                        "Python (ruff/src)".to_string(),
+                        out.ok().and_then(|r| r.ok()),
+                    )
                 }));
             }
         }
@@ -346,8 +365,10 @@ fn cmd_quality_gate() {
 
         // Final deadline check: if we ran over, demote to warning
         if gate_start.elapsed().as_secs() > GATE_DEADLINE_SECS + 1 {
-            eprintln!("[WARN] quality-gate: completed after deadline ({}s elapsed), treating as advisory",
-                gate_start.elapsed().as_secs());
+            eprintln!(
+                "[WARN] quality-gate: completed after deadline ({}s elapsed), treating as advisory",
+                gate_start.elapsed().as_secs()
+            );
             println!("==> Quality Gate: ADVISORY (deadline exceeded)");
             write_hook_result_report(
                 "THEGENT_QUALITY_GATE_RESULT_JSON",
@@ -448,7 +469,10 @@ fn cmd_dispatch() {
             }
         }
 
-        eprintln!("DEBUG: Dispatching from hooks directory: {}", actual_hooks_dir.display());
+        eprintln!(
+            "DEBUG: Dispatching from hooks directory: {}",
+            actual_hooks_dir.display()
+        );
 
         let stop_hooks = vec![
             ("quality-gate.sh", "quality-gate"),
@@ -472,7 +496,7 @@ fn cmd_dispatch() {
 
             futures.push(tokio::spawn(async move {
                 let mut cmd = TokioCommand::new(
-                    env::current_exe().unwrap_or_else(|_| PathBuf::from("thegent-hooks"))
+                    env::current_exe().unwrap_or_else(|_| PathBuf::from("thegent-hooks")),
                 );
                 cmd.arg(subcommand);
 
@@ -486,15 +510,19 @@ fn cmd_dispatch() {
                     let _ = stdin.write_all(&input).await;
                 }
 
-                let output = tokio::time::timeout(Duration::from_secs(60), child.wait_with_output()).await;
+                let output =
+                    tokio::time::timeout(Duration::from_secs(60), child.wait_with_output()).await;
 
                 match output {
                     Ok(Ok(out)) => (hook_file.to_string(), out),
-                    _ => (hook_file.to_string(), std::process::Output {
-                        status: std::process::ExitStatus::from_raw(124), // timeout
-                        stdout: Vec::new(),
-                        stderr: "Hook timed out after 60s".as_bytes().to_vec(),
-                    }),
+                    _ => (
+                        hook_file.to_string(),
+                        std::process::Output {
+                            status: std::process::ExitStatus::from_raw(124), // timeout
+                            stdout: Vec::new(),
+                            stderr: "Hook timed out after 60s".as_bytes().to_vec(),
+                        },
+                    ),
                 }
             }));
         }
@@ -505,7 +533,9 @@ fn cmd_dispatch() {
         for res in results {
             if let Ok((_name, output)) = res {
                 let rc = output.status.code().unwrap_or(1);
-                if rc > max_rc { max_rc = rc; }
+                if rc > max_rc {
+                    max_rc = rc;
+                }
 
                 if !output.stdout.is_empty() {
                     let _ = io::stdout().write_all(&output.stdout);
@@ -528,7 +558,8 @@ fn cmd_security_pipeline() {
         let _ = io::stdin().read_to_end(&mut input_buffer);
         let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-        let project_dir = input.get("project_dir")
+        let project_dir = input
+            .get("project_dir")
             .and_then(|v| v.as_str())
             .map(PathBuf::from)
             .unwrap_or_else(|| env::current_dir().unwrap_or_default());
@@ -553,7 +584,9 @@ fn cmd_security_pipeline() {
 
             let mut compiled_regs = Vec::new();
             for p in &secret_patterns {
-                if let Ok(re) = Regex::new(p) { compiled_regs.push(re); }
+                if let Ok(re) = Regex::new(p) {
+                    compiled_regs.push(re);
+                }
             }
 
             let walker = WalkBuilder::new(&proj_dir_clone)
@@ -568,7 +601,10 @@ fn cmd_security_pipeline() {
                         if let Ok(content) = fs::read_to_string(path) {
                             for re in &compiled_regs {
                                 if re.is_match(&content) {
-                                    findings.push(format!("[HIGH] secrets: Possible secret in {}", path.display()));
+                                    findings.push(format!(
+                                        "[HIGH] secrets: Possible secret in {}",
+                                        path.display()
+                                    ));
                                     count += 1;
                                     break;
                                 }
@@ -587,7 +623,11 @@ fn cmd_security_pipeline() {
             let mut count = 0;
 
             let mut cmd = TokioCommand::new("bandit");
-            cmd.arg("-r").arg(&proj_dir_clone2).arg("-q").arg("-f").arg("txt");
+            cmd.arg("-r")
+                .arg(&proj_dir_clone2)
+                .arg("-q")
+                .arg("-f")
+                .arg("txt");
 
             if let Ok(output) = cmd.output().await {
                 if !output.status.success() {
@@ -616,7 +656,9 @@ fn cmd_security_pipeline() {
                         "findings": count
                     }));
                     println!("{}: WARN ({} findings)", name, count);
-                    for f in findings { println!("  {}", f); }
+                    for f in findings {
+                        println!("  {}", f);
+                    }
                 } else {
                     checks.push(json!({
                         "name": name,
@@ -628,7 +670,10 @@ fn cmd_security_pipeline() {
             }
         }
 
-        println!("==> Security Pipeline: DONE ({} total findings)", total_findings);
+        println!(
+            "==> Security Pipeline: DONE ({} total findings)",
+            total_findings
+        );
         write_hook_result_report(
             "THEGENT_SECURITY_PIPELINE_RESULT_JSON",
             ".claude/.security-pipeline-result.json",
@@ -655,7 +700,8 @@ fn cmd_complexity_ratchet() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let project_dir = input.get("project_dir")
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
@@ -676,7 +722,10 @@ fn cmd_complexity_ratchet() {
             if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
                 let path = entry.path();
                 let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                if matches!(ext, "py" | "js" | "ts" | "jsx" | "tsx" | "rs" | "go" | "java" | "kt") {
+                if matches!(
+                    ext,
+                    "py" | "js" | "ts" | "jsx" | "tsx" | "rs" | "go" | "java" | "kt"
+                ) {
                     if let Ok(metrics) = thegent_hooks::QualityEvaluator::measure_complexity(path) {
                         total_files += 1;
                         if metrics.cyclomatic_complexity > max_cyc {
@@ -705,10 +754,18 @@ fn cmd_cache_key() {
     }
 
     let hook_name = &args[2];
-    let changed_files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
+    let changed_files: Vec<String> = if args.len() > 3 {
+        args[3..].to_vec()
+    } else {
+        Vec::new()
+    };
 
     let head_sha = if let Ok(input) = read_input() {
-        input.get("head_sha").and_then(|v| v.as_str()).unwrap_or("").to_string()
+        input
+            .get("head_sha")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string()
     } else {
         String::new()
     };
@@ -723,7 +780,9 @@ fn cmd_cache_key() {
 }
 
 fn is_cache_fresh(cache_path: &PathBuf, ttl_secs: u64) -> bool {
-    if !cache_path.exists() { return false; }
+    if !cache_path.exists() {
+        return false;
+    }
     if let Ok(metadata) = fs::metadata(cache_path) {
         if let Ok(modified) = metadata.modified() {
             if let Ok(elapsed) = modified.elapsed() {
@@ -742,10 +801,17 @@ fn cmd_cache_check() {
     }
 
     let key = &args[2];
-    let ttl: u64 = args.get(3).and_then(|v| v.parse().ok()).unwrap_or(DEFAULT_TTL_SECS);
+    let ttl: u64 = args
+        .get(3)
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(DEFAULT_TTL_SECS);
     let cache_path = get_cache_path(key);
 
-    if is_cache_fresh(&cache_path, ttl) { exit(0); } else { exit(1); }
+    if is_cache_fresh(&cache_path, ttl) {
+        exit(0);
+    } else {
+        exit(1);
+    }
 }
 
 fn cmd_cache_read() {
@@ -797,7 +863,10 @@ fn cmd_git_overhauled(git_args: Vec<String>) {
     let command = &git_args[0];
     let actual_git_args: Vec<String> = git_args[1..].to_vec();
 
-    if matches!(command.as_str(), "add" | "commit" | "status" | "merge" | "diff" | "log") {
+    if matches!(
+        command.as_str(),
+        "add" | "commit" | "status" | "merge" | "diff" | "log"
+    ) {
         let mut thegent_args = vec!["git".to_string(), command.clone()];
         thegent_args.extend(actual_git_args.clone());
 
@@ -813,11 +882,17 @@ fn cmd_git_overhauled(git_args: Vec<String>) {
     }
 
     if is_agent() {
-        eprintln!("Legacy git command '{}' is deprecated and has been removed for agents.", command);
+        eprintln!(
+            "Legacy git command '{}' is deprecated and has been removed for agents.",
+            command
+        );
         eprintln!("Please use the overhauled 'thegent git' suite or modern gix-based tools.");
         exit(1);
     } else {
-        let status = Command::new("git").arg(command).args(&actual_git_args).status();
+        let status = Command::new("git")
+            .arg(command)
+            .args(&actual_git_args)
+            .status();
         match status {
             Ok(s) => exit(s.code().unwrap_or(0)),
             Err(e) => {
@@ -836,17 +911,32 @@ fn cmd_changed_files() {
             if let Ok(v) = serde_json::from_slice::<Value>(&out.stdout) {
                 let mut files = Vec::new();
                 if let Some(modified) = v.get("modified").and_then(|m| m.as_array()) {
-                    for f in modified { if let Some(s) = f.as_str() { files.push(s.to_string()); } }
+                    for f in modified {
+                        if let Some(s) = f.as_str() {
+                            files.push(s.to_string());
+                        }
+                    }
                 }
                 if let Some(untracked) = v.get("untracked").and_then(|u| u.as_array()) {
-                    for f in untracked { if let Some(s) = f.as_str() { files.push(s.to_string()); } }
+                    for f in untracked {
+                        if let Some(s) = f.as_str() {
+                            files.push(s.to_string());
+                        }
+                    }
                 }
                 if let Some(staged) = v.get("staged").and_then(|s| s.as_array()) {
-                    for f in staged { if let Some(s) = f.as_str() { files.push(s.to_string()); } }
+                    for f in staged {
+                        if let Some(s) = f.as_str() {
+                            files.push(s.to_string());
+                        }
+                    }
                 }
                 files.sort();
                 files.dedup();
-                println!("{}", serde_json::to_string(&files).unwrap_or_else(|_| "[]".to_string()));
+                println!(
+                    "{}",
+                    serde_json::to_string(&files).unwrap_or_else(|_| "[]".to_string())
+                );
             } else {
                 eprintln!("Failed to parse thegent-git status output");
                 exit(1);
@@ -916,9 +1006,17 @@ fn cmd_breaker_record() {
         fs::read_to_string(&breaker_path)
             .ok()
             .and_then(|c| serde_json::from_str::<BreakerState>(&c).ok())
-            .unwrap_or(BreakerState { failures: 0, last_failure: None, status: "closed".to_string() })
+            .unwrap_or(BreakerState {
+                failures: 0,
+                last_failure: None,
+                status: "closed".to_string(),
+            })
     } else {
-        BreakerState { failures: 0, last_failure: None, status: "closed".to_string() }
+        BreakerState {
+            failures: 0,
+            last_failure: None,
+            status: "closed".to_string(),
+        }
     };
 
     state.failures += 1;
@@ -952,7 +1050,11 @@ fn cmd_debounce() {
     }
 
     let hook_name = &args[2];
-    let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
+    let files: Vec<String> = if args.len() > 3 {
+        args[3..].to_vec()
+    } else {
+        Vec::new()
+    };
 
     let debounce_path = ensure_cache_dir().join(format!("debounce-{}.json", hook_name));
     let now = Utc::now();
@@ -961,9 +1063,15 @@ fn cmd_debounce() {
         fs::read_to_string(&debounce_path)
             .ok()
             .and_then(|c| serde_json::from_str::<DebounceState>(&c).ok())
-            .unwrap_or(DebounceState { last_run: now, pending_files: Vec::new() })
+            .unwrap_or(DebounceState {
+                last_run: now,
+                pending_files: Vec::new(),
+            })
     } else {
-        DebounceState { last_run: now - chrono::Duration::hours(24), pending_files: Vec::new() }
+        DebounceState {
+            last_run: now - chrono::Duration::hours(24),
+            pending_files: Vec::new(),
+        }
     };
 
     for file in files {
@@ -980,7 +1088,10 @@ fn cmd_debounce() {
         if let Ok(content) = serde_json::to_string(&state) {
             let _ = fs::write(&debounce_path, content);
         }
-        println!("{}", serde_json::to_string(&pending).unwrap_or_else(|_| "[]".to_string()));
+        println!(
+            "{}",
+            serde_json::to_string(&pending).unwrap_or_else(|_| "[]".to_string())
+        );
         exit(0);
     } else {
         if let Ok(content) = serde_json::to_string(&state) {
@@ -1002,7 +1113,11 @@ fn cmd_incremental_check() {
     }
 
     let hook_name = &args[2];
-    let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
+    let files: Vec<String> = if args.len() > 3 {
+        args[3..].to_vec()
+    } else {
+        Vec::new()
+    };
 
     let manifest_path = get_manifest_path(hook_name);
     if !manifest_path.exists() {
@@ -1026,7 +1141,9 @@ fn cmd_incremental_check() {
         }
 
         let new_hash = compute_file_hash(&path).unwrap_or_else(|_| "error".to_string());
-        let old_hash = old_manifest.files.iter()
+        let old_hash = old_manifest
+            .files
+            .iter()
             .find(|f| f.path == file_path)
             .map(|f| f.hash.as_str())
             .unwrap_or("");
@@ -1036,7 +1153,10 @@ fn cmd_incremental_check() {
         }
     }
 
-    println!("{}", serde_json::to_string(&changed).unwrap_or_else(|_| "[]".to_string()));
+    println!(
+        "{}",
+        serde_json::to_string(&changed).unwrap_or_else(|_| "[]".to_string())
+    );
 }
 
 fn cmd_incremental_record() {
@@ -1047,7 +1167,11 @@ fn cmd_incremental_record() {
     }
 
     let hook_name = &args[2];
-    let files: Vec<String> = if args.len() > 3 { args[3..].to_vec() } else { Vec::new() };
+    let files: Vec<String> = if args.len() > 3 {
+        args[3..].to_vec()
+    } else {
+        Vec::new()
+    };
 
     let mut manifest = Manifest {
         hook_name: hook_name.to_string(),
@@ -1059,7 +1183,10 @@ fn cmd_incremental_record() {
         let path = PathBuf::from(&file_path);
         if path.exists() {
             let hash = compute_file_hash(&path).unwrap_or_else(|_| "error".to_string());
-            manifest.files.push(FileManifest { path: file_path, hash });
+            manifest.files.push(FileManifest {
+                path: file_path,
+                hash,
+            });
         }
     }
 
@@ -1090,13 +1217,16 @@ fn cmd_stop_reconcile() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let project_dir = input.get("project_dir")
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
 
     let change_log_path = project_dir.join(".claude/session-changes.log");
-    if !change_log_path.exists() { return; }
+    if !change_log_path.exists() {
+        return;
+    }
 
     let content = fs::read_to_string(&change_log_path).unwrap_or_default();
     let mut code_files = Vec::new();
@@ -1104,22 +1234,40 @@ fn cmd_stop_reconcile() {
 
     for line in content.lines() {
         let parts: Vec<&str> = line.split('|').collect();
-        if parts.len() < 3 { continue; }
+        if parts.len() < 3 {
+            continue;
+        }
         let fpath_str = parts[2];
         let fpath = Path::new(fpath_str);
 
         let relative_path = if fpath.is_absolute() {
-            fpath.strip_prefix(&project_dir).unwrap_or(fpath).to_string_lossy().to_string()
+            fpath
+                .strip_prefix(&project_dir)
+                .unwrap_or(fpath)
+                .to_string_lossy()
+                .to_string()
         } else {
             fpath_str.to_string()
         };
 
-        if relative_path.contains("node_modules") || relative_path.contains(".git") || relative_path.contains("target") { continue; }
+        if relative_path.contains("node_modules")
+            || relative_path.contains(".git")
+            || relative_path.contains("target")
+        {
+            continue;
+        }
 
         let ext = fpath.extension().and_then(|e| e.to_str()).unwrap_or("");
-        if matches!(ext, "py" | "rs" | "go" | "ts" | "js" | "tsx" | "jsx" | "sh" | "bash" | "c" | "h" | "conf") {
+        if matches!(
+            ext,
+            "py" | "rs" | "go" | "ts" | "js" | "tsx" | "jsx" | "sh" | "bash" | "c" | "h" | "conf"
+        ) {
             code_files.push(relative_path);
-        } else if relative_path.contains("docs/reference/") && (relative_path.contains("TRACKER") || relative_path.contains("STATUS") || relative_path.contains("MAP")) {
+        } else if relative_path.contains("docs/reference/")
+            && (relative_path.contains("TRACKER")
+                || relative_path.contains("STATUS")
+                || relative_path.contains("MAP"))
+        {
             tracker_files.push(relative_path);
         }
     }
@@ -1136,9 +1284,14 @@ fn cmd_stop_reconcile() {
 
     let mut feedback = String::new();
     if !code_files.is_empty() && tracker_files.is_empty() {
-        feedback.push_str(&format!("SESSION RECONCILIATION: {} code file(s) changed but no tracker docs updated.\n", code_files.len()));
+        feedback.push_str(&format!(
+            "SESSION RECONCILIATION: {} code file(s) changed but no tracker docs updated.\n",
+            code_files.len()
+        ));
         feedback.push_str("Changed code files:\n");
-        for f in &code_files { feedback.push_str(&format!("  - {}\n", f)); }
+        for f in &code_files {
+            feedback.push_str(&format!("  - {}\n", f));
+        }
         feedback.push_str("\nConsider updating:\n");
         feedback.push_str("  - docs/reference/FR_TRACKER.md (requirement status)\n");
         feedback.push_str("  - docs/reference/PLAN_STATUS.md (task progress)\n");
@@ -1149,16 +1302,24 @@ fn cmd_stop_reconcile() {
     if map_file_path.exists() {
         if let Ok(map_content) = fs::read_to_string(&map_file_path) {
             let mut unmapped = Vec::new();
-            for f in &code_files { if !map_content.contains(f) { unmapped.push(f); } }
+            for f in &code_files {
+                if !map_content.contains(f) {
+                    unmapped.push(f);
+                }
+            }
             if !unmapped.is_empty() {
                 feedback.push_str("\nUnmapped code files (not in CODE_ENTITY_MAP.md):\n");
-                for f in unmapped { feedback.push_str(&format!("  - {}\n", f)); }
+                for f in unmapped {
+                    feedback.push_str(&format!("  - {}\n", f));
+                }
             }
         }
     }
 
     let _ = fs::remove_file(&change_log_path);
-    if !feedback.is_empty() { println!("{}", feedback); }
+    if !feedback.is_empty() {
+        println!("{}", feedback);
+    }
 }
 
 fn cmd_teammate_reconcile() {
@@ -1166,15 +1327,29 @@ fn cmd_teammate_reconcile() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let session_id = input.get("session_id").and_then(|v| v.as_str()).unwrap_or("");
+    let session_id = input
+        .get("session_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     let exit_code = input.get("exit_code").and_then(|v| v.as_i64()).unwrap_or(0);
 
-    if !session_id.starts_with("DEL-") { exit(0); }
+    if !session_id.starts_with("DEL-") {
+        exit(0);
+    }
 
-    let status = if exit_code == 0 { "completed" } else { "failed" };
-    let summary = if exit_code == 0 { "Completed successfully" } else { &format!("Failed with exit code {}", exit_code) };
+    let status = if exit_code == 0 {
+        "completed"
+    } else {
+        "failed"
+    };
+    let summary = if exit_code == 0 {
+        "Completed successfully"
+    } else {
+        &format!("Failed with exit code {}", exit_code)
+    };
 
-    let script = format!(r#"
+    let script = format!(
+        r#"
 from thegent.governance.teammates import TeammateManager
 from thegent.config import ThegentSettings
 from pathlib import Path
@@ -1189,7 +1364,9 @@ summary = "{}"
 
 if mgr.update_status(session_id, status, summary=summary):
     print(f"TEAMMATE-RECONCILE: Updated delegation {{session_id}} to {{status}}")
-"#, session_id, status, summary);
+"#,
+        session_id, status, summary
+    );
 
     let _ = Command::new("python3").args(&["-c", &script]).output();
     exit(0);
@@ -1200,7 +1377,8 @@ fn cmd_agileplus_cycle() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let project_dir = input.get("project_dir")
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
@@ -1214,13 +1392,22 @@ fn cmd_agileplus_cycle() {
     let backlog_file = project_dir.join(".thegent/backlog.md");
     if backlog_file.exists() {
         if let Ok(content) = fs::read_to_string(&backlog_file) {
-            let open_count = content.lines().filter(|l| l.trim().starts_with("- [ ]") || l.trim().starts_with("* [ ]")).count();
+            let open_count = content
+                .lines()
+                .filter(|l| l.trim().starts_with("- [ ]") || l.trim().starts_with("* [ ]"))
+                .count();
             let stale_re = Regex::new(r"updated.*[3-9][0-9] days|updated.*[1-9][0-9]{2,}").unwrap();
             let stale_count = content.lines().filter(|l| stale_re.is_match(l)).count();
 
-            println!("  Backlog: {} open items, {} stale", open_count, stale_count);
+            println!(
+                "  Backlog: {} open items, {} stale",
+                open_count, stale_count
+            );
             if stale_count > 5 {
-                println!("    WARN: {} items haven't been updated in 30+ days", stale_count);
+                println!(
+                    "    WARN: {} items haven't been updated in 30+ days",
+                    stale_count
+                );
                 backlog_issues += 1;
             }
         }
@@ -1233,11 +1420,20 @@ fn cmd_agileplus_cycle() {
     if wip_state_file.exists() {
         if let Ok(content) = fs::read_to_string(&wip_state_file) {
             if let Ok(wip_json) = serde_json::from_str::<Value>(&content) {
-                let current_wip = wip_json.get("current_wip").and_then(|v| v.as_u64()).unwrap_or(0);
-                let max_wip = wip_json.get("max_wip").and_then(|v| v.as_u64()).unwrap_or(5);
+                let current_wip = wip_json
+                    .get("current_wip")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0);
+                let max_wip = wip_json
+                    .get("max_wip")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(5);
                 println!("  WIP: {} items (max: {})", current_wip, max_wip);
                 if current_wip > max_wip {
-                    println!("    WARN: WIP exceeds limit ({} > {})", current_wip, max_wip);
+                    println!(
+                        "    WARN: WIP exceeds limit ({} > {})",
+                        current_wip, max_wip
+                    );
                     wip_issues = 1;
                 }
             }
@@ -1250,12 +1446,22 @@ fn cmd_agileplus_cycle() {
     if agileplus_state_file.exists() {
         if let Ok(content) = fs::read_to_string(&agileplus_state_file) {
             if let Ok(state_json) = serde_json::from_str::<Value>(&content) {
-                last_velocity = state_json.get("last_velocity").and_then(|v| v.as_u64()).unwrap_or(0);
-                avg_velocity = state_json.get("avg_velocity").and_then(|v| v.as_u64()).unwrap_or(0);
+                last_velocity = state_json
+                    .get("last_velocity")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0);
+                avg_velocity = state_json
+                    .get("avg_velocity")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(0);
 
                 if last_velocity > 0 && avg_velocity > 0 {
-                    let change_pct = ((last_velocity as i64 - avg_velocity as i64) * 100) / avg_velocity as i64;
-                    println!("  Velocity: {} (avg: {}, change: {}%)", last_velocity, avg_velocity, change_pct);
+                    let change_pct =
+                        ((last_velocity as i64 - avg_velocity as i64) * 100) / avg_velocity as i64;
+                    println!(
+                        "  Velocity: {} (avg: {}, change: {}%)",
+                        last_velocity, avg_velocity, change_pct
+                    );
                     if change_pct < -30 {
                         println!("    WARN: Velocity dropped {}% vs average", change_pct);
                         velocity_issues = 1;
@@ -1269,11 +1475,18 @@ fn cmd_agileplus_cycle() {
     let mut session_contrib = 0;
     if change_log.exists() {
         if let Ok(content) = fs::read_to_string(&change_log) {
-            session_contrib = content.lines().filter(|l| l.contains("created") || l.contains("modified")).count() as u64;
+            session_contrib = content
+                .lines()
+                .filter(|l| l.contains("created") || l.contains("modified"))
+                .count() as u64;
         }
     }
 
-    let new_avg = if avg_velocity > 0 { (avg_velocity + session_contrib) / 2 } else { session_contrib };
+    let new_avg = if avg_velocity > 0 {
+        (avg_velocity + session_contrib) / 2
+    } else {
+        session_contrib
+    };
     let new_state = json!({
         "last_velocity": session_contrib,
         "avg_velocity": new_avg,
@@ -1314,21 +1527,32 @@ fn cmd_friction_detect() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let tool_name = input.get("tool_name").and_then(|v| v.as_str()).unwrap_or("");
-    let project_dir = input.get("project_dir")
+    let tool_name = input
+        .get("tool_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
 
     let friction_detector = project_dir.join("scripts/friction_detector.py");
-    if !friction_detector.exists() { exit(0); }
+    if !friction_detector.exists() {
+        exit(0);
+    }
 
     // NATIVE FRICTION DETECTION (RUST)
     // We'll complement the Python detector with some high-performance Rust-based checks
 
     if tool_name == "Execute" {
-        let command = input.get("tool_input").and_then(|v| v.as_str()).unwrap_or("");
-        if command.is_empty() { exit(0); }
+        let command = input
+            .get("tool_input")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        if command.is_empty() {
+            exit(0);
+        }
 
         // Native check: cd && pattern
         if command.contains("cd ") && command.contains(" && ") {
@@ -1345,14 +1569,20 @@ fn cmd_friction_detect() {
         }
 
         let output = Command::new("python3")
-            .args(&[friction_detector.to_str().unwrap(), "--command", command, "--format", "json"])
+            .args(&[
+                friction_detector.to_str().unwrap(),
+                "--command",
+                command,
+                "--format",
+                "json",
+            ])
             .output();
         if let Ok(out) = output {
             let findings: Value = serde_json::from_slice(&out.stdout).unwrap_or(json!([]));
             if let Some(arr) = findings.as_array() {
                 if !arr.is_empty() {
                     if !command.contains("cd ") || !command.contains(" && ") {
-                         println!("FRICTION DETECTED in command:");
+                        println!("FRICTION DETECTED in command:");
                     }
                     for f in arr {
                         let p = f.get("priority").and_then(|v| v.as_str()).unwrap_or("?");
@@ -1361,8 +1591,12 @@ fn cmd_friction_detect() {
                         let desc = f.get("description").and_then(|v| v.as_str()).unwrap_or("?");
 
                         // Avoid duplicates with native checks
-                        if t == "verbosity" && desc.contains("cd &&") { continue; }
-                        if t == "error_handling" && desc.contains("2>&1") { continue; }
+                        if t == "verbosity" && desc.contains("cd &&") {
+                            continue;
+                        }
+                        if t == "error_handling" && desc.contains("2>&1") {
+                            continue;
+                        }
 
                         println!("  [{}] {}: {} - {}", p, cat.to_uppercase(), t, desc);
                     }
@@ -1370,23 +1604,41 @@ fn cmd_friction_detect() {
             }
         }
     } else if matches!(tool_name, "Write" | "Edit") {
-        let file_path_str = input.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
-        if file_path_str.is_empty() { exit(0); }
+        let file_path_str = input
+            .get("file_path")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        if file_path_str.is_empty() {
+            exit(0);
+        }
         let output = Command::new("python3")
-            .args(&[friction_detector.to_str().unwrap(), "--file", file_path_str, "--format", "json"])
+            .args(&[
+                friction_detector.to_str().unwrap(),
+                "--file",
+                file_path_str,
+                "--format",
+                "json",
+            ])
             .output();
         if let Ok(out) = output {
             let findings: Value = serde_json::from_slice(&out.stdout).unwrap_or(json!([]));
             if let Some(arr) = findings.as_array() {
                 if !arr.is_empty() {
-                    let basename = Path::new(file_path_str).file_name().and_then(|n| n.to_str()).unwrap_or("file");
+                    let basename = Path::new(file_path_str)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("file");
                     println!("FRICTION DETECTED in {}:", basename);
                     for f in arr {
                         let loc = f.get("location").and_then(|v| v.as_str()).unwrap_or("0");
                         let line = loc.split(':').last().unwrap_or("0");
-                        println!("  [{}] {}: {} - {} (line {})",
+                        println!(
+                            "  [{}] {}: {} - {} (line {})",
                             f.get("priority").and_then(|v| v.as_str()).unwrap_or("?"),
-                            f.get("category").and_then(|v| v.as_str()).unwrap_or("?").to_uppercase(),
+                            f.get("category")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("?")
+                                .to_uppercase(),
                             f.get("type").and_then(|v| v.as_str()).unwrap_or("?"),
                             f.get("description").and_then(|v| v.as_str()).unwrap_or("?"),
                             line
@@ -1409,24 +1661,48 @@ fn cmd_notify() {
     let mut i = 2;
     while i < args.len() {
         match args[i].as_str() {
-            "--event" if i + 1 < args.len() => { event = args[i+1].clone(); i += 2; }
-            "--severity" if i + 1 < args.len() => { severity = args[i+1].clone(); i += 2; }
-            "--title" if i + 1 < args.len() => { title = args[i+1].clone(); i += 2; }
-            "--message" if i + 1 < args.len() => { message = args[i+1].clone(); i += 2; }
+            "--event" if i + 1 < args.len() => {
+                event = args[i + 1].clone();
+                i += 2;
+            }
+            "--severity" if i + 1 < args.len() => {
+                severity = args[i + 1].clone();
+                i += 2;
+            }
+            "--title" if i + 1 < args.len() => {
+                title = args[i + 1].clone();
+                i += 2;
+            }
+            "--message" if i + 1 < args.len() => {
+                message = args[i + 1].clone();
+                i += 2;
+            }
             _ => i += 1,
         }
     }
 
-    if env::var("THGENT_NOTIFY_ENABLE").unwrap_or_else(|_| "1".to_string()) == "0" { exit(0); }
+    if env::var("THGENT_NOTIFY_ENABLE").unwrap_or_else(|_| "1".to_string()) == "0" {
+        exit(0);
+    }
 
     #[cfg(target_os = "macos")]
     {
-        let script = format!("display notification \"{}\" with title \"{}\"", message, title);
+        let script = format!(
+            "display notification \"{}\" with title \"{}\"",
+            message, title
+        );
         let _ = Command::new("osascript").arg("-e").arg(script).spawn();
 
-        let voice_mode = env::var("THGENT_NOTIFY_VOICE_MODE").unwrap_or_else(|_| "errors".to_string());
-        if voice_mode == "all" || (voice_mode == "errors" && (severity == "error" || severity == "critical")) {
-            let _ = Command::new("say").arg("-v").arg("Samantha").arg(format!("{} - {}", title, message)).spawn();
+        let voice_mode =
+            env::var("THGENT_NOTIFY_VOICE_MODE").unwrap_or_else(|_| "errors".to_string());
+        if voice_mode == "all"
+            || (voice_mode == "errors" && (severity == "error" || severity == "critical"))
+        {
+            let _ = Command::new("say")
+                .arg("-v")
+                .arg("Samantha")
+                .arg(format!("{} - {}", title, message))
+                .spawn();
         }
     }
 
@@ -1454,10 +1730,23 @@ fn cmd_task_completed() {
     );
     let _ = Command::new("python3").arg("-c").arg(script).status();
 
-    println!("TASK-COMPLETED: Task {} updated in team {}", task_id, team_id);
+    println!(
+        "TASK-COMPLETED: Task {} updated in team {}",
+        task_id, team_id
+    );
 
     let _ = Command::new("thegent-hooks")
-        .args(["notify", "--event", "taskcompleted", "--severity", "info", "--title", "Task Completed", "--message", &format!("team={} task={} completed", team_id, task_id)])
+        .args([
+            "notify",
+            "--event",
+            "taskcompleted",
+            "--severity",
+            "info",
+            "--title",
+            "Task Completed",
+            "--message",
+            &format!("team={} task={} completed", team_id, task_id),
+        ])
         .spawn();
 
     exit(0);
@@ -1482,7 +1771,8 @@ fn cmd_harvest() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let project_dir = input.get("project_dir")
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
@@ -1501,8 +1791,16 @@ fn cmd_harvest() {
         if let Ok(content) = fs::read_to_string(&queue_file) {
             let mut count = 0;
             let _ = fs::create_dir_all(handoff_file.parent().unwrap());
-            if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&handoff_file) {
-                let _ = writeln!(f, "# Pending prompts (from session stop {})\n", chrono::Utc::now().to_rfc3339());
+            if let Ok(mut f) = fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&handoff_file)
+            {
+                let _ = writeln!(
+                    f,
+                    "# Pending prompts (from session stop {})\n",
+                    chrono::Utc::now().to_rfc3339()
+                );
                 for line in content.lines() {
                     if let Ok(v) = serde_json::from_str::<Value>(line) {
                         if let Some(prompt) = v.get("prompt").and_then(|p| p.as_str()) {
@@ -1513,7 +1811,11 @@ fn cmd_harvest() {
                 }
             }
             let _ = fs::write(&queue_file, ""); // Clear queue
-            println!("Pending queue: flushed {} item(s) to {}", count, handoff_file.display());
+            println!(
+                "Pending queue: flushed {} item(s) to {}",
+                count,
+                handoff_file.display()
+            );
         }
     }
 
@@ -1532,7 +1834,9 @@ fn cmd_teammate_idle() {
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
     let stdout = input.get("stdout").and_then(|v| v.as_str()).unwrap_or("");
-    if stdout.is_empty() { exit(0); }
+    if stdout.is_empty() {
+        exit(0);
+    }
 
     let script = format!(
         "from thegent.team.coordination import TeamCoordinator; from pathlib import Path; import sys; tc = TeamCoordinator(Path('.')); print('true' if tc.detect_idle(sys.stdin.read()) else 'false')"
@@ -1554,7 +1858,17 @@ fn cmd_teammate_idle() {
 
     if idle {
         let _ = Command::new("thegent-hooks")
-            .args(["notify", "--event", "teammateidle", "--severity", "warning", "--title", "Teammate Idle", "--message", "A teammate appears idle and may need follow-up input."])
+            .args([
+                "notify",
+                "--event",
+                "teammateidle",
+                "--severity",
+                "warning",
+                "--title",
+                "Teammate Idle",
+                "--message",
+                "A teammate appears idle and may need follow-up input.",
+            ])
             .spawn();
         eprintln!("TEAMMATE-IDLE: Teammate is idle, requesting feedback.");
         exit(2);
@@ -1568,7 +1882,8 @@ fn cmd_pre_compact() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let project_dir = input.get("project_dir")
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
@@ -1591,12 +1906,24 @@ fn cmd_pre_compact() {
     let change_log = project_dir.join(".claude/session-changes.log");
     let change_count = if let Ok(metadata) = fs::metadata(&change_log) {
         let size = metadata.len();
-        if size > 0 { (size / 80).max(1) } else { 0 }
-    } else { 0 };
+        if size > 0 {
+            (size / 80).max(1)
+        } else {
+            0
+        }
+    } else {
+        0
+    };
 
-    let qg_present = PathBuf::from(&home).join(".claude/.quality-gate-result.json").exists();
-    let tr_present = PathBuf::from(&home).join(".claude/.async-test-results.json").exists();
-    let sv_present = PathBuf::from(&home).join(".claude/.spec-verification.json").exists();
+    let qg_present = PathBuf::from(&home)
+        .join(".claude/.quality-gate-result.json")
+        .exists();
+    let tr_present = PathBuf::from(&home)
+        .join(".claude/.async-test-results.json")
+        .exists();
+    let sv_present = PathBuf::from(&home)
+        .join(".claude/.spec-verification.json")
+        .exists();
 
     // Git State
     let mut branch = "unknown".to_string();
@@ -1606,7 +1933,9 @@ fn cmd_pre_compact() {
         let head_line = head_content.trim();
         if head_line.starts_with("ref: ") {
             branch = head_line.trim_start_matches("ref: refs/heads/").to_string();
-            let ref_path = project_dir.join(".git").join(head_line.trim_start_matches("ref: "));
+            let ref_path = project_dir
+                .join(".git")
+                .join(head_line.trim_start_matches("ref: "));
             if let Ok(sha) = fs::read_to_string(&ref_path) {
                 head = sha.trim()[..8.min(sha.trim().len())].to_string();
             }
@@ -1639,12 +1968,21 @@ fn cmd_pre_compact() {
             "branch": branch,
             "has_uncommitted_changes": true // Simplified heuristic
         });
-        let _ = fs::write(&checkpoint_file, serde_json::to_string(&checkpoint).unwrap());
-        println!("AUTO_CHECKPOINT: HEAD={} branch={} changes=true", head, branch);
+        let _ = fs::write(
+            &checkpoint_file,
+            serde_json::to_string(&checkpoint).unwrap(),
+        );
+        println!(
+            "AUTO_CHECKPOINT: HEAD={} branch={} changes=true",
+            head, branch
+        );
     }
 
     println!("Quality state snapshot saved for context preservation");
-    println!("  Session changes: {} | Git: {} @ {}", change_count, branch, head);
+    println!(
+        "  Session changes: {} | Git: {} @ {}",
+        change_count, branch, head
+    );
 
     exit(0);
 }
@@ -1656,7 +1994,11 @@ fn cmd_subagent_gate() {
     let starts_file = PathBuf::from(home).join(".claude/.subagent-starts");
 
     if action == "start" {
-        if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&starts_file) {
+        if let Ok(mut f) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&starts_file)
+        {
             let _ = writeln!(f, "{}", chrono::Utc::now().timestamp());
         }
     } else if action == "stop" {
@@ -1671,7 +2013,10 @@ fn cmd_subagent_gate() {
             }
             let _ = fs::remove_file(&starts_file);
         }
-        println!("Subagent quality gate: {}s elapsed (lint deferred to Stop)", elapsed);
+        println!(
+            "Subagent quality gate: {}s elapsed (lint deferred to Stop)",
+            elapsed
+        );
     }
 
     exit(0);
@@ -1682,14 +2027,19 @@ fn cmd_prompt_submit_guard() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let prompt_text = input.get("tool_input").and_then(|ti| ti.get("prompt").or_else(|| ti.get("content")))
+    let prompt_text = input
+        .get("tool_input")
+        .and_then(|ti| ti.get("prompt").or_else(|| ti.get("content")))
         .or_else(|| input.get("content"))
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    if prompt_text.is_empty() { exit(0); }
+    if prompt_text.is_empty() {
+        exit(0);
+    }
 
-    let project_dir = input.get("project_dir")
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
@@ -1700,7 +2050,10 @@ fn cmd_prompt_submit_guard() {
     if prompt_text.contains("$block") {
         println!("\n--- Blocked (requires approval) ---");
         println!("Prompt added to escalation queue. Resolve with:");
-        println!("  thegent govern escalate resolve block-{}", chrono::Utc::now().timestamp());
+        println!(
+            "  thegent govern escalate resolve block-{}",
+            chrono::Utc::now().timestamp()
+        );
         exit(1);
     }
 
@@ -1708,11 +2061,18 @@ fn cmd_prompt_submit_guard() {
     if prompt_text.contains("$defer") || prompt_text.contains("$pending") {
         let queue_file = project_dir.join(".claude/pending-queue.jsonl");
         let _ = fs::create_dir_all(queue_file.parent().unwrap());
-        if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&queue_file) {
-            let _ = writeln!(f, "{{\"ts\":\"{}\",\"prompt\":{},\"project\":\"{}\"}}",
+        if let Ok(mut f) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&queue_file)
+        {
+            let _ = writeln!(
+                f,
+                "{{\"ts\":\"{}\",\"prompt\":{},\"project\":\"{}\"}}",
                 chrono::Utc::now().to_rfc3339(),
                 serde_json::to_string(prompt_text).unwrap(),
-                project_dir.display());
+                project_dir.display()
+            );
         }
         println!("\n--- Queued for session stop ---");
         exit(1);
@@ -1720,18 +2080,45 @@ fn cmd_prompt_submit_guard() {
 
     // 3. Antipatterns
     let mut found = Vec::new();
-    let test_patterns = ["skip tests", "skip the tests", "don't write tests", "no tests", "dont write tests", "without tests"];
-    for p in &test_patterns { if prompt_lower.contains(p) { found.push(format!("test-skipping: \"{}\"", p)); break; } }
+    let test_patterns = [
+        "skip tests",
+        "skip the tests",
+        "don't write tests",
+        "no tests",
+        "dont write tests",
+        "without tests",
+    ];
+    for p in &test_patterns {
+        if prompt_lower.contains(p) {
+            found.push(format!("test-skipping: \"{}\"", p));
+            break;
+        }
+    }
 
     if !found.is_empty() {
         println!("QA Governance Reminder: Quality enforcement is active.");
         println!("  Detected patterns:");
-        for f in found { println!("    - {}", f); }
+        for f in found {
+            println!("    - {}", f);
+        }
         println!("  Consider:\n    - Tests are required for all new code (TDD mandate)\n    - Suppressions require inline justification\n    - All linters must pass");
     }
 
     // 4. Workflow Triggers
-    let idea_patterns = ["idea", "research", "explore", "figure out", "add feature", "build", "implement", "design", "create", "task", "feature", "investigate"];
+    let idea_patterns = [
+        "idea",
+        "research",
+        "explore",
+        "figure out",
+        "add feature",
+        "build",
+        "implement",
+        "design",
+        "create",
+        "task",
+        "feature",
+        "investigate",
+    ];
     for p in &idea_patterns {
         if prompt_lower.contains(p) {
             println!("\n--- Agent workflow (idea/task detected) ---");
@@ -1756,9 +2143,22 @@ fn cmd_prompt_submit_guard() {
     if prompt_text.contains("$idea") {
         let seeds_dir = project_dir.join("docs/research/idea-seeds");
         let _ = fs::create_dir_all(&seeds_dir);
-        let seed_file = seeds_dir.join(format!("seed_{}.md", chrono::Utc::now().format("%Y%m%dT%H%M%SZ")));
-        let _ = fs::write(&seed_file, format!("---\nsaved_at: {}\nsource: UserPromptSubmit\n---\n\n{}", chrono::Utc::now().to_rfc3339(), prompt_text));
-        println!("\n--- Idea seed saved ---\nSaved to: {}", seed_file.display());
+        let seed_file = seeds_dir.join(format!(
+            "seed_{}.md",
+            chrono::Utc::now().format("%Y%m%dT%H%M%SZ")
+        ));
+        let _ = fs::write(
+            &seed_file,
+            format!(
+                "---\nsaved_at: {}\nsource: UserPromptSubmit\n---\n\n{}",
+                chrono::Utc::now().to_rfc3339(),
+                prompt_text
+            ),
+        );
+        println!(
+            "\n--- Idea seed saved ---\nSaved to: {}",
+            seed_file.display()
+        );
     }
 
     exit(0);
@@ -1769,7 +2169,8 @@ fn cmd_spec_preflight() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let project_dir = input.get("project_dir")
+    let project_dir = input
+        .get("project_dir")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
         .unwrap_or_else(|| env::current_dir().unwrap_or_default());
@@ -1788,25 +2189,50 @@ fn cmd_spec_preflight() {
         }
     }
 
-    if !has_commits && !has_src { exit(0); }
+    if !has_commits && !has_src {
+        exit(0);
+    }
 
-    let spec_docs = vec!["PRD.md", "ADR.md", "FUNCTIONAL_REQUIREMENTS.md", "PLAN.md", "USER_JOURNEYS.md"];
+    let spec_docs = vec![
+        "PRD.md",
+        "ADR.md",
+        "FUNCTIONAL_REQUIREMENTS.md",
+        "PLAN.md",
+        "USER_JOURNEYS.md",
+    ];
     let mut spec_present = Vec::new();
     let mut spec_missing = Vec::new();
     for d in &spec_docs {
-        if project_dir.join(d).exists() { spec_present.push(*d); }
-        else { spec_missing.push(*d); }
+        if project_dir.join(d).exists() {
+            spec_present.push(*d);
+        } else {
+            spec_missing.push(*d);
+        }
     }
 
-    let trackers = vec!["PRD_TRACKER.md", "ADR_STATUS.md", "FR_TRACKER.md", "PLAN_STATUS.md", "JOURNEY_VALIDATION.md", "CODE_ENTITY_MAP.md"];
+    let trackers = vec![
+        "PRD_TRACKER.md",
+        "ADR_STATUS.md",
+        "FR_TRACKER.md",
+        "PLAN_STATUS.md",
+        "JOURNEY_VALIDATION.md",
+        "CODE_ENTITY_MAP.md",
+    ];
     let mut track_present = Vec::new();
     let mut track_missing = Vec::new();
     for t in &trackers {
-        if project_dir.join("docs/reference").join(t).exists() { track_present.push(*t); }
-        else { track_missing.push(*t); }
+        if project_dir.join("docs/reference").join(t).exists() {
+            track_present.push(*t);
+        } else {
+            track_missing.push(*t);
+        }
     }
 
-    let project_type = if !has_commits && spec_present.is_empty() { "Greenfield" } else { "Brownfield" };
+    let project_type = if !has_commits && spec_present.is_empty() {
+        "Greenfield"
+    } else {
+        "Brownfield"
+    };
 
     println!("PROJECT STATE: {}", project_type);
     if spec_present.len() == 5 {
@@ -1841,22 +2267,48 @@ fn cmd_antipattern_detect() {
     let _ = io::stdin().read_to_end(&mut input_buffer);
     let input: Value = serde_json::from_slice(&input_buffer).unwrap_or(Value::Null);
 
-    let file_path_str = input.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
-    if file_path_str.is_empty() { exit(0); }
+    let file_path_str = input
+        .get("file_path")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    if file_path_str.is_empty() {
+        exit(0);
+    }
 
     let path = Path::new(file_path_str);
     let basename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
-    let v2_re = Regex::new(r"(?i)(_v[0-9]+\.|_new\.|_old\.|_backup\.|_copy\.|_orig\.|\.bak$)").unwrap();
+    let v2_re =
+        Regex::new(r"(?i)(_v[0-9]+\.|_new\.|_old\.|_backup\.|_copy\.|_orig\.|\.bak$)").unwrap();
     if v2_re.is_match(basename) {
-        println!(r#"{{"decision":"block","reason":"File '{}' uses a v2/new/old/backup naming pattern. Refactor the original file instead of creating duplicates. See CLAUDE.md: 'Extend, Never Duplicate'."}}"#, basename);
+        println!(
+            r#"{{"decision":"block","reason":"File '{}' uses a v2/new/old/backup naming pattern. Refactor the original file instead of creating duplicates. See CLAUDE.md: 'Extend, Never Duplicate'."}}"#,
+            basename
+        );
         exit(2);
     }
 
-    if !path.exists() && input.get("tool_name").and_then(|v| v.as_str()).unwrap_or("") != "Write" { exit(0); }
-    if ext != "py" && ext != "ts" && ext != "js" && ext != "tsx" && ext != "jsx" { exit(0); }
-    if basename.starts_with("test_") || basename.contains("_test.") || basename.contains("conftest.py") || file_path_str.contains("/tests/") || file_path_str.contains("/test/") { exit(0); }
+    if !path.exists()
+        && input
+            .get("tool_name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            != "Write"
+    {
+        exit(0);
+    }
+    if ext != "py" && ext != "ts" && ext != "js" && ext != "tsx" && ext != "jsx" {
+        exit(0);
+    }
+    if basename.starts_with("test_")
+        || basename.contains("_test.")
+        || basename.contains("conftest.py")
+        || file_path_str.contains("/tests/")
+        || file_path_str.contains("/test/")
+    {
+        exit(0);
+    }
 
     let content = if let Some(new_str) = input.get("tool_new_string").and_then(|v| v.as_str()) {
         new_str.to_string()
@@ -1866,7 +2318,9 @@ fn cmd_antipattern_detect() {
         fs::read_to_string(path).unwrap_or_default()
     };
 
-    if content.is_empty() { exit(0); }
+    if content.is_empty() {
+        exit(0);
+    }
     let mut warnings = Vec::new();
 
     let retry_re = Regex::new(r"(?i)(while\s+.*retry|for\s+.*in\s+range.*retry|max_retries|retry_count|num_retries|sleep.*retry|except.*retry)").unwrap();
@@ -1874,14 +2328,17 @@ fn cmd_antipattern_detect() {
         warnings.push("ANTIPATTERN: Custom retry logic detected. Use tenacity (already in deps) instead of manual retry loops.");
     }
 
-    let log_re = Regex::new(r"(?m)^\s*(import logging|from logging import|logging\.getLogger)").unwrap();
+    let log_re =
+        Regex::new(r"(?m)^\s*(import logging|from logging import|logging\.getLogger)").unwrap();
     if log_re.is_match(&content) {
         warnings.push("ANTIPATTERN: Using stdlib logging. Prefer structlog for structured logging (see CLAUDE.md library preferences).");
     }
 
     let argparse_re = Regex::new(r"(?m)^\s*(import argparse|from argparse import)").unwrap();
     if argparse_re.is_match(&content) {
-        warnings.push("ANTIPATTERN: Using argparse. Use typer (already in deps) for CLI argument parsing.");
+        warnings.push(
+            "ANTIPATTERN: Using argparse. Use typer (already in deps) for CLI argument parsing.",
+        );
     }
 
     if !basename.contains("settings") && !basename.contains("config") {
@@ -1891,7 +2348,10 @@ fn cmd_antipattern_detect() {
         }
     }
 
-    if !basename.contains("settings") && !basename.contains("config") && !basename.contains("constants") {
+    if !basename.contains("settings")
+        && !basename.contains("config")
+        && !basename.contains("constants")
+    {
         let provider_re = Regex::new(r#"(provider\s*=\s*["'](openai|anthropic|google|azure|cohere|mistral|groq)["']|model\s*=\s*["'](gpt-4|gpt-3|claude|gemini|llama)["'])"#).unwrap();
         if provider_re.is_match(&content) {
             warnings.push("ANTIPATTERN: Hardcoded provider/model strings. Use ProviderRegistry pattern and config-driven provider selection.");
@@ -1900,19 +2360,36 @@ fn cmd_antipattern_detect() {
 
     if !matches!(basename, "__main__.py" | "main.py" | "cli.py") && !basename.contains("_cli.py") {
         let print_re = Regex::new(r"(?m)^\s*print\(").unwrap();
-        if print_re.is_match(&content) && !content.contains("typer") && !content.contains("click") && !content.contains("rich") {
+        if print_re.is_match(&content)
+            && !content.contains("typer")
+            && !content.contains("click")
+            && !content.contains("rich")
+        {
             if print_re.find_iter(&content).count() >= 2 {
                 warnings.push("ANTIPATTERN: Multiple print() calls in non-CLI code. Use structured logging (structlog/rich) instead.");
             }
         }
     }
 
-    let requests_re = Regex::new(r"(?m)^\s*(import requests|from requests import|requests\.(get|post|put|delete|patch)\()").unwrap();
-    let urllib_re = Regex::new(r"(?m)^\s*(import urllib|from urllib import|urllib\.request\.)").unwrap();
-    let http_re = Regex::new(r"(?i)class\s+\w*(Http|HTTP|Api|API)(Client|Wrapper|Session|Handler)\b").unwrap();
-    if requests_re.is_match(&content) { warnings.push("ANTIPATTERN: Using 'requests' library. Prefer httpx (async-capable, modern)."); }
-    if urllib_re.is_match(&content) { warnings.push("ANTIPATTERN: Using urllib. Prefer httpx for HTTP requests."); }
-    if http_re.is_match(&content) && !content.contains("httpx") { warnings.push("ANTIPATTERN: Custom HTTP client class detected. Use httpx directly (see CLAUDE.md library preferences)."); }
+    let requests_re = Regex::new(
+        r"(?m)^\s*(import requests|from requests import|requests\.(get|post|put|delete|patch)\()",
+    )
+    .unwrap();
+    let urllib_re =
+        Regex::new(r"(?m)^\s*(import urllib|from urllib import|urllib\.request\.)").unwrap();
+    let http_re =
+        Regex::new(r"(?i)class\s+\w*(Http|HTTP|Api|API)(Client|Wrapper|Session|Handler)\b")
+            .unwrap();
+    if requests_re.is_match(&content) {
+        warnings
+            .push("ANTIPATTERN: Using 'requests' library. Prefer httpx (async-capable, modern).");
+    }
+    if urllib_re.is_match(&content) {
+        warnings.push("ANTIPATTERN: Using urllib. Prefer httpx for HTTP requests.");
+    }
+    if http_re.is_match(&content) && !content.contains("httpx") {
+        warnings.push("ANTIPATTERN: Custom HTTP client class detected. Use httpx directly (see CLAUDE.md library preferences).");
+    }
 
     let valid_re = Regex::new(r#"(?i)isinstance\(.*,\s*(str|int|float|dict|list)\)|if\s+not\s+isinstance|raise\s+(TypeError|ValueError)\(\s*f?['"](Expected|Invalid|Must be)"#).unwrap();
     if valid_re.find_iter(&content).count() >= 4 {
@@ -1930,8 +2407,14 @@ fn cmd_antipattern_detect() {
     }
 
     if !warnings.is_empty() {
-        println!("AGENT ANTI-PATTERNS [{}]: {} issue(s) detected", basename, warnings.len());
-        for w in warnings { println!("  - {}", w); }
+        println!(
+            "AGENT ANTI-PATTERNS [{}]: {} issue(s) detected",
+            basename,
+            warnings.len()
+        );
+        for w in warnings {
+            println!("  - {}", w);
+        }
     }
     exit(0);
 }
@@ -1948,11 +2431,21 @@ fn cmd_qa_artifact_gate() {
     let ac = project_dir.join("contracts/assurance-case.json");
     let rw = project_dir.join("contracts/rolling-wave.json");
     let pp = verify_dir.join("privacy-proof.json");
-    if ac.exists() { files.push(ac); }
-    if rw.exists() { files.push(rw); }
-    if pp.exists() { files.push(pp); }
+    if ac.exists() {
+        files.push(ac);
+    }
+    if rw.exists() {
+        files.push(rw);
+    }
+    if pp.exists() {
+        files.push(pp);
+    }
     if files.is_empty() {
-        let _ = fs::write(&report_file, json!({"generated_at": now, "status": "no_artifacts", "pass": true, "error_count": 0}).to_string());
+        let _ = fs::write(
+            &report_file,
+            json!({"generated_at": now, "status": "no_artifacts", "pass": true, "error_count": 0})
+                .to_string(),
+        );
         println!("ARTIFACT QUALITY GATE: pass (no critical artifacts)");
         return;
     }
@@ -1970,10 +2463,16 @@ fn cmd_qa_artifact_gate() {
     }
     if errors > 0 {
         let _ = fs::write(&report_file, json!({"generated_at": now, "status": "fail", "pass": false, "error_count": errors, "bad_files": bad_files.join(",")}).to_string());
-        eprintln!("ARTIFACT-QUALITY FAIL: {} artifact(s) contain placeholder content", errors);
+        eprintln!(
+            "ARTIFACT-QUALITY FAIL: {} artifact(s) contain placeholder content",
+            errors
+        );
         exit(2);
     }
-    let _ = fs::write(&report_file, json!({"generated_at": now, "status": "pass", "pass": true, "error_count": 0}).to_string());
+    let _ = fs::write(
+        &report_file,
+        json!({"generated_at": now, "status": "pass", "pass": true, "error_count": 0}).to_string(),
+    );
     println!("ARTIFACT QUALITY GATE: pass");
 }
 
@@ -1992,15 +2491,30 @@ fn cmd_qa_assurance_gate() {
     if let Ok(content) = fs::read_to_string(&ac) {
         if let Ok(v) = serde_json::from_str::<Value>(&content) {
             let mut errors = Vec::new();
-            if v.get("claims").and_then(|c| c.as_array()).map(|a| a.is_empty()).unwrap_or(true) { errors.push("No claims defined".to_string()); }
-            if v.get("evidence").and_then(|e| e.as_array()).map(|a| a.is_empty()).unwrap_or(true) { errors.push("No evidence defined".to_string()); }
+            if v.get("claims")
+                .and_then(|c| c.as_array())
+                .map(|a| a.is_empty())
+                .unwrap_or(true)
+            {
+                errors.push("No claims defined".to_string());
+            }
+            if v.get("evidence")
+                .and_then(|e| e.as_array())
+                .map(|a| a.is_empty())
+                .unwrap_or(true)
+            {
+                errors.push("No evidence defined".to_string());
+            }
             if !errors.is_empty() {
                 let _ = fs::write(&report_file, json!({"generated_at": now, "status": "fail", "pass": false, "error_count": errors.len(), "errors": errors}).to_string());
                 exit(2);
             }
         }
     }
-    let _ = fs::write(&report_file, json!({"generated_at": now, "status": "pass", "pass": true, "error_count": 0}).to_string());
+    let _ = fs::write(
+        &report_file,
+        json!({"generated_at": now, "status": "pass", "pass": true, "error_count": 0}).to_string(),
+    );
     println!("ASSURANCE CASE GATE: pass");
 }
 
@@ -2015,13 +2529,37 @@ fn cmd_qa_policy_engine() {
 
 fn cmd_doc_location_guard() {
     let input = read_input().unwrap_or(json!({}));
-    let file_path = input.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
-    if !file_path.ends_with(".md") { exit(0); }
-    let project_dir = PathBuf::from(input.get("project_dir").and_then(|v| v.as_str()).unwrap_or("."));
+    let file_path = input
+        .get("file_path")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    if !file_path.ends_with(".md") {
+        exit(0);
+    }
+    let project_dir = PathBuf::from(
+        input
+            .get("project_dir")
+            .and_then(|v| v.as_str())
+            .unwrap_or("."),
+    );
     let path = PathBuf::from(file_path);
     let rel = path.strip_prefix(&project_dir).unwrap_or(&path);
-    if rel == &path { exit(0); }
-    let allowed = ["README.md", "CHANGELOG.md", "AGENTS.md", "CLAUDE.md", "claude.md", "00_START_HERE.md", "PRD.md", "ADR.md", "FUNCTIONAL_REQUIREMENTS.md", "PLAN.md", "USER_JOURNEYS.md"];
+    if rel == &path {
+        exit(0);
+    }
+    let allowed = [
+        "README.md",
+        "CHANGELOG.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "claude.md",
+        "00_START_HERE.md",
+        "PRD.md",
+        "ADR.md",
+        "FUNCTIONAL_REQUIREMENTS.md",
+        "PLAN.md",
+        "USER_JOURNEYS.md",
+    ];
     let rel_s = rel.to_string_lossy();
     if !rel_s.contains('/') {
         if !allowed.contains(&rel_s.as_ref()) {
@@ -2029,60 +2567,126 @@ fn cmd_doc_location_guard() {
             exit(2);
         }
     } else if rel_s.starts_with("docs/") && rel_s.split('/').count() < 3 {
-        eprintln!("BLOCKED: .md files must be in docs/ subdirectories: {}", rel_s);
+        eprintln!(
+            "BLOCKED: .md files must be in docs/ subdirectories: {}",
+            rel_s
+        );
         exit(2);
     }
 }
 
 fn cmd_change_doc_tracker() {
     let input = read_input().unwrap_or(json!({}));
-    let project_dir = PathBuf::from(input.get("project_dir").and_then(|v| v.as_str()).unwrap_or("."));
-    let file_path = input.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
-    let tool_name = input.get("tool_name").and_then(|v| v.as_str()).unwrap_or("Edit");
-    if file_path.is_empty() { exit(0); }
+    let project_dir = PathBuf::from(
+        input
+            .get("project_dir")
+            .and_then(|v| v.as_str())
+            .unwrap_or("."),
+    );
+    let file_path = input
+        .get("file_path")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let tool_name = input
+        .get("tool_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Edit");
+    if file_path.is_empty() {
+        exit(0);
+    }
     let log_path = project_dir.join(".claude/session-changes.log");
-    if let Ok(mut f) = fs::OpenOptions::new().create(true).append(true).open(&log_path) {
+    if let Ok(mut f) = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_path)
+    {
         let _ = writeln!(f, "{}|{}|{}", Utc::now().to_rfc3339(), tool_name, file_path);
     }
 }
 
 fn cmd_task_completion_verify() {
     let input = read_input().unwrap_or(json!({}));
-    let project_dir = PathBuf::from(input.get("project_dir").and_then(|v| v.as_str()).unwrap_or("."));
-    let changed = input.get("changed_files").and_then(|v| v.as_str()).unwrap_or("");
-    if changed.is_empty() { exit(0); }
+    let project_dir = PathBuf::from(
+        input
+            .get("project_dir")
+            .and_then(|v| v.as_str())
+            .unwrap_or("."),
+    );
+    let changed = input
+        .get("changed_files")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    if changed.is_empty() {
+        exit(0);
+    }
     let mut warnings = Vec::new();
     for f in changed.split_whitespace() {
         let p = Path::new(f);
-        if !p.exists() { continue; }
+        if !p.exists() {
+            continue;
+        }
         let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("");
         let name = p.file_stem().and_then(|s| s.to_str()).unwrap_or("");
         let dir = p.parent().unwrap_or(Path::new("."));
         let mut has_test = false;
         if ext == "py" {
-            let cands = [dir.join(format!("test_{}.py", name)), dir.join("tests").join(format!("test_{}.py", name)), project_dir.join("tests").join(format!("test_{}.py", name))];
-            for c in &cands { if c.exists() { has_test = true; break; } }
+            let cands = [
+                dir.join(format!("test_{}.py", name)),
+                dir.join("tests").join(format!("test_{}.py", name)),
+                project_dir.join("tests").join(format!("test_{}.py", name)),
+            ];
+            for c in &cands {
+                if c.exists() {
+                    has_test = true;
+                    break;
+                }
+            }
         } else if ext == "rs" {
-            if fs::read_to_string(p).map(|c| c.contains("#[cfg(test)]")).unwrap_or(false) { has_test = true; }
-        } else { has_test = true; }
-        if !has_test && !f.contains("test") && !f.contains("spec") { warnings.push(format!("No test for: {}", f)); }
+            if fs::read_to_string(p)
+                .map(|c| c.contains("#[cfg(test)]"))
+                .unwrap_or(false)
+            {
+                has_test = true;
+            }
+        } else {
+            has_test = true;
+        }
+        if !has_test && !f.contains("test") && !f.contains("spec") {
+            warnings.push(format!("No test for: {}", f));
+        }
     }
     if !warnings.is_empty() {
         println!("Task Completion Warnings:");
-        for w in warnings { println!("  - {}", w); }
-    } else { println!("Task completion: ok"); }
+        for w in warnings {
+            println!("  - {}", w);
+        }
+    } else {
+        println!("Task completion: ok");
+    }
 }
 
 fn cmd_post_edit_check() {
     let input = read_input().unwrap_or(json!({}));
-    let file_path = input.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
-    if file_path.is_empty() { exit(0); }
+    let file_path = input
+        .get("file_path")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    if file_path.is_empty() {
+        exit(0);
+    }
     let path = Path::new(file_path);
-    if !path.exists() { exit(0); }
+    if !path.exists() {
+        exit(0);
+    }
     let content = fs::read_to_string(path).unwrap_or_default();
     let slop_re = Regex::new(r#"(?i)TODO:\s*(implement|add)|Lorem ipsum|your-.*-here|replace-with|CHANGEME|As an AI|I cannot|I apologize|#.*This function\s+.*does|pass\s+#\s*(placeholder|TODO)|throw new Error\(.*(not implemented|todo)|panic\(.*(not implemented|todo|unimplemented)"#).unwrap();
     let slop_hits = slop_re.find_iter(&content).count();
-    if slop_hits > 0 { println!("SLOP: {} potential placeholder(s) in {}", slop_hits, file_path); }
+    if slop_hits > 0 {
+        println!(
+            "SLOP: {} potential placeholder(s) in {}",
+            slop_hits, file_path
+        );
+    }
 }
 
 fn cmd_schema_validate() {
@@ -2190,20 +2794,32 @@ fn cmd_metric_contracts_eval() {
     });
 
     let contract_raw = fs::read_to_string(&contract_path).unwrap_or_else(|e| {
-        eprintln!("METRIC_CONTRACTS FAIL: cannot read contract {}: {}", contract_path, e);
+        eprintln!(
+            "METRIC_CONTRACTS FAIL: cannot read contract {}: {}",
+            contract_path, e
+        );
         exit(2);
     });
     let metrics_raw = fs::read_to_string(&metrics_path).unwrap_or_else(|e| {
-        eprintln!("METRIC_CONTRACTS FAIL: cannot read metrics {}: {}", metrics_path, e);
+        eprintln!(
+            "METRIC_CONTRACTS FAIL: cannot read metrics {}: {}",
+            metrics_path, e
+        );
         exit(2);
     });
 
     let contract_json: Value = serde_json::from_str(&contract_raw).unwrap_or_else(|e| {
-        eprintln!("METRIC_CONTRACTS FAIL: invalid contract JSON {}: {}", contract_path, e);
+        eprintln!(
+            "METRIC_CONTRACTS FAIL: invalid contract JSON {}: {}",
+            contract_path, e
+        );
         exit(2);
     });
     let metrics_json: Value = serde_json::from_str(&metrics_raw).unwrap_or_else(|e| {
-        eprintln!("METRIC_CONTRACTS FAIL: invalid metrics JSON {}: {}", metrics_path, e);
+        eprintln!(
+            "METRIC_CONTRACTS FAIL: invalid metrics JSON {}: {}",
+            metrics_path, e
+        );
         exit(2);
     });
 
@@ -2215,31 +2831,98 @@ fn cmd_metric_contracts_eval() {
         eprintln!("METRIC_CONTRACTS FAIL: metrics root must be object");
         exit(2);
     }
-    if !contract_json.get("version").map(|v| v.is_string()).unwrap_or(false) {
+    if !contract_json
+        .get("version")
+        .map(|v| v.is_string())
+        .unwrap_or(false)
+    {
         eprintln!("METRIC_CONTRACTS FAIL: contract.version must be string");
         exit(2);
     }
-    if !contract_json.get("enforcement").map(|v| v.is_object()).unwrap_or(false) {
+    if !contract_json
+        .get("enforcement")
+        .map(|v| v.is_object())
+        .unwrap_or(false)
+    {
         eprintln!("METRIC_CONTRACTS FAIL: contract.enforcement must be object");
         exit(2);
     }
-    if !contract_json.get("domains").map(|v| v.is_object()).unwrap_or(false) {
+    if !contract_json
+        .get("domains")
+        .map(|v| v.is_object())
+        .unwrap_or(false)
+    {
         eprintln!("METRIC_CONTRACTS FAIL: contract.domains must be object");
         exit(2);
     }
 
     let rules: [(&str, &str, &str, &str); 11] = [
-        ("domains.quality.max_lint_errors", "quality.lint_errors", "quality.max_lint_errors", "max"),
-        ("domains.quality.max_type_errors", "quality.type_errors", "quality.max_type_errors", "max"),
-        ("domains.quality.min_test_pass_rate", "quality.test_pass_rate", "quality.min_test_pass_rate", "min"),
-        ("domains.security.max_critical_vulns", "security.critical_vulns", "security.max_critical_vulns", "max"),
-        ("domains.security.max_high_vulns", "security.high_vulns", "security.max_high_vulns", "max"),
-        ("domains.security.max_secrets_detected", "security.secrets_detected", "security.max_secrets_detected", "max"),
-        ("domains.reliability.max_flake_rate", "reliability.flake_rate", "reliability.max_flake_rate", "max"),
-        ("domains.reliability.min_pass_rate", "reliability.pass_rate", "reliability.min_pass_rate", "min"),
-        ("domains.extensibility.max_file_lines", "extensibility.max_file_lines", "extensibility.max_file_lines", "max"),
-        ("domains.extensibility.max_function_lines", "extensibility.max_function_lines", "extensibility.max_function_lines", "max"),
-        ("domains.other.max_todo_markers", "other.todo_markers", "other.max_todo_markers", "max"),
+        (
+            "domains.quality.max_lint_errors",
+            "quality.lint_errors",
+            "quality.max_lint_errors",
+            "max",
+        ),
+        (
+            "domains.quality.max_type_errors",
+            "quality.type_errors",
+            "quality.max_type_errors",
+            "max",
+        ),
+        (
+            "domains.quality.min_test_pass_rate",
+            "quality.test_pass_rate",
+            "quality.min_test_pass_rate",
+            "min",
+        ),
+        (
+            "domains.security.max_critical_vulns",
+            "security.critical_vulns",
+            "security.max_critical_vulns",
+            "max",
+        ),
+        (
+            "domains.security.max_high_vulns",
+            "security.high_vulns",
+            "security.max_high_vulns",
+            "max",
+        ),
+        (
+            "domains.security.max_secrets_detected",
+            "security.secrets_detected",
+            "security.max_secrets_detected",
+            "max",
+        ),
+        (
+            "domains.reliability.max_flake_rate",
+            "reliability.flake_rate",
+            "reliability.max_flake_rate",
+            "max",
+        ),
+        (
+            "domains.reliability.min_pass_rate",
+            "reliability.pass_rate",
+            "reliability.min_pass_rate",
+            "min",
+        ),
+        (
+            "domains.extensibility.max_file_lines",
+            "extensibility.max_file_lines",
+            "extensibility.max_file_lines",
+            "max",
+        ),
+        (
+            "domains.extensibility.max_function_lines",
+            "extensibility.max_function_lines",
+            "extensibility.max_function_lines",
+            "max",
+        ),
+        (
+            "domains.other.max_todo_markers",
+            "other.todo_markers",
+            "other.max_todo_markers",
+            "max",
+        ),
     ];
 
     let mut checks: Vec<Value> = Vec::new();
@@ -2347,7 +3030,11 @@ fn cmd_reliability_eval() {
     let report_path_buf = PathBuf::from(&report_path);
     if let Some(parent) = report_path_buf.parent() {
         if let Err(e) = fs::create_dir_all(parent) {
-            eprintln!("RELIABILITY FAIL: cannot create report dir {}: {}", parent.display(), e);
+            eprintln!(
+                "RELIABILITY FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
             exit(2);
         }
     }
@@ -2613,7 +3300,9 @@ fn cmd_reliability_slo_eval() {
             checks.push(json!({"check":"min_pass_rate","status":"warn","value":pass_rate,"threshold":min_pass}));
         }
     } else {
-        checks.push(json!({"check":"min_pass_rate","status":"pass","value":pass_rate,"threshold":min_pass}));
+        checks.push(
+            json!({"check":"min_pass_rate","status":"pass","value":pass_rate,"threshold":min_pass}),
+        );
     }
 
     let report_json = json!({
@@ -2790,8 +3479,10 @@ fn cmd_flake_quarantine_eval() {
         .format("%Y-%m-%dT%H:%M:%SZ")
         .to_string();
 
-    let raw_quarantine = fs::read_to_string(&quarantine_path_buf).unwrap_or_else(|_| "{\"generated_at\":\"\",\"entries\":[]}".to_string());
-    let mut quarantine_json: Value = serde_json::from_str(&raw_quarantine).unwrap_or_else(|_| json!({"generated_at":"","entries":[]}));
+    let raw_quarantine = fs::read_to_string(&quarantine_path_buf)
+        .unwrap_or_else(|_| "{\"generated_at\":\"\",\"entries\":[]}".to_string());
+    let mut quarantine_json: Value = serde_json::from_str(&raw_quarantine)
+        .unwrap_or_else(|_| json!({"generated_at":"","entries":[]}));
     if !quarantine_json.is_object() {
         quarantine_json = json!({"generated_at":"","entries":[]});
     }
@@ -2811,7 +3502,10 @@ fn cmd_flake_quarantine_eval() {
         let mut already_active = false;
         for entry in entries.iter() {
             let e_test = entry.get("test_id").and_then(|v| v.as_str()).unwrap_or("");
-            let status = entry.get("status").and_then(|v| v.as_str()).unwrap_or("active");
+            let status = entry
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("active");
             if e_test == test_id && status == "active" {
                 already_active = true;
                 break;
@@ -2834,10 +3528,16 @@ fn cmd_flake_quarantine_eval() {
     let mut active_count: u64 = 0;
     if let Some(items) = quarantine_json.get("entries").and_then(|v| v.as_array()) {
         for entry in items {
-            let status = entry.get("status").and_then(|v| v.as_str()).unwrap_or("active");
+            let status = entry
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("active");
             if status == "active" {
                 active_count += 1;
-                let expires_at = entry.get("expires_at").and_then(|v| v.as_str()).unwrap_or("");
+                let expires_at = entry
+                    .get("expires_at")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
                 if !expires_at.is_empty() && expires_at < now_iso.as_str() {
                     expired_count += 1;
                 }
@@ -2863,10 +3563,14 @@ fn cmd_flake_quarantine_eval() {
     if expired_count > 0 {
         if enabled {
             err += 1;
-            checks.push(json!({"check":"expired_quarantine_entries","status":"fail","count":expired_count}));
+            checks.push(
+                json!({"check":"expired_quarantine_entries","status":"fail","count":expired_count}),
+            );
         } else {
             warn += 1;
-            checks.push(json!({"check":"expired_quarantine_entries","status":"warn","count":expired_count}));
+            checks.push(
+                json!({"check":"expired_quarantine_entries","status":"warn","count":expired_count}),
+            );
         }
     } else {
         checks.push(json!({"check":"expired_quarantine_entries","status":"pass","count":0}));
@@ -3325,7 +4029,11 @@ fn cmd_elicitation_closure_eval() {
             }
             let id = item.get("id").and_then(|v| v.as_str()).unwrap_or("");
             let src = item.get("source").and_then(|v| v.as_str()).unwrap_or("");
-            if id.is_empty() || src.is_empty() || !src.ends_with(".md") || !PathBuf::from(src).is_file() {
+            if id.is_empty()
+                || src.is_empty()
+                || !src.ends_with(".md")
+                || !PathBuf::from(src).is_file()
+            {
                 continue;
             }
 
@@ -3763,7 +4471,11 @@ fn cmd_artifact_quality_eval() {
     let report_path_buf = PathBuf::from(&report_path);
     if let Some(parent) = report_path_buf.parent() {
         if let Err(e) = fs::create_dir_all(parent) {
-            eprintln!("ARTIFACT_QUALITY FAIL: cannot create report dir {}: {}", parent.display(), e);
+            eprintln!(
+                "ARTIFACT_QUALITY FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
             exit(2);
         }
     }
@@ -3775,8 +4487,15 @@ fn cmd_artifact_quality_eval() {
             "error_count": 0,
             "pass": true
         });
-        if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-            eprintln!("ARTIFACT_QUALITY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+        if let Err(e) = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        ) {
+            eprintln!(
+                "ARTIFACT_QUALITY FAIL: cannot write report {}: {}",
+                report_path_buf.display(),
+                e
+            );
             exit(2);
         }
         exit(3);
@@ -3805,8 +4524,15 @@ fn cmd_artifact_quality_eval() {
         "bad_files": bad_files,
         "pass": errors == 0
     });
-    if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-        eprintln!("ARTIFACT_QUALITY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+    if let Err(e) = fs::write(
+        &report_path_buf,
+        serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+    ) {
+        eprintln!(
+            "ARTIFACT_QUALITY FAIL: cannot write report {}: {}",
+            report_path_buf.display(),
+            e
+        );
         exit(2);
     }
     if errors > 0 {
@@ -3868,7 +4594,11 @@ fn cmd_playbook_contract_eval() {
     let report_path_buf = PathBuf::from(&report_path);
     if let Some(parent) = report_path_buf.parent() {
         if let Err(e) = fs::create_dir_all(parent) {
-            eprintln!("PLAYBOOK_CONTRACT FAIL: cannot create report dir {}: {}", parent.display(), e);
+            eprintln!(
+                "PLAYBOOK_CONTRACT FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
             exit(2);
         }
     }
@@ -3880,15 +4610,24 @@ fn cmd_playbook_contract_eval() {
             "error_count": 0,
             "pass": true
         });
-        if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-            eprintln!("PLAYBOOK_CONTRACT FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+        if let Err(e) = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        ) {
+            eprintln!(
+                "PLAYBOOK_CONTRACT FAIL: cannot write report {}: {}",
+                report_path_buf.display(),
+                e
+            );
             exit(2);
         }
         exit(3);
     }
 
-    let brownfield = PathBuf::from(&project_dir).join("contracts/playbooks/brownfield.playbook.json");
-    let greenfield = PathBuf::from(&project_dir).join("contracts/playbooks/greenfield.playbook.json");
+    let brownfield =
+        PathBuf::from(&project_dir).join("contracts/playbooks/brownfield.playbook.json");
+    let greenfield =
+        PathBuf::from(&project_dir).join("contracts/playbooks/greenfield.playbook.json");
 
     let mut errors: u64 = 0;
     let mut missing: Vec<String> = Vec::new();
@@ -3943,8 +4682,15 @@ fn cmd_playbook_contract_eval() {
         "missing": missing,
         "pass": errors == 0
     });
-    if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-        eprintln!("PLAYBOOK_CONTRACT FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+    if let Err(e) = fs::write(
+        &report_path_buf,
+        serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+    ) {
+        eprintln!(
+            "PLAYBOOK_CONTRACT FAIL: cannot write report {}: {}",
+            report_path_buf.display(),
+            e
+        );
         exit(2);
     }
     if errors > 0 {
@@ -3996,7 +4742,11 @@ fn cmd_debt_registry_eval() {
     let report_path_buf = PathBuf::from(&report_path);
     if let Some(parent) = report_path_buf.parent() {
         if let Err(e) = fs::create_dir_all(parent) {
-            eprintln!("DEBT_REGISTRY FAIL: cannot create report dir {}: {}", parent.display(), e);
+            eprintln!(
+                "DEBT_REGISTRY FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
             exit(2);
         }
     }
@@ -4008,8 +4758,15 @@ fn cmd_debt_registry_eval() {
             "error_count": 0,
             "pass": true
         });
-        if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-            eprintln!("DEBT_REGISTRY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+        if let Err(e) = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        ) {
+            eprintln!(
+                "DEBT_REGISTRY FAIL: cannot write report {}: {}",
+                report_path_buf.display(),
+                e
+            );
             exit(2);
         }
         exit(3);
@@ -4023,8 +4780,15 @@ fn cmd_debt_registry_eval() {
             "reason": "missing debt-register.json",
             "pass": false
         });
-        if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-            eprintln!("DEBT_REGISTRY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+        if let Err(e) = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        ) {
+            eprintln!(
+                "DEBT_REGISTRY FAIL: cannot write report {}: {}",
+                report_path_buf.display(),
+                e
+            );
             exit(2);
         }
         exit(1);
@@ -4033,7 +4797,11 @@ fn cmd_debt_registry_eval() {
     let raw = match fs::read_to_string(&debt_path_buf) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("DEBT_REGISTRY FAIL: cannot read debt register {}: {}", debt_path_buf.display(), e);
+            eprintln!(
+                "DEBT_REGISTRY FAIL: cannot read debt register {}: {}",
+                debt_path_buf.display(),
+                e
+            );
             exit(2);
         }
     };
@@ -4044,8 +4812,15 @@ fn cmd_debt_registry_eval() {
             "reason": "invalid JSON",
             "pass": false
         });
-        if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-            eprintln!("DEBT_REGISTRY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+        if let Err(e) = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        ) {
+            eprintln!(
+                "DEBT_REGISTRY FAIL: cannot write report {}: {}",
+                report_path_buf.display(),
+                e
+            );
             exit(2);
         }
         exit(1);
@@ -4056,8 +4831,15 @@ fn cmd_debt_registry_eval() {
         "error_count": 0,
         "pass": true
     });
-    if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-        eprintln!("DEBT_REGISTRY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+    if let Err(e) = fs::write(
+        &report_path_buf,
+        serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+    ) {
+        eprintln!(
+            "DEBT_REGISTRY FAIL: cannot write report {}: {}",
+            report_path_buf.display(),
+            e
+        );
         exit(2);
     }
 }
@@ -4097,7 +4879,11 @@ fn cmd_formal_registry_eval() {
     let report_path_buf = PathBuf::from(&report_path);
     if let Some(parent) = report_path_buf.parent() {
         if let Err(e) = fs::create_dir_all(parent) {
-            eprintln!("FORMAL_REGISTRY FAIL: cannot create report dir {}: {}", parent.display(), e);
+            eprintln!(
+                "FORMAL_REGISTRY FAIL: cannot create report dir {}: {}",
+                parent.display(),
+                e
+            );
             exit(2);
         }
     }
@@ -4110,8 +4896,15 @@ fn cmd_formal_registry_eval() {
             "error_count": 0,
             "pass": true
         });
-        if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-            eprintln!("FORMAL_REGISTRY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+        if let Err(e) = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        ) {
+            eprintln!(
+                "FORMAL_REGISTRY FAIL: cannot write report {}: {}",
+                report_path_buf.display(),
+                e
+            );
             exit(2);
         }
         exit(3);
@@ -4120,7 +4913,11 @@ fn cmd_formal_registry_eval() {
     let raw = match fs::read_to_string(&registry_path_buf) {
         Ok(v) => v,
         Err(e) => {
-            eprintln!("FORMAL_REGISTRY FAIL: cannot read registry {}: {}", registry_path_buf.display(), e);
+            eprintln!(
+                "FORMAL_REGISTRY FAIL: cannot read registry {}: {}",
+                registry_path_buf.display(),
+                e
+            );
             exit(2);
         }
     };
@@ -4133,7 +4930,10 @@ fn cmd_formal_registry_eval() {
                 "reason": "invalid_json",
                 "pass": false
             });
-            let _ = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()));
+            let _ = fs::write(
+                &report_path_buf,
+                serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+            );
             exit(1);
         }
     };
@@ -4145,11 +4945,17 @@ fn cmd_formal_registry_eval() {
             "reason": "invalid_json",
             "pass": false
         });
-        let _ = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()));
+        let _ = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        );
         exit(1);
     }
 
-    let generated_at_ok = parsed.get("generated_at").map(|v| v.is_string()).unwrap_or(false);
+    let generated_at_ok = parsed
+        .get("generated_at")
+        .map(|v| v.is_string())
+        .unwrap_or(false);
     let items_opt = parsed.get("items").and_then(|v| v.as_array());
     if !generated_at_ok || items_opt.is_none() {
         let report_json = json!({
@@ -4158,16 +4964,31 @@ fn cmd_formal_registry_eval() {
             "reason": "missing_fields",
             "pass": false
         });
-        let _ = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()));
+        let _ = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        );
         exit(1);
     }
 
     let mut bad: u64 = 0;
     if let Some(items) = items_opt {
         for item in items {
-            let id_ok = item.get("id").and_then(|v| v.as_str()).map(|s| !s.is_empty()).unwrap_or(false);
-            let path_ok = item.get("path").and_then(|v| v.as_str()).map(|s| !s.is_empty()).unwrap_or(false);
-            let kind_ok = item.get("kind").and_then(|v| v.as_str()).map(|s| !s.is_empty()).unwrap_or(false);
+            let id_ok = item
+                .get("id")
+                .and_then(|v| v.as_str())
+                .map(|s| !s.is_empty())
+                .unwrap_or(false);
+            let path_ok = item
+                .get("path")
+                .and_then(|v| v.as_str())
+                .map(|s| !s.is_empty())
+                .unwrap_or(false);
+            let kind_ok = item
+                .get("kind")
+                .and_then(|v| v.as_str())
+                .map(|s| !s.is_empty())
+                .unwrap_or(false);
             if !(id_ok && path_ok && kind_ok) {
                 bad += 1;
             }
@@ -4181,7 +5002,10 @@ fn cmd_formal_registry_eval() {
             "reason": "invalid_item_shape",
             "pass": false
         });
-        let _ = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()));
+        let _ = fs::write(
+            &report_path_buf,
+            serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+        );
         exit(1);
     }
 
@@ -4190,18 +5014,43 @@ fn cmd_formal_registry_eval() {
         "error_count": 0,
         "pass": true
     });
-    if let Err(e) = fs::write(&report_path_buf, serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string())) {
-        eprintln!("FORMAL_REGISTRY FAIL: cannot write report {}: {}", report_path_buf.display(), e);
+    if let Err(e) = fs::write(
+        &report_path_buf,
+        serde_json::to_string(&report_json).unwrap_or_else(|_| "{}".to_string()),
+    ) {
+        eprintln!(
+            "FORMAL_REGISTRY FAIL: cannot write report {}: {}",
+            report_path_buf.display(),
+            e
+        );
         exit(2);
     }
 }
 
 fn cmd_pre_write_validate() {
     let input = read_input().unwrap_or(json!({}));
-    let file_path = input.get("file_path").and_then(|v| v.as_str()).unwrap_or("");
-    let content = if input.get("tool_name").and_then(|v| v.as_str()) == Some("Write") { input.get("tool_content").and_then(|v| v.as_str()).unwrap_or("") } else { input.get("tool_new_string").and_then(|v| v.as_str()).unwrap_or("") };
-    if file_path.is_empty() || content.is_empty() { exit(0); }
-    let ext = Path::new(file_path).extension().and_then(|e| e.to_str()).unwrap_or("");
+    let file_path = input
+        .get("file_path")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let content = if input.get("tool_name").and_then(|v| v.as_str()) == Some("Write") {
+        input
+            .get("tool_content")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+    } else {
+        input
+            .get("tool_new_string")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+    };
+    if file_path.is_empty() || content.is_empty() {
+        exit(0);
+    }
+    let ext = Path::new(file_path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("");
     if ext == "json" {
         if let Err(e) = serde_json::from_str::<Value>(content) {
             println!(r#"{{"decision":"block","reason":"Invalid JSON: {}"}}"#, e);
@@ -4217,29 +5066,69 @@ fn cmd_pre_write_validate() {
 
 fn cmd_suppression_blocker() {
     let input = read_input().unwrap_or(json!({}));
-    let tool_name = input.get("tool_name").and_then(|v| v.as_str()).unwrap_or("");
-    let new_content = if tool_name == "Write" { input.get("tool_content").and_then(|v| v.as_str()).unwrap_or("") } else { input.get("tool_new_string").and_then(|v| v.as_str()).unwrap_or("") };
-    let old_content = if tool_name == "Write" { "".to_string() } else { input.get("tool_old_string").and_then(|v| v.as_str()).unwrap_or("").to_string() };
-    let re = Regex::new(r"(?i)#[[:space:]]*noqa|//[[:space:]]*eslint-disable|@ts-ignore|#\[allow\(").unwrap();
+    let tool_name = input
+        .get("tool_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let new_content = if tool_name == "Write" {
+        input
+            .get("tool_content")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+    } else {
+        input
+            .get("tool_new_string")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+    };
+    let old_content = if tool_name == "Write" {
+        "".to_string()
+    } else {
+        input
+            .get("tool_old_string")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string()
+    };
+    let re =
+        Regex::new(r"(?i)#[[:space:]]*noqa|//[[:space:]]*eslint-disable|@ts-ignore|#\[allow\(")
+            .unwrap();
     let new_c = re.find_iter(new_content).count();
     let old_c = re.find_iter(&old_content).count();
     if new_c > old_c {
-        println!(r#"{{"decision":"block","reason":"New suppressions detected ({} -> {})"}}"#, old_c, new_c);
+        println!(
+            r#"{{"decision":"block","reason":"New suppressions detected ({} -> {})"}}"#,
+            old_c, new_c
+        );
         exit(2);
     }
 }
 
 fn cmd_test_maturity() {
     let input = read_input().unwrap_or(json!({}));
-    let project_dir = PathBuf::from(input.get("project_dir").and_then(|v| v.as_str()).unwrap_or("."));
+    let project_dir = PathBuf::from(
+        input
+            .get("project_dir")
+            .and_then(|v| v.as_str())
+            .unwrap_or("."),
+    );
     println!("==> Test Maturity Assessment (Rust Native)");
     let mut test_files = 0;
-    let walker = WalkBuilder::new(&project_dir).hidden(false).git_ignore(true).build();
+    let walker = WalkBuilder::new(&project_dir)
+        .hidden(false)
+        .git_ignore(true)
+        .build();
     for res in walker {
         if let Ok(e) = res {
             if e.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
                 let name = e.file_name().to_string_lossy();
-                if name.starts_with("test_") || name.contains("_test.") || name.contains(".test.") || name.contains(".spec.") { test_files += 1; }
+                if name.starts_with("test_")
+                    || name.contains("_test.")
+                    || name.contains(".test.")
+                    || name.contains(".spec.")
+                {
+                    test_files += 1;
+                }
             }
         }
     }
@@ -4249,15 +5138,25 @@ fn cmd_test_maturity() {
 
 fn cmd_spec_verify() {
     let input = read_input().unwrap_or(json!({}));
-    let project_dir = PathBuf::from(input.get("project_dir").and_then(|v| v.as_str()).unwrap_or("."));
+    let project_dir = PathBuf::from(
+        input
+            .get("project_dir")
+            .and_then(|v| v.as_str())
+            .unwrap_or("."),
+    );
     let fr_file = project_dir.join("FUNCTIONAL_REQUIREMENTS.md");
-    if !fr_file.exists() { println!("Spec: skipped (no FR file)"); return; }
+    if !fr_file.exists() {
+        println!("Spec: skipped (no FR file)");
+        return;
+    }
     println!("Spec: ok");
 }
 
 fn cmd_config_get() {
     let args: Vec<String> = env::args().collect();
-    if args.len() < 3 { exit(1); }
+    if args.len() < 3 {
+        exit(1);
+    }
     let key = &args[2];
     println!("null (config-get {} not implemented)", key);
 }
@@ -4279,8 +5178,15 @@ fn get_tenant_id() -> String {
 
 fn cmd_tool(name: &str) {
     let args: Vec<String> = env::args().collect();
-    let mut actual_args: Vec<String> = if args.len() > 1 && args[1] == name { args[2..].to_vec() } else { args[1..].to_vec() };
-    if name == "git" { cmd_git_overhauled(actual_args); return; }
+    let mut actual_args: Vec<String> = if args.len() > 1 && args[1] == name {
+        args[2..].to_vec()
+    } else {
+        args[1..].to_vec()
+    };
+    if name == "git" {
+        cmd_git_overhauled(actual_args);
+        return;
+    }
 
     let mut target_tool = name.to_string();
     let is_agent_session = is_agent();
@@ -4296,23 +5202,23 @@ fn cmd_tool(name: &str) {
                 target_tool = "bun".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "pip" | "pip3" | "poetry" => {
                 eprintln!("[RESTRICTED] Agents are restricted to 'uv' for Python operations. Redirecting {} to uv.", name);
                 target_tool = "uv".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "grep" => {
                 target_tool = "rg".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "find" => {
                 target_tool = "fd".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "cat" => {
                 target_tool = "bat".to_string();
                 cmd = Command::new(&target_tool);
@@ -4320,37 +5226,37 @@ fn cmd_tool(name: &str) {
                 if !actual_args.iter().any(|a| a == "--style") {
                     cmd.arg("--style=plain");
                 }
-            },
+            }
             "du" => {
                 target_tool = "dust".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "df" => {
                 target_tool = "duf".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "ps" => {
                 target_tool = "procs".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "top" => {
                 target_tool = "btm".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "sed" => {
                 target_tool = "sd".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "curl" => {
                 target_tool = "xh".to_string();
                 cmd = Command::new(&target_tool);
                 cmd.args(&actual_args);
-            },
+            }
             "rm" => {
                 // Protection: block agents from deleting critical files
                 for arg in &actual_args {
@@ -4359,7 +5265,7 @@ fn cmd_tool(name: &str) {
                         exit(1);
                     }
                 }
-            },
+            }
             _ => {}
         }
     }
@@ -4374,7 +5280,7 @@ fn cmd_tool(name: &str) {
                 cmd.env("UV_COLOR", "always");
                 cmd.env("UV_SHOW_PROGRESS", "always");
             }
-        },
+        }
         "bun" => {
             let cache_dir = format!("/tmp/thegent-cache/bun/{}", tenant_id);
             fs::create_dir_all(&cache_dir).ok();
@@ -4382,7 +5288,7 @@ fn cmd_tool(name: &str) {
             if !is_agent_session {
                 cmd.env("BUN_COLOR", "1");
             }
-        },
+        }
         "cargo" => {
             let cache_dir = format!("/tmp/thegent-cache/cargo/{}", tenant_id);
             fs::create_dir_all(&cache_dir).ok();
@@ -4391,7 +5297,7 @@ fn cmd_tool(name: &str) {
                 cmd.env("CARGO_TERM_COLOR", "always");
                 cmd.env("CARGO_INCREMENTAL", "1");
             }
-        },
+        }
         "ls" | "eza" => {
             if target_tool == "ls" || target_tool == "eza" {
                 target_tool = "eza".to_string();
@@ -4403,31 +5309,34 @@ fn cmd_tool(name: &str) {
                     cmd.arg("--group-directories-first");
                 }
             }
-        },
+        }
         "rg" => {
             if !is_agent_session {
-                if !actual_args.iter().any(|a| a == "--case-sensitive" || a == "-s") {
+                if !actual_args
+                    .iter()
+                    .any(|a| a == "--case-sensitive" || a == "-s")
+                {
                     cmd.arg("--smart-case");
                 }
                 cmd.arg("--color=always");
                 cmd.arg("--heading");
                 cmd.arg("--line-number");
             }
-        },
+        }
         "fd" => {
             if !is_agent_session {
                 if !actual_args.iter().any(|a| a == "--color") {
                     cmd.arg("--color=always");
                 }
             }
-        },
+        }
         "bat" => {
             if !is_agent_session {
                 if !actual_args.iter().any(|a| a == "--color") {
                     cmd.arg("--color=always");
                 }
             }
-        },
+        }
         _ => {}
     }
 
@@ -4437,9 +5346,15 @@ fn cmd_tool(name: &str) {
         Err(e) => {
             if !is_agent_session {
                 eprintln!("[DX] Tool '{}' failed to launch: {}.", target_tool, e);
-                eprintln!("[DX] Hint: Check if '{}' is installed in your system PATH.", target_tool);
+                eprintln!(
+                    "[DX] Hint: Check if '{}' is installed in your system PATH.",
+                    target_tool
+                );
             } else {
-                eprintln!("Failed to execute overhauled {}: {}. Legacy fallback disabled.", name, e);
+                eprintln!(
+                    "Failed to execute overhauled {}: {}. Legacy fallback disabled.",
+                    name, e
+                );
             }
             exit(1);
         }
@@ -4452,10 +5367,9 @@ fn cmd_mise_setup() {
     fs::create_dir_all(&shims_dir).ok();
 
     let pkgs = vec![
-        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry",
-        "cargo", "go", "ruff", "pytest", "sed", "cp", "mv", "rm",
-        "jq", "grep", "find", "pgrep", "wc", "date", "tr", "ls", "rg", "fd",
-        "cat", "du", "df", "ps", "top", "diff", "curl"
+        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry", "cargo", "go", "ruff",
+        "pytest", "sed", "cp", "mv", "rm", "jq", "grep", "find", "pgrep", "wc", "date", "tr", "ls",
+        "rg", "fd", "cat", "du", "df", "ps", "top", "diff", "curl",
     ];
 
     for p in pkgs {
@@ -4470,7 +5384,10 @@ fn cmd_mise_setup() {
     }
 
     println!("[env]");
-    println!("PATH = \"{}/shims:${{PATH}}\"", hooks_bin.parent().unwrap().display());
+    println!(
+        "PATH = \"{}/shims:${{PATH}}\"",
+        hooks_bin.parent().unwrap().display()
+    );
 
     // QOL: Aliases for humans
     if !is_agent() {
@@ -4498,7 +5415,9 @@ fn cmd_mise_setup() {
 
 fn cmd_agent() {
     let args: Vec<String> = env::args().collect();
-    if args.len() < 3 { exit(1); }
+    if args.len() < 3 {
+        exit(1);
+    }
     let cmd = &args[3];
     let status = Command::new(cmd).args(&args[4..]).status();
     exit(status.map(|s| s.code().unwrap_or(0)).unwrap_or(1));
@@ -4509,13 +5428,18 @@ fn main() {
     let exe_name = PathBuf::from(&args[0]);
     let stem = exe_name.file_stem().and_then(|s| s.to_str()).unwrap_or("");
     let shim_pkgs = vec![
-        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry",
-        "cargo", "go", "ruff", "pytest", "sed", "cp", "mv", "rm",
-        "jq", "grep", "find", "pgrep", "wc", "date", "tr", "ls", "rg", "fd",
-        "cat", "du", "df", "ps", "top", "diff", "curl"
+        "git", "uv", "npm", "pnpm", "bun", "yarn", "pip", "pip3", "poetry", "cargo", "go", "ruff",
+        "pytest", "sed", "cp", "mv", "rm", "jq", "grep", "find", "pgrep", "wc", "date", "tr", "ls",
+        "rg", "fd", "cat", "du", "df", "ps", "top", "diff", "curl",
     ];
-    if shim_pkgs.contains(&stem) && !args.get(1).map(|s| s == stem).unwrap_or(false) { cmd_tool(stem); return; }
-    if args.len() < 2 { print_help(); return; }
+    if shim_pkgs.contains(&stem) && !args.get(1).map(|s| s == stem).unwrap_or(false) {
+        cmd_tool(stem);
+        return;
+    }
+    if args.len() < 2 {
+        print_help();
+        return;
+    }
     match args[1].as_str() {
         "version" | "--version" | "-V" => print_version(),
         "help" | "--help" | "-h" => print_help(),
@@ -4580,6 +5504,10 @@ fn main() {
         "mise-setup" => cmd_mise_setup(),
         "agent" => cmd_agent(),
         pkg if shim_pkgs.contains(&pkg) => cmd_tool(pkg),
-        _ => { eprintln!("Unknown subcommand: {}", args[1]); print_help(); exit(1); }
+        _ => {
+            eprintln!("Unknown subcommand: {}", args[1]);
+            print_help();
+            exit(1);
+        }
     }
 }

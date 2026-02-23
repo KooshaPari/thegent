@@ -23,16 +23,12 @@ async fn test_client_initialization() {
 #[tokio::test]
 async fn test_invalid_project_id_rejects_empty() {
     let auth = AuthMethod::ApiKey("test_key".to_string());
-    let result = SupermemoryClient::new(
-        "https://api.example.com".to_string(),
-        "".to_string(),
-        auth,
-    )
-    .await;
+    let result =
+        SupermemoryClient::new("https://api.example.com".to_string(), "".to_string(), auth).await;
 
     assert!(result.is_err());
     match result {
-        Err(Error::InvalidProject(_)) => {},
+        Err(Error::InvalidProject(_)) => {}
         _ => panic!("Expected InvalidProject error"),
     }
 }
@@ -62,10 +58,7 @@ fn test_knowledge_node_creation() {
 
 #[test]
 fn test_relationship_creation() {
-    let rel = Relationship::new(
-        "depends_on".to_string(),
-        "other_entity".to_string(),
-    );
+    let rel = Relationship::new("depends_on".to_string(), "other_entity".to_string());
     assert_eq!(rel.relationship_type, "depends_on");
     assert_eq!(rel.target, "other_entity");
 }

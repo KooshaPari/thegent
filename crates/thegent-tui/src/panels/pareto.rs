@@ -133,7 +133,9 @@ impl ParetoFrontierState {
         // Keep only the most recent `limit` records.
         let start = records.len().saturating_sub(limit);
         self.audit_records = records[start..].to_vec();
-        self.selected_idx = self.selected_idx.min(self.audit_records.len().saturating_sub(1));
+        self.selected_idx = self
+            .selected_idx
+            .min(self.audit_records.len().saturating_sub(1));
         Ok(())
     }
 
@@ -178,11 +180,7 @@ impl ParetoFrontierPanel {
     /// (`~/.thegent/routing_audit.jsonl`).
     pub fn new() -> Self {
         let path = directories::UserDirs::new()
-            .map(|d| {
-                d.home_dir()
-                    .join(".thegent")
-                    .join("routing_audit.jsonl")
-            })
+            .map(|d| d.home_dir().join(".thegent").join("routing_audit.jsonl"))
             .unwrap_or_else(|| PathBuf::from(".thegent/routing_audit.jsonl"));
         Self { audit_path: path }
     }
@@ -308,17 +306,29 @@ impl ParetoFrontierPanel {
 
         let lines = vec![
             Line::from(vec![
-                Span::styled("Provider: ", Style::default().fg(fg).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Provider: ",
+                    Style::default().fg(fg).add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(provider, Style::default().fg(accent)),
                 Span::raw("   "),
-                Span::styled("Model: ", Style::default().fg(fg).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Model: ",
+                    Style::default().fg(fg).add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(model, Style::default().fg(accent)),
             ]),
             Line::from(vec![
-                Span::styled("Latency: ", Style::default().fg(fg).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Latency: ",
+                    Style::default().fg(fg).add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(latency, Style::default().fg(Color::Cyan)),
                 Span::raw("   "),
-                Span::styled("Cost: ", Style::default().fg(fg).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "Cost: ",
+                    Style::default().fg(fg).add_modifier(Modifier::BOLD),
+                ),
                 Span::styled(cost, Style::default().fg(Color::Yellow)),
             ]),
         ];

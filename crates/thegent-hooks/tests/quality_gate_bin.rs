@@ -345,7 +345,9 @@ fn quality_gate_returns_124_on_empty_input() {
 
 #[test]
 fn quality_gate_returns_124_on_missing_thresholds_field() {
-    let out = run_with_input(r#"{"rules":[],"context":{},"quality":{"coverage_percent":90.0,"lint_issues":0,"lint_errors":0,"lint_warnings":0,"cyclomatic_complexity":0,"cognitive_complexity":0,"function_max_lines":0}}"#);
+    let out = run_with_input(
+        r#"{"rules":[],"context":{},"quality":{"coverage_percent":90.0,"lint_issues":0,"lint_errors":0,"lint_warnings":0,"cyclomatic_complexity":0,"cognitive_complexity":0,"function_max_lines":0}}"#,
+    );
     assert_eq!(out.status.code(), Some(124));
 }
 
@@ -414,5 +416,8 @@ fn quality_gate_passes_disabled_policy_rule() {
       }
     }"#;
     let out = run_with_input(input);
-    assert!(out.status.success(), "Disabled rule should not cause failure");
+    assert!(
+        out.status.success(),
+        "Disabled rule should not cause failure"
+    );
 }

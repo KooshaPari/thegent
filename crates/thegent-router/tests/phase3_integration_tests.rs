@@ -8,9 +8,9 @@
 use std::sync::Arc;
 use tempfile::tempdir;
 use thegent_router::{
-    AuditLogger, AuditRecord, ArbitrationPolicy, ComplexityLevel, DispatchTarget, Dispatcher,
-    ExecutionOutcome, ParetoRouter, RiskFactors, RouteExecutor, RouterConfig,
-    RoutingMode, RoutingOrchestrator,
+    ArbitrationPolicy, AuditLogger, AuditRecord, ComplexityLevel, DispatchTarget, Dispatcher,
+    ExecutionOutcome, ParetoRouter, RiskFactors, RouteExecutor, RouterConfig, RoutingMode,
+    RoutingOrchestrator,
 };
 
 // ---------------------------------------------------------------------------
@@ -19,7 +19,12 @@ use thegent_router::{
 
 #[test]
 fn test_audit_record_has_correct_hash_length() {
-    let r = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 10, 0.001);
+    let r = AuditRecord::new(
+        "lifecycle".to_string(),
+        "gemini-3-flash".to_string(),
+        10,
+        0.001,
+    );
     assert_eq!(r.hash.len(), 64, "SHA-256 hash must be 64 hex chars");
 }
 
@@ -31,9 +36,17 @@ fn test_audit_logger_creates_file_on_construction() {
     let path = dir.path().join("routing_audit.jsonl");
     let logger = AuditLogger::new(path.clone());
 
-    assert!(path.exists(), "file must exist after construction (WL-075: file opened at new())");
+    assert!(
+        path.exists(),
+        "file must exist after construction (WL-075: file opened at new())"
+    );
 
-    let r = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 5, 0.001);
+    let r = AuditRecord::new(
+        "lifecycle".to_string(),
+        "gemini-3-flash".to_string(),
+        5,
+        0.001,
+    );
     logger.append(&r).unwrap();
 
     assert!(path.exists(), "file must still exist after append");
@@ -64,7 +77,12 @@ fn test_audit_records_contain_all_required_fields() {
     let dir = tempdir().unwrap();
     let logger = AuditLogger::new(dir.path().join("routing_audit.jsonl"));
 
-    let r = AuditRecord::new("thegent".to_string(), "claude-sonnet-4.6".to_string(), 200, 0.025);
+    let r = AuditRecord::new(
+        "thegent".to_string(),
+        "claude-sonnet-4.6".to_string(),
+        200,
+        0.025,
+    );
     logger.append(&r).unwrap();
 
     let records = logger.read_all();
@@ -146,14 +164,21 @@ fn test_executor_multiple_dispatches_audit_chain_valid() {
 
     let router = ParetoRouter::new();
 
-    for complexity in [ComplexityLevel::Simple, ComplexityLevel::Moderate, ComplexityLevel::Complex] {
+    for complexity in [
+        ComplexityLevel::Simple,
+        ComplexityLevel::Moderate,
+        ComplexityLevel::Complex,
+    ] {
         let factors = RiskFactors::new(complexity);
         let decision = router.route(&factors);
         exec.execute(&decision, "task");
     }
 
     let result = audit.verify_chain();
-    assert!(result.is_ok(), "audit chain must be valid after multiple dispatches");
+    assert!(
+        result.is_ok(),
+        "audit chain must be valid after multiple dispatches"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -249,8 +274,14 @@ fn test_orchestrator_status_display_contains_agent_ids() {
 
     let status = orch.status();
     let text = status.display();
-    assert!(text.contains("my-agent"), "status display must include agent ID");
-    assert!(text.contains("Router Status"), "status display must include header");
+    assert!(
+        text.contains("my-agent"),
+        "status display must include agent ID"
+    );
+    assert!(
+        text.contains("Router Status"),
+        "status display must include header"
+    );
 }
 
 #[test]
@@ -266,7 +297,10 @@ fn test_orchestrator_status_percentages_sum_to_100() {
 
     let status = orch.status();
     let total_pct = status.lifecycle_pct + status.thegent_pct;
-    assert!((total_pct - 100.0).abs() < 0.1, "lifecycle + thegent pct must = 100%");
+    assert!(
+        (total_pct - 100.0).abs() < 0.1,
+        "lifecycle + thegent pct must = 100%"
+    );
 }
 
 #[test]
@@ -277,7 +311,10 @@ fn test_orchestrator_quorum_present_after_routing() {
 
     orch.route_for_agent("agent-1", &RiskFactors::new(ComplexityLevel::Simple));
     let status = orch.status();
-    assert!(status.quorum_decision.is_some(), "quorum must be present after at least one routing");
+    assert!(
+        status.quorum_decision.is_some(),
+        "quorum must be present after at least one routing"
+    );
 }
 
 #[test]

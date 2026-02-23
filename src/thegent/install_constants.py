@@ -177,6 +177,48 @@ FACTORY_FILES = {
     ".factory/settings.json": "settings.json",
 }
 
+# Project-level scaffold files (go to project_dir/.client)
+FACTORY_PROJECT_FILES = {
+    ".factory/hooks": ".factory/hooks",
+    ".factory/skills": ".factory/skills",
+    ".factory/commands": ".factory/commands",
+    ".factory/droids": ".factory/droids",
+    ".factory/plugins": ".factory/plugins",
+    ".factory/mcp.json": ".factory/mcp.json",
+    ".factory/config.json": ".factory/config.json",
+    ".factory/settings.json": ".factory/settings.json",
+}
+
+CODEX_PROJECT_FILES = {
+    ".codex/hooks": ".codex/hooks",
+    ".codex/skills": ".codex/skills",
+    ".codex/commands": ".codex/commands",
+    ".codex/droids": ".codex/droids",
+    ".codex/plugins": ".codex/plugins",
+    ".codex/mcp.json": ".codex/mcp.json",
+    ".codex/config.json": ".codex/config.json",
+    ".codex/settings.json": ".codex/settings.json",
+}
+
+CLAUDE_PROJECT_FILES = {
+    ".claude/hooks": ".claude/hooks",
+    ".claude/skills": ".claude/skills",
+    ".claude/commands": ".claude/commands",
+    ".claude/agents": ".claude/agents",
+    ".claude/contracts": ".claude/contracts",
+    ".claude/templates": ".claude/templates",
+    ".claude/mcp_servers.json": ".claude/mcp_servers.json",
+    ".claude/qa-config.json": ".claude/qa-config.json",
+    "CLAUDE.md": "CLAUDE.md",
+}
+
+CURSOR_PROJECT_FILES = {
+    ".cursor/hooks": ".cursor/hooks",
+    ".cursor/skills-cursor": ".cursor/skills",
+    ".cursor/mcp_servers.json": ".cursor/mcp_servers.json",
+    ".cursor/qa-config.json": ".cursor/qa-config.json",
+}
+
 THEGENT_TOOLS = [
     "thegent_run",
     "thegent_bg",

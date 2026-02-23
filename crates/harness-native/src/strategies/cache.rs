@@ -1,11 +1,19 @@
 use std::path::{Path, PathBuf};
 
 pub fn l1_path(harness_home: &Path, key: &str) -> PathBuf {
-    harness_home.join("var").join("cache").join("l1").join(format!("{}.json", key))
+    harness_home
+        .join("var")
+        .join("cache")
+        .join("l1")
+        .join(format!("{}.json", key))
 }
 
 pub fn l2_path(harness_home: &Path, key: &str) -> PathBuf {
-    harness_home.join("var").join("cache").join("l2").join(format!("{}.json", key))
+    harness_home
+        .join("var")
+        .join("cache")
+        .join("l2")
+        .join(format!("{}.json", key))
 }
 
 pub fn lock_shared(path: &Path, timeout_secs: u64) -> Option<std::fs::File> {

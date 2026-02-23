@@ -5,7 +5,11 @@
 
 from __future__ import annotations
 
+<<<<<<< HEAD
 import orjson as json
+=======
+from thegent.utils.json_utils import json_dumps, json_loads
+>>>>>>> fix/ci-remove-macos
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -64,7 +68,11 @@ class LocalDecisionJournal:
 
     def append(self, entry: SyncDecisionEntry) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
+<<<<<<< HEAD
         line = json.dumps(asdict(entry).decode().decode(), sort_keys=True)
+=======
+        line = json_dumps(asdict(entry), sort_keys=True)
+>>>>>>> fix/ci-remove-macos
         with self._path.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
 
@@ -79,7 +87,7 @@ class LocalDecisionJournal:
                 if not line:
                     continue
                 try:
-                    payload = json.loads(line)
+                    payload = json_loads(line)
                     entries.append(SyncDecisionEntry(**payload))
                 except Exception as exc:  # noqa: BLE001 -- strict failure is intentional
                     raise ValueError(f"invalid journal line {line_num}: {exc}") from exc

@@ -3,7 +3,11 @@
 # @trace WL-124
 from __future__ import annotations
 
+<<<<<<< HEAD
 import orjson as json
+=======
+import json
+>>>>>>> fix/ci-remove-macos
 import sys
 from pathlib import Path
 from typing import Any
