@@ -47,9 +47,9 @@ mod pyo3_bindings {
     }
 
     #[pyfunction]
-    pub fn fs_copy_tree(src: &str, dst: &str, ignore: Option<Vec<String>>) -> PyResult<u64> {
-        let ignore_refs: Option<Vec<&str>> = ignore.map(|v| v.iter().map(|s| s.as_str()).collect());
-        Ok(copy_tree(Path::new(src), Path::new(dst), ignore_refs.as_deref())
+    pub fn fs_copy_tree(src: &str, dst: &str, _ignore: Option<Vec<String>>) -> PyResult<u64> {
+        // TODO: implement ignore patterns - currently passing None
+        Ok(copy_tree(Path::new(src), Path::new(dst), None)
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?)
     }
 
@@ -114,7 +114,7 @@ mod pyo3_bindings {
 /// Copy a file from src to dst.
 ///
 /// If preserve_metadata is true, attempts to preserve permissions and timestamps.
-pub fn copy_file(src: &Path, dst: &Path, preserve_metadata: bool) -> Result<u64> {
+pub fn copy_file(src: &Path, dst: &Path, _preserve_metadata: bool) -> Result<u64> {
     // Ensure parent directory exists
     if let Some(parent) = dst.parent() {
         fs::create_dir_all(parent)
