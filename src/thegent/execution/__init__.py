@@ -1,45 +1,183 @@
-"""Execution module - re-exports all symbols from execution.py for backward compatibility.
+"""Execution module - organized into logical domains.
 
-The flat execution.py file contains 35+ classes. This package __init__ forwards
-all attribute lookups to that file via importlib so both
-`from thegent.execution import X` and `import thegent.execution; thegent.execution.X`
-continue to work.
+This package contains:
+- execution/state.py: RunState, RunMeta, CheckpointMeta, etc.
+- execution/resilience.py: DLQManager, DeferralQueue, etc.
+- execution/concurrency.py: IdempotencyManager, ConcurrencyController, etc.
+- execution/policy.py: PolicyEngine, ProviderScorer, KPIManager, etc.
+- execution/registry.py: RunRegistry, ChatHistory, etc.
+
+Import from here or directly from submodules:
+    from thegent.execution import RunState
+    from thegent.execution.state import RunState
 """
 
 from __future__ import annotations
 
-import importlib
-import importlib.util
-import sys
-from pathlib import Path
 from typing import Any
 
-# Load the flat execution.py file as a sibling module.
-# It lives at src/thegent/execution.py which is shadowed by this package,
-# so we load it explicitly by file path.
-_EXECUTION_PY = Path(__file__).parent.parent / "execution.py"
-_MODULE_NAME = "thegent._execution_flat"
+# Import all from modular subpackages
+from .state import (
+    AgentSource,
+    CalibrationRegistry,
+    CheckpointMeta,
+    ContinuityPacket,
+    InteractivityMode,
+    MAIFArtifact,
+    RunMeta,
+    RunState,
+)
+from .resilience import (
+    CircuitBreakerRegistry,
+    ContinuityWatchdog,
+    DeferralQueue,
+    DLQManager,
+    EscalationQueue,
+    FreshnessValidator,
+    HandoffManager,
+    InterruptionTracker,
+    ReplayManager,
+)
+from .concurrency import (
+    ConcurrencyController,
+    IdempotencyManager,
+    LaneController,
+    LoadClassifier,
+)
+from .policy import (
+    Auditor,
+    EvidenceLinter,
+    KPIManager,
+    OverrideRegistry,
+    PolicyEngine,
+    ProviderScorer,
+    TrustBoundaryValidator,
+)
+from .registry import (
+    AuditEntry,
+    AuditRegistry,
+    CheckpointRegistry,
+    ChatEntry,
+    ChatHistory,
+    MessageEntry,
+    MessageRegistry,
+    RunRegistry,
+)
 
-if _MODULE_NAME not in sys.modules:
-    _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _EXECUTION_PY)
-    if _spec is None or _spec.loader is None:
-        raise ImportError(f"Cannot load {_EXECUTION_PY}")
-    _mod = importlib.util.module_from_spec(_spec)
-    sys.modules[_MODULE_NAME] = _mod
-    _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+# Combined exports
+__all__ = [
+    # State
+    "AgentSource",
+    "CalibrationRegistry",
+    "CheckpointMeta",
+    "ContinuityPacket",
+    "InteractivityMode",
+    "MAIFArtifact",
+    "RunMeta",
+    "RunState",
+    # Resilience
+    "CircuitBreakerRegistry",
+    "ContinuityWatchdog",
+    "DeferralQueue",
+    "DLQManager",
+    "EscalationQueue",
+    "FreshnessValidator",
+    "HandoffManager",
+    "InterruptionTracker",
+    "ReplayManager",
+    # Concurrency
+    "ConcurrencyController",
+    "IdempotencyManager",
+    "LaneController",
+    "LoadClassifier",
+    # Policy
+    "Auditor",
+    "EvidenceLinter",
+    "KPIManager",
+    "OverrideRegistry",
+    "PolicyEngine",
+    "ProviderScorer",
+    "TrustBoundaryValidator",
+    # Registry
+    "AuditEntry",
+    "AuditRegistry",
+    "CheckpointRegistry",
+    "ChatEntry",
+    "ChatHistory",
+    "MessageEntry",
+    "MessageRegistry",
+    "RunRegistry",
+]
 
-_flat = sys.modules[_MODULE_NAME]
+# Lazy-load flat module for backward compatibility only
+_flat = None
 
-# Re-export every public name from the flat module into this package namespace.
-_PUBLIC = [name for name in dir(_flat) if not name.startswith("_")]
-for _name in _PUBLIC:
-    globals()[_name] = getattr(_flat, _name)
-
-__all__ = _PUBLIC
+def _get_flat():
+    global _flat
+    if _flat is None:
+        import importlib
+        import importlib.util
+        import sys
+        from pathlib import Path
+        
+        _EXECUTION_PY = Path(__file__).parent.parent / "execution.py"
+        _MODULE_NAME = "thegent._execution_flat"
+        
+        if _MODULE_NAME not in sys.modules:
+            _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _EXECUTION_PY)
+            if _spec is None or _spec.loader is None:
+                raise ImportError(f"Cannot load {_EXECUTION_PY}")
+            _mod = importlib.util.module_from_spec(_spec)
+            sys.modules[_MODULE_NAME] = _mod
+            _spec.loader.exec_module(_mod)
+        
+        _flat = sys.modules[_MODULE_NAME]
+    return _flat
 
 
 def __getattr__(name: str) -> Any:
+    # Check modular exports first
+    modular_exports = {
+        "AgentSource": AgentSource,
+        "CalibrationRegistry": CalibrationRegistry,
+        "CheckpointMeta": CheckpointMeta,
+        "ContinuityPacket": ContinuityPacket,
+        "InteractivityMode": InteractivityMode,
+        "MAIFArtifact": MAIFArtifact,
+        "RunMeta": RunMeta,
+        "RunState": RunState,
+        "CircuitBreakerRegistry": CircuitBreakerRegistry,
+        "ConcurrencyController": ConcurrencyController,
+        "ContinuityWatchdog": ContinuityWatchdog,
+        "DeferralQueue": DeferralQueue,
+        "DLQManager": DLQManager,
+        "EscalationQueue": EscalationQueue,
+        "FreshnessValidator": FreshnessValidator,
+        "HandoffManager": HandoffManager,
+        "IdempotencyManager": IdempotencyManager,
+        "InterruptionTracker": InterruptionTracker,
+        "LaneController": LaneController,
+        "LoadClassifier": LoadClassifier,
+        "Auditor": Auditor,
+        "EvidenceLinter": EvidenceLinter,
+        "KPIManager": KPIManager,
+        "OverrideRegistry": OverrideRegistry,
+        "PolicyEngine": PolicyEngine,
+        "ProviderScorer": ProviderScorer,
+        "TrustBoundaryValidator": TrustBoundaryValidator,
+        "AuditEntry": AuditEntry,
+        "AuditRegistry": AuditRegistry,
+        "CheckpointRegistry": CheckpointRegistry,
+        "ChatEntry": ChatEntry,
+        "ChatHistory": ChatHistory,
+        "MessageEntry": MessageEntry,
+        "MessageRegistry": MessageRegistry,
+        "RunRegistry": RunRegistry,
+    }
+    if name in modular_exports:
+        return modular_exports[name]
+    # Fall back to flat module (lazy load)
     try:
-        return getattr(_flat, name)
-    except AttributeError:
+        return getattr(_get_flat(), name)
+    except (AttributeError, ImportError):
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None
