@@ -8,8 +8,11 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+<<<<<<< HEAD:src/thegent/integrations/archive/graphiti.py
 
 from thegent.integrations.base import DataclassConfig
+=======
+>>>>>>> fix/ci-remove-macos:src/thegent/integrations/graphiti.py
 
 logger = logging.getLogger(__name__)
 

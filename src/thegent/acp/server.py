@@ -1,7 +1,11 @@
 """ACP server adapter for exposing thegent agents via ACP protocol."""
 
 import asyncio
+<<<<<<< HEAD
 import orjson as json
+=======
+from thegent.utils.json_utils import json_dumps, json_loads
+>>>>>>> fix/ci-remove-macos
 import logging
 import sys
 from pathlib import Path
@@ -299,9 +303,13 @@ class ACPServerAdapter:
                 if not line:
                     continue
 
-                request = json.loads(line)
+                request = json_loads(line)
                 response = await self.handle_request(request)
+<<<<<<< HEAD
                 sys.stdout.write(json.dumps(response).decode().decode() + "\n")
+=======
+                sys.stdout.write(json_dumps(response) + "\n")
+>>>>>>> fix/ci-remove-macos
                 sys.stdout.flush()
 
             except json.JSONDecodeError as e:
@@ -311,7 +319,11 @@ class ACPServerAdapter:
                     "id": None,
                     "error": {"code": -32700, "message": f"Parse error: {e}"},
                 }
+<<<<<<< HEAD
                 sys.stdout.write(json.dumps(error_response).decode().decode() + "\n")
+=======
+                sys.stdout.write(json_dumps(error_response) + "\n")
+>>>>>>> fix/ci-remove-macos
                 sys.stdout.flush()
             except Exception as e:
                 logger.error("Error handling request: %s", e, exc_info=True)
@@ -320,7 +332,11 @@ class ACPServerAdapter:
                     "id": None,
                     "error": {"code": -32603, "message": f"Internal error: {e}"},
                 }
+<<<<<<< HEAD
                 sys.stdout.write(json.dumps(error_response).decode().decode() + "\n")
+=======
+                sys.stdout.write(json_dumps(error_response) + "\n")
+>>>>>>> fix/ci-remove-macos
                 sys.stdout.flush()
 
 

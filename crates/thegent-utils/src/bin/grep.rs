@@ -34,8 +34,7 @@ fn main() -> Result<()> {
 
 fn exec_rg(args: &[String]) -> Result<()> {
     // Find rg binary
-    let rg_bin = find_binary("rg")
-        .ok_or_else(|| anyhow::anyhow!("rg not found in PATH"))?;
+    let rg_bin = find_binary("rg").ok_or_else(|| anyhow::anyhow!("rg not found in PATH"))?;
 
     // Clean environment to avoid config errors
     let mut cmd = Command::new(rg_bin);
@@ -58,8 +57,7 @@ fn exec_rg(args: &[String]) -> Result<()> {
 
 fn exec_grep(args: &[String]) -> Result<()> {
     // Find grep binary (use system grep, not aliased version)
-    let grep_bin = find_binary("grep")
-        .ok_or_else(|| anyhow::anyhow!("grep not found in PATH"))?;
+    let grep_bin = find_binary("grep").ok_or_else(|| anyhow::anyhow!("grep not found in PATH"))?;
 
     let mut cmd = Command::new(grep_bin);
     cmd.args(args);
@@ -99,11 +97,7 @@ fn find_binary(name: &str) -> Option<String> {
     }
 
     // Fallback to regular PATH
-    let output = Command::new("command")
-        .arg("-v")
-        .arg(name)
-        .output()
-        .ok()?;
+    let output = Command::new("command").arg("-v").arg(name).output().ok()?;
 
     if output.status.success() {
         let path = String::from_utf8_lossy(&output.stdout).trim().to_string();

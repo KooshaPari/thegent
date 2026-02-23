@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::process::Command;
 
@@ -96,28 +96,31 @@ impl DiscoveryManager {
                 let pid: u32 = parts[0].parse().unwrap_or(0);
                 let ppid: u32 = parts[1].parse().unwrap_or(0);
                 let name = parts[2].to_string();
-                let cmd = parts[3..parts.len()-2].join(" ");
+                let cmd = parts[3..parts.len() - 2].join(" ");
                 let cmd_lower = cmd.to_lowercase();
                 let name_lower = name.to_lowercase();
-                let memory_kb: u64 = parts[parts.len()-2].parse().unwrap_or(0);
+                let memory_kb: u64 = parts[parts.len() - 2].parse().unwrap_or(0);
 
                 // Parse CPU time (format: MM:SS or HH:MM:SS)
-                let cpu_time_str = parts[parts.len()-1];
+                let cpu_time_str = parts[parts.len() - 1];
                 let cpu_usage = Self::parse_cpu_time_to_percent(cpu_time_str);
 
                 let agent_name: Option<String> = if cmd_lower.contains("cursor-agent")
                     || cmd_lower.contains("cursor agent")
-                    || (cmd_lower.contains("cursor") && cmd.contains("--resume=")) {
+                    || (cmd_lower.contains("cursor") && cmd.contains("--resume="))
+                {
                     Some("cursor-agent".to_string())
                 } else if cmd_lower.contains("claude-code")
                     || cmd_lower.contains("claude code")
                     || cmd_lower.contains("clode")
                     || name_lower.starts_with("claude")
-                    || name_lower.starts_with("clode") {
+                    || name_lower.starts_with("clode")
+                {
                     Some("claude-code".to_string())
                 } else if name_lower == "codex"
                     || cmd_lower.contains("codex")
-                    || cmd_lower.contains("dex") {
+                    || cmd_lower.contains("dex")
+                {
                     Some("codex".to_string())
                 } else {
                     None
@@ -158,12 +161,12 @@ impl DiscoveryManager {
                 let mins: u32 = parts[1].parse().unwrap_or(0);
                 let secs: u32 = parts[2].parse().unwrap_or(0);
                 hours * 3600 + mins * 60 + secs
-            },
+            }
             2 => {
                 let mins: u32 = parts[0].parse().unwrap_or(0);
                 let secs: u32 = parts[1].parse().unwrap_or(0);
                 mins * 60 + secs
-            },
+            }
             _ => parts[0].parse().unwrap_or(0),
         };
 
@@ -209,7 +212,10 @@ impl DiscoveryManager {
                             }
                         } else if key == "hw.memsize" {
                             if let Ok(mem_bytes) = value.parse::<f64>() {
-                                info.insert("memory_gb".to_string(), mem_bytes / (1024.0 * 1024.0 * 1024.0));
+                                info.insert(
+                                    "memory_gb".to_string(),
+                                    mem_bytes / (1024.0 * 1024.0 * 1024.0),
+                                );
                             }
                         }
                     }
@@ -285,7 +291,7 @@ mod tests {
         // Should not match invalid patterns
         assert!(!re.is_match("codex --resume="));
         assert!(!re.is_match("codex"));
-        assert!(!re.is_match("--resume=XYZ"));  // Invalid hex chars
+        assert!(!re.is_match("--resume=XYZ")); // Invalid hex chars
     }
 
     #[test]

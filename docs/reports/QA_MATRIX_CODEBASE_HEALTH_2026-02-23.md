@@ -1,7 +1,11 @@
 # QA Matrix - Codebase Health Report
 
 **Date:** February 23, 2026  
+<<<<<<< HEAD
 **Generated:** 2026-02-23T06:30:00Z
+=======
+**Generated:** 2026-02-23T06:25:00Z
+>>>>>>> fix/ci-remove-macos
 
 ---
 
@@ -48,7 +52,11 @@
 | `thegent-shims` | Shell integration | ✅ |
 | `thegent-utils` | Utilities | ✅ |
 | `thegent-watcher` | File watching | ✅ |
+<<<<<<< HEAD
 | + 16 more crates | Various | ✅ |
+=======
+| + 17 more crates | Various | ✅ |
+>>>>>>> fix/ci-remove-macos
 
 ---
 
@@ -66,7 +74,11 @@
 | Gate | Command | Status |
 |------|---------|--------|
 | Clippy | `cargo clippy` | ✅ Pass |
+<<<<<<< HEAD
 | Format | `cargo fmt --check` | ✅ Pass |
+=======
+|_fmt | `cargo fmt --check` | ✅ Pass |
+>>>>>>> fix/ci-remove-macos
 | Tests | `cargo test` | ✅ Pass |
 
 ### Shell Quality
@@ -74,6 +86,10 @@
 |------|---------|--------|
 | ShellCheck | `task bash:lint` | ✅ Pass |
 | Format | `task bash:format:check` | ✅ Pass |
+<<<<<<< HEAD
+=======
+| Tests | `task bash:test` | ✅ Pass |
+>>>>>>> fix/ci-remove-macos
 
 ---
 
@@ -86,6 +102,14 @@
 | Contract Tests | ~66 | Protocol contracts |
 | Total Test Files | 1,216 | All categories |
 
+<<<<<<< HEAD
+=======
+**Coverage Tools:**
+- `coverage` (Python)
+- `cargo test` (Rust)
+- `pytest` with `pytest-cov`
+
+>>>>>>> fix/ci-remove-macos
 ---
 
 ## CI/CD Pipeline
@@ -106,6 +130,64 @@
 
 ---
 
+<<<<<<< HEAD
+=======
+## Dependencies
+
+### Python Dependencies
+| Manager | Lock File | Status |
+|---------|-----------|--------|
+| uv | `uv.lock` | ✅ Current |
+
+### Rust Dependencies
+| Manager | Lock File | Status |
+|---------|-----------|--------|
+| Cargo | `Cargo.lock` | ✅ Current |
+
+---
+
+## Security
+
+| Check | Tool | Status |
+|-------|------|--------|
+| Secret Scanning | `task security:secrets` | ✅ |
+| Dependency Audit | `task security:deps` | ✅ |
+| SAST | `task security:sast` | ✅ |
+
+---
+
+## Agent/Automation Integrations
+
+### Factory (Droid)
+| Component | Status |
+|-----------|--------|
+| Hooks | ✅ 15+ hooks |
+| Skills | ✅ 30+ skills |
+| Commands | ✅ 100+ commands |
+| Droids | ✅ 40+ definitions |
+| Plugins | ✅ 10+ plugins |
+
+### Claude Code
+| Component | Status |
+|-----------|--------|
+| Skills | ✅ |
+| Hooks | ✅ |
+| Commands | ✅ |
+
+### Codex CLI
+| Component | Status |
+|-----------|--------|
+| Skills | ✅ |
+| Commands | ✅ |
+
+### Cursor
+| Component | Status |
+|-----------|--------|
+| Rules | ✅ |
+
+---
+
+>>>>>>> fix/ci-remove-macos
 ## SLA Requirements
 
 | Requirement | Current State | Target | Status |
@@ -134,7 +216,17 @@
 
 ---
 
+<<<<<<< HEAD
 ## Quick Commands
+=======
+## Required Actions
+
+None - codebase is in good health.
+
+---
+
+## Appendix: Quick Commands
+>>>>>>> fix/ci-remove-macos
 
 ```bash
 # Full quality check

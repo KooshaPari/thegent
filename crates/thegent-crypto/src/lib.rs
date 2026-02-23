@@ -1,9 +1,9 @@
 //! BKM-03: sign_artifact, verify_signature, artifact_hash for thegent.
 //! Expects canonical JSON bytes (sorted keys). Python uses orjson for canonical.
 
+use base16ct::lower;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
-use base16ct::lower;
 
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
@@ -36,11 +36,7 @@ pub fn sign_artifact_bytes(canonical_json: &[u8], secret_key: &str) -> String {
 
 /// Verify HMAC-SHA256 signature. Constant-time comparison.
 #[cfg_attr(feature = "python", pyfunction)]
-pub fn verify_signature_bytes(
-    canonical_json: &[u8],
-    signature: &str,
-    secret_key: &str,
-) -> bool {
+pub fn verify_signature_bytes(canonical_json: &[u8], signature: &str, secret_key: &str) -> bool {
     use subtle::ConstantTimeEq;
     let expected = sign_artifact_bytes(canonical_json, secret_key);
     if expected.len() != signature.len() {
@@ -86,10 +82,7 @@ mod tests {
     fn test_artifact_hash_different_for_different_inputs() {
         let hash1 = artifact_hash_bytes(TEST_JSON);
         let hash2 = artifact_hash_bytes(br#"{"key":"value","number":43}"#);
-        assert_ne!(
-            hash1, hash2,
-            "Hash of different inputs should be different"
-        );
+        assert_ne!(hash1, hash2, "Hash of different inputs should be different");
     }
 
     // Test 3: Hash returns valid hex string
@@ -115,7 +108,10 @@ mod tests {
         );
         // Empty input should produce a known SHA-256 hash
         let expected = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
-        assert_eq!(hash, expected, "Empty input should produce known SHA-256 hash");
+        assert_eq!(
+            hash, expected,
+            "Empty input should produce known SHA-256 hash"
+        );
     }
 
     // Test 5: Hash works with binary data
@@ -268,10 +264,7 @@ mod tests {
             "HMAC-SHA256 hex digest should be 64 characters"
         );
         let is_valid = verify_signature_bytes(LONG_JSON, &signature, TEST_KEY);
-        assert!(
-            is_valid,
-            "Long message signature should verify correctly"
-        );
+        assert!(is_valid, "Long message signature should verify correctly");
     }
 
     // Test 17: Verify with wrong signature format (too short)
@@ -347,10 +340,7 @@ mod tests {
         );
         // Verify that signing with empty key works and is verifiable
         let is_valid = verify_signature_bytes(TEST_JSON, &signature, empty_key);
-        assert!(
-            is_valid,
-            "Empty key signature should verify with empty key"
-        );
+        assert!(is_valid, "Empty key signature should verify with empty key");
         // But should not verify with different key
         let is_invalid = verify_signature_bytes(TEST_JSON, &signature, "non-empty-key");
         assert!(

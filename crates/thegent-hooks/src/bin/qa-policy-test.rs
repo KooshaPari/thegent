@@ -1,5 +1,5 @@
 //! QA Policy Test hook binary
-//! 
+//!
 //! Runs governance policy evaluation on changes.
 
 #![allow(unused)]
@@ -52,7 +52,7 @@ fn main() -> ExitCode {
                 warnings.push(format!("{}: file size {} bytes", file, meta.len()));
             }
         }
-        
+
         // Check for debug code
         if let Ok(content) = fs::read_to_string(file) {
             if content.contains("println!(") || content.contains("console.log") {
@@ -74,8 +74,10 @@ fn main() -> ExitCode {
         1
     };
 
-    println!(r#"{{"violations":{:?}, "warnings":{:?}, "exit_code":{}}}"#, 
-        violations, warnings, exit_code);
+    println!(
+        r#"{{"violations":{:?}, "warnings":{:?}, "exit_code":{}}}"#,
+        violations, warnings, exit_code
+    );
 
     if exit_code != 0 {
         for w in &warnings {

@@ -19,8 +19,16 @@ mod affected_tests_integration_tests {
         fs::create_dir_all(project.join("tests")).expect("Failed to create tests");
 
         // Create some Python source files
-        fs::write(project.join("src/config.py"), "# Config module\ndef load_config():\n    pass").expect("Failed to write");
-        fs::write(project.join("src/utils.py"), "# Utils module\ndef helper():\n    pass").expect("Failed to write");
+        fs::write(
+            project.join("src/config.py"),
+            "# Config module\ndef load_config():\n    pass",
+        )
+        .expect("Failed to write");
+        fs::write(
+            project.join("src/utils.py"),
+            "# Utils module\ndef helper():\n    pass",
+        )
+        .expect("Failed to write");
 
         // Create corresponding test files
         fs::write(
@@ -34,8 +42,13 @@ mod affected_tests_integration_tests {
 
         // Create Rust files
         fs::create_dir_all(project.join("src")).ok();
-        fs::write(project.join("src/lib.rs"), "pub mod config;\npub mod utils;").expect("Failed to write");
-        fs::write(project.join("src/config.rs"), "pub fn load_config() {}").expect("Failed to write");
+        fs::write(
+            project.join("src/lib.rs"),
+            "pub mod config;\npub mod utils;",
+        )
+        .expect("Failed to write");
+        fs::write(project.join("src/config.rs"), "pub fn load_config() {}")
+            .expect("Failed to write");
         fs::write(project.join("src/utils.rs"), "pub fn helper() {}").expect("Failed to write");
 
         // Create Rust test files
@@ -43,7 +56,8 @@ mod affected_tests_integration_tests {
         fs::write(
             project.join("tests/integration_tests.rs"),
             "#[test]\nfn test_config() {\n    // Integration test\n}",
-        ).expect("Failed to write");
+        )
+        .expect("Failed to write");
 
         tmp
     }
@@ -76,10 +90,7 @@ mod affected_tests_integration_tests {
         let _project = tmp.path();
 
         // Test multiple changed files
-        let changed_files = vec![
-            "src/config.py".to_string(),
-            "src/utils.py".to_string(),
-        ];
+        let changed_files = vec!["src/config.py".to_string(), "src/utils.py".to_string()];
 
         assert_eq!(changed_files.len(), 2);
         assert!(changed_files.iter().all(|f| f.ends_with(".py")));
@@ -91,13 +102,16 @@ mod affected_tests_integration_tests {
         let _project = tmp.path();
 
         // Test mixed Python and Rust files
-        let changed_files = vec![
-            "src/config.py".to_string(),
-            "src/lib.rs".to_string(),
-        ];
+        let changed_files = vec!["src/config.py".to_string(), "src/lib.rs".to_string()];
 
-        let py_files: Vec<_> = changed_files.iter().filter(|f| f.ends_with(".py")).collect();
-        let rs_files: Vec<_> = changed_files.iter().filter(|f| f.ends_with(".rs")).collect();
+        let py_files: Vec<_> = changed_files
+            .iter()
+            .filter(|f| f.ends_with(".py"))
+            .collect();
+        let rs_files: Vec<_> = changed_files
+            .iter()
+            .filter(|f| f.ends_with(".rs"))
+            .collect();
 
         assert_eq!(py_files.len(), 1);
         assert_eq!(rs_files.len(), 1);
@@ -112,7 +126,8 @@ mod affected_tests_integration_tests {
         fs::write(
             project.join("src/config.py"),
             "from src.utils import helper\n\ndef load_config():\n    helper()",
-        ).expect("Failed to write");
+        )
+        .expect("Failed to write");
 
         // Both config and utils should be affected
         let changed_files = vec!["src/utils.py".to_string()];
@@ -147,7 +162,8 @@ mod affected_tests_integration_tests {
         fs::write(
             project.join("src/deep/nested/module/handler.py"),
             "def process(): pass",
-        ).ok();
+        )
+        .ok();
 
         let changed_file = "src/deep/nested/module/handler.py";
         assert!(changed_file.contains("deep/nested"));

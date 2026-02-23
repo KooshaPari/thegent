@@ -107,8 +107,8 @@ impl SupermemoryClient {
         }
 
         let project = env::var("SM_PROJECT").ok();
-        let base_url = env::var("SM_BASE_URL")
-            .unwrap_or_else(|_| "https://api.supermemory.ai/v1".to_string());
+        let base_url =
+            env::var("SM_BASE_URL").unwrap_or_else(|_| "https://api.supermemory.ai/v1".to_string());
 
         let project_id = project.unwrap_or_else(|| "default".to_string());
         let auth = AuthMethod::ApiKey(api_key);
@@ -138,7 +138,9 @@ impl SupermemoryClient {
     /// ```
     pub async fn new(base_url: String, project_id: String, auth: AuthMethod) -> Result<Self> {
         if project_id.is_empty() {
-            return Err(Error::InvalidProject("Project ID cannot be empty".to_string()));
+            return Err(Error::InvalidProject(
+                "Project ID cannot be empty".to_string(),
+            ));
         }
 
         let http_client = HttpClient::builder()
@@ -221,10 +223,7 @@ impl SupermemoryClient {
         }
 
         let url = format!("{}/knowledge/store", self.base_url);
-        let node = KnowledgeNode::new(
-            uuid::Uuid::new_v4().to_string(),
-            entity.to_string(),
-        );
+        let node = KnowledgeNode::new(uuid::Uuid::new_v4().to_string(), entity.to_string());
 
         let body = serde_json::json!({
             "node": node,
@@ -298,7 +297,10 @@ impl SupermemoryClient {
             }
             Err(e) => {
                 let _ = self.circuit_breaker.record_failure();
-                Err(Error::StorageError(format!("Document storage failed: {}", e)))
+                Err(Error::StorageError(format!(
+                    "Document storage failed: {}",
+                    e
+                )))
             }
         }
     }
@@ -326,7 +328,10 @@ impl SupermemoryClient {
     }
 
     /// Query memories.
-    pub async fn query(&self, _query: &crate::types::MemoryQuery) -> Result<Vec<crate::types::MemoryResponse>> {
+    pub async fn query(
+        &self,
+        _query: &crate::types::MemoryQuery,
+    ) -> Result<Vec<crate::types::MemoryResponse>> {
         // Placeholder - would POST to /query
         Ok(vec![])
     }
@@ -354,12 +359,9 @@ mod tests {
     #[tokio::test]
     async fn test_empty_project_id() {
         let auth = AuthMethod::ApiKey("test_key".to_string());
-        let result = SupermemoryClient::new(
-            "https://api.example.com".to_string(),
-            "".to_string(),
-            auth,
-        )
-        .await;
+        let result =
+            SupermemoryClient::new("https://api.example.com".to_string(), "".to_string(), auth)
+                .await;
 
         assert!(result.is_err());
     }

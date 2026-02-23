@@ -369,9 +369,7 @@ impl<T: TableRow> TableWidget<T> {
             self.view.len()
         );
 
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title(title);
+        let block = Block::default().borders(Borders::ALL).title(title);
 
         let table = Table::new(data_rows, widths)
             .header(header_row)
@@ -404,7 +402,11 @@ mod tests {
 
     impl TableRow for AgentRun {
         fn headers() -> Vec<String> {
-            vec!["ID".to_string(), "Status".to_string(), "Duration(s)".to_string()]
+            vec![
+                "ID".to_string(),
+                "Status".to_string(),
+                "Duration(s)".to_string(),
+            ]
         }
 
         fn cells(&self) -> Vec<String> {
@@ -420,7 +422,11 @@ mod tests {
         (0..n)
             .map(|i| AgentRun {
                 id: format!("run-{:03}", i),
-                status: if i % 2 == 0 { "done".to_string() } else { "error".to_string() },
+                status: if i % 2 == 0 {
+                    "done".to_string()
+                } else {
+                    "error".to_string()
+                },
                 duration_s: (i as u32 * 3 + 1),
             })
             .collect()
@@ -518,9 +524,21 @@ mod tests {
     fn test_sort_asc() {
         let mut t: TableWidget<AgentRun> = TableWidget::new(10);
         t.set_rows(vec![
-            AgentRun { id: "c".to_string(), status: "done".to_string(), duration_s: 3 },
-            AgentRun { id: "a".to_string(), status: "done".to_string(), duration_s: 1 },
-            AgentRun { id: "b".to_string(), status: "done".to_string(), duration_s: 2 },
+            AgentRun {
+                id: "c".to_string(),
+                status: "done".to_string(),
+                duration_s: 3,
+            },
+            AgentRun {
+                id: "a".to_string(),
+                status: "done".to_string(),
+                duration_s: 1,
+            },
+            AgentRun {
+                id: "b".to_string(),
+                status: "done".to_string(),
+                duration_s: 2,
+            },
         ]);
         t.toggle_sort(0); // sort by ID asc
         assert_eq!(t.sort_dir(), &SortDir::Asc);
@@ -532,9 +550,21 @@ mod tests {
     fn test_sort_desc() {
         let mut t: TableWidget<AgentRun> = TableWidget::new(10);
         t.set_rows(vec![
-            AgentRun { id: "c".to_string(), status: "done".to_string(), duration_s: 3 },
-            AgentRun { id: "a".to_string(), status: "done".to_string(), duration_s: 1 },
-            AgentRun { id: "b".to_string(), status: "done".to_string(), duration_s: 2 },
+            AgentRun {
+                id: "c".to_string(),
+                status: "done".to_string(),
+                duration_s: 3,
+            },
+            AgentRun {
+                id: "a".to_string(),
+                status: "done".to_string(),
+                duration_s: 1,
+            },
+            AgentRun {
+                id: "b".to_string(),
+                status: "done".to_string(),
+                duration_s: 2,
+            },
         ]);
         t.toggle_sort(0); // Asc
         t.toggle_sort(0); // Desc

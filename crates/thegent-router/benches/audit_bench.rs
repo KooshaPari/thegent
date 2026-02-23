@@ -77,7 +77,9 @@ fn bench_audit_logger_verify_chain(c: &mut Criterion) {
     for n in [100u64, 1000u64, 10_000u64] {
         group.bench_with_input(BenchmarkId::from_parameter(n), &n, |b, &size| {
             let dir = tempdir().expect("failed to create tempdir");
-            let path = dir.path().join(format!("routing_audit_verify_{size}.jsonl"));
+            let path = dir
+                .path()
+                .join(format!("routing_audit_verify_{size}.jsonl"));
             let logger = AuditLogger::new(path);
             for i in 0u64..size {
                 let r = AuditRecord::new(
@@ -118,7 +120,12 @@ fn bench_read_last_hash(c: &mut Criterion) {
         b.iter(|| {
             let logger = black_box(AuditLogger::new(path.clone()));
             // Append one record to confirm the chain was resumed correctly.
-            let r = AuditRecord::new("thegent".to_string(), "claude-sonnet-4.6".to_string(), 1, 0.01);
+            let r = AuditRecord::new(
+                "thegent".to_string(),
+                "claude-sonnet-4.6".to_string(),
+                1,
+                0.01,
+            );
             logger.append(black_box(&r)).expect("append failed");
         });
     });

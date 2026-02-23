@@ -60,7 +60,10 @@ fn main() -> Result<()> {
     if missing_see_also.is_empty() {
         println!("✅ All files have 'See also' section");
     } else {
-        println!("⚠️  Missing 'See also' section ({} files):", missing_see_also.len());
+        println!(
+            "⚠️  Missing 'See also' section ({} files):",
+            missing_see_also.len()
+        );
         for audit in missing_see_also.iter().take(20) {
             println!("   - {}", audit.path.display());
         }

@@ -1,6 +1,9 @@
 """Tests for thegent tray plugin."""
 
 import pytest
+
+pytest.importorskip("PySide6")
+
 from unittest.mock import MagicMock, patch
 
 from thegent.tray.core.plugin_system import SidebarItem, TrayPlugin

@@ -4,6 +4,10 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fix/ci-remove-macos
 from thegent.tray.plugins.thegent.api_client import (
     Agent,
     CostSummary,

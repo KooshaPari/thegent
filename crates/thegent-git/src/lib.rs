@@ -5,8 +5,7 @@ use std::process::Command;
 use pyo3::prelude::*;
 
 fn open_repo(path: &str) -> Result<gix::Repository, String> {
-    gix::discover(path)
-        .map_err(|e| format!("not a git repository at {}: {}", path, e))
+    gix::discover(path).map_err(|e| format!("not a git repository at {}: {}", path, e))
 }
 
 // ---------------------------------------------------------------------------
@@ -17,8 +16,7 @@ fn open_repo(path: &str) -> Result<gix::Repository, String> {
 #[pyo3(signature = (path=None))]
 pub fn get_head_sha(path: Option<String>) -> PyResult<Option<String>> {
     let p = path.unwrap_or_else(|| ".".to_string());
-    let repo = open_repo(&p)
-        .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e))?;
+    let repo = open_repo(&p).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e))?;
     match repo.head_id() {
         Ok(id) => Ok(Some(id.to_hex().to_string())),
         Err(_) => Ok(None),
@@ -30,7 +28,9 @@ pub fn get_head_sha(path: Option<String>) -> PyResult<Option<String>> {
 pub fn get_branch_name(path: Option<String>) -> PyResult<Option<String>> {
     let p = path.unwrap_or_else(|| ".".to_string());
     let repo = open_repo(&p).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e))?;
-    let head = repo.head().map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("HEAD error: {}", e)))?;
+    let head = repo.head().map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("HEAD error: {}", e))
+    })?;
     Ok(match head.kind {
         gix::head::Kind::Symbolic(r) => Some(r.name.shorten().to_string()),
         _ => None,
@@ -42,8 +42,9 @@ pub fn get_branch_name(path: Option<String>) -> PyResult<Option<String>> {
 pub fn is_dirty(path: Option<String>) -> PyResult<bool> {
     let p = path.unwrap_or_else(|| ".".to_string());
     let repo = open_repo(&p).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e))?;
-    repo.is_dirty()
-        .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("dirty check error: {}", e)))
+    repo.is_dirty().map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("dirty check error: {}", e))
+    })
 }
 
 #[pyfunction]
@@ -182,9 +183,9 @@ pub fn rev_parse(ref_: String, path: Option<String>) -> PyResult<Option<String>>
         .output();
 
     match output {
-        Ok(out) if out.status.success() => {
-            Ok(Some(String::from_utf8_lossy(&out.stdout).trim().to_string()))
-        }
+        Ok(out) if out.status.success() => Ok(Some(
+            String::from_utf8_lossy(&out.stdout).trim().to_string(),
+        )),
         _ => Ok(None),
     }
 }
@@ -231,9 +232,9 @@ pub fn create_commit(
     cmd.arg("-m").arg(&message);
 
     match cmd.output() {
-        Ok(output) if output.status.success() => {
-            Ok(Some(String::from_utf8_lossy(&output.stdout).trim().to_string()))
-        }
+        Ok(output) if output.status.success() => Ok(Some(
+            String::from_utf8_lossy(&output.stdout).trim().to_string(),
+        )),
         _ => Ok(None),
     }
 }
@@ -261,7 +262,11 @@ pub fn update_ref(ref_: String, new_hash: String, path: Option<String>) -> PyRes
 /// Get merge-base (git merge-base equivalent)
 #[pyfunction]
 #[pyo3(signature = (commit1, commit2, path=None))]
-pub fn merge_base(commit1: String, commit2: String, path: Option<String>) -> PyResult<Option<String>> {
+pub fn merge_base(
+    commit1: String,
+    commit2: String,
+    path: Option<String>,
+) -> PyResult<Option<String>> {
     let p = path.unwrap_or_else(|| ".".to_string());
 
     let output = Command::new("git")
@@ -273,9 +278,9 @@ pub fn merge_base(commit1: String, commit2: String, path: Option<String>) -> PyR
         .output();
 
     match output {
-        Ok(out) if out.status.success() => {
-            Ok(Some(String::from_utf8_lossy(&out.stdout).trim().to_string()))
-        }
+        Ok(out) if out.status.success() => Ok(Some(
+            String::from_utf8_lossy(&out.stdout).trim().to_string(),
+        )),
         _ => Ok(None),
     }
 }
@@ -350,8 +355,7 @@ mod tests {
     fn test_get_branch_name_returns_branch() {
         let temp_dir = create_test_repo();
         let repo_path = temp_dir.path().to_str().unwrap();
-        let branch = get_branch_name(Some(repo_path.to_string()))
-            .expect("Function call failed");
+        let branch = get_branch_name(Some(repo_path.to_string())).expect("Function call failed");
 
         assert!(branch.is_some());
         let branch_name = branch.unwrap();
@@ -365,8 +369,7 @@ mod tests {
     fn test_is_dirty_clean_empty_repo() {
         let temp_dir = create_test_repo();
         let repo_path = temp_dir.path().to_str().unwrap();
-        let dirty = is_dirty(Some(repo_path.to_string()))
-            .expect("Function call failed");
+        let dirty = is_dirty(Some(repo_path.to_string())).expect("Function call failed");
         assert!(!dirty);
     }
 
@@ -380,8 +383,8 @@ mod tests {
         let untracked_file = repo_path.join("untracked.txt");
         std::fs::write(&untracked_file, "untracked content").expect("Failed to create file");
 
-        let dirty = is_dirty(Some(repo_path.to_str().unwrap().to_string()))
-            .expect("Function call failed");
+        let dirty =
+            is_dirty(Some(repo_path.to_str().unwrap().to_string())).expect("Function call failed");
         assert!(dirty);
     }
 
@@ -394,18 +397,28 @@ mod tests {
         let repo_path = temp_dir.path().to_str().unwrap();
 
         Python::with_gil(|py| {
-            let status = get_status(py, Some(repo_path.to_string()))
-                .expect("Function call failed");
+            let status = get_status(py, Some(repo_path.to_string())).expect("Function call failed");
 
-            let status_dict = status.downcast_bound::<pyo3::types::PyDict>(py)
+            let status_dict = status
+                .downcast_bound::<pyo3::types::PyDict>(py)
                 .expect("status should be a dict");
 
             // Verify required keys are present
-            assert!(status_dict.contains("branch").expect("Failed to check branch key"));
-            assert!(status_dict.contains("sha").expect("Failed to check sha key"));
-            assert!(status_dict.contains("staged").expect("Failed to check staged key"));
-            assert!(status_dict.contains("unstaged").expect("Failed to check unstaged key"));
-            assert!(status_dict.contains("untracked").expect("Failed to check untracked key"));
+            assert!(status_dict
+                .contains("branch")
+                .expect("Failed to check branch key"));
+            assert!(status_dict
+                .contains("sha")
+                .expect("Failed to check sha key"));
+            assert!(status_dict
+                .contains("staged")
+                .expect("Failed to check staged key"));
+            assert!(status_dict
+                .contains("unstaged")
+                .expect("Failed to check unstaged key"));
+            assert!(status_dict
+                .contains("untracked")
+                .expect("Failed to check untracked key"));
         });
     }
 
@@ -418,14 +431,16 @@ mod tests {
         let repo_path = temp_dir.path().to_str().unwrap();
 
         Python::with_gil(|py| {
-            let status = get_status(py, Some(repo_path.to_string()))
-                .expect("Function call failed");
+            let status = get_status(py, Some(repo_path.to_string())).expect("Function call failed");
 
-            let status_dict = status.downcast_bound::<pyo3::types::PyDict>(py)
+            let status_dict = status
+                .downcast_bound::<pyo3::types::PyDict>(py)
                 .expect("status should be a dict");
 
             // Branch should be set for empty repo
-            let branch = status_dict.get_item("branch").expect("Failed to get branch");
+            let branch = status_dict
+                .get_item("branch")
+                .expect("Failed to get branch");
             assert!(branch.is_some());
 
             // SHA should be None (empty repo has no commits)
@@ -448,9 +463,7 @@ mod tests {
     fn test_get_status_error_nonexistent() {
         use pyo3::Python;
         let nonexistent = "/tmp/nonexistent_repo_9998";
-        let result = Python::with_gil(|py| {
-            get_status(py, Some(nonexistent.to_string()))
-        });
+        let result = Python::with_gil(|py| get_status(py, Some(nonexistent.to_string())));
         assert!(result.is_err());
     }
 
@@ -478,8 +491,7 @@ mod tests {
         let repo_path = temp_dir.path().to_str().unwrap();
 
         Python::with_gil(|py| {
-            let status = get_status(py, Some(repo_path.to_string()))
-                .expect("Function call failed");
+            let status = get_status(py, Some(repo_path.to_string())).expect("Function call failed");
 
             // Verify it's a PyDict
             assert!(status.downcast_bound::<pyo3::types::PyDict>(py).is_ok());
@@ -498,8 +510,7 @@ mod tests {
         let _dirty = is_dirty(Some(repo_path.to_string())).expect("is_dirty failed");
 
         use pyo3::Python;
-        let _ = Python::with_gil(|py| {
-            get_status(py, Some(repo_path.to_string()))
-        }).expect("get_status failed");
+        let _ = Python::with_gil(|py| get_status(py, Some(repo_path.to_string())))
+            .expect("get_status failed");
     }
 }

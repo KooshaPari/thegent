@@ -1,10 +1,13 @@
 """Unit tests for tray agents tab."""
 
+import pytest
+
+pytest.importorskip("PySide6")
+
 import ast
 import os
 from pathlib import Path
 
-import pytest
 
 
 def get_module_ast(file_path: str) -> ast.Module:

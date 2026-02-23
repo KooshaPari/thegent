@@ -1,5 +1,8 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> fix/ci-remove-macos
 # Lane E Report - Wave 81 (Bugs 37-43)
 
 Source: `docs/reference/WORK_STREAM_CLIPROXY_ALL.md`
@@ -51,8 +54,11 @@ Scope: Bugs items 37..43 only
 2. Map current thegent request/stream adapter surfaces to concrete files, then open a focused test-first patch plan (P0 items first).
 3. Draft a short operator troubleshooting doc for auth outage class errors (#111, #949) with explicit fail-fast expectations and no fallback behavior.
 =======
+<<<<<<< HEAD
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> fix/ci-remove-macos
 # Worklog Wave 81 - Lane E
 
 Date: 2026-02-23
@@ -74,6 +80,10 @@ Lane focus: connector reliability, deterministic retry/resume behavior, and tele
 - No code changed yet; this is pure analysis. When execution begins, attach the next-action schema/metrics plan to the same worklog folder so reviewers can trace from analysis to implementation.
 - Validation commands: not applicable until instrumentation work starts.
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> 58ccbe31e72efd07558be54d6a129ce6d984487d
+>>>>>>> fix/ci-remove-macos

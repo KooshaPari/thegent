@@ -32,16 +32,27 @@ impl HysteresisManager {
     pub fn new() -> Self {
         Self {
             band_width: 0.15,
-            dwell_time: Duration::from_secs(300),      // 5 minutes
-            max_dwell: Duration::from_secs(1800),      // 30 minutes
+            dwell_time: Duration::from_secs(300), // 5 minutes
+            max_dwell: Duration::from_secs(1800), // 30 minutes
             override_threshold: 0.20,
         }
     }
 
     /// Create a new hysteresis manager with custom parameters.
-    pub fn with_config(band_width: f64, dwell_time: Duration, max_dwell: Duration, override_threshold: f64) -> Self {
-        assert!((0.0..=0.5).contains(&band_width), "band_width must be in [0.0, 0.5]");
-        assert!((0.0..=1.0).contains(&override_threshold), "override_threshold must be in [0.0, 1.0]");
+    pub fn with_config(
+        band_width: f64,
+        dwell_time: Duration,
+        max_dwell: Duration,
+        override_threshold: f64,
+    ) -> Self {
+        assert!(
+            (0.0..=0.5).contains(&band_width),
+            "band_width must be in [0.0, 0.5]"
+        );
+        assert!(
+            (0.0..=1.0).contains(&override_threshold),
+            "override_threshold must be in [0.0, 1.0]"
+        );
         assert!(dwell_time < max_dwell, "dwell_time must be < max_dwell");
 
         Self {
@@ -210,10 +221,10 @@ mod tests {
         // In band, dwell active, but large risk change → override
         let can_switch = hyst.should_switch(
             RoutingMode::Lifecycle,
-            0.50,      // Inside band
+            0.50, // Inside band
             0.5,
-            past,      // Recent switch time (within dwell)
-            0.28,      // Change of 0.22 > override_threshold 0.20
+            past, // Recent switch time (within dwell)
+            0.28, // Change of 0.22 > override_threshold 0.20
         );
         assert!(can_switch);
     }
@@ -226,10 +237,10 @@ mod tests {
         // In band, dwell active, small change → don't switch
         let can_switch = hyst.should_switch(
             RoutingMode::Lifecycle,
-            0.50,      // Inside band
+            0.50, // Inside band
             0.5,
-            now,       // Just switched
-            0.505,     // Small change < 0.20
+            now,   // Just switched
+            0.505, // Small change < 0.20
         );
         assert!(!can_switch);
     }
@@ -339,10 +350,10 @@ mod tests {
         // First large change overrides dwell
         let can_switch_1 = hyst.should_switch(
             RoutingMode::Lifecycle,
-            0.50,      // Inside band
+            0.50, // Inside band
             threshold,
             past_short, // Recent but with large change
-            0.28,      // Large change of 0.22 > override_threshold 0.20
+            0.28,       // Large change of 0.22 > override_threshold 0.20
         );
         assert!(can_switch_1);
 
@@ -350,10 +361,10 @@ mod tests {
         let past_long = Instant::now() - Duration::from_secs(2000);
         let can_switch_2 = hyst.should_switch(
             RoutingMode::TheGent,
-            0.50,       // Inside band
+            0.50, // Inside band
             threshold,
-            past_long,  // Max dwell exceeded (2000s > 1800s max_dwell)
-            0.30,       // Any change; max_dwell condition overrides
+            past_long, // Max dwell exceeded (2000s > 1800s max_dwell)
+            0.30,      // Any change; max_dwell condition overrides
         );
         assert!(can_switch_2);
     }

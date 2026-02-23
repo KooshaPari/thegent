@@ -10,7 +10,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Parser)]
 #[command(name = "wl138-decomposition-progress")]
 struct Args {
-    #[arg(long, default_value = "docs/reports/artifacts/wl138_decomposition_progress.json")]
+    #[arg(
+        long,
+        default_value = "docs/reports/artifacts/wl138_decomposition_progress.json"
+    )]
     output: PathBuf,
 
     #[arg(long)]
@@ -141,7 +144,14 @@ fn run() -> Result<()> {
     let checkpoints = build_checkpoints();
     let results = checkpoints
         .into_iter()
-        .map(|item| checkpoint_result(&repo_root, &item, args.skip_execution_gates, &args.python_bin))
+        .map(|item| {
+            checkpoint_result(
+                &repo_root,
+                &item,
+                args.skip_execution_gates,
+                &args.python_bin,
+            )
+        })
         .collect::<Vec<_>>();
     let payload = Payload::for_all(results);
     write_json(&args.output, &payload)?;
@@ -152,7 +162,9 @@ fn run() -> Result<()> {
     );
     println!(
         "execution gates: {}/{} ({}%)",
-        payload.execution_gates.complete, payload.execution_gates.total, payload.execution_gates.completion_pct
+        payload.execution_gates.complete,
+        payload.execution_gates.total,
+        payload.execution_gates.completion_pct
     );
 
     Ok(())
@@ -170,7 +182,11 @@ impl Payload {
             .iter()
             .map(|cp| cp.evaluation.total_execution_gates)
             .sum();
-        let skipped = if total == 0 { false } else { checkpoints[0].evaluation.execution_gates_skipped };
+        let skipped = if total == 0 {
+            false
+        } else {
+            checkpoints[0].evaluation.execution_gates_skipped
+        };
 
         Payload {
             workstream_id: "WL-138",
@@ -188,11 +204,14 @@ impl Payload {
             checkpoints,
         }
     }
-
 }
 
 fn percent(n: usize, d: usize) -> f64 {
-    if d == 0 { 0.0 } else { ((n as f64) / (d as f64) * 100.0 * 100.0).round() / 100.0 }
+    if d == 0 {
+        0.0
+    } else {
+        ((n as f64) / (d as f64) * 100.0 * 100.0).round() / 100.0
+    }
 }
 
 fn write_json<T: Serialize>(path: &PathBuf, value: &T) -> Result<()> {
@@ -301,7 +320,10 @@ fn normalize_command(gate: ExecutionGate, python_bin: &str) -> Vec<String> {
     command
 }
 
-fn execute_command(root: &PathBuf, command: &[String]) -> (String, Option<i32>, f64, Vec<String>, Vec<String>) {
+fn execute_command(
+    root: &PathBuf,
+    command: &[String],
+) -> (String, Option<i32>, f64, Vec<String>, Vec<String>) {
     if command.is_empty() {
         return (
             "fail".to_string(),
@@ -313,7 +335,10 @@ fn execute_command(root: &PathBuf, command: &[String]) -> (String, Option<i32>, 
     }
 
     let start = Instant::now();
-    let output = Command::new(&command[0]).args(&command[1..]).current_dir(root).output();
+    let output = Command::new(&command[0])
+        .args(&command[1..])
+        .current_dir(root)
+        .output();
     let elapsed_ms = (Instant::now() - start).as_secs_f64() * 1000.0;
 
     match output {

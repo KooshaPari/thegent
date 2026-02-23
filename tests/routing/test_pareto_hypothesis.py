@@ -13,7 +13,7 @@ import pytest
 from hypothesis import given, settings, assume
 from hypothesis import strategies as st
 
-from thegent.routing.pareto_router import ParetoRouter, RouteCandidate
+from thegent.utils.routing_impl.pareto_router import ParetoRouter, RouteCandidate
 
 
 # --- Strategies ---

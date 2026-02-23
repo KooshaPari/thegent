@@ -76,10 +76,7 @@ fn find_with_fd(
 
     cmd.arg(dir);
 
-    let output = cmd
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .output()?;
+    let output = cmd.stdout(Stdio::piped()).stderr(Stdio::null()).output()?;
 
     if !output.status.success() {
         return Err(FileDiscoveryError::CommandFailed(
@@ -121,10 +118,7 @@ fn find_with_find(
         cmd.arg("-name").arg(pattern);
     }
 
-    let output = cmd
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .output()?;
+    let output = cmd.stdout(Stdio::piped()).stderr(Stdio::null()).output()?;
 
     if !output.status.success() {
         return Err(FileDiscoveryError::CommandFailed(
