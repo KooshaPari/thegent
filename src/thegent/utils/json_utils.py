@@ -5,12 +5,12 @@ falling back to the standard json module. orjson is 3-5x faster than json.
 
 Usage:
     from thegent.utils.json_utils import json_dumps, json_loads
-    
+
     # Fast serialization
     data = {"key": "value"}
     result = json_dumps(data)
-    
-    # Fast deserialization  
+
+    # Fast deserialization
     parsed = json_loads(result)
 """
 
@@ -31,13 +31,13 @@ except ImportError:
 
 def json_dumps(obj: Any, **kwargs: Any) -> str:
     """Serialize obj to a JSON formatted string.
-    
+
     Uses orjson if available (3-5x faster), falls back to json.
-    
+
     Args:
         obj: Object to serialize
         **kwargs: Additional arguments (passed to json.dumps if using fallback)
-        
+
     Returns:
         JSON string
     """
@@ -49,13 +49,13 @@ def json_dumps(obj: Any, **kwargs: Any) -> str:
 
 def json_loads(s: str | bytes, **kwargs: Any) -> Any:
     """Deserialize s (a string containing a JSON document) to a Python object.
-    
+
     Uses orjson if available (3-5x faster), falls back to json.
-    
+
     Args:
         s: JSON string or bytes
         **kwargs: Additional arguments (passed to json.loads if using fallback)
-        
+
     Returns:
         Deserialized Python object
     """
@@ -66,9 +66,9 @@ def json_loads(s: str | bytes, **kwargs: Any) -> Any:
 
 def json_dump(obj: Any, fp: Any, **kwargs: Any) -> None:
     """Serialize obj as a JSON formatted stream to fp.
-    
+
     Uses orjson if available (3-5x faster), falls back to json.
-    
+
     Args:
         obj: Object to serialize
         fp: File-like object with write() method
@@ -82,13 +82,13 @@ def json_dump(obj: Any, fp: Any, **kwargs: Any) -> None:
 
 def json_load(fp: Any, **kwargs: Any) -> Any:
     """Deserialize fp to a Python object.
-    
+
     Uses orjson if available (3-5x faster), falls back to json.
-    
+
     Args:
         fp: File-like object with read() method
         **kwargs: Additional arguments
-        
+
     Returns:
         Deserialized Python object
     """

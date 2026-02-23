@@ -35,16 +35,30 @@ from thegent.cli.commands.governance_escalation_hitl_cmds import (
     govern_approve_cmd,
     govern_list_pending_cmd,
     govern_reject_cmd,
-    sweep_cmd,
 )
 
 # Re-export all policy & health commands
 from thegent.cli.commands.governance_policy_health_cmds import (
     HEALTH_POLICY_PROFILES,
+    contracts_conformance_cmd,
+    contracts_registry_cmd,
+    drift_cmd,
+    govern_configure_cmd,
+    govern_cost_cmd,
+    migration_cmd,
+    policy_check_cmd,
+    policy_purge_cmd,
+    policy_show_cmd,
+    sweep_cmd,
+)
+
+# Re-export all AgilePlus commands
+from thegent.cli.commands.governance_agileplus_cmds import (
     govern_go_cycle_cmd,
     govern_go_health_cmd,
     govern_go_status_cmd,
-    govern_go_watch_cmd,)
+    govern_go_watch_cmd,
+)
 
 # Re-export discovery & guardrails commands
 from thegent.cli.commands.governance_discovery_guardrails_cmds import (
@@ -57,4 +71,44 @@ from thegent.cli.commands.governance_discovery_guardrails_cmds import (
 
 __all__ = [
     # Audit & compliance
+    "audit_verify_cmd",
+    "compliance_plugin_check_cmd",
+    "compliance_redact_cmd",
+    "compliance_report_cmd",
+    "compliance_siem_test_cmd",
+    "data_protection_cmd",
+    "signatures_list_cmd",
+    "signatures_verify_cmd",
+    "trust_status_cmd",
+    # Escalation & HITL
+    "escalate_add_cmd",
+    "escalate_approve_cmd",
+    "escalate_list_cmd",
+    "escalate_resolve_cmd",
+    "govern_approve_cmd",
+    "govern_list_pending_cmd",
+    "govern_reject_cmd",
+    # Policies & health
+    "HEALTH_POLICY_PROFILES",
+    "contracts_conformance_cmd",
+    "contracts_registry_cmd",
+    "drift_cmd",
+    "govern_configure_cmd",
+    "govern_cost_cmd",
+    "migration_cmd",
+    "policy_check_cmd",
+    "policy_purge_cmd",
+    "policy_show_cmd",
+    "sweep_cmd",
+    # AgilePlus
+    "govern_go_cycle_cmd",
+    "govern_go_health_cmd",
+    "govern_go_status_cmd",
+    "govern_go_watch_cmd",
+    # Discovery & guardrails
+    "discovery_parse_cmd",
+    "discovery_register_cmd",
+    "discovery_scan_cmd",
+    "guardrails_check_cmd",
+    "guardrails_show_cmd",
 ]

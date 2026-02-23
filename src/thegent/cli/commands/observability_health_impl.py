@@ -9,21 +9,12 @@ from typing import Any
 
 from thegent.config import ThegentSettings
 
-_log = logging.getLogger(__name__)
-
-# --- Constants ---
-
 HEALTH_PAYLOAD_SCHEMA_VERSION = "health-schema-v1"
 HEALTH_PAYLOAD_TYPES = (
     "session_contract_health_gate",
     "session_contract_health_report",
     "session_contract_health_trend",
 )
-HEALTH_POLICY_PROFILES: dict[str, dict[str, Any]] = {
-    "strict_ci": {"strict": True, "min_healthy_ratio": 1.0},
-    "warn_only": {"strict": False, "min_healthy_ratio": 0.0},
-    "prod_release": {"strict": True, "min_healthy_ratio": 0.98},
-}
 
 HEALTH_POLICY_PROFILES: dict[str, dict[str, Any]] = {
     "strict_ci": {"strict": True, "min_healthy_ratio": 1.0},

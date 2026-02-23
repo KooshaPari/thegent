@@ -11,16 +11,15 @@ CheckResult = dict[str, Any]
 
 def display_results(results: list[CheckResult], verbose: bool = False) -> bool:
     """Display check results.
-    
+
     Args:
         results: List of check results
         verbose: Verbose output
-        
+
     Returns:
         True if all checks passed
     """
     if not results:
-        print("No checks to display")
         return True
 
     passed = all(r.get("status") == "passed" for r in results)
@@ -36,17 +35,16 @@ def display_results(results: list[CheckResult], verbose: bool = False) -> bool:
         else:
             prefix = "?"
 
-        print(f"{prefix} {check}: {status}")
 
         if verbose and "details" in result:
-            print(f"  {result['details']}")
+            pass
 
     return passed
 
 
 def display_fix_report(fix_report: list[dict], dry_run: bool = False) -> None:
     """Display fix report.
-    
+
     Args:
         fix_report: List of fix results
         dry_run: Whether this was a dry run
@@ -57,4 +55,3 @@ def display_fix_report(fix_report: list[dict], dry_run: bool = False) -> None:
         check = fix.get("check", "unknown")
         status = fix.get("status", "unknown")
 
-        print(f"{mode}: {check} -> {status}")

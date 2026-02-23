@@ -38,7 +38,7 @@ class AdapterRegistry:
     _adapters: dict[str, AdapterPort] = {}
 
     @classmethod
-    def register(cls, name: str, adapter: AdapterPort):
+    def register(cls, name: str, adapter: AdapterPort) -> None:
         """Register an adapter by name"""
         cls._adapters[name] = adapter
 
@@ -53,7 +53,7 @@ class AdapterRegistry:
         return cls._adapters.copy()
 
     @classmethod
-    def unregister(cls, name: str):
+    def unregister(cls, name: str) -> None:
         """Unregister an adapter"""
         cls._adapters.pop(name, None)
 

@@ -10,6 +10,7 @@ Usage:
 
 import typer
 from rich.console import Console
+import sys
 
 system_app = typer.Typer(help="System configuration management (Nix-like)")
 console = Console()
@@ -51,7 +52,7 @@ def system_install(
         verbose=verbose,
     )
 
-    exit(cmd_install(args))
+    sys.exit(cmd_install(args))
 
 
 @system_app.command("verify")
@@ -75,7 +76,7 @@ def system_verify(
         verbose=verbose,
     )
 
-    exit(cmd_verify(args))
+    sys.exit(cmd_verify(args))
 
 
 @system_app.command("status")
@@ -85,4 +86,4 @@ def system_status() -> None:
     import argparse
 
     args = argparse.Namespace(manifest=None)
-    exit(cmd_status(args))
+    sys.exit(cmd_status(args))

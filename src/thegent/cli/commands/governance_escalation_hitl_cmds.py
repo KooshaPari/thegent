@@ -3,11 +3,6 @@
 Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
 """
 
-This module handles escalation queue management and human-in-the-loop (HITL)
-approval workflows for policy enforcement.
-"""
-
-# @trace WL-124
 from __future__ import annotations
 
 import sys

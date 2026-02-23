@@ -24,7 +24,6 @@ def load_manifest(path: Optional[Path] = None) -> dict[str, Any]:
     """Load the system manifest."""
     manifest_path = path or MANIFEST_PATH
     if not manifest_path.exists():
-        print(f"Error: Manifest not found at {manifest_path}")
         sys.exit(1)
     return json.loads(manifest_path.read_text())
 
@@ -89,7 +88,7 @@ def install_target(
     backup_dir: Optional[Path] = None,
 ) -> dict[str, Any]:
     """Install a single target.
-    
+
     Args:
         target: Target to install (e.g., "tools.git")
         manifest: System manifest
@@ -102,7 +101,6 @@ def install_target(
 
     parts = target.split(".")
     if len(parts) != 2:
-        print(f"Error: Invalid target format: {target} (expected category.name)")
         results["errors"] += 1
         return results
 
@@ -110,7 +108,6 @@ def install_target(
     targets = manifest.get("targets", {}).get(category, {})
 
     if name not in targets:
-        print(f"Warning: Unknown target {target}")
         results["errors"] += 1
         return results
 
@@ -118,7 +115,6 @@ def install_target(
     source = config.get("source")
 
     if not source:
-        print(f"Warning: No source defined for {target}")
         results["skipped"] += 1
         return results
 
@@ -127,7 +123,6 @@ def install_target(
     source_path = thegent_root / source
 
     if not source_path.exists():
-        print(f"Warning: Source path not found: {source_path}")
         results["skipped"] += 1
         return results
 
@@ -141,14 +136,14 @@ def install_target(
                 backup_path = backup_dir / target_path.name
                 backup_path.parent.mkdir(parents=True, exist_ok=True)
                 if verbose:
-                    print(f"  Backing up {target_path} -> {backup_path}")
+                    pass
                 shutil.copy2(target_path, backup_path)
 
         if dry_run:
             if use_symlinks:
-                print(f"[DRY-RUN] Would symlink {source_path} -> {target_path}")
+                pass
             else:
-                print(f"[DRY-RUN] Would install {source_path} -> {target_path}")
+                pass
             results["skipped"] += 1
             continue
 
@@ -165,7 +160,7 @@ def install_target(
                 source_path = source_path.resolve()
                 target_path.symlink_to(source_path)
                 if verbose:
-                    print(f"  Symlinked {source_path} -> {target_path}")
+                    pass
                 results["copied"] += 1
             else:
                 if source_path.is_dir():
@@ -175,10 +170,9 @@ def install_target(
                 else:
                     shutil.copy2(source_path, target_path)
                 if verbose:
-                    print(f"  Copied {source_path} -> {target_path}")
+                    pass
                 results["copied"] += 1
         except Exception as e:
-            print(f"Error installing {target}: {e}")
             results["errors"] += 1
 
     return results
@@ -224,7 +218,7 @@ def cmd_install(args: argparse.Namespace) -> int:
     if args.all:
         targets = []
         for category in ["harnesses", "shells", "tools"]:
-            for name in manifest.get("targets", {}).get(category, {}).keys():
+            for name in manifest.get("targets", {}).get(category, {}):
                 targets.append(f"{category}.{name}")
     elif args.bundle:
         targets = expand_bundle(manifest, args.bundle)
@@ -233,11 +227,10 @@ def cmd_install(args: argparse.Namespace) -> int:
     elif args.auto:
         targets = detect_installed_targets(manifest)
     else:
-        print("Error: Must specify --all, --bundle, --target, or --auto")
         return 1
 
     if args.verbose:
-        print(f"Installing targets: {targets}")
+        pass
 
     # Determine backup directory
     backup_dir = None
@@ -248,7 +241,7 @@ def cmd_install(args: argparse.Namespace) -> int:
         if not args.dry_run:
             backup_dir.mkdir(parents=True, exist_ok=True)
         if args.verbose:
-            print(f"Backup directory: {backup_dir}")
+            pass
 
     total = {"copied": 0, "skipped": 0, "errors": 0}
 
@@ -265,7 +258,6 @@ def cmd_install(args: argparse.Namespace) -> int:
         total["skipped"] += result["skipped"]
         total["errors"] += result["errors"]
 
-    print(f"\nResults: {total['copied']} copied, {total['skipped']} skipped, {total['errors']} errors")
     return 0 if total["errors"] == 0 else 1
 
 
@@ -277,23 +269,21 @@ def cmd_verify(args: argparse.Namespace) -> int:
     if args.all:
         targets = []
         for category in ["harnesses", "shells", "tools"]:
-            for name in manifest.get("targets", {}).get(category, {}).keys():
+            for name in manifest.get("targets", {}).get(category, {}):
                 targets.append(f"{category}.{name}")
     elif args.target:
         targets = [args.target]
     else:
         targets = detect_installed_targets(manifest)
 
-    print(f"Verifying {len(targets)} targets...\n")
 
     all_ok = True
     for target in targets:
         result = verify_target(target, manifest)
         status_icon = "✓" if result["status"] == "ok" else "✗"
-        print(f"{status_icon} {target}: {result['status']}")
         if args.verbose:
-            for detail in result["details"]:
-                print(f"    {detail}")
+            for _detail in result["details"]:
+                pass
         if result["status"] != "ok":
             all_ok = False
 
@@ -306,17 +296,15 @@ def cmd_status(args: argparse.Namespace) -> int:
 
     installed = detect_installed_targets(manifest)
 
-    print("=== Installed Targets ===")
-    for target in sorted(installed):
-        print(f"  ✓ {target}")
+    for _target in sorted(installed):
+        pass
 
-    print(f"\n=== Available ({len(installed)} installed) ===")
     all_targets = []
     for category in ["harnesses", "shells", "tools"]:
-        for name in manifest.get("targets", {}).get(category, {}).keys():
+        for name in manifest.get("targets", {}).get(category, {}):
             full_target = f"{category}.{name}"
             if full_target not in installed:
-                print(f"  ○ {full_target}")
+                pass
 
     return 0
 

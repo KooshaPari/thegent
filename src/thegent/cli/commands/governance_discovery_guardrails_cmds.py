@@ -3,11 +3,6 @@
 Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
 """
 
-This module handles guardrails enforcement and discovery of external agents
-and governance-relevant code patterns.
-"""
-
-# @trace WL-124
 from __future__ import annotations
 
 import os
@@ -38,8 +33,6 @@ def discovery_register_cmd(
     mcp_errors: list[str] | None = typer.Option(None, "--mcp-error", help="MCP startup error(s)"),
 ) -> None:
     """Register or update a discovered external agent (WP-4008)."""
-    import json
-
     from thegent.discovery import register_discovered_agent
 
     token_usage = None
