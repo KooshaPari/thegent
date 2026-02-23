@@ -63,11 +63,35 @@ class MetricsCollector:
         WL-135 stub: this method intentionally only structures data so that
         downstream dashboard/report wiring can be added incrementally.
         """
-        status = "unknown"
-        if threshold is not None:
-            status = "pass" if value <= threshold else "fail"
+        status = self._compute_threshold_status(value=value, threshold=threshold)
+        payload = self._build_slo_payload(
+            metric_name=metric_name,
+            value=value,
+            threshold=threshold,
+            status=status,
+            lane=lane,
+        )
+        logger.info("slo_stub_emit metric=%s value=%s status=%s", metric_name, value, status)
+        return payload
 
-        payload: dict[str, Any] = {
+    @staticmethod
+    def _compute_threshold_status(*, value: float, threshold: float | None) -> str:
+        """Compute threshold status for a metric value."""
+        if threshold is None:
+            return "unknown"
+        return "pass" if value <= threshold else "fail"
+
+    @staticmethod
+    def _build_slo_payload(
+        *,
+        metric_name: str,
+        value: float,
+        threshold: float | None,
+        status: str,
+        lane: str,
+    ) -> dict[str, Any]:
+        """Build the SLO payload envelope."""
+        return {
             "emitter": "wl135-slo-stub",
             "metric_name": metric_name,
             "value": value,
@@ -76,5 +100,3 @@ class MetricsCollector:
             "lane": lane,
             "timestamp_unix": time.time(),
         }
-        logger.info("slo_stub_emit metric=%s value=%s status=%s", metric_name, value, status)
-        return payload

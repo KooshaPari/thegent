@@ -12,7 +12,7 @@ on:
 jobs:
   preflight:
     name: CI Preflight
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
@@ -53,8 +53,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ['3.12']
+        include:
+          - os: ubuntu-latest
+            python-version: '3.12'
+          - os: self-hosted
+            python-version: '3.12'
 
     steps:
       - name: Checkout code
@@ -163,7 +166,7 @@ jobs:
 
   quality:
     name: Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [preflight]
 
     steps:
@@ -255,7 +258,7 @@ jobs:
 
   quality-unified:
     name: Unified Quality Control Plane
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [preflight]
     if: github.event_name == 'pull_request' || github.event_name == 'schedule'
     permissions:
@@ -348,7 +351,7 @@ jobs:
 
   coverage:
     name: Coverage Gate
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [test, quality]
 
     steps:
@@ -391,7 +394,7 @@ jobs:
 
   template-collect-nightly:
     name: Template Path Collect (Nightly)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.event_name == 'schedule'
 
     steps:
@@ -431,7 +434,7 @@ jobs:
 
   leak-detection:
     name: Leak Detection (Comprehensive)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
@@ -496,7 +499,7 @@ jobs:
   # continue-on-error: true because Zig is P2/experimental; CI must not block on it.
   zig-readiness:
     name: Zig ABI Readiness Gate (WL-132)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     continue-on-error: true
 
     steps:
@@ -529,7 +532,7 @@ jobs:
 
   integration:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [coverage]
 
     steps:

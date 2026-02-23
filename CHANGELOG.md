@@ -1,10 +1,9 @@
 # Changelog
 
-All notable changes to thegent are documented here.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-
----
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
@@ -21,3 +20,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `thegent doctor` now reports stale shadow directories with actionable fix hint pointing to `thegent mcp prune` (WL-036)
 - `GardeningManager.run_shadow_cleanup` periodic task in `sitback/gardening.py` removes `.shadow-*` dirs older than 7 days (WL-036)
 - `NeverIdleLoop.GARDENING_STEPS` now includes `shadow_cleanup` for automatic periodic disk reclamation (WL-036)
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security

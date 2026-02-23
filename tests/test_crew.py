@@ -397,6 +397,113 @@ class TestWorkflowEngine:
         results = engine.execute()
         assert list(results.keys()) == ["first", "second"]
 
+    def test_wl9520_empty_stage_id_fails_fast(self):
+        # @trace WL-9520
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="", name="Empty"))
+        with pytest.raises(ValueError, match="Stage id cannot be empty"):
+            engine.resolve_stage_dependencies()
+
+    def test_wl9521_whitespace_stage_id_fails_fast(self):
+        # @trace WL-9521
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="   ", name="Whitespace"))
+        with pytest.raises(ValueError, match="Stage id cannot be empty"):
+            engine.resolve_stage_dependencies()
+
+    def test_wl9522_duplicate_crew_ids_fail_in_execution_plan(self):
+        # @trace WL-9522
+        engine = WorkflowEngine()
+        crew_a = Crew(name="A")
+        crew_b = Crew(name="B")
+        crew_b.id = crew_a.id
+        engine.add_stage(CrewStage(id="s1", name="Stage", crews=[crew_a, crew_b]))
+        with pytest.raises(ValueError, match="Duplicate crew id"):
+            engine.execute()
+
+    def test_wl9523_distinct_crew_ids_pass_execution_plan(self):
+        # @trace WL-9523
+        engine = WorkflowEngine()
+        crew_a = Crew(name="A")
+        crew_b = Crew(name="B")
+        engine.add_stage(CrewStage(id="s1", name="Stage", crews=[crew_a, crew_b]))
+        plan = engine._build_execution_plan()
+        assert [stage.id for stage in plan] == ["s1"]
+
+    def test_wl9524_execution_plan_respects_dependency_order(self):
+        # @trace WL-9524
+        engine = WorkflowEngine()
+        a = CrewStage(id="a", name="A")
+        b = CrewStage(id="b", name="B", depends_on=["a"])
+        c = CrewStage(id="c", name="C", depends_on=["b"])
+        engine.add_stage(c)
+        engine.add_stage(a)
+        engine.add_stage(b)
+        plan = engine._build_execution_plan()
+        assert [stage.id for stage in plan] == ["a", "b", "c"]
+
+    def test_wl9525_execute_uses_frozen_execution_plan(self, monkeypatch):
+        # @trace WL-9525
+        engine = WorkflowEngine()
+        first = CrewStage(id="first", name="First")
+        second = CrewStage(id="second", name="Second", depends_on=["first"])
+        engine.add_stage(second)
+        engine.add_stage(first)
+
+        original_execute_stage = engine.execute_stage
+
+        def mutate_and_execute(stage):
+            engine.add_stage(CrewStage(id="late", name="Late"))
+            return original_execute_stage(stage)
+
+        monkeypatch.setattr(engine, "execute_stage", mutate_and_execute)
+        results = engine.execute()
+        assert list(results.keys()) == ["first", "second"]
+        assert "late" not in results
+
+    def test_wl9526_execute_surfaces_stage_execution_error(self, monkeypatch):
+        # @trace WL-9526
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="s1", name="Stage"))
+
+        def raise_error(stage):
+            raise RuntimeError(f"boom:{stage.id}")
+
+        monkeypatch.setattr(engine, "execute_stage", raise_error)
+        with pytest.raises(RuntimeError, match="boom:s1"):
+            engine.execute()
+
+    def test_wl9527_empty_workflow_execution_is_noop(self):
+        # @trace WL-9527
+        engine = WorkflowEngine()
+        assert engine._build_execution_plan() == []
+        assert engine.execute() == {}
+
+    def test_wl9528_execute_stage_overwrites_previous_stage_result(self):
+        # @trace WL-9528
+        engine = WorkflowEngine()
+        stage = CrewStage(id="s1", name="Stage")
+        engine.results["s1"] = {"stale": {}}
+        result = engine.execute_stage(stage)
+        assert result == {}
+        assert engine.results["s1"] == {}
+
+    def test_wl9529_dependency_validation_happens_before_execution(self, monkeypatch):
+        # @trace WL-9529
+        engine = WorkflowEngine()
+        engine.add_stage(CrewStage(id="s1", name="S1", depends_on=["missing"]))
+
+        called = {"value": False}
+
+        def should_not_run(stage):
+            called["value"] = True
+            return {}
+
+        monkeypatch.setattr(engine, "execute_stage", should_not_run)
+        with pytest.raises(ValueError, match="Unknown dependency"):
+            engine.execute()
+        assert called["value"] is False
+
 
 class TestRouterManager:
     """Test RouterManager."""

@@ -46,6 +46,8 @@ class WorkflowEngine:
         """
         stage_map: dict[str, CrewStage] = {}
         for stage in self.stages:
+            if not stage.id.strip():
+                raise ValueError("Stage id cannot be empty")
             if stage.id in stage_map:
                 raise ValueError(f"Duplicate stage id: {stage.id}")
             stage_map[stage.id] = stage
@@ -63,6 +65,17 @@ class WorkflowEngine:
                 in_degree[stage.id] += 1
 
         return stage_map, in_degree, graph
+
+    def _build_execution_plan(self) -> list[CrewStage]:
+        """Create a validated execution plan before running any stages."""
+        ordered_stages = self.resolve_stage_dependencies()
+
+        for stage in ordered_stages:
+            crew_ids = [crew.id for crew in stage.crews]
+            if len(crew_ids) != len(set(crew_ids)):
+                raise ValueError(f"Duplicate crew id in stage {stage.id!r}")
+
+        return list(ordered_stages)
 
     def resolve_stage_dependencies(self) -> list[CrewStage]:
         """
@@ -117,7 +130,7 @@ class WorkflowEngine:
         Returns:
             Map of stage_id -> {crew_id -> {task_id -> ExecutionResult}}
         """
-        ordered_stages = self.resolve_stage_dependencies()
+        ordered_stages = self._build_execution_plan()
         all_results: dict[str, dict[str, dict[str, ExecutionResult]]] = {}
 
         for stage in ordered_stages:

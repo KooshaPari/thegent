@@ -26,17 +26,26 @@ from thegent.routing.route_executor import (
 _DEFAULT_AUDIT_PATH = Path.home() / ".thegent" / "routing_audit.jsonl"
 
 
-def _parse_jsonl_lines(lines: list[str], line_offset: int = 0) -> list[dict[str, Any]]:
+def _parse_jsonl_lines(
+    lines: list[str], line_offset: int = 0, strict: bool = True
+) -> tuple[list[dict[str, Any]], list[str]]:
     """Parse a list of non-empty JSON strings into dicts.
 
     Raises:
         ValueError: on the first line that fails JSON decoding.
     """
     records: list[dict[str, Any]] = []
+    errors: list[str] = []
     for i, line in enumerate(lines):
-        parsed = _decode_json_line(line, lineno=line_offset + i + 1)
-        records.append(parsed)
-    return records
+        lineno = line_offset + i + 1
+        try:
+            parsed = _decode_json_line(line, lineno=lineno)
+            records.append(parsed)
+        except ValueError:
+            if strict:
+                raise
+            errors.append(f"line {lineno}")
+    return records, errors
 
 
 def _decode_json_line(line: str, lineno: int) -> dict[str, Any]:
@@ -77,7 +86,7 @@ class ParetoTuiSession:
         """The configured audit file path."""
         return self._audit_path
 
-    def get_status(self) -> RouterStatus | None:
+    def get_status(self, strict: bool = True) -> RouterStatus | None:
         """Return current `RouterStatus` derived from the latest audit entry.
 
         Reads the most recent audit record, synthesises a single-agent routing
@@ -89,7 +98,7 @@ class ParetoTuiSession:
             ValueError: if the audit file is present but its latest entry
                 cannot be decoded as JSON.
         """
-        records = self.get_audit_history(limit=1)
+        records = self.get_audit_history(limit=1, strict=strict)
         if not records:
             return None
 
@@ -110,7 +119,7 @@ class ParetoTuiSession:
         self._bridge.record_decision("tui-session", decision)
         return self._bridge.status()
 
-    def get_audit_history(self, limit: int = 10) -> list[dict[str, Any]]:
+    def get_audit_history(self, limit: int = 10, strict: bool = True) -> list[dict[str, Any]]:
         """Return the last `limit` routing audit records (chronological order).
 
         Reads directly from the JSONL file via `read_routing_audit`.
@@ -124,9 +133,10 @@ class ParetoTuiSession:
         raw_lines = self._audit_path.read_text(encoding="utf-8").splitlines()
         recent_lines = [ln.strip() for ln in raw_lines[-limit:] if ln.strip()]
         offset = len(raw_lines) - len(recent_lines)
-        return _parse_jsonl_lines(recent_lines, line_offset=offset)
+        records, _errors = _parse_jsonl_lines(recent_lines, line_offset=offset, strict=strict)
+        return records
 
-    def get_pareto_data(self) -> dict[str, Any]:
+    def get_pareto_data(self, strict: bool = True) -> dict[str, Any]:
         """Return aggregated Pareto data for the TUI panel.
 
         Shape::
@@ -151,10 +161,16 @@ class ParetoTuiSession:
         Raises:
             ValueError: propagated from `get_audit_history` on malformed data.
         """
-        history = self.get_audit_history(limit=10)
+        raw_lines: list[str] = []
+        parse_errors: list[str] = []
+        if self._audit_path.exists():
+            raw_lines = self._audit_path.read_text(encoding="utf-8").splitlines()
+        recent_lines = [ln.strip() for ln in raw_lines[-10:] if ln.strip()]
+        offset = len(raw_lines) - len(recent_lines)
+        history, parse_errors = _parse_jsonl_lines(recent_lines, line_offset=offset, strict=strict)
 
         if not history:
-            return {"providers": [], "current": None, "history": []}
+            return {"providers": [], "current": None, "history": [], "parse_errors": parse_errors}
 
         # Aggregate per-provider statistics.
         provider_stats: dict[str, dict[str, Any]] = {}
@@ -190,4 +206,5 @@ class ParetoTuiSession:
             "providers": providers,
             "current": current,
             "history": history,
+            "parse_errors": parse_errors,
         }

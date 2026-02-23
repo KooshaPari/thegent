@@ -190,6 +190,8 @@ class WorkstreamAutosyncRunner:
                 multiplier=max(1.0, float(self.config.rate_limit_multiplier)),
             )
         )
+        self._cycle_throttle_retry_attempts = 0
+        self._cycle_throttle_wait_seconds = 0.0
         self._writer_lock = SingleWriterLock(lock_path=self._writer_lock_path())
 
     def _connector_breaker(self, connector: str) -> Any:
@@ -222,6 +224,14 @@ class WorkstreamAutosyncRunner:
     def _change_digest_path(self) -> Path:
         default_change_digest_path = Path("artifacts/workstream_autosync_change_digest.jsonl")
         return self.config.change_digest_path or default_change_digest_path
+
+    def _dry_run_diff_artifact_path(self) -> Path:
+        return Path("artifacts/workstream_autosync_dry_run_diff.txt")
+
+    def _connector_diff_workflow_output(self) -> dict[str, Any]:
+        return {
+            "dry_run_diff_artifact_path": str(self._dry_run_diff_artifact_path()),
+        }
 
     def _writer_lock_path(self) -> Path:
         if self.config.writer_lock_path is not None:
@@ -737,6 +747,8 @@ class WorkstreamAutosyncRunner:
             "next_cycle_interval_seconds": self._next_cycle_interval_seconds,
             "connector_health": [probe.to_dict() for probe in self._last_connector_probe],
             "correlation_id": self._current_run_correlation_id,
+            "throttle_retry_attempts": self._cycle_throttle_retry_attempts,
+            "throttle_wait_seconds": self._cycle_throttle_wait_seconds,
         }
         path = self._cycle_metrics_path()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -832,7 +844,7 @@ class WorkstreamAutosyncRunner:
             try:
                 await self._task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Autosync task cancelled during shutdown")
 
         logger.info("Workstream autosync stopped")
 
@@ -988,6 +1000,8 @@ class WorkstreamAutosyncRunner:
         cycle_items: list[WorkstreamItem] = []
         cycle_change_digest: dict[str, Any] = {"bucket": "hourly", "hours": {}}
         self._cycle_failure_recorded = False
+        self._cycle_throttle_retry_attempts = 0
+        self._cycle_throttle_wait_seconds = 0.0
         writer_lock_owner: str | None = None
         writer_lock_acquired = False
         cycle_decisions: dict[str, Any] = {
@@ -1083,7 +1097,11 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=[],
                     decisions={**cycle_decisions, "reason": "no_items"},
-                    outputs={"total_cycles": self.total_cycles, "change_digest": cycle_change_digest},
+                    outputs={
+                        "total_cycles": self.total_cycles,
+                        "change_digest": cycle_change_digest,
+                        "connector_diff_workflow": self._connector_diff_workflow_output(),
+                    },
                 )
                 _record_cycle_status("success")
                 return
@@ -1161,7 +1179,12 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=items,
                     decisions={**cycle_decisions, "reason": no_op_reason},
-                    outputs={"total_cycles": self.total_cycles, "no_op": True, "change_digest": cycle_change_digest},
+                    outputs={
+                        "total_cycles": self.total_cycles,
+                        "no_op": True,
+                        "change_digest": cycle_change_digest,
+                        "connector_diff_workflow": self._connector_diff_workflow_output(),
+                    },
                 )
                 _record_cycle_status("success")
                 return
@@ -1278,6 +1301,7 @@ class WorkstreamAutosyncRunner:
                     "last_operation": self.last_operation.to_dict() if self.last_operation else None,
                     "failure_queue_size": len(self._failure_queue.snapshot()),
                     "change_digest": cycle_change_digest,
+                    "connector_diff_workflow": self._connector_diff_workflow_output(),
                 },
             )
             _record_cycle_status("success")
@@ -1326,6 +1350,7 @@ class WorkstreamAutosyncRunner:
                     "total_cycles": self.total_cycles,
                     "last_error": self.last_error,
                     "change_digest": cycle_change_digest,
+                    "connector_diff_workflow": self._connector_diff_workflow_output(),
                 },
             )
             _record_cycle_status("failed")
@@ -1995,6 +2020,8 @@ class WorkstreamAutosyncRunner:
                         return
 
                     backoff_seconds = self._rate_limit_backoff.compute_wait(partition_attempt)
+                    self._cycle_throttle_retry_attempts += 1
+                    self._cycle_throttle_wait_seconds += backoff_seconds
                     logger.warning(
                         "Retrying %s/%s partition=%d attempt=%d/%d in %.3fs after %s",
                         connector,
@@ -2183,6 +2210,7 @@ class WorkstreamAutosyncRunner:
             "scope_filtered_wl_ids": self._last_scope_filtered_item_ids,
             "no_op_summary": self._no_op_summary,
             "trend_sample": self._last_trend_sample,
+            "connector_diff_workflow": self._connector_diff_workflow_output(),
         }
 
 
