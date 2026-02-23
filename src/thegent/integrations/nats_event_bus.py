@@ -13,6 +13,8 @@ from enum import Enum
 from typing import Callable
 from uuid import uuid4
 
+from thegent.integrations.base import DataclassConfig
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -37,9 +39,8 @@ class NATSStatus(Enum):
 
 
 @dataclass
-class NATSConfig:
+class NATSConfig(DataclassConfig):
     """Configuration for NATS event bus."""
-    enabled: bool = False
     servers: list = field(default_factory=lambda: ["nats://localhost:4222"])
     user: str = ""
     password: str = ""

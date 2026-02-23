@@ -11,11 +11,13 @@ from thegent.integrations.adapters.encryption_adapter import (
     xor_encrypt,
 )
 from thegent.integrations.adapters.metrics_adapter import MetricsAdapter
+from thegent.integrations.adapters.sla_adapter import SLAAdapter
 from thegent.integrations.adapters.state_adapter import StateAdapter
 
 __all__ = [
     "ConnectorConfigAdapter",
     "MetricsAdapter",
+    "SLAAdapter",
     "StateAdapter",
     "compute_artifact_key",
     "xor_decrypt",
