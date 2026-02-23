@@ -1,0 +1,1 @@
+const e={securityLevel:"loose",startOnLoad:!1,theme:"base",themeVariables:{primaryColor:"#42b883",background:"#ffffff",primaryTextColor:"#213547",primaryBorderColor:"#e0e0e0",lineColor:"#666666",secondaryColor:"#747bff",tertiaryColor:"#f5f5f5"},flowchart:{useMaxWidth:!0,htmlLabels:!0},sequence:{useMaxWidth:!0},gantt:{useMaxWidth:!0}};export{e as default};
