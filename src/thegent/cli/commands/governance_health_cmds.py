@@ -2,7 +2,7 @@
 
 Re-exports split modules:
 - governance_health_core_cmds: health/status/cycle/watch
-- governance_policy_cmds: policy, contracts, migration, drift
+- governance_policy_contracts_cmds: policy, contracts, migration, drift
 - governance_audit_compliance_cmds: audit, compliance, guardrails
 """
 
@@ -13,7 +13,7 @@ from thegent.cli.commands.governance_health_core_cmds import (
     govern_go_cycle_cmd,
     govern_go_watch_cmd,
 )
-from thegent.cli.commands.governance_policy_cmds import (
+from thegent.cli.commands.governance_policy_contracts_cmds import (
     policy_show_cmd,
     policy_purge_cmd,
     contracts_registry_cmd,
