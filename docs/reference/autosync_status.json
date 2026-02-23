@@ -1,5 +1,5 @@
 {
-  "last_cycle_at": "2026-02-23T00:25:59.922413+00:00",
+  "last_cycle_at": "2026-02-23T02:17:35.512310+00:00",
   "total_cycles": 1,
   "last_error": "Emergency stop active; autosync external mutation is paused",
   "health": "degraded",
@@ -11,7 +11,7 @@
     "linear_enabled": false,
     "last_operation": null,
     "open_blockers": [],
-    "failure_queue_size": 38,
+    "failure_queue_size": 47,
     "next_cycle_interval_seconds": 300,
     "connector_health": [],
     "metadata": {
@@ -31,12 +31,12 @@
     "trend_sample": null
   },
   "open_blockers": [],
-  "failure_queue_size": 38,
+  "failure_queue_size": 47,
   "checkpoint": null,
   "connector_health": [],
   "next_cycle_interval_seconds": 300,
   "incident_snapshot": {
-    "captured_at": "2026-02-23T00:25:59.921742+00:00",
+    "captured_at": "2026-02-23T02:17:35.511034+00:00",
     "items_count": 0,
     "snapshot_age_seconds": 0,
     "snapshot_stale": false,
@@ -59,7 +59,7 @@
       "age_seconds": 0
     },
     "last_error": "Emergency stop active; autosync external mutation is paused",
-    "failure_queue_size": 38,
+    "failure_queue_size": 47,
     "mutation_summary": null
   },
   "correlation_id": null,

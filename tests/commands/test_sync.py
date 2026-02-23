@@ -636,7 +636,7 @@ class TestSyncCLIRegistration:
         runner = CliRunner()
         result = runner.invoke(sync_app, ["local-orphans", "--help"])
         assert result.exit_code == 0
-        assert "--repo" in result.output
+        assert "--mapping-cache" in result.output
 
     def test_bootstrap_gh_invokes_script(self) -> None:
         # @trace WL-037

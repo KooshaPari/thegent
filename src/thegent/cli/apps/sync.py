@@ -7,6 +7,7 @@ import asyncio
 import importlib.util
 import json
 import os
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,32 @@ console = Console()
 app = typer.Typer(help="Synchronize rules, DAG, and model catalog.")
 
 _BOOTSTRAP_SYNC_SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "bootstrap_sync_workflow_project.py"
+
+
+def _serialize_model_data(value: Any) -> dict[str, Any]:
+    """Return a plain mapping for pydantic v2/v1 models and dataclass contracts."""
+    model_dump = getattr(value, "model_dump", None)
+    if callable(model_dump):
+        dumped = model_dump(mode="python")
+        if isinstance(dumped, dict):
+            return dumped
+        raise TypeError("model_dump() must return a mapping")
+
+    legacy_dict = getattr(value, "dict", None)
+    if callable(legacy_dict):
+        dumped = legacy_dict()
+        if isinstance(dumped, dict):
+            return dumped
+        raise TypeError("dict() must return a mapping")
+
+    if is_dataclass(value):
+        dumped = asdict(value)
+        if isinstance(dumped, dict):
+            return dumped
+
+    if isinstance(value, dict):
+        return value
+    raise TypeError(f"Unsupported model payload type: {type(value)!r}")
 
 
 def _load_bootstrap_sync_module() -> Any:
@@ -577,7 +604,7 @@ def sync_audit(
         payload["schema_version"] = contract.schema_version
         payload["conflict_precedence"] = contract.conflict_precedence
         payload["strict_mode"] = contract.strict_mode
-        payload["tenancy"] = contract.tenancy.model_dump()
+        payload["tenancy"] = _serialize_model_data(contract.tenancy) if contract.tenancy is not None else None
         console.print(json.dumps(payload, indent=2))
     elif format == "table":
         audit_result = auditor.audit_as_dict()
@@ -906,14 +933,14 @@ def sync_autopilot(
     if once:
         # Single cycle mode (useful for testing)
         asyncio.run(runner._perform_sync_cycle())
-        status = runner.get_status()
+        cycle_status = runner.get_status()
 
         if output_format == "json":
-            console.print(json.dumps(status, indent=2, default=str))
+            console.print(json.dumps(cycle_status, indent=2, default=str))
         else:
             console.print("[green]Autopilot cycle complete[/green]")
-            if status["last_operation"]:
-                op = status["last_operation"]
+            if cycle_status["last_operation"]:
+                op = cycle_status["last_operation"]
                 console.print(f"  Operation: {op['operation_id']}")
                 console.print(f"  Platform: {op['platform']}")
                 console.print(f"  Processed: {op['items_processed']} items")

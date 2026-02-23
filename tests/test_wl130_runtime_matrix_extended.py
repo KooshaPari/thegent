@@ -62,7 +62,10 @@ def test_runtime_matrix_v2_done_entries_have_test_file(matrix_v2: dict) -> None:
         assert "test_file" in entry, (
             f"Entry '{entry.get('id', '?')}' has migration_status='done' but is missing 'test_file' field"
         )
-        assert entry["test_file"] is not None and entry["test_file"] != "", (
+        assert entry["test_file"] is not None, (
+            f"Entry '{entry.get('id', '?')}' has migration_status='done' but 'test_file' is null/empty"
+        )
+        assert entry["test_file"] != "", (
             f"Entry '{entry.get('id', '?')}' has migration_status='done' but 'test_file' is null/empty"
         )
 

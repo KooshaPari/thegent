@@ -45,7 +45,8 @@ class TestFullWorkflow:
 
         (git_repo / "file1.txt").write_text("content 1\n")
         sha1 = journal.record_file_change("file1.txt", b"content 1\n", action="created")
-        assert sha1 and len(sha1) == 40
+        assert sha1
+        assert len(sha1) == 40
 
         (git_repo / "file1.txt").write_text("content 1 updated\n")
         sha2 = journal.record_file_change("file1.txt", b"content 1 updated\n", action="modified")

@@ -349,5 +349,86 @@
     "occurred_at": "2026-02-23T00:26:00.002976+00:00",
     "retry_class": "permanent",
     "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:43:03.929449+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:44:23.811720+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:48:31.181799+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:48:53.501388+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-read-gh-read-f7886328c220-86ec8bd2d0c8",
+    "connector": "github",
+    "item_id": "gh-read-f7886328c220",
+    "message": "gh command error: gh command failed: unknown owner type\n",
+    "occurred_at": "2026-02-23T02:09:25.082261+00:00",
+    "retry_class": "permanent",
+    "correlation_id": "95496312-0f31-4455-a98e-21451bf3ef76"
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T02:09:25.870390+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T02:09:31.427154+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T02:10:38.397438+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T02:17:35.566783+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
   }
 ]

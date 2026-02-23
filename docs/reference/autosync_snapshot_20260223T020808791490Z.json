@@ -1,0 +1,111 @@
+{
+  "last_cycle_at": "2026-02-23T02:08:08.790112+00:00",
+  "total_cycles": 1,
+  "last_error": "name 'timedelta' is not defined",
+  "health": "degraded",
+  "runner": {
+    "enabled": true,
+    "is_running": false,
+    "last_sync_time": "2026-02-23T02:08:08.781853+00:00",
+    "github_enabled": true,
+    "linear_enabled": false,
+    "last_operation": null,
+    "open_blockers": [],
+    "failure_queue_size": 43,
+    "next_cycle_interval_seconds": 300,
+    "connector_health": [
+      {
+        "connector": "github",
+        "status": "healthy",
+        "reason": null
+      }
+    ],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "correlation_id": "b7f6551c-97a3-4ca2-9689-8b1dcf73d0ff",
+    "local_orphan_report": {
+      "local_ids": [
+        "WL-160",
+        "WL-161"
+      ],
+      "mapped_remote_ids": [],
+      "local_orphan_ids": [
+        "WL-160",
+        "WL-161"
+      ],
+      "orphan_count": 2
+    },
+    "ignored_wl_ids": [],
+    "scope_filtered_wl_ids": [],
+    "no_op_summary": null,
+    "trend_sample": null
+  },
+  "open_blockers": [],
+  "failure_queue_size": 43,
+  "checkpoint": null,
+  "connector_health": [
+    {
+      "connector": "github",
+      "status": "healthy",
+      "reason": null
+    }
+  ],
+  "next_cycle_interval_seconds": 300,
+  "incident_snapshot": {
+    "captured_at": "2026-02-23T02:08:08.787908+00:00",
+    "items_count": 0,
+    "snapshot_age_seconds": 4755,
+    "snapshot_stale": true,
+    "correlation_id": "b7f6551c-97a3-4ca2-9689-8b1dcf73d0ff",
+    "slo_alerts": [
+      "autosync snapshot stale for 4755s",
+      "autosync error budget hard-fail threshold reached"
+    ],
+    "error_budget": {
+      "success_count": 0,
+      "failure_count": 1,
+      "consecutive_failures": 1,
+      "total_operations": 1,
+      "current_failure_rate": 1.0
+    },
+    "connector_sla": {},
+    "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
+    "connector_health": [
+      {
+        "connector": "github",
+        "status": "healthy",
+        "reason": null
+      }
+    ],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "last_error": "name 'timedelta' is not defined",
+    "failure_queue_size": 43,
+    "mutation_summary": null
+  },
+  "correlation_id": "b7f6551c-97a3-4ca2-9689-8b1dcf73d0ff",
+  "local_orphan_report": {
+    "local_ids": [
+      "WL-160",
+      "WL-161"
+    ],
+    "mapped_remote_ids": [],
+    "local_orphan_ids": [
+      "WL-160",
+      "WL-161"
+    ],
+    "orphan_count": 2
+  },
+  "ignored_wl_ids": [],
+  "scope_filtered_wl_ids": [],
+  "no_op_summary": null,
+  "trend_sample": null,
+  "change_digest": {
+    "bucket": "hourly",
+    "hours": {}
+  }
+}

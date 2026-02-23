@@ -13,6 +13,11 @@ from thegent.config import ThegentSettings
 _log = __import__("logging").getLogger(__name__)
 
 
+def _normalize_item_id(item_id: str) -> str:
+    """Normalize item ids for dedupe/claim handling."""
+    return item_id.strip().strip("~")
+
+
 def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
     """Find next actionable work items from work-stream and queue sources."""
     from thegent.cli.commands.impl import _resolve_cwd
@@ -174,14 +179,28 @@ def spawn_next_impl(
         }
     if "error" in result:
         return {"error": result["error"], "spawned": [], "errors": [], "count": 0}
-    items = result.get("next_items", [])
-    if not items:
+    raw_items = result.get("next_items", [])
+    if not raw_items:
         return {
             "spawned": [],
             "errors": [],
             "count": 0,
             "empty_reason": result.get("empty_reason"),
         }
+    # Remove duplicate/invalid items before claiming/spawning.
+    items: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for item in raw_items:
+        raw_item_id = str(item.get("id", "")).strip()
+        norm_item_id = _normalize_item_id(raw_item_id)
+        if not norm_item_id:
+            continue
+        if norm_item_id in seen_ids:
+            continue
+        seen_ids.add(norm_item_id)
+        item = dict(item)
+        item["id"] = norm_item_id
+        items.append(item)
 
     agent_id = "spawn-next"
     try:

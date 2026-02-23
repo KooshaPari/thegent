@@ -15,24 +15,50 @@ class ResourceManager:
     """Manages resource limits for agent processes."""
 
     def __init__(self) -> None:
-        pass
+        self._applied_limits: dict[str, tuple[int, int]] = {}
 
-    def apply_limits(self, memory_mb: int = 512, proc_limit: int = 100):
+    def apply_limits(self, memory_mb: int = 512, proc_limit: int = 100) -> dict[str, tuple[int, int]]:
         """Apply soft/hard limits using resource module."""
-        try:
-            # Memory limit (RLIMIT_AS - Address Space)
-            mem_bytes = memory_mb * 1024 * 1024
-            resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
+        if memory_mb <= 0:
+            raise ValueError("memory_mb must be > 0")
+        if proc_limit <= 0:
+            raise ValueError("proc_limit must be > 0")
 
-            # Process count limit
-            resource.setrlimit(resource.RLIMIT_NPROC, (proc_limit, proc_limit))
+        mem_bytes = memory_mb * 1024 * 1024
+        nofile_limit = 1024
 
-            # File descriptor limit
-            resource.setrlimit(resource.RLIMIT_NOFILE, (1024, 1024))
+        self._applied_limits["memory"] = self._enforce_limit(resource.RLIMIT_AS, mem_bytes, "memory")
+        self._applied_limits["processes"] = self._enforce_limit(resource.RLIMIT_NPROC, proc_limit, "processes")
+        self._applied_limits["nofile"] = self._enforce_limit(resource.RLIMIT_NOFILE, nofile_limit, "nofile")
 
-            logger.info(f"Applied resource limits: Mem={memory_mb}MB, Procs={proc_limit}")
-        except Exception as e:
-            logger.error(f"Failed to apply resource limits: {e}")
+        logger.info(
+            "Applied resource limits: memory=%sB processes=%s nofile=%s",
+            self._applied_limits["memory"][0],
+            self._applied_limits["processes"][0],
+            self._applied_limits["nofile"][0],
+        )
+        return dict(self._applied_limits)
+
+    def _enforce_limit(self, kind: int, target: int, label: str) -> tuple[int, int]:
+        """Set soft limit to target (or clamp to hard limit when required)."""
+        hard_limit = resource.getrlimit(kind)[1]
+        if hard_limit == resource.RLIM_INFINITY:
+            soft_limit = target
+        else:
+            soft_limit = min(target, hard_limit)
+
+        if soft_limit <= 0:
+            raise RuntimeError(f"invalid computed {label} soft limit: {soft_limit}")
+
+        resource.setrlimit(kind, (soft_limit, hard_limit))
+        current_soft, current_hard = resource.getrlimit(kind)
+        if current_soft != soft_limit:
+            raise RuntimeError(f"failed to enforce {label} limit: expected {soft_limit}, got {current_soft}")
+        return current_soft, current_hard
+
+    def get_applied_limits(self) -> dict[str, tuple[int, int]]:
+        """Return the most recently applied resource limits."""
+        return dict(self._applied_limits)
 
     def monitor_usage(self, pid: int) -> dict[str, Any]:
         """Monitor current resource usage of a process and record to SHM."""

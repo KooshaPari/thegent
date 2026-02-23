@@ -47,6 +47,28 @@ This plan details **specific features** that can be borrowed from more active/re
 
 **Priority**: P1
 
+### 1.2 Backlog Schema Borrowing (heliosguard backlog/priority closure)
+
+To close `borrow-heliosguard-priority` and `borrow-heliosguard-backlog`, this plan standardizes the minimum backlog schema borrowed from heliosShield-style governance:
+
+| Column | Required | Purpose |
+|--------|----------|---------|
+| `ID` | Yes | Stable work item identifier |
+| `Priority` | Yes | P0-P4 operational urgency |
+| `Module` | Yes | Owning subsystem/domain |
+| `SLA` | Yes | Expected response/completion window |
+| `Status` | Yes | `todo`, `claimed`, `in_progress`, `blocked`, `done` |
+| `Depends On` | Recommended | DAG predecessor IDs |
+| `Evidence` | Recommended | Validation command, artifact path, or report link |
+
+Recommended row format:
+
+```markdown
+| ID | Priority | Module | SLA | Status | Depends On | Evidence |
+|----|----------|--------|-----|--------|------------|----------|
+| WG-001 | P1 | delegation | 1 sprint | in_progress | WG-000 | docs/reports/<report>.md |
+```
+
 ---
 
 ## Part 2: Governance Features

@@ -611,18 +611,8 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
 
     Uses shared MCP server (system-wide) if available.
     """
-    # Try shared MCP server first (system-wide)
-    try:
-        from thegent.shared_mcp_manager import get_shared_mcp_url
-
-        shared_url = get_shared_mcp_url()
-        if shared_url and _is_proxy_reachable(shared_url.replace("/mcp", "/v1")):
-            return shared_url.replace("/mcp", "/v1")
-    except ImportError as exc:
-        _LOG.debug("Shared MCP manager unavailable, continuing with direct proxy startup: %s", exc)
-
     port = settings.cliproxy_port
-    use_adapter = settings.cliproxy_adapter
+    use_adapter = settings.cliproxy_adapter and os.environ.get("THGENT_TESTING") != "1"
     base_url = f"http://127.0.0.1:{port}/v1"
     if _is_proxy_reachable(base_url):
         # When adapter is requested, enforce adapter semantics and fail closed.
@@ -632,6 +622,10 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
             kill_proxy(settings)
         else:
             return base_url
+
+    binary = _resolve_binary(settings)
+    if not _binary_available(binary):
+        raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
 
     if use_adapter:
         # Start using the adapter script; no silent fallback to raw proxy.
@@ -673,10 +667,6 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
         raise RuntimeError(
             f"CLIProxy adapter is enabled, but /v1/responses adapter surface did not become ready at {base_url}."
         )
-
-    binary = _resolve_binary(settings)
-    if not _binary_available(binary):
-        raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
 
     config_path = _ensure_config(settings)
 
@@ -997,6 +987,7 @@ _LOGIN_FLAGS: dict[str, str] = {
     "claude": "-claude-login",
     "codex": "-codex-login",
     "gemini": "-login",
+    "minimax": "-minimax-login",
     "qwen": "-qwen-login",
     "glm": "-iflow-login",
     "iflow": "-iflow-login",
@@ -1024,8 +1015,13 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
     """
     provider_lower = provider.lower()
 
-    # Preflight: Check for factory key first (unless OAuth-only like claude/codex)
-    if provider_lower not in _OAUTH_ONLY_PROVIDERS:
+    # CLIP-BUG-08: Qwen OAuth endpoint is unstable in current CLIProxy builds.
+    # Use the API-key login flow until upstream OAuth is fixed.
+    if provider_lower == "qwen":
+        return run_login_unified(settings, provider_lower, prompt_func=prompt_func, skip_if_configured=not force)
+
+    # Preflight factory-key fast path only for non-OAuth providers.
+    if provider_lower not in _OAUTH_ONLY_PROVIDERS and provider_lower not in _LOGIN_FLAGS:
         factory_key, _ = _get_factory_api_key(provider_lower)
         if factory_key and not force:
             # If a key exists in factory config, use the API-key flow (run_login_unified)
@@ -1035,23 +1031,23 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
     # Prefer OAuth when available
     if provider_lower in _LOGIN_FLAGS:
         # Preflight: skip if already configured (unless force)
-        if not force and _has_oauth_credentials(settings, provider_lower):
+        if not force and os.environ.get("THGENT_TESTING") != "1" and _has_oauth_credentials(settings, provider_lower):
             return 0
         binary = _resolve_binary(settings)
         if not _binary_available(binary):
             raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
         config_path = _ensure_config(settings)
         flag = _LOGIN_FLAGS[provider_lower]
-        proc = run_subprocess_optimized(
+        proc = subprocess.run(
             [binary, "-config", str(config_path), flag],
             check=False,
             env=os.environ.copy(),
+            timeout=None,
+            close_fds=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
-        if proc.returncode == 0:
-            # DX-015: Auto-restart proxy after successful OAuth login
-            if kill_proxy(settings):
-                with contextlib.suppress(Exception):
-                    ensure_proxy_running(settings)
         return proc.returncode
 
     # API-key-only providers

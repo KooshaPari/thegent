@@ -1311,7 +1311,7 @@ tasks:
                 echo "[SKIP] $base (no Taskfile.yml)"
                 continue
               fi
-              if task -d "$d" --list-all 2>/dev/null | rg -Eq '(^|[[:space:]])quality([[:space:]]|$)'; then
+              if task -d "$d" --list-all 2>/dev/null | rg -q -e '(^|[[:space:]])quality([[:space:]]|$)'; then
                 echo "[RUN] $base -> task quality"
                 task -d "$d" quality
                 RAN=1
@@ -1338,7 +1338,7 @@ tasks:
   quality:runtime-contracts:mojo-kernel:
     desc: "Run Mojo deterministic kernel contract gates (WL-133)."
     cmds:
-      - uv run pytest -q tests/test_mojo_kernel_contract_v1.py tests/test_mojo_score_rank_harness.py tests/mojo/test_wl133_mojo_kernel_smoke.py
+      - uv run pytest -q tests/test_mojo_kernel_contracts.py tests/test_mojo_score_rank_harness.py tests/mojo/test_wl133_mojo_kernel_smoke.py
 
   quality:runtime-contracts:
     desc: "Run canonical runtime contract chain (WL-132/WL-133)."
@@ -1504,6 +1504,18 @@ tasks:
     desc: "Run full-file local pre-push hooks."
     cmds:
       - THEGENT_PRE_COMMIT_SCOPE=full ./scripts/run_pre_commit_stage.sh pre-push
+
+  quality:pre-commit:
+    desc: "Canonical pre-commit quality gate alias."
+    cmds:
+      - task: hooks:run:pre-commit
+      - THGENT_ACT_DOCKERLESS=1 task ci:local-gha:pre-commit
+
+  quality:pre-push:
+    desc: "Canonical pre-push quality gate alias."
+    cmds:
+      - task: hooks:run:pre-push
+      - THGENT_ACT_DOCKERLESS=1 task ci:local-gha:pre-push
 
   hooks:run:full:
     desc: "Run both local pre-commit and pre-push stages across all files."

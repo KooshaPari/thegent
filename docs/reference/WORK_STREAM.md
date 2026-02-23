@@ -1644,122 +1644,77 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 
 | ID | Agent | Started | Notes |
 |----|-------|---------|-------|
-| CLIP-BUG-01 | child-a | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-11 | child-a | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-02 | child-b | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-12 | child-b | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-03 | child-c | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-04 | child-c | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-05 | child-d | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-06 | child-d | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-07 | child-e | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-08 | child-e | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-09 | child-f | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
-| CLIP-BUG-10 | child-f | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
 
 ---
 
-| tenacity-add-jitter | child-a | 2026-02-22T10:17:47.456316+00:00 |
-| index-file-indexing | parent | 2026-02-22T10:18:24.867306+00:00 |
-| ghostty-terminal-integration | child-2 | 2026-02-22T10:18:25.428948+00:00 |
-| resource-network-bandwidth | child-2 | 2026-02-22T10:18:25.470001+00:00 |
-| resource-disk-queue-depth | child-2 | 2026-02-22T10:18:25.510678+00:00 |
-| resource-distributed-coordination | child-2 | 2026-02-22T10:18:25.550373+00:00 |
-| docs-claudemd-reference | child-2 | 2026-02-22T10:18:25.590639+00:00 |
-| docs-skill-examples | child-2 | 2026-02-22T10:18:25.634622+00:00 |
-| docs-cli-reference | child-2 | 2026-02-22T10:18:25.675435+00:00 |
-| docs-mcp-tool-docs | child-2 | 2026-02-22T10:18:25.716093+00:00 |
-| fastmcp-task-mode | child-2 | 2026-02-22T10:18:25.751798+00:00 |
-| setup-tailscale-nodes | child-2 | 2026-02-22T10:18:25.787904+00:00 |
-| impl-remote-executor | child-2 | 2026-02-22T10:18:25.822501+00:00 |
-| rollout-hook-rust-phase2 | child-2 | 2026-02-22T10:18:25.864630+00:00 |
-| impl-macos-desktop-automation | child-2 | 2026-02-22T10:18:25.903724+00:00 |
-| install-library-deps | child-2 | 2026-02-22T10:18:25.940006+00:00 |
-| impl-library-phase1 | child-2 | 2026-02-22T10:18:25.975372+00:00 |
-| research-cross-platform-remote | child-2 | 2026-02-22T10:18:26.011082+00:00 |
-| research-library-circuit-breaker | child-2 | 2026-02-22T10:18:26.049335+00:00 |
-| research-library-yaml | child-2 | 2026-02-22T10:18:26.089152+00:00 |
-| research-library-ansi | child-2 | 2026-02-22T10:18:26.128582+00:00 |
-| escalation-index-file-indexing | free-lane | 2026-02-22T10:19:15.841920+00:00 |
-| research-smart-robust-strategies | free-lane | 2026-02-22T10:19:15.878395+00:00 |
-| audit-delegation-friction | free-lane | 2026-02-22T10:19:15.914998+00:00 |
-| wp-16001-persona-registry | free-lane | 2026-02-22T10:19:15.948782+00:00 |
-| wp-16002-async-delegation | free-lane | 2026-02-22T10:19:15.987635+00:00 |
-| sharecli-git-parallelism | free-lane | 2026-02-22T10:19:16.026463+00:00 |
-| sharecli-smart-merge | free-lane | 2026-02-22T10:19:16.063576+00:00 |
-| sharecli-task-queue | free-lane | 2026-02-22T10:19:16.098058+00:00 |
-| compositor-cli-integration | free-lane | 2026-02-22T10:19:16.134725+00:00 |
-| ux-linting-accelerator | free-lane | 2026-02-22T10:19:16.173790+00:00 |
-| borrow-heliosguard-priority | free-lane | 2026-02-22T10:19:16.212462+00:00 |
-| borrow-heliosguard-backlog | free-lane | 2026-02-22T10:19:16.248771+00:00 |
-| borrow-thegent-mcp-tools | free-lane | 2026-02-22T10:19:16.282689+00:00 |
-| impl-cross-project-ipc | free-lane | 2026-02-22T10:19:16.316131+00:00 |
-| audit-teammate-collaboration | free-lane | 2026-02-22T10:19:16.349477+00:00 |
-| swarm-per-gate-logging | free-lane | 2026-02-22T10:19:16.382855+00:00 |
-| swarm-critical-lane | free-lane | 2026-02-22T10:19:16.417588+00:00 |
-| TGNT-P11.1 | free-lane | 2026-02-22T10:19:16.456806+00:00 |
-| TGNT-P14.1 | free-lane | 2026-02-22T10:19:16.496969+00:00 |
-| TGNT-P16.1 | free-lane | 2026-02-22T10:19:16.533516+00:00 |
-| TGNT-P16.2 | free-lane | 2026-02-22T10:19:16.568315+00:00 |
-| TGNT-P17.1 | free-lane | 2026-02-22T10:19:16.635982+00:00 |
-| TGNT-P18.2 | free-lane | 2026-02-22T10:19:16.700728+00:00 |
-| TGNT-P18.3 | free-lane | 2026-02-22T10:19:16.765380+00:00 |
-| SCLI-P1.2 | free-lane | 2026-02-22T10:19:16.805129+00:00 |
-| SCLI-P1.4 | free-lane | 2026-02-22T10:19:16.841270+00:00 |
-| SCLI-P7.1 | free-lane | 2026-02-22T10:19:16.878817+00:00 |
-| SCLI-P7.3 | free-lane | 2026-02-22T10:19:16.922848+00:00 |
-| SCLI-P13.2 | free-lane | 2026-02-22T10:19:16.960185+00:00 |
-| deferral-run_c56546ff | wave10to50 | 2026-02-22T10:37:35.474098+00:00 |
-| ~~heliosShield-smart-merge~~ | wave10to50 | 2026-02-22T10:37:35.595531+00:00 |
-| ~~compositor-caching~~ | wave10to50 | 2026-02-22T10:37:35.719598+00:00 |
-| ~~compositor-perf-profiling~~ | wave10to50 | 2026-02-22T10:37:35.867829+00:00 |
-| ~~compositor-cli-integration~~ | wave10to50 | 2026-02-22T10:37:36.290426+00:00 |
-| ~~ux-linting-accelerator~~ | wave10to50 | 2026-02-22T10:37:36.438243+00:00 |
-| ~~ux-terminal-keepalive~~ | wave10to50 | 2026-02-22T10:37:36.579491+00:00 |
-| ~~swarm-redis-concurrency~~ | wave10to50 | 2026-02-22T10:37:36.748083+00:00 |
-| ~~swarm-dag-prioritization~~ | wave10to50 | 2026-02-22T10:37:36.854031+00:00 |
-| ~~tenacity-migrate-cli~~ | wave10to50 | 2026-02-22T10:37:36.970240+00:00 |
-| ~~tenacity-migrate-loop~~ | wave10to50 | 2026-02-22T10:37:37.147191+00:00 |
-| ~~shell-consolidate-configs~~ | wave10to50 | 2026-02-22T10:37:37.259016+00:00 |
-| ~~bkm-10-jsonl-parser~~ | wave10to50 | 2026-02-22T10:37:37.354327+00:00 |
-| ~~acp-client-adapter~~ | wave10to50 | 2026-02-22T10:37:37.483613+00:00 |
-| ~~acp-mcp-bridge~~ | wave10to50 | 2026-02-22T10:37:37.577303+00:00 |
-| ~~resource-gpu-utilization~~ | wave10to50 | 2026-02-22T10:37:37.663916+00:00 |
-| ~~resource-network-bandwidth~~ | wave10to50 | 2026-02-22T10:37:37.775674+00:00 |
-| ~~fastmcp-elicitation-api~~ | wave10to50 | 2026-02-22T10:37:37.940501+00:00 |
-| ~~fastmcp-task-mode~~ | wave10to50 | 2026-02-22T10:37:38.072983+00:00 |
-| ~~research-governance-override-events~~ | wave10to50 | 2026-02-22T10:37:38.179504+00:00 |
-| ~~impl-pareto-router~~ | wave10to50 | 2026-02-22T10:37:38.326236+00:00 |
-| ~~impl-cost-aware-router~~ | wave10to50 | 2026-02-22T10:37:38.499392+00:00 |
-| ~~setup-tailscale-nodes~~ | wave10to50 | 2026-02-22T10:37:38.635044+00:00 |
-| ~~impl-library-phase1~~ | wave10to50 | 2026-02-22T10:37:38.759130+00:00 |
-| ~~prototype-federated-policy~~ | wave10to50 | 2026-02-22T10:37:38.883073+00:00 |
-| escalation-run_73623383 | wave10to50 | 2026-02-22T10:38:31.817391+00:00 |
-| escalation-run_56fb8042 | wave10to50 | 2026-02-22T10:38:31.880773+00:00 |
-| escalation-run_8aa7347a | wave10to50 | 2026-02-22T10:38:31.943953+00:00 |
-| deferral-run_b22258ca | wave10to50 | 2026-02-22T10:38:32.010869+00:00 |
-| deferral-run_2b97f82d | wave10to50 | 2026-02-22T10:38:32.078636+00:00 |
-| deferral-run_5ea86c0f | wave10to50 | 2026-02-22T10:38:32.206115+00:00 |
-| deferral-run_a0752f34 | wave10to50 | 2026-02-22T10:38:32.273281+00:00 |
-| deferral-run_def_f33667b2 | wave10to50 | 2026-02-22T10:38:32.337874+00:00 |
-| deferral-run_def_6ea77086 | wave10to50 | 2026-02-22T10:38:32.403838+00:00 |
-
 ### Wave70 Claims (2026-02-22)
 
-| ID | Agent | Started | Notes |
-|----|-------|---------|-------|
-| wave70-l1 | child-lane-1 | 2026-02-22T00:00:00Z | WL-293,294,295,296,297,299,300,262,263,264 |
-| wave70-l2 | child-lane-2 | 2026-02-22T00:00:00Z | WL-265,266,267,268,269,270,271,273,274,275 |
-| wave70-l3 | child-lane-3 | 2026-02-22T00:00:00Z | WL-276,277,278,242,243,244,245,246,247,248 |
-| wave70-l4 | child-lane-4 | 2026-02-22T00:00:00Z | WL-249,250,251,252,253,254,255,256,257,258 |
-| wave70-l7 | parent-lane | 2026-02-22T00:00:00Z | WL-240,203,204,205,206,208,209,210,211,212 |
 
+| research-library-ansi | codex-24976 | 2026-02-23T01:36:08.456669+00:00 |
+| ~~acp-client-adapter~~ | codex-26970 | 2026-02-23T01:36:12.070561+00:00 |
+| ~~research-governance-override-events~~ | codex-30449 | 2026-02-23T01:36:20.170381+00:00 |
+| ~~ux-linting-accelerator~~ | codex-26970 | 2026-02-23T01:36:23.486846+00:00 |
+| swarm-critical-lane | codex-30449 | 2026-02-23T01:36:31.268445+00:00 |
+| install-library-deps | codex-26970 | 2026-02-23T01:36:34.013522+00:00 |
+| ~~swarm-dag-prioritization~~ | codex-30449 | 2026-02-23T01:36:42.271806+00:00 |
+| ~~resource-network-bandwidth~~ | codex-26970 | 2026-02-23T01:36:45.032668+00:00 |
+| _none_ | codex-30449 | 2026-02-23T01:36:52.712383+00:00 |
+| SCLI-P1.4 | codex-26970 | 2026-02-23T01:36:55.773169+00:00 |
+| wave70-l4 | codex-30449 | 2026-02-23T01:37:05.303313+00:00 |
+| docs-cli-reference | codex-26970 | 2026-02-23T01:37:08.225371+00:00 |
+| ~~borrow-heliosguard-backlog~~ | codex-26970 | 2026-02-23T01:37:18.852120+00:00 |
+| CLIP-BUG-01 | codex-26970 | 2026-02-23T01:37:30.298312+00:00 |
+| wave70-l2 | codex-26970 | 2026-02-23T01:37:44.388215+00:00 |
+| ~~docs-claudemd-reference~~ | codex-26970 | 2026-02-23T01:37:56.908952+00:00 |
+| CLIP-BUG-10 | codex-26970 | 2026-02-23T01:38:08.306248+00:00 |
+| ~~SCLI-P7.1~~ | codex-26970 | 2026-02-23T01:38:24.452951+00:00 |
+| sharecli-smart-merge | codex-26970 | 2026-02-23T01:38:41.297906+00:00 |
+| sharecli-git-parallelism | codex-26970 | 2026-02-23T01:38:55.428057+00:00 |
+| ~~audit-delegation-friction~~ | codex-26970 | 2026-02-23T01:39:24.692432+00:00 |
+| CLIP-BUG-12 | codex-26970 | 2026-02-23T01:39:44.301338+00:00 |
+| escalation-index-file-indexing | codex-26970 | 2026-02-23T01:39:58.712689+00:00 |
+| docs-mcp-tool-docs | codex-26970 | 2026-02-23T01:40:12.286713+00:00 |
+| CLIP-BUG-03 | codex-26970 | 2026-02-23T01:40:24.793675+00:00 |
+| SCLI-P13.2 | codex-26970 | 2026-02-23T01:40:36.320359+00:00 |
+| CLIP-BUG-08 | codex-26970 | 2026-02-23T01:40:48.784390+00:00 |
+| TGNT-P16.2 | codex-smoke | 2026-02-23T01:40:58.247759+00:00 |
+| CLIP-BUG-02 | codex-smoke | 2026-02-23T01:40:59.250106+00:00 |
+| CLIP-BUG-07 | codex-smoke | 2026-02-23T01:40:59.793977+00:00 |
+| research-smart-robust-strategies | codex-smoke | 2026-02-23T01:41:00.119425+00:00 |
+| ~~borrow-heliosguard-priority~~ | codex-smoke | 2026-02-23T01:41:00.259408+00:00 |
+| TGNT-P18.3 | codex-36397 | 2026-02-23T01:41:24.684994+00:00 |
+| ~~audit-teammate-collaboration~~ | codex-36397 | 2026-02-23T01:42:13.232032+00:00 |
+| ~~TGNT-P14.1~~ | codex-36397 | 2026-02-23T01:46:47.270912+00:00 |
+| CLIP-BUG-06 | codex-self-wave10 | 2026-02-23T01:48:37.624266+00:00 |
+| ~~TGNT-P11.1~~ | codex-self-wave10 | 2026-02-23T01:48:38.010029+00:00 |
+| sharecli-task-queue | codex-self-wave10 | 2026-02-23T01:48:38.385069+00:00 |
+| TGNT-P18.2 | codex-self-wave10 | 2026-02-23T01:48:38.684327+00:00 |
+| CLIP-BUG-09 | codex-self-wave10 | 2026-02-23T01:48:38.962637+00:00 |
+| rollout-hook-rust-phase2 | codex-self-wave10 | 2026-02-23T01:48:39.121995+00:00 |
+| docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 |
+| wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 |
+| ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.797259+00:00 |
+| CLIP-BUG-11 | codex-self-wave10 | 2026-02-23T01:48:40.064125+00:00 |
+| wave70-l1 | codex-self-wave-next2 | 2026-02-23T01:50:21.485463+00:00 |
+| SCLI-P1.2 | codex-self-wave-next2 | 2026-02-23T01:50:21.659021+00:00 |
+| CLIP-BUG-04 | codex-self-wave-next2 | 2026-02-23T01:50:21.811749+00:00 |
+| wp-16002-async-delegation | codex-self-wave-next2 | 2026-02-23T01:50:21.967715+00:00 |
+| ~~TGNT-P16.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.105584+00:00 |
+| wave70-l7 | codex-self-wave-next2 | 2026-02-23T01:50:22.231318+00:00 |
+| wave70-l3 | codex-self-wave-next2 | 2026-02-23T01:50:22.365737+00:00 |
+| TGNT-P17.1 | codex-self-wave-next2 | 2026-02-23T01:50:22.490878+00:00 |
+| CLIP-BUG-05 | codex-self-wave-next2 | 2026-02-23T01:50:22.618446+00:00 |
 ## COMPLETED (historical reference)
 
 > All items below were completed by various agents between 2026-02-18 and 2026-02-20. See WORK_STREAM prior version for full entries with completion notes.
 
 | ID | Completed | Summary |
 |----|-----------|---------|
+| SCLI-P7.1 | 2026-02-23 | Verified singleflight dedup behavior and cache heat-map eviction via `tests/mesh/test_cache.py` (20 passed) |
+| SCLI-P7.3 | 2026-02-23 | Verified heat-based cache behavior and eviction ordering via `tests/mesh/test_cache.py` (20 passed) |
+| TGNT-P11.1 | 2026-02-23 | Hardened tmpfs-like mesh directory initialization with explicit `0o1777` chmod and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
+| TGNT-P14.1 | 2026-02-23 | Hardened AGENT template/context symlink management and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
+| TGNT-P16.1 | 2026-02-23 | Verified Linux bubblewrap tier-2 worktree bind behavior in `tests/test_wl681x_lane_d.py -k tier2_bwrap` |
 | wave70-l5 | 2026-02-22 | Implemented WL-224 (workstream schema linter), WL-225 (wl sort/normalize), WL-226 (remote payload checksums), WL-227 (metadata enrichment), plus WL-259,260,222,223,228,229 with comprehensive test coverage (76 tests) |
 | wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
@@ -4087,7 +4042,6 @@ Publish quick-start docs for unattended board reflection setup and verification 
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 **Implementation:** `src/thegent/integrations/zero_touch_quickstart.py`, tests in `tests/test_wl180_zero_touch_quickstart.py`
-
 
 <!-- auto-incorporated by thegent sync work-stream -->
 | Aspect | MCP (Model Context Protocol) | ACP (Agent Client Protocol) |
@@ -9785,11 +9739,11 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | ID | Deliverable |
 |----|-------------|
 | docs-mcp-tool-docs | MCP tools inventory above; full docs in mcp_server_api.md |
-| docs-claudemd-reference | THGENT_COMMAND research has command reference; CLAUDE.md update pending |
+| docs-claudemd-reference | THGENT_COMMAND research linked in CLAUDE.md command reference section |
 | docs-cli-reference | THGENT_COMMAND research has CLI reference; full doc gen pending |
 | docs-skill-examples | SKILL.md integration examples; THGENT_COMMAND has examples |
 | research-smart-robust-strategies | SMART_ROBUST_STRATEGIES_RESEARCH.md evaluation |
-| audit-teammate-collaboration | IN_DEPTH_TOOLING_AUDIT_2026.md identifies gaps |
+| audit-teammate-collaboration | IN_DEPTH_TOOLING_AUDIT_2026.md updated with teammate collaboration closure |
 | borrow-heliosShield-priority | CROSS_PROJECT_FEATURE_BORROWING_PLAN defines P0-P4 |
 | borrow-heliosShield-backlog | CROSS_PROJECT_FEATURE_BORROWING_PLAN defines Module/SLA columns |
 | Approach | Process Count | Use Case |
@@ -26683,7 +26637,6 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Neo4j** | ? Unknown | Not detected | Confirm requirement |
 | **MSW GraphQL** | N/A | Frontend | Defer to TS analysis |
 
-
 ---
 
 ## CLIProxyAPI Issue Board Work Items (2026-02-22)
@@ -26744,7 +26697,6 @@ See: docs/docset/CLIPROXY_BUGS_FULL.md
 ### References
 - Full data: docs/docset/cliproxy-github-issues.json
 - Issue board: docs/docset/CLIProxyAPI_ISSUE_BOARD.md
-
 
 ### Medium Priority
 

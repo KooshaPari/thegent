@@ -33,13 +33,15 @@ class IPCMesh:
         self.locks_dir = self.mesh_root / "locks"
         self._init_mesh()
 
-    def _init_mesh(self):
+    def _init_mesh(self) -> None:
         """Initialize tmpfs-like mesh directory."""
         try:
             self.mesh_root.mkdir(parents=True, exist_ok=True, mode=0o1777)
             self.locks_dir.mkdir(parents=True, exist_ok=True, mode=0o1777)
-        except PermissionError:
-            logger.warning(f"Could not create mesh root at {self.mesh_root} with mode 1777")
+        except PermissionError as exc:
+            raise PermissionError(
+                f"Unable to initialize IPC mesh directories with mode 1777 at {self.mesh_root}"
+            ) from exc
 
     def acquire_atomic_lock(self, lock_name: str, ttl: int = 60) -> bool:
         """Atomic lock primitive using mkdir (EEXIST)."""
