@@ -3185,7 +3185,7 @@ Define migration plan for enabling autosync by default in existing repos.
 **Evidence:** `src/thegent/integrations/enablement_migration.py`, `tests/test_wl260_enablement_migration.py`
 
 ### [WL-222] Blackout Calendar Support
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** ops, scheduling
 **Effort:** S
@@ -3193,10 +3193,10 @@ Define migration plan for enabling autosync by default in existing repos.
 
 Add project-level blackout windows where autosync pauses external mutation.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/blackout_calendar.py`, `tests/test_wl222_blackout_calendar.py`
 
 ### [WL-223] Actor/Impersonation Guardrails
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** security, governance
 **Effort:** S
@@ -3204,7 +3204,7 @@ Add project-level blackout windows where autosync pauses external mutation.
 
 Validate acting identity and prevent unintended impersonation in connector writes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/actor_guardrails.py`, `tests/test_wl223_actor_guardrails.py`
 
 ### [WL-224] Workstream Schema Linter
 **Status:** IN PROGRESS (Wave70 2026-02-22)
