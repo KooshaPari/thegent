@@ -117,7 +117,7 @@ class TestCursorTokenProvider:
 
     def test_discover_returns_none_when_no_candidates(self, tmp_path: Path) -> None:
         # @trace FR-CP-002
-        with patch("thegent.routing.cursor_provider._CURSOR_SERVER_TOKEN_CANDIDATES", []):
+        with patch("thegent.utils.routing_impl.cursor_provider._CURSOR_SERVER_TOKEN_CANDIDATES", []):
             result = CursorTokenProvider.discover()
         assert result is None
 
