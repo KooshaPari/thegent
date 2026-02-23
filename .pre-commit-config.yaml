@@ -82,7 +82,7 @@ repos:
 
       - id: max-lines-gate
         name: Canonical Max-Lines Gate
-        stages: [pre-push]
+        stages: [pre-commit, pre-push]
         entry: task quality:max-lines
         language: system
         pass_filenames: false
