@@ -115,6 +115,8 @@ def _fallback_sessions(*, include_meta: bool = False) -> list[dict[str, Any]] | 
         )
 
     metadata["session_count"] = len(sessions)
+    if not malformed_lines and not sessions:
+        metadata["status"] = "empty"
     if malformed_lines > 0:
         metadata["malformed_lines"] = malformed_lines
         metadata["status"] = "parse_failed"
@@ -251,12 +253,15 @@ class DiscoveryClient:
     def _fallback_metadata(self, component: str, fallback_payload: dict[str, Any] | None = None) -> dict[str, Any]:
         metadata: dict[str, Any] = {
             "component": component,
-            "status": "degraded",
             "source": "native_fallback",
         }
         if fallback_payload is not None:
             merged_payload = {k: v for k, v in fallback_payload.items() if k != "status"}
+            fallback_status = str(fallback_payload.get("status", "degraded") or "degraded")
             metadata.update(merged_payload)
+            metadata["status"] = fallback_status
+        else:
+            metadata["status"] = "degraded"
 
         if self.is_native:
             if self.last_run_diagnostics:

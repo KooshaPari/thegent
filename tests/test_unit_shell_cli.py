@@ -87,6 +87,25 @@ def test_shell_doctor_records_alias_probe_os_error(
     assert "Alias probe unavailable (zsh executable not found)." in result.output
 
 
+def test_shell_doctor_records_alias_probe_execution_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, runner: CliRunner
+) -> None:
+    (tmp_path / ".zshenv").write_text("export TEST=1\n", encoding="utf-8")
+    (tmp_path / ".zsh_bundle.zsh").write_text("echo bundle\n", encoding="utf-8")
+    monkeypatch.setattr(shell_cli_module.Path, "home", lambda: tmp_path)
+
+    def _error_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args=args[0], returncode=2, stdout="", stderr="rc=2 during startup")
+
+    monkeypatch.setattr(shell_cli_module.subprocess, "run", _error_run)
+
+    result = runner.invoke(shell_cli_module.shell_app, ["doctor"])
+    assert result.exit_code == 0
+    assert "Warnings:" in result.output
+    normalized_output = result.output.replace("\n", " ")
+    assert "Alias probe execution failed (execution failed (exit 2): rc=2 during startup)." in normalized_output
+
+
 def _set_platform_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(py_platform, "system", lambda: "Darwin")
     monkeypatch.setattr(py_platform, "platform", lambda: "Mock Platform")

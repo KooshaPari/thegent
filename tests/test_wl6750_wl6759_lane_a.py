@@ -255,7 +255,8 @@ def test_wl6757_discover_models_invalid_payload_status(tmp_path: Path) -> None:
     ):
         payload = discover_models(include_status=True)
 
-    assert payload["discovery"]["status"] == "invalid_payload"
+    assert payload["discovery"]["status"] == "error"
+    assert payload["discovery"]["failure_class"] == "protocol"
     assert payload["discovery"]["failure_type"] == "payload_not_object"
 
 

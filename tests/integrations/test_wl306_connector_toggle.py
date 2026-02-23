@@ -173,6 +173,7 @@ class TestConnectorSLATracking:
     """Tests for WL-233 connector SLA latency/error budget tracking."""
 
     @pytest.mark.requirement("WL-306")
+    @pytest.mark.requirement("WL-233")
     def test_sla_within_threshold(self) -> None:
         tracker = PipelinePercentileTracker()
         for value in (110.0, 120.0, 115.0, 105.0, 118.0):
@@ -192,6 +193,7 @@ class TestConnectorSLATracking:
         assert result["breaches"] == []
 
     @pytest.mark.requirement("WL-306")
+    @pytest.mark.requirement("WL-233")
     def test_sla_breach_latency_and_error_budget(self) -> None:
         tracker = PipelinePercentileTracker()
         for value in (200.0, 220.0, 260.0, 280.0, 400.0):

@@ -182,6 +182,20 @@ class TestSyncAuditor:
         assert is_valid is False
         assert any("gitlab" in issue and "Missing policy mode" in issue for issue in issues)
 
+
+@pytest.mark.requirement("WL-249")
+def test_detect_local_orphans_report() -> None:
+    """Local orphan detection should return local-only IDs and mapping metadata."""
+    report = SyncAuditor.detect_local_orphans(
+        local_ids=["WL-101", "WL-102", "WL-103"],
+        mapped_remote_ids=["WL-101", "WL-105"],
+    )
+    assert report.local_ids == ["WL-101", "WL-102", "WL-103"]
+    assert report.mapped_remote_ids == ["WL-101", "WL-105"]
+    assert report.local_orphan_ids == ["WL-102", "WL-103"]
+    assert report.orphan_count == 2
+    assert report.to_dict()["local_orphan_ids"] == ["WL-102", "WL-103"]
+
     @pytest.mark.requirement("WL-197")
     def test_load_policy_contract_maps_connector_fields(self, tmp_path: Path):
         """load_policy_contract reads .thegent/sync-policy.yaml into audit surfaces."""
@@ -215,6 +229,7 @@ tenancy:
         assert auditor._policy_modes == {"github": "enforce"}
 
     @pytest.mark.requirement("WL-261")
+    @pytest.mark.requirement("WL-232")
     def test_signed_audit_artifact_chain_verifies(self):
         """Signed audit artifact chain should verify when untouched."""
         auditor = SyncAuditor()
@@ -237,6 +252,7 @@ tenancy:
         assert reason == ""
 
     @pytest.mark.requirement("WL-261")
+    @pytest.mark.requirement("WL-232")
     def test_signed_audit_artifact_chain_detects_tamper(self):
         """Chain verification must fail after tampering."""
         auditor = SyncAuditor()

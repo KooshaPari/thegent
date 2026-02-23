@@ -172,6 +172,7 @@ def _parse_log_entry(
                 diagnostics.out_of_window += 1
         elif diagnostics is not None:
             diagnostics.unsupported_type += 1
+            diagnostics.sample("unsupported_type", f"type={data['type']!r}", line)
     except KeyError:
         if diagnostics is not None:
             diagnostics.missing_required_key += 1

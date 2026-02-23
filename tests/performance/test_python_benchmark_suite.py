@@ -7,6 +7,7 @@ from scripts.benchmark_python_suite import run_suite
 import pytest
 
 
+@pytest.mark.requirement("WL-236")
 def test_run_suite_emits_expected_shape() -> None:
     payload = run_suite(iterations=1000, mode="cold")
     assert payload["suite"] == "python-benchmark-suite-v1"
@@ -19,6 +20,7 @@ def test_run_suite_emits_expected_shape() -> None:
         assert row["avg_microseconds"] >= 0
 
 
+@pytest.mark.requirement("WL-236")
 def test_run_suite_can_be_serialized(tmp_path: Path) -> None:
     payload = run_suite(iterations=500, mode="warm")
     out = tmp_path / "bench.json"

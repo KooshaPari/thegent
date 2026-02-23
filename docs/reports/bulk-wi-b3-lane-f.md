@@ -99,7 +99,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4710] quick-start line 164 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -108,7 +109,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4711] causal-order line 13 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -117,7 +119,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4712] agent-helpers line 125 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -126,7 +129,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Replace placeholder/TBD content with concrete implementation details and add validation to prevent regression.
 
 ### [WL-4713] governance-gates line 1483 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -135,7 +139,8 @@ Replace placeholder/TBD content with concrete implementation details and add val
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4714] quick-start line 279 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -144,7 +149,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4715] circuit-breaker line 17 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -153,7 +159,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4716] agent-helpers line 381 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -162,7 +169,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4717] governance-gates line 1889 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -171,7 +179,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4718] WORK-STREAM line 12 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -180,7 +189,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4719] coalesce line 23 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -189,7 +199,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4720] agent-helpers line 474 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -198,7 +209,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4721] governance-gates line 1894 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -207,7 +219,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this stub path with production logic and add coverage that verifies the real execution path.
 
 ### [WL-4722] process-compose.backend line 217 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -216,7 +229,8 @@ Replace this stub path with production logic and add coverage that verifies the 
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4723] incremental line 12 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -225,7 +239,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4724] analyze-safari line 24 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -234,7 +249,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4725] governance-gates line 1895 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -243,7 +259,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this stub path with production logic and add coverage that verifies the real execution path.
 
 ### [WL-4726] process-compose.metrics line 264 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -252,7 +269,8 @@ Replace this stub path with production logic and add coverage that verifies the 
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4727] jobserver line 16 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -261,7 +279,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4728] analyze-test-coverage line 201 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -270,7 +289,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4729] governance-gates line 1922 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -279,7 +299,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4730] WORK-STREAM line 6 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -288,7 +309,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4731] load-balance line 14 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -297,7 +319,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4732] batch-fetch-backlog line 41 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -306,7 +329,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4733] governance-gates line 1928 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -315,7 +339,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4734] coverage-config line 25 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -324,7 +349,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement the missing branch and add tests that fail if this unimplemented path reappears.
 
 ### [WL-4735] proactive-warm line 16 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -333,7 +359,8 @@ Implement the missing branch and add tests that fail if this unimplemented path 
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4736] batch-fetch-backlog-persistent line 42 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -342,7 +369,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4737] governance-gates line 1961 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -351,7 +379,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4738] coverage-config line 26 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -360,7 +389,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4739] queue line 14 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -369,7 +399,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4740] batch-fetch-backlog-v2 line 41 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -378,7 +409,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4741] governance-gates line 1966 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -387,7 +419,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this stub path with production logic and add coverage that verifies the real execution path.
 
 ### [WL-4742] detekt line 99 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -396,7 +429,8 @@ Replace this stub path with production logic and add coverage that verifies the 
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4743] resource-throttle line 14 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -405,7 +439,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4744] batch-file-ops line 140 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -414,7 +449,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4745] governance-gates line 1967 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -423,7 +459,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this stub path with production logic and add coverage that verifies the real execution path.
 
 ### [WL-4746] detekt line 100 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -432,7 +469,8 @@ Replace this stub path with production logic and add coverage that verifies the 
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4747] speculative line 17 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -441,7 +479,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4748] batch-file-ops line 226 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -450,7 +489,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4749] governance-gates line 2017 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -459,7 +499,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace placeholder/TBD content with concrete implementation details and add validation to prevent regression.
 
 ### [WL-4750] semgrep-rules line 64 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -468,7 +509,8 @@ Replace placeholder/TBD content with concrete implementation details and add val
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4751] lib line 132 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -477,7 +519,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace placeholder/TBD content with concrete implementation details and add validation to prevent regression.
 
 ### [WL-4752] batch-file-ops line 308 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -486,7 +529,8 @@ Replace placeholder/TBD content with concrete implementation details and add val
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4753] governance-gates line 2018 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -495,7 +539,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace placeholder/TBD content with concrete implementation details and add validation to prevent regression.
 
 ### [WL-4754] Taskfile.quality line 32 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -504,7 +549,8 @@ Replace placeholder/TBD content with concrete implementation details and add val
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4755] lib line 79 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -513,7 +559,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4756] batch-file-ops line 342 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -522,7 +569,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4757] governance-gates line 2050 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -531,7 +579,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace placeholder/TBD content with concrete implementation details and add validation to prevent regression.
 
 ### [WL-4758] Taskfile.quality line 38 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -540,7 +589,8 @@ Replace placeholder/TBD content with concrete implementation details and add val
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4759] lib line 95 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -549,7 +599,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4760] batch-file-ops line 444 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -558,7 +609,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4761] governance-gates line 2217 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -567,7 +619,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4762] Taskfile.quality line 76 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -576,7 +629,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4763] lib line 111 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -585,7 +639,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4764] batch-file-ops line 476 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -594,7 +649,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4765] governance-gates line 2294 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -603,7 +659,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4766] quality-gate line 5 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -612,7 +669,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4767] lib line 122 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -621,7 +679,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4768] batch-file-ops line 559 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -630,7 +689,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4769] governance-gates line 2306 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -639,7 +699,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4770] quality-gate line 122 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -648,7 +709,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4771] lib line 134 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -657,7 +719,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4772] batch-file-ops line 591 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -666,7 +729,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4773] governance-gates line 2319 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -675,7 +739,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4774] quality-fix-runner line 100 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -684,7 +749,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4775] lib line 142 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -693,7 +759,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4776] benchmark-analysis line 117 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -702,7 +769,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4777] governance-gates line 2349 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -711,7 +779,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4778] quality-runner line 283 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -720,7 +789,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4779] quality-gate line 83 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -729,7 +799,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4780] benchmark-extended line 421 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -738,7 +809,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4781] hook-config line 17 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -747,7 +819,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4782] UJ-TEMPLATE line 43 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -756,7 +829,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4783] security-pipeline line 99 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -765,7 +839,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4784] benchmark-optimizations line 241 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -774,7 +849,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4785] governance-fs line 142 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -783,7 +859,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4786] UJ-TEMPLATE line 214 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -792,7 +869,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4787] main line 1570 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -801,7 +879,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4788] benchmark-optimizations line 262 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -810,7 +889,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4789] governance-fs line 143 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -819,7 +899,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4790] UJ-TEMPLATE line 218 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -828,7 +909,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4791] main line 1795 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -837,7 +919,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4792] benchmark-optimizations line 282 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -846,7 +929,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4793] main line 700 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -855,7 +939,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4794] UJ-TEMPLATE line 219 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -864,7 +949,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Implement concrete logic here and remove the stub/placeholder signal with focused coverage.
 
 ### [WL-4795] main line 1796 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -873,7 +959,8 @@ Implement concrete logic here and remove the stub/placeholder signal with focuse
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4796] benchmark-optimizations line 330 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -882,7 +969,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4797] main line 1243 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -891,7 +979,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4798] SETUP line 12 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -900,7 +989,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Replace placeholder/TBD content with concrete implementation details and add validation to prevent regression.
 
 ### [WL-4799] main line 1801 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S

@@ -27,9 +27,7 @@ class ActorImpersonationGuardrails:
         """Initialize the guardrails with no registered policies."""
         self._policies: dict[str, ActorPolicy] = {}
 
-    def register(
-        self, actor_id: str, allowed_targets: list[str], can_impersonate: bool = False
-    ) -> ActorPolicy:
+    def register(self, actor_id: str, allowed_targets: list[str], can_impersonate: bool = False) -> ActorPolicy:
         """Register an actor with its permissions.
 
         Args:

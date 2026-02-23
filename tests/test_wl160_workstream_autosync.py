@@ -550,7 +550,9 @@ class TestWorkstreamAutosyncRunner:
         assert runner._no_op_summary["reason"] == "no_workstream_items"
 
     @pytest.mark.asyncio
-    async def test_perform_sync_cycle_unchanged_state_fast_path(self, valid_github_config, sample_work_stream_file, tmp_path):
+    async def test_perform_sync_cycle_unchanged_state_fast_path(
+        self, valid_github_config, sample_work_stream_file, tmp_path
+    ):
         """Unchanged workstream state should skip all connector sync calls."""
         valid_github_config.work_stream_path = sample_work_stream_file
         valid_github_config.status_file_path = tmp_path / "autosync_status.json"
@@ -689,6 +691,30 @@ class TestWorkstreamAutosyncRunner:
             with pytest.raises(ValueError, match="invalid actor signature"):
                 await runner._sync_to_github(items)
 
+    @pytest.mark.asyncio
+    @pytest.mark.requirement("WL-228")
+    async def test_sync_to_github_blocks_missing_required_connector_capability(self, valid_github_config):
+        """Write syncs must fail when connector lacks required capabilities."""
+        valid_github_config.connector_capabilities = {"github": ["status-read"]}
+        valid_github_config.required_connector_capabilities = {"github": ["status-read", "issue-write"]}
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        items = [
+            WorkstreamItem(
+                item_id="WL-1",
+                title="Test",
+                status="BACKLOG",
+                priority="P1",
+                area="sync",
+            )
+        ]
+
+        with pytest.raises(
+            WorkstreamAutosyncConfigError,
+            match="Connector capability mismatch for github: missing issue-write",
+        ):
+            await runner._sync_to_github(items)
+
+    @pytest.mark.requirement("WL-235")
     def test_connector_chaos_timeout_fixture(self):
         """Deterministic timeout fixture should request retries and escalation."""
         payload = WorkstreamAutosyncRunner.simulate_connector_chaos("github", "timeout", items_count=4)
@@ -697,6 +723,7 @@ class TestWorkstreamAutosyncRunner:
         assert payload["escalate"] is True
         assert payload["outcome"] == "outage"
 
+    @pytest.mark.requirement("WL-235")
     def test_connector_chaos_partial_ack_fixture(self):
         """Partial ack fixture should report deterministic partial completion."""
         payload = WorkstreamAutosyncRunner.simulate_connector_chaos("linear", "partial_ack", items_count=5)
@@ -704,6 +731,7 @@ class TestWorkstreamAutosyncRunner:
         assert payload["items_acked"] == 4
         assert payload["escalate"] is True
 
+    @pytest.mark.requirement("WL-235")
     def test_connector_chaos_http_5xx_fixture(self):
         """HTTP 5xx chaos should be deterministic and escalate."""
         payload = WorkstreamAutosyncRunner.simulate_connector_chaos("github", "http_5xx", items_count=4)
@@ -713,6 +741,7 @@ class TestWorkstreamAutosyncRunner:
         assert payload["outcome"] == "server_error"
         assert payload["escalate"] is True
 
+    @pytest.mark.requirement("WL-235")
     def test_connector_chaos_partial_ack_one_item_boundary(self):
         """Boundary case for partial ack with single-item payload."""
         payload = WorkstreamAutosyncRunner.simulate_connector_chaos("linear", "partial_ack", items_count=1)
@@ -720,6 +749,7 @@ class TestWorkstreamAutosyncRunner:
         assert payload["items_acked"] == 0
         assert payload["outcome"] == "partial"
 
+    @pytest.mark.requirement("WL-235")
     def test_connector_chaos_unknown_fixture_raises(self):
         """Unsupported chaos scenarios must fail loudly."""
         with pytest.raises(ValueError, match="Unsupported chaos scenario"):
@@ -1744,6 +1774,7 @@ class TestStandaloneMode:
 class TestAnnotationAndReflectionStandard:
     """Tests for WL-238 remote->local annotation schema standard."""
 
+    @pytest.mark.requirement("WL-238")
     def test_annotation_schema_requires_canonical_keys(self) -> None:
         gen = CodeAnnotationGenerator(annotation_format="json")
         payload = gen.format_reflection_annotation(
@@ -1761,7 +1792,22 @@ class TestAnnotationAndReflectionStandard:
         assert list(payload.keys())[:7] == list(CodeAnnotationGenerator.REQUIRED_REFLECTION_KEYS)
         assert payload["extra"] == "ok"
 
+    @pytest.mark.requirement("WL-238")
     def test_reflection_event_log_writes_annotation_block(self, tmp_path) -> None:
+
+
+class TestAutosyncRunbookCoverage:
+    """Runbook documentation coverage for autosync incidents."""
+
+    @pytest.mark.requirement("WL-234")
+    def test_runbook_contains_autosync_incident_and_recovery_steps(self) -> None:
+        runbook_path = os.path.join(os.getcwd(), "docs", "site", "operations", "runbooks.md")
+        with open(runbook_path, encoding="utf-8") as fp:
+            content = fp.read()
+
+        assert "Autosync Incident" in content
+        assert "Rollback" in content
+        assert "autosync" in content.lower()
         log_path = tmp_path / "reflection.jsonl"
         log = ReflectionEventLog(log_path)
         decision = ReflectionDecision(

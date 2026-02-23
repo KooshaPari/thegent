@@ -353,9 +353,7 @@ class TestSyncToGithub:
         assert result["items_synced"] == 2
         assert result["errors"] == []
         assert any(cmd[:3] == ["project", "item-create", "1"] for cmd in calls)
-        assert any(
-            cmd[:3] == ["project", "item-edit", "--id"] and "--field-id" in cmd for cmd in calls
-        )
+        assert any(cmd[:3] == ["project", "item-edit", "--id"] and "--field-id" in cmd for cmd in calls)
         assert mock_run.call_count > 0
 
     @patch("thegent.integrations.gh_project_sync._run_gh_command")

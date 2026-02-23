@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
 import psutil
 import pytest
+from rich.console import Console
 from thegent.ux.session_tui import SessionTUI
 
 
@@ -72,6 +74,29 @@ def test_subagent_probe_success_returns_entries_without_degraded_state() -> None
     assert details["subagents"]
     assert details["subagents"][0]["pid"] == 222
     assert details["subagents"][0]["agent"] == "codex"
+
+
+def test_render_sessions_list_marks_subagent_probe_failures() -> None:
+    tui = SessionTUI()
+
+    with (
+        patch(
+            "thegent.ux.session_tui.ps_impl",
+            return_value=[
+                {"id": "sess-fail", "status": "running", "agent": "dex", "pid": 333, "prompt_preview": "running work"}
+            ],
+        ),
+        patch("thegent.ux.session_tui.session_meta_impl", return_value={"pid": 333, "status": "running"}),
+        patch("thegent.ux.session_tui._is_pid_running", return_value=True),
+        patch("thegent.ux.session_tui.psutil.Process", side_effect=psutil.AccessDenied(pid=333)),
+    ):
+        layout = tui.render_sessions_list()
+
+    panel = layout["main"].renderable
+    stream = StringIO()
+    console = Console(file=stream, width=120)
+    console.print(panel)
+    assert "ERR" in stream.getvalue()
 
 
 @pytest.mark.unit

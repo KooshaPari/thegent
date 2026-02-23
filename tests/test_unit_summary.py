@@ -52,3 +52,27 @@ def test_get_git_commits_git_command_failure_logs_context(
     assert "Git commit collection failed:" in caplog.text
     assert str(tmp_path) in caplog.text
     assert "git log" in caplog.text
+
+
+def test_get_git_commits_git_command_timeout_reports_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    (tmp_path / ".git").mkdir()
+
+    def _timeout_run(*_args: object, **_kwargs: object) -> None:
+        raise subprocess.TimeoutExpired(cmd=["git", "log"], timeout=2)
+
+    monkeypatch.setattr("thegent.summary.subprocess.run", _timeout_run)
+    caplog.set_level("WARNING", logger="thegent.summary")
+
+    start, end = _window()
+    result = get_git_commits(tmp_path, start, end)
+
+    assert result.commits == []
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error["type"] == "TimeoutExpired"
+    assert "Git commit collection failed:" in caplog.text
+    assert "timeout=2" in caplog.text

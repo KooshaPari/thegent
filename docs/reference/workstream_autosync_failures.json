@@ -322,5 +322,32 @@
     "occurred_at": "2026-02-23T00:06:45.570173+00:00",
     "retry_class": "permanent",
     "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:22:51.434435+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:24:03.084219+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-0e4d4020b024",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "flaky",
+    "occurred_at": "2026-02-23T00:26:00.002976+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
   }
 ]

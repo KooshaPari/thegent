@@ -45,6 +45,19 @@ class RemoteOrphanReport:
         return asdict(self)
 
 
+@dataclass
+class LocalOrphanReport:
+    """Structured report of local items without remote tracker mapping."""
+
+    local_ids: list[str]
+    mapped_remote_ids: list[str]
+    local_orphan_ids: list[str]
+    orphan_count: int
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
 class SyncAuditor:
     """Auditor for sync policies."""
 
@@ -187,6 +200,19 @@ class SyncAuditor:
             remote_ids=sorted(remote_ids),
             local_ids=sorted(local_ids),
             orphan_ids=orphan_ids,
+        )
+
+    @staticmethod
+    def detect_local_orphans(local_ids: list[str], mapped_remote_ids: list[str]) -> LocalOrphanReport:
+        """Return local IDs that are not present in remote tracker mappings."""
+        local_set = set(local_ids)
+        remote_set = set(mapped_remote_ids)
+        orphan_ids = sorted(local_set - remote_set)
+        return LocalOrphanReport(
+            local_ids=sorted(local_set),
+            mapped_remote_ids=sorted(remote_set),
+            local_orphan_ids=orphan_ids,
+            orphan_count=len(orphan_ids),
         )
 
     def append_artifact(

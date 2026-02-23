@@ -21,6 +21,7 @@ from thegent.commands.sync import (
     SyncOperationStatus,
     SyncResult,
 )
+from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -442,6 +443,56 @@ class TestSyncReset:
         assert ws.read_text(encoding="utf-8") == original_content
 
 
+@pytest.mark.unit
+class TestSyncLocalOrphans:
+    """WL-249 local orphan detection."""
+
+    @pytest.fixture
+    def workspace_with_cache(self, tmp_path: Path) -> tuple[Path, Path]:
+        ws = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
+        ws.parent.mkdir(parents=True, exist_ok=True)
+        ws.write_text(
+            """### [WL-101] Mapped local item
+**Status:** BACKLOG
+
+### [WL-102] Unmapped item
+**Status:** IN PROGRESS
+""",
+            encoding="utf-8",
+        )
+        cache = tmp_path / "docs" / "reference" / "connector_mapping_cache.json"
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache_store = ConnectorMappingCache(cache_file=cache)
+        cache_store.put("github", "WL-101", "remote-1")
+        return ws, cache
+
+    def test_detect_local_orphans_fails_for_unmapped_items(
+        self, workspace_with_cache: tuple[Path, Path], tmp_path: Path
+    ) -> None:
+        # @trace WL-249
+        ws, cache = workspace_with_cache
+        cmd = _make_cmd(tmp_path, work_stream_path=ws)
+        op = cmd.detect_local_orphans(mapping_cache_path=cache)
+
+        assert op.status == SyncOperationStatus.FAILED
+        assert op.details["orphan_count"] == 1
+        assert op.details["local_orphan_ids"] == ["WL-102"]
+        assert "local orphan detected: WL-102" in op.errors
+
+    def test_detect_local_orphans_succeeds_when_mapped(
+        self, workspace_with_cache: tuple[Path, Path], tmp_path: Path
+    ) -> None:
+        # @trace WL-249
+        ws, cache = workspace_with_cache
+        ConnectorMappingCache(cache_file=cache).put("linear", "WL-102", "remote-2")
+        cmd = _make_cmd(tmp_path, work_stream_path=ws)
+        op = cmd.detect_local_orphans(mapping_cache_path=cache)
+
+        assert op.ok is True
+        assert op.details["orphan_count"] == 0
+        assert op.details["local_orphan_ids"] == []
+
+
 # ---------------------------------------------------------------------------
 # CLI integration — sync_app subcommands registered in main
 # ---------------------------------------------------------------------------
@@ -564,6 +615,27 @@ class TestSyncCLIRegistration:
         result = runner.invoke(sync_app, ["bootstrap-gh", "--help"])
         assert result.exit_code == 0
         assert "--owner" in result.output
+
+    def test_local_orphans_command_exists(self) -> None:
+        # @trace WL-249
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["--help"])
+        assert result.exit_code == 0
+        assert "local-orphans" in result.output
+
+    def test_local_orphans_subcommand_help(self) -> None:
+        # @trace WL-249
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["local-orphans", "--help"])
+        assert result.exit_code == 0
         assert "--repo" in result.output
 
     def test_bootstrap_gh_invokes_script(self) -> None:

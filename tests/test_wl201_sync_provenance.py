@@ -20,6 +20,7 @@ from thegent.integrations.sync_provenance import (
 
 
 @pytest.mark.requirement("WL-201")
+@pytest.mark.requirement("WL-227")
 def test_sync_provenance_stamp_creation():
     """Test creating a provenance stamp."""
     stamp = SyncProvenanceStamp(
@@ -75,6 +76,7 @@ def test_sync_provenance_stamp_from_dict():
 
 
 @pytest.mark.requirement("WL-201")
+@pytest.mark.requirement("WL-227")
 def test_stamp_sync_record_attaches_provenance():
     """Test that stamping a record attaches provenance metadata."""
     record = {"id": "issue-1", "title": "Fix bug"}

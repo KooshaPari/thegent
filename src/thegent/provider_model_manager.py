@@ -537,29 +537,46 @@ def discover_models(
     {
       "models": [...],
       "discovery": {
-          "status": "ok"|"error"|"invalid_payload",
+          "status": "ok"|"error",
+          "failure_class": "transport"|"protocol"|None,
           "failure_type": str|None,
           "error_message": str|None,
           "url": str,
           "malformed_count": int,
+          "catalog_state": "empty"|"available"|"unknown",
+          "provider": str|None,
       }
     }
     """
+
+    def _mark_failure(*, failure_class: str, failure_type: str, error_message: str, event: str, **extra: Any) -> None:
+        status.update(
+            {
+                "status": "error",
+                "failure_class": failure_class,
+                "failure_type": failure_type,
+                "error_message": error_message,
+            }
+        )
+        _LOG.warning(
+            event, extra={"failure_class": failure_class, "failure_type": failure_type, **warning_extra, **extra}
+        )
+
     results: list[dict[str, Any]] = []
     status: dict[str, Any] = {
         "status": "ok",
+        "failure_class": None,
         "failure_type": None,
         "error_message": None,
         "url": "http://127.0.0.1:8317/v1/models",
         "malformed_count": 0,
+        "catalog_state": "unknown",
         "provider": provider,
     }
     warning_extra = {"provider": provider}
     settings = ThegentSettings()
     config_path = _ensure_config(settings)
-    _config = _load_yaml(config_path)
-
-    _providers = _load_json(_PROVIDER_DEFINITIONS_PATH)
+    _load_yaml(config_path)
 
     # Check CLIProxy for available models
     try:
@@ -567,31 +584,23 @@ def discover_models(
         if resp.status_code == 200:
             data = resp.json()
             if not isinstance(data, dict):
-                status.update(
-                    {
-                        "status": "invalid_payload",
-                        "failure_type": "payload_not_object",
-                        "error_message": "top-level JSON is not an object",
-                    }
-                )
-                _LOG.warning(
-                    "cliproxy_model_discovery_invalid_payload",
-                    extra={"failure_type": "payload_not_object", **warning_extra},
+                status["catalog_state"] = "empty"
+                _mark_failure(
+                    failure_class="protocol",
+                    failure_type="payload_not_object",
+                    error_message="top-level JSON is not an object",
+                    event="cliproxy_model_discovery_invalid_payload",
                 )
                 payload = {"models": results, "discovery": status}
                 return payload if include_status else results
             models = data.get("models", []) or data.get("data", [])
             if not isinstance(models, list):
-                status.update(
-                    {
-                        "status": "invalid_payload",
-                        "failure_type": "models_not_list",
-                        "error_message": "models/data field is not a list",
-                    }
-                )
-                _LOG.warning(
-                    "cliproxy_model_discovery_invalid_payload",
-                    extra={"failure_type": "models_not_list", **warning_extra},
+                status["catalog_state"] = "empty"
+                _mark_failure(
+                    failure_class="protocol",
+                    failure_type="models_not_list",
+                    error_message="models/data field is not a list",
+                    event="cliproxy_model_discovery_invalid_payload",
                 )
                 payload = {"models": results, "discovery": status}
                 return payload if include_status else results
@@ -619,41 +628,54 @@ def discover_models(
                     "cliproxy_model_discovery_malformed_entries",
                     extra={"malformed_count": status["malformed_count"], **warning_extra},
                 )
+            status["catalog_state"] = "available" if results else "empty"
         else:
-            status.update(
-                {
-                    "status": "error",
-                    "failure_type": "http_status",
-                    "error_message": f"HTTP {resp.status_code}",
-                }
-            )
-            _LOG.warning(
-                "cliproxy_model_discovery_http_error",
-                extra={"status_code": resp.status_code, **warning_extra},
+            _mark_failure(
+                failure_class="protocol",
+                failure_type="http_status",
+                error_message=f"HTTP {resp.status_code}",
+                event="cliproxy_model_discovery_http_error",
+                status_code=resp.status_code,
             )
     except httpx.TimeoutException as exc:
-        status.update({"status": "error", "failure_type": "timeout", "error_message": str(exc)})
-        _LOG.warning("cliproxy_model_discovery_timeout", extra={"failure_detail": str(exc), **warning_extra})
+        _mark_failure(
+            failure_class="transport",
+            failure_type="timeout",
+            error_message=str(exc),
+            event="cliproxy_model_discovery_timeout",
+            failure_detail=str(exc),
+        )
     except httpx.ConnectError as exc:
-        status.update({"status": "error", "failure_type": "connect_error", "error_message": str(exc)})
-        _LOG.warning(
-            "cliproxy_model_discovery_connect_error",
-            extra={"failure_detail": str(exc), **warning_extra},
+        _mark_failure(
+            failure_class="transport",
+            failure_type="connect_error",
+            error_message=str(exc),
+            event="cliproxy_model_discovery_connect_error",
+            failure_detail=str(exc),
         )
     except httpx.NetworkError as exc:
-        status.update({"status": "error", "failure_type": "network_error", "error_message": str(exc)})
-        _LOG.warning(
-            "cliproxy_model_discovery_network_error",
-            extra={"failure_detail": str(exc), **warning_extra},
+        _mark_failure(
+            failure_class="transport",
+            failure_type="network_error",
+            error_message=str(exc),
+            event="cliproxy_model_discovery_network_error",
+            failure_detail=str(exc),
         )
     except httpx.HTTPError as exc:
-        status.update({"status": "error", "failure_type": "http_error", "error_message": str(exc)})
-        _LOG.warning("cliproxy_model_discovery_http_error", extra={"failure_detail": str(exc), **warning_extra})
+        _mark_failure(
+            failure_class="transport",
+            failure_type="http_error",
+            error_message=str(exc),
+            event="cliproxy_model_discovery_http_error",
+            failure_detail=str(exc),
+        )
     except ValueError as exc:
-        status.update({"status": "invalid_payload", "failure_type": "json_decode", "error_message": str(exc)})
-        _LOG.warning(
-            "cliproxy_model_discovery_json_decode_error",
-            extra={"failure_detail": str(exc), **warning_extra},
+        _mark_failure(
+            failure_class="protocol",
+            failure_type="json_decode",
+            error_message=str(exc),
+            event="cliproxy_model_discovery_json_decode_error",
+            failure_detail=str(exc),
         )
 
     payload = {"models": results, "discovery": status}

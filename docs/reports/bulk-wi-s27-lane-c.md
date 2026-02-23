@@ -2,36 +2,40 @@
 **Title:** Replace alias-probe blanket exception swallowing with typed degraded diagnostics
 **Source:** [thegent/src/thegent/shell_cli.py:180]
 **Acceptance checklist:**
-- [ ] Replace broad alias-probe exception swallowing with timeout and subprocess-error classification.
-- [ ] Emit non-fatal doctor output with explicit failure reason and suggested remediation.
-- [ ] Add tests for successful probe, timeout path, and execution-failure path.
+- [x] Replace broad alias-probe exception swallowing with timeout and subprocess-error classification.
+- [x] Emit non-fatal doctor output with explicit failure reason and suggested remediation.
+- [x] Add tests for successful probe, timeout path, and execution-failure path.
+- **Evidence:** `src/thegent/shell_cli.py`, `tests/test_unit_shell_cli.py` (`test_shell_doctor_alias_probe_success`, `test_shell_doctor_records_alias_probe_timeout`, `test_shell_doctor_records_alias_probe_execution_failure`)
 **Notes:** Silent alias-probe failures can produce false healthy shell diagnostics.
 
 ### [WL-6891]
 **Title:** Distinguish git log execution failures from true empty commit windows
 **Source:** [thegent/src/thegent/summary.py:64]
 **Acceptance checklist:**
-- [ ] Replace catch-all git-log failure fallback with structured subprocess error handling.
-- [ ] Preserve explicit zero-commit semantics separately from command-execution failures.
-- [ ] Add tests for non-repository paths, empty ranges, and failing git invocations.
+- [x] Replace catch-all git-log failure fallback with structured subprocess error handling.
+- [x] Preserve explicit zero-commit semantics separately from command-execution failures.
+- [x] Add tests for non-repository paths, empty ranges, and failing git invocations.
+- **Evidence:** `src/thegent/summary.py`, `tests/test_unit_summary.py` (`test_get_git_commits_non_repo_returns_diagnostic_status`, `test_get_git_commits_git_command_failure_logs_context`, `test_get_git_commits_git_command_timeout_reports_error`), `tests/test_wl6872_summary_commits.py`
 **Notes:** Returning empty commit lists for all failures hides operational issues in summaries.
 
 ### [WL-6892]
 **Title:** Surface malformed summary JSON entries instead of silently dropping parse failures
 **Source:** [thegent/src/thegent/summary.py:84]
 **Acceptance checklist:**
-- [ ] Replace parse exception swallowing with bounded malformed-entry diagnostics.
-- [ ] Continue line-by-line ingestion while exposing skipped malformed record counts.
-- [ ] Add tests for mixed valid and malformed `.jsonl` records.
+- [x] Replace parse exception swallowing with bounded malformed-entry diagnostics.
+- [x] Continue line-by-line ingestion while exposing skipped malformed record counts.
+- [x] Add tests for mixed valid and malformed `.jsonl` records.
+- **Evidence:** `src/thegent/summary.py`, `tests/test_wl6910_wl6919_lane_f.py` (`test_wl6911_parse_log_entry_malformed_json`, `test_wl6912_read_log_file_with_malformed_and_valid_records`)
 **Notes:** Hidden parse failures reduce trust in generated activity summaries.
 
 ### [WL-6893]
 **Title:** Preserve tmux fallback discovery failures as degraded-state diagnostics
 **Source:** [thegent/src/thegent/native/discovery_native.py:61]
 **Acceptance checklist:**
-- [ ] Capture fallback discovery command failures with structured metadata.
-- [ ] Differentiate discovery failure from legitimate empty session results.
-- [ ] Add tests for successful parse, missing dependency, and command failure paths.
+- [x] Capture fallback discovery command failures with structured metadata.
+- [x] Differentiate discovery failure from legitimate empty session results.
+- [x] Add tests for successful parse, missing dependency, and command failure paths.
+- **Evidence:** `src/thegent/native/discovery_native.py`, `tests/native/test_discovery_native.py` (`test_all_falls_back_on_tmux_probe_failure`, `test_handles_subprocess_exception`, `test_returns_error_on_nonzero_exit`)
 **Notes:** Empty-list fallthrough on failure obscures runtime discovery health.
 
 ### [WL-6894]

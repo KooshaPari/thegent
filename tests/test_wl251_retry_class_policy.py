@@ -89,12 +89,8 @@ class TestRetryClassPolicy:
         classifier.add_policy("rate limit", RetryClass.RATE_LIMITED)
 
         assert classifier.classify("Connection timeout") == RetryClass.TRANSIENT
-        assert (
-            classifier.classify("Permission denied") == RetryClass.PERMANENT
-        )
-        assert (
-            classifier.classify("Rate limit exceeded") == RetryClass.RATE_LIMITED
-        )
+        assert classifier.classify("Permission denied") == RetryClass.PERMANENT
+        assert classifier.classify("Rate limit exceeded") == RetryClass.RATE_LIMITED
 
     def test_classifier_should_retry_invalid_attempt(self):
         """should_retry() raises ValueError for attempt < 1."""

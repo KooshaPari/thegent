@@ -62,6 +62,7 @@ def test_digest_empty_store(tmp_path: Path) -> None:
     assert "No new items" in md
 
 
+@pytest.mark.requirement("WL-237")
 def test_hourly_change_digest_groups_by_connector_action_outcome() -> None:
     from research_engine.digest import build_hourly_change_digest
 
@@ -92,6 +93,7 @@ def test_hourly_change_digest_groups_by_connector_action_outcome() -> None:
     assert hour_bucket["linear"]["write:failure"] == 1
 
 
+@pytest.mark.requirement("WL-237")
 def test_hourly_change_digest_accumulates_weighted_counts() -> None:
     from research_engine.digest import build_hourly_change_digest
 

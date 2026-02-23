@@ -61,9 +61,7 @@ class BlackoutCalendar:
         Returns:
             True if dt falls within any blackout window, False otherwise.
         """
-        return any(
-            window.start <= dt < window.end for window in self._windows.values()
-        )
+        return any(window.start <= dt < window.end for window in self._windows.values())
 
     def active_windows(self, dt: datetime) -> list[BlackoutWindow]:
         """Get all blackout windows that contain the given datetime.

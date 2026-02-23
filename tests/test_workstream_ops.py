@@ -123,6 +123,7 @@ class TestWorkStreamOps:
         expected = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
         assert ops.work_stream_path == expected
 
+    @pytest.mark.requirement("WL-224")
     def test_lint_schema(self, tmp_path: Path) -> None:
         """Validate schema linting includes missing required sections."""
         work_stream = tmp_path / "WORK_STREAM.md"
@@ -140,6 +141,7 @@ class TestWorkStreamOps:
         errors = ops.lint_schema()
         assert any("missing required section" in error for error in errors)
 
+    @pytest.mark.requirement("WL-225")
     def test_sort_and_normalize(self, tmp_path: Path) -> None:
         """Normalize and sort WL sections into canonical order."""
         work_stream = tmp_path / "WORK_STREAM.md"
