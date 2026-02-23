@@ -99,16 +99,13 @@ class NATSEventBus:
             logger.info("NATS event bus initialized (enabled)")
 
     def _load_config(self) -> NATSConfig:
-        servers_env = os.getenv("NATS_SERVERS", "nats://localhost:4222")
-        return NATSConfig(
-            enabled=os.getenv("THEGENT_EVENT_BUS", "").lower() in ("1", "true", "yes", "nats"),
-            servers=[s.strip() for s in servers_env.split(",")],
-            user=os.getenv("NATS_USER", ""),
-            password=os.getenv("NATS_PASSWORD", ""),
-            use_tls=os.getenv("NATS_USE_TLS", "").lower() in ("1", "true", "yes"),
-            max_reconnect_attempts=int(os.getenv("NATS_MAX_RECONNECT", "10")),
-            reconnect_time_wait=float(os.getenv("NATS_RECONNECT_WAIT", "2.0")),
-        )
+        config = NATSConfig.from_env("NATS_")
+        # Handle servers as comma-separated list
+        servers_env = os.environ.get("NATS_SERVERS", "nats://localhost:4222")
+        config.servers = [s.strip() for s in servers_env.split(",")]
+        # Handle enable flag with THEGENT-specific env var
+        config.enabled = os.environ.get("THEGENT_EVENT_BUS", "").lower() in ("1", "true", "yes", "nats")
+        return config
 
     @property
     def is_enabled(self) -> bool:
