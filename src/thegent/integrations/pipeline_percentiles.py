@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import statistics
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class PipelinePercentileTracker:
             stage=stage,
             duration_ms=duration_ms,
             cycle_id=cycle_id,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         )
         self._records.append(record)
         logger.debug(f"Recorded stage {stage} with duration {duration_ms}ms for cycle {cycle_id}")

@@ -4,7 +4,7 @@ Handles Prometheus metrics export, cycle metrics, and change digest.
 """
 
 import orjson as json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +39,7 @@ class MetricsAdapter:
         try:
             self._cycle_metrics_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self._cycle_metrics_path, "a") as f:
-                f.write(json.dumps(cycle_data).decode().decode() + "\n")
+                f.write(json.dumps(cycle_data).decode() + "\n")
         except Exception:
             pass
 
@@ -48,7 +48,7 @@ class MetricsAdapter:
 
     def refresh_change_digest(self, current_digest: dict[str, Any]) -> dict[str, Any]:
         """Refresh hourly change digest."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         hour_key = now.strftime("%Y-%m-%dT%H")
 
         if "hours" not in current_digest:

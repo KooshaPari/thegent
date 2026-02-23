@@ -111,7 +111,7 @@ def audit_cmd(
 
     # Machine-readable JSON to stdout
     if output_json:
-        sys.stdout.write(json.dumps(report.to_dict().decode().decode(), indent=2, default=str) + "\n")
+        sys.stdout.write(json.dumps(report.to_dict().decode(), indent=2, default=str) + "\n")
         raise typer.Exit(0 if not report.has_drift else 1)
 
     # Human-readable rich output

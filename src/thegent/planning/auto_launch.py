@@ -221,7 +221,7 @@ class AutoLaunchSystem:
                 session_id,
                 item_id,
                 datetime.now(UTC).isoformat(),
-                json.dumps(payload).decode().decode() if payload else None,
+                json.dumps(payload).decode() if payload else None,
                 evidence_hash,
             ),
         )

@@ -193,7 +193,7 @@ class ProjectRegistry:
         record = ProjectRecord(name=name, path=path, metadata=metadata or {})
         self._conn.execute(
             "INSERT INTO projects (id, name, path, created_at, metadata) VALUES (?, ?, ?, ?, ?)",
-            (record.id, record.name, record.path, record.created_at, json.dumps(record.metadata).decode().decode()),
+            (record.id, record.name, record.path, record.created_at, json.dumps(record.metadata).decode()),
         )
         self._conn.commit()
         log.info("project_registry.register_project project_id=%s name=%s", record.id, name)
@@ -251,7 +251,7 @@ class ProjectRegistry:
         new_metadata = {**current_metadata, **metadata}
         self._conn.execute(
             "UPDATE projects SET metadata = ? WHERE id = ?",
-            (json.dumps(new_metadata).decode().decode(), project_id),
+            (json.dumps(new_metadata).decode(), project_id),
         )
         self._conn.commit()
         return ProjectRecord(
@@ -288,7 +288,7 @@ class ProjectRegistry:
                 record.started_at,
                 record.ended_at,
                 record.status.value,
-                json.dumps(record.metadata).decode().decode(),
+                json.dumps(record.metadata).decode(),
             ),
         )
         self._conn.commit()
@@ -330,7 +330,7 @@ class ProjectRegistry:
 
         self._conn.execute(
             "UPDATE episodes SET status = ?, metadata = ?, ended_at = ? WHERE id = ?",
-            (new_status, json.dumps(new_metadata).decode().decode(), new_ended_at, episode_id),
+            (new_status, json.dumps(new_metadata).decode(), new_ended_at, episode_id),
         )
         self._conn.commit()
 

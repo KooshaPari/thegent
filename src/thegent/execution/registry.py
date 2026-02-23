@@ -168,7 +168,7 @@ class RunRegistry:
             marker = build_schema_marker_event(self.SCHEMA_VERSION)
             marker["hash"] = self._calculate_hash(marker)
             with self.registry_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(marker).decode().decode() + "\n")
+                f.write(json.dumps(marker).decode() + "\n")
 
     def _get_last_hash(self) -> str | None:
         """Return the hash of the last record in the registry."""
@@ -283,7 +283,7 @@ class RunRegistry:
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def register_feedback(self, run_id: str, score: float, note: str | None = None) -> None:
         """Record operator feedback for a run with hash chaining."""
@@ -295,7 +295,7 @@ class RunRegistry:
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def register_pause(
         self,
@@ -313,7 +313,7 @@ class RunRegistry:
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def register_resume(self, run_id: str) -> None:
         """Record run resume for state-aware orchestration (G-KD-03)."""
@@ -321,7 +321,7 @@ class RunRegistry:
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def get_run_state(self, run_id: str) -> RunState | None:
         """Return current run state from registry events (G-KD-03)."""
@@ -531,7 +531,7 @@ class MessageRegistry:
             "event": "update",
         }
         with self.messages_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(update).decode().decode() + "\n")
+            f.write(json.dumps(update).decode() + "\n")
 
 
 class AuditEntry(BaseModel):

@@ -4,7 +4,7 @@ Handles local state persistence, checkpoints, and trends.
 """
 
 import orjson as json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -47,7 +47,7 @@ class StateAdapter:
 
     def get_snapshot_path(self) -> Path:
         """Get path for snapshot file."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         return self._status_path.parent / f"autosync_snapshot_{timestamp}.json"
 
     def get_latest_snapshot_age_seconds(self) -> int | None:
@@ -57,7 +57,7 @@ class StateAdapter:
             return None
         try:
             latest = max(snapshot_candidates, key=lambda p: p.stat().st_mtime)
-            age = datetime.now(timezone.utc) - datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+            age = datetime.now(UTC) - datetime.fromtimestamp(latest.stat().st_mtime, tz=UTC)
             return max(0, int(age.total_seconds()))
         except OSError:
             return None
@@ -67,7 +67,7 @@ class StateAdapter:
         try:
             self._trend_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self._trend_path, "a") as f:
-                f.write(json.dumps(sample).decode().decode() + "\n")
+                f.write(json.dumps(sample).decode() + "\n")
         except Exception:
             pass
 
@@ -85,7 +85,7 @@ class StateAdapter:
         """Write status to file."""
         try:
             self._status_path.parent.mkdir(parents=True, exist_ok=True)
-            self._status_path.write_text(json.dumps(status, indent=2).decode().decode())
+            self._status_path.write_text(json.dumps(status, indent=2))
         except Exception:
             pass
 

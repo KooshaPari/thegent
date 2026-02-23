@@ -81,7 +81,7 @@ def govern_vet(
             policy_id=policy_id,
         )
         if json_output:
-            typer.echo(json.dumps(result, indent=2).decode().decode())
+            typer.echo(json.dumps(result, indent=2))
             return
 
         console.print(f"[cyan]Run:[/cyan] {result['run_id']}")

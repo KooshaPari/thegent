@@ -119,4 +119,4 @@ class OverrideManager:
     def _save_override(self, override: PolicyOverride) -> None:
         """Save override to disk."""
         p = self.override_dir / f"{override.policy_id}.json"
-        p.write_text(json.dumps(override.to_dict().decode().decode(), indent=2), encoding="utf-8")
+        p.write_text(json.dumps(override.to_dict().decode(), indent=2), encoding="utf-8")

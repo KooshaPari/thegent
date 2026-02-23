@@ -18,7 +18,7 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
     )
     latest_issue_types_json = result.get(
         "latest_issue_types_json",
-        json.dumps(latest_issue_types).decode().decode(),
+        json.dumps(latest_issue_types).decode(),
     )
     latest_issue_types_hash = result.get(
         "latest_issue_types_hash",
@@ -129,7 +129,7 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
     )
     summary["scope_key_json"] = result.get(
         "scope_key_json",
-        json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True),
+        json.dumps(result.get("scope_key", {}).decode(), sort_keys=True),
     )
     summary["payload_signature_algorithm"] = _safe_dict(result.get("payload_signature")).get("algorithm", "sha256")
     summary["payload_signature_value"] = _safe_dict(result.get("payload_signature")).get("value", "")
@@ -138,7 +138,7 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
         "aliases": _safe_dict(result.get("compat")).get("aliases", {}),
     }
     summary["compat_aliases_count"] = compat_aliases_count
-    lines.append(json.dumps(summary, sort_keys=True).decode().decode())
+    lines.append(json.dumps(summary, sort_keys=True).decode())
     for snap in result.get("snapshots", []):
         row = dict(snap)
         row["record_type"] = "snapshot"
@@ -156,11 +156,11 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
         row["scope_key"] = result.get("scope_key", {})
         row["scope_key_json"] = result.get(
             "scope_key_json",
-            json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True),
+            json.dumps(result.get("scope_key", {}).decode(), sort_keys=True),
         )
         row["delta_summary_json"] = result.get(
             "delta_summary_json",
-            json.dumps(result.get("delta_summary", {}).decode().decode(), sort_keys=True),
+            json.dumps(result.get("delta_summary", {}).decode(), sort_keys=True),
         )
         row["delta_summary"] = result.get("delta_summary", {})
         row["blocked_ratio_delta"] = result.get(
@@ -230,5 +230,5 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
             "mode": result.get("schema_compat_mode", "compat"),
             "aliases": _safe_dict(result.get("compat")).get("aliases", {}),
         }
-        lines.append(json.dumps(row, sort_keys=True).decode().decode())
+        lines.append(json.dumps(row, sort_keys=True).decode())
     return "\n".join(lines) + ("\n" if lines else "")

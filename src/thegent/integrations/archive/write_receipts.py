@@ -78,7 +78,7 @@ class WriteReceiptLog:
         if not isinstance(receipt, WriteReceipt):
             raise ValueError("receipt must be a WriteReceipt")
 
-        line = json.dumps(receipt.to_dict().decode().decode())
+        line = json.dumps(receipt.to_dict().decode())
         with self.log_path.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
 

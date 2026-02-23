@@ -57,6 +57,6 @@ class IncidentReplayer:
 
         for i, action in enumerate(trace["actions"]):
             report.append(f"{i + 1}. {action['type']} (Hash: {action['hash'][:8]}...)")
-            report.append(f"   Payload: {json.dumps(action['payload']).decode().decode()}")
+            report.append(f"   Payload: {json.dumps(action['payload']).decode()}")
 
         return "\n".join(report)

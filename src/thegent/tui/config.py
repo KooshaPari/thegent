@@ -152,7 +152,7 @@ class ConfigManager:
         if self._config_file.suffix in (".yaml", ".yml"):
             self._config_file.write_text(yaml.dump(data, default_flow_style=False))
         else:
-            self._config_file.write_text(json.dumps(data, indent=2).decode().decode())
+            self._config_file.write_text(json.dumps(data, indent=2))
 
     def get(self) -> TUIConfig:
         """Get current configuration."""

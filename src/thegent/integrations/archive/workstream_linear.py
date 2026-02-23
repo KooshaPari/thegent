@@ -49,7 +49,7 @@ class LinearSync:
         except (LinearGraphQLError, LinearGraphQLAuthError) as e:
             logger.error(f"Linear sync error: {e}")
             return {"error": str(e)}
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {"error": "timeout"}
 
     async def sync_from_linear(self) -> list[WorkstreamItem]:

@@ -56,11 +56,8 @@ def main() -> int:
     import asyncio
     result = asyncio.run(_check_nats())
 
-<<<<<<< HEAD
     print(json.dumps(result).decode().decode())
-=======
     print(json.dumps(result))
->>>>>>> fix/ci-remove-macos
 
     if not result.get("ok"):
         raise RuntimeError(f"NATS health check failed: {result.get('error')}")

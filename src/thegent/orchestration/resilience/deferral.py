@@ -158,7 +158,7 @@ class DeferralManager:
         }
         self.settings.session_dir.mkdir(parents=True, exist_ok=True)
         with self.deferral_log.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def list_deferred(self) -> list[dict[str, Any]]:
         """List all currently deferred tasks."""

@@ -148,7 +148,7 @@ class SmartPruner:
                 }
                 for sid, snap in self.snapshots.items()
             }
-            self.state_file.write_text(json.dumps(data, indent=2).decode().decode())
+            self.state_file.write_text(json.dumps(data, indent=2))
         except Exception as e:
             logger.warning(f"Failed to save smart prune state: {e}")
 

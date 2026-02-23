@@ -167,7 +167,7 @@ def transform_models_response(
             "client_version": "proxy",
             "models": models,
         }
-        body = json.dumps(result).decode().decode().encode()
+        body = json.dumps(result).decode().encode()
         etag = _compute_models_etag(models)
         return body, etag
     except json.JSONDecodeError as exc:

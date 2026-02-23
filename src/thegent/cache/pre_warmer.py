@@ -31,7 +31,7 @@ import contextlib
 import logging
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -376,7 +376,7 @@ class CachePreWarmer:
 
 def _utcnow() -> datetime:
     """Return current UTC datetime (extracted for testability)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _should_run(state: _StrategyState, now: datetime) -> bool:

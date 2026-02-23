@@ -250,17 +250,17 @@ class AgentHierarchyManager:
         # Save agents
         agents_file = self.storage_path / "hierarchy.json"
         agents_data = {run_id: node.to_dict() for run_id, node in self._agents.items()}
-        agents_file.write_text(json.dumps(agents_data, indent=2).decode().decode())
+        agents_file.write_text(json.dumps(agents_data, indent=2))
 
         # Save relationships
         relationships_file = self.storage_path / "relationships.json"
         relationships_data = {rel_id: rel.to_dict() for rel_id, rel in self._relationships.items()}
-        relationships_file.write_text(json.dumps(relationships_data, indent=2).decode().decode())
+        relationships_file.write_text(json.dumps(relationships_data, indent=2))
 
         # Save teams
         teams_file = self.storage_path / "teams.json"
         teams_data = {team_id: team.to_dict() for team_id, team in self._teams.items()}
-        teams_file.write_text(json.dumps(teams_data, indent=2).decode().decode())
+        teams_file.write_text(json.dumps(teams_data, indent=2))
 
     def register_agent(
         self,

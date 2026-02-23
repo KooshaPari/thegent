@@ -85,7 +85,7 @@ def status_cmd(session_id: str | None = None, format: str | None = None, include
         out["route_request"] = m.get("route_request")
     fmt = _normalize_output_format(format, default="json")
     if fmt == "json":
-        sys.stdout.write(json.dumps(out).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(out).decode() + "\n")
     else:
         status_text = status
         console.print(f"session_id: {session_id}")
@@ -100,7 +100,7 @@ def status_cmd(session_id: str | None = None, format: str | None = None, include
             console.print("route_contract:")
             console.print_json(data=out["route_contract"])
         if include_contract and out.get("route_request") is not None:
-            console.print(f"route_request: {json.dumps(out['route_request']).decode().decode()}")
+            console.print(f"route_request: {json.dumps(out['route_request']).decode()}")
 
 
 def inspect_cmd(

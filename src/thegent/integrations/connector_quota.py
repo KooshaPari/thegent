@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 
 class QuotaExhaustedError(Exception):
@@ -29,7 +29,7 @@ class ConnectorQuota:
 
     def _calculate_reset_time(self) -> datetime:
         """Calculate the next reset time (midnight UTC tomorrow)."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         next_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         return next_midnight
 
@@ -109,7 +109,7 @@ class QuotaBudgetManager:
 
     def reset_daily(self) -> None:
         """Reset all quotas if their reset time has passed."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for quota in self._quotas.values():
             if quota.reset_at is not None and now >= quota.reset_at:
                 quota.used_today = 0
@@ -117,7 +117,7 @@ class QuotaBudgetManager:
 
     def _check_and_reset_if_needed(self, quota: ConnectorQuota) -> None:
         """Check and reset quota if reset time has passed."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if quota.reset_at is not None and now >= quota.reset_at:
             quota.used_today = 0
             quota.reset_at = quota._calculate_reset_time()

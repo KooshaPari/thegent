@@ -51,7 +51,7 @@ class SignedAuditArtifactChain:
         """Append a new audit entry to the chain.
 
         The entry's signature is computed as:
-        SHA256(prev_signature + ":" + entry_id + ":" + json.dumps(data, sort_keys=True).decode().decode())
+        SHA256(prev_signature + ":" + entry_id + ":" + json.dumps(data, sort_keys=True).decode())
 
         Args:
             entry_id: Unique identifier for this entry.
@@ -63,7 +63,7 @@ class SignedAuditArtifactChain:
         prev_signature = self._entries[-1].signature if self._entries else ""
 
         # Compute signature: SHA256 of prev_signature:entry_id:json_data
-        data_json = json.dumps(data, sort_keys=True).decode().decode()
+        data_json = json.dumps(data, sort_keys=True).decode()
         signature_input = f"{prev_signature}:{entry_id}:{data_json}"
         signature = hashlib.sha256(signature_input.encode()).hexdigest()
 
@@ -88,7 +88,7 @@ class SignedAuditArtifactChain:
         prev_signature = ""
         for entry in self._entries:
             # Recompute signature for this entry
-            data_json = json.dumps(entry.data, sort_keys=True).decode().decode()
+            data_json = json.dumps(entry.data, sort_keys=True).decode()
             signature_input = f"{prev_signature}:{entry.entry_id}:{data_json}"
             expected_signature = hashlib.sha256(signature_input.encode()).hexdigest()
 

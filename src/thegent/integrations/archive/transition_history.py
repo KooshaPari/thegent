@@ -59,7 +59,7 @@ class TransitionHistoryLog:
 
         record = asdict(transition)
         with open(self.log_path, "a") as f:
-            f.write(json.dumps(record).decode().decode() + "\n")
+            f.write(json.dumps(record).decode() + "\n")
 
     def read_all(self) -> list[StatusTransition]:
         """Read all transition records from the log.

@@ -8,7 +8,7 @@ enabling compact hourly change summaries.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 @dataclass
@@ -39,7 +39,7 @@ class HourlyChangeDigest:
         Returns:
             The created ChangeEntry.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         hour = now.strftime("%Y-%m-%dT%H")
         entry = ChangeEntry(item_id=item_id, change_type=change_type, hour=hour)
         if hour not in self._by_hour:

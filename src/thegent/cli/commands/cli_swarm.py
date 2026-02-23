@@ -52,7 +52,7 @@ def swarm_usage(
 
     if format == "json":
         payload = {o: s.to_dict() for o, s in all_stats.items()}
-        typer.echo(json.dumps(payload, indent=2).decode().decode())
+        typer.echo(json.dumps(payload, indent=2))
         return
 
     # Rich table output

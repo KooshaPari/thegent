@@ -75,7 +75,7 @@ class TeammateManager:
     def _save(self) -> None:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         data = {did: asdict(d) for did, d in self._delegations.items()}
-        self.storage_path.write_text(json.dumps(data, indent=2).decode().decode())
+        self.storage_path.write_text(json.dumps(data, indent=2))
 
     def list_personas(self) -> list[TeammatePersona]:
         """WP-16001: Discover teammates from agent markdown files (recursive)."""

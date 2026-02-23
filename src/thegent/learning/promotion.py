@@ -76,4 +76,4 @@ class ModelPromoter:
             },
         }
         with audit_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(event).decode().decode() + "\n")
+            fh.write(json.dumps(event).decode() + "\n")

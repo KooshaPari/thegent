@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class IncidentSnapshotBundle:
         Returns:
             The created IncidentSnapshot.
         """
-        snapshot = IncidentSnapshot(incident_id=incident_id, timestamp=datetime.now(timezone.utc), data=data)
+        snapshot = IncidentSnapshot(incident_id=incident_id, timestamp=datetime.now(UTC), data=data)
         self._snapshots[incident_id] = snapshot
 
         logger.debug(f"Captured incident snapshot for {incident_id} at {snapshot.timestamp.isoformat()}")

@@ -24,6 +24,7 @@ members = [
     "harness-native",
     "thegent-tui",
     "thegent-memory",
+    "thegent-subprocess",
 ]
 exclude = ["thegent-watcher"]
 
@@ -35,4 +36,5 @@ exclude = ["thegent-watcher"]
 # Pure-Rust git library (gitoxide). Preferred over git2/libgit2 for all new
 # Rust crates. Use `max-performance-safe` for portable SIMD acceleration.
 gix = { version = "0.79.0", default-features = false, features = ["max-performance-safe"] }
+which = "6.0"
 criterion = "0.5"

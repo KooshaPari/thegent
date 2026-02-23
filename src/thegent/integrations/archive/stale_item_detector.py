@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 
 def _utc(dt: datetime | None) -> datetime | None:
@@ -11,7 +11,7 @@ def _utc(dt: datetime | None) -> datetime | None:
         return None
     if dt.tzinfo is None:
         raise ValueError("timestamps must be timezone-aware")
-    return dt.astimezone(timezone.utc)
+    return dt.astimezone(UTC)
 
 
 @dataclass(frozen=True)
@@ -54,7 +54,7 @@ class StaleItemDetector:
         self.config = config
 
     def detect(self, items: list[ItemActivity], *, now: datetime | None = None) -> list[StaleItem]:
-        now_utc = _utc(now or datetime.now(timezone.utc))
+        now_utc = _utc(now or datetime.now(UTC))
         assert now_utc is not None
 
         stale: list[StaleItem] = []

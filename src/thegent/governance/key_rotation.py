@@ -252,7 +252,7 @@ class KeyRotationWebhook:
         _log.info("Posting key rotation event for key_id=%s to %s", key_id, self.webhook_url)
         response = httpx.post(
             self.webhook_url,
-            content=json.dumps(payload).decode().decode().encode(),
+            content=json.dumps(payload).decode().encode(),
             headers={"Content-Type": "application/json"},
             timeout=self.timeout_seconds,
         )

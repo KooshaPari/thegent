@@ -103,7 +103,7 @@ def register_dynamic_registry_tools(
             success=success,
         )
         event = server_tools_sessions._dynamic_registry.tool_call_completed_event(result)
-        return json.dumps({"success": True, "event": event}, indent=2).decode().decode()
+        return json.dumps({"success": True, "event": event}, indent=2)
 
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     async def thegent_list_dynamic_tools(

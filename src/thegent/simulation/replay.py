@@ -20,6 +20,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
+from datetime import UTC
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -470,7 +471,7 @@ def _parse_iso_to_float(iso: str) -> float:
         dt = datetime.fromisoformat(normalised)
         # fromisoformat may return naive datetime if no offset present
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            dt = dt.replace(tzinfo=UTC)
         return dt.timestamp()
     except (ValueError, AttributeError):
         return 0.0

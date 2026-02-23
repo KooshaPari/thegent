@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -28,7 +28,7 @@ class InterAgentMessage(BaseModel):
     message_type: Literal["task_request", "status_update", "result", "error", "heartbeat"]
     payload: dict[str, Any]
     correlation_id: str | None = None
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     ttl_s: int = 300
 
 

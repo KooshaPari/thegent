@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 import hashlib
 import orjson as json
 from typing import Any, ClassVar
@@ -129,7 +129,7 @@ class CrossConnectorVerifier:
     def state_fingerprint(self, connector_state: dict[str, Any]) -> str:
         """Build canonical fingerprint for connector state."""
         canonical = {field: connector_state.get(field) for field in self.FINGERPRINT_FIELDS}
-        payload = json.dumps(canonical, sort_keys=True, separators=(",", ":").decode().decode())
+        payload = json.dumps(canonical, sort_keys=True, separators=(",", ":").decode())
         return hashlib.sha1(payload.encode("utf-8")).hexdigest()
 
     def detect_split_brain(self, states: list[dict[str, Any]]) -> list[SplitBrainFinding]:
@@ -166,7 +166,7 @@ class CrossConnectorVerifier:
         now: datetime | None = None,
     ) -> list[ConflictRecord]:
         """Convert violations to conflict records with first_seen_at + ttl_seconds."""
-        timestamp = now or datetime.now(timezone.utc)
+        timestamp = now or datetime.now(UTC)
         ttl = max(1, int(ttl_seconds))
         return [
             ConflictRecord(
@@ -189,7 +189,7 @@ class CrossConnectorVerifier:
         now: datetime | None = None,
     ) -> list[ConflictRecord]:
         """Mark conflicts escalated when TTL window has elapsed."""
-        at = now or datetime.now(timezone.utc)
+        at = now or datetime.now(UTC)
         updated: list[ConflictRecord] = []
         for conflict in conflicts:
             expires_at = conflict.first_seen_at + timedelta(seconds=max(1, conflict.ttl_seconds))

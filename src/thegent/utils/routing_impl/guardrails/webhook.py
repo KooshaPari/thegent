@@ -59,7 +59,7 @@ def call_webhook_guardrail(
     try:
         response = httpx.post(
             config.url,
-            content=json.dumps(payload).decode().decode(),
+            content=json.dumps(payload).decode(),
             headers=headers,
             timeout=config.timeout_sec,
         )

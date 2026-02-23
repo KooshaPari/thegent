@@ -376,7 +376,7 @@ class GardenerAgent:
         """Build a generic append note for non-WORK_STREAM docs."""
         import datetime
 
-        today = datetime.datetime.now(tz=datetime.timezone.utc).date().isoformat()
+        today = datetime.datetime.now(tz=datetime.UTC).date().isoformat()
         lines = [
             f"<!-- Gardener note: {today} -->",
             f"<!-- {stale_doc.reason} -->",

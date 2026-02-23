@@ -64,7 +64,7 @@ def review_run(
         }
         if isinstance(context_usage, dict):
             payload["context_usage"] = context_usage
-        console.print(json.dumps(payload, indent=2).decode().decode())
+        console.print(json.dumps(payload, indent=2))
     else:
         console.print(f"[bold]Summary:[/bold] {result['summary']}")
         console.print(f"[bold]Overall Rating:[/bold] {result['overall_rating']}")

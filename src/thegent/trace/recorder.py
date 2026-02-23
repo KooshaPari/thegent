@@ -191,7 +191,7 @@ class TraceRecorder:
             redacted_result = self._truncate_result(redacted_result)
 
         record = ToolCallRecord(
-            timestamp=datetime.now(timezone.utc).isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             sequence_id=seq,
             tool=tool,
             tool_name=tool_name,
@@ -311,7 +311,7 @@ class TraceRecorder:
         """Truncate large results to max size."""
         # Try to serialize to check size
         try:
-            serialized = json.dumps(result).decode().decode()
+            serialized = json.dumps(result).decode()
             if len(serialized.encode()) > self.config.truncation.max_bytes:
                 # Truncate large fields
                 truncated = result.copy()
@@ -409,7 +409,7 @@ class TraceCleanup:
 
         for trace_file in self.trace_dir.glob("*.jsonl*"):
             try:
-                mtime = datetime.fromtimestamp(trace_file.stat().st_mtime, tz=timezone.utc)
+                mtime = datetime.fromtimestamp(trace_file.stat().st_mtime, tz=UTC)
                 if mtime < cutoff_time:
                     trace_file.unlink()
                     deleted_count += 1

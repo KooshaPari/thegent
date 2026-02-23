@@ -193,7 +193,7 @@ class ToolAdapter:
         if not tool:
             return ""
 
-        return f"Tool: {tool.tool_id}\nDescription: {tool.description}\nParams: {json.dumps(tool.parameters).decode().decode()}"
+        return f"Tool: {tool.tool_id}\nDescription: {tool.description}\nParams: {json.dumps(tool.parameters).decode()}"
 
 
 # Register with unified adapter registry

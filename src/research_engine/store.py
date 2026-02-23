@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import orjson as json
 import sqlite3
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from pathlib import Path
 
 from research_engine.schema import ResearchItem
@@ -65,7 +65,7 @@ class ResearchStore:
                     item.title,
                     item.summary,
                     item.score,
-                    json.dumps(item.tags).decode().decode(),
+                    json.dumps(item.tags).decode(),
                     item.fetched_at.isoformat(),
                     item.relevance,
                 ),
@@ -84,7 +84,7 @@ class ResearchStore:
         Returns:
             List of ResearchItem objects, sorted by relevance and score.
         """
-        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        cutoff = (datetime.now(UTC) - timedelta(hours=hours)).isoformat()
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT * FROM research_items WHERE fetched_at >= ? ORDER BY relevance DESC, score DESC LIMIT ?",

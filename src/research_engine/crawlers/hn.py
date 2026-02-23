@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import httpx
 
@@ -42,7 +42,7 @@ class HNCrawler(BaseCrawler):
         resp = httpx.get(_HN_API, params={"query": query, "tags": "story", "hitsPerPage": 30})
         resp.raise_for_status()
         hits = resp.json().get("hits", [])
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         items = []
         for hit in hits:
             url = hit.get("url") or f"https://news.ycombinator.com/item?id={hit['objectID']}"

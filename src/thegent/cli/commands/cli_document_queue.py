@@ -258,7 +258,7 @@ def process_cmd(
         console.print("[green]✓ Processed successfully[/green]")
         console.print(f"  Processing time: [dim]{result.processing_time:.2f}s[/dim]")
         if result.metadata:
-            console.print(f"  Metadata: {json.dumps(result.metadata, indent=2).decode().decode()}")
+            console.print(f"  Metadata: {json.dumps(result.metadata, indent=2)}")
 
         # Mark as processed in queue
         if queue_file:

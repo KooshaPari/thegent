@@ -29,5 +29,5 @@ class EvidenceGraph:
             "artifact_count": len(self._graph),
             "checksum": "sha256_val",
         }
-        target_path.write_text(json.dumps(manifest, indent=2).decode().decode())
+        target_path.write_text(json.dumps(manifest, indent=2))
         return manifest

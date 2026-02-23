@@ -1042,7 +1042,7 @@ class InstallManager:
 
         curr[parts[-1]] = value
 
-        config_path.write_text(json.dumps(config, indent=2).decode().decode())
+        config_path.write_text(json.dumps(config, indent=2))
 
         # Register in manifest
         self.manifest.configs.append(
@@ -1071,7 +1071,7 @@ class InstallManager:
                         curr[parts[-1]] = cfg.original_value
 
                     if not self.dry_run:
-                        path.write_text(json.dumps(data, indent=2).decode().decode())
+                        path.write_text(json.dumps(data, indent=2))
                     counts["reverted"] += 1
                 except Exception:
                     counts["errors"] += 1

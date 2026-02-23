@@ -45,7 +45,7 @@ def compute_cache_key(model: str, messages: list[dict], **kwargs: Any) -> str:
         "messages": messages,
         "extras": dict(sorted(extras.items())),
     }
-    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":").decode())
     digest = hashlib.sha256(serialized.encode()).hexdigest()
     return digest[:32]
 
@@ -278,7 +278,7 @@ class DiskCache:
             "ttl": entry.ttl,
             "namespace": entry.namespace,
         }
-        serialized = json.dumps(data, separators=(",", ":").decode().decode())
+        serialized = json.dumps(data, separators=(",", ":").decode())
 
         # Atomic write: temp file in same directory, then rename
         fd, tmp_path = tempfile.mkstemp(dir=path.parent, suffix=".tmp")

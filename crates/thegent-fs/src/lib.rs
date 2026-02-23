@@ -37,14 +37,7 @@ use walkdir::WalkDir;
 mod pyo3_bindings {
     use super::*;
     use pyo3::prelude::*;
-<<<<<<< HEAD
-<<<<<<< Updated upstream
     use pyo3::types::PyList;
-=======
->>>>>>> Stashed changes
-=======
-    
->>>>>>> fix/ci-remove-macos
 
     #[pyfunction]
     pub fn fs_copy_file(src: &str, dst: &str, preserve_metadata: bool) -> PyResult<u64> {

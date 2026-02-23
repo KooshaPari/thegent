@@ -131,7 +131,7 @@ class McpGateway:
         command = shlex.split(config.command)
         env = os.environ.copy()
         env.update(config.env)
-        payload = json.dumps(request).decode().decode()
+        payload = json.dumps(request).decode()
         try:
             if config.transport is None:
                 returncode, stdout, stderr = self._run_subprocess_transport(

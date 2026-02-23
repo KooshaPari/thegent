@@ -61,5 +61,5 @@ def build_observe_lines(result: dict[str, Any], provider: str | None) -> list[st
             f"health={trend.get('trend_snapshot_health', 'disabled')}"
         )
     if result.get("generated_query"):
-        lines.append(f"generated_query={json.dumps(result['generated_query']).decode().decode()}")
+        lines.append(f"generated_query={json.dumps(result['generated_query']).decode()}")
     return lines

@@ -11,7 +11,7 @@ from __future__ import annotations
 import orjson as json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -139,7 +139,7 @@ class ConversationDumper:
         """
         self.ensure_directory()
 
-        timestamp = datetime.now(tz=timezone.utc)
+        timestamp = datetime.now(tz=UTC)
         record = ConversationRecord(
             conversation_id=conversation_id,
             timestamp=timestamp,
@@ -191,7 +191,7 @@ class ConversationDumper:
         """
         self.ensure_directory()
 
-        timestamp = datetime.now(tz=timezone.utc)
+        timestamp = datetime.now(tz=UTC)
         record = ConversationRecord(
             conversation_id=conversation_id,
             timestamp=timestamp,
@@ -333,7 +333,7 @@ class ConversationDumper:
 
             return ConversationRecord(
                 conversation_id=conversation_id,
-                timestamp=datetime.fromtimestamp(dump_path.stat().st_mtime, tz=timezone.utc),
+                timestamp=datetime.fromtimestamp(dump_path.stat().st_mtime, tz=UTC),
                 model=model,
                 prompt="\n".join(prompt_lines).strip(),
                 response="\n".join(response_lines).strip(),

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 from uuid import uuid4
 
@@ -231,7 +231,7 @@ def get_current_timestamp() -> str:
     Returns:
         ISO 8601 formatted timestamp.
     """
-    return datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(tz=UTC).isoformat().replace("+00:00", "Z")
 
 
 def new_run_correlation_id() -> str:

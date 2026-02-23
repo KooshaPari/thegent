@@ -262,7 +262,7 @@ class DistributedResourceCoordinator:
     # ------------------------------------------------------------------
 
     @contextlib.contextmanager
-    def _locked(self) -> Generator[None, None, None]:
+    def _locked(self) -> Generator[None]:
         """Context manager that acquires the file-lock when available."""
         if self._filelock is not None:
             with self._filelock:

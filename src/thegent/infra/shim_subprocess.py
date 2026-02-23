@@ -68,7 +68,7 @@ def run(
         subprocess.CompletedProcess
     """
     if not SHIM_AVAILABLE or kwargs.get("shell") or not args:
-        return shim_run(args, **kwargs)
+        return subprocess.run(args, **kwargs)
 
     cmd = args[0]
     shim_cmd = SHIM_COMMANDS.get(cmd)
@@ -76,9 +76,9 @@ def run(
     if shim_cmd and "thegent" not in cmd:
         # Use shim wrapper
         shim_args = [shim_cmd] + args[1:]
-        return shim_run(shim_args, **kwargs)
+        return subprocess.run(shim_args, **kwargs)
 
-    return shim_run(args, **kwargs)
+    return subprocess.run(args, **kwargs)
 
 
 def check_output(

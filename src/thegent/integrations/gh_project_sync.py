@@ -19,7 +19,7 @@ import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any, Literal
 
@@ -731,7 +731,7 @@ def sync_to_github(
             "items_updated": items_updated,
             "items_synced": items_created + items_updated,
             "errors": errors,
-            "synced_at": datetime.now(timezone.utc).isoformat(),
+            "synced_at": datetime.now(UTC).isoformat(),
         }
 
     except GHProjectAuthError as e:
@@ -788,7 +788,7 @@ def sync_from_github(config: GHProjectConfig) -> dict[str, Any]:
                 "items_imported": len(normalized_items),
                 "items": normalized_items,
                 "errors": [],
-                "synced_at": datetime.now(timezone.utc).isoformat(),
+                "synced_at": datetime.now(UTC).isoformat(),
             }
         return {"items_imported": 0, "status": "failed"}
 

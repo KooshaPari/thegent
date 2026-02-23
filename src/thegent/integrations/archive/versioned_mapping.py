@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class VersionedMappingRegistry:
         mapping_version = MappingVersion(
             version=version,
             mappings=mappings.copy(),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             label=label,
         )
         self._versions[version] = mapping_version

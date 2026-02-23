@@ -185,7 +185,7 @@ class FastSubprocess:
         start_time = time.time()
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             process.kill()
             await process.wait()
             raise subprocess.TimeoutExpired(cmd, timeout if timeout is not None else 0.0)

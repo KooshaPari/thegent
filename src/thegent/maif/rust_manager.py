@@ -45,7 +45,7 @@ class RustMAIFManager:
         """Create and sign a MAIF artifact using the Rust binary."""
         self.ensure_keys()
 
-        payload_json = json.dumps(payload).decode().decode()
+        payload_json = json.dumps(payload).decode()
 
         shim_run(
             [

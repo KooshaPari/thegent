@@ -15,7 +15,7 @@ def append_bench_record(record: BenchRecord, *, path: Path | None = None) -> Pat
     target = path or DEFAULT_RESULTS_PATH
     target.parent.mkdir(parents=True, exist_ok=True)
     with target.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(record.to_dict().decode().decode(), separators=(",", ":")))
+        handle.write(json.dumps(record.to_dict().decode(), separators=(",", ":")))
         handle.write("\n")
     return target
 

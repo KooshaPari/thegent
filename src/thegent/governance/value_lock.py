@@ -74,4 +74,4 @@ class ValueLock:
     def _save_locks(self):
         """Persist locked principles to disk."""
         data = {k: v.model_dump() for k, v in self.locked_principles.items()}
-        self.lock_path.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
+        self.lock_path.write_text(json.dumps(data, indent=2), encoding="utf-8")

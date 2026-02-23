@@ -21,7 +21,7 @@ class RestoreVerificationResult:
 
 
 def _stable_hash(payload: dict[str, Any]) -> str:
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":").decode())
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 

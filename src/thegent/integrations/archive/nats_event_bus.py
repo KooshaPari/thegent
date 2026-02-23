@@ -8,7 +8,7 @@ import orjson as json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from enum import Enum
 from typing import Callable
 from uuid import uuid4
@@ -64,7 +64,7 @@ class WorkflowEvent:
     event_type: EventType = EventType.TASK_STARTED
     workflow_id: str = ""
     task_id: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now(tz=timezone.utc).isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
     data: dict = field(default_factory=dict)
 
 

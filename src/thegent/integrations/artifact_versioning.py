@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 @dataclass
@@ -38,7 +38,7 @@ class ArtifactFormatRegistry:
         version = ArtifactVersion(
             format_version=format_version,
             schema_hash=schema_hash,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         self._versions[format_version] = version
         return version

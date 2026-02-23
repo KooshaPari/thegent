@@ -371,7 +371,7 @@ class WorkstreamDB:
         conn = self._connect()
         cursor = conn.cursor()
         now = self._now_iso()
-        meta_json = json.dumps(metadata).decode().decode() if metadata else None
+        meta_json = json.dumps(metadata).decode() if metadata else None
         cursor.execute(
             """
             INSERT INTO workstream_items (item_id, title, source, source_system, priority, status, last_synced_at, metadata)

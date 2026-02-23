@@ -8,7 +8,7 @@ from __future__ import annotations
 import orjson as json
 import uuid
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -64,7 +64,7 @@ class JournalEntry:
             A new JournalEntry with auto-generated ID and timestamp.
         """
         entry_id = str(uuid.uuid4())[:8]
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
 
         return JournalEntry(
             entry_id=entry_id,
@@ -105,7 +105,7 @@ class DecisionJournal:
 
         # Append as single JSON line
         entry_dict = asdict(entry)
-        line = json.dumps(entry_dict).decode().decode() + "\n"
+        line = json.dumps(entry_dict).decode() + "\n"
 
         with self._journal_file.open("a", encoding="utf-8") as f:
             f.write(line)

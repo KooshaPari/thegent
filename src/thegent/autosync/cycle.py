@@ -5,7 +5,7 @@ Handles sync cycle execution - extracted to reduce runner size.
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +23,7 @@ async def run_sync_cycle(runner) -> dict[str, Any]:
     This is the main cycle logic - extracted to reduce runner size.
     """
     result = {
-        "started_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": datetime.now(UTC).isoformat(),
         "items_count": 0,
         "error": None,
     }
@@ -54,7 +54,7 @@ async def run_sync_cycle(runner) -> dict[str, Any]:
         result["error"] = str(e)
         logger.error(f"Cycle error: {e}")
 
-    result["completed_at"] = datetime.now(timezone.utc).isoformat()
+    result["completed_at"] = datetime.now(UTC).isoformat()
     return result
 
 

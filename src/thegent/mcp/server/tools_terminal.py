@@ -63,7 +63,7 @@ def handoff_impl(
         "next_steps": next_steps,
     }
     return ToolResult(
-        content=json.dumps(result).decode().decode(),
+        content=json.dumps(result).decode(),
         structured_content=result,
         meta={"execution_time_ms": 0},
     )
@@ -80,7 +80,7 @@ def handoff_list_impl(
     hm = HandoffManager(settings.session_dir)
     snapshots = hm.list_pending_snapshots(limit=limit)
     return ToolResult(
-        content=json.dumps(snapshots).decode().decode(),
+        content=json.dumps(snapshots).decode(),
         structured_content=snapshots,
         meta={"count": len(snapshots)},
     )
@@ -100,7 +100,7 @@ def handoff_show_impl(
     if not snap:
         return error_result(f"Snapshot {snapshot_id} not found.", "Run thegent_handoff_list", extra={})
     return ToolResult(
-        content=json.dumps(snap).decode().decode(),
+        content=json.dumps(snap).decode(),
         structured_content=snap,
         meta={},
     )
@@ -119,7 +119,7 @@ def handoff_confirm_impl(
     hm = HandoffManager(settings.session_dir)
     ok = hm.confirm_handoff(snapshot_id=snapshot_id, incoming_owner=incoming_owner, confidence=confidence)
     return ToolResult(
-        content=json.dumps({"success": ok, "snapshot_id": snapshot_id}).decode().decode(),
+        content=json.dumps({"success": ok, "snapshot_id": snapshot_id}).decode(),
         structured_content={"success": ok, "snapshot_id": snapshot_id},
         meta={},
     )
@@ -141,12 +141,12 @@ def terminal_route_impl(
     if pane_id:
         success = send_to_tmux_pane(pane_id, prompt)
         return ToolResult(
-            content=json.dumps({"routed": True, "pane_id": pane_id, "success": success}).decode().decode(),
+            content=json.dumps({"routed": True, "pane_id": pane_id, "success": success}).decode(),
             structured_content={"routed": True, "pane_id": pane_id, "success": success},
             meta={},
         )
     return ToolResult(
-        content=json.dumps({"routed": False, "fallback": "Use thegent_run or thegent_bg"}).decode().decode(),
+        content=json.dumps({"routed": False, "fallback": "Use thegent_run or thegent_bg"}).decode(),
         structured_content={"routed": False, "fallback": "Use thegent_run or thegent_bg"},
         meta={},
     )

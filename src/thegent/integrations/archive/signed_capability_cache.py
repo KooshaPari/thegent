@@ -9,7 +9,7 @@ to prevent use of stale or tampered capability data.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 @dataclass
@@ -91,8 +91,8 @@ class SignedCapabilityCache:
         if not signature:
             raise ValueError("signature cannot be empty")
 
-        now = datetime.now(timezone.utc)
-        expires_at = datetime.fromtimestamp(now.timestamp() + self._ttl_seconds, tz=timezone.utc)
+        now = datetime.now(UTC)
+        expires_at = datetime.fromtimestamp(now.timestamp() + self._ttl_seconds, tz=UTC)
 
         capability = SignedCapability(
             capability_id=capability_id,
@@ -142,7 +142,7 @@ class SignedCapabilityCache:
             return True
 
         capability = self._capabilities[capability_id]
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return now >= capability.expires_at
 
     def renew(self, capability_id: str, signature: str) -> SignedCapability | None:
@@ -165,8 +165,8 @@ class SignedCapabilityCache:
             return None
 
         capability = self._capabilities[capability_id]
-        now = datetime.now(timezone.utc)
-        expires_at = datetime.fromtimestamp(now.timestamp() + self._ttl_seconds, tz=timezone.utc)
+        now = datetime.now(UTC)
+        expires_at = datetime.fromtimestamp(now.timestamp() + self._ttl_seconds, tz=UTC)
 
         # Update in place
         capability.signature = signature

@@ -280,7 +280,7 @@ def loop_send_cmd(session_id: str | None = None, prompt: str = "") -> None:
     session_dir = settings.session_dir / sid
     session_dir.mkdir(parents=True, exist_ok=True)
     takeover_file = session_dir / "takeover.json"
-    takeover_file.write_text(json.dumps({"prompt": prompt}).decode().decode(), encoding="utf-8")
+    takeover_file.write_text(json.dumps({"prompt": prompt}).decode(), encoding="utf-8")
     console.print(f"[green]Takeover input sent to loop session {sid}.[/green]")
     console.print("[dim]The loop will use this as the next prompt on its next iteration.[/dim]")
 

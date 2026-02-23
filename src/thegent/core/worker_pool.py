@@ -145,11 +145,11 @@ for raw_line in sys.stdin:
     try:
         task = json.loads(raw_line)
     except json.JSONDecodeError as exc:
-        sys.stdout.write(json.dumps({"error": str(exc).decode().decode()}) + "\n")
+        sys.stdout.write(json.dumps({"error": str(exc).decode()}) + "\n")
         sys.stdout.flush()
         continue
     result = _run_task_in_process(task)
-    sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+    sys.stdout.write(json.dumps(result).decode() + "\n")
     sys.stdout.flush()
 """
 
@@ -192,7 +192,7 @@ class Worker:
         if self._proc.stdin is None or self._proc.stdout is None:
             raise RuntimeError(f"Worker {self.pid} has closed pipes")
 
-        payload = json.dumps(dataclasses.asdict(task).decode().decode()) + "\n"
+        payload = json.dumps(dataclasses.asdict(task).decode()) + "\n"
         self._proc.stdin.write(payload.encode())
         await self._proc.stdin.drain()
 
@@ -330,7 +330,7 @@ class PersistentWorkerPool:
                 proc.stdout.readline(),  # type: ignore[union-attr]
                 timeout=10.0,
             )
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             proc.terminate()
             raise RuntimeError("Worker failed to send READY within 10 s") from exc
         if ready_line.strip() != b"READY":

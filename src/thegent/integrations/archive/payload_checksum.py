@@ -39,7 +39,7 @@ class RemotePayloadChecksumVerifier:
         Returns:
             A ChecksumRecord with the payload_id and computed checksum.
         """
-        json_str = json.dumps(data, sort_keys=True).decode().decode()
+        json_str = json.dumps(data, sort_keys=True).decode()
         checksum = hashlib.sha256(json_str.encode("utf-8")).hexdigest()
         return ChecksumRecord(payload_id=payload_id, checksum=checksum)
 

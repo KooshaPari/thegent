@@ -199,7 +199,7 @@ class RemoteNodeClient:
                 timeout=self._timeout_s,
             )
             resp.raise_for_status()
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise RemoteNodeError(f"Remote node {self._node.node_id} timed out after {self._timeout_s}s") from exc
         except httpx.HTTPStatusError as exc:
             raise RemoteNodeError(

@@ -167,7 +167,7 @@ class EscalationQueue:
     def _save_item(self, item: EscalationItem) -> None:
         """Save item to disk."""
         p = self.queue_dir / f"{item.id}.json"
-        p.write_text(json.dumps(item.to_dict().decode().decode(), indent=2), encoding="utf-8")
+        p.write_text(json.dumps(item.to_dict().decode(), indent=2), encoding="utf-8")
 
     def _load_and_process_item(self, p: Path) -> EscalationItem | None:
         """Helper to load and process a single escalation item."""

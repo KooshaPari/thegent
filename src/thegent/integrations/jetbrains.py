@@ -247,7 +247,7 @@ class JetBrainsIntegration:
         output = {**existing, "mcpServers": mcp_servers}
 
         config.mcp_config_path.write_text(
-            json.dumps(output, indent=2).decode().decode() + "\n",
+            json.dumps(output, indent=2) + "\n",
             encoding="utf-8",
         )
         logger.info("Wrote MCP config to %s", config.mcp_config_path)

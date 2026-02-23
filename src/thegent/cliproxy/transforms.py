@@ -6,7 +6,7 @@ These can be used by both thegent and standalone CLI tools.
 
 import hashlib
 import re
-from typing import Any
+from typing import Any, Optional
 
 
 def transform_models_response(response: dict[str, Any]) -> dict[str, Any]:
@@ -63,7 +63,7 @@ def _map_model_for_backend(model: str) -> str:
     return mappings.get(model.lower(), model)
 
 
-def _process_sse_line(line: str) -> dict[str, Any] | None:
+def _process_sse_line(line: str) -> Optional[dict[str, Any]]:
     """Process a Server-Sent Events line."""
     if not line.startswith("data: "):
         return None
