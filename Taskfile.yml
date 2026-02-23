@@ -1598,6 +1598,16 @@ tasks:
     cmds:
       - uv run python scripts/lmcache_contract_smoke.py
 
+  integration:searxng:smoke:
+    desc: "Fail-fast SearXNG endpoint contract smoke."
+    cmds:
+      - uv run python scripts/searxng_contract_smoke.py
+
+  integration:doorstop:smoke:
+    desc: "Fail-fast Doorstop requirements contract smoke."
+    cmds:
+      - uv run python scripts/doorstop_contract_smoke.py
+
   hooks:run:full:
     desc: "Run both local pre-commit and pre-push stages across all files."
     cmds:
