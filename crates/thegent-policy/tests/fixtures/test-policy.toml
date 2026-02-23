@@ -1,0 +1,16 @@
+version = "1.0"
+
+[[policies]]
+id = "cost-governance"
+category = "cost_governance"
+rules = ["FR-GOV-001", "FR-GOV-002"]
+enabled = true
+
+[[policies]]
+id = "compliance-checks"
+category = "compliance"
+rules = ["FR-GOV-003"]
+enabled = true
+
+[globals]
+max_cost_per_day = "10.0"
