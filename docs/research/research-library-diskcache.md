@@ -1,0 +1,31 @@
+# Library Replacement Research — DiskCache
+
+**WORK_STREAM ID:** `research-library-diskcache`
+**Priority:** P2
+**Status:** ✅ Research complete (no implementation yet)
+
+## Purpose
+
+Evaluate whether [`diskcache`](https://grantjenks.com/docs/diskcache/) should replace ad-hoc file scrapers and custom caching in the thegent tooling path.
+
+## Findings
+
+- `diskcache` provides a persistent, SQLite/SQLite3-backed cache with TTL, size limits, and serialization support.
+- It has a Python-native API with predictable behavior and good docs for cleanup/eviction (`fanout`, `timeout`, `cull_limit`).
+- It handles cross-process access better than naive JSONL cache writes and reduces race conditions in concurrent agent workloads.
+- It introduces a new dependency that must be pinned with lock-file hygiene.
+
+## Recommendation
+
+Adopt as a **target library** for local, process-safe cache needs where persistence and eviction policy matter.
+
+## Next Action
+
+1. Add a small compatibility wrapper in `src/thegent/` if a cache abstraction is required.
+2. Gate rollout behind feature flag until benchmark baseline confirms no I/O regression on 10k-session workloads.
+
+## Related Artifacts
+
+- `docs/research/PACKAGE_REPLACEMENT_RESEARCH_SUMMARY.md`
+- `docs/research/PACKAGE_REPLACEMENT_AUDIT_DEEP.md`
+- `docs/research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md`
