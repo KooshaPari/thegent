@@ -2,11 +2,12 @@ import orjson as json
 import logging
 import re
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
+from thegent.integrations.base import SerializableMixin
 from thegent.skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class SessionSnapshotFailedEvent(TypedDict, total=False):
 
 
 @dataclass
-class SessionSnapshot:
+class SessionSnapshot(SerializableMixin):
     """Structured snapshot of recently observed session context."""
 
     snapshot_id: str
@@ -71,9 +72,6 @@ class SessionSnapshot:
     decisions: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
     sources: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict:
-        return asdict(self)
 
 
 def _dedupe_keep_order(items: list[str]) -> list[str]:
