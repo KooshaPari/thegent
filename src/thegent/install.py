@@ -51,6 +51,7 @@ from thegent.install_constants import (
     SHELL_LOCAL_TEMPLATE,
     THEGENT_TOOLS,
     VALID_TARGETS,
+    get_targets_for_install,
 )
 from thegent.install_models import (
     BundleItem,
@@ -1486,7 +1487,7 @@ def run_install(
 
         settings = ThegentSettings()
 
-    if target != "all" and target not in VALID_TARGETS:
+    if target not in VALID_TARGETS and not target.startswith("claude") and target not in ("auto", "all"):
         raise ValueError(f"Invalid target: {target}. Valid targets: {VALID_TARGETS}")
 
     mgr = InstallManager(dry_run=dry_run, verbose=verbose)
@@ -1506,21 +1507,8 @@ def run_install(
     home = get_home_dir()
     cwd = Path.cwd()
 
-    targets = (
-        [target]
-        if target != "all"
-        else [
-            "claude-code",
-            "claude-desktop",
-            "cursor",
-            "codex",
-            "droid",
-            "envrc",
-            "shell",
-            "harness",
-            "git-lock-cleanup",
-        ]
-    )
+    # Use get_targets_for_install to resolve "all", "auto", or comma-separated lists
+    targets = get_targets_for_install(target, auto_detect=True)
 
     # Optional: Install launchd service on macOS
     if install_service and platform.system() == "Darwin" and not dry_run:
