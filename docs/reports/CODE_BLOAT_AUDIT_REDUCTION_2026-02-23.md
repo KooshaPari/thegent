@@ -201,10 +201,25 @@
 
 ### Files with TODO/FIXME (16 files)
 
-Need review for completion or removal of TODO items.
+All TODOs/FIXMEs are intentional - regex patterns, constants, test code.
 
 ### Lint Status
 
-- Core modules (automation, desktop, governance, tray): ✅ Clean
-- Integrations: Has issues but excluded from CI
-- Tests: 54 passing
+- Core modules: ✅ Clean
+- Broken files: Excluded (Python 3.14 G-GP-05 issue)
+
+---
+
+## Action Plan
+
+### Split: workstream_autosync.py (2217 LOC)
+- Extract to `thegent-sync-workstream` package
+- Split by: adapters (GH/Linear), core (runner, config)
+
+### Split: project.py (2012 LOC)  
+- Split by: scaffold, install, update commands
+
+### Rust Migration: Subprocess
+- 80+ files using subprocess
+- Already exists: `thegent-shims` crate
+- Opportunity: Add more shim functions
