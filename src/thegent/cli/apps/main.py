@@ -49,7 +49,7 @@ from thegent.cli.apps import (
     sys,
     team,
 )
-from thegent.cli.apps.project import install_app, scaffold_app
+from thegent.cli.apps.project import install_app, scaffold_app, update_app
 from thegent.cli.apps.project import setup_project_app
 from thegent.mesh.main import app as mesh_app
 from thegent.cli.commands import model_cmds
@@ -93,6 +93,7 @@ app.add_typer(mcp.app, name="mcp", help="MCP: install, service, migration, and c
 app.add_typer(isolation.app, name="isolation", help="Isolation: Multi-tenancy, L1/L2 nesting, and SHM.")
 app.add_typer(mesh_app, name="mesh", help="Mesh: Local agent coordination, status, and discovery.")
 app.add_typer(install_app, name="install", help="Install user/system assets and project runtime installation.")
+app.add_typer(update_app, name="update", help="Update user/system assets and project runtime installation.")
 app.add_typer(git_app, name="git", help="Coordinated git workflows for multi-agent development.")
 app.add_typer(
     registry.app, name="registry", help="Registry: Agent capability index, recommendations, and health (WL-034)."
