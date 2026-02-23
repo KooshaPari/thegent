@@ -83,6 +83,26 @@ thegent install-shims
 thegent setup --hooks
 ```
 
+### Worktree Governance (Primary-main Flow)
+
+thegent bootstrap and shell/dotfile management support a worktree-first governance model:
+
+- Keep your primary checkout on `main`.
+- Do branch development in dedicated worktrees.
+- Merge/cherry-pick branch worktree commits back into `main`.
+
+When bootstrap runs inside a git repository, it can write a marker file:
+
+- `.thegent-primary-main` (policy marker)
+
+Interactive shells get a helper function through managed zsh config:
+
+```bash
+thg_new_worktree <branch> [start-point] [worktree-path]
+```
+
+This helper refuses to branch from a dirty/non-main primary checkout.
+
 ### Automated Tool Management with mise
 
 thegent integrates with [mise](https://mise.jdx.dev/) for automated, per-project tool version management. mise replaces manual `nvm`, `pyenv`, and `rbenv` usage with a single, fast tool that activates automatically when you enter a project directory.

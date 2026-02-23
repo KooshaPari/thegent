@@ -4,6 +4,25 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 
 ---
 
+# Worktree Governance (Mandatory)
+
+- Keep the primary repo checkout on `main`.
+- Create/use dedicated branch worktrees for all feature/fix work.
+- Merge/cherry-pick from branch worktrees back into `main` from a controlled integration flow.
+- Do not repurpose the primary checkout for branch development.
+- If `.thegent-primary-main` exists at repo root, treat it as an enforced policy marker.
+
+Preferred helper:
+
+```bash
+thg_new_worktree <branch> [start-point] [worktree-path]
+```
+
+When operating through bootstrap and shell-managed dotfiles, this helper is installed via
+`~/.zsh_worktree_governance.zsh`.
+
+---
+
 # 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
 
 ## ⛔ FORBIDDEN: Killing Agent or Terminal Processes

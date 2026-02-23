@@ -37,6 +37,21 @@ When layers conflict, higher precedence wins. Project docs should extend global 
 
 ---
 
+# Worktree Governance (Mandatory)
+
+- Keep the primary checkout on `main`; do not do branch development there.
+- Create branch worktrees and do implementation inside them.
+- Integrate into `main` via merge/cherry-pick from those worktrees.
+- Respect `.thegent-primary-main` as a policy marker when present.
+
+Bootstrap + shell dotfile management installs helper tooling:
+
+```bash
+thg_new_worktree <branch> [start-point] [worktree-path]
+```
+
+---
+
 # 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
 
 ## ⛔ FORBIDDEN: Killing Agent or Terminal Processes
@@ -270,6 +285,7 @@ See: `~/.claude/docs/friction-reduction.md` for full helpers, detection patterns
 # Thegent Command Reference
 
 > Full reference with all options, patterns, and providers: `~/.claude/docs/thegent-commands.md`
+> Repo research source: `docs/research/THGENT_COMMAND_MODEL_OPTIONS_AND_AGENT_FEATURES_RESEARCH.md`
 
 ## Command Selection
 
