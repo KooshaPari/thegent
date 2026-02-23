@@ -1,14 +1,38 @@
-"""Routing model compatibility types."""
+from dataclasses import dataclass, field
+from enum import StrEnum
+from typing import Any
 
-from __future__ import annotations
 
-from dataclasses import dataclass
+class TaskCategory(StrEnum):
+    """Task complexity classification."""
+
+    FAST = "FAST"
+    NORMAL = "NORMAL"
+    COMPLEX = "COMPLEX"
+    HIGH_COMPLEX = "HIGH_COMPLEX"
 
 
 @dataclass
 class TaskMetadata:
-    """Minimal task metadata used by agent runners."""
+    """Routing and classification metadata for a task."""
 
-    execution_path: str | None = None
-    provider: str | None = None
-    model: str | None = None
+    category: TaskCategory
+    complexity_score: float = 0.0
+    estimated_tokens: int = 0
+    estimated_cost: float = 0.0
+    estimated_duration_s: float = 0.0
+    reasoning: str = ""
+    signals: dict[str, Any] = field(default_factory=dict)
+    resolved_provider: str | None = None
+    resolved_model_alias: str | None = None
+
+
+@dataclass
+class RoutingConstraint:
+    """A constraint for routing a task."""
+
+    name: str
+    target_value: Any
+    actual_value: Any
+    passed: bool
+    message: str = ""
