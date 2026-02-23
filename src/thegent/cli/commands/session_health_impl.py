@@ -407,5 +407,7 @@ def session_contract_health_gate_impl(
 # Re-export from sub-module for backward-compat import surface
 from thegent.cli.commands.session_health_report_impl import (  # noqa: F401, E402
     session_contract_health_report_impl,
+)
+from thegent.cli.commands.session_health_trend_impl import (  # noqa: F401, E402
     session_contract_health_trend_impl,
 )
