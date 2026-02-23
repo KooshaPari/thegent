@@ -26,56 +26,77 @@ from thegent.cli.commands.governance_audit_compliance_cmds import (
 )
 
 # Re-export all escalation & HITL commands
-# TODO: uncomment when governance_escalation_hitl_cmds is implemented (WL-124)
-# from thegent.cli.commands.governance_escalation_hitl_cmds import (
-#     escalate_add_cmd,
-#     escalate_approve_cmd,
-#     escalate_list_cmd,
-#     escalate_resolve_cmd,
-#     govern_approve_cmd,
-#     govern_list_pending_cmd,
-#     govern_reject_cmd,
-# )
+from thegent.cli.commands.governance_escalation_hitl_cmds import (
+    escalate_add_cmd,
+    escalate_approve_cmd,
+    escalate_list_cmd,
+    escalate_resolve_cmd,
+    govern_approve_cmd,
+    govern_list_pending_cmd,
+    govern_reject_cmd,
+    sweep_cmd,
+)
 
 # Re-export all policy & health commands
-# TODO: uncomment when governance_policy_health_cmds is implemented (WL-124)
-# from thegent.cli.commands.governance_policy_health_cmds import (
-#     contracts_conformance_cmd,
-#     contracts_registry_cmd,
-#     drift_cmd,
-#     govern_configure_cmd,
-#     govern_cost_cmd,
-#     govern_go_cycle_cmd,
-#     govern_go_health_cmd,
-#     govern_go_status_cmd,
-#     govern_go_watch_cmd,
-#     migration_cmd,
-#     policy_check_cmd,
-#     policy_purge_cmd,
-#     policy_show_cmd,
-#     sweep_cmd,
-# )
+from thegent.cli.commands.governance_policy_health_cmds import (
+    contracts_conformance_cmd,
+    contracts_registry_cmd,
+    drift_cmd,
+    govern_configure_cmd,
+    govern_cost_cmd,
+    govern_go_cycle_cmd,
+    govern_go_health_cmd,
+    govern_go_status_cmd,
+    govern_go_watch_cmd,
+    migration_cmd,
+    policy_check_cmd,
+    policy_purge_cmd,
+    policy_show_cmd,
+)
 
 # Re-export discovery & guardrails commands
-# TODO: uncomment when governance_discovery_guardrails_cmds is implemented (WL-124)
-# from thegent.cli.commands.governance_discovery_guardrails_cmds import (
-#     discovery_parse_cmd,
-#     discovery_register_cmd,
-#     discovery_scan_cmd,
-#     guardrails_check_cmd,
-#     guardrails_show_cmd,
-# )
+from thegent.cli.commands.governance_discovery_guardrails_cmds import (
+    discovery_parse_cmd,
+    discovery_register_cmd,
+    discovery_scan_cmd,
+    guardrails_check_cmd,
+    guardrails_show_cmd,
+)
 
 __all__ = [
-    # Only implemented commands from governance_audit_compliance_cmds
     "audit_verify_cmd",
     "compliance_plugin_check_cmd",
     "compliance_redact_cmd",
     "compliance_report_cmd",
     "compliance_siem_test_cmd",
+    "contracts_conformance_cmd",
+    "contracts_registry_cmd",
     "data_protection_cmd",
+    "discovery_parse_cmd",
+    "discovery_register_cmd",
+    "discovery_scan_cmd",
+    "drift_cmd",
+    "escalate_add_cmd",
+    "escalate_approve_cmd",
+    "escalate_list_cmd",
+    "escalate_resolve_cmd",
+    "govern_approve_cmd",
+    "govern_configure_cmd",
+    "govern_cost_cmd",
+    "govern_go_cycle_cmd",
+    "govern_go_health_cmd",
+    "govern_go_status_cmd",
+    "govern_go_watch_cmd",
+    "govern_list_pending_cmd",
+    "govern_reject_cmd",
+    "guardrails_check_cmd",
+    "guardrails_show_cmd",
+    "migration_cmd",
+    "policy_check_cmd",
+    "policy_purge_cmd",
+    "policy_show_cmd",
     "signatures_list_cmd",
     "signatures_verify_cmd",
+    "sweep_cmd",
     "trust_status_cmd",
-    # TODO: add remaining commands when modules are implemented (WL-124)
 ]
