@@ -50,7 +50,6 @@ def _lazy_fallback_import(name: str) -> Any:
     if name in fallback_map:
         module_name = fallback_map[name]
         # Import without going through this module to avoid circular imports
-        parts = module_name.split(".")
         module = __import__(module_name, fromlist=[name])
         return getattr(module, name)
 
