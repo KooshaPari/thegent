@@ -1,3 +1,4 @@
+# MIGRATION NOTE: Migrate to cliproxyapi-plusplus Go SDK
 from __future__ import annotations
 
 import hashlib

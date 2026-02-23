@@ -1,5 +1,12 @@
 """CLIProxyAPIPlus lifecycle: config generation and proxy process management.
 
+# MIGRATION NOTE (2026-02-23)
+# This module should be migrated to:
+# - cliproxyapi-plusplus: Core cliproxy logic -> Go SDK
+# - agentapi: Agent-specific routing -> agentapi Go module
+#
+# After migration, thegent will use generated Python SDKs from both repos.
+
 Unified login flow: open URL + prompt for API key for all providers. Preflight check for
 existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
