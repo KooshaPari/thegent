@@ -137,5 +137,3 @@ packages = [ "src/thegent", "src/research_engine",]
 hooks = "thegent/hooks"
 skills = "thegent/skills"
 "src/thegent/py.typed" = "thegent/py.typed"
-"test_discovery.py" = ["ALL"]
-"packages/thegent-cli/src/thegent_cli/commands/run_cmds.py" = ["PLC0414", "B009"]

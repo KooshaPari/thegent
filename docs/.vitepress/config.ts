@@ -107,11 +107,8 @@ const config = defineConfig({
         errorColor: '#cc0000'
       })
 
-      // Emoji support
-      md.use(markdownItEmoji, {
-        shortcuts: {},
-        defs: {}
-      })
+      // Emoji support - use defaults to avoid undefined rendering in tables
+      md.use(markdownItEmoji)
     },
     // Enable line numbers for code blocks
     lineNumbers: true,
