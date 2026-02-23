@@ -1,7 +1,12 @@
 # Tach Configuration — Architecture Enforcement
 # https://github.com/tach-org/tach
 
-source_roots = ["src", "sub-projects/thegent-cli/src", "sub-projects/thegent-agents/src", "sub-projects/thegent-mcp/src"]
+source_roots = [
+  "src",
+  "packages/thegent-sdk/src",
+  "packages/thegent-mcp/src",
+  "packages/thegent-agents/src",
+]
 
 exclude = [
   "**/__pycache__",
