@@ -3031,7 +3031,7 @@ Validate config parity/drift across dev/staging/prod autosync profiles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-247] Legacy Board ID Migration Tool
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** migration, cli
 **Effort:** M
@@ -3042,7 +3042,7 @@ Add migration command to normalize legacy IDs into WL namespace.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-248] Remote-Orphan Detector
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** S
@@ -3053,7 +3053,7 @@ Detect remote tracker items lacking local workstream representation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-249] Local-Orphan Detector
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** S
@@ -3064,7 +3064,7 @@ Detect local workstream items lacking any remote tracker mapping.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-250] Conflict TTL and Escalation
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, conflicts
 **Effort:** S
@@ -3163,7 +3163,7 @@ Add automatic checker for stale sync docs and command reference drift.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-259] Operator Acceptance Tests
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, ops
 **Effort:** M
@@ -3171,10 +3171,10 @@ Add automatic checker for stale sync docs and command reference drift.
 
 Add operator journey acceptance tests from setup to steady-state operation.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/operator_acceptance.py`, `tests/test_wl259_operator_acceptance.py`
 
 ### [WL-260] Default Enablement Migration Plan
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** migration, release
 **Effort:** S
@@ -3182,7 +3182,7 @@ Add operator journey acceptance tests from setup to steady-state operation.
 
 Define migration plan for enabling autosync by default in existing repos.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/enablement_migration.py`, `tests/test_wl260_enablement_migration.py`
 
 ### [WL-222] Blackout Calendar Support
 **Status:** IN PROGRESS (Wave70 2026-02-22)
