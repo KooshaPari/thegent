@@ -19,23 +19,6 @@ from thegent.cli.commands.dag_impl_helpers import (
 )
 from thegent.config import ThegentSettings
 
-__all__ = [
-    "_dag_path",
-    "_ensure_dag_file",
-    "_session_status_for",
-    "_parse_depends_on",
-    "_get_ready_task_ids",
-    "_resolve_prompt",
-    "dag_list_impl",
-    "dag_raw_impl",
-    "dag_ready_impl",
-    "dag_run_impl",
-    "dag_status_impl",
-    "rules_sync_impl",
-    "dag_sync_impl",
-    "dag_recover_impl",
-]
-
 _log = logging.getLogger(__name__)
 
 
