@@ -66,7 +66,7 @@ class UnifiedWorkerDaemon:
             try:
                 await self._event_consumer_task
             except asyncio.CancelledError:
-                pass
+                _log.debug("Event consumer task cancelled during daemon shutdown")
 
         # Stop Serena
         await self.serena.stop()

@@ -832,7 +832,7 @@ class WorkstreamAutosyncRunner:
             try:
                 await self._task
             except asyncio.CancelledError:
-                pass
+                logger.debug("Autosync task cancelled during shutdown")
 
         logger.info("Workstream autosync stopped")
 

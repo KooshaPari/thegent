@@ -252,6 +252,10 @@ task sync:autopilot:once
 - **[Complete User Guide](./docs/guides/COMPLETE_USER_GUIDE.md)** — Deep dive into features.
 - **[Installation Guide](./docs/guides/INSTALLATION.md)** — Advanced setup options.
 - **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, and troubleshooting.
+- **[Changelog](./CHANGELOG.md)** — Keep-a-Changelog release history with active `Unreleased` section.
+- **[Changelog Process](./docs/guides/CHANGELOG_PROCESS.md)** — How to add, classify, and release changelog entries.
+- **[Changelog Entry Template](./docs/reference/CHANGELOG_ENTRY_TEMPLATE.md)** — Copy/paste template and writing guidance for entries.
+- **[Project Setup Style](./docs/guides/PROJECT_SETUP_STYLE.md)** — Standardized command/process baseline inspired by vercel/ai.
 - **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
 - **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
 
