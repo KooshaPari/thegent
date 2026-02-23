@@ -312,10 +312,12 @@ pub fn run_retry(
 
 /// Check if a command exists in PATH
 #[pyfunction]
-pub fn which(program: String) -> PyResult<Option<String>> {
-    let result: Result<std::path::PathBuf, which::Error> = which::which(&program);
-    match result {
-        Ok(path) => Ok(path.to_str().map(|s| s.to_string())),
+pub fn find_command(program: String) -> PyResult<Option<String>> {
+    match ::which::which(&program) {
+        Ok(path) => {
+            let s = path.as_path().to_string_lossy();
+            Ok(Some(s.to_string()))
+        }
         Err(_) => Ok(None),
     }
 }
@@ -365,7 +367,7 @@ pub fn check_output(
 fn thegent_subprocess(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run, m)?)?;
     m.add_function(wrap_pyfunction!(run_retry, m)?)?;
-    m.add_function(wrap_pyfunction!(which, m)?)?;
+    m.add_function(wrap_pyfunction!(find_command, m)?)?;
     m.add_function(wrap_pyfunction!(check_output, m)?)?;
     Ok(())
 }
@@ -413,7 +415,7 @@ mod tests {
 
     #[test]
     fn test_which_echo() {
-        let result = which("echo".to_string());
+        let result = find_command("echo".to_string());
         assert!(result.is_ok());
         let path = result.unwrap();
         assert!(path.is_some());
@@ -421,7 +423,7 @@ mod tests {
 
     #[test]
     fn test_which_not_found() {
-        let result = which("nonexistent_command_xyz".to_string());
+        let result = find_command("nonexistent_command_xyz".to_string());
         assert!(result.is_ok());
         assert!(result.unwrap().is_none());
     }
