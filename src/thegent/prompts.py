@@ -12,6 +12,7 @@ import orjson as json
 import os
 import sqlite3
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -589,7 +590,7 @@ def run_harvest(script_dir: Path | None = None) -> tuple[int, str]:
     script = base / "scripts" / "harvest-idea-seeds.sh"
     if not script.exists():
         return 1, f"Harvest script not found: {script}"
-    result = subprocess.run(
+    result = shim_run(
         [str(script)],
         capture_output=True,
         text=True,

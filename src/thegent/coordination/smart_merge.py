@@ -5,6 +5,7 @@ Includes Mergiraf integration, conflict prediction, and structural merge.
 import orjson as json
 import logging
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +24,7 @@ class SmartMerger:
         """Perform AST-aware merge using Mergiraf."""
         try:
             cmd = [self.mergiraf_path, "merge", str(base), str(local), str(remote), "-o", str(output)]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            result = shim_run(cmd, capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 logger.info(f"AST merge successful for {output}")
                 return True

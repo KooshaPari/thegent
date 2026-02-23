@@ -305,7 +305,7 @@ class DoctorRunner:
         def _fix() -> str:
             import subprocess
 
-            subprocess.run(["chmod", "700", str(thegent_dir)], check=True, timeout=5)
+            shim_run(["chmod", "700", str(thegent_dir)], check=True, timeout=5)
             return f"chmod 700 {thegent_dir}"
 
         return DoctorCheck(

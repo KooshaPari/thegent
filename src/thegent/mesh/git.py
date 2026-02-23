@@ -7,6 +7,7 @@ import os
 import random
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 
@@ -48,7 +49,7 @@ class GitParallelismManager:
         env = os.environ.copy()
         if use_index:
             env["GIT_INDEX_FILE"] = str(self.agent_index)
-        return subprocess.run(
+        return shim_run(
             ["git", *args],
             cwd=self.project_root,
             env=env,
@@ -74,7 +75,7 @@ class GitParallelismManager:
     def _has_open_lock_holder(self, lock_path: Path) -> bool:
         """Return True when the lock file appears to be open in another process."""
         try:
-            check = subprocess.run(
+            check = shim_run(
                 ["lsof", str(lock_path)],
                 capture_output=True,
                 text=True,
@@ -257,7 +258,7 @@ class GitParallelismManager:
         expected = old_hash
 
         for attempt in range(max_retries):
-            update = subprocess.run(
+            update = shim_run(
                 ["git", "update-ref", ref, new_hash, expected],
                 cwd=self.project_root,
                 capture_output=True,

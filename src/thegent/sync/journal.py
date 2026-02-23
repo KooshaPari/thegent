@@ -64,7 +64,8 @@ class LocalDecisionJournal:
 
     def append(self, entry: SyncDecisionEntry) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        line = json.dumps(asdict(entry).decode().decode(), sort_keys=True)        with self._path.open("a", encoding="utf-8") as handle:
+        line = json.dumps(asdict(entry).decode().decode(), sort_keys=True)
+        with self._path.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
 
     def read_all(self) -> list[SyncDecisionEntry]:

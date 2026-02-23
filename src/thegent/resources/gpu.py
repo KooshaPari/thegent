@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -34,7 +35,7 @@ def _run_subprocess(args: list[str], timeout: int = 10) -> subprocess.CompletedP
     Returns:
         CompletedProcess result.
     """
-    return subprocess.run(
+    return shim_run(
         args,
         capture_output=True,
         text=True,

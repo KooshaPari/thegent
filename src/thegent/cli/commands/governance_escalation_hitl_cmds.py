@@ -1,40 +1,18 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-"""Thegent CLI governance escalation and HITL approval commands.
-
-Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
-"""
-<<<<<<< HEAD
-=======
 """Governance escalation and HITL approval handling commands (WL-124).
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
 
+This module handles escalation queue management and human-in-the-loop (HITL)
+approval workflows for policy enforcement.
+"""
+
+# @trace WL-124
 from __future__ import annotations
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-import sys
-from typing import Any
-
-import orjson as json
-import typer
-<<<<<<< HEAD
-=======
 import json
 import sys
 
 import typer
 
 from rich.panel import Panel
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
@@ -53,22 +31,6 @@ def escalate_add_cmd(
     priority: int = 0,
 ) -> None:
     """Add a blocked run to the escalation queue (WP-3008)."""
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-    from thegent.cli.commands.observability_main_impl import escalate_add_impl
-
-    escalate_add_impl(
-        run_id=run_id,
-        reason=reason,
-        sla_minutes=sla_minutes,
-        owner=owner,
-        lane=lane,
-        priority=priority,
-    )
-<<<<<<< HEAD
-=======
     from thegent.cli.commands.impl import escalate_add_impl
 
     payload = {
@@ -81,9 +43,6 @@ def escalate_add_cmd(
     if priority:
         payload["priority"] = priority
     escalate_add_impl(**payload)
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
     console.print(
         f"[green]Added run_id={run_id} to escalation queue (SLA: {sla_minutes} min, priority: {priority})[/green]"
     )
@@ -95,28 +54,12 @@ def escalate_list_cmd(
     format: str | None = None,
 ) -> None:
     """List governance escalation queue (WP-3008)."""
-<<<<<<< HEAD
-<<<<<<< HEAD
-    from thegent.cli.commands.observability_main_impl import escalate_list_impl
-=======
     from thegent.cli.commands.impl import escalate_list_impl
->>>>>>> fix/ci-remove-macos
-=======
-    from thegent.cli.commands.observability_main_impl import escalate_list_impl
->>>>>>> main
 
     items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-<<<<<<< HEAD
-<<<<<<< HEAD
-        sys.stdout.write(json.dumps(items).decode().decode() + "\n")
-=======
         sys.stdout.write(json.dumps(items) + "\n")
->>>>>>> fix/ci-remove-macos
-=======
-        sys.stdout.write(json.dumps(items).decode().decode() + "\n")
->>>>>>> main
         return
     if not items:
         console.print("[dim]No escalation items.[/dim]")
@@ -145,16 +88,6 @@ def escalate_list_cmd(
     console.print(table)
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved") -> None:
-    """Mark an escalation item as resolved (WP-3008)."""
-    rid = _resolve_run_id(run_id)
-    from thegent.cli.commands.observability_main_impl import escalate_resolve_impl
-<<<<<<< HEAD
-=======
 def sweep_cmd(
     drift_window: int = 50,
     include_audit: bool = False,
@@ -201,37 +134,18 @@ def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved"
     """Mark an escalation item as resolved (WP-3008)."""
     rid = _resolve_run_id(run_id)
     from thegent.cli.commands.impl import escalate_resolve_impl
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
 
     ok = escalate_resolve_impl(run_id=rid, resolution=resolution)
     if ok:
         console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
     else:
-<<<<<<< HEAD
-<<<<<<< HEAD
-        console.print(f"[red]Escalation {rid} not found or already resolved.[/red]")
-=======
         console.print(f"[red]Escalation {rid} has no pending item.[/red]")
->>>>>>> fix/ci-remove-macos
-=======
-        console.print(f"[red]Escalation {rid} not found or already resolved.[/red]")
->>>>>>> main
 
 
 def escalate_approve_cmd(run_id: str | None = None) -> None:
     """Approve an escalation, recording an override for the owner (G-GP-05)."""
     rid = _resolve_run_id(run_id)
-<<<<<<< HEAD
-<<<<<<< HEAD
-    from thegent.cli.commands.observability_main_impl import escalate_approve_impl
-=======
     from thegent.cli.commands.impl import escalate_approve_impl
->>>>>>> fix/ci-remove-macos
-=======
-    from thegent.cli.commands.observability_main_impl import escalate_approve_impl
->>>>>>> main
 
     ok = escalate_approve_impl(run_id=rid)
     if ok:
@@ -241,48 +155,6 @@ def escalate_approve_cmd(run_id: str | None = None) -> None:
 
 
 def govern_approve_cmd(run_id: str, reason: str | None = None) -> None:
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> main
-    """Approve a HITL-blocked run, updating governance_events.jsonl to 'approved'."""
-    from thegent.cli.commands.observability_main_impl import govern_approve_impl
-
-    result = govern_approve_impl(run_id=run_id, reason=reason)
-    console.print(f"[green]Run {run_id} approved.[/green]")
-    if result and result.get("approved"):
-        console.print(f"[dim]Event recorded at {result.get('timestamp_utc', 'unknown')}[/dim]")
-
-
-def govern_reject_cmd(run_id: str, reason: str | None = None) -> None:
-    """Reject a HITL-blocked run, updating governance_events.jsonl to 'rejected'."""
-    from thegent.cli.commands.observability_main_impl import govern_reject_impl
-
-    result = govern_reject_impl(run_id=run_id, reason=reason)
-    console.print(f"[red]Run {run_id} rejected.[/red]")
-    if result and result.get("rejected"):
-        console.print(f"[dim]Event recorded at {result.get('timestamp_utc', 'unknown')}[/dim]")
-
-
-def govern_list_pending_cmd() -> None:
-    """List all pending HITL approval events from governance_events.jsonl."""
-    from thegent.cli.commands.observability_main_impl import govern_list_pending_impl
-
-    items = govern_list_pending_impl()
-    if not items:
-        console.print("[dim]No pending HITL approvals.[/dim]")
-        return
-    table = Table(title="Pending HITL Approvals")
-    table.add_column("Run ID")
-    table.add_column("Status")
-    table.add_column("Timestamp")
-    for it in items:
-        table.add_row(
-            it.get("run_id", "?"),
-            it.get("status", "unknown"),
-            it.get("timestamp_utc", "?")[:19],
-<<<<<<< HEAD
-=======
     """WL-019-B: Approve a HITL-blocked run (G-GP-05).
 
     Reads pending approvals from governance_events.jsonl, updates status to
@@ -359,9 +231,6 @@ def govern_list_pending_cmd(format: str | None = None) -> None:
             it.get("owner", "-"),
             (it.get("emitted_at_utc") or "?")[:19],
             diff_summary,
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
         )
     console.print(table)
 
@@ -374,11 +243,5 @@ __all__ = [
     "govern_approve_cmd",
     "govern_list_pending_cmd",
     "govern_reject_cmd",
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
     "sweep_cmd",
->>>>>>> fix/ci-remove-macos
-=======
->>>>>>> main
 ]

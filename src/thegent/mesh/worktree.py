@@ -8,6 +8,7 @@ import orjson as json
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 
@@ -50,7 +51,7 @@ class WorktreeManager:
             self.remove_worktree(agent_id)
 
         try:
-            subprocess.run(
+            shim_run(
                 ["git", "worktree", "add", str(worktree_path), branch],
                 cwd=self.project_root,
                 check=True,
@@ -122,7 +123,7 @@ class WorktreeManager:
             return True
 
         try:
-            subprocess.run(
+            shim_run(
                 ["git", "worktree", "remove", "--force", str(worktree_path)],
                 cwd=self.project_root,
                 check=True,

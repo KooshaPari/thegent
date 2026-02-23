@@ -4,6 +4,7 @@ import os
 import platform
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 
@@ -27,7 +28,7 @@ class OSUserAdapter:
         # (Windows doesn't have a direct 'sudo' in standard shell, needs ShellExecute with 'runas')
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            result = shim_run(cmd, capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 return True, result.stdout.strip()
             return False, result.stderr.strip()
@@ -111,7 +112,7 @@ class OSUserAdapter:
 
         # Windows doesn't have 'sudo', we expect to be running as admin.
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            result = shim_run(cmd, capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 return True, result.stdout.strip()
             return False, result.stderr.strip()

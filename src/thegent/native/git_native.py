@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +32,7 @@ except ImportError:
 def _run_git_command(repo_path: str, *args: str) -> str | None:
     """Run a git command and return output."""
     try:
-        result = subprocess.run(
+        result = shim_run(
             ["git", "-C", repo_path, *args],
             capture_output=True,
             text=True,

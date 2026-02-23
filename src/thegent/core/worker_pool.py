@@ -81,7 +81,7 @@ def get_runner(agent_name: str) -> Any:
 def run_task_in_process(task: dict[str, Any]) -> dict[str, Any]:
     """Execute an agent task in-process via the agent registry.
 
-    Replaces the old subprocess.run() approach. Errors propagate directly
+    Replaces the old shim_run() approach. Errors propagate directly
     instead of being silently swallowed.
 
     # @trace FR-OPT-006

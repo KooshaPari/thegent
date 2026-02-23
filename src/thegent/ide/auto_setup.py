@@ -69,7 +69,7 @@ def auto_setup_jetbrains_integration(auto_install: bool = True) -> dict[str, Any
         try:
             if system == "darwin":
                 # Install via Homebrew
-                result = subprocess.run(
+                result = shim_run(
                     ["brew", "install", "--cask", "intellij-idea"],
                     capture_output=True,
                     text=True,

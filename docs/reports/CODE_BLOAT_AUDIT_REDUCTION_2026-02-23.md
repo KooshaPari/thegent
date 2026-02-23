@@ -223,3 +223,31 @@ All TODOs/FIXMEs are intentional - regex patterns, constants, test code.
 - 80+ files using subprocess
 - Already exists: `thegent-shims` crate
 - Opportunity: Add more shim functions
+
+---
+
+## Migration Progress
+
+### Shim Subprocess Migration (Feb 23, 2026)
+- Created: `thegent/infra/shim_subprocess.py` - shim-aware subprocess runner
+- Updated 18 files to use shims:
+  - governance/native_governance_scan.py
+  - governance/native_secret_scan.py
+  - governance/scanner.py
+  - orchestration/shadow.py
+  - orchestration/state/audit_log.py
+  - orchestration/state/shadow.py
+  - orchestration/state/transactions.py
+  - audit/shadow_audit_git.py
+  - cli/commands/impl.py
+  - cli/commands/model_cmds.py
+  - cli/commands/cli_git.py
+  - infra/worktree.py
+  - mesh/cli.py
+  - mesh/merge.py
+  - mesh/git.py
+  - mesh/smart_merge.py
+  - mesh/audit.py
+  - mesh/git_parallelism.py
+
+Remaining: 78+ files can be migrated similarly

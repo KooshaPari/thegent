@@ -5,6 +5,7 @@ Includes tmux session detection, command injection via send-keys, and readiness 
 import logging
 import re
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ class TmuxInjector:
     def list_agent_sessions(self) -> list[str]:
         """List all tmux sessions matching agent prefix."""
         try:
-            result = subprocess.run(["tmux", "ls", "-F", "#S"], capture_output=True, text=True, check=False)
+            result = shim_run(["tmux", "ls", "-F", "#S"], capture_output=True, text=True, check=False)
             if result.returncode != 0:
                 return []
             sessions = result.stdout.splitlines()
@@ -35,7 +36,7 @@ class TmuxInjector:
 
         # send-keys -l for literal string, then Enter
         try:
-            subprocess.run(["tmux", "send-keys", "-t", session_id, command, "C-m"], check=True)
+            shim_run(["tmux", "send-keys", "-t", session_id, command, "C-m"], check=True)
             logger.info(f"Injected command into {session_id}: {command}")
             return True
         except subprocess.CalledProcessError:
@@ -54,7 +55,7 @@ class TmuxInjector:
         """Check if session is at a prompt (idle)."""
         try:
             # Capture last few lines of the pane
-            result = subprocess.run(
+            result = shim_run(
                 ["tmux", "capture-pane", "-pt", session_id], capture_output=True, text=True, check=False
             )
             output = result.stdout.strip()

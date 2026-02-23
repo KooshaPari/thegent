@@ -7,6 +7,7 @@ Leverages gix/gitoxide via native binary and private index files.
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from pathlib import Path
 

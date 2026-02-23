@@ -4,6 +4,7 @@ import logging
 import shlex
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +45,7 @@ class RemoteComputeClient:
 
         try:
             # We use check=False because we want to capture exit_code
-            result = subprocess.run(
+            result = shim_run(
                 ssh_cmd,
                 capture_output=True,
                 text=True,
@@ -94,7 +95,7 @@ class RemoteComputeClient:
         logger.info(f"Transferring {local_path} to {self.remote_host}:{remote_path}")
 
         try:
-            subprocess.run(rsync_cmd, check=True, capture_output=True)
+            shim_run(rsync_cmd, check=True, capture_output=True)
             return True
         except subprocess.CalledProcessError as e:
             logger.error(f"File transfer failed: {e.stderr.decode()}")

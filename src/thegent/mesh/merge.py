@@ -1,6 +1,7 @@
 """Smart merge and conflict resolution for the agent mesh."""
 
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 
@@ -14,7 +15,7 @@ class SmartMerge:
         """Mergiraf integration (AST-aware merge) (SCLI-P5.1)."""
         # Mergiraf command line: mergiraf merge --base <base> --ours <ours> --theirs <theirs> --output <output>
         try:
-            subprocess.run(
+            shim_run(
                 [
                     "mergiraf",
                     "merge",
@@ -35,7 +36,7 @@ class SmartMerge:
             # Fallback to standard 3-way merge if mergiraf fails or missing
             try:
                 with output.open("wb") as out_file:
-                    subprocess.run(
+                    shim_run(
                         ["git", "merge-file", "-p", str(ours), str(base), str(theirs)],
                         check=True,
                         stdout=out_file,
@@ -91,7 +92,7 @@ class SmartMerge:
         if ext == ".json":
             try:
                 with output.open("wb") as out_file:
-                    subprocess.run(
+                    shim_run(
                         ["jq", "-s", ".[0] * .[1]", str(path_a), str(path_b)],
                         check=True,
                         stdout=out_file,

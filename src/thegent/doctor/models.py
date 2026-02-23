@@ -23,7 +23,7 @@ class CheckResult:
     fix_available: bool = False
 
 
-@dataclass 
+@dataclass
 class ProcessInfo:
     """Information about a process."""
     pid: int

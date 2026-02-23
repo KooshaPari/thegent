@@ -31,7 +31,7 @@ def project_migrate_snapshot(project_path: Path) -> dict[str, Any]:
 
 __all__ = [
     "project_migrate",
-    "resolve_migration_template", 
-    "resolve_migration_mode",
     "project_migrate_snapshot",
+    "resolve_migration_mode",
+    "resolve_migration_template",
 ]

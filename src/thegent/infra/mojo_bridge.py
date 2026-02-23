@@ -17,6 +17,7 @@ import os
 import platform
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -223,7 +224,7 @@ class MojoBridge:
         if modular_cmd:
             # Try to get mojo version through modular
             try:
-                _result = subprocess.run(
+                _result = shim_run(
                     ["modular", "auth"],
                     capture_output=True,
                     timeout=5,
