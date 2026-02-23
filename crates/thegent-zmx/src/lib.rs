@@ -45,6 +45,8 @@ use anyhow::{Context, Result, anyhow};
 
 pub use thegent_zmx_interop::ZmxError;
 
+pub mod session;
+
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
