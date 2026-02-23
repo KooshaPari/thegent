@@ -202,9 +202,22 @@ def continuity_snapshot_impl(
     )
 
 
-def harness_interact_impl() -> dict[str, Any]:
+def harness_interact_impl(
+    *,
+    harness: str,
+    action: str,
+    host_id: str | None = None,
+    prompt: str | None = None,
+    session_id: str | None = None,
+) -> dict[str, Any]:
     from thegent.cli.services import run_post_surface_helpers
-    return run_post_surface_helpers.harness_interact_impl()
+    return run_post_surface_helpers.harness_interact_impl(
+        harness=harness,
+        action=action,
+        host_id=host_id,
+        prompt=prompt,
+        session_id=session_id,
+    )
 
 
 def harness_list_actions_impl() -> dict[str, Any]:

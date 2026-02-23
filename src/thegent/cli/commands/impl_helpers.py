@@ -5,7 +5,6 @@ from thegent.cli.services import (
     run_audio_helpers,
     run_dag_helpers,
     run_event_helpers,
-    run_guard_helpers,
     run_health_helpers,
     run_input_helpers,
     run_model_helpers,
