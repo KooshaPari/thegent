@@ -1,11 +1,17 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 """Thegent CLI governance discovery and guardrails commands.
 
 Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
 """
+<<<<<<< HEAD
 =======
 """Governance discovery and guardrails commands (WL-124).
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 
 This module handles guardrails enforcement and discovery of external agents
 and governance-relevant code patterns.
@@ -15,6 +21,9 @@ and governance-relevant code patterns.
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
 import os
 import sys
 from pathlib import Path
@@ -30,6 +39,7 @@ from thegent.cli.commands._cli_shared import (
     console,
 )
 
+<<<<<<< HEAD
 =======
 from pathlib import Path
 
@@ -79,6 +89,8 @@ def guardrails_show_cmd() -> None:
     console.print(table)
 
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 
 def discovery_register_cmd(
     agent: str = typer.Option("?", "--agent", "-a", help="Agent name"),
@@ -93,10 +105,15 @@ def discovery_register_cmd(
 ) -> None:
     """Register or update a discovered external agent (WP-4008)."""
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     import json
 
 >>>>>>> fix/ci-remove-macos
+=======
+    import json
+
+>>>>>>> main
     from thegent.discovery import register_discovered_agent
 
     token_usage = None
@@ -126,6 +143,9 @@ def discovery_parse_cmd(
 ) -> None:
     """Parse CLI output for session information and register them."""
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
     from thegent.discovery import register_discovered_agent
     from thegent.parser import parse_cli_output
 
@@ -133,6 +153,7 @@ def discovery_parse_cmd(
     if text is None:
         if sys.stdin.isatty():
             console_obj.print("[yellow]Waiting for input on stdin (Ctrl+D to finish)...[/yellow]")
+<<<<<<< HEAD
 =======
     import sys
 
@@ -147,15 +168,21 @@ def discovery_parse_cmd(
         if sys.stdin.isatty():
             console.print("[yellow]Waiting for input on stdin (Ctrl+D to finish)...[/yellow]")
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
         text = sys.stdin.read()
 
     sessions = parse_cli_output(text)
     if not sessions:
 <<<<<<< HEAD
+<<<<<<< HEAD
         console_obj.print("[yellow]No sessions found in output.[/yellow]")
 =======
         console.print("[yellow]No sessions found in output.[/yellow]")
 >>>>>>> fix/ci-remove-macos
+=======
+        console_obj.print("[yellow]No sessions found in output.[/yellow]")
+>>>>>>> main
         return
 
     table = Table(title="Discovered Sessions")
@@ -171,6 +198,7 @@ def discovery_parse_cmd(
 
         if register:
 <<<<<<< HEAD
+<<<<<<< HEAD
             target_ppid = ppid or os.getpid()
 =======
             # If PPID is not given, we use current PID as a placeholder
@@ -178,6 +206,9 @@ def discovery_parse_cmd(
             # If PPID is not given, we use the current shell's parent PID for best effort attribution.
             target_ppid = ppid or os.getppid()
 >>>>>>> fix/ci-remove-macos
+=======
+            target_ppid = ppid or os.getpid()
+>>>>>>> main
             register_discovered_agent(
                 pid=0,
                 ppid=target_ppid,
@@ -189,6 +220,7 @@ def discovery_parse_cmd(
             )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     console_obj.print(table)
     if register:
         console_obj.print(f"[green]Registered {len(sessions)} session(s).[/green]")
@@ -197,6 +229,11 @@ def discovery_parse_cmd(
     if register:
         console.print(f"[green]Registered {len(sessions)} session(s).[/green]")
 >>>>>>> fix/ci-remove-macos
+=======
+    console_obj.print(table)
+    if register:
+        console_obj.print(f"[green]Registered {len(sessions)} session(s).[/green]")
+>>>>>>> main
 
 
 def discovery_scan_cmd(
@@ -209,6 +246,7 @@ def discovery_scan_cmd(
     for introspection via thegent ps, terminal takeover, and inbox.
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     from thegent.discovery import list_discovered_agents, scan_agent_processes
 
     console_obj = Console()
@@ -220,6 +258,11 @@ def discovery_scan_cmd(
 
     console = Console()
 >>>>>>> fix/ci-remove-macos
+=======
+    from thegent.discovery import list_discovered_agents, scan_agent_processes
+
+    console_obj = Console()
+>>>>>>> main
     registered = scan_agent_processes()
 
     if not format or format == "rich":
@@ -237,6 +280,9 @@ def discovery_scan_cmd(
                     r.get("cwd", "?")[:50],
                 )
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
             console_obj.print(table)
             console_obj.print(f"[green]Registered {len(registered)} agent session(s).[/green]")
         else:
@@ -285,6 +331,7 @@ def guardrails_show_cmd() -> None:
     )
 
     console.print(table)
+<<<<<<< HEAD
 =======
             console.print(table)
             console.print(f"[green]Registered {len(registered)} agent session(s).[/green]")
@@ -306,6 +353,8 @@ __all__ = [
     "guardrails_show_cmd",
 ]
 >>>>>>> fix/ci-remove-macos
+=======
+>>>>>>> main
 
 
 __all__ = [

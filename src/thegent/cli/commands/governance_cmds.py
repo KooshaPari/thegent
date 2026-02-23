@@ -36,13 +36,18 @@ from thegent.cli.commands.governance_escalation_hitl_cmds import (
     govern_list_pending_cmd,
     govern_reject_cmd,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     sweep_cmd,
 >>>>>>> fix/ci-remove-macos
+=======
+    sweep_cmd,
+>>>>>>> main
 )
 
 # Re-export all policy & health commands
 from thegent.cli.commands.governance_policy_health_cmds import (
+<<<<<<< HEAD
 <<<<<<< HEAD
     HEALTH_POLICY_PROFILES,
 =======
@@ -76,6 +81,13 @@ from thegent.cli.commands.governance_agileplus_cmds import (
     policy_show_cmd,
 >>>>>>> fix/ci-remove-macos
 )
+=======
+    HEALTH_POLICY_PROFILES,
+    govern_go_cycle_cmd,
+    govern_go_health_cmd,
+    govern_go_status_cmd,
+    govern_go_watch_cmd,)
+>>>>>>> main
 
 # Re-export discovery & guardrails commands
 from thegent.cli.commands.governance_discovery_guardrails_cmds import (
@@ -87,6 +99,7 @@ from thegent.cli.commands.governance_discovery_guardrails_cmds import (
 )
 
 __all__ = [
+<<<<<<< HEAD
 <<<<<<< HEAD
     # Audit & compliance
 =======
@@ -160,4 +173,7 @@ __all__ = [
     "guardrails_show_cmd",
 =======
 >>>>>>> fix/ci-remove-macos
+=======
+    # Audit & compliance
+>>>>>>> main
 ]

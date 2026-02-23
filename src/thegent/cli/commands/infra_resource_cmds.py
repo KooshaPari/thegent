@@ -4,11 +4,15 @@
 from __future__ import annotations
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import orjson as json
 =======
 import json
 >>>>>>> fix/ci-remove-macos
 import sys
+=======
+import orjson as jsonimport sys
+>>>>>>> main
 from pathlib import Path
 from typing import Any
 

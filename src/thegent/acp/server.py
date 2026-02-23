@@ -2,11 +2,15 @@
 
 import asyncio
 <<<<<<< HEAD
+<<<<<<< HEAD
 import orjson as json
 =======
 from thegent.utils.json_utils import json_dumps, json_loads
 >>>>>>> fix/ci-remove-macos
 import logging
+=======
+import orjson as jsonimport logging
+>>>>>>> main
 import sys
 from pathlib import Path
 from typing import Any
@@ -306,11 +310,15 @@ class ACPServerAdapter:
                 request = json_loads(line)
                 response = await self.handle_request(request)
 <<<<<<< HEAD
+<<<<<<< HEAD
                 sys.stdout.write(json.dumps(response).decode().decode() + "\n")
 =======
                 sys.stdout.write(json_dumps(response) + "\n")
 >>>>>>> fix/ci-remove-macos
                 sys.stdout.flush()
+=======
+                sys.stdout.write(json.dumps(response).decode().decode() + "\n")                sys.stdout.flush()
+>>>>>>> main
 
             except json.JSONDecodeError as e:
                 logger.error("Invalid JSON-RPC request: %s", e)
@@ -320,11 +328,15 @@ class ACPServerAdapter:
                     "error": {"code": -32700, "message": f"Parse error: {e}"},
                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
                 sys.stdout.write(json.dumps(error_response).decode().decode() + "\n")
 =======
                 sys.stdout.write(json_dumps(error_response) + "\n")
 >>>>>>> fix/ci-remove-macos
                 sys.stdout.flush()
+=======
+                sys.stdout.write(json.dumps(error_response).decode().decode() + "\n")                sys.stdout.flush()
+>>>>>>> main
             except Exception as e:
                 logger.error("Error handling request: %s", e, exc_info=True)
                 error_response = {
@@ -333,11 +345,15 @@ class ACPServerAdapter:
                     "error": {"code": -32603, "message": f"Internal error: {e}"},
                 }
 <<<<<<< HEAD
+<<<<<<< HEAD
                 sys.stdout.write(json.dumps(error_response).decode().decode() + "\n")
 =======
                 sys.stdout.write(json_dumps(error_response) + "\n")
 >>>>>>> fix/ci-remove-macos
                 sys.stdout.flush()
+=======
+                sys.stdout.write(json.dumps(error_response).decode().decode() + "\n")                sys.stdout.flush()
+>>>>>>> main
 
 
 async def main() -> None:

@@ -2,611 +2,7 @@
 
 import contextlib
 import hashlib
-
-import logging
-import os
-import socket
-import time
-import uuid
-
-from thegent.utils.json_utils import json_dumps, json_loads
-from datetime import UTC, datetime, timedelta
-from enum import StrEnum
-from pathlib import Path
-from typing import Any
-
-import httpx
-from pydantic import BaseModel, Field, ValidationError
-
-from thegent.config import ThegentSettings
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
-from thegent.execution_event_builders import (
-    build_feedback_event,
-    build_finish_event,
-    build_pause_event,
-    build_resume_event,
-    build_schema_marker_event,
-)
-from thegent.execution_hash_helpers import calculate_stable_record_hash
-from thegent.execution_jsonl_parsers import parse_checkpoint_by_id as _parse_checkpoint_by_id_impl
-from thegent.execution_jsonl_parsers import parse_checkpoint_line as _parse_checkpoint_line_impl
-from thegent.execution_jsonl_parsers import parse_circuit_failure as _parse_circuit_failure_impl
-from thegent.execution_jsonl_parsers import parse_dlq_item as _parse_dlq_item_impl
-from thegent.execution_jsonl_parsers import parse_fatigue_line as _parse_fatigue_line_impl
-from thegent.execution_jsonl_parsers import parse_override_unexpired as _parse_override_unexpired_impl
-from thegent.execution_jsonl_parsers import process_dlq_line as _process_dlq_line_impl
-from thegent.execution_run_scan_helpers import check_session_id as _check_session_id_impl
-from thegent.execution_run_scan_helpers import extract_domain_tag as _extract_domain_tag_impl
-from thegent.execution_run_scan_helpers import extract_run_id as _extract_run_id_impl
-from thegent.execution_run_scan_helpers import extract_session_id as _extract_session_id_impl
-from thegent.execution_run_scan_helpers import filter_expired_record as _filter_expired_record_impl
-from thegent.execution_run_scan_helpers import process_calibration_entry as _process_calibration_entry_impl
-from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry_impl
-from thegent.execution_run_scan_helpers import process_token_match as _process_token_match_impl
-from thegent.execution_run_scan_helpers import update_run_state as _update_run_state_impl
-
-_log = logging.getLogger(__name__)
-_EXECUTION_WARNING_LIMIT = 3
-_execution_warning_count = 0
-_admission_import_warning_once: set[str] = set()
-_execution_diagnostics: dict[str, Any] = {
-    "optional_gate_import_failures": 0,
-    "optional_gate_last_error_type": None,
-    "optional_gate_last_error_message": None,
-    "deadline_unregister": {
-        "import_failures": 0,
-        "runtime_failures": 0,
-        "last_error_type": None,
-        "last_error_message": None,
-    },
-    "message_parse": {
-        "invalid_rows": 0,
-        "non_pending_rows": 0,
-        "last_error_type": None,
-        "last_error_message": None,
-    },
-}
-
-
-def _warn_bounded(message: str, *args: object) -> None:
-    global _execution_warning_count
-    _execution_warning_count += 1
-    if _execution_warning_count <= _EXECUTION_WARNING_LIMIT:
-        _log.warning(message, *args)
-
-
-def get_execution_diagnostics() -> dict[str, Any]:
-    """Return diagnostics snapshot for execution-path degradation."""
-    return {
-        "optional_gate_import_failures": _execution_diagnostics["optional_gate_import_failures"],
-        "optional_gate_last_error_type": _execution_diagnostics["optional_gate_last_error_type"],
-        "optional_gate_last_error_message": _execution_diagnostics["optional_gate_last_error_message"],
-        "deadline_unregister": dict(_execution_diagnostics["deadline_unregister"]),
-        "message_parse": dict(_execution_diagnostics["message_parse"]),
-    }
-
-
-def reset_execution_diagnostics() -> None:
-    """Reset execution diagnostics (test helper)."""
-    global _execution_warning_count
-    _execution_warning_count = 0
-    _admission_import_warning_once.clear()
-    _execution_diagnostics["optional_gate_import_failures"] = 0
-    _execution_diagnostics["optional_gate_last_error_type"] = None
-    _execution_diagnostics["optional_gate_last_error_message"] = None
-    _execution_diagnostics["deadline_unregister"] = {
-        "import_failures": 0,
-        "runtime_failures": 0,
-        "last_error_type": None,
-        "last_error_message": None,
-    }
-    _execution_diagnostics["message_parse"] = {
-        "invalid_rows": 0,
-        "non_pending_rows": 0,
-        "last_error_type": None,
-        "last_error_message": None,
-    }
-
-
-def _as_float(value: Any, default: float) -> float:
-    """Coerce arbitrary values to float with a safe default."""
-    return _as_float_impl(value, default)
-
-
-def _as_int(value: Any, default: int) -> int:
-    """Coerce arbitrary values to int with a safe default."""
-    return _as_int_impl(value, default)
-
-
-def _as_bool(value: Any, default: bool) -> bool:
-    """Coerce arbitrary values to bool with a safe default."""
-    return _as_bool_impl(value, default)
-
-
-class RunState(StrEnum):
-    """Run lifecycle state for state-aware orchestration (G-KD-03)."""
-
-    RUNNING = "running"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    FAILED = "failed"
-
-
-class MAIFArtifact(BaseModel):
-    """WP-3002: Model AI Information Format (MAIF) for signed artifacts."""
-
-    version: str = "1.0"
-    run_id: str
-    timestamp: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
-    agent: str
-    model: str | None = None
-    prompt_hash: str
-    output_hash: str | None = None
-    signature: str
-    policy_result: str | None = None
-
-
-class IdempotencyManager:
-    """WP-1003: Ensures idempotent execution using 4-tuple keys."""
-
-    def __init__(self, session_dir: Path) -> None:
-        self.session_dir = session_dir
-
-    def generate_key(self, run_id: str, step_index: int, action_type: str, content: str) -> str:
-        """Generate a 4-tuple idempotency key (run_id, step, action, hash)."""
-        content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
-        return f"{run_id}:{step_index}:{action_type}:{content_hash}"
-
-    def check_and_record(self, registry: "RunRegistry", key: str) -> bool:
-        """Check if key exists in registry; return True if already executed."""
-        run = registry.find_by_token(key)
-        return run is not None and run.get("status") == "completed"
-
-
-class ContinuityPacket(BaseModel):
-    """Compressed essence of session progress for cross-session handoffs (L3/L4).
-
-    # @trace FR-HAX-004
-    """
-
-    intent: str
-    """High-level goal of the session."""
-
-    decisions: list[str] = Field(default_factory=list)
-    """Key decisions made during the session."""
-
-    risks: list[str] = Field(default_factory=list)
-    """Identified risks or blockers."""
-
-    context_hashes: dict[str, str] = Field(default_factory=dict)
-    """SHA-256 hashes of referenced context files keyed by path string."""
-
-    token_count: int = 0
-    """Approximate token count (rough estimate)."""
-
-    session_id: str = Field(default_factory=lambda: "")
-    """Session ID this packet belongs to."""
-
-    created_at: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
-    """ISO-8601 timestamp when the packet was created."""
-
-
-class ConcurrencyController:
-    """WP-5001: Advanced resource-based adaptive concurrency controller.
-
-    Features:
-    - Extended resource indices (CPU, memory, FD, network, disk, GPU, etc.)
-    - Prediction engine for forecasting resource needs
-    - Harness card modeling (codex/claude/droid usage profiles)
-    - Bottleneck detection and analysis
-    - Speculative execution strategies
-    - Work chunking and parallelization
-    - Per-owner usage tracking for fairness enforcement (swarm-usage-tracking)
-    """
-
-    def __init__(
-        self,
-        session_dir: Path,
-        max_concurrency: int = 5,
-        use_load_based: bool = True,
-        critical_lane_slots: int | None = None,
-    ) -> None:
-        self.session_dir = session_dir
-        self.max_concurrency = max_concurrency  # Fallback if load-based disabled
-        self.use_load_based = use_load_based
-        self.lock_file = session_dir / "concurrency.lock"
-        # Critical lane reservation: slots kept exclusively for critical-priority runs.
-        # Standard runs are limited to slots 0..(max_slots - critical_lane_slots - 1).
-        # Resolved from: explicit arg → settings.critical_lane_slots → default 2.
-        if critical_lane_slots is not None:
-            self.critical_lane_slots = max(0, critical_lane_slots)
-        else:
-            try:
-                settings = ThegentSettings()
-                configured_slots = settings.critical_lane_slots
-            except Exception:
-                configured_slots = _as_int(os.environ.get("THGENT_CRITICAL_LANE_SLOTS"), 2)
-            self.critical_lane_slots = max(0, configured_slots if configured_slots is not None else 2)
-
-        # Per-owner usage tracker (module-level singleton, shared across instances).
-        from thegent.orchestration.resource.load_based_limits import get_usage_tracker
-
-        self._usage_tracker = get_usage_tracker()
-
-        # Initialize advanced features (if available)
-        if use_load_based:
-            try:
-                from thegent.orchestration.resource.resource_management import (
-                    BottleneckDetector,
-                    ResourcePredictionEngine,
-                    create_harness_cards,
-                )
-
-                self.prediction_engine = ResourcePredictionEngine(session_dir / "resource_history.jsonl")
-                self.bottleneck_detector = BottleneckDetector()
-                self.harness_cards = create_harness_cards()
-            except ImportError:
-                # Advanced features not available, use basic resource-based limits
-                self.prediction_engine = None
-                self.bottleneck_detector = None
-                self.harness_cards = None
-
-    def acquire(
-        self,
-        lane: str = "standard",
-        harness_type: str | None = None,
-        priority: str = "standard",
-        owner: str = "unknown",
-        run_id: str = "",
-        soft_deadline_s: float | None = None,
-        warn_at_pct: float = 0.8,
-        speculative: bool = False,
-    ) -> bool:
-        """Acquire a concurrency slot using advanced resource-based limits.
-
-        Uses:
-        - Extended resource monitoring (CPU, memory, FD, network, disk, etc.)
-        - Prediction engine for forecasting
-        - Harness card modeling for harness-specific limits
-        - Bottleneck detection
-        - 5% minimum buffer (hard limit, prevents crashes)
-        - 15% discretionary buffer (soft limit, allows scaling)
-        - Critical lane reservation: standard runs are blocked from the top
-          ``critical_lane_slots`` slots so that critical runs always find room.
-        - Per-owner usage tracking: records start when admitted.
-        - Soft deadline monitoring: registers a preferred completion time with
-          the :class:`DeadlineMonitor` when ``soft_deadline_s`` is provided.
-          Past-deadline runs are logged but never cancelled.
-
-        Args:
-            lane: Lane name (``"standard"``, ``"critical"``, etc.).
-            harness_type: Optional harness type for capacity modeling.
-            priority: ``"critical"`` or ``"standard"`` (default).  A run is
-                treated as critical when ``priority="critical"`` OR when
-                ``lane="critical"``.  Critical runs may use all available
-                slots; standard runs are limited to
-                ``effective_limit - critical_lane_slots``.
-            owner: Identifier for the owning agent/user/project (for fairness tracking).
-            run_id: Unique run identifier (for tracing in usage logs).
-            soft_deadline_s: Optional preferred completion budget in seconds.
-                When provided and the run is admitted, a soft deadline is
-                registered with the module-level :class:`DeadlineMonitor`.
-                Violations emit WARNING (at ``warn_at_pct * soft_deadline_s``)
-                and ERROR (at ``soft_deadline_s``) but do NOT cancel the run.
-            warn_at_pct: Fraction of ``soft_deadline_s`` at which to warn
-                (default 0.8 → 80 %).  Only used when ``soft_deadline_s`` is set.
-        """
-        is_critical = priority == "critical" or (lane or "").lower() == "critical"
-        from thegent.cli.commands.impl import ps_impl
-        from thegent.config import ThegentSettings
-
-        sessions = ps_impl(all=True)
-        running_count = sum(1 for s in sessions if s.get("status") == "running")
-
-        # Use resource-based limits if enabled (default)
-        settings = ThegentSettings()
-        if self.use_load_based and (True):  # Default to True
-            from thegent.orchestration.resource.load_based_limits import (
-                LimitGateConfig,
-                compute_dynamic_limit,
-                sample_resources,
-            )
-
-            # Sample current resources
-            snapshot = sample_resources()
-
-            # Compute base dynamic limit (uses 5% min buffer, 15% discretionary buffer)
-            config = LimitGateConfig.from_dict(settings.model_dump())
-            effective_limit, details = compute_dynamic_limit(snapshot, config)
-
-            # Log per-gate details (swarm-per-gate-logging)
-            gate_values = {
-                "cpu": details.get("cpu_slots", 999),
-                "fd": details.get("fd_slots", 999),
-                "mem": details.get("mem_slots", 999),
-                "load": details.get("load_slots", 999),
-            }
-            limiting_gate = min(gate_values, key=lambda k: gate_values[k])
-            _log.info(
-                f"concurrency admission: effective_limit={effective_limit} "
-                f"limiting_gate={limiting_gate} details={gate_values} "
-                f"running={running_count} run_id={run_id}"
-            )
-
-            # Advanced features (if available)
-            try:
-                from thegent.orchestration.resource.resource_management import sample_extended_resources
-
-                extended_snapshot = sample_extended_resources()
-
-                # Record for prediction engine
-                if self.prediction_engine:
-                    self.prediction_engine.record(extended_snapshot)
-
-                    # WP-5001: Predictive Throttling for Speculative Runs
-                    if speculative and self.prediction_engine.should_throttle_speculative():
-                        _log.info(f"gate blocked: gate=speculative_throttle value=1.0 limit=0.0 run_id={run_id}")
-                        return False
-                    _log.info(f"gate passed: gate=speculative_throttle run_id={run_id}")
-
-                # Apply harness card modeling if harness type specified
-                if harness_type and self.harness_cards:
-                    card = self.harness_cards.get(harness_type)
-                    if card:
-                        # Estimate resources for current + 1 session (use p95 for conservative planning)
-                        estimated = card.estimate_resources(running_count + 1, isolated=False, use_p95=True)
-                        # Extract p95 memory estimate (or fallback to avg)
-                        mem_estimate = estimated["memory_mb"].get("p95", estimated["memory_mb"].get("avg", 0))
-                        # Adjust limit based on harness capacity
-                        harness_limit = int((snapshot.mem_available_mb - mem_estimate) / config.mem_mb_per_slot)
-                        old_limit = effective_limit
-                        effective_limit = min(effective_limit, max(1, harness_limit))
-                        if effective_limit < old_limit:
-                            _log.info(
-                                f"gate passed: gate=harness_card type={harness_type} limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
-                            )
-                        else:
-                            _log.info(
-                                f"gate passed: gate=harness_card type={harness_type} limit={effective_limit} run_id={run_id}"
-                            )
-
-                # Apply prediction adjustments
-                if self.prediction_engine:
-                    prediction = self.prediction_engine.predict_next_interval(60)
-                    if prediction.get("confidence", 0) > 0.5:
-                        # Adjust based on predicted trends
-                        pred_mem = prediction.get("prediction", {}).get("mem_rss_mb", {})
-                        if pred_mem and pred_mem.get("trend", 0) > 0:
-                            # Memory trending up, reduce limit slightly
-                            old_limit = effective_limit
-                            effective_limit = int(effective_limit * 0.95)
-                            _log.info(
-                                f"gate passed: gate=prediction trend=up limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
-                            )
-
-                # Check for bottlenecks
-                if self.bottleneck_detector:
-                    contentions = self.bottleneck_detector.detect_resource_contention(
-                        extended_snapshot, self.harness_cards or {}
-                    )
-                    if contentions:
-                        # Reduce limit if resource contention detected
-                        high_severity = sum(1 for c in contentions if c.get("severity") == "high")
-                        if high_severity > 0:
-                            old_limit = effective_limit
-                            effective_limit = int(effective_limit * 0.9)
-                            _log.info(
-                                f"gate passed: gate=bottleneck severity=high limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
-                            )
-            except ImportError as exc:
-                # Advanced features not available, use basic resource-based limits.
-                mod = "thegent.orchestration.resource.resource_management"
-                _execution_diagnostics["optional_gate_import_failures"] = (
-                    int(_execution_diagnostics["optional_gate_import_failures"]) + 1
-                )
-                _execution_diagnostics["optional_gate_last_error_type"] = type(exc).__name__
-                _execution_diagnostics["optional_gate_last_error_message"] = str(exc)
-                if mod not in _admission_import_warning_once:
-                    _admission_import_warning_once.add(mod)
-                    _warn_bounded(
-                        "Concurrency admission degraded: optional module %s unavailable; advanced gates skipped",
-                        mod,
-                    )
-
-            # Apply critical lane reservation (swarm-critical-lane).
-            # Critical runs can use all slots (no cap adjustment).
-            # Standard runs are capped at effective_limit - critical_lane_slots
-            # to keep dedicated headroom available for critical runs.
-            old_limit = effective_limit
-            slot_limit = effective_limit if is_critical else max(1, effective_limit - self.critical_lane_slots)
-            if not is_critical and self.critical_lane_slots > 0:
-                _log.info(
-                    f"gate passed: gate=critical_lane_reservation slots={self.critical_lane_slots} "
-                    f"limit={slot_limit} (reduced from {old_limit}) run_id={run_id}"
-                )
-            else:
-                _log.debug(
-                    f"gate passed: gate=critical_lane_reservation is_critical={is_critical} limit={slot_limit} run_id={run_id}"
-                )
-
-            admitted = running_count < slot_limit
-            _log.info(
-                "gate %s: gate=slots value=%d limit=%d run_id=%s lane=%s",
-                "passed" if admitted else "blocked",
-                running_count,
-                slot_limit,
-                run_id,
-                lane,
-            )
-            if admitted:
-                _log.info("run admitted: slots=%d/%d run_id=%s owner=%s", running_count, slot_limit, run_id, owner)
-                self._usage_tracker.record_start(owner, run_id)
-                if soft_deadline_s is not None and soft_deadline_s > 0:
-                    from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
-
-                    get_deadline_monitor().register(
-                        run_id=run_id or owner,
-                        deadline_ts=soft_deadline_s,
-                        warn_at_pct=warn_at_pct,
-                    )
-            else:
-                _log.warning(
-                    "run blocked: reason=slots count=%d limit=%d run_id=%s owner=%s",
-                    running_count,
-                    slot_limit,
-                    run_id,
-                    owner,
-                )
-            return admitted
-
-        # Fallback to fixed limit (if load-based disabled).
-        # Apply the same critical lane reservation against max_concurrency.
-        old_limit = self.max_concurrency
-        slot_limit = self.max_concurrency if is_critical else max(1, self.max_concurrency - self.critical_lane_slots)
-        if not is_critical and self.critical_lane_slots > 0:
-            _log.debug(
-                f"gate passed: gate=critical_lane_reservation slots={self.critical_lane_slots} limit={slot_limit} (reduced from {old_limit})"
-            )
-
-        admitted = running_count < slot_limit
-        _log.debug(
-            "gate %s: gate=slots value=%.2f limit=%.2f",
-            "passed" if admitted else "blocked",
-            float(running_count),
-            float(slot_limit),
-        )
-        if admitted:
-            _log.info("run admitted: slots=%d/%d run_id=%s owner=%s (fixed)", running_count, slot_limit, run_id, owner)
-            self._usage_tracker.record_start(owner, run_id)
-            if soft_deadline_s is not None and soft_deadline_s > 0:
-                from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
-
-                get_deadline_monitor().register(
-                    run_id=run_id or owner,
-                    deadline_ts=soft_deadline_s,
-                    warn_at_pct=warn_at_pct,
-                )
-        else:
-            _log.warning(
-                "run blocked: reason=slots count=%d limit=%d run_id=%s owner=%s (fixed)",
-                running_count,
-                slot_limit,
-                run_id,
-                owner,
-            )
-        return admitted
-
-    def release(self, owner: str = "unknown", run_id: str = "", elapsed_ms: float = 0.0) -> None:
-        """Record the completion of a run for per-owner usage tracking.
-
-        Also unregisters any soft deadline that was associated with this run so
-        that the :class:`DeadlineMonitor` stops checking it.
-
-        Call this after a run finishes (succeeded or failed) to decrement the
-        owner's active count and accumulate elapsed time statistics.
-
-        Args:
-            owner:      Identifier used in the corresponding :meth:`acquire` call.
-            run_id:     Run identifier used in the corresponding :meth:`acquire` call.
-            elapsed_ms: Wall-clock duration of the run in milliseconds.
-        """
-        self._usage_tracker.record_end(owner, run_id, elapsed_ms)
-        # Unregister any soft deadline for this run (no-op if none registered).
-        try:
-            from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
-
-            get_deadline_monitor().unregister(run_id or owner)
-        except ImportError as exc:
-            deadline = _execution_diagnostics["deadline_unregister"]
-            deadline["import_failures"] = int(deadline["import_failures"]) + 1
-            deadline["last_error_type"] = type(exc).__name__
-            deadline["last_error_message"] = str(exc)
-            _warn_bounded(
-                "ResourceCoordinator.release: deadline monitor import unavailable; unregister skipped (%s)",
-                type(exc).__name__,
-            )
-        except Exception as exc:
-            deadline = _execution_diagnostics["deadline_unregister"]
-            deadline["runtime_failures"] = int(deadline["runtime_failures"]) + 1
-            deadline["last_error_type"] = type(exc).__name__
-            deadline["last_error_message"] = str(exc)
-            _warn_bounded(
-                "ResourceCoordinator.release: deadline monitor unregister failed (%s)",
-                type(exc).__name__,
-            )
-
-    def get_usage_stats(self) -> dict[str, Any]:
-        """Return per-owner usage statistics as a serializable dict.
-
-        Returns a mapping of ``{owner: stats_dict}`` suitable for CLI/MCP display.
-        Each value is the output of :meth:`OwnerStats.to_dict`.
-        """
-        all_stats = self._usage_tracker.get_all_stats()
-        return {owner: stats.to_dict() for owner, stats in all_stats.items()}
-
-    def get_bottlenecks(self) -> dict[str, Any]:
-        """Get current bottlenecks and slow points."""
-        if self.bottleneck_detector is None:
-            return {
-                "detector_available": False,
-                "reason": "bottleneck_detector_unavailable",
-            }
-
-        slow_points = self.bottleneck_detector.identify_slow_points()
-        from thegent.orchestration.resource.resource_management import sample_extended_resources
-
-        snapshot = sample_extended_resources()
-        harness_cards = self.harness_cards if self.harness_cards is not None else {}
-        contentions = self.bottleneck_detector.detect_resource_contention(snapshot, harness_cards)
-
-        return {
-            "slow_points": slow_points,
-            "resource_contention": contentions,
-        }
-
-
-def _parse_checkpoint_by_id(line: str, checkpoint_id: str) -> dict[str, Any] | None:
-    """Parse a checkpoint line and check if ID matches. WP-P2: Fix PERF203."""
-    return _parse_checkpoint_by_id_impl(line, checkpoint_id)
-
-
-def _parse_circuit_failure(
-    line: str, target: str, category: str, now: datetime, window_s: int
-) -> tuple[int, datetime | None]:
-    """Parse a circuit breaker failure line. WP-P2: Fix PERF203."""
-    return _parse_circuit_failure_impl(line, target, category, now, window_s)
-
-
-def _parse_override_unexpired(line: str, owner: str, now: datetime) -> bool:
-    """Parse an override line and check if it's unexpired. WP-P2: Fix PERF203."""
-    return _parse_override_unexpired_impl(line, owner, now)
-
-
-def _parse_fatigue_line(line: str, now: datetime, window_s: int) -> int:
-    """Parse a fatigue interruption line. WP-P2: Fix PERF203."""
-    return _parse_fatigue_line_impl(line, now, window_s)
-
-
-class InterruptionTracker:
-    """WP-4004: Fatigue tracking and interruption controls."""
-
-    def __init__(self, session_dir: Path) -> None:
-        self.session_dir = session_dir
-        self.path = session_dir / "interruption_tracker.jsonl"
-
-    def record_interruption(self, run_id: str, severity: str = "medium") -> None:
-        """Record an agent interruption event."""
-        self.session_dir.mkdir(parents=True, exist_ok=True)
-        event = {
-            "timestamp": datetime.now(UTC).isoformat(),
-            "run_id": run_id,
-            "severity": severity,
-        }
-        with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+import orjson as json
     def get_fatigue_score(self, window_s: int = 3600) -> float:
         """Calculate fatigue score based on recent interruptions (0.0-1.0)."""
         if not self.path.exists():
@@ -677,8 +73,7 @@ class HandoffManager:
             "confirmed": False,
         }
         with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-        return snapshot_id
+            f.write(json.dumps(event).decode().decode() + "\n")        return snapshot_id
 
     def confirm_handoff(self, snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> bool:
         """WP-9004/12005: Incoming owner confirms handoff completeness with confidence."""
@@ -693,8 +88,7 @@ f.write(json_dumps(event) + "\n")
                 "reason": "snapshot_not_found",
             }
             with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(invalid_event) + "\n")
-            return False
+                f.write(json.dumps(invalid_event).decode().decode() + "\n")            return False
 
         if confidence < 0.0 or confidence > 1.0:
             self.session_dir.mkdir(parents=True, exist_ok=True)
@@ -707,8 +101,7 @@ f.write(json_dumps(invalid_event) + "\n")
                 "reason": "confidence_out_of_range",
             }
             with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(invalid_event) + "\n")
-            return False
+                f.write(json.dumps(invalid_event).decode().decode() + "\n")            return False
 
         snapshot = self.get_snapshot(snapshot_id)
         if not isinstance(snapshot, dict) or not isinstance(snapshot.get("run_ids"), list):
@@ -722,8 +115,7 @@ f.write(json_dumps(invalid_event) + "\n")
                 "reason": "invalid_snapshot_shape",
             }
             with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(invalid_event) + "\n")
-            return False
+                f.write(json.dumps(invalid_event).decode().decode() + "\n")            return False
 
         confidence_state = "high"
         if confidence < self.warning_threshold:
@@ -744,8 +136,7 @@ f.write(json_dumps(invalid_event) + "\n")
                 "run_count": len(snapshot.get("run_ids", [])),
             }
             with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(low_confidence_event) + "\n")
-
+                f.write(json.dumps(low_confidence_event).decode().decode() + "\n")
         self._confirmed_handoffs.add(snapshot_id)
         # Update registry record (simplified: append confirmation event)
         event = {
@@ -760,8 +151,7 @@ f.write(json_dumps(low_confidence_event) + "\n")
             "continuity_envelope_version": "v2.0",  # WP-12005
         }
         with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-        return True
+            f.write(json.dumps(event).decode().decode() + "\n")        return True
 
     def get_snapshot(self, snapshot_id: str) -> dict[str, Any] | None:
         """Retrieve a specific handoff snapshot by ID."""
@@ -911,8 +301,7 @@ class DeferralQueue:
             "status": "deferred",
         }
         with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def list_deferred(self) -> list[dict[str, Any]]:
         """List all currently deferred tasks."""
         if not self.path.exists():
@@ -944,8 +333,7 @@ f.write(json_dumps(event) + "\n")
                 if data.get("run_id") == run_id and data.get("status") == "deferred":
                     data["status"] = "resumed"
                     found = True
-lines.append(json_dumps(data) + "\n")
-        if found:
+                lines.append(json.dumps(data).decode().decode() + "\n")        if found:
             with self.path.open("w", encoding="utf-8") as f:
                 f.writelines(lines)
         return found
@@ -1077,8 +465,7 @@ class DLQManager:
             event["poison_pill_count"] = existing[0].get("poison_pill_count", 0) + 1
 
         with self.path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
         # WP-3008: Integrate EscalationQueue with DLQ (Option C)
         try:
             # Check for infinite loops (don't escalate if it's an expired escalation)
@@ -1313,8 +700,7 @@ class ProviderScorer:
         scores[characteristic][provider] = (current * 0.9) + (quality_score * 0.1)
 
         self.session_dir.mkdir(parents=True, exist_ok=True)
-self.path.write_text(json_dumps(scores, indent=2), encoding="utf-8")
-        return {"status": "updated", "new_score": scores[characteristic][provider]}
+        self.path.write_text(json.dumps(scores, indent=2).decode().decode(), encoding="utf-8")        return {"status": "updated", "new_score": scores[characteristic][provider]}
 
 
 class EvidenceLinter:
@@ -1488,8 +874,7 @@ class CalibrationRegistry:
             "updated_at_utc": datetime.now(UTC).isoformat(),
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
-self.path.write_text(json_dumps(data, indent=2), encoding="utf-8")
-
+        self.path.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
 
 class LaneController:
     """WP-1002: Priority and urgency lane model for task management."""
@@ -1666,8 +1051,7 @@ class RunRegistry:
             marker = build_schema_marker_event(self.SCHEMA_VERSION)
             marker["hash"] = self._calculate_hash(marker)
             with self.registry_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(marker) + "\n")
-
+                f.write(json.dumps(marker).decode().decode() + "\n")
     def _get_last_hash(self) -> str | None:
         """Return the hash of the last record in the registry."""
         if not self.registry_path.exists():
@@ -1781,8 +1165,7 @@ f.write(json_dumps(marker) + "\n")
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def register_feedback(self, run_id: str, score: float, note: str | None = None) -> None:
         """Record operator feedback for a run with hash chaining."""
         event = build_feedback_event(
@@ -1793,8 +1176,7 @@ f.write(json_dumps(event) + "\n")
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def register_pause(
         self,
         run_id: str,
@@ -1811,16 +1193,14 @@ f.write(json_dumps(event) + "\n")
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def register_resume(self, run_id: str) -> None:
         """Record run resume for state-aware orchestration (G-KD-03)."""
         event = build_resume_event(run_id=run_id, prev_hash=self._get_last_hash())
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def get_run_state(self, run_id: str) -> RunState | None:
         """Return current run state from registry events (G-KD-03)."""
         if not self.registry_path.exists():
@@ -2029,8 +1409,7 @@ class MessageRegistry:
             "event": "update",
         }
         with self.messages_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(update) + "\n")
-
+            f.write(json.dumps(update).decode().decode() + "\n")
 
 class AuditEntry(BaseModel):
     """Audit trail entry for session actions (WP-9005)."""
@@ -2215,8 +1594,7 @@ class PolicyEngine:
         }
         try:
             with path.open("a", encoding="utf-8") as fh:
-fh.write(json_dumps(event, sort_keys=True))
-                fh.write("\n")
+                fh.write(json.dumps(event, sort_keys=True).decode().decode())                fh.write("\n")
         except OSError as exc:
             _log.warning("failed to write governance await_approval event: %s", exc)
 
@@ -2444,8 +1822,7 @@ class TrustBoundaryValidator:
         """Record current environment after successful run."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         data = {"last_environment": env, "updated_at": datetime.now(UTC).isoformat()}
-self.state_path.write_text(json_dumps(data, indent=2), encoding="utf-8")
-
+        self.state_path.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
     def validate_transition(self, from_env: str | None, to_env: str) -> tuple[bool, str]:
         """
         Validate transition from from_env to to_env.
@@ -2537,8 +1914,7 @@ class Auditor:
         path = artifacts_dir / f"{run_id}.maif.json"
 
         if isinstance(artifact, dict):
-path.write_text(json_dumps(artifact, indent=2), encoding="utf-8")
-        else:
+            path.write_text(json.dumps(artifact, indent=2).decode().decode(), encoding="utf-8")        else:
             path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
         return path
 
@@ -2676,8 +2052,7 @@ class CircuitBreakerRegistry:
             "error_hash": error_hash,
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def is_open(self, target: str, category: str = "agent") -> bool:
         """Check if the circuit for a target in a category is open (blocked)."""
         if not self.registry_path.exists():
@@ -2722,8 +2097,7 @@ class OverrideRegistry:
             "expires_at_utc": datetime.fromtimestamp(expires_at, tz=UTC).isoformat(),
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def has_unexpired(self, owner: str) -> bool:
         """True if owner has an override that has not yet expired."""
         if not self.registry_path.exists():
@@ -2770,8 +2144,7 @@ class EscalationQueue:
             "status": "pending",
         }
         with self.queue_path.open("a", encoding="utf-8") as f:
-f.write(json_dumps(event) + "\n")
-
+            f.write(json.dumps(event).decode().decode() + "\n")
     def list_pending(self, past_sla_only: bool = False, limit: int = 50) -> list[dict[str, Any]]:
         """List escalation items. If past_sla_only, return only items past escalate_by."""
         if not self.queue_path.exists():
@@ -2816,8 +2189,7 @@ f.write(json_dumps(event) + "\n")
                     data["status"] = resolution
                     data["resolved_at_utc"] = datetime.now(UTC).isoformat()
                     updated = True
-new_lines.append(json_dumps(data))
-            except Exception:
+                new_lines.append(json.dumps(data).decode().decode())            except Exception:
                 new_lines.append(line)
         if updated:
             self.queue_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")

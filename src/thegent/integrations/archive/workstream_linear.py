@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 class LinearSync:
     """Handles Linear sync operations."""
-    
+
     def __init__(self, config: Any, connector_timeout: float):
         self.config = config
         self.connector_timeout = connector_timeout
-    
+
     async def sync_to_linear(
         self,
         items: list[WorkstreamItem],
@@ -35,7 +35,7 @@ class LinearSync:
         """Sync items to Linear."""
         if not self.config.linear_enabled:
             return {"skipped": True, "reason": "linear disabled"}
-        
+
         try:
             result = await asyncio.wait_for(
                 linear_sync_to(
@@ -51,12 +51,12 @@ class LinearSync:
             return {"error": str(e)}
         except asyncio.TimeoutError:
             return {"error": "timeout"}
-    
+
     async def sync_from_linear(self) -> list[WorkstreamItem]:
         """Sync items from Linear."""
         if not self.config.linear_enabled:
             return []
-        
+
         try:
             result = await asyncio.wait_for(
                 linear_sync_from(config=self._linear_config()),
@@ -66,7 +66,7 @@ class LinearSync:
         except Exception as e:
             logger.error(f"Linear sync error: {e}")
             return []
-    
+
     def _linear_config(self) -> LinearGraphQLConfig:
         return LinearGraphQLConfig(
             api_key=self.config.linear_api_key,
