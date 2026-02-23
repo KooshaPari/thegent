@@ -20,6 +20,8 @@ import pytest
 # ---------------------------------------------------------------------------
 _RUNNER_PATH = Path(__file__).parent.parent / "templates" / "shared" / "scripts" / "quality" / "quality_runner.py"
 _QUALITY_GATE_SH = Path(__file__).parent.parent / "templates" / "shared" / "quality-gate.sh"
+_QUALITY_AGENT_SH = Path(__file__).parent.parent / "scripts" / "quality-agent.sh"
+_QUALITY_FIX_AGENT_SH = Path(__file__).parent.parent / "scripts" / "quality-fix-agent.sh"
 
 
 def _load_runner():
@@ -194,6 +196,20 @@ class TestStaleShadowCleanup:
         content = _QUALITY_GATE_SH.read_text()
         assert "QUALITY_SHADOW_CLEANUP_HOURS" in content
         assert ":-24}" in content or '"${QUALITY_SHADOW_CLEANUP_HOURS:-24}"' in content or ":-24}" in content
+
+    def test_quality_agent_uses_shadow_cleanup_hours(self) -> None:
+        """quality-agent.sh must use QUALITY_SHADOW_CLEANUP_HOURS (with legacy fallback)."""
+        assert _QUALITY_AGENT_SH.exists(), f"quality-agent.sh not found at {_QUALITY_AGENT_SH}"
+        content = _QUALITY_AGENT_SH.read_text()
+        assert "QUALITY_SHADOW_CLEANUP_HOURS" in content
+        assert "QUALITY_SHADOW_MAX_AGE_HOURS" in content
+
+    def test_quality_fix_agent_uses_shadow_cleanup_hours(self) -> None:
+        """quality-fix-agent.sh must use QUALITY_SHADOW_CLEANUP_HOURS (with legacy fallback)."""
+        assert _QUALITY_FIX_AGENT_SH.exists(), f"quality-fix-agent.sh not found at {_QUALITY_FIX_AGENT_SH}"
+        content = _QUALITY_FIX_AGENT_SH.read_text()
+        assert "QUALITY_SHADOW_CLEANUP_HOURS" in content
+        assert "QUALITY_SHADOW_MAX_AGE_HOURS" in content
 
     def test_quality_gate_sh_defines_log_retention_days(self) -> None:
         """quality-gate.sh must read QUALITY_LOG_RETENTION_DAYS with default 7."""
