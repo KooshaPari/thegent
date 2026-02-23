@@ -23,8 +23,7 @@
 //! let files = glob_files("src/**/*.rs").unwrap();
 //! ```
 
-use std::fs::{self, File};
-use std::io;
+use std::fs::{self};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -38,7 +37,7 @@ use walkdir::WalkDir;
 mod pyo3_bindings {
     use super::*;
     use pyo3::prelude::*;
-    use pyo3::types::PyList;
+    
 
     #[pyfunction]
     pub fn fs_copy_file(src: &str, dst: &str, preserve_metadata: bool) -> PyResult<u64> {
