@@ -12,7 +12,6 @@ import pytest
 from datetime import datetime
 
 from thegent.integrations.incident_snapshot import (
-    IncidentSnapshot,
     IncidentSnapshotBundle,
 )
 
