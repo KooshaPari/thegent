@@ -18,6 +18,7 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 4. Enforce in hooks and CI.
 5. Roll out by lane percentages.
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 ## Enforced Commands
@@ -25,3 +26,5 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 1. `./scripts/worktree_governance.sh new <branch> [start-point]`
 2. `./scripts/worktree_governance.sh check`
 >>>>>>> codex/governance-wireup
+=======
+>>>>>>> codex/provider-plane-wave1

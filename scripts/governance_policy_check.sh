@@ -33,6 +33,7 @@ if ! rg -q "THGENT_BOOTSTRAP_WORKTREE_GOVERNANCE" scripts/bootstrap.sh; then
 fi
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 if [ ! -x scripts/worktree_governance.sh ]; then
   echo "[FAIL] scripts/worktree_governance.sh missing or not executable" >&2
@@ -44,6 +45,8 @@ else
 fi
 
 >>>>>>> codex/governance-wireup
+=======
+>>>>>>> codex/provider-plane-wave1
 if [ "$failed" -ne 0 ]; then
   exit 1
 fi

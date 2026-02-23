@@ -77,6 +77,7 @@ logs/
 # Local GH Actions emulation artifacts
 .github/act-events/
 .worktrees/
+<<<<<<< HEAD
 
 # Workspace noise and generated diagnostics
 wt/
@@ -84,3 +85,5 @@ docs/dumps/
 hooks/zig/
 .serena/memories/
 .factory/closure_pack_*.md
+=======
+>>>>>>> codex/provider-plane-wave1
