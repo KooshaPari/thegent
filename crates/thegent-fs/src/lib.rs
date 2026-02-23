@@ -309,6 +309,7 @@ pub fn list_dir(path: &Path) -> Result<Vec<PathBuf>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
     use std::io::Write;
     use tempfile::TempDir;
 
