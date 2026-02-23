@@ -1,8 +1,619 @@
 {
   "version": "1.0",
-  "generated_at": "2026-02-19T02:07:19Z",
-  "project_dir": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent",
-  "items": [],
+  "generated_at": "2026-02-16T14:02:37Z",
+  "project_dir": "/Users/kooshapari",
+  "items": [
+    {
+      "id": "Product",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Executive",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Product",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Epic",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "User",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "US-E1",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "US-E2",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "US-E2",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "US-E3",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "US-E4",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "US-E5",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Non-Functional",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Constraints",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Technical",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Business",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Success",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Acceptance",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Open",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Questions",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Risks",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Future",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Document",
+      "source": "/Users/kooshapari/PRD.md",
+      "state": "draft"
+    },
+    {
+      "id": "Architecture",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "ADR-001",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Context",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Implementation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Create",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Agent",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Changes",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Automatic",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Create",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Agent",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Changes",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "cleanup",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Use",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Symlink",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Copy-on-write",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Explicit",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Consequences",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Validation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "ADR-002",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Context",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Implementation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "macOS",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Linux",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "hooks",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Cache",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Implementation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Cache",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Consequences",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Validation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "ADR-003",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Context",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Implementation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "hooks",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Lock",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Correct",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Consequences",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Validation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "ADR-004",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Context",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "DAG",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Implementation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Consequences",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Validation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "ADR-005",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Context",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Implementation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Session-scoped",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "global",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "qa-state",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "session-changes",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "FIFO",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Lock",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Lock",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Lock",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Consequences",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Validation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "ADR-006",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Context",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Implementation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "hooks",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Initialize",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Lookup",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Consequences",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Validation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "ADR-007",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Context",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Consequences",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Validation",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Decision",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Open",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Document",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Review",
+      "source": "/Users/kooshapari/ADR.md",
+      "state": "draft"
+    },
+    {
+      "id": "Work",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Phase",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Cross-Phase",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Documentation",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Testing",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Monitoring",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Dependency",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Success",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Resource",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Risk",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    },
+    {
+      "id": "Sign-Off",
+      "source": "/Users/kooshapari/PLAN.md",
+      "state": "draft"
+    }
+  ],
   "dag": {
     "nodes": [],
     "edges": []

@@ -1,89 +1,90 @@
-### [WL-9310]
-**Title:** Preserve hook execution by separating sync and async control paths
-**Source:** [thegent/src/thegent/telemetry/metrics.go:690]
+### [WL-9510]
+**Title:** Preserve telemetry pipeline by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:330]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9311]
-**Title:** Preserve quality gates by separating signal collection and threshold enforcement
-**Source:** [thegent/src/thegent/hooks/dispatcher.go:693]
+### [WL-9511]
+**Title:** Preserve health diagnostics by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:331]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9312]
-**Title:** Preserve observability by separating metric emission and business logic
-**Source:** [thegent/src/thegent/telemetry/metrics.go:696]
+### [WL-9512]
+**Title:** Preserve retry behavior by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:332]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9313]
-**Title:** Preserve session state by separating claim and completion transitions
-**Source:** [thegent/src/thegent/hooks/dispatcher.go:699]
+### [WL-9513]
+**Title:** Preserve connector onboarding by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:333]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9314]
-**Title:** Preserve agent governance by separating parse and execution phases
-**Source:** [thegent/src/thegent/telemetry/metrics.go:702]
+### [WL-9514]
+**Title:** Preserve session restoration by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:334]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9315]
-**Title:** Preserve hook execution by separating sync and async control paths
-**Source:** [thegent/src/thegent/hooks/dispatcher.go:705]
+### [WL-9515]
+**Title:** Preserve plugin registration by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:335]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9316]
-**Title:** Preserve quality gates by separating signal collection and threshold enforcement
-**Source:** [thegent/src/thegent/telemetry/metrics.go:708]
+### [WL-9516]
+**Title:** Preserve routing integrity by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:336]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9317]
-**Title:** Preserve observability by separating metric emission and business logic
-**Source:** [thegent/src/thegent/hooks/dispatcher.go:711]
+### [WL-9517]
+**Title:** Preserve validation flow by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:337]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9318]
-**Title:** Preserve session state by separating claim and completion transitions
-**Source:** [thegent/src/thegent/telemetry/metrics.go:714]
+### [WL-9518]
+**Title:** Preserve payload handling by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:338]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
 
-### [WL-9319]
-**Title:** Preserve agent governance by separating parse and execution phases
-**Source:** [thegent/src/thegent/hooks/dispatcher.go:717]
+### [WL-9519]
+**Title:** Preserve workstream sequencing by separating parse and execution branches
+**Source:** [thegent/src/thegent/automation/workflow.go:339]
 **Acceptance checklist:
-- [ ] Separate parse and execution paths.
-- [ ] Preserve current behavior on both happy and failure paths.
-- [ ] Add regression tests around boundary conditions.
+- [ ] Separate parser failures from execution failures.
+- [ ] Preserve partial behavior on downstream failures.
+- [ ] Add tests for both branch failures.
 **Notes:** Continuation artifact for high-volume work item stream.
+

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from thegent.governance.helios_shield_bridge import heliosShieldBridge
+from thegent.governance.heliosShield_bridge import heliosShieldBridge
 from thegent.governance.teammates import TeammateManager
 
 

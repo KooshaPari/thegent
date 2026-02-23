@@ -1,0 +1,1627 @@
+{
+  "project_name": "TripleM",
+  "version": "1.0.0",
+  "created_at": "2026-02-18T01:26:41.181051",
+  "overview": "#",
+  "objectives": [],
+  "success_metrics": [],
+  "stakeholders": [],
+  "target_users": [],
+  "functional_requirements": [
+    {
+      "id": "TripleM-feat-0",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-1",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-2",
+      "title": "Contributing",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-3",
+      "title": "API",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-4",
+      "title": "ES Modules (ESM)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-5",
+      "title": "CommonJS",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-6",
+      "title": "Providing global access",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-7",
+      "title": "Plain text or HTML",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-8",
+      "title": "JSON",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-9",
+      "title": "Simple Post",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-10",
+      "title": "Post with JSON",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-11",
+      "title": "Post with form parameters",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-12",
+      "title": "Handling exceptions",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-13",
+      "title": "Handling client and server errors",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-14",
+      "title": "Handling cookies",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-15",
+      "title": "Streams",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-16",
+      "title": "Accessing Headers and other Metadata",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-17",
+      "title": "Extract Set-Cookie Header",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-18",
+      "title": "Post data using a file",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-19",
+      "title": "Request cancellation with AbortSignal",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-20",
+      "title": "fetch(url[, options])",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-21",
+      "title": "Options",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-22",
+      "title": "Class: Request",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-23",
+      "title": "Class: Response",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-24",
+      "title": "Class: Headers",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-25",
+      "title": "Interface: Body",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-26",
+      "title": "Class: FetchError",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-27",
+      "title": "Class: AbortError",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-28",
+      "title": "Migrating from 6.x to 7.x",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-29",
+      "title": "Documentation",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-30",
+      "title": "Examples",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-31",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-32",
+      "title": "Used by",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-33",
+      "title": "Simplest way to make http get requests",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-34",
+      "title": "simple GET request",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-35",
+      "title": "even simpler GET request",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-36",
+      "title": "POST, PUT, PATCH, HEAD, DELETE support",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-37",
+      "title": "JSON",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-38",
+      "title": "Timeout",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-39",
+      "title": "One Quick Tip",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-40",
+      "title": "Proxies",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-41",
+      "title": "Cookies",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-42",
+      "title": "Form data",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-43",
+      "title": "Specifically disallowing redirects",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-44",
+      "title": "Basic Auth",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-45",
+      "title": "OAuth",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-46",
+      "title": "Throttle requests",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-47",
+      "title": "Important",
+      "description": "",
+      "priority": "high",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-48",
+      "title": "Options",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-49",
+      "title": "Tags",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-50",
+      "title": "Includes",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-51",
+      "title": "Caching",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-52",
+      "title": "Custom file loader",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-53",
+      "title": "Layouts",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-54",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-55",
+      "title": "Caveats",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-56",
+      "title": "Data input",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-57",
+      "title": "Output",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-58",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-59",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-60",
+      "title": "Contributing",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-61",
+      "title": "API",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-62",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-63",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-64",
+      "title": "Contributing",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-65",
+      "title": "API",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-66",
+      "title": "<a name=\"wow\"></a> Message From Our Sponsors",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-67",
+      "title": "Properties",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-68",
+      "title": "Methods",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-69",
+      "title": "minimatch(path, pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-70",
+      "title": "minimatch.filter(pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-71",
+      "title": "minimatch.match(list, pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-72",
+      "title": "minimatch.makeRe(pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-73",
+      "title": "debug",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-74",
+      "title": "nobrace",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-75",
+      "title": "noglobstar",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-76",
+      "title": "dot",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-77",
+      "title": "noext",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-78",
+      "title": "nocase",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-79",
+      "title": "nonull",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-80",
+      "title": "matchBase",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-81",
+      "title": "nocomment",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-82",
+      "title": "nonegate",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-83",
+      "title": "flipNegate",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-84",
+      "title": "partial",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    },
+    {
+      "id": "TripleM-feat-85",
+      "title": "allowWindowsEscape",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "dependencies": []
+    }
+  ],
+  "non_functional_requirements": [],
+  "features": [
+    {
+      "id": "TripleM-feat-0",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-1",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-2",
+      "title": "Contributing",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-3",
+      "title": "API",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-4",
+      "title": "ES Modules (ESM)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-5",
+      "title": "CommonJS",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-6",
+      "title": "Providing global access",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-7",
+      "title": "Plain text or HTML",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-8",
+      "title": "JSON",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-9",
+      "title": "Simple Post",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-10",
+      "title": "Post with JSON",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-11",
+      "title": "Post with form parameters",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-12",
+      "title": "Handling exceptions",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-13",
+      "title": "Handling client and server errors",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-14",
+      "title": "Handling cookies",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-15",
+      "title": "Streams",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-16",
+      "title": "Accessing Headers and other Metadata",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-17",
+      "title": "Extract Set-Cookie Header",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-18",
+      "title": "Post data using a file",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-19",
+      "title": "Request cancellation with AbortSignal",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-20",
+      "title": "fetch(url[, options])",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-21",
+      "title": "Options",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-22",
+      "title": "Class: Request",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-23",
+      "title": "Class: Response",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-24",
+      "title": "Class: Headers",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-25",
+      "title": "Interface: Body",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-26",
+      "title": "Class: FetchError",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-27",
+      "title": "Class: AbortError",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-28",
+      "title": "Migrating from 6.x to 7.x",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-29",
+      "title": "Documentation",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-30",
+      "title": "Examples",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-31",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-32",
+      "title": "Used by",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-33",
+      "title": "Simplest way to make http get requests",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-34",
+      "title": "simple GET request",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-35",
+      "title": "even simpler GET request",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-36",
+      "title": "POST, PUT, PATCH, HEAD, DELETE support",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-37",
+      "title": "JSON",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-38",
+      "title": "Timeout",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-39",
+      "title": "One Quick Tip",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-40",
+      "title": "Proxies",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-41",
+      "title": "Cookies",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-42",
+      "title": "Form data",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-43",
+      "title": "Specifically disallowing redirects",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-44",
+      "title": "Basic Auth",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-45",
+      "title": "OAuth",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-46",
+      "title": "Throttle requests",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-47",
+      "title": "Important",
+      "description": "",
+      "priority": "high",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-48",
+      "title": "Options",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-49",
+      "title": "Tags",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-50",
+      "title": "Includes",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-51",
+      "title": "Caching",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-52",
+      "title": "Custom file loader",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-53",
+      "title": "Layouts",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-54",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-55",
+      "title": "Caveats",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-56",
+      "title": "Data input",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-57",
+      "title": "Output",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-58",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-59",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-60",
+      "title": "Contributing",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-61",
+      "title": "API",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-62",
+      "title": "Example",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-63",
+      "title": "Features",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-64",
+      "title": "Contributing",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-65",
+      "title": "API",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-66",
+      "title": "<a name=\"wow\"></a> Message From Our Sponsors",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-67",
+      "title": "Properties",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-68",
+      "title": "Methods",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-69",
+      "title": "minimatch(path, pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-70",
+      "title": "minimatch.filter(pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-71",
+      "title": "minimatch.match(list, pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-72",
+      "title": "minimatch.makeRe(pattern, options)",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-73",
+      "title": "debug",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-74",
+      "title": "nobrace",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-75",
+      "title": "noglobstar",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-76",
+      "title": "dot",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-77",
+      "title": "noext",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-78",
+      "title": "nocase",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-79",
+      "title": "nonull",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-80",
+      "title": "matchBase",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-81",
+      "title": "nocomment",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-82",
+      "title": "nonegate",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-83",
+      "title": "flipNegate",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-84",
+      "title": "partial",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    },
+    {
+      "id": "TripleM-feat-85",
+      "title": "allowWindowsEscape",
+      "description": "",
+      "priority": "medium",
+      "acceptance_criteria": [],
+      "tags": []
+    }
+  ],
+  "feature_priorities": {},
+  "architecture_overview": "Architecture details to be documented.",
+  "technical_requirements": [
+    "Use aws",
+    "Use react",
+    "Use typescript",
+    "Use rust",
+    "Use javascript",
+    "Use angular",
+    "Use docker",
+    "Use go",
+    "Use redis",
+    "Use postgresql"
+  ],
+  "integration_points": [
+    {
+      "name": "Integration with is",
+      "description": "Integration point with is project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with jprichardson",
+      "description": "Integration point with jprichardson project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with status",
+      "description": "Integration point with status project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with uses",
+      "description": "Integration point with uses project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with includes",
+      "description": "Integration point with includes project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with does",
+      "description": "Integration point with does project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with via",
+      "description": "Integration point with via project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with There",
+      "description": "Integration point with There project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with for",
+      "description": "Integration point with for project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with Status",
+      "description": "Integration point with Status project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with requires",
+      "description": "Integration point with requires project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with participation",
+      "description": "Integration point with participation project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with history",
+      "description": "Integration point with history project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with also",
+      "description": "Integration point with also project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with You",
+      "description": "Integration point with You project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with git",
+      "description": "Integration point with git project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with and",
+      "description": "Integration point with and project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with like",
+      "description": "Integration point with like project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with app",
+      "description": "Integration point with app project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with of",
+      "description": "Integration point with of project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with Links",
+      "description": "Integration point with Links project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with are",
+      "description": "Integration point with are project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with stay",
+      "description": "Integration point with stay project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with npm",
+      "description": "Integration point with npm project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with follows",
+      "description": "Integration point with follows project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with disclosure",
+      "description": "Integration point with disclosure project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with to",
+      "description": "Integration point with to project",
+      "type": "project_integration"
+    },
+    {
+      "name": "Integration with strong",
+      "description": "Integration point with strong project",
+      "type": "project_integration"
+    }
+  ],
+  "phases": [],
+  "milestones": [],
+  "dependencies": [],
+  "blockers": [],
+  "related_projects": [
+    "is",
+    "jprichardson",
+    "status",
+    "uses",
+    "includes",
+    "does",
+    "via",
+    "There",
+    "for",
+    "Status",
+    "requires",
+    "participation",
+    "history",
+    "also",
+    "You",
+    "git",
+    "and",
+    "like",
+    "app",
+    "of",
+    "Links",
+    "are",
+    "stay",
+    "npm",
+    "follows",
+    "disclosure",
+    "to",
+    "strong"
+  ],
+  "shared_features": [
+    "Caching",
+    "Tags",
+    "JSON",
+    "Documentation",
+    "Features",
+    "API",
+    "Output:",
+    "Examples",
+    "Methods",
+    "Example",
+    "OAuth",
+    "Options:",
+    "Used By",
+    "Contributing",
+    "Timeout",
+    "fetch(url[, options])",
+    "Class: Request",
+    "Class: Response",
+    "Class: Headers",
+    "Interface: Body",
+    "Class: FetchError",
+    "Class: AbortError",
+    "Cookies",
+    "Includes",
+    "CommonJS",
+    "Caveats",
+    "Properties",
+    "minimatch(path, pattern, options)",
+    "minimatch.filter(pattern, options)",
+    "minimatch.match(list, pattern, options)",
+    "minimatch.makeRe(pattern, options)",
+    "debug",
+    "nobrace",
+    "noglobstar",
+    "dot",
+    "noext",
+    "nocase",
+    "nonull",
+    "matchBase",
+    "nocomment",
+    "nonegate",
+    "flipNegate",
+    "partial",
+    "allowWindowsEscape"
+  ]
+}

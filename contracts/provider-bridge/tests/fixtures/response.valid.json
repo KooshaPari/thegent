@@ -1,0 +1,30 @@
+{
+  "bridge_schema_version": "v1.0.0",
+  "request_id": "req_123",
+  "run_id": "run_123",
+  "status": "ok",
+  "selected_route": {
+    "provider_id": "openai",
+    "subprovider_id": "acct_team_a",
+    "model": "gpt-5"
+  },
+  "attempts": 1,
+  "usage": {
+    "input_tokens": 100,
+    "output_tokens": 50,
+    "estimated_cost_usd": 0.02
+  },
+  "output": {
+    "message": {
+      "role": "assistant",
+      "content": "hello"
+    },
+    "tool_calls": []
+  },
+  "governance_outcome": {
+    "budget_check": "pass",
+    "rate_limit_check": "pass",
+    "fallback_used": false
+  }
+}
+

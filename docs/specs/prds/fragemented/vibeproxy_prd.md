@@ -1,0 +1,299 @@
+# Product Requirements Document: vibeproxy
+
+**Version:** 1.0.0  
+**Created:** 2026-02-18
+
+## 1. Overview
+
+# VibeProxy
+
+## 2. Objectives
+
+
+## 3. Success Metrics
+
+
+## 4. Stakeholders
+
+
+## 5. Target Users
+
+
+## 6. Functional Requirements
+
+### FR-1: Architecture Diagram
+
+
+
+
+### FR-2: Data Flow
+
+
+
+
+### FR-3: 2.1 DualRouter (Go, ~500 LOC)
+
+
+
+
+### FR-4: 2.2 ExecutorRegistry (Go, ~300 LOC)
+
+
+
+
+### FR-5: 2.3 PolicyDB Schema (SQL/PostgreSQL)
+
+
+
+
+### FR-6: 2.4 FeatureExtractor (Go, ~200 LOC)
+
+
+
+
+### FR-7: 2.5 MIRT Inference (Go wrapper, ~150 LOC)
+
+
+
+
+### FR-8: 3.1 Vibeproxy → CLIProxyAPI
+
+
+
+
+### FR-9: 3.2 CLIProxyAPI Endpoints
+
+
+
+
+### FR-10: 3.3 MLX-LM Server Integration
+
+
+
+
+### FR-11: Week 1: Foundation & Setup
+
+
+
+
+### FR-12: Week 2: Core Logic
+
+
+
+
+### FR-13: Week 3: Integration & Testing
+
+
+
+
+### FR-14: Week 4: Optimization & Monitoring
+
+
+
+
+### FR-15: Week 5: Production Deployment
+
+
+
+
+### FR-16: New Files (Core Implementation)
+
+
+
+
+### FR-17: Modified Files (Integration)
+
+
+
+
+### FR-18: Immediate (This week):
+
+- [ ] Clone MIRT checkpoint path
+
+
+### FR-19: Following week:
+
+- [ ] Implement DualRouter skeleton
+
+
+### FR-20: Then:
+
+- [ ] Complete integration
+
+
+
+## 7. Non-Functional Requirements
+
+
+## 8. Features
+
+### 🟡 Architecture Diagram
+
+
+
+
+### 🟡 Data Flow
+
+
+
+
+### 🟡 2.1 DualRouter (Go, ~500 LOC)
+
+
+
+
+### 🟡 2.2 ExecutorRegistry (Go, ~300 LOC)
+
+
+
+
+### 🟡 2.3 PolicyDB Schema (SQL/PostgreSQL)
+
+
+
+
+### 🟡 2.4 FeatureExtractor (Go, ~200 LOC)
+
+
+
+
+### 🟡 2.5 MIRT Inference (Go wrapper, ~150 LOC)
+
+
+
+
+### 🟡 3.1 Vibeproxy → CLIProxyAPI
+
+
+
+
+### 🟡 3.2 CLIProxyAPI Endpoints
+
+
+
+
+### 🟡 3.3 MLX-LM Server Integration
+
+
+
+
+### 🟡 Week 1: Foundation & Setup
+
+
+
+
+### 🟡 Week 2: Core Logic
+
+
+
+
+### 🟡 Week 3: Integration & Testing
+
+
+
+
+### 🟡 Week 4: Optimization & Monitoring
+
+
+
+
+### 🟡 Week 5: Production Deployment
+
+
+
+
+### 🟡 New Files (Core Implementation)
+
+
+
+
+### 🟡 Modified Files (Integration)
+
+
+
+
+### 🟡 Immediate (This week):
+
+- [ ] Clone MIRT checkpoint path
+
+
+### 🟡 Following week:
+
+- [ ] Implement DualRouter skeleton
+
+
+### 🟡 Then:
+
+- [ ] Complete integration
+
+
+
+## 9. Architecture Overview
+
+Architecture details to be documented.
+
+
+## 10. Technical Requirements
+
+- Use python
+- Use go
+- Use postgresql
+- Use sql
+
+## 11. Integration Points
+
+- **Integration with open**: Integration point with open project
+- **Integration with or**: Integration point with or project
+- **Integration with adheres**: Integration point with adheres project
+- **Integration with forked**: Integration point with forked project
+- **Integration with is**: Integration point with is project
+- **Integration with 485**: Integration point with 485 project
+- **Integration with setup**: Integration point with setup project
+- **Integration with and**: Integration point with and project
+- **Integration with builds**: Integration point with builds project
+- **Integration with while**: Integration point with while project
+- **Integration with for**: Integration point with for project
+- **Integration with initially**: Integration point with initially project
+- **Integration with wants**: Integration point with wants project
+- **Integration with in**: Integration point with in project
+- **Integration with -**: Integration point with - project
+- **Integration with selection**: Integration point with selection project
+- **Integration with Structure**: Integration point with Structure project
+- **Integration with target**: Integration point with target project
+
+## 12. Timeline & Phases
+
+
+## 13. Milestones
+
+
+## 14. Dependencies
+
+
+## 16. Related Projects
+
+- open
+- or
+- adheres
+- forked
+- is
+- 485
+- setup
+- and
+- builds
+- while
+- for
+- initially
+- wants
+- in
+- -
+- selection
+- Structure
+- target
+
+## 17. Shared Features
+
+- Data Flow
+- THEN
+- Immediate (This Week)
+- 1.1 Architecture Diagram

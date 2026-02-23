@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thegent-cli"
+dynamic = ["version"]
+description = "thegent CLI surface layer — command dispatch and output formatting"
+requires-python = ">=3.10"
+dependencies = [
+    "typer>=0.16.0",
+    "rich>=13.9.4",
+    "pydantic>=2.12.5",
+    "httpx>=0.28.1",
+    "structlog>=24.0.0",
+]
+
+[project.scripts]
+thegent = "thegent_cli.apps.main:app"
+
+[tool.hatch.version]
+source = "vcs"
+raw-options = { root = "../.." }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thegent_cli"]

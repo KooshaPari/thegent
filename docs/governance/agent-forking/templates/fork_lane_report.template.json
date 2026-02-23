@@ -1,0 +1,54 @@
+{
+  "lane_id": "lane-1",
+  "plan_id": "plan-YYYYMMDD-###",
+  "agent_context_version": "ctx-v1",
+  "phase": "analysis|execution|verification|handoff",
+  "owner": "human-or-agent-id",
+  "objective": "Short objective statement for this lane",
+  "scope": [
+    "path/pattern1",
+    "path/pattern2"
+  ],
+  "findings": [
+    {
+      "file": "src/example.py",
+      "type": "discovery",
+      "summary": "What was found and why it matters",
+      "severity": "low",
+      "evidence": [
+        "governance/agent-forking/artifacts/findings.md:12",
+        "python tests/unit/test_example.py::test_case"
+      ],
+      "confidence": 0.91
+    }
+  ],
+  "proposed_actions": [
+    "Proposed file-level change or investigation step"
+  ],
+  "conflicts": [
+    {
+      "path": "src/example.py",
+      "type": "overlap",
+      "description": "Two lanes modified the same export order",
+      "severity": "high",
+      "recommended_owner": "lane-2"
+    }
+  ],
+  "next_actions": [
+    "Continue with test execution for changed files",
+    "Escalate conflict to coordinator"
+  ],
+  "validation": {
+    "commands": [
+      "python cli.py test run --scope unit --path src/example.py"
+    ],
+    "results": [
+      {
+        "command": "python cli.py test run --scope unit --path src/example.py",
+        "status": "pass",
+        "notes": "All checks passed"
+      }
+    ]
+  },
+  "generated_at": "YYYY-MM-DDTHH:MM:SSZ"
+}

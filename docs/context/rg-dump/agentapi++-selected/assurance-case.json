@@ -1,0 +1,33 @@
+{
+  "generated_at": "2026-02-14T00:57:23Z",
+  "top_claims": [
+    "C-RELEASE-AGENTAPI-001"
+  ],
+  "nodes": [
+    {
+      "id": "C-RELEASE-AGENTAPI-001",
+      "type": "claim",
+      "text": "Release governance gates are satisfied",
+      "supports": [
+        "E-POLICY-001",
+        "E-ATTEST-001"
+      ]
+    },
+    {
+      "id": "E-POLICY-001",
+      "type": "evidence",
+      "text": "Policy report",
+      "evidence_refs": [
+        "file://.claude/verification/policy-report.json"
+      ]
+    },
+    {
+      "id": "E-ATTEST-001",
+      "type": "evidence",
+      "text": "QA attestation",
+      "evidence_refs": [
+        "att://sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ]
+    }
+  ]
+}

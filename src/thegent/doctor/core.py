@@ -6,7 +6,7 @@ Domain: Core
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, List, Optional
 
 
 @dataclass
@@ -22,7 +22,7 @@ class ProcessInfo:
 
 
 def run_doctor(
-    checks: list[str] | None = None,
+    checks: Optional[List[str]] = None,
     fix: bool = False,
     verbose: bool = False,
 ) -> int:

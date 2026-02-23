@@ -1,0 +1,12 @@
+{
+  "event_type": "chunk",
+  "request_id": "req_123",
+  "run_id": "run_123",
+  "attempt_id": "att_1",
+  "route_id": "route_1",
+  "ts": "2026-02-23T00:00:00Z",
+  "payload": {
+    "delta": "hello"
+  }
+}
+
