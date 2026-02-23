@@ -80,8 +80,24 @@ def detect_installed_targets(manifest: Dict[str, Any]) -> list[str]:
     return detected
 
 
-def install_target(target: str, manifest: Dict[str, Any], dry_run: bool = False, verbose: bool = False) -> dict[str, Any]:
-    """Install a single target."""
+def install_target(
+    target: str, 
+    manifest: Dict[str, Any], 
+    dry_run: bool = False, 
+    verbose: bool = False,
+    use_symlinks: bool = False,
+    backup_dir: Optional[Path] = None,
+) -> dict[str, Any]:
+    """Install a single target.
+    
+    Args:
+        target: Target to install (e.g., "tools.git")
+        manifest: System manifest
+        dry_run: If True, only show what would be done
+        verbose: If True, print detailed output
+        use_symlinks: If True, use symlinks instead of copying
+        backup_dir: Directory to backup existing configs to
+    """
     results = {"copied": 0, "skipped": 0, "errors": 0, "details": []}
     
     parts = target.split(".")
@@ -119,23 +135,48 @@ def install_target(target: str, manifest: Dict[str, Any], dry_run: bool = False,
     for path_pattern in config.get("config_files", []):
         target_path = Path(os.path.expanduser(path_pattern))
         
+        # Backup existing config if needed
+        if target_path.exists() and backup_dir:
+            if not dry_run:
+                backup_path = backup_dir / target_path.name
+                backup_path.parent.mkdir(parents=True, exist_ok=True)
+                if verbose:
+                    print(f"  Backing up {target_path} -> {backup_path}")
+                shutil.copy2(target_path, backup_path)
+        
         if dry_run:
-            print(f"[DRY-RUN] Would install {source_path} -> {target_path}")
+            if use_symlinks:
+                print(f"[DRY-RUN] Would symlink {source_path} -> {target_path}")
+            else:
+                print(f"[DRY-RUN] Would install {source_path} -> {target_path}")
             results["skipped"] += 1
             continue
         
-        if verbose:
-            print(f"Installing {source_path} -> {target_path}")
-        
         try:
             target_path.parent.mkdir(parents=True, exist_ok=True)
-            if source_path.is_dir():
+            
+            # Use symlink or copy
+            if use_symlinks:
                 if target_path.exists():
-                    shutil.rmtree(target_path)
-                shutil.copytree(source_path, target_path)
+                    if target_path.is_symlink():
+                        target_path.unlink()
+                    else:
+                        shutil.rmtree(target_path) if target_path.is_dir() else target_path.unlink()
+                source_path = source_path.resolve()
+                target_path.symlink_to(source_path)
+                if verbose:
+                    print(f"  Symlinked {source_path} -> {target_path}")
+                results["copied"] += 1
             else:
-                shutil.copy2(source_path, target_path)
-            results["copied"] += 1
+                if source_path.is_dir():
+                    if target_path.exists():
+                        shutil.rmtree(target_path)
+                    shutil.copytree(source_path, target_path)
+                else:
+                    shutil.copy2(source_path, target_path)
+                if verbose:
+                    print(f"  Copied {source_path} -> {target_path}")
+                results["copied"] += 1
         except Exception as e:
             print(f"Error installing {target}: {e}")
             results["errors"] += 1
@@ -198,10 +239,28 @@ def cmd_install(args: argparse.Namespace) -> int:
     if args.verbose:
         print(f"Installing targets: {targets}")
     
+    # Determine backup directory
+    backup_dir = None
+    do_backup = args.backup and not args.no_backup
+    if do_backup:
+        from datetime import datetime
+        backup_dir = Path.home() / ".thegent" / "backups" / datetime.now().strftime("%Y%m%d_%H%M%S")
+        if not args.dry_run:
+            backup_dir.mkdir(parents=True, exist_ok=True)
+        if args.verbose:
+            print(f"Backup directory: {backup_dir}")
+    
     total = {"copied": 0, "skipped": 0, "errors": 0}
     
     for target in targets:
-        result = install_target(target, manifest, dry_run=args.dry_run, verbose=args.verbose)
+        result = install_target(
+            target, 
+            manifest, 
+            dry_run=args.dry_run, 
+            verbose=args.verbose,
+            use_symlinks=args.symlink,
+            backup_dir=backup_dir,
+        )
         total["copied"] += result["copied"]
         total["skipped"] += result["skipped"]
         total["errors"] += result["errors"]
@@ -275,6 +334,9 @@ def main() -> int:
     install_parser.add_argument("--target", type=str, help="Install a specific target (e.g., shells.zsh)")
     install_parser.add_argument("--auto", action="store_true", help="Auto-detect and install")
     install_parser.add_argument("--dry-run", action="store_true", help="Show what would be installed")
+    install_parser.add_argument("--symlink", action="store_true", help="Use symlinks instead of copying (more Nix-like)")
+    install_parser.add_argument("--backup", action="store_true", default=True, help="Backup existing configs before installing (default: True)")
+    install_parser.add_argument("--no-backup", action="store_true", help="Skip backing up existing configs")
     install_parser.add_argument("-v", "--verbose", action="store_true")
     install_parser.set_defaults(func=cmd_install)
     

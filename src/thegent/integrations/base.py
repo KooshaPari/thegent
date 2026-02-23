@@ -44,6 +44,44 @@ class IntegrationInfo:
     error: str | None = None
 
 
+@dataclass
+class DataclassConfig:
+    """Base dataclass config with env loading support.
+
+    Inherit from this for dataclass-based configs:
+        @dataclass
+        class MyConfig(DataclassConfig):
+            base_url: str = "http://localhost"
+            api_key: str = ""
+    """
+
+    enabled: bool = False
+
+    @classmethod
+    def from_env(cls, prefix: str = "") -> "DataclassConfig":
+        """Load config from environment variables."""
+        from dataclasses import fields
+
+        env_values: dict[str, Any] = {}
+
+        for f in fields(cls):
+            env_key = f"{prefix}{f.name.upper()}"
+            env_val = os.environ.get(env_key)
+
+            if env_val is not None and f.default is not None:
+                field_type = type(f.default)
+                if field_type == bool:
+                    env_values[f.name] = env_val.lower() in ("1", "true", "yes")
+                elif field_type == int:
+                    env_values[f.name] = int(env_val)
+                elif field_type == float:
+                    env_values[f.name] = float(env_val)
+                else:
+                    env_values[f.name] = env_val
+
+        return cls(**env_values)
+
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -175,6 +213,7 @@ class BaseIntegration(ABC):
 __all__ = [
     "BaseIntegration",
     "BaseIntegrationConfig",
+    "DataclassConfig",
     "IntegrationInfo",
     "IntegrationStatus",
 ]

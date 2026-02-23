@@ -1,0 +1,159 @@
+add_newline = false
+scan_timeout = 100
+command_timeout = 2000
+
+palette = "rounded_pw"
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$python\
+$golang\
+$rust\
+$c\
+$zig\
+$fill\
+$cmd_duration\
+$status\
+$time\
+ $character\
+"""
+
+[palettes.rounded_pw]
+text = "#f8fafc"
+muted = "#cbd5e1"
+dir = "#0ea5e9"
+git = "#8b5cf6"
+lang = "#10b981"
+warn = "#f59e0b"
+err = "#ef4444"
+info = "#334155"
+ssh = "#64748b"
+
+[character]
+success_symbol = "[❯](bold fg:lang)"
+error_symbol = "[❯](bold fg:err)"
+vimcmd_symbol = "[❮](bold fg:dir)"
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+fish_style_pwd_dir_length = 1
+home_symbol = "~"
+read_only = " "
+style = "fg:text bg:dir bold"
+format = "[](fg:dir)[   $path ]($style)[](fg:dir)"
+
+[git_branch]
+symbol = ""
+style = "fg:text bg:git bold"
+format = "[](fg:git)[ $symbol $branch ]($style)[](fg:git)"
+
+[git_status]
+style = "fg:text bg:git bold"
+format = "[](fg:git)[ $all_status$ahead_behind ]($style)[](fg:git)"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕${ahead_count}/${behind_count}"
+untracked = "?${count}"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+conflicted = "=${count}"
+up_to_date = "✓"
+disabled = false
+ignore_submodules = true
+
+[nodejs]
+detect_files = ["package.json", ".nvmrc", ".node-version"]
+symbol = ""
+style = "fg:text bg:lang bold"
+format = "[](fg:lang)[ $symbol $version ]($style)[](fg:lang)"
+
+[python]
+detect_files = ["pyproject.toml", "requirements.txt", "Pipfile", ".python-version"]
+symbol = ""
+style = "fg:text bg:lang bold"
+format = "[](fg:lang)[ $symbol $version ]($style)[](fg:lang)"
+
+[golang]
+symbol = ""
+style = "fg:text bg:lang bold"
+format = "[](fg:lang)[ $symbol $version ]($style)[](fg:lang)"
+
+[rust]
+symbol = ""
+style = "fg:text bg:lang bold"
+format = "[](fg:lang)[ $symbol $version ]($style)[](fg:lang)"
+
+[c]
+symbol = "C"
+style = "fg:text bg:lang bold"
+format = "[](fg:lang)[ $symbol ]($style)[](fg:lang)"
+
+[zig]
+symbol = ""
+style = "fg:text bg:lang bold"
+format = "[](fg:lang)[ $symbol ]($style)[](fg:lang)"
+
+[fill]
+symbol = " "
+
+[cmd_duration]
+min_time = 1500
+show_milliseconds = false
+style = "fg:text bg:warn bold"
+format = "[](fg:warn)[ 󱦟 $duration ]($style)[](fg:warn)"
+
+[status]
+disabled = false
+map_symbol = true
+recognize_signal_code = true
+symbol = "✖"
+success_symbol = ""
+not_executable_symbol = ""
+not_found_symbol = "󰍉"
+sigint_symbol = "󰟾"
+signal_symbol = "󱐋"
+style = "fg:text bg:err bold"
+format = "[](fg:err)[ $symbol $status ]($style)[](fg:err)"
+
+[time]
+disabled = false
+time_format = "%H:%M"
+style = "fg:muted"
+format = "[$time]($style)"
+
+# Keep these disabled to avoid prompt noise.
+[gcloud]
+disabled = true
+
+[aws]
+disabled = true
+
+[azure]
+disabled = true
+
+[kubernetes]
+disabled = true
+
+[java]
+disabled = true
+
+[package]
+disabled = true
+
+[shell]
+disabled = true
+
+[sudo]
+disabled = true
+
+[container]
+disabled = true
+
+[docker_context]
+disabled = true

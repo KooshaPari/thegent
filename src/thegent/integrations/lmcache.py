@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from thegent.integrations.base import DataclassConfig
+
 logger = logging.get_logger(__name__) if hasattr(logging, 'get_logger') else logging
 
 try:
@@ -33,9 +35,8 @@ class LMCacheStatus(Enum):
 
 
 @dataclass
-class LMCacheConfig:
+class LMCacheConfig(DataclassConfig):
     """Configuration for LMCache."""
-    enabled: bool = False
     server_url: str = "http://localhost:8080"
     backend: str = "redis"
     redis_host: str = "localhost"
@@ -76,18 +77,10 @@ class LMCacheBackend:
             logger.info("LMCache backend initialized (enabled)")
 
     def _load_config(self) -> LMCacheConfig:
-        return LMCacheConfig(
-            enabled=os.getenv("LMCACHE_ENABLED", "").lower() in ("1", "true", "yes"),
-            server_url=os.getenv("LMCACHE_SERVER_URL", "http://localhost:8080"),
-            backend=os.getenv("LMCACHE_BACKEND", "redis"),
-            redis_host=os.getenv("LMCACHE_REDIS_HOST", "localhost"),
-            redis_port=int(os.getenv("LMCACHE_REDIS_PORT", "6379")),
-            redis_db=int(os.getenv("LMCACHE_REDIS_DB", "0")),
-            redis_password=os.getenv("LMCACHE_REDIS_PASSWORD", ""),
-            key_prefix=os.getenv("LMCACHE_KEY_PREFIX", "cliproxy"),
-            ttl_seconds=int(os.getenv("LMCACHE_TTL_SECONDS", "3600")),
-            max_size=int(os.getenv("LMCACHE_MAX_SIZE", str(10 * 1024 * 1024 * 1024))),
-        )
+        config = LMCacheConfig.from_env("LMCACHE_")
+        # Handle enable flag
+        config.enabled = os.environ.get("LMCACHE_ENABLED", "").lower() in ("1", "true", "yes")
+        return config
 
     @property
     def is_enabled(self) -> bool:

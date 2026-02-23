@@ -27,6 +27,30 @@
 
 ## Research Extension (In Progress)
 
+### NEW: External Research Compiled (2026-02-23)
+- [EXTERNAL_RESEARCH_COMPILED_2026-02-23.md](./EXTERNAL_RESEARCH_COMPILED_2026-02-23.md) - 500+ items
+  - MCP Servers & Protocols (15+)
+  - AI Agent Frameworks (20+)
+  - CLI Tools (20+)
+  - Observability & Tracing (15+)
+  - RAG & Retrieval (10+)
+  - Code Execution Sandboxes (15+)
+  - Awesome Lists (15+)
+  - Python/Rust Libraries (30+)
+  - Dev Tools & Infrastructure (20+)
+  - Research & Academic (10+)
+
+### NEW: External Research Batch 2 (2026-02-23)
+- [EXTERNAL_RESEARCH_BATCH2_2026-02-23.md](./EXTERNAL_RESEARCH_BATCH2_2026-02-23.md) - 300+ additional items including:
+  - Model Serving & Inference (15+)
+  - Evaluation & Benchmarking (20+)
+  - Data Pipelines & ETL (15+)
+  - Vector Databases (15+)
+  - Prompt Engineering (20+)
+  - Agent Frameworks Additional (15+)
+  - LLM Infrastructure (15+)
+  - Security & Safety (10+)
+
 
 
 

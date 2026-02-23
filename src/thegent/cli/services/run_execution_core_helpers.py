@@ -19,8 +19,26 @@ from rich.console import Console
 from thegent.agents import get_fallback_agents, get_runner, resolve_agent
 from thegent.agents.resilience import is_usage_limit
 from thegent.agents.base import AgentRunner, RunResult
-from thegent.cli.commands.impl import _apply_pareto_routing, _inject_time_constraint
-from thegent.cli.commands.impl import _resolve_agent_model
+
+# Lazy import wrapper to avoid circular dependency
+class _LazyImpl:
+    _impl = None
+    _spawn_with_eagain_retry = None
+
+    def __getattr__(self, name):
+        if name == '_spawn_with_eagain_retry':
+            if self._spawn_with_eagain_retry is None:
+                from thegent.cli.commands.impl import _spawn_with_eagain_retry
+                self._spawn_with_eagain_retry = _spawn_with_eagain_retry
+            return self._spawn_with_eagain_retry
+        if self._impl is None:
+            from thegent.cli.commands import impl
+            self._impl = impl
+        return getattr(self._impl, name)
+
+_impl_lazy = _LazyImpl()
+
+# These are now accessed via _impl_lazy._apply_pareto_routing etc.
 from thegent.cli.commands.observability_impl import escalate_add_impl
 from thegent.cli.services import run_session_helpers as _rsh
 from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
@@ -33,7 +51,7 @@ from thegent.cli.commands.session_meta_impl import (
     _build_continuation_prompt,
     _save_session_meta,
 )
-from thegent.cli.commands.impl import _spawn_with_eagain_retry
+
 from thegent.cli.services import run_session_helpers as _rsh_impl
 import os
 import platform
@@ -143,7 +161,7 @@ def run_impl_core(
         }
 
     # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
-    agent, model, route_contract, route_request = _apply_pareto_routing(
+    agent, model, route_contract, route_request = _impl_lazy._apply_pareto_routing(
         agent, model, routing, include_contract, route_contract, route_request
     )
 
@@ -270,7 +288,7 @@ def run_impl_core(
         except (TypeError, ValueError) as exc:
             _log.debug("Invalid claude timeout override '%s'; using existing timeout: %s", _min_claude, exc)
 
-    prompt = _inject_time_constraint(prompt, int(effective_timeout), summary_mode=not full)
+    prompt = _impl_lazy._inject_time_constraint(prompt, int(effective_timeout), summary_mode=not full)
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -718,7 +736,7 @@ def run_impl_core(
 
         # Wrap runner.run to inject agent_model
         original_run = runner.run
-        agent_model = _resolve_agent_model(agent_name, model, mode, settings)
+        agent_model = _impl_lazy._resolve_agent_model(agent_name, model, mode, settings)
 
         def wrapped_run(**kwargs) -> RunResult:
             if agent_model:
@@ -1090,7 +1108,7 @@ def bg_impl_core(
     tracker.start_run(rid)
 
     # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
-    agent, model, route_contract, route_request = _apply_pareto_routing(
+    agent, model, route_contract, route_request = _impl_lazy._apply_pareto_routing(
         agent, model, routing, include_contract, route_contract, route_request
     )
 
@@ -1499,7 +1517,7 @@ def bg_impl_core(
             _log.warning("Failed to create FIFO: %s", e)
 
     try:
-        proc = _spawn_with_eagain_retry(
+        proc = _impl_lazy._spawn_with_eagain_retry(
             cmd,
             cwd=str(cwd),
             env=env,

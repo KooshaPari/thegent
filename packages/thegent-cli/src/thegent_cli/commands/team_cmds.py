@@ -273,7 +273,7 @@ def snapshot_daily_index_cmd(
     for day_payload in days_list:
         snapshots = day_payload.get("snapshots") if "snapshots" in day_payload else day_payload.get("count", 0)
         console.print(
-            f"- {day_dict.get('day')}: snapshots={snapshots} latest={day_dict.get('latest_captured_at') or '?'}"
+            f"- {day_payload.get('day')}: snapshots={snapshots} latest={day_payload.get('latest_captured_at') or '?'}"
         )
 
 

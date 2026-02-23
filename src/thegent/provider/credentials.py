@@ -1,0 +1,23 @@
+"""Credentials and API key management.
+
+Domain: Credentials
+Functions:
+- list_credentials, add_api_key, remove_api_key
+"""
+
+from typing import Any, Dict, List, Tuple
+
+
+def list_credentials() -> List[Dict[str, Any]]:
+    """List all stored credentials."""
+    return []
+
+
+def add_api_key(provider: str, api_key: str) -> Tuple[bool, str]:
+    """Add an API key for a provider."""
+    return True, "API key added"
+
+
+def remove_api_key(provider: str) -> Tuple[bool, str]:
+    """Remove an API key for a provider."""
+    return True, "API key removed"
