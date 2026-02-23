@@ -1,5 +1,5 @@
 //! Complexity Ratchet hook binary
-//! 
+//!
 //! Enforces complexity limits and prevents regression.
 
 #![allow(unused)]
@@ -29,37 +29,43 @@ struct ComplexityRatchetInput {
     max_lines: usize,
 }
 
-fn default_max_complexity() -> usize { 10 }
-fn default_max_cognitive() -> usize { 15 }
-fn default_max_lines() -> usize { 40 }
+fn default_max_complexity() -> usize {
+    10
+}
+fn default_max_cognitive() -> usize {
+    15
+}
+fn default_max_lines() -> usize {
+    40
+}
 
 fn analyze_file(content: &str) -> (Vec<String>, Vec<String>) {
     let mut violations = Vec::new();
     let mut warnings = Vec::new();
-    
+
     let mut in_function = false;
     let mut func_lines = 0;
     let mut func_name = String::new();
     let mut branches = 0;
-    
+
     for line in content.lines() {
         let trimmed = line.trim();
-        
+
         // Detect function start
         if trimmed.contains("fn ") || trimmed.contains("def ") || trimmed.contains("function ") {
             in_function = true;
             func_lines = 0;
-            
+
             // Extract function name
             if let Some(name) = trimmed.split_whitespace().nth(1) {
                 func_name = name.split('(').next().unwrap_or("unknown").to_string();
             }
         }
-        
+
         // Count lines in function
         if in_function {
             func_lines += 1;
-            
+
             // Count branches
             if trimmed.contains("if ") || trimmed.starts_with("if ") {
                 branches += 1;
@@ -70,7 +76,7 @@ fn analyze_file(content: &str) -> (Vec<String>, Vec<String>) {
             if trimmed.contains("match ") {
                 branches += 1;
             }
-            
+
             // End of function (simple heuristic)
             if trimmed == "}" || trimmed.ends_with(':') && func_lines > 1 {
                 if func_lines > 40 {
@@ -82,7 +88,7 @@ fn analyze_file(content: &str) -> (Vec<String>, Vec<String>) {
             }
         }
     }
-    
+
     (violations, warnings)
 }
 
@@ -118,8 +124,10 @@ fn main() -> ExitCode {
 
     let exit_code = if all_violations.is_empty() { 0 } else { 1 };
 
-    println!(r#"{{"violations":{:?}, "warnings":{:?}, "exit_code":{}}}"#, 
-        all_violations, all_warnings, exit_code);
+    println!(
+        r#"{{"violations":{:?}, "warnings":{:?}, "exit_code":{}}}"#,
+        all_violations, all_warnings, exit_code
+    );
 
     for v in &all_violations {
         eprintln!("complexity-ratchet: violation: {}", v);

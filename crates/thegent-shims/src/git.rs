@@ -9,26 +9,35 @@
 //! NOTE: Uses std::process::Command which is safe from shell injection
 //! (unlike shell exec, Command never invokes a shell)
 
-use std::process::{Command, ExitCode};
-use std::path::PathBuf;
-use crate::utils::{resolve_binary, exec_command};
 use crate::lock;
+use crate::utils::{exec_command, resolve_binary};
+use std::path::PathBuf;
+use std::process::{Command, ExitCode};
 
 const READ_ONLY_CMDS: &[&str] = &[
-    "diff", "status", "ls-files", "rev-parse", "log", "show",
-    "name-rev", "symbolic-ref", "branch", "tag", "remote",
-    "config", "ls-tree", "cat-file", "describe",
+    "diff",
+    "status",
+    "ls-files",
+    "rev-parse",
+    "log",
+    "show",
+    "name-rev",
+    "symbolic-ref",
+    "branch",
+    "tag",
+    "remote",
+    "config",
+    "ls-tree",
+    "cat-file",
+    "describe",
 ];
 
 const WRITE_CMDS: &[&str] = &[
-    "add", "commit", "checkout", "reset", "rm", "mv",
-    "pull", "push", "merge", "rebase", "fetch", "stash",
-    "am", "apply",
+    "add", "commit", "checkout", "reset", "rm", "mv", "pull", "push", "merge", "rebase", "fetch",
+    "stash", "am", "apply",
 ];
 
-const AGENT_CMDS: &[&str] = &[
-    "codex", "copilot", "dex", "claude", "cursor",
-];
+const AGENT_CMDS: &[&str] = &["codex", "copilot", "dex", "claude", "cursor"];
 
 pub struct GitShim {
     git_bin: Option<PathBuf>,

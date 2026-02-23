@@ -176,7 +176,7 @@ pub fn create_session(name: &str, cmd: &str) -> Result<(), ZmxError> {
 
 #[cfg(feature = "zmx-native")]
 mod native {
-    use super::{ZmxError, ffi};
+    use super::{ffi, ZmxError};
     use std::ffi::CString;
 
     const LIST_BUF_SIZE: usize = 65_536; // 64 KiB — sufficient for many sessions
@@ -223,12 +223,8 @@ mod native {
         let ccmd = CString::new(cmd).map_err(|_| ZmxError::NulInName)?;
 
         // SAFETY: both CStrings are valid NUL-terminated C strings.
-        let rc = unsafe {
-            ffi::zmx_create(
-                cname.as_ptr() as *const u8,
-                ccmd.as_ptr() as *const u8,
-            )
-        };
+        let rc =
+            unsafe { ffi::zmx_create(cname.as_ptr() as *const u8, ccmd.as_ptr() as *const u8) };
 
         if rc != 0 {
             Err(ZmxError::NativeError {
@@ -251,13 +247,14 @@ mod subprocess {
     use std::process::Command;
 
     pub fn list_sessions() -> Result<Vec<String>, ZmxError> {
-        let output = Command::new("zmx")
-            .arg("list")
-            .output()
-            .map_err(|e| ZmxError::Subprocess {
-                source: e,
-                context: "zmx list".into(),
-            })?;
+        let output =
+            Command::new("zmx")
+                .arg("list")
+                .output()
+                .map_err(|e| ZmxError::Subprocess {
+                    source: e,
+                    context: "zmx list".into(),
+                })?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
@@ -267,8 +264,9 @@ mod subprocess {
             });
         }
 
-        let stdout = String::from_utf8(output.stdout)
-            .map_err(|e| ZmxError::Utf8 { source: e.utf8_error() })?;
+        let stdout = String::from_utf8(output.stdout).map_err(|e| ZmxError::Utf8 {
+            source: e.utf8_error(),
+        })?;
 
         Ok(super::parse_session_list(&stdout))
     }

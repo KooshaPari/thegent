@@ -295,11 +295,15 @@ impl InteractiveInput {
         block.render(area, buf);
 
         // Build display line: prompt + buffer text with cursor mark.
-        let prompt = Span::styled("> ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD));
+        let prompt = Span::styled(
+            "> ",
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
+        );
         let text_before = Span::raw(self.buffer[..self.cursor].to_string());
         // Cursor block: highlight char at cursor position or a space.
-        let cursor_char: String = self
-            .buffer[self.cursor..]
+        let cursor_char: String = self.buffer[self.cursor..]
             .chars()
             .next()
             .map(|c| c.to_string())
@@ -309,8 +313,7 @@ impl InteractiveInput {
             Style::default().bg(Color::White).fg(Color::Black),
         );
         let text_after_start = self.cursor
-            + self
-                .buffer[self.cursor..]
+            + self.buffer[self.cursor..]
                 .chars()
                 .next()
                 .map(|c| c.len_utf8())
@@ -404,14 +407,13 @@ mod tests {
 
     #[test]
     fn test_submit_invalid_returns_none() {
-        let mut input = InteractiveInput::new(make_registry())
-            .with_validator(|s| {
-                if s.starts_with('!') {
-                    ValidationState::Invalid("Commands cannot start with !".to_string())
-                } else {
-                    ValidationState::Valid
-                }
-            });
+        let mut input = InteractiveInput::new(make_registry()).with_validator(|s| {
+            if s.starts_with('!') {
+                ValidationState::Invalid("Commands cannot start with !".to_string())
+            } else {
+                ValidationState::Valid
+            }
+        });
         input.insert_char('!');
         input.insert_char('x');
         let result = input.submit();
@@ -420,14 +422,13 @@ mod tests {
 
     #[test]
     fn test_validator_valid() {
-        let mut input = InteractiveInput::new(make_registry())
-            .with_validator(|s| {
-                if s.is_empty() {
-                    ValidationState::Empty
-                } else {
-                    ValidationState::Valid
-                }
-            });
+        let mut input = InteractiveInput::new(make_registry()).with_validator(|s| {
+            if s.is_empty() {
+                ValidationState::Empty
+            } else {
+                ValidationState::Valid
+            }
+        });
         input.insert_char('o');
         assert_eq!(input.validation, ValidationState::Valid);
     }
@@ -525,8 +526,8 @@ mod tests {
 
     #[test]
     fn test_border_color_valid() {
-        let mut input = InteractiveInput::new(make_registry())
-            .with_validator(|_| ValidationState::Valid);
+        let mut input =
+            InteractiveInput::new(make_registry()).with_validator(|_| ValidationState::Valid);
         input.insert_char('x');
         assert_eq!(input.border_color(), Color::Green);
     }

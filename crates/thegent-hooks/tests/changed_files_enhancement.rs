@@ -138,7 +138,10 @@ fn test_changed_files_filter_by_directory() {
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("src/main.py"), "should find src/main.py");
-    assert!(!stdout.contains("tests/test.py"), "should not find tests/test.py");
+    assert!(
+        !stdout.contains("tests/test.py"),
+        "should not find tests/test.py"
+    );
 }
 
 /// Test: Filter by impact type (code vs docs)
@@ -180,7 +183,10 @@ fn test_changed_files_filter_by_impact() {
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("main.py"), "should find main.py (code)");
-    assert!(!stdout.contains("README.md"), "should not find README.md (docs)");
+    assert!(
+        !stdout.contains("README.md"),
+        "should not find README.md (docs)"
+    );
 }
 
 /// Test: Dependency analysis
@@ -192,7 +198,11 @@ fn test_changed_files_dependency_analysis() {
 
     // Create Python files with dependencies
     fs::write(repo.join("utils.py"), "def helper(): pass\n").expect("write utils");
-    fs::write(repo.join("main.py"), "from utils import helper\n\nhelper()\n").expect("write main");
+    fs::write(
+        repo.join("main.py"),
+        "from utils import helper\n\nhelper()\n",
+    )
+    .expect("write main");
 
     // Commit initial state
     Command::new("git")
@@ -219,8 +229,10 @@ fn test_changed_files_dependency_analysis() {
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Should produce valid JSON with dependency information
-    assert!(stdout.contains("depends_on") || stdout.contains("utils.py"),
-            "should have dependency information");
+    assert!(
+        stdout.contains("depends_on") || stdout.contains("utils.py"),
+        "should have dependency information"
+    );
 }
 
 /// Test: Filter by status (modified vs added)
@@ -298,8 +310,10 @@ fn test_changed_files_multiple_filters() {
     let output = Command::new(cargo_bin())
         .args([
             "changed-files-filter",
-            "--extension", "py",
-            "--directory", "src",
+            "--extension",
+            "py",
+            "--directory",
+            "src",
         ])
         .current_dir(&repo)
         .output()
@@ -309,7 +323,10 @@ fn test_changed_files_multiple_filters() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("src/main.py"), "should find src/main.py");
     assert!(stdout.contains("src/utils.py"), "should find src/utils.py");
-    assert!(!stdout.contains("tests/test.py"), "should not find tests/test.py");
+    assert!(
+        !stdout.contains("tests/test.py"),
+        "should not find tests/test.py"
+    );
     assert!(!stdout.contains("README.md"), "should not find README.md");
 }
 
@@ -346,8 +363,10 @@ fn test_changed_files_exclude_filters() {
     let output = Command::new(cargo_bin())
         .args([
             "changed-files-filter",
-            "--extension", "py",
-            "--exclude-extension", "md", // This should have no effect
+            "--extension",
+            "py",
+            "--exclude-extension",
+            "md", // This should have no effect
         ])
         .current_dir(&repo)
         .output()

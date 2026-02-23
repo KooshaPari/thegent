@@ -114,7 +114,10 @@ fn audit_command(dir: &PathBuf) -> Result<()> {
     if missing_see_also.is_empty() {
         println!("✅ All files have 'See also' section");
     } else {
-        println!("⚠️  Missing 'See also' section ({} files):", missing_see_also.len());
+        println!(
+            "⚠️  Missing 'See also' section ({} files):",
+            missing_see_also.len()
+        );
         for audit in missing_see_also.iter().take(20) {
             println!("   - {}", audit.path.display());
         }
@@ -154,8 +157,7 @@ fn normalize_command(dir: &PathBuf) -> Result<()> {
 }
 
 fn extract_command(file: &PathBuf) -> Result<()> {
-    let doc = load_markdown(file)
-        .with_context(|| format!("Failed to load {}", file.display()))?;
+    let doc = load_markdown(file).with_context(|| format!("Failed to load {}", file.display()))?;
 
     if let Some(ref fm) = doc.frontmatter {
         println!("Frontmatter:");
@@ -165,7 +167,8 @@ fn extract_command(file: &PathBuf) -> Result<()> {
     }
 
     let has_fm = doc.frontmatter.is_some();
-    if let Some(title) = extract_title(&format!("{}\n{}",
+    if let Some(title) = extract_title(&format!(
+        "{}\n{}",
         if has_fm { "---\n---\n" } else { "" },
         doc.body
     )) {

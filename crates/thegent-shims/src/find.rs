@@ -7,9 +7,9 @@
 //! which never invokes a shell and is completely safe from injection attacks.
 //! The hook warning about child_process.exec() does not apply to Rust code.
 
-use std::process::{Command, ExitCode};
-use std::path::PathBuf;
 use crate::utils::resolve_binary;
+use std::path::PathBuf;
+use std::process::{Command, ExitCode};
 
 pub struct FindShim {
     fd_bin: Option<PathBuf>,
@@ -112,10 +112,7 @@ impl FindShim {
     fn exec_fd(&self, fd_path: &PathBuf, args: &[String]) -> ExitCode {
         let fd_args = Self::convert_to_fd(args);
 
-        match Command::new(fd_path)
-            .args(&fd_args)
-            .status()
-        {
+        match Command::new(fd_path).args(&fd_args).status() {
             Ok(status) => {
                 let code = status.code().unwrap_or(1);
                 ExitCode::from(code as u8)
@@ -133,10 +130,7 @@ impl FindShim {
 
     /// Execute find (fallback)
     fn exec_find(&self, find_path: &PathBuf, args: &[String]) -> ExitCode {
-        match Command::new(find_path)
-            .args(args)
-            .status()
-        {
+        match Command::new(find_path).args(args).status() {
             Ok(status) => {
                 let code = status.code().unwrap_or(1);
                 ExitCode::from(code as u8)

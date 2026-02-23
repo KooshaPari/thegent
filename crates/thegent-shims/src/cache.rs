@@ -3,11 +3,11 @@
 //! Caches results from read-only git commands (status, diff, log, etc.)
 //! with configurable TTL. 5-20x speedup for repeated operations.
 
-use std::path::Path;
-use std::time::{SystemTime, Duration};
-use std::collections::HashMap;
 use parking_lot::RwLock;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::path::Path;
+use std::time::{Duration, SystemTime};
 
 const DEFAULT_TTL_SECS: u64 = 300; // 5 minutes
 

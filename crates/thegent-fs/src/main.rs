@@ -13,7 +13,9 @@ use std::path::PathBuf;
 use std::process;
 
 use clap::{Parser, Subcommand};
-use thegent_fs::{copy_file, copy_tree, ensure_dir, get_size, glob_files, list_dir, move_path, remove_path};
+use thegent_fs::{
+    copy_file, copy_tree, ensure_dir, get_size, glob_files, list_dir, move_path, remove_path,
+};
 
 // ---------------------------------------------------------------------------
 // CLI definition
@@ -106,13 +108,25 @@ fn main() {
 
 fn run(cli: Cli) -> anyhow::Result<()> {
     match cli.command {
-        Command::Copy { src, dst, preserve_metadata } => {
+        Command::Copy {
+            src,
+            dst,
+            preserve_metadata,
+        } => {
             let bytes = copy_file(&src, &dst, preserve_metadata)?;
             println!("Copied {} bytes", bytes);
         }
         Command::CopyTree { src, dst, ignore } => {
             let ignore_refs: Vec<&str> = ignore.iter().map(|s| s.as_str()).collect();
-            let bytes = copy_tree(&src, &dst, if ignore_refs.is_empty() { None } else { Some(&ignore_refs) })?;
+            let bytes = copy_tree(
+                &src,
+                &dst,
+                if ignore_refs.is_empty() {
+                    None
+                } else {
+                    Some(&ignore_refs)
+                },
+            )?;
             println!("Copied {} bytes", bytes);
         }
         Command::Move { src, dst } => {

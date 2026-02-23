@@ -74,7 +74,9 @@ impl Session {
 
     pub fn transition(&mut self, new_state: SessionState) -> Result<(), String> {
         let valid = match self.state {
-            SessionState::Created => matches!(new_state, SessionState::Active | SessionState::Closed),
+            SessionState::Created => {
+                matches!(new_state, SessionState::Active | SessionState::Closed)
+            }
             SessionState::Active => {
                 matches!(new_state, SessionState::Suspended | SessionState::Closed)
             }

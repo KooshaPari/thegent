@@ -1,46 +1,46 @@
-/// thegent-hooks: Rust governance library for hook runtime
-pub mod types;
+pub mod affected_tests;
+pub mod changed_files;
 pub mod config;
-pub mod policy;
 pub mod cost;
-pub mod quality;
-pub mod security;
-pub mod utils;
 pub mod file_discovery;
 pub mod git_cache;
 pub mod git_ops;
-pub mod changed_files;
-pub mod affected_tests;
+pub mod policy;
 pub mod prewarm;
+pub mod quality;
 pub mod report;
+pub mod security;
+/// thegent-hooks: Rust governance library for hook runtime
+pub mod types;
+pub mod utils;
 
 pub use types::{
-    HookConfig, HookError, PolicyRule, PolicyOutcome, QualityMetrics, SecurityFinding,
-    CostEstimate, LintIssue, SecurityRule, QualityThresholds, RuleType, Severity,
+    CostEstimate, HookConfig, HookError, LintIssue, PolicyOutcome, PolicyRule, QualityMetrics,
+    QualityThresholds, RuleType, SecurityFinding, SecurityRule, Severity,
 };
 
+pub use affected_tests::{
+    AffectedTestsAnalyzer, AffectedTestsError, DetectionStrategy, ImportDetector, PatternDetector,
+    TestFile,
+};
+pub use changed_files::{
+    ChangeStatus, ChangedFile, ChangedFilesDetector, ChangedFilesError, DependencyGraph,
+    FilterOptions, ImpactType,
+};
 pub use config::ConfigLoader;
-pub use policy::PolicyEngine;
 pub use cost::CostCalculator;
-pub use quality::QualityEvaluator;
-pub use security::SecurityScanner;
-pub use utils::{resolve_real_binary, resolve_git_binary, command_exists, get_safe_path};
-pub use file_discovery::{find_files, FileType, FileDiscoveryError};
+pub use file_discovery::{find_files, FileDiscoveryError, FileType};
 pub use git_cache::{GitCache, GitCacheError};
 pub use git_ops::{GitOps, GitOpsError};
-pub use changed_files::{
-    ChangedFilesDetector, ChangedFile, ChangeStatus, ImpactType, FilterOptions, DependencyGraph,
-    ChangedFilesError,
-};
-pub use affected_tests::{
-    AffectedTestsAnalyzer, PatternDetector, ImportDetector, TestFile, DetectionStrategy,
-    AffectedTestsError,
-};
+pub use policy::PolicyEngine;
 pub use prewarm::{
-    PrewarmManager, PrewarmReport, SharedDataCache, RuffCache, ShellcheckCache, SystemInfoCache,
-    PrewarmMetadata, PrewarmError,
+    PrewarmError, PrewarmManager, PrewarmMetadata, PrewarmReport, RuffCache, SharedDataCache,
+    ShellcheckCache, SystemInfoCache,
 };
+pub use quality::QualityEvaluator;
 pub use report::{
-    ReportManager, HookReport, Issue, IssueType, IssueSeverity, PerformanceMetrics, Statistics,
-    SummaryReport, ReportError,
+    HookReport, Issue, IssueSeverity, IssueType, PerformanceMetrics, ReportError, ReportManager,
+    Statistics, SummaryReport,
 };
+pub use security::SecurityScanner;
+pub use utils::{command_exists, get_safe_path, resolve_git_binary, resolve_real_binary};

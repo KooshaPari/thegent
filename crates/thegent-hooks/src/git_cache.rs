@@ -1,14 +1,14 @@
 //! Git operation caching migrated from hooks/lib/git-cache.sh
 //! Provides TTL-based caching for git operations (70% reduction in git calls)
 
+use base16ct::lower;
+use blake3;
+use dashmap::DashMap;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use dashmap::DashMap;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use blake3;
-use base16ct::lower;
 
 #[derive(Error, Debug)]
 pub enum GitCacheError {
@@ -179,10 +179,13 @@ impl GitCache {
                     if self.is_valid(cached_at) {
                         if let Ok(content) = fs::read_to_string(&cache_file) {
                             // Update memory cache
-                            self.memory_cache.insert(key.clone(), CachedResult {
-                                output: content.clone(),
-                                cached_at,
-                            });
+                            self.memory_cache.insert(
+                                key.clone(),
+                                CachedResult {
+                                    output: content.clone(),
+                                    cached_at,
+                                },
+                            );
                             return Some(content);
                         }
                     }
@@ -202,10 +205,13 @@ impl GitCache {
             .as_secs();
 
         // Update memory cache
-        self.memory_cache.insert(key.clone(), CachedResult {
-            output: output.to_string(),
-            cached_at: now,
-        });
+        self.memory_cache.insert(
+            key.clone(),
+            CachedResult {
+                output: output.to_string(),
+                cached_at: now,
+            },
+        );
 
         // Write to disk atomically
         let cache_file = self.cache_dir.join(&key);

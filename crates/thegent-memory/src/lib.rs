@@ -31,9 +31,9 @@ pub mod types;
 pub use client::SupermemoryClient;
 pub use error::{Error, Result};
 pub use types::{
-    KnowledgeNode, Relationship, AuthMethod, QueryResult,
-    MemoryData, MemoryId, MemoryOperation, MemoryQuery, MemoryResponse, MemoryResult,
-    OperationType, ResponseMetadata, SessionContext, SessionId,
+    AuthMethod, KnowledgeNode, MemoryData, MemoryId, MemoryOperation, MemoryQuery, MemoryResponse,
+    MemoryResult, OperationType, QueryResult, Relationship, ResponseMetadata, SessionContext,
+    SessionId,
 };
 
 /// Re-export common items
@@ -41,8 +41,8 @@ pub mod prelude {
     pub use crate::client::SupermemoryClient;
     pub use crate::error::{Error, Result};
     pub use crate::types::{
-        KnowledgeNode, Relationship, AuthMethod, QueryResult,
-        MemoryData, MemoryId, MemoryOperation, MemoryQuery, MemoryResponse, MemoryResult,
-        OperationType, ResponseMetadata, SessionContext, SessionId,
+        AuthMethod, KnowledgeNode, MemoryData, MemoryId, MemoryOperation, MemoryQuery,
+        MemoryResponse, MemoryResult, OperationType, QueryResult, Relationship, ResponseMetadata,
+        SessionContext, SessionId,
     };
 }

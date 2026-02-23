@@ -65,7 +65,10 @@ impl RouterStatus {
             format!("Router Status ({} agents)", self.agents.len()),
             format!("Policy: {:?}", self.policy),
             format!("Total decisions: {}", self.total_decisions),
-            format!("Lifecycle: {:.1}% | TheGent: {:.1}%", self.lifecycle_pct, self.thegent_pct),
+            format!(
+                "Lifecycle: {:.1}% | TheGent: {:.1}%",
+                self.lifecycle_pct, self.thegent_pct
+            ),
         ];
         if let Some(quorum) = self.quorum_decision {
             lines.push(format!("Quorum: {:?}", quorum));
@@ -214,7 +217,10 @@ impl RoutingOrchestrator {
                 }
             }
             ArbitrationPolicy::MajorityWins => {
-                let thegent_votes = decisions.iter().filter(|&&m| m == RoutingMode::TheGent).count();
+                let thegent_votes = decisions
+                    .iter()
+                    .filter(|&&m| m == RoutingMode::TheGent)
+                    .count();
                 let lifecycle_votes = decisions.len() - thegent_votes;
                 // TheGent wins ties.
                 if thegent_votes >= lifecycle_votes {
@@ -231,11 +237,21 @@ impl RoutingOrchestrator {
     /// Used by `thegent router status` CLI command.
     pub fn status(&self) -> RouterStatus {
         let agents = self.agents.lock().unwrap();
-        let agent_states: Vec<AgentRoutingState> = agents.values().map(|e| e.state.clone()).collect();
+        let agent_states: Vec<AgentRoutingState> =
+            agents.values().map(|e| e.state.clone()).collect();
 
-        let total = agent_states.iter().map(|a| a.total_decisions).sum::<usize>();
-        let lc_total = agent_states.iter().map(|a| a.lifecycle_decisions).sum::<usize>();
-        let tg_total = agent_states.iter().map(|a| a.thegent_decisions).sum::<usize>();
+        let total = agent_states
+            .iter()
+            .map(|a| a.total_decisions)
+            .sum::<usize>();
+        let lc_total = agent_states
+            .iter()
+            .map(|a| a.lifecycle_decisions)
+            .sum::<usize>();
+        let tg_total = agent_states
+            .iter()
+            .map(|a| a.thegent_decisions)
+            .sum::<usize>();
 
         let (lifecycle_pct, thegent_pct) = if total == 0 {
             (0.0, 0.0)
@@ -333,7 +349,11 @@ mod tests {
         orch.route_for_agent("agent-1", &simple);
 
         let status = orch.status();
-        let agent = status.agents.iter().find(|a| a.agent_id == "agent-1").unwrap();
+        let agent = status
+            .agents
+            .iter()
+            .find(|a| a.agent_id == "agent-1")
+            .unwrap();
         assert_eq!(agent.total_decisions, 2);
         assert_eq!(agent.lifecycle_decisions, 2);
     }
@@ -436,8 +456,16 @@ mod tests {
         orch.route_for_agent("agent-2", &complex);
 
         let status = orch.status();
-        let a1 = status.agents.iter().find(|a| a.agent_id == "agent-1").unwrap();
-        let a2 = status.agents.iter().find(|a| a.agent_id == "agent-2").unwrap();
+        let a1 = status
+            .agents
+            .iter()
+            .find(|a| a.agent_id == "agent-1")
+            .unwrap();
+        let a2 = status
+            .agents
+            .iter()
+            .find(|a| a.agent_id == "agent-2")
+            .unwrap();
         assert_eq!(a1.current_mode, RoutingMode::Lifecycle);
         assert_eq!(a2.current_mode, RoutingMode::TheGent);
     }
@@ -471,7 +499,9 @@ mod tests {
             });
             handles.push(handle);
         }
-        for h in handles { h.join().unwrap(); }
+        for h in handles {
+            h.join().unwrap();
+        }
 
         let status = orch.status();
         assert_eq!(status.total_decisions, 40);

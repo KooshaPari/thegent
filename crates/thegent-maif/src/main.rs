@@ -1,10 +1,10 @@
 use clap::{Parser, Subcommand};
-use thegent_maif::{MAIFArtifact, generate_key_pair, load_private_key, load_public_key, MAIFError};
-use std::path::PathBuf;
-use std::collections::BTreeMap;
-use serde_json::json;
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
+use serde_json::json;
+use std::collections::BTreeMap;
 use std::fs;
+use std::path::PathBuf;
+use thegent_maif::{generate_key_pair, load_private_key, load_public_key, MAIFArtifact, MAIFError};
 
 #[derive(Parser)]
 #[command(name = "thegent-maif")]
@@ -64,7 +64,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Keygen { bits, private_key, public_key } => {
+        Commands::Keygen {
+            bits,
+            private_key,
+            public_key,
+        } => {
             let (priv_key, pub_key) = generate_key_pair(bits)?;
 
             let priv_pem = priv_key.to_pkcs8_pem(LineEnding::LF)?;
@@ -75,7 +79,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             println!("Key pair generated successfully.");
         }
-        Commands::Create { action, payload, agent, session, key, output } => {
+        Commands::Create {
+            action,
+            payload,
+            agent,
+            session,
+            key,
+            output,
+        } => {
             let payload_map: BTreeMap<String, serde_json::Value> = serde_json::from_str(&payload)?;
             let mut artifact = MAIFArtifact::new(action, payload_map, agent, session);
 

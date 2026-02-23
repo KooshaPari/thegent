@@ -1,9 +1,9 @@
+use dashmap::DashMap;
+use lru::LruCache;
+use serde::{Deserialize, Serialize};
+use std::num::NonZeroUsize;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
-use lru::LruCache;
-use dashmap::DashMap;
-use std::num::NonZeroUsize;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CacheEntry<T> {
@@ -232,7 +232,8 @@ impl PythonCache {
     }
 
     fn set_with_ttl(&self, key: String, value: String, ttl_seconds: u64) {
-        self.cache.set_with_ttl(key, value, Duration::from_secs(ttl_seconds));
+        self.cache
+            .set_with_ttl(key, value, Duration::from_secs(ttl_seconds));
     }
 
     fn remove(&self, key: &str) {
