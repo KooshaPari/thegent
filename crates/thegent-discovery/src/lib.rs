@@ -2,28 +2,67 @@ use serde::{Deserialize, Serialize};
 use regex::Regex;
 use std::collections::HashMap;
 use std::process::Command;
+
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::PyModule;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass]
+#[cfg_attr(feature = "python", pyclass)]
 pub struct DiscoveredAgent {
-    #[pyo3(get)]
     pub pid: u32,
-    #[pyo3(get)]
     pub ppid: u32,
-    #[pyo3(get)]
     pub name: String,
-    #[pyo3(get)]
     pub cmd: String,
-    #[pyo3(get)]
     pub cwd: String,
-    #[pyo3(get)]
     pub session_id: Option<String>,
-    #[pyo3(get)]
     pub memory_kb: u64,
-    #[pyo3(get)]
     pub cpu_usage: f32,
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl DiscoveredAgent {
+    #[getter]
+    fn get_pid(&self) -> u32 {
+        self.pid
+    }
+
+    #[getter]
+    fn get_ppid(&self) -> u32 {
+        self.ppid
+    }
+
+    #[getter]
+    fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[getter]
+    fn get_cmd(&self) -> String {
+        self.cmd.clone()
+    }
+
+    #[getter]
+    fn get_cwd(&self) -> String {
+        self.cwd.clone()
+    }
+
+    #[getter]
+    fn get_session_id(&self) -> Option<String> {
+        self.session_id.clone()
+    }
+
+    #[getter]
+    fn get_memory_kb(&self) -> u64 {
+        self.memory_kb
+    }
+
+    #[getter]
+    fn get_cpu_usage(&self) -> f32 {
+        self.cpu_usage
+    }
 }
 
 pub struct DiscoveryManager {
@@ -182,11 +221,13 @@ impl DiscoveryManager {
     }
 }
 
+#[cfg(feature = "python")]
 #[pyclass]
 struct PyDiscoveryManager {
     manager: DiscoveryManager,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl PyDiscoveryManager {
     #[new]
@@ -205,6 +246,7 @@ impl PyDiscoveryManager {
     }
 }
 
+#[cfg(feature = "python")]
 #[pymodule]
 fn thegent_discovery(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDiscoveryManager>()?;
