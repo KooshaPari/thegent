@@ -27,6 +27,21 @@ def _classify_subprocess_probe_error(exc: BaseException) -> str:
     return f"unexpected error ({type(exc).__name__}): {exc}"
 
 
+def _classify_subprocess_probe_execution(
+    result: subprocess.CompletedProcess[str]
+) -> str:
+    reason = f"execution failed (exit {result.returncode})"
+    stderr = result.stderr.strip()
+    stdout = result.stdout.strip()
+    if stderr and stdout:
+        return f"{reason}: stderr='{stderr}', stdout='{stdout}'"
+    if stderr:
+        return f"{reason}: {stderr}"
+    if stdout:
+        return f"{reason}: {stdout}"
+    return reason
+
+
 @shell_app.command("status")
 def shell_status() -> None:
     """Show shell environment status and configuration."""
@@ -218,7 +233,12 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
             env={**os.environ, "RIPGREP_CONFIG_PATH": "", "GREP_OPTIONS": ""},
             check=False,
         )
-        if result.stdout.strip():
+        if result.returncode != 0:
+            reason = _classify_subprocess_probe_execution(result)
+            warnings.append(f"Alias probe execution failed ({reason}). Check zsh startup and rerun: thegent shell doctor.")
+            if fix:
+                fixes.append("Fix zsh startup errors or rerun with a clean PATH.")
+        elif result.stdout.strip():
             issues.append("ls is aliased to tree/recursive output")
             if fix:
                 fixes.append("Safeguards should fix this automatically")
@@ -229,7 +249,23 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
         )
         if fix:
             fixes.append("Increase shell probe timeout or skip alias checks temporarily.")
-    except (FileNotFoundError, subprocess.SubprocessError, OSError) as exc:
+    except FileNotFoundError as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        warnings.append(
+            f"Alias probe unavailable ({reason}). Verify zsh is installed and runnable, "
+            "then rerun: thegent shell doctor."
+        )
+        if fix:
+            fixes.append("Install or fix zsh in PATH, then rerun: thegent shell doctor.")
+    except subprocess.SubprocessError as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        warnings.append(
+            f"Alias probe unavailable ({reason}). Verify zsh is installed and runnable, "
+            "then rerun: thegent shell doctor."
+        )
+        if fix:
+            fixes.append("Install or fix zsh in PATH, then rerun: thegent shell doctor.")
+    except OSError as exc:
         reason = _classify_subprocess_probe_error(exc)
         warnings.append(
             f"Alias probe unavailable ({reason}). Verify zsh is installed and runnable, "
@@ -555,9 +591,22 @@ def shell_platform() -> None:
                 table.add_row("Zsh Status", "Malformed version output")
                 table.add_row("Zsh Version", result.stdout.strip() or "Unknown")
         else:
-            table.add_row("Zsh Status", f"Execution failed (exit {result.returncode})")
+            reason = _classify_subprocess_probe_execution(result)
+            table.add_row("Zsh Status", f"Execution failed ({reason})")
             table.add_row("Zsh Version", "Unknown")
-    except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as exc:
+    except FileNotFoundError as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Probe failed ({reason})")
+        table.add_row("Zsh Version", "Unknown")
+    except subprocess.TimeoutExpired as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Probe failed ({reason})")
+        table.add_row("Zsh Version", "Unknown")
+    except subprocess.SubprocessError as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Probe failed ({reason})")
+        table.add_row("Zsh Version", "Unknown")
+    except OSError as exc:
         reason = _classify_subprocess_probe_error(exc)
         table.add_row("Zsh Status", f"Probe failed ({reason})")
         table.add_row("Zsh Version", "Unknown")

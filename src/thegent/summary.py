@@ -16,6 +16,7 @@ _log = logging.getLogger(__name__)
 _PARSE_DETAIL_LIMIT = 120
 _PARSE_LINE_LIMIT = 140
 _PARSE_SAMPLE_LIMIT = 5
+_NO_COMMIT_STMTS = ("does not have any commits yet",)
 
 
 @dataclass
@@ -107,9 +108,6 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
     since = start_dt.isoformat()
     until = end_dt.isoformat()
     cmd = ["git", "log", f"--since={since}", f"--until={until}", "--pretty=format:%h %ad %s", "--date=short"]
-    no_commit_errors = [
-        "does not have any commits yet",
-    ]
     try:
         res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
     except OSError as exc:
@@ -117,14 +115,15 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
         _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
         return GitCommitsResult(commits=[], status="error", error=error)
 
+    stdout = (res.stdout or "").strip()
+    stderr = (res.stderr or "").strip().lower()
     if res.returncode != 0:
-        stderr = (res.stderr or "").strip().lower()
-        if any(marker in stderr for marker in no_commit_errors):
+        if not stdout and any(marker in stderr for marker in _NO_COMMIT_STMTS):
             return GitCommitsResult(commits=[], status="empty", error=None)
 
         error = {
             "type": "git_log_failed",
-            "message": (res.stderr.strip() or f"git log exited with status {res.returncode}")[:200],
+            "message": (stderr or f"git log exited with status {res.returncode}")[:200],
             "returncode": res.returncode,
         }
         _log.warning(
@@ -132,11 +131,11 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
             str(project_path),
             " ".join(cmd),
             res.returncode,
-            (res.stderr or "").strip()[:500],
+            stderr[:500],
         )
         return GitCommitsResult(commits=[], status="error", error=error)
 
-    commits = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+    commits = [line.strip() for line in stdout.splitlines() if line.strip()]
     return GitCommitsResult(commits=commits, status="empty" if not commits else "ok")
 
 
