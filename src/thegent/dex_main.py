@@ -401,6 +401,13 @@ def _run_codex_interactive(
     cmd.extend(["--model", canonical])
     add_filtered_interactive_args(cmd, extra_args, _DEX_BYPASS_FLAG)
 
+    # Extra path safety: if callers accidentally pass bypass flags in extra args,
+    # ensure we still end up with a single canonical pair.
+    if _DEX_YOLO_FLAG not in cmd:
+        cmd.insert(1, _DEX_YOLO_FLAG)
+    if _DEX_BYPASS_FLAG not in cmd:
+        cmd.insert(2, _DEX_BYPASS_FLAG)
+
     # Wrap with caffeinate to prevent sleep on macOS
     cmd = wrap_with_caffeinate(cmd, "codex")
 
@@ -482,7 +489,7 @@ def default_dex(
 
         # If no args, use default flash model
         if not cmd_args:
-            _run_codex_interactive("flash", extra_args=[_DEX_BYPASS_FLAG])
+            _run_codex_interactive("flash")
             return
 
         # Check if first argument is a model alias
@@ -498,7 +505,7 @@ def default_dex(
             remaining_args = cmd_args
 
         # Run with the model and remaining arguments (prompt, flags, etc.)
-        extra_args = [_DEX_BYPASS_FLAG, *remaining_args]
+        extra_args = remaining_args
         _run_codex_interactive(model_alias, extra_args=extra_args)
 
 

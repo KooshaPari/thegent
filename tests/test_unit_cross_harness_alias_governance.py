@@ -47,7 +47,7 @@ def test_default_dex_callback_uses_flash_path() -> None:
     ctx = type("Ctx", (), {"invoked_subcommand": None})()
     with patch("sys.argv", ["dex"]), patch("thegent.dex_main._run_codex_interactive") as run_interactive:
         default_dex(ctx, force=False, native=False)  # type: ignore[arg-type]
-    run_interactive.assert_called_once_with("flash", extra_args=[_DEX_BYPASS_FLAG])
+    run_interactive.assert_called_once_with("flash")
 
 
 def test_default_roid_callback_uses_flash_path() -> None:

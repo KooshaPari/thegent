@@ -6,20 +6,13 @@ import asyncio
 import json
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict
 from thegent.config import ThegentSettings
-from thegent.govern.vetter.checks import (
-    DiffSizeVetterCheck,
-    QualityScoreVetterCheck,
-    RuffVetterCheck,
-    SafetyVetterCheck,
-    SchemaVetterCheck,
-    TestPassVetterCheck,
-)
-from thegent.govern.vetter.models import VetterCheckResult, VetterPolicy
-from thegent.govern.vetter.orchestrator import VetterOrchestrator
+
+if TYPE_CHECKING:
+    from thegent.govern.vetter.models import VetterCheckResult, VetterPolicy
 
 
 def _session_dir() -> Any:
@@ -76,7 +69,50 @@ class _SchemaOutputModel(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
+def _load_vetter_components() -> tuple[
+    Any,
+    Any,
+    Any,
+    Any,
+    Any,
+    Any,
+    "VetterPolicy",
+    Any,
+]:
+    from thegent.govern.vetter.checks import (
+        DiffSizeVetterCheck,
+        QualityScoreVetterCheck,
+        RuffVetterCheck,
+        SafetyVetterCheck,
+        SchemaVetterCheck,
+        TestPassVetterCheck,
+    )
+    from thegent.govern.vetter.models import VetterPolicy
+    from thegent.govern.vetter.orchestrator import VetterOrchestrator
+
+    return (
+        DiffSizeVetterCheck,
+        QualityScoreVetterCheck,
+        RuffVetterCheck,
+        SafetyVetterCheck,
+        SchemaVetterCheck,
+        TestPassVetterCheck,
+        VetterPolicy,
+        VetterOrchestrator,
+    )
+
+
 def _build_check_registry(policy: VetterPolicy) -> dict[str, Any]:
+    (
+        DiffSizeVetterCheck,
+        QualityScoreVetterCheck,
+        RuffVetterCheck,
+        SafetyVetterCheck,
+        SchemaVetterCheck,
+        TestPassVetterCheck,
+        _,
+        _,
+    ) = _load_vetter_components()
     judge_model = "gpt-4o-mini"
     required_names = set(policy.checks).union(policy.escalate_on)
     checks: dict[str, Any] = {}
@@ -106,6 +142,8 @@ def _build_check_registry(policy: VetterPolicy) -> dict[str, Any]:
 
 
 def _resolve_policy_bundle(policy: str) -> tuple[VetterPolicy, dict[str, Any]]:
+    from thegent.govern.vetter.models import VetterPolicy
+
     contract_path = _vetter_contract_path(policy)
     if not contract_path.exists():
         raise FileNotFoundError(f"Vetter policy contract not found: {contract_path}")
@@ -256,6 +294,16 @@ def govern_vet_impl(
         ]
         return payload
 
+    (
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        VetterOrchestrator,
+    ) = _load_vetter_components()
     orchestrator = VetterOrchestrator(session_dir=session_dir, check_registry=check_registry)
     run_context = {
         "run_id": run_id,

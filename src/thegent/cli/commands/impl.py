@@ -226,7 +226,6 @@ __all__ = [
 
 
 import logging
-import time
 import subprocess
 import sys
 from pathlib import Path
@@ -388,49 +387,70 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
     )
 
 
-_hash_observe_summary_payload = run_observe_helpers.hash_observe_summary_payload
 _build_observe_summary_trend_scope = run_observe_helpers.build_observe_summary_trend_scope
 _hash_observe_summary_trend_scope = run_observe_helpers.hash_observe_summary_trend_scope
 _parse_observe_summary_timestamp = run_observe_helpers.parse_observe_summary_timestamp
 _parse_observe_summary_env_float = run_observe_helpers.parse_observe_summary_env_float
 _parse_observe_summary_env_int = run_observe_helpers.parse_observe_summary_env_int
 _observe_summary_freshness_bucket = run_observe_helpers.observe_summary_freshness_bucket
+
+
+def _hash_observe_summary_payload(payload: dict[str, Any]) -> dict[str, str]:
+    return run_observe_helpers.hash_observe_summary_payload(payload)
+
+
 def _load_observe_summary_snapshots(
     scope_signature: str,
     scope_key_json: str,
     limit: int,
 ) -> list[dict[str, Any]]:
-    path = _health_snapshot_log_path()
-    if not path.exists():
-        return []
-    snapshots: list[dict[str, Any]] = []
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except OSError:
-        return []
-    requested_limit = max(0, int(limit))
-    for line in reversed(lines):
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            rec = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if rec.get("record_type") != "observe_summary_snapshot":
-            continue
-        if (
-            rec.get("trend_scope_signature") != scope_signature
-            and rec.get("scope_signature") != scope_signature
-            and rec.get("scope_key_json") != scope_key_json
-        ):
-            continue
-        snapshots.append(rec)
-        if requested_limit and len(snapshots) >= requested_limit:
-            break
-    return snapshots
-_classify_observe_summary_trend_health = run_observe_helpers.classify_observe_summary_trend_health
-_append_observe_summary_snapshot = run_observe_helpers.append_observe_summary_snapshot
+    run_observe_helpers.health_snapshot_log_path = _health_snapshot_log_path
+    return run_observe_helpers.load_observe_summary_snapshots(
+        scope_signature,
+        scope_key_json,
+        limit,
+    )
+
+
+def _classify_observe_summary_trend_health(
+    *,
+    enabled: bool,
+    baseline_available: bool,
+    trend_snapshot_coverage_pct: float,
+    trend_snapshot_deficit: int,
+    trend_snapshot_invalid_timestamps: int,
+    trend_snapshot_freshness_bucket: str,
+    trend_snapshot_gap_count: int,
+    trend_sampling_mode: str,
+) -> dict[str, Any]:
+    return run_observe_helpers.classify_observe_summary_trend_health(
+        enabled=enabled,
+        baseline_available=baseline_available,
+        trend_snapshot_coverage_pct=trend_snapshot_coverage_pct,
+        trend_snapshot_deficit=trend_snapshot_deficit,
+        trend_snapshot_invalid_timestamps=trend_snapshot_invalid_timestamps,
+        trend_snapshot_freshness_bucket=trend_snapshot_freshness_bucket,
+        trend_snapshot_gap_count=trend_snapshot_gap_count,
+        trend_sampling_mode=trend_sampling_mode,
+    )
+
+
+def _append_observe_summary_snapshot(
+    payload: dict[str, Any],
+    trend_scope_key: dict[str, Any],
+    trend_scope_signature: str,
+    scope_key_json: str,
+    trend_snapshot_ids: list[str],
+    trend_summary: dict[str, Any],
+) -> None:
+    run_observe_helpers.append_observe_summary_snapshot(
+        payload,
+        trend_scope_key,
+        trend_scope_signature,
+        scope_key_json,
+        trend_snapshot_ids,
+        trend_summary,
+    )
 
 
 _EAGAIN_ERRNOS: frozenset[int] = spawn_retry_helpers.EAGAIN_ERRNOS
