@@ -168,3 +168,43 @@
 | Rust LOC | 168,545 | >200,000 |
 | Files | 1,408 | <1,000 |
 | Avg file size | 183 LOC | <150 LOC |
+
+---
+
+## Additional Findings (Feb 23, 2026)
+
+### Empty Stub Files (21 total) - Can Be Removed
+
+| Path | Module | Action |
+|------|--------|--------|
+| src/docs_engine/export/__init__.py | docs_engine | Remove |
+| src/docs_engine/git/__init__.py | docs_engine | Remove |
+| src/docs_engine/hub/__init__.py | docs_engine | Remove |
+| src/docs_engine/mcp/__init__.py | docs_engine | Remove |
+| src/docs_engine/semantic/__init__.py | docs_engine | Remove |
+| src/docs_engine/sidebar/__init__.py | docs_engine | Remove |
+| src/thegent/cli/apps/__init__.py | cli | Remove |
+| src/thegent/evals/__init__.py | evals | Remove |
+| src/thegent/mcp/tools/__init__.py | mcp | Remove |
+| src/thegent/observability/__init__.py | observability | Remove |
+| src/thegent/offload/__init__.py | offload | Remove |
+| src/thegent/orchestration/consensus/__init__.py | orchestration | Review |
+| src/thegent/orchestration/pruning/__init__.py | orchestration | Review |
+| src/thegent/orchestration/resilience/__init__.py | orchestration | Review |
+| src/thegent/orchestration/resource/__init__.py | orchestration | Review |
+| src/thegent/orchestration/state/__init__.py | orchestration | Review |
+| src/thegent/orchestration/strategies/__init__.py | orchestration | Review |
+| src/thegent/prompts/__init__.py | prompts | Remove |
+| src/thegent/protocols/__init__.py | protocols | Remove |
+| src/thegent/tools/__init__.py | tools | Remove |
+| src/thegent/utils/routing_impl/guardrails/__init__.py | utils | Review |
+
+### Files with TODO/FIXME (16 files)
+
+Need review for completion or removal of TODO items.
+
+### Lint Status
+
+- Core modules (automation, desktop, governance, tray): ✅ Clean
+- Integrations: Has issues but excluded from CI
+- Tests: 54 passing
