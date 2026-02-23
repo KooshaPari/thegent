@@ -150,7 +150,7 @@ def run_impl_core(
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
         try:
-            from thegent.routing.auto_router import auto_route
+            from thegent.utils.routing_impl.auto_router import auto_route
 
             ar = auto_route(
                 prompt=prompt,
@@ -290,7 +290,7 @@ def run_impl_core(
         try:
             import importlib
 
-            routing_mod = importlib.import_module("thegent.routing")
+            routing_mod = importlib.import_module("thegent.utils.routing_impl")
             TaskRouter = getattr(routing_mod, "TaskRouter", None)
             if TaskRouter:
                 router = TaskRouter(settings)
@@ -1097,7 +1097,7 @@ def bg_impl_core(
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
         try:
-            from thegent.routing.auto_router import auto_route
+            from thegent.utils.routing_impl.auto_router import auto_route
 
             ar = auto_route(
                 prompt=prompt,
