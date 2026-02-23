@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump — 2026-02-19 Session 2
 
 **Session**: Claude Code, Haiku 4.5

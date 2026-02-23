@@ -1,3 +1,4 @@
+<DONE>
 # Tenacity vs Custom Retry — Audit & Plan
 
 > **Purpose**: Audit custom retry/backoff implementations and plan migration to tenacity where appropriate.

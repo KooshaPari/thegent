@@ -1,3 +1,4 @@
+<DONE>
 # Codex CLI Lightweight & Scalable Overhaul Design
 
 **Date:** 2026-02-20

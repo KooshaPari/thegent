@@ -1,3 +1,4 @@
+<DONE>
 # Shell Startup Fixes - 2026-02-17
 
 **Current:** 654ms

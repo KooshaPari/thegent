@@ -1,3 +1,4 @@
+<DONE>
 ---
 title: WL-082 SubAgentDispatcher Implementation
 date: 2026-02-20

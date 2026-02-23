@@ -1,3 +1,4 @@
+<DONE>
 # Multi-Agent Feature Parity Audit
 
 **Purpose:** Audit all modern agent platforms — **Claude Code**, **Codex**, **Cursor-agent**, **Factory droid**, **Augment Code** — and map equivalents. Informs the Agent Orchestration Harness plan for full parity across all surfaces (interactive + headless, agents/teammates, rules, hooks).

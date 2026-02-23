@@ -1,3 +1,4 @@
+<DONE>
 # Cross-Platform Shell Research — Summary
 
 **Task:** research-cross-platform-shell

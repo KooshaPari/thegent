@@ -30,10 +30,17 @@ def __getattr__(name: str) -> Any:
         "_list_minimax_models", "_list_glm_models", "_list_cursor_models",
         "_list_gemini_models", "_list_copilot_models", "_list_claude_models",
         "_list_codex_models", "_list_antigravity_models", "_list_kiro_models",
+        "_list_copilot_models_fallback", "_list_codex_models_fallback",
     )
     if name in _model_list_funcs:
         from thegent.cli.commands import model_cmds_config
         func = getattr(model_cmds_config, name, None)
+        if func:
+            globals()[name] = func
+            return func
+        # Try model_cmds_rules
+        from thegent.cli.commands import model_cmds_rules
+        func = getattr(model_cmds_rules, name, None)
         if func:
             globals()[name] = func
             return func

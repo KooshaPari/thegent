@@ -1,3 +1,4 @@
+<DONE>
 # Codex 0.104.0 "No Model Metadata" Fix
 
 **Date:** 2026-02-20

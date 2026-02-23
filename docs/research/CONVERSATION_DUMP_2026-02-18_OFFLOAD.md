@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump: research-compute-offload Synthesis (2026-02-18)
 
 **Session Date**: 2026-02-18

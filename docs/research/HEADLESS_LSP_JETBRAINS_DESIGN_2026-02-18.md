@@ -1,3 +1,4 @@
+<DONE>
 # Headless LSP Setup with JetBrains Integration
 
 **Date**: 2026-02-18

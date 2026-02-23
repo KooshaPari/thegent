@@ -1,3 +1,4 @@
+<DONE>
 # Phase 15: Enterprise Lifecycle and Compliance Surface Map
 
 > **Purpose:** Map architectural surfaces for enterprise compliance, SOC/SIEM, ledger, certification export.

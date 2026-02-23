@@ -1,3 +1,4 @@
+<DONE>
 # Research: Unified Nested Isolation & CLI-Share Deep Dive (v2.0)
 
 **Date**: 2026-02-19

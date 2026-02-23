@@ -1,3 +1,4 @@
+<DONE>
 # Cross-Platform Gaps and Extensions — Research & Plan
 
 **Purpose:** Fill holes in existing cross-platform, remote compute, and multi-tenant plans. Extend with POSIX+pwsh dual-shell strategy, remote compute implementation detail, and OS-level agent primitives.

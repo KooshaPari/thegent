@@ -1,3 +1,4 @@
+<DONE>
 # MCP Full Parity & FastMCP Transport Spec Audit
 
 **Purpose:** Achieve full parity (CLI ↔ MCP ↔ Codex/CC ecosystem), maximize FastMCP transport spec feature usage, and extend to the full Claude Code / Codex ecosystem per thegent's multi-platform parity plans.

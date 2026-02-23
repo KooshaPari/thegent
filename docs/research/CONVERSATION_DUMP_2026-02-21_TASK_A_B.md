@@ -1,3 +1,4 @@
+<DONE>
 # Task A & B Completion: Hardcoded Path Fix + Test Skeleton
 
 **Date:** 2026-02-21

@@ -1,3 +1,4 @@
+<DONE>
 # Agent Hierarchy Implementation Status
 
 > **Date**: 2026-02-18

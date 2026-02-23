@@ -1,3 +1,4 @@
+<DONE>
 # Memory Optimization — Long-Term Plan
 
 > **Purpose**: Long-term optimizations for memory issues in multi-agent, multi-session local swarms.

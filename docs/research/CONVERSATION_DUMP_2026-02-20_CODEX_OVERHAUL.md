@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump: Codex CLI Lightweight & Scalable Overhaul Design
 **Date:** 2026-02-20
 **Session:** Codex overhaul design research and implementation

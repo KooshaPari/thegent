@@ -1,3 +1,4 @@
+<DONE>
 # Comprehensive AI Agent CLI Tools Research (2025-2026)
 ## 15-20 Additional Tools Not in Original Leaderboards
 

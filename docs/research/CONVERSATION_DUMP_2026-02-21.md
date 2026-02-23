@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump 2026-02-21 — Pyright Zero-Error Sweep
 
 ## Session Goal

@@ -7,6 +7,7 @@ This module handles policy configuration, contract management, drift detection, 
 from __future__ import annotations
 
 import hashlib
+import json
 from thegent.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid

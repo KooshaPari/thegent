@@ -1,3 +1,4 @@
+<DONE>
 # OpenClaw / Agent Zero as Main Agent — Research
 
 **Purpose:** Evaluate OpenClaw or Agent Zero as thegent's primary agent runtime so that chatting with sessions and advanced sitback (dashboard, never-idle, gardening) becomes easier and more robust.

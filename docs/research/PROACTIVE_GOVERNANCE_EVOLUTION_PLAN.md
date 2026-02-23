@@ -1,3 +1,4 @@
+<DONE>
 # Proactive Governance Evolution Plan
 
 > **Purpose**: Remove the need for users to explicitly indicate when governance should evolve. Agents and tooling should **proactively identify** governance gaps and **propose or implement** updates without being asked.

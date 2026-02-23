@@ -1,3 +1,4 @@
+<DONE>
 # ChatGPT Pareto Router Deep Research — Master Index
 
 **Source**: chatgpt3.md, chatgpt4.md (full conversation transcripts)

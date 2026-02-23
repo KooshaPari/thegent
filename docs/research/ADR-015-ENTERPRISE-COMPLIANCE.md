@@ -1,3 +1,4 @@
+<DONE>
 # ADR-015: Enterprise Lifecycle and Compliance API
 
 ## Status

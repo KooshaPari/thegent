@@ -1,3 +1,4 @@
+<DONE>
 # Zsh + Modern Dev CLI Research - 2026-02-22
 
 ## Scope

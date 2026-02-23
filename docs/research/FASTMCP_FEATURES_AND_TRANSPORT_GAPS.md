@@ -1,3 +1,4 @@
+<DONE>
 # FastMCP Features & MCP Transport Spec Gaps
 
 **Purpose:** Deep research on FastMCP capabilities and MCP transport spec implementation gaps in clients (Codex, Cursor, Claude Code). Informs thegent MCP server design and potential client patches.

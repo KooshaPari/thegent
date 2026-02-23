@@ -1,3 +1,4 @@
+<DONE>
 # Cross-Platform Shell Strategy: Research & Design
 
 **Date:** 2026-02-19

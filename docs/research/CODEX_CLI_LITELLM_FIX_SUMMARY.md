@@ -1,3 +1,4 @@
+<DONE>
 # Codex CLI + LiteLLM Integration Fix Summary
 
 **Date**: 2026-02-18
