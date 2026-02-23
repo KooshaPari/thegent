@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import pytest
 
@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -78,8 +78,7 @@ def test_wl10965_turn_submit_notification_with_approval_keeps_approval_and_suppr
                     "unified_diff": "--- a\n+++ b\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert response is None
     assert any(item["method"] == "approval/requested" for item in notifications)
     turn_id = SERVER_STATE.sessions[session_id]["turn_ids"][0]
@@ -103,8 +102,7 @@ def test_wl10966_turn_submit_request_with_approval_returns_approval_payload() ->
                     "unified_diff": "--- a\n+++ b\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["result"]["approval"]["status"] == "requested"
     assert response["result"]["approval"]["diff"] == "--- a\n+++ b\n"
@@ -128,8 +126,7 @@ def test_wl10967_turn_submit_approval_diff_whitespace_is_rejected() -> None:
                     "unified_diff": "   \n  ",
                 },
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["data"]["reason"] == "diff_must_be_non_empty_string"
 
@@ -146,8 +143,7 @@ def test_wl10968_turn_submit_without_approval_returns_completed_turn() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "lane-c4"},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     turn_id = response["result"]["turn"]["id"]
     assert response["result"]["turn"]["status"] == "completed"

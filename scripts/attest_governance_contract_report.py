@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
-import json
+import orjson as json
 import os
 from pathlib import Path
 
@@ -49,7 +49,7 @@ def main() -> int:
     }
 
     attestation_path.parent.mkdir(parents=True, exist_ok=True)
-    attestation_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    attestation_path.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
     print(attestation_path)
     return 0
 

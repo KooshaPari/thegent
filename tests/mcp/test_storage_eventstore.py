@@ -13,7 +13,7 @@ FR Traceability: @trace FR-MCP-STORAGE-001
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 from typing import TYPE_CHECKING, Any
 

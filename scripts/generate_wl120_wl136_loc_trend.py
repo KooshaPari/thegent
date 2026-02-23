@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-import json
+import orjson as json
 import subprocess
 from pathlib import Path
 
@@ -195,7 +195,7 @@ def main() -> int:
 
     args.json_out.parent.mkdir(parents=True, exist_ok=True)
     args.md_out.parent.mkdir(parents=True, exist_ok=True)
-    args.json_out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    args.json_out.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     md = _render_md(
         report_date=report_end_date.isoformat(),

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 
@@ -28,7 +28,7 @@ def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":"))
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode()).hexdigest()}
 
 
@@ -178,7 +178,7 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
     }
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, sort_keys=True))
+            fh.write(json.dumps(rec, sort_keys=True).decode().decode())
             fh.write("\n")
     except OSError:
         return

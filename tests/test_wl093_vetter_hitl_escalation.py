@@ -17,7 +17,7 @@ Covers the full escalation path in VetterOrchestrator:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, call
@@ -820,7 +820,7 @@ async def test_escalation_event_payload_shape_is_json_serializable_for_audit_log
     assert escalation_event["status"] == "pending"
     assert escalation_event["escalation_lane"] == "critical"
     assert isinstance(escalation_event["reason"], str)
-    json.dumps(escalation_event)
+    json.dumps(escalation_event).decode().decode()
 
 
 @pytest.mark.asyncio

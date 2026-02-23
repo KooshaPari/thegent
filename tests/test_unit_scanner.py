@@ -9,7 +9,7 @@ Traces to: FR-GOV-001 (health score computation), FR-GOV-002 (dimension scanning
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -589,9 +589,9 @@ def test_scan_agent_failure_all_closed(scanner: CodebaseScanner) -> None:
     """
     cb_file = scanner.session_dir / "circuit_breakers.jsonl"
     cb_file.write_text(
-        json.dumps({"name": "agent1", "status": "CLOSED"})
+        json.dumps({"name": "agent1", "status": "CLOSED"}).decode().decode()
         + "\n"
-        + json.dumps({"name": "agent2", "status": "CLOSED"})
+        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode().decode()
         + "\n"
     )
 
@@ -606,11 +606,11 @@ def test_scan_agent_failure_open_breakers(scanner: CodebaseScanner) -> None:
     """
     cb_file = scanner.session_dir / "circuit_breakers.jsonl"
     cb_file.write_text(
-        json.dumps({"name": "agent1", "status": "OPEN"})
+        json.dumps({"name": "agent1", "status": "OPEN"}).decode().decode()
         + "\n"
-        + json.dumps({"name": "agent2", "status": "CLOSED"})
+        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode().decode()
         + "\n"
-        + json.dumps({"status": "OPEN"})
+        + json.dumps({"status": "OPEN"}).decode().decode()
         + "\n"
     )
 
@@ -627,10 +627,10 @@ def test_scan_agent_failure_malformed_json(scanner: CodebaseScanner) -> None:
     """
     cb_file = scanner.session_dir / "circuit_breakers.jsonl"
     cb_file.write_text(
-        json.dumps({"name": "agent1", "status": "OPEN"})
+        json.dumps({"name": "agent1", "status": "OPEN"}).decode().decode()
         + "\n"
         + "not valid json\n"
-        + json.dumps({"name": "agent2", "status": "CLOSED"})
+        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode().decode()
         + "\n"
     )
 

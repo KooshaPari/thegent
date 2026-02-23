@@ -3,7 +3,7 @@ Federated agent state synchronization across multiple registered projects.
 Ensures context continuity in cross-project multi-agent teams.
 """
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -90,7 +90,7 @@ class SyncLoop:
 
         sync_file = peer_sync_inbox / f"{source_id}_state.json"
         try:
-            sync_file.write_text(json.dumps(payload, indent=2))
+            sync_file.write_text(json.dumps(payload, indent=2).decode().decode())
         except Exception as e:
             _log.error("Failed to push state to peer %s: %s", source_id, e)
 

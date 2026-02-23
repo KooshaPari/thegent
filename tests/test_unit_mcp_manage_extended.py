@@ -6,7 +6,7 @@ install_to_client dispatcher branches, service lifecycle, process-compose manage
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -154,7 +154,7 @@ class TestInstallToClaudeDesktopExtended:
         claude_dir = tmp_path / "Library" / "Application Support" / "Claude"
         claude_dir.mkdir(parents=True)
         existing = {"mcpServers": {"other": {"url": "http://other"}}, "apiKey": "abc"}
-        (claude_dir / "claude_desktop_config.json").write_text(json.dumps(existing))
+        (claude_dir / "claude_desktop_config.json").write_text(json.dumps(existing).decode().decode())
         with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             install_to_claude_desktop(url=DEFAULT_MCP_URL)
         data = json.loads((claude_dir / "claude_desktop_config.json").read_text())
@@ -178,7 +178,7 @@ class TestInstallToCodexExtended:
         codex_dir = tmp_path / ".codex"
         codex_dir.mkdir()
         existing = {"mcpServers": {"other-tool": {"url": "http://other"}}}
-        (codex_dir / "mcp.json").write_text(json.dumps(existing))
+        (codex_dir / "mcp.json").write_text(json.dumps(existing).decode().decode())
         with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             install_to_codex(url=DEFAULT_MCP_URL)
         data = json.loads((codex_dir / "mcp.json").read_text())
@@ -202,7 +202,7 @@ class TestInstallToDroidExtended:
         factory_dir = tmp_path / ".factory"
         factory_dir.mkdir()
         existing = {"mcpServers": {"existing-server": {"url": "http://x"}}}
-        (factory_dir / "mcp.json").write_text(json.dumps(existing))
+        (factory_dir / "mcp.json").write_text(json.dumps(existing).decode().decode())
         install_to_droid(url=DEFAULT_MCP_URL, workspace=tmp_path)
         data = json.loads((factory_dir / "mcp.json").read_text())
         assert "existing-server" in data["mcpServers"]

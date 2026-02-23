@@ -1,7 +1,7 @@
 """E2E tests for thegent CLI (read-only, deterministic)."""
 
 import hashlib
-import json
+import orjson as json
 import re
 import sys
 from pathlib import Path
@@ -940,7 +940,7 @@ class TestObserveSummaryCustom:
             "missing_baseline_penalty": 45.0,
         }
         trend_health_signature = hashlib.sha256(
-            json.dumps(trend_health_policy, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            json.dumps(trend_health_policy, sort_keys=True, separators=(",", ":").decode().decode()).encode("utf-8")
         ).hexdigest()
         session_dir = tmp_path / "sessions"
         snapshot_file = tmp_path / "observe_summary_snapshots.jsonl"
@@ -957,7 +957,7 @@ class TestObserveSummaryCustom:
             "limit": 500,
             "top_escalations": 10,
         }
-        scope_json = json.dumps(scope, sort_keys=True, separators=(",", ":"))
+        scope_json = json.dumps(scope, sort_keys=True, separators=(",", ":").decode().decode())
         scope_signature = hashlib.sha256(scope_json.encode("utf-8")).hexdigest()
 
         snapshot_records = [
@@ -1033,7 +1033,7 @@ class TestObserveSummaryCustom:
             },
         ]
         snapshot_file.write_text(
-            "".join(json.dumps(record, sort_keys=True) + "\n" for record in snapshot_records),
+            "".join(json.dumps(record, sort_keys=True).decode().decode() + "\n" for record in snapshot_records),
             encoding="utf-8",
         )
 

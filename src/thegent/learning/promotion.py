@@ -1,6 +1,6 @@
 """WP-14002: Autonomous learning and model promotion."""
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 
@@ -76,4 +76,4 @@ class ModelPromoter:
             },
         }
         with audit_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(event) + "\n")
+            fh.write(json.dumps(event).decode().decode() + "\n")

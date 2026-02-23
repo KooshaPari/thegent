@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -64,7 +64,7 @@ class LocalDecisionJournal:
 
     def append(self, entry: SyncDecisionEntry) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        line = json.dumps(asdict(entry), sort_keys=True)
+        line = json.dumps(asdict(entry).decode().decode(), sort_keys=True)
         with self._path.open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
 

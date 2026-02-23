@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 from thegent.protocols import jsonrpc_agent_server as server
 from thegent.protocols.jsonrpc_agent_server import SERVER_STATE, process_jsonrpc_line_full
@@ -20,7 +20,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -128,8 +128,7 @@ def test_wl10969_handle_turn_submit_request_with_invalid_session_id_returns_pars
                 "method": "turn/submit",
                 "params": {"session_id": "missing", "input": "b4"},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["code"] == -32001
     assert response["error"]["message"] == "Session not found"

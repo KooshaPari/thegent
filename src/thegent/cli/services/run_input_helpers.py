@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import contextlib
-import json
+import orjson as json
 import math
 from pathlib import Path
 from typing import TYPE_CHECKING, Any

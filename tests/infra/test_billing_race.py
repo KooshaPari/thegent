@@ -8,7 +8,7 @@ TDD: These tests are written FIRST to demonstrate the race, then the fix is appl
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import threading
 from pathlib import Path
 
@@ -31,7 +31,7 @@ def billing_manager(tmp_path: Path) -> TeamBillingManager:
                 "budget_usd": 10_000.0,
                 "used_usd": 0.0,
             }
-        }),
+        }).decode(),
         encoding="utf-8",
     )
     return mgr
@@ -130,7 +130,7 @@ class TestBillingRaceConcurrentRecordUsage:
                     "budget_usd": 100_000.0,
                     "used_usd": 0.0,
                 }
-            }),
+            }).decode(),
             encoding="utf-8",
         )
 

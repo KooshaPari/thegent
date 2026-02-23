@@ -5,7 +5,7 @@ Covers tasks 87-100 from the pytest optimization wave plan.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 from datetime import datetime, timezone
 import subprocess
@@ -528,16 +528,16 @@ def test_requirements_promotion_criteria_contract_includes_optional_lane_readine
     )
     requirements_gate = tmp_path / "requirements-gate.json"
     requirements_gate.write_text(
-        json.dumps({"blocked_count": 0}, indent=2),
+        json.dumps({"blocked_count": 0}, indent=2).decode().decode(),
         encoding="utf-8",
     )
     health = tmp_path / "health.json"
-    health.write_text(json.dumps({"overall_health_score": 93}, indent=2), encoding="utf-8")
+    health.write_text(json.dumps({"overall_health_score": 93}, indent=2).decode().decode(), encoding="utf-8")
 
     run_1 = tmp_path / "run-1.json"
-    run_1.write_text(json.dumps({"status": "passed"}, indent=2), encoding="utf-8")
+    run_1.write_text(json.dumps({"status": "passed"}, indent=2).decode().decode(), encoding="utf-8")
     run_2 = tmp_path / "run-2.json"
-    run_2.write_text(json.dumps({"status": "passed"}, indent=2), encoding="utf-8")
+    run_2.write_text(json.dumps({"status": "passed"}, indent=2).decode().decode(), encoding="utf-8")
 
     criteria_output = tmp_path / "requirements-promotion-criteria.json"
     result = subprocess.run(
@@ -638,7 +638,7 @@ def test_requirements_diagram_output_respects_max_nodes_and_truncation(tmp_path:
             {
                 "schema_version": "requirements-map/v1",
                 "requirement_to_tests": {
-                    f"FR-TEST-{index:03d}": [f"tests/test_{index}.py::test_{index}"] for index in range(1, 7)
+                    f"FR-TEST-{index:03d}": [f"tests/test_{index}.py::test_{index}"] for index in range(1, 7).decode()
                 },
                 "requirement_coverage": {"coverage_ratio": 1.0},
             },

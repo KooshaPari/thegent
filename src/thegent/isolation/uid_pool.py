@@ -1,6 +1,6 @@
 """UID pool management for tenant isolation."""
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 

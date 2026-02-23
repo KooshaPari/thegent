@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 import os
 import sys
 import uuid
@@ -47,7 +47,7 @@ def data_protection_cmd(format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(status) + "\n")
+        sys.stdout.write(json.dumps(status).decode().decode() + "\n")
         return
 
     table = Table(title="Data Protection & Privacy Status (WP-3006)")
@@ -79,7 +79,7 @@ def compliance_report_cmd(
     fmt = _normalize_output_format(format)
 
     if fmt == "json":
-        out = json.dumps(report, indent=2)
+        out = json.dumps(report, indent=2).decode().decode()
     else:
         # Markdown report
         ts = report["tiered_storage"]
@@ -129,7 +129,7 @@ def audit_verify_cmd(format: str | None = None) -> None:
     res = auditor.verify_registry()
 
     if format == "json":
-        sys.stdout.write(json.dumps(res) + "\n")
+        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
         return
 
     if res["status"] == "passed":
@@ -185,7 +185,7 @@ def escalate_list_cmd(
     items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode().decode() + "\n")
         return
     if not items:
         console.print("[dim]No escalation items.[/dim]")
@@ -232,7 +232,7 @@ def sweep_cmd(
         out = {k: v for k, v in result.items() if k != "audit" or v is not None}
         if result.get("audit"):
             out["audit"] = result["audit"]
-        sys.stdout.write(json.dumps(out) + "\n")
+        sys.stdout.write(json.dumps(out).decode().decode() + "\n")
         if not result["pass"]:
             raise typer.Exit(1)
         return
@@ -329,7 +329,7 @@ def govern_list_pending_cmd(format: str | None = None) -> None:
     items = govern_list_pending_impl()
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode().decode() + "\n")
         return
     if not items:
         console.print("[dim]No pending HITL approval requests.[/dim]")
@@ -387,7 +387,7 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
     except FileNotFoundError:
         fmt = _normalize_output_format(format)
         if fmt == "json":
-            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}) + "\n")
+            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}).decode().decode() + "\n")
         else:
             console.print("[yellow]Govern not configured.[/yellow]")
             console.print("[dim]Run: thegent govern configure[/dim]")
@@ -410,7 +410,7 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
 
     if fmt == "json":
         output = build_health_json_output(health, get_band)
-        sys.stdout.write(json.dumps(output, indent=2) + "\n")
+        sys.stdout.write(json.dumps(output, indent=2).decode().decode() + "\n")
         return
 
     # Rich output
@@ -499,7 +499,7 @@ def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str
             started_at=started_at,
             completed_at=completed_at,
         )
-        sys.stdout.write(json.dumps(output, indent=2) + "\n")
+        sys.stdout.write(json.dumps(output, indent=2).decode().decode() + "\n")
         return
 
     table = build_cycle_result_table(
@@ -642,7 +642,7 @@ def contracts_registry_cmd(format: str | None = None) -> None:
                 data.append(v.__dict__)
             else:
                 data.append(v)
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
 
     table = Table(title="Contract Registry")
@@ -671,7 +671,7 @@ def migration_cmd(contract_id: str, version: str, format: str | None = None) -> 
     res = mc.evaluate_version(contract_id, version)
 
     if format == "json":
-        sys.stdout.write(json.dumps(res) + "\n")
+        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
         return
 
     color = "green" if res["allowed"] else "red"
@@ -711,7 +711,7 @@ def drift_cmd(
 
     if format == "json":
         out = {"issues": issues, "budget": budget}
-        sys.stdout.write(json.dumps(out) + "\n")
+        sys.stdout.write(json.dumps(out).decode().decode() + "\n")
         return
 
     if not issues and budget["within_budget"]:
@@ -753,7 +753,7 @@ def contracts_conformance_cmd(
     console = Console()
 
     if format == "json":
-        sys.stdout.write(json.dumps(report) + "\n")
+        sys.stdout.write(json.dumps(report).decode().decode() + "\n")
         import typer
 
         if report.get("drift_issues") or report["failed"] > 0:
@@ -805,7 +805,7 @@ def trust_status_cmd(format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(res) + "\n")
+        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
         return
 
     console.print("[bold]Trust Boundary Status (WP-3007)[/bold]")
@@ -830,7 +830,7 @@ def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(artifacts) + "\n")
+        sys.stdout.write(json.dumps(artifacts).decode().decode() + "\n")
         return
 
     if not artifacts:
@@ -877,7 +877,7 @@ def signatures_verify_cmd(run_id: str) -> None:
         for block in blocks:
             # Re-calculate hash (simplified for CLI check)
             payload = block.get("payload")
-            body = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+            body = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
             actual_hash = hashlib.sha256(body.encode()).hexdigest()
 
             if actual_hash != block.get("payload_hash"):
@@ -988,7 +988,7 @@ def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None 
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(res) + "\n")
+        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
         return
 
     console.print("[bold]Daily Cost Aggregation (FR-GOV-002)[/bold]")

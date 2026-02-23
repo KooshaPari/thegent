@@ -1,6 +1,6 @@
 """Health score calculator for thegent project governance."""
 
-import json
+import orjson as json
 from datetime import UTC
 from pathlib import Path
 from typing import TypedDict

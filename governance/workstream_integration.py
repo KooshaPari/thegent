@@ -4,7 +4,7 @@ Work Stream Integration
 Integrates governance, quality matrices, and audits into the work stream.
 """
 
-import json
+import orjson as json
 from datetime import datetime
 from pathlib import Path
 

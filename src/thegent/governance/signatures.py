@@ -52,7 +52,7 @@ def _resolve_signing_key(signing_key: str | None) -> str:
 
 def _canonical_json(data: dict[str, Any]) -> bytes:
     """Canonical JSON (sorted keys) for hashing/signing. Uses orjson for ~10x speedup."""
-    return orjson.dumps(data, option=orjson.OPT_SORT_KEYS)
+    return orjson.dumps(data, option=orjson.OPT_SORT_KEYS).decode().decode()
 
 
 def generate_artifact_hash(data: dict[str, Any]) -> str:

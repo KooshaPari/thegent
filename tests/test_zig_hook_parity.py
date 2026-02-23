@@ -20,7 +20,7 @@ Test Coverage:
 - AI slop detector logic
 """
 
-import json
+import orjson as json
 import subprocess
 import pytest
 import tempfile
@@ -171,7 +171,7 @@ class TestGateParity:
             "tool_name": "file_write",
             "tool_args": {"path": "/tmp/test.txt", "content": "test"},
             "session_id": "test-session-001",
-        })
+        }).decode()
 
         # Zig should accept and process this
         result = subprocess.run(
@@ -195,7 +195,7 @@ class TestGateParity:
             "tool_name": "file_write",
             "tool_result": {"status": "success", "bytes_written": 42},
             "session_id": "test-session-001",
-        })
+        }).decode()
 
         result = subprocess.run(
             [zig_dispatcher_bin, "validate", "PostToolUse"],

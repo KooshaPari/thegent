@@ -9,7 +9,7 @@ FR traceability: WL-312 (Policy Checksum Drift Detection)
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -52,7 +52,7 @@ class PolicyChecksumDriftDetector:
             SHA256 hex digest of the sorted JSON serialization.
         """
         # Use separators and sort_keys for deterministic serialization
-        json_str = json.dumps(policy_data, sort_keys=True, separators=(",", ":"))
+        json_str = json.dumps(policy_data, sort_keys=True, separators=(",", ":").decode().decode())
         return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
     def record_baseline(self, policy_id: str, policy_data: dict, cycle_id: str) -> PolicyChecksum:
@@ -128,7 +128,7 @@ class PolicyChecksumDriftDetector:
 
 def compute_payload_checksum(payload: Any) -> str:
     """Compute a deterministic SHA256 checksum for a JSON-compatible payload."""
-    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 

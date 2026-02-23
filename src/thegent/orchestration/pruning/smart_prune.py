@@ -3,7 +3,7 @@
 Implements the strategy defined in docs/research/SMART_PRUNING_STRATEGY.md.
 """
 
-import json
+import orjson as json
 import logging
 import os
 import re
@@ -148,7 +148,7 @@ class SmartPruner:
                 }
                 for sid, snap in self.snapshots.items()
             }
-            self.state_file.write_text(json.dumps(data, indent=2))
+            self.state_file.write_text(json.dumps(data, indent=2).decode().decode())
         except Exception as e:
             logger.warning(f"Failed to save smart prune state: {e}")
 

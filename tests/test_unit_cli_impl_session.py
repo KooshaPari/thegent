@@ -10,7 +10,7 @@ Covers: run_impl, bg_impl, status_impl, stop_impl, wait_impl,
         _run_background_session_observer).
 """
 
-import json
+import orjson as json
 import os
 import signal
 from datetime import UTC, datetime
@@ -950,7 +950,7 @@ class TestEventsImpl:
             {"run_id": "r2", "event": "start"},
         ]
         registry_file.write_text(
-            "\n".join(json.dumps(e) for e in events) + "\n",
+            "\n".join(json.dumps(e).decode().decode() for e in events) + "\n",
             encoding="utf-8",
         )
         with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
@@ -967,7 +967,7 @@ class TestEventsImpl:
             {"run_id": "r2", "event": "start"},
         ]
         registry_file.write_text(
-            "\n".join(json.dumps(e) for e in events) + "\n",
+            "\n".join(json.dumps(e).decode().decode() for e in events) + "\n",
             encoding="utf-8",
         )
         with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):
@@ -990,7 +990,7 @@ class TestEventsImpl:
         registry_file = tmp_path / "run_registry.jsonl"
         events = [{"run_id": f"r{i}", "event": "start"} for i in range(200)]
         registry_file.write_text(
-            "\n".join(json.dumps(e) for e in events) + "\n",
+            "\n".join(json.dumps(e).decode().decode() for e in events) + "\n",
             encoding="utf-8",
         )
         with patch("thegent.cli.commands.impl.ThegentSettings", return_value=settings):

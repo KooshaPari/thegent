@@ -4,7 +4,7 @@ Extracts session metadata from Ante agent harness at ~/.ante/sessions/.
 Sessions are stored as JSON files with usage stats, timestamps, and model info.
 """
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path

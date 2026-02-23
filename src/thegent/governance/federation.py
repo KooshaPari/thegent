@@ -12,7 +12,7 @@ Implements FR-FED-001 through FR-FED-006 (WL-020):
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 import logging
 import time
 from datetime import UTC, datetime
@@ -154,7 +154,7 @@ class ArbitrationLog:
             "arbitration_rule": rule,
         }
         with self.log_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry).decode().decode() + "\n")
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ class ConsentRelayStore:
     def store(self, artifact: dict[str, Any]) -> None:
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.store_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(artifact) + "\n")
+            f.write(json.dumps(artifact).decode().decode() + "\n")
 
     def list_active(self, run_id: str | None = None) -> list[dict[str, Any]]:
         if not self.store_path.exists():

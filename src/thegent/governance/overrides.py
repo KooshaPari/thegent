@@ -1,6 +1,6 @@
 """WP-3003: Override path with TTL and revalidation (FR-011)."""
 
-import json
+import orjson as json
 import logging
 import time
 from dataclasses import asdict, dataclass
@@ -119,4 +119,4 @@ class OverrideManager:
     def _save_override(self, override: PolicyOverride) -> None:
         """Save override to disk."""
         p = self.override_dir / f"{override.policy_id}.json"
-        p.write_text(json.dumps(override.to_dict(), indent=2), encoding="utf-8")
+        p.write_text(json.dumps(override.to_dict().decode().decode(), indent=2), encoding="utf-8")

@@ -1,6 +1,6 @@
 """Shared parsing helpers used by :mod:`thegent.config`."""
 
-import json
+import orjson as json
 import os
 from pathlib import Path
 

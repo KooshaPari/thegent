@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from typing import Any
 
@@ -30,7 +30,7 @@ def operations_cmd(*, format: str | None, operation: str | None, console: Any) -
         data = list_operations()
 
     if format == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
 
     table = Table(title="Universal Operations")

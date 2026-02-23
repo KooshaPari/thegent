@@ -13,7 +13,7 @@ Covers:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -37,7 +37,7 @@ from thegent.compute.tailscale import (
 
 def _make_status_json(peers: dict[str, Any] | None = None) -> str:
     """Return a minimal ``tailscale status --json`` payload."""
-    return json.dumps({"Version": "1.60.0", "Peer": peers or {}})
+    return json.dumps({"Version": "1.60.0", "Peer": peers or {}}).decode().decode()
 
 
 def _make_peer(
@@ -272,7 +272,7 @@ class TestParseStatus:
     # @trace FR-COMPUTE-005
     def test_peer_missing_hostname_uses_key(self) -> None:
         """Peer with no HostName falls back to the peer key."""
-        raw = json.dumps({"Peer": {"nodekey:fallback": {"TailscaleIPs": ["100.1.2.3"], "OS": "linux", "Online": True}}})
+        raw = json.dumps({"Peer": {"nodekey:fallback": {"TailscaleIPs": ["100.1.2.3"], "OS": "linux", "Online": True}}}).decode().decode()
         nodes = TailscaleManager._parse_status(raw)
         assert nodes[0].hostname == "nodekey:fallback"
 
@@ -280,7 +280,7 @@ class TestParseStatus:
     def test_peer_no_ips(self) -> None:
         """Peer with no TailscaleIPs gets an empty ip string."""
         peers = {"nodekey:x": {"HostName": "noip", "TailscaleIPs": [], "OS": "linux", "Online": True}}
-        nodes = TailscaleManager._parse_status(json.dumps({"Peer": peers}))
+        nodes = TailscaleManager._parse_status(json.dumps({"Peer": peers}).decode().decode())
         assert nodes[0].ip == ""
 
     # @trace FR-COMPUTE-005
@@ -294,12 +294,12 @@ class TestParseStatus:
     def test_raises_on_non_dict_root(self) -> None:
         """_parse_status raises TailscaleError when root is not a dict."""
         with pytest.raises(TailscaleError, match="root is not an object"):
-            TailscaleManager._parse_status(json.dumps([1, 2, 3]))
+            TailscaleManager._parse_status(json.dumps([1, 2, 3]).decode().decode())
 
     # @trace FR-COMPUTE-005
     def test_skips_non_dict_peer_entries(self) -> None:
         """Non-dict peer entries are skipped without raising."""
-        raw = json.dumps({"Peer": {"bad": "not-a-dict", "nodekey:good": _make_peer("ok")}})
+        raw = json.dumps({"Peer": {"bad": "not-a-dict", "nodekey:good": _make_peer("ok").decode().decode()}})
         nodes = TailscaleManager._parse_status(raw)
         assert len(nodes) == 1
         assert nodes[0].hostname == "ok"

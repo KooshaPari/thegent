@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
-import json
+import orjson as json
 from pathlib import Path
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_deprecated_quality_aliases.py"

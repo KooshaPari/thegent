@@ -1,6 +1,6 @@
 """Unit tests for cliproxy_adapter (Responses API <-> Chat Completions transform)."""
 
-import json
+import orjson as json
 
 import pytest
 

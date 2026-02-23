@@ -7,7 +7,7 @@ Sends request data to a webhook URL, expects {verdict: "allow"|"block", transfor
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass
 
@@ -59,7 +59,7 @@ def call_webhook_guardrail(
     try:
         response = httpx.post(
             config.url,
-            content=json.dumps(payload),
+            content=json.dumps(payload).decode().decode(),
             headers=headers,
             timeout=config.timeout_sec,
         )

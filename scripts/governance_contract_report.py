@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
+import orjson as json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -168,7 +168,7 @@ def main() -> int:
         "failed": sum(1 for r in results if not r.ok),
         "results": [{"name": r.name, "ok": r.ok, "details": r.details} for r in results],
     }
-    json_out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    json_out.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
     md_out.write_text(_render_markdown(results), encoding="utf-8")
     print(md_out)
     return 0

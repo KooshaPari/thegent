@@ -14,6 +14,10 @@
 #   2 = at least one fail-closed gate failed
 set -euo pipefail
 
+# Initialize JQ_CMD if not already set
+JQ_CMD="${JQ_CMD:-jq}"
+
+
 HOOK_NAME="GOVERNANCE-GATES"
 SPIRAL_CONTRACT_VERSION="v1"
 # Get script directory in a cross-shell compatible way
@@ -86,6 +90,7 @@ if [[ "$_GG_SELECTED_MODE" == "true" ]]; then
 fi
 _cache_key=$(hook_cache_key "$_gg_cache_scope")
 _gg_ttl="${HOOK_CACHE_TTL:-600}"
+echo "DEBUG: _gg_cache_scope=$_gg_cache_scope, _cache_key=$_cache_key" >&2
 if hook_cache_check "$_cache_key" "$_gg_ttl"; then
     _GG_GATE_CACHE_HIT="true"
     hook_cache_read "$_cache_key"
@@ -2633,6 +2638,6 @@ mkdir -p "$_CACHE_DIR" 2>/dev/null || true
 echo "$_output" > "$_CACHE_FILE" 2>/dev/null || true
 [[ -n "$_output" ]] && echo "$_output"
 if [[ "$_rc" -ne 0 ]]; then
-  echo "GOVERNANCE-GATES FAIL: $_gate_failures fail-closed gate(s) triggered exit code $_rc" >&2
+  # Failure count is already printed in the main() summary above
 fi
 exit "$_rc"

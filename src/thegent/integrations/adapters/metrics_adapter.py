@@ -3,7 +3,7 @@
 Handles Prometheus metrics export, cycle metrics, and change digest.
 """
 
-import json
+import orjson as json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -40,7 +40,7 @@ class MetricsAdapter:
         try:
             self._cycle_metrics_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self._cycle_metrics_path, "a") as f:
-                f.write(json.dumps(cycle_data) + "\n")
+                f.write(json.dumps(cycle_data).decode().decode() + "\n")
         except Exception:
             pass
     

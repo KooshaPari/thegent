@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import sys
 from pathlib import Path
@@ -117,7 +117,7 @@ def test_validate_zig_abi_contract_fails_on_missing_readiness_gates(tmp_path: Pa
     bad_contract = tmp_path / "zig_abi_contract_missing_readiness.json"
     contract_payload = _valid_contract_payload()
     contract_payload["validation"] = {"required_tests": ["abi_symbol_presence"]}
-    bad_contract.write_text(json.dumps(contract_payload), encoding="utf-8")
+    bad_contract.write_text(json.dumps(contract_payload).decode().decode(), encoding="utf-8")
 
     result = subprocess.run(
         [sys.executable, str(script), "--contract", str(bad_contract)],
@@ -146,7 +146,7 @@ def test_validate_zig_abi_contract_fails_on_duplicate_required_tests(tmp_path: P
             "wasm_target_build",
         ]
     }
-    bad_contract.write_text(json.dumps(contract_payload), encoding="utf-8")
+    bad_contract.write_text(json.dumps(contract_payload).decode().decode(), encoding="utf-8")
 
     result = subprocess.run(
         [sys.executable, str(script), "--contract", str(bad_contract)],
@@ -214,7 +214,7 @@ def test_check_zig_abi_artifact_passes_with_symbols_and_error_envelope(tmp_path:
                 "stage": "execute",
                 "details": {"field": "input"},
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 

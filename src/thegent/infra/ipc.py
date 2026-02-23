@@ -6,7 +6,7 @@ filesystem notification, intent broadcast, conflict detection, and WAL.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import os
 import fcntl
@@ -56,7 +56,7 @@ class IPCMesh:
                 "expires_in": ttl,
                 "owner": lock_name,
             }
-            (lock_path / "metadata").write_text(json.dumps(metadata))
+            (lock_path / "metadata").write_text(json.dumps(metadata).decode().decode())
             return True
         except FileExistsError:
             metadata_file = lock_path / "metadata"
@@ -114,7 +114,7 @@ class MaildirQueue:
         tmp_path = self.tmp_dir / msg_id
         new_path = self.new_dir / msg_id
 
-        tmp_path.write_text(json.dumps(envelope), encoding="utf-8")
+        tmp_path.write_text(json.dumps(envelope).decode().decode(), encoding="utf-8")
         tmp_path.rename(new_path)
         return msg_id
 
@@ -277,7 +277,7 @@ class IntentBroadcaster:
             "created_at": time.time(),
         }
         intent_path = self.intents_dir / f"{intent_id}.json"
-        intent_path.write_text(json.dumps(payload), encoding="utf-8")
+        intent_path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
         return intent_id
 
     def list_active(self, agent_id: str | None = None) -> list[dict[str, Any]]:
@@ -360,7 +360,7 @@ class SharedStateManager:
         # Fallback to file-based (for observability/debugging)
         metric_file = self.metrics_dir / f"{provider}.json"
         tmp_file = metric_file.with_suffix(".tmp")
-        tmp_file.write_text(json.dumps(metrics))
+        tmp_file.write_text(json.dumps(metrics).decode().decode())
         tmp_file.replace(metric_file)
 
     def get_all_metrics(self) -> dict[str, Any]:
@@ -394,7 +394,7 @@ class WriteAheadLog:
         entry = {"timestamp": time.time(), "op": operation, "data": data, "id": uuid.uuid4().hex}
         with open(self.wal_file, "a") as f:
             fcntl.flock(f, fcntl.LOCK_EX)
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry).decode().decode() + "\n")
             f.flush()
             os.fsync(f.fileno())
             fcntl.flock(f, fcntl.LOCK_UN)

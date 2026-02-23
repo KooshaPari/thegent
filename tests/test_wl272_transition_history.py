@@ -7,7 +7,7 @@ JSONL persistence, time-range queries, and full replay capability.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from datetime import datetime, timedelta
 from pathlib import Path
 

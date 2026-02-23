@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any
 
 _SEVERITIES = frozenset({"critical", "high", "medium", "low"})

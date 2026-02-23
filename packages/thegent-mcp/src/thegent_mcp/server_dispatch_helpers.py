@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 
@@ -85,4 +85,4 @@ def format_acp_response(
     }
     if error:
         payload["error"] = error
-    return json.dumps(payload)
+    return json.dumps(payload).decode().decode()

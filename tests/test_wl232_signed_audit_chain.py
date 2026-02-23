@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 
 import pytest
 
@@ -67,7 +67,7 @@ class TestSignedAuditArtifactChain:
         entry = chain.append("entry_001", {"action": "create"})
 
         # For first entry, prev_signature is empty
-        expected_input = f":{entry.entry_id}:{json.dumps(entry.data, sort_keys=True)}"
+        expected_input = f":{entry.entry_id}:{json.dumps(entry.data, sort_keys=True).decode().decode()}"
         expected_signature = hashlib.sha256(expected_input.encode()).hexdigest()
 
         assert entry.signature == expected_signature

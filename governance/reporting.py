@@ -4,7 +4,7 @@ Comprehensive Reporting and Visualization System
 Generates reports, dashboards, and visualizations for governance data.
 """
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum

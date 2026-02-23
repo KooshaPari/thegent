@@ -5,7 +5,7 @@ Manages the processing queue, tracks progress, and provides queue operations
 for iterating through documents by month and location.
 """
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from pathlib import Path
 

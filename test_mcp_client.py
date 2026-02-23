@@ -1,7 +1,7 @@
 """Simple MCP client for testing thegent server. Handles SSE responses."""
 
 import asyncio
-import json
+import orjson as json
 
 import httpx
 

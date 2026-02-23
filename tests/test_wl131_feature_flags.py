@@ -6,7 +6,7 @@ B90-W3-D2: Finalize Rust-backed feature flag defaults.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent

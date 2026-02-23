@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any
 
 
@@ -61,5 +61,5 @@ def build_observe_lines(result: dict[str, Any], provider: str | None) -> list[st
             f"health={trend.get('trend_snapshot_health', 'disabled')}"
         )
     if result.get("generated_query"):
-        lines.append(f"generated_query={json.dumps(result['generated_query'])}")
+        lines.append(f"generated_query={json.dumps(result['generated_query']).decode().decode()}")
     return lines

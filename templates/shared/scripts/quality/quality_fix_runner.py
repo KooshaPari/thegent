@@ -8,7 +8,7 @@ Requires config/quality-fix-dag.yaml.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -107,7 +107,7 @@ def run_fix_agents() -> int:
                 agents.append(fut.result())
 
     FIX_AGENTS_JSON.parent.mkdir(parents=True, exist_ok=True)
-    FIX_AGENTS_JSON.write_text(json.dumps({"agents": agents}, indent=2))
+    FIX_AGENTS_JSON.write_text(json.dumps({"agents": agents}, indent=2).decode())
 
     return 0 if all(a.get("status") == "passed" for a in agents) else 1
 

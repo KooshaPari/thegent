@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -452,7 +452,7 @@ class TestUpdateConfig:
         mock_backup_dir.return_value = tmp_path / "backups"
 
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({"existingKey": "value", "mcpServers": {}}))
+        config_path.write_text(json.dumps({"existingKey": "value", "mcpServers": {}}).decode().decode())
 
         mgr = InstallManager()
         mgr.update_config(config_path, "mcpServers.thegent", {"url": "http://test"})
@@ -471,7 +471,7 @@ class TestUpdateConfig:
         mock_backup_dir.return_value = tmp_path / "backups"
 
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({"mcpServers": {"thegent": {"url": "old"}}}))
+        config_path.write_text(json.dumps({"mcpServers": {"thegent": {"url": "old"}}}).decode().decode())
 
         mgr = InstallManager()
         mgr.update_config(config_path, "mcpServers.thegent", {"url": "new"})
@@ -603,7 +603,7 @@ class TestUninstall:
         mock_backup_dir.return_value = tmp_path / "backups"
 
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({"mcpServers": {"thegent": {"url": "new"}}}))
+        config_path.write_text(json.dumps({"mcpServers": {"thegent": {"url": "new"}}}).decode().decode())
 
         manifest = InstallManifest(
             configs=[
@@ -634,7 +634,7 @@ class TestUninstall:
         mock_backup_dir.return_value = tmp_path / "backups"
 
         config_path = tmp_path / "config.json"
-        config_path.write_text(json.dumps({"mcpServers": {"thegent": {"url": "x"}}}))
+        config_path.write_text(json.dumps({"mcpServers": {"thegent": {"url": "x"}}}).decode().decode())
 
         manifest = InstallManifest(
             configs=[
@@ -761,7 +761,7 @@ class TestBundleManifestLoader:
     def test_resolve_bundles_rejects_unknown(self, tmp_path) -> None:
         """Unknown bundle name raises a clear error."""
         manifest = tmp_path / "bundles.json"
-        manifest.write_text(json.dumps({"bundles": {"known": []}}))
+        manifest.write_text(json.dumps({"bundles": {"known": []}}).decode().decode())
 
         with patch("thegent.install.load_bundle_manifest") as mock_load:
             mock_load.return_value = {"known": []}
@@ -792,8 +792,7 @@ class TestBundleManifestLoader:
                         }
                     }
                 }
-            )
-        )
+            )).decode()
         ok, issues = validate_bundle_manifest(manifest)
         assert ok is False
         assert any("requires non-empty 'pin'" in issue for issue in issues)
@@ -818,8 +817,7 @@ class TestBundleManifestLoader:
                         }
                     }
                 }
-            )
-        )
+            )).decode()
         ok, issues = validate_bundle_manifest(manifest)
         assert ok is True
         assert issues == []

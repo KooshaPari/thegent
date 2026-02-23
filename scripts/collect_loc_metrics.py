@@ -16,7 +16,7 @@ Uses only stdlib + optional tokei subprocess.
 from __future__ import annotations
 
 import ast
-import json
+import orjson as json
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -162,7 +162,7 @@ def main() -> int:
 
     metrics = collect_metrics()
 
-    OUTPUT_PATH.write_text(json.dumps(metrics, indent=2))
+    OUTPUT_PATH.write_text(json.dumps(metrics, indent=2).decode().decode())
 
     print(f"LOC metrics written to {OUTPUT_PATH}")
     print(f"  Total LOC   : {metrics['total_loc']}")

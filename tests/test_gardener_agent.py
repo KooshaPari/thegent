@@ -12,7 +12,7 @@ Covers:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 from pathlib import Path
 from collections.abc import Generator
@@ -45,9 +45,9 @@ def tmp_memory_dir(tmp_path: Path) -> Path:
     mem_dir.mkdir(parents=True)
     log_file = mem_dir / "session_001.jsonl"
     log_file.write_text(
-        json.dumps({"type": "note", "content": "WL-060 COMPLETED"})
+        json.dumps({"type": "note", "content": "WL-060 COMPLETED"}).decode().decode()
         + "\n"
-        + json.dumps({"type": "rule", "content": "Use structlog"})
+        + json.dumps({"type": "rule", "content": "Use structlog"}).decode().decode()
         + "\n"
     )
     return mem_dir

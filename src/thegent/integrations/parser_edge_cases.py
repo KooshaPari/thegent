@@ -8,7 +8,7 @@ including handling of malformed input, status reflection, and boundary condition
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass
 from typing import Any
 

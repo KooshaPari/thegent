@@ -8,7 +8,7 @@ structured output constraints across all agent harnesses.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 
@@ -78,7 +78,7 @@ class OutputSchemaValidator:
         Returns:
             A string containing the schema injection instruction.
         """
-        schema_json = json.dumps(self.schema, indent=2)
+        schema_json = json.dumps(self.schema, indent=2).decode().decode()
         return f"\n\nYou MUST respond with valid JSON matching this schema:\n{schema_json}"
 
     def get_codex_args(self) -> list[str]:

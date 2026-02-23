@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 from typing import Any, Callable
 
@@ -34,7 +34,7 @@ def register_workstream_governance_tools(
             results = db.execute_query(query)
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
             return ToolResult(
-                content=json.dumps(results, indent=2),
+                content=json.dumps(results, indent=2).decode().decode(),
                 structured_content={"results": results, "count": len(results)},
                 meta={"execution_time_ms": elapsed_ms, "row_count": len(results)},
             )
@@ -72,7 +72,7 @@ def register_workstream_governance_tools(
 
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
             return ToolResult(
-                content=json.dumps(result, indent=2),
+                content=json.dumps(result, indent=2).decode().decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed_ms},
             )
@@ -85,7 +85,7 @@ def register_workstream_governance_tools(
             )
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         return ToolResult(
-            content=json.dumps(result),
+            content=json.dumps(result).decode().decode(),
             structured_content=result,
             meta={"execution_time_ms": elapsed_ms},
         )

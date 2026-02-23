@@ -11,7 +11,7 @@ Traces to: FR-SEC-001 (secret detection), FR-GOV-006 (native binary integration)
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import re
 import shutil

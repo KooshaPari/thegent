@@ -7,7 +7,7 @@ and completeness audit trail.
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -26,7 +26,7 @@ class PromotionGate:
 
     def capture_evidence(self, run_id: str, csm: Any) -> str:
         """Capture CSM state as evidence; return SHA-256 hash. Appends to audit trail."""
-        evidence_data = json.dumps(csm.to_dict(), sort_keys=True)
+        evidence_data = json.dumps(csm.to_dict().decode().decode(), sort_keys=True)
         evidence_hash = hashlib.sha256(evidence_data.encode()).hexdigest()
 
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
@@ -43,7 +43,7 @@ class PromotionGate:
             "evidence_path": str(evidence_path),
         }
         with self.audit_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(audit_entry) + "\n")
+            f.write(json.dumps(audit_entry).decode().decode() + "\n")
 
         return evidence_hash
 

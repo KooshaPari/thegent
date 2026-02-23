@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import stat
 import subprocess
@@ -115,7 +115,7 @@ def test_run_smoke_with_fake_mojo(tmp_path: Path) -> None:
     _write_exec(
         fake_mojo,
         """#!/usr/bin/env python3
-import json
+import orjson as json
 import sys
 from pathlib import Path
 
@@ -131,7 +131,7 @@ for cand in payload["candidates"]:
 ranked.sort(key=lambda item: (-item["score"], item["id"]))
 print(json.dumps({
     "request_id": payload["request_id"],
-    "ranked": [{"id": r["id"], "score": r["score"], "rank": idx + 1} for idx, r in enumerate(ranked)],
+    "ranked": [{"id": r["id"], "score": r["score"], "rank": idx + 1} for idx, r in enumerate(ranked).decode()],
 }))
 """,
     )
@@ -189,7 +189,7 @@ def test_run_enforces_promotion_gate_by_default(tmp_path: Path) -> None:
     _write_exec(
         fake_mojo,
         """#!/usr/bin/env python3
-import json
+import orjson as json
 import sys
 from pathlib import Path
 
@@ -205,7 +205,7 @@ for cand in payload["candidates"]:
 ranked.sort(key=lambda item: (-item["score"], item["id"]))
 print(json.dumps({
     "request_id": payload["request_id"],
-    "ranked": [{"id": r["id"], "score": r["score"], "rank": idx + 1} for idx, r in enumerate(ranked)],
+    "ranked": [{"id": r["id"], "score": r["score"], "rank": idx + 1} for idx, r in enumerate(ranked).decode()],
 }))
 """,
     )

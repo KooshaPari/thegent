@@ -5,7 +5,7 @@ and verify_evidence_hash methods.
 """
 
 import hashlib
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -96,7 +96,7 @@ class TestPromotionGateCaptureEvidence:
 
     def test_returns_correct_hash(self, gate: PromotionGate, mock_csm: MagicMock) -> None:
         """Verify correct SHA-256 hash is returned."""
-        expected_data = json.dumps(mock_csm.to_dict(), sort_keys=True)
+        expected_data = json.dumps(mock_csm.to_dict().decode().decode(), sort_keys=True)
         expected_hash = hashlib.sha256(expected_data.encode()).hexdigest()
 
         result = gate.capture_evidence("run-001", mock_csm)

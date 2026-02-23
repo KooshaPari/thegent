@@ -62,7 +62,7 @@ class IdeaSeedSystem:
         seed_file = self.storage_path / f"{seed['id']}.json"
         import json
 
-        seed_file.write_text(json.dumps(seed, indent=2))
+        seed_file.write_text(json.dumps(seed, indent=2).decode().decode())
         logger.info(f"Stored idea seed: {seed_file}")
         return seed_file
 

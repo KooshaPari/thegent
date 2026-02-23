@@ -11,7 +11,7 @@ Run from project root. Uses cwd as ROOT. Requires PyYAML.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import subprocess
 import sys
@@ -311,7 +311,7 @@ def _write_progress(
         "completed": completed,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
-    PROGRESS_JSON.write_text(json.dumps(data, indent=2))
+    PROGRESS_JSON.write_text(json.dumps(data, indent=2).decode())
 
 
 def run_dag(
@@ -448,7 +448,7 @@ def write_last_run(
         "failed_steps": failed,
         "ok": len(failed) == 0,
     }
-    LAST_RUN_JSON.write_text(json.dumps(data, indent=2))
+    LAST_RUN_JSON.write_text(json.dumps(data, indent=2).decode())
 
 
 def _status_counts(results: dict[str, int | str]) -> tuple[int, int, int, int]:

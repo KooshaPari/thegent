@@ -1,4 +1,4 @@
-import json
+import orjson as json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any

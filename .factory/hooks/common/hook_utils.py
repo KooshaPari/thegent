@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shared utilities for Factory hooks - User Level."""
 
-import json
+import orjson as json
 import re
 import sys
 from typing import Any

@@ -4,7 +4,7 @@ This module provides functionality to discover, load, and validate skills
 from both `.thegent/skills/` and `~/.thegent/skills/` directories.
 """
 
-import json
+import orjson as json
 import logging
 import re
 from dataclasses import dataclass

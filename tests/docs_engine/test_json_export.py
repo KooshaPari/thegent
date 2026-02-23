@@ -3,7 +3,7 @@
 # @trace FR-DOCS-008
 """
 
-import json
+import orjson as json
 from docs_engine.export.json_export import JsonExporter
 from docs_engine.db.indexer import DocIndexer
 

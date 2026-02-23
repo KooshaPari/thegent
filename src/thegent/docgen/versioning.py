@@ -46,4 +46,4 @@ class VersioningManager:
             "versions": self.versions,
             "latest": self.versions[-1] if self.versions else "unknown",
         }
-        return json.dumps(manifest, indent=2)
+        return json.dumps(manifest, indent=2).decode().decode()

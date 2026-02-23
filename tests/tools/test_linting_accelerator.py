@@ -8,7 +8,7 @@ linter binaries are required.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -198,7 +198,7 @@ class TestRunOxlint:
         assert "my-oxlintrc.json" in calls[0]
 
     def test_non_dict_items_are_skipped(self) -> None:
-        payload = json.dumps(["not-a-dict", None, 42])
+        payload = json.dumps(["not-a-dict", None, 42]).decode().decode()
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/oxlint"):
             with patch("subprocess.run", return_value=_completed(payload)):
@@ -216,7 +216,7 @@ class TestRunOxlint:
                     ],
                 }
             ]
-        )
+        ).decode()
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/oxlint"):
             with patch("subprocess.run", return_value=_completed(payload)):
@@ -252,7 +252,7 @@ class TestRunEslint:
                     ],
                 }
             ]
-        )
+        ).decode()
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/eslint"):
             with patch("subprocess.run", return_value=_completed(payload)):
@@ -273,7 +273,7 @@ class TestRunEslint:
                     ],
                 }
             ]
-        )
+        ).decode()
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/eslint"):
             with patch("subprocess.run", return_value=_completed(payload)):
@@ -327,7 +327,7 @@ class TestRunRuff:
                     "fix": None,
                 }
             ]
-        )
+        ).decode()
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/ruff"):
             with patch("subprocess.run", return_value=_completed(payload)):
@@ -353,7 +353,7 @@ class TestRunRuff:
                     "fix": {"message": "Remove unused import", "edits": []},
                 }
             ]
-        )
+        ).decode()
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/ruff"):
             with patch("subprocess.run", return_value=_completed(payload)):

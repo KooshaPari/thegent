@@ -1,6 +1,6 @@
 """Unit tests for nats_contract_smoke.py"""
 
-import json
+import orjson as json
 import os
 import pytest
 import sys

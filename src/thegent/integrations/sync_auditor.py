@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from difflib import HtmlDiff
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -131,7 +131,7 @@ class SyncAuditor:
             JSON representation of audit result.
         """
         audit = self.audit()
-        return json.dumps(asdict(audit), indent=2)
+        return json.dumps(asdict(audit).decode().decode(), indent=2)
 
     def audit_as_dict(self) -> dict[str, Any]:
         """Get audit result as dictionary.
@@ -178,8 +178,8 @@ class SyncAuditor:
         local_snapshot: dict[str, Any], remote_snapshot: dict[str, Any], out_path: Path
     ) -> Path:
         """Generate deterministic side-by-side HTML diff artifact."""
-        local_lines = json.dumps(local_snapshot, indent=2, sort_keys=True).splitlines()
-        remote_lines = json.dumps(remote_snapshot, indent=2, sort_keys=True).splitlines()
+        local_lines = json.dumps(local_snapshot, indent=2, sort_keys=True).decode().decode().splitlines()
+        remote_lines = json.dumps(remote_snapshot, indent=2, sort_keys=True).decode().decode().splitlines()
         html = HtmlDiff(tabsize=2, wrapcolumn=120).make_file(
             fromlines=local_lines,
             tolines=remote_lines,

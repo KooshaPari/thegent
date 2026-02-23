@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any, Callable
 
 from fastmcp import FastMCP
@@ -36,7 +36,7 @@ def resource_meta_impl(
     *,
     get_server_meta_impl: Callable[[], dict[str, Any]],
 ) -> str:
-    return json.dumps(get_server_meta_impl())
+    return json.dumps(get_server_meta_impl().decode().decode())
 
 
 def resource_operations_impl(operation: str | None = None) -> str:
@@ -46,14 +46,14 @@ def resource_operations_impl(operation: str | None = None) -> str:
         try:
             op = Operation(operation)
         except ValueError:
-            return json.dumps({"error": f"Unknown operation: {operation}"})
+            return json.dumps({"error": f"Unknown operation: {operation}"}).decode().decode()
         entries = get_operations_by_type(op)
         data = {
             op.value: [{"command": e.command, "description": e.description, "mcp_tool": e.mcp_tool} for e in entries]
         }
     else:
         data = list_operations()
-    return json.dumps(data)
+    return json.dumps(data).decode().decode()
 
 
 def resource_modes_impl(mode: str | None = None) -> str:
@@ -62,7 +62,7 @@ def resource_modes_impl(mode: str | None = None) -> str:
     if mode:
         entry = get_mode(mode)
         if not entry:
-            return json.dumps({"error": f"Unknown mode: {mode}"})
+            return json.dumps({"error": f"Unknown mode: {mode}"}).decode().decode()
         data = [
             {
                 "mode": entry.mode.value,
@@ -75,7 +75,7 @@ def resource_modes_impl(mode: str | None = None) -> str:
         ]
     else:
         data = list_modes()
-    return json.dumps(data)
+    return json.dumps(data).decode().decode()
 
 
 def register_system_resources(

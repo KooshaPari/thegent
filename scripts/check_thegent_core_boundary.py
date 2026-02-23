@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
-import json
+import orjson as json
 import sys
 import tomllib
 from pathlib import Path
@@ -171,12 +171,12 @@ def main(argv: list[str] | None = None) -> int:
     mode = "strict" if args.strict else "advisory"
 
     if args.format == "json":
-        print(json.dumps(build_json_payload(report, mode), indent=2, sort_keys=True))
+        print(json.dumps(build_json_payload(report, mode).decode().decode(), indent=2, sort_keys=True))
     elif args.format == "summary-json":
-        print(json.dumps(build_summary_payload(report, mode), sort_keys=True))
+        print(json.dumps(build_summary_payload(report, mode).decode().decode(), sort_keys=True))
     elif args.format == "violations-jsonl":
         for entry in build_violation_entries(report):
-            print(json.dumps(entry, sort_keys=True))
+            print(json.dumps(entry, sort_keys=True).decode().decode())
     elif violations:
         print(f"thegent-core boundary check found violations ({mode} mode):")
         for violation in violations:

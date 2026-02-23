@@ -25,7 +25,7 @@ path only, where partial decomposition is worse than no decomposition.
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 import logging
 import uuid
 from collections.abc import Callable

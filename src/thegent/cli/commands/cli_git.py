@@ -72,7 +72,7 @@ def worktree_status(
         payload = [{"agent_id": agent_id, "branch": branch} for agent_id, branch in agents]
         import json
 
-        console.print(json.dumps(payload, indent=2))
+        console.print(json.dumps(payload, indent=2).decode().decode())
         return
 
     if not agents:
@@ -97,7 +97,7 @@ def worktree_list(
         payload = [{"agent_id": agent_id, "branch": branch} for agent_id, branch in agents]
         import json
 
-        console.print(json.dumps(payload, indent=2))
+        console.print(json.dumps(payload, indent=2).decode().decode())
         return
     if not agents:
         console.print("[yellow]No active pooled worktrees.[/yellow]")
@@ -271,7 +271,7 @@ def lock_status(
     if json_output:
         import json
 
-        console.print(json.dumps(status_payload, indent=2))
+        console.print(json.dumps(status_payload, indent=2).decode().decode())
         return
 
     if not status_payload["exists"]:

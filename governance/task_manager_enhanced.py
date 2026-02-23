@@ -4,7 +4,7 @@ Enhanced Task Management System
 Expanded with validation, conflict detection, progress tracking, and reporting.
 """
 
-import json
+import orjson as json
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field

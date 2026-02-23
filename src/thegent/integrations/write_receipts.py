@@ -8,7 +8,7 @@ FR traceability: WL-308 (Remote Write Receipts)
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -78,7 +78,7 @@ class WriteReceiptLog:
         if not isinstance(receipt, WriteReceipt):
             raise ValueError("receipt must be a WriteReceipt")
 
-        line = json.dumps(receipt.to_dict())
+        line = json.dumps(receipt.to_dict().decode().decode())
         with self.log_path.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
 

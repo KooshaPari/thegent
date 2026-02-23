@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
-import json
+import orjson as json
 from pathlib import Path
 
 import yaml

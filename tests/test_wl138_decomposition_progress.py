@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import sys
 from pathlib import Path
@@ -82,7 +82,7 @@ def test_build_progress_fails_checkpoint_when_execution_gate_fails(tmp_path: Pat
                         "command": [
                             python_bin,
                             "-c",
-                            "raise SystemExit(7)",
+                            "raise SystemExit(7).decode()",
                         ],
                     }
                 ],

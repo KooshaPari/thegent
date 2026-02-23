@@ -3,7 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 from typing import Any
@@ -50,7 +50,7 @@ def concurrency_show_cmd(format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data, indent=2) + "\n")
+        sys.stdout.write(json.dumps(data, indent=2).decode().decode() + "\n")
         return
 
     table = Table(title="Concurrency Status (WP-5001)")
@@ -131,7 +131,7 @@ def load_status_cmd(format: str | None = None) -> None:
     }
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
     table = Table(title="Load Status (WP-5002)")
     table.add_column("Metric")
@@ -168,7 +168,7 @@ def cost_status_cmd(format: str | None = None) -> None:
     }
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
     table = Table(title="Cost Status (WP-5003)")
     table.add_column("Metric")
@@ -206,7 +206,7 @@ def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data) + "\n")
+        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
         return
 
     if metrics:

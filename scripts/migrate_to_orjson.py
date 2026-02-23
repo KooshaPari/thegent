@@ -5,7 +5,7 @@ This script helps migrate from json to orjson in thegent codebase.
 Usage: python scripts/migrate_to_orjson.py [--dry-run]
 
 Note: orjson.dumps returns bytes, not str. Replace:
-  - json.dumps(x) -> orjson.dumps(x).decode()
+  - json.dumps(x).decode().decode() -> orjson.dumps(x).decode().decode().decode()
   - json.loads(x) -> orjson.loads(x)
 """
 
@@ -76,9 +76,9 @@ def main():
     print("       import json")
     print("       JSON = json")
     print("")
-    print("2. Replace json.dumps(x):")
+    print("2. Replace json.dumps(x).decode().decode():")
     print("   - JSON.dumps(x) -> JSON.dumps(x).decode() if str needed")
-    print("   - json.dumps(x) -> orjson.dumps(x) if bytes OK")
+    print("   - json.dumps(x).decode().decode() -> orjson.dumps(x).decode().decode() if bytes OK")
     print("")
     print("3. Replace json.loads(x):")
     print("   - JSON.loads(x) works for both str and bytes")

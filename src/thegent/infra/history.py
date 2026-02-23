@@ -3,7 +3,7 @@ Stores shell commands with rich context (cwd, task_id, exit_code) in a local SQL
 Enables semantic search and task reconstruction.
 """
 
-import json
+import orjson as json
 import logging
 import sqlite3
 from datetime import UTC, datetime
@@ -78,7 +78,7 @@ class ContextHistory:
                     entry.task_id,
                     entry.agent_id,
                     entry.duration_s,
-                    json.dumps(entry.tags),
+                    json.dumps(entry.tags).decode().decode(),
                 ),
             )
             return cursor.lastrowid or 0

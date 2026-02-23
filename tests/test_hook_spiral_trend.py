@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from pathlib import Path
 
@@ -40,7 +40,7 @@ def test_spiral_trend_command_reports_metrics(tmp_path: Path) -> None:
                             "stale_e2e_evidence": 0,
                         },
                     }
-                ),
+                ).decode(),
                 json.dumps(
                     {
                         "generated_at": "2026-02-20T01:10:00Z",
@@ -58,7 +58,7 @@ def test_spiral_trend_command_reports_metrics(tmp_path: Path) -> None:
                             "stale_e2e_evidence": 0,
                         },
                     }
-                ),
+                ).decode(),
                 json.dumps(
                     {
                         "generated_at": "2026-02-20T01:20:00Z",
@@ -76,7 +76,7 @@ def test_spiral_trend_command_reports_metrics(tmp_path: Path) -> None:
                             "stale_e2e_evidence": 1,
                         },
                     }
-                ),
+                ).decode(),
             ]
         )
         + "\n",

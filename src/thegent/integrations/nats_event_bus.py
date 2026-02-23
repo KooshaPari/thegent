@@ -4,7 +4,7 @@ NATS Event Bus Integration - Event bus for thegent orchestration.
 Full implementation for Phase 3 Spike Batch B.
 """
 
-import json
+import orjson as json
 import logging
 import os
 from dataclasses import dataclass, field

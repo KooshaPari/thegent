@@ -1,6 +1,6 @@
 """WP-15001: External SOC/SIEM event egress for enterprise observability."""
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -51,4 +51,4 @@ class SIEMEgress:
 
     def format_for_syslog(self, event: EgressEvent) -> str:
         """Format the event for traditional RFC 5424 syslog."""
-        return f"<{event.severity}> {event.timestamp} {event.source} {event.event_type}: {json.dumps(event.payload)}"
+        return f"<{event.severity}> {event.timestamp} {event.source} {event.event_type}: {json.dumps(event.payload).decode().decode()}"

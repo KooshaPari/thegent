@@ -12,7 +12,7 @@ Tests cover:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 

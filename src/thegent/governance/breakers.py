@@ -1,6 +1,6 @@
 """WP-5005: Usage spike circuit breakers."""
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -35,7 +35,7 @@ class CircuitBreaker:
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.breaker_file.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event) + "\n")
+            f.write(json.dumps(event).decode().decode() + "\n")
 
     def is_tripped(self) -> bool:
         """Return True if any active breaker is tripped."""

@@ -5,7 +5,7 @@ Provides YAML/JSON configuration file support with validation.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -152,7 +152,7 @@ class ConfigManager:
         if self._config_file.suffix in (".yaml", ".yml"):
             self._config_file.write_text(yaml.dump(data, default_flow_style=False))
         else:
-            self._config_file.write_text(json.dumps(data, indent=2))
+            self._config_file.write_text(json.dumps(data, indent=2).decode().decode())
 
     def get(self) -> TUIConfig:
         """Get current configuration."""

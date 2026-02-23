@@ -1,6 +1,6 @@
 """Helpers for scanning run registry JSONL lines."""
 
-import json
+import orjson as json
 from datetime import UTC, datetime
 from typing import Any
 

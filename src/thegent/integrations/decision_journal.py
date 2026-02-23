@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -105,7 +105,7 @@ class DecisionJournal:
 
         # Append as single JSON line
         entry_dict = asdict(entry)
-        line = json.dumps(entry_dict) + "\n"
+        line = json.dumps(entry_dict).decode().decode() + "\n"
 
         with self._journal_file.open("a", encoding="utf-8") as f:
             f.write(line)

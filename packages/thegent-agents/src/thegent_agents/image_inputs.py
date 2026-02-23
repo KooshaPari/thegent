@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import base64
-import json
+import orjson as json
 import mimetypes
 from pathlib import Path
 
@@ -102,4 +102,4 @@ def build_claude_stdin_with_images(prompt: str, paths: list[str]) -> str:
             "content": content,
         },
     }
-    return json.dumps(message, separators=(",", ":")) + "\n"
+    return json.dumps(message, separators=(",", ":").decode().decode()) + "\n"

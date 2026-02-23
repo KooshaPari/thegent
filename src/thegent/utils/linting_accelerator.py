@@ -16,7 +16,7 @@ process results without caring which backend was used.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import shutil
 import subprocess

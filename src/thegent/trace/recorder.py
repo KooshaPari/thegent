@@ -9,7 +9,7 @@ Records ToolCallRecord, DecisionRecord events to JSONL files with:
 """
 
 import asyncio
-import json
+import orjson as json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -311,7 +311,7 @@ class TraceRecorder:
         """Truncate large results to max size."""
         # Try to serialize to check size
         try:
-            serialized = json.dumps(result)
+            serialized = json.dumps(result).decode().decode()
             if len(serialized.encode()) > self.config.truncation.max_bytes:
                 # Truncate large fields
                 truncated = result.copy()

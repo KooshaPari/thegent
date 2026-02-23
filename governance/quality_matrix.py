@@ -4,7 +4,7 @@ Quality Matrix System
 Comprehensive quality assessment and tracking system for projects.
 """
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum

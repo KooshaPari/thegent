@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import importlib
-import json
+import orjson as json
 import time
 from typing import Any, Callable
 
@@ -30,7 +30,7 @@ def register_storage_event_tools(
             payload = {"error": str(exc), "key": key, "found": False}
         elapsed = int((time.monotonic() - start_ms) * 1000)
         return tool_result_type(
-            content=json.dumps(payload),
+            content=json.dumps(payload).decode().decode(),
             structured_content=payload,
             meta={"execution_time_ms": elapsed},
         )
@@ -47,7 +47,7 @@ def register_storage_event_tools(
         except json.JSONDecodeError as exc:
             payload: dict[str, Any] = {"ok": False, "error": f"value is not valid JSON: {exc}"}
             return tool_result_type(
-                content=json.dumps(payload),
+                content=json.dumps(payload).decode().decode(),
                 structured_content=payload,
                 meta={"execution_time_ms": 0},
             )
@@ -58,7 +58,7 @@ def register_storage_event_tools(
             payload = {"ok": False, "error": str(exc), "key": key}
         elapsed = int((time.monotonic() - start_ms) * 1000)
         return tool_result_type(
-            content=json.dumps(payload),
+            content=json.dumps(payload).decode().decode(),
             structured_content=payload,
             meta={"execution_time_ms": elapsed},
         )
@@ -71,14 +71,14 @@ def register_storage_event_tools(
         except json.JSONDecodeError as exc:
             err_payload: dict[str, Any] = {"ok": False, "error": f"payload is not valid JSON: {exc}"}
             return tool_result_type(
-                content=json.dumps(err_payload),
+                content=json.dumps(err_payload).decode().decode(),
                 structured_content=err_payload,
                 meta={"execution_time_ms": 0},
             )
         if not isinstance(parsed_payload, dict):
             err_payload = {"ok": False, "error": "payload must be a JSON object (dict)"}
             return tool_result_type(
-                content=json.dumps(err_payload),
+                content=json.dumps(err_payload).decode().decode(),
                 structured_content=err_payload,
                 meta={"execution_time_ms": 0},
             )
@@ -89,7 +89,7 @@ def register_storage_event_tools(
             result_payload = {"ok": False, "error": str(exc)}
         elapsed = int((time.monotonic() - start_ms) * 1000)
         return tool_result_type(
-            content=json.dumps(result_payload),
+            content=json.dumps(result_payload).decode().decode(),
             structured_content=result_payload,
             meta={"execution_time_ms": elapsed},
         )
@@ -101,7 +101,7 @@ def register_storage_event_tools(
         result_payload: dict[str, Any] = {"events": events, "count": len(events)}
         elapsed = int((time.monotonic() - start_ms) * 1000)
         return tool_result_type(
-            content=json.dumps(result_payload),
+            content=json.dumps(result_payload).decode().decode(),
             structured_content=result_payload,
             meta={"execution_time_ms": elapsed},
         )

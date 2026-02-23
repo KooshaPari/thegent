@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
+import orjson as json
 import logging
 import os
 import re
@@ -229,7 +229,7 @@ class ShadowAuditGit:
         dest = Path(path)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(
-            json.dumps([e.to_dict() for e in entries], indent=2),
+            json.dumps([e.to_dict().decode().decode() for e in entries], indent=2),
             encoding="utf-8",
         )
         log.info("shadow_audit_git.export_audit project=%s path=%s", project_id, dest)
@@ -475,7 +475,7 @@ class GitJournal:
         # Build commit message
         msg_parts = [f"[audit] {action}: {rel_path}"]
         if metadata:
-            msg_parts.append(f"metadata: {json.dumps(metadata)}")
+            msg_parts.append(f"metadata: {json.dumps(metadata).decode().decode()}")
         msg_parts.append(f"session: {self.session_id}")
         msg_parts.append(f"timestamp: {datetime.now(UTC).isoformat()}")
         message = "\n".join(msg_parts)

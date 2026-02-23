@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import pytest
 
@@ -138,7 +138,7 @@ class TestA2AMessage:
         )
         data = a2a_message_to_dict(msg)
         # Must not raise
-        serialized = json.dumps(data)
+        serialized = json.dumps(data).decode().decode()
         assert len(serialized) > 0
 
 

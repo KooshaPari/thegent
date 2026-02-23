@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import pytest
 
@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -135,7 +135,7 @@ def test_wl9829_handler_preserves_notification_mode_and_turn_mutation() -> None:
     _reset_state()
     session_id = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "af"}})
+        json.dumps({"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "af"}}).decode().decode()
     )
     assert response is None
     assert notifications[0]["method"] == "turn/started"

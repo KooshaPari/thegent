@@ -4,7 +4,7 @@ Seeds are stored in docs/research/seeds.jsonl (one JSON object per line).
 Provides read, write, update, and query operations.
 """
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -53,7 +53,7 @@ class SeedStorage:
 
         # Append to JSONL
         with open(self.storage_path, "a") as f:
-            f.write(json.dumps(seed.to_dict()) + "\n")
+            f.write(json.dumps(seed.to_dict().decode().decode()) + "\n")
 
         _log.info(f"Stored seed {seed.id}: {seed.text[:50]}...")
         return seed.id
@@ -306,7 +306,7 @@ class SeedStorage:
         """
         self._ensure_directory()
         with open(self.storage_path, "w") as f:
-            f.writelines(json.dumps(seed.to_dict()) + "\n" for seed in seeds)
+            f.writelines(json.dumps(seed.to_dict().decode().decode()) + "\n" for seed in seeds)
 
     @staticmethod
     def _dict_to_seed(data: dict) -> Seed:

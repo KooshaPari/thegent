@@ -1,6 +1,6 @@
 """WP-Y7: TRAFFIC KPI dashboard."""
 
-import json
+import orjson as json
 import logging
 from collections.abc import Iterable
 from datetime import UTC, datetime

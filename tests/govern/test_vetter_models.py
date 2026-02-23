@@ -17,7 +17,7 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -236,7 +236,7 @@ def test_ruff_check_implements_protocol():
 async def test_schema_check_passes_valid_json():
     # @trace WL-090
     check = SchemaCheck(schema={"type": "object", "properties": {"key": {"type": "string"}}})
-    result = await check.check("run-1", json.dumps({"key": "value"}), {})
+    result = await check.check("run-1", json.dumps({"key": "value"}).decode().decode(), {})
     assert result.passed is True
     assert result.check_name == "schema"
 
@@ -254,7 +254,7 @@ async def test_schema_check_fails_invalid_json():
 async def test_schema_check_fails_schema_violation():
     # @trace WL-090
     check = SchemaCheck(schema={"type": "object", "required": ["name"]})
-    result = await check.check("run-1", json.dumps({"other": 1}), {})
+    result = await check.check("run-1", json.dumps({"other": 1}).decode().decode(), {})
     assert result.passed is False
     assert "Schema validation failed" in result.message
 
@@ -456,7 +456,7 @@ async def test_quality_score_check_raises_on_malformed_json():
 async def test_quality_score_check_raises_on_invalid_payload_shape():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({"scores": {"correctness": 0.8}})
+    mock_response.choices[0].message.content = json.dumps({"scores": {"correctness": 0.8}}).decode().decode()
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck()
         with pytest.raises(VetterConfigError, match="judge response failed schema validation"):
@@ -473,7 +473,7 @@ async def test_quality_score_check_auto_model_uses_capability_index_recommendati
             "pass_verdict": True,
             "critique": "",
         }
-    )
+    ).decode()
 
     fake_agent = MagicMock()
     fake_agent.path = Path("/tmp/quality-agent.md")
@@ -535,7 +535,7 @@ async def test_quality_score_check_prefers_explicit_model_resolver_when_provided
             "pass_verdict": True,
             "critique": "",
         }
-    )
+    ).decode()
     resolver = MagicMock(return_value="gpt-4.1-mini")
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck(judge_model="auto", model_resolver=resolver)
@@ -565,7 +565,7 @@ async def test_quality_score_check_builds_deterministic_failure_message_without_
             "pass_verdict": True,
             "critique": "   ",
         }
-    )
+    ).decode()
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck(pass_threshold=0.8, min_criterion_score=3)
         result = await check.check("run-qs-10", "output", {"task": "task"})

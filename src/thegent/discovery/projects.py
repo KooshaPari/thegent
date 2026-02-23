@@ -2,7 +2,7 @@
 
 import contextlib
 import sqlite3
-import json
+import orjson as json
 import logging
 import uuid
 from datetime import UTC, datetime

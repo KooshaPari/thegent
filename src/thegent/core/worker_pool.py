@@ -17,7 +17,7 @@ from __future__ import annotations
 import asyncio
 from asyncio import subprocess
 import dataclasses
-import json
+import orjson as json
 import logging
 import os
 import sys
@@ -145,11 +145,11 @@ for raw_line in sys.stdin:
     try:
         task = json.loads(raw_line)
     except json.JSONDecodeError as exc:
-        sys.stdout.write(json.dumps({"error": str(exc)}) + "\n")
+        sys.stdout.write(json.dumps({"error": str(exc).decode().decode()}) + "\n")
         sys.stdout.flush()
         continue
     result = _run_task_in_process(task)
-    sys.stdout.write(json.dumps(result) + "\n")
+    sys.stdout.write(json.dumps(result).decode().decode() + "\n")
     sys.stdout.flush()
 """
 
@@ -192,7 +192,7 @@ class Worker:
         if self._proc.stdin is None or self._proc.stdout is None:
             raise RuntimeError(f"Worker {self.pid} has closed pipes")
 
-        payload = json.dumps(dataclasses.asdict(task)) + "\n"
+        payload = json.dumps(dataclasses.asdict(task).decode().decode()) + "\n"
         self._proc.stdin.write(payload.encode())
         await self._proc.stdin.drain()
 

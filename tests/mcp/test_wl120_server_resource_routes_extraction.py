@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
-import json
+import orjson as json
 import sys
 import types
 from types import SimpleNamespace
@@ -49,31 +49,31 @@ def _register_routes() -> tuple[Any, ...]:
         resource_sessions_impl=lambda **kwargs: json.dumps(
             {"items": [], "include_contract": kwargs["include_contract"]}
         ),
-        resource_session_meta_impl=lambda **kwargs: json.dumps({"id": kwargs["session_id"]}),
+        resource_session_meta_impl=lambda **kwargs: json.dumps({"id": kwargs["session_id"]}).decode().decode(),
         resource_session_logs_impl=lambda **kwargs: "ok",
     )
     catalog = SimpleNamespace(
-        resource_dag_impl=lambda **kwargs: json.dumps({"tasks": []}),
-        resource_agents_impl=lambda **kwargs: json.dumps([]),
+        resource_dag_impl=lambda **kwargs: json.dumps({"tasks": []}).decode().decode(),
+        resource_agents_impl=lambda **kwargs: json.dumps([]).decode().decode(),
         resource_models_impl=lambda **kwargs: json.dumps(
             {"provider": kwargs["provider"], "include_contract": kwargs["include_contract"]}
         ),
-        resource_models_contract_impl=lambda: json.dumps({"contract": "ok"}),
+        resource_models_contract_impl=lambda: json.dumps({"contract": "ok"}).decode().decode(),
     )
     workstream = SimpleNamespace(
         resource_workstream_impl=lambda: "# workstream",
-        resource_events_session_complete_impl=lambda: json.dumps({"events": []}),
-        resource_workstream_db_impl=lambda: json.dumps({"db": "ok"}),
+        resource_events_session_complete_impl=lambda: json.dumps({"events": []}).decode().decode(),
+        resource_workstream_db_impl=lambda: json.dumps({"db": "ok"}).decode().decode(),
     )
     contracts = SimpleNamespace(
-        resource_session_contracts_impl=lambda **kwargs: json.dumps({"summary": {}}),
-        resource_session_contract_health_gate_impl=lambda **kwargs: json.dumps({"gate": "ok"}),
-        resource_session_contract_health_report_impl=lambda **kwargs: json.dumps({"report": "ok"}),
-        resource_session_contract_health_trend_impl=lambda **kwargs: json.dumps({"trend": []}),
+        resource_session_contracts_impl=lambda **kwargs: json.dumps({"summary": {}}).decode().decode(),
+        resource_session_contract_health_gate_impl=lambda **kwargs: json.dumps({"gate": "ok"}).decode().decode(),
+        resource_session_contract_health_report_impl=lambda **kwargs: json.dumps({"report": "ok"}).decode().decode(),
+        resource_session_contract_health_trend_impl=lambda **kwargs: json.dumps({"trend": []}).decode().decode(),
     )
 
     def _stable_json(payload: Any) -> str:
-        return json.dumps(payload, sort_keys=True)
+        return json.dumps(payload, sort_keys=True).decode().decode()
 
     def _gate_helper(**kwargs: Any) -> str:
         return kwargs["stable_json"](
@@ -151,7 +151,7 @@ def test_resource_routes_registers_expected_handler_set() -> None:
         session_contract_health_gate_impl=lambda **kwargs: {},
         session_contract_health_report_impl=lambda **kwargs: {},
         session_contract_health_trend_impl=lambda **kwargs: {},
-        stable_json=lambda payload: json.dumps(payload),
+        stable_json=lambda payload: json.dumps(payload).decode().decode(),
     )
 
     assert len(registered) == 14

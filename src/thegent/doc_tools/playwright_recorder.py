@@ -9,7 +9,7 @@ Provides high-level utilities for:
 """
 
 import asyncio
-import json
+import orjson as json
 import logging
 import time
 from dataclasses import asdict, dataclass, field
@@ -118,7 +118,7 @@ class RecordingResult:
 
     def to_json(self, path: Path | None = None) -> str:
         """Convert to JSON string or save to file."""
-        json_data = json.dumps(self.to_dict(), indent=2, default=str)
+        json_data = json.dumps(self.to_dict().decode().decode(), indent=2, default=str)
         if path:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json_data)

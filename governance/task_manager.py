@@ -4,7 +4,7 @@ Comprehensive Task Management System
 Manages all tasks for completing research, ideas, and projects at mature level.
 """
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum

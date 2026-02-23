@@ -30,7 +30,7 @@ Usage:
     batch_delete_files(["/path/to/file1.py", "/path/to/file2.py"])
 """
 
-import json
+import orjson as json
 import shutil
 import sys
 import time
@@ -745,7 +745,7 @@ if __name__ == "__main__":
         if args.read:
             files = batch_read_files(args.read, verbose=args.verbose)
             if args.json:
-                print(json.dumps({k: v[:100] + "..." if len(v) > 100 else v for k, v in files.items()}, indent=2))
+                print(json.dumps({k: v[:100] + "..." if len(v).decode().decode() > 100 else v for k, v in files.items()}, indent=2))
             else:
                 for path, content in files.items():
                     print(f"{path}: {len(content)} bytes")
@@ -754,7 +754,7 @@ if __name__ == "__main__":
             ops_list = [(args.write[i], args.write[i + 1]) for i in range(0, len(args.write), 2)]
             result = batch_write_files(ops_list, verbose=args.verbose)
             if args.json:
-                print(json.dumps(result.to_dict(), indent=2))
+                print(json.dumps(result.to_dict().decode().decode(), indent=2))
             else:
                 print(f"Wrote {result.successful}/{result.total} files")
 
@@ -762,19 +762,19 @@ if __name__ == "__main__":
             ops_list = [(args.edit[i], args.edit[i + 1], args.edit[i + 2]) for i in range(0, len(args.edit), 3)]
             result = batch_edit_files(ops_list, verbose=args.verbose)
             if args.json:
-                print(json.dumps(result.to_dict(), indent=2))
+                print(json.dumps(result.to_dict().decode().decode(), indent=2))
             else:
                 print(f"Edited {result.successful}/{result.total} files")
 
         elif args.delete:
             result = batch_delete_files(args.delete, verbose=args.verbose)
             if args.json:
-                print(json.dumps(result.to_dict(), indent=2))
+                print(json.dumps(result.to_dict().decode().decode(), indent=2))
             else:
                 print(f"Deleted {result.successful}/{result.total} files")
 
     except BatchFileOpsError as e:
         print(f"Error: {e}", file=sys.stderr)
         if e.result and args.json:
-            print(json.dumps(e.result.to_dict(), indent=2), file=sys.stderr)
+            print(json.dumps(e.result.to_dict().decode().decode(), indent=2), file=sys.stderr)
         sys.exit(1)

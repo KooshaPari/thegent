@@ -14,7 +14,7 @@ FR-REPLAY-005: extract_tool_calls() must return only "tool_call" typed events' d
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import textwrap
 import time
 from dataclasses import dataclass, field

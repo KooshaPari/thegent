@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -36,7 +36,7 @@ class JsonExporter:
 
     def _write_artifact(self, out_path: Path, payload_type: str, records: Any) -> Path:
         payload = self._wrap_payload(payload_type, records)
-        out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        out_path.write_text(json.dumps(payload, indent=2).decode().decode(), encoding="utf-8")
         return out_path
 
     @staticmethod

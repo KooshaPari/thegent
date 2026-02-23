@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 from math import isfinite
 from pathlib import Path
 from typing import Any
@@ -173,7 +173,7 @@ def main() -> int:
         require_complete_baseline=args.require_complete_baseline,
     )
     if not gate["ok"]:
-        print(json.dumps(gate, indent=2))
+        print(json.dumps(gate, indent=2).decode().decode())
         return 1
     print(
         json.dumps(
@@ -184,8 +184,7 @@ def main() -> int:
                 "throughput_gate": gate["throughput_gate"],
             },
             indent=2,
-        )
-    )
+        )).decode()
     return 0
 
 

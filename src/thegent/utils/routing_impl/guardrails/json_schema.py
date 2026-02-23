@@ -7,7 +7,7 @@ Validates LLM response content against a JSON schema provided in the request.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass
 from typing import Any
 

@@ -5,7 +5,7 @@ Aggregates actual cost per run and provides budget alerting for the orchestratio
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -143,7 +143,7 @@ class RunCostTracker:
         """Save run summary to JSON file."""
         run_file = self.cost_dir / f"{summary['run_id']}.json"
         try:
-            run_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+            run_file.write_text(json.dumps(summary, indent=2).decode().decode(), encoding="utf-8")
         except OSError as e:
             logger.error("Failed to save run summary: %s", e)
 
@@ -159,7 +159,7 @@ class RunCostTracker:
                             "total_cost": summary["total_cost_usd"],
                             "ended_at": summary["ended_at"],
                         }
-                    )
+                    ).decode()
                     + "\n"
                 )
         except OSError as e:

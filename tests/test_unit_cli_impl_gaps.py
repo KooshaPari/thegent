@@ -35,7 +35,7 @@ Covers uncovered branches and edge cases in:
 - get_data_protection_status_impl
 """
 
-import json
+import orjson as json
 import os
 import time
 from datetime import UTC, datetime
@@ -269,7 +269,7 @@ class TestRunBackgroundSessionObserver:
         meta = tmp_path / "sess.json"
         rc = tmp_path / "sess.rc"
         started = datetime.now(UTC).isoformat()
-        meta.write_text(json.dumps({"status": "running", "started_at_utc": started}))
+        meta.write_text(json.dumps({"status": "running", "started_at_utc": started}).decode().decode())
         with patch.dict(
             os.environ,
             {
@@ -288,7 +288,7 @@ class TestRunBackgroundSessionObserver:
     # @trace FR-CLI-426
     def test_timed_out_flag_preserved(self, tmp_path) -> None:
         meta = tmp_path / "sess2.json"
-        meta.write_text(json.dumps({"status": "running"}))
+        meta.write_text(json.dumps({"status": "running"}).decode().decode())
         with patch.dict(os.environ, {"THGENT_SESSION_META_PATH": str(meta)}):
             _run_background_session_observer(137, timed_out=True)
         updated = json.loads(meta.read_text())
@@ -298,7 +298,7 @@ class TestRunBackgroundSessionObserver:
     # @trace FR-CLI-427
     def test_rc_write_oserror_ignored(self, tmp_path) -> None:
         meta = tmp_path / "sess3.json"
-        meta.write_text(json.dumps({"status": "running"}))
+        meta.write_text(json.dumps({"status": "running"}).decode().decode())
         rc_path = tmp_path / "readonly_dir" / "sess3.rc"
         with patch.dict(
             os.environ,
@@ -353,7 +353,7 @@ class TestSessionStatusFor:
     def test_running_status(self, tmp_path) -> None:
         settings = MagicMock()
         meta = tmp_path / "sess.json"
-        meta.write_text(json.dumps({"pid": 99999}))
+        meta.write_text(json.dumps({"pid": 99999}).decode().decode())
         tmp_path / "sess.rc"
         with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta):
             with patch("thegent.cli.commands.impl._is_pid_running", return_value=True):
@@ -364,7 +364,7 @@ class TestSessionStatusFor:
     def test_exited_with_rc(self, tmp_path) -> None:
         settings = MagicMock()
         meta = tmp_path / "sess.json"
-        meta.write_text(json.dumps({"pid": 12345}))
+        meta.write_text(json.dumps({"pid": 12345}).decode().decode())
         rc = tmp_path / "sess.rc"
         rc.write_text("42\n")
         with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta):
@@ -376,7 +376,7 @@ class TestSessionStatusFor:
     def test_exited_no_rc(self, tmp_path) -> None:
         settings = MagicMock()
         meta = tmp_path / "sess.json"
-        meta.write_text(json.dumps({"pid": 12345}))
+        meta.write_text(json.dumps({"pid": 12345}).decode().decode())
         with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta):
             with patch("thegent.cli.commands.impl._is_pid_running", return_value=False):
                 result = _session_status_for("sess", settings)
@@ -811,7 +811,7 @@ class TestLoadObserveSummarySnapshots:
             "trend_scope_signature": "sig-abc",
             "captured_at_utc": "2025-01-01T00:00:00Z",
         }
-        log_path.write_text(json.dumps(rec) + "\n")
+        log_path.write_text(json.dumps(rec).decode().decode() + "\n")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("sig-abc", "{}", 5)
         assert len(result) == 1
@@ -824,7 +824,7 @@ class TestLoadObserveSummarySnapshots:
             "scope_signature": "sig-def",
             "captured_at_utc": "2025-01-01T00:00:00Z",
         }
-        log_path.write_text(json.dumps(rec) + "\n")
+        log_path.write_text(json.dumps(rec).decode().decode() + "\n")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("sig-def", "{}", 5)
         assert len(result) == 1
@@ -832,13 +832,13 @@ class TestLoadObserveSummarySnapshots:
     # @trace FR-CLI-474
     def test_matching_by_scope_key_json(self, tmp_path) -> None:
         log_path = tmp_path / "snapshots.jsonl"
-        key_json = json.dumps({"payload_type": "test"}, sort_keys=True)
+        key_json = json.dumps({"payload_type": "test"}, sort_keys=True).decode().decode()
         rec = {
             "record_type": "observe_summary_snapshot",
             "scope_key_json": key_json,
             "captured_at_utc": "2025-01-01T00:00:00Z",
         }
-        log_path.write_text(json.dumps(rec) + "\n")
+        log_path.write_text(json.dumps(rec).decode().decode() + "\n")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("no-match", key_json, 5)
         assert len(result) == 1
@@ -853,7 +853,7 @@ class TestLoadObserveSummarySnapshots:
                 "trend_scope_signature": "sig-x",
                 "captured_at_utc": f"2025-01-{i + 1:02d}T00:00:00Z",
             }
-            lines.append(json.dumps(rec))
+            lines.append(json.dumps(rec).decode().decode())
         log_path.write_text("\n".join(lines) + "\n")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_observe_summary_snapshots("sig-x", "{}", 3)
@@ -863,8 +863,8 @@ class TestLoadObserveSummarySnapshots:
     def test_non_matching_records_skipped(self, tmp_path) -> None:
         log_path = tmp_path / "snapshots.jsonl"
         lines = [
-            json.dumps({"record_type": "health_snapshot", "scope_key": {}}),
-            json.dumps({"record_type": "observe_summary_snapshot", "trend_scope_signature": "other"}),
+            json.dumps({"record_type": "health_snapshot", "scope_key": {}}).decode().decode(),
+            json.dumps({"record_type": "observe_summary_snapshot", "trend_scope_signature": "other"}).decode().decode(),
             "invalid-json",
             "",
         ]
@@ -981,7 +981,7 @@ class TestLoadPreviousHealthSnapshot:
         log_path = tmp_path / "snap.jsonl"
         scope = {"type": "gate", "owner": "alice"}
         rec = {"record_type": "health_snapshot", "scope_key": scope, "blocked_ratio": 0.1}
-        log_path.write_text(json.dumps(rec) + "\n")
+        log_path.write_text(json.dumps(rec).decode().decode() + "\n")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_previous_health_snapshot(scope)
         assert result is not None
@@ -991,7 +991,7 @@ class TestLoadPreviousHealthSnapshot:
     def test_no_matching_scope_returns_none(self, tmp_path) -> None:
         log_path = tmp_path / "snap.jsonl"
         rec = {"record_type": "health_snapshot", "scope_key": {"type": "other"}}
-        log_path.write_text(json.dumps(rec) + "\n")
+        log_path.write_text(json.dumps(rec).decode().decode() + "\n")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             assert _load_previous_health_snapshot({"type": "gate"}) is None
 
@@ -1002,7 +1002,7 @@ class TestLoadPreviousHealthSnapshot:
         lines = [
             "invalid json",
             "",
-            json.dumps({"record_type": "health_snapshot", "scope_key": scope, "val": 1}),
+            json.dumps({"record_type": "health_snapshot", "scope_key": scope, "val": 1}).decode().decode(),
         ]
         log_path.write_text("\n".join(lines) + "\n")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):

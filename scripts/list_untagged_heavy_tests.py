@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -98,7 +98,7 @@ def main() -> int:
     }
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output_path.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
     return 0
 
 

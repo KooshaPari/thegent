@@ -8,7 +8,7 @@ and correctly exits 0 (no data / all green) or 1 (any red metric).
 from __future__ import annotations
 
 import ast
-import json
+import orjson as json
 import subprocess
 import sys
 from pathlib import Path
@@ -93,7 +93,7 @@ def test_gate_exits_0_when_all_green(tmp_path: Path) -> None:
     quality_dir = tmp_path / ".quality"
     quality_dir.mkdir()
     jsonl_path = quality_dir / "slo-metrics.jsonl"
-    jsonl_path.write_text(json.dumps(_all_green_record()) + "\n", encoding="utf-8")
+    jsonl_path.write_text(json.dumps(_all_green_record().decode().decode()) + "\n", encoding="utf-8")
 
     result = subprocess.run(
         [sys.executable, str(GATE_SCRIPT)],
@@ -111,7 +111,7 @@ def test_gate_exits_1_when_all_red(tmp_path: Path) -> None:
     quality_dir = tmp_path / ".quality"
     quality_dir.mkdir()
     jsonl_path = quality_dir / "slo-metrics.jsonl"
-    jsonl_path.write_text(json.dumps(_all_red_record()) + "\n", encoding="utf-8")
+    jsonl_path.write_text(json.dumps(_all_red_record().decode().decode()) + "\n", encoding="utf-8")
 
     result = subprocess.run(
         [sys.executable, str(GATE_SCRIPT)],
@@ -134,7 +134,7 @@ def test_gate_uses_last_record_only(tmp_path: Path) -> None:
     quality_dir.mkdir()
     jsonl_path = quality_dir / "slo-metrics.jsonl"
     # First record is all-red, last record is all-green
-    content = json.dumps(_all_red_record()) + "\n" + json.dumps(_all_green_record()) + "\n"
+    content = json.dumps(_all_red_record().decode().decode()) + "\n" + json.dumps(_all_green_record().decode().decode()) + "\n"
     jsonl_path.write_text(content, encoding="utf-8")
 
     result = subprocess.run(

@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import re
 
 import pytest
@@ -162,7 +162,7 @@ class TestHITLDiffPayload:
     def test_hitl_diff_payload_serializable(self) -> None:
         payload = self._make_hitl_payload()
         data = payload.model_dump()
-        serialized = json.dumps(data)
+        serialized = json.dumps(data).decode().decode()
         assert "hitl_abc123" in serialized
         assert "file.py" in serialized
         # Round-trip

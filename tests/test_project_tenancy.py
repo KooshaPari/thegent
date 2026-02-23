@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import TYPE_CHECKING
 
 import pytest
@@ -1125,7 +1125,7 @@ class TestSetupProjectMigrateCli:
         thegent_dir = proj / ".thegent"
         thegent_dir.mkdir()
         (thegent_dir / "templates.lock").write_text(
-            json.dumps({"template": "ag-dd", "version": "1.1.0"}), encoding="utf-8"
+            json.dumps({"template": "ag-dd", "version": "1.1.0"}).decode().decode(), encoding="utf-8"
         )
 
         calls: dict[str, object] = {}
@@ -1179,7 +1179,7 @@ class TestSetupProjectMigrateCli:
         thegent_dir = proj / ".thegent"
         thegent_dir.mkdir()
         (thegent_dir / "templates.lock").write_text(
-            json.dumps({"template": "ag-dd", "version": "1.2.0"}), encoding="utf-8"
+            json.dumps({"template": "ag-dd", "version": "1.2.0"}).decode().decode(), encoding="utf-8"
         )
 
         result = cli_runner.invoke(project_cli, ["migrate", str(proj), "--dry-run", "--json"])

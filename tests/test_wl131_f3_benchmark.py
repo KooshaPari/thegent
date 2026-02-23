@@ -1,7 +1,7 @@
 # @trace WL-131 B90-W3-F3
 """Migration benchmark report and baseline validation for WL-131."""
 
-import json
+import orjson as json
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent

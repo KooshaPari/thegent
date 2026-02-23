@@ -1,7 +1,7 @@
 """JSONL parsing helpers used by execution registries."""
 
 import importlib.util
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -192,8 +192,8 @@ def process_dlq_line(line: str, run_id: str, resolution: str) -> tuple[str, bool
         if data.get("run_id") == run_id and data.get("status") == "pending_review":
             data["status"] = resolution
             data["resolved_at"] = datetime.now(UTC).isoformat()
-            return json.dumps(data), True
-        return json.dumps(data), False
+            return json.dumps(data).decode().decode(), True
+        return json.dumps(data).decode().decode(), False
     except Exception:
         return line, False
 

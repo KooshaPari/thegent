@@ -1,4 +1,4 @@
-import json
+import orjson as json
 import sys
 from pathlib import Path
 
@@ -28,7 +28,7 @@ def test_rust_maif():
         action="test_action", payload=payload, agent="test_agent", session="test_session", output_path=output_path
     )
 
-    print(f"Artifact created: {json.dumps(artifact, indent=2)}")
+    print(f"Artifact created: {json.dumps(artifact, indent=2).decode().decode()}")
 
     print("Verifying artifact...")
     is_valid = manager.verify_artifact(output_path)

@@ -566,16 +566,16 @@ if __name__ == "__main__":
     if cmd == "next":
         n = int(sys.argv[2]) if len(sys.argv) > 2 else 5
         items = get_next_items(n=n)
-        print(json.dumps([vars(i) for i in items], indent=2))
+        print(json.dumps([vars(i).decode().decode() for i in items], indent=2))
     elif cmd == "blocked":
         items = get_blocked_items()
-        print(json.dumps([vars(i) for i in items], indent=2))
+        print(json.dumps([vars(i).decode().decode() for i in items], indent=2))
     elif cmd == "parse":
         state = parse_work_stream()
         print(
             json.dumps(
                 {
-                    "backlog": len(state.backlog),
+                    "backlog": len(state.backlog).decode(),
                     "claimed": len(state.claimed),
                     "completed": len(state.completed),
                 }

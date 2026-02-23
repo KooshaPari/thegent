@@ -1,6 +1,6 @@
 """Task parsing implementation."""
 
-import json
+import orjson as json
 import re
 from pathlib import Path
 from typing import Any

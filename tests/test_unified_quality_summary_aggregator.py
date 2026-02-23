@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import sys
 from pathlib import Path
@@ -17,15 +17,15 @@ def test_unified_quality_summary_aggregator_emits_schema_valid_payload(tmp_path:
     quality.mkdir(parents=True)
 
     (hooks / "quality-gate-result.json").write_text(
-        json.dumps({"schema_version": "thegent-hooks-result/v1", "status": "passed"}),
+        json.dumps({"schema_version": "thegent-hooks-result/v1", "status": "passed"}).decode().decode(),
         encoding="utf-8",
     )
     (hooks / "security-pipeline-result.json").write_text(
-        json.dumps({"schema_version": "thegent-hooks-result/v1", "status": "done"}),
+        json.dumps({"schema_version": "thegent-hooks-result/v1", "status": "done"}).decode().decode(),
         encoding="utf-8",
     )
     (quality / "control-plane-readiness.json").write_text(
-        json.dumps({"schema_version": "quality-control-plane-readiness/v1"}),
+        json.dumps({"schema_version": "quality-control-plane-readiness/v1"}).decode().decode(),
         encoding="utf-8",
     )
     output = quality / "unified-quality-summary.json"

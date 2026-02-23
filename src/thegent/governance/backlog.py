@@ -4,7 +4,7 @@ Maintains a JSONL queue of known issues that could not be resolved in a single
 cycle, enabling carry-over across cycles and audit trail of all findings.
 """
 
-import json
+import orjson as json
 import logging
 import uuid
 from datetime import UTC, datetime

@@ -5,7 +5,7 @@ Allows external agents to discover and borrow thegent tools.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -184,7 +184,7 @@ class ToolBorrower:
             mcp_servers = {}
 
         mcp_servers["thegent"] = server_entry
-        output_path.write_text(json.dumps({"mcpServers": mcp_servers}, indent=2), encoding="utf-8")
+        output_path.write_text(json.dumps({"mcpServers": mcp_servers}, indent=2).decode().decode(), encoding="utf-8")
         return output_path.resolve()
 
     def generate_claude_md_snippet(self, tool_names: list[str]) -> str:

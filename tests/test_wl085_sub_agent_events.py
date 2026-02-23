@@ -36,7 +36,7 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

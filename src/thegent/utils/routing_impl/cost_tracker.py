@@ -6,7 +6,7 @@ for integration with the Donut Architecture harvest system.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -164,7 +164,7 @@ class CostTracker:
         try:
             self._log_path.parent.mkdir(parents=True, exist_ok=True)
             with self._log_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(entry.to_json()) + "\n")
+                f.write(json.dumps(entry.to_json().decode().decode()) + "\n")
         except OSError as e:
             logger.warning("Failed to write cost log %s: %s", self._log_path, e)
 

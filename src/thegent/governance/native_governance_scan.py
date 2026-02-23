@@ -11,7 +11,7 @@ Traces to: FR-GOV-007 (governance violation detection), FR-GOV-006 (native binar
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import re
 import shutil

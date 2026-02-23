@@ -1,6 +1,6 @@
 """Starlette server for thegent Control Plane."""
 
-import json
+import orjson as json
 import logging
 import os
 import platform

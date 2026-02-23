@@ -6,7 +6,7 @@ Reads .quality/last-run.json and returns list of (step_name, log_path) for faile
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 ROOT = Path.cwd()

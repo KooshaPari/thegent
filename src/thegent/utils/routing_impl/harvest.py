@@ -1,6 +1,6 @@
 """WP-7002: LiteLLM cost/latency data harvesting implementation."""
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -68,7 +68,7 @@ def harvest_routing_metrics(session_id: str, output_path: Path | str | None = No
         out_p = Path(output_path)
         out_p.parent.mkdir(parents=True, exist_ok=True)
         try:
-            out_p.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+            out_p.write_text(json.dumps(metrics, indent=2).decode().decode(), encoding="utf-8")
             logger.info("Harvested routing metrics for %s to %s", session_id, out_p)
         except Exception as e:
             logger.error("Failed to write harvested metrics to %s: %s", out_p, e)

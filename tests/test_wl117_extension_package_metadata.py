@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
-import json
+import orjson as json
 from pathlib import Path
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "check_extension_package_metadata.py"
@@ -34,7 +34,7 @@ def _write_valid_extension(root: Path, name: str = "vscode") -> Path:
             "test": "node ./out/tests.js",
         },
     }
-    (extension_dir / "package.json").write_text(json.dumps(package), encoding="utf-8")
+    (extension_dir / "package.json").write_text(json.dumps(package).decode().decode(), encoding="utf-8")
     (extension_dir / "README.md").write_text(
         "## Run Steps\n\n```bash\nnpm run lint\nnpm run test\n```\n",
         encoding="utf-8",
@@ -53,7 +53,7 @@ def test_validate_extension_package_flags_missing_activation_event(tmp_path: Pat
     package_path = extension_dir / "package.json"
     package = json.loads(package_path.read_text(encoding="utf-8"))
     package["activationEvents"] = []
-    package_path.write_text(json.dumps(package), encoding="utf-8")
+    package_path.write_text(json.dumps(package).decode().decode(), encoding="utf-8")
 
     errors = MODULE.validate_extension_package(extension_dir)
     assert any("`activationEvents` must be a non-empty list" in error for error in errors)
@@ -88,7 +88,7 @@ def test_validate_extension_package_rejects_duplicate_command_ids(tmp_path: Path
     package["contributes"]["commands"].append(
         {"command": "thegent.startSession", "title": "thegent: Duplicate Start Session"}
     )
-    package_path.write_text(json.dumps(package), encoding="utf-8")
+    package_path.write_text(json.dumps(package).decode().decode(), encoding="utf-8")
 
     errors = MODULE.validate_extension_package(extension_dir)
     assert any("duplicate contributes.commands command id `thegent.startSession`" in error for error in errors)

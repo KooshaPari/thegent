@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any, Callable
 
 from thegent.mcp.dynamic_tools import DynamicToolRegistry, DynamicToolSpec
@@ -36,7 +36,7 @@ def session_list_impl(
     ps_impl: Callable[..., list[dict[str, Any]]],
 ) -> str:
     sessions = ps_impl(all=all, owner=owner, agent=agent, status=status, limit=limit)
-    return json.dumps(sessions, indent=2)
+    return json.dumps(sessions, indent=2).decode().decode()
 
 
 def _find_session(session_id: str, sessions: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -50,8 +50,8 @@ def session_show_impl(
 ) -> str:
     session = _find_session(session_id, ps_impl(all=True))
     if not session:
-        return json.dumps({"error": f"Session {session_id} not found"}, indent=2)
-    return json.dumps(session, indent=2)
+        return json.dumps({"error": f"Session {session_id} not found"}, indent=2).decode().decode()
+    return json.dumps(session, indent=2).decode().decode()
 
 
 def session_logs_impl(
@@ -119,7 +119,7 @@ def session_send_impl(
                 raise ValueError("dynamic tool invoke timeout_seconds must be numeric") from exc
         call = _dynamic_registry.create_tool_call(session_id, name, arguments, timeout_seconds=timeout_seconds)
         event = _dynamic_registry.tool_call_requested_event(call)
-        return json.dumps({"success": True, "event": event}, indent=2)
+        return json.dumps({"success": True, "event": event}, indent=2).decode().decode()
 
     if msg_type == "dynamic_tool_complete":
         payload = _parse_dynamic_message(message)
@@ -142,10 +142,10 @@ def session_send_impl(
         except TimeoutError as exc:
             raise ValueError(str(exc)) from exc
         event = _dynamic_registry.tool_call_completed_event(result)
-        return json.dumps({"success": True, "event": event}, indent=2)
+        return json.dumps({"success": True, "event": event}, indent=2).decode().decode()
 
     ok, msg = send_impl(session_id, message, msg_type=msg_type)
-    return json.dumps({"success": ok, "message": msg}, indent=2)
+    return json.dumps({"success": ok, "message": msg}, indent=2).decode().decode()
 
 
 def session_attach_hint_impl(
@@ -155,7 +155,7 @@ def session_attach_hint_impl(
 ) -> str:
     session = _find_session(session_id, ps_impl(all=True))
     if not session:
-        return json.dumps({"error": f"Session {session_id} not found"}, indent=2)
+        return json.dumps({"error": f"Session {session_id} not found"}, indent=2).decode().decode()
 
     interactivity = session.get("interactivity")
     attach_target = session.get("attach_target") or {}
@@ -170,7 +170,7 @@ def session_attach_hint_impl(
                 "hint": "Attach via tmux",
             },
             indent=2,
-        )
+        ).decode()
 
     if interactivity == "headless-holdpty":
         return json.dumps(
@@ -180,7 +180,7 @@ def session_attach_hint_impl(
                 "hint": "Attach via holdpty wrapper",
             },
             indent=2,
-        )
+        ).decode()
 
     return json.dumps(
         {
@@ -188,4 +188,4 @@ def session_attach_hint_impl(
             "hint": "Session does not support interactive attachment. Use 'thegent session logs --follow' instead.",
         },
         indent=2,
-    )
+    ).decode()

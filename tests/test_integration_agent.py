@@ -4,7 +4,7 @@ Minimizes probabilism: prompt asks "what is in file X" -> assert response contai
 expected content from that file.
 """
 
-import json
+import orjson as json
 from pathlib import Path
 
 import pytest

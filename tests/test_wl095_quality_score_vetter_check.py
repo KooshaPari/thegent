@@ -12,7 +12,7 @@ Every test carries # @trace WL-095
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -30,7 +30,7 @@ from thegent.govern.vetter.models import VetterCheck, VetterCheckResult, VetterC
 
 def _make_litellm_response(scores: dict[str, int], pass_verdict: bool, critique: str = "") -> MagicMock:
     """Build a minimal litellm ModelResponse mock with the given judge payload."""
-    payload = json.dumps({"scores": scores, "pass_verdict": pass_verdict, "critique": critique})
+    payload = json.dumps({"scores": scores, "pass_verdict": pass_verdict, "critique": critique}).decode().decode()
     msg = MagicMock()
     msg.content = payload
     choice = MagicMock()

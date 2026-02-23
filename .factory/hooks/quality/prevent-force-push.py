@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prevent accidental git force pushes - User Level Global Hook."""
 
-import json
+import orjson as json
 import sys
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 from typing import TYPE_CHECKING, Any, Callable
 
@@ -49,7 +49,7 @@ def thegent_wait_impl(
             meta={"execution_time_ms": elapsed_ms, "auto_timeout": True, "action": "retry"},
         )
 
-    return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+    return ToolResult(content=json.dumps(result).decode().decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
 
 def thegent_inbox_list_impl(
@@ -75,7 +75,7 @@ def thegent_inbox_list_impl(
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     payload = {"events": events}
     return ToolResult(
-        content=json.dumps(payload),
+        content=json.dumps(payload).decode().decode(),
         structured_content=payload,
         meta={"count": len(events), "execution_time_ms": elapsed_ms},
     )
@@ -152,7 +152,7 @@ def thegent_inbox_wait_impl(
     events = result if isinstance(result, list) else []
     payload = {"events": events}
     return ToolResult(
-        content=json.dumps(payload),
+        content=json.dumps(payload).decode().decode(),
         structured_content=payload,
         meta={"count": len(events), "execution_time_ms": elapsed_ms},
     )
@@ -169,7 +169,7 @@ def thegent_stop_impl(
     start_time = time.perf_counter()
     result = stop_impl(session_id=session_id, force=force)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+    return ToolResult(content=json.dumps(result).decode().decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
 
 def thegent_pause_impl(
@@ -189,7 +189,7 @@ def thegent_pause_impl(
     result = {"success": True, "session_id": session_id, "status": "paused", "reason": reason}
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result),
+        content=json.dumps(result).decode().decode(),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -211,7 +211,7 @@ def thegent_resume_impl(
     result = {"success": True, "session_id": session_id, "status": "running"}
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result),
+        content=json.dumps(result).decode().decode(),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -234,7 +234,7 @@ def thegent_continuity_snapshot_impl(
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result),
+        content=json.dumps(result).decode().decode(),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )

@@ -9,7 +9,7 @@ Creates a complete work stream plan for:
 4. Completing all research/ideas at mature level
 """
 
-import json
+import orjson as json
 import sys
 from pathlib import Path
 

@@ -5,7 +5,7 @@ Full implementation for Phase 3 Spike Batch B.
 """
 
 import hashlib
-import json
+import orjson as json
 import logging
 import os
 from dataclasses import dataclass
@@ -157,7 +157,7 @@ class LMCacheBackend:
             if self._config.backend == "redis" and REDIS_AVAILABLE:
                 client = await self._get_redis_client()
                 if client:
-                    data = json.dumps(response) if not isinstance(response, str) else response
+                    data = json.dumps(response).decode().decode() if not isinstance(response, str) else response
                     await client.setex(
                         cache_key,
                         self._config.ttl_seconds,

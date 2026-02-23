@@ -5,7 +5,7 @@ Tests the state machine, cycle execution, error handling, and graceful shutdown.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import signal
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -84,7 +84,7 @@ _VERIFICATION_MOCK.verdict = MagicMock(value="pass")
 def health_targets_path(tmp_path: Path) -> Path:
     """Write health-targets.json to tmp_path and return its path."""
     p = tmp_path / "health-targets.json"
-    p.write_text(json.dumps(_HEALTH_TARGETS_DATA))
+    p.write_text(json.dumps(_HEALTH_TARGETS_DATA).decode().decode())
     return p
 
 

@@ -5,7 +5,7 @@ Tests for cost_tracker, alerting, donut_adapter, and enhanced router features.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path  # noqa: TC003 -- Path used in pytest fixture type hints
 from unittest.mock import patch
 
@@ -273,7 +273,7 @@ class TestRoutingDonutAdapter:
                     "prompt": "Test prompt",
                     "preferred_model": "claude-opus-4.6",
                 }
-            )
+            ).decode()
             + "\n"
         )
 

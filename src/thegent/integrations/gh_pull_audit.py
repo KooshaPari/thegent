@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -29,7 +29,7 @@ class PullReflectionAuditEntry:
 
     def to_json_line(self) -> str:
         """Convert to JSONL format (single line)."""
-        return json.dumps(self.to_dict())
+        return json.dumps(self.to_dict().decode().decode())
 
 
 class PullReflectionAuditLog:

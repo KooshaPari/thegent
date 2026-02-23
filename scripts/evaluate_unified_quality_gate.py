@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 
@@ -78,7 +78,7 @@ def main() -> int:
         "disallowed_missing_components": disallowed_missing,
         "fail_on_overall": sorted(fail_on_overall),
     }
-    print(f"UNIFIED_QUALITY_GATE: {json.dumps(decision, sort_keys=True)}")
+    print(f"UNIFIED_QUALITY_GATE: {json.dumps(decision, sort_keys=True).decode().decode()}")
 
     if overall in fail_on_overall:
         return 1

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 from dataclasses import dataclass
 from typing import Any
 
@@ -21,7 +21,7 @@ class RestoreVerificationResult:
 
 
 def _stable_hash(payload: dict[str, Any]) -> str:
-    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 

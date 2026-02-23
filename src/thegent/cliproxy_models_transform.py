@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 import logging
 import time
 from typing import Any
@@ -167,7 +167,7 @@ def transform_models_response(
             "client_version": "proxy",
             "models": models,
         }
-        body = json.dumps(result).encode()
+        body = json.dumps(result).decode().decode().encode()
         etag = _compute_models_etag(models)
         return body, etag
     except json.JSONDecodeError as exc:

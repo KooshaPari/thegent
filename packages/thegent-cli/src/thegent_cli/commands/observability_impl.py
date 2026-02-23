@@ -4,7 +4,7 @@ Extracted from impl.py as part of WL-120 Python LOC Reduction Program.
 """
 
 import hashlib
-import json
+import orjson as json
 import logging
 import os
 from datetime import UTC, datetime
@@ -50,7 +50,7 @@ def _hash_observe_summary_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":"))
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode("utf-8")).hexdigest()}
 
 
@@ -75,7 +75,7 @@ def _build_observe_summary_trend_scope(
 
 
 def _hash_observe_summary_trend_scope(scope_key: dict[str, Any]) -> str:
-    scope_key_json = json.dumps(scope_key, sort_keys=True, separators=(",", ":"))
+    scope_key_json = json.dumps(scope_key, sort_keys=True, separators=(",", ":").decode().decode())
     return hashlib.sha256(scope_key_json.encode("utf-8")).hexdigest()
 
 
@@ -219,7 +219,7 @@ def _classify_observe_summary_trend_health(
         ),
     }
     policy_signature = hashlib.sha256(
-        json.dumps(policy, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        json.dumps(policy, sort_keys=True, separators=(",", ":").decode().decode()).encode("utf-8")
     ).hexdigest()
 
     if not enabled:
@@ -433,7 +433,7 @@ def _append_observe_summary_snapshot(
     path = _health_snapshot_log_path()
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, sort_keys=True))
+            fh.write(json.dumps(record, sort_keys=True).decode().decode())
             fh.write("\n")
     except OSError:
         return
@@ -459,7 +459,7 @@ def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":"))
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode()).hexdigest()}
 
 
@@ -609,7 +609,7 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
     }
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, sort_keys=True))
+            fh.write(json.dumps(rec, sort_keys=True).decode().decode())
             fh.write("\n")
     except OSError:
         return

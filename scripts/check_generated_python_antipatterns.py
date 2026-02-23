@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -194,13 +194,13 @@ def main() -> int:
     }
     json_out = Path(args.json_out)
     json_out.parent.mkdir(parents=True, exist_ok=True)
-    json_out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    json_out.write_text(json.dumps(report, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if args.sarif_out:
         sarif = to_sarif(findings)
         sarif_out = Path(args.sarif_out)
         sarif_out.parent.mkdir(parents=True, exist_ok=True)
-        sarif_out.write_text(json.dumps(sarif, indent=2) + "\n", encoding="utf-8")
+        sarif_out.write_text(json.dumps(sarif, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     threshold = SEVERITY_RANK[args.fail_on]
     has_blocking = any(SEVERITY_RANK[str(f["severity"])] >= threshold for f in findings)

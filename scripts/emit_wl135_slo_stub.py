@@ -8,7 +8,7 @@ report/dashboard prototyping.
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 from pathlib import Path
 
 from thegent.metrics.collector import MetricsCollector
@@ -42,9 +42,9 @@ def main() -> int:
     if args.jsonl is not None:
         args.jsonl.parent.mkdir(parents=True, exist_ok=True)
         with args.jsonl.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(payload, sort_keys=True) + "\n")
+            fh.write(json.dumps(payload, sort_keys=True).decode().decode() + "\n")
 
-    print(json.dumps(payload, sort_keys=True))
+    print(json.dumps(payload, sort_keys=True).decode().decode())
     return 0
 
 

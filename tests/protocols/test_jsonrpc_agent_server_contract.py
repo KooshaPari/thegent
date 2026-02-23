@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-import json
+import orjson as json
 
 import pytest
 
@@ -28,13 +28,13 @@ def reset_server_state() -> None:
 
 
 def test_session_lifecycle_methods_return_concrete_payloads() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
     assert session_id == "session-0001"
     assert started["result"]["session"]["status"] == "active"
 
-    listed = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": 2, "method": "session/list"}))
+    listed = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": 2, "method": "session/list"}).decode().decode())
     assert listed is not None
     assert listed["result"]["sessions"][0]["id"] == session_id
 
@@ -46,8 +46,7 @@ def test_session_lifecycle_methods_return_concrete_payloads() -> None:
                 "method": "session/resume",
                 "params": {"session_id": session_id},
             }
-        )
-    )
+        )).decode()
     assert resumed is not None
     assert resumed["result"]["session"]["id"] == session_id
 
@@ -59,8 +58,7 @@ def test_session_lifecycle_methods_return_concrete_payloads() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "hello"},
             }
-        )
-    )
+        )).decode()
     assert turn_response is not None
 
     read = process_jsonrpc_line(
@@ -71,8 +69,7 @@ def test_session_lifecycle_methods_return_concrete_payloads() -> None:
                 "method": "session/read",
                 "params": {"session_id": session_id},
             }
-        )
-    )
+        )).decode()
     assert read is not None
     assert read["result"]["session"]["id"] == session_id
     assert len(read["result"]["turns"]) == 1
@@ -80,7 +77,7 @@ def test_session_lifecycle_methods_return_concrete_payloads() -> None:
 
 
 def test_turn_submit_emits_expected_notifications_order() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -92,8 +89,7 @@ def test_turn_submit_emits_expected_notifications_order() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "ship"},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["result"]["turn"]["status"] == "completed"
 
@@ -108,7 +104,7 @@ def test_turn_submit_emits_expected_notifications_order() -> None:
 
 
 def test_turn_cancel_marks_terminal_and_blocks_duplicate_cancel() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -125,8 +121,7 @@ def test_turn_cancel_marks_terminal_and_blocks_duplicate_cancel() -> None:
                     "unified_diff": "--- a/app.py\n+++ b/app.py\n@@\n-old\n+new\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert response is not None
     turn_id = response["result"]["turn"]["id"]
     assert notifications[-1]["method"] == "approval/requested"
@@ -139,8 +134,7 @@ def test_turn_cancel_marks_terminal_and_blocks_duplicate_cancel() -> None:
                 "method": "turn/cancel",
                 "params": {"turn_id": turn_id},
             }
-        )
-    )
+        )).decode()
     assert first_cancel is not None
     assert first_cancel["result"]["turn"]["status"] == "cancelled"
 
@@ -152,14 +146,13 @@ def test_turn_cancel_marks_terminal_and_blocks_duplicate_cancel() -> None:
                 "method": "turn/cancel",
                 "params": {"turn_id": turn_id},
             }
-        )
-    )
+        )).decode()
     assert second_cancel is not None
     assert second_cancel["error"]["code"] == -32003
 
 
 def test_turn_submit_rejects_non_boolean_requires_approval() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -171,8 +164,7 @@ def test_turn_submit_rejects_non_boolean_requires_approval() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "deploy", "requires_approval": "yes"},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "requires_approval_must_be_boolean"
@@ -188,8 +180,7 @@ def test_turn_submit_rejects_whitespace_session_id() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": "   ", "input": "deploy"},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "session_id_required"
@@ -197,7 +188,7 @@ def test_turn_submit_rejects_whitespace_session_id() -> None:
 
 
 def test_turn_submit_requires_non_empty_diff_when_approval_is_required() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -209,8 +200,7 @@ def test_turn_submit_requires_non_empty_diff_when_approval_is_required() -> None
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "deploy", "requires_approval": True},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "diff_required_when_requires_approval"
@@ -218,7 +208,7 @@ def test_turn_submit_requires_non_empty_diff_when_approval_is_required() -> None
 
 
 def test_turn_submit_rejects_blank_diff_when_approval_is_required() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -235,8 +225,7 @@ def test_turn_submit_rejects_blank_diff_when_approval_is_required() -> None:
                     "unified_diff": "   ",
                 },
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "diff_must_be_non_empty_string"
@@ -244,14 +233,14 @@ def test_turn_submit_rejects_blank_diff_when_approval_is_required() -> None:
 
 
 def test_request_with_invalid_id_type_returns_invalid_request() -> None:
-    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": {"not": "scalar"}, "method": "health/check"}))
+    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": {"not": "scalar"}, "method": "health/check"}).decode().decode())
     assert response is not None
     assert response["error"]["code"] == -32600
     assert response["error"]["data"]["reason"] == "id"
 
 
 def test_approval_requested_and_grant_reject_flow_works() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -284,8 +273,7 @@ def test_approval_requested_and_grant_reject_flow_works() -> None:
                 "method": "approval/grant",
                 "params": {"approval_id": approval_id},
             }
-        )
-    )
+        )).decode()
     assert grant_response is not None
     assert grant_response["result"]["approval"]["status"] == "granted"
     assert [item["method"] for item in grant_notifications] == [
@@ -307,8 +295,7 @@ def test_approval_requested_and_grant_reject_flow_works() -> None:
                     "diff": "--- a/main.py\n+++ b/main.py\n@@\n-stop\n+continue\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert reject_submit_response is not None
     assert reject_submit_notifications[-1]["method"] == "approval/requested"
     reject_approval_id = reject_submit_response["result"]["approval"]["id"]
@@ -321,8 +308,7 @@ def test_approval_requested_and_grant_reject_flow_works() -> None:
                 "method": "approval/reject",
                 "params": {"approval_id": reject_approval_id},
             }
-        )
-    )
+        )).decode()
     assert reject_response is not None
     assert reject_response["result"]["approval"]["status"] == "rejected"
     assert [item["method"] for item in reject_notifications] == ["turn/completed"]
@@ -332,7 +318,7 @@ def test_serve_stdio_writes_response_and_notifications_as_jsonl() -> None:
     in_stream = io.StringIO(
         "\n".join(
             [
-                json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}),
+                json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode(),
                 json.dumps(
                     {
                         "jsonrpc": "2.0",
@@ -364,7 +350,7 @@ def test_serve_stdio_writes_response_and_notifications_as_jsonl() -> None:
 
 
 def test_fail_loud_jsonrpc_errors_are_preserved() -> None:
-    unknown = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "bogus/method"}))
+    unknown = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "bogus/method"}).decode().decode())
     assert unknown is not None
     assert unknown["error"]["code"] == -32601
 
@@ -374,7 +360,7 @@ def test_fail_loud_jsonrpc_errors_are_preserved() -> None:
 
 
 def test_turn_submit_notification_without_id_emits_notifications_only() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -385,8 +371,7 @@ def test_turn_submit_notification_without_id_emits_notifications_only() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "hello from notification"},
             }
-        )
-    )
+        )).decode()
     assert response is None
     assert [item["method"] for item in notifications] == [
         "turn/started",
@@ -397,7 +382,7 @@ def test_turn_submit_notification_without_id_emits_notifications_only() -> None:
     ]
 
     read = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": session_id}})
+        json.dumps({"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": session_id}}).decode().decode()
     )
     assert read is not None
     assert len(read["result"]["turns"]) == 1
@@ -405,14 +390,14 @@ def test_turn_submit_notification_without_id_emits_notifications_only() -> None:
 
 
 def test_invalid_params_type_returns_invalid_params_error() -> None:
-    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "x", "method": "turn/submit", "params": []}))
+    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "x", "method": "turn/submit", "params": []}).decode().decode())
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "params_must_be_object"
 
 
 def test_approval_diff_must_be_string() -> None:
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -424,22 +409,21 @@ def test_approval_diff_must_be_string() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "review", "requires_approval": True, "unified_diff": 123},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "diff_must_be_string"
 
 
 def test_config_read_reports_canonical_supported_methods() -> None:
-    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "cfg", "method": "config/read"}))
+    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "cfg", "method": "config/read"}).decode().decode())
     assert response is not None
     assert response["result"]["supported_methods"] == sorted(SUPPORTED_METHODS)
 
 
 def test_request_id_boolean_is_rejected_as_invalid_request() -> None:
     # @trace WL-9500
-    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": True, "method": "health/check"}))
+    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": True, "method": "health/check"}).decode().decode())
     assert response is not None
     assert response["error"]["code"] == -32600
     assert response["error"]["data"]["reason"] == "id"
@@ -448,7 +432,7 @@ def test_request_id_boolean_is_rejected_as_invalid_request() -> None:
 def test_session_resume_with_whitespace_session_id_fails_validation() -> None:
     # @trace WL-9501
     response = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": "   "}})
+        json.dumps({"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": "   "}}).decode().decode()
     )
     assert response is not None
     assert response["error"]["code"] == -32602
@@ -457,12 +441,12 @@ def test_session_resume_with_whitespace_session_id_fails_validation() -> None:
 
 def test_turn_submit_rejects_non_string_input_during_parse_stage() -> None:
     # @trace WL-9502
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
     response = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "t", "method": "turn/submit", "params": {"session_id": session_id, "input": 9}})
+        json.dumps({"jsonrpc": "2.0", "id": "t", "method": "turn/submit", "params": {"session_id": session_id, "input": 9}}).decode().decode()
     )
     assert response is not None
     assert response["error"]["code"] == -32602
@@ -471,7 +455,7 @@ def test_turn_submit_rejects_non_string_input_during_parse_stage() -> None:
 
 def test_approval_grant_follows_success_path_and_completes_turn() -> None:
     # @trace WL-9503
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -488,13 +472,12 @@ def test_approval_grant_follows_success_path_and_completes_turn() -> None:
                     "diff": "--- a/x\n+++ b/x\n@@\n-x\n+y\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert gated is not None
     approval_id = gated["result"]["approval"]["id"]
 
     granted, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "grant", "method": "approval/grant", "params": {"approval_id": approval_id}})
+        json.dumps({"jsonrpc": "2.0", "id": "grant", "method": "approval/grant", "params": {"approval_id": approval_id}}).decode().decode()
     )
     assert granted is not None
     assert granted["result"]["approval"]["status"] == "granted"
@@ -504,7 +487,7 @@ def test_approval_grant_follows_success_path_and_completes_turn() -> None:
 def test_session_read_for_missing_session_returns_not_found_branch() -> None:
     # @trace WL-9504
     response = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": "session-9999"}})
+        json.dumps({"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": "session-9999"}}).decode().decode()
     )
     assert response is not None
     assert response["error"]["code"] == -32001
@@ -512,7 +495,7 @@ def test_session_read_for_missing_session_returns_not_found_branch() -> None:
 
 def test_approval_requires_diff_when_enabled_discovery_phase() -> None:
     # @trace WL-9505
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -524,8 +507,7 @@ def test_approval_requires_diff_when_enabled_discovery_phase() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "ship", "requires_approval": True},
             }
-        )
-    )
+        )).decode()
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "diff_required_when_requires_approval"
@@ -533,7 +515,7 @@ def test_approval_requires_diff_when_enabled_discovery_phase() -> None:
 
 def test_turn_cancel_requires_turn_id_validation_gate() -> None:
     # @trace WL-9506
-    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "cancel", "method": "turn/cancel", "params": {}}))
+    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "cancel", "method": "turn/cancel", "params": {}}).decode().decode())
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "turn_id_required"
@@ -541,7 +523,7 @@ def test_turn_cancel_requires_turn_id_validation_gate() -> None:
 
 def test_approval_reject_follows_recovery_path_and_rejects_turn() -> None:
     # @trace WL-9507
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
@@ -558,13 +540,12 @@ def test_approval_reject_follows_recovery_path_and_rejects_turn() -> None:
                     "unified_diff": "--- a/x\n+++ b/x\n@@\n-x\n+y\n",
                 },
             }
-        )
-    )
+        )).decode()
     assert gated is not None
     approval_id = gated["result"]["approval"]["id"]
 
     rejected, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "reject", "method": "approval/reject", "params": {"approval_id": approval_id}})
+        json.dumps({"jsonrpc": "2.0", "id": "reject", "method": "approval/reject", "params": {"approval_id": approval_id}}).decode().decode()
     )
     assert rejected is not None
     assert rejected["result"]["approval"]["status"] == "rejected"
@@ -573,12 +554,12 @@ def test_approval_reject_follows_recovery_path_and_rejects_turn() -> None:
 
 def test_session_resume_uses_existing_session_lookup_hit() -> None:
     # @trace WL-9508
-    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}))
+    started = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode())
     assert started is not None
     session_id = started["result"]["session"]["id"]
 
     resumed = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": session_id}})
+        json.dumps({"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": session_id}}).decode().decode()
     )
     assert resumed is not None
     assert resumed["result"]["session"]["id"] == session_id
@@ -587,7 +568,7 @@ def test_session_resume_uses_existing_session_lookup_hit() -> None:
 def test_session_resume_uses_missing_session_lookup_miss() -> None:
     # @trace WL-9509
     response = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": "session-4040"}})
+        json.dumps({"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": "session-4040"}}).decode().decode()
     )
     assert response is not None
     assert response["error"]["code"] == -32001

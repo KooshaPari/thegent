@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 import pytest
 
@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"})
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]

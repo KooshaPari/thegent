@@ -10,7 +10,7 @@ Tests for:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -56,7 +56,7 @@ def _make_state(
     if owner is not None:
         payload["owner"] = owner
     sp = d / "state.json"
-    sp.write_text(json.dumps(payload), encoding="utf-8")
+    sp.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
     return sp
 
 
@@ -167,7 +167,7 @@ def test_resume_impl_fails_when_run_id_missing_from_state(tmp_path: Path, monkey
     monkeypatch.setattr("thegent.cli.commands.impl.ThegentSettings", lambda: _mock_settings(tmp_path))
     d = tmp_path / "sess-bad"
     d.mkdir()
-    (d / "state.json").write_text(json.dumps({"session_id": "sess-bad", "status": "running"}), encoding="utf-8")
+    (d / "state.json").write_text(json.dumps({"session_id": "sess-bad", "status": "running"}).decode().decode(), encoding="utf-8")
     result = resume_impl(session_id="sess-bad")
     assert result["exit_code"] == 1
     assert "missing run_id" in result["error"]
@@ -327,7 +327,7 @@ def test_session_list_impl_skips_malformed_state_contracts(tmp_path: Path, monke
                 "status": "running",
                 "updated_at_utc": "2026-02-22T00:00:00+00:00",
             }
-        ),
+        ).decode(),
         encoding="utf-8",
     )
 

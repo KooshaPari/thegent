@@ -42,7 +42,7 @@ Covers:
 from __future__ import annotations
 
 import asyncio
-import json
+import orjson as json
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -86,7 +86,7 @@ def _make_valid_llm_json(
     nodes = [node]
     if extra_nodes:
         nodes.extend(extra_nodes)
-    return json.dumps({"nodes": nodes})
+    return json.dumps({"nodes": nodes}).decode().decode()
 
 
 def _make_flash_result(*, success: bool, output: str = "", elapsed_s: float = 0.5) -> MagicMock:
@@ -188,32 +188,32 @@ class TestParseLlmResponseErrors:
     def test_raises_on_json_array_at_root(self) -> None:
         """_parse_llm_response raises ValueError when root is a JSON array."""
         with pytest.raises(ValueError, match="JSON object"):
-            _parse_llm_response(json.dumps([{"id": "t1"}]))
+            _parse_llm_response(json.dumps([{"id": "t1"}]).decode().decode())
 
     def test_raises_when_nodes_key_missing(self) -> None:
         """_parse_llm_response raises ValueError when 'nodes' key is absent."""
         with pytest.raises(ValueError, match="missing required key 'nodes'"):
-            _parse_llm_response(json.dumps({"tasks": []}))
+            _parse_llm_response(json.dumps({"tasks": []}).decode().decode())
 
     def test_raises_when_nodes_is_not_list(self) -> None:
         """_parse_llm_response raises ValueError when 'nodes' is not a list."""
         with pytest.raises(ValueError, match="'nodes' must be a list"):
-            _parse_llm_response(json.dumps({"nodes": "not a list"}))
+            _parse_llm_response(json.dumps({"nodes": "not a list"}).decode().decode())
 
     def test_raises_when_nodes_list_is_empty(self) -> None:
         """_parse_llm_response raises ValueError when 'nodes' is an empty list."""
         with pytest.raises(ValueError, match="must not be empty"):
-            _parse_llm_response(json.dumps({"nodes": []}))
+            _parse_llm_response(json.dumps({"nodes": []}).decode().decode())
 
     def test_raises_when_node_entry_is_not_dict(self) -> None:
         """_parse_llm_response raises ValueError when a node entry is not a dict."""
         with pytest.raises(ValueError, match="nodes\\[0\\] must be a JSON object"):
-            _parse_llm_response(json.dumps({"nodes": ["string not dict"]}))
+            _parse_llm_response(json.dumps({"nodes": ["string not dict"]}).decode().decode())
 
     def test_raises_when_node_missing_required_keys(self) -> None:
         """_parse_llm_response raises ValueError when a node is missing required keys."""
         with pytest.raises(ValueError, match="missing required keys"):
-            _parse_llm_response(json.dumps({"nodes": [{"id": "t1", "task": "do"}]}))
+            _parse_llm_response(json.dumps({"nodes": [{"id": "t1", "task": "do"}]}).decode().decode())
 
     def test_raises_on_blank_node_id(self) -> None:
         """_parse_llm_response raises ValueError for a blank 'id' field."""
@@ -225,13 +225,13 @@ class TestParseLlmResponseErrors:
 
     def test_raises_on_blank_node_task(self) -> None:
         """_parse_llm_response raises ValueError for a blank 'task' field."""
-        raw = json.dumps({"nodes": [{"id": "t1", "task": "", "agent_hint": None, "deps": [], "budget_tokens": None}]})
+        raw = json.dumps({"nodes": [{"id": "t1", "task": "", "agent_hint": None, "deps": [], "budget_tokens": None}]}).decode().decode()
         with pytest.raises(ValueError, match="non-empty string"):
             _parse_llm_response(raw)
 
     def test_raises_on_non_str_agent_hint(self) -> None:
         """_parse_llm_response raises ValueError when agent_hint is non-string non-null."""
-        raw = json.dumps({"nodes": [{"id": "t1", "task": "do", "agent_hint": 42, "deps": [], "budget_tokens": None}]})
+        raw = json.dumps({"nodes": [{"id": "t1", "task": "do", "agent_hint": 42, "deps": [], "budget_tokens": None}]}).decode().decode()
         with pytest.raises(ValueError, match="agent_hint must be a string or null"):
             _parse_llm_response(raw)
 
@@ -253,7 +253,7 @@ class TestParseLlmResponseErrors:
 
     def test_raises_on_float_budget_tokens(self) -> None:
         """_parse_llm_response raises ValueError when budget_tokens is a float."""
-        raw = json.dumps({"nodes": [{"id": "t1", "task": "do", "agent_hint": None, "deps": [], "budget_tokens": 1.5}]})
+        raw = json.dumps({"nodes": [{"id": "t1", "task": "do", "agent_hint": None, "deps": [], "budget_tokens": 1.5}]}).decode().decode()
         with pytest.raises(ValueError, match="budget_tokens must be an int or null"):
             _parse_llm_response(raw)
 
@@ -387,7 +387,7 @@ class TestLLMPlangentPlannerDecomposeSuccess:
                     {"id": "t2", "task": "Write the code", "agent_hint": "coder", "deps": ["t1"], "budget_tokens": 700},
                 ]
             }
-        )
+        ).decode()
 
     def test_decompose_returns_plan(self) -> None:
         """decompose() returns a Plan instance on success."""
@@ -505,7 +505,7 @@ class TestLLMPlangentPlannerOrchestrationPlan:
                     {"id": "a2", "task": "Implement", "agent_hint": "coder", "deps": ["a1"], "budget_tokens": 600},
                 ]
             }
-        )
+        ).decode()
 
     def test_returns_orchestration_plan_instance(self) -> None:
         """decompose_to_orchestration_plan() returns an OrchestrationPlan."""

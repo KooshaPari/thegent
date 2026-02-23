@@ -5,7 +5,7 @@ enforcing fallback policies and semantic validation gates.
 """
 
 import hashlib
-import json
+import orjson as json
 import logging
 import time
 import uuid
@@ -37,7 +37,7 @@ class PromotionGate:
 
     def capture_evidence(self, run_id: str, csm: Any) -> str:
         """Capture and hash CSM state as evidence."""
-        evidence_data = json.dumps(csm.to_dict(), sort_keys=True)
+        evidence_data = json.dumps(csm.to_dict().decode().decode(), sort_keys=True)
         evidence_hash = hashlib.sha256(evidence_data.encode()).hexdigest()
 
         # Store evidence snapshot

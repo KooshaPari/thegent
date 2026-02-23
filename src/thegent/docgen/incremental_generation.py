@@ -1,7 +1,7 @@
 """Incremental documentation generation (only changed files)."""
 
 import hashlib
-import json
+import orjson as json
 import logging
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -50,7 +50,7 @@ class IncrementalGenerator:
     def _save_manifest(self) -> None:
         """Save generation manifest."""
         self.manifest["last_generated"] = datetime.now(UTC).isoformat()
-        self.manifest_path.write_text(json.dumps(self.manifest, indent=2))
+        self.manifest_path.write_text(json.dumps(self.manifest, indent=2).decode().decode())
 
     def _file_hash(self, file_path: Path) -> str:
         """Calculate file hash.

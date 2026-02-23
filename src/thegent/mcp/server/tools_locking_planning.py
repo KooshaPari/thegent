@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -65,7 +65,7 @@ def thegent_verify_context_impl(
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
 
     return ToolResult(
-        content=json.dumps(res, indent=2),
+        content=json.dumps(res, indent=2).decode().decode(),
         structured_content=res,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -94,7 +94,7 @@ def thegent_retry_impl(
     if "error" in result:
         return error_result_impl(result["error"], result.get("remediation", ""), extra=result)
     return ToolResult(
-        content=json.dumps(result),
+        content=json.dumps(result).decode().decode(),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -111,7 +111,7 @@ def thegent_plan_incorporate_impl(
     result = incorporate_impl(cd=cd_path, dry_run=dry_run)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result),
+        content=json.dumps(result).decode().decode(),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )

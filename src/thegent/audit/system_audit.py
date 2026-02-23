@@ -10,7 +10,7 @@ This module checks:
 from __future__ import annotations
 
 import importlib.metadata
-import json
+import orjson as json
 import os
 import re
 import sys

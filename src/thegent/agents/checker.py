@@ -1,6 +1,6 @@
 """Checker Agent (Head LLM) for Lifecycle loops."""
 
-import json
+import orjson as json
 import logging
 from enum import StrEnum
 from typing import Any
@@ -91,7 +91,7 @@ class CheckerAgent:
             "agent_response": agent_response,
         }
 
-        prompt = f"Context:\n{json.dumps(context, indent=2)}\n\n{CHECKER_SYSTEM_PROMPT}\n\nDecision:"
+        prompt = f"Context:\n{json.dumps(context, indent=2).decode().decode()}\n\n{CHECKER_SYSTEM_PROMPT}\n\nDecision:"
 
         try:
             result = self.runner.run(

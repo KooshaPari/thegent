@@ -1,6 +1,6 @@
 """Tests for skills auto-discovery and MCP integration."""
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -174,7 +174,7 @@ class TestSkillDiscovery:
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text("# Has content", encoding="utf-8")
         (skill_dir / "skill.json").write_text(
-            json.dumps({"name": "   ", "description": "bad", "version": "1.0.0", "entrypoint": "x"}),
+            json.dumps({"name": "   ", "description": "bad", "version": "1.0.0", "entrypoint": "x"}).decode().decode(),
             encoding="utf-8",
         )
 

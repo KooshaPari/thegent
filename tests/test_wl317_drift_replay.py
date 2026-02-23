@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import pytest
 from datetime import datetime, timezone
 from pathlib import Path

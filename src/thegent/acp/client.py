@@ -1,6 +1,6 @@
 """ACP client adapter for spawning external ACP agents."""
 
-import json
+import orjson as json
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
@@ -77,7 +77,7 @@ class ACPClientAdapter(AgentRunner):
                     "capabilities": {},
                 },
             }
-            self.process.stdin.write(json.dumps(init_request) + "\n")
+            self.process.stdin.write(json.dumps(init_request).decode().decode() + "\n")
             self.process.stdin.flush()
 
             # Read initialize response
@@ -102,7 +102,7 @@ class ACPClientAdapter(AgentRunner):
                     "cwd": str(cwd) if cwd else None,
                 },
             }
-            self.process.stdin.write(json.dumps(spawn_request) + "\n")
+            self.process.stdin.write(json.dumps(spawn_request).decode().decode() + "\n")
             self.process.stdin.flush()
 
             # Read responses

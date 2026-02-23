@@ -7,7 +7,7 @@ escalation contacts for governance and accountability.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path

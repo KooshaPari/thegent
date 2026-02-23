@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 
 from thegent.protocols.jsonrpc_agent_server import (
     SERVER_STATE,
@@ -158,7 +158,7 @@ def test_wl9749_notification_turn_cancel_has_side_effect_without_response() -> N
     # @trace WL-9749
     _reset_state()
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"})
+        json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode()
     )
     assert response is not None
     session_id = response["result"]["session"]["id"]
@@ -171,13 +171,12 @@ def test_wl9749_notification_turn_cancel_has_side_effect_without_response() -> N
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "lane-o", "requires_approval": True, "unified_diff": "x"},
             }
-        )
-    )
+        )).decode()
     assert submit is not None
     turn_id = submit["result"]["turn"]["id"]
 
     cancel_response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "turn/cancel", "params": {"turn_id": turn_id}})
+        json.dumps({"jsonrpc": "2.0", "method": "turn/cancel", "params": {"turn_id": turn_id}}).decode().decode()
     )
     assert cancel_response is None
     assert notifications == []

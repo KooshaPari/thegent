@@ -7,7 +7,7 @@ All functions are called DIRECTLY with internal dependencies mocked.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch

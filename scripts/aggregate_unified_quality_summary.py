@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -100,7 +100,7 @@ def main() -> int:
     }
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(json.dumps(summary, indent=2).decode().decode() + "\n", encoding="utf-8")
     print(f"Wrote: {args.output}")
     return 0
 

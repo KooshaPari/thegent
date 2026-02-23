@@ -35,7 +35,7 @@ to the same inbox are safe because each file name contains a UUID.
 from __future__ import annotations
 
 import hashlib
-import json
+import orjson as json
 import logging
 import time
 import uuid
@@ -91,7 +91,7 @@ class IpcMessage:
 
     def to_json(self) -> str:
         """Serialise to a JSON string."""
-        return json.dumps(asdict(self))
+        return json.dumps(asdict(self).decode().decode())
 
     @classmethod
     def from_json(cls, text: str) -> IpcMessage:

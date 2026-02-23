@@ -7,7 +7,7 @@ import argparse
 import copy
 import datetime as dt
 import hashlib
-import json
+import orjson as json
 from pathlib import Path
 
 
@@ -16,7 +16,7 @@ def _read_json(path: Path) -> dict:
 
 
 def _write_json(path: Path, payload: dict) -> None:
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(payload, indent=2).decode().decode() + "\n", encoding="utf-8")
 
 
 def _sha256_file(path: Path) -> str:

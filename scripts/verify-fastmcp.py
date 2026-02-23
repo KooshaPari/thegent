@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
+import orjson as json
 import sys
 from typing import Any
 

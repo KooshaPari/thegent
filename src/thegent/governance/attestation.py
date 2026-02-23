@@ -1,6 +1,6 @@
 """WP-5008: Compliance attestation generator."""
 
-import json
+import orjson as json
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -32,7 +32,7 @@ class AttestationGenerator:
 
         att_path = self.settings.session_dir / "attestations" / f"{run_id}.json"
         att_path.parent.mkdir(parents=True, exist_ok=True)
-        att_path.write_text(json.dumps(attestation, indent=2), encoding="utf-8")
+        att_path.write_text(json.dumps(attestation, indent=2).decode().decode(), encoding="utf-8")
 
         return attestation
 

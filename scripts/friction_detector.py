@@ -542,7 +542,7 @@ def main():
     if args.format == "json":
         import json
 
-        print(json.dumps(filtered_findings, indent=2))
+        print(json.dumps(filtered_findings, indent=2).decode().decode())
     else:
         if not filtered_findings:
             print("No friction patterns detected.")

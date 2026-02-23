@@ -1,6 +1,6 @@
 """WP-12001: Forensic snapshotting for deep debugging and audit."""
 
-import json
+import orjson as json
 import logging
 import os
 from datetime import UTC, datetime
@@ -35,7 +35,7 @@ class ForensicSnapshotter:
             "git_status": self._get_git_status(project_root),
         }
         path = self.snapshot_dir / f"{run_id}_pre.json"
-        path.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+        path.write_text(json.dumps(snapshot, indent=2).decode().decode(), encoding="utf-8")
         return path
 
     def capture_post_run(self, run_id: str, project_root: Path, exit_code: int) -> Path:
@@ -48,7 +48,7 @@ class ForensicSnapshotter:
             "git_diff": self._get_git_diff(project_root),
         }
         path = self.snapshot_dir / f"{run_id}_post.json"
-        path.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+        path.write_text(json.dumps(snapshot, indent=2).decode().decode(), encoding="utf-8")
         return path
 
     def _get_git_branch(self, root: Path) -> str:

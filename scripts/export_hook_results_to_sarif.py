@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 from pathlib import Path
 from typing import Any
 
@@ -106,7 +106,7 @@ def main() -> int:
     sarif = build_sarif(inputs, tool_name=args.tool_name)
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(sarif, indent=2) + "\n", encoding="utf-8")
+    output_path.write_text(json.dumps(sarif, indent=2).decode().decode() + "\n", encoding="utf-8")
     return 0
 
 

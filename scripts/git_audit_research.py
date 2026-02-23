@@ -4,7 +4,7 @@ Git Audit Journaling Research Script
 Run: python scripts/git_audit_research.py
 """
 
-import json
+import orjson as json
 from thegent.skills.research import ddg_search
 
 SEARCHES = [

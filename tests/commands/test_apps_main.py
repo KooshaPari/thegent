@@ -1,6 +1,6 @@
 """Unit tests for the modular CLI app entrypoints."""
 
-import json
+import orjson as json
 from pathlib import Path
 from unittest.mock import ANY, patch
 

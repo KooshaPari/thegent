@@ -9,7 +9,7 @@ Outputs:
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import re
 import shlex
 import subprocess
@@ -247,7 +247,7 @@ def _write_outputs(inventory: dict[str, Any]) -> tuple[Path, Path]:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     json_path = OUT_DIR / "antigma_inventory.json"
     md_path = OUT_DIR / "antigma_drift_report.md"
-    json_path.write_text(json.dumps(inventory, indent=2), encoding="utf-8")
+    json_path.write_text(json.dumps(inventory, indent=2).decode().decode(), encoding="utf-8")
 
     drift = inventory["drift"]
     lines = [

@@ -5,7 +5,7 @@ Provides command-line interface for scanning, managing, and processing
 document queues.
 """
 
-import json
+import orjson as json
 from pathlib import Path
 
 import click
@@ -195,7 +195,7 @@ def process_file(filepath: str, queue_file: str | None, analyze: bool):
         click.echo(f"Processed: {filepath}")
         click.echo(f"  Processing time: {result.processing_time:.2f}s")
         if result.metadata:
-            click.echo(f"  Metadata: {json.dumps(result.metadata, indent=2)}")
+            click.echo(f"  Metadata: {json.dumps(result.metadata, indent=2).decode()}")
 
         # Mark as processed in queue
         if queue_file:

@@ -165,7 +165,7 @@ class CrossProcessSingleflight:
         # 3. We have the lock, execute func
         try:
             result = func()
-            result_file.write_text(json.dumps({"result": result, "timestamp": time.time()}))
+            result_file.write_text(json.dumps({"result": result, "timestamp": time.time().decode().decode()}))
             return result
         finally:
             if lock_file.exists():

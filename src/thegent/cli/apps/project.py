@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 import tempfile
 from collections.abc import Iterable
@@ -1058,7 +1058,7 @@ def project_migrate(
             "runtime": runtime_result,
             "snapshot": snapshot,
         }
-        typer.echo(json.dumps(payload, indent=2))
+        typer.echo(json.dumps(payload, indent=2).decode().decode())
         raise typer.Exit(0 if not runtime_result.get("errors") else 1)
 
     baseline_label = "adopted" if registration.get("status") in {"adopted", "adopted (dry-run)"} else "reconciled"
@@ -1163,7 +1163,7 @@ def project_init(
         if template == "ag-dd":
             payload["template_files_installed"] = installed_count
             payload["template_files_skipped"] = skipped_count
-        typer.echo(json.dumps(payload, indent=2))
+        typer.echo(json.dumps(payload, indent=2).decode().decode())
         return
 
     console.print(f"[green]Project registered:[/green] {record.name}")
@@ -1265,7 +1265,7 @@ def project_scaffold(
     if not dry_run:
         with tempfile.TemporaryDirectory(prefix="thegent-scaffold-") as td:
             data_file = Path(td) / "copier-data.json"
-            data_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            data_file.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
             cmd = [
                 "uvx",
                 "copier",
@@ -1346,7 +1346,7 @@ def project_scaffold(
         "install_runtime_result": install_runtime_result,
     }
     if json_output:
-        typer.echo(json.dumps(payload, indent=2))
+        typer.echo(json.dumps(payload, indent=2).decode().decode())
         return
 
     if dry_run:
@@ -1375,7 +1375,7 @@ def project_scaffold_profiles(
     """Show all scaffold presets and their project_type target."""
     profile_names = _scaffold_profile_names()
     if json_output:
-        typer.echo(json.dumps(profile_names, indent=2))
+        typer.echo(json.dumps(profile_names, indent=2).decode().decode())
         return
 
     table = Table(title="Scaffold Preset Profiles")
@@ -1423,7 +1423,7 @@ def project_list(
             }
             for p in projects
         ]
-        typer.echo(json.dumps(payload, indent=2))
+        typer.echo(json.dumps(payload, indent=2).decode().decode())
         return
 
     if not projects:
@@ -1489,7 +1489,7 @@ def project_show(
             "tenant_root_exists": tenant_root.exists(),
             "thegent_config": str(Path(record.path) / ".thegent" / "config.yaml"),
         }
-        typer.echo(json.dumps(payload, indent=2))
+        typer.echo(json.dumps(payload, indent=2).decode().decode())
         return
 
     console.print(f"\n[bold cyan]{record.name}[/bold cyan]")
@@ -1569,7 +1569,7 @@ def _doctor_fix(record_path: str, tenant_id: str) -> list[str]:
     ownership_json = thegent_dir / "ownership.json"
     if not ownership_json.exists():
         ownership_json.write_text(
-            json.dumps({"tenant_id": tenant_id, "owner": "default"}, indent=2) + "\n",
+            json.dumps({"tenant_id": tenant_id, "owner": "default"}, indent=2).decode().decode() + "\n",
             encoding="utf-8",
         )
         actions.append(f"created ownership.json: {ownership_json}")
@@ -1577,7 +1577,7 @@ def _doctor_fix(record_path: str, tenant_id: str) -> list[str]:
     templates_lock = thegent_dir / "templates.lock"
     if not templates_lock.exists():
         templates_lock.write_text(
-            json.dumps({"template": "none", "version": "unset", "locked_at": ""}, indent=2) + "\n",
+            json.dumps({"template": "none", "version": "unset", "locked_at": ""}, indent=2).decode().decode() + "\n",
             encoding="utf-8",
         )
         actions.append(f"created templates.lock: {templates_lock}")
@@ -1639,7 +1639,7 @@ def project_doctor(
         )
 
     if json_output:
-        typer.echo(json.dumps(report, indent=2))
+        typer.echo(json.dumps(report, indent=2).decode().decode())
         raise typer.Exit(0 if all_passed else 1)
 
     for entry in report:
@@ -1707,7 +1707,7 @@ def install_project_cmd(
     )
 
     if json_output:
-        typer.echo(json.dumps(result, indent=2))
+        typer.echo(json.dumps(result, indent=2).decode().decode())
         if result.get("errors"):
             raise typer.Exit(1)
         return

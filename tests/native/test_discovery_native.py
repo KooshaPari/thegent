@@ -15,7 +15,7 @@ Coverage targets:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import subprocess
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 
 from thegent.orchestration.state.session_scraper import SessionScraper
@@ -35,7 +35,7 @@ def _write_snapshot(
         "tags": tags,
         "sources": [],
     }
-    path.write_text(json.dumps(payload), encoding="utf-8")
+    path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
     return path
 
 

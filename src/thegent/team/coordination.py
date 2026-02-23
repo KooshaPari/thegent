@@ -2,7 +2,7 @@
 Handles inter-agent communication, idle detection, and task completion hooks.
 """
 
-import json
+import orjson as json
 import logging
 import re
 import uuid
@@ -71,7 +71,7 @@ class TeamCoordinator:
             t_inbox = inbox_dir / f"{teammate}.jsonl"
             entry = {"ts": datetime.now(UTC).isoformat(), "sender": sender, "message": message}
             with t_inbox.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(entry) + "\n")
+                f.write(json.dumps(entry).decode().decode() + "\n")
 
         _log.info("Broadcast from %s to team %s: %s", sender, team_id, message[:50])
 
@@ -89,7 +89,7 @@ class TeamCoordinator:
         }
         vote_path = self.session_dir / "teams" / team_id / "votes" / f"{vote_id}.json"
         vote_path.parent.mkdir(parents=True, exist_ok=True)
-        vote_path.write_text(json.dumps(vote_meta), encoding="utf-8")
+        vote_path.write_text(json.dumps(vote_meta).decode().decode(), encoding="utf-8")
 
         self.broadcast_message(
             team_id,
@@ -112,7 +112,7 @@ class TeamCoordinator:
             return False
 
         vote_meta["votes"][voter] = option
-        vote_path.write_text(json.dumps(vote_meta), encoding="utf-8")
+        vote_path.write_text(json.dumps(vote_meta).decode().decode(), encoding="utf-8")
         return True
 
     def get_vote_result(self, team_id: str, vote_id: str) -> dict[str, Any]:

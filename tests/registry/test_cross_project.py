@@ -5,7 +5,7 @@ FR Traceability: FR-AGT-020 (cross-project persona discovery and search)
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from datetime import UTC, datetime
 from pathlib import Path  # noqa: TC003 -- used at runtime for Path construction
 from textwrap import dedent
@@ -430,7 +430,7 @@ class TestSaveLoad:
         """A JSON file containing a dict (not a list) raises ValueError."""
         # @trace FR-AGT-020
         reg_file = tmp_path / "wrong.json"
-        reg_file.write_text(json.dumps({"key": "value"}), encoding="utf-8")
+        reg_file.write_text(json.dumps({"key": "value"}).decode().decode(), encoding="utf-8")
 
         reg = CrossProjectRegistry(registry_file=reg_file)
         with pytest.raises(ValueError, match="Expected JSON list"):

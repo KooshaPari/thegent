@@ -5,7 +5,7 @@ Provides theme management with built-in themes and custom theme support.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -314,7 +314,7 @@ class ThemeManager:
         themes_dir.mkdir(parents=True, exist_ok=True)
 
         data = theme.to_dict()
-        (themes_dir / f"{theme.name}.json").write_text(json.dumps(data, indent=2))
+        (themes_dir / f"{theme.name}.json").write_text(json.dumps(data, indent=2).decode().decode())
 
     def add_theme(self, theme: ThemeDefinition) -> None:
         """Add a custom theme."""
@@ -390,7 +390,7 @@ class ThemeManager:
         """Export a theme to a JSON file."""
         theme = self._themes.get(name)
         if theme:
-            path.write_text(json.dumps(theme.to_dict(), indent=2))
+            path.write_text(json.dumps(theme.to_dict().decode().decode(), indent=2))
             return True
         return False
 

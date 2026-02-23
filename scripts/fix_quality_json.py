@@ -1,4 +1,4 @@
-import json
+import orjson as json
 
 
 def fix_quality_json(file_path):

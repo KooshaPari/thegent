@@ -8,7 +8,7 @@ nominated for Rust migration in the WL-131 Batch-A plan.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import time
 import logging
 
@@ -42,4 +42,4 @@ def benchmark_parse_model_suffix() -> dict[str, float | int]:
 if __name__ == "__main__":
     result = benchmark_parse_model_suffix()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logging.getLogger(__name__).info(json.dumps(result, indent=2))
+    logging.getLogger(__name__).info(json.dumps(result, indent=2).decode())

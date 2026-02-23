@@ -196,7 +196,7 @@ class StreamingXMLParser(IncrementalXMLParser):
         import hashlib
         import json
 
-        state_data = json.dumps(self._committed_tags, sort_keys=True)
+        state_data = json.dumps(self._committed_tags, sort_keys=True).decode().decode()
         checkpoint_id = hashlib.sha256(state_data.encode()).hexdigest()[:12]
         self._checkpoints.append(self._committed_tags.copy())
         return checkpoint_id

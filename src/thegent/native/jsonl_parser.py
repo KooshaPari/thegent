@@ -6,7 +6,7 @@ symbols consumed by tests and historical imports.
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import logging
 import shutil
 import subprocess

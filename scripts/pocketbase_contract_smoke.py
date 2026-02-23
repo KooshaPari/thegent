@@ -8,7 +8,7 @@ Required env:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import os
 import sys
 
@@ -46,7 +46,7 @@ def main() -> int:
             if status != 200:
                 raise RuntimeError(f"PocketBase health check returned non-200 status: {status}")
 
-    print(json.dumps({"ok": True, "target": "pocketbase", "url": base_url, "status": status}))
+    print(json.dumps({"ok": True, "target": "pocketbase", "url": base_url, "status": status}).decode().decode())
     return 0
 
 
@@ -54,5 +54,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print(json.dumps({"ok": False, "target": "pocketbase", "error": str(exc)}))
+        print(json.dumps({"ok": False, "target": "pocketbase", "error": str(exc).decode().decode()}))
         raise

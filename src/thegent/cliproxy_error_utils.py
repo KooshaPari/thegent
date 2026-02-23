@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import orjson as json
 from typing import Any
 
 __all__ = [

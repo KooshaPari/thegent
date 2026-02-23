@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import subprocess
 import sys
 from pathlib import Path
@@ -72,7 +72,7 @@ def main() -> int:
         json.dumps(
             {
                 "status": "ok",
-                "contract": str(args.contract),
+                "contract": str(args.contract).decode(),
                 "schema": str(args.schema),
                 "selected_plane": selected,
             }

@@ -15,7 +15,7 @@ Usage:
 
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -168,7 +168,7 @@ def main() -> int:
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
     summary = build_progress_summary()
-    OUTPUT_PATH.write_text(json.dumps(summary, indent=2) + "\n")
+    OUTPUT_PATH.write_text(json.dumps(summary, indent=2).decode().decode() + "\n")
 
     print(f"[decomposition_progress] wrote {OUTPUT_PATH}")
     print(

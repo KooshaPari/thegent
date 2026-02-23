@@ -24,6 +24,12 @@ from thegent.agents.resilience import TransientAgentError, is_retryable, with_re
 from thegent.config import ThegentSettings
 from thegent.discovery import _is_triggered_by_agent_process
 from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
+from thegent.utils.routing_impl.circuit_breaker import (
+    CircuitOpenError,
+    ProviderCircuitBreakerRegistry,
+    record_deployment_failure,
+    record_deployment_success,
+)
 from thegent.utils.routing_impl.models import TaskMetadata
 from thegent.utils.routing_impl.provider_types import ExecutionPath, get_execution_path
 from thegent.utils import strip_ansi
@@ -44,6 +50,45 @@ __all__ = [
     "_write_config_override",
 ]
 _LITELLM_CONTEXT_WINDOW_MAX = 50_000
+
+# Provider-specific retry configuration for LiteLLM API calls
+# These settings are optimized for each provider's rate limits and behavior
+_PROVIDER_RETRY_CONFIG: dict[str, dict] = {
+    "minimax": {
+        "max_attempts": 5,
+        "min_wait": 2.0,
+        "max_wait": 120.0,  # MiniMax can have longer backoff
+        "backoff_multiplier": 2.0,
+    },
+    "glm": {
+        "max_attempts": 4,
+        "min_wait": 2.0,
+        "max_wait": 60.0,
+        "backoff_multiplier": 1.5,
+    },
+    "nim": {
+        "max_attempts": 3,
+        "min_wait": 1.0,
+        "max_wait": 30.0,
+        "backoff_multiplier": 1.5,
+    },
+    "kilo": {
+        "max_attempts": 3,
+        "min_wait": 1.0,
+        "max_wait": 30.0,
+        "backoff_multiplier": 1.5,
+    },
+}
+
+
+def _get_provider_retry_config(provider: str) -> dict:
+    """Get retry configuration for a specific provider."""
+    return _PROVIDER_RETRY_CONFIG.get(provider, {
+        "max_attempts": 3,
+        "min_wait": 1.0,
+        "max_wait": 30.0,
+        "backoff_multiplier": 1.5,
+    })
 
 # Instance tracking for concurrent execution monitoring
 _instance_counter = 0
@@ -987,6 +1032,8 @@ class CodexProxyRunner(AgentRunner):
         going through the CLIProxyAPIPlus proxy. Supports providers
         like minimax, glm, nim, kilo that have API keys.
 
+        Implements provider-specific retry with circuit breaker for resilience.
+
         Args:
             prompt: User prompt to send to the model
             cwd: Working directory (not used for API calls, kept for signature compatibility)
@@ -1025,6 +1072,13 @@ class CodexProxyRunner(AgentRunner):
                 timed_out=False,
             )
 
+        # Get provider-specific retry config
+        retry_config = _get_provider_retry_config(provider)
+
+        # Get or create circuit breaker for this provider
+        cb_registry = ProviderCircuitBreakerRegistry.get_instance()
+        cb = cb_registry.get(provider)
+
         logger.info(f"Calling LiteLLM API: {model_string}")
         messages, compaction = self._prepare_litellm_messages(
             prompt=prompt,
@@ -1035,32 +1089,87 @@ class CodexProxyRunner(AgentRunner):
         normalized_usage_ratio = _normalize_context_usage_ratio(compaction.usage_ratio)
         estimated_tokens = round(normalized_usage_ratio * _LITELLM_CONTEXT_WINDOW_MAX)
 
+        # Define the actual API call function for retry
+        def _do_completion() -> tuple[str, bool]:
+            """Execute litellm.completion and return (content, is_timeout)."""
+            # Check circuit breaker first
+            try:
+                cb.call(lambda: None)  # This will raise if circuit is open
+            except CircuitOpenError:
+                logger.warning(f"Circuit breaker OPEN for provider {provider}, failing fast")
+                raise
+
+            try:
+                response = completion(
+                    model=model_string,
+                    messages=messages,
+                    api_key=api_key,
+                    timeout=timeout,
+                )
+
+                # Extract response content from LiteLLM response.
+                choices = getattr(response, "choices", None)
+                choice = choices[0] if choices else None
+                message_or_delta = (
+                    (getattr(choice, "message", None) or getattr(choice, "delta", None)) if choice is not None else None
+                )
+                content = getattr(message_or_delta, "content", None)
+
+                # Record success for circuit breaker
+                record_deployment_success(provider)
+
+                return content or "", False
+
+            except Exception as e:
+                error_msg = str(e)
+                is_timeout = "timeout" in error_msg.lower() or "timed out" in error_msg.lower()
+
+                # Record failure for circuit breaker
+                record_deployment_failure(provider, e)
+
+                # Check for rate limit - could have Retry-After header
+                if is_timeout or "429" in error_msg or "rate limit" in error_msg.lower():
+                    logger.warning(f"Rate limit or timeout for {provider}: {error_msg}")
+
+                raise
+
+        # Execute with retry using tenacity
+        from tenacity import (
+            retry,
+            stop_after_attempt,
+            wait_exponential,
+            retry_if_exception_type,
+            RetryCallState,
+        )
+
+        @retry(
+            stop=stop_after_attempt(retry_config["max_attempts"]),
+            wait=wait_exponential(
+                multiplier=retry_config["backoff_multiplier"],
+                min=retry_config["min_wait"],
+                max=retry_config["max_wait"],
+            ),
+            retry=retry_if_exception_type((Exception,)),
+            before_sleep=lambda retry_state: logger.warning(
+                "Retrying LiteLLM API call (attempt %d/%d) for provider %s: %s",
+                retry_state.attempt_number,
+                retry_config["max_attempts"],
+                provider,
+                retry_state.outcome.exception() if retry_state.outcome else "unknown",
+            ),
+            reraise=True,
+        )
+        def _execute_with_retry():
+            return _do_completion()
+
         try:
-            response = completion(
-                model=model_string,
-                messages=messages,
-                api_key=api_key,
-                timeout=timeout,
-            )
-
-            # Extract response content from LiteLLM response.
-            # LiteLLM returns ModelResponse (non-streaming) with choices[0].message,
-            # but the union type also includes CustomStreamWrapper/StreamingChoices
-            # which uses .delta instead of .message and may lack .choices entirely.
-            # Use getattr throughout to safely handle both response shapes.
-            choices = getattr(response, "choices", None)
-            choice = choices[0] if choices else None
-            message_or_delta = (
-                (getattr(choice, "message", None) or getattr(choice, "delta", None)) if choice is not None else None
-            )
-            content = getattr(message_or_delta, "content", None)
-
+            content, is_timeout = _execute_with_retry()
             logger.info(f"LiteLLM API call successful: {model_string}")
             return RunResult(
                 exit_code=0,
-                stdout=content or "",
+                stdout=content,
                 stderr="",
-                timed_out=False,
+                timed_out=is_timeout,
                 context_tokens_used=estimated_tokens,
                 context_window_max=_LITELLM_CONTEXT_WINDOW_MAX,
                 context_usage_ratio=normalized_usage_ratio,
@@ -1068,10 +1177,14 @@ class CodexProxyRunner(AgentRunner):
 
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"LiteLLM API call failed: {error_msg}")
+            logger.error(f"LiteLLM API call failed after retries: {error_msg}")
 
             # Check for timeout-related errors
             is_timeout = "timeout" in error_msg.lower() or "timed out" in error_msg.lower()
+
+            # Check if circuit breaker is now open
+            if cb.state == "open":
+                logger.error(f"Circuit breaker now OPEN for provider {provider}")
 
             return RunResult(
                 exit_code=1,

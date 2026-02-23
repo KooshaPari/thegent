@@ -10,7 +10,7 @@ WL-012 Phase 3.2
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -116,7 +116,7 @@ def router_config(
         },
     }
     if output_json:
-        typer.echo(json.dumps(cfg, indent=2))
+        typer.echo(json.dumps(cfg, indent=2).decode().decode())
     else:
         typer.echo("Pareto Router Configuration (Phase 3)")
         typer.echo("--------------------------------------")
@@ -173,7 +173,7 @@ def router_verify(
     for i, record in enumerate(records):
         # Recompute hash (ADR-015 pattern: sort_keys, exclude hash field).
         d = {k: v for k, v in record.items() if k != "hash"}
-        canonical = json.dumps(d, sort_keys=True, separators=(",", ":"))
+        canonical = json.dumps(d, sort_keys=True, separators=(",", ":").decode().decode())
         expected_hash = hashlib.sha256(canonical.encode()).hexdigest()
 
         if record.get("hash") != expected_hash:

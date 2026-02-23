@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-import json
+import orjson as json
 import subprocess
 from dataclasses import dataclass
 

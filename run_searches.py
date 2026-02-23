@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the 6 specific ddgr searches requested."""
 
-import json
+import orjson as json
 import sys
 import logging
 from pathlib import Path

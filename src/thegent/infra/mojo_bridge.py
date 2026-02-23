@@ -11,7 +11,7 @@ import asyncio
 import contextlib
 import importlib
 import inspect
-import json
+import orjson as json
 import logging
 import os
 import platform
@@ -105,8 +105,8 @@ fn main():
 
 def build_python_dispatch_kernel_script(module: str, function: str) -> str:
     """Build a Mojo script that dispatches to a Python module/function target."""
-    module_json = json.dumps(module)
-    function_json = json.dumps(function)
+    module_json = json.dumps(module).decode().decode()
+    function_json = json.dumps(function).decode().decode()
     return f"""
 from python import Python
 
@@ -319,7 +319,7 @@ class MojoBridge:
 
             # Pass args as JSON environment variable
             env = os.environ.copy()
-            env["THEGENT_MOJO_ARGS"] = json.dumps(args)
+            env["THEGENT_MOJO_ARGS"] = json.dumps(args).decode().decode()
 
             process = await asyncio.create_subprocess_exec(
                 cmd,
@@ -453,7 +453,7 @@ Visit https://docs.modular.com/mojo/manual/install/ for platform-specific instru
         # Future: use C-ABI when stable
 
         # Check cache first
-        cache_key = f"mojo_task:{task.module}:{task.function}:{json.dumps(task.args, sort_keys=True)}"
+        cache_key = f"mojo_task:{task.module}:{task.function}:{json.dumps(task.args, sort_keys=True).decode().decode()}"
         cached = await self._cache.get(cache_key)
         if cached:
             return cached

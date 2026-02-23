@@ -184,7 +184,7 @@ class TestDecisionJournal:
                     "timestamp": valid_entry.timestamp,
                     "replayable": True,
                 }
-            )
+            ).decode()
             + "\n"
             + "{ invalid json }\n"
             + json.dumps(
@@ -199,7 +199,7 @@ class TestDecisionJournal:
                     "timestamp": "2026-02-22T12:01:00+00:00",
                     "replayable": True,
                 }
-            )
+            ).decode()
             + "\n",
             encoding="utf-8",
         )

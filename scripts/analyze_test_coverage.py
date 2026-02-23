@@ -9,7 +9,7 @@ This script:
 """
 
 import ast
-import json
+import orjson as json
 import re
 from collections import defaultdict
 from pathlib import Path

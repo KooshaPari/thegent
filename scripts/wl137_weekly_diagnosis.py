@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import fnmatch
-import json
+import orjson as json
 import os
 import subprocess
 import sys
@@ -325,7 +325,7 @@ def main() -> int:
     if args.ci_summary is not None:
         ci_summary = _build_ci_summary(timestamp_utc, targets_payload, history)
         args.ci_summary.parent.mkdir(parents=True, exist_ok=True)
-        args.ci_summary.write_text(json.dumps(ci_summary, indent=2) + "\n", encoding="utf-8")
+        args.ci_summary.write_text(json.dumps(ci_summary, indent=2).decode().decode() + "\n", encoding="utf-8")
 
     if args.dry_run:
         print(report_text)

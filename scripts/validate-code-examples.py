@@ -2,7 +2,7 @@
 """WP-8.2: Validate code examples in markdown documentation."""
 
 import ast
-import json
+import orjson as json
 import re
 import sys
 from pathlib import Path

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
+import orjson as json
 import logging
 import sqlite3
 import uuid
@@ -169,7 +169,7 @@ def save_private_key(private_key: rsa.RSAPrivateKey, path: Path, password: bytes
 def _sign_artifact_dict(payload: dict[str, Any], timestamp: str, agent_id: str, private_key: rsa.RSAPrivateKey) -> str:
     """Sign raw artifact dict fields with RSA private key (MAIF internal)."""
     # Create canonical payload
-    canonical = json.dumps({"payload": payload, "timestamp": timestamp, "agent_id": agent_id}, sort_keys=True)
+    canonical = json.dumps({"payload": payload, "timestamp": timestamp, "agent_id": agent_id}, sort_keys=True).decode().decode()
 
     # Calculate SHA-256 hash
     message_hash = hashlib.sha256(canonical.encode()).digest()
@@ -222,7 +222,7 @@ class MAIFArtifactStore:
                 (
                     artifact["artifact_id"],
                     artifact["action_type"],
-                    json.dumps(artifact["payload"]),
+                    json.dumps(artifact["payload"]).decode().decode(),
                     artifact["signature"],
                     artifact["timestamp"],
                     artifact["agent_id"],

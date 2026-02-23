@@ -6,7 +6,7 @@ Generates, writes, and loads seed records for sandbox environment initialization
 
 from __future__ import annotations
 
-import json
+import orjson as json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import ClassVar

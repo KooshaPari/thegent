@@ -1,6 +1,6 @@
 """FastMCP server for thegent."""
 
-import json
+import orjson as json
 import logging
 from pathlib import Path
 from typing import Any, cast
@@ -648,12 +648,12 @@ try:
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_task_status(task_id: str) -> ToolResult:
         result = _task_reg.status(task_id)
-        return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": 0})
+        return ToolResult(content=json.dumps(result).decode().decode(), structured_content=result, meta={"execution_time_ms": 0})
 
     @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
     def thegent_task_cancel(task_id: str) -> ToolResult:
         result = _task_reg.cancel(task_id)
-        return ToolResult(content=json.dumps(result), structured_content=result, meta={"execution_time_ms": 0})
+        return ToolResult(content=json.dumps(result).decode().decode(), structured_content=result, meta={"execution_time_ms": 0})
 
     _log.info("task mode tools registered: thegent_task_status, thegent_task_cancel")
 except Exception as _task_mode_err:

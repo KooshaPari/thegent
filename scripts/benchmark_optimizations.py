@@ -16,7 +16,7 @@ Usage:
 
 import argparse
 import asyncio
-import json
+import orjson as json
 import statistics
 import time
 from pathlib import Path

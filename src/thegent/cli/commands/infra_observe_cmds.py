@@ -3,7 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
+import orjson as json
 import sys
 
 import typer
@@ -45,7 +45,7 @@ def observe_summary_cmd(
     )
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(result) + "\n")
+        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
         return
 
     lines = build_observe_lines(result, provider)
@@ -150,7 +150,7 @@ def sitback_dashboard_cmd(
 
     def _render(data: dict) -> None:  # noqa: ANN001
         if format == "json":
-            sys.stdout.write(json.dumps(data, sort_keys=True) + "\n")
+            sys.stdout.write(json.dumps(data, sort_keys=True).decode().decode() + "\n")
             return
 
         if prof == "light":
