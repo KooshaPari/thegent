@@ -134,12 +134,7 @@ def test_helper_names_are_not_shadowed_by_local_bindings() -> None:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     bound_names.update(_iter_target_names(target))
-            elif (
-                isinstance(node, ast.AnnAssign)
-                or isinstance(node, ast.AugAssign)
-                or isinstance(node, (ast.For, ast.AsyncFor))
-                or isinstance(node, ast.comprehension)
-            ):
+            elif isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.For, ast.AsyncFor, ast.comprehension)):
                 bound_names.update(_iter_target_names(node.target))
             elif isinstance(node, (ast.With, ast.AsyncWith)):
                 for item in node.items:
@@ -149,7 +144,7 @@ def test_helper_names_are_not_shadowed_by_local_bindings() -> None:
                 bound_names.update(_iter_target_names(node.target))
             elif isinstance(node, ast.ExceptHandler) and node.name:
                 bound_names.add(node.name)
-            elif isinstance(node, ast.Lambda) or isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            elif isinstance(node, (ast.Lambda, ast.FunctionDef, ast.AsyncFunctionDef)):
                 bound_names.update(arg.arg for arg in node.args.posonlyargs)
                 bound_names.update(arg.arg for arg in node.args.args)
                 bound_names.update(arg.arg for arg in node.args.kwonlyargs)

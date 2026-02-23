@@ -136,4 +136,91 @@ class DesktopAutomationProvider:
             except Exception as exc:
                 raise RuntimeError("Failed to read Windows screen size via PowerShell") from exc
 
+        elif self.system == "Linux":
+            # Linux: Use xdotool or xrandr
+            try:
+                # Try xrandr first (more reliable)
+                result = subprocess.run(
+                    ["xrandr", "--current"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                for line in result.stdout.split("\n"):
+                    if "*" in line:
+                        # Parse: "   1920x1080*+    60.00    59.96    59.93"
+                        parts = line.split()[0].split("x")
+                        if len(parts) == 2:
+                            return (int(parts[0]), int(parts[1]))
+            except Exception:
+                pass
+
+            # Fallback to xdotool
+            try:
+                result = subprocess.run(
+                    ["xdotool", "getdisplaygeometry"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                parts = result.stdout.strip().split()
+                if len(parts) >= 2:
+                    return (int(parts[0]), int(parts[1]))
+            except Exception as exc:
+                raise RuntimeError("Failed to read Linux screen size via xrandr or xdotool") from exc
+
         raise NotImplementedError(f"Screen size detection is not implemented for platform: {self.system}")
+
+    def key_press(self, key: str) -> bool:
+        """Press a key.
+
+        Args:
+            key: Key to press (e.g., 'Return', 'Escape', 'a')
+
+        Returns:
+            True if successful
+        """
+        logger.info(f"Pressing key '{key}' on {self.provider}")
+
+        if self.system == "Darwin":
+            script = f'tell application "System Events" to key code {self._key_to_mac_code(key)}'
+            try:
+                subprocess.run(["osascript", "-e", script], check=True)
+                return True
+            except Exception as e:
+                logger.error(f"macOS key press failed: {e}")
+                return False
+
+        elif self.system == "Windows":
+            script = f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("{{{key}}}")'
+            try:
+                subprocess.run(["powershell", "-Command", script], check=True)
+                return True
+            except Exception as e:
+                logger.error(f"Windows key press failed: {e}")
+                return False
+
+        elif self.system == "Linux":
+            try:
+                subprocess.run(["xdotool", "key", key], check=True)
+                return True
+            except Exception as e:
+                logger.error(f"Linux key press failed: {e}")
+                return False
+
+        return False
+
+    def _key_to_mac_code(self, key: str) -> int:
+        """Convert key name to macOS key code."""
+        key_codes = {
+            "return": 36,
+            "tab": 48,
+            "escape": 53,
+            "space": 49,
+            "delete": 51,
+            "up": 126,
+            "down": 125,
+            "left": 123,
+            "right": 124,
+        }
+        return key_codes.get(key.lower(), 0)

@@ -393,7 +393,7 @@ def test_missing_criterion_score_raises_config_error():
     # Only "correctness" returned, "completeness" missing
     mock_resp = _make_litellm_response(scores={"correctness": 4}, pass_verdict=True)
     with patch("litellm.acompletion", new=AsyncMock(return_value=mock_resp)):
-        with pytest.raises(VetterConfigError, match="missing score.*completeness"):
+        with pytest.raises(VetterConfigError, match=r"missing score.*completeness"):
             _run(check.check("run-11", "output", {}))
 
 
@@ -402,7 +402,7 @@ def test_unexpected_criterion_score_raises_config_error():
     check = QualityScoreVetterCheck(judge_model="gpt-4o-mini", rubric=["correctness"])
     mock_resp = _make_litellm_response(scores={"correctness": 4, "novelty": 5}, pass_verdict=True)
     with patch("litellm.acompletion", new=AsyncMock(return_value=mock_resp)):
-        with pytest.raises(VetterConfigError, match="unexpected score.*novelty"):
+        with pytest.raises(VetterConfigError, match=r"unexpected score.*novelty"):
             _run(check.check("run-11b", "output", {}))
 
 

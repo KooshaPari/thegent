@@ -26,7 +26,7 @@ def _version_callback(value: bool) -> None:
     raise typer.Exit()
 
 # Modular Stream Registrations
-from thegent_cli.apps import (
+from thegent_cli.apps import (  # noqa: E402
     audit,
     bench,
     crew,
@@ -49,10 +49,10 @@ from thegent_cli.apps import (
     sys,
     team,
 )
-from thegent_cli.apps.project import install_app, scaffold_app, update_app
-from thegent_cli.apps.project import setup_project_app
-from thegent.mesh.main import app as mesh_app
-from thegent_cli.commands import model_cmds
+from thegent_cli.apps.project import install_app, scaffold_app, update_app  # noqa: E402
+from thegent_cli.apps.project import setup_project_app  # noqa: E402
+from thegent.mesh.main import app as mesh_app  # noqa: E402
+from thegent_cli.commands import model_cmds  # noqa: E402
 
 try:
     from thegent_cli.commands.cli_git import app as git_app

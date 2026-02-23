@@ -12,12 +12,12 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 # Type for verification callback: (task_id, result) -> Any
 VerificationCallback = Callable[[str, Any], Any]
 
-from thegent_agents.base import RunResult
-from thegent_agents.checker import CheckerAgent, CheckerDecision, CheckerResult
-from thegent_agents.presets import get_preset, match_preset
-from thegent_agents.resilience import TransientAgentError, with_retry
-from thegent.cli.commands.impl import run_impl
-from thegent.config import ThegentSettings
+from thegent_agents.base import RunResult  # noqa: E402
+from thegent_agents.checker import CheckerAgent, CheckerDecision, CheckerResult  # noqa: E402
+from thegent_agents.presets import get_preset, match_preset  # noqa: E402
+from thegent_agents.resilience import TransientAgentError, with_retry  # noqa: E402
+from thegent.cli.commands.impl import run_impl  # noqa: E402
+from thegent.config import ThegentSettings  # noqa: E402
 
 _log = logging.getLogger(__name__)
 

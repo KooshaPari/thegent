@@ -502,4 +502,4 @@ def test_dispatch_all_sender_id_consistent_across_messages() -> None:
     messages = bus.drain("worker")
     sender_ids = {m.sender_id for m in messages}
     assert len(sender_ids) == 1
-    assert list(sender_ids)[0] == dispatcher.sender_id
+    assert next(iter(sender_ids)) == dispatcher.sender_id
