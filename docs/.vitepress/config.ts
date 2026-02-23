@@ -68,18 +68,8 @@ const config = defineConfig({
       rollupOptions: {
         output: {
           manualChunks: (id) => {
-            // Optimize code splitting for faster loads
+            // Keep chunking simple to avoid mermaid/vue circular init ordering bugs.
             if (id.includes('node_modules')) {
-              // Split large vendor chunks
-              if (id.includes('mermaid')) {
-                return 'mermaid'
-              }
-              if (id.includes('vue')) {
-                return 'vue'
-              }
-              if (id.includes('markdown-it')) {
-                return 'markdown'
-              }
               return 'vendor'
             }
           }
