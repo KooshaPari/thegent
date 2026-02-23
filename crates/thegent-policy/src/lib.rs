@@ -8,6 +8,8 @@ mod cost_enforcer;
 mod engine;
 mod errors;
 mod evaluator;
+#[cfg(feature = "python")]
+pub mod python;
 
 pub use compliance::ComplianceChecker;
 pub use cost_enforcer::CostEnforcer;

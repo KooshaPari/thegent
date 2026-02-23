@@ -9,8 +9,10 @@ fn test_compliance_check_cost_exceeded() {
         expression: "cost <= 1.0".to_string(),
     };
 
-    let mut context = thegent_policy::EvaluationContext::default();
-    context.cost_per_call = 2.5;
+    let context = thegent_policy::EvaluationContext {
+        cost_per_call: 2.5,
+        ..Default::default()
+    };
 
     let result = checker.evaluate(&rule, &context).unwrap();
     assert!(!result.passed);
@@ -28,8 +30,10 @@ fn test_compliance_check_cost_within_limit() {
         expression: "cost <= 1.0".to_string(),
     };
 
-    let mut context = thegent_policy::EvaluationContext::default();
-    context.cost_per_call = 0.5;
+    let context = thegent_policy::EvaluationContext {
+        cost_per_call: 0.5,
+        ..Default::default()
+    };
 
     let result = checker.evaluate(&rule, &context).unwrap();
     assert!(result.passed);
