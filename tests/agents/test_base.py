@@ -276,11 +276,11 @@ class TestProcessOutputDeferrals:
             stderr="",
         )
 
-        with patch("thegent.agents.base.extract_deferred_tasks") as mock_extract:
+        with patch("thegent.orchestration.resilience.deferral.extract_deferred_tasks") as mock_extract:
             mock_extract.return_value = ["follow-up task"]
-            with patch("thegent.agents.base.inject_deferred_tasks") as mock_inject:
+            with patch("thegent.orchestration.resilience.deferral.inject_deferred_tasks") as mock_inject:
                 mock_inject.return_value = 1
-                with patch("thegent.agents.base.ThegentSettings"):
+                with patch("thegent.config.ThegentSettings"):
                     runner._process_output_deferrals(result, cwd=Path("/project"))
 
                 mock_extract.assert_called_once()
@@ -290,7 +290,10 @@ class TestProcessOutputDeferrals:
         runner = AgentRunner()
         result = RunResult(exit_code=0, stdout="output", stderr="")
 
-        with patch("thegent.agents.base.extract_deferred_tasks", side_effect=RuntimeError("fail")):
+        with patch(
+            "thegent.orchestration.resilience.deferral.extract_deferred_tasks",
+            side_effect=RuntimeError("fail"),
+        ):
             returned = runner._process_output_deferrals(result)
             assert returned is result
 

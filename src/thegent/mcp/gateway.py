@@ -130,15 +130,17 @@ class McpGateway:
         command = shlex.split(config.command)
         env = os.environ.copy()
         env.update(config.env)
-        transport = config.transport or self._run_subprocess_transport
         payload = json.dumps(request)
         try:
-            returncode, stdout, stderr = transport(
-                command=command,
-                request_payload=payload,
-                env=env,
-                timeout_sec=timeout_sec,
-            )
+            if config.transport is None:
+                returncode, stdout, stderr = self._run_subprocess_transport(
+                    command=command,
+                    request_payload=payload,
+                    env=env,
+                    timeout_sec=timeout_sec,
+                )
+            else:
+                returncode, stdout, stderr = config.transport(command, payload, env, timeout_sec)
         except FileNotFoundError:
             duration_ms = (time.monotonic() - start) * 1000.0
             return McpToolResult(
