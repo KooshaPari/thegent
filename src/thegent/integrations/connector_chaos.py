@@ -58,7 +58,7 @@ class ConnectorChaosTestSuite:
         Raises:
             KeyError: If the scenario_name does not exist.
         """
-        scenario = self._scenarios[scenario_name]
+        _ = self._scenarios[scenario_name]
         # For simplicity, just call the target function directly
         # In a production system, faults would be injected based on scenario.probability
         return target_fn()
