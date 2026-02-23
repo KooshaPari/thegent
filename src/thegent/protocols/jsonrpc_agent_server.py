@@ -9,6 +9,8 @@ import sys
 from dataclasses import dataclass, field
 from typing import Any, TextIO
 
+from thegent.integrations.base import SerializableMixin
+
 
 JSONRPC_VERSION = "2.0"
 
@@ -29,12 +31,13 @@ TERMINAL_TURN_STATES = {"completed", "cancelled", "rejected"}
 
 
 @dataclass(frozen=True)
-class JsonRpcError:
+class JsonRpcError(SerializableMixin):
     code: int
     message: str
     data: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Override to conditionally include data field."""
         payload: dict[str, Any] = {"code": self.code, "message": self.message}
         if self.data is not None:
             payload["data"] = self.data

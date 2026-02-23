@@ -13,8 +13,6 @@ from typing import TYPE_CHECKING, Any
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
 
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -66,7 +64,7 @@ def run_wizard(url: str | None = None) -> None:
     
     # Step 5: Project setup
     if url:
-        console.print(f"\n[bold]Step 5: Project Setup[/bold]")
+        console.print("\n[bold]Step 5: Project Setup[/bold]")
         console.print(f"Installing project: {url}")
         run_install_project(url)
     else:

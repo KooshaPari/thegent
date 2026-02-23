@@ -16,6 +16,7 @@ from typing import Any
 
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from cachetools import TTLCache
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class AgentRecord:
 
 
 @dataclass
-class AgentRecommendation:
+class AgentRecommendation(SerializableMixin):
     """A recommended agent with its relevance score."""
 
     name: str

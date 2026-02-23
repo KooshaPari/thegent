@@ -10,8 +10,6 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    pass
 
 
 def parse_retention_by_domain(v: object) -> dict[str, int]:
@@ -199,7 +197,7 @@ def validate_settings_setup(settings: object) -> list[str]:
     
     # Check session directory is writable
     if hasattr(settings, "session_dir"):
-        session_dir = getattr(settings, "session_dir")
+        session_dir = settings.session_dir
         if session_dir:
             session_dir = Path(session_dir).expanduser()
             session_dir.mkdir(parents=True, exist_ok=True)
@@ -208,13 +206,13 @@ def validate_settings_setup(settings: object) -> list[str]:
     
     # Check factory directories exist
     if hasattr(settings, "factory_skills_dir"):
-        skills_dir = getattr(settings, "factory_skills_dir")
+        skills_dir = settings.factory_skills_dir
         if skills_dir and not Path(skills_dir).expanduser().exists():
             errors.append(f"Factory skills directory does not exist: {skills_dir}")
     
     # Validate timeouts
     if hasattr(settings, "default_timeout_claude") and hasattr(settings, "default_timeout"):
-        if getattr(settings, "default_timeout_claude") < getattr(settings, "default_timeout"):
+        if settings.default_timeout_claude < settings.default_timeout:
             errors.append("default_timeout_claude must be >= default_timeout")
     
     return errors

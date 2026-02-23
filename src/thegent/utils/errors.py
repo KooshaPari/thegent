@@ -16,42 +16,34 @@ T = TypeVar("T")
 
 class ThegentError(Exception):
     """Base exception for thegent."""
-    pass
 
 
 class ConfigurationError(ThegentError):
     """Configuration-related errors."""
-    pass
 
 
 class NetworkError(ThegentError):
     """Network-related errors."""
-    pass
 
 
 class AuthenticationError(ThegentError):
     """Authentication errors."""
-    pass
 
 
 class TimeoutError(ThegentError):
     """Timeout errors."""
-    pass
 
 
 class ValidationError(ThegentError):
     """Validation errors."""
-    pass
 
 
 class NotFoundError(ThegentError):
     """Resource not found errors."""
-    pass
 
 
 class RateLimitError(ThegentError):
     """Rate limiting errors."""
-    pass
 
 
 def handle_error(

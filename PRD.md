@@ -49,5 +49,17 @@
 - **Latency**: < 10ms for queue operations; < 100ms for routing resolution.
 - **Documentation**: 0 documentation debt; `CLAUDE.md` and `PRD.md` always reflect the latest state via Gardener.
 
+## 5. User Stories (Engineering Excellence)
+
+| ID | Title | Status | Priority |
+|----|-------|--------|----------|
+| US-E1 | Diagnose Timeout Failures | In Progress | P1 |
+| US-E2 | Add Timeouts to Git Commands & Output Streaming | In Progress | P1 |
+| US-E3 | Atomic File Operations | Pending | P2 |
+| US-E4 | Git Caching | Pending | P2 |
+| US-E5 | 50-Agent Coordination | Pending | P2 |
+
+*Detailed user stories with acceptance criteria are maintained in [docs/plans/PRD.md](./docs/plans/PRD.md) and contract items in `contracts/items-generated/US-*.json`.*
+
 ---
-*Cross-ref: [PLAN.md](./PLAN.md) | [ADR.md](./ADR.md) | [FUNCTIONAL_REQUIREMENTS.md](./FUNCTIONAL_REQUIREMENTS.md)*
+*Cross-ref: [PLAN.md](./PLAN.md) | [ADR.md](./ADR.md) | [FUNCTIONAL_REQUIREMENTS.md](./FUNCTIONAL_REQUIREMENTS.md) | [docs/plans/PRD.md](./docs/plans/PRD.md)*

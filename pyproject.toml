@@ -4,6 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "thegent"
+version = "0.1.0"
 dynamic = [ "version",]
 description = "Unified agent orchestration CLI for Factory skills, droids, and multi-agent workflows"
 readme = "README.md"
