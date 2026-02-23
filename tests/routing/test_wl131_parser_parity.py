@@ -41,7 +41,7 @@ PARITY_CASES: list[tuple[str, str, list[str]]] = [
 ]
 
 
-@pytest.mark.parametrize("model_str,expected_base,expected_suffixes", PARITY_CASES)
+@pytest.mark.parametrize(("model_str", "expected_base", "expected_suffixes"), PARITY_CASES)
 def test_parse_model_suffixes_base_model(model_str: str, expected_base: str, expected_suffixes: list[str]) -> None:
     """Base model is extracted correctly for all parity cases."""
     del expected_suffixes
@@ -51,7 +51,7 @@ def test_parse_model_suffixes_base_model(model_str: str, expected_base: str, exp
     )
 
 
-@pytest.mark.parametrize("model_str,expected_base,expected_suffixes", PARITY_CASES)
+@pytest.mark.parametrize(("model_str", "expected_base", "expected_suffixes"), PARITY_CASES)
 def test_parse_model_suffixes_suffix_values(model_str: str, expected_base: str, expected_suffixes: list[str]) -> None:
     """Suffix values are extracted correctly for all parity cases."""
     del expected_base
@@ -60,7 +60,7 @@ def test_parse_model_suffixes_suffix_values(model_str: str, expected_base: str, 
     assert actual == expected_suffixes, f"input={model_str!r}: expected suffixes={expected_suffixes!r}, got {actual!r}"
 
 
-@pytest.mark.parametrize("model_str,expected_base,expected_suffixes", PARITY_CASES)
+@pytest.mark.parametrize(("model_str", "expected_base", "expected_suffixes"), PARITY_CASES)
 def test_parse_model_suffixes_raw_preserved(model_str: str, expected_base: str, expected_suffixes: list[str]) -> None:
     """Raw input string is preserved unchanged."""
     del expected_base, expected_suffixes

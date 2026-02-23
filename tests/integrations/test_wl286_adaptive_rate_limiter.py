@@ -51,7 +51,7 @@ class TestAdaptiveRateLimiterInit:
     @pytest.mark.requirement("WL-286")
     def test_init_invalid_default_raises_error(self) -> None:
         """AdaptiveRateLimiter raises ValueError for invalid default."""
-        with pytest.raises(ValueError, match="default_rpm must be >= 1.0"):
+        with pytest.raises(ValueError, match=r"default_rpm must be >= 1.0"):
             AdaptiveRateLimiter(default_rpm=0.5)
 
 
@@ -78,7 +78,7 @@ class TestAdaptiveRateLimiterSetLimit:
     @pytest.mark.requirement("WL-286")
     def test_set_limit_invalid_raises_error(self, limiter: AdaptiveRateLimiter) -> None:
         """set_limit raises ValueError for rpm < 1.0."""
-        with pytest.raises(ValueError, match="rpm must be >= 1.0"):
+        with pytest.raises(ValueError, match=r"rpm must be >= 1.0"):
             limiter.set_limit("github", 0.5)
 
     @pytest.mark.requirement("WL-286")

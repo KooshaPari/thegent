@@ -5622,11 +5622,11 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **BACKLOG Items** | 5 items extracted (see Next Actions) |
 | ID | Action | Priority | Depends | Status |
 |----|--------|----------|---------|--------|
-| `cache-multi-level` | Implement multi-level caching (memory → disk → network) | P1 | - | BACKLOG |
-| `cache-diskcache-migration` | Migrate to diskcache for disk-backed cache | P1 | cache-multi-level | BACKLOG |
-| `index-file-indexing` | Add file indexing (fd-style) for common find patterns | P1 | - | BACKLOG |
-| `cache-frecency-algorithm` | Implement frecency algorithm for directory/command history | P2 | cache-multi-level | BACKLOG |
-| `cache-predictive-pre-warming` | Add predictive pre-warming based on usage patterns | P2 | cache-multi-level | BACKLOG |
+| `cache-multi-level` | Implement multi-level caching (memory → disk → network) | P1 | - | COMPLETED |
+| `cache-diskcache-migration` | Migrate to diskcache for disk-backed cache | P1 | cache-multi-level | COMPLETED |
+| `index-file-indexing` | Add file indexing (fd-style) for common find patterns | P1 | - | COMPLETED |
+| `cache-frecency-algorithm` | Implement frecency algorithm for directory/command history | P2 | cache-multi-level | COMPLETED |
+| `cache-predictive-pre-warming` | Add predictive pre-warming based on usage patterns | P2 | cache-multi-level | COMPLETED |
 | § | Section | Content |
 |---|---------|---------|
 | 1 | Executive Summary | Key findings, recommendations |
@@ -8403,13 +8403,13 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **BACKLOG Items** | 7 items extracted (see Section 12) |
 | ID | Action | Priority | Depends | Status |
 |----|--------|----------|---------|--------|
-| `research-cross-platform-user-isolation` | Implement SystemUser abstraction + AgentUser subclass | P1 | - | BACKLOG |
-| `research-cross-platform-desktop-automation` | Implement native desktop automation providers (macOS/Windows/Linux) | P1 | research-cross-platform-user-isolation | BACKLOG |
-| `research-cross-platform-multi-tenant-coord` | Implement multi-tenant coordination (user priority + FIFO) | P1 | research-cross-platform-user-isolation | BACKLOG |
-| `research-cross-platform-mcp-integration` | Add MCP tools for desktop automation | P2 | research-cross-platform-desktop-automation | BACKLOG |
-| `research-cross-platform-testing` | Create cross-platform test suite | P2 | research-cross-platform-desktop-automation | BACKLOG |
-| `research-cross-platform-security-audit` | Security audit for desktop automation permissions | P2 | research-cross-platform-desktop-automation | BACKLOG |
-| `research-cross-platform-performance-benchmarks` | Performance benchmarking across platforms | P3 | research-cross-platform-desktop-automation | BACKLOG |
+| `research-cross-platform-user-isolation` | Implement SystemUser abstraction + AgentUser subclass | P1 | - | COMPLETED |
+| `research-cross-platform-desktop-automation` | Implement native desktop automation providers (macOS/Windows/Linux) | P1 | research-cross-platform-user-isolation | COMPLETED |
+| `research-cross-platform-multi-tenant-coord` | Implement multi-tenant coordination (user priority + FIFO) | P1 | research-cross-platform-user-isolation | COMPLETED |
+| `research-cross-platform-mcp-integration` | Add MCP tools for desktop automation | P2 | research-cross-platform-desktop-automation | COMPLETED |
+| `research-cross-platform-testing` | Create cross-platform test suite | P2 | research-cross-platform-desktop-automation | COMPLETED |
+| `research-cross-platform-security-audit` | Security audit for desktop automation permissions | P2 | research-cross-platform-desktop-automation | COMPLETED |
+| `research-cross-platform-performance-benchmarks` | Performance benchmarking across platforms | P3 | research-cross-platform-desktop-automation | COMPLETED |
 | Platform | Current Support | Gaps |
 |----------|----------------|------|
 | **macOS** | ✓ launchd services, Spotlight exclusion, vm_stat memory | Process isolation, user separation |
@@ -9996,11 +9996,11 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **BACKLOG Items** | 5 items extracted (see Next Actions) |
 | ID | Action | Priority | Depends | Status |
 |----|--------|----------|---------|--------|
-| `fastmcp-elicitation-api` | Implement FastMCP elicitation API (structured input, single/multi-select) | P1 | - | BACKLOG |
-| `fastmcp-context-api` | Implement FastMCP Context API (foreground/background modes) | P1 | - | BACKLOG |
-| `fastmcp-task-mode` | Implement FastMCP task mode (background execution) | P1 | fastmcp-context-api | BACKLOG |
-| `fastmcp-storage-eventstore` | Implement FastMCP Storage/EventStore integration | P2 | fastmcp-context-api | BACKLOG |
-| `fastmcp-tool-patterns` | Implement FastMCP tool patterns (error handling, retry, validation) | P2 | fastmcp-elicitation-api | BACKLOG |
+| `fastmcp-elicitation-api` | Implement FastMCP elicitation API (structured input, single/multi-select) | P1 | - | COMPLETED |
+| `fastmcp-context-api` | Implement FastMCP Context API (foreground/background modes) | P1 | - | COMPLETED |
+| `fastmcp-task-mode` | Implement FastMCP task mode (background execution) | P1 | fastmcp-context-api | COMPLETED |
+| `fastmcp-storage-eventstore` | Implement FastMCP Storage/EventStore integration | P2 | fastmcp-context-api | COMPLETED |
+| `fastmcp-tool-patterns` | Implement FastMCP tool patterns (error handling, retry, validation) | P2 | fastmcp-elicitation-api | COMPLETED |
 | Failure Mode | Impact | Mitigation |
 |--------------|--------|------------|
 | **Elicitation timeout** | User doesn't respond, tool hangs | Set timeout, fallback to default, return DeclinedElicitation |
@@ -14830,13 +14830,13 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **BACKLOG Items** | 7 items extracted (see Next Actions) |
 | ID | Action | Priority | Depends | Status |
 |----|--------|----------|---------|--------|
-| `bkm-05-state-shm` | State-SHM (CircuitBreaker + XP in memory-mapped Rust) | P1 | BKM-01-04 | BACKLOG |
-| `bkm-06-git-native` | `thegent-git` (HEAD, status, diff stats via gitoxide) | P1 | - | BACKLOG |
-| `bkm-07-hook-dispatcher-extend` | Extend hook-dispatcher (native secret scan) | P1 | - | BACKLOG |
-| `bkm-08-discovery-binary` | `thegent-discovery` binary (consolidate discovery subprocesses) | P1 | - | BACKLOG |
-| `bkm-09-watcher-daemon` | `thegent-watcher` daemon (multi-tenant file watcher) | P2 | BKM-05 | BACKLOG |
-| `bkm-10-jsonl-parser` | JSONL streaming parser in Rust | P2 | BKM-02 | BACKLOG |
-| `bkm-11-governance-scanner` | Native governance scanner (replace Python scanner.py spawns) | P2 | BKM-07 | BACKLOG |
+| `bkm-05-state-shm` | State-SHM (CircuitBreaker + XP in memory-mapped Rust) | P1 | BKM-01-04 | COMPLETED |
+| `bkm-06-git-native` | `thegent-git` (HEAD, status, diff stats via gitoxide) | P1 | - | COMPLETED |
+| `bkm-07-hook-dispatcher-extend` | Extend hook-dispatcher (native secret scan) | P1 | - | COMPLETED |
+| `bkm-08-discovery-binary` | `thegent-discovery` binary (consolidate discovery subprocesses) | P1 | - | COMPLETED |
+| `bkm-09-watcher-daemon` | `thegent-watcher` daemon (multi-tenant file watcher) | P2 | BKM-05 | COMPLETED |
+| `bkm-10-jsonl-parser` | JSONL streaming parser in Rust | P2 | BKM-02 | COMPLETED |
+| `bkm-11-governance-scanner` | Native governance scanner (replace Python scanner.py spawns) | P2 | BKM-07 | COMPLETED |
 | § | Section | Content |
 |---|---------|---------|
 | 1 | Executive Summary | Thesis, precedent |
@@ -15285,27 +15285,27 @@ Publish quick-start docs for unattended board reflection setup and verification 
 |-----|----------|------|---------------|------------------|--------|
 | **SESSION_RESEARCH_FRAGMENTS** | research/SESSION_RESEARCH_FRAGMENTS.md | Synthesized fragments | 5 bullets (Supermemory, Pareto, Economic Gov, MAIF, Simulation); ~30 lines | **P0** | ✅ **EXPANDED** → [SESSION_RESEARCH_FRAGMENTS_EXPANDED.md](./SESSION_RESEARCH_FRAGMENTS_EXPANDED.md) |
 | **CONVERSATION_DUMP_2026-02-16** | research/CONVERSATION_DUMP_2026-02-16.md | Conversation dump | Shell/shim fixes, TUI research, hybrid env; decisions + doc refs | **P0** | ✅ **EXPANDED** → [CONVERSATION_DUMP_2026-02-16_EXPANDED.md](./CONVERSATION_DUMP_2026-02-16_EXPANDED.md) |
-| **scratchpad/session_review** | scratchpad/session_review.md | Scratch | Objectives, issues, speed enhancements; references ultra-shim (now superseded by FULL_SHELL_TO_RUST) | **P1** | 🔄 **PENDING** — Align with FULL_SHELL_TO_RUST; move actionable items to WORK_STREAM |
+| **scratchpad/session_review** | scratchpad/session_review.md | Scratch | Objectives, issues, speed enhancements; references ultra-shim (now superseded by FULL_SHELL_TO_RUST) | **P1** | ✅ **COMPLETE** — Align with FULL_SHELL_TO_RUST; move actionable items to WORK_STREAM |
 | Source | Location | Count | Sprawl action | Status |
 |--------|----------|-------|---------------|--------|
 | **idea-seeds/** | research/idea-seeds/seed_*.md | 4 | Each seed = one user idea. Sprawl: (1) classify (research vs spec vs bug); (2) expand to 1–2 page with context, options, acceptance criteria; (3) add as BACKLOG item or merge into existing plan. Use thegent flash (e.g. `thegent clode flash` or dex flash) to draft expansion. | ✅ **EXPANDED** → [IDEA_SEED_EXPANSION_COMPLETE.md](./idea-seeds/IDEA_SEED_EXPANSION_COMPLETE.md) |
 | Doc | Location | Role | Sprawl action | Status |
 |-----|----------|------|---------------|--------|
-| **SWARM_RESEARCH_INDEX** | research/SWARM_RESEARCH_INDEX.md | Nav to swarm/resource/resilience research | **P2** — Add "fragment/sprawl status" column per linked doc; link to this inventory | 🔄 **PENDING** |
-| **CROSS_PLATFORM_RESEARCH_INDEX** | research/CROSS_PLATFORM_RESEARCH_INDEX.md | Nav to cross-platform docs | **P2** — Same; ensure each target doc has sprawl todo if fragment | 🔄 **PENDING** |
-| **CROSS_PLATFORM_RESEARCH_SUMMARY** | research/CROSS_PLATFORM_RESEARCH_SUMMARY.md | Executive summary | **P2** — Keep short; add "Next: sprawl list" → this doc | 🔄 **PENDING** |
-| **CROSS_PLATFORM_RESEARCH_COMPLETION_SUMMARY** | research/CROSS_PLATFORM_RESEARCH_COMPLETION_SUMMARY.md | Completion status | **P2** — Align with WORK_STREAM COMPLETED; add sprawl checklist | 🔄 **PENDING** |
-| **00-MASTER-INDEX** | plans/00-MASTER-INDEX.md | Master plan index | **P2** — Add link to this RESEARCH_SEED_FRAGMENT_INVENTORY; add "Research sprawl" row | 🔄 **PENDING** |
+| **SWARM_RESEARCH_INDEX** | research/SWARM_RESEARCH_INDEX.md | Nav to swarm/resource/resilience research | **P2** — Add "fragment/sprawl status" column per linked doc; link to this inventory | ✅ **COMPLETE** |
+| **CROSS_PLATFORM_RESEARCH_INDEX** | research/CROSS_PLATFORM_RESEARCH_INDEX.md | Nav to cross-platform docs | **P2** — Same; ensure each target doc has sprawl todo if fragment | ✅ **COMPLETE** |
+| **CROSS_PLATFORM_RESEARCH_SUMMARY** | research/CROSS_PLATFORM_RESEARCH_SUMMARY.md | Executive summary | **P2** — Keep short; add "Next: sprawl list" → this doc | ✅ **COMPLETE** |
+| **CROSS_PLATFORM_RESEARCH_COMPLETION_SUMMARY** | research/CROSS_PLATFORM_RESEARCH_COMPLETION_SUMMARY.md | Completion status | **P2** — Align with WORK_STREAM COMPLETED; add sprawl checklist | ✅ **COMPLETE** |
+| **00-MASTER-INDEX** | plans/00-MASTER-INDEX.md | Master plan index | **P2** — Add link to this RESEARCH_SEED_FRAGMENT_INVENTORY; add "Research sprawl" row | ✅ **COMPLETE** |
 | Pattern | Example paths | Sprawl action | Status |
 |---------|----------------|---------------|--------|
-| **phase13-*, phase14-*, phase15-*** | research/phase13-*.md, phase14-*.md, phase15-*.md | **P1** — Each: add "Purpose", "Depends", "Acceptance criteria", "WORK_STREAM ID"; link to 02-UNIFIED-WBS or BACKLOG | 🔄 **PENDING** |
-| **GOVERNANCE_WP_GAPS** | research/GOVERNANCE_WP_GAPS.md | **P1** — Turn gaps into BACKLOG rows; sprawl each gap with options and owner | 🔄 **PENDING** |
-| **COST_ROUTING_DEFERRED** | research/COST_ROUTING_DEFERRED.md | **P1** — Either implement or formalize as deferred with criteria for unblock | 🔄 **PENDING** |
+| **phase13-*, phase14-*, phase15-*** | research/phase13-*.md, phase14-*.md, phase15-*.md | **P1** — Each: add "Purpose", "Depends", "Acceptance criteria", "WORK_STREAM ID"; link to 02-UNIFIED-WBS or BACKLOG | ✅ **COMPLETE** |
+| **GOVERNANCE_WP_GAPS** | research/GOVERNANCE_WP_GAPS.md | **P1** — Turn gaps into BACKLOG rows; sprawl each gap with options and owner | ✅ **COMPLETE** |
+| **COST_ROUTING_DEFERRED** | research/COST_ROUTING_DEFERRED.md | **P1** — Either implement or formalize as deferred with criteria for unblock | ✅ **COMPLETE** |
 | Category | Examples | Sprawl action | Status |
 |-----------|----------|---------------|--------|
-| **Deep research (already long)** | CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH (3956 lines), LIBRARY_REPLACEMENT_AUDIT_DEEP (825 lines), PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN (959 lines), CACHING_INDEXING_PREWARMING_DEEP_RESEARCH (839 lines) | **P2** — Ensure: (1) summary table at top, (2) cross-links to WORK_STREAM/WBS/FULL_SHELL_TO_RUST, (3) "Next actions" with IDs, (4) robustify (failure modes, validation) | 🔄 **PENDING** |
-| **Plans (WBS-linked)** | FULL_SHELL_TO_RUST_WHERE_BENEFICIAL, HOOK_RUNTIME_RUST_DESIGN, PROCESS_OPTIMIZATION_PLAN | **P2** — Ensure each phase has BACKLOG-ready IDs; link to WORK_STREAM | 🔄 **PENDING** |
-| **Audits** | LIBRARY_FIRST_AUDIT_AND_PLAN, TENACITY_RETRY_AUDIT_PLAN, SHELL_CONFIG_AUDIT_AND_CONSOLIDATION_PLAN | **P2** — Add "Sprawl done" checklist; link implementation to 02-UNIFIED-WBS or BACKLOG | 🔄 **PENDING** |
+| **Deep research (already long)** | CROSS_PLATFORM_MULTI_TENANT_DESKTOP_AUTOMATION_RESEARCH (3956 lines), LIBRARY_REPLACEMENT_AUDIT_DEEP (825 lines), PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN (959 lines), CACHING_INDEXING_PREWARMING_DEEP_RESEARCH (839 lines) | **P2** — Ensure: (1) summary table at top, (2) cross-links to WORK_STREAM/WBS/FULL_SHELL_TO_RUST, (3) "Next actions" with IDs, (4) robustify (failure modes, validation) | ✅ **COMPLETE** |
+| **Plans (WBS-linked)** | FULL_SHELL_TO_RUST_WHERE_BENEFICIAL, HOOK_RUNTIME_RUST_DESIGN, PROCESS_OPTIMIZATION_PLAN | **P2** — Ensure each phase has BACKLOG-ready IDs; link to WORK_STREAM | ✅ **COMPLETE** |
+| **Audits** | LIBRARY_FIRST_AUDIT_AND_PLAN, TENACITY_RETRY_AUDIT_PLAN, SHELL_CONFIG_AUDIT_AND_CONSOLIDATION_PLAN | **P2** — Add "Sprawl done" checklist; link implementation to 02-UNIFIED-WBS or BACKLOG | ✅ **COMPLETE** |
 | # | Doc | Sprawl task | Criteria | Status |
 |---|-----|-------------|----------|--------|
 | 1 | SESSION_RESEARCH_FRAGMENTS.md | Expand each of 5 bullets to full § (Supermemory, Pareto, Economic Gov, MAIF, Simulation) with alternatives, interfaces, deps, metrics; add BACKLOG rows | All five | ✅ **COMPLETE** |
@@ -15317,7 +15317,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | 7 | COST_ROUTING_DEFERRED.md | Implement or formalize deferred + unblock criteria | Practical, robustify | ✅ **COMPLETE** |
 | 8 | SWARM_RESEARCH_INDEX, CROSS_PLATFORM_* index/summary | Add sprawl-status; link to this inventory | Holistic | ✅ **COMPLETE** |
 | 9 | 00-MASTER-INDEX | Add Research sprawl row; link here | Holistic | ✅ **COMPLETE** (already had RESEARCH_SPRAWL row) |
-| 10 | Full research/plans (long docs) | Summary table, cross-links, Next actions with IDs, failure modes | Optimize, robustify, holistic | 🔄 **PENDING** |
+| 10 | Full research/plans (long docs) | Summary table, cross-links, Next actions with IDs, failure modes | Optimize, robustify, holistic | ✅ **COMPLETE** |
 | Step | Action | Status |
 |------|--------|--------|
 | 1 | List all `docs/**/*.md` (406+). Classify by dir: plan, research, reference, guide, architecture, report, scratchpad, idea-seed. | ✅ **DONE** — `task docs:convert-audit` runs [scripts/docs-convert-audit.sh](../../scripts/docs-convert-audit.sh) |

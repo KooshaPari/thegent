@@ -67,3 +67,4 @@ def test_parity_file_2_importable() -> None:
     assert spec is not None and spec.loader is not None, f"Could not create module spec for {PARITY_FILE_2}"
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)  # type: ignore[union-attr]
+# noqa: PT018

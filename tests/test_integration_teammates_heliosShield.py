@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from thegent.governance.heliosShield_bridge import heliosShieldBridge
+from thegent.governance.helios_shield_bridge import heliosShieldBridge
 from thegent.governance.teammates import TeammateManager
 
 
@@ -34,15 +34,15 @@ class TestTeammateManagerheliosShieldIntegration:
         return TeammateManager(tmp_path / "teammates.json")
 
     @pytest.fixture
-    def heliosShield_bridge(self, harness_root, monkeypatch):
+    def helios_shield_bridge(self, harness_root, monkeypatch):
         """Create a heliosShieldBridge with mocked harness root."""
         monkeypatch.setenv("HARNESS_ROOT", str(harness_root))
         return heliosShieldBridge()
 
-    def test_delegation_creates_heliosShield_task(self, teammate_manager, heliosShield_bridge, harness_root):
+    def test_delegation_creates_heliosShield_task(self, teammate_manager, helios_shield_bridge, harness_root):
         """WP-16003: Delegation should create a task in heliosShield when available."""
         # Verify heliosShield is available
-        assert heliosShield_bridge.is_available() is True
+        assert helios_shield_bridge.is_available() is True
 
         # Create a delegation
         req = teammate_manager.delegate(
@@ -63,7 +63,7 @@ class TestTeammateManagerheliosShieldIntegration:
         assert "RUN-123" in content
         assert "Refactor the parser" in content
 
-    def test_delegation_broadcasts_intent(self, teammate_manager, heliosShield_bridge, harness_root):
+    def test_delegation_broadcasts_intent(self, teammate_manager, helios_shield_bridge, harness_root):
         """WP-16003: Delegation should broadcast intent to heliosShield mesh."""
         # Create a delegation
         req = teammate_manager.delegate(
@@ -91,7 +91,7 @@ class TestTeammateManagerheliosShieldIntegration:
         assert "target=reviewer-beta" in intent_content
         assert "status=active" in intent_content
 
-    def test_get_session_state_finds_delegations(self, teammate_manager, heliosShield_bridge, harness_root):
+    def test_get_session_state_finds_delegations(self, teammate_manager, helios_shield_bridge, harness_root):
         """WP-16003: get_session_state should find tasks and intents for a session."""
         session_id = "SESSION-789"
 
@@ -100,7 +100,7 @@ class TestTeammateManagerheliosShieldIntegration:
         req2 = teammate_manager.delegate("reviewer-beta", session_id, "Task 2")
 
         # Get session state
-        state = heliosShield_bridge.get_session_state(session_id)
+        state = helios_shield_bridge.get_session_state(session_id)
 
         # Verify we found tasks
         assert len(state["tasks"]) >= 2, "Should find at least 2 tasks"
@@ -134,7 +134,7 @@ class TestTeammateManagerheliosShieldIntegration:
         assert req.parent_run_id == "RUN-999"
         assert req.status == "pending"
 
-    def test_multiple_delegations_create_multiple_tasks(self, teammate_manager, heliosShield_bridge, harness_root):
+    def test_multiple_delegations_create_multiple_tasks(self, teammate_manager, helios_shield_bridge, harness_root):
         """WP-16003: Multiple delegations should create multiple tasks."""
         parent_run = "RUN-MULTI"
 
@@ -160,7 +160,7 @@ class TestTeammateManagerheliosShieldIntegration:
             content = task_file.read_text()
             assert parent_run in content
 
-    def test_delegation_task_includes_dependencies(self, teammate_manager, heliosShield_bridge, harness_root):
+    def test_delegation_task_includes_dependencies(self, teammate_manager, helios_shield_bridge, harness_root):
         """WP-16003: Task creation should handle dependencies correctly."""
         # Create first delegation
         req1 = teammate_manager.delegate("coder-alpha", "RUN-DEP", "First task")
@@ -179,13 +179,13 @@ class TestTeammateManagerheliosShieldIntegration:
         # Note: Current implementation doesn't set depends_on in delegation,
         # but the structure is there for future enhancement
 
-    def test_session_state_empty_when_no_delegations(self, heliosShield_bridge):
+    def test_session_state_empty_when_no_delegations(self, helios_shield_bridge):
         """WP-16003: get_session_state should return empty state for session with no delegations."""
-        state = heliosShield_bridge.get_session_state("NONEXISTENT-SESSION")
+        state = helios_shield_bridge.get_session_state("NONEXISTENT-SESSION")
 
         assert state == {"claims": [], "intents": [], "tasks": []}
 
-    def test_intent_file_format(self, teammate_manager, heliosShield_bridge, harness_root):
+    def test_intent_file_format(self, teammate_manager, helios_shield_bridge, harness_root):
         """WP-16003: Intent files should have correct format."""
         req = teammate_manager.delegate("coder-alpha", "RUN-FORMAT", "Test format")
 
@@ -209,7 +209,7 @@ class TestTeammateManagerheliosShieldIntegration:
         assert "started=" in content
         assert "status=" in content
 
-    def test_task_file_format(self, teammate_manager, heliosShield_bridge, harness_root):
+    def test_task_file_format(self, teammate_manager, helios_shield_bridge, harness_root):
         """WP-16003: Task files should have correct format."""
         req = teammate_manager.delegate("coder-alpha", "RUN-FORMAT", "Test task format")
 
@@ -228,7 +228,7 @@ class TestTeammateManagerheliosShieldIntegration:
         assert any("assigned_to=" in line for line in lines)
 
     def test_delegation_status_update_preserves_heliosShield_task(
-        self, teammate_manager, heliosShield_bridge, harness_root
+        self, teammate_manager, helios_shield_bridge, harness_root
     ):
         """WP-16003: Updating delegation status should not affect heliosShield task."""
         req = teammate_manager.delegate("coder-alpha", "RUN-UPDATE", "Task to update")

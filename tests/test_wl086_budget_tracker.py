@@ -393,12 +393,12 @@ class TestAllUsage:
 class TestPublicExports:
     def test_budget_tracker_exported_from_orchestration(self) -> None:
         """BudgetTracker must be importable from thegent.orchestration. # @trace WL-086"""
-        from thegent.orchestration import BudgetTracker as BT  # noqa: PLC0415
+        from thegent.orchestration import BudgetTracker as BT  # noqa: PLC0415, N817
 
         assert BT is BudgetTracker
 
     def test_budget_exceeded_error_exported_from_orchestration(self) -> None:
         """BudgetExceededError must be importable from thegent.orchestration. # @trace WL-086"""
-        from thegent.orchestration import BudgetExceededError as BEE  # noqa: PLC0415
+        from thegent.orchestration import BudgetExceededError as BEE  # noqa: PLC0415, N817
 
         assert BEE is BudgetExceededError

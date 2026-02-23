@@ -59,7 +59,7 @@ class TestWLIdAllocator:
     @pytest.mark.requirement("WL-307")
     def test_reserve_range_start_greater_than_end_raises_error(self, allocator: WLIdAllocator) -> None:
         """Reserving with start > end raises ValueError."""
-        with pytest.raises(ValueError, match="start.*must be.*end"):
+        with pytest.raises(ValueError, match=r"start.*must be.*end"):
             allocator.reserve_range(100, 1, "Bad", "alice")
 
     @pytest.mark.requirement("WL-307")
@@ -67,7 +67,7 @@ class TestWLIdAllocator:
         """Reserving overlapping range raises ValueError."""
         allocator.reserve_range(1, 100, "Phase 1", "alice")
 
-        with pytest.raises(ValueError, match="overlaps"):
+        with pytest.raises(ValueError, match=r"overlaps"):
             allocator.reserve_range(50, 150, "Phase 2", "bob")
 
     @pytest.mark.requirement("WL-307")

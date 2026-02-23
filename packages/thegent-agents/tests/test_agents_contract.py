@@ -1,6 +1,5 @@
 """Contract tests for thegent-agents package."""
 
-import pytest
 
 
 class TestAgentsContract:

@@ -728,3 +728,4 @@ def test_command_table_parser_ignores_escaped_pipe_backtick_edge_rows_and_keeps_
     assert "Governance sync contracts (direct)" in goals
     assert "Escaped \\| pipe edge row" not in goals
     assert "Escaped backtick edge row" not in goals
+# noqa: PT018

@@ -48,16 +48,16 @@ __all__ = [
 # Exposes: console, ThegentSettings, RunRegistry, get_exit_message,
 # dag_ready_impl, dag_run_impl, dag_sync_impl, dag_recover_impl,
 # EXIT_TIMEOUT, EXIT_HEALTH_GATE_FAILED, list_agent_names, resolve_agent, etc.
-from thegent_cli.commands._cli_shared import *  # noqa: F401, F403 -- WL-120 shim re-export
+from thegent_cli.commands._cli_shared import *  # noqa: F401, F403, E402 -- WL-120 shim re-export
 
 # WL-120 Wave-X: private helper re-exports now come from _cli_shared.__all__,
 # so explicit private import lists are no longer needed in this shim.
 
 # WL-124: Domain submodule re-exports — all command names available at this namespace.
-from thegent_cli.commands.run_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent_cli.commands.session_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent_cli.commands.governance_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent_cli.commands.plan_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent_cli.commands.model_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent_cli.commands.infra_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent_cli.commands.team_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.commands.run_cmds import *  # noqa: F401, F403, E402 -- WL-124 re-export
+from thegent_cli.commands.session_cmds import *  # noqa: F401, F403, E402 -- WL-124 re-export
+from thegent_cli.commands.governance_cmds import *  # noqa: F401, F403, E402 -- WL-124 re-export
+from thegent_cli.commands.plan_cmds import *  # noqa: F401, F403, E402 -- WL-124 re-export
+from thegent_cli.commands.model_cmds import *  # noqa: F401, F403, E402 -- WL-124 re-export
+from thegent_cli.commands.infra_cmds import *  # noqa: F401, F403, E402 -- WL-124 re-export
+from thegent_cli.commands.team_cmds import *  # noqa: F401, F403, E402 -- WL-124 re-export

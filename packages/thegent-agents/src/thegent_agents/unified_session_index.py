@@ -650,8 +650,8 @@ if __name__ == "__main__":
 # ---------------------------------------------------------------------------
 
 
-import subprocess
-import shlex
+import subprocess  # noqa: E402
+import shlex  # noqa: E402
 
 
 class HarnessActionError(Exception):
