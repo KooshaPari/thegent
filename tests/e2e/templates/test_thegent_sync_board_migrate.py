@@ -13,7 +13,7 @@ runner = CliRunner()
 
 
 @pytest.mark.e2e
-class TestSyncBoard-migrate:
+class TestSyncBoardMigrate:
     """E2E tests for thegent sync board-migrate command."""
 
     def test_sync_board_migrate_exits_zero(self) -> None:

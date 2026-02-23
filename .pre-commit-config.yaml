@@ -83,9 +83,9 @@ repos:
       - id: max-lines-gate
         name: Canonical Max-Lines Gate
         stages: [pre-push]
-        entry: scripts/max-lines-gate.sh
+        entry: task quality:max-lines
         language: system
-        pass_filenames: true
+        pass_filenames: false
 
       - id: ty
         name: Fast Type Check (ty) (Gate 3)

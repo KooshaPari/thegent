@@ -1356,6 +1356,7 @@ tasks:
     cmds:
       - task: shims:guard
       - task: shims:probe
+      - task: quality:rust:ci
       - task: quality:rust:links-conflicts
       - task: quality:rust:pyo3-drift
       - task: quality:max-lines
@@ -1364,6 +1365,7 @@ tasks:
       - task: quality:instruction-architecture
       - task: quality:harness-contracts
       - task: quality:governance:policy
+      - task: quality:shell-docs-config
       - task: quality:cliproxy-parent
       - task: quality:runtime-contracts
       - task: lint:strict
@@ -1372,6 +1374,62 @@ tasks:
       - zsh scripts/traceability-validator.sh
       - zsh scripts/dx-audit.sh
       - uv run ruff check .
+
+  quality:rust:ci:
+    desc: "Canonical rust CI lane for quality (fmt/check/clippy/test) in deterministic order."
+    cmds:
+      - |
+        if ! command -v cargo >/dev/null 2>&1; then
+          echo "[FAIL] Cargo is required for quality:rust:ci" >&2
+          exit 1
+        fi
+      - |
+        if [ ! -f crates/Cargo.toml ]; then
+          echo "[FAIL] crates/Cargo.toml is required for quality:rust:ci" >&2
+          exit 1
+        fi
+      - |
+        fmt_files="${QUALITY_RUST_FORMAT_FILES:-}"
+        if [ -z "$fmt_files" ]; then
+          fmt_files="$(git diff --name-only origin/main...HEAD -- '*.rs' | tr '\n' ' ')"
+        fi
+        if [ -n "$fmt_files" ]; then
+          cargo fmt --all --manifest-path crates/Cargo.toml --check -- $fmt_files
+        else
+          echo "[SKIP] No rust files in current diff for fmt check"
+        fi
+      - cargo check --workspace --manifest-path crates/Cargo.toml --all-targets
+      - cargo clippy --workspace --manifest-path crates/Cargo.toml --all-targets --all-features -- -D warnings
+      - cargo test --workspace --manifest-path crates/Cargo.toml --all-targets --all-features
+
+  quality:shell-docs-config:
+    desc: "Run shell/doc/config quality checks via focused pre-commit hooks."
+    cmds:
+      - |
+        changed_files="${QUALITY_DOCS_CHECK_FILES:-$(git diff --name-only origin/main...HEAD -- .)}"
+        changed_docs="$(printf '%s\n' "$changed_files" | rg '^docs/.+\.md$')"
+        if [ -z "$changed_files" ]; then
+          echo "[SKIP] no changed files for shell/doc/config checks"
+          exit 0
+        fi
+        for hook in \
+          check-yaml \
+          check-toml \
+          check-json \
+          check-merge-conflict \
+          check-ast \
+          check-added-large-files \
+          trailing-whitespace \
+          end-of-file-fixer \
+          detect-private-key; do
+          uv run pre-commit run "$hook" --files $changed_files
+        done
+        uv run pre-commit run shellcheck --files $changed_files
+        if [ -n "$changed_docs" ]; then
+          DOCS_AUDIT_FILES="$changed_docs" zsh scripts/docs-convert-audit.sh docs
+        else
+          echo "[SKIP] no changed markdown files under docs for convert audit"
+        fi
 
   metrics:loc:
     desc: "Collect LOC/complexity metrics for src/thegent/ and write to .quality/loc-metrics.json (WL-135)."

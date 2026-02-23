@@ -13,7 +13,7 @@ runner = CliRunner()
 
 
 @pytest.mark.e2e
-class TestSyncRemote-orphans:
+class TestSyncRemoteOrphans:
     """E2E tests for thegent sync remote-orphans command."""
 
     def test_sync_remote_orphans_exits_zero(self) -> None:
