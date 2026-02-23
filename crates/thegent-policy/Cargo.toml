@@ -7,6 +7,7 @@ description = "Policy engine and compliance evaluation for thegent governance"
 [lib]
 name = "thegent_policy"
 path = "src/lib.rs"
+crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -15,6 +16,11 @@ toml = "0.8"
 thiserror = "2.0"
 dashmap = "6.1"
 regex = "1.11"
+pyo3 = { version = "0.23.4", features = ["extension-module"], optional = true }
 
 [dev-dependencies]
 tempfile = "3"
+
+[features]
+default = []
+python = ["dep:pyo3"]
