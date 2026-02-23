@@ -682,7 +682,7 @@ class AuditExporter:
         if output_path is not None:
             out = Path(output_path)
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(export, indent=2), sort_keys=True).decode() + "\n", encoding="utf-8")
+            out.write_text(json.dumps(export, indent=2, sort_keys=True).decode() + "\n", encoding="utf-8")
             _wl051_log.info("Audit export written to %s (%d records)", out, len(records))
 
         return export
@@ -714,5 +714,5 @@ class AuditExporter:
             "evidence_digest_sha256": digest,
         }
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(checkpoint, indent=2), sort_keys=True).decode() + "\n", encoding="utf-8")
+        output_path.write_text(json.dumps(checkpoint, indent=2, sort_keys=True).decode() + "\n", encoding="utf-8")
         return checkpoint

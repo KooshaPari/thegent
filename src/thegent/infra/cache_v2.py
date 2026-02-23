@@ -16,13 +16,6 @@ from typing import Any
 from cachetools import LRUCache, TTLCache
 
 try:
-    import diskcache
-
-    DISKCACHE_AVAILABLE = True
-except ImportError:
-    DISKCACHE_AVAILABLE = False
-
-try:
     from PersistDict import PersistDict
 
     PERSISTDICT_AVAILABLE = True
@@ -288,19 +281,15 @@ class MultiTierCache:
         self.l1_size = l1_size
         self.l2: LRUCache = LRUCache(maxsize=l2_size)
         self.l2_size = l2_size
-        # Use PersistDict for L3 (safer than diskcache - no pickle vulnerability)
+        # Use PersistDict for L3 (safe serialization via LMDB)
         self._l3_type: str = "none"
         if l3_path and PERSISTDICT_AVAILABLE:
             self.l3: "PersistDict | None" = PersistDict(
                 database_path=l3_path,
                 expiration_days=int(default_ttl / 86400) if default_ttl else 7,
-                background_thread=False,  # Synchronous writes for reliability
+                background_thread=False,
             )
             self._l3_type = "persistdict"
-        elif l3_path and DISKCACHE_AVAILABLE:
-            # Fallback to diskcache if PersistDict not available
-            self.l3: "diskcache.Cache | None" = diskcache.Cache(l3_path)
-            self._l3_type = "diskcache"
         else:
             self.l3 = None
         self.default_ttl = default_ttl
@@ -321,52 +310,39 @@ class MultiTierCache:
         return None
 
     def _get_l3(self, key: str) -> Any | None:
-        """Get from L3 cache, handling both PersistDict and diskcache."""
+        """Get from L3 cache (PersistDict)."""
         try:
-            if self._l3_type == "persistdict":
-                return self.l3[key]  # PersistDict .get() has issues, use []
-            elif self._l3_type == "diskcache":
-                return self.l3.get(key)
+            return self.l3[key]
         except KeyError:
             return None
         except Exception:
-            pass
-        return None
+            return None
 
     def _set_l3(self, key: str, value: Any, ttl: float | None) -> None:
-        """Set L3 cache, handling both PersistDict and diskcache."""
+        """Set L3 cache (PersistDict)."""
         try:
-            if self._l3_type == "persistdict":
-                self.l3[key] = value
-            elif self._l3_type == "diskcache":
-                self.l3.set(key, value, expire=ttl)
+            self.l3[key] = value
         except Exception:
             pass
 
     def _delete_l3(self, key: str) -> None:
-        """Delete from L3 cache, handling both PersistDict and diskcache."""
+        """Delete from L3 cache (PersistDict)."""
         try:
-            if self._l3_type == "persistdict":
-                self.l3.pop(key, None)
-            elif self._l3_type == "diskcache":
-                self.l3.delete(key)
+            self.l3.pop(key, None)
         except Exception:
             pass
 
     def _clear_l3(self) -> None:
-        """Clear L3 cache, handling both PersistDict and diskcache."""
+        """Clear L3 cache (PersistDict)."""
         try:
             self.l3.clear()
         except Exception:
             pass
 
     def _len_l3(self) -> int:
-        """Get L3 cache size, handling both PersistDict and diskcache."""
+        """Get L3 cache size (PersistDict)."""
         try:
-            if self._l3_type == "persistdict":
-                return len(self.l3)
-            elif self._l3_type == "diskcache":
-                return sum(1 for _ in self.l3.iterkeys())
+            return len(self.l3)
         except Exception:
             return 0
 

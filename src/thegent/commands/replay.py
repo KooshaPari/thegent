@@ -199,7 +199,7 @@ def replay_diff(
     diff = engine.compare_sessions(sess_a, sess_b)
 
     if output_json:
-        typer.echo(json.dumps(diff, indent=2), default=str).decode())
+        typer.echo(json.dumps(diff, indent=2), indent=2)
         return
 
     console = Console()
