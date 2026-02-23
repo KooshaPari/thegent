@@ -1,6 +1,6 @@
 # Vercel AI SDK Context
 
-> Definitive reference for the Vercel AI SDK — TypeScript toolkit for building AI-powered applications across providers.
+> Reference for the Vercel AI SDK — TypeScript toolkit for building AI applications across providers.
 > Sources: ai-sdk.dev/docs, vercel.com/blog/ai-sdk-6, github.com/vercel/ai (fetched 2026-02-20).
 > **Version covered: AI SDK 6.x (latest: 6.0.94 as of 2026-02-20)**
 
@@ -15,7 +15,7 @@ Key capabilities:
 - **Streaming**: First-class SSE streaming with backpressure and React Suspense integration
 - **Structured output**: Generate typed JSON objects, arrays, and choices from any provider
 - **Tool calling**: Declare tools with Zod schemas; SDK handles round-trips automatically
-- **Agent patterns**: Multi-step tool loops with `maxSteps`; `ToolLoopAgent` for production agents
+- **Agent patterns**: Multi-step tool loops with `maxSteps`; `ToolLoopAgent` for multi-step agents
 - **React/Next.js hooks**: `useChat`, `useCompletion`, `useObject` for UI state management
 - **MCP support**: Native Model Context Protocol client with HTTP transport + OAuth
 
@@ -35,7 +35,7 @@ Key capabilities:
 | **Tool** | Defined with `tool()` — schema + execute function |
 | **Step** | One round of model → tool calls → tool results in a multi-step loop |
 | **`maxSteps`** | Max number of steps in a tool call loop |
-| **ToolLoopAgent** | New in v6: production agent with automatic tool loops |
+| **ToolLoopAgent** | New in v6: agent abstraction with automatic tool loops |
 | **`useChat`** | React hook for chat UI state management |
 
 ---
@@ -297,7 +297,7 @@ const richTool = tool({
 
 ## Agents: `ToolLoopAgent` (v6)
 
-Production-ready agent with automatic tool execution loops.
+Agent abstraction with automatic tool execution loops.
 
 ```typescript
 import { ToolLoopAgent } from 'ai';

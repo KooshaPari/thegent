@@ -1,13 +1,13 @@
 # OpenAI Responses API Context
 
-> Definitive reference for OpenAI's Responses API as a next-generation agent protocol in thegent.
+> Reference for OpenAI's Responses API in thegent.
 > Sources: platform.openai.com API documentation, migration guides (fetched 2026-02-20).
 
 ---
 
 ## What is the Responses API
 
-The Responses API is OpenAI's modern agentic endpoint designed to replace Chat Completions for agent-based workflows. Unlike Chat Completions (stateless, array of messages), the Responses API uses a stateful model with Items, native tools, and persistent reasoning state.
+The Responses API is OpenAI's stateful endpoint for agent-based workflows, intended to replace Chat Completions. Unlike Chat Completions (stateless, array of messages), the Responses API uses Items, native tools, and persistent reasoning state.
 
 Key characteristics:
 - **Stateful** (with optional persistence): Reasoning tokens persist via `previous_response_id`
