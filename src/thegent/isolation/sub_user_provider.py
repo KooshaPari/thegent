@@ -4,6 +4,7 @@ import logging
 import os
 import resource
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -159,7 +160,7 @@ class SubUserIsolationProvider(IsolationProvider):
                     logger.debug(f"Failed to set rlimit: {e}")
 
             # Execute command
-            result = subprocess.run(
+            result = shim_run(
                 command,
                 cwd=context.home_dir,
                 env=env,

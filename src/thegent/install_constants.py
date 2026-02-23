@@ -56,7 +56,7 @@ def detect_installed_harnesses() -> list[str]:
     home = Path.home()
 
     for harness, config_path in HARNESS_CONFIG_PATHS.items():
-        expanded = Path(os.path.expanduser(config_path))
+        expanded = Path(config_path))
         if expanded.exists():
             detected.append(harness)
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import orjson as json
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -58,7 +59,7 @@ def dispatch_post_agent_run_hook(
     policy = str(context.get("vetter_policy") or os.environ.get("THGENT_VETTER_POLICY", ""))
     env["THGENT_VETTER_POLICY"] = policy
 
-    proc = subprocess.run(
+    proc = shim_run(
         ["hook-dispatcher", "postagentrun"],
         input=json.dumps(payload).decode().decode(),
         capture_output=True,

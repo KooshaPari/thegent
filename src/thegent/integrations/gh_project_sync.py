@@ -16,6 +16,7 @@ import orjson as json
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -101,7 +102,7 @@ def _run_gh_command(args: list[str], capture: bool = True) -> tuple[int, str, st
 
     try:
         cmd = ["gh"] + args
-        result = subprocess.run(
+        result = shim_run(
             cmd,
             capture_output=capture,
             text=True,

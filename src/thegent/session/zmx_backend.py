@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 
@@ -227,7 +228,7 @@ class ZmxBackend:
             logger.debug("zmx binary not found on PATH (%s)", self._zmx_bin)
             return False
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [self._zmx_bin, "--version"],
                 capture_output=True,
                 text=True,
@@ -238,7 +239,7 @@ class ZmxBackend:
                 logger.debug("zmx detected: %s", result.stdout.strip())
                 return True
             # Some zmx versions exit non-zero for --version; try `list` as fallback probe
-            result2 = subprocess.run(
+            result2 = shim_run(
                 [self._zmx_bin, "list"],
                 capture_output=True,
                 text=True,
@@ -254,10 +255,10 @@ class ZmxBackend:
         """Run a zmx command, returning True on returncode==0."""
         try:
             if capture:
-                result = subprocess.run(args, capture_output=True, text=True, timeout=30, check=False)
+                result = shim_run(args, capture_output=True, text=True, timeout=30, check=False)
             else:
                 # Interactive attach — no capture, inherit stdio
-                result = subprocess.run(args, timeout=None, check=False)
+                result = shim_run(args, timeout=None, check=False)
             if result.returncode != 0 and capture:
                 logger.debug(
                     "zmx command %r exited %d: %s",
@@ -273,7 +274,7 @@ class ZmxBackend:
     def _run_capture(self, args: list[str]) -> tuple[bool, str, str]:
         """Run a zmx command, returning (success, stdout, stderr)."""
         try:
-            result = subprocess.run(args, capture_output=True, text=True, timeout=30, check=False)
+            result = shim_run(args, capture_output=True, text=True, timeout=30, check=False)
             return result.returncode == 0, result.stdout, result.stderr
         except (OSError, subprocess.TimeoutExpired) as exc:
             logger.debug("zmx command %r failed: %s", args, exc)

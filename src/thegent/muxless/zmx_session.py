@@ -3,7 +3,7 @@
 Provides a high-level manager for creating and managing zmx virtual terminal
 sessions, enabling agent sessions to persist without tmux/screen.
 
-Integration model: subprocess calls only via subprocess.run (never os.system).
+Integration model: subprocess calls only via shim_run (never os.system).
 zmx not being installed degrades gracefully -- all methods return safe defaults.
 
 FR-SES-001: Session backend must be pluggable and auto-detected.
@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ class ZmxSessionManager:
     All public methods are safe to call even when zmx is not installed --
     they log a warning and return a safe fallback value.
 
-    Subprocess integration: all zmx calls go through subprocess.run().
+    Subprocess integration: all zmx calls go through shim_run().
 
     # @trace FR-SES-001, FR-SES-002, FR-SES-003
     """
@@ -234,7 +235,7 @@ class ZmxSessionManager:
             logger.debug("zmx binary not found on PATH (%s)", binary)
             return False
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [binary, "--version"],
                 capture_output=True,
                 text=True,
@@ -244,7 +245,7 @@ class ZmxSessionManager:
             if result.returncode == 0:
                 logger.debug("zmx detected: %s", result.stdout.strip())
                 return True
-            result2 = subprocess.run(
+            result2 = shim_run(
                 [binary, "list"],
                 capture_output=True,
                 text=True,
@@ -259,7 +260,7 @@ class ZmxSessionManager:
     def _run_bool(self, args: list[str]) -> bool:
         """Run a zmx command, return True iff exit code is 0."""
         try:
-            result = subprocess.run(args, capture_output=True, text=True, timeout=30, check=False)
+            result = shim_run(args, capture_output=True, text=True, timeout=30, check=False)
             if result.returncode != 0:
                 logger.debug(
                     "zmx command %r exited %d: %s",
@@ -275,7 +276,7 @@ class ZmxSessionManager:
     def _run_interactive(self, args: list[str]) -> bool:
         """Run a zmx command interactively (no capture, inherit stdio)."""
         try:
-            result = subprocess.run(args, timeout=None, check=False)
+            result = shim_run(args, timeout=None, check=False)
             return result.returncode == 0
         except (OSError, subprocess.TimeoutExpired) as exc:
             logger.debug("zmx interactive command %r failed: %s", args, exc)
@@ -284,7 +285,7 @@ class ZmxSessionManager:
     def _run_capture(self, args: list[str]) -> tuple[bool, str, str]:
         """Run a zmx command, returning (success, stdout, stderr)."""
         try:
-            result = subprocess.run(args, capture_output=True, text=True, timeout=30, check=False)
+            result = shim_run(args, capture_output=True, text=True, timeout=30, check=False)
             return result.returncode == 0, result.stdout, result.stderr
         except (OSError, subprocess.TimeoutExpired) as exc:
             logger.debug("zmx command %r failed: %s", args, exc)

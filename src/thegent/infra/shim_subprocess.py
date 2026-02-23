@@ -1,6 +1,6 @@
 """Shim-aware subprocess runner.
 
-Provides shim-aware shim_run that uses thegent-shims when available,
+Provides shim_run that uses thegent-shims when available,
 with transparent fallback to standard subprocess.
 
 This enables gradual migration of subprocess calls to use Rust shims.
@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from pathlib import Path
 from typing import Any
 
 
@@ -24,9 +24,9 @@ def _get_shim_path() -> str | None:
 
     # Check common locations
     common_paths = [
-        os.path.expanduser("~/.local/bin/thegent-shims"),
+        Path("~/.local/bin/thegent-shims").expanduser(),
         "/usr/local/bin/thegent-shims",
-        os.path.expanduser("~/.cargo/bin/thegent-shims"),
+        Path("~/.cargo/bin/thegent-shims").expanduser(),
     ]
     for path in common_paths:
         if os.path.isfile(path) and os.access(path, os.X_OK):

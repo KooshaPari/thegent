@@ -7,6 +7,7 @@ Implements sitbon/magg for MCP server aggregation.
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from enum import Enum
 
@@ -49,7 +50,7 @@ class MaggAggregator:
             if background:
                 self._process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 return {"success": True, "pid": self._process.pid}
-            result = subprocess.run(cmd, capture_output=True, timeout=30)
+            result = shim_run(cmd, capture_output=True, timeout=30)
             return {"success": result.returncode == 0}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -58,7 +59,7 @@ class MaggAggregator:
         if not self.is_enabled:
             return []
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["magg", "list"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
@@ -71,7 +72,7 @@ class MaggAggregator:
         if not self.is_enabled:
             return {"success": False}
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["magg", "add", name] + command, capture_output=True, timeout=10
             )
             return {"success": result.returncode == 0}

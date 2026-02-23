@@ -128,7 +128,7 @@ class SmartMerge:
             cmd = ["git", "merge-file", "-p", str(ours), str(base), str(theirs)]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            result = shim_run(cmd, capture_output=True, text=True, check=False)
             if not self.mergiraf_path:
                 output.write_text(result.stdout)
 

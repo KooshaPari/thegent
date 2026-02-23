@@ -427,7 +427,7 @@ class SmartPruner:
             banner = f"{context_header}{last_output}{context_footer}\n*** THEGENT: High resources detected for session {sid} ({agent}) ***\nTask: {title_text}\n(Showing menu for Kill/Pause/Bypass)\n"
             send_to_tmux_pane(pane.pane_id, banner, enter=False)
 
-            subprocess.run(cmd, check=False)
+            shim_run(cmd, check=False)
             logger.info(f"Showed interactive menu for {sid} in pane {pane.pane_id}")
         except Exception as e:
             logger.warning(f"Failed to show interactive menu: {e}")

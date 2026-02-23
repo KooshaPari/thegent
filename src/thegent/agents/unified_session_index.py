@@ -651,6 +651,7 @@ if __name__ == "__main__":
 
 
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import shlex
 
 
@@ -835,7 +836,7 @@ class HarnessTUIMapper:
             raise HarnessActionError(f"Missing required parameter: {e}")
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 shlex.split(cmd),
                 capture_output=True,
                 text=True,

@@ -7,6 +7,7 @@ Implements doorstop-dev/doorstop for FR tracking.
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from enum import Enum
 
@@ -38,7 +39,7 @@ class DoorstopSync:
 
     def _check_available(self):
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["doorstop", "--version"],
                 capture_output=True, timeout=5
             )
@@ -56,7 +57,7 @@ class DoorstopSync:
             return {"success": False, "error": "Not enabled"}
         try:
             # Generate requirements document
-            result = subprocess.run(
+            result = shim_run(
                 ["doorstop", "build", "-p", self._config.project_path, "-o", output_path],
                 capture_output=True, timeout=60
             )

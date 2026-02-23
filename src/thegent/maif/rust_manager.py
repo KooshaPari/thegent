@@ -2,6 +2,7 @@
 
 import orjson as json
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +19,7 @@ class RustMAIFManager:
         """Ensure RSA keys exist, generate if not."""
         if not self.private_key_path.exists() or not self.public_key_path.exists():
             self.private_key_path.parent.mkdir(parents=True, exist_ok=True)
-            subprocess.run(
+            shim_run(
                 [
                     str(self.binary_path),
                     "keygen",
@@ -46,7 +47,7 @@ class RustMAIFManager:
 
         payload_json = json.dumps(payload).decode().decode()
 
-        subprocess.run(
+        shim_run(
             [
                 str(self.binary_path),
                 "create",
@@ -72,7 +73,7 @@ class RustMAIFManager:
 
     def verify_artifact(self, artifact_path: Path) -> bool:
         """Verify a MAIF artifact using the Rust binary."""
-        result = subprocess.run(
+        result = shim_run(
             [
                 str(self.binary_path),
                 "verify",

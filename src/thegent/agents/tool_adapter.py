@@ -7,6 +7,7 @@ import orjson as json
 import logging
 import shlex
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from collections.abc import Callable
 from importlib import import_module
 from typing import Any
@@ -125,7 +126,7 @@ class ToolAdapter:
         cmd = shlex.split(tool.command)
         for key in sorted(kwargs):
             cmd.extend([f"--{key.replace('_', '-')}", str(kwargs[key])])
-        process = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        process = shim_run(cmd, capture_output=True, text=True, check=False)
         if process.returncode != 0:
             raise RuntimeError(process.stderr.strip() or f"Command failed with exit code {process.returncode}")
         return {

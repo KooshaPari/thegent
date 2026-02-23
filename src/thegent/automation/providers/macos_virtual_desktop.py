@@ -10,6 +10,7 @@ Uses:
 import asyncio
 import logging
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from typing import Any
 
@@ -47,7 +48,7 @@ class MacOSVirtualDesktopProvider(VirtualDesktopProvider):
     def _check_accessibility_sync(self) -> bool:
         """Check if we have accessibility permissions (sync version)."""
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["osascript", "-e", 'tell application "System Events" to keystroke "t"'],
                 capture_output=True,
                 timeout=2,

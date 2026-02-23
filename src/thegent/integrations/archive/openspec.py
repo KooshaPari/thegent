@@ -7,6 +7,7 @@ Implements Fission-AI/OpenSpec for thegent.
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from enum import Enum
 
@@ -43,7 +44,7 @@ class OpenSpecAdapter:
         if not self.is_enabled:
             return None
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [self._config.binary_path] + args,
                 capture_output=True, text=True, timeout=30
             )

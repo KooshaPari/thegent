@@ -56,7 +56,7 @@ class IsolatedExecutor:
             # Fall back to non-isolated execution
             import subprocess
 
-            result = subprocess.run(
+            result = shim_run(
                 command,
                 capture_output=True,
                 text=True,

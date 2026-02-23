@@ -53,7 +53,7 @@ def detect_installed_targets(manifest: dict[str, Any]) -> list[str]:
     harnesses = manifest.get("targets", {}).get("harnesses", {})
     for name, config in harnesses.items():
         for path_pattern in config.get("config_paths", []):
-            expanded = Path(os.path.expanduser(path_pattern))
+            expanded = Path(path_pattern).expanduser()
             if expanded.exists():
                 detected.append(f"harnesses.{name}")
                 break
@@ -62,7 +62,7 @@ def detect_installed_targets(manifest: dict[str, Any]) -> list[str]:
     shells = manifest.get("targets", {}).get("shells", {})
     for name, config in shells.items():
         for path_pattern in config.get("config_files", []):
-            expanded = Path(os.path.expanduser(path_pattern))
+            expanded = Path(path_pattern).expanduser()
             if expanded.exists():
                 detected.append(f"shells.{name}")
                 break
@@ -71,7 +71,7 @@ def detect_installed_targets(manifest: dict[str, Any]) -> list[str]:
     tools = manifest.get("targets", {}).get("tools", {})
     for name, config in tools.items():
         for path_pattern in config.get("config_files", []):
-            expanded = Path(os.path.expanduser(path_pattern))
+            expanded = Path(path_pattern).expanduser()
             if expanded.exists():
                 detected.append(f"tools.{name}")
                 break
@@ -128,7 +128,7 @@ def install_target(
 
     # Install config files
     for path_pattern in config.get("config_files", []):
-        target_path = Path(os.path.expanduser(path_pattern))
+        target_path = Path(path_pattern).expanduser()
 
         # Backup existing config if needed
         if target_path.exists() and backup_dir:
@@ -200,7 +200,7 @@ def verify_target(target: str, manifest: dict[str, Any]) -> dict[str, Any]:
     all_exist = True
 
     for path_pattern in config.get("config_files", []):
-        target_path = Path(os.path.expanduser(path_pattern))
+        target_path = Path(path_pattern).expanduser()
         exists = target_path.exists()
         if not exists:
             all_exist = False
