@@ -53,8 +53,9 @@ export THEGENT_QUALITY_AGENT_ACTIVE=1
 
 _cleanup_storage() {
   if [[ "${QUALITY_AUTO_CLEANUP:-1}" == "1" ]]; then
+    local shadow_cleanup_hours="${QUALITY_SHADOW_CLEANUP_HOURS:-${QUALITY_SHADOW_MAX_AGE_HOURS:-24}}"
     uv run python scripts/quality_cleanup.py \
-      --shadow-max-age-hours "${QUALITY_SHADOW_MAX_AGE_HOURS:-24}" \
+      --shadow-max-age-hours "${shadow_cleanup_hours}" \
       --log-max-age-days "${QUALITY_LOG_RETENTION_DAYS:-7}"
   fi
 }

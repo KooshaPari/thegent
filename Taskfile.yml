@@ -82,6 +82,24 @@ tasks:
       - task --list
     silent: true
 
+  changelog:check:
+    desc: "Validate root CHANGELOG.md has Keep-a-Changelog Unreleased section"
+    cmds:
+      - test -f CHANGELOG.md
+      - rg -n '^## \[Unreleased\]$' CHANGELOG.md >/dev/null
+
+  check:
+    desc: "Canonical full-project check"
+    cmds:
+      - task: quality
+
+  release:prep:
+    desc: "Canonical release preparation checks"
+    cmds:
+      - task: changelog:check
+      - task: check
+      - task: ci:local:pre-push
+
   # -- Project setup --
 
   nix:setup:

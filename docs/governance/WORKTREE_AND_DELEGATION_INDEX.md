@@ -19,7 +19,6 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 3. Implement scheduler placement and conflict controls.
 4. Enforce in hooks and CI.
 5. Roll out by lane percentages.
-
 ## Enforced Commands
 
 1. `./scripts/worktree_governance.sh new <branch> [start-point]`

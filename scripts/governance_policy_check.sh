@@ -3,6 +3,7 @@ set -eu
 
 ROOT_DIR="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$ROOT_DIR"
+
 METRICS_FILE="${THGENT_GOV_METRICS_FILE:-$ROOT_DIR/var/metrics/governance_policy_metrics.jsonl}"
 REQUIRED_POLICY_MARKER="$ROOT_DIR/.thegent-primary-main"
 
@@ -20,6 +21,8 @@ docs/governance/DELEGATION_ARCHITECTURE_LN.md
 docs/governance/TASK_CLASSIFIER_SCHEMA.yaml
 docs/governance/DOMAIN_PLAYBOOKS.md
 docs/governance/GOVERNANCE_ROADMAP_DAG.md
+docs/governance/MCP_A2A_CONTROL_PLANE_BOUNDARY.md
+docs/governance/ROLLOUT_PHASES_CHECKLIST.md
 "
 
 failed=0
@@ -62,8 +65,8 @@ if [ ! -x scripts/worktree_governance.sh ]; then
   echo "[FAIL] scripts/worktree_governance.sh missing or not executable" >&2
   failed=1
 else
+  wt_rc=0
   wt_output="$(THGENT_WORKTREE_ALLOW_LEGACY=0 ./scripts/worktree_governance.sh check 2>&1)" || wt_rc=$?
-  wt_rc="${wt_rc:-0}"
   printf '%s\n' "$wt_output"
   if printf '%s\n' "$wt_output" | rg -q "^\[WARN\]"; then
     echo "[FAIL] Governance precondition: legacy worktree mode is not allowed." >&2

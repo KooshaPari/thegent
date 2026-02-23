@@ -5,7 +5,7 @@ import functools
 import logging
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, get_type_hints
 
 from tenacity import retry, stop_after_attempt, wait_fixed
 
@@ -34,8 +34,8 @@ class ReusableHelpers:
             Wrapped callable.
         """
         hints = {}
-        with contextlib.suppress(AttributeError):
-            hints = func.__annotations__
+        with contextlib.suppress(Exception):
+            hints = get_type_hints(func)
 
         return_hint = hints.get("return", None)
 

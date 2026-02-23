@@ -1710,6 +1710,28 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | sharecli-task-queue | 2026-02-23 | Verified Maildir queue behavior and task lifecycle via `tests/mesh/test_task_queue.py` |
 | TGNT-P18.2 | 2026-02-23 | Verified advanced metrics aggregation and JSONL parsing via `tests/observability/test_observability_v2.py` |
 | rollout-hook-rust-phase2 | 2026-02-23 | Closed with focused Rust-hook rollout evidence capture and regression suite pass in lane report |
+| WL-9510 | 2026-02-23 | Split hook shell-resolution/command-build/execute phases and fixed TimeoutExpired text-stream handling in `src/thegent/infra/hook_runner.py`; regression coverage in `tests/infra/test_hook_runner.py` |
+| WL-9511 | 2026-02-23 | Hook execution command-path quality-gate parity validated for PowerShell `-File` mode via `tests/infra/test_hook_runner.py` |
+| WL-9512 | 2026-02-23 | Split metrics emission formatting from storage logic in `src/thegent/integrations/prometheus_metrics.py` |
+| WL-9513 | 2026-02-23 | Added regression guard for stable metric sample state after record-time capture in `tests/test_wl196_prometheus_metrics.py` |
+| WL-9514 | 2026-02-23 | Split SLO status computation from payload construction in `src/thegent/metrics/collector.py` |
+| WL-9515 | 2026-02-23 | Hook sync-path timeout behavior now preserves stdout/stderr payloads without decode crashes in `src/thegent/infra/hook_runner.py` |
+| WL-9516 | 2026-02-23 | Threshold enforcement path in SLO stub now explicitly isolated and regression-covered in `tests/test_wl135_slo_metric_emitter_stub.py` |
+| WL-9517 | 2026-02-23 | Prometheus metric export now uses explicit sample-format helper, preserving business logic isolation in `src/thegent/integrations/prometheus_metrics.py` |
+| WL-9518 | 2026-02-23 | Added pass-at-threshold boundary regression for SLO payload status in `tests/test_wl135_slo_metric_emitter_stub.py` |
+| WL-9519 | 2026-02-23 | Wave-77 Lane-E evidence captured in `docs/reports/2026-02-23-worklog-wave77-lane-e.md` with focused test run proof |
+| WL-9520 | 2026-02-23 | Workflow stage graph now fails fast on empty stage IDs in `src/thegent/agents/crew/workflow.py`; regression coverage in `tests/test_crew.py` |
+| WL-9521 | 2026-02-23 | Added whitespace-only stage-ID guard in dependency parse phase with regression coverage in `tests/test_crew.py` |
+| WL-9522 | 2026-02-23 | Execution planning now fails fast on duplicate crew IDs within a stage in `src/thegent/agents/crew/workflow.py` |
+| WL-9523 | 2026-02-23 | Added execution-plan regression coverage for valid multi-crew stage IDs in `tests/test_crew.py` |
+| WL-9524 | 2026-02-23 | Added explicit `_build_execution_plan()` parse boundary and dependency-order regression coverage in `tests/test_crew.py` |
+| WL-9525 | 2026-02-23 | Execution now consumes a frozen execution plan snapshot before stage runs, preventing mid-run stage-list mutations from changing run order |
+| WL-9526 | 2026-02-23 | Added regression ensuring stage execution errors propagate fail-fast through `WorkflowEngine.execute()` |
+| WL-9527 | 2026-02-23 | Added no-op regression for empty workflow execution path (`_build_execution_plan()` and `execute()`) |
+| WL-9528 | 2026-02-23 | Added regression for stage-result map replacement semantics in `execute_stage()` |
+| WL-9529 | 2026-02-23 | Added regression ensuring dependency validation happens before any stage execution side effects |
+| wave80-pr23-merge | 2026-02-23 | PR #23 merged as `a1b56700ef5f716cda77280901454b3f0ddd7d82`; follow-up evidence captured in `docs/reports/2026-02-23-wave80-followup.md` including GitHub check runs (`Test` matrix + CI/Build/Benchmark gates) |
+| wave80-wl007-checkpoint | 2026-02-23 | Wave80 follow-up checkpoint updated for WL-007-related validation evidence after PR #23 merge; no new WL-007 closure claim added |
 | wave70-l5 | 2026-02-22 | Implemented WL-224 (workstream schema linter), WL-225 (wl sort/normalize), WL-226 (remote payload checksums), WL-227 (metadata enrichment), plus WL-259,260,222,223,228,229 with comprehensive test coverage (76 tests) |
 | wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
@@ -26736,8 +26758,18 @@ See: docs/docset/CLIPROXY_BUGS_FULL.md
 **Area:** connector reliability and retry/resume hardening
 **Effort:** S
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl321` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-321.
+Establish a deterministic connector baseline contract for retry/resume behavior and traceable execution outputs.
+
+**Acceptance Criteria:**
+- Baseline connector contract is documented with retry/resume invariants and failure semantics.
+- Validation tests cover happy path, bounded retry exhaustion, and idempotent resume behavior.
+- Sync evidence includes deterministic run output captured in a dated lane report.
+
+**Close Conditions:**
+- All acceptance criteria are merged with passing focused tests in CI.
+- Workstream entry is updated with concrete evidence links and status transitioned out of BACKLOG by owner.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26747,8 +26779,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** M
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl322` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-322.
+Implement strict connector input/state validation to prevent ambiguous retry/resume execution paths.
+
+**Acceptance Criteria:**
+- Invalid connector configuration/state combinations fail fast with explicit diagnostics.
+- Validation coverage includes schema errors, missing required fields, and incompatible state transitions.
+- Workstream sync path rejects invalid payloads without partial side effects.
+
+**Close Conditions:**
+- Validation behavior is enforced by tests and verified in a focused execution artifact.
+- Entry evidence links include code path, tests, and lane report proving fail-fast behavior.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26758,8 +26800,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** S
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl323` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-323.
+Add watchdog monitoring for stalled connector runs with deterministic timeout and escalation signals.
+
+**Acceptance Criteria:**
+- Watchdog detects no-progress windows using explicit timeout thresholds.
+- Stall events emit structured diagnostics with connector ID, attempt count, and last progress marker.
+- Recovery path is deterministic (abort or resume) and validated by regression tests.
+
+**Close Conditions:**
+- Watchdog logic and stall handling tests pass in focused CI execution.
+- Lane evidence demonstrates at least one simulated stall and expected watchdog outcome.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26769,8 +26821,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** S
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl324` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-324.
+Produce deterministic connector state diffs to support traceable retries, resumes, and incident review.
+
+**Acceptance Criteria:**
+- Diff generation normalizes ordering and formatting for stable repeated output.
+- Diffs include pre-state, post-state, and operation context identifiers.
+- Tests verify identical input/state produces byte-stable diff output across runs.
+
+**Close Conditions:**
+- Deterministic diff behavior is covered by regression tests and merged.
+- Evidence includes sample diff artifact in lane report plus linked implementation/tests.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26780,8 +26842,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** M
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl325` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-325.
+Implement reconciliation logic that resolves connector drift before retry/resume execution proceeds.
+
+**Acceptance Criteria:**
+- Reconciliation identifies and classifies drift into recoverable vs hard-fail categories.
+- Recoverable drift is auto-corrected with explicit audit trail output.
+- Non-recoverable drift blocks execution with actionable remediation guidance.
+
+**Close Conditions:**
+- Reconciliation paths (recoverable and hard-fail) are regression-tested and passing.
+- Workstream evidence includes drift scenario coverage and resulting reconciliation decisions.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26791,8 +26863,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** M
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl326` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-326.
+Enforce connector payload and state integrity checks before and after retry/resume operations.
+
+**Acceptance Criteria:**
+- Integrity checks validate required identifiers, version markers, and checksum/hash fields where applicable.
+- Any integrity mismatch fails fast and records the exact failing field(s).
+- Post-operation integrity verification confirms no silent corruption during retry/resume flow.
+
+**Close Conditions:**
+- Integrity checks are wired into execution path and covered by positive/negative tests.
+- Evidence links show failing mismatch case plus passing verified path.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26802,8 +26884,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** S
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl327` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-327.
+Apply explicit connector policy gates for retry/resume eligibility and escalation boundaries.
+
+**Acceptance Criteria:**
+- Policy rules define allowed retry counts, cooldown behavior, and escalation triggers.
+- Policy evaluation is deterministic and logged with rule IDs for each decision.
+- Out-of-policy operations are blocked with fail-fast errors and remediation hints.
+
+**Close Conditions:**
+- Policy gate tests cover allow/deny/escalate paths and pass in CI.
+- Entry evidence demonstrates policy decision traceability in a sample run artifact.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26813,8 +26905,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** M
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl328` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-328.
+Add checkpointing for connector execution state to guarantee safe deterministic resume after interruption.
+
+**Acceptance Criteria:**
+- Checkpoints capture minimal sufficient state for exact resume continuation.
+- Resume logic restores from latest valid checkpoint without duplicate side effects.
+- Checkpoint corruption or absence is handled via explicit fail-fast path with diagnostics.
+
+**Close Conditions:**
+- Checkpoint create/restore/failure scenarios are validated by regression tests.
+- Evidence includes interrupted-run replay showing deterministic resume outcome.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26824,8 +26926,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** S
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl329` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-329.
+Build deterministic connector run rollups summarizing retry/resume behavior and outcome quality.
+
+**Acceptance Criteria:**
+- Rollup output includes attempts, terminal status, elapsed duration, and failure class breakdown.
+- Aggregation logic is stable across repeated runs with identical input events.
+- Rollup schema is documented and covered by parsing/serialization tests.
+
+**Close Conditions:**
+- Rollup generation tests pass and schema docs are linked in evidence.
+- Lane report includes at least one produced rollup artifact from focused execution.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26835,8 +26947,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** S
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl330` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-330.
+Add connector telemetry for retry/resume lifecycle events with stable field contracts and tags.
+
+**Acceptance Criteria:**
+- Telemetry emits start/retry/resume/success/failure events with connector and attempt metadata.
+- Event field names/types are versioned and documented to prevent schema drift.
+- Telemetry assertions verify deterministic emission order for equivalent execution traces.
+
+**Close Conditions:**
+- Telemetry coverage tests pass and include schema/ordering checks.
+- Evidence links include captured telemetry sample and referenced schema contract.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26846,8 +26968,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** M
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl331` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-331.
+Harden connector queue processing to preserve deterministic ordering and safe retry/resume semantics.
+
+**Acceptance Criteria:**
+- Queue processing enforces stable ordering and explicit deduplication boundaries.
+- Retry/requeue behavior preserves original causality metadata and attempt lineage.
+- Queue drain/recovery behavior is validated under interruption and restart scenarios.
+
+**Close Conditions:**
+- Queue ordering and recovery tests pass in focused regression runs.
+- Evidence includes queue timeline artifact showing deterministic ordering after retries.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
@@ -26857,8 +26989,18 @@ Advance connector reliability and retry/resume hardening with deterministic beha
 **Area:** connector reliability and retry/resume hardening
 **Effort:** S
 **Blocked by:** none
+**Owner:** `@lane-b-owner-wl332` (placeholder)
 
-Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-332.
+Implement throttle controls that bound connector retry pressure while preserving deterministic recovery behavior.
+
+**Acceptance Criteria:**
+- Throttle policy enforces max in-flight operations and retry backoff ceilings.
+- Throttle decisions are logged with deterministic reason codes and timing metadata.
+- Tests validate behavior under burst load and ensure no starvation of queued work.
+
+**Close Conditions:**
+- Throttle controls and burst-load regressions are merged with passing tests.
+- Evidence includes measured before/after run output showing bounded retry pressure.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 

@@ -86,6 +86,17 @@ class TestPrometheusMetricsExporterRecord:
         samples = exporter.get_samples("metric")
         assert samples[0].labels == {}
 
+    def test_record_copies_labels_to_prevent_external_mutation(self):
+        """Recorded labels are isolated from caller-side dict mutation."""
+        exporter = PrometheusMetricsExporter()
+        labels = {"region": "us-east-1"}
+
+        exporter.record("requests", 1.0, labels=labels)
+        labels["region"] = "mutated"
+
+        samples = exporter.get_samples("requests")
+        assert samples[0].labels == {"region": "us-east-1"}
+
 
 @pytest.mark.requirement("WL-196")
 class TestPrometheusMetricsExporterExport:

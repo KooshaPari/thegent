@@ -26,6 +26,11 @@ def test_emit_slo_stub_fail_and_unknown_statuses() -> None:
     assert unknown_payload["status"] == "unknown"
 
 
+def test_emit_slo_stub_pass_at_threshold_boundary() -> None:
+    payload = MetricsCollector().emit_slo_stub("latency_p95_ms", 250.0, threshold=250.0)
+    assert payload["status"] == "pass"
+
+
 def test_emit_wl135_script_jsonl_append(tmp_path: Path) -> None:
     jsonl_path = tmp_path / "slo_stub.jsonl"
 
