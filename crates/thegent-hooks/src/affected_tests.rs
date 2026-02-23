@@ -6,10 +6,10 @@
 //! 2. Import-based: Parse imports to find dependent tests
 //! 3. Coverage-based: Use coverage maps to identify affected tests
 
+use regex::Regex;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 use std::path::Path;
-use regex::Regex;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -85,9 +85,7 @@ impl ImportAnalyzer {
     /// Parse TypeScript/JavaScript imports
     fn parse_typescript(&mut self, content: &str) -> Result<()> {
         // Match: import { x } from "y", import x from "y", import * as x from "y"
-        let import_re = Regex::new(
-            r#"import\s+(?:[\w\{\}\s,*]+\s+)?from\s+['"]([^'"]+)['"]"#,
-        )?;
+        let import_re = Regex::new(r#"import\s+(?:[\w\{\}\s,*]+\s+)?from\s+['"]([^'"]+)['"]"#)?;
 
         for cap in import_re.captures_iter(content) {
             if let Some(module) = cap.get(1) {
@@ -128,30 +126,15 @@ impl PatternDetector {
     pub fn new() -> Result<Self> {
         let test_patterns = vec![
             // Python: src/foo.py → tests/test_foo.py or tests/foo_test.py
-            (
-                Regex::new(r"^src/([\w/]+)\.py$")?,
-                String::new(),
-            ),
+            (Regex::new(r"^src/([\w/]+)\.py$")?, String::new()),
             // Python: thegent/foo.py → tests/test_foo.py
-            (
-                Regex::new(r"^thegent/([\w/]+)\.py$")?,
-                String::new(),
-            ),
+            (Regex::new(r"^thegent/([\w/]+)\.py$")?, String::new()),
             // Rust: src/lib.rs or src/main.rs → tests/integration_tests.rs or src/main.rs tests
-            (
-                Regex::new(r"^src/(lib|main)\.rs$")?,
-                String::new(),
-            ),
+            (Regex::new(r"^src/(lib|main)\.rs$")?, String::new()),
             // Rust: src/foo.rs → tests/foo_test.rs
-            (
-                Regex::new(r"^src/([\w/]+)\.rs$")?,
-                String::new(),
-            ),
+            (Regex::new(r"^src/([\w/]+)\.rs$")?, String::new()),
             // TypeScript: src/foo.ts → src/foo.test.ts or tests/foo.test.ts
-            (
-                Regex::new(r"^src/([\w/]+)\.ts(?:x)?$")?,
-                String::new(),
-            ),
+            (Regex::new(r"^src/([\w/]+)\.ts(?:x)?$")?, String::new()),
         ];
 
         Ok(PatternDetector { test_patterns })
@@ -436,9 +419,7 @@ impl CoverageDetector {
                 if let Some(coverage_data) = data.as_object() {
                     if let Some(lines) = coverage_data.get("l").and_then(|l| l.as_object()) {
                         // If any line has count > 0, this file is covered
-                        let has_coverage = lines.values().any(|v| {
-                            v.as_u64().unwrap_or(0) > 0
-                        });
+                        let has_coverage = lines.values().any(|v| v.as_u64().unwrap_or(0) > 0);
 
                         if has_coverage {
                             // Try to determine test from the path pattern
@@ -452,9 +433,7 @@ impl CoverageDetector {
                                     .or_insert_with(Vec::new)
                                     .push(normalized);
                             } else {
-                                self.coverage_map
-                                    .entry(normalized)
-                                    .or_insert_with(Vec::new);
+                                self.coverage_map.entry(normalized).or_insert_with(Vec::new);
                             }
                         }
                     }
@@ -490,9 +469,7 @@ impl CoverageDetector {
                                     .or_insert_with(Vec::new)
                                     .push(normalized);
                             } else {
-                                self.coverage_map
-                                    .entry(normalized)
-                                    .or_insert_with(Vec::new);
+                                self.coverage_map.entry(normalized).or_insert_with(Vec::new);
                             }
                         }
                     }
@@ -529,9 +506,7 @@ impl CoverageDetector {
                             .or_insert_with(Vec::new)
                             .push(normalized);
                     } else {
-                        self.coverage_map
-                            .entry(normalized)
-                            .or_insert_with(Vec::new);
+                        self.coverage_map.entry(normalized).or_insert_with(Vec::new);
                     }
                 }
             }
@@ -565,15 +540,9 @@ impl CoverageDetector {
         let ext = path.extension()?.to_str()?;
 
         match ext {
-            "py" => {
-                Some(format!("tests/test_{}.py", stem))
-            }
-            "rs" => {
-                Some(format!("tests/{}_test.rs", stem))
-            }
-            "ts" | "tsx" | "js" | "jsx" => {
-                Some(format!("src/{}.test.{}", stem, ext))
-            }
+            "py" => Some(format!("tests/test_{}.py", stem)),
+            "rs" => Some(format!("tests/{}_test.rs", stem)),
+            "ts" | "tsx" | "js" | "jsx" => Some(format!("src/{}.test.{}", stem, ext)),
             _ => None,
         }
     }
@@ -663,7 +632,10 @@ impl AffectedTestsAnalyzer {
         }
 
         // Load coverage data if needed
-        if matches!(strategy, DetectionStrategy::Coverage | DetectionStrategy::All) {
+        if matches!(
+            strategy,
+            DetectionStrategy::Coverage | DetectionStrategy::All
+        ) {
             if let Err(e) = self.coverage_detector.load_coverage(project_dir) {
                 eprintln!("Warning: Failed to load coverage data: {}", e);
             }
@@ -754,10 +726,7 @@ impl AffectedTestsAnalyzer {
     }
 
     /// Find tests that transitively depend on changed files
-    pub fn find_transitive_tests(
-        &self,
-        changed_files: &[String],
-    ) -> Result<Vec<String>> {
+    pub fn find_transitive_tests(&self, changed_files: &[String]) -> Result<Vec<String>> {
         let mut affected = HashSet::new();
         let mut queue = VecDeque::new();
 

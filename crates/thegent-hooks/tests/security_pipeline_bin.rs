@@ -69,7 +69,8 @@ fn security_pipeline_passes_info_finding_with_warning_threshold() {
 
 #[test]
 fn security_pipeline_fails_on_openai_secret() {
-    let input = r#"{"text":"OPENAI_API_KEY=sk-123456789012345678901234567890","fail_on":"warning"}"#;
+    let input =
+        r#"{"text":"OPENAI_API_KEY=sk-123456789012345678901234567890","fail_on":"warning"}"#;
     let out = run_with_input(input);
     assert_eq!(out.status.code(), Some(1));
     let stderr = String::from_utf8_lossy(&out.stderr);
@@ -106,7 +107,10 @@ fn security_pipeline_fails_on_private_key_pem() {
 #[test]
 fn security_pipeline_fails_on_semgrep_finding() {
     let semgrep_json = r#"{\"results\":[{\"check_id\":\"python.flask.security.xss\",\"extra\":{\"severity\":\"ERROR\",\"message\":\"XSS risk\"},\"path\":\"app.py\"}]}"#;
-    let input = format!(r#"{{"text":"","semgrep_json":"{}","fail_on":"warning"}}"#, semgrep_json);
+    let input = format!(
+        r#"{{"text":"","semgrep_json":"{}","fail_on":"warning"}}"#,
+        semgrep_json
+    );
     let out = run_with_input(&input);
     assert_eq!(out.status.code(), Some(1));
     let stderr = String::from_utf8_lossy(&out.stderr);

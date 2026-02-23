@@ -1,15 +1,19 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
-use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use rsa::{RsaPrivateKey, RsaPublicKey, pkcs1v15::{SigningKey, VerifyingKey}, signature::{Signer, Verifier, SignatureEncoding}};
-use pkcs8::{DecodePrivateKey, DecodePublicKey};
-use sha2::Sha256;
 use base64::{engine::general_purpose, Engine as _};
+use chrono::{DateTime, Utc};
+use pkcs8::{DecodePrivateKey, DecodePublicKey};
+use rsa::{
+    pkcs1v15::{SigningKey, VerifyingKey},
+    signature::{SignatureEncoding, Signer, Verifier},
+    RsaPrivateKey, RsaPublicKey,
+};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
+use sha2::Sha256;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 use thiserror::Error;
+use uuid::Uuid;
 
 #[derive(Error, Debug)]
 pub enum MAIFError {
@@ -68,7 +72,15 @@ impl MAIFArtifact {
         let mut data = BTreeMap::new();
         data.insert("artifact_id", Value::String(self.artifact_id.clone()));
         data.insert("action_type", Value::String(self.action_type.clone()));
-        data.insert("payload", Value::Object(self.payload.iter().map(|(k, v)| (k.clone(), v.clone())).collect()));
+        data.insert(
+            "payload",
+            Value::Object(
+                self.payload
+                    .iter()
+                    .map(|(k, v)| (k.clone(), v.clone()))
+                    .collect(),
+            ),
+        );
         data.insert("timestamp", Value::String(self.timestamp.to_rfc3339()));
         data.insert("agent_id", Value::String(self.agent_id.clone()));
         data.insert("session_id", Value::String(self.session_id.clone()));
@@ -95,7 +107,10 @@ impl MAIFArtifact {
     }
 
     pub fn verify(&self, public_key: &RsaPublicKey) -> Result<bool, MAIFError> {
-        let signature_str = self.signature.as_ref().ok_or_else(|| MAIFError::Signature("No signature found".to_string()))?;
+        let signature_str = self
+            .signature
+            .as_ref()
+            .ok_or_else(|| MAIFError::Signature("No signature found".to_string()))?;
         let signature_bytes = general_purpose::STANDARD.decode(signature_str)?;
         let canonical_data = self.get_canonical_data()?;
 
@@ -103,7 +118,8 @@ impl MAIFArtifact {
         let signature = rsa::pkcs1v15::Signature::try_from(signature_bytes.as_slice())
             .map_err(|e| MAIFError::Signature(format!("Invalid signature format: {}", e)))?;
 
-        verifying_key.verify(canonical_data.as_bytes(), &signature)
+        verifying_key
+            .verify(canonical_data.as_bytes(), &signature)
             .map(|_| true)
             .or(Ok(false))
     }

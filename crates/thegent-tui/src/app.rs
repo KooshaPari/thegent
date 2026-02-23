@@ -36,9 +36,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Terminal;
 
-use crate::widgets::{
-    CommandRegistry, InteractiveInput, TableRow, TableWidget, TimelineWidget,
-};
+use crate::widgets::{CommandRegistry, InteractiveInput, TableRow, TableWidget, TimelineWidget};
 
 // ---------------------------------------------------------------------------
 // AgentRunRow — default row type for the main table
@@ -417,10 +415,16 @@ mod tests {
         let table_sel_before = app.table.selected_index();
         app.handle_key(KeyCode::Up, KeyModifiers::NONE);
         // history_up should have fired (not table navigation)
-        assert_eq!(app.table.selected_index(), table_sel_before,
-            "table selection must be unchanged when input buffer is non-empty");
+        assert_eq!(
+            app.table.selected_index(),
+            table_sel_before,
+            "table selection must be unchanged when input buffer is non-empty"
+        );
         // Input should now show the history entry
-        assert!(!app.input.buffer.is_empty(), "history_up should have set buffer to a history entry");
+        assert!(
+            !app.input.buffer.is_empty(),
+            "history_up should have set buffer to a history entry"
+        );
     }
 
     #[test]

@@ -6,9 +6,9 @@
 //! SECURITY: Uses std::process::Command (NOT shell exec).
 //! Command never invokes a shell and is completely safe from injection.
 
-use std::process::{Command, ExitCode};
-use std::path::PathBuf;
 use crate::utils::resolve_binary;
+use std::path::PathBuf;
+use std::process::{Command, ExitCode};
 
 pub struct AgentShim {
     agent_map: std::collections::HashMap<String, Vec<String>>,
@@ -19,9 +19,15 @@ impl AgentShim {
         let mut agent_map = std::collections::HashMap::new();
 
         // Define fallback chains
-        agent_map.insert("dex".to_string(), vec!["dex".to_string(), "codex".to_string()]);
+        agent_map.insert(
+            "dex".to_string(),
+            vec!["dex".to_string(), "codex".to_string()],
+        );
         agent_map.insert("codex".to_string(), vec!["codex".to_string()]);
-        agent_map.insert("copilot".to_string(), vec!["copilot".to_string(), "github-copilot".to_string()]);
+        agent_map.insert(
+            "copilot".to_string(),
+            vec!["copilot".to_string(), "github-copilot".to_string()],
+        );
         agent_map.insert("claude".to_string(), vec!["claude".to_string()]);
         agent_map.insert("cursor".to_string(), vec!["cursor".to_string()]);
 

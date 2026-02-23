@@ -30,13 +30,16 @@ impl QualityEvaluator {
                         .and_then(|v| v.as_str())
                         .unwrap_or("unknown")
                         .to_string(),
-                    file: issue.get("filename").and_then(|v| v.as_str()).map(String::from),
-                    line: issue.get("location").and_then(|v| {
-                        v.get("row").and_then(|r| r.as_u64()).map(|r| r as u32)
-                    }),
-                    column: issue.get("location").and_then(|v| {
-                        v.get("column").and_then(|c| c.as_u64()).map(|c| c as u32)
-                    }),
+                    file: issue
+                        .get("filename")
+                        .and_then(|v| v.as_str())
+                        .map(String::from),
+                    line: issue
+                        .get("location")
+                        .and_then(|v| v.get("row").and_then(|r| r.as_u64()).map(|r| r as u32)),
+                    column: issue
+                        .get("location")
+                        .and_then(|v| v.get("column").and_then(|c| c.as_u64()).map(|c| c as u32)),
                 };
                 issues.push(lint_issue);
             }
@@ -73,11 +76,11 @@ impl QualityEvaluator {
                                 .and_then(|v| v.as_str())
                                 .unwrap_or("unknown")
                                 .to_string(),
-                            file: issue.get("filePath").and_then(|v| v.as_str()).map(String::from),
-                            line: issue
-                                .get("line")
-                                .and_then(|v| v.as_u64())
-                                .map(|l| l as u32),
+                            file: issue
+                                .get("filePath")
+                                .and_then(|v| v.as_str())
+                                .map(String::from),
+                            line: issue.get("line").and_then(|v| v.as_u64()).map(|l| l as u32),
                             column: issue
                                 .get("column")
                                 .and_then(|v| v.as_u64())
@@ -139,10 +142,7 @@ impl QualityEvaluator {
     }
 
     /// Aggregate quality metrics from lint and coverage data
-    pub fn aggregate_metrics(
-        lint_issues: &[LintIssue],
-        coverage_percent: f64,
-    ) -> QualityMetrics {
+    pub fn aggregate_metrics(lint_issues: &[LintIssue], coverage_percent: f64) -> QualityMetrics {
         let (errors, warnings, _info) = Self::count_by_severity(lint_issues);
 
         QualityMetrics {
@@ -172,7 +172,9 @@ impl QualityEvaluator {
         for line in content.lines() {
             line_count += 1;
             let trimmed = line.trim();
-            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with("//") { continue; }
+            if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with("//") {
+                continue;
+            }
 
             // Simplified nesting and complexity proxies
             match ext {
@@ -180,10 +182,17 @@ impl QualityEvaluator {
                     // Python: indentation based
                     let indent = line.len() - line.trim_start().len();
                     let level = indent / 4;
-                    if level > max_nest { max_nest = level; }
+                    if level > max_nest {
+                        max_nest = level;
+                    }
 
-                    if trimmed.contains("if ") || trimmed.contains("elif ") || trimmed.contains("for ") ||
-                       trimmed.contains("while ") || trimmed.contains("except ") || trimmed.contains("with ") {
+                    if trimmed.contains("if ")
+                        || trimmed.contains("elif ")
+                        || trimmed.contains("for ")
+                        || trimmed.contains("while ")
+                        || trimmed.contains("except ")
+                        || trimmed.contains("with ")
+                    {
                         cyc += 1;
                         cog += 1 + level;
                     }
@@ -191,29 +200,41 @@ impl QualityEvaluator {
                         cyc += 1;
                         cog += 1;
                     }
-                },
+                }
                 "js" | "ts" | "jsx" | "tsx" | "rs" | "go" | "java" | "kt" => {
                     // Brace based
                     for c in trimmed.chars() {
                         if c == '{' {
                             current_nest += 1;
-                            if current_nest > max_nest { max_nest = current_nest; }
+                            if current_nest > max_nest {
+                                max_nest = current_nest;
+                            }
                         } else if c == '}' {
-                            if current_nest > 0 { current_nest -= 1; }
+                            if current_nest > 0 {
+                                current_nest -= 1;
+                            }
                         }
                     }
 
-                    if trimmed.contains("if ") || trimmed.contains("else if") || trimmed.contains("for ") ||
-                       trimmed.contains("while ") || trimmed.contains("switch ") || trimmed.contains("case ") ||
-                       trimmed.contains("catch ") {
+                    if trimmed.contains("if ")
+                        || trimmed.contains("else if")
+                        || trimmed.contains("for ")
+                        || trimmed.contains("while ")
+                        || trimmed.contains("switch ")
+                        || trimmed.contains("case ")
+                        || trimmed.contains("catch ")
+                    {
                         cyc += 1;
                         cog += 1 + current_nest;
                     }
-                    if trimmed.contains(" && ") || trimmed.contains(" || ") || trimmed.contains(" ?? ") {
+                    if trimmed.contains(" && ")
+                        || trimmed.contains(" || ")
+                        || trimmed.contains(" ?? ")
+                    {
                         cyc += 1;
                         cog += 1;
                     }
-                },
+                }
                 _ => {}
             }
         }

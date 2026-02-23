@@ -58,10 +58,7 @@ fn is_executable(path: &std::path::Path) -> bool {
 
 /// Execute a command and return its exit code
 pub fn exec_command(cmd: &str, args: &[String]) -> ExitCode {
-    match Command::new(cmd)
-        .args(args)
-        .status()
-    {
+    match Command::new(cmd).args(args).status() {
         Ok(status) => {
             let code = status.code().unwrap_or(1);
             ExitCode::from(code as u8)

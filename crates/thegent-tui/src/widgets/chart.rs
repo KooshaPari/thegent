@@ -149,8 +149,10 @@ impl BarChartWidget {
 
         // Build owned string storage so we can create `(&str, u64)` slices.
         let owned: Vec<(String, u64)> = self.data.clone();
-        let bar_data: Vec<(&str, u64)> =
-            owned.iter().map(|(label, v)| (label.as_str(), *v)).collect();
+        let bar_data: Vec<(&str, u64)> = owned
+            .iter()
+            .map(|(label, v)| (label.as_str(), *v))
+            .collect();
 
         let chart = BarChart::default()
             .block(block)
@@ -158,11 +160,7 @@ impl BarChartWidget {
             .bar_width(self.bar_width)
             .bar_gap(self.bar_gap)
             .bar_style(Style::default().fg(self.bar_color))
-            .value_style(
-                Style::default()
-                    .fg(Color::White)
-                    .bg(self.bar_color),
-            );
+            .value_style(Style::default().fg(Color::White).bg(self.bar_color));
 
         chart.render(area, buf);
     }

@@ -97,8 +97,7 @@ pub fn parse_stream<R: Read>(reader: R) -> JsonlIter<R> {
 /// Opens the file and returns a lazy iterator.  The file handle is held open
 /// for the lifetime of the iterator.
 pub fn parse_file(path: &Path) -> Result<JsonlIter<File>> {
-    let file = File::open(path)
-        .map_err(|e| anyhow::anyhow!("cannot open {:?}: {}", path, e))?;
+    let file = File::open(path).map_err(|e| anyhow::anyhow!("cannot open {:?}: {}", path, e))?;
     Ok(JsonlIter::new(file))
 }
 
@@ -129,7 +128,11 @@ pub fn filter_file<'a>(
                     other => other.to_string().trim_matches('"') == value_owned,
                 })
                 .unwrap_or(false);
-            if matches { Some(Ok(v)) } else { None }
+            if matches {
+                Some(Ok(v))
+            } else {
+                None
+            }
         }
         Err(e) => Some(Err(e)),
     }))
@@ -154,7 +157,11 @@ pub fn filter_stream<'a, R: Read + 'a>(
                     other => other.to_string().trim_matches('"') == value_owned,
                 })
                 .unwrap_or(false);
-            if matches { Some(Ok(v)) } else { None }
+            if matches {
+                Some(Ok(v))
+            } else {
+                None
+            }
         }
         Err(e) => Some(Err(e)),
     })
@@ -185,8 +192,7 @@ pub fn count_stream<R: Read>(reader: R) -> Result<usize> {
 
 /// Count non-blank records in a file (parses JSON to validate each line).
 pub fn count_file(path: &Path) -> Result<usize> {
-    let file = File::open(path)
-        .map_err(|e| anyhow::anyhow!("cannot open {:?}: {}", path, e))?;
+    let file = File::open(path).map_err(|e| anyhow::anyhow!("cannot open {:?}: {}", path, e))?;
     count_stream(file)
 }
 

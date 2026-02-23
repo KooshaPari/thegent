@@ -104,8 +104,8 @@ impl RiskCalculator {
         if factors.max_cost_cents == 0 {
             return 0.0;
         }
-        let normalized = factors.cost_cents.min(factors.max_cost_cents) as f64
-            / factors.max_cost_cents as f64;
+        let normalized =
+            factors.cost_cents.min(factors.max_cost_cents) as f64 / factors.max_cost_cents as f64;
         normalized.min(1.0)
     }
 

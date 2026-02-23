@@ -181,7 +181,7 @@ exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedE
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*"]
+exclude = ["templates/*", "src/fastmcp/*", "src/starlette/*", "src/opentelemetry/*", "src/key_value/*", ".worktrees/*", ".shadow-*", ".shadow-run*", "tests/test_unit_tray_*.py"]
 
 [tool.ruff.lint]
 select = [
@@ -211,7 +211,7 @@ ignore = [
     "UP045", "UP037", "RUF010", "FURB110", "TC003", "F821",
     "PLW0108", "DTZ011",
     # Additional non-blocking issues
-    "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203"
+    "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203", "T201"
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -73,7 +73,10 @@ fn main() -> ExitCode {
         let content = match fs::read_to_string(file) {
             Ok(c) => c,
             Err(err) => {
-                eprintln!("security-pipeline: failed reading {}: {err}", file.display());
+                eprintln!(
+                    "security-pipeline: failed reading {}: {err}",
+                    file.display()
+                );
                 return ExitCode::from(124);
             }
         };
@@ -102,10 +105,7 @@ fn main() -> ExitCode {
         for finding in blocking {
             eprintln!(
                 "[{:?}] {} {} {}",
-                finding.severity,
-                finding.id,
-                finding.category,
-                finding.message
+                finding.severity, finding.id, finding.category, finding.message
             );
         }
         ExitCode::from(1)

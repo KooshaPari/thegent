@@ -156,9 +156,10 @@ impl TimelineWidget {
 
     /// Scroll up (toward older events).
     pub fn scroll_up(&mut self) {
-        self.scroll_offset = self.scroll_offset.saturating_add(1).min(
-            self.events.len().saturating_sub(1),
-        );
+        self.scroll_offset = self
+            .scroll_offset
+            .saturating_add(1)
+            .min(self.events.len().saturating_sub(1));
     }
 
     /// Scroll down (toward newer events).

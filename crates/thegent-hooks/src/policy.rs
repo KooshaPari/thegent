@@ -94,8 +94,9 @@ impl PolicyEngine {
             match op {
                 "<" | "<=" | ">" | ">=" | "==" => {
                     if let Some(actual) = context.get(key).and_then(|v| v.as_f64()) {
-                        let threshold: f64 = value.parse()
-                            .map_err(|_| HookError::ParseError(format!("Invalid cost: {}", value)))?;
+                        let threshold: f64 = value.parse().map_err(|_| {
+                            HookError::ParseError(format!("Invalid cost: {}", value))
+                        })?;
                         Ok(match op {
                             "<" => actual < threshold,
                             "<=" => actual <= threshold,
@@ -108,7 +109,10 @@ impl PolicyEngine {
                         Ok(false)
                     }
                 }
-                _ => Err(HookError::ValidationError(format!("Unknown operator: {}", op))),
+                _ => Err(HookError::ValidationError(format!(
+                    "Unknown operator: {}",
+                    op
+                ))),
             }
         } else {
             Ok(false)
@@ -126,8 +130,9 @@ impl PolicyEngine {
             match op {
                 "<" | "<=" | ">" | ">=" | "==" => {
                     if let Some(actual) = context.get(key).and_then(|v| v.as_u64()) {
-                        let threshold: u64 = value.parse()
-                            .map_err(|_| HookError::ParseError(format!("Invalid threshold: {}", value)))?;
+                        let threshold: u64 = value.parse().map_err(|_| {
+                            HookError::ParseError(format!("Invalid threshold: {}", value))
+                        })?;
                         Ok(match op {
                             "<" => actual < threshold,
                             "<=" => actual <= threshold,
@@ -140,7 +145,10 @@ impl PolicyEngine {
                         Ok(false)
                     }
                 }
-                _ => Err(HookError::ValidationError(format!("Unknown operator: {}", op))),
+                _ => Err(HookError::ValidationError(format!(
+                    "Unknown operator: {}",
+                    op
+                ))),
             }
         } else {
             Ok(false)
@@ -168,8 +176,9 @@ impl PolicyEngine {
             match op {
                 ">=" | ">" | "<=" | "<" => {
                     if let Some(actual) = context.get(key).and_then(|v| v.as_u64()) {
-                        let threshold: u64 = value.parse()
-                            .map_err(|_| HookError::ParseError(format!("Invalid threshold: {}", value)))?;
+                        let threshold: u64 = value.parse().map_err(|_| {
+                            HookError::ParseError(format!("Invalid threshold: {}", value))
+                        })?;
                         Ok(match op {
                             "<" => actual < threshold,
                             "<=" => actual <= threshold,
@@ -181,7 +190,10 @@ impl PolicyEngine {
                         Ok(false)
                     }
                 }
-                _ => Err(HookError::ValidationError(format!("Unknown operator: {}", op))),
+                _ => Err(HookError::ValidationError(format!(
+                    "Unknown operator: {}",
+                    op
+                ))),
             }
         } else {
             Ok(false)
@@ -240,10 +252,14 @@ mod tests {
         let mut context = HashMap::new();
         context.insert("coverage".to_string(), serde_json::json!(85));
 
-        let result = engine.evaluate_quality_rule("coverage >= 80", &context).unwrap();
+        let result = engine
+            .evaluate_quality_rule("coverage >= 80", &context)
+            .unwrap();
         assert!(result);
 
-        let result = engine.evaluate_quality_rule("coverage >= 90", &context).unwrap();
+        let result = engine
+            .evaluate_quality_rule("coverage >= 90", &context)
+            .unwrap();
         assert!(!result);
     }
 

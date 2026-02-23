@@ -78,13 +78,28 @@ impl AuditRecord {
 /// Excludes the `hash` field itself from the computation.
 fn compute_hash(record: &AuditRecord) -> String {
     let mut map = BTreeMap::new();
-    map.insert("timestamp", serde_json::Value::String(record.timestamp.clone()));
-    map.insert("decision_id", serde_json::Value::String(record.decision_id.clone()));
-    map.insert("provider", serde_json::Value::String(record.provider.clone()));
+    map.insert(
+        "timestamp",
+        serde_json::Value::String(record.timestamp.clone()),
+    );
+    map.insert(
+        "decision_id",
+        serde_json::Value::String(record.decision_id.clone()),
+    );
+    map.insert(
+        "provider",
+        serde_json::Value::String(record.provider.clone()),
+    );
     map.insert("model", serde_json::Value::String(record.model.clone()));
-    map.insert("latency_ms", serde_json::Value::Number(record.latency_ms.into()));
+    map.insert(
+        "latency_ms",
+        serde_json::Value::Number(record.latency_ms.into()),
+    );
     map.insert("cost", serde_json::json!(record.cost));
-    map.insert("prev_hash", serde_json::Value::String(record.prev_hash.clone()));
+    map.insert(
+        "prev_hash",
+        serde_json::Value::String(record.prev_hash.clone()),
+    );
 
     let canonical = serde_json::to_string(&map).expect("BTreeMap serialization never fails");
     sha256_hex(canonical.as_bytes())
@@ -133,7 +148,20 @@ fn days_to_ymd(days: u64) -> (u32, u32, u32) {
         year += 1;
     }
     let leap = is_leap(year);
-    let month_days: [u32; 12] = [31, if leap { 29 } else { 28 }, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    let month_days: [u32; 12] = [
+        31,
+        if leap { 29 } else { 28 },
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
+    ];
     let mut month = 1u32;
     for &md in &month_days {
         if remaining < md as u64 {
@@ -335,8 +363,18 @@ mod tests {
 
     #[test]
     fn test_audit_record_hash_stable() {
-        let r1 = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 10, 0.001);
-        let r2 = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 10, 0.001);
+        let r1 = AuditRecord::new(
+            "lifecycle".to_string(),
+            "gemini-3-flash".to_string(),
+            10,
+            0.001,
+        );
+        let r2 = AuditRecord::new(
+            "lifecycle".to_string(),
+            "gemini-3-flash".to_string(),
+            10,
+            0.001,
+        );
         // Different timestamps/decision_ids → different hashes.
         // But same structure is verifiable.
         assert!(!r1.hash.is_empty());
@@ -346,7 +384,12 @@ mod tests {
 
     #[test]
     fn test_audit_record_hash_chain() {
-        let r = AuditRecord::new("thegent".to_string(), "claude-sonnet-4.6".to_string(), 50, 0.01);
+        let r = AuditRecord::new(
+            "thegent".to_string(),
+            "claude-sonnet-4.6".to_string(),
+            50,
+            0.01,
+        );
         let r2 = r.clone().with_prev_hash(r.hash.clone());
         assert_eq!(r2.prev_hash, r.hash);
         assert_ne!(r2.hash, r.hash); // Different because prev_hash changed.
@@ -358,7 +401,12 @@ mod tests {
         let path = dir.path().join("routing_audit.jsonl");
         let logger = AuditLogger::new(path.clone());
 
-        let r = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 5, 0.0001);
+        let r = AuditRecord::new(
+            "lifecycle".to_string(),
+            "gemini-3-flash".to_string(),
+            5,
+            0.0001,
+        );
         logger.append(&r).unwrap();
 
         let records = logger.read_all();
@@ -391,7 +439,12 @@ mod tests {
         let dir = tempdir().unwrap();
         let logger = AuditLogger::new(dir.path().join("routing_audit.jsonl"));
 
-        let r = AuditRecord::new("thegent".to_string(), "claude-sonnet-4.6".to_string(), 100, 0.01);
+        let r = AuditRecord::new(
+            "thegent".to_string(),
+            "claude-sonnet-4.6".to_string(),
+            100,
+            0.01,
+        );
         logger.append(&r).unwrap();
 
         let records = logger.read_all();
@@ -403,8 +456,18 @@ mod tests {
         let dir = tempdir().unwrap();
         let logger = AuditLogger::new(dir.path().join("routing_audit.jsonl"));
 
-        let r1 = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 10, 0.001);
-        let r2 = AuditRecord::new("thegent".to_string(), "claude-sonnet-4.6".to_string(), 50, 0.005);
+        let r1 = AuditRecord::new(
+            "lifecycle".to_string(),
+            "gemini-3-flash".to_string(),
+            10,
+            0.001,
+        );
+        let r2 = AuditRecord::new(
+            "thegent".to_string(),
+            "claude-sonnet-4.6".to_string(),
+            50,
+            0.005,
+        );
         logger.append(&r1).unwrap();
         logger.append(&r2).unwrap();
 
@@ -422,14 +485,24 @@ mod tests {
         // First session.
         {
             let logger = AuditLogger::new(path.clone());
-            let r = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 5, 0.001);
+            let r = AuditRecord::new(
+                "lifecycle".to_string(),
+                "gemini-3-flash".to_string(),
+                5,
+                0.001,
+            );
             logger.append(&r).unwrap();
         }
 
         // Second session: reads prior chain head.
         {
             let logger = AuditLogger::new(path.clone());
-            let r = AuditRecord::new("thegent".to_string(), "claude-sonnet-4.6".to_string(), 20, 0.002);
+            let r = AuditRecord::new(
+                "thegent".to_string(),
+                "claude-sonnet-4.6".to_string(),
+                20,
+                0.002,
+            );
             logger.append(&r).unwrap();
         }
 
@@ -443,7 +516,10 @@ mod tests {
     #[test]
     fn test_sha256_known_value() {
         let hash = sha256_hex(b"");
-        assert_eq!(hash, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+        assert_eq!(
+            hash,
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
     }
 
     // @trace FR-OPT-007
@@ -462,7 +538,12 @@ mod tests {
         let path = dir.path().join("subdir").join("routing_audit.jsonl");
         let logger = AuditLogger::new(path.clone());
 
-        let r = AuditRecord::new("lifecycle".to_string(), "gemini-3-flash".to_string(), 5, 0.001);
+        let r = AuditRecord::new(
+            "lifecycle".to_string(),
+            "gemini-3-flash".to_string(),
+            5,
+            0.001,
+        );
         logger.append(&r).unwrap();
 
         assert!(path.exists());
@@ -493,7 +574,11 @@ mod tests {
         let records = logger.read_all();
         assert_eq!(records.len(), 100);
         let chain_result = logger.verify_chain();
-        assert!(chain_result.is_ok(), "chain verification failed: {:?}", chain_result.err());
+        assert!(
+            chain_result.is_ok(),
+            "chain verification failed: {:?}",
+            chain_result.err()
+        );
         assert_eq!(chain_result.unwrap(), 100);
 
         // Verify the raw file has exactly 100 lines.

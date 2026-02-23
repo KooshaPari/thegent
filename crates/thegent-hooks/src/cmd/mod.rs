@@ -14,10 +14,7 @@ pub(crate) fn cmd_init() {
         .get("session_id")
         .and_then(|v| v.as_str())
         .unwrap_or("");
-    let head_sha = input
-        .get("head_sha")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let head_sha = input.get("head_sha").and_then(|v| v.as_str()).unwrap_or("");
     let hook_name = input
         .get("hook_name")
         .and_then(|v| v.as_str())

@@ -1,5 +1,5 @@
 //! Pre-write-validator hook binary
-//! 
+//!
 //! Validates files before they are written: encoding, size, syntax, etc.
 
 #![allow(unused)]
@@ -32,8 +32,12 @@ struct PreWriteValidatorInput {
     content: Option<String>,
 }
 
-fn default_max_size() -> u64 { 10 * 1024 * 1024 }
-fn default_max_line_length() -> usize { 1000 }
+fn default_max_size() -> u64 {
+    10 * 1024 * 1024
+}
+fn default_max_line_length() -> usize {
+    1000
+}
 
 fn main() -> ExitCode {
     let mut stdin = String::new();
@@ -52,25 +56,25 @@ fn main() -> ExitCode {
 
     let content = match &input.content {
         Some(c) => c.clone(),
-        None => {
-            match fs::read_to_string(&input.file_path) {
-                Ok(c) => c,
-                Err(err) => {
-                    if err.kind() == std::io::ErrorKind::NotFound {
-                        String::new()
-                    } else {
-                        eprintln!("pre-write-validator: failed to read file: {}", err);
-                        return ExitCode::from(2);
-                    }
+        None => match fs::read_to_string(&input.file_path) {
+            Ok(c) => c,
+            Err(err) => {
+                if err.kind() == std::io::ErrorKind::NotFound {
+                    String::new()
+                } else {
+                    eprintln!("pre-write-validator: failed to read file: {}", err);
+                    return ExitCode::from(2);
                 }
             }
-        }
+        },
     };
 
     // Check file size
     if content.len() as u64 > input.max_size {
-        println!(r#"{{"valid":false,"errors":[{{"rule":"file_size","message":"File exceeds {} bytes","line":null,"column":null}}],"exit_code":1}}"#, 
-            input.max_size);
+        println!(
+            r#"{{"valid":false,"errors":[{{"rule":"file_size","message":"File exceeds {} bytes","line":null,"column":null}}],"exit_code":1}}"#,
+            input.max_size
+        );
         return ExitCode::from(1);
     }
 
@@ -78,10 +82,13 @@ fn main() -> ExitCode {
 
     let check_encoding = input.check_encoding;
     let check_control_chars = input.check_control_chars;
-    
+
     // Validate encoding
     if check_encoding && !content.is_char_boundary(content.len()) {
-        errors.push(r#"{"rule":"encoding","message":"Invalid UTF-8","line":null,"column":null}"#.to_string());
+        errors.push(
+            r#"{"rule":"encoding","message":"Invalid UTF-8","line":null,"column":null}"#
+                .to_string(),
+        );
     }
 
     // Validate control characters
@@ -109,9 +116,13 @@ fn main() -> ExitCode {
 
     let valid = errors.is_empty();
     let exit_code = if valid { 0 } else { 1 };
-    
-    println!(r#"{{"valid":{},"errors":[{}],"exit_code":{}}}"#, 
-        valid, errors.join(","), exit_code);
+
+    println!(
+        r#"{{"valid":{},"errors":[{}],"exit_code":{}}}"#,
+        valid,
+        errors.join(","),
+        exit_code
+    );
 
     ExitCode::from(exit_code)
 }

@@ -159,7 +159,8 @@ impl PrewarmManager {
 
         // Scan for file types
         let python_files = self.find_files(project_dir, &[".py"])?;
-        let test_files = self.find_files(project_dir, &["test_", "_test.py", ".test.ts", ".test.tsx"])?;
+        let test_files =
+            self.find_files(project_dir, &["test_", "_test.py", ".test.ts", ".test.tsx"])?;
         let source_files = self.find_files(project_dir, &[".py", ".rs", ".ts", ".tsx", ".js"])?;
 
         let cache = SharedDataCache {
@@ -287,16 +288,16 @@ impl PrewarmManager {
         if output.status.success() {
             Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
         } else {
-            Err(PrewarmError::CommandFailed("git rev-parse HEAD".to_string()))
+            Err(PrewarmError::CommandFailed(
+                "git rev-parse HEAD".to_string(),
+            ))
         }
     }
 
     fn get_tool_version(&self, tool: &str) -> Result<String> {
         use std::process::Command;
 
-        let output = Command::new(tool)
-            .args(&["--version"])
-            .output()?;
+        let output = Command::new(tool).args(&["--version"]).output()?;
 
         if output.status.success() {
             Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
@@ -315,9 +316,17 @@ impl PrewarmManager {
         None
     }
 
-
     fn scan_available_tools(&self) -> Vec<String> {
-        let tools = vec!["python", "node", "cargo", "git", "ruff", "shellcheck", "jq", "rg"];
+        let tools = vec![
+            "python",
+            "node",
+            "cargo",
+            "git",
+            "ruff",
+            "shellcheck",
+            "jq",
+            "rg",
+        ];
         let mut available = Vec::new();
 
         for tool in tools {

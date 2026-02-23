@@ -6,9 +6,9 @@
 //! NOTE: Uses std::process::Command which is safe from shell injection
 //! (unlike shell exec, Command never invokes a shell)
 
-use std::process::{Command, ExitCode};
-use std::path::PathBuf;
 use crate::utils::resolve_binary;
+use std::path::PathBuf;
+use std::process::{Command, ExitCode};
 
 pub struct GrepShim {
     rg_bin: Option<PathBuf>,
@@ -27,8 +27,8 @@ impl GrepShim {
     fn is_recursive(args: &[String]) -> bool {
         for arg in args {
             match arg.as_str() {
-                "-r" | "-R" | "-rE" | "-ro" | "-roE" | "-rH" | "-rHo" |
-                "-rHoE" | "-rEl" | "-rEh" | "-rn" => return true,
+                "-r" | "-R" | "-rE" | "-ro" | "-roE" | "-rH" | "-rHo" | "-rHoE" | "-rEl"
+                | "-rEh" | "-rn" => return true,
                 _ => {}
             }
         }
@@ -155,9 +155,16 @@ impl GrepShim {
                 let has_exclude = rg_args.iter().any(|a| a.starts_with("-g"));
                 if !has_exclude {
                     let excludes = vec![
-                        "!node_modules", "!vendor", "!.git", "!target",
-                        "!out", "!dist", "!build", "!coverage",
-                        "!__pycache__", "!.venv",
+                        "!node_modules",
+                        "!vendor",
+                        "!.git",
+                        "!target",
+                        "!out",
+                        "!dist",
+                        "!build",
+                        "!coverage",
+                        "!__pycache__",
+                        "!.venv",
                     ];
                     for exclude in excludes {
                         final_args.push("-g".to_string());
@@ -166,10 +173,7 @@ impl GrepShim {
                 }
 
                 // Command::new() is safe from injection
-                match Command::new(rg_path)
-                    .args(&final_args)
-                    .status()
-                {
+                match Command::new(rg_path).args(&final_args).status() {
                     Ok(status) => {
                         let code = status.code().unwrap_or(1);
                         ExitCode::from(code as u8)
@@ -189,10 +193,7 @@ impl GrepShim {
         match &self.grep_bin {
             Some(grep_path) => {
                 // Command::new() is safe from injection
-                match Command::new(grep_path)
-                    .args(args)
-                    .status()
-                {
+                match Command::new(grep_path).args(args).status() {
                     Ok(status) => {
                         let code = status.code().unwrap_or(1);
                         ExitCode::from(code as u8)
