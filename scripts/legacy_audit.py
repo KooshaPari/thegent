@@ -2,7 +2,6 @@
 """
 Deep audit for legacy/older tools and modern alternatives
 """
-
 import re
 import json
 from pathlib import Path
@@ -17,70 +16,70 @@ LEGACY_ALTERNATIVES = {
             "reason": "Deprecated in favor of std::sync::OnceLock (Rust 1.70+)",
             "priority": "HIGH",
             "effort": "Medium",
-            "benefit": "No external dependency, better performance",
+            "benefit": "No external dependency, better performance"
         },
         "md5": {
             "modern": "sha2 or blake3",
             "reason": "MD5 is cryptographically broken. Use SHA-256 or BLAKE3",
             "priority": "HIGH",
             "effort": "Low",
-            "benefit": "Security improvement",
+            "benefit": "Security improvement"
         },
         "hex": {
             "modern": "base16ct or base16",
             "reason": "hex 0.4 is old. base16ct/base16 are faster and more modern",
             "priority": "MEDIUM",
             "effort": "Low",
-            "benefit": "Better performance, maintained",
+            "benefit": "Better performance, maintained"
         },
         "which": {
             "modern": "which 6.0+ (already updated)",
             "reason": "Ensure using latest which crate",
             "priority": "LOW",
             "effort": "None",
-            "benefit": "Already updated",
+            "benefit": "Already updated"
         },
         "thiserror": {
             "modern": "thiserror 2.0+",
             "reason": "thiserror 1.0 → 2.0 has better error handling",
             "priority": "MEDIUM",
             "effort": "Low",
-            "benefit": "Better error types, const generics",
+            "benefit": "Better error types, const generics"
         },
         "async-trait": {
             "modern": "async-trait 0.1 (check for 0.2 beta)",
             "reason": "Check for async-trait 0.2 beta with better performance",
             "priority": "LOW",
             "effort": "Low",
-            "benefit": "Performance improvements",
+            "benefit": "Performance improvements"
         },
         "log": {
             "modern": "tracing (already using)",
             "reason": "tracing is more modern than log",
             "priority": "LOW",
             "effort": "None",
-            "benefit": "Already using tracing",
+            "benefit": "Already using tracing"
         },
         "chrono": {
             "modern": "time crate (optional)",
             "reason": "time crate is lighter and faster than chrono",
             "priority": "LOW",
             "effort": "Medium",
-            "benefit": "Smaller binary, better performance",
+            "benefit": "Smaller binary, better performance"
         },
         "serde_yaml": {
             "modern": "yaml-rust or yaml-rs",
             "reason": "Check if newer yaml parsers are faster",
             "priority": "LOW",
             "effort": "Low",
-            "benefit": "Potential performance",
+            "benefit": "Potential performance"
         },
         "crossbeam-channel": {
             "modern": "tokio::sync::mpsc (if using tokio)",
             "reason": "If already using tokio, use tokio channels",
             "priority": "LOW",
             "effort": "Medium",
-            "benefit": "Fewer dependencies",
+            "benefit": "Fewer dependencies"
         },
     },
     # Go
@@ -90,35 +89,35 @@ LEGACY_ALTERNATIVES = {
             "reason": "pgx is faster, more modern, and actively maintained",
             "priority": "HIGH",
             "effort": "Medium",
-            "benefit": "Better performance, modern API",
+            "benefit": "Better performance, modern API"
         },
         "github.com/gorilla/mux": {
             "modern": "github.com/go-chi/chi or stdlib http",
             "reason": "chi is lighter, stdlib is simpler",
             "priority": "MEDIUM",
             "effort": "Medium",
-            "benefit": "Smaller binary, better performance",
+            "benefit": "Smaller binary, better performance"
         },
         "github.com/labstack/echo": {
             "modern": "github.com/gin-gonic/gin or stdlib",
             "reason": "Gin is faster, or use stdlib for simplicity",
             "priority": "LOW",
             "effort": "High",
-            "benefit": "Performance (if needed)",
+            "benefit": "Performance (if needed)"
         },
         "gorm.io/gorm": {
             "modern": "sqlc or sqlx",
             "reason": "sqlc/sqlx are faster, type-safe, and generate code",
             "priority": "MEDIUM",
             "effort": "High",
-            "benefit": "Type safety, better performance",
+            "benefit": "Type safety, better performance"
         },
         "github.com/golang-jwt/jwt": {
             "modern": "github.com/golang-jwt/jwt/v5 (already using)",
             "reason": "Already updated to v5",
             "priority": "LOW",
             "effort": "None",
-            "benefit": "Already modern",
+            "benefit": "Already modern"
         },
     },
     # Python
@@ -128,46 +127,45 @@ LEGACY_ALTERNATIVES = {
             "reason": "ruamel.yaml preserves formatting, yaml-rs-py is faster",
             "priority": "LOW",
             "effort": "Low",
-            "benefit": "Already using ruamel.yaml",
+            "benefit": "Already using ruamel.yaml"
         },
         "watchdog": {
             "modern": "watchfiles (already using)",
             "reason": "watchfiles is faster and more modern",
             "priority": "LOW",
             "effort": "None",
-            "benefit": "Already using watchfiles",
+            "benefit": "Already using watchfiles"
         },
         "psycopg2-binary": {
             "modern": "psycopg (psycopg3) or asyncpg",
             "reason": "psycopg3 is modern, asyncpg is async-native",
             "priority": "MEDIUM",
             "effort": "Medium",
-            "benefit": "Better async support, modern API",
+            "benefit": "Better async support, modern API"
         },
         "httpx": {
             "modern": "httpx (already modern) or curl-cffi",
             "reason": "httpx is modern, curl-cffi is faster",
             "priority": "LOW",
             "effort": "Low",
-            "benefit": "curl-cffi already in optional deps",
+            "benefit": "curl-cffi already in optional deps"
         },
         "uvicorn": {
             "modern": "granian (already added)",
             "reason": "granian is Rust-based, much faster",
             "priority": "LOW",
             "effort": "Low",
-            "benefit": "Already added granian",
+            "benefit": "Already added granian"
         },
         "pydantic": {
             "modern": "pydantic 2.x (already using)",
             "reason": "Already using modern pydantic",
             "priority": "LOW",
             "effort": "None",
-            "benefit": "Already modern",
+            "benefit": "Already modern"
         },
-    },
+    }
 }
-
 
 def find_rust_dependencies():
     """Find all Rust dependencies"""
@@ -195,7 +193,6 @@ def find_rust_dependencies():
 
     return deps
 
-
 def find_go_dependencies():
     """Find all Go dependencies"""
     deps = defaultdict(set)
@@ -208,7 +205,7 @@ def find_go_dependencies():
         try:
             content = go_mod.read_text()
             for dep_name in LEGACY_ALTERNATIVES["go"]:
-                pattern = rf"({re.escape(dep_name)})\s+v?([\d.]+)"
+                pattern = rf'({re.escape(dep_name)})\s+v?([\d.]+)'
                 matches = re.findall(pattern, content)
                 if matches:
                     for match in matches:
@@ -217,7 +214,6 @@ def find_go_dependencies():
             print(f"Error reading {go_mod}: {e}")
 
     return deps
-
 
 def find_python_dependencies():
     """Find all Python dependencies"""
@@ -233,19 +229,16 @@ def find_python_dependencies():
             for dep_name in LEGACY_ALTERNATIVES["python"]:
                 patterns = [
                     rf'["\']{re.escape(dep_name)}[^"\']*["\']',
-                    rf"{re.escape(dep_name)}\s*>=\s*([\d.]+)",
+                    rf'{re.escape(dep_name)}\s*>=\s*([\d.]+)',
                 ]
                 for pattern in patterns:
                     matches = re.findall(pattern, content)
                     if matches:
-                        deps[dep_name].add(
-                            (str(pyproject.relative_to(base_path)), matches[0] if matches else "present")
-                        )
+                        deps[dep_name].add((str(pyproject.relative_to(base_path)), matches[0] if matches else "present"))
         except Exception as e:
             print(f"Error reading {pyproject}: {e}")
 
     return deps
-
 
 def generate_report():
     """Generate comprehensive audit report"""
@@ -256,7 +249,11 @@ def generate_report():
     go_deps = find_go_dependencies()
     python_deps = find_python_dependencies()
 
-    report = {"rust": {}, "go": {}, "python": {}}
+    report = {
+        "rust": {},
+        "go": {},
+        "python": {}
+    }
 
     # Rust audit
     print("\n📦 RUST DEPENDENCIES")
@@ -270,7 +267,7 @@ def generate_report():
                 "reason": alt["reason"],
                 "priority": alt["priority"],
                 "effort": alt["effort"],
-                "benefit": alt["benefit"],
+                "benefit": alt["benefit"]
             }
             print(f"\n⚠️  {dep}")
             print(f"   Found in: {len(files)} file(s)")
@@ -292,7 +289,7 @@ def generate_report():
                 "reason": alt["reason"],
                 "priority": alt["priority"],
                 "effort": alt["effort"],
-                "benefit": alt["benefit"],
+                "benefit": alt["benefit"]
             }
             print(f"\n⚠️  {dep}")
             print(f"   Found in: {len(files)} file(s)")
@@ -314,7 +311,7 @@ def generate_report():
                 "reason": alt["reason"],
                 "priority": alt["priority"],
                 "effort": alt["effort"],
-                "benefit": alt["benefit"],
+                "benefit": alt["benefit"]
             }
             print(f"\n⚠️  {dep}")
             print(f"   Found in: {len(files)} file(s)")
@@ -344,7 +341,6 @@ def generate_report():
             print(f"   [{lang.upper()}] {dep} → {info['alternative']}")
 
     return report
-
 
 if __name__ == "__main__":
     generate_report()
