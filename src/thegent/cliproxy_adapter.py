@@ -1,3 +1,4 @@
+# MIGRATION NOTE: Migrate to cliproxyapi-plusplus Go SDK
 """CLIProxy adapter: exposes /v1/responses (HTTP + WebSocket) for Codex compatibility.
 
 cliproxyapi++ (kooshapari fork) may not implement /v1/responses. This adapter:
