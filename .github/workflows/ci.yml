@@ -29,6 +29,11 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+
       - name: Install Task runner
         uses: arduino/setup-task@v2
 
@@ -200,6 +205,14 @@ jobs:
         run: |
           task quality:max-lines
 
+      - name: Enforce worktree governance policy
+        run: |
+          ./scripts/governance_policy_check.sh
+
+      - name: Run rust quality CI lane (fmt/clippy/test)
+        run: |
+          task quality:rust:ci
+
       - name: Run mandatory quality gates (fail-closed)
         shell: bash
         run: |
@@ -224,9 +237,17 @@ jobs:
             exit 1
           fi
 
+      - name: Run shell/docs/config quality lane
+        run: |
+          task quality:shell-docs-config
+
       - name: Deterministic benchmark smoke
         run: |
           task bench:smoke:ci
+
+      - name: Run explicit polyglot quality orchestrator lane
+        run: |
+          task quality:polyglot:orchestrator:lane
 
       - name: Performance gate alias
         run: |

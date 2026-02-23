@@ -40,6 +40,21 @@ includes:
     vars:
       BASH_SRC: '{{.BASH_SRC}}'
       BASH_TESTS: '{{.BASH_TESTS}}'
+  go:
+    taskfile: ./templates/go/Taskfile.go.yml
+    optional: true
+  rust:
+    taskfile: ./templates/rust/Taskfile.rust.yml
+    optional: true
+    vars:
+      RUST_PKG: '{{.RUST_PKG | default "."}}'
+      RUST_ALL_FEATURES: '{{.RUST_ALL_FEATURES | default "--all-features"}}'
+  zig:
+    taskfile: ./templates/zig/Taskfile.zig.yml
+    optional: true
+  typescript:
+    taskfile: ./templates/typescript/Taskfile.typescript.yml
+    optional: true
   quality:
     taskfile: ./templates/shared/Taskfile.quality.yml
     optional: true
@@ -1276,6 +1291,68 @@ tasks:
     cmds:
       - task: quality:aggregate:artifacts
 
+  quality:polyglot:orchestrator:lane:
+    desc: "Run explicit polyglot quality gates for all detected native stacks"
+    cmds:
+      - task: quality:dag:hard
+
+  quality:polyglot:go:lane:
+    desc: "Run Go quality gates when a Go workspace is present"
+    cmds:
+      - |
+        if [ ! -f go.mod ] && [ ! -f go.work ]; then
+          echo "[SKIP] quality:polyglot:go:lane (no go.mod/go.work)"
+          exit 0
+        fi
+        if ! command -v go >/dev/null 2>&1; then
+          echo "[SKIP] go toolchain missing; cannot run go lane"
+          exit 0
+        fi
+        task go:lint
+        task go:test
+
+  quality:polyglot:ts:lane:
+    desc: "Run TypeScript quality gates when a TypeScript workspace is present"
+    cmds:
+      - |
+        if [ ! -f package.json ]; then
+          echo "[SKIP] quality:polyglot:ts:lane (no package.json)"
+          exit 0
+        fi
+        if [ ! -d node_modules ] && [ ! -d .yarn ] && [ ! -f bun.lockb ] && [ ! -f package-lock.json ] && [ ! -f pnpm-lock.yaml ]; then
+          echo "[SKIP] TS dependencies missing; install with bun/npm/yarn first"
+          exit 0
+        fi
+        task typescript:lint
+        task typescript:typecheck
+        task typescript:build
+        task typescript:test
+
+  quality:polyglot:zig:lane:
+    desc: "Run Zig quality gates when Zig sources are present"
+    cmds:
+      - |
+        if ! find . -name "*.zig" | head -n 1 | grep -q .; then
+          echo "[SKIP] quality:polyglot:zig:lane (no .zig sources)"
+          exit 0
+        fi
+        if ! command -v zig >/dev/null 2>&1; then
+          echo "[SKIP] zig toolchain missing; cannot run zig lane"
+          exit 0
+        fi
+        task zig:fmt:check
+        task zig:test
+
+  quality:polyglot:mojo:lane:
+    desc: "Run Mojo quality gates when Mojo sources are present"
+    cmds:
+      - |
+        if ! find src -name "*.mojo" | head -n 1 | grep -q .; then
+          echo "[SKIP] quality:polyglot:mojo:lane (no mojo sources)"
+          exit 0
+        fi
+        task quality:runtime-contracts:mojo-kernel
+
   quality:harness-contracts:strict:
     desc: "Run strict harness contract chain with required-provider gate"
     cmds:
@@ -1346,11 +1423,17 @@ tasks:
       - task: quality:runtime-contracts:zig-abi
       - task: quality:runtime-contracts:mojo-kernel
 
+  quality:governance:policy:
+    desc: "Validate governance policy docs and enforcement references."
+    cmds:
+      - ./scripts/governance_policy_check.sh
+
   quality:
     desc: "Run full strict quality pipeline (max-lines/lint/type/test/traceability)"
     cmds:
       - task: shims:guard
       - task: shims:probe
+      - task: quality:rust:ci
       - task: quality:rust:links-conflicts
       - task: quality:rust:pyo3-drift
       - task: quality:max-lines
@@ -1358,6 +1441,8 @@ tasks:
       - task: quality:deprecated-aliases:strict
       - task: quality:instruction-architecture
       - task: quality:harness-contracts
+      - task: quality:governance:policy
+      - task: quality:shell-docs-config
       - task: quality:cliproxy-parent
       - task: quality:runtime-contracts
       - task: lint:strict
@@ -1366,6 +1451,62 @@ tasks:
       - zsh scripts/traceability-validator.sh
       - zsh scripts/dx-audit.sh
       - uv run ruff check .
+
+  quality:rust:ci:
+    desc: "Canonical rust CI lane for quality (fmt/check/clippy/test) in deterministic order."
+    cmds:
+      - |
+        if ! command -v cargo >/dev/null 2>&1; then
+          echo "[FAIL] Cargo is required for quality:rust:ci" >&2
+          exit 1
+        fi
+      - |
+        if [ ! -f crates/Cargo.toml ]; then
+          echo "[FAIL] crates/Cargo.toml is required for quality:rust:ci" >&2
+          exit 1
+        fi
+      - |
+        fmt_files="${QUALITY_RUST_FORMAT_FILES:-}"
+        if [ -z "$fmt_files" ]; then
+          fmt_files="$(git diff --name-only origin/main...HEAD -- '*.rs' | tr '\n' ' ')"
+        fi
+        if [ -n "$fmt_files" ]; then
+          cargo fmt --all --manifest-path crates/Cargo.toml --check -- $fmt_files
+        else
+          echo "[SKIP] No rust files in current diff for fmt check"
+        fi
+      - cargo check --workspace --manifest-path crates/Cargo.toml --all-targets
+      - cargo clippy --workspace --manifest-path crates/Cargo.toml --all-targets --all-features -- -D warnings
+      - cargo test --workspace --manifest-path crates/Cargo.toml --all-targets --all-features
+
+  quality:shell-docs-config:
+    desc: "Run shell/doc/config quality checks via focused pre-commit hooks."
+    cmds:
+      - |
+        changed_files="${QUALITY_DOCS_CHECK_FILES:-$(git diff --name-only origin/main...HEAD -- .)}"
+        changed_docs="$(printf '%s\n' "$changed_files" | rg '^docs/.+\.md$')"
+        if [ -z "$changed_files" ]; then
+          echo "[SKIP] no changed files for shell/doc/config checks"
+          exit 0
+        fi
+        for hook in \
+          check-yaml \
+          check-toml \
+          check-json \
+          check-merge-conflict \
+          check-ast \
+          check-added-large-files \
+          trailing-whitespace \
+          end-of-file-fixer \
+          detect-private-key; do
+          uv run pre-commit run "$hook" --files $changed_files
+        done
+        uv run pre-commit run shellcheck --files $changed_files
+        if [ -n "$changed_docs" ]; then
+          DOCS_AUDIT_FILES="$changed_docs" zsh scripts/docs-convert-audit.sh docs
+        else
+          echo "[SKIP] no changed markdown files under docs for convert audit"
+        fi
 
   metrics:loc:
     desc: "Collect LOC/complexity metrics for src/thegent/ and write to .quality/loc-metrics.json (WL-135)."

@@ -13,7 +13,7 @@ runner = CliRunner()
 
 
 @pytest.mark.e2e
-class TestSyncBootstrap-gh:
+class TestSyncBootstrapGh:
     """E2E tests for thegent sync bootstrap-gh command."""
 
     def test_sync_bootstrap_gh_exits_zero(self) -> None:
