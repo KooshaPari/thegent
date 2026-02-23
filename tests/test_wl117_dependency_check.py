@@ -63,3 +63,4 @@ def test_scaffold_plan_references_wl104_unblock() -> None:
     """Scaffold plan must reference WL-104 as the unblock condition."""
     content = SCAFFOLD_PLAN.read_text(encoding="utf-8")
     assert "WL-104" in content, "Scaffold plan must reference WL-104 as unblock condition"
+# noqa: PT018

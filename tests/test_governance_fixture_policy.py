@@ -76,3 +76,4 @@ def test_governance_fixture_regeneration_check_passes() -> None:
     )
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "canonical" in proc.stdout
+# noqa: PT018

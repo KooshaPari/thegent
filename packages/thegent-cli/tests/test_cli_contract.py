@@ -1,6 +1,5 @@
 """Contract tests for thegent-cli package."""
 
-import pytest
 
 
 class TestCliContract:

@@ -1,4 +1,17 @@
 """Thegent implementation layer: functions that return dict/str instead of printing."""
+import json
+import logging
+import subprocess
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+    from thegent.config_provider import ConfigProvider
+
+from rich.console import Console
+
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
 __all__ = [
     "CONTRACT_SCHEMA_VERSION",
@@ -223,21 +236,6 @@ __all__ = [
     "work_stream_complete_impl",
     "work_stream_orchestration",
 ]
-
-
-import json
-import logging
-import subprocess
-import sys
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
-
-if TYPE_CHECKING:
-    from thegent.config_provider import ConfigProvider
-
-from rich.console import Console
-
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
 from thegent.agents import (
     get_fallback_agents,

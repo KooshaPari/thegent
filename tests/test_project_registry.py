@@ -94,7 +94,7 @@ class TestProjectRegistryCreateMilestone:
         assert milestone.name == "v1.0"
 
     def test_create_milestone_invalid_product(self, registry: ProjectRegistry) -> None:
-        with pytest.raises(ValueError, match="Product .* not found"):
+        with pytest.raises(ValueError, match=r"Product .* not found"):
             registry.create_milestone(product_id="nonexistent", name="v1.0")
 
 
@@ -107,7 +107,7 @@ class TestProjectRegistryCreateSprint:
         assert sprint.milestone_id == milestone.id
 
     def test_create_sprint_invalid_milestone(self, registry: ProjectRegistry) -> None:
-        with pytest.raises(ValueError, match="Milestone .* not found"):
+        with pytest.raises(ValueError, match=r"Milestone .* not found"):
             registry.create_sprint(milestone_id="nonexistent", name="Sprint 1")
 
 
@@ -121,7 +121,7 @@ class TestProjectRegistryCreateTask:
         assert task.sprint_id == sprint.id
 
     def test_create_task_invalid_sprint(self, registry: ProjectRegistry) -> None:
-        with pytest.raises(ValueError, match="Sprint .* not found"):
+        with pytest.raises(ValueError, match=r"Sprint .* not found"):
             registry.create_task(sprint_id="nonexistent", name="Task 1")
 
 
@@ -137,7 +137,7 @@ class TestProjectRegistryCreateEpisode:
         assert episode.status == "active"
 
     def test_create_episode_invalid_task(self, registry: ProjectRegistry) -> None:
-        with pytest.raises(ValueError, match="Task .* not found"):
+        with pytest.raises(ValueError, match=r"Task .* not found"):
             registry.create_episode(task_id="nonexistent")
 
 

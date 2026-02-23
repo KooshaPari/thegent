@@ -502,3 +502,4 @@ class TestMcpSkillTools:
         backend = DiscoverySkillBackend()
         result = backend.activate_skill("__no_such_skill_wl101__")
         assert result is None
+# noqa: PT018

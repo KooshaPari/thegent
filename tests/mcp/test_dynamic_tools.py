@@ -32,7 +32,7 @@ def test_rejects_duplicate_tool_names_per_session() -> None:
 
 def test_rejects_blank_tool_description() -> None:
     registry = DynamicToolRegistry()
-    with pytest.raises(ValueError, match="tool_spec.description must be non-empty"):
+    with pytest.raises(ValueError, match=r"tool_spec.description must be non-empty"):
         registry.register_dynamic_tool(
             "s1",
             DynamicToolSpec(name="alpha", description="   ", input_schema={"type": "object"}),

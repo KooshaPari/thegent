@@ -192,7 +192,7 @@ async def test_mojo_bridge_dispatch_success_cases() -> None:
 
 
 @pytest.mark.parametrize(
-    "cost,quality,latency,expected_score",
+    ("cost", "quality", "latency", "expected_score"),
     [
         (1.2, 1.2, 1.2, 1.0),  # F5: above upper bound -> clamped to 1.0
         (-0.5, 0.2, 0.1, 0.0),  # F6: negative -> clamped to 0.0

@@ -49,10 +49,9 @@ def test_browser_use_available():
             import browser_use_contract_smoke as smoke
 
             # Should not raise
-            try:
+            with pytest.raises(SystemExit) as exc_info:
                 smoke.main()
-            except SystemExit as e:
-                assert e.code == 0
+            assert exc_info.value.code == 0
 
 
 if __name__ == "__main__":

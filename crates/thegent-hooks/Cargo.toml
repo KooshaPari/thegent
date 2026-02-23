@@ -16,6 +16,34 @@ path = "src/bin/quality-gate.rs"
 name = "security-pipeline"
 path = "src/bin/security-pipeline.rs"
 
+[[bin]]
+name = "stop-reconcile"
+path = "src/bin/stop-reconcile.rs"
+
+[[bin]]
+name = "spec-verifier"
+path = "src/bin/spec-verifier.rs"
+
+[[bin]]
+name = "pre-write-validator"
+path = "src/bin/pre-write-validator.rs"
+
+[[bin]]
+name = "qa-policy-test"
+path = "src/bin/qa-policy-test.rs"
+
+[[bin]]
+name = "task-completion-verifier"
+path = "src/bin/task-completion-verifier.rs"
+
+[[bin]]
+name = "post-edit-checker"
+path = "src/bin/post-edit-checker.rs"
+
+[[bin]]
+name = "complexity-ratchet"
+path = "src/bin/complexity-ratchet.rs"
+
 [dependencies]
 ignore = "0.4"
 jsonschema = "0.26"

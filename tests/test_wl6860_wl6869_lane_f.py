@@ -258,7 +258,7 @@ def test_wl6864_transform_wrong_shape_records_diagnostics() -> None:
 def _patch_ps_impl(monkeypatch: pytest.MonkeyPatch) -> None:
     from thegent.cli.commands import impl
 
-    monkeypatch.setattr(impl, "ps_impl", lambda all=True: [])
+    monkeypatch.setattr(impl, "ps_impl", lambda all_flag=True: [])
 
 
 def test_wl6865_optional_module_present(monkeypatch: pytest.MonkeyPatch) -> None:

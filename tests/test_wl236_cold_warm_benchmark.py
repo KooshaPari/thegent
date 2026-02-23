@@ -90,7 +90,7 @@ class TestColdWarmBenchmarkSplitter:
         cold = splitter.cold_runs()
         assert len(cold) == 2
         assert all(not run.warm for run in cold)
-        assert set(run.run_id for run in cold) == {"cold-1", "cold-2"}
+        assert {run.run_id for run in cold} == {"cold-1", "cold-2"}
 
     def test_warm_runs_separation(self) -> None:
         """Test that warm_runs returns only warm runs."""
@@ -102,7 +102,7 @@ class TestColdWarmBenchmarkSplitter:
         warm = splitter.warm_runs()
         assert len(warm) == 2
         assert all(run.warm for run in warm)
-        assert set(run.run_id for run in warm) == {"warm-1", "warm-2"}
+        assert {run.run_id for run in warm} == {"warm-1", "warm-2"}
 
     def test_average_cold_single_run(self) -> None:
         """Test average_cold with a single cold run."""

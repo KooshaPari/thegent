@@ -51,8 +51,8 @@ from thegent_cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent_cli.commands.run_cmds import bg_cmd
-from thegent_cli.commands.session_cmds import history_cmd
+from thegent_cli.commands.run_cmds import bg_cmd  # noqa: E402
+from thegent_cli.commands.session_cmds import history_cmd  # noqa: E402
 
 
 def dag_validate_cmd(cd: Path | None = None) -> None:
