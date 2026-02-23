@@ -1042,6 +1042,7 @@ tasks:
     desc: "Run all linters"
     cmds:
       - task: lint:python
+      - task: lint:prose
       - task: typecheck
       - task: lint:dead-code
       - task: lint:shell
@@ -1054,6 +1055,12 @@ tasks:
     cmds:
       - uv run ruff check . --output-format=grouped
       - uv run ruff format --check .
+
+  lint:prose:
+    desc: "Prose linting via Vale (README/docs/governance and key markdown surfaces)."
+    cmds:
+      - vale --version
+      - vale README.md AGENTS.md CLAUDE.md docs
 
   lint:strict:
     desc: "Strict type checking (basedpyright + mypy) - recommended for CI/commit"
@@ -1565,6 +1572,16 @@ tasks:
     cmds:
       - task: hooks:run:pre-push
       - THGENT_ACT_DOCKERLESS=1 task ci:local-gha:pre-push
+
+  integration:context7:smoke:
+    desc: "Fail-fast Context7 endpoint contract smoke for Spike Batch A."
+    cmds:
+      - uv run python scripts/context7_contract_smoke.py
+
+  integration:beads:smoke:
+    desc: "Fail-fast beads endpoint contract smoke for Spike Batch A."
+    cmds:
+      - uv run python scripts/beads_contract_smoke.py
 
   hooks:run:full:
     desc: "Run both local pre-commit and pre-push stages across all files."
