@@ -39,7 +39,7 @@ depends_on = ["thegent.output_parser", "thegent.config"]
 
 [[modules]]
 path = "thegent.models"
-depends_on = ["thegent.config", "thegent.agents", "thegent.routing"]
+depends_on = ["thegent.config", "thegent.agents", "thegent.utils.routing_impl"]
 
 [[modules]]
 path = "thegent.execution"
@@ -47,7 +47,7 @@ depends_on = [ "thegent.contracts", "thegent.cli", "thegent.config"]
 
 [[modules]]
 path = "thegent.agents"
-depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.cli", "thegent.execution", "thegent.routing"]
+depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.cli", "thegent.execution", "thegent.utils.routing_impl"]
 
 [[modules]]
 path = "thegent.operations"
@@ -62,7 +62,7 @@ path = "thegent.planning"
 depends_on = [ "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
 
 [[modules]]
-path = "thegent.routing"
+path = "thegent.utils.routing_impl"
 depends_on = []
 
 [[modules]]
@@ -81,11 +81,46 @@ depends_on = [
     "thegent.orchestration_modes",
     "thegent.planning",
     "thegent.exit_codes",
-    "thegent.routing"
+    "thegent.utils.routing_impl"
 , "thegent.output_parser", "thegent.observability"]
 
 [[modules]]
 path = "thegent.mcp_server"
+depends_on = []
+
+# Track 4: Sub-project Split
+# Phase 1: Infrastructure (P1.3)
+
+# thegent-cli sub-project
+[[modules]]
+path = "thegent.cli.commands"
+depends_on = ["thegent.config", "thegent.cli.parser"]
+
+# thegent-agents sub-project  
+[[modules]]
+path = "thegent.agents.pool"
+depends_on = ["thegent.config", "thegent.agents.executor"]
+
+[[modules]]
+path = "thegent.agents.executor"
+depends_on = ["thegent.config", "thegent.contracts"]
+
+# thegent-mcp sub-project
+[[modules]]
+path = "thegent.mcp.providers"
+depends_on = ["thegent.config"]
+
+[[modules]]
+path = "thegent.mcp.tools"
+depends_on = ["thegent.config", "thegent.mcp.providers"]
+
+# Contracts module (new)
+[[modules]]
+path = "thegent.contracts.mcp"
+depends_on = []
+
+[[modules]]
+path = "thegent.contracts.ipc"
 depends_on = []
 
 [[modules]]
