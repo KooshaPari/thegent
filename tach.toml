@@ -59,11 +59,11 @@ depends_on = []
 
 [[modules]]
 path = "thegent.planning"
-depends_on = ["thegent.routing", "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
+depends_on = [ "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
 
 [[modules]]
 path = "thegent.routing"
-depends_on = [ "thegent.execution", "thegent.config", "thegent.contracts", "thegent.models"]
+depends_on = []
 
 [[modules]]
 path = "thegent.observability"

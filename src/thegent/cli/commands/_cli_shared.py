@@ -6,8 +6,10 @@ WL-124: Monolith Split shared helpers.
 from __future__ import annotations
 
 import contextlib
+import importlib
 import json
 import os
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -32,12 +34,23 @@ def _get_yaml_infra():
 class LazyConsole:
     """Lazy-loaded rich console to speed up CLI startup."""
 
-    def __getattr__(self, name: str) -> Any:
-        from rich.console import Console
+    _real_console: Any | None = None
 
-        global console
-        console = Console()
-        return getattr(console, name)
+    def _resolve_target(self) -> Any:
+        # Allow tests to patch `thegent.cli.console` and have all command modules honor it.
+        cli_module = sys.modules.get("thegent.cli")
+        if cli_module is not None:
+            patched = getattr(cli_module, "console", None)
+            if patched is not None and patched is not self:
+                return patched
+        if self._real_console is None:
+            from rich.console import Console
+
+            self._real_console = Console()
+        return self._real_console
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._resolve_target(), name)
 
 
 console = LazyConsole()
@@ -50,14 +63,20 @@ if TYPE_CHECKING:
 # Lazy imports for thegent modules to speed up startup.
 def _lazy_import(module: str, name: str) -> Callable[..., Any]:
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        import importlib
+        cli_module = sys.modules.get("thegent.cli")
+        if cli_module is not None and hasattr(cli_module, name):
+            patched = getattr(cli_module, name)
+            if patched is not wrapper and patched is not globals().get(name):
+                if callable(patched):
+                    return patched(*args, **kwargs)
+                return patched
 
         m = importlib.import_module(module)
         f = getattr(m, name)
-        # For non-callable attributes (like constants), we might need another way,
-        # but for functions this works and replaces the global.
         globals()[name] = f
-        return f(*args, **kwargs)
+        if callable(f):
+            return f(*args, **kwargs)
+        return f
 
     return wrapper
 

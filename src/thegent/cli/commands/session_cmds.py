@@ -742,8 +742,8 @@ def inspect_cmd(
                         "status": st,
                     }
                     console.print_json(data=output)
-                continue
-            console.print(st.get("status", ""))
+            else:
+                console.print(st.get("status", ""))
         except Exception as e:
             console.print(f"[red]status error: {e}[/red]")
             continue
@@ -897,19 +897,20 @@ def resume_cmd(
     prompt: str | None = None,
     skills: list[str] | None = None,
 ) -> None:
-    """WL-110: Resume a background session and optionally send a follow-up prompt."""
-    from thegent.cli.commands.impl import resume_impl
+    """Resume a session in the registry state machine."""
+    sid = _resolve_session_id(session_id)
+    settings = ThegentSettings()
+    registry = RunRegistry(settings.session_dir)
 
-    result = resume_impl(session_id=session_id, prompt=prompt, skills=skills)
-    if "error" in result:
-        console.print(f"[red]{result['error']}[/red]")
-        raise typer.Exit(result.get("exit_code", 1))
+    meta_path = _find_session_meta(settings, sid)
+    m = _read_session_meta(meta_path)
+    run_id = m.get("run_id")
+    if not run_id:
+        console.print(f"[red]Could not find run_id for session {sid}.[/red]")
+        raise typer.Exit(1)
 
-    console.print(f"[green]Session {result['session_id']} resumed.[/green]")
-    console.print(f"[dim]Run ID: {result['run_id']}[/dim]")
-    console.print(f"[dim]State: {result['state_path']}[/dim]")
-    if result.get("prompt_sent"):
-        console.print("[dim]Follow-up prompt queued to session input.[/dim]")
+    registry.register_resume(run_id)
+    console.print(f"[green]Session {sid} marked as RESUMED in registry.[/green]")
 
 
 def session_fork_cmd(

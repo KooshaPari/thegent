@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Annotated, Literal, cast
 
 import typer
+from typer.models import OptionInfo
 
 from rich.panel import Panel
 from rich.table import Table
@@ -78,6 +79,25 @@ def run_cmd(
     ),
 ) -> None:
     """Run an agent or droid with the given prompt. Model-first: agent=None, model set."""
+    if isinstance(shadow, OptionInfo):
+        shadow = False
+    if isinstance(lock, OptionInfo):
+        lock = None
+    if isinstance(remote, OptionInfo):
+        remote = None
+    if isinstance(output_schema, OptionInfo):
+        output_schema = None
+    if isinstance(image, OptionInfo):
+        image = None
+    if isinstance(audio, OptionInfo):
+        audio = None
+    if isinstance(google_grounding, OptionInfo):
+        google_grounding = False
+    if isinstance(reasoning, OptionInfo):
+        reasoning = None
+    if isinstance(skills, OptionInfo):
+        skills = None
+
     from thegent.cli.commands.impl import run_impl
     from thegent.models import ModelCatalog, resolve_route
 
@@ -102,10 +122,6 @@ def run_cmd(
                 quality_floor=getattr(settings, "cost_quality_min_weight", 0.1),
                 lane="standard",
             )
-            if resolved is None:
-                provider_routes = [r for r in routes if str(getattr(r, "provider", "")) == str(provider)]
-                if provider_routes:
-                    resolved = provider_routes[0]
         elif routes:
             resolved = routes[0]
 
@@ -193,11 +209,6 @@ def run_cmd(
             console.print(f"[dim]Available Agents: {res['agents']}[/dim]")
         raise typer.Exit(res.get("exit_code", 1))
 
-    if res.get("stdout"):
-        console.print(res["stdout"])
-    if res.get("stderr"):
-        console.print(res["stderr"], style="dim")
-
     context_line = _format_context_usage_line(res.get("context_usage"))
     if context_line:
         console.print(f"[dim]{context_line}[/dim]")
@@ -209,10 +220,10 @@ def run_cmd(
         console.print(f"[dim]{line}[/dim]")
 
     if full:
-        if res.get("stderr"):
-            console.print(res["stderr"], style="dim")
         if res.get("stdout"):
             console.print(res["stdout"])
+        if res.get("stderr"):
+            console.print(res["stderr"], style="dim")
     # condensed output is already in stdout if not full
     elif res.get("stdout"):
         console.print(res["stdout"])

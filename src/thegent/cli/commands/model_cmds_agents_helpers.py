@@ -42,10 +42,6 @@ def render_agents_table(
         table.add_row(display_name, _AGENT_BACKENDS.get(canonical, "Direct"))
 
     console.print(table)
-    console.print(
-        "[dim]Backend = LLM source. Codex is the harness. "
-        "cliproxy bundles all APIs: Claude, Gemini, Copilot, Codex, Cursor, MiniMax, GLM, NIM.[/dim]"
-    )
 
 
 def render_droids_table(droids: list[str], *, console: Any) -> None:
