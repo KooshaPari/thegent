@@ -334,7 +334,6 @@ class AutoLaunchSystem:
         self.sync_database()
 
         # Send notification
-        import subprocess
 
         try:
             shim_run(
@@ -799,7 +798,6 @@ class AutoLaunchSystem:
 
     def _award_xp(self, session: dict[str, Any]) -> None:
         """Award XP for a successful session completion."""
-        import subprocess
 
         agent = session.get("agent", "unknown")
         item_id = session.get("workstream_item_id", "unknown")

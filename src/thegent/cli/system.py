@@ -11,11 +11,10 @@ Usage:
 
 import argparse
 import orjson as json
-import os
 import shutil
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 MANIFEST_PATH = Path(__file__).parent.parent.parent.parent / "templates" / "system-manifest.json"
 
@@ -172,7 +171,7 @@ def install_target(
                 if verbose:
                     pass
                 results["copied"] += 1
-        except Exception as e:
+        except Exception:
             results["errors"] += 1
 
     return results

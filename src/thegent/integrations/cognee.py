@@ -15,6 +15,8 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 
+from thegent.integrations.base import DataclassConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +26,7 @@ class CogneeStatus(Enum):
 
 
 @dataclass
-class CogneeConfig:
-    enabled: bool = False
+class CogneeConfig(DataclassConfig):
     api_url: str = "http://localhost:8000"
 
 
@@ -37,10 +38,9 @@ class CogneeClient:
             self._status = CogneeStatus.ENABLED
 
     def _load_config(self):
-        return CogneeConfig(
-            enabled=os.getenv("THEGENT_ENABLE_COGNEE", "").lower() in ("1", "true", "yes"),
-            api_url=os.getenv("COGNEE_API_URL", "http://localhost:8000"),
-        )
+        config = CogneeConfig.from_env("COGNEE_")
+        config.enabled = os.environ.get("THEGENT_ENABLE_COGNEE", "").lower() in ("1", "true", "yes")
+        return config
 
     @property
     def is_enabled(self): return self._config.enabled

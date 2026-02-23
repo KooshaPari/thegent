@@ -5,12 +5,16 @@ from __future__ import annotations
 import orjson as json
 import os
 import signal
+import subprocess
 import sys
 import time
 from typing import Any
 
 from thegent.cli.commands import cli as _cli_surface
 from thegent.cli.commands import _cli_shared as _shared
+
+# Backward compatibility - expose commonly used modules for test mocking
+Columns = getattr(_cli_surface, "Columns", None)
 
 
 def __getattr__(name: str) -> Any:

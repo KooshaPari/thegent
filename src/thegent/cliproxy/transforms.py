@@ -5,7 +5,6 @@ These can be used by both thegent and standalone CLI tools.
 """
 
 import hashlib
-import re
 from typing import Any, Optional
 
 

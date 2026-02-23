@@ -411,7 +411,7 @@ def _append_observe_summary_snapshot(
     path = _health_snapshot_log_path()
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, sort_keys=True).decode())
+            fh.write(json.dumps(record, option=json.OPT_SORT_KEYS).decode())
             fh.write("\n")
     except OSError:
         return

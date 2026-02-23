@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import orjson as json
 import os
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any

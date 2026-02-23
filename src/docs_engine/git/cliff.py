@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import subprocess
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 
 from docs_engine.db.indexer import DocIndexer

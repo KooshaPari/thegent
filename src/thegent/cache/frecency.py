@@ -21,7 +21,7 @@ import contextlib
 import math
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:

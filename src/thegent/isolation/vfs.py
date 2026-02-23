@@ -4,7 +4,6 @@ import logging
 import os
 import platform
 import shutil
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 

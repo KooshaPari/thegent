@@ -32,17 +32,5 @@ def roid() -> None:
     _exec_shim("roid")
 
 
-def droid() -> None:
-    _exec_shim("droid")
-
-
 def fanta() -> None:
     _exec_shim("fanta")
-
-
-def anen() -> None:
-    _exec_shim("anen")
-
-
-def antigma() -> None:
-    _exec_shim("antigma")

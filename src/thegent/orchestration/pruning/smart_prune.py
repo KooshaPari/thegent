@@ -381,7 +381,6 @@ class SmartPruner:
 
     def _show_interactive_menu(self, session: dict[str, Any], pane: TmuxPane):
         """Show a tmux menu for resource management."""
-        import subprocess
 
         pid = int(session["pid"])
         sid = session["id"]

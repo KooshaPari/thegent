@@ -1,7 +1,6 @@
 """Auto-generate demo GIFs from scripts."""
 
 import logging
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 

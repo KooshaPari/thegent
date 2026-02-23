@@ -8,6 +8,8 @@ from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from enum import Enum
 
+from thegent.integrations.base import DataclassConfig
+
 logger = logging.getLogger(__name__)
 
 class BeadsStatus(Enum):
@@ -15,8 +17,7 @@ class BeadsStatus(Enum):
     AVAILABLE = "available"
 
 @dataclass
-class BeadsConfig:
-    enabled: bool = False
+class BeadsConfig(DataclassConfig):
     binary_path: str = ""
 
 class BeadsWrapper:
@@ -27,10 +28,9 @@ class BeadsWrapper:
             self._check_availability()
 
     def _load_config(self):
-        return BeadsConfig(
-            enabled=os.getenv("THEGENT_ENABLE_BEADS", "").lower() in ("1", "true", "yes"),
-            binary_path=os.getenv("BEADS_BINARY", ""),
-        )
+        config = BeadsConfig.from_env("BEADS_")
+        config.enabled = os.environ.get("THEGENT_ENABLE_BEADS", "").lower() in ("1", "true", "yes")
+        return config
 
     def _check_availability(self):
         binary = self._config.binary_path or "bd"

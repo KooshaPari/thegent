@@ -1,22 +1,14 @@
 """Execution run metadata and registry for thegent orchestration."""
 
-import contextlib
-import hashlib
 import orjson as json
 import logging
-import os
-import socket
-import time
 import uuid
-from datetime import UTC, datetime, timedelta
-from enum import StrEnum
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import httpx
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
-from thegent.config import ThegentSettings
 from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent.execution_coercion_helpers import as_float as _as_float_impl
 from thegent.execution_coercion_helpers import as_int as _as_int_impl
@@ -28,22 +20,6 @@ from thegent.execution_event_builders import (
     build_schema_marker_event,
 )
 from thegent.execution_hash_helpers import calculate_stable_record_hash
-from thegent.execution_jsonl_parsers import parse_checkpoint_by_id as _parse_checkpoint_by_id_impl
-from thegent.execution_jsonl_parsers import parse_checkpoint_line as _parse_checkpoint_line_impl
-from thegent.execution_jsonl_parsers import parse_circuit_failure as _parse_circuit_failure_impl
-from thegent.execution_jsonl_parsers import parse_dlq_item as _parse_dlq_item_impl
-from thegent.execution_jsonl_parsers import parse_fatigue_line as _parse_fatigue_line_impl
-from thegent.execution_jsonl_parsers import parse_override_unexpired as _parse_override_unexpired_impl
-from thegent.execution_jsonl_parsers import process_dlq_line as _process_dlq_line_impl
-from thegent.execution_run_scan_helpers import check_session_id as _check_session_id_impl
-from thegent.execution_run_scan_helpers import extract_domain_tag as _extract_domain_tag_impl
-from thegent.execution_run_scan_helpers import extract_run_id as _extract_run_id_impl
-from thegent.execution_run_scan_helpers import extract_session_id as _extract_session_id_impl
-from thegent.execution_run_scan_helpers import filter_expired_record as _filter_expired_record_impl
-from thegent.execution_run_scan_helpers import process_calibration_entry as _process_calibration_entry_impl
-from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry_impl
-from thegent.execution_run_scan_helpers import process_token_match as _process_token_match_impl
-from thegent.execution_run_scan_helpers import update_run_state as _update_run_state_impl
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3

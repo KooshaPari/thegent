@@ -8,7 +8,6 @@ import re
 import os
 import shutil
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from pathlib import Path
 from typing import Any, cast
@@ -28,7 +27,6 @@ from thegent.cli.commands._cli_shared import (
     list_agent_names,
     list_droid_names,
     resolve_agent,
-    run_login,
 )
 from thegent.cli.commands.model_cmds_agents_helpers import render_agents_table, render_droids_table
 from thegent.cli.commands.model_cmds_catalog_helpers import (

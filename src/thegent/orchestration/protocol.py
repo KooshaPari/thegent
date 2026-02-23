@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from enum import StrEnum
 from pathlib import Path
 from typing import Any

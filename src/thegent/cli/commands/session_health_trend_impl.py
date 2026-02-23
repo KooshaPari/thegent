@@ -187,7 +187,7 @@ def session_contract_health_trend_impl(
         "schema_compat_mode": "compat",
         "trend_payload_type": payload_type,
         "scope_key": scope_key,
-        "scope_key_json": json.dumps(scope_key, sort_keys=True).decode(),
+        "scope_key_json": json.dumps(scope_key, option=json.OPT_SORT_KEYS).decode(),
         "scope_payload_type": scope_key.get("payload_type", ""),
         "scope_owner": scope_key.get("owner", ""),
         "scope_all": scope_key.get("all", False),

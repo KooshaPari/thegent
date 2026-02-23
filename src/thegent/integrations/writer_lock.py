@@ -15,7 +15,7 @@ is suitable for single-machine, single-repository environments.
 import orjson as json
 import logging
 import os
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

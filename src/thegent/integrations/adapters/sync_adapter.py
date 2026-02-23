@@ -4,7 +4,6 @@ Handles GitHub and Linear sync operations.
 """
 
 import hashlib
-from pathlib import Path
 from typing import Any
 
 from thegent.integrations.workstream_autosync_shared import WorkstreamItem

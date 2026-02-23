@@ -192,7 +192,7 @@ def append_health_snapshot(
     }
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, sort_keys=True).decode())
+            fh.write(json.dumps(rec, option=json.OPT_SORT_KEYS).decode())
             fh.write("\n")
     except OSError:
         return

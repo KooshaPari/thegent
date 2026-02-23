@@ -7,7 +7,7 @@ Functions:
 - search_models_by_capability, fuzzy_search_models
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 
 def list_models(provider: Optional[str] = None) -> list[dict[str, Any]]:
