@@ -1753,7 +1753,6 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | wave70-l3 | child-lane-3 | 2026-02-22T00:00:00Z | WL-276,277,278,242,243,244,245,246,247,248 |
 | wave70-l4 | child-lane-4 | 2026-02-22T00:00:00Z | WL-249,250,251,252,253,254,255,256,257,258 |
 | wave70-l5 | child-lane-5 | 2026-02-22T00:00:00Z | WL-259,260,222,223,224,225,226,227,228,229 |
-| wave70-l6 | child-lane-6 | 2026-02-22T00:00:00Z | WL-230,231,232,233,234,235,236,237,238,239 |
 | wave70-l7 | parent-lane | 2026-02-22T00:00:00Z | WL-240,203,204,205,206,208,209,210,211,212 |
 
 ## COMPLETED (historical reference)
@@ -1762,6 +1761,7 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 
 | ID | Completed | Summary |
 |----|-----------|---------|
+| wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
 | WL-155-156-next20-b3 | 2026-02-22 | Executed third next-20 memory/scraper batch: snapshot lifecycle utilities (list/load/latest/filter/export markdown), plus targeted unit tests and plan log updates |
 | WL-155-156-next20-b2 | 2026-02-22 | Executed second next-20 memory/scraper batch: runtime trigger wiring (`tool_use`/`error`/`session_change`), snapshot persistence integration, inferred dump tagging, and targeted test/doc updates |
