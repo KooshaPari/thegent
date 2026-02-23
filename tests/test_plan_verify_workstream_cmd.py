@@ -7,7 +7,11 @@ import typer
 
 from thegent.cli.commands import cli as cli_shim
 from thegent.cli.apps.plan import app as plan_app
-from thegent.cli.commands.plan_cmds import plan_verify_workstream_cmd
+from thegent.cli.commands.plan_cmds import (
+    plan_lint_workstream_cmd,
+    plan_normalize_workstream_cmd,
+    plan_verify_workstream_cmd,
+)
 
 
 def _write_work_stream_with_overlap(base: Path) -> None:
@@ -37,10 +41,20 @@ def _write_work_stream_with_overlap(base: Path) -> None:
 def test_plan_app_registers_verify_workstream_command() -> None:
     names = [command.name for command in plan_app.registered_commands]
     assert "verify-workstream" in names
+    assert "lint-workstream" in names
+    assert "normalize-workstream" in names
 
 
 def test_cli_shim_exports_plan_verify_workstream_cmd() -> None:
     assert cli_shim.plan_verify_workstream_cmd is plan_verify_workstream_cmd
+
+
+def test_cli_shim_exports_plan_lint_workstream_cmd() -> None:
+    assert cli_shim.plan_lint_workstream_cmd is plan_lint_workstream_cmd
+
+
+def test_cli_shim_exports_plan_normalize_workstream_cmd() -> None:
+    assert cli_shim.plan_normalize_workstream_cmd is plan_normalize_workstream_cmd
 
 
 def test_plan_verify_workstream_exits_nonzero_on_invariant_violation(tmp_path: Path) -> None:

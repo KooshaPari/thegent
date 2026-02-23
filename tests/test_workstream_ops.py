@@ -1,6 +1,5 @@
 """Tests for workstream_ops module."""
 
-import json
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -123,3 +122,38 @@ class TestWorkStreamOps:
         ops = WorkStreamOps(base_dir=tmp_path)
         expected = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
         assert ops.work_stream_path == expected
+
+    def test_lint_schema(self, tmp_path: Path) -> None:
+        """Validate schema linting includes missing required sections."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """# Unified Work Stream
+
+### [WL-1] Missing Sections
+**Status:** BACKLOG
+""",
+            encoding="utf-8",
+        )
+        ops = WorkStreamOps(base_dir=tmp_path)
+        ops.work_stream_path = work_stream
+
+        errors = ops.lint_schema()
+        assert any("missing required section" in error for error in errors)
+
+    def test_sort_and_normalize(self, tmp_path: Path) -> None:
+        """Normalize and sort WL sections into canonical order."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-20] Second
+**Status:** BACKLOG
+
+### [WL-10] First
+**Status:** BACKLOG
+""",
+            encoding="utf-8",
+        )
+        ops = WorkStreamOps(base_dir=tmp_path)
+        ops.work_stream_path = work_stream
+
+        normalized = ops.sort_and_normalize()
+        assert normalized.find("WL-10") < normalized.find("WL-20")

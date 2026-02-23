@@ -55,9 +55,7 @@ class AdaptiveSyncIntervalController:
         # Cap at max_seconds
         capped_interval = min(new_interval, config.max_seconds)
 
-        logger.debug(
-            f"Increasing sync interval: {config.current_seconds}s -> {capped_interval}s (factor: {factor})"
-        )
+        logger.debug(f"Increasing sync interval: {config.current_seconds}s -> {capped_interval}s (factor: {factor})")
 
         return replace(config, current_seconds=capped_interval)
 
@@ -79,9 +77,7 @@ class AdaptiveSyncIntervalController:
         # Cap at min_seconds
         capped_interval = max(new_interval, config.min_seconds)
 
-        logger.debug(
-            f"Decreasing sync interval: {config.current_seconds}s -> {capped_interval}s (factor: {factor})"
-        )
+        logger.debug(f"Decreasing sync interval: {config.current_seconds}s -> {capped_interval}s (factor: {factor})")
 
         return replace(config, current_seconds=capped_interval)
 

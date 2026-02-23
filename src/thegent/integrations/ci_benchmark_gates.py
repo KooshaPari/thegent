@@ -85,9 +85,7 @@ class CIBenchmarkGates:
             List of BenchmarkGate objects where actual_ms > threshold_ms.
         """
         return [
-            gate
-            for gate in self._gates.values()
-            if gate.actual_ms is not None and gate.actual_ms > gate.threshold_ms
+            gate for gate in self._gates.values() if gate.actual_ms is not None and gate.actual_ms > gate.threshold_ms
         ]
 
     def passed(self) -> bool:

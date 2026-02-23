@@ -28,9 +28,7 @@ class TestBenchmarkGate:
     @pytest.mark.requirement("WL-275")
     def test_create_with_result(self) -> None:
         """Can create BenchmarkGate with actual_ms."""
-        gate = BenchmarkGate(
-            name="api_latency", threshold_ms=100.0, actual_ms=95.5
-        )
+        gate = BenchmarkGate(name="api_latency", threshold_ms=100.0, actual_ms=95.5)
 
         assert gate.name == "api_latency"
         assert gate.threshold_ms == 100.0
@@ -85,7 +83,7 @@ class TestCIBenchmarkGates:
         """Raises ValueError for invalid threshold."""
         gates = CIBenchmarkGates()
 
-        with pytest.raises(ValueError, match="threshold_ms must be >= 1.0"):
+        with pytest.raises(ValueError, match=r"threshold_ms must be >= 1\.0"):
             gates.add_gate("test", 0.5)
 
     @pytest.mark.requirement("WL-275")
@@ -132,7 +130,7 @@ class TestCIBenchmarkGates:
         gates = CIBenchmarkGates()
         gates.add_gate("test", 100.0)
 
-        with pytest.raises(ValueError, match="actual_ms must be >= 0.0"):
+        with pytest.raises(ValueError, match=r"actual_ms must be >= 0\.0"):
             gates.record_result("test", -1.0)
 
     @pytest.mark.requirement("WL-275")

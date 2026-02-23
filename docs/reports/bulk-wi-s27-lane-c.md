@@ -47,10 +47,11 @@
 **Title:** Replace startup endpoint reachability stub with deterministic network probes
 **Source:** [thegent/src/thegent/integrations/startup_validation.py:46]
 **Acceptance checklist:**
-- [ ] Implement real endpoint checks with explicit timeout and connection-failure handling.
-- [ ] Return structured reachability outcomes consumed by startup validation reporting.
-- [ ] Add tests for reachable, unreachable, and timeout scenarios.
+- [x] Implement real endpoint checks with explicit timeout and connection-failure handling.
+- [x] Return structured reachability outcomes consumed by startup validation reporting.
+- [x] Add tests for reachable, unreachable, and timeout scenarios.
 **Notes:** Stubbed reachability logic can over-report healthy startup state.
+- **Evidence:** `src/thegent/integrations/startup_validation.py` (`StartupValidator`), `tests/test_wl192_startup_validation.py` (`test_check_endpoint_reachability_returns_dict`, `test_check_endpoint_reachability_reflects_status_code`, `test_check_endpoint_reachability_handles_errors`, `test_check_endpoint_reachability_empty_list`, `test_validate_all_with_endpoints`, `test_validate_all_with_unreachable_endpoint`)
 
 ### [WL-6896]
 **Title:** Replace GitHub Project sync mock write response with real item upsert flow

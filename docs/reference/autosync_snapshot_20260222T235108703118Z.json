@@ -1,5 +1,5 @@
 {
-  "last_cycle_at": "2026-02-22T14:04:13.450199+00:00",
+  "last_cycle_at": "2026-02-22T23:51:08.702789+00:00",
   "total_cycles": 1,
   "last_error": "Emergency stop active; autosync external mutation is paused",
   "health": "degraded",
@@ -11,7 +11,7 @@
     "linear_enabled": false,
     "last_operation": null,
     "open_blockers": [],
-    "failure_queue_size": 22,
+    "failure_queue_size": 34,
     "next_cycle_interval_seconds": 300,
     "connector_health": [],
     "metadata": {
@@ -31,13 +31,25 @@
     "trend_sample": null
   },
   "open_blockers": [],
-  "failure_queue_size": 22,
+  "failure_queue_size": 34,
   "checkpoint": null,
   "connector_health": [],
   "next_cycle_interval_seconds": 300,
   "incident_snapshot": {
-    "captured_at": "2026-02-22T14:04:13.448168+00:00",
+    "captured_at": "2026-02-22T23:51:08.701570+00:00",
     "items_count": 0,
+    "snapshot_age_seconds": 0,
+    "snapshot_stale": false,
+    "slo_alerts": [
+      "autosync error budget hard-fail threshold reached"
+    ],
+    "error_budget": {
+      "success_count": 0,
+      "failure_count": 1,
+      "consecutive_failures": 1,
+      "total_operations": 1,
+      "current_failure_rate": 1.0
+    },
     "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
     "connector_health": [],
     "metadata": {
@@ -45,7 +57,7 @@
       "age_seconds": 0
     },
     "last_error": "Emergency stop active; autosync external mutation is paused",
-    "failure_queue_size": 22,
+    "failure_queue_size": 34,
     "mutation_summary": null
   },
   "correlation_id": null,

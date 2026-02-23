@@ -11,14 +11,17 @@ Tests cover:
 
 import os
 from datetime import datetime, timezone, timedelta
+import json
 from unittest.mock import patch
 
 import pytest
 
+from thegent.integrations.policy_checksum import compute_payload_checksum
 from thegent.docgen.code_annotation import CodeAnnotationGenerator
 from thegent.execution import EscalationQueue
 from thegent.integrations.reflection_event_log import ReflectionDecision, ReflectionEventLog
 from thegent.integrations.workstream_autosync import (
+    ConnectorSLAThresholds,
     SyncDirection,
     SyncOperation,
     MaintenanceWindow,
@@ -213,6 +216,24 @@ class TestWorkstreamParser:
         assert len(items) == 1
         assert items[0].tags == ["urgent", "critical", "ui"]
         assert items[0].sla_hours == 6.0
+        assert items[0].raw_section is not None
+        assert "SLA" in items[0].raw_section
+
+    @pytest.mark.requirement("WL-245")
+    def test_parse_owner_metadata(self, tmp_path):
+        """Parse owner metadata from WORK_STREAM.md."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-100] Test Owner
+**Status:** BACKLOG
+**Owner:** dev-team-alice
+"""
+        )
+
+        items = WorkstreamParser.parse_items(work_stream)
+
+        assert len(items) == 1
+        assert items[0].owner == "dev-team-alice"
 
     def test_open_blocker_digest(self):
         """Build digest for blocked open items."""
@@ -477,6 +498,21 @@ class TestWorkstreamAutosyncRunner:
         assert "Emergency stop active" in runner.last_error
 
     @pytest.mark.asyncio
+    async def test_maintenance_windows_are_project_scoped(self, valid_github_config):
+        """Maintenance window checks can be scoped to specific project IDs."""
+        now = datetime.now(timezone.utc)
+        valid_github_config.maintenance_windows = [
+            MaintenanceWindow(
+                connector="github",
+                project="proj-alpha",
+                start_utc=now - timedelta(minutes=1),
+                end_utc=now + timedelta(minutes=1),
+            )
+        ]
+        assert valid_github_config.is_maintenance_active("github", at=now, project="proj-alpha") is True
+        assert valid_github_config.is_maintenance_active("github", at=now, project="proj-beta") is False
+
+    @pytest.mark.asyncio
     async def test_write_entrypoint_blocks_when_emergency_stop_file_exists(self, valid_github_config, tmp_path):
         """Write entrypoints fail fast when emergency stop sentinel file is present."""
         sentinel = tmp_path / "autosync.stop"
@@ -526,6 +562,23 @@ class TestWorkstreamAutosyncRunner:
             assert runner.last_operation is not None
             assert runner.last_operation.items_successful == 0
 
+    @pytest.mark.asyncio
+    async def test_sync_to_github_enforces_actor_identity(self, valid_github_config):
+        """Write syncs require actor identity when enforcement is enabled."""
+        valid_github_config.require_actor_identity = True
+        valid_github_config.actor_id = "agent-alpha"
+        valid_github_config.actor_signature = "bad-signature"
+        valid_github_config.actor_signing_key = "secret"
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        items = [WorkstreamItem(item_id="WL-1", title="One", status="BACKLOG", priority="P1", area="sync")]
+
+        with patch(
+            "thegent.integrations.workstream_autosync.SSHIdentityProxy.require_actor_identity",
+            side_effect=ValueError("invalid actor signature"),
+        ):
+            with pytest.raises(ValueError, match="invalid actor signature"):
+                await runner._sync_to_github(items)
+
     def test_connector_chaos_timeout_fixture(self):
         """Deterministic timeout fixture should request retries and escalation."""
         payload = WorkstreamAutosyncRunner.simulate_connector_chaos("github", "timeout", items_count=4)
@@ -541,10 +594,90 @@ class TestWorkstreamAutosyncRunner:
         assert payload["items_acked"] == 4
         assert payload["escalate"] is True
 
+    def test_connector_chaos_http_5xx_fixture(self):
+        """HTTP 5xx chaos should be deterministic and escalate."""
+        payload = WorkstreamAutosyncRunner.simulate_connector_chaos("github", "http_5xx", items_count=4)
+        assert payload["scenario"] == "http_5xx"
+        assert payload["items_attempted"] == 4
+        assert payload["items_acked"] == 0
+        assert payload["outcome"] == "server_error"
+        assert payload["escalate"] is True
+
+    def test_connector_chaos_partial_ack_one_item_boundary(self):
+        """Boundary case for partial ack with single-item payload."""
+        payload = WorkstreamAutosyncRunner.simulate_connector_chaos("linear", "partial_ack", items_count=1)
+        assert payload["items_attempted"] == 1
+        assert payload["items_acked"] == 0
+        assert payload["outcome"] == "partial"
+
     def test_connector_chaos_unknown_fixture_raises(self):
         """Unsupported chaos scenarios must fail loudly."""
         with pytest.raises(ValueError, match="Unsupported chaos scenario"):
             WorkstreamAutosyncRunner.simulate_connector_chaos("github", "unknown", items_count=1)
+
+    def test_local_reflection_events_are_logged_with_schema_and_direction(self, tmp_path):
+        """Local reflection logs should emit local_to_remote annotations."""
+        runner = WorkstreamAutosyncRunner(
+            WorkstreamAutosyncConfig(
+                enabled=True,
+                github_enabled=True,
+                github_owner="owner",
+                github_project_number=1,
+                reflection_event_log_path=tmp_path / "local_reflections.jsonl",
+                standalone_mode=True,
+            )
+        )
+        operation = SyncOperation(
+            operation_id="op-local",
+            platform="github",
+            direction="write",
+            items_processed=2,
+            items_successful=1,
+            items_failed=1,
+            errors=["error"],
+        )
+        operation.completed_at = datetime.now(timezone.utc)
+        operation.duration_seconds = 0.01
+
+        runner._record_local_reflection_events(connector="github", operation=operation)
+
+        lines = (tmp_path / "local_reflections.jsonl").read_text(encoding="utf-8").splitlines()
+        assert lines
+        payload = json.loads(lines[0])
+        assert payload["direction"] == "local_to_remote"
+        assert payload["annotation"]["direction"] == "local_to_remote"
+        assert payload["annotation"]["schema"] == "reflection-annotation-v1"
+        assert payload["wl_id"] == operation.operation_id
+
+    def test_remote_reflection_events_are_logged_with_schema_and_direction(self, tmp_path):
+        """Remote reflection logs should emit remote_to_local annotations."""
+        runner = WorkstreamAutosyncRunner(
+            WorkstreamAutosyncConfig(
+                enabled=True,
+                github_enabled=True,
+                github_owner="owner",
+                github_project_number=1,
+                reflection_event_log_path=tmp_path / "remote_reflections.jsonl",
+                standalone_mode=True,
+            )
+        )
+        local_items = [
+            WorkstreamItem(item_id="WL-100", title="One", status="BACKLOG", priority="P1", area="core"),
+            WorkstreamItem(item_id="WL-101", title="Two", status="BACKLOG", priority="P1", area="core"),
+        ]
+        runner._log_remote_reflection_events(
+            connector="github",
+            local_items=local_items,
+            status_updates={"WL-100": "COMPLETED"},
+        )
+
+        lines = (tmp_path / "remote_reflections.jsonl").read_text(encoding="utf-8").splitlines()
+        assert len(lines) == 1
+        payload = json.loads(lines[0])
+        assert payload["direction"] == "remote_to_local"
+        assert payload["annotation"]["direction"] == "remote_to_local"
+        assert payload["annotation"]["schema"] == "reflection-annotation-v1"
+        assert payload["wl_id"] == "WL-100"
 
     @pytest.mark.asyncio
     async def test_checkpoint_resume_on_failure(self, tmp_path):
@@ -629,6 +762,137 @@ class TestWorkstreamAutosyncRunner:
         assert runner.last_operation.direction == "write"
 
     @pytest.mark.asyncio
+    async def test_sync_to_github_closes_issue_on_local_completion(self, valid_github_config, tmp_path):
+        """Completed local item should auto-close mapped GitHub issue."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-160] Do a thing owner/repo#123
+**Status:** COMPLETED
+**Priority:** P1
+**Area:** sync
+Extra: owner/repo#456
+### [WL-161] Stay open owner/repo#789
+**Status:** IN PROGRESS
+**Priority:** P1
+**Area:** sync
+"""
+        )
+        valid_github_config.work_stream_path = work_stream
+        valid_github_config.github_auto_close_issues = True
+        valid_github_config.github_auto_close_comment = "Closed via autosync."
+
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        items = WorkstreamParser.parse_items(work_stream)
+
+        with (
+            patch(
+                "thegent.integrations.workstream_autosync.gh_sync_to_github",
+                return_value={"items_created": 0, "items_updated": 2, "errors": []},
+            ),
+            patch(
+                "thegent.integrations.workstream_autosync.close_or_comment_github_issue_refs",
+                return_value={
+                    "items_processed": 1,
+                    "items_updated": 1,
+                    "items_commented": 1,
+                    "issues": [
+                        {
+                            "issue_ref": "owner/repo#123",
+                            "commented": True,
+                            "closed": True,
+                            "status": "ok",
+                        }
+                    ],
+                    "errors": [],
+                },
+            ) as close_mock,
+        ):
+            await runner._sync_to_github(items)
+
+        assert close_mock.call_count == 1
+        called_args, called_kwargs = close_mock.call_args
+        assert called_args[0] == ["owner/repo#123"]
+        assert called_kwargs["close_comment"] == "Closed via autosync."
+
+    @pytest.mark.asyncio
+    @pytest.mark.requirement("WL-243")
+    async def test_sync_to_github_shadow_mode_blocks_mutation(self, valid_github_config):
+        """Shadow mode should block all GitHub mutation calls."""
+        valid_github_config.shadow_mode = True
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        items = [
+            WorkstreamItem(
+                item_id="WL-160",
+                title="Test",
+                status="IN PROGRESS",
+                priority="P1",
+                area="test",
+            )
+        ]
+
+        with patch("thegent.integrations.workstream_autosync.gh_sync_to_github") as sync_mock:
+            await runner._sync_to_github(items)
+
+        sync_mock.assert_not_called()
+        assert runner.last_operation is not None
+        assert runner.last_operation.platform == "github"
+        assert runner.last_operation.direction == "write"
+
+    @pytest.mark.asyncio
+    @pytest.mark.requirement("WL-243")
+    async def test_sync_to_linear_shadow_mode_blocks_mutation(self, valid_linear_config):
+        """Shadow mode should block all Linear mutation calls."""
+        valid_linear_config.shadow_mode = True
+        runner = WorkstreamAutosyncRunner(valid_linear_config)
+        items = [
+            WorkstreamItem(
+                item_id="WL-160",
+                title="Test",
+                status="IN PROGRESS",
+                priority="P1",
+                area="test",
+            )
+        ]
+
+        with patch("thegent.integrations.workstream_autosync.linear_sync_to") as sync_mock:
+            await runner._sync_to_linear(items)
+
+        sync_mock.assert_not_called()
+        assert runner.last_operation is not None
+        assert runner.last_operation.platform == "linear"
+        assert runner.last_operation.direction == "write"
+
+    @pytest.mark.asyncio
+    @pytest.mark.requirement("WL-245")
+    async def test_sync_to_github_includes_owner_metadata(self, valid_github_config, tmp_path):
+        """Outbound GitHub payload should include canonical and connector owner metadata."""
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        runner._idempotency_cache = IdempotencyCache(tmp_path / "idempotency.json")
+        items = [
+            WorkstreamItem(
+                item_id="WL-160",
+                title="Test",
+                status="IN PROGRESS",
+                priority="P1",
+                area="test",
+                owner="dev-team-alice",
+            )
+        ]
+
+        with patch(
+            "thegent.integrations.workstream_autosync.gh_sync_to_github",
+            return_value={"items_created": 0, "items_updated": 1, "errors": []},
+        ) as sync_mock:
+            await runner._sync_to_github(items)
+
+        payload = sync_mock.call_args.args[1][0]
+        assert payload[0]["owner"] == "dev-team-alice"
+        assert payload[0]["github_owner"] == "dev-team-alice"
+        assert payload[0]["linear_assignee"] == "dev-team-alice"
+        assert payload[0]["__sync_metadata"]["source_url"] == "github://workstream/WL-160"
+        assert payload[0]["__sync_metadata"]["source_tag"] == "github"
+
+    @pytest.mark.asyncio
     async def test_sync_from_github(self, valid_github_config, tmp_path):
         """Test reading from GitHub Projects."""
         work_stream = tmp_path / "WORK_STREAM.md"
@@ -708,6 +972,70 @@ class TestWorkstreamAutosyncRunner:
         close_mock.assert_called_once_with(["owner/repo#123"], close_comment="Closed via autosync.")
 
     @pytest.mark.asyncio
+    async def test_sync_from_github_enforces_payload_checksum(self, tmp_path):
+        """Read sync succeeds when checksum matches configured expected value."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-160] Test
+**Status:** IN PROGRESS
+"""
+        )
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            payload_checksum_enforced=True,
+            standalone_mode=True,
+            work_stream_path=work_stream,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        items = WorkstreamParser.parse_items(work_stream)
+
+        remote_items = [{"item_id": "WL-160", "status": "COMPLETED"}]
+        checksum = compute_payload_checksum(remote_items)
+        config.expected_payload_checksum = checksum
+
+        with patch(
+            "thegent.integrations.workstream_autosync.gh_sync_from_github",
+            return_value={"items": remote_items, "errors": []},
+        ):
+            await runner._sync_from_github(items, work_stream)
+
+        updated = work_stream.read_text(encoding="utf-8")
+        assert "**Status:** COMPLETED" in updated
+
+    @pytest.mark.asyncio
+    async def test_sync_from_github_rejects_bad_remote_payload_checksum(self, tmp_path):
+        """Read sync fails when remote payload checksum does not match."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-160] Test
+**Status:** IN PROGRESS
+"""
+        )
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            payload_checksum_enforced=True,
+            expected_payload_checksum="bad-checksum",
+            standalone_mode=False,
+            work_stream_path=work_stream,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        items = WorkstreamParser.parse_items(work_stream)
+
+        remote_items = [{"item_id": "WL-160", "status": "COMPLETED"}]
+        with patch(
+            "thegent.integrations.workstream_autosync.gh_sync_from_github",
+            return_value={"items": remote_items, "errors": []},
+        ):
+            with pytest.raises(ValueError, match="Payload checksum mismatch"):
+                await runner._sync_from_github(items, work_stream)
+
+    @pytest.mark.asyncio
     async def test_finalize_incident_snapshot_enqueues_slo_escalation(self, valid_github_config, tmp_path):
         """Snapshot with stale age and budget breach should enqueue escalation entry."""
         status_path = tmp_path / "autosync_status.json"
@@ -744,6 +1072,62 @@ class TestWorkstreamAutosyncRunner:
         assert any("autosync snapshot stale" in str(item.get("reason", "")) for item in pending)
 
     @pytest.mark.asyncio
+    async def test_finalize_incident_snapshot_enqueues_hard_fail_escalation(self, valid_github_config, tmp_path):
+        """Snapshot with error budget hard-fail should enqueue escalation entry."""
+        status_path = tmp_path / "autosync_status.json"
+        status_path.parent.mkdir(parents=True, exist_ok=True)
+
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            status_file_path=status_path,
+            error_budget_max_consecutive_failures=0,
+            error_budget_max_failure_rate=0.0,
+            error_budget_escalation_after=100,
+            autosync_stale_snapshot_seconds=9999,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        runner._current_run_correlation_id = "run-hard-fail"
+        runner._error_budget.record_failure()
+
+        runner._finalize_incident_snapshot(items_count=2, metadata_state={"status": "fresh", "age_seconds": 0})
+
+        snapshot = runner._latest_incident_snapshot
+        assert any("hard-fail threshold reached" in reason for reason in snapshot["slo_alerts"])
+
+        queue = EscalationQueue(status_path.parent)
+        pending = queue.list_pending()
+        assert any("hard-fail threshold reached" in str(item.get("reason", "")) for item in pending)
+
+    @pytest.mark.requirement("WL-233")
+    def test_evaluate_slo_state_flags_connector_sla_breaches(self, tmp_path):
+        """Connector SLA breaches should appear in SLO alert set."""
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            failure_queue_path=tmp_path / "failures.json",
+            reflection_event_log_path=tmp_path / "reflection_events.jsonl",
+            connector_sla_thresholds={
+                "github": ConnectorSLAThresholds(p95_latency_ms=100.0, max_failure_rate=0.1),
+            },
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        runner._current_run_correlation_id = "run-123"
+        runner._record_connector_latency("github", duration_seconds=0.2)
+        runner._connector_error_budget("github").record_failure()
+        runner._connector_error_budget("github").record_failure()
+
+        alerts = runner._evaluate_slo_state()
+        assert any("connector github" in alert and "latency" in alert for alert in alerts)
+        assert any("connector github" in alert and "failure rate" in alert for alert in alerts)
+
+    @pytest.mark.asyncio
     async def test_sync_to_linear(self, valid_linear_config):
         """Test Linear sync operation."""
         runner = WorkstreamAutosyncRunner(valid_linear_config)
@@ -770,6 +1154,36 @@ class TestWorkstreamAutosyncRunner:
         assert runner.last_operation.direction == "write"
 
     @pytest.mark.asyncio
+    @pytest.mark.requirement("WL-245")
+    async def test_sync_to_linear_includes_owner_metadata(self, valid_linear_config, tmp_path):
+        """Outbound Linear payload should include canonical and connector owner metadata."""
+        runner = WorkstreamAutosyncRunner(valid_linear_config)
+        runner._idempotency_cache = IdempotencyCache(tmp_path / "idempotency.json")
+        items = [
+            WorkstreamItem(
+                item_id="WL-160",
+                title="Test",
+                status="IN PROGRESS",
+                priority="P1",
+                area="test",
+                owner="dev-team-alice",
+            )
+        ]
+
+        with patch(
+            "thegent.integrations.workstream_autosync.linear_sync_to",
+            return_value={"items_created": 0, "items_updated": 1, "errors": []},
+        ) as sync_mock:
+            await runner._sync_to_linear(items)
+
+        payload = sync_mock.call_args.args[1][0]
+        assert payload[0]["owner"] == "dev-team-alice"
+        assert payload[0]["github_owner"] == "dev-team-alice"
+        assert payload[0]["linear_assignee"] == "dev-team-alice"
+        assert payload[0]["__sync_metadata"]["source_url"] == "linear://workstream/WL-160"
+        assert payload[0]["__sync_metadata"]["source_tag"] == "linear"
+
+    @pytest.mark.asyncio
     async def test_sync_from_linear(self, valid_linear_config, tmp_path):
         """Test reading from Linear."""
         work_stream = tmp_path / "WORK_STREAM.md"
@@ -789,6 +1203,68 @@ class TestWorkstreamAutosyncRunner:
         assert runner.last_operation is not None
         assert runner.last_operation.platform == "linear"
         assert runner.last_operation.direction == "read"
+
+    @pytest.mark.asyncio
+    async def test_sync_from_linear_rejects_bad_remote_payload_checksum(self, tmp_path):
+        """Read sync fails when Linear payload checksum does not match."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-160] Test
+**Status:** IN PROGRESS
+"""
+        )
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            linear_enabled=True,
+            linear_api_key="key",
+            linear_team_key="team",
+            payload_checksum_enforced=True,
+            expected_payload_checksum="bad-checksum",
+            standalone_mode=False,
+            work_stream_path=work_stream,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        items = WorkstreamParser.parse_items(work_stream)
+
+        remote_items = [{"item_id": "WL-160", "status": "COMPLETED"}]
+        with patch(
+            "thegent.integrations.workstream_autosync.linear_sync_from",
+            return_value={"items": remote_items, "errors": []},
+        ):
+            with pytest.raises(ValueError, match="Payload checksum mismatch"):
+                await runner._sync_from_linear(items, work_stream)
+
+    @pytest.mark.asyncio
+    async def test_sync_from_linear_accepts_expected_payload_checksum(self, tmp_path):
+        """Read sync succeeds when checksum matches configured Linear payload."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text(
+            """### [WL-160] Test
+**Status:** IN PROGRESS
+"""
+        )
+        remote_items = [{"item_id": "WL-160", "status": "COMPLETED"}]
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            linear_enabled=True,
+            linear_api_key="key",
+            linear_team_key="team",
+            payload_checksum_enforced=True,
+            expected_payload_checksum=compute_payload_checksum(remote_items),
+            standalone_mode=True,
+            work_stream_path=work_stream,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        items = WorkstreamParser.parse_items(work_stream)
+
+        with patch(
+            "thegent.integrations.workstream_autosync.linear_sync_from",
+            return_value={"items": remote_items, "errors": []},
+        ):
+            await runner._sync_from_linear(items, work_stream)
+
+        updated = work_stream.read_text(encoding="utf-8")
+        assert "**Status:** COMPLETED" in updated
 
     def test_get_status(self, valid_github_config):
         """Test getting runner status."""
@@ -907,6 +1383,32 @@ class TestLoadAutosyncConfigFromEnv:
             assert config.github_direction == SyncDirection.READ_ONLY
             assert config.linear_direction == SyncDirection.WRITE_ONLY
 
+    def test_load_maintenance_windows_support_project_scoped_token_format(self):
+        """Maintenance window token parser supports project-scoped entries."""
+        with patch.dict(
+            "os.environ",
+            {
+                "THGENT_AUTOSYNC_MAINTENANCE_WINDOWS": (
+                    "github:2026-02-22T00:00:00Z:2026-02-22T01:00:00Z:project-alpha:release-window"
+                )
+            },
+        ):
+            config = load_autosync_config_from_env()
+            windows = config.maintenance_windows
+            assert len(windows) == 1
+            assert windows[0].project == "project-alpha"
+            assert windows[0].reason == "release-window"
+
+        with patch.dict(
+            "os.environ",
+            {"THGENT_AUTOSYNC_MAINTENANCE_WINDOWS": ("linear:2026-02-22T00:00:00Z:2026-02-22T01:00:00Z:legacy-reason")},
+        ):
+            config = load_autosync_config_from_env()
+            windows = config.maintenance_windows
+            assert len(windows) == 1
+            assert windows[0].project == "default"
+            assert windows[0].reason == "legacy-reason"
+
     def test_load_emergency_stop_settings(self):
         """Load emergency-stop settings from env."""
         with patch.dict(
@@ -969,6 +1471,43 @@ class TestLoadAutosyncConfigFromEnv:
             assert config.error_budget_max_failure_rate == 0.2
             assert config.error_budget_escalation_after == 4
             assert config.autosync_stale_snapshot_seconds == 1200
+
+    def test_load_digest_and_reflection_event_log_paths_from_env(self):
+        """Digest and reflection log paths should be accepted from env."""
+        with patch.dict(
+            "os.environ",
+            {
+                "THGENT_WORKSTREAM_AUTOSYNC_ENABLED": "true",
+                "THGENT_GITHUB_ENABLED": "true",
+                "THGENT_GITHUB_OWNER": "owner",
+                "THGENT_GITHUB_PROJECT_NUMBER": "1",
+                "THGENT_WORKSTREAM_AUTOSYNC_CHANGE_DIGEST_PATH": "/tmp/autosync/change-digest.jsonl",
+                "THGENT_WORKSTREAM_AUTOSYNC_REFLECTION_EVENT_LOG_PATH": "/tmp/autosync/reflections.jsonl",
+            },
+        ):
+            config = load_autosync_config_from_env()
+            assert str(config.change_digest_path) == "/tmp/autosync/change-digest.jsonl"
+            assert str(config.reflection_event_log_path) == "/tmp/autosync/reflections.jsonl"
+
+    @pytest.mark.requirement("WL-233")
+    def test_load_connector_sla_thresholds_env(self):
+        """Load connector SLA thresholds from JSON env map."""
+        with patch.dict(
+            "os.environ",
+            {
+                "THGENT_WORKSTREAM_AUTOSYNC_ENABLED": "true",
+                "THGENT_GITHUB_ENABLED": "true",
+                "THGENT_GITHUB_OWNER": "owner",
+                "THGENT_GITHUB_PROJECT_NUMBER": "1",
+                "THGENT_AUTOSYNC_CONNECTOR_SLA_THRESHOLDS": (
+                    '{"github":{"p95_latency_ms":150.0,"max_failure_rate":0.25}}'
+                ),
+            },
+        ):
+            config = load_autosync_config_from_env()
+            thresholds = config.connector_sla_thresholds["github"]
+            assert thresholds.p95_latency_ms == 150.0
+            assert thresholds.max_failure_rate == 0.25
 
 
 class TestStandaloneMode:

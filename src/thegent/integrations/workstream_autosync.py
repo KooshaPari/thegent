@@ -29,7 +29,12 @@ from uuid import uuid4
 
 from thegent.config_defaults import autosync_phase1_enabled
 from thegent.infra.identity_proxy import SSHIdentityProxy
-from thegent.integrations.capability_alerts import CapabilityMismatchDetector, ConnectorCapabilityDiscovery
+from thegent.integrations.capability_alerts import (
+    CapabilityMismatchDetector,
+    ConnectorCapabilityDiscovery,
+    ConnectorSLAEvaluator,
+    ConnectorSLAThresholds,
+)
 from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
 from thegent.integrations.error_budget import ErrorBudgetConfig, ErrorBudgetTracker
 from thegent.integrations.gh_project_sync import (
@@ -41,6 +46,7 @@ from thegent.integrations.gh_project_sync import (
     sync_to_github as gh_sync_to_github,
 )
 from thegent.integrations.idempotency_cache import IdempotencyCache
+from thegent.integrations.reflection_event_log import ReflectionDecision, ReflectionEventLog
 from thegent.integrations.linear_graphql import (
     LinearGraphQLAuthError,
     LinearGraphQLConfig,
@@ -50,10 +56,15 @@ from thegent.integrations.linear_graphql import (
 )
 from thegent.integrations.rate_limit_backoff import RateLimitBackoffManager, RateLimitConfig
 from thegent.integrations.policy_checksum import verify_payload_checksum
-from thegent.integrations.sync_provenance import enrich_sync_metadata
+from thegent.integrations.sync_provenance import (
+    enrich_sync_metadata,
+    propagate_owner_metadata,
+)
 from thegent.integrations.writer_lock import SingleWriterLock
+from thegent.integrations.pipeline_percentiles import PipelinePercentileTracker
 from thegent.observability.prometheus import get_metrics_collector
 from thegent.execution import EscalationQueue
+from research_engine.digest import build_hourly_change_digest
 from thegent.routing.circuit_breaker import (
     CircuitOpenError,
     ProviderCircuitBreakerConfig,
@@ -281,6 +292,7 @@ class WorkstreamAutosyncConfig:
     actor_signing_key: str = ""
     connector_capabilities: dict[str, list[str]] = field(default_factory=dict)
     required_connector_capabilities: dict[str, list[str]] = field(default_factory=dict)
+    connector_sla_thresholds: dict[str, ConnectorSLAThresholds] = field(default_factory=dict)
     payload_checksum_enforced: bool = False
     expected_payload_checksum: str = ""
     emergency_stop_enabled: bool = True
@@ -305,6 +317,8 @@ class WorkstreamAutosyncConfig:
     connector_circuit_breaker_failure_threshold: int = 3
     connector_circuit_breaker_success_threshold: int = 1
     connector_circuit_breaker_timeout_seconds: float = 60.0
+    change_digest_path: Path | None = None
+    reflection_event_log_path: Path | None = None
     autosync_prometheus_export_path: Path | None = None
     cycle_metrics_path: Path | None = None
     writer_lock_enabled: bool = True
@@ -513,12 +527,14 @@ class WorkstreamItem:
     status: str  # BACKLOG, IN PROGRESS, COMPLETED, CLAIMED
     priority: str  # P0, P1, P2
     area: str
+    owner: str | None = None
     blocked_by: str | None = None
     source_line: int = 0
     board_id: str | None = None  # External board ID if known
     tags: list[str] = field(default_factory=list)
     sla_hours: float | None = None
     last_synced: datetime | None = None
+    raw_section: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -528,12 +544,14 @@ class WorkstreamItem:
             "status": self.status,
             "priority": self.priority,
             "area": self.area,
+            "owner": self.owner,
             "blocked_by": self.blocked_by,
             "source_line": self.source_line,
             "board_id": self.board_id,
             "tags": self.tags,
             "sla_hours": self.sla_hours,
             "last_synced": self.last_synced.isoformat() if self.last_synced else None,
+            "raw_section": self.raw_section,
         }
 
 
@@ -682,6 +700,7 @@ class WorkstreamParser:
     STATUS_PATTERN = re.compile(r"\*\*Status:\*\*\s+(.+?)(?:\n|$)")
     PRIORITY_PATTERN = re.compile(r"\*\*Priority:\*\*\s+(\w+)")
     AREA_PATTERN = re.compile(r"\*\*Area:\*\*\s+(.+?)(?:\n|$)")
+    OWNER_PATTERN = re.compile(r"\*\*Owner:\*\*\s+(.+?)(?:\n|$)")
     BLOCKED_BY_PATTERN = re.compile(r"\*\*Blocked by:\*\*\s+(.+?)(?:\n|$)")
     TAGS_PATTERN = re.compile(r"\*\*Tags:\*\*\s+(.+?)(?:\n|$)")
     SLA_PATTERN = re.compile(r"\*\*SLA:\*\*\s+(.+?)(?:\n|$)")
@@ -776,6 +795,9 @@ class WorkstreamParser:
             area_match = cls.AREA_PATTERN.search(section)
             area = area_match.group(1).strip() if area_match else "unknown"
 
+            owner_match = cls.OWNER_PATTERN.search(section)
+            owner = owner_match.group(1).strip() if owner_match else None
+
             blocked_by_match = cls.BLOCKED_BY_PATTERN.search(section)
             blocked_by = blocked_by_match.group(1).strip() if blocked_by_match else None
 
@@ -791,10 +813,12 @@ class WorkstreamParser:
                 status=status,
                 priority=priority,
                 area=area,
+                owner=owner,
                 blocked_by=blocked_by,
                 tags=tags,
                 sla_hours=sla_hours,
                 source_line=source_line,
+                raw_section=section.strip() if section else None,
             )
 
             items.append(item)
@@ -1000,13 +1024,20 @@ class WorkstreamAutosyncRunner:
         self._last_cycle_fingerprint: str | None = None
         self._slo_alerts: list[str] = []
         self._last_slo_escalation_signature: str | None = None
+        self._connector_sla_thresholds: dict[str, ConnectorSLAThresholds] = dict(self.config.connector_sla_thresholds)
+        self._connector_sla_evaluator = ConnectorSLAEvaluator()
+        self._connector_latency_tracker = PipelinePercentileTracker()
+        self._connector_error_budgets: dict[str, ErrorBudgetTracker] = {}
         self._cycle_failure_recorded = False
+        self._cycle_change_events: list[dict[str, Any]] = []
+        self._latest_change_digest: dict[str, Any] = {"bucket": "hourly", "hours": {}}
         self._local_orphan_report: dict[str, Any] = {
             "local_ids": [],
             "mapped_remote_ids": [],
             "local_orphan_ids": [],
             "orphan_count": 0,
         }
+        self._reflection_event_log = ReflectionEventLog(log_path=self.config.reflection_event_log_path)
         self._no_op_summary: dict[str, Any] | None = None
         self._last_trend_sample: dict[str, Any] | None = None
         self._rate_limit_backoff = RateLimitBackoffManager(
@@ -1045,6 +1076,10 @@ class WorkstreamAutosyncRunner:
     def _cycle_metrics_path(self) -> Path:
         default_cycle_metrics_path = Path("docs/reference/workstream_autosync_cycle_metrics.jsonl")
         return self.config.cycle_metrics_path or default_cycle_metrics_path
+
+    def _change_digest_path(self) -> Path:
+        default_change_digest_path = Path("artifacts/workstream_autosync_change_digest.jsonl")
+        return self.config.change_digest_path or default_change_digest_path
 
     def _writer_lock_path(self) -> Path:
         if self.config.writer_lock_path is not None:
@@ -1095,7 +1130,40 @@ class WorkstreamAutosyncRunner:
         if self._error_budget.should_hard_fail():
             alerts.append("autosync error budget hard-fail threshold reached")
 
+        for connector, thresholds in sorted(self._connector_sla_thresholds.items()):
+            latency_summary = self._connector_latency_tracker.summary(connector)
+            if latency_summary.get("count", 0) == 0:
+                continue
+            error_budget = self._connector_error_budget(connector)
+            result = self._connector_sla_evaluator.evaluate(
+                connector_name=connector,
+                latency_summary=latency_summary,
+                error_budget_stats=error_budget.get_stats(),
+                thresholds=thresholds,
+            )
+            for breach in result.get("breaches", []):
+                alerts.append(f"connector {connector} SLA breach: {breach}")
+
         return alerts
+
+    def _connector_error_budget(self, connector: str) -> ErrorBudgetTracker:
+        normalized = connector.lower()
+        budget = self._connector_error_budgets.get(normalized)
+        if budget is None:
+            budget = ErrorBudgetTracker(
+                ErrorBudgetConfig(
+                    max_consecutive_failures=self.config.error_budget_max_consecutive_failures,
+                    max_failure_rate=self.config.error_budget_max_failure_rate,
+                    escalation_after=self.config.error_budget_escalation_after,
+                ),
+            )
+            self._connector_error_budgets[normalized] = budget
+        return budget
+
+    def _record_connector_latency(self, connector: str, *, duration_seconds: float) -> None:
+        duration_ms = max(0.0, float(duration_seconds) * 1000.0)
+        cycle_id = self._current_run_correlation_id or "standalone"
+        self._connector_latency_tracker.record(connector, duration_ms, cycle_id)
 
     def _maybe_enqueue_escalation(self, reason: str) -> None:
         if not reason or self.config.dry_run:
@@ -1179,6 +1247,12 @@ class WorkstreamAutosyncRunner:
         payload = f"{platform}:{item.item_id}:{item.status}:{item.priority}:{item.area}"
         digest = hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]
         return f"{platform}-mutation-{item.item_id}-{digest}"
+
+    @staticmethod
+    def _normalize_for_checksum_payload(payload: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Return a deterministic remote payload representation for checksum verification."""
+        normalized = [{key: item[key] for key in sorted(item)} for item in payload]
+        return sorted(normalized, key=lambda item: json.dumps(item, sort_keys=True))
 
     def _enforce_write_guards(self, *, connector: str, items: list[WorkstreamItem]) -> None:
         """Fail-fast guard for write-capable sync entrypoints."""
@@ -1346,6 +1420,156 @@ class WorkstreamAutosyncRunner:
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(sample, sort_keys=True) + "\n")
         self._last_trend_sample = sample
+
+    def _record_change_event(
+        self,
+        *,
+        connector: str,
+        action: str,
+        outcome: str,
+        count: int,
+    ) -> None:
+        if count <= 0:
+            return
+        self._cycle_change_events.append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "connector": connector,
+                "action": action,
+                "outcome": outcome,
+                "count": count,
+            }
+        )
+
+    def _refresh_change_digest(self) -> dict[str, Any]:
+        self._latest_change_digest = build_hourly_change_digest(self._cycle_change_events)
+        return self._latest_change_digest
+
+    def _append_change_digest_snapshot(self) -> None:
+        payload = {
+            "captured_at": datetime.now(timezone.utc).isoformat(),
+            "cycle_number": self.total_cycles,
+            "cycle_id": self._current_run_correlation_id,
+            "digest": self._refresh_change_digest(),
+        }
+        path = self._change_digest_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+
+    def _finalize_change_digest(self) -> dict[str, Any]:
+        """Finalize and persist the current cycle's digest."""
+        self._refresh_change_digest()
+        self._append_change_digest_snapshot()
+        return self._latest_change_digest
+
+    def _log_remote_reflection_events(
+        self,
+        *,
+        connector: str,
+        local_items: list[WorkstreamItem],
+        status_updates: dict[str, str],
+    ) -> None:
+        if not status_updates:
+            return
+
+        local_status = {item.item_id: item.status for item in local_items}
+        cycle_id = self._current_run_correlation_id or "unknown"
+
+        for item_id, updated_status in status_updates.items():
+            before_status = local_status.get(item_id, "")
+            decision_type = "skip" if before_status == updated_status else "apply"
+            self._reflection_event_log.log(
+                ReflectionDecision(
+                    wl_id=item_id,
+                    decision_type=decision_type,
+                    before_value=before_status,
+                    after_value=updated_status,
+                    connector=connector,
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    cycle_id=cycle_id,
+                    direction="remote_to_local",
+                    mutation_id=f"{connector}:{item_id}:{cycle_id}",
+                )
+            )
+            self._record_change_event(
+                connector=connector,
+                action="remote_to_local",
+                outcome=decision_type,
+                count=1,
+            )
+
+    def _record_local_reflection_events(self, *, connector: str, operation: SyncOperation) -> None:
+        if operation.items_processed <= 0:
+            return
+        if operation.items_failed > 0 and operation.errors:
+            self._record_change_event(
+                connector=connector,
+                action="local_to_remote",
+                outcome="failure",
+                count=operation.items_failed,
+            )
+
+        applied = max(0, operation.items_successful)
+        skipped = max(0, operation.items_processed - operation.items_successful)
+        if skipped > 0 and not operation.errors:
+            self._record_change_event(
+                connector=connector,
+                action="local_to_remote",
+                outcome="skip",
+                count=skipped,
+            )
+        event_ts = (
+            operation.completed_at.isoformat() if operation.completed_at else datetime.now(timezone.utc).isoformat()
+        )
+        cycle_id = self._current_run_correlation_id or "unknown"
+
+        def _log_local_decision(
+            *, decision_type: str, before_value: object, after_value: object, mutation_suffix: str
+        ) -> None:
+            self._reflection_event_log.log(
+                ReflectionDecision(
+                    wl_id=operation.operation_id,
+                    decision_type=decision_type,
+                    before_value=before_value,
+                    after_value=after_value,
+                    connector=connector,
+                    timestamp=event_ts,
+                    cycle_id=cycle_id,
+                    direction="local_to_remote",
+                    mutation_id=f"{connector}:{operation.operation_id}:{mutation_suffix}",
+                )
+            )
+
+        if operation.items_failed > 0 and operation.errors:
+            _log_local_decision(
+                decision_type="failure",
+                before_value=operation.items_processed,
+                after_value=operation.items_successful,
+                mutation_suffix="failure",
+            )
+            if operation.items_successful <= 0:
+                return
+        if skipped > 0 and not operation.errors:
+            _log_local_decision(
+                decision_type="skip",
+                before_value=operation.items_processed,
+                after_value=operation.items_processed - skipped,
+                mutation_suffix="skip",
+            )
+        if applied > 0:
+            _log_local_decision(
+                decision_type="apply",
+                before_value=operation.items_processed,
+                after_value=applied,
+                mutation_suffix="apply",
+            )
+            self._record_change_event(
+                connector=connector,
+                action="local_to_remote",
+                outcome="apply",
+                count=applied,
+            )
 
     def _emit_cycle_metrics(
         self,
@@ -1539,6 +1763,7 @@ class WorkstreamAutosyncRunner:
             "snapshot_stale": snapshot_stale,
             "slo_alerts": slo_alerts,
             "error_budget": self._error_budget.get_stats(),
+            "connector_sla": self._connector_sla_snapshot(),
             "policy_hash": policy_hash,
             "connector_health": [probe.to_dict() for probe in self._last_connector_probe],
             "metadata": metadata_state,
@@ -1553,6 +1778,33 @@ class WorkstreamAutosyncRunner:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(snapshot, sort_keys=True) + "\n")
+
+    def _connector_sla_snapshot(self) -> dict[str, Any]:
+        snapshot: dict[str, Any] = {}
+        for connector, thresholds in sorted(self._connector_sla_thresholds.items()):
+            latency_summary = self._connector_latency_tracker.summary(connector)
+            error_budget = self._connector_error_budget(connector)
+            if latency_summary.get("count", 0) == 0:
+                snapshot[connector] = {
+                    "latency": latency_summary,
+                    "error_budget": error_budget.get_stats(),
+                    "thresholds": {
+                        "p95_latency_ms": thresholds.p95_latency_ms,
+                        "max_failure_rate": thresholds.max_failure_rate,
+                    },
+                    "within_sla": None,
+                    "breaches": [],
+                }
+                continue
+
+            evaluation = self._connector_sla_evaluator.evaluate(
+                connector_name=connector,
+                latency_summary=latency_summary,
+                error_budget_stats=error_budget.get_stats(),
+                thresholds=thresholds,
+            )
+            snapshot[connector] = evaluation
+        return snapshot
 
     def _finalize_incident_snapshot(self, *, items_count: int, metadata_state: dict[str, Any]) -> None:
         """Persist incident snapshot and act on SLO alerts."""
@@ -1590,6 +1842,7 @@ class WorkstreamAutosyncRunner:
         no_op = False
         no_op_reason: str | None = None
         cycle_items: list[WorkstreamItem] = []
+        cycle_change_digest: dict[str, Any] = {"bucket": "hourly", "hours": {}}
         self._cycle_failure_recorded = False
         writer_lock_owner: str | None = None
         writer_lock_acquired = False
@@ -1604,6 +1857,7 @@ class WorkstreamAutosyncRunner:
             self._metrics.record_autosync_cycle_result(status=status, duration_seconds=duration)
 
         try:
+            self._cycle_change_events = []
             if self._requires_writer_lock():
                 writer_lock_owner = self._writer_lock_owner()
                 if not self._writer_lock.acquire(writer_lock_owner):
@@ -1671,6 +1925,7 @@ class WorkstreamAutosyncRunner:
                     no_op=no_op,
                     no_op_reason=no_op_reason,
                 )
+                cycle_change_digest = self._finalize_change_digest()
                 self._emit_cycle_metrics(
                     started_at=cycle_started_at,
                     completed_at=datetime.now(timezone.utc),
@@ -1684,7 +1939,7 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=[],
                     decisions={**cycle_decisions, "reason": "no_items"},
-                    outputs={"total_cycles": self.total_cycles},
+                    outputs={"total_cycles": self.total_cycles, "change_digest": cycle_change_digest},
                 )
                 _record_cycle_status("success")
                 return
@@ -1748,6 +2003,7 @@ class WorkstreamAutosyncRunner:
                     no_op=no_op,
                     no_op_reason=no_op_reason,
                 )
+                cycle_change_digest = self._finalize_change_digest()
                 self._emit_cycle_metrics(
                     started_at=cycle_started_at,
                     completed_at=datetime.now(timezone.utc),
@@ -1761,7 +2017,7 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=items,
                     decisions={**cycle_decisions, "reason": no_op_reason},
-                    outputs={"total_cycles": self.total_cycles, "no_op": True},
+                    outputs={"total_cycles": self.total_cycles, "no_op": True, "change_digest": cycle_change_digest},
                 )
                 _record_cycle_status("success")
                 return
@@ -1858,6 +2114,7 @@ class WorkstreamAutosyncRunner:
                 no_op=no_op,
                 no_op_reason=no_op_reason,
             )
+            cycle_change_digest = self._finalize_change_digest()
             self._emit_cycle_metrics(
                 started_at=cycle_started_at,
                 completed_at=datetime.now(timezone.utc),
@@ -1875,6 +2132,7 @@ class WorkstreamAutosyncRunner:
                     "total_cycles": self.total_cycles,
                     "last_operation": self.last_operation.to_dict() if self.last_operation else None,
                     "failure_queue_size": len(self._failure_queue.snapshot()),
+                    "change_digest": cycle_change_digest,
                 },
             )
             _record_cycle_status("success")
@@ -1905,6 +2163,7 @@ class WorkstreamAutosyncRunner:
                 no_op=no_op,
                 no_op_reason=no_op_reason,
             )
+            cycle_change_digest = self._finalize_change_digest()
             self._emit_cycle_metrics(
                 started_at=cycle_started_at,
                 completed_at=datetime.now(timezone.utc),
@@ -1918,7 +2177,11 @@ class WorkstreamAutosyncRunner:
                 started_at=cycle_started_at,
                 items=cycle_items,
                 decisions=cycle_decisions,
-                outputs={"total_cycles": self.total_cycles, "last_error": self.last_error},
+                outputs={
+                    "total_cycles": self.total_cycles,
+                    "last_error": self.last_error,
+                    "change_digest": cycle_change_digest,
+                },
             )
             _record_cycle_status("failed")
         finally:
@@ -1945,6 +2208,7 @@ class WorkstreamAutosyncRunner:
             "scope_filtered_wl_ids": self._last_scope_filtered_item_ids,
             "no_op_summary": self._no_op_summary,
             "trend_sample": self._last_trend_sample,
+            "change_digest": self._latest_change_digest,
         }
         try:
             status_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1976,23 +2240,33 @@ class WorkstreamAutosyncRunner:
 
         try:
             op.items_processed = len(items)
-            _ = [
-                enrich_sync_metadata(
+            fallback_owner = self.config.actor_id.strip()
+            enriched_items = []
+            for item in items:
+                metadata = enrich_sync_metadata(
                     item.to_dict(),
-                    source_url=f"linear://workstream/{item.item_id}",
-                    source_tag="linear",
+                    source_url=f"github://workstream/{item.item_id}",
+                    source_tag="github",
                 )
-                for item in items
-            ]
+                owner = item.owner.strip() if item.owner else ""
+                if not owner:
+                    owner = fallback_owner
+                if owner:
+                    metadata = propagate_owner_metadata(metadata, owner=owner)
+                enriched_items.append(metadata)
             if self.config.shadow_mode:
                 logger.info("Shadow mode active: blocking %d GitHub mutations", len(items))
+                op.items_successful = len(items)
                 op.completed_at = datetime.now(timezone.utc)
                 op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="github", operation=op)
                 self.last_operation = op
                 return
             if self._idempotency_cache.check(op.operation_id):
+                op.items_successful = 0
                 op.completed_at = datetime.now(timezone.utc)
                 op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="github", operation=op)
                 self.last_operation = op
                 logger.info("Skipping replayed GitHub write operation: %s", op.operation_id)
                 return
@@ -2013,14 +2287,6 @@ class WorkstreamAutosyncRunner:
                     direction=self.config.github_direction.value,
                     standalone_mode=self.config.standalone_mode,
                 )
-                enriched_items = [
-                    enrich_sync_metadata(
-                        item.to_dict(),
-                        source_url=f"github://workstream/{item.item_id}",
-                        source_tag="github",
-                    )
-                    for item in items
-                ]
                 result = await asyncio.to_thread(gh_sync_to_github, gh_config, enriched_items)
                 created = int(result.get("items_created", 0))
                 updated = int(result.get("items_updated", 0))
@@ -2035,6 +2301,28 @@ class WorkstreamAutosyncRunner:
                     if isinstance(error, str) and ":" in error
                 }
                 successful_items = [item for item in items if item.item_id not in error_ids]
+                close_failures = 0
+                if self.config.github_auto_close_issues:
+                    completed_issue_refs: list[str] = []
+                    for item in successful_items:
+                        if item.status.upper() != "COMPLETED":
+                            continue
+                        completed_issue_refs.extend(
+                            extract_github_issue_refs(
+                                {
+                                    "title": item.title,
+                                    "body": item.raw_section or "",
+                                }
+                            )
+                        )
+                    if completed_issue_refs:
+                        close_result = close_or_comment_github_issue_refs(
+                            completed_issue_refs,
+                            close_comment=self.config.github_auto_close_comment,
+                        )
+                        close_failures = len(close_result.get("errors", []))
+                        if close_failures:
+                            op.errors.extend(str(error) for error in close_result["errors"])
                 for item in successful_items:
                     mutation_id = self._build_mutation_id("gh", item)
                     mutation_hash = hashlib.sha1(
@@ -2058,10 +2346,11 @@ class WorkstreamAutosyncRunner:
                         ).hexdigest(),
                     )
 
-            op.items_failed = max(0, op.items_processed - op.items_successful)
+            op.items_failed = max(0, op.items_processed - op.items_successful) + close_failures
 
             op.completed_at = datetime.now(timezone.utc)
             op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+            self._record_local_reflection_events(connector="github", operation=op)
             self.last_operation = op
 
         except (GHProjectSyncError, ValueError, TypeError) as e:
@@ -2069,6 +2358,9 @@ class WorkstreamAutosyncRunner:
             op.items_failed = max(0, op.items_processed - op.items_successful)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                op.completed_at = datetime.now(timezone.utc)
+                op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="github", operation=op)
                 await self._record_failure(
                     connector="github",
                     direction="write",
@@ -2082,14 +2374,15 @@ class WorkstreamAutosyncRunner:
             op.items_failed = max(0, op.items_processed - op.items_successful)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                op.completed_at = datetime.now(timezone.utc)
+                op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="github", operation=op)
                 await self._record_failure(
                     connector="github",
                     direction="write",
                     item_id=op.operation_id,
                     message=str(e),
                 )
-                return
-            if self.config.standalone_mode:
                 return
             raise
 
@@ -2113,6 +2406,7 @@ class WorkstreamAutosyncRunner:
         try:
             op.items_processed = len(items)
             local_status_by_id = {item.item_id: item.status.upper() for item in items}
+            status_updates: dict[str, str] = {}
             if self.config.dry_run:
                 logger.info("Dry-run: skip GitHub read reflection (%d items)", len(items))
             else:
@@ -2125,6 +2419,13 @@ class WorkstreamAutosyncRunner:
                 )
                 result = await asyncio.to_thread(gh_sync_from_github, gh_config)
                 remote_items = result.get("items", [])
+                if self.config.payload_checksum_enforced:
+                    if not isinstance(remote_items, list) or any(not isinstance(item, dict) for item in remote_items):
+                        raise TypeError("Remote payload must be a list of objects for checksum verification")
+                    verify_payload_checksum(
+                        self._normalize_for_checksum_payload(remote_items),
+                        self.config.expected_payload_checksum,
+                    )
                 target_ids = {item.item_id for item in items}
                 status_updates: dict[str, str] = {}
                 close_failures = 0
@@ -2163,6 +2464,11 @@ class WorkstreamAutosyncRunner:
                 errors = result.get("errors", [])
                 if isinstance(errors, list):
                     op.errors.extend(str(error) for error in errors)
+            self._log_remote_reflection_events(
+                connector="github",
+                local_items=items,
+                status_updates=status_updates,
+            )
             if self.config.standalone_mode and close_failures:
                 await self._record_failure(
                     connector="github",
@@ -2179,6 +2485,8 @@ class WorkstreamAutosyncRunner:
             logger.error("Failed to sync from GitHub: %s", e, exc_info=True)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                op.completed_at = datetime.now(timezone.utc)
+                op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
                 await self._record_failure(
                     connector="github",
                     direction="read",
@@ -2192,6 +2500,8 @@ class WorkstreamAutosyncRunner:
             logger.error("Unexpected GitHub read sync failure: %s", e, exc_info=True)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                op.completed_at = datetime.now(timezone.utc)
+                op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
                 await self._record_failure(
                     connector="github",
                     direction="read",
@@ -2221,15 +2531,33 @@ class WorkstreamAutosyncRunner:
 
         try:
             op.items_processed = len(items)
+            fallback_owner = self.config.actor_id.strip()
+            enriched_items = []
+            for item in items:
+                metadata = enrich_sync_metadata(
+                    item.to_dict(),
+                    source_url=f"linear://workstream/{item.item_id}",
+                    source_tag="linear",
+                )
+                owner = item.owner.strip() if item.owner else ""
+                if not owner:
+                    owner = fallback_owner
+                if owner:
+                    metadata = propagate_owner_metadata(metadata, owner=owner)
+                enriched_items.append(metadata)
             if self.config.shadow_mode:
                 logger.info("Shadow mode active: blocking %d Linear mutations", len(items))
+                op.items_successful = len(items)
                 op.completed_at = datetime.now(timezone.utc)
                 op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="linear", operation=op)
                 self.last_operation = op
                 return
             if self._idempotency_cache.check(op.operation_id):
+                op.items_successful = 0
                 op.completed_at = datetime.now(timezone.utc)
                 op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="linear", operation=op)
                 self.last_operation = op
                 logger.info("Skipping replayed Linear write operation: %s", op.operation_id)
                 return
@@ -2245,7 +2573,7 @@ class WorkstreamAutosyncRunner:
                     team_key=self.config.linear_team_key,
                     timeout_seconds=self.config.linear_write_timeout_seconds,
                 )
-                result = await asyncio.to_thread(linear_sync_to, linear_config, [item.to_dict() for item in items])
+                result = await asyncio.to_thread(linear_sync_to, linear_config, enriched_items)
                 created = int(result.get("items_created", 0))
                 updated = int(result.get("items_updated", 0))
                 op.items_successful = created + updated
@@ -2286,6 +2614,7 @@ class WorkstreamAutosyncRunner:
 
             op.completed_at = datetime.now(timezone.utc)
             op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+            self._record_local_reflection_events(connector="linear", operation=op)
             self.last_operation = op
 
         except (LinearGraphQLAuthError, LinearGraphQLError, ValueError, TypeError) as e:
@@ -2293,6 +2622,9 @@ class WorkstreamAutosyncRunner:
             op.items_failed = max(0, op.items_processed - op.items_successful)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                op.completed_at = datetime.now(timezone.utc)
+                op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="linear", operation=op)
                 return
             raise
         except Exception as e:
@@ -2300,6 +2632,9 @@ class WorkstreamAutosyncRunner:
             op.items_failed = max(0, op.items_processed - op.items_successful)
             op.errors.append(str(e))
             if self.config.standalone_mode:
+                op.completed_at = datetime.now(timezone.utc)
+                op.duration_seconds = (op.completed_at - op.started_at).total_seconds()
+                self._record_local_reflection_events(connector="linear", operation=op)
                 return
             raise
 
@@ -2322,6 +2657,7 @@ class WorkstreamAutosyncRunner:
 
         try:
             op.items_processed = len(items)
+            status_updates: dict[str, str] = {}
             if self.config.dry_run:
                 logger.info("Dry-run: skip Linear read reflection (%d items)", len(items))
             else:
@@ -2332,6 +2668,13 @@ class WorkstreamAutosyncRunner:
                 )
                 result = await asyncio.to_thread(linear_sync_from, linear_config)
                 remote_items = result.get("items", [])
+                if self.config.payload_checksum_enforced:
+                    if not isinstance(remote_items, list) or any(not isinstance(item, dict) for item in remote_items):
+                        raise TypeError("Remote payload must be a list of objects for checksum verification")
+                    verify_payload_checksum(
+                        self._normalize_for_checksum_payload(remote_items),
+                        self.config.expected_payload_checksum,
+                    )
                 target_ids = {item.item_id for item in items}
                 status_updates: dict[str, str] = {}
                 if isinstance(remote_items, list):
@@ -2356,6 +2699,11 @@ class WorkstreamAutosyncRunner:
                 errors = result.get("errors", [])
                 if isinstance(errors, list):
                     op.errors.extend(str(error) for error in errors)
+            self._log_remote_reflection_events(
+                connector="linear",
+                local_items=items,
+                status_updates=status_updates,
+            )
             op.items_failed = max(0, op.items_processed - op.items_successful)
 
             op.completed_at = datetime.now(timezone.utc)
@@ -2416,43 +2764,52 @@ class WorkstreamAutosyncRunner:
                     try:
                         await breaker.call_async(_run_partition_sync)
                     except asyncio.TimeoutError as exc:
+                        duration_seconds = max(0.0, time.monotonic() - started_at)
+                        self._record_connector_latency(connector, duration_seconds=duration_seconds)
                         self._metrics.record_autosync_connector_operation(
                             connector=connector,
                             direction=direction,
                             result="timeout",
-                            duration_seconds=max(0.0, time.monotonic() - started_at),
+                            duration_seconds=duration_seconds,
                         )
                         self._metrics.set_circuit_breaker(connector, breaker.state == "open")
                         raise WorkstreamAutosyncError(
                             f"{connector}/{direction} timed out after {timeout_seconds:.3f}s",
                         ) from exc
                     except CircuitOpenError as exc:
+                        duration_seconds = max(0.0, time.monotonic() - started_at)
+                        self._record_connector_latency(connector, duration_seconds=duration_seconds)
                         self._metrics.record_autosync_circuit_open(connector=connector, direction=direction)
                         self._metrics.record_autosync_connector_operation(
                             connector=connector,
                             direction=direction,
                             result="circuit_open",
-                            duration_seconds=max(0.0, time.monotonic() - started_at),
+                            duration_seconds=duration_seconds,
                         )
                         self._metrics.set_circuit_breaker(connector, True)
                         raise WorkstreamAutosyncError(
                             f"{connector}/{direction} blocked by open connector circuit breaker",
                         ) from exc
                     except Exception:
+                        duration_seconds = max(0.0, time.monotonic() - started_at)
+                        self._record_connector_latency(connector, duration_seconds=duration_seconds)
                         self._metrics.record_autosync_connector_operation(
                             connector=connector,
                             direction=direction,
                             result="error",
-                            duration_seconds=max(0.0, time.monotonic() - started_at),
+                            duration_seconds=duration_seconds,
                         )
                         self._metrics.set_circuit_breaker(connector, breaker.state == "open")
                         raise
                     else:
+                        duration_seconds = max(0.0, time.monotonic() - started_at)
+                        self._record_connector_latency(connector, duration_seconds=duration_seconds)
+                        self._connector_error_budget(connector).record_success()
                         self._metrics.record_autosync_connector_operation(
                             connector=connector,
                             direction=direction,
                             result="success",
-                            duration_seconds=max(0.0, time.monotonic() - started_at),
+                            duration_seconds=duration_seconds,
                         )
                         self._metrics.set_circuit_breaker(connector, breaker.state == "open")
                         break
@@ -2640,6 +2997,7 @@ class WorkstreamAutosyncRunner:
         operation_id = f"{connector}-{direction}-{item_id}-{digest}"
         retry_class = self._classify_retry(message)
         self._error_budget.record_failure()
+        self._connector_error_budget(connector).record_failure()
         self._cycle_failure_recorded = True
         self._failure_queue.push(
             operation_id=operation_id,
@@ -2704,10 +3062,13 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
     THGENT_WORKSTREAM_AUTOSYNC_CHECKPOINT_PATH: Path to checkpoint JSON
     THGENT_WORKSTREAM_AUTOSYNC_MAX_PARTITION_SIZE: Dynamic partition size
     THGENT_WORKSTREAM_AUTOSYNC_TTL_SECONDS: Checkpoint TTL seconds
-    THGENT_AUTOSYNC_MAINTENANCE_WINDOWS: Maintenance windows (`connector:start:end:reason` or JSON array)
+    THGENT_AUTOSYNC_MAINTENANCE_WINDOWS: Maintenance windows (`connector:start:end:project:reason` or `connector:start:end:reason` legacy; JSON array also supported)
     THGENT_WORKSTREAM_TAG_TAXONOMY: Comma-separated approved tags
     THGENT_WORKSTREAM_AUTOSYNC_FAILURE_QUEUE_PATH: Path to failure queue JSON
     THGENT_WORKSTREAM_AUTOSYNC_FAILURE_QUEUE_TTL_SECONDS: Failure queue retention seconds
+    THGENT_WORKSTREAM_AUTOSYNC_CHANGE_DIGEST_PATH: Path for hourly change digest JSONL output
+    THGENT_WORKSTREAM_AUTOSYNC_REFLECTION_EVENT_LOG_PATH: Path for reflection event log JSONL output
+    THGENT_AUTOSYNC_CONNECTOR_SLA_THRESHOLDS: JSON connector SLA thresholds (`{"github":{"p95_latency_ms":250,"max_failure_rate":0.2}}`)
     THGENT_WORKSTREAM_STRICT_TAG_VALIDATION: Require tags to match taxonomy
     THGENT_WORKSTREAM_STRICT_TITLE_VALIDATION: Require duplicate titles to fail
     THGENT_AUTOSYNC_EMERGENCY_STOP_ENABLED: Enable emergency stop checks
@@ -2761,7 +3122,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
     def parse_json_windows(raw: str | None) -> list[MaintenanceWindow]:
         if not raw:
             return []
-        parsed = []
+        maintenance_windows: list[MaintenanceWindow] = []
         candidate_windows = raw.strip()
         if candidate_windows.startswith("["):
             try:
@@ -2782,7 +3143,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                 if start_raw is None or end_raw is None:
                     continue
                 try:
-                    parsed.append(
+                    maintenance_windows.append(
                         MaintenanceWindow(
                             connector=connector,
                             start_utc=datetime.fromisoformat(str(start_raw).replace("Z", "+00:00")),
@@ -2793,31 +3154,66 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                     )
                 except (TypeError, ValueError):
                     logger.debug("Skipping malformed maintenance window item: %s", item)
-            return parsed
+            return maintenance_windows
 
         for raw_entry in candidate_windows.split(";"):
             raw_entry = raw_entry.strip()
             if not raw_entry:
                 continue
-            parts = raw_entry.split(":", 3)
-            if len(parts) < 3:
+
+            connector, separator, remainder = raw_entry.partition(":")
+            if not separator:
                 logger.debug("Skipping malformed maintenance window token: %s", raw_entry)
                 continue
-            connector, start_raw, end_raw, *reason_parts = parts
-            reason = reason_parts[0].strip() if reason_parts else ""
+
+            def _parse_iso_pair(raw: str) -> tuple[datetime, datetime, str] | None:
+                if not raw:
+                    return None
+                for start_split in range(1, len(raw)):
+                    if raw[start_split] != ":":
+                        continue
+                    start_raw = raw[:start_split]
+                    try:
+                        start_utc = datetime.fromisoformat(start_raw.replace("Z", "+00:00"))
+                    except (TypeError, ValueError):
+                        continue
+                    remainder = raw[start_split + 1 :]
+                    for end_split in range(1, len(remainder)):
+                        if remainder[end_split] != ":":
+                            continue
+                        end_raw = remainder[:end_split]
+                        try:
+                            end_utc = datetime.fromisoformat(end_raw.replace("Z", "+00:00"))
+                        except (TypeError, ValueError):
+                            continue
+                        return start_utc, end_utc, remainder[end_split + 1 :]
+                return None
+
+            parsed_window = _parse_iso_pair(remainder)
+            if parsed_window is None:
+                logger.debug("Skipping malformed maintenance window token: %s", raw_entry)
+                continue
+            start_utc, end_utc, remainder = parsed_window
+            if ":" in remainder:
+                project, reason = remainder.split(":", 1)
+                project = project.strip() or "default"
+                reason = reason.strip()
+            else:
+                project = "default"
+                reason = remainder.strip()
             try:
-                parsed.append(
+                maintenance_windows.append(
                     MaintenanceWindow(
                         connector=connector.strip().lower() or "all",
-                        start_utc=datetime.fromisoformat(start_raw.strip().replace("Z", "+00:00")),
-                        end_utc=datetime.fromisoformat(end_raw.strip().replace("Z", "+00:00")),
+                        start_utc=start_utc,
+                        end_utc=end_utc,
                         reason=reason,
-                        project="default",
+                        project=project,
                     )
                 )
             except (TypeError, ValueError):
                 logger.debug("Skipping malformed maintenance window token: %s", raw_entry)
-        return parsed
+        return maintenance_windows
 
     def parse_tag_taxonomy(raw: str | None) -> list[str]:
         if not raw:
@@ -2877,6 +3273,32 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                 normalized[str(connector).strip().lower()] = [str(value).strip().lower() for value in values]
         return normalized
 
+    def parse_connector_sla_thresholds(raw: str | None) -> dict[str, ConnectorSLAThresholds]:
+        if not raw:
+            return {}
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            return {}
+        if not isinstance(payload, dict):
+            return {}
+
+        normalized: dict[str, ConnectorSLAThresholds] = {}
+        for connector, value in payload.items():
+            if not isinstance(value, dict):
+                continue
+            p95_latency_ms = value.get("p95_latency_ms")
+            max_failure_rate = value.get("max_failure_rate")
+            try:
+                normalized[connector.strip().lower()] = ConnectorSLAThresholds(
+                    p95_latency_ms=float(p95_latency_ms),
+                    max_failure_rate=float(max_failure_rate),
+                )
+            except (TypeError, ValueError):
+                logger.debug("Skipping malformed connector SLA threshold for %s: %s", connector, value)
+                continue
+        return normalized
+
     github_direction = os.getenv("THGENT_GITHUB_DIRECTION", "bidirectional")
     try:
         github_dir = SyncDirection(github_direction)
@@ -2896,6 +3318,8 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
     checkpoint_file_path = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_CHECKPOINT_PATH")
     cycle_manifest_path = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_CYCLE_MANIFEST_PATH")
     cycle_metrics_path = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_CYCLE_METRICS_PATH")
+    change_digest_path = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_CHANGE_DIGEST_PATH")
+    reflection_event_log_path = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_REFLECTION_EVENT_LOG_PATH")
     failure_queue_path = os.getenv("THGENT_WORKSTREAM_AUTOSYNC_FAILURE_QUEUE_PATH")
     autosync_prometheus_export_path = os.getenv("THGENT_AUTOSYNC_PROMETHEUS_EXPORT_PATH")
     connector_mapping_cache_path = os.getenv("THGENT_CONNECTOR_MAPPING_CACHE_PATH")
@@ -2911,6 +3335,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
     connector_health_states = parse_connector_health_states(os.getenv("THGENT_CONNECTOR_HEALTH_STATES"))
     connector_capabilities = parse_capability_map(os.getenv("THGENT_CONNECTOR_CAPABILITIES"))
     required_connector_capabilities = parse_capability_map(os.getenv("THGENT_REQUIRED_CONNECTOR_CAPABILITIES"))
+    connector_sla_thresholds = parse_connector_sla_thresholds(os.getenv("THGENT_AUTOSYNC_CONNECTOR_SLA_THRESHOLDS"))
     bootstrap_required_fields = parse_bootstrap_mappings(os.getenv("THGENT_BOOTSTRAP_REQUIRED_FIELDS"))
     scope_areas = parse_scope_tokens(os.getenv("THGENT_WORKSTREAM_SYNC_SCOPE_AREAS"))
     scope_statuses = parse_scope_tokens(os.getenv("THGENT_WORKSTREAM_SYNC_SCOPE_STATUSES"), upper=True)
@@ -2980,6 +3405,8 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
         checkpoint_file_path=Path(checkpoint_file_path) if checkpoint_file_path else None,
         cycle_manifest_path=Path(cycle_manifest_path) if cycle_manifest_path else None,
         cycle_metrics_path=Path(cycle_metrics_path) if cycle_metrics_path else None,
+        change_digest_path=Path(change_digest_path) if change_digest_path else None,
+        reflection_event_log_path=(Path(reflection_event_log_path) if reflection_event_log_path else None),
         maintenance_windows=maintenance_windows,
         max_partition_size=parse_int(os.getenv("THGENT_WORKSTREAM_AUTOSYNC_MAX_PARTITION_SIZE", "200"), default=200),
         allowed_tags=allowed_tags,
@@ -3006,6 +3433,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
         actor_signing_key=os.getenv("THGENT_AUTOSYNC_ACTOR_SIGNING_KEY", ""),
         connector_capabilities=connector_capabilities,
         required_connector_capabilities=required_connector_capabilities,
+        connector_sla_thresholds=connector_sla_thresholds,
         payload_checksum_enforced=parse_bool(os.getenv("THGENT_AUTOSYNC_PAYLOAD_CHECKSUM_ENFORCED")),
         expected_payload_checksum=os.getenv("THGENT_AUTOSYNC_EXPECTED_PAYLOAD_CHECKSUM", ""),
         failure_queue_path=Path(failure_queue_path) if failure_queue_path else None,

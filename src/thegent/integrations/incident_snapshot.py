@@ -52,14 +52,10 @@ class IncidentSnapshotBundle:
         Returns:
             The created IncidentSnapshot.
         """
-        snapshot = IncidentSnapshot(
-            incident_id=incident_id, timestamp=datetime.now(timezone.utc), data=data
-        )
+        snapshot = IncidentSnapshot(incident_id=incident_id, timestamp=datetime.now(timezone.utc), data=data)
         self._snapshots[incident_id] = snapshot
 
-        logger.debug(
-            f"Captured incident snapshot for {incident_id} at {snapshot.timestamp.isoformat()}"
-        )
+        logger.debug(f"Captured incident snapshot for {incident_id} at {snapshot.timestamp.isoformat()}")
 
         return snapshot
 

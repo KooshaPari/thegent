@@ -290,6 +290,7 @@ class TestRolloutScorecardSummary:
         assert auth_check["details"] == ""
 
 
+@pytest.mark.requirement("WL-239")
 class TestStagedRolloutProfiles:
     """Tests for WL-239 staged rollout profiles."""
 
