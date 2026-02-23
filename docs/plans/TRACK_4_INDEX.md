@@ -1,0 +1,326 @@
+# Track 4: Sub-Project Split + Ecosystem Consolidation — Document Index
+
+**Date:** 2026-02-22
+**Status:** Design Complete | Ready for Implementation
+**Total Documentation:** ~45K words across 4 documents
+
+---
+
+## Quick Navigation
+
+### Start Here
+1. **[TRACK_4_SUMMARY.md](../../TRACK_4_SUMMARY.md)** (2K words)
+   - Executive summary
+   - What, why, how
+   - Success criteria
+   - Next steps
+
+### Detailed Plan (Primary Reference)
+2. **[TRACK_4_TDD_IMPLEMENTATION_PLAN.md](TRACK_4_TDD_IMPLEMENTATION_PLAN.md)** (25K words)
+   - 4 phases, 11 tasks
+   - Detailed acceptance criteria
+   - Code examples for all sub-projects
+   - Test-first approach
+   - Risk mitigation
+   - Commit strategy
+
+### Quick Checklist (For Execution)
+3. **[TRACK_4_QUICK_CHECKLIST.md](../reference/TRACK_4_QUICK_CHECKLIST.md)** (5K words)
+   - Phase-by-phase checkboxes
+   - Time allocations
+   - Execution strategy
+   - Risk table
+   - Commit messages
+
+### Protocol & Interface Specs
+4. **[SUBPROJECT_INTERFACE_SPEC.md](../reference/SUBPROJECT_INTERFACE_SPEC.md)** (8K words)
+   - MCP contracts (machine-readable)
+   - CLI ↔ Agents tools (6 tools, 2 resources)
+   - Agents ↔ MCP tool invocation
+   - Shared module rules
+   - Error codes & SLOs
+   - Testing contracts
+
+---
+
+## Document Organization
+
+```
+Track 4 Design
+├── TRACK_4_SUMMARY.md
+│   └── High-level overview, success criteria
+│
+├── docs/
+│   ├── plans/
+│   │   ├── TRACK_4_TDD_IMPLEMENTATION_PLAN.md
+│   │   │   ├── Phase 1: Infrastructure (contracts, workspace, tach)
+│   │   │   ├── Phase 2: Extract Sub-Projects (cli, agents, mcp)
+│   │   │   ├── Phase 3: Integration (tests, docs, reports)
+│   │   │   └── Phase 4: Completion (CI/CD)
+│   │   │
+│   │   └── TRACK_4_INDEX.md (this file)
+│   │
+│   └── reference/
+│       ├── TRACK_4_QUICK_CHECKLIST.md
+│       │   └── Execution checklist & time allocations
+│       │
+│       └── SUBPROJECT_INTERFACE_SPEC.md
+│           └── Machine-readable MCP contracts
+│
+└── reports/
+    └── ECOSYSTEM_CONSOLIDATION_2026-02-22.md
+        (created during Phase 3)
+```
+
+---
+
+## How to Use This Documentation
+
+### For Planning
+1. Read **TRACK_4_SUMMARY.md** (5 min)
+2. Review **TRACK_4_TDD_IMPLEMENTATION_PLAN.md** phases (30 min)
+3. Approve design and resource allocation
+
+### For Implementation
+1. Use **TRACK_4_QUICK_CHECKLIST.md** to track progress
+2. Reference **SUBPROJECT_INTERFACE_SPEC.md** for protocol details
+3. Follow code examples in **TRACK_4_TDD_IMPLEMENTATION_PLAN.md**
+
+### For Code Review
+1. Check against acceptance criteria in **TRACK_4_TDD_IMPLEMENTATION_PLAN.md**
+2. Verify interface compliance via **SUBPROJECT_INTERFACE_SPEC.md**
+3. Ensure commits match messages in **TRACK_4_QUICK_CHECKLIST.md**
+
+### For Troubleshooting
+1. Check "Risk Mitigation" section in **TRACK_4_TDD_IMPLEMENTATION_PLAN.md**
+2. Verify MCP contracts in **SUBPROJECT_INTERFACE_SPEC.md**
+3. Review "Troubleshooting" in referenced guides (Phase 3 deliverables)
+
+---
+
+## Document Purpose & Audience
+
+| Document | Length | Audience | Purpose |
+|----------|--------|----------|---------|
+| **TRACK_4_SUMMARY.md** | 2K | Decision makers | Quick overview, approval |
+| **TRACK_4_TDD_IMPLEMENTATION_PLAN.md** | 25K | Implementation team | Detailed spec, code examples |
+| **TRACK_4_QUICK_CHECKLIST.md** | 5K | Execution team | Progress tracking |
+| **SUBPROJECT_INTERFACE_SPEC.md** | 8K | Developers | Protocol compliance |
+
+---
+
+## Key Sections in Each Document
+
+### TRACK_4_TDD_IMPLEMENTATION_PLAN.md
+
+- **Overview** — Problem statement, target architecture
+- **Sub-Project Definitions** — Scope, files, responsibilities
+- **Phase 1: Infrastructure** (T0–T1)
+  - P1.1: Define IPC & MCP contracts
+  - P1.2: Create workspace configs
+  - P1.3: Update tach.toml
+- **Phase 2: Extract Sub-Projects** (T2–T4)
+  - P2.1: Extract thegent-cli
+  - P2.2: Extract thegent-agents
+  - P2.3: Extract thegent-mcp + absorb zen-mcp-server
+  - P2.4: Deprecate & archive
+- **Phase 3: Integration** (T5–T6)
+  - P3.1: Full test suite
+  - P3.2: Documentation
+  - P3.3: Consolidation report
+- **Phase 4: Completion** (T7)
+  - P4.1: CI/CD integration
+- **Summary Table** — Phase breakdown, dependencies
+- **Success Criteria** — Definition of done
+- **Risks & Mitigations** — Known issues and solutions
+- **Follow-Up Tasks** — Post-Track 4 work
+
+### TRACK_4_QUICK_CHECKLIST.md
+
+- **Phase 1 Checklist** — P1.1, P1.2, P1.3 (checkboxes)
+- **Phase 2 Checklist** — P2.1, P2.2, P2.3, P2.4 (checkboxes)
+- **Phase 3 Checklist** — P3.1, P3.2, P3.3 (checkboxes)
+- **Phase 4 Checklist** — P4.1 (checkboxes)
+- **Success Criteria** — Consolidated from plan
+- **Execution Strategy** — Parallelization recommendations
+- **Time-Box Allocation** — Detailed time estimates
+
+### SUBPROJECT_INTERFACE_SPEC.md
+
+- **Layering Diagram** — Data flow between sub-projects
+- **CLI ↔ Agents Interface** — 6 tools, 2 resources
+- **Agents ↔ MCP Interface** — Tool invocation contract
+- **Shared Modules** — Read-only access rules
+- **Configuration & Credentials** — Unified config system
+- **Error Handling** — Standard error format, codes
+- **Testing Contracts** — Compliance tests
+- **Backwards Compatibility** — Deprecation policy
+- **Performance & SLO** — Response time targets
+
+---
+
+## Execution Roadmap
+
+### Week 1: Design & Approval
+- [ ] Team reviews TRACK_4_SUMMARY.md
+- [ ] Team reviews TRACK_4_TDD_IMPLEMENTATION_PLAN.md
+- [ ] Design approved (no code changes yet)
+
+### Week 1–2: Phase 1 (Infrastructure)
+- [ ] P1.1: Define IPC & MCP contracts
+- [ ] P1.2: Create workspace configs
+- [ ] P1.3: Update tach.toml
+- **Checkpoint:** All configs created, uv sync works
+
+### Week 2–3: Phase 2 (Extract)
+- [ ] P2.1: Extract thegent-cli (~2–3h)
+- [ ] P2.2: Extract thegent-agents (~3–4h)
+- [ ] P2.3: Extract thegent-mcp + zen-mcp (~3–4h)
+- [ ] P2.4: Deprecate & archive (~0.5–1h)
+- **Checkpoint:** All extractions complete, imports updated, tests green
+
+### Week 3–4: Phase 3 (Integration)
+- [ ] P3.1: Full test suite + integration tests (~2–3h)
+- [ ] P3.2: Documentation + guides (~1–2h)
+- [ ] P3.3: Ecosystem consolidation report (~1–2h)
+- **Checkpoint:** Full test suite passes, docs complete, no regressions
+
+### Week 4: Phase 4 (Completion)
+- [ ] P4.1: CI/CD integration (~1–2h)
+- **Checkpoint:** CI/CD active, all commits pass
+
+---
+
+## Parallel Execution (Recommended)
+
+If using 4 agents:
+
+```
+Agent 1 (Lead):      P1.1 → P1.2 → P1.3 (blocks others)
+                     ↓
+Agent 2:             P2.1 (CLI extraction)
+Agent 3:             P2.2 (Agents extraction)
+Agent 4:             P2.3 + P2.4 (MCP extraction + deprecate)
+                     ↓
+All agents:          P3.1, P3.2, P3.3 (parallel)
+                     ↓
+All agents:          P4.1 (final validation)
+```
+
+**Wall-clock time:** 8–10 hours
+**Sequential time:** 24–30 hours
+
+---
+
+## Cross-References
+
+### From Planning to Implementation
+
+When reading **TRACK_4_TDD_IMPLEMENTATION_PLAN.md** Phase 2 (Extract Sub-Projects):
+
+- **P2.1 (CLI Extraction)** → See code example in plan
+- **P2.2 (Agents Extraction)** → See FastMCP server.py example in plan
+- **P2.3 (MCP Extraction)** → See tool registry example in plan
+- **All tools/resources** → See full spec in **SUBPROJECT_INTERFACE_SPEC.md**
+
+### From Interface Spec to Testing
+
+When implementing **SUBPROJECT_INTERFACE_SPEC.md** contracts:
+
+- **MCP Protocol** → Contract tests in **TRACK_4_TDD_IMPLEMENTATION_PLAN.md** (P3.1)
+- **Tool Invocation** → Test code example in plan
+- **Error Handling** → Error codes table in interface spec
+- **SLOs** → Benchmark tests in plan (Performance & SLO section)
+
+---
+
+## Document Maintenance
+
+### When to Update
+
+- **TRACK_4_SUMMARY.md** — Only for major scope changes
+- **TRACK_4_TDD_IMPLEMENTATION_PLAN.md** — When tasks change, new risks discovered
+- **TRACK_4_QUICK_CHECKLIST.md** — Weekly during implementation (track progress)
+- **SUBPROJECT_INTERFACE_SPEC.md** — When MCP contracts change, versions bump
+
+### Version Control
+
+All documents are in git. Update via:
+
+```bash
+# Edit document
+vim docs/plans/TRACK_4_TDD_IMPLEMENTATION_PLAN.md
+
+# Commit
+git add docs/
+git commit -m "docs: update Track 4 plan with [reason]"
+```
+
+---
+
+## Questions & Answers
+
+### Q: Where do I find the full MCP protocol spec?
+**A:** See **SUBPROJECT_INTERFACE_SPEC.md**, Part 1 (CLI ↔ Agents Interface)
+
+### Q: How do I add a new tool to thegent-mcp?
+**A:** See **TRACK_4_TDD_IMPLEMENTATION_PLAN.md**, P2.3 code example
+
+### Q: What happens to zen-mcp-server?
+**A:** It's absorbed into thegent-mcp (620 files → 500+ tools). See P2.3 and **ECOSYSTEM_CONSOLIDATION_2026-02-22.md** (created during Phase 3)
+
+### Q: Will existing CLI scripts break?
+**A:** No. All changes are backward compatible. See "Backward Compatibility" section in **TRACK_4_SUMMARY.md**
+
+### Q: How long will Phase 1 take?
+**A:** 2–3 hours total (P1.1 + P1.2 + P1.3). See time allocations in **TRACK_4_QUICK_CHECKLIST.md**
+
+### Q: Can I run agents and mcp on separate machines?
+**A:** Yes. After Phase 2, each sub-project is independent. See "Deployment" in post-Phase 3 guides.
+
+---
+
+## Summary of Deliverables
+
+### Documentation (This Plan)
+- ✅ TRACK_4_SUMMARY.md (executive summary)
+- ✅ TRACK_4_TDD_IMPLEMENTATION_PLAN.md (detailed plan)
+- ✅ TRACK_4_QUICK_CHECKLIST.md (execution guide)
+- ✅ SUBPROJECT_INTERFACE_SPEC.md (protocol spec)
+- ✅ TRACK_4_INDEX.md (this document)
+
+### Code (During Implementation)
+- `sub-projects/thegent-cli/` (Phase 2.1)
+- `sub-projects/thegent-agents/` (Phase 2.2)
+- `sub-projects/thegent-mcp/` (Phase 2.3)
+- `crates/thegent-ffi/` (Phase 2, refine)
+
+### Tests (Phase 3)
+- Contract tests (MCP compliance)
+- Integration tests (cross-project communication)
+- Full test suite (all sub-projects)
+- CI/CD pipeline (GitHub Actions)
+
+### More Documentation (Phase 3)
+- ECOSYSTEM_CONSOLIDATION_2026-02-22.md (consolidation report)
+- SUBPROJECT_ARCHITECTURE.md (guide)
+- SUBPROJECT_DEVELOPMENT.md (guide)
+
+---
+
+## Final Checklist Before Execution
+
+- [ ] Read TRACK_4_SUMMARY.md
+- [ ] Review TRACK_4_TDD_IMPLEMENTATION_PLAN.md (especially Phase 1 & 2)
+- [ ] Check SUBPROJECT_INTERFACE_SPEC.md for protocol details
+- [ ] Understand parallelization strategy
+- [ ] Identify 4 agents for parallel execution (or schedule sequential)
+- [ ] Allocate 8–10 hours wall-clock time (or 24–30 sequential)
+- [ ] Set up monitoring/progress tracking
+- [ ] Approve design and move to Phase 1
+
+---
+
+**All documentation complete. Ready to begin Phase 1 (Infrastructure) → Phase 4 (Completion).**
+
+End of Index

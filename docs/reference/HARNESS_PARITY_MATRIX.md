@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This matrix compares five major agent harnesses across 13 feature categories. **Codex** leads in native Rust execution and MCP integration, but **Claude Code** dominates in project context/memory systems. **Gemini CLI** emphasizes hooks and skills. **GitHub Copilot Workspace** excels at multi-file planning. This document guides Codex improvement priorities.
+This matrix compares five major agent harnesses across 13 feature categories. **Codex** leads in native Rust execution and MCP integration, and thegent now provides baseline project context, skills, and hook plumbing for Codex workflows. **Claude Code** still leads in session ergonomics and polished interactive UX. This document tracks parity deltas and next upgrades.
 
 ---
 
@@ -18,9 +18,9 @@ This matrix compares five major agent harnesses across 13 feature categories. **
 |---|---|---|---|---|---|---|
 | **Non-Interactive Mode** | ✅ `codex exec` | ✅ `--print` | ✅ Headless | ✅ `--prompt` | ⚠️ Limited (web-focused) | N/A |
 | **JSONL/Streaming Output** | ✅ `--json` | ✅ `--output-format stream-json` | ⚠️ Partial | ✅ JSON streaming | ⚠️ Web-centric | N/A |
-| **Project Memory/Context** | ❌ None | ✅ `CLAUDE.md` + session memory | ✅ Skills + memory | ✅ Project config | ❌ Per-issue only | **P0: Add project context file** |
-| **Compact/Adaptive Context** | ❌ None | ✅ Adaptive thinking | ✅ Selective context | ✅ Hooks control context | ✅ Specialized models | **P1: Context compression** |
-| **Skills/Commands System** | ❌ None | ✅ Skills (Anthropic standard) | ✅ Skills + procedures | ✅ Agent Skills (extensible) | ✅ Agent Skills | **P0: Add skills system** |
+| **Project Memory/Context** | ⚠️ Baseline (`.thegent/rules` -> `.codex/skills`) | ✅ `CLAUDE.md` + session memory | ✅ Skills + memory | ✅ Project config | ❌ Per-issue only | **P1: Expand memory depth** |
+| **Compact/Adaptive Context** | ✅ Context compactor active | ✅ Adaptive thinking | ✅ Selective context | ✅ Hooks control context | ✅ Specialized models | **P2: Improve heuristics** |
+| **Skills/Commands System** | ✅ `.codex/skills` + activate skill tools | ✅ Skills (Anthropic standard) | ✅ Skills + procedures | ✅ Agent Skills (extensible) | ✅ Agent Skills | **P1: Strengthen interoperability** |
 | **Tool Approval/Permissions** | ✅ `--dangerously-bypass-approvals` | ✅ `--permission-mode` | ✅ Fine-grained | ✅ Built-in approval | ✅ Multi-stage approval | Configured |
 | **Subprocess Invocation** | ✅ Native Rust, direct | ✅ Via shell + monitoring | ⚠️ Sandboxed | ✅ Via shell | ✅ Via shell | N/A |
 | **MCP Integration** | ✅ Full (Codex-native) | ✅ Full (100M+ downloads) | ⚠️ Partial | ✅ Full (Google-certified) | ⚠️ Limited | N/A |
@@ -28,7 +28,7 @@ This matrix compares five major agent harnesses across 13 feature categories. **
 | **Session Continuity** | ⚠️ Stateless (file-based) | ✅ Stateful (resume/teleport) | ✅ Stateful | ✅ Stateful | ✅ Workspace state | **P1: Session persistence** |
 | **Multi-Model Support** | ✅ 11+ models (via routing) | ✅ Multiple models | ✅ Multiple models | ✅ Multiple models | ✅ Multi-model (experimental) | N/A |
 | **Filesystem Sandbox** | ✅ Strict (workspace-write, full-auto) | ✅ Sandbox mode (Linux/Mac) | ✅ Strict | ✅ Via hooks | ⚠️ Issue-scoped | Configured |
-| **Hooks/Middleware System** | ❌ None | ⚠️ Limited (pre/post tool use) | ✅ Extensive | ✅ Rich lifecycle hooks | ❌ None | **P1: Add hooks system** |
+| **Hooks/Middleware System** | ⚠️ Post-run hook dispatcher baseline | ⚠️ Limited (pre/post tool use) | ✅ Extensive | ✅ Rich lifecycle hooks | ❌ None | **P1: Broaden lifecycle coverage** |
 | **Git Workflow Awareness** | ⚠️ Basic (--skip-git-repo-check) | ✅ Native git operations | ✅ Git-aware | ✅ Git-aware | ✅ PR generation | Configured |
 | **Local/Offline Mode** | ✅ Yes (Rust binary) | ✅ Yes (terminal-native) | ✅ Yes | ⚠️ Needs internet | ❌ Cloud-dependent | N/A |
 | **Interactive Terminal UI** | ⚠️ Minimal (JSON stream) | ✅ Rich TUI with diffs | ✅ Rich TUI | ✅ Rich TUI | ✅ Web UI (visual) | **P2: Enhance TUI** |
@@ -49,38 +49,36 @@ This matrix compares five major agent harnesses across 13 feature categories. **
 
 ---
 
-## Critical Gaps (P0 - Blocking Parity)
+## Critical Gaps (P0/P1 - Remaining Parity Work)
 
 These features are fundamental to competitive parity with Claude Code and Gemini CLI:
 
-### 1. **Project Memory/Context System** (Impact: HIGH)
-- **Gap**: Codex has no project-level memory or context persistence across sessions.
-- **What Claude Code does**: Maintains `CLAUDE.md` (project memory), session-specific memory, adaptive thinking.
-- **What Gemini CLI does**: Stores project config, agent skills, hook configuration.
-- **Impact on Codex**: Users lose context between sessions, can't define project-specific behaviors.
-- **Recommended solution**:
-  - Add `.codex/project.yaml` or `CODEX.md` for project-level config
-  - Persistent session memory in `.codex/memory/`
-  - Auto-load project context on session start
+### 1. **Project Memory/Context Depth** (Impact: HIGH)
+- **Current baseline**: Codex flows already sync project instructions from `.thegent/rules/` into `.codex/skills/SKILL.md`, and runners can activate those skills.
+- **Remaining gap**: Session-to-session memory depth and richer project state are still thinner than Claude Code-style continuity.
+- **Impact on Codex**: Teams get baseline project guidance, but long-horizon continuity still requires manual carryover.
+- **Recommended next step**:
+  - Add explicit session memory persistence under `.codex/memory/`
+  - Add compact project metadata (`.codex/project.yaml`) for defaults and policy knobs
+  - Surface active project context in CLI status output
 
-### 2. **Skills System** (Impact: HIGH)
-- **Gap**: Codex has no extensible skills or command abstraction.
-- **What others do**: Claude Code, Gemini CLI, Copilot use Agent Skills standard (Anthropic's open spec).
-- **Impact on Codex**: Can't encode procedural knowledge, reusable workflows, or domain expertise.
-- **Recommended solution**:
-  - Adopt Agent Skills standard (same as Claude Code, Gemini CLI, Copilot)
-  - Add `.codex/skills/` directory for skill manifests (SKILL.md + assets)
-  - Auto-load and inject skill descriptions into agent prompts
-  - Implement `activate_skill()` tool
+### 2. **Skills Interop and Coverage** (Impact: HIGH)
+- **Current baseline**: `.codex/skills/` is already consumed and skill activation APIs are present.
+- **Remaining gap**: Cross-harness interoperability and richer skill metadata contracts are incomplete.
+- **Impact on Codex**: Teams can encode reusable workflows, but portability and consistency vary.
+- **Recommended next step**:
+  - Align skill metadata with shared external conventions where practical
+  - Add validation/linting for skill manifests and activation failures
+  - Expand discoverability and docs for skill activation flows
 
-### 3. **Hooks System** (Impact: MEDIUM)
-- **Gap**: Codex has no lifecycle hooks for customization without forking.
-- **What Gemini CLI does**: Pre/post hooks at every lifecycle point (init, tool execution, completion).
-- **Impact on Codex**: Users can't customize behavior via config; must use SDK or proxy.
-- **Recommended solution**:
-  - Add `.codex/hooks/` directory with event scripts
-  - Standard hook points: `pre-init`, `post-init`, `pre-tool`, `post-tool`, `pre-completion`, `post-completion`
-  - Hook config in `.codex/project.yaml` to enable/disable selectively
+### 3. **Hooks Lifecycle Breadth** (Impact: MEDIUM)
+- **Current baseline**: Codex runs dispatch post-agent hooks via the shared hook dispatcher.
+- **Remaining gap**: Full lifecycle breadth (pre-init, pre/post tool, completion stages) is not yet symmetric with Gemini-style hooks.
+- **Impact on Codex**: Post-run automation works, but teams still need additional hook points for full policy injection.
+- **Recommended next step**:
+  - Expand hook points beyond post-run events
+  - Standardize hook payload schemas across lifecycle stages
+  - Expose hook-point health/status in doctor/governance surfaces
 
 ### 4. **Diff Review UI** (Impact: MEDIUM)
 - **Gap**: Codex outputs JSON only; no visual diff review for approvals.
@@ -107,7 +105,8 @@ These significantly enhance agent and developer experience without breaking curr
   - Auto-save state after each tool execution
 
 ### 2. **Context Compression/Adaptive Thinking** (Impact: MEDIUM)
-- **Gap**: No intelligent context reduction; always sends full prompts.
+- **Current baseline**: Context compaction already runs before Codex/LiteLLM execution.
+- **Gap**: Heuristics and transparency are still weaker than top-tier adaptive systems.
 - **What Claude Code does**: Adaptive thinking, selective context injection.
 - **Benefit**: Faster responses, lower token cost for large codebases.
 - **Recommended solution**:
@@ -125,7 +124,8 @@ These significantly enhance agent and developer experience without breaking curr
   - Show diffs inline with approve/reject options
 
 ### 4. **Hooks Middleware System** (Impact: MEDIUM)
-- **Gap**: No way to inject custom logic without modifying Codex.
+- **Current baseline**: Post-agent hook dispatch exists and is integrated.
+- **Gap**: Missing broader lifecycle hook surface and config ergonomics.
 - **What Gemini CLI does**: Full hook lifecycle for customization.
 - **Benefit**: Teams can enforce policies, add logging, implement guardrails.
 - **Recommended solution**:
@@ -305,9 +305,9 @@ Summary table:
 
 | Feature | Codex | Claude Code | Codex Path to Parity |
 |---|---|---|---|
-| **Project Context** | None | CLAUDE.md + session memory | Add `.codex/project.yaml` + persistent storage |
-| **Skills** | None | Agent Skills (standard) | Adopt Agent Skills spec |
-| **Hooks** | None | Pre/post tool hooks | Implement hook dispatcher |
+| **Project Context** | Baseline via synced `.codex/skills` | CLAUDE.md + session memory | Add deeper persisted session memory + project metadata |
+| **Skills** | Active skills discovery + activation | Agent Skills (standard) | Improve interop contracts + validation |
+| **Hooks** | Post-run dispatcher active | Pre/post tool hooks | Expand lifecycle coverage and hook UX |
 | **Session Resume** | Stateless | `--continue <id>` | Add session ID tracking, state storage |
 | **Diff UI** | None | Side-by-side diffs | Add TUI diff viewer |
 | **Error Messages** | Generic | Contextual + actionable | Improve error module, add recovery hints |
@@ -328,9 +328,10 @@ Summary table:
 ## Roadmap Summary
 
 ### Phase 1: Foundation (Month 1-2)
-- [ ] Add project memory system (`.codex/project.yaml` + `.codex/memory/`)
-- [ ] Implement Agent Skills standard adoption
-- [ ] Add basic hooks system
+- [x] Baseline project-context sync (`.thegent/rules` -> `.codex/skills`)
+- [x] Baseline skills activation and MCP skill tooling
+- [x] Baseline post-run hook dispatcher
+- [ ] Add deeper project/session memory system (`.codex/project.yaml` + `.codex/memory/`)
 
 ### Phase 2: UX Improvements (Month 2-3)
 - [ ] Implement session persistence and resumption
@@ -338,7 +339,7 @@ Summary table:
 - [ ] Enhance error messages with recovery hints
 
 ### Phase 3: Advanced Features (Month 3+)
-- [ ] Context compression / adaptive thinking
+- [ ] Context compaction heuristic upgrades and operator controls
 - [ ] Full hooks lifecycle customization
 - [ ] Benchmarking harness for competitive analysis
 

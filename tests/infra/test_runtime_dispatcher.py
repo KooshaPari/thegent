@@ -693,5 +693,180 @@ class TestGlobalAccessFunctions:
         assert callable(loads)
 
 
+class TestJsonDispatcherEdgeCases:
+    """Tests for JSON dispatcher edge cases and library paths."""
+
+    def test_dumps_handles_nested_objects(self):
+        """Test json dumps handles nested objects."""
+        dumps = get_json_dumps()
+        result = dumps({"outer": {"inner": [1, 2, 3]}})
+        assert "outer" in result
+        assert "inner" in result
+
+    def test_dumps_handles_unicode(self):
+        """Test json dumps handles unicode."""
+        dumps = get_json_dumps()
+        result = dumps({"unicode": "こんにちは"})
+        assert "unicode" in result
+
+    def test_dumps_handles_numbers(self):
+        """Test json dumps handles numbers."""
+        dumps = get_json_dumps()
+        result = dumps({"int": 42, "float": 3.14})
+        assert "42" in result
+
+    def test_loads_handles_unicode(self):
+        """Test json loads handles unicode."""
+        loads = get_json_loads()
+        result = loads('{"text": "こんにちは"}')
+        assert result["text"] == "こんにちは"
+
+    def test_loads_handles_whitespace(self):
+        """Test json loads handles whitespace."""
+        loads = get_json_loads()
+        result = loads('  {  "key"  :  "value"  }  ')
+        assert result["key"] == "value"
+
+
+class TestTomlDispatcherEdgeCases:
+    """Tests for TOML dispatcher edge cases."""
+
+    def test_loads_handles_arrays(self):
+        """Test toml loads handles arrays."""
+        loads = get_toml_loads()
+        toml_str = 'items = [1, 2, 3]\n'
+        result = loads(toml_str)
+        assert result["items"] == [1, 2, 3]
+
+    def test_loads_handles_nested_tables(self):
+        """Test toml loads handles nested tables."""
+        loads = get_toml_loads()
+        toml_str = '[a.b]\nkey = "value"\n'
+        result = loads(toml_str)
+        assert "a" in result
+
+    def test_loads_handles_strings(self):
+        """Test toml loads handles strings."""
+        loads = get_toml_loads()
+        toml_str = 'name = "test"\n'
+        result = loads(toml_str)
+        assert result["name"] == "test"
+
+    def test_loads_handles_booleans(self):
+        """Test toml loads handles booleans."""
+        loads = get_toml_loads()
+        toml_str = 'enabled = true\ndisabled = false\n'
+        result = loads(toml_str)
+        assert result["enabled"] is True
+        assert result["disabled"] is False
+
+
+class TestRouterDispatcher:
+    """Tests for router dispatcher."""
+
+    def test_router_is_callable(self):
+        """Test router is callable."""
+        router = get_router()
+        assert callable(router)
+
+    def test_router_dispatcher_has_implementations(self):
+        """Test router_dispatcher has implementations."""
+        from thegent.infra.runtime_dispatcher import router_dispatcher
+        assert len(router_dispatcher._implementations) > 0
+
+
+class TestExtensionFlags:
+    """Tests for extension availability flags."""
+
+    def test_has_orjson_is_boolean(self):
+        """Test HAS_ORJSON is boolean."""
+        from thegent.infra.runtime_dispatcher import HAS_ORJSON
+        assert isinstance(HAS_ORJSON, bool)
+
+    def test_has_ujson_is_boolean(self):
+        """Test HAS_UJSON is boolean."""
+        from thegent.infra.runtime_dispatcher import HAS_UJSON
+        assert isinstance(HAS_UJSON, bool)
+
+    def test_has_rtoml_is_boolean(self):
+        """Test HAS_RTOML is boolean."""
+        from thegent.infra.runtime_dispatcher import HAS_RTOML
+        assert isinstance(HAS_RTOML, bool)
+
+    def test_has_rust_router_is_boolean(self):
+        """Test HAS_RUST_ROUTER is boolean."""
+        from thegent.infra.runtime_dispatcher import HAS_RUST_ROUTER
+        assert isinstance(HAS_RUST_ROUTER, bool)
+
+
+class TestPrivateDispatcherFunctions:
+    """Tests for private dispatcher functions to cover all code paths."""
+
+    def test_pypy_json_dumps(self):
+        """Test _pypy_json_dumps function."""
+        from thegent.infra.runtime_dispatcher import _pypy_json_dumps
+        result = _pypy_json_dumps({"key": "value"})
+        assert isinstance(result, str)
+        assert "key" in result
+
+    def test_pypy_json_dumps_with_kwargs(self):
+        """Test _pypy_json_dumps with kwargs."""
+        from thegent.infra.runtime_dispatcher import _pypy_json_dumps
+        result = _pypy_json_dumps([1, 2, 3])
+        # The format may include spaces depending on library used
+        assert "1" in result
+        assert "2" in result
+        assert "3" in result
+
+    def test_cpython_json_dumps(self):
+        """Test _cpython_json_dumps function."""
+        from thegent.infra.runtime_dispatcher import _cpython_json_dumps
+        result = _cpython_json_dumps({"key": "value"})
+        assert isinstance(result, str)
+        assert "key" in result
+
+    def test_cpython_json_dumps_with_bytes_return(self):
+        """Test _cpython_json_dumps returns string."""
+        from thegent.infra.runtime_dispatcher import _cpython_json_dumps
+        result = _cpython_json_dumps("test string")
+        assert isinstance(result, str)
+
+    def test_pypy_json_loads(self):
+        """Test _pypy_json_loads function."""
+        from thegent.infra.runtime_dispatcher import _pypy_json_loads
+        result = _pypy_json_loads('{"key": "value"}')
+        assert result["key"] == "value"
+
+    def test_pypy_json_loads_with_bytes(self):
+        """Test _pypy_json_loads with bytes."""
+        from thegent.infra.runtime_dispatcher import _pypy_json_loads
+        result = _pypy_json_loads(b'{"key": "value"}')
+        assert result["key"] == "value"
+
+    def test_cpython_json_loads(self):
+        """Test _cpython_json_loads function."""
+        from thegent.infra.runtime_dispatcher import _cpython_json_loads
+        result = _cpython_json_loads('{"key": "value"}')
+        assert result["key"] == "value"
+
+    def test_cpython_json_loads_with_bytes(self):
+        """Test _cpython_json_loads with bytes."""
+        from thegent.infra.runtime_dispatcher import _cpython_json_loads
+        result = _cpython_json_loads(b'{"key": "value"}')
+        assert result["key"] == "value"
+
+    def test_pypy_toml_loads(self):
+        """Test _pypy_toml_loads function."""
+        from thegent.infra.runtime_dispatcher import _pypy_toml_loads
+        result = _pypy_toml_loads('[section]\nkey = "value"\n')
+        assert isinstance(result, dict)
+
+    def test_cpython_toml_loads(self):
+        """Test _cpython_toml_loads function."""
+        from thegent.infra.runtime_dispatcher import _cpython_toml_loads
+        result = _cpython_toml_loads('[section]\nkey = "value"\n')
+        assert isinstance(result, dict)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

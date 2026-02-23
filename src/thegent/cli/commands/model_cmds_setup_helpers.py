@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import concurrent.futures
+import os
 from collections.abc import Callable
 from typing import Any
 
@@ -55,6 +57,7 @@ def configure_providers(
 ) -> bool:
     """Apply CLI key overrides and optional interactive provider logins."""
     any_configured = False
+    summary_lines: list[str] = []
 
     for provider in providers:
         display_name = provider_login_config.get(provider, {}).get("display_name", provider.replace("-", " ").title())
@@ -70,17 +73,57 @@ def configure_providers(
             inject_api_key(config, provider, str(override_value), cfg)
             config_path.write_text(yaml_dump(config, default_flow_style=False, sort_keys=False) or "")
             any_configured = True
+            if wizard:
+                line = f"[green]✓ {display_name} configured from CLI override.[/green]"
+                summary_lines.append(line)
+                console.print(line)
             continue
 
         if wizard:
-            console.print(f"\n[bold cyan]Setting up {display_name}...[/bold cyan]")
-            try:
-                rc = run_login(settings, provider, prompt_func=prompt_key, force=False)
-                if rc == 0:
-                    any_configured = True
-                else:
-                    console.print(f"[yellow]  setup for {provider} exited with code {rc}.[/yellow]")
-            except (ValueError, FileNotFoundError) as exc:
-                console.print(f"[dim]  {exc}[/dim]")
+            provider_timeout = int(os.environ.get("THGENT_SETUP_PROVIDER_TIMEOUT", "90"))
+            rc: int | None = None
+            timed_out = False
+            fatal_error: Exception | None = None
+
+            console.print(f"\n[bold cyan]Setting up {display_name}[/bold cyan]")
+            with console.status(f"[cyan]{display_name}: preparing login flow...[/cyan]") as status:
+                status.update(f"[cyan]{display_name}: checking existing credentials...[/cyan]")
+                ex = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+                fut = ex.submit(run_login, settings, provider, prompt_func=prompt_key, force=False)
+                try:
+                    status.update(f"[cyan]{display_name}: running login handshake...[/cyan]")
+                    rc = fut.result(timeout=provider_timeout)
+                    status.update(f"[cyan]{display_name}: validating result...[/cyan]")
+                except concurrent.futures.TimeoutError:
+                    timed_out = True
+                except (ValueError, FileNotFoundError) as exc:
+                    fatal_error = exc
+                finally:
+                    ex.shutdown(wait=False, cancel_futures=True)
+
+            if timed_out:
+                line = f"[yellow]✗ {display_name} timed out after {provider_timeout}s; continued.[/yellow]"
+                summary_lines.append(line)
+                console.print(line)
+                continue
+            if fatal_error is not None:
+                line = f"[yellow]✗ {display_name} setup error: {fatal_error}[/yellow]"
+                summary_lines.append(line)
+                console.print(line)
+                continue
+            if rc == 0:
+                any_configured = True
+                line = f"[green]✓ {display_name} setup complete.[/green]"
+                summary_lines.append(line)
+                console.print(line)
+            else:
+                line = f"[yellow]✗ {display_name} exited with code {rc}; continued.[/yellow]"
+                summary_lines.append(line)
+                console.print(line)
+
+    if wizard and summary_lines:
+        console.print("\n[bold]Setup Summary[/bold]")
+        for line in summary_lines:
+            console.print(line)
 
     return any_configured
