@@ -1,14 +1,14 @@
-# Unified Work Stream
+# Unified Work Stream — Canonical
 
-**Status:** Active | **Last Updated:** 2026-02-18 | **Total Items:** 130+ | **Source:** thegent/PLAN.md + sharecli/PLAN.md
+> **Purpose**: Single source of truth for all project work. All agents read this file before picking work.
+> **Claim before starting**: Append to CLAIMED. Move to COMPLETED when done.
+> **Incorporator**: Run `thegent plan incorporate` to merge new fragments from plans, research, specs.
+> **Last Audited**: 2026-02-21
 
 ---
 
-## Schema
+## Instructions for Agents
 
-<<<<<<< HEAD
-| Column | Description |
-=======
 1. **Before picking work**: Read BACKLOG; filter out items in CLAIMED; pick items whose Depends are satisfied.
 2. **When starting**: Append to CLAIMED (ID, Agent, Started). Use unique agent_id.
 3. **When completing**: Remove from CLAIMED; add to COMPLETED; update source plan if applicable.
@@ -1730,11 +1730,8 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | WL-9527 | 2026-02-23 | Added no-op regression for empty workflow execution path (`_build_execution_plan()` and `execute()`) |
 | WL-9528 | 2026-02-23 | Added regression for stage-result map replacement semantics in `execute_stage()` |
 | WL-9529 | 2026-02-23 | Added regression ensuring dependency validation happens before any stage execution side effects |
-<<<<<<< HEAD
 | wave80-pr23-merge | 2026-02-23 | PR #23 merged as `a1b56700ef5f716cda77280901454b3f0ddd7d82`; follow-up evidence captured in `docs/reports/2026-02-23-wave80-followup.md` including GitHub check runs (`Test` matrix + CI/Build/Benchmark gates) |
 | wave80-wl007-checkpoint | 2026-02-23 | Wave80 follow-up checkpoint updated for WL-007-related validation evidence after PR #23 merge; no new WL-007 closure claim added |
-=======
->>>>>>> codex/provider-plane-wave1
 | wave70-l5 | 2026-02-22 | Implemented WL-224 (workstream schema linter), WL-225 (wl sort/normalize), WL-226 (remote payload checksums), WL-227 (metadata enrichment), plus WL-259,260,222,223,228,229 with comprehensive test coverage (76 tests) |
 | wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
@@ -5434,18 +5431,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | Qdrant | External instance supported |
 | Redis | Supported |
 | Metric | Description |
->>>>>>> codex/wave80-integration-lanes-a-f
 |--------|-------------|
-<<<<<<< HEAD
-| **ID** | Unique task identifier (format: `{PROJECT}-{PHASE}.{TASK}` or `P{PHASE}.{TASK}`) |
-| **Title** | Task description (brief, <80 chars) |
-| **Type** | `feature` \| `refactor` \| `bugfix` \| `infra` \| `research` \| `docs` |
-| **Project** | `thegent` or `sharecli` |
-| **Phase** | Phase number (0-18) or epic name |
-| **Depends On** | Prerequisite task IDs (comma-separated) |
-| **Effort** | Estimate: `~3min` / `~5min` / `~8min` / `~10min` / `~15min` / `~20min` |
-| **Status** | `PENDING` / `CLAIMED` / `IN_PROGRESS` / `COMPLETED` / `BLOCKED` |
-=======
 | `bifrost_upstream_requests_total` | Total requests to providers |
 | `bifrost_cost_total` | Real-time USD cost tracking |
 | `bifrost_cache_hits_total` | Cache hit count |
@@ -7551,9 +7537,9 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | 1. Shell & shims | Done (Optional, agent shims, Zsh, Ghostty) | [SETUP-RESTORE.md](../SETUP-RESTORE.md) | — |
 | 2. TUI research | Merged | [UNIFIED_SYSTEM_APPLICATION_PLAN.md](../plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md) | — |
 | 3. Compositor + menu | Merged | Same | — |
-| 4. Compute offloading | Research done; implementation not started | [HYBRID_ENV_IMPLEMENTATION_PLAN.md](../plans/HYBRID_ENV_IMPLEMENTATION_PLAN.md), [REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md](../plans/REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md) | research-remote-compute-impl |
+| 4. Compute offloading | Architecture done; impl not started | [HYBRID_ENV_IMPLEMENTATION_PLAN.md](../plans/HYBRID_ENV_IMPLEMENTATION_PLAN.md), [REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md](../plans/REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md) | research-remote-compute-impl |
 | 5. Cursor 2/16 recovery | Manual export from Cursor chat history | — | pending-cursor-2-16-export |
-| 6. Always-write-dumps | ✅ Complete | CLAUDE.md (project root) | research-always-write-dumps |
+| 6. Always-write-dumps | Add rule to CLAUDE.md | CLAUDE.md (project root) | research-always-write-dumps |
 | ID | Title | Source | Priority | Depends |
 |----|-------|--------|----------|---------|
 | research-remote-compute-impl | Implement `thegent run --remote` (Phase 4 compute offload) | CONVERSATION_DUMP_2026-02-16.md §4 | P2 | — |
@@ -10724,18 +10710,18 @@ Publish quick-start docs for unattended board reflection setup and verification 
 |--------|-------------|--------|--------|
 | A | EscalationQueue with add(blocked_run, sla_minutes) | 2–3 days | ✓ Done |
 | B | `thegent govern escalate list` — list items past SLA | 1 day | ✓ Done |
-| C | Integrate with DLQ: when recovery exhausted, add to escalation queue | 1–2 days | ✅ Done |
+| C | Integrate with DLQ: when recovery exhausted, add to escalation queue | 1–2 days | Deferred |
 | D | Priority dispatch; continuity snapshots; handoff confirm | 1 day | ✓ Done |
 | ID | Title | Source | Priority | Notes |
 |----|-------|--------|----------|-------|
 | gov-wp-3003-enhance | Emit governance.override.expired when cached override used but record expired | GOVERNANCE_WP_GAPS.md §WP-3003 | P3 | Optional enhancement |
-| gov-wp-3008-dlq | Integrate EscalationQueue with DLQ: when recovery exhausted, add to escalation | GOVERNANCE_WP_GAPS.md §WP-3008 | P2 | Option A done |
+| gov-wp-3008-dlq | Integrate EscalationQueue with DLQ: when recovery exhausted, add to escalation | GOVERNANCE_WP_GAPS.md §WP-3008 | P2 | Option C deferred |
 | ID | Title | Priority | Depends | Options |
 |----|-------|----------|---------|---------|
 | **research-governance-override-events** | Add override expiry event emission | P3 | WP-3003 | Option A: Add event emission<br>Option B: Defer (low priority) |
 | ID | Title | Priority | Depends | Options |
 |----|-------|----------|---------|---------|
-| **research-governance-escalation-dlq** | Integrate escalation queue with DLQ | P2 | WP-3008, WP-2002 | Option A: Auto-add to escalation when DLQ exhausted (✅ Done)<br>Option B: Manual escalation only<br>Option C: Defer integration |
+| **research-governance-escalation-dlq** | Integrate escalation queue with DLQ | P2 | WP-3008, WP-2002 | Option A: Auto-add to escalation when DLQ exhausted<br>Option B: Manual escalation only<br>Option C: Defer integration |
 | ID | Title | Priority | Depends | Options |
 |----|-------|----------|---------|---------|
 | **research-governance-policy-federation** | Multi-tenant policy federation | P1 | WP-3001, research-phase13-policy-federation | Option A: Centralized policy server<br>Option B: Distributed consensus<br>Option C: Hybrid approach |
@@ -26682,450 +26668,2286 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Duplication** | ✅ Clean | DRY followed | Minor extraction opportunities |
 | **Neo4j** | ? Unknown | Not detected | Confirm requirement |
 | **MSW GraphQL** | N/A | Frontend | Defer to TS analysis |
->>>>>>> codex/wave79-wl007-010-030-031
 
 ---
 
-## PENDING
+## CLIProxyAPI Issue Board Work Items (2026-02-22)
 
-All actionable, unassigned work items. Ordered by project, phase, then task ID.
+### High Priority
 
-### thegent: Phase 0 (Foundation - COMPLETE)
+- [ ] **CLIPROXY-001**: OAuth flow fixes - Qwen, Kiro, codex auth issues (~15 issues)
+  - Related: #1658, #1612, #1611, #232, #177
+  - Bundle: cliproxy_oauth
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P0.1 | Symlink dispatch mechanism (`bin/harness` + N symlinks) | infra | -- | ~5min | COMPLETED |
-| TGNT-P0.2 | Agent detection via `/proc` tree walk with macOS `ps` fallback | infra | TGNT-P0.1 | ~5min | COMPLETED |
-| TGNT-P0.3 | `rules.conf` parser (command, strategy, options) | infra | TGNT-P0.1 | ~3min | COMPLETED |
-| TGNT-P0.4 | Coalesce strategy (flock + SHA256 cache key + atomic writes) | infra | TGNT-P0.2, TGNT-P0.3 | ~10min | COMPLETED |
-| TGNT-P0.5 | Queue strategy (bounded concurrency pool with slot files) | infra | TGNT-P0.3 | ~8min | COMPLETED |
-| TGNT-P0.6 | Debounce strategy (delay + coalesce within window) | infra | TGNT-P0.3 | ~5min | COMPLETED |
-| TGNT-P0.7 | `harness sync` symlink generator from rules.conf | infra | TGNT-P0.3 | ~3min | COMPLETED |
-| TGNT-P0.8 | `nocache_args` safety (`--fix` / `--write` -> queue fallback) | infra | TGNT-P0.4 | ~3min | COMPLETED |
+- [ ] **CLIPROXY-002**: Streaming translation fixes (~5 critical issues)
+  - Related: #1609, #1592, #1478, #1407, #1085
+  - Bundle: cliproxy_streaming
 
-### thegent: Phase 1 (Quick Wins - COMPLETE)
+- [ ] **CLIPROXY-003**: Claude Models in Codex CLI bug fix
+  - Related: #1671
+  - Bundle: cliproxy_codex
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P1.1 | Lock timeout via `HARNESS_LOCK_TIMEOUT` (fallback to uncached) | infra | TGNT-P0.4 | ~3min | COMPLETED |
-| TGNT-P1.2 | Stale-while-revalidate (serve stale + background refresh) | infra | TGNT-P0.4 | ~5min | COMPLETED |
-| TGNT-P1.3 | Prometheus metrics endpoint (`harness metrics`) | infra | TGNT-P0.4 | ~5min | COMPLETED |
-| TGNT-P1.4 | Cache compression (zstd for outputs > 10KB) | infra | TGNT-P0.4 | ~5min | COMPLETED |
-| TGNT-P1.5 | JSON metrics export (`harness metrics json`) | infra | TGNT-P1.3 | ~2min | COMPLETED |
-
-### thegent: Phase 2 (Intelligence - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P2.1 | 5-level priority queue (critical/high/normal/low/background) | feature | TGNT-P1.1 | ~8min | COMPLETED |
-| TGNT-P2.2 | Priority aging (+1 level per 5s waiting, prevents starvation) | feature | TGNT-P2.1 | ~3min | COMPLETED |
-| TGNT-P2.3 | Fair share scheduling (per-agent quota with penalty for over-use) | feature | TGNT-P2.1 | ~8min | COMPLETED |
-| TGNT-P2.4 | Semantic coalescing (path normalization, `.` -> project root) | feature | TGNT-P0.4 | ~5min | COMPLETED |
-| TGNT-P2.5 | Queue timeout protection (fallback execution on timeout) | feature | TGNT-P2.1 | ~3min | COMPLETED |
-
-### thegent: Phase 3 (Performance - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P3.1 | L1 memory cache (`/dev/shm`, 100MB max, 60s TTL) | infra | TGNT-P0.4 | ~8min | COMPLETED |
-| TGNT-P3.2 | L2 disk cache (`var/cache`, compressed, persistent) | infra | TGNT-P0.4 | ~5min | COMPLETED |
-| TGNT-P3.3 | L2-to-L1 promotion on cache hit (automatic) | infra | TGNT-P3.1, TGNT-P3.2 | ~5min | COMPLETED |
-| TGNT-P3.4 | I/O scheduler integration (ionice priority classes) | feature | TGNT-P2.1 | ~5min | COMPLETED |
-| TGNT-P3.5 | Negative stat cache (track nonexistent files, 5s TTL) | feature | TGNT-P3.1 | ~3min | COMPLETED |
-| TGNT-P3.6 | Page cache warmer (bulk read by file type before exec) | feature | TGNT-P0.4 | ~5min | COMPLETED |
-
-### thegent: Phase 4 (Coordination - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P4.1 | Intent broadcasting (agents signal planned file ops) | feature | TGNT-P0.4 | ~8min | COMPLETED |
-| TGNT-P4.2 | Intent conflict checking (write-write, read-write detection) | feature | TGNT-P4.1 | ~5min | COMPLETED |
-| TGNT-P4.3 | Wait-for graph construction from lock records | feature | TGNT-P0.5 | ~8min | COMPLETED |
-| TGNT-P4.4 | DFS cycle detection for deadlocks | feature | TGNT-P4.3 | ~5min | COMPLETED |
-| TGNT-P4.5 | Deadlock auto-resolution (abort youngest waiter) | feature | TGNT-P4.4 | ~3min | COMPLETED |
-| TGNT-P4.6 | Fair share tracking with 50% decay smoothing | feature | TGNT-P2.3 | ~5min | COMPLETED |
-
-### thegent: Phase 5 (Polish - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P5.1 | Interactive dashboard (TUI with cache/queue/intent/fair share) | feature | TGNT-P1.3, TGNT-P2.3, TGNT-P4.1 | ~10min | COMPLETED |
-| TGNT-P5.2 | Self-tuning report (analyze metrics, detect low hit rate/contention) | feature | TGNT-P1.3, TGNT-P3.1 | ~8min | COMPLETED |
-| TGNT-P5.3 | Auto-fix recommendations (color-coded severity, safe auto-apply) | feature | TGNT-P5.2 | ~5min | COMPLETED |
-| TGNT-P5.4 | Rules suggestion engine (generate rules from observed patterns) | feature | TGNT-P5.2 | ~5min | COMPLETED |
-| TGNT-P5.5 | L1 vs L2 benchmark command | feature | TGNT-P3.1, TGNT-P3.2 | ~3min | COMPLETED |
-
-### thegent: Phase 6 (Git Parallelism - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P6.1 | Per-agent `GIT_INDEX_FILE` management (init, copy, cleanup) | feature | TGNT-P4.1 | ~8min | COMPLETED |
-| TGNT-P6.2 | Git plumbing commit pipeline (hash-object -> write-tree -> commit-tree) | feature | TGNT-P6.1 | ~10min | COMPLETED |
-| TGNT-P6.3 | CAS ref update with exponential backoff + jitter retry | feature | TGNT-P6.2 | ~5min | COMPLETED |
-| TGNT-P6.4 | Scoped staging (agent-to-file mapping, parallel when non-overlapping) | feature | TGNT-P6.1 | ~5min | COMPLETED |
-| TGNT-P6.5 | `harness git status` per-agent view (show each agent's staged changes) | feature | TGNT-P6.4 | ~3min | COMPLETED |
-
-### thegent: Phase 7 (Smart Merge - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P7.1 | Mergiraf integration (AST merge for Python/JS/TS/Rust/Go/Java/C) | feature | TGNT-P6.3 | ~10min | COMPLETED |
-| TGNT-P7.2 | Conflict prediction from intents (trial merge before commit) | feature | TGNT-P4.1, TGNT-P6.3 | ~8min | COMPLETED |
-| TGNT-P7.3 | Import union auto-resolve (Python/JS import conflicts -> sorted union) | feature | TGNT-P7.1 | ~5min | COMPLETED |
-| TGNT-P7.4 | JSON/YAML structural merge (deep merge via jq, ours-wins on conflict) | feature | TGNT-P7.1 | ~5min | COMPLETED |
-
-### thegent: Phase 8 (File Coordination - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P8.1 | OCC version check on write (record version at claim, verify before commit) | feature | TGNT-P4.1 | ~8min | COMPLETED |
-| TGNT-P8.2 | HLC timestamp generation (millisecond physical + logical counter) | feature | TGNT-P8.1 | ~5min | COMPLETED |
-| TGNT-P8.3 | Lease-based file claims registry (read/write/exclusive with flock) | feature | TGNT-P8.1 | ~8min | COMPLETED |
-| TGNT-P8.4 | Lease renewal and expiry (background cleanup daemon) | feature | TGNT-P8.3 | ~5min | COMPLETED |
-
-### thegent: Phase 9 (Request Coalescing v2 - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P9.1 | Singleflight dedup pattern (first executes, rest wait for shared result) | feature | TGNT-P0.4 | ~5min | COMPLETED |
-| TGNT-P9.2 | inotify cache invalidation (watch file changes, invalidate affected entries) | feature | TGNT-P3.1 | ~8min | COMPLETED |
-| TGNT-P9.3 | Heat-based LRU eviction (access frequency with exponential decay) | feature | TGNT-P3.1 | ~5min | COMPLETED |
-
-### thegent: Phase 10 (Resource Isolation - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P10.1 | Per-agent TMPDIR allocation (private temp, cleanup on exit) | feature | TGNT-P0.2 | ~3min | COMPLETED |
-| TGNT-P10.2 | Dynamic port range allocation (registry + liveness check) | feature | TGNT-P10.1 | ~5min | COMPLETED |
-| TGNT-P10.3 | Environment variable isolation (agent-specific env file, wrapped exec) | feature | TGNT-P10.1 | ~5min | COMPLETED |
-
-### thegent: Phase 11 (IPC Primitives - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P11.1 | tmpfs mesh directory creation (`/tmp/agent-mesh`, 256MB, mode 1777) | infra | -- | ~3min | COMPLETED |
-| TGNT-P11.2 | Atomic mkdir lock primitives (EEXIST = already held) + claim + lease | infra | TGNT-P11.1 | ~5min | COMPLETED |
-| TGNT-P11.3 | Maildir message queue (tmp -> new -> cur lifecycle, TTL enforcement) | infra | TGNT-P11.1 | ~10min | COMPLETED |
-| TGNT-P11.4 | inotify event notification (1-10ms latency, polling fallback for macOS) | feature | TGNT-P11.3 | ~8min | COMPLETED |
-| TGNT-P11.5 | Write-ahead log (WAL) with append-before-execute + replay-on-crash | infra | TGNT-P11.1 | ~8min | COMPLETED |
-
-### thegent: Phase 12 (Process Discovery - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P12.1 | `/proc` scanner with agent-specific patterns (Claude/Aider/Cursor/Cline) | feature | TGNT-P11.1 | ~8min | COMPLETED |
-| TGNT-P12.2 | Agent manifest creation (YAML: id, type, pid, capabilities, ODD, status) | feature | TGNT-P12.1 | ~5min | COMPLETED |
-| TGNT-P12.3 | Heartbeat monitor (touch-file every 5s, 15s failure threshold) | feature | TGNT-P12.2 | ~5min | COMPLETED |
-| TGNT-P12.4 | Stale agent cleanup (reclaim tasks, notify dependents, archive manifest) | feature | TGNT-P12.3 | ~3min | COMPLETED |
-
-### thegent: Phase 13 (Shell Injection - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P13.1 | tmux session detection and naming (`mesh-{agent-uuid}`) | feature | TGNT-P12.1 | ~5min | COMPLETED |
-| TGNT-P13.2 | Command injection via `tmux send-keys -l` + 1.5s delay + Enter (>99% reliable) | feature | TGNT-P13.1 | ~8min | COMPLETED |
-| TGNT-P13.3 | Agent readiness detection (prompt patterns per agent type, busy/idle/error states) | feature | TGNT-P13.2 | ~5min | COMPLETED |
-
-### thegent: Phase 14 (Context Injection - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P14.1 | AGENT.md template system (mesh state, coordination rules, identity) | feature | TGNT-P12.2 | ~5min | COMPLETED |
-| TGNT-P14.2 | Tool-specific context files (CLAUDE.md, .cursorrules, .clinerules symlinks) | feature | TGNT-P14.1 | ~8min | COMPLETED |
-| TGNT-P14.3 | Dynamic context update (re-render AGENT.md on mesh state changes) | feature | TGNT-P14.2 | ~5min | COMPLETED |
-
-### thegent: Phase 15 (Worktree Support - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P15.1 | Optional worktree creation (`git worktree add .mesh/worktrees/agent-{uuid}`) | feature | TGNT-P6.1 | ~8min | COMPLETED |
-| TGNT-P15.2 | Branch coordination (registry, collision avoidance, status tracking) | feature | TGNT-P15.1 | ~5min | COMPLETED |
-| TGNT-P15.3 | Worktree cleanup (orphan detection, 30s grace, health monitor) | feature | TGNT-P15.2 | ~3min | COMPLETED |
-
-### thegent: Phase 16 (Sandboxing - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P16.1 | bubblewrap profile (Linux: filesystem + network + process policies) | infra | TGNT-P12.2 | ~10min | COMPLETED |
-| TGNT-P16.2 | seatbelt profile (macOS: sandbox-exec equivalent) | infra | TGNT-P12.2 | ~10min | COMPLETED |
-| TGNT-P16.3 | 5-tier autonomy enforcement (read -> worktree -> git -> shared -> production) | feature | TGNT-P16.1, TGNT-P16.2 | ~8min | COMPLETED |
-| TGNT-P16.4 | Operation classification engine (tier assignment from command + target analysis) | feature | TGNT-P16.3 | ~8min | COMPLETED |
-
-### thegent: Phase 17 (Resource Management - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P17.1 | Memory limit enforcement (cgroups on Linux, ulimit fallback) | feature | TGNT-P12.2 | ~8min | COMPLETED |
-| TGNT-P17.2 | Process count limits (detect runaway subprocess spawning) | feature | TGNT-P17.1 | ~5min | COMPLETED |
-| TGNT-P17.3 | FD budget allocation (monitor per-agent, alert at thresholds) | feature | TGNT-P17.2 | ~5min | COMPLETED |
-
-### thegent: Phase 18 (Observability v2 - COMPLETE)
-
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| TGNT-P18.1 | JSONL structured logging (PIPE_BUF-aware, atomic append, <4KB per line) | infra | TGNT-P11.1 | ~5min | COMPLETED |
-| TGNT-P18.2 | Advanced metrics aggregation (per-agent, per-command, histograms) | feature | TGNT-P1.3, TGNT-P12.2 | ~8min | COMPLETED |
-| TGNT-P18.3 | CLI for mesh management (`mesh status`, `mesh agents`, `mesh tasks`) | feature | TGNT-P12.2 | ~10min | COMPLETED |
-| TGNT-P18.4 | Health dashboard v2 (agent activity, port/tmpdir usage, claims, intents) | feature | TGNT-P5.1, TGNT-P18.2 | ~10min | COMPLETED |
+- [ ] **CLIPROXY-004**: variant parameter fallback for reasoning_effort
+  - Related: #258
+  - Status: ✅ DONE (in thegent routing/reasoning_transform.py)
+  - Bundle: cliproxy_routing
 
 ---
 
-## sharecli: Phases 0-3 (Early Stages)
+## CLIProxyAPI Bug Fixes - Priority Queue
 
-### Phase 0: Foundation & Prototype (COMPLETE)
+### Phase 1: Tool Translation Bugs
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P0.1 | Mission statement and hard problems analysis | research | -- | ~5min | COMPLETED |
-| SCLI-P0.2 | System architecture diagram and component overview | docs | SCLI-P0.1 | ~8min | COMPLETED |
-| SCLI-P0.3 | Configuration schema (rules.conf, agents.conf, env vars) | docs | SCLI-P0.2 | ~5min | COMPLETED |
-| SCLI-P0.4 | Risk register with mitigation strategies | docs | SCLI-P0.2 | ~8min | COMPLETED |
-| SCLI-P0.5 | Tech stack justification (Bash, Rust, C, flock, etc.) | docs | SCLI-P0.2 | ~5min | COMPLETED |
+| WL ID | GitHub | Title | Status |
+|-------|--------|-------|--------|
+| CLIP-BUG-01 | #1671 | Cannot use Claude Models in Codex CLI (type:custom tool) | TODO |
+| CLIP-BUG-02 | #1533 | 400 Invalid Argument with claude-opus-4-6-thinking | TODO |
+| CLIP-BUG-03 | #1513 | Nullable type arrays cause 400 error | TODO |
+| CLIP-BUG-04 | #1424 | Claude→Gemini translation fails (JSON Schema) | TODO |
+| CLIP-BUG-05 | #1477 | metadata fields in contents[] causing Gemini rejection | TODO |
+| CLIP-BUG-11 | #1535 | Invalid argument with claude-opus-4 translation | TODO |
+| CLIP-BUG-12 | #1530 | tool_choice.name and tools[].name mismatch for prefix handling | TODO |
 
-### Phase 1: Process Detection & Agent Mesh Initialization (PENDING)
+### Phase 2: Streaming Bugs
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P1.1 | Process enumeration from `/proc` (or `ps` for macOS) | feature | -- | ~8min | COMPLETED |
-| SCLI-P1.2 | Agent pattern matching (regex-based detection from agents.conf) | feature | SCLI-P1.1 | ~5min | COMPLETED |
-| SCLI-P1.3 | Agent manifest system (YAML with metadata, capabilities, ODD) | feature | SCLI-P1.2 | ~8min | COMPLETED |
-| SCLI-P1.4 | Mesh directory initialization (`/tmp/agent-mesh` or configurable) | infra | -- | ~3min | COMPLETED |
-| SCLI-P1.5 | Agent heartbeat mechanism (touch-file every 5s, 15s failure detection) | feature | SCLI-P1.3 | ~8min | COMPLETED |
-| SCLI-P1.6 | Stale agent cleanup and task reclamation | feature | SCLI-P1.5 | ~8min | COMPLETED |
+| WL ID | GitHub | Title | Status |
+|-------|--------|-------|--------|
+| CLIP-BUG-06 | #1085 | Streaming [DONE] marker not emitting completion | TODO |
+| CLIP-BUG-07 | #796 | Stream usage merged with finish_reason | TODO |
 
-### Phase 2: IPC & Coordination (PENDING)
+### Phase 3: OAuth/Auth Bugs
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P2.1 | Atomic mkdir lock primitives for mesh coordination | infra | SCLI-P1.4 | ~5min | COMPLETED |
-| SCLI-P2.2 | Maildir message queue system (tmp -> new -> cur lifecycle) | feature | SCLI-P1.4 | ~10min | COMPLETED |
-| SCLI-P2.3 | inotify-based event notification (with /proc polling fallback) | feature | SCLI-P2.2 | ~8min | COMPLETED |
-| SCLI-P2.4 | Write-ahead log (WAL) for crash recovery | infra | SCLI-P1.4 | ~8min | COMPLETED |
-| SCLI-P2.5 | Intent broadcasting system (agents signal planned operations) | feature | SCLI-P2.2 | ~8min | COMPLETED |
-| SCLI-P2.6 | Intent conflict detection (write-write, read-write conflicts) | feature | SCLI-P2.5 | ~5min | COMPLETED |
+| WL ID | GitHub | Title | Status |
+|-------|--------|-------|--------|
+| CLIP-BUG-08 | #1658 | Qwen OAuth fails | TODO |
+| CLIP-BUG-09 | #1584 | Invalid thinking block signature (provider switch) | TODO |
+| CLIP-BUG-10 | #178 | thought_signature forwarded to Gemini (Base64 error) | TODO |
 
-### Phase 3: Consensus & Escalation (PENDING)
+### All Other Bugs
+See: docs/docset/CLIPROXY_BUGS_FULL.md
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P3.1 | Consensus protocol (majority for implementation, supermajority for architecture) | feature | SCLI-P2.5 | ~8min | COMPLETED |
-| SCLI-P3.2 | Shapley-value causal influence tracking | feature | SCLI-P3.1 | ~10min | COMPLETED |
-| SCLI-P3.3 | 5-tier escalation workflow (self -> peer -> lead -> committee -> human) | feature | SCLI-P3.1 | ~10min | COMPLETED |
-| SCLI-P3.4 | Async human escalation queue | feature | SCLI-P3.3 | ~5min | COMPLETED |
-| SCLI-P3.5 | Confidence scoring and debate capping (max 3 rounds) | feature | SCLI-P3.1 | ~8min | COMPLETED |
+### References
+- Full data: docs/docset/cliproxy-github-issues.json
+- Issue board: docs/docset/CLIProxyAPI_ISSUE_BOARD.md
 
----
+### Medium Priority
 
-## sharecli: Phases 4-9 (Mid-Stage Features)
+- [ ] **CLIPROXY-005**: Model support expansion (~40 issues)
+  - New model additions, deprecation handling
+  - Bundle: cliproxy_models
 
-### Phase 4: Git Operations & Parallelism (PENDING)
+- [ ] **CLIPROXY-006**: Docker/ARM deployment improvements
+  - Related: #147, #1267
+  - Bundle: cliproxy_deployment
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P4.1 | Per-agent `GIT_INDEX_FILE` implementation | feature | SCLI-P1.3 | ~8min | COMPLETED |
-| SCLI-P4.2 | Git plumbing pipeline (hash-object, write-tree, commit-tree, update-ref CAS) | feature | SCLI-P4.1 | ~10min | COMPLETED |
-| SCLI-P4.3 | CAS retry loop with exponential backoff and jitter | feature | SCLI-P4.2 | ~5min | COMPLETED |
-| SCLI-P4.4 | Scoped staging (agent-to-file mapping for parallel operations) | feature | SCLI-P4.1 | ~5min | COMPLETED |
-| SCLI-P4.5 | Per-agent git status view (show staged changes per agent) | feature | SCLI-P4.4 | ~3min | COMPLETED |
+- [ ] **CLIPROXY-007**: UI/Dashboard enhancements
+  - Account rotation, provider visibility
+  - Bundle: cliproxy_ui
 
-### Phase 5: Smart Merge (PENDING)
+- [ ] **CLIPROXY-008**: Session-aware hybrid routing strategy
+  - Related: #1617
+  - Bundle: cliproxy_routing
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P5.1 | Mergiraf integration (AST-aware merge for 10+ languages) | feature | SCLI-P4.2 | ~10min | COMPLETED |
-| SCLI-P5.2 | Conflict prediction before commit (trial merge from intents) | feature | SCLI-P2.5, SCLI-P4.2 | ~8min | COMPLETED |
-| SCLI-P5.3 | Import union auto-resolution (Python/JS imports) | feature | SCLI-P5.1 | ~5min | COMPLETED |
-| SCLI-P5.4 | JSON/YAML structural merge (deep merge via jq) | feature | SCLI-P5.1 | ~5min | COMPLETED |
+### Reference
+- Full issue board: docs/docset/CLIProxyAPI_ISSUE_BOARD.md
+- Consolidation matrix: docs/docset/CLIProxyAPI_ISSUE_CONSOLIDATION.md
 
-### Phase 6: File Coordination (PENDING)
+### [WL-321] Connector baseline initiative 321
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P6.1 | Optimistic concurrency control (OCC) version tracking | feature | SCLI-P2.5 | ~8min | COMPLETED |
-| SCLI-P6.2 | Hybrid Logical Clock (HLC) timestamp generation | feature | SCLI-P6.1 | ~5min | COMPLETED |
-| SCLI-P6.3 | Lease-based file claims registry (read/write/exclusive) | feature | SCLI-P6.1 | ~8min | COMPLETED |
-| SCLI-P6.4 | Lease renewal and expiry management | feature | SCLI-P6.3 | ~5min | COMPLETED |
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-321.
 
-### Phase 7: Caching & Request Deduplication (PENDING)
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P7.1 | Singleflight deduplication (first executes, rest wait) | feature | -- | ~5min | COMPLETED |
-| SCLI-P7.2 | inotify-based cache invalidation on file changes | feature | SCLI-P2.3 | ~8min | COMPLETED |
-| SCLI-P7.3 | Heat-based LRU eviction (access frequency tracking) | feature | -- | ~5min | COMPLETED |
+### [WL-322] Connector validation initiative 322
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
 
-### Phase 8: Resource Isolation (PENDING)
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-322.
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P8.1 | Per-agent TMPDIR allocation and cleanup | feature | SCLI-P1.3 | ~3min | COMPLETED |
-| SCLI-P8.2 | Dynamic port range allocation (registry + liveness) | feature | SCLI-P8.1 | ~5min | COMPLETED |
-| SCLI-P8.3 | Environment variable isolation per agent | feature | SCLI-P8.1 | ~5min | COMPLETED |
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-### Phase 9: Shell Injection & Context Injection (PENDING)
+### [WL-323] Connector watchdog initiative 323
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P9.1 | tmux session detection and naming | feature | SCLI-P1.3 | ~5min | COMPLETED |
-| SCLI-P9.2 | tmux command injection (`send-keys` with 1.5s delay) | feature | SCLI-P9.1 | ~8min | PENDING |
-| SCLI-P9.3 | Agent readiness detection (prompt patterns, busy/idle/error) | feature | SCLI-P9.2 | ~5min | PENDING |
-| SCLI-P9.4 | AGENT.md template system (dynamic mesh state injection) | feature | SCLI-P1.3 | ~5min | PENDING |
-| SCLI-P9.5 | Tool-specific context files (CLAUDE.md, .cursorrules symlinks) | feature | SCLI-P9.4 | ~8min | PENDING |
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-323.
 
----
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-## sharecli: Phases 10-14 (Advanced Features)
+### [WL-324] Connector diff initiative 324
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
 
-### Phase 10: Sandboxing (PENDING)
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-324.
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P10.1 | bubblewrap profile (Linux filesystem/network/process policies) | infra | SCLI-P1.3 | ~10min | PENDING |
-| SCLI-P10.2 | seatbelt profile (macOS sandbox-exec equivalent) | infra | SCLI-P1.3 | ~10min | PENDING |
-| SCLI-P10.3 | 5-tier autonomy enforcement (read -> worktree -> git -> shared -> production) | feature | SCLI-P10.1, SCLI-P10.2 | ~8min | PENDING |
-| SCLI-P10.4 | Operation classification (tier assignment from command + target) | feature | SCLI-P10.3 | ~8min | PENDING |
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-### Phase 11: Worktree Support (PENDING)
+### [WL-325] Connector reconciliation initiative 325
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P11.1 | Optional per-agent git worktree creation | feature | SCLI-P4.1 | ~8min | PENDING |
-| SCLI-P11.2 | Branch coordination and collision avoidance | feature | SCLI-P11.1 | ~5min | PENDING |
-| SCLI-P11.3 | Worktree cleanup and orphan detection | feature | SCLI-P11.2 | ~3min | PENDING |
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-325.
 
-### Phase 12: Resource Management (PENDING)
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P12.1 | Memory limit enforcement (cgroups on Linux, ulimit fallback) | feature | SCLI-P1.3 | ~8min | PENDING |
-| SCLI-P12.2 | Process count limits (runaway subprocess detection) | feature | SCLI-P12.1 | ~5min | PENDING |
-| SCLI-P12.3 | File descriptor budget allocation and monitoring | feature | SCLI-P12.2 | ~5min | PENDING |
+### [WL-326] Connector integrity initiative 326
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
 
-### Phase 13: Observability (PENDING)
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-326.
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P13.1 | JSONL structured logging (atomic append, <4KB per line) | infra | SCLI-P1.4 | ~5min | PENDING |
-| SCLI-P13.2 | Advanced metrics aggregation (per-agent, per-command) | feature | -- | ~8min | PENDING |
-| SCLI-P13.3 | CLI mesh management commands (`mesh status`, `mesh agents`) | feature | SCLI-P1.3 | ~10min | PENDING |
-| SCLI-P13.4 | Health dashboard v2 (activity, usage, claims, intents) | feature | SCLI-P13.2 | ~10min | PENDING |
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-### Phase 14: Audit & Recovery (PENDING)
+### [WL-327] Connector policy initiative 327
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
 
-| ID | Title | Type | Depends On | Effort | Status |
-|----|-------|------|-----------|--------|--------|
-| SCLI-P14.1 | Shadow git repo for full delete recovery | feature | SCLI-P4.2 | ~10min | PENDING |
-| SCLI-P14.2 | Audit trail with inotify sync to shadow repo | feature | SCLI-P14.1 | ~8min | PENDING |
-| SCLI-P14.3 | Full recovery workflow (cross-reference dev + audit repos) | feature | SCLI-P14.2 | ~8min | PENDING |
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-327.
 
----
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-## CLAIMED
+### [WL-328] Connector checkpoint initiative 328
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
 
-| ID | Title | Agent | Claimed At | Expected Completion |
-|----|-------|-------|-----------|-------------------|
-| TGNT-P6.1 | Per-agent GIT_INDEX_FILE management | phase6-worker | 2026-02-18T16:45:00Z | 2026-02-18T16:53:00Z |
-| TGNT-P6.2 | Git plumbing commit pipeline | phase6-worker | 2026-02-18T16:45:00Z | 2026-02-18T17:05:00Z |
-| TGNT-P6.3 | CAS ref update with exponential backoff | phase6-worker | 2026-02-18T16:45:00Z | 2026-02-18T17:10:00Z |
-| TGNT-P6.4 | Scoped staging (agent-to-file mapping) | phase6-worker | 2026-02-18T16:45:00Z | 2026-02-18T17:15:00Z |
-| TGNT-P6.5 | harness git status per-agent view | phase6-worker | 2026-02-18T16:45:00Z | 2026-02-18T17:18:00Z |
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-328.
 
----
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-## COMPLETED
+### [WL-329] Connector rollup initiative 329
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
 
-| ID | Title | Completed At | Effort | Notes |
-|----|-------|---|--------|-------|
-| TGNT-P0.1 | Symlink dispatch mechanism | 2026-02-15 | ~5min | Core harness foundation |
-| TGNT-P0.2 | Agent detection via `/proc` tree walk | 2026-02-15 | ~5min | Includes macOS `ps` fallback |
-| TGNT-P0.3 | `rules.conf` parser | 2026-02-15 | ~3min | Command, strategy, options support |
-| TGNT-P0.4 | Coalesce strategy | 2026-02-15 | ~10min | flock + SHA256 + atomic writes |
-| TGNT-P0.5 | Queue strategy | 2026-02-16 | ~8min | Bounded concurrency pool |
-| TGNT-P0.6 | Debounce strategy | 2026-02-16 | ~5min | Delay + coalesce within window |
-| TGNT-P0.7 | `harness sync` symlink generator | 2026-02-16 | ~3min | From rules.conf |
-| TGNT-P0.8 | `nocache_args` safety | 2026-02-16 | ~3min | `--fix`/`--write` fallback |
-| TGNT-P1.1 | Lock timeout + fallback | 2026-02-16 | ~3min | HARNESS_LOCK_TIMEOUT env var |
-| TGNT-P1.2 | Stale-while-revalidate | 2026-02-16 | ~5min | Serve stale + background refresh |
-| TGNT-P1.3 | Prometheus metrics | 2026-02-16 | ~5min | `harness metrics` endpoint |
-| TGNT-P1.4 | Cache compression | 2026-02-16 | ~5min | zstd for outputs > 10KB |
-| TGNT-P1.5 | JSON metrics export | 2026-02-16 | ~2min | `harness metrics json` |
-| TGNT-P2.1 | 5-level priority queue | 2026-02-17 | ~8min | critical/high/normal/low/background |
-| TGNT-P2.2 | Priority aging | 2026-02-17 | ~3min | +1 level per 5s, prevents starvation |
-| TGNT-P2.3 | Fair share scheduling | 2026-02-17 | ~8min | Per-agent quota + penalty |
-| TGNT-P2.4 | Semantic coalescing | 2026-02-17 | ~5min | Path normalization, `.` -> root |
-| TGNT-P2.5 | Queue timeout protection | 2026-02-17 | ~3min | Fallback execution on timeout |
-| TGNT-P3.1 | L1 memory cache | 2026-02-17 | ~8min | `/dev/shm`, 100MB, 60s TTL |
-| TGNT-P3.2 | L2 disk cache | 2026-02-17 | ~5min | `var/cache`, compressed, persistent |
-| TGNT-P3.3 | L2-to-L1 promotion | 2026-02-17 | ~5min | Automatic on cache hit |
-| TGNT-P3.4 | I/O scheduler integration | 2026-02-17 | ~5min | ionice priority classes |
-| TGNT-P3.5 | Negative stat cache | 2026-02-17 | ~3min | Nonexistent files, 5s TTL |
-| TGNT-P3.6 | Page cache warmer | 2026-02-17 | ~5min | Bulk read by file type |
-| TGNT-P4.1 | Intent broadcasting | 2026-02-18 | ~8min | Agents signal planned ops |
-| TGNT-P4.2 | Intent conflict checking | 2026-02-18 | ~5min | write-write, read-write detection |
-| TGNT-P4.3 | Wait-for graph | 2026-02-18 | ~8min | From lock records |
-| TGNT-P4.4 | DFS cycle detection | 2026-02-18 | ~5min | Deadlock detection |
-| TGNT-P4.5 | Deadlock auto-resolution | 2026-02-18 | ~3min | Abort youngest waiter |
-| TGNT-P4.6 | Fair share tracking | 2026-02-18 | ~5min | 50% decay smoothing |
-| TGNT-P5.1 | Interactive TUI dashboard | 2026-02-18 | ~10min | cache/queue/intent/fair share |
-| TGNT-P5.2 | Self-tuning report | 2026-02-18 | ~8min | Detect low hit rate/contention |
-| TGNT-P5.3 | Auto-fix recommendations | 2026-02-18 | ~5min | Color-coded severity |
-| TGNT-P5.4 | Rules suggestion engine | 2026-02-18 | ~5min | From observed patterns |
-| TGNT-P5.5 | L1 vs L2 benchmark | 2026-02-18 | ~3min | Perf comparison tool |
-| SCLI-P0.1 | Mission & hard problems | 2026-02-15 | ~5min | System analysis |
-| SCLI-P0.2 | Architecture diagram | 2026-02-15 | ~8min | Component overview |
-| SCLI-P0.3 | Configuration schema | 2026-02-15 | ~5min | rules.conf, agents.conf, env vars |
-| SCLI-P0.4 | Risk register | 2026-02-15 | ~8min | Mitigations |
-| SCLI-P0.5 | Tech stack justification | 2026-02-15 | ~5min | Bash, Rust, C rationale |
-| SCLI-P5.1 | Mergiraf integration (AST-aware merge for 10+ languages) | 2026-02-22 | ~10min | merge_ast_aware in mesh/merge.py |
-| SCLI-P5.2 | Conflict prediction before commit (trial merge from intents) | 2026-02-22 | ~8min | predict_conflicts in mesh/merge.py |
-| SCLI-P5.3 | Import union auto-resolution (Python/JS imports) | 2026-02-22 | ~5min | resolve_imports in mesh/merge.py |
-| SCLI-P5.4 | JSON/YAML structural merge (deep merge via jq) | 2026-02-22 | ~5min | merge_structural in mesh/merge.py |
-| SCLI-P6.1 | Optimistic concurrency control (OCC) version tracking | 2026-02-22 | ~8min | OptimisticConcurrencyControl in mesh/coordination.py |
-| TGNT-P7.1 | Mergiraf integration | 2026-02-19 | ~10min | AST merge for 10+ languages |
-| TGNT-P7.2 | Conflict prediction from intents | 2026-02-19 | ~8min | Trial merge before commit |
-| TGNT-P7.3 | Import union auto-resolve | 2026-02-19 | ~5min | Python/JS sorted union |
-| TGNT-P7.4 | JSON/YAML structural merge | 2026-02-19 | ~5min | Deep merge via jq, ours-wins |
-| TGNT-P8.1 | OCC version check on write | 2026-02-19 | ~8min | Record version at claim, verify before commit |
-| TGNT-P8.2 | HLC timestamp generation | 2026-02-19 | ~5min | Millisecond physical + logical counter |
-| TGNT-P8.3 | Lease-based file claims registry | 2026-02-19 | ~8min | read/write/exclusive with flock |
-| TGNT-P8.4 | Lease renewal and expiry | 2026-02-19 | ~5min | Background cleanup daemon |
-| TGNT-P9.1 | Singleflight dedup pattern | 2026-02-19 | ~5min | First executes, rest wait |
-| TGNT-P9.2 | inotify cache invalidation | 2026-02-19 | ~8min | Watch file changes, invalidate |
-| TGNT-P9.3 | Heat-based LRU eviction | 2026-02-19 | ~5min | Access frequency + exponential decay |
-| TGNT-P10.1 | Per-agent TMPDIR allocation | 2026-02-19 | ~3min | Private temp, cleanup on exit |
-| TGNT-P10.2 | Dynamic port range allocation | 2026-02-19 | ~5min | Registry + liveness check |
-| TGNT-P10.3 | Environment variable isolation | 2026-02-19 | ~5min | Agent-specific env file |
-| TGNT-P12.1 | /proc scanner with agent patterns | 2026-02-19 | ~8min | Claude/Aider/Cursor/Cline detection |
-| TGNT-P12.2 | Agent manifest creation | 2026-02-19 | ~5min | YAML: id, type, pid, capabilities |
-| TGNT-P12.3 | Heartbeat monitor | 2026-02-19 | ~5min | Touch-file every 5s, 15s threshold |
-| TGNT-P12.4 | Stale agent cleanup | 2026-02-19 | ~3min | Reclaim tasks, archive manifest |
-| TGNT-P13.1 | tmux session detection | 2026-02-19 | ~5min | mesh-{agent-uuid} naming |
-| TGNT-P13.2 | Command injection via tmux | 2026-02-19 | ~8min | send-keys + 1.5s delay |
-| TGNT-P13.3 | Agent readiness detection | 2026-02-19 | ~5min | Prompt patterns, busy/idle/error |
-| TGNT-P15.1 | Optional worktree creation | 2026-02-19 | ~8min | git worktree add .mesh/worktrees/agent-{uuid} |
-| TGNT-P15.2 | Branch coordination | 2026-02-19 | ~5min | Registry, collision avoidance, status tracking |
-| TGNT-P15.3 | Worktree cleanup | 2026-02-19 | ~3min | Orphan detection, 30s grace, health monitor |
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-329.
 
----
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-## Notes
+### [WL-330] Connector telemetry initiative 330
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
 
-- **Total Pending Tasks**: 89 items across both projects
-- **Completed Tasks**: 46 items (Phases 0-5 for thegent, Phases 0 for sharecli)
-- **Effort Distribution**: Mix of ~3-20 minute tasks, primarily feature and infrastructure work
-- **Dependency Strategy**: Sequential foundation (P0-P1), parallel optimization (P2-P5), then specialized tracks (P6-P18)
-- **Next Steps**: Begin Phase 6 (Git Parallelism) for thegent; Phase 1 (Process Detection) for sharecli
-- **Agents**: Coordinate via this file; claim items in CLAIMED section before starting
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-330.
 
----
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-## Claiming Work
+### [WL-331] Connector queue initiative 331
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
 
-1. **Before starting**: Add your item to CLAIMED with agent name and current timestamp
-2. **Upon completion**: Move from CLAIMED to COMPLETED with completion timestamp and notes
-3. **If blocked**: Update status to BLOCKED and note the blocking dependency
-4. **For coordination**: Read PENDING and CLAIMED to avoid duplicates; check "Depends On" column for prerequisites
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-331.
 
----
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
 
-**Last Updated**: 2026-02-22 | **Format Version**: 1.0
+### [WL-332] Connector throttle initiative 332
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-332.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-333] Connector guardrail initiative 333
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-333.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-334] Connector snapshot initiative 334
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-334.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-335] Connector router initiative 335
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-335.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-336] Connector reporting initiative 336
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-336.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-337] Connector review initiative 337
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-337.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-338] Connector automation initiative 338
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-338.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-339] Connector hardening initiative 339
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** M
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-339.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-340] Connector readiness initiative 340
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** connector reliability and retry/resume hardening
+**Effort:** S
+**Blocked by:** none
+
+Advance connector reliability and retry/resume hardening with deterministic behavior and traceable outputs for WL-340.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md`
+
+### [WL-341] Governance baseline initiative 341
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-341.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-342] Governance validation initiative 342
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-342.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-343] Governance watchdog initiative 343
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-343.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-344] Governance diff initiative 344
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-344.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-345] Governance reconciliation initiative 345
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-345.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-346] Governance integrity initiative 346
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-346.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-347] Governance policy initiative 347
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-347.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-348] Governance checkpoint initiative 348
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-348.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-349] Governance rollup initiative 349
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-349.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-350] Governance telemetry initiative 350
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-350.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-351] Governance queue initiative 351
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-351.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-352] Governance throttle initiative 352
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-352.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-353] Governance guardrail initiative 353
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-353.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-354] Governance snapshot initiative 354
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-354.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-355] Governance router initiative 355
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-355.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-356] Governance reporting initiative 356
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-356.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-357] Governance review initiative 357
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-357.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-358] Governance automation initiative 358
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-358.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-359] Governance hardening initiative 359
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** M
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-359.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-360] Governance readiness initiative 360
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** governance policy and compliance evidence automation
+**Effort:** S
+**Blocked by:** none
+
+Advance governance policy and compliance evidence automation with deterministic behavior and traceable outputs for WL-360.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_J_2026-02-22.md`
+
+### [WL-361] Operator baseline initiative 361
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-361.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-362] Operator validation initiative 362
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-362.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-363] Operator watchdog initiative 363
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-363.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-364] Operator diff initiative 364
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-364.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-365] Operator reconciliation initiative 365
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-365.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-366] Operator integrity initiative 366
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-366.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-367] Operator policy initiative 367
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-367.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-368] Operator checkpoint initiative 368
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-368.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-369] Operator rollup initiative 369
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-369.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-370] Operator telemetry initiative 370
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-370.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-371] Operator queue initiative 371
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-371.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-372] Operator throttle initiative 372
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-372.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-373] Operator guardrail initiative 373
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-373.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-374] Operator snapshot initiative 374
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-374.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-375] Operator router initiative 375
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-375.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-376] Operator reporting initiative 376
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-376.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-377] Operator review initiative 377
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-377.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-378] Operator automation initiative 378
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-378.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-379] Operator hardening initiative 379
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** M
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-379.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-380] Operator readiness initiative 380
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** operator ux/cli diagnostics and workflows
+**Effort:** S
+**Blocked by:** none
+
+Advance operator ux/cli diagnostics and workflows with deterministic behavior and traceable outputs for WL-380.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_K_2026-02-22.md`
+
+### [WL-381] Performance/scalability baseline initiative 381
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-381.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-382] Performance/scalability validation initiative 382
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-382.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-383] Performance/scalability watchdog initiative 383
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-383.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-384] Performance/scalability diff initiative 384
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-384.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-385] Performance/scalability reconciliation initiative 385
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-385.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-386] Performance/scalability integrity initiative 386
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-386.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-387] Performance/scalability policy initiative 387
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-387.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-388] Performance/scalability checkpoint initiative 388
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-388.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-389] Performance/scalability rollup initiative 389
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-389.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-390] Performance/scalability telemetry initiative 390
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-390.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-391] Performance/scalability queue initiative 391
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-391.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-392] Performance/scalability throttle initiative 392
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-392.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-393] Performance/scalability guardrail initiative 393
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-393.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-394] Performance/scalability snapshot initiative 394
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-394.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-395] Performance/scalability router initiative 395
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-395.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-396] Performance/scalability reporting initiative 396
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-396.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-397] Performance/scalability review initiative 397
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-397.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-398] Performance/scalability automation initiative 398
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-398.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-399] Performance/scalability hardening initiative 399
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** M
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-399.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-400] Performance/scalability readiness initiative 400
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** performance/scalability with batching and partitioning
+**Effort:** S
+**Blocked by:** none
+
+Advance performance/scalability with batching and partitioning with deterministic behavior and traceable outputs for WL-400.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_L_2026-02-22.md`
+
+### [WL-401] Testing baseline initiative 401
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-401.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-402] Testing validation initiative 402
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-402.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-403] Testing watchdog initiative 403
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-403.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-404] Testing diff initiative 404
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-404.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-405] Testing reconciliation initiative 405
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-405.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-406] Testing integrity initiative 406
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-406.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-407] Testing policy initiative 407
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-407.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-408] Testing checkpoint initiative 408
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-408.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-409] Testing rollup initiative 409
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-409.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-410] Testing telemetry initiative 410
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-410.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-411] Testing queue initiative 411
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-411.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-412] Testing throttle initiative 412
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-412.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-413] Testing guardrail initiative 413
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-413.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-414] Testing snapshot initiative 414
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-414.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-415] Testing router initiative 415
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-415.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-416] Testing reporting initiative 416
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-416.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-417] Testing review initiative 417
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-417.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-418] Testing automation initiative 418
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-418.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-419] Testing hardening initiative 419
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** M
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-419.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-420] Testing readiness initiative 420
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** testing strategy: unit/integration/e2e/chaos/load
+**Effort:** S
+**Blocked by:** none
+
+Advance testing strategy: unit/integration/e2e/chaos/load with deterministic behavior and traceable outputs for WL-420.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_M_2026-02-22.md`
+
+### [WL-421] Docs, baseline initiative 421
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-421.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-422] Docs, validation initiative 422
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-422.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-423] Docs, watchdog initiative 423
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-423.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-424] Docs, diff initiative 424
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-424.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-425] Docs, reconciliation initiative 425
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-425.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-426] Docs, integrity initiative 426
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-426.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-427] Docs, policy initiative 427
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-427.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-428] Docs, checkpoint initiative 428
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-428.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-429] Docs, rollup initiative 429
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-429.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-430] Docs, telemetry initiative 430
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-430.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-431] Docs, queue initiative 431
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-431.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-432] Docs, throttle initiative 432
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-432.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-433] Docs, guardrail initiative 433
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-433.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-434] Docs, snapshot initiative 434
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-434.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-435] Docs, router initiative 435
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-435.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-436] Docs, reporting initiative 436
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-436.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-437] Docs, review initiative 437
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-437.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-438] Docs, automation initiative 438
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-438.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-439] Docs, hardening initiative 439
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** M
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-439.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-440] Docs, readiness initiative 440
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** docs
+**Effort:** S
+**Blocked by:** none
+
+Advance docs, onboarding, runbooks, troubleshooting with deterministic behavior and traceable outputs for WL-440.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_N_2026-02-22.md`
+
+### [WL-441] Security, baseline initiative 441
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-441.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-442] Security, validation initiative 442
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-442.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-443] Security, watchdog initiative 443
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-443.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-444] Security, diff initiative 444
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-444.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-445] Security, reconciliation initiative 445
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-445.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-446] Security, integrity initiative 446
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-446.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-447] Security, policy initiative 447
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-447.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-448] Security, checkpoint initiative 448
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-448.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-449] Security, rollup initiative 449
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-449.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-450] Security, telemetry initiative 450
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-450.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-451] Security, queue initiative 451
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-451.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-452] Security, throttle initiative 452
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-452.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-453] Security, guardrail initiative 453
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-453.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-454] Security, snapshot initiative 454
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-454.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-455] Security, router initiative 455
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-455.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-456] Security, reporting initiative 456
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-456.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-457] Security, review initiative 457
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-457.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-458] Security, automation initiative 458
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-458.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-459] Security, hardening initiative 459
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** M
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-459.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-460] Security, readiness initiative 460
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** security
+**Effort:** S
+**Blocked by:** none
+
+Advance security, auditability, redaction, retention with deterministic behavior and traceable outputs for WL-460.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_O_2026-02-22.md`
+
+### [WL-461] Tenancy baseline initiative 461
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-461.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-462] Tenancy validation initiative 462
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-462.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-463] Tenancy watchdog initiative 463
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-463.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-464] Tenancy diff initiative 464
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-464.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-465] Tenancy reconciliation initiative 465
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-465.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-466] Tenancy integrity initiative 466
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-466.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-467] Tenancy policy initiative 467
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-467.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-468] Tenancy checkpoint initiative 468
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-468.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-469] Tenancy rollup initiative 469
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-469.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-470] Tenancy telemetry initiative 470
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-470.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-471] Tenancy queue initiative 471
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-471.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-472] Tenancy throttle initiative 472
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-472.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-473] Tenancy guardrail initiative 473
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-473.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-474] Tenancy snapshot initiative 474
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-474.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-475] Tenancy router initiative 475
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-475.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-476] Tenancy reporting initiative 476
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-476.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-477] Tenancy review initiative 477
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-477.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-478] Tenancy automation initiative 478
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-478.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-479] Tenancy hardening initiative 479
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** M
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-479.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-480] Tenancy readiness initiative 480
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** tenancy and multi-project orchestration
+**Effort:** S
+**Blocked by:** none
+
+Advance tenancy and multi-project orchestration with deterministic behavior and traceable outputs for WL-480.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_P_2026-02-22.md`
+
+### [WL-481] Release baseline initiative 481
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-481.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-482] Release validation initiative 482
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-482.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-483] Release watchdog initiative 483
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-483.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-484] Release diff initiative 484
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-484.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-485] Release reconciliation initiative 485
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-485.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-486] Release integrity initiative 486
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-486.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-487] Release policy initiative 487
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-487.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-488] Release checkpoint initiative 488
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-488.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-489] Release rollup initiative 489
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-489.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-490] Release telemetry initiative 490
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-490.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-491] Release queue initiative 491
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-491.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-492] Release throttle initiative 492
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-492.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-493] Release guardrail initiative 493
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-493.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-494] Release snapshot initiative 494
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-494.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-495] Release router initiative 495
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-495.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-496] Release reporting initiative 496
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-496.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-497] Release review initiative 497
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-497.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-498] Release automation initiative 498
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-498.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-499] Release hardening initiative 499
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** M
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-499.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-500] Release readiness initiative 500
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** release engineering and migration tooling
+**Effort:** S
+**Blocked by:** none
+
+Advance release engineering and migration tooling with deterministic behavior and traceable outputs for WL-500.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_Q_2026-02-22.md`
+
+### [WL-501] Analytics, baseline initiative 501
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-501.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-502] Analytics, validation initiative 502
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-502.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-503] Analytics, watchdog initiative 503
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-503.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-504] Analytics, diff initiative 504
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-504.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-505] Analytics, reconciliation initiative 505
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-505.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-506] Analytics, integrity initiative 506
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-506.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-507] Analytics, policy initiative 507
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-507.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-508] Analytics, checkpoint initiative 508
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-508.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-509] Analytics, rollup initiative 509
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-509.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-510] Analytics, telemetry initiative 510
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-510.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-511] Analytics, queue initiative 511
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-511.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-512] Analytics, throttle initiative 512
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-512.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-513] Analytics, guardrail initiative 513
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-513.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-514] Analytics, snapshot initiative 514
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-514.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-515] Analytics, router initiative 515
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-515.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-516] Analytics, reporting initiative 516
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-516.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-517] Analytics, review initiative 517
+**Status:** BACKLOG
+**Priority:** P2
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-517.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-518] Analytics, automation initiative 518
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-518.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-519] Analytics, hardening initiative 519
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** M
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-519.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+
+### [WL-520] Analytics, readiness initiative 520
+**Status:** BACKLOG
+**Priority:** P1
+**Area:** analytics
+**Effort:** S
+**Blocked by:** none
+
+Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-520.
+
+**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
