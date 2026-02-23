@@ -3,11 +3,6 @@
 Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
 """
 
-This module handles policy configuration, health score computation, drift detection,
-contract conformance checking, and governance cycles.
-"""
-
-# @trace WL-124
 from __future__ import annotations
 
 import sys
@@ -157,83 +152,6 @@ def contracts_registry_cmd(format: str | None = None) -> None:
         table.add_row(v.contract_id, v.version, v.description, status)
 
     console.print(table)
-
-
-def migration_cmd(contract_id: str, version: str, format: str | None = None) -> None:
-    """Evaluate migration status for a contract version."""
-    from rich.console import Console
-
-    from thegent.contracts.migration import MigrationController
-
-    console = Console()
-    mc = MigrationController()
-    res = mc.evaluate_version(contract_id, version)
-
-    if format == "json":
-        sys.stdout.write(json.dumps(res) + "\n")
-        return
-
-    color = "green" if res["allowed"] else "red"
-    if res["status"] == "deprecated":
-        color = "yellow"
-
-    panel = Panel(
-        f"[bold]Status:[/bold] {res['status'].upper()}\n"
-        f"[bold]Allowed:[/bold] {'YES' if res['allowed'] else 'NO'}\n"
-        f"[bold]Reason:[/bold] {res['reason']}\n"
-        f"[bold]Days Left:[/bold] {res.get('migration_days_left', 'N/A')}",
-        title=f"Migration Evaluation: {contract_id}@{version}",
-        border_style=color,
-    )
-    console.print(panel)
-
-
-def drift_cmd(
-    window: int = 50,
-    format: str | None = None,
-    structural_budget: float = 5.0,
-    semantic_budget: float = 10.0,
-) -> None:
-    """Detect significant drift in contract performance and check alert budgets (G-RV-07)."""
-    from rich.console import Console
-
-    from thegent.contracts.telemetry import ContractTelemetry
-
-    settings = ThegentSettings()
-    console = Console()
-    ct = ContractTelemetry(settings.session_dir)
-    issues = ct.detect_drift(window_size=window)
-    budget = ct.get_drift_budget_status(
-        structural_budget_pct=structural_budget,
-        semantic_budget_pct=semantic_budget,
-    )
-
-    if format == "json":
-        out = {"issues": issues, "budget": budget}
-        sys.stdout.write(json.dumps(out) + "\n")
-        return
-
-    if not issues and budget["within_budget"]:
-        console.print("[green]No significant contract drift detected.[/green]")
-        return
-
-    parts = []
-    if issues:
-        issue_str = "\n".join([f"[red]![/red] {i}" for i in issues])
-        parts.append(issue_str)
-    if not budget["within_budget"]:
-        parts.append(
-            f"[yellow]Budget exceeded:[/yellow] structural {budget['structural_rate_pct']}% "
-            f"(budget {budget['structural_budget_pct']}%), semantic {budget['semantic_rate_pct']}% "
-            f"(budget {budget['semantic_budget_pct']}%)"
-        )
-    if parts:
-        panel = Panel(
-            "\n\n".join(parts),
-            title=f"Contract Drift Alert (window={window})",
-            border_style="red",
-        )
-        console.print(panel)
 
 
 def contracts_conformance_cmd(
@@ -428,7 +346,8 @@ __all__ = [
     "contracts_registry_cmd",
     "drift_cmd",
     "govern_configure_cmd",
-    "govern_cost_cmd",    "migration_cmd",
+    "govern_cost_cmd",
+    "migration_cmd",
     "policy_check_cmd",
     "policy_purge_cmd",
     "policy_show_cmd",

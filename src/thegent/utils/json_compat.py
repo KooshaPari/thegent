@@ -9,11 +9,11 @@ try:
 
     def dumps(obj, **kwargs):
         """Serialize obj to JSON string.
-        
+
         Args:
             obj: Object to serialize
             **kwargs: Additional options (indent, sort_keys supported)
-        
+
         Returns:
             str: JSON string
         """
@@ -28,10 +28,10 @@ try:
 
     def loads(s):
         """Deserialize JSON string to object.
-        
+
         Args:
             s: JSON string or bytes
-        
+
         Returns:
             Deserialized object
         """
@@ -41,7 +41,7 @@ try:
 
     def dump(obj, fp, **kwargs):
         """Serialize obj to file.
-        
+
         Args:
             obj: Object to serialize
             fp: File-like object with write()
@@ -51,10 +51,10 @@ try:
 
     def load(fp):
         """Deserialize file to object.
-        
+
         Args:
             fp: File-like object with read()
-        
+
         Returns:
             Deserialized object
         """

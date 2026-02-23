@@ -3,7 +3,8 @@
 # @trace WL-124
 from __future__ import annotations
 
-import orjson as jsonimport sys
+import orjson as json
+import sys
 from pathlib import Path
 from typing import Any
 

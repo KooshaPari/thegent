@@ -57,7 +57,7 @@ def _check_connectivity(auto_start: bool = True) -> list[CheckResult]:
 
 def _check_environment() -> list[CheckResult]:
     """Check environment variables and PATH configuration.
-    
+
     Delegates to thegent.doctor.checks_env module.
     """
     return _check_environment_impl(project_root=_project_root_cache)
@@ -65,7 +65,7 @@ def _check_environment() -> list[CheckResult]:
 
 def _check_shim_binaries() -> list[CheckResult]:
     """Check thegent-hooks and thegent-shims (Rust) binary version and availability.
-    
+
     Delegates to thegent.doctor.checks_env module.
     """
     return _check_shim_binaries_impl(project_root=_project_root_cache)

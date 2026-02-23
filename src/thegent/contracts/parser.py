@@ -132,20 +132,43 @@ class IncrementalXMLParser:
         self._committed_tags = tags.copy()
         return tags
 
-    def get_partial_state(self, text: str) -> dict[str, bool]:
-        """Return simple partial parse signals: whether an open tag is present or an incomplete tag."""
+    def get_partial_state(self, text: str) -> dict[str, any]:
+        """Return partial parse state with tag name, content, and truncation status."""
         buf = text or ""
-        open_tag = False
-        incomplete_tag = False
-        # If last '<' occurs after last '>' we assume an open/incomplete tag
+        
+        # Find last '<' and '>'
         last_lt = buf.rfind("<")
         last_gt = buf.rfind(">")
-        if last_lt != -1 and last_lt > last_gt:
-            open_tag = True
-            # If there is no closing '>' at all, treat as incomplete
-            if ">" not in buf:
-                incomplete_tag = True
-        return {"open_tag": open_tag, "incomplete_tag": incomplete_tag}
+        
+        open_tag: str | None = None
+        partial_content = ""
+        is_truncated = False
+        incomplete_tag: str | None = None
+        
+        if last_lt != -1:
+            # Check if there's an unclosed tag
+            if last_lt > last_gt or (last_gt == -1 and last_lt != -1):
+                is_truncated = True
+                # Extract tag name
+                tag_start = last_lt + 1
+                if tag_start < len(buf):
+                    tag_end = buf.find(">", tag_start)
+                    if tag_end == -1:
+                        # No closing >, incomplete tag
+                        incomplete_tag = buf[tag_start:].strip()
+                        open_tag = None
+                    else:
+                        # Has closing >, check if there's content after
+                        open_tag = buf[tag_start:tag_end].strip()
+                        if tag_end + 1 < len(buf):
+                            partial_content = buf[tag_end + 1:]
+        
+        return {
+            "open_tag": open_tag,
+            "partial_content": partial_content,
+            "is_truncated": is_truncated,
+            "incomplete_tag": incomplete_tag
+        }
 
     def _extract_committed(self) -> dict[str, str]:
         return self._committed_tags.copy()

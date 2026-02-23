@@ -27,6 +27,7 @@ from thegent.cli.commands._cli_shared import (
     list_agent_names,
     list_droid_names,
     resolve_agent,
+    run_login,
 )
 from thegent.cli.commands.model_cmds_agents_helpers import render_agents_table, render_droids_table
 from thegent.cli.commands.model_cmds_catalog_helpers import (
