@@ -26,6 +26,12 @@ settings:
   use_rust_runtime: true
   # Runtime binary for Rust migration mode
   rust_runtime_path: "thegent-hooks"
+  # Phase 3 Zig hook dispatcher migration (default: true, production-ready)
+  # The Zig dispatcher provides lock-free event queuing and contract validation
+  # for all governance gates. Extensively tested for parity with shell governance-gates.sh.
+  use_zig_dispatcher: true
+  # Path to Zig dispatcher binary (relative to repo root)
+  zig_dispatcher_path: "hooks/zig/zig-out/bin/hook-dispatcher-zig"
   # DEBUG: Log hook execution times (default: false)
   debug_timing: true
   # Timeout overrides (in seconds) for slow hooks - CAPPED for stop hooks

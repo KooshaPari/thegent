@@ -223,7 +223,7 @@ def test_default_dex_uses_flash_model() -> None:
     with patch("thegent.dex_main._run_codex_interactive") as run_interactive:
         result = runner.invoke(app, [])
         assert result.exit_code == 0
-        run_interactive.assert_called_once_with("flash", extra_args=[_DEX_BYPASS_FLAG])
+        run_interactive.assert_called_once_with("flash")
 
 
 def test_dex_high_uses_codex_high_model() -> None:
@@ -330,11 +330,11 @@ def test_dex_alias_parity_resolves_expected_models_and_providers(
 @pytest.mark.parametrize(
     ("argv", "expected_model", "expected_extra_args"),
     [
-        (["dex", "unknown-token", "hello"], "flash", [_DEX_BYPASS_FLAG, "unknown-token", "hello"]),
-        (["dex"], "flash", [_DEX_BYPASS_FLAG]),
-        (["dex", "dex", "hello"], "dex", [_DEX_BYPASS_FLAG, "hello"]),
-        (["dex", "high", "hello"], "high", [_DEX_BYPASS_FLAG, "hello"]),
-        (["dex", "xhigh", "hello"], "xhigh", [_DEX_BYPASS_FLAG, "hello"]),
+        (["dex", "unknown-token", "hello"], "flash", ["unknown-token", "hello"]),
+        (["dex"], "flash", []),
+        (["dex", "dex", "hello"], "dex", ["hello"]),
+        (["dex", "high", "hello"], "high", ["hello"]),
+        (["dex", "xhigh", "hello"], "xhigh", ["hello"]),
     ],
 )
 def test_default_dex_callback_uses_flash_table_driven(
@@ -357,7 +357,7 @@ def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec()
         default_dex(ctx, force=False, native=False)  # type: ignore[arg-type]
 
     exec_native.assert_not_called()
-    run_interactive.assert_called_once_with("flash", extra_args=[_DEX_BYPASS_FLAG])
+    run_interactive.assert_called_once_with("flash")
 
 
 def test_default_dex_native_force_includes_force_yolo_for_native_path() -> None:
@@ -384,6 +384,20 @@ def test_run_codex_interactive_includes_yolo_and_dangerously_bypass_flags() -> N
         command = execvpe.call_args.args[1]
         assert _DEX_YOLO_FLAG in command
         assert _DEX_BYPASS_FLAG in command
+
+
+def test_run_codex_interactive_deduplicates_bypass_flags() -> None:
+    with (
+        patch("thegent.dex_main._resolve_provider_for_model", return_value="copilot"),
+        patch("thegent.dex_main._get_codex_env", return_value={"OPENAI_BASE_URL": "http://127.0.0.1:8317"}),
+        patch("thegent.dex_main.resolve_codex_cli_path", return_value="/usr/bin/codex"),
+        patch("thegent.dex_main.os.execvpe") as execvpe,
+        patch("thegent.dex_main.wrap_with_caffeinate", side_effect=lambda cmd, _: cmd),
+    ):
+        _run_codex_interactive("max", dangerously_bypass=True, extra_args=[_DEX_BYPASS_FLAG])
+        command = execvpe.call_args.args[1]
+        assert command.count(_DEX_YOLO_FLAG) == 1
+        assert command.count(_DEX_BYPASS_FLAG) == 1
 
 
 @pytest.mark.parametrize("subcommand", ["run", "bg"])

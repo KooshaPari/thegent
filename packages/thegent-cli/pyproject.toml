@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "thegent-cli"
+dynamic = ["version"]
+description = "Command-line interface for thegent"
+authors = [
+    { name = "Koosha Paridehpour", email = "kooshapari@gmail.com" },
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "typer>=0.16.0",
+    "rich>=13.9.4",
+    "pydantic>=2.12.5",
+    "thegent-agents",
+]
+
+[project.scripts]
+thegent = "thegent_cli.apps.main:app"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.1.0"
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "../../src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

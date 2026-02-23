@@ -1,0 +1,45 @@
+# Worklog Wave 80 - Lane X (2026-02-23)
+
+Scope: Implement next 10 open WL items for rolling replacement lane X, `WL-9760..WL-9769`, with tests.
+
+Queue artifact used: `docs/reports/bulk-wi-s82-lane-e.md`.
+
+## Completed WL Items
+
+1. `WL-9760`: Added discovery phase helper `_discover_approval_resolution_route(...)` for canonical approval routing (`approval/grant -> grant`, `approval/reject -> reject`).
+2. `WL-9761`: Added binding phase helper `_bind_approval_resolution_phases(...)` that binds parse/execute/project callables.
+3. `WL-9762`: Added parse-phase wrapper `_parse_approval_resolution_with_binding(...)` and context resolver `_resolve_approval_resolution_context(...)` to isolate parse-time validation.
+4. `WL-9763`: Preserved parse boundary behavior for missing approvals (`-32005 Approval not found`) via focused resolver tests.
+5. `WL-9764`: Added success-dispatch helper `_dispatch_approval_resolution_success(...)` and execution helper `_execute_approval_resolution(...)` for grant/reject behavior.
+6. `WL-9765`: Added recovery-dispatch helper `_dispatch_approval_resolution_recovery(...)` to keep parse-error projection explicit.
+7. `WL-9766`: Preserved reject-path execution semantics (approval `rejected`, turn `rejected`, terminal notification emission).
+8. `WL-9767`: Added projection helper `_project_approval_resolution_result(...)` with fail-fast approval-id mismatch guard.
+9. `WL-9768`: Updated method handling to orchestrate discovery -> binding -> parse -> dispatch through `_handle_approval_resolution_request(...)` while preserving happy/failure contracts.
+10. `WL-9769`: Preserved notification-mode behavior for `approval/grant` (state mutation + notifications, no response envelope).
+
+## Files Changed
+
+- `src/thegent/protocols/jsonrpc_agent_server.py`
+- `tests/protocols/test_wl9760_wl9769_lane_x.py`
+- `docs/reports/bulk-wi-s82-lane-e.md`
+- `docs/reports/2026-02-23-worklog-wave80-lane-x.md`
+
+## Validation
+
+- `uv run python -m pytest -q tests/protocols/test_wl9760_wl9769_lane_x.py`
+- `uv run python -m pytest -q tests/protocols/test_jsonrpc_agent_server_contract.py`
+
+## Evidence Mapping (WL-9760..WL-9769)
+
+- `WL-9760`: Discovery route helper maps only supported approval methods.
+- `WL-9761`: Binding phase returns parse/execute/project callables for approval routes.
+- `WL-9762`: Parse phase resolves requested approval + turn context through bound parser.
+- `WL-9763`: Parse boundary preserves `Approval not found` error contract.
+- `WL-9764`: Success dispatch executes route and returns projected approval/turn payload.
+- `WL-9765`: Recovery dispatch preserves parse-error payload behavior.
+- `WL-9766`: Reject execution path preserves existing state transitions and notification contract.
+- `WL-9767`: Projection phase enforces approval-id parity fail-fast.
+- `WL-9768`: Request handler composes explicit discovery/binding/parse/dispatch phases.
+- `WL-9769`: Notification grant path preserves side effects with no response body.
+
+No commits were created.
