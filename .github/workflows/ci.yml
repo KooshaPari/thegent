@@ -245,6 +245,10 @@ jobs:
         run: |
           task bench:smoke:ci
 
+      - name: Run explicit polyglot quality orchestrator lane
+        run: |
+          task quality:polyglot:orchestrator:lane
+
       - name: Performance gate alias
         run: |
           task quality:perf:benchmark-gate

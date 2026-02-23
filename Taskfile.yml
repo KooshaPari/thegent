@@ -40,6 +40,21 @@ includes:
     vars:
       BASH_SRC: '{{.BASH_SRC}}'
       BASH_TESTS: '{{.BASH_TESTS}}'
+  go:
+    taskfile: ./templates/go/Taskfile.go.yml
+    optional: true
+  rust:
+    taskfile: ./templates/rust/Taskfile.rust.yml
+    optional: true
+    vars:
+      RUST_PKG: '{{.RUST_PKG | default "."}}'
+      RUST_ALL_FEATURES: '{{.RUST_ALL_FEATURES | default "--all-features"}}'
+  zig:
+    taskfile: ./templates/zig/Taskfile.zig.yml
+    optional: true
+  typescript:
+    taskfile: ./templates/typescript/Taskfile.typescript.yml
+    optional: true
   quality:
     taskfile: ./templates/shared/Taskfile.quality.yml
     optional: true
@@ -1275,6 +1290,11 @@ tasks:
     desc: "Unified quality CI lane (contract+artifact first)"
     cmds:
       - task: quality:aggregate:artifacts
+
+  quality:polyglot:orchestrator:lane:
+    desc: "Run explicit polyglot quality gates for all detected native stacks"
+    cmds:
+      - task: quality:dag:hard
 
   quality:harness-contracts:strict:
     desc: "Run strict harness contract chain with required-provider gate"
