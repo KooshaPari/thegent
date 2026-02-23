@@ -4,6 +4,9 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+# Local pre-push defaults to skipping docs build unless explicitly enabled.
+export THGENT_SKIP_DOCS_BUILD="${THGENT_SKIP_DOCS_BUILD:-1}"
+
 # Always run the configured pre-push stage checks first.
 ./scripts/run_pre_commit_stage.sh pre-push
 

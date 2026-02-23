@@ -103,6 +103,13 @@ repos:
         pass_filenames: true
         types: [python]
 
+      - id: governance-policy-check
+        name: Governance Policy Check
+        stages: [pre-push]
+        entry: scripts/governance_policy_check.sh
+        language: system
+        pass_filenames: false
+
       - id: shellcheck
         name: Shellcheck (project scripts)
         stages: [pre-commit, pre-push]
