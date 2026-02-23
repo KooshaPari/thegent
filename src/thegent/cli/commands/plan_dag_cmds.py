@@ -471,6 +471,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
 
 def dag_recover_cmd(cd: Path | None = None, action: str = "retry-failed") -> None:
     """Perform recovery playbook actions on the DAG."""
+    from thegent.cli.commands._cli_shared import dag_recover_impl
     res = dag_recover_impl(cd=cd, action=action)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")
