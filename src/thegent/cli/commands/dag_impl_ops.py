@@ -175,7 +175,8 @@ def dag_run_impl(
     contract_version: str | None = None,
 ) -> dict[str, Any]:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
-    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, bg_impl
+    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent.cli.commands.impl import _default_owner_tag, bg_impl
     from thegent.cli.commands.dag_impl_helpers import _dag_update_task
 
     cwd = _resolve_cwd(cd)
@@ -411,7 +412,7 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
 
 def dag_recover_impl(cd: Path | None = None, action: str = "retry-failed") -> dict[str, Any]:
     """Perform recovery playbook actions on the DAG."""
-    from thegent.cli.commands.impl import _resolve_cwd
+    from thegent.cli.commands._cli_shared import _resolve_cwd
     from thegent.cli.commands.dag_impl_helpers import _dag_update_task
 
     cwd = _resolve_cwd(cd)
