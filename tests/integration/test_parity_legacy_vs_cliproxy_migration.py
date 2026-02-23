@@ -22,12 +22,10 @@ Reference:
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import socket
 from dataclasses import dataclass
-from typing import Any
 
 import httpx
 import pytest
@@ -51,7 +49,7 @@ def cliproxy_available() -> bool:
         sock = socket.create_connection(("localhost", 8317), timeout=2.0)
         sock.close()
         return True
-    except (socket.error, socket.timeout):
+    except OSError:
         return False
 
 
@@ -92,17 +90,18 @@ class RoutingCandidate:
 class LegacyParetoRouter:
     """Legacy thegent Pareto router (minimal reference implementation)."""
 
-    # Simplified model catalog
-    _MODELS = [
-        RoutingCandidate("claude-opus-4.6", "claude", 0.006, 0.95),
-        RoutingCandidate("claude-sonnet-4.6", "claude", 0.003, 0.88),
-        RoutingCandidate("claude-haiku-4.5", "claude", 0.0008, 0.75),
-        RoutingCandidate("gpt-5.3-codex", "openai", 0.005, 0.82),
-        RoutingCandidate("gpt-5.3-codex-spark", "openai", 0.001, 0.78),
-        RoutingCandidate("gemini-3.1-pro", "gemini", 0.0025, 0.90),
-        RoutingCandidate("gemini-3-flash", "gemini", 0.00075, 0.78),
-        RoutingCandidate("minimax", "minimax", 0.0005, 0.70),
-    ]
+    def __init__(self):
+        """Initialize with simplified model catalog."""
+        self._models = [
+            RoutingCandidate("claude-opus-4.6", "claude", 0.006, 0.95),
+            RoutingCandidate("claude-sonnet-4.6", "claude", 0.003, 0.88),
+            RoutingCandidate("claude-haiku-4.5", "claude", 0.0008, 0.75),
+            RoutingCandidate("gpt-5.3-codex", "openai", 0.005, 0.82),
+            RoutingCandidate("gpt-5.3-codex-spark", "openai", 0.001, 0.78),
+            RoutingCandidate("gemini-3.1-pro", "gemini", 0.0025, 0.90),
+            RoutingCandidate("gemini-3-flash", "gemini", 0.00075, 0.78),
+            RoutingCandidate("minimax", "minimax", 0.0005, 0.70),
+        ]
 
     def select(
         self,
@@ -114,7 +113,7 @@ class LegacyParetoRouter:
         """Select (provider, model) using Pareto frontier + lexicographic ordering."""
         # Filter by hard constraints
         feasible = [
-            c for c in self._MODELS
+            c for c in self._models
             if c.cost_per_1k <= max_cost_per_call and c.quality_score >= min_quality_score
         ]
         if not feasible:
@@ -553,32 +552,37 @@ class TestCutoverReadiness:
         total_go = sum(s["go_locs"] for s in subsystems)
         reduction_pct = (1.0 - total_go / total_python) * 100
 
-        # Print summary table
-        print("\n" + "=" * 80)
-        print("CUTOVER READINESS SUMMARY: thegent → CLIProxy Migration (Track 1)")
-        print("=" * 80)
-        print(f"{'Subsystem':<30} {'Python LOC':<15} {'Go LOC':<15} {'Status':<20}")
-        print("-" * 80)
+        # Log summary table
+        table_lines = [
+            "\n" + "=" * 80,
+            "CUTOVER READINESS SUMMARY: thegent → CLIProxy Migration (Track 1)",
+            "=" * 80,
+            f"{'Subsystem':<30} {'Python LOC':<15} {'Go LOC':<15} {'Status':<20}",
+            "-" * 80,
+        ]
         for s in subsystems:
-            print(
+            table_lines.append(
                 f"{s['name']:<30} {s['python_locs']:<15} {s['go_locs']:<15} {s['status']:<20}"
             )
-        print("-" * 80)
-        print(
-            f"{'TOTAL':<30} {total_python:<15} {total_go:<15} "
-            f"({reduction_pct:.1f}% reduction)"
-        )
-        print("=" * 80)
+        table_lines.extend([
+            "-" * 80,
+            f"{'TOTAL':<30} {total_python:<15} {total_go:<15} ({reduction_pct:.1f}% reduction)",
+            "=" * 80,
+        ])
+
+        # Print to stdout for visibility
+        for line in table_lines:
+            _log.info(line)
 
         # All subsystems ready assertion
         all_verified = all("VERIFIED" in s["status"] for s in subsystems)
         if all_verified:
-            print("\n✓ All subsystems MIGRATION-READY for production cutover.")
-            print(f"  - Estimated LOC reduction: {total_python} → {total_go} ({reduction_pct:.1f}% smaller)")
-            print(f"  - Parity tests: PASSING")
-            print(f"  - CLIProxy endpoint: RESPONDING at {CLIPROXY_BASE_URL}")
+            _log.info("✓ All subsystems MIGRATION-READY for production cutover.")
+            _log.info(f"  - Estimated LOC reduction: {total_python} → {total_go} ({reduction_pct:.1f}% smaller)")
+            _log.info("  - Parity tests: PASSING")
+            _log.info(f"  - CLIProxy endpoint: RESPONDING at {CLIPROXY_BASE_URL}")
         else:
-            print("\n⚠ Some subsystems NOT READY. Run individual subsystem tests for details.")
+            _log.warning("⚠ Some subsystems NOT READY. Run individual subsystem tests for details.")
 
         assert all_verified, "Not all subsystems are migration-ready"
 
@@ -589,10 +593,10 @@ class TestCutoverReadiness:
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
-    """Print parity test summary at session end."""
+    """Log parity test summary at session end."""
     if exitstatus == 0:
-        print("\n" + "=" * 80)
-        print("✓ Parity Integration Suite PASSED")
-        print("  All tests: PASS/SKIP (CLIProxy availability-dependent)")
-        print("  Migration cutover readiness: CONFIRMED")
-        print("=" * 80)
+        _log.info("=" * 80)
+        _log.info("✓ Parity Integration Suite PASSED")
+        _log.info("  All tests: PASS/SKIP (CLIProxy availability-dependent)")
+        _log.info("  Migration cutover readiness: CONFIRMED")
+        _log.info("=" * 80)
