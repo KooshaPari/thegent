@@ -28,6 +28,7 @@ from thegent.infra.identity_proxy import SSHIdentityProxy
 from thegent.integrations.adapters import (
     ConnectorConfigAdapter,
     MetricsAdapter,
+    SLAAdapter,
     StateAdapter,
     xor_encrypt,
     xor_decrypt,
