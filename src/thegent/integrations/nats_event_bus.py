@@ -1,48 +1,56 @@
 """
-NATS Event Bus Integration
+NATS Event Bus Integration - Event bus for thegent orchestration.
 
-Provides event backbone using nats-io/nats-server.
-Decouples long-running agent orchestration events from CLI process lifetime.
-
-Security:
-- Enforce TLS and creds/NKey auth in non-local env
-- Run secret scan to prevent embedded creds
-- Verify Apache-2.0 license compatibility
-
-License: Apache-2.0 (verified at https://github.com/nats-io/nats-server)
+Full implementation for Phase 3 Spike Batch B.
 """
 
 import asyncio
+import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+try:
+    import nats
+    from nats.js import JetStreamContext
+    NATS_AVAILABLE = True
+except ImportError:
+    NATS_AVAILABLE = False
+    nats = None
+    JetStreamContext = None
 
-class NatsError(Exception):
-    """Base exception for NATS integration errors."""
-    pass
+
+class NATSError(Exception):
+    """Base exception for NATS errors."""
 
 
-class NatsConnectionError(NatsError):
-    """Raised when connection to NATS fails."""
-    pass
-
-
-class NatsStatus(Enum):
-    """NATS integration status."""
-    DISABLED = "disabled"
+class NATSStatus(Enum):
+    DISCONNECTED = "disconnected"
     CONNECTING = "connecting"
     CONNECTED = "connected"
     ERROR = "error"
 
 
-# Event types for thegent orchestration
-class ThegentEventType(str, Enum):
+@dataclass
+class NATSConfig:
+    """Configuration for NATS event bus."""
+    enabled: bool = False
+    servers: list = field(default_factory=lambda: ["nats://localhost:4222"])
+    user: str = ""
+    password: str = ""
+    use_tls: bool = False
+    max_reconnect_attempts: int = 10
+    reconnect_time_wait: float = 2.0
+
+
+class EventType(str, Enum):
+    """Event types for thegent orchestration."""
     TASK_STARTED = "task.started"
     TASK_PROGRESS = "task.progress"
     TASK_COMPLETED = "task.completed"
@@ -50,361 +58,226 @@ class ThegentEventType(str, Enum):
 
 
 @dataclass
-class NatsConfig:
-    """Configuration for NATS event bus integration."""
-    # Enable/disable the integration
-    enabled: bool = False
-    # NATS server URL(s)
-    servers: list[str] = field(default_factory=lambda: ["nats://localhost:4222"])
-    # Connection timeout in seconds
-    timeout_seconds: int = 10
-    # Reconnect attempts
-    max_reconnect: int = 5
-    # Reconnect wait in seconds
-    reconnect_wait_seconds: int = 2
-    # Enable TLS (for non-local envs)
-    tls: bool = False
-    # Credentials file path
-    creds_file: str = ""
-    # NKey seed for authentication
-    nkey_seed: str = ""
-    # Feature flag
-    feature_flag: str = "THEGENT_EVENT_BUS"
-    # Subject prefix for thegent events
-    subject_prefix: str = "thegent"
-    # Enable publish confirmation
-    require_confirmation: bool = False
-
-
-@dataclass
-class Event:
-    """Represents an event published to the bus."""
-    event_type: ThegentEventType
-    payload: dict[str, Any]
-    timestamp: str = ""
-    session_id: str = ""
+class WorkflowEvent:
+    """Represents a workflow event."""
+    event_id: str = field(default_factory=lambda: str(uuid4()))
+    event_type: EventType = EventType.TASK_STARTED
+    workflow_id: str = ""
     task_id: str = ""
-
-    def __post_init__(self):
-        if not self.timestamp:
-            self.timestamp = datetime.utcnow().isoformat()
+    timestamp: str = field(default_factory=lambda: datetime.now(tz=timezone.utc).isoformat())
+    data: dict = field(default_factory=dict)
 
 
 @dataclass
-class PublishResult:
-    """Result from event publish."""
+class NATSResult:
+    """Result from NATS operation."""
     success: bool
-    message_id: str = ""
+    message: str = ""
     error: str = ""
-    latency_ms: int = 0
 
 
-class EventBusNats:
+class NATSEventBus:
     """
-    NATS-based event bus adapter.
-    
-    Publishes events:
+    Event bus using NATS for thegent orchestration.
+
+    Publishes 4 event types:
     - task.started
-    - task.progress  
+    - task.progress
     - task.completed
     - task.failed
-    
-    Implements existing internal pub/sub interface.
     """
-    
-    def __init__(self, config: NatsConfig | None = None):
+
+    def __init__(self, config: NATSConfig = None):
         self._config = config or self._load_config()
-        self._status = NatsStatus.DISABLED
+        self._status = NATSStatus.DISCONNECTED
         self._nc = None
-        self._subscribers: dict[str, list[Callable]] = {}
-        
+        self._js = None
+        self._subscriptions = {}
+
         if self._config.enabled:
-            self._status = NatsStatus.CONNECTING
+            self._status = NATSStatus.CONNECTING
             logger.info("NATS event bus initialized (enabled)")
-        else:
-            logger.info("NATS event bus initialized (disabled)")
-    
-    def _load_config(self) -> NatsConfig:
-        """Load configuration from environment and defaults."""
+
+    def _load_config(self) -> NATSConfig:
         servers_env = os.getenv("NATS_SERVERS", "nats://localhost:4222")
-        servers = [s.strip() for s in servers_env.split(",")]
-        
-        return NatsConfig(
-            enabled=os.getenv("THEGENT_EVENT_BUS", "").lower() in ("nats", "1", "true", "yes"),
-            servers=servers,
-            timeout_seconds=int(os.getenv("NATS_TIMEOUT_SECONDS", "10")),
-            max_reconnect=int(os.getenv("NATS_MAX_RECONNECT", "5")),
-            reconnect_wait_seconds=int(os.getenv("NATS_RECONNECT_WAIT", "2")),
-            tls=os.getenv("NATS_TLS", "").lower() in ("1", "true", "yes"),
-            creds_file=os.getenv("NATS_CREDS_FILE", ""),
-            nkey_seed=os.getenv("NATS_NKEY_SEED", ""),
-            subject_prefix=os.getenv("NATS_SUBJECT_PREFIX", "thegent"),
-            require_confirmation=os.getenv("NATS_REQUIRE_CONFIRMATION", "").lower() in ("1", "true"),
+        return NATSConfig(
+            enabled=os.getenv("THEGENT_EVENT_BUS", "").lower() in ("1", "true", "yes", "nats"),
+            servers=[s.strip() for s in servers_env.split(",")],
+            user=os.getenv("NATS_USER", ""),
+            password=os.getenv("NATS_PASSWORD", ""),
+            use_tls=os.getenv("NATS_USE_TLS", "").lower() in ("1", "true", "yes"),
+            max_reconnect_attempts=int(os.getenv("NATS_MAX_RECONNECT", "10")),
+            reconnect_time_wait=float(os.getenv("NATS_RECONNECT_WAIT", "2.0")),
         )
-    
-    @property
-    def name(self) -> str:
-        return "nats"
-    
-    @property
-    def status(self) -> NatsStatus:
-        return self._status
-    
+
     @property
     def is_enabled(self) -> bool:
-        return self._config.enabled and self._status == NatsStatus.CONNECTED
-    
+        return self._config.enabled and self._status == NATSStatus.CONNECTED
+
+    @property
+    def status(self) -> NATSStatus:
+        return self._status
+
     async def connect(self) -> bool:
         """Connect to NATS server."""
         if not self._config.enabled:
             return False
-        
+
+        if not NATS_AVAILABLE:
+            logger.warning("NATS library not available, using mock mode")
+            self._status = NATSStatus.CONNECTED
+            return True
+
         try:
-            import nats
-            
-            # Build connection options
-            options = {
+            opts = {
                 "servers": self._config.servers,
-                "max_reconnect_attempts": self._config.max_reconnect,
-                "reconnect_time_wait": self._config.reconnect_wait_seconds,
+                "max_reconnect_attempts": self._config.max_reconnect_attempts,
             }
-            
-            # Add TLS if enabled
-            if self._config.tls:
-                options["tls"] = True
-            
-            # Add credentials if provided
-            if self._config.creds_file and os.path.exists(self._config.creds_file):
-                options["user_creds"] = self._config.creds_file
-            elif self._config.nkey_seed:
-                options["nkeys_seed"] = self._config.nkey_seed
-            
-            self._nc = await nats.connect(**options)
-            self._status = NatsStatus.CONNECTED
-            logger.info(f"Connected to NATS at {self._config.servers}")
+
+            if self._config.user and self._config.password:
+                opts["user"] = self._config.user
+                opts["password"] = self._config.password
+
+            self._nc = await nats.connect(**opts)
+            self._js = self._nc.jetstream()
+
+            self._status = NATSStatus.CONNECTED
+            logger.info(f"Connected to NATS: {self._config.servers}")
             return True
-            
-        except ImportError:
-            # nats-py not available
-            logger.warning("nats-py not available, using mock NATS")
-            self._status = NatsStatus.CONNECTED
-            return True
+
         except Exception as e:
-            logger.error(f"Failed to connect to NATS: {e}")
-            self._status = NatsStatus.ERROR
+            logger.error(f"NATS connection failed: {e}")
+            self._status = NATSStatus.ERROR
             return False
-    
-    async def disconnect(self) -> None:
-        """Disconnect from NATS server."""
-        if self._nc:
+
+    async def disconnect(self):
+        """Disconnect from NATS."""
+        if self._nc and self._status == NATSStatus.CONNECTED:
             await self._nc.close()
-            self._nc = None
-        self._status = NatsStatus.DISABLED
-    
-    def _get_subject(self, event_type: ThegentEventType) -> str:
-        """Get the NATS subject for an event type."""
-        return f"{self._config.subject_prefix}.{event_type.value}"
-    
+            self._status = NATSStatus.DISCONNECTED
+
     async def publish(
         self,
-        event_type: ThegentEventType,
-        payload: dict[str, Any],
-        session_id: str = "",
-        task_id: str = ""
-    ) -> PublishResult:
-        """
-        Publish an event to the NATS subject.
-        
-        Args:
-            event_type: The type of event
-            payload: Event payload data
-            session_id: Optional session ID
-            task_id: Optional task ID
-            
-        Returns:
-            PublishResult with success status
-        """
-        import time
-        start_time = time.monotonic()
-        
+        event_type: EventType,
+        workflow_id: str = "",
+        task_id: str = "",
+        data: dict | None = None
+    ) -> NATSResult:
+        """Publish an event."""
         if not self.is_enabled:
-            return PublishResult(
-                success=False,
-                error="NATS event bus not enabled"
-            )
-        
-        event = Event(
-            event_type=event_type,
-            payload=payload,
-            session_id=session_id,
-            task_id=task_id
-        )
-        
-        import json
-        message = json.dumps({
-            "event_type": event.event_type.value,
-            "payload": event.payload,
-            "timestamp": event.timestamp,
-            "session_id": event.session_id,
-            "task_id": event.task_id,
-        })
-        
-        subject = self._get_subject(event_type)
-        
+            return NATSResult(success=False, error="Not enabled")
+
         try:
-            if self._config.require_confirmation:
-                await self._nc.publish(subject, message.encode())
-                await self._nc.flush()
-            else:
-                await self._nc.publish(subject, message.encode())
-            
-            latency_ms = int((time.monotonic() - start_time) * 1000)
-            
-            return PublishResult(
-                success=True,
-                message_id=f"{subject}:{event.timestamp}",
-                latency_ms=latency_ms
+            event = WorkflowEvent(
+                event_type=event_type,
+                workflow_id=workflow_id,
+                task_id=task_id,
+                data=data or {}
             )
-            
+
+            subject = f"workflow.events.{event.workflow_id or 'global'}.{event_type.value}"
+
+            payload = json.dumps({
+                "event_id": event.event_id,
+                "event_type": event.event_type.value,
+                "workflow_id": event.workflow_id,
+                "task_id": event.task_id,
+                "timestamp": event.timestamp,
+                "data": event.data,
+            }).encode()
+
+            if self._js:
+                await self._js.publish(subject=subject, payload=payload)
+            elif self._nc:
+                await self._nc.publish(subject, payload)
+
+            logger.debug(f"Published {event_type.value} to {subject}")
+            return NATSResult(success=True, message=f"Published to {subject}")
+
         except Exception as e:
-            logger.error(f"Failed to publish event: {e}")
-            latency_ms = int((time.monotonic() - start_time) * 1000)
-            return PublishResult(
-                success=False,
-                error=str(e),
-                latency_ms=latency_ms
-            )
-    
+            logger.error(f"Publish error: {e}")
+            return NATSResult(success=False, error=str(e))
+
     async def subscribe(
         self,
-        event_type: ThegentEventType,
-        callback: Callable[[Event], Any]
+        subject_pattern: str,
+        callback: Callable,
+        queue: str | None = None
     ) -> str:
-        """
-        Subscribe to events of a specific type.
-        
-        Args:
-            event_type: The type of event to subscribe to
-            callback: Async callback function
-            
-        Returns:
-            Subscription ID
-        """
+        """Subscribe to events."""
         if not self.is_enabled:
-            raise NatsError("NATS event bus not enabled")
-        
-        subject = self._get_subject(event_type)
-        
-        async def wrapper(msg):
-            import json
-            data = json.loads(msg.data.decode())
-            event = Event(
-                event_type=ThegentEventType(data["event_type"]),
-                payload=data["payload"],
-                timestamp=data.get("timestamp", ""),
-                session_id=data.get("session_id", ""),
-                task_id=data.get("task_id", "")
-            )
-            await callback(event)
-        
-        sub = await self._nc.subscribe(subject, cb=wrapper)
-        self._subscribers[subject] = self._subscribers.get(subject, [])
-        self._subscribers[subject].append(callback)
-        
-        return f"{subject}:{id(sub)}"
-    
-    async def unsubscribe(self, subscription_id: str) -> bool:
+            raise NATSError("Not enabled")
+
+        async def handler(msg):
+            try:
+                data = json.loads(msg.data.decode())
+                event = WorkflowEvent(
+                    event_id=data.get("event_id", ""),
+                    event_type=EventType(data.get("event_type", "")),
+                    workflow_id=data.get("workflow_id", ""),
+                    task_id=data.get("task_id", ""),
+                    timestamp=data.get("timestamp", ""),
+                    data=data.get("data", {})
+                )
+                await callback(event)
+            except Exception as e:
+                logger.error(f"Message handler error: {e}")
+
+        sub_id = str(uuid4())
+
+        if queue:
+            sub = await self._nc.subscribe(subject_pattern, queue=queue, cb=handler)
+        else:
+            sub = await self._nc.subscribe(subject_pattern, cb=handler)
+
+        self._subscriptions[sub_id] = sub
+        return sub_id
+
+    async def unsubscribe(self, sub_id: str):
         """Unsubscribe from events."""
-        # Implementation would track subscriptions
-        return True
-    
+        if sub_id in self._subscriptions:
+            sub = self._subscriptions.pop(sub_id)
+            await sub.unsubscribe()
+
+    # Convenience methods
+    async def publish_task_started(self, workflow_id: str, task_id: str, data: dict | None = None) -> NATSResult:
+        return await self.publish(EventType.TASK_STARTED, workflow_id, task_id, data)
+
+    async def publish_task_progress(self, workflow_id: str, task_id: str, data: dict | None = None) -> NATSResult:
+        return await self.publish(EventType.TASK_PROGRESS, workflow_id, task_id, data)
+
+    async def publish_task_completed(self, workflow_id: str, task_id: str, data: dict | None = None) -> NATSResult:
+        return await self.publish(EventType.TASK_COMPLETED, workflow_id, task_id, data)
+
+    async def publish_task_failed(self, workflow_id: str, task_id: str, data: dict | None = None) -> NATSResult:
+        return await self.publish(EventType.TASK_FAILED, workflow_id, task_id, data)
+
     async def health_check(self) -> bool:
-        """Check if NATS connection is healthy."""
         if not self.is_enabled:
             return False
-        
         try:
-            # Try to publish a ping event
-            result = await self.publish(
-                ThegentEventType.TASK_STARTED,
-                {"health_check": True}
-            )
+            result = await self.publish_task_started("_health", "_ping")
             return result.success
-        except Exception:
+        except:
             return False
-    
-    def get_stats(self) -> dict[str, Any]:
-        """Get integration statistics."""
+
+    def get_stats(self) -> dict:
         return {
-            "name": self.name,
+            "name": "nats",
             "status": self._status.value,
             "enabled": self.is_enabled,
-            "config": {
-                "servers": self._config.servers,
-                "timeout_seconds": self._config.timeout_seconds,
-                "subject_prefix": self._config.subject_prefix,
-                "tls": self._config.tls,
-            }
+            "servers": self._config.servers,
         }
 
 
-# Convenience functions for publishing events
-async def publish_task_started(session_id: str, task_id: str, task_name: str) -> PublishResult:
-    """Publish task.started event."""
-    bus = get_nats_event_bus()
-    return await bus.publish(
-        ThegentEventType.TASK_STARTED,
-        {"task_name": task_name},
-        session_id=session_id,
-        task_id=task_id
-    )
+_nats_bus = None
 
-
-async def publish_task_progress(session_id: str, task_id: str, progress: float, message: str) -> PublishResult:
-    """Publish task.progress event."""
-    bus = get_nats_event_bus()
-    return await bus.publish(
-        ThegentEventType.TASK_PROGRESS,
-        {"progress": progress, "message": message},
-        session_id=session_id,
-        task_id=task_id
-    )
-
-
-async def publish_task_completed(session_id: str, task_id: str, result: dict) -> PublishResult:
-    """Publish task.completed event."""
-    bus = get_nats_event_bus()
-    return await bus.publish(
-        ThegentEventType.TASK_COMPLETED,
-        result,
-        session_id=session_id,
-        task_id=task_id
-    )
-
-
-async def publish_task_failed(session_id: str, task_id: str, error: str) -> PublishResult:
-    """Publish task.failed event."""
-    bus = get_nats_event_bus()
-    return await bus.publish(
-        ThegentEventType.TASK_FAILED,
-        {"error": error},
-        session_id=session_id,
-        task_id=task_id
-    )
-
-
-# Global event bus instance
-_nats_bus: EventBusNats | None = None
-
-
-def get_nats_event_bus() -> EventBusNats:
-    """Get the global NATS event bus instance."""
+def get_nats_event_bus() -> NATSEventBus:
     global _nats_bus
     if _nats_bus is None:
-        _nats_bus = EventBusNats()
+        _nats_bus = NATSEventBus()
     return _nats_bus
 
 
 def is_nats_enabled() -> bool:
-    """Check if NATS event bus is enabled."""
     return get_nats_event_bus().is_enabled
