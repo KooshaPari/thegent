@@ -6,7 +6,7 @@ import json
 import logging
 from pathlib import Path
 import inspect
-from collections.abc import AsyncIterable, Awaitable
+from collections.abc import AsyncIterable, Awaitable, Mapping
 from unittest.mock import Base
 from typing import TYPE_CHECKING, Any, cast
 
@@ -371,11 +371,12 @@ def _normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
             converted["strict"] = tool["strict"]
         return converted
     if tool_type == "function":
-        function = tool.get("function")
-        if isinstance(function, dict) and "parameters" in function:
+        function_value = tool.get("function")
+        function_payload: dict[str, Any] = function_value if isinstance(function_value, dict) else {}
+        if "parameters" in function_payload:
             converted = dict(tool)
-            converted_function = dict(function)
-            converted_function["parameters"] = _normalize_schema_for_provider(function.get("parameters"))
+            converted_function = dict(function_payload)
+            converted_function["parameters"] = _normalize_schema_for_provider(function_payload.get("parameters"))
             converted["function"] = converted_function
             return converted
     return tool
@@ -404,9 +405,11 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
     input_items = body.get("input", [])
     if not isinstance(input_items, list):
         input_items = []
-    messages = _responses_input_to_messages(input_items)
+    messages: list[dict[str, Any]] = _responses_input_to_messages(input_items)
     if not messages and isinstance(body.get("messages"), list):
-        messages = body.get("messages")
+        raw_messages = body.get("messages")
+        if isinstance(raw_messages, list):
+            messages = [item for item in raw_messages if isinstance(item, dict)]
     if not messages:
         messages = [{"role": "user", "content": ""}]
 
@@ -684,11 +687,14 @@ async def _forward_native_responses(
     resp_headers = resp.headers
     if inspect.isawaitable(resp_headers):
         resp_headers = await resp_headers
+    response_headers: dict[str, str] = (
+        {str(k): str(v) for k, v in resp_headers.items()} if isinstance(resp_headers, Mapping) else {}
+    )
 
     return Response(
         content=resp.content,
         status_code=resp.status_code,
-        headers={k: v for k, v in resp_headers.items() if k.lower() not in ("transfer-encoding", "connection")},
+        headers={k: v for k, v in response_headers.items() if k.lower() not in ("transfer-encoding", "connection")},
     )
 
 
