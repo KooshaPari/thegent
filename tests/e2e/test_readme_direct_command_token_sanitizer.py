@@ -6,6 +6,8 @@ from pathlib import Path
 import re
 import shlex
 
+import pytest
+
 
 README_PATH = Path(__file__).with_name("README.md")
 
@@ -100,7 +102,7 @@ def test_table_command_snippets_are_shlex_tokenizable() -> None:
         try:
             shlex.split(snippet)
         except ValueError as exc:
-            assert False, (
+            pytest.fail(
                 "README table command snippet must be shlex-tokenizable "
                 f"(likely unbalanced quotes): {snippet!r} ({exc})"
             )
@@ -152,9 +154,8 @@ def test_direct_row_command_snippet_is_single_line_without_shell_separators() ->
         )
 
         snippet = snippets[0]
-        assert "\n" not in snippet and "\r" not in snippet, (
-            f"README direct row '{goal}' command snippet must be single-line: {snippet!r}"
-        )
+        assert "\n" not in snippet, f"README direct row '{goal}' command snippet must be single-line: {snippet!r}"
+        assert "\r" not in snippet, f"README direct row '{goal}' command snippet must be single-line: {snippet!r}"
         assert not re.search(r";|&&|\|\||\|", snippet), (
             f"README direct row '{goal}' command snippet must not contain shell separators (; && || |): {snippet!r}"
         )
@@ -166,7 +167,10 @@ def test_direct_pytest_rows_only_use_allowed_tokens() -> None:
 
     for tokens in commands:
         for token in tokens[2:]:
-            assert token.startswith("tests/e2e/") and token.endswith(".py"), (
+            assert token.startswith("tests/e2e/"), (
+                f"Direct README governance pytest rows must contain only tests/e2e paths after `pytest -q`: {tokens!r}"
+            )
+            assert token.endswith(".py"), (
                 f"Direct README governance pytest rows must contain only tests/e2e paths after `pytest -q`: {tokens!r}"
             )
 
@@ -450,7 +454,7 @@ def test_alias_trio_direct_rows_each_have_exactly_one_test_path_token() -> None:
         "Alias unsupported rationale contract (direct)",
     }
 
-    direct_map = {goal: command_cell for goal, command_cell in rows}
+    direct_map = dict(rows)
     assert alias_trio_goals <= set(direct_map), (
         "README direct table must include all alias trio direct rows: "
         f"missing={sorted(alias_trio_goals - set(direct_map))!r}"
