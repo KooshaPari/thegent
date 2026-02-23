@@ -225,6 +225,14 @@ class WorkstreamAutosyncRunner:
         default_change_digest_path = Path("artifacts/workstream_autosync_change_digest.jsonl")
         return self.config.change_digest_path or default_change_digest_path
 
+    def _dry_run_diff_artifact_path(self) -> Path:
+        return Path("artifacts/workstream_autosync_dry_run_diff.txt")
+
+    def _connector_diff_workflow_output(self) -> dict[str, Any]:
+        return {
+            "dry_run_diff_artifact_path": str(self._dry_run_diff_artifact_path()),
+        }
+
     def _writer_lock_path(self) -> Path:
         if self.config.writer_lock_path is not None:
             return self.config.writer_lock_path
@@ -1089,7 +1097,11 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=[],
                     decisions={**cycle_decisions, "reason": "no_items"},
-                    outputs={"total_cycles": self.total_cycles, "change_digest": cycle_change_digest},
+                    outputs={
+                        "total_cycles": self.total_cycles,
+                        "change_digest": cycle_change_digest,
+                        "connector_diff_workflow": self._connector_diff_workflow_output(),
+                    },
                 )
                 _record_cycle_status("success")
                 return
@@ -1167,7 +1179,12 @@ class WorkstreamAutosyncRunner:
                     started_at=cycle_started_at,
                     items=items,
                     decisions={**cycle_decisions, "reason": no_op_reason},
-                    outputs={"total_cycles": self.total_cycles, "no_op": True, "change_digest": cycle_change_digest},
+                    outputs={
+                        "total_cycles": self.total_cycles,
+                        "no_op": True,
+                        "change_digest": cycle_change_digest,
+                        "connector_diff_workflow": self._connector_diff_workflow_output(),
+                    },
                 )
                 _record_cycle_status("success")
                 return
@@ -1284,6 +1301,7 @@ class WorkstreamAutosyncRunner:
                     "last_operation": self.last_operation.to_dict() if self.last_operation else None,
                     "failure_queue_size": len(self._failure_queue.snapshot()),
                     "change_digest": cycle_change_digest,
+                    "connector_diff_workflow": self._connector_diff_workflow_output(),
                 },
             )
             _record_cycle_status("success")
@@ -1332,6 +1350,7 @@ class WorkstreamAutosyncRunner:
                     "total_cycles": self.total_cycles,
                     "last_error": self.last_error,
                     "change_digest": cycle_change_digest,
+                    "connector_diff_workflow": self._connector_diff_workflow_output(),
                 },
             )
             _record_cycle_status("failed")
@@ -2191,6 +2210,7 @@ class WorkstreamAutosyncRunner:
             "scope_filtered_wl_ids": self._last_scope_filtered_item_ids,
             "no_op_summary": self._no_op_summary,
             "trend_sample": self._last_trend_sample,
+            "connector_diff_workflow": self._connector_diff_workflow_output(),
         }
 
 
