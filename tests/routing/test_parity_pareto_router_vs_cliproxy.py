@@ -16,13 +16,10 @@ Test Strategy:
 
 from __future__ import annotations
 
-import json
 import logging
-import pytest
-import subprocess
-import time
-from dataclasses import asdict
 from typing import Any
+
+import pytest
 
 from thegent.routing import ParetoRouter, RouteCandidate
 

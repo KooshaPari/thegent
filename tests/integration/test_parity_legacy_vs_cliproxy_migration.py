@@ -299,7 +299,7 @@ class TestRoutingParity:
 
                 # Verify constraints are satisfied
                 cliproxy_cost = cliproxy_result.get("estimated_cost", 0.0)
-                cliproxy_latency = cliproxy_result.get("estimated_latency_ms", 0)
+                _ = cliproxy_result.get("estimated_latency_ms", 0)  # Not used in assertions
                 cliproxy_quality = cliproxy_result.get("quality_score", 0.0)
 
                 assert cliproxy_cost <= case.max_cost_per_call + 0.001, (
