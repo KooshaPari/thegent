@@ -1,124 +1,87 @@
-"""Fast JSON utilities using orjson with fallback to standard json.
+"""Common JSON utilities for thegent.
 
-This module provides fast JSON serialization/deserialization using orjson when available,
-falling back to the standard json module. orjson is 3-5x faster than json.
-
-Usage:
-    from thegent.utils.json_utils import json_dumps, json_loads
-
-    # Fast serialization
-    data = {"key": "value"}
-    result = json_dumps(data)
-
-    # Fast deserialization
-    parsed = json_loads(result)
+Provides JSON parsing, loading, and saving with consistent error handling.
 """
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
 
-# Try to use orjson for better performance
-try:
-    import orjson
-
-    _HAS_ORJSON = True
-except ImportError:
-    import json
-
-    _HAS_ORJSON = False
+import orjson
 
 
-def json_dumps(obj: Any, **kwargs: Any) -> str:
-    """Serialize obj to a JSON formatted string.
+def load_json(path: Path) -> dict[str, Any]:
+    """Load JSON from a file."""
+    return json.loads(path.read_text())
 
-    Uses orjson if available (3-5x faster), falls back to json.
 
+def save_json(path: Path, data: dict[str, Any], indent: int = 2) -> None:
+    """Save JSON to a file."""
+    path.write_text(json.dumps(data, indent=indent))
+
+
+def load_json_fast(path: Path) -> dict[str, Any]:
+    """Load JSON from a file using orjson (faster)."""
+    return orjson.loads(path.read_bytes())
+
+
+def save_json_fast(path: Path, data: dict[str, Any]) -> None:
+    """Save JSON to a file using orjson (faster)."""
+    path.write_bytes(orjson.dumps(data))
+
+
+def parse_json(text: str) -> dict[str, Any] | None:
+    """Parse JSON text, returning None on error."""
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
+
+
+def parse_json_fast(text: str) -> dict[str, Any] | None:
+    """Parse JSON text using orjson, returning None on error."""
+    try:
+        return orjson.loads(text)
+    except orjson.JSONDecodeError:
+        return None
+
+
+def parse_json_lines(text: str) -> list[dict[str, Any]]:
+    """Parse multiple JSON objects from text (JSONL format)."""
+    results: list[dict[str, Any]] = []
+    for line in text.strip().split("\n"):
+        line = line.strip()
+        if line:
+            obj = parse_json(line)
+            if obj is not None:
+                results.append(obj)
+    return results
+
+
+def safe_get(data: dict[str, Any], *keys: str, default: Any = None) -> Any:
+    """Safely get nested dictionary values.
+    
     Args:
-        obj: Object to serialize
-        **kwargs: Additional arguments (passed to json.dumps if using fallback)
-
-    Returns:
-        JSON string
+        data: Dictionary to search
+        *keys: Sequence of keys to traverse
+        default: Default value if key not found
+    
+    Example:
+        safe_get(config, "database", "host", default="localhost")
     """
-    if _HAS_ORJSON:
-        # orjson.dumps returns bytes, decode to str
-        return orjson.dumps(obj).decode("utf-8")
-    return json.dumps(obj, **kwargs)
+    current: Any = data
+    for key in keys:
+        if isinstance(current, dict):
+            current = current.get(key)
+            if current is None:
+                return default
+        else:
+            return default
+    return current if current is not None else default
 
+# Aliases for backward compatibility
+json_loads = json.loads
+json_dumps = json.dumps
 
-def json_loads(s: str | bytes, **kwargs: Any) -> Any:
-    """Deserialize s (a string containing a JSON document) to a Python object.
-
-    Uses orjson if available (3-5x faster), falls back to json.
-
-    Args:
-        s: JSON string or bytes
-        **kwargs: Additional arguments (passed to json.loads if using fallback)
-
-    Returns:
-        Deserialized Python object
-    """
-    if _HAS_ORJSON:
-        return orjson.loads(s)
-    return json.loads(s, **kwargs)
-
-
-def json_dump(obj: Any, fp: Any, **kwargs: Any) -> None:
-    """Serialize obj as a JSON formatted stream to fp.
-
-    Uses orjson if available (3-5x faster), falls back to json.
-
-    Args:
-        obj: Object to serialize
-        fp: File-like object with write() method
-        **kwargs: Additional arguments
-    """
-    if _HAS_ORJSON:
-        fp.write(orjson.dumps(obj).decode("utf-8"))
-    else:
-        json.dump(obj, fp, **kwargs)
-
-
-def json_load(fp: Any, **kwargs: Any) -> Any:
-    """Deserialize fp to a Python object.
-
-    Uses orjson if available (3-5x faster), falls back to json.
-
-    Args:
-        fp: File-like object with read() method
-        **kwargs: Additional arguments
-
-    Returns:
-        Deserialized Python object
-    """
-    if _HAS_ORJSON:
-        return orjson.loads(fp.read())
-    return json.load(fp, **kwargs)
-
-
-# For compatibility - re-export standard json when needed
-if not _HAS_ORJSON:
-    json = json  # noqa: F811
-else:
-    # Create a compatibility module
-    class _JsonCompat:
-        """Compatibility layer for code that expects json module."""
-
-        @staticmethod
-        def loads(s: str | bytes, **kwargs: Any) -> Any:
-            return json_loads(s, **kwargs)
-
-        @staticmethod
-        def dumps(obj: Any, **kwargs: Any) -> str:
-            return json_dumps(obj, **kwargs)
-
-        @staticmethod
-        def load(fp: Any, **kwargs: Any) -> Any:
-            return json_load(fp, **kwargs)
-
-        @staticmethod
-        def dump(obj: Any, fp: Any, **kwargs: Any) -> None:
-            return json_dump(obj, fp, **kwargs)
-
-    json = _JsonCompat()  # type: ignore[assignment]
