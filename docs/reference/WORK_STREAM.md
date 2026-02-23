@@ -1710,6 +1710,26 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | sharecli-task-queue | 2026-02-23 | Verified Maildir queue behavior and task lifecycle via `tests/mesh/test_task_queue.py` |
 | TGNT-P18.2 | 2026-02-23 | Verified advanced metrics aggregation and JSONL parsing via `tests/observability/test_observability_v2.py` |
 | rollout-hook-rust-phase2 | 2026-02-23 | Closed with focused Rust-hook rollout evidence capture and regression suite pass in lane report |
+| WL-9510 | 2026-02-23 | Split hook shell-resolution/command-build/execute phases and fixed TimeoutExpired text-stream handling in `src/thegent/infra/hook_runner.py`; regression coverage in `tests/infra/test_hook_runner.py` |
+| WL-9511 | 2026-02-23 | Hook execution command-path quality-gate parity validated for PowerShell `-File` mode via `tests/infra/test_hook_runner.py` |
+| WL-9512 | 2026-02-23 | Split metrics emission formatting from storage logic in `src/thegent/integrations/prometheus_metrics.py` |
+| WL-9513 | 2026-02-23 | Added regression guard for stable metric sample state after record-time capture in `tests/test_wl196_prometheus_metrics.py` |
+| WL-9514 | 2026-02-23 | Split SLO status computation from payload construction in `src/thegent/metrics/collector.py` |
+| WL-9515 | 2026-02-23 | Hook sync-path timeout behavior now preserves stdout/stderr payloads without decode crashes in `src/thegent/infra/hook_runner.py` |
+| WL-9516 | 2026-02-23 | Threshold enforcement path in SLO stub now explicitly isolated and regression-covered in `tests/test_wl135_slo_metric_emitter_stub.py` |
+| WL-9517 | 2026-02-23 | Prometheus metric export now uses explicit sample-format helper, preserving business logic isolation in `src/thegent/integrations/prometheus_metrics.py` |
+| WL-9518 | 2026-02-23 | Added pass-at-threshold boundary regression for SLO payload status in `tests/test_wl135_slo_metric_emitter_stub.py` |
+| WL-9519 | 2026-02-23 | Wave-77 Lane-E evidence captured in `docs/reports/2026-02-23-worklog-wave77-lane-e.md` with focused test run proof |
+| WL-9520 | 2026-02-23 | Workflow stage graph now fails fast on empty stage IDs in `src/thegent/agents/crew/workflow.py`; regression coverage in `tests/test_crew.py` |
+| WL-9521 | 2026-02-23 | Added whitespace-only stage-ID guard in dependency parse phase with regression coverage in `tests/test_crew.py` |
+| WL-9522 | 2026-02-23 | Execution planning now fails fast on duplicate crew IDs within a stage in `src/thegent/agents/crew/workflow.py` |
+| WL-9523 | 2026-02-23 | Added execution-plan regression coverage for valid multi-crew stage IDs in `tests/test_crew.py` |
+| WL-9524 | 2026-02-23 | Added explicit `_build_execution_plan()` parse boundary and dependency-order regression coverage in `tests/test_crew.py` |
+| WL-9525 | 2026-02-23 | Execution now consumes a frozen execution plan snapshot before stage runs, preventing mid-run stage-list mutations from changing run order |
+| WL-9526 | 2026-02-23 | Added regression ensuring stage execution errors propagate fail-fast through `WorkflowEngine.execute()` |
+| WL-9527 | 2026-02-23 | Added no-op regression for empty workflow execution path (`_build_execution_plan()` and `execute()`) |
+| WL-9528 | 2026-02-23 | Added regression for stage-result map replacement semantics in `execute_stage()` |
+| WL-9529 | 2026-02-23 | Added regression ensuring dependency validation happens before any stage execution side effects |
 | wave70-l5 | 2026-02-22 | Implemented WL-224 (workstream schema linter), WL-225 (wl sort/normalize), WL-226 (remote payload checksums), WL-227 (metadata enrichment), plus WL-259,260,222,223,228,229 with comprehensive test coverage (76 tests) |
 | wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |

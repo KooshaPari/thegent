@@ -1004,7 +1004,13 @@ _LOGIN_FLAGS: dict[str, str] = {
 }
 
 
-def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force: bool = False) -> int:
+def run_login(
+    settings: ThegentSettings,
+    provider: str,
+    prompt_func=None,
+    force: bool = False,
+    login_timeout: int | None = None,
+) -> int:
     """
     Run login for provider. Returns exit code.
     Prefers OAuth via CLIProxy for providers that support it.
@@ -1037,20 +1043,36 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
             raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
         config_path = _ensure_config(settings)
         flag = _LOGIN_FLAGS[provider_lower]
-        login_timeout = int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        timeout_seconds = login_timeout if login_timeout is not None else int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        requires_interactive_stdio = provider_lower == "minimax"
+        if requires_interactive_stdio and not sys.stdin.isatty():
+            _LOG.error(
+                "Provider %s login requires an interactive terminal. "
+                "Use `thegent setup --minimax-key <KEY>` for non-interactive setup.",
+                provider_lower,
+            )
+            return 2
+        run_kwargs: dict[str, Any] = {
+            "check": False,
+            "env": os.environ.copy(),
+            "timeout": timeout_seconds,
+            "close_fds": True,
+        }
+        if requires_interactive_stdio:
+            run_kwargs["stdin"] = sys.stdin
+            run_kwargs["stdout"] = sys.stdout
+            run_kwargs["stderr"] = sys.stderr
+        else:
+            run_kwargs["capture_output"] = True
+            run_kwargs["text"] = True
         try:
             proc = subprocess.run(
                 [binary, "-config", str(config_path), flag],
-                check=False,
-                env=os.environ.copy(),
-                timeout=login_timeout,
-                close_fds=True,
-                capture_output=True,
-                text=True,
+                **run_kwargs,
             )
             return proc.returncode
         except subprocess.TimeoutExpired:
-            _LOG.warning("Login timed out for provider=%s after %ss", provider_lower, login_timeout)
+            _LOG.warning("Login timed out for provider=%s after %ss", provider_lower, timeout_seconds)
             return 124
 
     # API-key-only providers

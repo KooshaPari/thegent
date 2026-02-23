@@ -1697,17 +1697,19 @@ def install_links(
     ),
     force: bool = typer.Option(False, "--force", "-f", help="Overwrite existing files"),
 ) -> None:
-    """Install/update clode -> thegent-shims harness shim under ~/.local/bin."""
+    """Install/update clode harness aliases -> thegent-shims under ~/.local/bin."""
     if not bin_dir.exists():
         from thegent.errors import print_error
 
         print_error(f"{bin_dir} does not exist.")
         raise typer.Exit(1)
 
-    if _install_harness_link(bin_dir, "clode", force=force):
-        console.print(f"[green]Installed[/green] {bin_dir / 'clode'} -> thegent-shims")
-        return
-    console.print(f"[yellow]Skipping {bin_dir / 'clode'} (already exists). Use --force to overwrite.[/yellow]")
+    harness_aliases = ("clode", "roid", "droid", "fanta", "anen")
+    for harness in harness_aliases:
+        if _install_harness_link(bin_dir, harness, force=force):
+            console.print(f"[green]Installed[/green] {bin_dir / harness} -> thegent-shims")
+            continue
+        console.print(f"[yellow]Skipping {bin_dir / harness} (already exists). Use --force to overwrite.[/yellow]")
 
 
 if __name__ == "__main__":

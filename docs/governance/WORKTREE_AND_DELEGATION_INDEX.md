@@ -17,4 +17,3 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 3. Implement scheduler placement and conflict controls.
 4. Enforce in hooks and CI.
 5. Roll out by lane percentages.
-
