@@ -42,7 +42,8 @@ class MaggAggregator:
     def is_enabled(self): return self._config.enabled
 
     def serve(self, background: bool = True):
-        if not self.is_enabled: return None
+        if not self.is_enabled:
+            return None
         try:
             cmd = ["magg", "serve", "--http", str(self._config.http_port)]
             if background:
@@ -54,18 +55,21 @@ class MaggAggregator:
             return {"success": False, "error": str(e)}
 
     def list_servers(self):
-        if not self.is_enabled: return []
+        if not self.is_enabled:
+            return []
         try:
             result = subprocess.run(
                 ["magg", "list"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
                 return [line.strip() for line in result.stdout.split("\n") if line.strip()]
-        except: pass
+        except:
+            pass
         return []
 
     def add_server(self, name: str, command: list):
-        if not self.is_enabled: return {"success": False}
+        if not self.is_enabled:
+            return {"success": False}
         try:
             result = subprocess.run(
                 ["magg", "add", name] + command, capture_output=True, timeout=10
@@ -77,5 +81,6 @@ class MaggAggregator:
 _magg = None
 def get_magg_aggregator():
     global _magg
-    if _magg is None: _magg = MaggAggregator()
+    if _magg is None:
+        _magg = MaggAggregator()
     return _magg

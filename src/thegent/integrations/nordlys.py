@@ -39,5 +39,6 @@ class NordlysRouter:
 _nordlys = None
 def get_nordlys_router():
     global _nordlys
-    if _nordlys is None: _nordlys = NordlysRouter()
+    if _nordlys is None:
+        _nordlys = NordlysRouter()
     return _nordlys

@@ -45,17 +45,20 @@ class CogneeClient:
     @property
     def is_enabled(self): return self._config.enabled
 
-    async def add_memory(self, text: str, metadata: dict = None):
-        if not self.is_enabled: return None
+    async def add_memory(self, text: str, metadata: dict | None = None):
+        if not self.is_enabled:
+            return None
         return {"id": "mock"}
 
     async def search(self, query: str, limit: int = 10):
-        if not self.is_enabled: return []
+        if not self.is_enabled:
+            return []
         return []
 
 
 _cognee = None
 def get_cognee():
     global _cognee
-    if _cognee is None: _cognee = CogneeClient()
+    if _cognee is None:
+        _cognee = CogneeClient()
     return _cognee

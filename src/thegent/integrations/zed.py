@@ -38,5 +38,6 @@ class ZedEditor:
 _zed = None
 def get_zed():
     global _zed
-    if _zed is None: _zed = ZedEditor()
+    if _zed is None:
+        _zed = ZedEditor()
     return _zed

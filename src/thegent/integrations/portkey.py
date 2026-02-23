@@ -48,12 +48,14 @@ class PortkeyClient:
     def is_enabled(self): return self._config.enabled
 
     async def call(self, prompt: str, model: str = "gpt-4"):
-        if not self.is_enabled: return None
+        if not self.is_enabled:
+            return None
         return {"choices": [{"text": ""}]}
 
 
 _portkey = None
 def get_portkey():
     global _portkey
-    if _portkey is None: _portkey = PortkeyClient()
+    if _portkey is None:
+        _portkey = PortkeyClient()
     return _portkey

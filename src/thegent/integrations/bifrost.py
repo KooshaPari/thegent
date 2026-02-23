@@ -47,12 +47,14 @@ class BifrostClient:
     def is_enabled(self): return self._config.enabled
 
     def validate_claims(self, claims: dict):
-        if not self.is_enabled: return False
+        if not self.is_enabled:
+            return False
         return True
 
 
 _bifrost = None
 def get_bifrost():
     global _bifrost
-    if _bifrost is None: _bifrost = BifrostClient()
+    if _bifrost is None:
+        _bifrost = BifrostClient()
     return _bifrost

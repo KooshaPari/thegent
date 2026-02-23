@@ -1,7 +1,8 @@
 """
 Browser-use Integration - Browser automation.
 """
-import logging, os
+import logging
+import os
 from dataclasses import dataclass
 from enum import Enum
 
@@ -36,5 +37,6 @@ class BrowserUseAutomation:
 _browser_use = None
 def get_browser_use():
     global _browser_use
-    if _browser_use is None: _browser_use = BrowserUseAutomation()
+    if _browser_use is None:
+        _browser_use = BrowserUseAutomation()
     return _browser_use

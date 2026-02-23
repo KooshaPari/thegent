@@ -37,5 +37,6 @@ class SearXNGSearch:
 _searxng = None
 def get_searxng():
     global _searxng
-    if _searxng is None: _searxng = SearXNGSearch()
+    if _searxng is None:
+        _searxng = SearXNGSearch()
     return _searxng

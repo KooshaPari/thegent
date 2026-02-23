@@ -20,7 +20,7 @@ class Context7Config:
     api_key: str = ""
 
 class Context7Provider:
-    SECRET_PATTERNS = [
+    SECRET_PATTERNS = [  # noqa: RUF012
         r'(?i)(api[_-]?key|secret)=[\w-]+',
         r'ghp_[a-zA-Z0-9]{36}',
     ]
@@ -44,12 +44,15 @@ class Context7Provider:
         return all(not re.search(p, query) for p in self.SECRET_PATTERNS)
 
     async def lookup(self, query: str, context: str = ""):
-        if not self.is_enabled: return {"success": False}
-        if not self.validate_query(query): return {"success": False, "error": "security"}
+        if not self.is_enabled:
+            return {"success": False}
+        if not self.validate_query(query):
+            return {"success": False, "error": "security"}
         return {"success": True, "content": f"[Context7: {query}]"}
 
 _context7 = None
 def get_context7_provider():
     global _context7
-    if _context7 is None: _context7 = Context7Provider()
+    if _context7 is None:
+        _context7 = Context7Provider()
     return _context7

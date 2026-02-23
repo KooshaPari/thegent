@@ -46,16 +46,19 @@ class ChunkHoundClient:
     def is_enabled(self): return self._config.enabled
 
     def index(self, path: str):
-        if not self.is_enabled: return None
+        if not self.is_enabled:
+            return None
         return {"indexed": 0}
 
     def query(self, query: str):
-        if not self.is_enabled: return []
+        if not self.is_enabled:
+            return []
         return []
 
 
 _chunkhound = None
 def get_chunkhound():
     global _chunkhound
-    if _chunkhound is None: _chunkhound = ChunkHoundClient()
+    if _chunkhound is None:
+        _chunkhound = ChunkHoundClient()
     return _chunkhound

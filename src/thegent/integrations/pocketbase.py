@@ -1,7 +1,8 @@
 """
 PocketBase Storage Integration - Lightweight backend.
 """
-import logging, os
+import logging
+import os
 from dataclasses import dataclass
 from enum import Enum
 
@@ -38,5 +39,6 @@ class PocketBaseClient:
 _pocketbase = None
 def get_pocketbase_client():
     global _pocketbase
-    if _pocketbase is None: _pocketbase = PocketBaseClient()
+    if _pocketbase is None:
+        _pocketbase = PocketBaseClient()
     return _pocketbase
