@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import UTC
 from enum import Enum
 from typing import ClassVar
+from thegent.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class SeedSource(Enum):
 
 
 @dataclass
-class Seed:
+class Seed(SerializableMixin):
     """Represents a detected idea seed."""
 
     id: str  # UUID or generated ID

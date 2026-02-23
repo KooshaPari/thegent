@@ -10,8 +10,6 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +34,7 @@ def _get_mcp_config(url: str, client: str = "generic") -> dict[str, Any]:
     }
     
     # Client-specific configurations
-    if client == "claude":
-        base_config["mcpServers"]["thegent"]["command"] = "thegent"
-        base_config["mcpServers"]["thegent"]["args"] = ["mcp", "serve"]
-    elif client == "cursor":
-        base_config["mcpServers"]["thegent"]["command"] = "thegent"
-        base_config["mcpServers"]["thegent"]["args"] = ["mcp", "serve"]
-    elif client == "codex":
+    if client == "claude" or client == "cursor" or client == "codex":
         base_config["mcpServers"]["thegent"]["command"] = "thegent"
         base_config["mcpServers"]["thegent"]["args"] = ["mcp", "serve"]
     

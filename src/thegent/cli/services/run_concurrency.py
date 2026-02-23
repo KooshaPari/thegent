@@ -73,7 +73,7 @@ def get_resource_based_limit(settings: "ThegentSettings | None" = None) -> int:
     
     # Apply settings override if set
     if settings and hasattr(settings, "max_concurrent_runs"):
-        settings_limit = getattr(settings, "max_concurrent_runs")
+        settings_limit = settings.max_concurrent_runs
         if settings_limit:
             max_concurrent = min(max_concurrent, settings_limit)
     

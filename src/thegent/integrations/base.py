@@ -107,6 +107,13 @@ def feature(name: str, default: bool = False) -> FeatureFlag:
 class SerializableMixin:
     """Mixin providing to_dict/from_dict for dataclasses.
     
+    Automatically handles:
+    - Enum values → serialized as .value
+    - datetime objects → serialized as .isoformat()
+    - Path objects → serialized as str()
+    - Nested SerializableMixin objects → .to_dict()
+    - Nested dicts/lists → recursive serialization
+    
     Usage:
         @dataclass
         class MyModel(SerializableMixin):
@@ -119,15 +126,38 @@ class SerializableMixin:
     """
     
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
+        """Convert to dictionary with automatic type serialization."""
+        from enum import Enum
+        from datetime import datetime
+        from pathlib import Path
+        
+        def _serialize(val: Any) -> Any:
+            if val is None:
+                return None
+            if isinstance(val, Enum):
+                return val.value
+            if isinstance(val, datetime):
+                return val.isoformat()
+            if isinstance(val, Path):
+                return str(val)
+            if isinstance(val, SerializableMixin):
+                return val.to_dict()
+            if isinstance(val, dict):
+                return {k: _serialize(v) for k, v in val.items()}
+            if isinstance(val, (list, tuple)):
+                return [_serialize(v) for v in val]
+            return val
+        
         if hasattr(self, '__dataclass_fields__'):
-            return asdict(self)
+            result = {}
+            for f in fields(self):
+                val = getattr(self, f.name, None)
+                result[f.name] = _serialize(val)
+            return result
         # Fallback for non-dataclass
         result = {}
-        if hasattr(self.__class__, '__dataclass_fields__'):
-            for f in fields(self.__class__):
-                val = getattr(self, f.name, None)
-                result[f.name] = val
+        for key, val in self.__dict__.items():
+            result[key] = _serialize(val)
         return result
     
     @classmethod

@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, cast, get_type_hints
 
 from thegent.adapters.acp_client import ACPClient, ACPClientError, ACPResult
+from thegent.integrations.base import SerializableMixin
 
 if TYPE_CHECKING:
     from fastmcp import FastMCP
@@ -72,7 +73,7 @@ class ACPAgentCallError(BridgeError):
 
 
 @dataclass
-class ACPToolDescriptor:
+class ACPToolDescriptor(SerializableMixin):
     """ACP-compatible descriptor for a single MCP tool.
 
     Attributes:

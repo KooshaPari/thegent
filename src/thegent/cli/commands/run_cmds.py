@@ -292,7 +292,7 @@ def bg_cmd(
     session_id = res.get("session_id")
     console.print(f"[bold green]Session:[/bold green] [cyan]{session_id}[/cyan]")
     if res.get("ready"):
-        console.print(f"[dim]Status: awaiting input (ready for loop_send_cmd)[/dim]")
+        console.print("[dim]Status: awaiting input (ready for loop_send_cmd)[/dim]")
 
     if res.get("logs_path"):
         console.print(f"[dim]Logs: {res['logs_path']}[/dim]")

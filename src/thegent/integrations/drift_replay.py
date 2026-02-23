@@ -10,10 +10,11 @@ import orjson as json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
+from thegent.integrations.base import SerializableMixin
 
 
 @dataclass
-class DriftManifest:
+class DriftManifest(SerializableMixin):
     """A manifest of drift events for replay."""
 
     manifest_id: str
