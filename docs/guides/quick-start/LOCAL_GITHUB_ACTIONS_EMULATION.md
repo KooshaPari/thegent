@@ -37,3 +37,18 @@ task ci:local-gha:pre-push   # single pre-push lane
 ```
 
 For a student/free GH account, prefer the Dockerless hooks/tasks above first to avoid consuming Actions minutes.
+
+### Why remote runs can fail on Student/Free plans
+
+- Public repos: mostly unlimited Actions usage.
+- Private repos: limited monthly minutes and throughput by repository plan/capability.
+
+If you see unexpected `queued`/`complete/failure` transitions while no code changed, check **Settings → Actions → Usage/Minutes** for your account-level quota first.  
+On a constrained plan, repeated workflow traffic can hit the minute/concurrency ceiling before a code issue appears.
+
+### Run all local lanes (no Actions minutes)
+
+- `task ci:local:hooks` → pre-commit + pre-push hook gates only.
+- `task ci:local-gha:stages` → dockerless pre-commit then pre-push.
+- `task ci:local-gha:pre-commit` → dockerless pre-commit only.
+- `task ci:local-gha:pre-push` → dockerless pre-push only.
