@@ -1,6 +1,31 @@
 """IDE and tool integrations for thegent."""
 
 # Auth and quota modules migrated to CLIProxy (Go)
+from thegent.integrations.alert_routing import (
+    AlertRoutingConfig,
+    route_alert,
+)
+from thegent.integrations.artifact_redaction import (
+    redact_artifact,
+    RedactionConfig,
+)
+from thegent.integrations.artifact_versioning import (
+    ArtifactVersion,
+    get_artifact_version,
+    version_artifact,
+)
+from thegent.integrations.autopilot_doctor import (
+    AutopilotDoctorConfig,
+    run_autopilot_diagnosis,
+)
+from thegent.integrations.compliance_snapshot import (
+    ComplianceSnapshot,
+    take_compliance_snapshot,
+)
+from thegent.integrations.board_id_migration import (
+    migrate_board_ids,
+    BoardIdMigrationConfig,
+)
 from thegent.integrations.auth_expiry import (
     AuthExpiryConfig,
     check_auth_expiry,
@@ -86,6 +111,25 @@ from thegent.integrations.sync_provenance import (
 )
 
 __all__ = [
+    # Alert Routing
+    "AlertRoutingConfig",
+    "route_alert",
+    # Artifact Redaction
+    "redact_artifact",
+    "RedactionConfig",
+    # Artifact Versioning
+    "ArtifactVersion",
+    "get_artifact_version",
+    "version_artifact",
+    # Autopilot Doctor
+    "AutopilotDoctorConfig",
+    "run_autopilot_diagnosis",
+    # Board ID Migration
+    "migrate_board_ids",
+    "BoardIdMigrationConfig",
+    # Compliance Snapshot
+    "ComplianceSnapshot",
+    "take_compliance_snapshot",
     # Auth & Expiry
     "AuthExpiryConfig",
     "check_auth_expiry",
