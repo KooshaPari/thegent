@@ -79,7 +79,7 @@ def install_callback(
         "all",
         "--target",
         "-t",
-        help="User-scope install target: all, codex, droid, cursor, harness, shell, etc. or system.",
+        help="Target: all, auto, codex, droid, cursor, harness, shell, or comma-separated list (e.g., 'claude-code,droid'). Use 'auto' to detect installed harnesses.",
     ),
     mode: str = typer.Option(
         "smart",
