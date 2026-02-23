@@ -1,0 +1,36 @@
+# Worklog Wave 80 - Lane A8 (2026-02-23)
+
+Scope: implement the next unclaimed lane-A 10-item slice after `WL-10719`.
+
+Queue artifact used: `docs/reports/bulk-wi-s102-lane-a.md`.
+
+## Completed WL Items
+
+1. `WL-10720`: Preserved provider-selection behavior with fallback/primary path separation.
+2. `WL-10721`: Preserved policy-enforcement behavior with rule discovery/action separation.
+3. `WL-10722`: Preserved sync reliability behavior with source-scan/mutation separation.
+4. `WL-10723`: Preserved runtime terminal-outcome behavior for recoverable and terminal branches.
+5. `WL-10724`: Preserved hook-delivery behavior with trigger-evaluation/call-site separation.
+6. `WL-10725`: Preserved session lifecycle behavior across claim transition and persistence boundaries.
+7. `WL-10726`: Preserved CLI behavior with schema parse/handler separation.
+8. `WL-10727`: Preserved orchestration determinism with plan/execution boundary partitioning.
+9. `WL-10728`: Preserved queue throughput behavior by separating intake scheduling and fanout controls.
+10. `WL-10729`: Preserved telemetry behavior by separating collection and emitter lifecycle.
+
+## Files Changed
+
+- `tests/protocols/test_wl10720_wl10729_lane_a8.py`
+- `docs/reports/2026-02-23-worklog-wave80-lane-a8.md`
+- `docs/reference/WBS_AGENT_PROGRESS.md`
+
+## Validation
+
+Commands run:
+
+```bash
+uv run python -m pytest -q tests/protocols/test_wl10720_wl10729_lane_a8.py
+```
+
+Results:
+
+- `uv run python -m pytest -q tests/protocols/test_wl10720_wl10729_lane_a8.py`: pass (`10 passed`).
