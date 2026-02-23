@@ -7,7 +7,6 @@ import json
 import sys
 
 import typer
-
 from rich.columns import Columns
 from rich.panel import Panel
 from rich.table import Table
@@ -33,7 +32,7 @@ def observe_summary_cmd(
     top_escalations: int = 10,
 ) -> None:
     """FR-X08: Unified observability summary (KPIs, drift, escalation)."""
-    from thegent.cli.commands.impl import observe_summary_impl
+    from thegent.cli.commands.observability_main_impl import observe_summary_impl
 
     result = observe_summary_impl(
         limit=limit,
@@ -58,7 +57,7 @@ def cockpit_cmd() -> None:
     """Show high-level operator cockpit summary."""
     settings = ThegentSettings()
 
-    from thegent.cli.commands.impl import ps_impl
+    from thegent.cli.commands.session_ops_list_impl import ps_impl
     from thegent.contracts.telemetry import ContractTelemetry
     from thegent.cost.aggregator import CostAggregator
     from thegent.execution import CircuitBreakerRegistry
@@ -141,7 +140,7 @@ def sitback_dashboard_cmd(
     profile: str = "medium",
 ) -> None:
     """Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals."""
-    from thegent.cli.commands.impl import sitback_dashboard_impl
+    from thegent.cli.commands.observability_main_impl import sitback_dashboard_impl
 
     valid_profiles = ("light", "medium", "full")
     prof = profile.strip().lower() if profile else "medium"
