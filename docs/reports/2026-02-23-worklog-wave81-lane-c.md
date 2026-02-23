@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Wave 81 Lane C Report (2026-02-23)
 
 ## 1) Covered items table (issue id/title/status)
@@ -51,6 +52,8 @@
 2. Harden `cliproxy_request_transform`/adapter sanitization for Gemini-incompatible fields and run targeted pytest selection for touched tests.
 3. Add doctor/cliproxy manager diagnostics path that turns missing/invalid auth prerequisites into explicit actionable guidance, then validate with unit tests.
 =======
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332
 # Worklog Wave 81 - Lane C
 
 Date: 2026-02-23
@@ -98,4 +101,7 @@ Date: 2026-02-23
 ### Close criteria
 - Integrity guards block the run or reconcile automatically before downstream systems see divergent state.
 - The connector health scoreboard/trend grab sees the failure/recovery pattern, satisfying the GA readiness gate and giving ops a reliable signal that integrity is enforced (`docs/reference/AUTOSYNC_GA_READINESS_CRITERIA.md:18`).
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332

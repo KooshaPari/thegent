@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Worklog Wave 81 - Lane A (2026-02-23)
 
 Source: `docs/reference/WORK_STREAM_CLIPROXY_ALL.md` (Bugs 1..9 only).
@@ -53,6 +54,8 @@ Source: `docs/reference/WORK_STREAM_CLIPROXY_ALL.md` (Bugs 1..9 only).
 2. Add/extend streaming regression test to assert chunked emission (not single flush) for cliproxy-routed Claude responses.
 3. Build a minimal issue-evidence matrix (issue -> required artifacts/log fields/repro command) and request missing artifacts to unblock direct fixes.
 =======
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332
 # Worklog Wave 81 Lane A report (2026-02-23)
 
 ## WL-321 Connector baseline initiative 321
@@ -96,4 +99,7 @@ Source: `docs/reference/WORK_STREAM_CLIPROXY_ALL.md` (Bugs 1..9 only).
 - Every autosync cycle manifest/incident snapshot contains the new provenance stamp/validation payload and the CLI/documentation surfaces (`autosync_status.json`, cycle manifest reader) can resolve the same `sync_id`/`prev_hash` pair.
 - Automation tests that rely on `SyncCycleManifest` inputs/outputs or `SyncProvenanceStamp` fields pass without workaround; the wall of traceable outputs described in the worklog entry is now reproducible from the artifacts.
 - Update `docs/reference/WORK_STREAM.md` to reflect that WL-322 has moved into the implementation phase once these outputs are live.
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332
