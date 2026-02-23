@@ -287,6 +287,17 @@ class TestHelpExamples:
         cmd_names = [cmd.name for cmd in app.registered_commands]
         assert "help" in cmd_names, "help command must be registered on the main typer app"
 
+    def test_main_app_supports_version_option(self) -> None:
+        from typer.testing import CliRunner
+
+        from thegent import __version__
+        from thegent.cli.apps.main import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["--version"])
+        assert result.exit_code == 0
+        assert __version__ in result.stdout
+
 
 # ---------------------------------------------------------------------------
 # WP-4005: Progress Spinners
