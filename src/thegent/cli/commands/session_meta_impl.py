@@ -125,7 +125,7 @@ def _state_ledger_path(settings: ThegentSettings) -> Path:
 
 
 def _state_payload_hash(payload: dict[str, Any]) -> str:
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":").decode()).encode("utf-8")
+    encoded = json.dumps(payload, option=json.OPT_SORT_KEYS, separators=(",", ":").decode()).encode("utf-8")
     return sha256(encoded).hexdigest()
 
 

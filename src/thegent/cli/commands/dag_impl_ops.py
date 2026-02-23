@@ -41,7 +41,7 @@ _log = logging.getLogger(__name__)
 
 def _dag_path(cd: Path | None) -> tuple[Path | None, Path | None]:
     """Resolve cwd and dag-session.md path. Returns (None, None) if cwd cannot be resolved."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -119,7 +119,7 @@ def _resolve_prompt(task_id: str, prompt: str, cwd: Path) -> str:  # pyright: ig
 
 def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
     """List DAG tasks. Returns {frontmatter, tasks} or error."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -133,7 +133,7 @@ def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
 
 def dag_raw_impl(cd: Path | None = None) -> str:
     """Get raw DAG markdown content. Returns markdown string or error message."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -146,9 +146,11 @@ def dag_raw_impl(cd: Path | None = None) -> str:
 
 def dag_ready_impl(cd: Path | None = None) -> dict[str, Any]:
     """List task ids that are ready (pending with all deps done|cancelled|skipped)."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent.cli.commands._cli_shared import _resolve_cwd
 
-    cwd = _resolve_cwd(cd) or Path.cwd()
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {"error": "Ambiguous cwd; use --cd to specify project root.", "ready_task_ids": []}
     dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}", "ready_task_ids": []}
@@ -176,7 +178,9 @@ def dag_run_impl(
     from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, bg_impl
     from thegent.cli.commands.dag_impl_helpers import _dag_update_task
 
-    cwd = _resolve_cwd(cd) or Path.cwd()
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {"error": "Ambiguous cwd; use --cd to specify project root."}
     dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}"}
@@ -263,9 +267,11 @@ def dag_run_impl(
 
 def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
     """For each task with session_id show id, status, session_id, session_status."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent.cli.commands._cli_shared import _resolve_cwd
 
-    cwd = _resolve_cwd(cd) or Path.cwd()
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {"error": "Ambiguous cwd; use --cd to specify project root."}
     dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}", "tasks": []}
@@ -325,7 +331,7 @@ def rules_sync_impl(cd: Path | None = None, force: bool = False, check: bool = F
 
 def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[str, Any]:
     """For tasks with session_id and status=running, if pid not running set status=done or failed from rc."""
-    from thegent.cli.commands.impl import (
+    from thegent.cli.commands._cli_shared import (
         _find_session_meta,
         _is_pid_running,
         _read_session_meta,
@@ -334,7 +340,9 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
     )
     from thegent.cli.commands.dag_impl_helpers import _dag_update_task
 
-    cwd = _resolve_cwd(cd) or Path.cwd()
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {"error": "Ambiguous cwd; use --cd to specify project root."}
     dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}", "changed": False}
@@ -406,7 +414,9 @@ def dag_recover_impl(cd: Path | None = None, action: str = "retry-failed") -> di
     from thegent.cli.commands.impl import _resolve_cwd
     from thegent.cli.commands.dag_impl_helpers import _dag_update_task
 
-    cwd = _resolve_cwd(cd) or Path.cwd()
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {"error": "Ambiguous cwd; use --cd to specify project root."}
     dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}", "changed": False}
