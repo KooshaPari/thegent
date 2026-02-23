@@ -18,7 +18,7 @@ class NordlysConfig:
     server_url: str = "http://localhost:8001"
 
 class NordlysRouter:
-    def __init__(self, config: NordlysConfig = None):
+    def __init__(self, config: NordlysConfig | None = None):
         self._config = config or self._load_config()
         self._status = NordlysStatus.DISABLED
         if self._config.enabled:

@@ -7,15 +7,15 @@
 //! - Agent passthrough metadata (agent_id, session_id) for tracing
 //! - Support for agent-initiated operations (commit, push with metadata)
 
-use std::fs;
-use std::path::{PathBuf};
-use std::process::{Command, Output};
-#[cfg(unix)]
-use std::os::unix::process::ExitStatusExt;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::collections::HashMap;
 use crate::git_cache::GitCache;
 use crate::utils::resolve_git_binary;
+use std::collections::HashMap;
+use std::fs;
+#[cfg(unix)]
+use std::os::unix::process::ExitStatusExt;
+use std::path::PathBuf;
+use std::process::{Command, Output};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -83,14 +83,14 @@ pub struct GitOps {
 impl GitOps {
     /// Create new GitOps instance
     pub fn new() -> Result<Self, GitOpsError> {
-        let git_bin = resolve_git_binary()
-            .ok_or(GitOpsError::GitNotFound)?;
+        let git_bin = resolve_git_binary().ok_or(GitOpsError::GitNotFound)?;
 
-        let cache = GitCache::from_env()
-            .map_err(|e| GitOpsError::Io(std::io::Error::new(
+        let cache = GitCache::from_env().map_err(|e| {
+            GitOpsError::Io(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("Failed to create git cache: {}", e)
-            )))?;
+                format!("Failed to create git cache: {}", e),
+            ))
+        })?;
 
         let metadata = AgentMetadata::from_env();
 
@@ -160,7 +160,8 @@ impl GitOps {
         let metadata = fs::metadata(lock_file)?;
         let modified = metadata.modified()?;
         let now = SystemTime::now();
-        let age = now.duration_since(modified)
+        let age = now
+            .duration_since(modified)
             .unwrap_or(Duration::from_secs(0));
 
         Ok(Some(LockInfo {
@@ -171,7 +172,11 @@ impl GitOps {
     }
 
     /// Handle index.lock contention with improved diagnostics
-    fn wait_for_lock(&self, lock_file: &PathBuf, wait_timeout: Duration) -> Result<(), GitOpsError> {
+    fn wait_for_lock(
+        &self,
+        lock_file: &PathBuf,
+        wait_timeout: Duration,
+    ) -> Result<(), GitOpsError> {
         const MAX_RETRIES: u32 = 20;
         const STALE_LOCK_AGE: u64 = 10; // seconds
         let max_wait = wait_timeout.as_secs_f64();
@@ -195,9 +200,10 @@ impl GitOps {
                             eprintln!("GIT-MUTEX: Stealing stale lock ({} seconds old) from crashed process...", age);
                             if let Err(e) = fs::remove_file(lock_file) {
                                 eprintln!("GIT-MUTEX: Failed to remove stale lock: {}", e);
-                                return Err(GitOpsError::LockDetected(
-                                    format!("Could not remove stale lock (age: {} seconds): {}", age, e)
-                                ));
+                                return Err(GitOpsError::LockDetected(format!(
+                                    "Could not remove stale lock (age: {} seconds): {}",
+                                    age, e
+                                )));
                             }
                             return Ok(());
                         }
@@ -213,7 +219,10 @@ impl GitOps {
                 return Err(GitOpsError::LockTimeout);
             }
 
-            eprintln!("GIT-MUTEX: Waiting {:.1}s for git index.lock (held by another agent/tenant)...", sleep_time);
+            eprintln!(
+                "GIT-MUTEX: Waiting {:.1}s for git index.lock (held by another agent/tenant)...",
+                sleep_time
+            );
             std::thread::sleep(Duration::from_secs_f64(sleep_time));
         }
 
@@ -222,18 +231,44 @@ impl GitOps {
 
     /// Check if command is read-only (can be cached)
     fn is_read_only(&self, cmd: &str) -> bool {
-        matches!(cmd,
-            "diff" | "status" | "ls-files" | "rev-parse" | "log" | "show" |
-            "name-rev" | "symbolic-ref" | "branch" | "tag" | "remote" |
-            "config" | "ls-tree" | "cat-file" | "describe"
+        matches!(
+            cmd,
+            "diff"
+                | "status"
+                | "ls-files"
+                | "rev-parse"
+                | "log"
+                | "show"
+                | "name-rev"
+                | "symbolic-ref"
+                | "branch"
+                | "tag"
+                | "remote"
+                | "config"
+                | "ls-tree"
+                | "cat-file"
+                | "describe"
         )
     }
 
     /// Check if command modifies repository (should invalidate cache)
     fn is_write_operation(&self, cmd: &str) -> bool {
-        matches!(cmd,
-            "add" | "commit" | "checkout" | "reset" | "rm" | "mv" | "pull" |
-            "push" | "merge" | "rebase" | "fetch" | "stash" | "am" | "apply"
+        matches!(
+            cmd,
+            "add"
+                | "commit"
+                | "checkout"
+                | "reset"
+                | "rm"
+                | "mv"
+                | "pull"
+                | "push"
+                | "merge"
+                | "rebase"
+                | "fetch"
+                | "stash"
+                | "am"
+                | "apply"
         )
     }
 
@@ -273,9 +308,7 @@ impl GitOps {
             cmd_args.push(cmd.to_string());
             cmd_args.extend_from_slice(args);
 
-            let output = Command::new(&self.git_bin)
-                .args(&cmd_args)
-                .output()?;
+            let output = Command::new(&self.git_bin).args(&cmd_args).output()?;
 
             // Cache successful results
             if output.status.success() {
@@ -295,10 +328,12 @@ impl GitOps {
 
         // Detect lock and surface information
         if let Ok(Some(lock_info)) = self.detect_lock(&lock_file) {
-            eprintln!("GIT-LOCK-DETECTED: {} (age: {:.1}s, stale: {})",
+            eprintln!(
+                "GIT-LOCK-DETECTED: {} (age: {:.1}s, stale: {})",
                 lock_info.path.display(),
                 lock_info.age.as_secs_f64(),
-                lock_info.is_stale);
+                lock_info.is_stale
+            );
         }
 
         // Wait for lock if needed, with configurable timeout
@@ -306,7 +341,7 @@ impl GitOps {
             std::env::var("THEGENT_GIT_LOCK_TIMEOUT")
                 .ok()
                 .and_then(|s| s.parse().ok())
-                .unwrap_or(30)
+                .unwrap_or(30),
         );
         self.wait_for_lock(&lock_file, wait_timeout)?;
 
@@ -320,9 +355,7 @@ impl GitOps {
         cmd_args.push(cmd.to_string());
         cmd_args.extend_from_slice(args);
 
-        let output = Command::new(&self.git_bin)
-            .args(&cmd_args)
-            .output()?;
+        let output = Command::new(&self.git_bin).args(&cmd_args).output()?;
 
         Ok(output)
     }

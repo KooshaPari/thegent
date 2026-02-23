@@ -1,6 +1,6 @@
 //! Integration tests for router with hysteresis.
 
-use thegent_router::{ParetoRouter, RiskFactors, ComplexityLevel, RoutingMode};
+use thegent_router::{ComplexityLevel, ParetoRouter, RiskFactors, RoutingMode};
 
 #[test]
 fn test_router_with_hysteresis_single_session() {
@@ -205,10 +205,7 @@ fn test_router_rationale_includes_hysteresis_info() {
     let decision = router.route_with_session(session_id, &simple);
 
     // Rationale should include hysteresis information
-    assert!(
-        decision.rationale.contains("Lifecycle")
-        || decision.rationale.contains("hysteresis")
-    );
+    assert!(decision.rationale.contains("Lifecycle") || decision.rationale.contains("hysteresis"));
 }
 
 #[test]

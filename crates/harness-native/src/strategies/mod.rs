@@ -1,20 +1,20 @@
 //! Execution strategies: coalesce, queue, debounce, retry, etc.
 
-mod cache;
-mod coalesce;
-mod queue;
-mod breaker;
-mod debounce;
-mod retry;
-mod circuit_breaker;
 mod batch;
+mod breaker;
+mod cache;
 mod causal_order;
+mod circuit_breaker;
+mod coalesce;
+mod debounce;
+mod incremental;
 mod jobserver;
 mod load_balance;
-mod speculative;
 mod proactive_warm;
+mod queue;
 mod resource_throttle;
-mod incremental;
+mod retry;
+mod speculative;
 
 use std::path::Path;
 
@@ -97,13 +97,7 @@ pub fn execute(
             );
         }
         "incremental" => {
-            return incremental::run(
-                harness_home,
-                real_cmd,
-                cache_key,
-                opts.ttl,
-                &full_args,
-            );
+            return incremental::run(harness_home, real_cmd, cache_key, opts.ttl, &full_args);
         }
         "circuit_breaker" => {
             return circuit_breaker::run(

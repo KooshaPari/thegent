@@ -6,6 +6,10 @@ import pytest
 
 pytest.importorskip("PySide6")
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fix/ci-remove-macos
 from typing import Any
 from unittest.mock import MagicMock, patch
 

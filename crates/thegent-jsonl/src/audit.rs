@@ -51,19 +51,14 @@ impl AuditLogger {
     }
 
     pub fn file_hash(&self) -> Result<String, AuditError> {
-        let content = std::fs::read(&self.file_path)
-            .map_err(|e| AuditError::IoError(e.to_string()))?;
+        let content =
+            std::fs::read(&self.file_path).map_err(|e| AuditError::IoError(e.to_string()))?;
         let hash = blake3::hash(&content);
         Ok(hash.to_hex().to_string())
     }
 
-    pub fn read_range(
-        &self,
-        start: usize,
-        end: usize,
-    ) -> Result<Vec<AuditEntry>, AuditError> {
-        let file =
-            File::open(&self.file_path).map_err(|e| AuditError::IoError(e.to_string()))?;
+    pub fn read_range(&self, start: usize, end: usize) -> Result<Vec<AuditEntry>, AuditError> {
+        let file = File::open(&self.file_path).map_err(|e| AuditError::IoError(e.to_string()))?;
         let reader = BufReader::new(file);
 
         let mut entries = Vec::new();
@@ -73,8 +68,8 @@ impl AuditLogger {
             }
             if idx >= start {
                 let line = line.map_err(|e| AuditError::IoError(e.to_string()))?;
-                let entry: AuditEntry = serde_json::from_str(&line)
-                    .map_err(|e| AuditError::SerError(e.to_string()))?;
+                let entry: AuditEntry =
+                    serde_json::from_str(&line).map_err(|e| AuditError::SerError(e.to_string()))?;
                 entries.push(entry);
             }
         }
@@ -87,8 +82,7 @@ impl AuditLogger {
         event_type: Option<&str>,
         agent_id: Option<&str>,
     ) -> Result<Vec<AuditEntry>, AuditError> {
-        let file =
-            File::open(&self.file_path).map_err(|e| AuditError::IoError(e.to_string()))?;
+        let file = File::open(&self.file_path).map_err(|e| AuditError::IoError(e.to_string()))?;
         let reader = BufReader::new(file);
 
         let mut results = Vec::new();
@@ -99,8 +93,7 @@ impl AuditLogger {
 
             let matches_type =
                 event_type.is_none() || event_type == Some(entry.event_type.as_str());
-            let matches_agent =
-                agent_id.is_none() || agent_id == Some(entry.agent_id.as_str());
+            let matches_agent = agent_id.is_none() || agent_id == Some(entry.agent_id.as_str());
 
             if matches_type && matches_agent {
                 results.push(entry);

@@ -12,8 +12,13 @@ from __future__ import annotations
 
 # Re-export all main implementation functions
 from thegent.cli.commands.observability_main_impl import (
+<<<<<<< HEAD
     _REVIEW_ALLOWED_TOOLS as _REVIEW_ALLOWED_TOOLS,
     _REVIEW_SCHEMA_PREAMBLE as _REVIEW_SCHEMA_PREAMBLE,
+=======
+    _REVIEW_ALLOWED_TOOLS,
+    _REVIEW_SCHEMA_PREAMBLE,
+>>>>>>> fix/ci-remove-macos
     _append_observe_summary_snapshot,
     _extract_agent_from_line,
     _extract_review_json_payload,

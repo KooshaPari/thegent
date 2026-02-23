@@ -5,7 +5,10 @@
 
 from __future__ import annotations
 
+<<<<<<< HEAD
 import orjson as json
+=======
+>>>>>>> fix/ci-remove-macos
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path

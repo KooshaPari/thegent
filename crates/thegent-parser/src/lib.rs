@@ -27,12 +27,17 @@ fn extract_xml_tags(
     let mut tags: HashMap<String, String> = HashMap::new();
     let mut search_start = 0;
     while let Some(cap) = tag_re().captures(&text[search_start..]) {
-        let key = cap.get(1).map(|m| m.as_str().to_string()).unwrap_or_default();
+        let key = cap
+            .get(1)
+            .map(|m| m.as_str().to_string())
+            .unwrap_or_default();
         let open_full = cap.get(0).unwrap();
         let content_start = search_start + open_full.end();
         let closing = format!("</{}>", key);
         if let Some(close_pos) = text[content_start..].find(&closing) {
-            let val = text[content_start..content_start + close_pos].trim().to_string();
+            let val = text[content_start..content_start + close_pos]
+                .trim()
+                .to_string();
             let include = match &allowed_tags {
                 None => true,
                 Some(t) => {
@@ -66,12 +71,16 @@ fn strip_think_blocks(text: &str) -> String {
 #[pyo3(signature = (text, profile="plain"))]
 fn strip_noise(text: &str, profile: &str) -> String {
     let re_time = Regex::new(r"^\[TIME CONSTRAINT").unwrap_or_else(|_| Regex::new("$^").unwrap());
-    let re_tool_calls = Regex::new(r"^You have approximately \d+ tool calls").unwrap_or_else(|_| Regex::new("$^").unwrap());
+    let re_tool_calls = Regex::new(r"^You have approximately \d+ tool calls")
+        .unwrap_or_else(|_| Regex::new("$^").unwrap());
     let re_ok = Regex::new(r"^\s*OK\s*$").unwrap_or_else(|_| Regex::new("$^").unwrap());
-    let re_turn = Regex::new(r#"^\s*\{\s*"type"\s*:\s*"turn\.(completed|started)"#).unwrap_or_else(|_| Regex::new("$^").unwrap());
-    let re_thread = Regex::new(r#"^\s*\{\s*"type"\s*:\s*"thread\.started"#).unwrap_or_else(|_| Regex::new("$^").unwrap());
+    let re_turn = Regex::new(r#"^\s*\{\s*"type"\s*:\s*"turn\.(completed|started)"#)
+        .unwrap_or_else(|_| Regex::new("$^").unwrap());
+    let re_thread = Regex::new(r#"^\s*\{\s*"type"\s*:\s*"thread\.started"#)
+        .unwrap_or_else(|_| Regex::new("$^").unwrap());
     let re_total = Regex::new(r"^Total usage est:").unwrap_or_else(|_| Regex::new("$^").unwrap());
-    let re_duration = Regex::new(r"^Total duration \(API\):").unwrap_or_else(|_| Regex::new("$^").unwrap());
+    let re_duration =
+        Regex::new(r"^Total duration \(API\):").unwrap_or_else(|_| Regex::new("$^").unwrap());
     let re_usage = Regex::new(r"^Usage by model:").unwrap_or_else(|_| Regex::new("$^").unwrap());
     let re_ok_prefix = Regex::new(r"^\[OK\] ").unwrap_or_else(|_| Regex::new("$^").unwrap());
     let re_exit = Regex::new(r"^exit=\d+").unwrap_or_else(|_| Regex::new("$^").unwrap());
@@ -88,7 +97,9 @@ fn strip_noise(text: &str, profile: &str) -> String {
         }
 
         if profile == "leading" || profile == "plain" {
-            let is_leading = re_time.is_match(trimmed) || re_tool_calls.is_match(trimmed) || re_ok.is_match(trimmed);
+            let is_leading = re_time.is_match(trimmed)
+                || re_tool_calls.is_match(trimmed)
+                || re_ok.is_match(trimmed);
             if is_leading && stripped_leading < 5 {
                 stripped_leading += 1;
                 continue;
@@ -178,14 +189,20 @@ fn parse_dlq_item(
     };
 
     if let Some(status_expected) = status {
-        let got_status = obj.get("status").and_then(|v| v.as_str()).unwrap_or_default();
+        let got_status = obj
+            .get("status")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default();
         if got_status != status_expected {
             return Ok(py.None().into_bound(py).unbind());
         }
     }
 
     if let Some(run_id_expected) = run_id {
-        let got_run_id = obj.get("run_id").and_then(|v| v.as_str()).unwrap_or_default();
+        let got_run_id = obj
+            .get("run_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default();
         if got_run_id != run_id_expected {
             return Ok(py.None().into_bound(py).unbind());
         }
@@ -220,7 +237,10 @@ fn parse_override_unexpired(line: &str, owner: &str, now_iso: &str) -> PyResult<
         Value::Object(map) => map,
         _ => return Ok(false),
     };
-    let got_owner = obj.get("owner").and_then(|v| v.as_str()).unwrap_or_default();
+    let got_owner = obj
+        .get("owner")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
     if got_owner != owner {
         return Ok(false);
     }
@@ -282,9 +302,18 @@ fn parse_circuit_failure(
         _ => return Ok((0, None)),
     };
 
-    let got_target = obj.get("target").and_then(|v| v.as_str()).unwrap_or_default();
-    let got_category = obj.get("category").and_then(|v| v.as_str()).unwrap_or("agent");
-    let got_event = obj.get("event").and_then(|v| v.as_str()).unwrap_or_default();
+    let got_target = obj
+        .get("target")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+    let got_category = obj
+        .get("category")
+        .and_then(|v| v.as_str())
+        .unwrap_or("agent");
+    let got_event = obj
+        .get("event")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
     if got_target != target || got_category != category || got_event != "failure" {
         return Ok((0, None));
     }
@@ -354,9 +383,7 @@ fn serde_to_py<'py>(py: Python<'py>, v: Value) -> PyResult<Bound<'py, PyAny>> {
 // ---------------------------------------------------------------------------
 
 /// Known routing suffixes for model strings (GW-14 / FR-ROUTE-014).
-const KNOWN_SUFFIXES: &[&str] = &[
-    "nitro", "floor", "free", "thinking", "online", "extended",
-];
+const KNOWN_SUFFIXES: &[&str] = &["nitro", "floor", "free", "thinking", "online", "extended"];
 
 /// Result of parsing a model string with optional colon-separated suffix(es).
 ///

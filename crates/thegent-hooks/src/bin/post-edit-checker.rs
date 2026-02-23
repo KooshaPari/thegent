@@ -1,5 +1,5 @@
 //! Post-Edit Checker hook binary
-//! 
+//!
 //! Detects AI-generated patterns (slop) and measures code complexity.
 
 #![allow(unused)]
@@ -27,11 +27,13 @@ struct PostEditCheckerInput {
     check_complexity: bool,
 }
 
-fn default_true() -> bool { true }
+fn default_true() -> bool {
+    true
+}
 
 fn detect_ai_slop(content: &str) -> Vec<String> {
     let mut issues = Vec::new();
-    
+
     let patterns = [
         (r"(?i)as an ai", "AI self-reference"),
         (r"(?i)i cannot|i am unable|i'm sorry", "AI apology/refusal"),
@@ -40,7 +42,7 @@ fn detect_ai_slop(content: &str) -> Vec<String> {
         (r"(?i)placeholder", "Placeholder text"),
         (r"example\.com", "Example domain in non-test"),
     ];
-    
+
     for (pattern, desc) in &patterns {
         if let Ok(re) = Regex::new(pattern) {
             if re.is_match(content) {
@@ -48,7 +50,7 @@ fn detect_ai_slop(content: &str) -> Vec<String> {
             }
         }
     }
-    
+
     issues
 }
 
@@ -56,7 +58,7 @@ fn measure_complexity(content: &str) -> (usize, usize) {
     // Simple cyclomatic complexity: count branches
     let mut branches = 0;
     let mut functions = 0;
-    
+
     for line in content.lines() {
         let trimmed = line.trim();
         if trimmed.contains("if ") || trimmed.starts_with("if ") {
@@ -72,7 +74,7 @@ fn measure_complexity(content: &str) -> (usize, usize) {
             functions += 1;
         }
     }
-    
+
     (branches, functions)
 }
 
@@ -103,13 +105,15 @@ fn main() -> ExitCode {
                     ai_slop_issues.push(format!("{}: {}", file, issue));
                 }
             }
-            
+
             // Complexity check
             if input.check_complexity {
                 let (branches, funcs) = measure_complexity(&content);
                 if funcs > 0 && branches / funcs > 10 {
-                    complexity_warnings.push(format!("{}: high complexity ({} branches in {} funcs)", 
-                        file, branches, funcs));
+                    complexity_warnings.push(format!(
+                        "{}: high complexity ({} branches in {} funcs)",
+                        file, branches, funcs
+                    ));
                 }
             }
         }
@@ -118,8 +122,10 @@ fn main() -> ExitCode {
     let has_issues = !ai_slop_issues.is_empty() || !complexity_warnings.is_empty();
     let exit_code = if has_issues { 1 } else { 0 };
 
-    println!(r#"{{"ai_slop_issues":{:?}, "complexity_warnings":{:?}, "exit_code":{}}}"#, 
-        ai_slop_issues, complexity_warnings, exit_code);
+    println!(
+        r#"{{"ai_slop_issues":{:?}, "complexity_warnings":{:?}, "exit_code":{}}}"#,
+        ai_slop_issues, complexity_warnings, exit_code
+    );
 
     if has_issues {
         for issue in &ai_slop_issues {

@@ -8,7 +8,7 @@ pub struct CostCalculator {
 
 #[derive(Clone, Debug)]
 struct ModelPricing {
-    input_cost_per_mtok: f64,  // Cost per million tokens
+    input_cost_per_mtok: f64, // Cost per million tokens
     output_cost_per_mtok: f64,
 }
 

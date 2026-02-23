@@ -6,15 +6,15 @@
 //! - `thegent-find`: Directory traversal with fd awareness
 //! - `thegent-agent`: Agent invocation with fallback routing
 
-pub mod git;
-pub mod grep;
-pub mod find;
 pub mod agent;
 pub mod cache;
+pub mod find;
+pub mod git;
+pub mod grep;
 pub mod lock;
 pub mod utils;
 
+pub use agent::AgentShim;
+pub use find::FindShim;
 pub use git::GitShim;
 pub use grep::GrepShim;
-pub use find::FindShim;
-pub use agent::AgentShim;

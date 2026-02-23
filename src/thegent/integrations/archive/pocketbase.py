@@ -18,7 +18,7 @@ class PocketBaseConfig:
     url: str = "http://localhost:8090"
 
 class PocketBaseClient:
-    def __init__(self, config: PocketBaseConfig = None):
+    def __init__(self, config: PocketBaseConfig | None = None):
         self._config = config or self._load_config()
         self._status = PocketBaseStatus.DISABLED
         if self._config.enabled:

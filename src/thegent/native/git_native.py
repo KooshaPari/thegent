@@ -103,8 +103,8 @@ class GitNative:
         Returns:
             ``{"files_changed": N, "insertions": N, "deletions": N}``
         """
-        if _native_available and hasattr(thegent_git, "get_diff_stat"):
-            return thegent_git.get_diff_stat(self.repo_path)
+        if _native_available and hasattr(thegent_git, "get_diff_stat"):  # type: ignore[reportAttributeAccessIssue]
+            return thegent_git.get_diff_stat(self.repo_path)  # type: ignore[reportAttributeAccessIssue]
 
         # Fallback to subprocess
         diff = _run_git_command(self.repo_path, "diff", "--stat")

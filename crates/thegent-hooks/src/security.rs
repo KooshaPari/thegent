@@ -39,12 +39,16 @@ impl SecurityScanner {
             },
             SecretPattern {
                 name: "Slack API Token".to_string(),
-                pattern: Regex::new(r"xox[bapru]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,32}").unwrap(),
+                pattern: Regex::new(r"xox[bapru]-[0-9]{10,13}-[0-9]{10,13}-[a-zA-Z0-9]{24,32}")
+                    .unwrap(),
                 severity: Severity::Critical,
             },
             SecretPattern {
                 name: "Private Key".to_string(),
-                pattern: Regex::new(r"-----BEGIN (?:RSA|DSA|EC|PGP|ENCRYPTED|OPENSSH) PRIVATE KEY-----").unwrap(),
+                pattern: Regex::new(
+                    r"-----BEGIN (?:RSA|DSA|EC|PGP|ENCRYPTED|OPENSSH) PRIVATE KEY-----",
+                )
+                .unwrap(),
                 severity: Severity::Critical,
             },
             SecretPattern {
@@ -54,7 +58,10 @@ impl SecurityScanner {
             },
             SecretPattern {
                 name: "Database Password".to_string(),
-                pattern: Regex::new(r#"(?:password|passwd|pwd)\s*[=:]\s*['"]?[a-zA-Z0-9!@#$%^&*()_+=\-]{8,}['"]?"#).unwrap(),
+                pattern: Regex::new(
+                    r#"(?:password|passwd|pwd)\s*[=:]\s*['"]?[a-zA-Z0-9!@#$%^&*()_+=\-]{8,}['"]?"#,
+                )
+                .unwrap(),
                 severity: Severity::Error,
             },
         ];
@@ -94,10 +101,7 @@ impl SecurityScanner {
 
         let mut findings = Vec::new();
 
-        if let Some(arr) = value
-            .get("results")
-            .and_then(|v| v.as_array())
-        {
+        if let Some(arr) = value.get("results").and_then(|v| v.as_array()) {
             for result in arr {
                 let finding = SecurityFinding {
                     id: format!("SEMGREP-{}", findings.len() + 1),
@@ -119,7 +123,10 @@ impl SecurityScanner {
                         .and_then(|m| m.as_str())
                         .unwrap_or("Security issue detected")
                         .to_string(),
-                    location: result.get("path").and_then(|p| p.as_str()).map(String::from),
+                    location: result
+                        .get("path")
+                        .and_then(|p| p.as_str())
+                        .map(String::from),
                     remediation: None,
                 };
                 findings.push(finding);
@@ -140,7 +147,12 @@ impl SecurityScanner {
     }
 
     /// Add custom pattern
-    pub fn add_pattern(&mut self, name: &str, pattern_str: &str, severity: Severity) -> Result<(), HookError> {
+    pub fn add_pattern(
+        &mut self,
+        name: &str,
+        pattern_str: &str,
+        severity: Severity,
+    ) -> Result<(), HookError> {
         let regex = Regex::new(pattern_str)
             .map_err(|e| HookError::ParseError(format!("Invalid regex: {}", e)))?;
 

@@ -36,7 +36,10 @@ fn main() -> Result<()> {
 }
 
 fn monitor_once() -> Result<()> {
-    println!("{}", "🔍 Monitoring process count and fork failures...".blue());
+    println!(
+        "{}",
+        "🔍 Monitoring process count and fork failures...".blue()
+    );
     println!();
 
     // Current process count
@@ -50,7 +53,11 @@ fn monitor_once() -> Result<()> {
     // Check for fork failures
     let fork_failures = get_fork_failures().unwrap_or(0);
     if fork_failures > 0 {
-        println!("{} {}", "⚠️  Fork failures detected in system logs:".yellow(), fork_failures);
+        println!(
+            "{} {}",
+            "⚠️  Fork failures detected in system logs:".yellow(),
+            fork_failures
+        );
     }
 
     // Check thegent-related processes
@@ -62,22 +69,42 @@ fn monitor_once() -> Result<()> {
     println!("{}", "📊 Analysis:".blue());
 
     if proc_count > 500 {
-        println!("  {} {}", "🔴 CRITICAL: Process count is very high".red(), format!("({})", proc_count));
+        println!(
+            "  {} {}",
+            "🔴 CRITICAL: Process count is very high".red(),
+            format!("({})", proc_count)
+        );
         println!("     Recommendation: Restart shell, apply fast-path fixes");
     } else if proc_count > 200 {
-        println!("  {} {}", "🟡 WARNING: Process count is elevated".yellow(), format!("({})", proc_count));
+        println!(
+            "  {} {}",
+            "🟡 WARNING: Process count is elevated".yellow(),
+            format!("({})", proc_count)
+        );
         println!("     Recommendation: Monitor and consider applying fixes");
     } else {
-        println!("  {} {}", "✅ Process count is normal".green(), format!("({})", proc_count));
+        println!(
+            "  {} {}",
+            "✅ Process count is normal".green(),
+            format!("({})", proc_count)
+        );
     }
 
     if thegent_procs > 50 {
-        println!("  {} {}", "🟡 WARNING: Many thegent processes".yellow(), format!("({})", thegent_procs));
+        println!(
+            "  {} {}",
+            "🟡 WARNING: Many thegent processes".yellow(),
+            format!("({})", thegent_procs)
+        );
         println!("     Recommendation: Check for process leaks");
     }
 
     if fork_failures > 0 {
-        println!("  {} {}", "🔴 CRITICAL: Fork failures detected".red(), format!("({})", fork_failures));
+        println!(
+            "  {} {}",
+            "🔴 CRITICAL: Fork failures detected".red(),
+            format!("({})", fork_failures)
+        );
         println!("     Recommendation: Increase process limit, restart shell");
     }
 
@@ -92,14 +119,10 @@ fn monitor_once() -> Result<()> {
 }
 
 fn get_process_count() -> Result<usize> {
-    let output = Command::new("ps")
-        .arg("aux")
-        .output()?;
+    let output = Command::new("ps").arg("aux").output()?;
 
     if output.status.success() {
-        let count = String::from_utf8_lossy(&output.stdout)
-            .lines()
-            .count();
+        let count = String::from_utf8_lossy(&output.stdout).lines().count();
         Ok(count.saturating_sub(1)) // Subtract header line
     } else {
         Ok(0)
@@ -128,9 +151,7 @@ fn get_max_processes() -> Option<String> {
 
 fn get_fork_failures() -> Option<usize> {
     // Try dmesg if available
-    let output = Command::new("dmesg")
-        .output()
-        .ok()?;
+    let output = Command::new("dmesg").output().ok()?;
 
     if output.status.success() {
         let dmesg_output = String::from_utf8_lossy(&output.stdout);
@@ -145,18 +166,14 @@ fn get_fork_failures() -> Option<usize> {
 }
 
 fn get_thegent_processes() -> Result<usize> {
-    let output = Command::new("ps")
-        .arg("aux")
-        .output()?;
+    let output = Command::new("ps").arg("aux").output()?;
 
     if output.status.success() {
         let ps_output = String::from_utf8_lossy(&output.stdout);
         let count = ps_output
             .lines()
             .filter(|line| {
-                line.contains("thegent") ||
-                line.contains("common.sh") ||
-                line.contains("hook")
+                line.contains("thegent") || line.contains("common.sh") || line.contains("hook")
             })
             .count();
         Ok(count)

@@ -3,6 +3,7 @@
 # See: docs/research/RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md §5.2
 set -euo pipefail
 DOCS_DIR="${1:-docs}"
+DOCS_AUDIT_FILES="${DOCS_AUDIT_FILES:-}"
 echo "=== Docs convert audit: $DOCS_DIR ==="
 total=0
 has_h1=0
@@ -11,19 +12,27 @@ has_see=0
 missing_h1=""
 missing_fm=""
 missing_see=""
-while IFS= read -r f; do
-  [ -f "$f" ] || continue
-  total=$((total + 1))
-  h1=0
-  fm=0
-  see=0
-  head -20 "$f" | grep -q '^# ' && h1=1
-  head -1 "$f" | grep -q '^---$' && fm=1
-  (grep -q 'See also' "$f" || grep -q 'Related' "$f" || grep -q 'References' "$f") 2>/dev/null && see=1
-  [ "$h1" -eq 1 ] && has_h1=$((has_h1 + 1)) || missing_h1="$missing_h1  $f\n"
-  [ "$fm" -eq 1 ] && has_fm=$((has_fm + 1)) || missing_fm="$missing_fm  $f\n"
-  [ "$see" -eq 1 ] && has_see=$((has_see + 1)) || missing_see="$missing_see  $f\n"
-done < <(find "$DOCS_DIR" -name '*.md' -type f 2>/dev/null | sort)
+check_md_files() {
+  while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    total=$((total + 1))
+    h1=0
+    fm=0
+    see=0
+    head -20 "$f" | grep -q '^# ' && h1=1
+    head -1 "$f" | grep -q '^---$' && fm=1
+    (grep -q 'See also' "$f" || grep -q 'Related' "$f" || grep -q 'References' "$f") 2>/dev/null && see=1
+    [ "$h1" -eq 1 ] && has_h1=$((has_h1 + 1)) || missing_h1="$missing_h1  $f\n"
+    [ "$fm" -eq 1 ] && has_fm=$((has_fm + 1)) || missing_fm="$missing_fm  $f\n"
+    [ "$see" -eq 1 ] && has_see=$((has_see + 1)) || missing_see="$missing_see  $f\n"
+  done
+}
+
+if [ -n "$DOCS_AUDIT_FILES" ]; then
+  printf '%s\n' "$DOCS_AUDIT_FILES" | check_md_files
+else
+  check_md_files < <(find "$DOCS_DIR" -name '*.md' -type f 2>/dev/null | sort)
+fi
 echo "Total .md: $total"
 echo "Has H1:   $has_h1"
 echo "Has frontmatter (---): $has_fm"
@@ -39,5 +48,9 @@ if [ -n "$missing_see" ]; then
 fi
 echo ""
 echo "By directory:"
-find "$DOCS_DIR" -name '*.md' -type f 2>/dev/null | sed 's|/[^/]*$||' | sort | uniq -c | sort -rn
+if [ -n "$DOCS_AUDIT_FILES" ]; then
+  printf '%s\n' "$DOCS_AUDIT_FILES" | sed 's|/[^/]*$||' | sort | uniq -c | sort -rn
+else
+  find "$DOCS_DIR" -name '*.md' -type f 2>/dev/null | sed 's|/[^/]*$||' | sort | uniq -c | sort -rn
+fi
 echo "Done. Add 'See also' to missing_see files; add frontmatter where needed."
