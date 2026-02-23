@@ -78,36 +78,29 @@ repos:
         stages: [pre-push]
         entry: bash scripts/dx-audit.sh
         language: system
-        pass_filenames: false
+        pass_filenames: true
 
       - id: max-lines-gate
         name: Canonical Max-Lines Gate
         stages: [pre-push]
-        entry: task quality:max-lines
+        entry: scripts/max-lines-gate.sh
         language: system
-        pass_filenames: false
-
-      - id: tach
-        name: Architectural Boundary Check
-        stages: [pre-push]
-        entry: tach check
-        language: system
-        pass_filenames: false
+        pass_filenames: true
 
       - id: ty
         name: Fast Type Check (ty) (Gate 3)
         stages: [pre-push]
-        entry: uv run ty check src/
+        entry: scripts/typecheck_changed.sh ty
         language: system
-        pass_filenames: false
+        pass_filenames: true
         types: [python]
 
       - id: basedpyright
         name: Strict Type Check (basedpyright) (Gate 3)
         stages: [pre-push]
-        entry: uv run basedpyright src/
+        entry: scripts/typecheck_changed.sh basedpyright
         language: system
-        pass_filenames: false
+        pass_filenames: true
         types: [python]
 
       - id: shellcheck

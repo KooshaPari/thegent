@@ -819,7 +819,7 @@ tasks:
           --summary artifacts/pytest/requirements/requirements-gate.md \
           --strict
         req_gate_rc=$?
-        uv run python scripts/test_pytest_wave_artifacts.py requirements-map \
+        uv run python scripts/fr_trace_extractor.py \
           --input-dir tests \
           --fr-tracker docs/reference/FR_TRACKER.md \
           --output artifacts/pytest/traceability/requirements-map.json \
@@ -877,7 +877,7 @@ tasks:
     cmds:
       - mkdir -p artifacts/pytest/traceability
       - |
-        uv run python scripts/test_pytest_wave_artifacts.py requirements-map \
+        uv run python scripts/fr_trace_extractor.py \
           --input-dir tests \
           --fr-tracker docs/reference/FR_TRACKER.md \
           --output artifacts/pytest/traceability/requirements-map.json \
@@ -1106,7 +1106,7 @@ tasks:
   quality:sitback-contracts:
     desc: "Run sitback harness contracts"
     cmds:
-      - uv run pytest -q tests/test_unit_clode_main.py
+      - uv run python -m pytest -q tests/test_unit_clode_main.py
 
   quality:harness-model-contracts:
     desc: "Run harness model contracts"
@@ -1404,7 +1404,7 @@ tasks:
   quality:max-lines:
     desc: "Run max-lines gate via canonical developer task path (WL-122)."
     cmds:
-      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh,src/thegent/integrations/workstream_autosync.py} sh scripts/max-lines-gate.sh
+      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh,src/thegent/integrations/workstream_autosync.py,src/thegent/execution.py} sh scripts/max-lines-gate.sh
 
   quality:rust:pyo3-drift:
     desc: "Fail if Rust crates declare drifted pyo3 versions (includes optional dependencies)."

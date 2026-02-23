@@ -9,7 +9,7 @@ import sys
 from importlib import import_module
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
@@ -958,13 +958,13 @@ class InstallManager:
                 if dst_mtime >= src_mtime:
                     if self.verbose:
                         sys.stdout.write(f"  Skipped (up to date or user modified): {target}\n")
-                    return FileAction.SKIPPED
+                    return cast("FileAction", FileAction.SKIPPED)
             elif mode == InstallMode.INTERACTIVE:
                 # In non-interactive shells, this might hang. We should check if sys.stdin.isatty()
                 if not sys.stdin.isatty():
                     if self.verbose:
                         sys.stderr.write(f"  Non-interactive shell, skipping conflict: {target}\n")
-                    return FileAction.CONFLICT
+                    return cast("FileAction", FileAction.CONFLICT)
 
                 choice = Prompt.ask(
                     f"Conflict detected for {target}. [o]verwrite, [s]kip, [b]ackup & overwrite?",
@@ -972,8 +972,8 @@ class InstallManager:
                     default="s",
                 )
                 if choice == "s":
-                    return FileAction.SKIPPED
-                mode = InstallMode.SMART if choice == "b" else InstallMode.FORCE
+                    return cast("FileAction", FileAction.SKIPPED)
+                mode = cast("InstallMode", InstallMode.SMART if choice == "b" else InstallMode.FORCE)
 
         # Perform action
         backup_path = None
@@ -987,13 +987,13 @@ class InstallManager:
 
             if mode == InstallMode.EDITABLE:
                 target.symlink_to(source)
-                action = FileAction.SYMLINKED
+                action = cast("FileAction", FileAction.SYMLINKED)
             else:
                 if source.is_dir():
                     copy_tree(source, target)
                 else:
                     copy_file(source, target)
-                action = FileAction.COPIED
+                action = cast("FileAction", FileAction.COPIED)
 
             # Register in manifest
             self.manifest.files[str(target)] = FileManifest(
@@ -1004,7 +1004,7 @@ class InstallManager:
                 backup=str(backup_path) if backup_path else None,
             )
         else:
-            action = FileAction.COPIED if mode != InstallMode.EDITABLE else FileAction.SYMLINKED
+            action = cast("FileAction", FileAction.COPIED if mode != InstallMode.EDITABLE else FileAction.SYMLINKED)
             if self.verbose:
                 sys.stdout.write(f"  Would {'symlink' if mode == InstallMode.EDITABLE else 'copy'}: {target}\n")
 
@@ -1733,7 +1733,7 @@ def run_install(
             src_local = shell_dir / SHELL_LOCAL_TEMPLATE
             dst_local = home / ".zshrc.local"
             if src_local.exists() and not dst_local.exists():
-                res = mgr.install_file(src_local, dst_local, InstallMode.SMART)
+                res = mgr.install_file(src_local, dst_local, cast("InstallMode", InstallMode.SMART))
                 key = res.value if hasattr(res, "value") else str(res)
                 counts[key] = counts.get(key, 0) + 1
 
