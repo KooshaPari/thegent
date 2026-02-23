@@ -13,4 +13,4 @@ class CheckpointRegistry:
     def list_checkpoints(self, limit: int = 20):
         return []
 
-__all__ = ["CheckpointMeta", "CheckpointRegistry"]
+__all__ = ["CheckpointRegistry", "CheckpointMeta"]

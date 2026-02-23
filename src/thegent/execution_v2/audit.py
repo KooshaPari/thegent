@@ -15,12 +15,13 @@ class AuditEntry(BaseModel):
 
 class AuditRegistry:
     """Manages audit registry."""
-
+    
     def __init__(self, audit_path: Path) -> None:
         self.audit_path = audit_path
-
+    
     def record(self, entry: AuditEntry) -> None:
         """Record audit entry."""
+        pass
 
 
 __all__ = ["AuditEntry", "AuditRegistry"]

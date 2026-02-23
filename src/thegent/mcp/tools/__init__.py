@@ -8,7 +8,7 @@ from thegent.mcp.tools.sitback import register_sitback
 __all__ = [
     "register_elicitation_tools",
     "register_modes",
+    "register_tool_pattern_tools",
     "register_seed_tools",
     "register_sitback",
-    "register_tool_pattern_tools",
 ]

@@ -200,10 +200,10 @@ from thegent.adapters.ports import AdapterRegistry
 
 class ToolAdapterWrapper:
     """Tool adapter wrapper for registry"""
-
+    
     def __init__(self):
         self._adapter = None
-
+    
     def call(self, **kwargs) -> dict:
         return {"status": "tool_adapter_ready"}
 

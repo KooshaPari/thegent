@@ -12,7 +12,7 @@ from thegent.integrations.pipeline_percentiles import PipelinePercentileTracker
 
 class SLAAdapter:
     """Adapter for SLA evaluation and error budget operations."""
-
+    
     def __init__(self, config: Any, error_budget: ErrorBudgetTracker):
         self.config = config
         self._error_budget = error_budget
@@ -20,21 +20,21 @@ class SLAAdapter:
         self._connector_sla_evaluator = ConnectorSLAEvaluator()
         self._connector_latency_tracker = PipelinePercentileTracker()
         self._connector_error_budgets: dict[str, ErrorBudgetTracker] = {}
-
+    
     def evaluate_slo_state(self, snapshot_age_seconds: int | None) -> list[str]:
         """Evaluate current SLO state and return alerts."""
         alerts = []
-
+        
         # Check snapshot staleness
         if snapshot_age_seconds is not None and snapshot_age_seconds > self.config.autosync_stale_snapshot_seconds:
             alerts.append(f"autosync snapshot stale for {snapshot_age_seconds}s")
-
+        
         # Check global error budget
         if self._error_budget.should_escalate():
             alerts.append("autosync error budget escalation threshold reached")
         if self._error_budget.should_hard_fail():
             alerts.append("autosync error budget hard-fail threshold reached")
-
+        
         # Check connector SLAs
         for connector, thresholds in sorted(self._connector_sla_thresholds.items()):
             latency_summary = self._connector_latency_tracker.summary(connector)
@@ -49,9 +49,9 @@ class SLAAdapter:
             )
             for breach in result.get("breaches", []):
                 alerts.append(f"connector {connector} SLA breach: {breach}")
-
+        
         return alerts
-
+    
     def get_connector_error_budget(self, connector: str) -> ErrorBudgetTracker:
         """Get or create error budget for connector."""
         normalized = connector.lower()
@@ -64,10 +64,11 @@ class SLAAdapter:
                 ),
             )
         return self._connector_error_budgets[normalized]
-
+    
     def record_connector_latency(self, connector: str, duration_seconds: float) -> None:
         """Record connector latency metric."""
         # Implementation would use actual pipeline tracker
+        pass
 
 
 __all__ = ["SLAAdapter"]
