@@ -233,7 +233,7 @@ def session_contract_health_trend_impl(
                 "blocked_count_delta": delta_count,
                 "blocked_ratio_delta": delta_ratio,
             },
-            sort_keys=True,
+            option=json.OPT_SORT_KEYS,
         ).decode(),
         "blocked_ratio_delta": delta_ratio,
         "blocked_count_delta": delta_count,
