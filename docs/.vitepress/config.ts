@@ -42,9 +42,10 @@ const config = defineConfig({
   lastUpdated: true,
 
   // Exclude problematic directories from the build
-  // IMPORTANT: Keep this aggressive to avoid build timeouts
+  // IMPORTANT: Keep aggressive to avoid build timeouts (7800+ md files total)
+  // Only include: index.md, start-here.md, tutorials/, how-to/, reference/, operations/, api/
   srcExclude: [
-    // Research/context dumps (very large)
+    // Research/context dumps (566MB+)
     'context/**',
     'diagrams/**',
     'dumps/**',
@@ -56,14 +57,66 @@ const config = defineConfig({
     'reports/**',
     'changes/**',
     'specs/**',
-    // Auto-generated content
+    // Auto-generated API docs (691 files)
     'reference/api/**',
     'reference/WORK_STREAM.md',
-    // Archives
+    // Archives and legacy
     'archives/**',
     'contracts/**',
-    // Exclude individual large files
-    'contracts/TEST_HEALTH_DASHBOARD.md',
+    'migration/**',
+    'closure/**',
+    // Large generated sections
+    'governance/**',
+    'architecture/**',
+    'guides/**',
+    'checklists/**',
+    'examples/**',
+    'security/**',
+    'deployment/**',
+    'tasks/**',
+    'demos/**',
+    'concepts/**',
+    'projects/**',
+    'recordings/**',
+    'references/**',
+    'site/**',
+    // Root-level large files
+    'AGENT_*.md',
+    'AUDIT_*.md',
+    'CROSS_*.md',
+    'DISCOVERY.md',
+    'DOCUMENT_*.md',
+    'FASTMCP_*.md',
+    'GAP_*.md',
+    'GOVERNANCE_*.md',
+    'IMPLEMENTATION_*.md',
+    'INSTALL_*.md',
+    'LLM_*.md',
+    'MAINTENANCE_*.md',
+    'MISE_*.md',
+    'MONITORING_*.md',
+    'MULTI_*.md',
+    'NATS_*.md',
+    'NEO4J_*.md',
+    'NAVIGATION_*.md',
+    'NEXT_*.md',
+    'ORCHESTRATION_*.md',
+    'PATCHES_*.md',
+    'PLANNING_*.md',
+    'POST_*.md',
+    'PYTHON_*.md',
+    'QUALITY_*.md',
+    'RESUME_*.md',
+    'RUNBOOK.md',
+    'SETUP-*.md',
+    'SHELL_*.md',
+    'SPECS_*.md',
+    'STATE_*.md',
+    'ULTRA_*.md',
+    'VERIFICATION_*.md',
+    'WHAT_*.md',
+    'WORK_*.md',
+    'ZSH_*.md',
   ],
 
   // Disable dead link check (links are external or cross-project)
