@@ -89,7 +89,14 @@ def configure_providers(
             with console.status(f"[cyan]{display_name}: preparing login flow...[/cyan]") as status:
                 status.update(f"[cyan]{display_name}: checking existing credentials...[/cyan]")
                 ex = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-                fut = ex.submit(run_login, settings, provider, prompt_func=prompt_key, force=False)
+                fut = ex.submit(
+                    run_login,
+                    settings,
+                    provider,
+                    prompt_func=prompt_key,
+                    force=False,
+                    login_timeout=provider_timeout,
+                )
                 try:
                     status.update(f"[cyan]{display_name}: running login handshake...[/cyan]")
                     rc = fut.result(timeout=provider_timeout)

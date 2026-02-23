@@ -443,6 +443,60 @@ class TestRunLoginAdditionalProviders:
         cmd = mock_run.call_args[0][0]
         assert "-login" in cmd
 
+    @patch("thegent.agents.cliproxy_manager._resolve_binary")
+    @patch("thegent.agents.cliproxy_manager._binary_available")
+    @patch("thegent.agents.cliproxy_manager._ensure_config")
+    @patch("thegent.agents.cliproxy_manager.subprocess.run")
+    @patch("thegent.agents.cliproxy_manager.sys.stdin.isatty")
+    def test_minimax_login_requires_tty(
+        self,
+        mock_isatty: MagicMock,
+        mock_run: MagicMock,
+        mock_ensure: MagicMock,
+        mock_avail: MagicMock,
+        mock_resolve: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """minimax login exits with code 2 when stdin is non-interactive."""
+        mock_resolve.return_value = "/usr/bin/cli-proxy-api-plus"
+        mock_avail.return_value = True
+        mock_ensure.return_value = tmp_path / "config.yaml"
+        mock_isatty.return_value = False
+
+        rc = run_login(ThegentSettings(), "minimax")
+        assert rc == 2
+        mock_run.assert_not_called()
+
+    @patch("thegent.agents.cliproxy_manager._resolve_binary")
+    @patch("thegent.agents.cliproxy_manager._binary_available")
+    @patch("thegent.agents.cliproxy_manager._ensure_config")
+    @patch("thegent.agents.cliproxy_manager.subprocess.run")
+    @patch("thegent.agents.cliproxy_manager.sys.stdin.isatty")
+    def test_minimax_login_uses_interactive_stdio(
+        self,
+        mock_isatty: MagicMock,
+        mock_run: MagicMock,
+        mock_ensure: MagicMock,
+        mock_avail: MagicMock,
+        mock_resolve: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """minimax login streams stdio and honors timeout override."""
+        mock_resolve.return_value = "/usr/bin/cli-proxy-api-plus"
+        mock_avail.return_value = True
+        mock_ensure.return_value = tmp_path / "config.yaml"
+        mock_isatty.return_value = True
+        mock_run.return_value = MagicMock(returncode=0)
+
+        rc = run_login(ThegentSettings(), "minimax", login_timeout=7)
+        assert rc == 0
+        kwargs = mock_run.call_args.kwargs
+        assert kwargs["timeout"] == 7
+        assert "capture_output" not in kwargs
+        assert kwargs["stdin"] is not None
+        assert kwargs["stdout"] is not None
+        assert kwargs["stderr"] is not None
+
     @patch("thegent.agents.cliproxy_manager.run_login_unified")
     def test_qwen_login_uses_api_key_flow(self, mock_unified: MagicMock) -> None:
         """CLIP-BUG-08: qwen login should use unified API-key flow, not OAuth flag."""

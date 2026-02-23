@@ -8,25 +8,38 @@ from thegent.config import get_settings
 from thegent.infra.shell_detection import ShellType, get_preferred_shell, get_shell_executable
 
 
+def _resolve_shell_type() -> ShellType:
+    """Resolve shell type from settings or platform-preferred defaults."""
+    settings = get_settings()
+    if settings.hook_shell:
+        return ShellType(settings.hook_shell.lower())
+    return get_preferred_shell(performance=True)
+
+
+def _build_hook_command(shell_exe: str, shell_type: ShellType, hook_path: Path) -> list[str]:
+    """Build hook execution command for the selected shell."""
+    if shell_type in [ShellType.PWSH, ShellType.POWERSHELL]:
+        return [shell_exe, "-NoProfile", "-NonInteractive", "-File", str(hook_path)]
+    return [shell_exe, str(hook_path)]
+
+
+def _normalize_stream_text(stream: str | bytes | None) -> str:
+    """Normalize subprocess output streams to text."""
+    if stream is None:
+        return ""
+    if isinstance(stream, bytes):
+        return stream.decode()
+    return stream
+
+
 def run_hook(hook_path: Path, input_data: str | None = None, timeout: int = 60) -> subprocess.CompletedProcess:
     """Run a hook script using the preferred shell."""
-    settings = get_settings()
-
     # 1. Determine shell to use
-    if settings.hook_shell:
-        shell_type = ShellType(settings.hook_shell.lower())
-    else:
-        # For hooks, always use high-performance shells (dash/cmd)
-        shell_type = get_preferred_shell(performance=True)
-
+    shell_type = _resolve_shell_type()
     shell_exe = get_shell_executable(shell_type)
 
     # 2. Build command
-    cmd = [shell_exe, str(hook_path)]
-
-    # 3. Handle Windows peculiarities (pwsh/powershell need -File)
-    if shell_type in [ShellType.PWSH, ShellType.POWERSHELL]:
-        cmd = [shell_exe, "-NoProfile", "-NonInteractive", "-File", str(hook_path)]
+    cmd = _build_hook_command(shell_exe, shell_type, hook_path)
 
     # 4. Execute
     try:
@@ -36,8 +49,8 @@ def run_hook(hook_path: Path, input_data: str | None = None, timeout: int = 60) 
         return subprocess.CompletedProcess(
             args=cmd,
             returncode=124,
-            stdout=e.stdout.decode() if e.stdout else "",
-            stderr=f"Hook timed out after {timeout}s\n" + (e.stderr.decode() if e.stderr else ""),
+            stdout=_normalize_stream_text(e.stdout),
+            stderr=f"Hook timed out after {timeout}s\n{_normalize_stream_text(e.stderr)}",
         )
     except Exception as e:
         return subprocess.CompletedProcess(args=cmd, returncode=1, stdout="", stderr=f"Failed to run hook: {e}")

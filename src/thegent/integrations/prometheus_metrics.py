@@ -31,6 +31,21 @@ class PrometheusMetricsExporter:
         self._samples: list[MetricSample] = []
         logger.debug("Initialized Prometheus metrics exporter")
 
+    def _normalize_labels(self, labels: dict[str, str] | None) -> dict[str, str]:
+        """Return an isolated labels mapping for storage."""
+        if labels is None:
+            return {}
+        return dict(labels)
+
+    @staticmethod
+    def _format_sample(sample: MetricSample) -> str:
+        """Format one metric sample into Prometheus text format."""
+        if sample.labels:
+            label_parts = [f'{k}="{v}"' for k, v in sorted(sample.labels.items())]
+            label_str = "{" + ",".join(label_parts) + "}"
+            return f"{sample.name}{label_str} {sample.value}"
+        return f"{sample.name} {sample.value}"
+
     def record(self, name: str, value: float, labels: dict[str, str] | None = None) -> None:
         """Record a metric sample.
 
@@ -45,7 +60,7 @@ class PrometheusMetricsExporter:
         if not name:
             raise ValueError("metric name cannot be empty")
 
-        label_dict = labels if labels is not None else {}
+        label_dict = self._normalize_labels(labels)
         sample = MetricSample(name=name, value=value, labels=label_dict)
         self._samples.append(sample)
 
@@ -58,18 +73,7 @@ class PrometheusMetricsExporter:
             String in Prometheus text format, with one metric per line.
             Format: metric_name{label1="val1",label2="val2"} 1.0
         """
-        lines = []
-
-        for sample in self._samples:
-            if sample.labels:
-                # Format labels: key1="val1",key2="val2"
-                label_parts = [f'{k}="{v}"' for k, v in sorted(sample.labels.items())]
-                label_str = "{" + ",".join(label_parts) + "}"
-                line = f"{sample.name}{label_str} {sample.value}"
-            else:
-                line = f"{sample.name} {sample.value}"
-
-            lines.append(line)
+        lines = [self._format_sample(sample) for sample in self._samples]
 
         result = "\n".join(lines)
         logger.debug(f"Exported {len(self._samples)} metrics")
