@@ -251,11 +251,14 @@ task sync:autopilot:once
 - **[Changelog Process](./docs/guides/CHANGELOG_PROCESS.md)** — How to add, classify, and release changelog entries.
 - **[Changelog Entry Template](./docs/reference/CHANGELOG_ENTRY_TEMPLATE.md)** — Copy/paste template and writing guidance for entries.
 - **[Project Setup Style](./docs/guides/PROJECT_SETUP_STYLE.md)** — Standardized command/process baseline inspired by vercel/ai.
+<<<<<<< HEAD
 =======
 - **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, GLM + MiniMax flows, and OpenCode/Zen integration notes.
 - **[Domain Mapping Guide](./docs/guides/DOMAIN_MAPPING_GUIDE.md)** — `thegent domain map` advisor mode for Porkbun + Cloudflare Tunnel domain exposure.
 - **[Release Supply Chain Controls](./docs/governance/RELEASE_SUPPLY_CHAIN_CONTROLS.md)** — SBOM, vulnerability scans, governance attestation, and release provenance artifacts.
 >>>>>>> codex/governance-wireup
+=======
+>>>>>>> codex/provider-plane-wave1
 - **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
 - **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
 
