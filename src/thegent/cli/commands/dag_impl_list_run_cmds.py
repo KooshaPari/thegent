@@ -184,6 +184,15 @@ def dag_run_impl(
 
 
 def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
+    pass
+
+
+def rules_sync_impl(cd: Path | None = None, force: bool = False) -> dict[str, Any]:
+    pass
+
+
+def dag_sync_impl(cd: Path | None = None) -> dict[str, Any]:
+    pass
 
 
 __all__ = [
