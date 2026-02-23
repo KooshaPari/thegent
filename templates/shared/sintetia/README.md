@@ -1,0 +1,1 @@
+# sintetia config

@@ -1,0 +1,1 @@
+# eza config
