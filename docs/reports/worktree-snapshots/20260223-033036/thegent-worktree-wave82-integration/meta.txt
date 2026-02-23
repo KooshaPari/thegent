@@ -1,0 +1,3 @@
+path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-wave82-integration
+branch=codex/wave82-integration-impl
+head=f4b298a489733672216195a3a1022d45b0148450
