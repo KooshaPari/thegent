@@ -185,6 +185,7 @@ if thegent doctor; then
 # Use dedicated worktrees for branch development.
 EOF
         echo "Created policy marker: $marker"
+        echo "Governance docs: docs/governance/WORKTREE_AND_DELEGATION_INDEX.md"
       fi
     fi
   fi

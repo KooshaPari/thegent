@@ -90,7 +90,11 @@ def _invalid_params(reason: str) -> JsonRpcError:
 
 
 def _is_valid_request_id(value: Any) -> bool:
-    return isinstance(value, (str | int | float)) or value is None
+    if value is None:
+        return True
+    if isinstance(value, bool):
+        return False
+    return isinstance(value, (str, int, float))
 
 
 def _normalized_non_empty_string(value: Any) -> str | None:
@@ -131,18 +135,90 @@ def _serialize_turn(turn: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+def _validate_request_envelope(request: dict[str, Any]) -> JsonRpcError | None:
     if request.get("jsonrpc") != JSONRPC_VERSION:
-        return _error_response(request.get("id"), JsonRpcError(-32600, "Invalid Request", {"reason": "jsonrpc"})), []
+        return JsonRpcError(-32600, "Invalid Request", {"reason": "jsonrpc"})
     if "id" in request and not _is_valid_request_id(request["id"]):
-        return _error_response(None, JsonRpcError(-32600, "Invalid Request", {"reason": "id"})), []
-
+        return JsonRpcError(-32600, "Invalid Request", {"reason": "id"})
     method = request.get("method")
     if not isinstance(method, str) or not method:
-        return _error_response(request.get("id"), JsonRpcError(-32600, "Invalid Request", {"reason": "method"})), []
-
+        return JsonRpcError(-32600, "Invalid Request", {"reason": "method"})
     if method not in SUPPORTED_METHODS:
-        return _error_response(request.get("id"), _method_not_found(method)), []
+        return _method_not_found(method)
+    return None
+
+
+def _require_session(request_id: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    session_id = _normalized_non_empty_string(params.get("session_id"))
+    if session_id is None:
+        return None, None, _error_response(request_id, _invalid_params("session_id_required"))
+    session = SERVER_STATE.sessions.get(session_id)
+    if session is None:
+        return session_id, None, _error_response(request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id}))
+    return session_id, session, None
+
+
+def _require_turn(request_id: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    turn_id = _normalized_non_empty_string(params.get("turn_id"))
+    if turn_id is None:
+        return None, None, _error_response(request_id, _invalid_params("turn_id_required"))
+    turn = SERVER_STATE.turns.get(turn_id)
+    if turn is None:
+        return turn_id, None, _error_response(request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id}))
+    return turn_id, turn, None
+
+
+def _extract_required_approval_diff(request_id: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None]:
+    if "unified_diff" in params:
+        raw_diff = params["unified_diff"]
+    elif "diff" in params:
+        raw_diff = params["diff"]
+    else:
+        return None, _error_response(request_id, _invalid_params("diff_required_when_requires_approval"))
+    if not isinstance(raw_diff, str):
+        return None, _error_response(request_id, _invalid_params("diff_must_be_string"))
+    if not raw_diff.strip():
+        return None, _error_response(request_id, _invalid_params("diff_must_be_non_empty_string"))
+    return raw_diff, None
+
+
+def _append_execution_notifications(
+    notifications: list[dict[str, Any]], session_id: str, turn_id: str, user_input: str, tool_call_id: str
+) -> None:
+    notifications.append(
+        _notification(
+            "item/toolCall/started",
+            {
+                "session_id": session_id,
+                "turn_id": turn_id,
+                "tool_call_id": tool_call_id,
+                "tool_name": "in_memory.echo",
+            },
+        )
+    )
+    notifications.append(
+        _notification(
+            "item/toolCall/completed",
+            {
+                "session_id": session_id,
+                "turn_id": turn_id,
+                "tool_call_id": tool_call_id,
+                "output": f"echo:{user_input}",
+            },
+        )
+    )
+    notifications.append(_notification("turn/completed", {"session_id": session_id, "turn_id": turn_id, "status": "completed"}))
+
+
+def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    envelope_error = _validate_request_envelope(request)
+    if envelope_error is not None:
+        request_id = request.get("id")
+        if envelope_error.data and envelope_error.data.get("reason") == "id":
+            request_id = None
+        return _error_response(request_id, envelope_error), []
+
+    method = str(request.get("method"))
 
     params, params_error = _extract_params(request)
     if params_error is not None:
@@ -193,14 +269,10 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
         return maybe_response({"session": _serialize_session(session)}), notifications
 
     if method == "session/resume":
-        session_id = _normalized_non_empty_string(params.get("session_id"))
-        if session_id is None:
-            return _error_response(request_id, _invalid_params("session_id_required")), notifications
-        session = SERVER_STATE.sessions.get(session_id)
-        if session is None:
-            return _error_response(
-                request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})
-            ), notifications
+        _session_id, session, session_error = _require_session(request_id, params)
+        if session_error is not None:
+            return session_error, notifications
+        assert session is not None
         session["status"] = "active"
         return maybe_response({"session": _serialize_session(session)}), notifications
 
@@ -212,26 +284,19 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
         return maybe_response({"sessions": sessions}), notifications
 
     if method == "session/read":
-        session_id = _normalized_non_empty_string(params.get("session_id"))
-        if session_id is None:
-            return _error_response(request_id, _invalid_params("session_id_required")), notifications
-        session = SERVER_STATE.sessions.get(session_id)
-        if session is None:
-            return _error_response(
-                request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})
-            ), notifications
+        _session_id, session, session_error = _require_session(request_id, params)
+        if session_error is not None:
+            return session_error, notifications
+        assert session is not None
         turns = [_serialize_turn(SERVER_STATE.turns[turn_id]) for turn_id in session["turn_ids"]]
         return maybe_response({"session": _serialize_session(session), "turns": turns}), notifications
 
     if method == "turn/submit":
-        session_id = _normalized_non_empty_string(params.get("session_id"))
-        if session_id is None:
-            return _error_response(request_id, _invalid_params("session_id_required")), notifications
-        session = SERVER_STATE.sessions.get(session_id)
-        if session is None:
-            return _error_response(
-                request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})
-            ), notifications
+        session_id, session, session_error = _require_session(request_id, params)
+        if session_error is not None:
+            return session_error, notifications
+        assert session_id is not None
+        assert session is not None
 
         user_input = params.get("input", "")
         if not isinstance(user_input, str):
@@ -241,19 +306,11 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
             return _error_response(request_id, _invalid_params("requires_approval_must_be_boolean")), notifications
 
         requires_approval = params.get("requires_approval", False)
+        approval_diff: str | None = None
         if requires_approval:
-            if "unified_diff" in params:
-                raw_diff = params["unified_diff"]
-            elif "diff" in params:
-                raw_diff = params["diff"]
-            else:
-                return _error_response(
-                    request_id, _invalid_params("diff_required_when_requires_approval")
-                ), notifications
-            if not isinstance(raw_diff, str):
-                return _error_response(request_id, _invalid_params("diff_must_be_string")), notifications
-            if not raw_diff.strip():
-                return _error_response(request_id, _invalid_params("diff_must_be_non_empty_string")), notifications
+            approval_diff, approval_diff_error = _extract_required_approval_diff(request_id, params)
+            if approval_diff_error is not None:
+                return approval_diff_error, notifications
 
         turn_id = SERVER_STATE.next_turn_id()
         turn = {
@@ -281,7 +338,7 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
 
         if requires_approval:
             approval_id = SERVER_STATE.next_approval_id()
-            approval_diff = params["unified_diff"] if "unified_diff" in params else params["diff"]
+            assert approval_diff is not None
             turn["status"] = "awaiting_approval"
             turn["approval_id"] = approval_id
             approval = {
@@ -319,50 +376,16 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
 
         tool_call_id = SERVER_STATE.next_tool_call_id()
         turn["tool_call_id"] = tool_call_id
-        notifications.append(
-            _notification(
-                "item/toolCall/started",
-                {
-                    "session_id": session_id,
-                    "turn_id": turn_id,
-                    "tool_call_id": tool_call_id,
-                    "tool_name": "in_memory.echo",
-                },
-            )
-        )
-        notifications.append(
-            _notification(
-                "item/toolCall/completed",
-                {
-                    "session_id": session_id,
-                    "turn_id": turn_id,
-                    "tool_call_id": tool_call_id,
-                    "output": f"echo:{user_input}",
-                },
-            )
-        )
+        _append_execution_notifications(notifications, session_id, turn_id, user_input, tool_call_id)
         turn["status"] = "completed"
-        notifications.append(
-            _notification(
-                "turn/completed",
-                {
-                    "session_id": session_id,
-                    "turn_id": turn_id,
-                    "status": turn["status"],
-                },
-            )
-        )
         return maybe_response({"turn": _serialize_turn(turn)}), notifications
 
     if method == "turn/cancel":
-        turn_id = _normalized_non_empty_string(params.get("turn_id"))
-        if turn_id is None:
-            return _error_response(request_id, _invalid_params("turn_id_required")), notifications
-        turn = SERVER_STATE.turns.get(turn_id)
-        if turn is None:
-            return _error_response(
-                request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})
-            ), notifications
+        turn_id, turn, turn_error = _require_turn(request_id, params)
+        if turn_error is not None:
+            return turn_error, notifications
+        assert turn_id is not None
+        assert turn is not None
         if turn["status"] in TERMINAL_TURN_STATES:
             return _error_response(
                 request_id,
@@ -415,39 +438,8 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
             approval["status"] = "granted"
             tool_call_id = SERVER_STATE.next_tool_call_id()
             turn["tool_call_id"] = tool_call_id
-            notifications.append(
-                _notification(
-                    "item/toolCall/started",
-                    {
-                        "session_id": turn["session_id"],
-                        "turn_id": turn_id,
-                        "tool_call_id": tool_call_id,
-                        "tool_name": "in_memory.echo",
-                    },
-                )
-            )
-            notifications.append(
-                _notification(
-                    "item/toolCall/completed",
-                    {
-                        "session_id": turn["session_id"],
-                        "turn_id": turn_id,
-                        "tool_call_id": tool_call_id,
-                        "output": f"echo:{turn['input']}",
-                    },
-                )
-            )
+            _append_execution_notifications(notifications, turn["session_id"], turn_id, turn["input"], tool_call_id)
             turn["status"] = "completed"
-            notifications.append(
-                _notification(
-                    "turn/completed",
-                    {
-                        "session_id": turn["session_id"],
-                        "turn_id": turn_id,
-                        "status": turn["status"],
-                    },
-                )
-            )
         else:
             approval["status"] = "rejected"
             turn["status"] = "rejected"

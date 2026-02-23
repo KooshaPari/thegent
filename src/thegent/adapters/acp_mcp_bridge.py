@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, cast, get_type_hints
 
 from thegent.adapters.acp_client import ACPClient, ACPClientError, ACPResult
 
@@ -322,7 +322,7 @@ class AcpMcpBridge:
     def _extract_parameters(tool_obj: Any) -> dict[str, Any]:
         """Extract parameter schema from a FastMCP tool object.
 
-        Tries ``parameters``, ``inputSchema``, and ``fn.__annotations__`` in
+        Tries ``parameters``, ``inputSchema``, and ``typing.get_type_hints(fn)`` in
         order, returning whichever yields a usable dict first.
 
         Args:
@@ -344,7 +344,10 @@ class AcpMcpBridge:
         # 3. Annotations from the underlying function
         fn = getattr(tool_obj, "fn", None)
         if fn is not None:
-            annotations = getattr(fn, "__annotations__", {})
+            try:
+                annotations = get_type_hints(fn)
+            except Exception:
+                annotations = {}
             if annotations:
                 return {k: {"type": str(v)} for k, v in annotations.items() if k != "return"}
 

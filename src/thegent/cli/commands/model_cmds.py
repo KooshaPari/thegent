@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -612,20 +613,42 @@ def setup_cmd(
         agents=agents,
         console=console,
     )
-    any_configured = configure_providers(
-        providers=all_providers,
-        overrides=cast("dict[str, str | None]", overrides),
-        wizard=wizard,
-        settings=settings,
-        provider_login_config=PROVIDER_LOGIN_CONFIG,
-        ensure_config=_ensure_config,
-        inject_api_key=_inject_api_key_into_cliproxy,
-        run_login=run_login,
-        yaml_load=yaml_load,
-        yaml_dump=lambda data, **kw: _assert_str(yaml_dump(data, **kw)),
-        prompt_key=prompt_key,
-        console=console,
+    should_delegate_setup = (
+        wizard
+        and os.environ.get("THGENT_SETUP_USE_CLIPROXY", "1") == "1"
+        and not (agents or "").strip()
+        and not any(v for v in overrides.values())
     )
+    if should_delegate_setup:
+        from thegent.agents.cliproxy_manager import _binary_available, _resolve_binary
+
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+        binary = _resolve_binary(settings)
+        if not _binary_available(binary):
+            console.print("[red]Delegated setup failed: cli-proxy-api-plus not found.[/red]")
+            raise typer.Exit(1)
+        config_path = _ensure_config(settings)
+        console.print("\n[bold cyan]Delegating provider setup to cli-proxy-api-plus...[/bold cyan]")
+        proc = run_subprocess_optimized([binary, "-config", str(config_path), "-setup"], check=False)
+        if proc.returncode != 0:
+            console.print(f"[red]Delegated setup failed with exit code {proc.returncode}.[/red]")
+            raise typer.Exit(proc.returncode)
+        any_configured = True
+    else:
+        any_configured = configure_providers(
+            providers=all_providers,
+            overrides=cast("dict[str, str | None]", overrides),
+            wizard=wizard,
+            settings=settings,
+            provider_login_config=PROVIDER_LOGIN_CONFIG,
+            ensure_config=_ensure_config,
+            inject_api_key=_inject_api_key_into_cliproxy,
+            run_login=run_login,
+            yaml_load=yaml_load,
+            yaml_dump=lambda data, **kw: _assert_str(yaml_dump(data, **kw)),
+            prompt_key=prompt_key,
+            console=console,
+        )
 
     env_updated = False
     if model:
