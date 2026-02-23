@@ -4,13 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
-
-_log = logging.getLogger(__name__)
 
 HEALTH_PAYLOAD_SCHEMA_VERSION = "health-schema-v1"
 HEALTH_PAYLOAD_TYPES = (

@@ -84,6 +84,7 @@
       "pythonVersion": "3.12",
       "pythonPlatform": "All",
       "extraPaths": [
+        "src",
         "packages/thegent-agents/src",
         "packages/thegent-cli/src",
         "packages/thegent-mcp/src"

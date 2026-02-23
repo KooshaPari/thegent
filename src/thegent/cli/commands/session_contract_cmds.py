@@ -512,9 +512,9 @@ def inbox_list_cmd(
 
 
 def inbox_wait_cmd(
-    owner: str | None = None,
-    agent: str | None = None,
-    event_type: str | None = None,
+    _owner: str | None = None,
+    _agent: str | None = None,
+    _event_type: str | None = None,
     status: str | None = None,
     sources: str | None = None,
     poll: float = 2.0,
