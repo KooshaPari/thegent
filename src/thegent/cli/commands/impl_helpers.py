@@ -137,7 +137,7 @@ health_snapshot_log_path = run_health_helpers.health_snapshot_log_path
 health_snapshot_max_lines = run_health_helpers.health_snapshot_max_lines
 
 def resolve_health_policy(policy_profile: str | None, strict: bool, min_healthy_ratio: float) -> dict:
-    from thegent.cli.commands.observability_health_impl import HEALTH_POLICY_PROFILES
+    from thegent.cli.commands.observability_health_impl import HEALTH_POLICY_PROFILES  # pyright: ignore[reportMissingImports]
     return run_health_helpers.resolve_health_policy(
         policy_profile=policy_profile,
         strict=strict,

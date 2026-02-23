@@ -21,7 +21,7 @@ def concurrency_show_cmd(format: str | None = None) -> None:
     """Show current concurrency limit and utilization (WP-5001)."""
     from rich.table import Table
 
-    from thegent.cli.commands.session_ops_list_impl import ps_impl
+    from thegent.cli.commands.session_ops_list_impl import ps_impl  # pyright: ignore[reportMissingImports]
     from thegent.orchestration.resource.load_based_limits import (
         LimitGateConfig,
         compute_dynamic_limit,

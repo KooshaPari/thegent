@@ -22,7 +22,7 @@ def handoff_cmd(owner: str) -> None:
     """Create a continuity snapshot for a shift handoff (WP-4006, WP-3008)."""
     settings = ThegentSettings()
 
-    from thegent.cli.commands.observability_main_impl import escalate_list_impl
+    from thegent.cli.commands.observability_main_impl import escalate_list_impl  # pyright: ignore[reportMissingImports]
     from thegent.execution import HandoffManager, RunRegistry
 
     registry = RunRegistry(settings.session_dir)
