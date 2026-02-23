@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # Pre-commit hook to build VitePress docs when docs/ changes
 # Exit on error
-set -e
+set -euo pipefail
 
-# Check if docs/ has changes
+# Determine project root and whether docs files are present in either
+# staged or working-tree changes.
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
 if ! {
   git diff --cached --name-only;
   git diff --name-only;
@@ -12,19 +16,38 @@ if ! {
   exit 0
 fi
 
+required_pm="$(node -p "require('./package.json').packageManager?.split('@')[0] || 'bun'" 2>/dev/null || echo bun)"
+
+case "$required_pm" in
+  bun)
+    if ! command -v bun >/dev/null 2>&1; then
+      echo "Error: packageManager is bun but bun was not found in PATH."
+      echo "Install Bun and ensure it is available before continuing."
+      exit 1
+    fi
+    ;;
+  pnpm)
+    if ! command -v pnpm >/dev/null 2>&1; then
+      echo "Error: packageManager is pnpm but pnpm was not found in PATH."
+      echo "Install pnpm and ensure it is available before continuing."
+      exit 1
+    fi
+    ;;
+  *)
+    echo "Error: unsupported packageManager '${required_pm}' in package.json."
+    echo "Supported values: bun, pnpm."
+    exit 1
+    ;;
+esac
+
 echo "Docs changes detected, building docsite..."
-
-# Check if pnpm is available
-if ! command -v pnpm &> /dev/null; then
-  echo "Error: pnpm not found. Please install pnpm first."
-  exit 1
+if [[ "$required_pm" == "bun" ]]; then
+  bun run docs:build
+else
+  pnpm run docs:build
 fi
-
-# Build the docsite (run from root where package.json exists)
-cd "$(git rev-parse --show-toplevel)"
-pnpm run docs:build
 
 echo "Docsite built successfully!"
 
-# Stage the built files
+# Stage generated artifacts so downstream hooks and checks see updated files.
 git add docs-dist/

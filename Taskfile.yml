@@ -1403,38 +1403,26 @@ tasks:
     deps: [docs:demos]
     cmds:
       - |
-        if command -v bun >/dev/null 2>&1; then
-          bun run docs:build
-        else
-          pnpm docs:build
-        fi
+        bun run docs:build
 
   docs:watch:
     desc: Watch docs and rebuild on change
     cmds:
       - |
-        if command -v bun >/dev/null 2>&1; then
-          bun run docs:dev
-        else
-          pnpm docs:dev
-        fi
+        bun run docs:dev
 
   docs:serve:
     desc: Serve docsite locally with hot reload
     cmds:
       - |
-        if command -v bun >/dev/null 2>&1; then
-          bun run docs:preview
-        else
-          pnpm docs:preview
-        fi
+        bun run docs:preview
 
   docs:pdf:
     desc: Export docsite to PDF
     env:
       PUPPETEER_EXECUTABLE_PATH: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
     cmds:
-      - pnpm docs:pdf
+      - bun run docs:pdf
 
   docs:convert-audit:
     desc: Audit docs/*.md for H1, frontmatter, See also (convert phase)
