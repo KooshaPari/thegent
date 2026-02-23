@@ -3,7 +3,6 @@ Zed Editor Integration - IDE-like functionality.
 """
 import logging
 import os
-import subprocess
 from dataclasses import dataclass
 from enum import Enum
 
@@ -19,7 +18,7 @@ class ZedConfig:
     binary_path: str = ""
 
 class ZedEditor:
-    def __init__(self, config: ZedConfig = None):
+    def __init__(self, config: ZedConfig | None = None):
         self._config = config or self._load_config()
         self._status = ZedStatus.DISABLED
         if self._config.enabled:
