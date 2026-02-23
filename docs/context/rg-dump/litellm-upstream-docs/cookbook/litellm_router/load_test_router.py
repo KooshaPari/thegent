@@ -54,7 +54,7 @@ questions = []
 for file_path in file_paths:
     try:
         print(file_path)
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             content = file.read()
             questions.append(content)
     except FileNotFoundError as e:
@@ -136,8 +136,8 @@ print(f"Successful Calls: {successful_calls}")
 print(f"Failed Calls: {failed_calls}")
 
 # Display content of the logs
-with open("request_log.txt", "r") as log_file:
+with open("request_log.txt") as log_file:
     print("\nRequest Log:\n", log_file.read())
 
-with open("error_log.txt", "r") as error_log_file:
+with open("error_log.txt") as error_log_file:
     print("\nError Log:\n", error_log_file.read())

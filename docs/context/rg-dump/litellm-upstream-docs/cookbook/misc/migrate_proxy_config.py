@@ -20,7 +20,7 @@ _in_memory_os_variables = {}
 
 def migrate_models(config_file, proxy_base_url):
     # Step 1: Read the config.yaml file
-    with open(config_file, "r") as f:
+    with open(config_file) as f:
         config = yaml.safe_load(f)
 
     # Step 2: Read the model_list and loop through all models

@@ -15,12 +15,12 @@ from thegent.utils.routing_impl.circuit_breaker import (
 
 class ConnectorConfigAdapter:
     """Adapter for connector-specific configuration."""
-    
+
     def __init__(self, config: Any):
         self.config = config
         self._breaker_registry = ProviderCircuitBreakerRegistry.get_instance()
         self._error_budgets: dict[str, ErrorBudgetTracker] = {}
-    
+
     def get_connector_breaker(self, connector: str) -> Any:
         """Get circuit breaker for connector."""
         cb_config = ProviderCircuitBreakerConfig(
@@ -29,7 +29,7 @@ class ConnectorConfigAdapter:
             timeout_sec=max(0.1, self.config.connector_circuit_breaker_timeout_seconds),
         )
         return self._breaker_registry.get(connector, config=cb_config)
-    
+
     def get_connector_timeout(self, connector: str, direction: str) -> float:
         """Get timeout for connector operation."""
         if connector == "github" and direction == "write":
@@ -41,7 +41,7 @@ class ConnectorConfigAdapter:
         if connector == "linear" and direction == "read":
             return max(0.001, self.config.linear_read_timeout_seconds)
         raise ValueError(f"Unsupported connector timeout target: {connector}/{direction}")
-    
+
     def get_error_budget(self, connector: str) -> ErrorBudgetTracker:
         """Get error budget tracker for connector."""
         normalized = connector.lower()
@@ -54,7 +54,7 @@ class ConnectorConfigAdapter:
                 ),
             )
         return self._error_budgets[normalized]
-    
+
     def create_rate_limiter(self) -> RateLimitBackoffManager:
         """Create rate limiter with config."""
         return RateLimitBackoffManager(

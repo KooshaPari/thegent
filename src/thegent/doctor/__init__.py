@@ -16,7 +16,7 @@ Import from here or directly from submodules:
 # Re-export from original checks_env module
 from .checks_env import check_environment, check_shim_binaries
 
-# Re-export from core module  
+# Re-export from core module
 from .core import ProcessInfo, run_doctor
 
 # Re-export from checks module
@@ -66,6 +66,9 @@ spec.loader.exec_module(_doctor_impl)
 _check_mcp_tools = _doctor_impl._check_mcp_tools
 _apply_fixes = _doctor_impl._apply_fixes
 _display_fix_report = _doctor_impl._display_fix_report
+_check_runtime_infrastructure = _doctor_impl._check_runtime_infrastructure
+_display_results = _doctor_impl._display_results
+_check_project_hints = _doctor_impl._check_project_hints
 
 __all__ = [
     # Core
@@ -100,6 +103,9 @@ __all__ = [
     "_check_mcp_tools",
     "_apply_fixes",
     "_display_fix_report",
+    "_check_runtime_infrastructure",
+    "_display_results",
+    "_check_project_hints",
     # Models
     "CheckResult",
 ]

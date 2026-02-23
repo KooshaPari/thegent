@@ -43,10 +43,10 @@ class AgentMemory:
     agent_id: str                               # Agent that owns this memory
     memory_type: MemoryType                     # Type of memory
     timestamp: float                            # When it occurred
-    content: Dict[str, Any] = field(default_factory=dict)  # Main data
+    content: dict[str, Any] = field(default_factory=dict)  # Main data
 
     # Metadata
-    context: Dict[str, str] = field(default_factory=dict)  # Tags, session_id, project
+    context: dict[str, str] = field(default_factory=dict)  # Tags, session_id, project
     importance: float = 0.5                     # 0.0-1.0 (for prioritization)
     verified: bool = False                      # Validated by human or peer?
 
@@ -67,7 +67,7 @@ class MemoryService:
             self.base_path = base_path
 
         self.base_path.mkdir(parents=True, exist_ok=True)
-        self.memory_cache: Dict[str, List[AgentMemory]] = {}  # In-memory cache
+        self.memory_cache: dict[str, list[AgentMemory]] = {}  # In-memory cache
 
     def _get_agent_dir(self, agent_id: str) -> Path:
         """Get directory for agent's memories.
@@ -136,7 +136,7 @@ class MemoryService:
             print(f"Error storing memory: {e}")
             return False
 
-    def _load_agent_memories(self, agent_id: str) -> List[AgentMemory]:
+    def _load_agent_memories(self, agent_id: str) -> list[AgentMemory]:
         """Load all memories for an agent from disk.
 
         Args:
@@ -155,7 +155,7 @@ class MemoryService:
             return memories
 
         try:
-            with open(memory_file, 'r') as f:
+            with open(memory_file) as f:
                 for line in f:
                     if line.strip():
                         try:
@@ -185,7 +185,7 @@ class MemoryService:
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         limit: Optional[int] = None,
-    ) -> List[AgentMemory]:
+    ) -> list[AgentMemory]:
         """Query agent memories with optional filters.
 
         Args:
@@ -219,7 +219,7 @@ class MemoryService:
 
         return memories
 
-    def _compute_fresh_stats(self, agent_id: str) -> Dict[str, Any]:
+    def _compute_fresh_stats(self, agent_id: str) -> dict[str, Any]:
         """Compute fresh statistics from all memories for an agent.
 
         Args:
@@ -278,7 +278,7 @@ class MemoryService:
 
         return stats
 
-    def get_agent_stats(self, agent_id: str) -> Dict[str, Any]:
+    def get_agent_stats(self, agent_id: str) -> dict[str, Any]:
         """Get aggregated statistics for an agent.
 
         Args:
@@ -291,7 +291,7 @@ class MemoryService:
 
         if stats_file.exists():
             try:
-                with open(stats_file, 'r') as f:
+                with open(stats_file) as f:
                     return json.load(f)
             except Exception:
                 pass
@@ -304,7 +304,7 @@ class MemoryService:
 
         return stats
 
-    def _save_stats(self, stats: Dict[str, Any]) -> None:
+    def _save_stats(self, stats: dict[str, Any]) -> None:
         """Save stats to disk.
 
         Args:
@@ -328,7 +328,7 @@ class MemoryService:
         stats_file = self._get_stats_file(agent_id)
         if stats_file.exists():
             try:
-                with open(stats_file, 'r') as f:
+                with open(stats_file) as f:
                     stats = json.load(f)
             except Exception:
                 # If can't read, initialize fresh
@@ -443,7 +443,7 @@ class MemoryService:
         agent_id: str,
         min_importance: float = 0.5,
         limit: int = 10,
-    ) -> List[AgentMemory]:
+    ) -> list[AgentMemory]:
         """Get agent's most important memories.
 
         Args:
@@ -464,7 +464,7 @@ class MemoryService:
 
         return important[:limit]
 
-    def get_learning_summary(self, agent_id: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def get_learning_summary(self, agent_id: str, limit: int = 5) -> list[dict[str, Any]]:
         """Get agent's recent learnings in summarized form.
 
         Args:

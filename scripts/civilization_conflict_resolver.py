@@ -48,10 +48,10 @@ class ConflictRecord:
     conflict_type: ConflictType
     detected_at: float
     resolved_at: Optional[float] = None
-    involved_agents: List[str] = field(default_factory=list)
+    involved_agents: list[str] = field(default_factory=list)
     resolution_strategy: Optional[ResolutionStrategy] = None
     resolution_winner: Optional[str] = None
-    resolution_details: Dict = field(default_factory=dict)
+    resolution_details: dict = field(default_factory=dict)
     resolved: bool = False
 
 
@@ -71,21 +71,21 @@ class ConflictResolver:
         # Conflict log storage
         self.conflict_log_path = Path(os.path.expanduser("~/.claude/civilization/conflicts.json"))
         self.conflict_log_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conflicts: List[ConflictRecord] = self._load_conflict_log()
+        self.conflicts: list[ConflictRecord] = self._load_conflict_log()
 
-    def _load_conflict_log(self) -> List[ConflictRecord]:
+    def _load_conflict_log(self) -> list[ConflictRecord]:
         """Load conflict log from disk."""
         if not self.conflict_log_path.exists():
             return []
 
         try:
-            with open(self.conflict_log_path, 'r') as f:
+            with open(self.conflict_log_path) as f:
                 data = json.load(f)
                 return [self._deserialize_conflict_record(item) for item in data]
         except (json.JSONDecodeError, KeyError):
             return []
 
-    def _deserialize_conflict_record(self, data: Dict) -> ConflictRecord:
+    def _deserialize_conflict_record(self, data: dict) -> ConflictRecord:
         """Deserialize conflict record from JSON."""
         data_copy = data.copy()
         data_copy['conflict_type'] = ConflictType[data_copy['conflict_type']]
@@ -106,7 +106,7 @@ class ConflictResolver:
         with open(self.conflict_log_path, 'w') as f:
             json.dump(conflict_dicts, f, indent=2)
 
-    def detect_conflicts(self) -> List[ConflictRecord]:
+    def detect_conflicts(self) -> list[ConflictRecord]:
         """Detect all conflicts in the current registry state.
 
         Returns:
@@ -157,7 +157,7 @@ class ConflictResolver:
         self._save_conflict_log()
         return new_conflicts
 
-    def _detect_duplicate_registrations(self) -> List[Tuple[str, str]]:
+    def _detect_duplicate_registrations(self) -> list[tuple[str, str]]:
         """Detect agents registered under different IDs.
 
         Returns:
@@ -181,7 +181,7 @@ class ConflictResolver:
 
         return duplicates
 
-    def _detect_parent_reference_conflicts(self) -> List[Tuple[str, str]]:
+    def _detect_parent_reference_conflicts(self) -> list[tuple[str, str]]:
         """Detect agents with invalid parent references.
 
         Returns:
@@ -200,7 +200,7 @@ class ConflictResolver:
 
         return conflicts
 
-    def _detect_circular_dependencies(self) -> List[Set[str]]:
+    def _detect_circular_dependencies(self) -> list[set[str]]:
         """Detect circular parent-child relationships.
 
         Returns:
@@ -214,7 +214,7 @@ class ConflictResolver:
         visited = set()
         rec_stack = set()
 
-        def has_cycle(agent_id: str, path: Set[str]) -> Optional[Set[str]]:
+        def has_cycle(agent_id: str, path: set[str]) -> Optional[set[str]]:
             """DFS to detect cycles."""
             visited.add(agent_id)
             path.add(agent_id)
@@ -299,12 +299,11 @@ class ConflictResolver:
         """
         if conflict.conflict_type == ConflictType.DUPLICATE_REGISTRATION:
             return ResolutionStrategy.LAST_WRITE_WINS
-        elif conflict.conflict_type == ConflictType.CIRCULAR_DEPENDENCY:
+        if conflict.conflict_type == ConflictType.CIRCULAR_DEPENDENCY:
             return ResolutionStrategy.MERGE
-        elif conflict.conflict_type == ConflictType.PARENT_REFERENCE_CONFLICT:
+        if conflict.conflict_type == ConflictType.PARENT_REFERENCE_CONFLICT:
             return ResolutionStrategy.LAST_WRITE_WINS
-        else:
-            return ResolutionStrategy.LAST_WRITE_WINS
+        return ResolutionStrategy.LAST_WRITE_WINS
 
     def _resolve_lww(self, conflict: ConflictRecord) -> Optional[str]:
         """Resolve using Last-Write-Wins strategy.
@@ -416,7 +415,7 @@ class ConflictResolver:
 
         return primary_id
 
-    def get_conflicts_by_agent(self, agent_id: str) -> List[ConflictRecord]:
+    def get_conflicts_by_agent(self, agent_id: str) -> list[ConflictRecord]:
         """Get all conflicts involving a specific agent.
 
         Args:
@@ -427,7 +426,7 @@ class ConflictResolver:
         """
         return [c for c in self.conflicts if agent_id in c.involved_agents]
 
-    def get_unresolved_conflicts(self) -> List[ConflictRecord]:
+    def get_unresolved_conflicts(self) -> list[ConflictRecord]:
         """Get all unresolved conflicts.
 
         Returns:
@@ -435,7 +434,7 @@ class ConflictResolver:
         """
         return [c for c in self.conflicts if not c.resolved]
 
-    def get_conflicts_since(self, timestamp: float) -> List[ConflictRecord]:
+    def get_conflicts_since(self, timestamp: float) -> list[ConflictRecord]:
         """Get all conflicts detected since a specific time.
 
         Args:
@@ -446,7 +445,7 @@ class ConflictResolver:
         """
         return [c for c in self.conflicts if c.detected_at >= timestamp]
 
-    def get_conflict_summary(self) -> Dict:
+    def get_conflict_summary(self) -> dict:
         """Get summary statistics about conflicts.
 
         Returns:

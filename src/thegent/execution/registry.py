@@ -156,9 +156,9 @@ class CheckpointRegistry:
 __all__ = [
     "AuditEntry",
     "AuditRegistry",
-    "CheckpointRegistry",
     "ChatEntry",
     "ChatHistory",
+    "CheckpointRegistry",
     "MessageEntry",
     "MessageRegistry",
     "RunRegistry",

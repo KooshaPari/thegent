@@ -72,7 +72,7 @@ class AgentMetrics:
     last_activity: float = field(default_factory=time.time)
     task_progress: int = 0
     restart_count: int = 0
-    restart_timestamps: List[float] = field(default_factory=list)
+    restart_timestamps: list[float] = field(default_factory=list)
     cpu_percent: float = 0.0
     memory_percent: float = 0.0
     open_files: int = 0
@@ -81,7 +81,7 @@ class AgentMetrics:
     slo_breaches: int = 0
     session_start_time: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "agent_id": self.agent_id,
@@ -102,7 +102,7 @@ class AgentMetrics:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AgentMetrics":
+    def from_dict(cls, data: dict[str, Any]) -> "AgentMetrics":
         """Create from dictionary."""
         data = data.copy()
         if "status" in data and isinstance(data["status"], str):
@@ -138,7 +138,7 @@ class Config:
     backpressure_claimed_threshold: int = 10
 
     # Restart backoff (seconds)
-    restart_backoff: List[int] = field(default_factory=lambda: [2, 4, 8, 16])
+    restart_backoff: list[int] = field(default_factory=lambda: [2, 4, 8, 16])
 
     # Logging
     log_file: str = ".claude/swarm_controller.log"
@@ -168,7 +168,7 @@ class ResourceManager:
         self.config = config
         self.logger = logging.getLogger(__name__)
 
-    def get_agent_resources(self, pid: Optional[int]) -> Tuple[float, float, int]:
+    def get_agent_resources(self, pid: Optional[int]) -> tuple[float, float, int]:
         """Get CPU%, memory%, and open file count for agent process.
 
         Returns:
@@ -186,7 +186,7 @@ class ResourceManager:
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return 0.0, 0.0, 0
 
-    def get_system_resources(self) -> Tuple[float, float]:
+    def get_system_resources(self) -> tuple[float, float]:
         """Get overall system CPU% and memory%.
 
         Returns:
@@ -211,7 +211,7 @@ class QueueManager:
         self.config = config
         self.logger = logging.getLogger(__name__)
 
-    def get_queue_stats(self) -> Dict[str, int]:
+    def get_queue_stats(self) -> dict[str, int]:
         """Get current queue statistics from WORK_STREAM.md."""
         work_stream = Path(self.config.work_stream_file)
         if not work_stream.exists():
@@ -278,7 +278,7 @@ class ScalingDecision:
 
     def should_scale(
         self,
-        queue_stats: Dict[str, int],
+        queue_stats: dict[str, int],
         current_agents: int,
         resource_available: bool,
     ) -> ScalingDirection:
@@ -301,7 +301,7 @@ class ScalingDecision:
 
     def get_target_agent_count(
         self,
-        queue_stats: Dict[str, int],
+        queue_stats: dict[str, int],
         current_agents: int,
         resource_available: bool,
     ) -> int:
@@ -310,7 +310,7 @@ class ScalingDecision:
 
         if direction == ScalingDirection.UP:
             return min(current_agents + 1, self.config.max_concurrent_agents)
-        elif direction == ScalingDirection.DOWN:
+        if direction == ScalingDirection.DOWN:
             return max(current_agents - 1, self.config.min_concurrent_agents)
 
         return current_agents
@@ -354,7 +354,7 @@ class AgentHealthMonitor:
 
     def monitor_all_agents(
         self,
-        metrics_dict: Dict[str, AgentMetrics],
+        metrics_dict: dict[str, AgentMetrics],
     ) -> None:
         """Monitor all agents and update status."""
         for agent_id, metrics in metrics_dict.items():
@@ -385,7 +385,7 @@ class SwarmController:
         self.queue_manager = QueueManager(config)
         self.restart_policy = RestartPolicy(config)
         self.scaling_decision = ScalingDecision(config)
-        self.metrics: Dict[str, AgentMetrics] = {}
+        self.metrics: dict[str, AgentMetrics] = {}
         self._load_state()
 
         # Phase 1 Integration: Agent Identity System
@@ -393,7 +393,7 @@ class SwarmController:
         self.agent_factory = None
         self.l1_agent_id = None
         self.project_name = self._detect_project_name()
-        self.agent_id_map: Dict[str, str] = {}  # Maps local ID to registry ID
+        self.agent_id_map: dict[str, str] = {}  # Maps local ID to registry ID
 
         # Phase 3a: Stale agent cleanup
         self.cycle_count = 0
@@ -788,7 +788,7 @@ class SwarmController:
             self.logger.info("Monitor interrupted by user")
             self._save_state()
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get current swarm status."""
         queue_stats = self.queue_manager.get_queue_stats()
         cpu, memory = self.resource_manager.get_system_resources()
@@ -844,7 +844,7 @@ class SwarmController:
 
         return "\n".join(lines)
 
-    def get_civilization_status(self) -> Dict[str, Any]:
+    def get_civilization_status(self) -> dict[str, Any]:
         """Phase 3C: Get civilization-wide status for dashboard."""
         if not self.agent_registry or not AGENT_IDENTITY_AVAILABLE:
             return {"error": "Registry not available"}
@@ -894,7 +894,7 @@ class SwarmController:
             self.logger.debug(f"Phase 3C: Failed to get civilization status: {e}")
             return {"error": str(e)}
 
-    def get_agents_by_level(self, level: str) -> Dict[str, Any]:
+    def get_agents_by_level(self, level: str) -> dict[str, Any]:
         """Phase 3C: Query agents by level (L1, L2, or L3)."""
         if not self.agent_registry or not AGENT_IDENTITY_AVAILABLE:
             return {"error": "Registry not available"}
@@ -916,7 +916,7 @@ class SwarmController:
             self.logger.debug(f"Phase 3C: Failed to query level {level}: {e}")
             return {"error": str(e)}
 
-    def get_agents_by_project(self, project: str) -> Dict[str, Any]:
+    def get_agents_by_project(self, project: str) -> dict[str, Any]:
         """Phase 3C: Query agents by project."""
         if not self.agent_registry or not AGENT_IDENTITY_AVAILABLE:
             return {"error": "Registry not available"}

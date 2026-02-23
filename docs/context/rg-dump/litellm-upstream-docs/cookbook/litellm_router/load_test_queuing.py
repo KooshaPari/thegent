@@ -54,7 +54,7 @@ questions = []
 for file_path in file_paths:
     try:
         print(file_path)
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             content = file.read()
             questions.append(content)
     except FileNotFoundError as e:

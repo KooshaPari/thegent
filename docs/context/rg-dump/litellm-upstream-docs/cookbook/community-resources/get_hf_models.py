@@ -72,8 +72,7 @@ def write_to_txt(cleaned_models, filename):
     :param filename: name of the text file
     """
     with open(filename, "w") as f:
-        for item in cleaned_models:
-            f.write("%s\n" % item)
+        f.writelines("%s\n" % item for item in cleaned_models)
 
 
 # Write contents of cleaned_text_generation_models to text_generation_models.txt

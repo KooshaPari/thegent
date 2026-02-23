@@ -52,11 +52,11 @@ class RealtimeClient:
     async def connect(self):
         """Connect to LiteLLM proxy realtime endpoint."""
         print(f"Connecting to {self.url}...")
-        
+
         headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        
+
         self.ws = await websockets.connect(
             self.url,
             additional_headers=headers,
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     print("2. Bedrock is configured in proxy_server_config.yaml")
     print("3. AWS credentials are set")
     print()
-    
+
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

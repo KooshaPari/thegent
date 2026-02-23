@@ -34,7 +34,6 @@ class MemoryStorage(ABC):
     @abstractmethod
     def store(self, memory: "AgentMemory") -> bool:
         """Store a memory record."""
-        pass
 
     @abstractmethod
     def query(
@@ -44,24 +43,20 @@ class MemoryStorage(ABC):
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         limit: Optional[int] = None,
-    ) -> List["AgentMemory"]:
+    ) -> list["AgentMemory"]:
         """Query memories with optional filters."""
-        pass
 
     @abstractmethod
-    def get_stats(self, agent_id: str) -> Dict[str, Any]:
+    def get_stats(self, agent_id: str) -> dict[str, Any]:
         """Get aggregated statistics for an agent."""
-        pass
 
     @abstractmethod
     def purge_old(self, agent_id: str, ttl_seconds: int) -> int:
         """Delete old memories older than TTL."""
-        pass
 
     @abstractmethod
     def clear(self, agent_id: str) -> bool:
         """Delete all memories for an agent."""
-        pass
 
 
 class SQLiteMemoryStorage(MemoryStorage):
@@ -200,7 +195,7 @@ class SQLiteMemoryStorage(MemoryStorage):
                 (memory.memory_id, keyword),
             )
 
-    def _extract_keywords(self, content: Dict[str, Any]) -> List[str]:
+    def _extract_keywords(self, content: dict[str, Any]) -> list[str]:
         """Extract keywords from memory content."""
         keywords = []
 
@@ -223,7 +218,7 @@ class SQLiteMemoryStorage(MemoryStorage):
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         limit: Optional[int] = None,
-    ) -> List["AgentMemory"]:
+    ) -> list["AgentMemory"]:
         """Query memories from SQLite."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -287,7 +282,7 @@ class SQLiteMemoryStorage(MemoryStorage):
                 return member
         return type_str
 
-    def search(self, agent_id: str, query: str, limit: int = 10) -> List["AgentMemory"]:
+    def search(self, agent_id: str, query: str, limit: int = 10) -> list["AgentMemory"]:
         """Search memories by keywords (Phase 6 feature)."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -349,7 +344,7 @@ class SQLiteMemoryStorage(MemoryStorage):
             print(f"Error searching memories: {e}")
             return []
 
-    def get_stats(self, agent_id: str) -> Dict[str, Any]:
+    def get_stats(self, agent_id: str) -> dict[str, Any]:
         """Get statistics for an agent from SQLite."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -438,7 +433,7 @@ class SQLiteMemoryStorage(MemoryStorage):
                 placeholders = ",".join("?" * len(memory_ids))
                 cursor.execute(f"DELETE FROM memory_index WHERE memory_id IN ({placeholders})", memory_ids)
                 cursor.execute(
-                    f"DELETE FROM memories WHERE agent_id = ? AND timestamp < ?",
+                    "DELETE FROM memories WHERE agent_id = ? AND timestamp < ?",
                     (agent_id, cutoff_time),
                 )
 
@@ -526,7 +521,7 @@ class SQLiteMemoryStorage(MemoryStorage):
 
     def get_related_memories(
         self, memory_id: str, min_strength: float = 0.0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get memories related to a given memory.
 
         Args:
@@ -566,7 +561,7 @@ class SQLiteMemoryStorage(MemoryStorage):
             print(f"Error getting related memories: {e}")
             return []
 
-    def get_relationship_graph(self, agent_id: str) -> Dict[str, Any]:
+    def get_relationship_graph(self, agent_id: str) -> dict[str, Any]:
         """Get the relationship graph for all memories of an agent.
 
         Args:
@@ -666,7 +661,7 @@ class JSONLMemoryStorage(MemoryStorage):
         start_time: Optional[float] = None,
         end_time: Optional[float] = None,
         limit: Optional[int] = None,
-    ) -> List["AgentMemory"]:
+    ) -> list["AgentMemory"]:
         """Query memories from JSONL file."""
         memory_file = self._get_memory_file(agent_id)
         if not memory_file.exists():
@@ -674,7 +669,7 @@ class JSONLMemoryStorage(MemoryStorage):
 
         memories = []
         try:
-            with open(memory_file, "r") as f:
+            with open(memory_file) as f:
                 for line in f:
                     if line.strip():
                         try:
@@ -706,7 +701,7 @@ class JSONLMemoryStorage(MemoryStorage):
 
         return memories
 
-    def search(self, agent_id: str, query: str, limit: int = 10) -> List["AgentMemory"]:
+    def search(self, agent_id: str, query: str, limit: int = 10) -> list["AgentMemory"]:
         """Search memories by content (simple text search)."""
         memories = self.query(agent_id, limit=100)
         query_lower = query.lower()
@@ -721,7 +716,7 @@ class JSONLMemoryStorage(MemoryStorage):
 
         return results
 
-    def get_stats(self, agent_id: str) -> Dict[str, Any]:
+    def get_stats(self, agent_id: str) -> dict[str, Any]:
         """Get statistics for an agent from JSONL."""
         memories = self.query(agent_id)
 

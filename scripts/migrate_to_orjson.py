@@ -56,17 +56,17 @@ def main():
     if not check_orjson_installed():
         print("ERROR: orjson not installed. Run: pip install orjson")
         sys.exit(1)
-    
+
     print("=== ORJSON MIGRATION PLAN ===\n")
     print(f"Total files importing json: {len(get_files_needing_migration())}")
     print("\n--- HIGH PRIORITY (30+ usages) ---")
     for f, count in HIGH_PRIORITY_FILES:
         print(f"  {f}: {count} uses")
-    
+
     print("\n--- MEDIUM PRIORITY (10-30 usages) ---")
     for f, count in MEDIUM_PRIORITY_FILES:
         print(f"  {f}: {count} uses")
-    
+
     print("\n--- MIGRATION STEPS ---")
     print("1. Replace 'import json' with:")
     print("   try:")
@@ -75,17 +75,17 @@ def main():
     print("   except ImportError:")
     print("       import json")
     print("       JSON = json")
-    print("")
+    print()
     print("2. Replace json.dumps(x).decode().decode():")
     print("   - JSON.dumps(x) -> JSON.dumps(x).decode() if str needed")
     print("   - json.dumps(x).decode().decode() -> orjson.dumps(x).decode().decode() if bytes OK")
-    print("")
+    print()
     print("3. Replace json.loads(x):")
     print("   - JSON.loads(x) works for both str and bytes")
-    print("")
+    print()
     print("4. Replace json.load(f) / json.dump(d, f):")
     print("   - Need wrapper: load(f) -> orjson.loads(f.read())")
-    print("")
+    print()
 
 if __name__ == "__main__":
     main()

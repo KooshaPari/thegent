@@ -68,7 +68,7 @@ class AgentStatus:
     last_heartbeat: Optional[float] = None
     created_at: Optional[float] = None
     parent_id: Optional[str] = None
-    children_ids: List[str] = field(default_factory=list)
+    children_ids: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -88,8 +88,8 @@ class DashboardOverview:
     total_agents: int
     active_count: int
     stale_count: int
-    by_level: Dict[str, Dict[str, int]]  # level -> {total, active, stale}
-    by_project: Dict[str, Dict[str, int]]  # project -> {total, active, stale}
+    by_level: dict[str, dict[str, int]]  # level -> {total, active, stale}
+    by_project: dict[str, dict[str, int]]  # project -> {total, active, stale}
     timestamp: float
 
 
@@ -98,9 +98,9 @@ class DashboardProject:
     """Project-specific dashboard."""
     project: str
     agent_count: int
-    hierarchy: Dict[str, Any]  # Tree structure of agents
-    recent_activity: List[Dict[str, Any]]
-    conflicts: List[Dict[str, Any]]
+    hierarchy: dict[str, Any]  # Tree structure of agents
+    recent_activity: list[dict[str, Any]]
+    conflicts: list[dict[str, Any]]
     timestamp: float
 
 
@@ -113,10 +113,10 @@ class DashboardAgent:
     last_heartbeat_seconds_ago: Optional[float]
     created_seconds_ago: Optional[float]
     metrics: MetricsSnapshot
-    memory_summary: Dict[str, Any]
-    relationships: Dict[str, Any]
+    memory_summary: dict[str, Any]
+    relationships: dict[str, Any]
     timestamp: float
-    analytics: Dict[str, Any] = field(default_factory=dict)
+    analytics: dict[str, Any] = field(default_factory=dict)
 
 
 class DashboardService:
@@ -316,7 +316,7 @@ class DashboardService:
         time_since_heartbeat = time.time() - agent.last_heartbeat
         return time_since_heartbeat >= 300
 
-    def _build_project_hierarchy(self, project: str) -> Dict[str, Any]:
+    def _build_project_hierarchy(self, project: str) -> dict[str, Any]:
         """Build agent hierarchy tree for a project.
 
         Args:
@@ -349,7 +349,7 @@ class DashboardService:
 
         return hierarchy
 
-    def _get_recent_activity(self, project: str) -> List[Dict[str, Any]]:
+    def _get_recent_activity(self, project: str) -> list[dict[str, Any]]:
         """Get recent activity for a project.
 
         Args:
@@ -384,7 +384,7 @@ class DashboardService:
 
         return recent_memories[:10]
 
-    def _get_project_conflicts(self, project: str) -> List[Dict[str, Any]]:
+    def _get_project_conflicts(self, project: str) -> list[dict[str, Any]]:
         """Get conflicts for a project.
 
         Args:
@@ -443,7 +443,7 @@ class DashboardService:
 
         return metrics
 
-    def _get_memory_summary(self, agent_id: str) -> Dict[str, Any]:
+    def _get_memory_summary(self, agent_id: str) -> dict[str, Any]:
         """Get memory summary for an agent.
 
         Args:
@@ -492,7 +492,7 @@ class DashboardService:
 
         return summary
 
-    def _get_agent_relationships(self, agent_id: str, agent: Any) -> Dict[str, Any]:
+    def _get_agent_relationships(self, agent_id: str, agent: Any) -> dict[str, Any]:
         """Get agent relationships (parent, siblings, children).
 
         Args:
@@ -529,7 +529,7 @@ class DashboardService:
 
         return relationships
 
-    def _get_analytics_summary(self, agent_id: str) -> Dict[str, Any]:
+    def _get_analytics_summary(self, agent_id: str) -> dict[str, Any]:
         """Get analytics summary for an agent using MemoryAnalytics.
 
         Args:
@@ -588,7 +588,7 @@ class DashboardService:
 
     # ========== Serialization Helpers ==========
 
-    def overview_to_dict(self, overview: DashboardOverview) -> Dict[str, Any]:
+    def overview_to_dict(self, overview: DashboardOverview) -> dict[str, Any]:
         """Convert overview dashboard to dictionary for serialization.
 
         Args:
@@ -599,7 +599,7 @@ class DashboardService:
         """
         return asdict(overview)
 
-    def project_to_dict(self, project: DashboardProject) -> Dict[str, Any]:
+    def project_to_dict(self, project: DashboardProject) -> dict[str, Any]:
         """Convert project dashboard to dictionary for serialization.
 
         Args:
@@ -610,7 +610,7 @@ class DashboardService:
         """
         return asdict(project)
 
-    def agent_to_dict(self, agent: DashboardAgent) -> Dict[str, Any]:
+    def agent_to_dict(self, agent: DashboardAgent) -> dict[str, Any]:
         """Convert agent dashboard to dictionary for serialization.
 
         Args:

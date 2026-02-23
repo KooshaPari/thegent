@@ -17,18 +17,18 @@ from typing import Optional, List, Dict
 QUEUE_FILE = Path(__file__).parent / "MARKDOWN_SCAN_QUEUE.json"
 
 
-def load_queue() -> Dict:
+def load_queue() -> dict:
     """Load the queue JSON file."""
-    with open(QUEUE_FILE, 'r') as f:
+    with open(QUEUE_FILE) as f:
         return json.load(f)
 
 
-def get_next_month(queue_data: Dict, last_processed: Optional[str] = None) -> Optional[Dict]:
+def get_next_month(queue_data: dict, last_processed: Optional[str] = None) -> Optional[dict]:
     """Get the next month to process."""
     if last_processed is None:
         # Start with the first (newest) month
         return queue_data["queue"][0] if queue_data["queue"] else None
-    
+
     # Find the month after last_processed
     found = False
     for month_entry in queue_data["queue"]:
@@ -36,11 +36,11 @@ def get_next_month(queue_data: Dict, last_processed: Optional[str] = None) -> Op
             return month_entry
         if month_entry["month"] == last_processed:
             found = True
-    
+
     return None
 
 
-def get_month_files(queue_data: Dict, month: str, location: Optional[str] = None) -> List[str]:
+def get_month_files(queue_data: dict, month: str, location: Optional[str] = None) -> list[str]:
     """Get all files for a specific month, optionally filtered by location."""
     for month_entry in queue_data["queue"]:
         if month_entry["month"] == month:
@@ -52,13 +52,13 @@ def get_month_files(queue_data: Dict, month: str, location: Optional[str] = None
     return []
 
 
-def list_months(queue_data: Dict):
+def list_months(queue_data: dict):
     """List all months in the queue."""
     print("Available months:")
     for month_entry in queue_data["queue"]:
         month = month_entry["month"]
         total = month_entry["total_files"]
-        locations = ", ".join([f"{loc['location']}({loc['file_count']})" 
+        locations = ", ".join([f"{loc['location']}({loc['file_count']})"
                               for loc in month_entry["locations"]])
         print(f"  {month}: {total} files [{locations}]")
 
@@ -71,22 +71,22 @@ def main():
     parser.add_argument("--list", action="store_true", help="List all months")
     parser.add_argument("--files", action="store_true", help="Output file list")
     parser.add_argument("--count", action="store_true", help="Show file count only")
-    
+
     args = parser.parse_args()
-    
+
     queue_data = load_queue()
-    
+
     if args.list:
         list_months(queue_data)
         return
-    
+
     if args.next:
         # Try to read last processed from a file
         last_file = Path(__file__).parent / ".last_processed"
         last_processed = None
         if last_file.exists():
             last_processed = last_file.read_text().strip()
-        
+
         next_month = get_next_month(queue_data, last_processed)
         if next_month:
             print(f"Next month to process: {next_month['month']}")
@@ -101,10 +101,10 @@ def main():
         else:
             print("No more months to process!")
         return
-    
+
     if args.month:
         files = get_month_files(queue_data, args.month, args.location)
-        
+
         if args.count:
             print(len(files))
         elif args.files:

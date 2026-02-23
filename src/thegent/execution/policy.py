@@ -17,21 +17,21 @@ from typing import Any
 
 class KPIManager:
     """Manages KPI tracking for executions."""
-    
+
     def __init__(self) -> None:
         self._kpis: dict[str, list[float]] = {}
-    
+
     def record(self, kpi_name: str, value: float) -> None:
         """Record a KPI value."""
         if kpi_name not in self._kpis:
             self._kpis[kpi_name] = []
         self._kpis[kpi_name].append(value)
-    
+
     def get_average(self, kpi_name: str) -> float:
         """Get average for a KPI."""
         values = self._kpis.get(kpi_name, [])
         return sum(values) / len(values) if values else 0.0
-    
+
     def get_stats(self, kpi_name: str) -> dict[str, float]:
         """Get statistics for a KPI."""
         values = self._kpis.get(kpi_name, [])

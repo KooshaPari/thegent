@@ -26,7 +26,7 @@ def find_jsonl_files(source_dir: Path) -> list:
 def read_jsonl_memories(jsonl_path: Path) -> list:
     """Read all memory records from a JSONL file. Skip malformed lines."""
     memories = []
-    with open(jsonl_path, "r") as f:
+    with open(jsonl_path) as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
             if not line:

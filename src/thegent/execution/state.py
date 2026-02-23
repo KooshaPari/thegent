@@ -95,18 +95,18 @@ class ContinuityPacket(BaseModel):
 
 class CalibrationRegistry:
     """Registry for execution calibration data."""
-    
+
     def __init__(self) -> None:
         self._calibrations: dict[str, dict[str, Any]] = {}
-    
+
     def register(self, run_id: str, calibration: dict[str, Any]) -> None:
         """Register calibration for a run."""
         self._calibrations[run_id] = calibration
-    
+
     def get(self, run_id: str) -> dict[str, Any] | None:
         """Get calibration for a run."""
         return self._calibrations.get(run_id)
-    
+
     def list_all(self) -> list[dict[str, Any]]:
         """List all calibrations."""
         return list(self._calibrations.values())

@@ -168,12 +168,12 @@ class WorkstreamAutosyncRunner:
                 escalation_after=self.config.error_budget_escalation_after,
             ),
         )
-        
+
         # Initialize adapters
         self._metrics_adapter = MetricsAdapter(config)
         self._state_adapter = StateAdapter(config)
         self._connector_config_adapter = ConnectorConfigAdapter(config)
-        
+
         self._metrics = get_metrics_collector()
         self._breaker_registry = ProviderCircuitBreakerRegistry.get_instance()
         self._current_run_correlation_id: str | None = None
