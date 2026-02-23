@@ -34,9 +34,7 @@ class RemoteToLocalAnnotationStandard:
         """Initialize an empty annotation store."""
         self._entries: dict[str, AnnotationEntry] = {}
 
-    def annotate(
-        self, item_id: str, source: str, annotations: dict[str, str]
-    ) -> AnnotationEntry:
+    def annotate(self, item_id: str, source: str, annotations: dict[str, str]) -> AnnotationEntry:
         """Create or replace annotations for an item.
 
         Args:

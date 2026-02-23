@@ -83,9 +83,7 @@ class TestRemotePayloadChecksumVerifier:
         data = {"key": "value"}
         record = verifier.compute("payload_1", data)
 
-        expected_hash = hashlib.sha256(
-            json.dumps(data, sort_keys=True).encode("utf-8")
-        ).hexdigest()
+        expected_hash = hashlib.sha256(json.dumps(data, sort_keys=True).encode("utf-8")).hexdigest()
 
         assert record.checksum == expected_hash
 
@@ -241,6 +239,7 @@ class TestRemotePayloadChecksumVerifier:
         data = {"int": 42, "float": 3.14, "negative": -100, "zero": 0}
 
         record = verifier.compute("payload_1", data)
+        verifier.store(record)
         assert verifier.verify("payload_1", data) is True
 
     def test_checksum_record_immutability(self):

@@ -19,9 +19,7 @@ class TestConnectorCapability:
     @pytest.mark.requirement("WL-228")
     def test_create_capability(self) -> None:
         """Can create a ConnectorCapability with all fields."""
-        cap = ConnectorCapability(
-            connector_id="github", capabilities=["oauth2", "webhook", "streaming"]
-        )
+        cap = ConnectorCapability(connector_id="github", capabilities=["oauth2", "webhook", "streaming"])
 
         assert cap.connector_id == "github"
         assert cap.capabilities == ["oauth2", "webhook", "streaming"]
@@ -92,9 +90,7 @@ class TestConnectorCapabilityRegistry:
         assert basic_connectors == ["jira"]
 
     @pytest.mark.requirement("WL-228")
-    def test_connectors_with_missing_capability(
-        self, registry: ConnectorCapabilityRegistry
-    ) -> None:
+    def test_connectors_with_missing_capability(self, registry: ConnectorCapabilityRegistry) -> None:
         """connectors_with returns empty list for missing capability."""
         registry.register("github", ["oauth2"])
 

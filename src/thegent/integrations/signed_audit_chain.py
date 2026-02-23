@@ -67,9 +67,7 @@ class SignedAuditArtifactChain:
         signature_input = f"{prev_signature}:{entry_id}:{data_json}"
         signature = hashlib.sha256(signature_input.encode()).hexdigest()
 
-        entry = AuditEntry(
-            entry_id=entry_id, data=data, signature=signature, prev_signature=prev_signature
-        )
+        entry = AuditEntry(entry_id=entry_id, data=data, signature=signature, prev_signature=prev_signature)
         self._entries.append(entry)
 
         logger.debug(f"Appended audit entry {entry_id} (signature={signature[:8]}...)")

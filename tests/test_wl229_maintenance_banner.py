@@ -141,9 +141,7 @@ class TestMaintenanceBannerPropagator:
         assert current.severity == "critical"
 
     @pytest.mark.requirement("WL-229")
-    def test_lifecycle_set_activate_deactivate(
-        self, propagator: MaintenanceBannerPropagator
-    ) -> None:
+    def test_lifecycle_set_activate_deactivate(self, propagator: MaintenanceBannerPropagator) -> None:
         """Complete lifecycle: set -> activate -> deactivate."""
         # Initially inactive
         assert propagator.is_active() is False

@@ -48,9 +48,7 @@ class TestRemoteToLocalAnnotationStandard:
     def test_annotate_creates_new_entry(self):
         """# @trace WL-238 — annotate() creates a new AnnotationEntry."""
         store = RemoteToLocalAnnotationStandard()
-        entry = store.annotate(
-            "item-1", "source-a", {"label": "priority-high", "owner": "alice"}
-        )
+        entry = store.annotate("item-1", "source-a", {"label": "priority-high", "owner": "alice"})
 
         assert entry.item_id == "item-1"
         assert entry.source == "source-a"

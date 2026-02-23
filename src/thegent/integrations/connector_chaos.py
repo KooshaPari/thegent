@@ -27,9 +27,7 @@ class ConnectorChaosTestSuite:
         """Initialize the connector chaos test suite."""
         self._scenarios: dict[str, ChaosScenario] = {}
 
-    def add_scenario(
-        self, name: str, fault_type: str, probability: float = 1.0
-    ) -> ChaosScenario:
+    def add_scenario(self, name: str, fault_type: str, probability: float = 1.0) -> ChaosScenario:
         """Add a chaos scenario to the test suite.
 
         Args:
