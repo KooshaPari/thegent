@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from pydantic import BaseModel
 
 Category = Literal["testers", "content", "infrastructure", "core"]

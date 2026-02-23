@@ -332,3 +332,7 @@ __all__ = [
     "load_env_config",
     "load_file_config",
 ]
+
+
+# Alias for backward compatibility
+BaseIntegrationConfig = DataclassConfig
