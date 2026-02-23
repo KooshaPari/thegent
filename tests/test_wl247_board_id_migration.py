@@ -53,7 +53,7 @@ class TestLegacyBoardIdMigrationTool:
     def test_register_duplicate_old_id_overwrites(self) -> None:
         """Test that registering with duplicate old_id overwrites."""
         tool = LegacyBoardIdMigrationTool()
-        entry1 = tool.register("old_1", "new_1")
+        _ = tool.register("old_1", "new_1")
         entry2 = tool.register("old_1", "new_2")
 
         assert entry2.new_id == "new_2"

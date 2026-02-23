@@ -8,7 +8,7 @@ Provides suite management for operator acceptance tests with pass/fail/pending t
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
