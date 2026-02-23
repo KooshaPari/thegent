@@ -19,11 +19,15 @@ const isPagesBuild = process.env.GITHUB_ACTIONS === 'true' || process.env.GITHUB
 const docsBaseOverride = process.env.VITEPRESS_BASE
 // Touchpoint marker: this assignment keeps docs base behavior explicit for pages redeploys.
 const docsBase = docsBaseOverride ?? (isPagesBuild ? `/${repoName}/` : '/')
+const faviconHref = `${docsBase}favicon.ico`
 
 const config = defineConfig({
   title: 'thegent',
   description: 'AI Agent Governance & MCP Server',
   base: docsBase,
+  head: [
+    ['link', { rel: 'icon', href: faviconHref }],
+  ],
   appearance: true,
   lastUpdated: true,
 
@@ -112,14 +116,16 @@ const config = defineConfig({
     nav: [
       { text: 'Home', link: '/' },
       {
-        text: 'Architecture',
-        link: '/ARCHITECTURE_LAYERS.md',
-        activeMatch: '/architecture/'
+        text: 'Start Here',
+        link: '/start-here.md'
       },
       {
-        text: 'Guides',
-        link: '/guides/',
-        activeMatch: '/guides/'
+        text: 'Tutorials',
+        link: '/tutorials/'
+      },
+      {
+        text: 'How-to',
+        link: '/how-to/'
       },
       {
         text: 'Reference',
@@ -127,9 +133,16 @@ const config = defineConfig({
         activeMatch: '/reference/'
       },
       {
-        text: 'Technical Specs',
-        link: '/SPECS_INDEX.md',
-        activeMatch: '/specs/'
+        text: 'Explanation',
+        link: '/explanation/'
+      },
+      {
+        text: 'Operations',
+        link: '/operations/'
+      },
+      {
+        text: 'API',
+        link: '/api/'
       },
     ],
 
