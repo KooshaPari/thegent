@@ -1,0 +1,5 @@
+/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app
+/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.worktrees/track1-cliproxy
+/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.worktrees/track2-rust
+/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.worktrees/track3-zig-quality
+/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.worktrees/track4-split
