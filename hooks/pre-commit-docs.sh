@@ -8,6 +8,11 @@ set -euo pipefail
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
+if [[ "${THGENT_SKIP_DOCS_BUILD:-0}" == "1" ]]; then
+  echo "Skipping docsite build (THGENT_SKIP_DOCS_BUILD=1)."
+  exit 0
+fi
+
 if ! {
   git diff --cached --name-only;
   git diff --name-only;
@@ -40,11 +45,28 @@ case "$required_pm" in
     ;;
 esac
 
-echo "Docs changes detected, building docsite..."
-if [[ "$required_pm" == "bun" ]]; then
-  bun run docs:build
+timeout_sec="${THGENT_DOCS_BUILD_TIMEOUT_SEC:-300}"
+echo "Docs changes detected, building docsite (timeout=${timeout_sec}s)..."
+if [[ "$timeout_sec" != "0" ]]; then
+  python - "$required_pm" "$timeout_sec" <<'PY'
+import subprocess
+import sys
+
+pm = sys.argv[1]
+timeout_sec = int(sys.argv[2])
+
+try:
+    subprocess.run([pm, "run", "docs:build"], check=True, timeout=timeout_sec)
+except subprocess.TimeoutExpired:
+    print(f"Error: docs build timed out after {timeout_sec}s", file=sys.stderr)
+    sys.exit(1)
+PY
 else
-  pnpm run docs:build
+  if [[ "$required_pm" == "bun" ]]; then
+    bun run docs:build
+  else
+    pnpm run docs:build
+  fi
 fi
 
 echo "Docsite built successfully!"

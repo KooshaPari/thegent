@@ -68,4 +68,3 @@ Define a single policy model for how work is placed, committed, versioned, and m
 1. Use file-claim/ownership checks before edits.
 2. On conflict, fork/branch both outcomes and retain both artifacts.
 3. Never destructively overwrite concurrent work.
-
