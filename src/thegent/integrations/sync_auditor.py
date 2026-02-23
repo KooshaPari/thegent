@@ -178,8 +178,8 @@ class SyncAuditor:
         local_snapshot: dict[str, Any], remote_snapshot: dict[str, Any], out_path: Path
     ) -> Path:
         """Generate deterministic side-by-side HTML diff artifact."""
-        local_lines = json.dumps(local_snapshot, indent=2), sort_keys=True).decode().splitlines()
-        remote_lines = json.dumps(remote_snapshot, indent=2), sort_keys=True).decode().splitlines()
+        local_lines = json.dumps(local_snapshot, indent=2, sort_keys=True).decode().splitlines()
+        remote_lines = json.dumps(remote_snapshot, indent=2, sort_keys=True).decode().splitlines()
         html = HtmlDiff(tabsize=2, wrapcolumn=120).make_file(
             fromlines=local_lines,
             tolines=remote_lines,
