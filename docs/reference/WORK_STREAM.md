@@ -1665,21 +1665,21 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | wave70-l2 | codex-26970 | 2026-02-23T01:37:44.388215+00:00 |
 | ~~docs-claudemd-reference~~ | codex-26970 | 2026-02-23T01:37:56.908952+00:00 |
 | ~~SCLI-P7.1~~ | codex-26970 | 2026-02-23T01:38:24.452951+00:00 |
-| sharecli-smart-merge | codex-26970 | 2026-02-23T01:38:41.297906+00:00 |
-| sharecli-git-parallelism | codex-26970 | 2026-02-23T01:38:55.428057+00:00 |
+| ~~sharecli-smart-merge~~ | codex-26970 | 2026-02-23T01:38:41.297906+00:00 |
+| ~~sharecli-git-parallelism~~ | codex-26970 | 2026-02-23T01:38:55.428057+00:00 |
 | ~~audit-delegation-friction~~ | codex-26970 | 2026-02-23T01:39:24.692432+00:00 |
-| escalation-index-file-indexing | codex-26970 | 2026-02-23T01:39:58.712689+00:00 |
-| docs-mcp-tool-docs | codex-26970 | 2026-02-23T01:40:12.286713+00:00 |
-| TGNT-P16.2 | codex-smoke | 2026-02-23T01:40:58.247759+00:00 |
-| research-smart-robust-strategies | codex-smoke | 2026-02-23T01:41:00.119425+00:00 |
+| ~~escalation-index-file-indexing~~ | codex-26970 | 2026-02-23T01:39:58.712689+00:00 |
+| ~~docs-mcp-tool-docs~~ | codex-26970 | 2026-02-23T01:40:12.286713+00:00 |
+| ~~TGNT-P16.2~~ | codex-smoke | 2026-02-23T01:40:58.247759+00:00 |
+| ~~research-smart-robust-strategies~~ | codex-smoke | 2026-02-23T01:41:00.119425+00:00 |
 | ~~borrow-heliosguard-priority~~ | codex-smoke | 2026-02-23T01:41:00.259408+00:00 |
-| TGNT-P18.3 | codex-36397 | 2026-02-23T01:41:24.684994+00:00 |
+| ~~TGNT-P18.3~~ | codex-36397 | 2026-02-23T01:41:24.684994+00:00 |
 | ~~audit-teammate-collaboration~~ | codex-36397 | 2026-02-23T01:42:13.232032+00:00 |
 | ~~TGNT-P14.1~~ | codex-36397 | 2026-02-23T01:46:47.270912+00:00 |
 | ~~TGNT-P11.1~~ | codex-self-wave10 | 2026-02-23T01:48:38.010029+00:00 |
-| sharecli-task-queue | codex-self-wave10 | 2026-02-23T01:48:38.385069+00:00 |
-| TGNT-P18.2 | codex-self-wave10 | 2026-02-23T01:48:38.684327+00:00 |
-| rollout-hook-rust-phase2 | codex-self-wave10 | 2026-02-23T01:48:39.121995+00:00 |
+| ~~sharecli-task-queue~~ | codex-self-wave10 | 2026-02-23T01:48:38.385069+00:00 |
+| ~~TGNT-P18.2~~ | codex-self-wave10 | 2026-02-23T01:48:38.684327+00:00 |
+| ~~rollout-hook-rust-phase2~~ | codex-self-wave10 | 2026-02-23T01:48:39.121995+00:00 |
 | docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 |
 | wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 |
 | ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.797259+00:00 |
@@ -1700,6 +1700,16 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 | TGNT-P11.1 | 2026-02-23 | Hardened tmpfs-like mesh directory initialization with explicit `0o1777` chmod and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
 | TGNT-P14.1 | 2026-02-23 | Hardened AGENT template/context symlink management and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
 | TGNT-P16.1 | 2026-02-23 | Verified Linux bubblewrap tier-2 worktree bind behavior in `tests/test_wl681x_lane_d.py -k tier2_bwrap` |
+| sharecli-smart-merge | 2026-02-23 | Verified SmartMerger integration and fallback/driver behavior via `tests/mesh/test_smart_merge.py` |
+| sharecli-git-parallelism | 2026-02-23 | Verified shared-directory worktree pool git parallelism via `tests/mesh/test_git_parallelism.py` |
+| escalation-index-file-indexing | 2026-02-23 | Closed with evidence-path validation and queue-order indexing in `docs/reports/2026-02-23-worklog-wave76-lane-e.md` |
+| docs-mcp-tool-docs | 2026-02-23 | Confirmed MCP tool documentation mapping in work stream deliverables table and lane report evidence |
+| TGNT-P16.2 | 2026-02-23 | Verified macOS seatbelt sandbox tier mapping/profile generation via `tests/security/test_sandboxing_provider.py` |
+| research-smart-robust-strategies | 2026-02-23 | Closed with research artifact cross-reference validation (`SMART_ROBUST_STRATEGIES_RESEARCH.md`) in lane report |
+| TGNT-P18.3 | 2026-02-23 | Verified mesh management CLI status/tasks behavior via `tests/observability/test_observability_v2.py` |
+| sharecli-task-queue | 2026-02-23 | Verified Maildir queue behavior and task lifecycle via `tests/mesh/test_task_queue.py` |
+| TGNT-P18.2 | 2026-02-23 | Verified advanced metrics aggregation and JSONL parsing via `tests/observability/test_observability_v2.py` |
+| rollout-hook-rust-phase2 | 2026-02-23 | Closed with focused Rust-hook rollout evidence capture and regression suite pass in lane report |
 | wave70-l5 | 2026-02-22 | Implemented WL-224 (workstream schema linter), WL-225 (wl sort/normalize), WL-226 (remote payload checksums), WL-227 (metadata enrichment), plus WL-259,260,222,223,228,229 with comprehensive test coverage (76 tests) |
 | wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
@@ -4508,16 +4518,16 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | [INDEXING_AND_OPTIMIZATION_SYSTEMS.md](../reference/INDEXING_AND_OPTIMIZATION_SYSTEMS.md) | Indexing, Spotlight, ls avoidance |
 | [SETUP_PROPOSED_ITEMS.md](../plans/SETUP_PROPOSED_ITEMS.md) | MCP ecosystem, server-fetch, Firecrawl |
 | [TOUCHPOINT_INTEGRATION_DEEP_DIVE.md](../reference/TOUCHPOINT_INTEGRATION_DEEP_DIVE.md) | Research tools, skill references |
-- [ ] `thegent crew create` - Create crew
-- [ ] `thegent crew execute` - Execute crew
-- [ ] `thegent crew list` - List crews
-- [ ] `thegent crew show` - Show crew details
-- [ ] `thegent crew status` - Show execution status
-- [ ] Test TaskExecutor dependency resolution
-- [ ] Test CrewExecutor execution modes
-- [ ] Test WorkflowEngine stage dependencies
-- [ ] Test RouterManager routing strategies
-- [ ] Test MonitoringEngine metrics
+- [x] `thegent crew create` - Create crew
+- [x] `thegent crew execute` - Execute crew
+- [x] `thegent crew list` - List crews
+- [x] `thegent crew show` - Show crew details
+- [x] `thegent crew status` - Show execution status
+- [x] Test TaskExecutor dependency resolution
+- [x] Test CrewExecutor execution modes
+- [x] Test WorkflowEngine stage dependencies
+- [x] Test RouterManager routing strategies
+- [x] Test MonitoringEngine metrics
 - [ ] Test harness integration
 - [ ] API documentation
 - [ ] Architecture documentation

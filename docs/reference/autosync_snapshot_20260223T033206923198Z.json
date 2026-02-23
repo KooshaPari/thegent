@@ -1,17 +1,17 @@
 {
-  "last_cycle_at": "2026-02-23T02:08:08.790112+00:00",
+  "last_cycle_at": "2026-02-23T03:32:06.922325+00:00",
   "total_cycles": 1,
-  "last_error": "name 'timedelta' is not defined",
-  "health": "degraded",
+  "last_error": null,
+  "health": "ok",
   "runner": {
     "enabled": true,
     "is_running": false,
-    "last_sync_time": "2026-02-23T02:08:08.781853+00:00",
+    "last_sync_time": "2026-02-23T03:32:06.915641+00:00",
     "github_enabled": true,
     "linear_enabled": false,
     "last_operation": null,
     "open_blockers": [],
-    "failure_queue_size": 43,
+    "failure_queue_size": 48,
     "next_cycle_interval_seconds": 300,
     "connector_health": [
       {
@@ -24,26 +24,26 @@
       "status": "fresh",
       "age_seconds": 0
     },
-    "correlation_id": "b7f6551c-97a3-4ca2-9689-8b1dcf73d0ff",
+    "correlation_id": "fce0af3e-3bf4-4550-a20b-5c1890f68748",
     "local_orphan_report": {
       "local_ids": [
-        "WL-160",
-        "WL-161"
+        "WL-196"
       ],
       "mapped_remote_ids": [],
       "local_orphan_ids": [
-        "WL-160",
-        "WL-161"
+        "WL-196"
       ],
-      "orphan_count": 2
+      "orphan_count": 1
     },
-    "ignored_wl_ids": [],
+    "ignored_wl_ids": [
+      "WL-189"
+    ],
     "scope_filtered_wl_ids": [],
     "no_op_summary": null,
     "trend_sample": null
   },
   "open_blockers": [],
-  "failure_queue_size": 43,
+  "failure_queue_size": 48,
   "checkpoint": null,
   "connector_health": [
     {
@@ -54,21 +54,18 @@
   ],
   "next_cycle_interval_seconds": 300,
   "incident_snapshot": {
-    "captured_at": "2026-02-23T02:08:08.787908+00:00",
-    "items_count": 0,
-    "snapshot_age_seconds": 4755,
-    "snapshot_stale": true,
-    "correlation_id": "b7f6551c-97a3-4ca2-9689-8b1dcf73d0ff",
-    "slo_alerts": [
-      "autosync snapshot stale for 4755s",
-      "autosync error budget hard-fail threshold reached"
-    ],
+    "captured_at": "2026-02-23T03:32:06.919880+00:00",
+    "items_count": 1,
+    "snapshot_age_seconds": 2720,
+    "snapshot_stale": false,
+    "correlation_id": "fce0af3e-3bf4-4550-a20b-5c1890f68748",
+    "slo_alerts": [],
     "error_budget": {
-      "success_count": 0,
-      "failure_count": 1,
-      "consecutive_failures": 1,
+      "success_count": 1,
+      "failure_count": 0,
+      "consecutive_failures": 0,
       "total_operations": 1,
-      "current_failure_rate": 1.0
+      "current_failure_rate": 0.0
     },
     "connector_sla": {},
     "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
@@ -83,24 +80,24 @@
       "status": "fresh",
       "age_seconds": 0
     },
-    "last_error": "name 'timedelta' is not defined",
-    "failure_queue_size": 43,
+    "last_error": null,
+    "failure_queue_size": 48,
     "mutation_summary": null
   },
-  "correlation_id": "b7f6551c-97a3-4ca2-9689-8b1dcf73d0ff",
+  "correlation_id": "fce0af3e-3bf4-4550-a20b-5c1890f68748",
   "local_orphan_report": {
     "local_ids": [
-      "WL-160",
-      "WL-161"
+      "WL-196"
     ],
     "mapped_remote_ids": [],
     "local_orphan_ids": [
-      "WL-160",
-      "WL-161"
+      "WL-196"
     ],
-    "orphan_count": 2
+    "orphan_count": 1
   },
-  "ignored_wl_ids": [],
+  "ignored_wl_ids": [
+    "WL-189"
+  ],
   "scope_filtered_wl_ids": [],
   "no_op_summary": null,
   "trend_sample": null,

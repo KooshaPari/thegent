@@ -106,6 +106,14 @@ PARSER_PARITY_TARGET_NAMES = {
     "test_wl131_rust_python_parity.py",
 }
 
+PARSER_TOUCHING_PATH_PREFIXES = (
+    "crates/thegent-parser",
+    "src/thegent/contracts/parser",
+    "src/thegent/output_parser",
+    "src/thegent/execution_jsonl_parsers",
+    "src/thegent/routing",
+)
+
 # Quarterly cleanup cadence and debt windows are intentionally explicit for deterministic governance.
 TRACEABILITY_STALE_WINDOW_DAYS = 90
 
@@ -1635,8 +1643,26 @@ def run_pr_targets(config: PrTargetConfig) -> dict[str, object]:
     return payload
 
 
-def _targets_require_parser_parity(targets: Sequence[Path]) -> bool:
-    return any(target.name in PARSER_PARITY_TARGET_NAMES for target in targets)
+def _normalize_changed_path_for_parser(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return path.as_posix()
+
+
+def _targets_require_parser_parity(changed: Sequence[Path], targets: Sequence[Path]) -> bool:
+    if any(target.name in PARSER_PARITY_TARGET_NAMES for target in targets):
+        return True
+
+    for changed_path in changed:
+        normalized = _normalize_changed_path_for_parser(changed_path)
+        if normalized in PARSER_PARITY_TARGET_NAMES:
+            return True
+        for prefix in PARSER_TOUCHING_PATH_PREFIXES:
+            if normalized.startswith(prefix):
+                return True
+
+    return False
 
 
 def run_pr_lane(config: RunPrLaneConfig) -> int:
@@ -1666,7 +1692,7 @@ def run_pr_lane(config: RunPrLaneConfig) -> int:
     command.append("--strict-markers")
 
     env = os.environ.copy()
-    if _targets_require_parser_parity(resolved_targets):
+    if _targets_require_parser_parity(changed, resolved_targets):
         env["THEGENT_PARSER_PARITY_REQUIRED"] = "1"
 
     started = datetime.now().timestamp()

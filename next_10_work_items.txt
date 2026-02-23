@@ -8,3 +8,5 @@ docgen-performance-code-split|Optimize code splitting for faster loads|P1|✅ Co
 docgen-performance-images|Image optimization (WebP/AVIF; lazy loading pending)|P1|⚠️ Partial
 docgen-edit-links|Add edit-on-GitHub links|P1|✅ Complete (configured)
 docgen-link-checker|Automated link checking|P1|✅ Complete (scripts exists)
+lane-b-open-items-artifact-repair|Restore missing OPEN_ITEMS validation artifact path and record factual lane status|P0|✅ Complete (2026-02-23)
+lane-b-harness-parity-contracts|Validate and fix anen/antigma/fanta shim alias parity + hook YAML threshold regression coverage|P0|✅ Complete (2026-02-23)
