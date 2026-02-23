@@ -223,11 +223,11 @@ class TestStagedRolloutManager:
         manager = StagedRolloutManager()
 
         # Create features at different stages
-        feature_1 = manager.create("feature-1")  # CANARY
-        feature_2 = manager.create("feature-2")  # CANARY
+        _feature_1 = manager.create("feature-1")  # CANARY
+        _feature_2 = manager.create("feature-2")  # CANARY
         manager.advance("feature-2")  # EARLY_ADOPTER
 
-        feature_3 = manager.create("feature-3")  # CANARY
+        _feature_3 = manager.create("feature-3")  # CANARY
         manager.advance("feature-3")  # EARLY_ADOPTER
         manager.advance("feature-3")  # GENERAL
 

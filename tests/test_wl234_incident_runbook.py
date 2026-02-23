@@ -64,9 +64,9 @@ class TestIncidentRunbook:
     def test_add_multiple_steps_preserves_order(self) -> None:
         """Test that multiple steps are preserved in order."""
         runbook = IncidentRunbook()
-        step1 = runbook.add_step("s1", "First", "Do first")
-        step2 = runbook.add_step("s2", "Second", "Do second")
-        step3 = runbook.add_step("s3", "Third", "Do third")
+        _step1 = runbook.add_step("s1", "First", "Do first")
+        _step2 = runbook.add_step("s2", "Second", "Do second")
+        _step3 = runbook.add_step("s3", "Third", "Do third")
 
         steps = runbook.steps()
         assert len(steps) == 3
