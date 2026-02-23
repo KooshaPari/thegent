@@ -35,7 +35,7 @@ LATENCY_TOLERANCE_MS = 10  # ms
 
 class CLIProxyClient:
     """Minimal CLIProxy HTTP client for /v1/routing/select endpoint.
-    
+
     Falls back to mocking if server unavailable.
     """
 
