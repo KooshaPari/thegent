@@ -177,6 +177,11 @@ def _run_governance_selected(
     cache_dir = tmp_path / ".hook-cache"
 
     verify_dir.mkdir(parents=True, exist_ok=True)
+    # Create test directories for tier-enforcer to pass
+    (project / "tests" / "unit").mkdir(parents=True, exist_ok=True)
+    (project / "tests" / "integration").mkdir(parents=True, exist_ok=True)
+    (project / "tests" / "e2e").mkdir(parents=True, exist_ok=True)
+    (project / "tests" / "security").mkdir(parents=True, exist_ok=True)
     hooks_dir.mkdir(parents=True, exist_ok=True)
     (home_dir / ".claude").mkdir(parents=True, exist_ok=True)
     temp_dir.mkdir(parents=True, exist_ok=True)
@@ -198,14 +203,14 @@ def _run_governance_selected(
                 "last_policy_band": "green",
                 "last_directive": "seed_directive",
             }
-        )
+        ).decode()
         + "\n",
         encoding="utf-8",
     )
 
     if async_results_payload is not None:
         (home_dir / ".claude" / ".async-test-results.json").write_text(
-            json.dumps(async_results_payload).decode().decode() + "\n",
+            json.dumps(async_results_payload).decode() + "\n",
             encoding="utf-8",
         )
 
@@ -222,7 +227,7 @@ def _run_governance_selected(
             },
             "security": {"signed_attestation_present": True, "slsa_provenance_present": True},
         }
-        (verify_dir / "qa-attestation.json").write_text(json.dumps(attestation).decode().decode() + "\n", encoding="utf-8")
+        (verify_dir / "qa-attestation.json").write_text(json.dumps(attestation).decode() + "\n", encoding="utf-8")
 
     subprocess.run(["git", "init", "-q"], cwd=project, check=True)
     subprocess.run(["git", "config", "user.email", "a@b.c"], cwd=project, check=True)
