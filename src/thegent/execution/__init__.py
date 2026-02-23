@@ -62,12 +62,16 @@ from .registry import (
     MessageEntry,
     MessageRegistry,
     RunRegistry,
+    get_last_poll_session_messages_meta,
+    poll_session_messages,
 )
 
 # Combined exports
 __all__ = [
     # State
     "AgentSource",
+    "get_last_poll_session_messages_meta",
+    "poll_session_messages",
     # Registry
     "AuditEntry",
     "AuditRegistry",
@@ -173,6 +177,8 @@ def __getattr__(name: str) -> Any:
         "MessageEntry": MessageEntry,
         "MessageRegistry": MessageRegistry,
         "RunRegistry": RunRegistry,
+        "get_last_poll_session_messages_meta": get_last_poll_session_messages_meta,
+        "poll_session_messages": poll_session_messages,
     }
     if name in modular_exports:
         return modular_exports[name]

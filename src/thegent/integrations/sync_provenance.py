@@ -9,10 +9,12 @@ FR traceability: WL-201 (Sync Provenance Stamps)
 from __future__ import annotations
 
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, UTC
 from typing import Any
 from uuid import uuid4
+
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ _SYNC_METADATA_KEY = "__sync_metadata__"
 
 
 @dataclass
-class SyncProvenanceStamp:
+class SyncProvenanceStamp(SerializableMixin):
     """Provenance metadata for a sync operation.
 
     Attributes:
@@ -42,14 +44,6 @@ class SyncProvenanceStamp:
     correlation_id: str | None = None
     prev_hash: str = ""
     signature: str = ""
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert stamp to a dictionary.
-
-        Returns:
-            Dictionary representation of the stamp.
-        """
-        return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SyncProvenanceStamp:
