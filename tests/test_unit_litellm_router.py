@@ -47,7 +47,7 @@ class TestLiteLLMRouterBuilder:
 
     def test_get_litellm_router_returns_router(self):
         """get_litellm_router returns a Router instance."""
-        with patch("thegent.routing.litellm_router.Router") as mock_router:
+        with patch("thegent.utils.routing_impl.litellm_router.Router") as mock_router:
             mock_router.return_value = MagicMock()
             router = get_litellm_router(policy="cheapest")
             assert router is not None
