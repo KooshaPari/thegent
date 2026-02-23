@@ -8,6 +8,8 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
+from thegent import __version__
+
 console = Console()
 app = typer.Typer(
     name="thegent",
@@ -15,6 +17,13 @@ app = typer.Typer(
     no_args_is_help=True,
     add_completion=True,
 )
+
+
+def _version_callback(value: bool) -> None:
+    if not value:
+        return
+    console.print(__version__)
+    raise typer.Exit()
 
 # Modular Stream Registrations
 from thegent.cli.apps import (
@@ -502,7 +511,16 @@ def agent_server_cmd() -> None:
 
 
 @app.callback(invoke_without_command=True)
-def main_welcome(ctx: typer.Context):
+def main_welcome(
+    ctx: typer.Context,
+    _version: bool = typer.Option(
+        False,
+        "--version",
+        help="Show thegent version and exit.",
+        is_eager=True,
+        callback=_version_callback,
+    ),
+):
     if ctx.invoked_subcommand is None:
         console.print(
             Panel(
