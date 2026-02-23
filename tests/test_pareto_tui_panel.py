@@ -135,10 +135,11 @@ class TestParetoTuiSession:
         audit = _write_audit_file(tmp_path, records)
         session = ParetoTuiSession(audit_path=audit)
         data = session.get_pareto_data()
-        assert set(data.keys()) == {"providers", "current", "history"}
+        assert set(data.keys()) == {"providers", "current", "history", "parse_errors"}
         assert isinstance(data["providers"], list)
         assert isinstance(data["current"], dict)
         assert isinstance(data["history"], list)
+        assert isinstance(data["parse_errors"], list)
 
     def test_get_pareto_data_empty_audit_returns_none_current(self, tmp_path: Path) -> None:
         """get_pareto_data returns current=None when audit file is empty."""
@@ -149,6 +150,7 @@ class TestParetoTuiSession:
         assert data["current"] is None
         assert data["providers"] == []
         assert data["history"] == []
+        assert data["parse_errors"] == []
 
     def test_get_audit_history_malformed_json_raises_value_error(self, tmp_path: Path) -> None:
         """get_audit_history raises ValueError on malformed JSON lines."""
@@ -157,6 +159,23 @@ class TestParetoTuiSession:
         session = ParetoTuiSession(audit_path=audit)
         with pytest.raises(ValueError, match="Malformed JSON"):
             session.get_audit_history()
+
+    def test_get_audit_history_non_strict_skips_malformed_rows(self, tmp_path: Path) -> None:
+        """Non-strict mode skips malformed JSON lines instead of raising."""
+        audit = tmp_path / "routing_audit.jsonl"
+        audit.write_text("{not valid json}\n" + json.dumps(_make_audit_record()) + "\n", encoding="utf-8")
+        session = ParetoTuiSession(audit_path=audit)
+        history = session.get_audit_history(strict=False)
+        assert len(history) == 1
+
+    def test_get_pareto_data_non_strict_returns_parse_errors(self, tmp_path: Path) -> None:
+        """Non-strict mode surfaces parse_errors for malformed JSON rows."""
+        audit = tmp_path / "routing_audit.jsonl"
+        audit.write_text("{not valid json}\n" + json.dumps(_make_audit_record()) + "\n", encoding="utf-8")
+        session = ParetoTuiSession(audit_path=audit)
+        data = session.get_pareto_data(strict=False)
+        assert len(data["history"]) == 1
+        assert data["parse_errors"] == ["line 1"]
 
 
 # ---------------------------------------------------------------------------
