@@ -9,11 +9,61 @@ WARMUP_RUNS="${BENCH_WARMUP_RUNS:-3}"
 MEASURE_RUNS="${BENCH_MEASURE_RUNS:-20}"
 DRY_RUN="${BENCH_DRY_RUN:-0}"
 
-if ! command -v hyperfine >/dev/null 2>&1; then
-  echo "benchmark-quality-gate-rust: missing dependency hyperfine" >&2
-  echo "Install with: brew install hyperfine  # or cargo install hyperfine" >&2
-  exit 1
-fi
+usage() {
+  cat <<'EOF'
+WL-007 Rust Quality/Security Benchmark
+
+Usage:
+  bash scripts/benchmark-quality-gate-rust.sh [--help]
+
+Environment Variables:
+  THEGENT_BENCH_RESULTS_DIR  Results directory (default: benchmarks/results)
+  BENCH_RUN_ID               Custom run ID (default: timestamp-sha)
+  BENCH_WARMUP_RUNS          Warmup runs (default: 3)
+  BENCH_MEASURE_RUNS         Measurement runs (default: 20)
+  BENCH_DRY_RUN              Dry run mode (0|1, default: 0)
+
+Required Tools:
+  hyperfine, cargo, python3, git
+EOF
+  exit "${1:-0}"
+}
+
+require_cmd() {
+  local cmd="$1"
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "benchmark-quality-gate-rust: missing required dependency: $cmd" >&2
+    return 1
+  fi
+  return 0
+}
+
+check_dependencies() {
+  local missing=0
+  for cmd in hyperfine cargo python3 git; do
+    if ! require_cmd "$cmd"; then
+      missing=1
+    fi
+  done
+  if [[ "$missing" -ne 0 ]]; then
+    echo "Install missing tools and re-run. Hint for hyperfine: brew install hyperfine or cargo install hyperfine" >&2
+    exit 1
+  fi
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+  --help | -h)
+    usage 0
+    ;;
+  *)
+    echo "benchmark-quality-gate-rust: unknown option: $1" >&2
+    usage 1
+    ;;
+  esac
+done
+
+check_dependencies
 
 RUN_SHA="$(git -C "$THEGENT_ROOT" rev-parse --short HEAD 2>/dev/null || echo no-git)"
 RUN_STAMP="${BENCH_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$RUN_SHA}"
