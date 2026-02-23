@@ -101,7 +101,7 @@ class FastFileOps:
                         os.utime(dst_path, (stat.st_atime, stat.st_mtime))
 
                     return
-                except (OSError, AttributeError) as exc:
+                except Exception as exc:
                     # Fallback to shutil if sendfile fails
                     _record_sendfile_fallback(exc, src_path, dst_path)
 

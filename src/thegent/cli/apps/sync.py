@@ -737,6 +737,31 @@ def sync_autopilot(
         "--bootstrap-connector",
         help="Connector used for bootstrap mapping cache checks (default from env/config).",
     ),
+    simulation_mode: bool = typer.Option(
+        False,
+        "--simulation-mode",
+        help="Run autopilot cycle without connector mutations or reads.",
+    ),
+    offline: bool = typer.Option(
+        False,
+        "--offline",
+        help="Alias for --simulation-mode; run with no connector I/O.",
+    ),
+    snapshot_retention_count: int | None = typer.Option(
+        None,
+        "--snapshot-retention-count",
+        help="Override snapshot retention count for this run.",
+    ),
+    artifact_encryption: bool = typer.Option(
+        False,
+        "--artifact-encryption",
+        help="Enable artifact encryption for this run.",
+    ),
+    artifact_encryption_key: str = typer.Option(
+        "",
+        "--artifact-encryption-key",
+        help="Artifact encryption key for this run.",
+    ),
 ):
     """``thegent sync autopilot`` — run automatic workstream reflection.
 
@@ -775,6 +800,20 @@ def sync_autopilot(
         config.cycle_interval_seconds = interval
     if dry_run:
         config.dry_run = True
+    if simulation_mode or offline:
+        config.simulation_mode = True
+    if snapshot_retention_count is not None:
+        if snapshot_retention_count < 1:
+            raise typer.BadParameter(
+                "snapshot-retention-count must be >= 1",
+                param_hint="--snapshot-retention-count",
+            )
+        config.snapshot_retention_count = snapshot_retention_count
+    if artifact_encryption:
+        config.artifact_encryption_enabled = True
+    if artifact_encryption_key:
+        config.artifact_encryption_enabled = True
+        config.artifact_encryption_key = artifact_encryption_key
     if area:
         config.scope_areas = list(area)
     if status:
@@ -1028,6 +1067,23 @@ def _normalize_autosync_runner(raw_runner: Any) -> dict[str, Any]:
     }
 
 
+def _normalize_no_op_summary(raw_no_op_summary: Any) -> dict[str, Any] | None:
+    if not isinstance(raw_no_op_summary, dict):
+        return None
+
+    skipped_connectors = raw_no_op_summary.get("skipped_connectors", 0)
+    try:
+        skipped_connectors = int(skipped_connectors)
+    except (TypeError, ValueError):
+        skipped_connectors = 0
+
+    return {
+        "no_op": bool(raw_no_op_summary.get("no_op")),
+        "reason": str(raw_no_op_summary.get("reason", "")),
+        "skipped_connectors": skipped_connectors,
+    }
+
+
 def _normalize_autosync_status(raw_status: Any, *, read_error: str | None = None) -> dict[str, Any]:
     status = raw_status if isinstance(raw_status, dict) else {}
     runner = _normalize_autosync_runner(status.get("runner"))
@@ -1064,7 +1120,10 @@ def _normalize_autosync_status(raw_status: Any, *, read_error: str | None = None
         "runner": runner,
         "open_blockers": blocker_list,
         "failure_queue_size": max(0, failure_queue_size),
+        "correlation_id": str(status.get("correlation_id")) if status.get("correlation_id") is not None else None,
+        "no_op_summary": _normalize_no_op_summary(status.get("no_op_summary")),
         "checkpoint": status.get("checkpoint"),
+        "incident_snapshot": status.get("incident_snapshot"),
     }
 
 
@@ -1142,5 +1201,20 @@ def sync_autopilot_status(
             table.add_row("Last Error", f"[red]{last_error}[/red]")
         else:
             table.add_row("Last Error", "[green]None[/green]")
+
+        correlation_id = status.get("correlation_id")
+        if correlation_id:
+            table.add_row("Run ID", str(correlation_id))
+
+        no_op_summary = status.get("no_op_summary")
+        if isinstance(no_op_summary, dict):
+            table.add_row(
+                "No-Op",
+                "[yellow]true[/yellow]" if bool(no_op_summary.get("no_op")) else "[green]false[/green]",
+            )
+            reason = str(no_op_summary.get("reason", "")).strip()
+            if reason:
+                table.add_row("No-Op Reason", reason)
+            table.add_row("No-Op Connectors Skipped", str(no_op_summary.get("skipped_connectors", 0)))
 
         console.print(table)

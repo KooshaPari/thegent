@@ -73,7 +73,7 @@ def test_wl6750_shell_doctor_alias_probe_success_and_probe_failure_visibility(
     collector.messages.clear()
     monkeypatch.setattr(shell_cli.subprocess, "run", _raise_timeout)
     shell_cli.shell_doctor(fix=False)
-    assert any("Alias probe failed" in message and "timeout" in message for message in collector.messages)
+    assert any("Alias probe timed out" in message and "timeout" in message for message in collector.messages)
     assert any("Warnings:" in message for message in collector.messages)
 
 

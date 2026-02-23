@@ -7,7 +7,7 @@
 
 - `src/thegent/integrations/workstream_autosync.py`
   - Built outbound sync payloads with provenance metadata + owner propagation for write syncs:
-    - GitHub sync now enriches each item with `__sync_metadata` (source URL/tag) and propagates owner fields (`owner`, `github_owner`, `linear_assignee`) from `WorkstreamItem.owner` or fallback actor id.
+  - GitHub sync now enriches each item with `__sync_metadata__` (source URL/tag) and propagates owner fields (`owner`, `github_owner`, `linear_assignee`) from `WorkstreamItem.owner` or fallback actor id.
     - Linear sync now uses the same enriched payload path and owner propagation.
   - Removed the unused pre-loop enrichment pass that built metadata and dropped it.
 - `tests/test_wl160_workstream_autosync.py`
@@ -25,6 +25,7 @@
 
 ## Verification
 
-- `python -m pytest tests/test_wl261_sync_audit.py -q`
-- `python -m pytest tests/test_wl160_workstream_autosync.py -q`
-- `python -m pytest tests/integrations/test_wl320_rollout_scorecard.py -q`
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest tests/test_wl160_workstream_autosync.py -k "shadow or owner or wl243 or wl245" -p pytest_asyncio.plugin -q`
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest tests/test_wl261_sync_audit.py -q`
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest tests/integrations/test_wl320_rollout_scorecard.py -q`
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest tests/test_wl242_cycle_manifest.py -q`

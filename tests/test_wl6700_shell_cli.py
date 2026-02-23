@@ -54,5 +54,7 @@ def test_shell_doctor_surfaces_alias_probe_failures_as_issues(monkeypatch, tmp_p
     result = runner.invoke(shell_app, ["doctor"])
 
     assert result.exit_code == 0
-    assert "Issues found" in result.output
-    assert "Alias probe failed:" in result.output
+    assert "Warnings:" in result.output
+    assert "Alias probe timed out:" in result.output
+    assert "Check zsh startup time and rerun:" in result.output
+    assert "thegent shell doctor --fix" in result.output

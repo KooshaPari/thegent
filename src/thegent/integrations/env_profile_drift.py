@@ -58,9 +58,7 @@ class EnvProfileDriftValidator:
             if actual_value is None:
                 issues.append(EnvDriftIssue(key=key, expected=expected_value, actual=None))
             elif actual_value != expected_value:
-                issues.append(
-                    EnvDriftIssue(key=key, expected=expected_value, actual=actual_value)
-                )
+                issues.append(EnvDriftIssue(key=key, expected=expected_value, actual=actual_value))
 
         # Check for unexpected variables in actual
         for key in env:

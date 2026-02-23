@@ -24,10 +24,11 @@ from thegent.integrations.workstream_autosync import (
     ConnectorSLAThresholds,
     SyncDirection,
     SyncOperation,
+    RetryClass,
     MaintenanceWindow,
+    WorkstreamAutosyncConfigError,
     RemoteMissingItemPolicy,
     WorkstreamAutosyncConfig,
-    WorkstreamAutosyncConfigError,
     WorkstreamAutosyncRunner,
     WorkstreamItem,
     WorkstreamParser,
@@ -465,6 +466,115 @@ class TestWorkstreamAutosyncRunner:
         assert runner.last_sync_time is not None
 
     @pytest.mark.asyncio
+    async def test_record_failure_stores_retry_class_and_correlation(self, tmp_path):
+        """Recorded failures should preserve retry classification and correlation ID."""
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            failure_queue_path=tmp_path / "failures.json",
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        runner._current_run_correlation_id = "run-251"
+
+        retry_class = await runner._record_failure(
+            connector="github",
+            direction="write",
+            item_id="WL-160",
+            message="429 rate limit exceeded",
+        )
+
+        assert retry_class == RetryClass.RATE_LIMIT
+        snapshot = runner._failure_queue.snapshot()
+        assert len(snapshot) == 1
+        record = snapshot[0]
+        assert record.retry_class == RetryClass.RATE_LIMIT.value
+        assert record.correlation_id == "run-251"
+
+        reloaded = WorkstreamAutosyncRunner(config)
+        persisted = reloaded._failure_queue.snapshot()
+        assert len(persisted) == 1
+        assert persisted[0].retry_class == RetryClass.RATE_LIMIT.value
+        assert persisted[0].correlation_id == "run-251"
+
+    @pytest.mark.asyncio
+    async def test_perform_sync_cycle_simulation_mode_marks_no_op(
+        self, valid_github_config, sample_work_stream_file, tmp_path
+    ):
+        """Simulation mode should skip connector partitions and mark the cycle as no-op."""
+        valid_github_config.work_stream_path = sample_work_stream_file
+        valid_github_config.simulation_mode = True
+        valid_github_config.status_file_path = tmp_path / "autosync_status.json"
+        valid_github_config.cycle_manifest_path = tmp_path / "cycle_manifest.jsonl"
+        valid_github_config.change_digest_path = tmp_path / "change_digest.jsonl"
+        valid_github_config.failure_queue_path = tmp_path / "failures.json"
+        valid_github_config.trend_file_path = tmp_path / "trend.jsonl"
+        valid_github_config.checkpoint_file_path = tmp_path / "checkpoint.json"
+        valid_github_config.incident_bundle_path = tmp_path / "incident_snapshots.jsonl"
+
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        with patch.object(runner, "_sync_in_partitions", autospec=True) as sync_partitions:
+            await runner._perform_sync_cycle()
+
+        assert sync_partitions.call_count == 0
+        assert runner._no_op_summary is not None
+        assert runner._no_op_summary["no_op"] is True
+        assert runner._no_op_summary["reason"] == "simulation_mode"
+        assert runner.last_error is None
+        assert runner.total_cycles == 1
+
+    @pytest.mark.asyncio
+    async def test_perform_sync_cycle_no_workstream_items_fast_path(self, valid_github_config, tmp_path):
+        """No-workstream state should return a no-op cycle without connector calls."""
+        work_stream = tmp_path / "WORK_STREAM.md"
+        work_stream.write_text("# Work Stream\\n", encoding="utf-8")
+        valid_github_config.work_stream_path = work_stream
+        valid_github_config.status_file_path = tmp_path / "autosync_status.json"
+        valid_github_config.cycle_manifest_path = tmp_path / "cycle_manifest.jsonl"
+        valid_github_config.change_digest_path = tmp_path / "change_digest.jsonl"
+        valid_github_config.failure_queue_path = tmp_path / "failures.json"
+        valid_github_config.trend_file_path = tmp_path / "trend.jsonl"
+        valid_github_config.checkpoint_file_path = tmp_path / "checkpoint.json"
+
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        with patch.object(runner, "_sync_in_partitions", autospec=True) as sync_partitions:
+            await runner._perform_sync_cycle()
+
+        assert sync_partitions.call_count == 0
+        assert runner.total_cycles == 1
+        assert runner.last_error is None
+        assert runner._no_op_summary is not None
+        assert runner._no_op_summary["no_op"] is True
+        assert runner._no_op_summary["reason"] == "no_workstream_items"
+
+    @pytest.mark.asyncio
+    async def test_perform_sync_cycle_unchanged_state_fast_path(self, valid_github_config, sample_work_stream_file, tmp_path):
+        """Unchanged workstream state should skip all connector sync calls."""
+        valid_github_config.work_stream_path = sample_work_stream_file
+        valid_github_config.status_file_path = tmp_path / "autosync_status.json"
+        valid_github_config.cycle_manifest_path = tmp_path / "cycle_manifest.jsonl"
+        valid_github_config.change_digest_path = tmp_path / "change_digest.jsonl"
+        valid_github_config.failure_queue_path = tmp_path / "failures.json"
+        valid_github_config.trend_file_path = tmp_path / "trend.jsonl"
+        valid_github_config.checkpoint_file_path = tmp_path / "checkpoint.json"
+
+        items = WorkstreamParser.parse_items(sample_work_stream_file)
+        runner = WorkstreamAutosyncRunner(valid_github_config)
+        runner._last_cycle_fingerprint = runner._compute_cycle_fingerprint(items)
+
+        with patch.object(runner, "_sync_in_partitions", autospec=True) as sync_partitions:
+            await runner._perform_sync_cycle()
+
+        assert sync_partitions.call_count == 0
+        assert runner.total_cycles == 1
+        assert runner.last_error is None
+        assert runner._no_op_summary is not None
+        assert runner._no_op_summary["no_op"] is True
+        assert runner._no_op_summary["reason"] == "unchanged_workstream_state"
+
+    @pytest.mark.asyncio
     async def test_run_cycle_skips_maintenance(self, valid_github_config, sample_work_stream_file):
         """Run cycle should skip connectors in maintenance window."""
         now = datetime.now(timezone.utc)
@@ -886,11 +996,13 @@ Extra: owner/repo#456
             await runner._sync_to_github(items)
 
         payload = sync_mock.call_args.args[1][0]
-        assert payload[0]["owner"] == "dev-team-alice"
-        assert payload[0]["github_owner"] == "dev-team-alice"
-        assert payload[0]["linear_assignee"] == "dev-team-alice"
-        assert payload[0]["__sync_metadata"]["source_url"] == "github://workstream/WL-160"
-        assert payload[0]["__sync_metadata"]["source_tag"] == "github"
+        if isinstance(payload, list):
+            payload = payload[0]
+        assert payload["owner"] == "dev-team-alice"
+        assert payload["github_owner"] == "dev-team-alice"
+        assert payload["linear_assignee"] == "dev-team-alice"
+        assert payload["__sync_metadata__"]["source_url"] == "github://workstream/WL-160"
+        assert payload["__sync_metadata__"]["source_tag"] == "github"
 
     @pytest.mark.asyncio
     async def test_sync_from_github(self, valid_github_config, tmp_path):
@@ -1036,6 +1148,105 @@ Extra: owner/repo#456
                 await runner._sync_from_github(items, work_stream)
 
     @pytest.mark.asyncio
+    async def test_compact_snapshots_keeps_latest_only(self, tmp_path):
+        """Snapshot compaction should keep only the configured retention count."""
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            snapshot_retention_count=3,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+
+        status_path = tmp_path / "autosync_status.json"
+        for index in range(5):
+            (tmp_path / f"autosync_snapshot_{index:04d}.json").write_text(f'{{"run":"{index}"}}', encoding="utf-8")
+
+        runner._compact_snapshots(status_path)
+
+        remaining = sorted(tmp_path.glob("autosync_snapshot_*.json"))
+        assert len(remaining) == 3
+        assert [path.stem for path in remaining] == [
+            "autosync_snapshot_0002",
+            "autosync_snapshot_0003",
+            "autosync_snapshot_0004",
+        ]
+
+    def test_artifact_encrypt_and_decrypt_round_trip(self, tmp_path):
+        """Encrypted artifact payloads should round-trip through serializer."""
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            artifact_encryption_enabled=True,
+            artifact_encryption_key="secret",
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        payload = {"run_id": "run-254", "items": [1, 2, 3]}
+
+        serialized = runner._serialize_artifact_payload(payload)
+        loaded = runner._deserialize_artifact_payload(serialized)
+
+        assert loaded == payload
+        assert json.loads(serialized).get("encrypted") is True
+
+    def test_artifact_encryption_requires_key(self, tmp_path, monkeypatch: pytest.MonkeyPatch):
+        """Encrypted artifact handling should fail when no key is configured."""
+        monkeypatch.delenv("THGENT_AUTOSYNC_ARTIFACT_KEY", raising=False)
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            artifact_encryption_enabled=True,
+        )
+        runner = WorkstreamAutosyncRunner(config)
+
+        with pytest.raises(
+            WorkstreamAutosyncConfigError,
+            match="Artifact encryption is enabled but no key is configured",
+        ):
+            runner._serialize_artifact_payload({"run_id": "run-254"})
+
+    def test_correlation_id_in_manifest_and_incident_snapshot_inputs(self, tmp_path):
+        """Run correlation IDs should be present in manifest and incident snapshot payloads."""
+        config = WorkstreamAutosyncConfig(
+            enabled=True,
+            github_enabled=True,
+            github_owner="owner",
+            github_project_number=1,
+            standalone_mode=True,
+            cycle_manifest_path=tmp_path / "manifest.jsonl",
+            incident_bundle_path=tmp_path / "incidents.jsonl",
+        )
+        runner = WorkstreamAutosyncRunner(config)
+        runner._current_run_correlation_id = "run-255"
+        runner.total_cycles = 4
+        runner._append_cycle_manifest(
+            status="success",
+            started_at=datetime(2026, 2, 22, 0, 0, tzinfo=timezone.utc),
+            items=[
+                WorkstreamItem(item_id="WL-1", title="One", status="BACKLOG", priority="P1", area="sync"),
+            ],
+            decisions={"github_enabled": True},
+            outputs={"result": "ok"},
+        )
+
+        manifest_payload = json.loads((tmp_path / "manifest.jsonl").read_text(encoding="utf-8").strip())
+        assert manifest_payload["inputs"]["run_id"] == "run-255"
+
+        incident = runner._build_incident_snapshot_bundle(
+            items_count=1,
+            metadata_state={"status": "fresh", "age_seconds": 0},
+        )
+        assert incident["correlation_id"] == "run-255"
+
+    @pytest.mark.asyncio
     async def test_finalize_incident_snapshot_enqueues_slo_escalation(self, valid_github_config, tmp_path):
         """Snapshot with stale age and budget breach should enqueue escalation entry."""
         status_path = tmp_path / "autosync_status.json"
@@ -1177,11 +1388,13 @@ Extra: owner/repo#456
             await runner._sync_to_linear(items)
 
         payload = sync_mock.call_args.args[1][0]
-        assert payload[0]["owner"] == "dev-team-alice"
-        assert payload[0]["github_owner"] == "dev-team-alice"
-        assert payload[0]["linear_assignee"] == "dev-team-alice"
-        assert payload[0]["__sync_metadata"]["source_url"] == "linear://workstream/WL-160"
-        assert payload[0]["__sync_metadata"]["source_tag"] == "linear"
+        if isinstance(payload, list):
+            payload = payload[0]
+        assert payload["owner"] == "dev-team-alice"
+        assert payload["github_owner"] == "dev-team-alice"
+        assert payload["linear_assignee"] == "dev-team-alice"
+        assert payload["__sync_metadata__"]["source_url"] == "linear://workstream/WL-160"
+        assert payload["__sync_metadata__"]["source_tag"] == "linear"
 
     @pytest.mark.asyncio
     async def test_sync_from_linear(self, valid_linear_config, tmp_path):

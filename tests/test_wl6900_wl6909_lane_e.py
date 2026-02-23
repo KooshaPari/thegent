@@ -78,7 +78,7 @@ def test_wl6900_shell_doctor_records_probe_timeout(monkeypatch: pytest.MonkeyPat
 
     shell_cli.shell_doctor(fix=False)
 
-    assert any("Alias probe failed" in message and "timeout" in message for message in collector.messages)
+    assert any("Alias probe timed out" in message and "timeout" in message for message in collector.messages)
 
 
 def test_wl6901_shell_platform_reports_success_version(monkeypatch: pytest.MonkeyPatch) -> None:

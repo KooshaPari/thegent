@@ -17,60 +17,8 @@ import OpenAPI from './components/OpenAPI.vue'
 import DocStatusBadge from './components/DocStatusBadge.vue'
 import AuditTimeline from './components/AuditTimeline.vue'
 import KBGraph from './components/KBGraph.vue'
+import { tabsClientScript } from '../plugins/content-tabs'
 import './custom.css'
-
-// Client-side script for tabs behavior
-const tabsClientScript = `
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.content-tabs-wrapper').forEach(wrapper => {
-    const headers = wrapper.querySelectorAll('.tab-header')
-    const bodies = wrapper.querySelectorAll('.tab-body')
-
-    if (headers.length === 0) return
-
-    headers.forEach(header => {
-      header.addEventListener('click', () => {
-        const tabId = header.getAttribute('data-tab')
-
-        headers.forEach(h => h.classList.remove('active'))
-        header.classList.add('active')
-
-        bodies.forEach(body => {
-          if (body.getAttribute('data-tab') === tabId) {
-            body.style.display = 'block'
-          } else {
-            body.style.display = 'none'
-          }
-        })
-      })
-
-      header.addEventListener('keydown', (e) => {
-        const currentIndex = Array.from(headers).indexOf(header)
-
-        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-          e.preventDefault()
-          const nextIndex = (currentIndex + 1) % headers.length
-          headers[nextIndex].click()
-          headers[nextIndex].focus()
-        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-          e.preventDefault()
-          const prevIndex = (currentIndex - 1 + headers.length) % headers.length
-          headers[prevIndex].click()
-          headers[prevIndex].focus()
-        } else if (e.key === 'Home') {
-          e.preventDefault()
-          headers[0].click()
-          headers[0].focus()
-        } else if (e.key === 'End') {
-          e.preventDefault()
-          headers[headers.length - 1].click()
-          headers[headers.length - 1].focus()
-        }
-      })
-    })
-  })
-})
-`
 
 export default {
   extends: DefaultTheme,

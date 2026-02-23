@@ -284,6 +284,31 @@ class _RunnerStub:
         }
 
 
+class _ConfigSurfaceCapture:
+    cycle_interval_seconds = 300
+    dry_run = False
+    bootstrap_required_fields: list[str] = []
+    bootstrap_mapping_cache_path = None
+    bootstrap_connector = "github"
+    simulation_mode = False
+    snapshot_retention_count = 20
+    artifact_encryption_enabled = False
+    artifact_encryption_key = ""
+    scope_areas: list[str] | None = None
+    scope_statuses: list[str] | None = None
+    scope_priorities: list[str] | None = None
+    scope_wl_ranges: list[str] | None = None
+
+    def is_valid(self) -> bool:
+        return True
+
+    def should_sync_github(self) -> bool:
+        return True
+
+    def should_sync_linear(self) -> bool:
+        return False
+
+
 def _extract_json_payload(stdout: str) -> dict[str, Any]:
     start = stdout.find("{")
     if start < 0:
@@ -311,6 +336,49 @@ def test_sync_autopilot_once_json_path(monkeypatch: pytest.MonkeyPatch) -> None:
     assert payload["health"] == "ok"
     assert payload["last_operation"]["operation_id"] == "op-123"
     assert runner.performed is True
+
+
+@pytest.mark.unit
+def test_sync_autopilot_once_surface_flags_map_to_config(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, Any] = {}
+
+    def load_config() -> _ConfigSurfaceCapture:
+        return _ConfigSurfaceCapture()
+
+    class _RunnerSurfaceStub(_RunnerStub):
+        def __init__(self, config: Any):
+            super().__init__(config=config)
+            captured["config"] = config
+
+    monkeypatch.setattr(
+        "thegent.integrations.workstream_autosync.load_autosync_config_from_env",
+        load_config,
+    )
+    monkeypatch.setattr(
+        "thegent.integrations.workstream_autosync.WorkstreamAutosyncRunner",
+        lambda config: _RunnerSurfaceStub(config),
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "autopilot",
+            "--once",
+            "--offline",
+            "--snapshot-retention-count",
+            "7",
+            "--artifact-encryption",
+            "--artifact-encryption-key",
+            "unit-key",
+        ],
+    )
+
+    assert result.exit_code == 0
+    config = captured["config"]
+    assert config.simulation_mode is True
+    assert config.snapshot_retention_count == 7
+    assert config.artifact_encryption_enabled is True
+    assert config.artifact_encryption_key == "unit-key"
 
 
 @pytest.mark.unit
@@ -358,6 +426,41 @@ def test_sync_autopilot_status_uses_env_override(monkeypatch: pytest.MonkeyPatch
     payload = _extract_json_payload(result.stdout)
     assert payload["total_cycles"] == 7
     assert payload["health"] == "degraded"
+
+
+@pytest.mark.unit
+def test_sync_autopilot_status_json_exposes_correlation_and_no_op(monkeypatch: pytest.MonkeyPatch) -> None:
+    runner = CliRunner()
+
+    with runner.isolated_filesystem():
+        status_path = "custom_status.json"
+        with open(status_path, "w", encoding="utf-8") as handle:
+            json.dump(
+                {
+                    "last_cycle_at": "2026-02-23T09:00:00",
+                    "total_cycles": 13,
+                    "health": "ok",
+                    "correlation_id": "run-255",
+                    "no_op_summary": {
+                        "no_op": True,
+                        "reason": "simulation_mode",
+                        "skipped_connectors": 1,
+                    },
+                },
+                handle,
+            )
+
+        monkeypatch.setenv("THGENT_AUTOSYNC_STATUS_PATH", status_path)
+        result = runner.invoke(app, ["autopilot-status", "--format", "json"])
+
+    assert result.exit_code == 0
+    payload = _extract_json_payload(result.stdout)
+    assert payload["correlation_id"] == "run-255"
+    assert payload["no_op_summary"] == {
+        "no_op": True,
+        "reason": "simulation_mode",
+        "skipped_connectors": 1,
+    }
 
 
 @pytest.mark.unit

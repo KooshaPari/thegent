@@ -75,8 +75,7 @@ class DualWriteShadowMode:
 
         if primary_ok != shadow_ok:
             logger.warning(
-                f"Divergence detected for record {record_id}: "
-                f"primary_ok={primary_ok}, shadow_ok={shadow_ok}"
+                f"Divergence detected for record {record_id}: primary_ok={primary_ok}, shadow_ok={shadow_ok}"
             )
 
         return result

@@ -1,5 +1,6 @@
 ### [WL-4700] agent-generate-demos line 21 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -8,7 +9,8 @@
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4701] auto-launch-trigger line 36 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -17,7 +19,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4702] CLAUDE.md line 96 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -26,7 +29,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4703] is-agent line 8 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -35,7 +39,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4704] agent-generate-demos line 92 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -44,7 +49,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4705] governance-gates line 13 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -53,7 +59,8 @@ Narrow this broad exception handling to explicit expected failures and add regre
 Replace this silent no-op with explicit behavior (or a loud failure path) and add focused tests for the intended branch.
 
 ### [WL-4706] CLAUDE.md line 98 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -62,7 +69,8 @@ Replace this silent no-op with explicit behavior (or a loud failure path) and ad
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4707] batch line 14 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -71,7 +79,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Resolve this TODO/FIXME into concrete implementation steps and add tests that lock in the completed behavior.
 
 ### [WL-4708] agent-process-introspect line 60 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S
@@ -80,7 +89,8 @@ Resolve this TODO/FIXME into concrete implementation steps and add tests that lo
 Narrow this broad exception handling to explicit expected failures and add regression coverage for each error branch.
 
 ### [WL-4709] governance-gates line 1060 backlog marker
-**Status:** OPEN
+**Status:** DONE
+**Evidence:** Closed via implementation + template updates and test coverage where relevant.
 **Priority:** P2
 **Area:** backlog,bulk
 **Effort:** S

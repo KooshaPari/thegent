@@ -75,7 +75,7 @@ def test_wl6910_shell_doctor_alias_probe_subprocess_failure(monkeypatch: pytest.
 
     shell_cli.shell_doctor(fix=False)
 
-    assert any("Alias probe failed" in message and "subprocess error" in message for message in collector.messages)
+    assert any("Alias probe unavailable" in message and "subprocess error" in message for message in collector.messages)
 
 
 def test_wl6910_shell_doctor_alias_probe_timeout(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -92,7 +92,7 @@ def test_wl6910_shell_doctor_alias_probe_timeout(monkeypatch: pytest.MonkeyPatch
 
     shell_cli.shell_doctor(fix=False)
 
-    assert any("Alias probe failed" in message and "timeout" in message for message in collector.messages)
+    assert any("Alias probe timed out" in message and "timeout" in message for message in collector.messages)
 
 
 def test_wl6911_parse_log_entry_valid_payload() -> None:

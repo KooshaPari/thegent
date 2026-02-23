@@ -35,8 +35,14 @@ import subprocess
 import threading
 import time
 from dataclasses import dataclass
+from collections.abc import Callable
 
 _log = logging.getLogger(__name__)
+
+TransportResult = tuple[int, str, str]
+
+
+McpServerTransport = Callable[[list[str], str, dict[str, str], float], TransportResult]
 
 
 @dataclass
@@ -46,6 +52,7 @@ class McpServerConfig:
     env: dict[str, str]  # environment variables to pass
     timeout_sec: float = 30.0
     description: str = ""
+    transport: McpServerTransport | None = None
 
 
 @dataclass
@@ -123,15 +130,14 @@ class McpGateway:
         command = shlex.split(config.command)
         env = os.environ.copy()
         env.update(config.env)
+        transport = config.transport or self._run_subprocess_transport
+        payload = json.dumps(request)
         try:
-            completed = subprocess.run(
-                command,
-                input=json.dumps(request),
-                capture_output=True,
-                text=True,
-                timeout=timeout_sec,
-                check=False,
+            returncode, stdout, stderr = transport(
+                command=command,
+                request_payload=payload,
                 env=env,
+                timeout_sec=timeout_sec,
             )
         except FileNotFoundError:
             duration_ms = (time.monotonic() - start) * 1000.0
@@ -142,7 +148,7 @@ class McpGateway:
                 duration_ms=duration_ms,
                 error=f"transport_error: command not found ({command[0]!r})",
             )
-        except subprocess.TimeoutExpired:
+        except TimeoutError:
             duration_ms = (time.monotonic() - start) * 1000.0
             return McpToolResult(
                 result=None,
@@ -162,7 +168,16 @@ class McpGateway:
             )
 
         duration_ms = (time.monotonic() - start) * 1000.0
-        parsed = self._parse_mcp_response(completed.stdout)
+        parsed, has_transport_payload = self._parse_mcp_response(stdout)
+        if not has_transport_payload:
+            return McpToolResult(
+                result=None,
+                server_id=call.server_id,
+                tool=call.tool,
+                duration_ms=duration_ms,
+                error="transport_error: invalid or empty MCP response",
+            )
+
         if parsed.get("error"):
             normalized_error = self._normalize_tool_error(
                 server_id=call.server_id,
@@ -177,14 +192,14 @@ class McpGateway:
                 error=normalized_error,
             )
 
-        if completed.returncode != 0 and parsed.get("result") is None:
-            stderr = (completed.stderr or "").strip()
+        if returncode != 0 and parsed.get("result") is None:
+            stderr = (stderr or "").strip()
             return McpToolResult(
                 result=None,
                 server_id=call.server_id,
                 tool=call.tool,
                 duration_ms=duration_ms,
-                error=f"transport_error: exit_code={completed.returncode} {stderr}".strip(),
+                error=f"transport_error: exit_code={returncode} {stderr}".strip(),
             )
 
         return McpToolResult(
@@ -195,8 +210,9 @@ class McpGateway:
             error="",
         )
 
-    def _parse_mcp_response(self, stdout: str) -> dict[str, object]:
+    def _parse_mcp_response(self, stdout: str) -> tuple[dict[str, object], bool]:
         payload = {"result": None, "error": None}
+        has_payload = False
         for raw_line in stdout.splitlines():
             line = raw_line.strip()
             if not line:
@@ -209,9 +225,30 @@ class McpGateway:
                 continue
             if "error" in data:
                 payload["error"] = data.get("error")
+                has_payload = True
             if "result" in data:
                 payload["result"] = data.get("result")
-        return payload
+                has_payload = True
+        return payload, has_payload
+
+    def _run_subprocess_transport(
+        self,
+        *,
+        command: list[str],
+        request_payload: str,
+        env: dict[str, str],
+        timeout_sec: float,
+    ) -> TransportResult:
+        completed = subprocess.run(
+            command,
+            input=request_payload,
+            capture_output=True,
+            text=True,
+            timeout=timeout_sec,
+            check=False,
+            env=env,
+        )
+        return completed.returncode, completed.stdout or "", completed.stderr or ""
 
     def _normalize_tool_error(self, server_id: str, tool: str, error_payload: object) -> str:
         if isinstance(error_payload, dict):

@@ -1,9 +1,9 @@
 {
   "summary": {
-    "total_commands": 226,
+    "total_commands": 246,
     "commands_with_e2e_tests": 220,
-    "commands_without_e2e_tests": 6,
-    "coverage_percent": 97.35,
+    "commands_without_e2e_tests": 26,
+    "coverage_percent": 89.43,
     "total_cli_functions": 3
   },
   "commands": {
@@ -80,6 +80,22 @@
         "test_ps_help_exits_zero",
         "test_ps_help_exits_zero"
       ]
+    },
+    "thegent reload": {
+      "command": "reload",
+      "function": "reload_top_level",
+      "app": "reload",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent hmr": {
+      "command": "hmr",
+      "function": "hmr_top_level",
+      "app": "hmr",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
     },
     "thegent list-agents": {
       "command": "list-agents",
@@ -393,6 +409,14 @@
         "test_sync_work_stream_help"
       ]
     },
+    "thegent sync bootstrap-gh": {
+      "command": "bootstrap-gh",
+      "function": "sync_bootstrap_github",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
     "thegent sync rules": {
       "command": "rules",
       "function": "sync_rules",
@@ -495,6 +519,110 @@
       "tests": [
         "test_sync_reset_help_exits_zero"
       ]
+    },
+    "thegent sync board": {
+      "command": "board",
+      "function": "sync_board",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync board-migrate": {
+      "command": "board-migrate",
+      "function": "sync_board_migrate",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync remote-orphans": {
+      "command": "remote-orphans",
+      "function": "sync_remote_orphans",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync conflicts": {
+      "command": "conflicts",
+      "function": "sync_conflicts",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync freeze": {
+      "command": "freeze",
+      "function": "sync_freeze",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync unfreeze": {
+      "command": "unfreeze",
+      "function": "sync_unfreeze",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync health": {
+      "command": "health",
+      "function": "sync_health",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync ga-readiness": {
+      "command": "ga-readiness",
+      "function": "sync_ga_readiness",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync audit": {
+      "command": "audit",
+      "function": "sync_audit",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync dead-letter-replay": {
+      "command": "dead-letter-replay",
+      "function": "sync_dead_letter_replay",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync rollback": {
+      "command": "rollback",
+      "function": "sync_rollback",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync autopilot": {
+      "command": "autopilot",
+      "function": "sync_autopilot",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent sync autopilot-status": {
+      "command": "autopilot-status",
+      "function": "sync_autopilot_status",
+      "app": "sync",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
     },
     "thegent sync models": {
       "command": "models",
@@ -830,6 +958,22 @@
       "tests": [
         "test_plan_verify_workstream_help"
       ]
+    },
+    "thegent plan lint-workstream": {
+      "command": "lint-workstream",
+      "function": "plan_lint_workstream",
+      "app": "plan",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent plan normalize-workstream": {
+      "command": "normalize-workstream",
+      "function": "plan_normalize_workstream",
+      "app": "plan",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
     },
     "thegent plan progress": {
       "command": "progress",
@@ -1551,6 +1695,22 @@
         "test_mcp_restart_help",
         "test_mcp_restart_help_exits_zero"
       ]
+    },
+    "thegent mcp reload": {
+      "command": "reload",
+      "function": "mcp_reload_cmd",
+      "app": "mcp",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
+    },
+    "thegent mcp hmr": {
+      "command": "hmr",
+      "function": "mcp_hmr_cmd",
+      "app": "mcp",
+      "has_e2e_test": false,
+      "test_count": 0,
+      "tests": []
     },
     "thegent mcp status": {
       "command": "status",
@@ -2359,10 +2519,30 @@
     }
   },
   "missing_tests": [
+    "thegent reload",
+    "thegent hmr",
+    "thegent sync bootstrap-gh",
+    "thegent sync board",
+    "thegent sync board-migrate",
+    "thegent sync remote-orphans",
+    "thegent sync conflicts",
+    "thegent sync freeze",
+    "thegent sync unfreeze",
+    "thegent sync health",
+    "thegent sync ga-readiness",
+    "thegent sync audit",
+    "thegent sync dead-letter-replay",
+    "thegent sync rollback",
+    "thegent sync autopilot",
+    "thegent sync autopilot-status",
+    "thegent plan lint-workstream",
+    "thegent plan normalize-workstream",
     "thegent sys setup project ag-dd",
     "thegent sys setup project none",
     "thegent project ag-dd",
     "thegent project none",
+    "thegent mcp reload",
+    "thegent mcp hmr",
     "thegent install project ag-dd",
     "thegent install project none"
   ]
