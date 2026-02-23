@@ -15,8 +15,8 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use sysinfo::System;
 use std::process::Command;
+use sysinfo::System;
 
 // ---------------------------------------------------------------------------
 // CLI definition
@@ -100,15 +100,7 @@ struct DiscoveryAll {
 
 /// Default tools to probe when running `tools` or `all`
 const PROBE_TOOLS: &[&str] = &[
-    "claude",
-    "thegent",
-    "tmux",
-    "git",
-    "npx",
-    "node",
-    "python3",
-    "screen",
-    "cargo",
+    "claude", "thegent", "tmux", "git", "npx", "node", "python3", "screen", "cargo",
 ];
 
 /// Default agent process pattern
@@ -120,7 +112,11 @@ fn discover_sessions() -> Vec<TmuxSession> {
 
     // tmux sessions
     let tmux_result = Command::new("tmux")
-        .args(["list-sessions", "-F", "#{session_name}|#{session_windows}|#{session_created_string}|#{session_attached}"])
+        .args([
+            "list-sessions",
+            "-F",
+            "#{session_name}|#{session_windows}|#{session_created_string}|#{session_attached}",
+        ])
         .output();
 
     if let Ok(output) = tmux_result {
@@ -142,9 +138,7 @@ fn discover_sessions() -> Vec<TmuxSession> {
     }
 
     // GNU screen sessions (best-effort)
-    let screen_result = Command::new("screen")
-        .args(["-ls"])
-        .output();
+    let screen_result = Command::new("screen").args(["-ls"]).output();
 
     if let Ok(output) = screen_result {
         let stdout = String::from_utf8_lossy(&output.stdout);

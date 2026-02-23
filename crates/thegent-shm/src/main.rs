@@ -20,9 +20,9 @@
 
 use clap::{Parser, Subcommand};
 use serde_json::json;
+use std::io;
 use std::path::PathBuf;
 use thegent_shm::SHMInterface;
-use std::io;
 
 #[derive(Parser)]
 #[command(name = "thegent-shm", version, about = "BKM-05: SHM state binary")]
@@ -50,13 +50,23 @@ enum Commands {
     /// Get provider metrics
     Provider { name: String },
     /// Update provider stats
-    ProviderUpdate { name: String, requests: u64, successes: u64, latency_ms: u32 },
+    ProviderUpdate {
+        name: String,
+        requests: u64,
+        successes: u64,
+        latency_ms: u32,
+    },
     /// Record a failure
     Failure { target: String, category: i32 },
     /// Get router metrics
     Router,
     /// Update router metrics
-    RouterUpdate { lifecycle: u64, thegent: u64, changes: u64, hysteresis: u64 },
+    RouterUpdate {
+        lifecycle: u64,
+        thegent: u64,
+        changes: u64,
+        hysteresis: u64,
+    },
     /// Record resource usage
     Resource { pid: u32, cpu: f32, memory_kb: u64 },
 }
@@ -67,7 +77,10 @@ fn main() -> io::Result<()> {
     // Handle init specially (does not need existing SHM)
     if matches!(cli.command, Commands::Init) {
         SHMInterface::open(&cli.path)?;
-        println!("{}", json!({"status": "initialized", "path": cli.path.to_string_lossy()}));
+        println!(
+            "{}",
+            json!({"status": "initialized", "path": cli.path.to_string_lossy()})
+        );
         return Ok(());
     }
 
@@ -108,7 +121,12 @@ fn main() -> io::Result<()> {
                 json!({"error": "provider not found"})
             }
         }
-        Commands::ProviderUpdate { name, requests, successes, latency_ms } => {
+        Commands::ProviderUpdate {
+            name,
+            requests,
+            successes,
+            latency_ms,
+        } => {
             shm.do_update_provider(name.clone(), requests, successes, latency_ms)?;
             json!({"status": "updated", "name": name})
         }
@@ -126,12 +144,21 @@ fn main() -> io::Result<()> {
                 "hysteresis_activations": m.hysteresis_activations,
             })
         }
-        Commands::RouterUpdate { lifecycle, thegent, changes, hysteresis } => {
+        Commands::RouterUpdate {
+            lifecycle,
+            thegent,
+            changes,
+            hysteresis,
+        } => {
             shm.do_update_router_metrics(lifecycle, thegent, changes, hysteresis)?;
             let m = shm.do_get_router_metrics();
             json!({"status": "updated", "total_decisions": m.total_decisions})
         }
-        Commands::Resource { pid, cpu, memory_kb } => {
+        Commands::Resource {
+            pid,
+            cpu,
+            memory_kb,
+        } => {
             shm.do_record_resource_usage(pid, cpu, memory_kb)?;
             json!({"status": "recorded", "pid": pid})
         }

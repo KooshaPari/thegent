@@ -8,9 +8,9 @@
 
 use clap::{Parser, Subcommand};
 use std::env;
+use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command as StdCommand, ExitCode};
-use std::os::unix::process::ExitStatusExt;
 
 /// thegent-shims - Efficient shell command shims for thegent
 #[derive(Parser)]
@@ -101,13 +101,28 @@ fn safe_command(name: &str) -> StdCommand {
 /// Resolve the real binary path, avoiding shims in ~/.local/bin
 fn resolve_binary(name: &str) -> Option<PathBuf> {
     // We use which_in to specify the path explicitly
-    which::which_in(name, Some(SAFE_PATH), env::current_dir().ok().unwrap_or_else(|| PathBuf::from("."))).ok()
+    which::which_in(
+        name,
+        Some(SAFE_PATH),
+        env::current_dir()
+            .ok()
+            .unwrap_or_else(|| PathBuf::from(".")),
+    )
+    .ok()
 }
 
 /// Find the first available tool from a list of candidates
 fn first_available(candidates: &[&str]) -> Option<PathBuf> {
     for candidate in candidates {
-        if let Some(path) = which::which_in(candidate, Some(SAFE_PATH), env::current_dir().ok().unwrap_or_else(|| PathBuf::from("."))).ok() {
+        if let Some(path) = which::which_in(
+            candidate,
+            Some(SAFE_PATH),
+            env::current_dir()
+                .ok()
+                .unwrap_or_else(|| PathBuf::from(".")),
+        )
+        .ok()
+        {
             return Some(path);
         }
     }
@@ -154,18 +169,13 @@ fn run_grep(args: &[String]) -> ExitCode {
 
     match rg_path {
         Some(path) => {
-            let cmd_name = path.file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("grep");
+            let cmd_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("grep");
 
             // For rg, pass args directly; for grep, may need adjustment
             let final_args: Vec<String> = if cmd_name == "rg" {
                 // translate -E (extended regex) to nothing as rg is always extended
                 // and -E in rg means --encoding which causes errors.
-                args.iter()
-                    .filter(|&arg| arg != "-E")
-                    .cloned()
-                    .collect()
+                args.iter().filter(|&arg| arg != "-E").cloned().collect()
             } else {
                 // Add -n for line numbers if not present (grep compatibility)
                 let mut new_args = vec!["-n".to_string()];
@@ -198,9 +208,7 @@ fn run_find(args: &[String]) -> ExitCode {
 
     match fd_path {
         Some(path) => {
-            let cmd_name = path.file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("find");
+            let cmd_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("find");
 
             if cmd_name == "fd" || cmd_name == "fdfind" {
                 // fd has different argument structure
@@ -214,15 +222,15 @@ fn run_find(args: &[String]) -> ExitCode {
                 while i < fd_args.len() {
                     let arg = &fd_args[i];
                     if arg == "-name" && i + 1 < fd_args.len() {
-                        final_args.push(fd_args[i+1].clone());
+                        final_args.push(fd_args[i + 1].clone());
                         i += 2;
                     } else if arg == "-type" && i + 1 < fd_args.len() {
                         final_args.push("-t".to_string());
-                        final_args.push(fd_args[i+1].clone());
+                        final_args.push(fd_args[i + 1].clone());
                         i += 2;
                     } else if arg == "-maxdepth" && i + 1 < fd_args.len() {
                         final_args.push("--max-depth".to_string());
-                        final_args.push(fd_args[i+1].clone());
+                        final_args.push(fd_args[i + 1].clone());
                         i += 2;
                     } else {
                         final_args.push(arg.clone());
@@ -279,9 +287,13 @@ fn is_self_or_shim_wrapper(path: &Path) -> bool {
 }
 
 fn resolve_nonshim_binary(name: &str) -> Option<PathBuf> {
-    if let Ok(path) =
-        which::which_in(name, Some(SAFE_PATH), env::current_dir().ok().unwrap_or_else(|| PathBuf::from(".")))
-    {
+    if let Ok(path) = which::which_in(
+        name,
+        Some(SAFE_PATH),
+        env::current_dir()
+            .ok()
+            .unwrap_or_else(|| PathBuf::from(".")),
+    ) {
         if !is_self_or_shim_wrapper(&path) {
             return Some(path);
         }
@@ -336,7 +348,10 @@ fn inject_harness_defaults(name: &str, args: &[String]) -> Vec<String> {
     let mut out = args.to_vec();
     match name {
         "dex" => {
-            if !out.iter().any(|a| a == "--dangerously-bypass-approvals-and-sandbox") {
+            if !out
+                .iter()
+                .any(|a| a == "--dangerously-bypass-approvals-and-sandbox")
+            {
                 out.insert(0, "--dangerously-bypass-approvals-and-sandbox".to_string());
             }
             if !out.iter().any(|a| a == "--search") {
@@ -496,7 +511,9 @@ fn split_native_flag(args: &[String]) -> (bool, Vec<String>) {
 }
 
 fn split_force_flag(args: &[String]) -> (bool, Vec<String>) {
-    let force_mode = args.iter().any(|a| a == "--force" || a == "-f" || a.starts_with("--force="));
+    let force_mode = args
+        .iter()
+        .any(|a| a == "--force" || a == "-f" || a.starts_with("--force="));
     let filtered = args
         .iter()
         .filter(|a| a.as_str() != "--force" && a.as_str() != "-f" && !a.starts_with("--force="))
@@ -559,7 +576,10 @@ fn inject_force_alias(name: &str, args: &[String], force_mode: bool) -> Vec<Stri
     let mut out = args.to_vec();
     match name {
         "dex" => {
-            if !out.iter().any(|a| a == "--dangerously-bypass-approvals-and-sandbox") {
+            if !out
+                .iter()
+                .any(|a| a == "--dangerously-bypass-approvals-and-sandbox")
+            {
                 out.insert(0, "--dangerously-bypass-approvals-and-sandbox".to_string());
             }
         }
@@ -762,7 +782,10 @@ fn run_wc(args: &[String]) -> ExitCode {
 fn run_date(args: &[String]) -> ExitCode {
     if args.len() == 1 && args[0] == "+%s" {
         use std::time::{SystemTime, UNIX_EPOCH};
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
         println!("{}", now);
         return ExitCode::from(0);
     }
@@ -788,7 +811,10 @@ fn run_date(args: &[String]) -> ExitCode {
 
 /// Run tr with acceleration - fast path for space/newline removal
 fn run_tr(args: &[String]) -> ExitCode {
-    if args.len() == 2 && args[0] == "-d" && (args[1] == " " || args[1] == "' '" || args[1] == "\n" || args[1] == "'\n'") {
+    if args.len() == 2
+        && args[0] == "-d"
+        && (args[1] == " " || args[1] == "' '" || args[1] == "\n" || args[1] == "'\n'")
+    {
         use std::io::{Read, Write};
         let to_remove = args[1].trim_matches('\'').as_bytes()[0];
         let mut input = Vec::new();
@@ -828,14 +854,18 @@ fn run_flock(args: &[String]) -> ExitCode {
         // This is a stub to prevent 'command not found' errors.
 
         let mut cmd_idx = 0;
-        while cmd_idx < args.len() && (args[cmd_idx].starts_with("-") || args[cmd_idx].chars().all(|c| c.is_digit(10))) {
+        while cmd_idx < args.len()
+            && (args[cmd_idx].starts_with("-") || args[cmd_idx].chars().all(|c| c.is_digit(10)))
+        {
             cmd_idx += 1;
         }
 
         if cmd_idx < args.len() {
             let mut cmd = StdCommand::new(&args[cmd_idx]);
-            cmd.args(&args[cmd_idx+1..]);
-            let status = cmd.status().unwrap_or_else(|_| std::process::ExitStatus::from_raw(0));
+            cmd.args(&args[cmd_idx + 1..]);
+            let status = cmd
+                .status()
+                .unwrap_or_else(|_| std::process::ExitStatus::from_raw(0));
             return ExitCode::from(status.code().unwrap_or(0) as u8);
         }
     }
@@ -844,13 +874,13 @@ fn run_flock(args: &[String]) -> ExitCode {
 
 fn main() -> ExitCode {
     // Initialize logger for debugging
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn"))
-        .init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("warn")).init();
 
     // Phase 2: Support symlink dispatching (e.g. called as 'thegent-git')
     let args: Vec<String> = env::args().collect();
     let program_path = PathBuf::from(&args[0]);
-    let program_name = program_path.file_name()
+    let program_name = program_path
+        .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("");
 
@@ -881,7 +911,10 @@ fn main() -> ExitCode {
         return run_date(&args[1..].to_vec());
     } else if program_name == "thegent-tr" {
         return run_tr(&args[1..].to_vec());
-    } else if program_name.starts_with("thegent-") && program_name != "thegent-shims" && program_name != "thegent-agent" {
+    } else if program_name.starts_with("thegent-")
+        && program_name != "thegent-shims"
+        && program_name != "thegent-agent"
+    {
         let agent = program_name.strip_prefix("thegent-").unwrap();
         if matches!(
             agent,
@@ -948,36 +981,16 @@ fn main() -> ExitCode {
     let cli = Cli::parse();
 
     match cli.command {
-        ShimCommand::Git { args } => {
-            run_git(&args)
-        }
-        ShimCommand::Grep { args } => {
-            run_grep(&args)
-        }
-        ShimCommand::Find { args } => {
-            run_find(&args)
-        }
-        ShimCommand::Agent { name, args } => {
-            run_agent(&name, &args)
-        }
-        ShimCommand::Jq { args } => {
-            run_jq(&args)
-        }
-        ShimCommand::Pgrep { args } => {
-            run_pgrep(&args)
-        }
-        ShimCommand::Wc { args } => {
-            run_wc(&args)
-        }
-        ShimCommand::Date { args } => {
-            run_date(&args)
-        }
-        ShimCommand::Tr { args } => {
-            run_tr(&args)
-        }
-        ShimCommand::Flock { args } => {
-            run_flock(&args)
-        }
+        ShimCommand::Git { args } => run_git(&args),
+        ShimCommand::Grep { args } => run_grep(&args),
+        ShimCommand::Find { args } => run_find(&args),
+        ShimCommand::Agent { name, args } => run_agent(&name, &args),
+        ShimCommand::Jq { args } => run_jq(&args),
+        ShimCommand::Pgrep { args } => run_pgrep(&args),
+        ShimCommand::Wc { args } => run_wc(&args),
+        ShimCommand::Date { args } => run_date(&args),
+        ShimCommand::Tr { args } => run_tr(&args),
+        ShimCommand::Flock { args } => run_flock(&args),
     }
 }
 
@@ -987,8 +1000,9 @@ mod tests {
 
     use super::{
         dedupe_exact_flags, dex_proxy_env_defaults, inject_force_alias, inject_harness_defaults,
-        inject_native_force_alias, normalize_harness_command_labels, normalize_harness_exec_legacy_args,
-        should_inject_proxy_env_defaults, split_force_flag, split_native_flag,
+        inject_native_force_alias, normalize_harness_command_labels,
+        normalize_harness_exec_legacy_args, should_inject_proxy_env_defaults, split_force_flag,
+        split_native_flag,
     };
 
     fn v(args: &[&str]) -> Vec<String> {
@@ -1220,7 +1234,8 @@ mod tests {
     fn inject_defaults_for_clode_adds_skip_permissions_once() {
         let out = inject_harness_defaults("clode", &v(&["resume"]));
         assert!(out.contains(&"--dangerously-skip-permissions".to_string()));
-        let out2 = inject_harness_defaults("clode", &v(&["--dangerously-skip-permissions", "resume"]));
+        let out2 =
+            inject_harness_defaults("clode", &v(&["--dangerously-skip-permissions", "resume"]));
         let count = out2
             .iter()
             .filter(|a| a.as_str() == "--dangerously-skip-permissions")

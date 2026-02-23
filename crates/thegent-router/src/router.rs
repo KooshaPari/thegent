@@ -3,12 +3,12 @@
 //! Routes tasks between Lifecycle (low-risk, fast) and TheGent (high-risk, thorough)
 //! based on a configurable risk threshold.
 
-use crate::risk::{RiskCalculator, RiskFactors};
 use crate::hysteresis::HysteresisManager;
+use crate::risk::{RiskCalculator, RiskFactors};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 /// Routing mode for task execution.
@@ -203,7 +203,8 @@ impl ParetoRouter {
         let risk_score = self.risk_calculator.calculate(factors);
 
         let mut session_states = self.session_states.lock().unwrap();
-        let session_state = session_states.entry(session_id.to_string())
+        let session_state = session_states
+            .entry(session_id.to_string())
             .or_insert_with(|| SessionState {
                 current_mode: RoutingMode::Lifecycle, // Default for first decision
                 last_switch_time: Instant::now(),
@@ -212,23 +213,23 @@ impl ParetoRouter {
 
         // Determine if we should switch based on hysteresis
         let should_switch_to_new = if risk_score < self.config.low_threshold {
-            session_state.current_mode != RoutingMode::Lifecycle &&
-            self.hysteresis.should_switch(
-                session_state.current_mode,
-                risk_score,
-                self.config.low_threshold,
-                session_state.last_switch_time,
-                session_state.last_risk_score,
-            )
+            session_state.current_mode != RoutingMode::Lifecycle
+                && self.hysteresis.should_switch(
+                    session_state.current_mode,
+                    risk_score,
+                    self.config.low_threshold,
+                    session_state.last_switch_time,
+                    session_state.last_risk_score,
+                )
         } else if risk_score > self.config.high_threshold {
-            session_state.current_mode != RoutingMode::TheGent &&
-            self.hysteresis.should_switch(
-                session_state.current_mode,
-                risk_score,
-                self.config.high_threshold,
-                session_state.last_switch_time,
-                session_state.last_risk_score,
-            )
+            session_state.current_mode != RoutingMode::TheGent
+                && self.hysteresis.should_switch(
+                    session_state.current_mode,
+                    risk_score,
+                    self.config.high_threshold,
+                    session_state.last_switch_time,
+                    session_state.last_risk_score,
+                )
         } else {
             false // Stay in band, don't switch
         };
@@ -517,7 +518,9 @@ mod tests {
         let factors = RiskFactors::new(ComplexityLevel::Simple);
         let decision = router.route(&factors);
 
-        assert!(decision.rationale.contains(&format!("{:.2}", decision.risk_score)));
+        assert!(decision
+            .rationale
+            .contains(&format!("{:.2}", decision.risk_score)));
     }
 
     #[test]

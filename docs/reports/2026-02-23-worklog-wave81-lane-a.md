@@ -1,5 +1,8 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> fix/ci-remove-macos
 # Worklog Wave 81 - Lane A (2026-02-23)
 
 Source: `docs/reference/WORK_STREAM_CLIPROXY_ALL.md` (Bugs 1..9 only).
@@ -54,8 +57,11 @@ Source: `docs/reference/WORK_STREAM_CLIPROXY_ALL.md` (Bugs 1..9 only).
 2. Add/extend streaming regression test to assert chunked emission (not single flush) for cliproxy-routed Claude responses.
 3. Build a minimal issue-evidence matrix (issue -> required artifacts/log fields/repro command) and request missing artifacts to unblock direct fixes.
 =======
+<<<<<<< HEAD
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> fix/ci-remove-macos
 # Worklog Wave 81 Lane A report (2026-02-23)
 
 ## WL-321 Connector baseline initiative 321
@@ -100,6 +106,10 @@ Source: `docs/reference/WORK_STREAM_CLIPROXY_ALL.md` (Bugs 1..9 only).
 - Automation tests that rely on `SyncCycleManifest` inputs/outputs or `SyncProvenanceStamp` fields pass without workaround; the wall of traceable outputs described in the worklog entry is now reproducible from the artifacts.
 - Update `docs/reference/WORK_STREAM.md` to reflect that WL-322 has moved into the implementation phase once these outputs are live.
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> 58ccbe31e72efd07558be54d6a129ce6d984487d
+>>>>>>> fix/ci-remove-macos

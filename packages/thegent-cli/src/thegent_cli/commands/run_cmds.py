@@ -106,9 +106,8 @@ def run_cmd(
                 provider_routes = [r for r in routes if str(getattr(r, "provider", "")) == str(provider)]
                 if provider_routes:
                     resolved = provider_routes[0]
-        else:
-            if routes:
-                resolved = routes[0]
+        elif routes:
+            resolved = routes[0]
 
         if resolved is None:
             if provider:
@@ -119,7 +118,7 @@ def run_cmd(
                 console.print(f"[red]Model '{model}' has no available providers.[/red]")
             raise typer.Exit(1)
         if hasattr(resolved, "provider") and not isinstance(resolved, (list, tuple)):
-            effective_agent = getattr(resolved, "provider")
+            effective_agent = resolved.provider
         else:
             effective_agent = resolved
 

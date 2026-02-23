@@ -9,22 +9,22 @@
 //! - `executor`: RouteExecutor dispatches RoutingDecisions to providers
 //! - `orchestrator`: RoutingOrchestrator coordinates N concurrent agents
 
-pub mod risk;
-pub mod router;
-pub mod hysteresis;
 pub mod audit;
 pub mod executor;
+pub mod hysteresis;
 pub mod orchestrator;
+pub mod risk;
+pub mod router;
 
 #[cfg(feature = "python")]
 pub mod python;
 
-pub use risk::{RiskCalculator, ComplexityLevel, RiskFactors};
-pub use router::{ParetoRouter, RoutingMode, RoutingDecision, RouterMetrics, RouterConfig};
-pub use hysteresis::HysteresisManager;
 pub use audit::{AuditLogger, AuditRecord};
-pub use executor::{RouteExecutor, ExecutionOutcome, DispatchTarget, Dispatcher};
-pub use orchestrator::{RoutingOrchestrator, RouterStatus, AgentRoutingState, ArbitrationPolicy};
+pub use executor::{DispatchTarget, Dispatcher, ExecutionOutcome, RouteExecutor};
+pub use hysteresis::HysteresisManager;
+pub use orchestrator::{AgentRoutingState, ArbitrationPolicy, RouterStatus, RoutingOrchestrator};
+pub use risk::{ComplexityLevel, RiskCalculator, RiskFactors};
+pub use router::{ParetoRouter, RouterConfig, RouterMetrics, RoutingDecision, RoutingMode};
 
 #[cfg(test)]
 mod tests {

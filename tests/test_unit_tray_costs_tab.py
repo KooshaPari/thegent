@@ -1,10 +1,13 @@
 """Unit tests for tray costs tab."""
 
+import pytest
+
+pytest.importorskip("PySide6")
+
 import ast
 import os
 from pathlib import Path
 
-import pytest
 
 
 def get_module_ast(file_path: str) -> ast.Module:
@@ -252,7 +255,15 @@ class TestTabsPackage:
 
     def test_tabs_package_exports_costs(self):
         """tabs package exports costs tab items."""
+<<<<<<< HEAD
         import sys
+=======
+        import os
+        from pathlib import Path
+        import sys
+
+        # Add src to path
+>>>>>>> fix/ci-remove-macos
         src_path = Path(__file__).parent.parent.parent / "src"
         if src_path not in sys.path:
             sys.path.insert(0, src_path)

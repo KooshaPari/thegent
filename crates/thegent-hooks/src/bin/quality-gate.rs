@@ -38,7 +38,10 @@ fn main() -> ExitCode {
         Ok(outcomes) => {
             for outcome in outcomes {
                 if !outcome.passed {
-                    violations.push(format!("policy {} failed: {}", outcome.rule_id, outcome.message));
+                    violations.push(format!(
+                        "policy {} failed: {}",
+                        outcome.rule_id, outcome.message
+                    ));
                 }
             }
         }

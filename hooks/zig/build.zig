@@ -5,6 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // Only build native dispatcher for non-WASM targets
     const is_wasm_target = target.result.cpu.arch == .wasm32;
 
@@ -89,6 +90,8 @@ pub fn build(b: *std.Build) void {
         test_step.dependOn(&run_wasm_tests.step);
     }
 =======
+=======
+>>>>>>> fix/ci-remove-macos
     // Native dispatcher binary
     const dispatcher = b.addExecutable(.{
         .name = "hook-dispatcher-zig",
@@ -140,5 +143,8 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_unit_tests.step);
     test_step.dependOn(&run_contract_tests.step);
+<<<<<<< HEAD
 >>>>>>> chore/thegent-provider-plane-pr3
+=======
+>>>>>>> fix/ci-remove-macos
 }

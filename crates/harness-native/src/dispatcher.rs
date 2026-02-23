@@ -116,7 +116,11 @@ fn get_rule(etc_dir: &Path, cmd: &str, subcmd: &str) -> (String, String) {
     let Ok(content) = fs::read_to_string(&rules_file) else {
         return ("passthrough".to_string(), String::new());
     };
-    let exact_key = format!("{}__{}", cmd, if subcmd.is_empty() { "STAR" } else { subcmd });
+    let exact_key = format!(
+        "{}__{}",
+        cmd,
+        if subcmd.is_empty() { "STAR" } else { subcmd }
+    );
     let wild_key = format!("{}__STAR", cmd);
 
     let mut rules: HashMap<String, (String, String)> = HashMap::new();
@@ -129,13 +133,14 @@ fn get_rule(etc_dir: &Path, cmd: &str, subcmd: &str) -> (String, String) {
         let pattern = parts.next().unwrap_or("");
         let rest = parts.next().unwrap_or("").trim();
         let strategy = rest.split_whitespace().next().unwrap_or("passthrough");
-        let opts = rest.split_whitespace().skip(1).collect::<Vec<_>>().join(" ");
+        let opts = rest
+            .split_whitespace()
+            .skip(1)
+            .collect::<Vec<_>>()
+            .join(" ");
         let (pcmd, psub) = if pattern.contains(':') {
             let mut sp = pattern.splitn(2, ':');
-            (
-                sp.next().unwrap_or(""),
-                sp.next().unwrap_or("*"),
-            )
+            (sp.next().unwrap_or(""), sp.next().unwrap_or("*"))
         } else {
             (pattern, "*")
         };
@@ -212,9 +217,7 @@ fn compute_cache_key(harness_home: &Path, mode: &str, cmd: &str, args: &[String]
     }
     let mut cargs = vec![mode.to_string(), cmd.to_string()];
     cargs.extend(args.iter().cloned());
-    let out = Command::new(&cache_key_bin)
-        .args(&cargs)
-        .output();
+    let out = Command::new(&cache_key_bin).args(&cargs).output();
     let out = match out {
         Ok(o) => o,
         Err(_) => return format!("{}:{}", cmd, args.join(":")),
@@ -246,9 +249,7 @@ fn first_non_flag_arg(args: &[String]) -> String {
 
 fn exec_bash_harness(harness_home: &Path, invoked_as: &str, args: &[String]) -> ! {
     // Prefer harness.bash (when Rust binary replaced bin/harness), else bin/harness
-    let bash_harness = harness_home
-        .join("bin")
-        .join("harness.bash");
+    let bash_harness = harness_home.join("bin").join("harness.bash");
     let bash_harness = if bash_harness.is_file() {
         bash_harness
     } else {
@@ -305,28 +306,24 @@ fn main() {
             debug!(cmd = %invoked, path = %p.display(), "resolved via .real cache");
             p
         }
-        None => match find_real::find_real(
-            &proxy_dir,
-            &harness_home,
-            harness_bin.as_deref(),
-            &invoked,
-        ) {
-            Some(p) => {
-                debug!(cmd = %invoked, path = %p.display(), "resolved via PATH scan");
-                p
+        None => {
+            match find_real::find_real(&proxy_dir, &harness_home, harness_bin.as_deref(), &invoked)
+            {
+                Some(p) => {
+                    debug!(cmd = %invoked, path = %p.display(), "resolved via PATH scan");
+                    p
+                }
+                None => {
+                    warn!(cmd = %invoked, "find_real: binary not found, delegating to bash");
+                    exec_bash_harness(&harness_home, &invoked, &args);
+                }
             }
-            None => {
-                warn!(cmd = %invoked, "find_real: binary not found, delegating to bash");
-                exec_bash_harness(&harness_home, &invoked, &args);
-            }
-        },
+        }
     };
 
     // Agent detection: run harness-is-agent
     let is_agent = {
-        let is_agent_bin = harness_home
-            .join("bin")
-            .join("harness-is-agent");
+        let is_agent_bin = harness_home.join("bin").join("harness-is-agent");
         let is_agent_bin = if is_agent_bin.is_file() {
             is_agent_bin
         } else {
