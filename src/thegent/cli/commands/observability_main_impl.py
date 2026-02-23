@@ -52,16 +52,16 @@ _REVIEW_SCHEMA_PREAMBLE = (
 
 def get_server_meta_impl() -> dict[str, Any]:
     """Return server metadata dict for thegent://meta resource."""
-    from thegent.cli.commands.observability_health_impl import (
+    from thegent.cli.commands.observability_health_impl import (  # pyright: ignore[reportMissingImports]
         HEALTH_PAYLOAD_SCHEMA_VERSION,
         HEALTH_PAYLOAD_TYPES,
     )
-    from thegent.cli.commands.observability_trends_impl import (
+    from thegent.cli.commands.observability_trends_impl import (  # pyright: ignore[reportMissingImports]
         OBSERVE_SUMMARY_PAYLOAD_TYPES,
         OBSERVE_SUMMARY_SCHEMA_VERSION,
     )
 
-    from thegent.cli.commands.governance_policy_health_cmds import HEALTH_POLICY_PROFILES
+    from thegent.cli.commands.governance_policy_health_cmds import HEALTH_POLICY_PROFILES  # pyright: ignore[reportMissingImports]
 
     return observability_service.get_server_meta_impl(
         health_payload_schema_version=HEALTH_PAYLOAD_SCHEMA_VERSION,
@@ -210,7 +210,7 @@ def observe_summary_impl(
     from thegent.contracts.telemetry import ContractTelemetry
     from thegent.execution import EscalationQueue
 
-    from thegent.cli.commands.observability_trends_impl import (
+    from thegent.cli.commands.observability_trends_impl import (  # pyright: ignore[reportMissingImports]
         OBSERVE_SUMMARY_SCHEMA_VERSION,
         _build_observe_summary_trend_scope,
         _classify_observe_summary_trend_health,
@@ -353,8 +353,8 @@ def _append_observe_summary_snapshot(
     trend_snapshot_ids: list[str],
     trend_summary: dict[str, Any],
 ) -> None:
-    from thegent.cli.commands.observability_health_impl import _health_snapshot_log_path
-    from thegent.cli.commands.observability_trends_impl import OBSERVE_SUMMARY_SCHEMA_VERSION
+    from thegent.cli.commands.observability_health_impl import _health_snapshot_log_path  # pyright: ignore[reportMissingImports]
+    from thegent.cli.commands.observability_trends_impl import OBSERVE_SUMMARY_SCHEMA_VERSION  # pyright: ignore[reportMissingImports]
 
     record = {
         "record_type": "observe_summary_snapshot",
@@ -415,7 +415,7 @@ def _append_observe_summary_snapshot(
             fh.write("\n")
     except OSError:
         return
-    from thegent.cli.commands.observability_health_impl import _compact_health_snapshot_log
+    from thegent.cli.commands.observability_health_impl import _compact_health_snapshot_log  # pyright: ignore[reportMissingImports]
 
     _compact_health_snapshot_log()
 
