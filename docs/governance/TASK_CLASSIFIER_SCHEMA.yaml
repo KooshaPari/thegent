@@ -1,0 +1,87 @@
+version: 1
+name: governance_task_classifier
+description: >
+  Canonical classifier used by L1/L2 orchestration for delegation, worktree placement,
+  commit packaging, and gate selection.
+
+fields:
+  task_id:
+    type: string
+    required: true
+  title:
+    type: string
+    required: true
+  domain:
+    type: enum
+    values: [backend, frontend, infra, data, docs, research, security, qa, release, ops]
+    required: true
+  scale:
+    type: enum
+    values: [XS, S, M, L, XL]
+    required: true
+  risk:
+    type: enum
+    values: [low, medium, high, critical]
+    required: true
+  coupling:
+    type: enum
+    values: [isolated, cross_module, cross_repo]
+    required: true
+  runtime_profile:
+    type: enum
+    values: [cpu_heavy, io_heavy, long_running, interactive, mixed]
+    required: true
+  validation_depth:
+    type: list
+    items:
+      type: enum
+      values: [lint, unit, integration, e2e, security, perf, chaos, accessibility]
+    required: true
+  overlap_risk:
+    type: integer
+    range: [0, 100]
+    required: true
+
+outputs:
+  delegation_tier:
+    type: enum
+    values: [L1_direct, L2_managed, L3_specialist, Ln_worker]
+  worker_count:
+    type: integer
+    range: [1, 50]
+  worktree_mode:
+    type: enum
+    values: [shared_lane, burst_isolated, lane_dedicated, integration]
+  commit_mode:
+    type: enum
+    values: [single, micro, pkg, integration_train]
+  required_gates:
+    type: list
+    items:
+      type: string
+
+policy_defaults:
+  XS:
+    worktree_mode: shared_lane
+    commit_mode: single
+  S:
+    worktree_mode: shared_lane
+    commit_mode: micro
+  M:
+    worktree_mode: lane_dedicated
+    commit_mode: micro
+  L:
+    worktree_mode: integration
+    commit_mode: pkg
+  XL:
+    worktree_mode: integration
+    commit_mode: integration_train
+
+escalation_rules:
+  - if: "overlap_risk >= 60"
+    then:
+      worktree_mode: burst_isolated
+  - if: "risk in [high, critical]"
+    then:
+      required_gates: [lint, unit, integration, security]
+

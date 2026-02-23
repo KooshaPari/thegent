@@ -60,17 +60,29 @@ def team_create(
 
 @app.command("list", help="List active agent swarms.")
 def team_list(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    console.print("[yellow]Team list is not yet implemented.[/yellow]")
+    from thegent.cli.commands.team_commands import team_list_cmd
+
+    if format not in {"rich", "json"}:
+        raise typer.BadParameter("format must be one of: rich, json", param_hint="--format")
+    team_list_cmd(format=format, console=console)
 
 
 @app.command("hierarchy", help="Show current agent management hierarchy.")
 def team_hierarchy(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    console.print("[yellow]Team hierarchy is not yet implemented.[/yellow]")
+    from thegent.cli.commands.team_commands import team_hierarchy_cmd
+
+    if format not in {"rich", "json"}:
+        raise typer.BadParameter("format must be one of: rich, json", param_hint="--format")
+    team_hierarchy_cmd(format=format, console=console)
 
 
 @app.command("crew", help="List hierarchical agent crews.")
 def team_crew(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    console.print("[yellow]Team crew is not yet implemented.[/yellow]")
+    from thegent.cli.commands.team_commands import team_crew_cmd
+
+    if format not in {"rich", "json"}:
+        raise typer.BadParameter("format must be one of: rich, json", param_hint="--format")
+    team_crew_cmd(format=format, console=console)
 
 
 # Shortcuts for common teammate ops at top level of team stream
