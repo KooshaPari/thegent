@@ -3,7 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
+from thegent.utils.json_utils import json_loads, json_dumps
 import re
 import os
 import shutil

@@ -5,7 +5,7 @@ process-compose to reduce overhead of repeatedly spawning task processes.
 """
 
 import asyncio
-import json
+from thegent.utils.json_utils import json_loads, json_dumps
 import logging
 import os
 import subprocess
