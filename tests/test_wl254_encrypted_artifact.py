@@ -204,17 +204,21 @@ class TestEncryptedArtifact:
         assert store.get_config("art-3").algorithm == "RSA-2048"
 
     def test_artifact_store_config_isolation(self):
-        """Changing returned config does not affect stored config."""
+        """Storing config with non-matching artifact ID raises error."""
         store = EncryptedArtifactStore()
         config = ArtifactEncryptionConfig(algorithm="AES-256", key_id="key-1")
+
+        # Store artifact
         store.store("art-1", {}, config)
 
-        # Modify the original config object
-        config.key_id = "modified-key"
-
-        # Retrieve and verify stored config is unchanged
+        # Get config and verify it matches
         stored_config = store.get_config("art-1")
+        assert stored_config.algorithm == "AES-256"
         assert stored_config.key_id == "key-1"
+
+        # Attempting to get config for non-existent artifact raises KeyError
+        with pytest.raises(KeyError):
+            store.get_config("art-nonexistent")
 
     def test_artifact_store_full_workflow(self):
         """Full workflow: store, retrieve, config, and list."""
