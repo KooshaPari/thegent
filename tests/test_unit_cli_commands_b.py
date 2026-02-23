@@ -807,7 +807,7 @@ class TestDagCheckpointsCmdImpl:
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path", return_value=(None, None))
+    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False})
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-341
@@ -894,7 +894,7 @@ class TestDagRecoverCmdImpl:
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path", return_value=(None, None))
+    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False})
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-346
