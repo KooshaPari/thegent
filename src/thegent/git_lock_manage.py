@@ -7,6 +7,7 @@ Uses mtime + lsof for safe removal (per GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM
 import platform
 import subprocess
 from collections.abc import Iterator
+from typing import Optional
 from pathlib import Path
 
 from thegent.infra import run_subprocess_optimized
@@ -32,7 +33,30 @@ def _get_lock_mtime_seconds(lock_path: Path) -> float | None:
         return None
 
 
-def _has_open_holder(lock_path: Path) -> bool:
+def _resolve_git_dir(git_ref: Path) -> Path | None:
+    """Resolve .git as directory or gitfile pointer to worktree git dir."""
+    if not git_ref.exists():
+        return None
+
+    if git_ref.is_dir():
+        return git_ref
+
+    if not git_ref.is_file():
+        return None
+
+    try:
+        raw = git_ref.read_text(encoding="utf-8", errors="ignore").strip()
+    except OSError:
+        return None
+
+    if not raw.lower().startswith("gitdir:"):
+        return None
+
+    payload = raw.split(":", 1)[1].strip()
+    return (git_ref.parent / payload).resolve()
+
+
+def _has_open_holder(lock_path: Path) -> Optional[bool]:
     """Return True if any process has the lock file open (lsof)."""
     try:
         result = run_subprocess_optimized(
@@ -45,18 +69,58 @@ def _has_open_holder(lock_path: Path) -> bool:
             if isinstance(result.stdout, str)
             else (result.stdout.decode("utf-8", errors="replace") if result.stdout else "")
         )
-        return result.returncode == 0 and bool(stdout_text and stdout_text.strip())
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+        stderr_text = (
+            result.stderr
+            if isinstance(result.stderr, str)
+            else (result.stderr.decode("utf-8", errors="replace") if result.stderr else "")
+        )
+
+        if result.returncode == 0:
+            return bool(stdout_text and stdout_text.strip())
+        if result.returncode == 1 and not stdout_text.strip() and not stderr_text.strip():
+            return False
+        return None
+    except FileNotFoundError:
+        return None
+    except subprocess.TimeoutExpired:
         return False
 
 
 def _find_lock_files(paths: list[Path]) -> Iterator[Path]:
-    """Yield .git/index.lock under each path."""
+    """Yield .git/index.lock under each path.
+
+    Supports:
+      - Standard repos with .git as a directory
+      - Worktrees where .git is a pointer file
+      - Shared gitdir worktrees metadata under <gitdir>/worktrees/*
+    """
     seen: set[Path] = set()
     for base in paths:
         if not base.exists():
             continue
-        lock = base / ".git" / "index.lock"
+
+        git_dir = _resolve_git_dir(base / ".git")
+        if git_dir is not None:
+            lock = git_dir / "index.lock"
+            if lock.exists() and lock not in seen:
+                seen.add(lock)
+                yield lock
+
+            worktree_index = git_dir / "worktrees"
+            if worktree_index.exists() and worktree_index.is_dir():
+                try:
+                    for candidate in worktree_index.iterdir():
+                        if not candidate.is_dir():
+                            continue
+                        lock = candidate / "index.lock"
+                        if lock.exists() and lock not in seen:
+                            seen.add(lock)
+                            yield lock
+                except (OSError, PermissionError):
+                    pass
+
+        else:
+            lock = base / ".git" / "index.lock"
         if lock.exists() and lock not in seen:
             seen.add(lock)
             yield lock
@@ -83,7 +147,11 @@ def run_lock_cleanup(
         if age < max_age:
             skipped += 1
             continue
-        if _has_open_holder(lock_path):
+        has_open_holder = _has_open_holder(lock_path)
+        if has_open_holder is None:
+            skipped += 1
+            continue
+        if has_open_holder:
             skipped += 1
             continue
         if dry_run:

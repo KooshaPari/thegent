@@ -1006,7 +1006,11 @@ def review_impl(
 
 def get_data_protection_status_impl() -> dict[str, Any]:
     """Return status of data protection and privacy controls (WP-3006)."""
-    settings = ThegentSettings()
+    import importlib
+
+    cli_module = importlib.import_module("thegent.cli.commands.impl")
+    settings_cls = getattr(cli_module, "ThegentSettings", ThegentSettings)
+    settings = settings_cls()
     session_dir = settings.session_dir.expanduser().resolve()
 
     perms_ok = False

@@ -16,24 +16,56 @@ from typing import Any, cast
 
 import typer
 
-from thegent.cli.commands.observability_impl import (
-    HEALTH_PAYLOAD_SCHEMA_VERSION,
-    HEALTH_PAYLOAD_TYPES,
-    _append_health_snapshot,
-    _coerce_issue_types,
-    _hash_health_payload,
-    _health_scope_key,
-    _health_snapshot_log_path,
-    _health_snapshot_max_lines,
-    _load_previous_health_snapshot,
-    _resolve_health_policy,
-)
 from thegent.cli.commands.session_health_impl import (
     _extract_blocked_ratio,
     session_contract_audit_impl,
 )
 
 _log = logging.getLogger(__name__)
+
+
+def _health_report_impl():
+    from thegent.cli.commands import impl as cli_impl
+
+    return cli_impl
+
+
+HEALTH_PAYLOAD_SCHEMA_VERSION = _health_report_impl().HEALTH_PAYLOAD_SCHEMA_VERSION
+HEALTH_PAYLOAD_TYPES = _health_report_impl().HEALTH_PAYLOAD_TYPES
+
+
+def _resolve_health_policy(policy_profile: str | None, strict: bool, min_healthy_ratio: float) -> dict[str, Any]:
+    return _health_report_impl()._resolve_health_policy(
+        policy_profile=policy_profile, strict=strict, min_healthy_ratio=min_healthy_ratio
+    )
+
+
+def _coerce_issue_types(value: Any) -> list[str]:
+    return _health_report_impl()._coerce_issue_types(value)
+
+
+def _health_scope_key(payload: dict[str, Any]) -> dict[str, Any]:
+    return _health_report_impl()._health_scope_key(payload)
+
+
+def _load_previous_health_snapshot(scope_key: dict[str, Any]) -> dict[str, Any] | None:
+    return _health_report_impl()._load_previous_health_snapshot(scope_key)
+
+
+def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) -> None:
+    return _health_report_impl()._append_health_snapshot(payload, scope_key)
+
+
+def _hash_health_payload(payload: dict[str, Any]) -> str:
+    return _health_report_impl()._hash_health_payload(payload)
+
+
+def _health_snapshot_log_path():
+    return _health_report_impl()._health_snapshot_log_path()
+
+
+def _health_snapshot_max_lines() -> int:
+    return _health_report_impl()._health_snapshot_max_lines()
 
 
 def session_contract_health_report_impl(

@@ -379,22 +379,68 @@ class LimitGateConfig:
         """Build config from dict (e.g. settings). Supports concurrency_ prefix."""
         if not d:
             return cls()  # Use defaults with 5%/15% buffers
+
+        def _as_float(value: Any, default: float) -> float:
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return default
+
+        def _as_int(value: Any, default: int) -> int:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return default
+
         return cls(
-            fd_utilization_max=d.get("concurrency_fd_utilization_max", d.get("fd_utilization_max", 0.95)),
-            fd_utilization_warn=d.get("concurrency_fd_utilization_warn", d.get("fd_utilization_warn", 0.85)),
-            mem_utilization_max=d.get("concurrency_mem_utilization_max", d.get("mem_utilization_max", 0.95)),
-            mem_utilization_warn=d.get("concurrency_mem_utilization_warn", d.get("mem_utilization_warn", 0.85)),
-            cpu_utilization_max=d.get("concurrency_cpu_utilization_max", d.get("cpu_utilization_max", 0.95)),
-            cpu_utilization_warn=d.get("concurrency_cpu_utilization_warn", d.get("cpu_utilization_warn", 0.85)),
-            load_per_cpu_max=d.get("concurrency_load_per_cpu_max", d.get("load_per_cpu_max", 0.95)),
-            load_per_cpu_warn=d.get("concurrency_load_per_cpu_warn", d.get("load_per_cpu_warn", 0.85)),
-            mem_available_min_mb=d.get("concurrency_mem_available_min_mb", d.get("mem_available_min_mb", 128.0)),
-            mem_available_warn_mb=d.get("concurrency_mem_available_warn_mb", d.get("mem_available_warn_mb", 512.0)),
-            min_slots=d.get("concurrency_min_slots", d.get("min_slots", 1)),
-            max_slots=d.get("max_concurrency", d.get("max_slots", 10000)),
-            slots_per_cpu=d.get("concurrency_slots_per_cpu", d.get("slots_per_cpu", 50.0)),
-            fd_headroom_per_slot=d.get("concurrency_fd_headroom_per_slot", d.get("fd_headroom_per_slot", 50)),
-            mem_mb_per_slot=d.get("concurrency_mem_mb_per_slot", d.get("mem_mb_per_slot", 128.0)),
+            fd_utilization_max=_as_float(
+                d.get("concurrency_fd_utilization_max", d.get("fd_utilization_max", 0.95)),
+                0.95,
+            ),
+            fd_utilization_warn=_as_float(
+                d.get("concurrency_fd_utilization_warn", d.get("fd_utilization_warn", 0.85)),
+                0.85,
+            ),
+            mem_utilization_max=_as_float(
+                d.get("concurrency_mem_utilization_max", d.get("mem_utilization_max", 0.95)),
+                0.95,
+            ),
+            mem_utilization_warn=_as_float(
+                d.get("concurrency_mem_utilization_warn", d.get("mem_utilization_warn", 0.85)),
+                0.85,
+            ),
+            cpu_utilization_max=_as_float(
+                d.get("concurrency_cpu_utilization_max", d.get("cpu_utilization_max", 0.95)),
+                0.95,
+            ),
+            cpu_utilization_warn=_as_float(
+                d.get("concurrency_cpu_utilization_warn", d.get("cpu_utilization_warn", 0.85)),
+                0.85,
+            ),
+            load_per_cpu_max=_as_float(
+                d.get("concurrency_load_per_cpu_max", d.get("load_per_cpu_max", 0.95)),
+                0.95,
+            ),
+            load_per_cpu_warn=_as_float(
+                d.get("concurrency_load_per_cpu_warn", d.get("load_per_cpu_warn", 0.85)),
+                0.85,
+            ),
+            mem_available_min_mb=_as_float(
+                d.get("concurrency_mem_available_min_mb", d.get("mem_available_min_mb", 128.0)),
+                128.0,
+            ),
+            mem_available_warn_mb=_as_float(
+                d.get("concurrency_mem_available_warn_mb", d.get("mem_available_warn_mb", 512.0)),
+                512.0,
+            ),
+            min_slots=_as_int(d.get("concurrency_min_slots", d.get("min_slots", 1)), 1),
+            max_slots=_as_int(d.get("max_concurrency", d.get("max_slots", 10000)), 10000),
+            slots_per_cpu=_as_float(d.get("concurrency_slots_per_cpu", d.get("slots_per_cpu", 50.0)), 50.0),
+            fd_headroom_per_slot=_as_int(
+                d.get("concurrency_fd_headroom_per_slot", d.get("fd_headroom_per_slot", 50)),
+                50,
+            ),
+            mem_mb_per_slot=_as_float(d.get("concurrency_mem_mb_per_slot", d.get("mem_mb_per_slot", 128.0)), 128.0),
         )
 
 

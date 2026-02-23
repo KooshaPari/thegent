@@ -12,7 +12,7 @@ from typing import Any
 
 import typer
 
-from thegent.agents import get_fallback_agents, list_agent_names, list_droid_names
+from thegent.agents import get_fallback_agents, list_agent_names
 from thegent.agents.registry import AGENT_LABELS
 from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
@@ -215,13 +215,14 @@ def list_droids_impl(
     cd: Any = None,
     resolve_cwd: Callable[[Any], Path | None],
     resolve_droids_dir: Callable[[Path, ThegentSettings], Path],
+    list_droid_names_fn: Callable[[Path], list[str]],
     settings_factory: Callable[[], ThegentSettings] = ThegentSettings,
 ) -> list[str]:
     """List available droids. Returns list of droid names."""
     settings = settings_factory()
     cwd = resolve_cwd(cd) or Path.cwd()
     droids_dir = resolve_droids_dir(cwd, settings)
-    return sorted(list_droid_names(droids_dir))
+    return sorted(list_droid_names_fn(droids_dir))
 
 
 def list_models_impl(

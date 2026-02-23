@@ -184,7 +184,7 @@ The spiral state/report/alert/metrics now share deterministic operational fields
 ### Start-Surface Parity Matrix
 | Surface | Entry Point | Gate Behavior on Failure |
 |---|---|---|
-| CLI | `thegent plan do-next` (`do_next_impl`) | Returns `governance_blocked=true` payload, includes `governance_block.remediation_steps`, blocks start |
+| CLI | `thegent plan next` (`do_next_impl`) | Returns `governance_blocked=true` payload, includes `governance_block.remediation_steps`, blocks start |
 | CLI | `thegent plan get-next` (`do_next_impl` wrapper) | Propagates `governance_blocked=true` with remediation and exits non-zero |
 | CLI | `thegent plan spawn-next` (`spawn_next_impl`) | Propagates `governance_blocked=true`; does not spawn or claim |
 | CLI | `thegent plan claim` (`work_stream_claim_impl`) | Returns `success=false` + `governance_blocked=true` with remediation |

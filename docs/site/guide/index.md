@@ -15,8 +15,8 @@ This section helps you install, configure, and run `thegent` day-to-day.
 
 ```bash
 thegent doctor
-thegent run "summarize current repo status" free
-thegent plan do-next
+thegent run free "summarize current repo status"
+thegent plan next
 thegent plan loop
 ```
 

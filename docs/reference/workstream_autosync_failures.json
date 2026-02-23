@@ -484,5 +484,32 @@
     "occurred_at": "2026-02-23T05:49:06.599232+00:00",
     "retry_class": "permanent",
     "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-b5995404f2cc",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "github/write timed out after 0.010s",
+    "occurred_at": "2026-02-23T06:24:07.074012+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-3c6741b3a620",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "boom",
+    "occurred_at": "2026-02-23T06:24:07.085185+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
+  },
+  {
+    "operation_id": "github-write-partition:0-b895a8b395b8",
+    "connector": "github",
+    "item_id": "partition:0",
+    "message": "github/write blocked by open connector circuit breaker",
+    "occurred_at": "2026-02-23T06:24:07.087060+00:00",
+    "retry_class": "permanent",
+    "correlation_id": null
   }
 ]

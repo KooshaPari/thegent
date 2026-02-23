@@ -334,8 +334,18 @@ def _resolve_turn_cancel_turn(
     return turn_id, turn, None
 
 
-def _validate_turn_cancel_turn_state(request_id: Any, turn_id: str, turn: dict[str, Any]) -> dict[str, Any] | None:
-    if turn["status"] in TERMINAL_TURN_STATES:
+def _validate_turn_cancel_turn_state(
+    request_id: Any,
+    turn_id: Any,
+    turn: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    if turn is None and isinstance(turn_id, dict):
+        turn = turn_id
+        turn_id = request_id
+        request_id = "compat"
+    if turn is None or not isinstance(turn, dict):
+        raise TypeError("Turn payload required")
+    if turn.get("status") in TERMINAL_TURN_STATES:
         return _error_response(
             request_id,
             JsonRpcError(-32003, "Turn already terminal", {"turn_id": turn_id, "status": turn["status"]}),
@@ -448,6 +458,49 @@ def _handle_turn_cancel(
     request_has_id: bool, request_id: Any, params: dict[str, Any]
 ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
     return _handle_turn_cancel_request("turn/cancel", request_has_id, request_id, params), []
+
+
+def _parse_turn_cancel_turn_id(params: dict[str, Any]) -> tuple[str | None, JsonRpcError | None]:
+    turn_id = _normalized_non_empty_string(params.get("turn_id"))
+    if turn_id is None:
+        return None, _invalid_params("turn_id_required")
+    return turn_id, None
+
+
+def _lookup_turn_for_cancel(turn_id: str) -> dict[str, Any] | None:
+    return SERVER_STATE.turns.get(turn_id)
+
+
+def _resolve_turn_cancel_target(
+    session_id: Any, params: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    # session_id retained for compatibility with earlier call signatures.
+    turn_id = _normalized_non_empty_string(params.get("turn_id"))
+    if turn_id is None:
+        return None, None, _error_response(session_id, _invalid_params("turn_id_required"))
+    turn = SERVER_STATE.turns.get(turn_id)
+    if turn is None:
+        return turn_id, None, _error_response(session_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id}))
+    error = _validate_turn_cancel_turn_state(session_id, turn_id, turn)
+    if error is not None:
+        return None, None, error
+    return turn_id, turn, None
+
+
+def _mark_turn_cancelled(turn: dict[str, Any]) -> None:
+    _mark_turn_as_cancelled(turn)
+
+
+def _cancel_requested_approval_for_turn(turn: dict[str, Any]) -> None:
+    _cancel_turn_requested_approval(turn)
+
+
+def _build_turn_cancel_response(
+    request_has_id: bool, request_id: Any, turn: dict[str, Any]
+) -> dict[str, Any] | None:
+    if not request_has_id:
+        return None
+    return _result_response(request_id, _build_turn_cancel_projection_payload(turn))
 
 
 def _discover_approval_resolution_route(method: str) -> str:
@@ -732,6 +785,17 @@ def _resolve_turn_submit_parse_error(plan: dict[str, Any]) -> dict[str, Any] | N
     return parse_error
 
 
+def _build_turn_submit_parse_phase(plan: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "parse_error": _resolve_turn_submit_parse_error(plan),
+        "session_id": plan.get("session_id"),
+        "session": plan.get("session"),
+        "user_input": plan.get("user_input"),
+        "requires_approval": plan.get("requires_approval"),
+        "approval_diff": plan.get("approval_diff"),
+    }
+
+
 def _turn_submit_should_emit_response(request_has_id: bool) -> bool:
     return request_has_id
 
@@ -755,6 +819,12 @@ def _resolve_turn_submit_execution_target(
     return session_id, session, user_input, requires_approval, approval_diff
 
 
+def _build_turn_submit_execution_phase(
+    parse_phase: dict[str, Any],
+) -> tuple[str, dict[str, Any], str, bool, str | None]:
+    return _resolve_turn_submit_execution_target(parse_phase)
+
+
 def _build_turn_submit_commit_phase(
     session_id: str, session: dict[str, Any], user_input: str
 ) -> dict[str, Any]:
@@ -771,6 +841,12 @@ def _resolve_turn_submit_commit_target(
     if not isinstance(turn_id, str) or not isinstance(turn, dict) or not isinstance(session, dict):
         raise ValueError("Turn submit commit target unresolved")
     return turn_id, turn, session
+
+
+def _build_turn_submit_commit_resolution_phase(
+    commit_phase: dict[str, Any],
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    return _resolve_turn_submit_commit_target(commit_phase)
 
 
 def _apply_turn_submit_started_notifications(
@@ -899,6 +975,12 @@ def _resolve_turn_submit_side_effects_target(
     return session_id, turn_id, turn, user_input, requires_approval, approval_diff
 
 
+def _build_turn_submit_side_effects_resolution_phase(
+    side_effects_phase: dict[str, Any],
+) -> tuple[str, str, dict[str, Any], str, bool, str | None]:
+    return _resolve_turn_submit_side_effects_target(side_effects_phase)
+
+
 def _resolve_turn_submit_completion(
     session_id: str, turn_id: str, user_input: str, turn: dict[str, Any], notifications: list[dict[str, Any]]
 ) -> None:
@@ -982,27 +1064,6 @@ def _extract_turn_submit_response_approval_payload(
     return approval_payload
 
 
-def _extract_turn_submit_approval_payload_id(approval_payload: dict[str, Any]) -> str:
-    approval_id = approval_payload.get("id")
-    if not isinstance(approval_id, str) or not approval_id:
-        raise ValueError("Turn submit response target unresolved")
-    return approval_id
-
-
-def _extract_turn_submit_approval_payload_status(approval_payload: dict[str, Any]) -> str:
-    approval_status = approval_payload.get("status")
-    if not isinstance(approval_status, str) or not approval_status:
-        raise ValueError("Turn submit response target unresolved")
-    return approval_status
-
-
-def _extract_turn_submit_approval_payload_diff(approval_payload: dict[str, Any]) -> str | None:
-    approval_diff = approval_payload.get("diff")
-    if approval_diff is not None and not isinstance(approval_diff, str):
-        raise ValueError("Turn submit response target unresolved")
-    return approval_diff
-
-
 def _extract_turn_submit_response_approval_id(approval_payload: dict[str, Any] | None) -> str | None:
     if approval_payload is None:
         return None
@@ -1030,6 +1091,27 @@ def _resolve_turn_submit_response_approval_fields(
     return approval_id, approval_status, approval_diff
 
 
+def _extract_turn_submit_approval_payload_id(approval_payload: dict[str, Any]) -> str:
+    approval_id = approval_payload.get("id")
+    if not isinstance(approval_id, str) or not approval_id:
+        raise ValueError("Turn submit response target unresolved")
+    return approval_id
+
+
+def _extract_turn_submit_approval_payload_status(approval_payload: dict[str, Any]) -> str:
+    approval_status = approval_payload.get("status")
+    if not isinstance(approval_status, str) or not approval_status:
+        raise ValueError("Turn submit response target unresolved")
+    return approval_status
+
+
+def _extract_turn_submit_approval_payload_diff(approval_payload: dict[str, Any]) -> str | None:
+    approval_diff = approval_payload.get("diff")
+    if approval_diff is not None and not isinstance(approval_diff, str):
+        raise ValueError("Turn submit response target unresolved")
+    return approval_diff
+
+
 def _validate_turn_submit_approval_payload(approval_payload: dict[str, Any]) -> None:
     _extract_turn_submit_approval_payload_id(approval_payload)
     _extract_turn_submit_approval_payload_status(approval_payload)
@@ -1048,16 +1130,23 @@ def _resolve_turn_submit_response_target(
     return request_has_id, request_id, turn, approval_payload
 
 
+def _build_turn_submit_response_resolution_phase(
+    response_phase: dict[str, Any],
+) -> tuple[bool, Any, dict[str, Any], dict[str, Any] | None]:
+    return _resolve_turn_submit_response_target(response_phase)
+
+
 def _handle_turn_submit_request(
     request_has_id: bool, request_id: Any, params: dict[str, Any], notifications: list[dict[str, Any]]
 ) -> dict[str, Any] | None:
     plan = _build_turn_submit_phase_plan(request_id, params)
-    parse_error = _resolve_turn_submit_parse_error(plan)
+    parse_phase = _build_turn_submit_parse_phase(plan)
+    parse_error = parse_phase["parse_error"]
     if parse_error is not None:
         return _handle_turn_submit_parse_failure(parse_error)
-    session_id, session, user_input, requires_approval, approval_diff = _resolve_turn_submit_execution_target(plan)
+    session_id, session, user_input, requires_approval, approval_diff = _build_turn_submit_execution_phase(parse_phase)
     commit_phase = _build_turn_submit_commit_phase(session_id, session, user_input)
-    turn_id, turn, _planned_session = _resolve_turn_submit_commit_target(commit_phase)
+    turn_id, turn, _planned_session = _build_turn_submit_commit_resolution_phase(commit_phase)
     side_effects_phase = _build_turn_submit_side_effects_phase(
         session_id, turn_id, turn, user_input, requires_approval, approval_diff
     )
@@ -1068,7 +1157,7 @@ def _handle_turn_submit_request(
         side_effects_user_input,
         side_effects_requires_approval,
         side_effects_approval_diff,
-    ) = _resolve_turn_submit_side_effects_target(side_effects_phase)
+    ) = _build_turn_submit_side_effects_resolution_phase(side_effects_phase)
     _commit_turn_submit_plan(turn_id, turn, session)
     approval_payload = _apply_turn_submit_side_effects(
         side_effects_session_id,
@@ -1080,8 +1169,8 @@ def _handle_turn_submit_request(
         notifications,
     )
     response_phase = _build_turn_submit_response_phase(request_has_id, request_id, side_effects_turn, approval_payload)
-    response_request_has_id, response_request_id, response_turn, response_approval_payload = (
-        _resolve_turn_submit_response_target(response_phase)
+    response_request_has_id, response_request_id, response_turn, response_approval_payload = _build_turn_submit_response_resolution_phase(
+        response_phase
     )
     return _build_turn_submit_success_response(
         response_request_has_id, response_request_id, response_turn, response_approval_payload

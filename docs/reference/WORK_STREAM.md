@@ -1697,6 +1697,27 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 |----|-----------|---------|
 | SCLI-P7.1 | 2026-02-23 | Verified singleflight dedup behavior and cache heat-map eviction via `tests/mesh/test_cache.py` (20 passed) |
 | SCLI-P7.3 | 2026-02-23 | Verified heat-based cache behavior and eviction ordering via `tests/mesh/test_cache.py` (20 passed) |
+| SCLI-P9.2 | 2026-02-23 | Added tmux command injection logic and command-level tests in `src/thegent/mesh/injection.py` + `tests/mesh/test_injection.py` |
+| SCLI-P9.3 | 2026-02-23 | Added readiness detection for tmux prompt availability in `src/thegent/mesh/injection.py` with `tests/mesh/test_injection.py` |
+| SCLI-P9.4 | 2026-02-23 | Added AGENT.md context rendering via mesh state in `src/thegent/mesh/injection.py`; integration path covered in `tests/mesh/test_injection.py` |
+| SCLI-P9.5 | 2026-02-23 | Added tool symlink generation for AGENT metadata in `src/thegent/mesh/injection.py`; path existence checks in `tests/mesh/test_injection.py` |
+| SCLI-P10.1 | 2026-02-23 | Added Linux bwrap argument generation and worktree bind logic in `src/thegent/mesh/sandbox.py`; tested in `tests/mesh/test_sandboxing.py` |
+| SCLI-P10.2 | 2026-02-23 | Added seatbelt profile generation for macOS sandboxing in `src/thegent/mesh/sandbox.py`; behavior covered in `tests/mesh/test_sandboxing.py` |
+| SCLI-P10.3 | 2026-02-23 | Added autonomy level enforcement checks in `src/thegent/mesh/sandbox.py`; covered by `tests/mesh/test_sandboxing.py` |
+| SCLI-P10.4 | 2026-02-23 | Added command-to-tier classifier in `src/thegent/mesh/sandbox.py` and test matrix in `tests/mesh/test_sandboxing.py` |
+| SCLI-P11.1 | 2026-02-23 | Completed mesh `git_parallelism` shared worktree path and state handling in `src/thegent/mesh/git_parallelism.py` via existing suite `tests/mesh/test_git_parallelism.py` |
+| SCLI-P11.2 | 2026-02-23 | Completed git worktree pool fallback and concurrent claim handling in `src/thegent/mesh/git_parallelism.py`; validated by `tests/mesh/test_git_parallelism.py` |
+| SCLI-P11.3 | 2026-02-23 | Completed shared-directory worktree merge/release path and active-agent reporting in `src/thegent/mesh/git_parallelism.py`; validated by `tests/mesh/test_git_parallelism.py` |
+| SCLI-P12.1 | 2026-02-23 | Added memory limits and cgroup path helpers in `src/thegent/mesh/resources.py`; exercised in `tests/mesh/test_resources.py` |
+| SCLI-P12.2 | 2026-02-23 | Added process count limit enforcement plumbing in `src/thegent/mesh/resources.py` with `tests/mesh/test_resources.py` |
+| SCLI-P12.3 | 2026-02-23 | Added file-descriptor cap handling in `src/thegent/mesh/resources.py`; exercised in `tests/mesh/test_resources.py` |
+| SCLI-P13.1 | 2026-02-23 | Added JSONL mesh logger structured events in `src/thegent/mesh/observability.py` and validated in `tests/mesh/test_observability.py` |
+| SCLI-P13.2 | 2026-02-23 | Added mesh metrics aggregator and summary support in `src/thegent/mesh/observability.py`; validated in `tests/mesh/test_observability.py` |
+| SCLI-P13.3 | 2026-02-23 | Added `mesh status` and `mesh agents` CLI output in `src/thegent/mesh/main.py` + `src/thegent/mesh/observability.py`; covered by `tests/mesh/test_main_discover.py` and `tests/mesh/test_observability.py` |
+| SCLI-P13.4 | 2026-02-23 | Added JSON metrics aggregation coverage for multi-agent totals and per-metric summaries in `src/thegent/mesh/observability.py`; covered in `tests/mesh/test_observability.py` |
+| SCLI-P14.1 | 2026-02-23 | Added shadow-repo bootstrap and recovery root setup in `src/thegent/mesh/audit.py`; added focused tests in `tests/mesh/test_audit.py` |
+| SCLI-P14.2 | 2026-02-23 | Added audit action logging and shadow backup flow in `src/thegent/mesh/audit.py`; covered by `tests/mesh/test_audit.py` |
+| SCLI-P14.3 | 2026-02-23 | Added file recovery path from shadow repo in `src/thegent/mesh/audit.py`; validated by `tests/mesh/test_audit.py` |
 | TGNT-P11.1 | 2026-02-23 | Hardened tmpfs-like mesh directory initialization with explicit `0o1777` chmod and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
 | TGNT-P14.1 | 2026-02-23 | Hardened AGENT template/context symlink management and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
 | TGNT-P16.1 | 2026-02-23 | Verified Linux bubblewrap tier-2 worktree bind behavior in `tests/test_wl681x_lane_d.py -k tier2_bwrap` |
@@ -28961,3 +28982,13 @@ Advance analytics, scorecards, slos, continuous improvement with deterministic b
 | WL-9737 | 2026-02-23 | Added lane-L regression proving requested approvals transition to `cancelled` when parent turn is cancelled |
 | WL-9738 | 2026-02-23 | Added lane-L regression proving non-requested approval statuses are preserved during turn cancellation |
 | WL-9739 | 2026-02-23 | Added lane-L regression proving invalid `params` type is rejected before cancel execution (`params_must_be_object`) |
+| WL-10940 | 2026-02-23 | Added explicit response-phase request-id gate helper extraction for turn-submit response target parsing (`tests/protocols/test_wl10940_wl10949_lane_b2.py`) |
+| WL-10941 | 2026-02-23 | Added fail-fast regression for non-boolean request-id gate in turn-submit response phase extraction |
+| WL-10942 | 2026-02-23 | Added explicit turn payload extractor helper for turn-submit response target parsing |
+| WL-10943 | 2026-02-23 | Added fail-fast regression for malformed non-dict turn payload in response target extraction |
+| WL-10944 | 2026-02-23 | Added explicit optional approval-payload extractor helper preserving `None` behavior |
+| WL-10945 | 2026-02-23 | Added fail-fast regression for malformed non-dict approval payload in response target extraction |
+| WL-10946 | 2026-02-23 | Added explicit approval-id extraction helper with strict fail-fast validation |
+| WL-10947 | 2026-02-23 | Added explicit approval-status extraction helper with strict fail-fast validation |
+| WL-10948 | 2026-02-23 | Added explicit approval-diff extraction helper rejecting non-string diff payloads |
+| WL-10949 | 2026-02-23 | Added end-to-end notification-mode approval-required turn-submit regression (side effects, no response envelope) |

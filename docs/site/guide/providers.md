@@ -15,14 +15,17 @@
 ## Credential Setup
 
 ```bash
-thegent setup --provider claude
-thegent setup --provider codex
-thegent setup --provider gemini
+thegent setup
 ```
 
-Manual env setup:
+For provider-specific credentials, use the provider login helper where available:
 
 ```bash
+thegent cliproxy login claude
+thegent cliproxy login codex
+thegent cliproxy login gemini
+
+# Or set environment credentials directly when using custom backends:
 export ANTHROPIC_API_KEY="..."
 export OPENAI_API_KEY="..."
 export GOOGLE_API_KEY="..."
@@ -32,13 +35,13 @@ export GOOGLE_API_KEY="..."
 
 ```bash
 # Explicit provider
-thegent run "generate migration checklist" --provider claude
+thegent run agent "generate migration checklist" --agent claude --provider claude
 
 # Explicit model
-thegent run "deep code audit" -M gpt-5.3-codex
+thegent run agent "deep code audit" --model gpt-5.3-codex
 
 # Cost-aware automatic routing
-thegent run "summarize logs" -R cheapest
+thegent run agent "summarize logs" --routing cheapest
 ```
 
 ## Proxy Provider Example
@@ -46,7 +49,7 @@ thegent run "summarize logs" -R cheapest
 ```bash
 thegent config set providers.myproxy.url "http://localhost:8317"
 thegent config set providers.myproxy.model "claude-sonnet-4-6"
-thegent run "health check" --provider myproxy
+thegent run agent "health check" --provider myproxy
 ```
 
 ## Failure Handling

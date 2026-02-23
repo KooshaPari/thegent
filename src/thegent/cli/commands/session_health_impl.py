@@ -16,15 +16,40 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from thegent.cli.commands.observability_impl import (
-    HEALTH_PAYLOAD_SCHEMA_VERSION,
-    _append_health_snapshot,
-    _coerce_issue_types,
-    _hash_health_payload,
-    _health_scope_key,
-    _load_previous_health_snapshot,
-    _resolve_health_policy,
-)
+
+def _health_impl():
+    from thegent.cli.commands import impl as cli_impl
+
+    return cli_impl
+
+
+def _health_impl_payload_schema_version() -> str:
+    return _health_impl().HEALTH_PAYLOAD_SCHEMA_VERSION
+
+
+def _resolve_health_policy(policy_profile: str | None, strict: bool, min_healthy_ratio: float) -> dict[str, Any]:
+    return _health_impl()._resolve_health_policy(policy_profile, strict, min_healthy_ratio)
+
+
+def _coerce_issue_types(value: Any) -> list[str]:
+    return _health_impl()._coerce_issue_types(value)
+
+
+def _hash_health_payload(payload: dict[str, Any]) -> str:
+    return _health_impl()._hash_health_payload(payload)
+
+
+def _health_scope_key(payload: dict[str, Any]) -> dict[str, Any]:
+    return _health_impl()._health_scope_key(payload)
+
+
+def _load_previous_health_snapshot(scope_key: dict[str, Any]) -> dict[str, Any] | None:
+    return _health_impl()._load_previous_health_snapshot(scope_key)
+
+
+def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) -> None:
+    return _health_impl()._append_health_snapshot(payload, scope_key)
+
 
 _log = logging.getLogger(__name__)
 
@@ -214,9 +239,7 @@ def session_contract_health_gate_impl(
     threshold = float(policy["min_healthy_ratio"])
     tolerance = max(0.0, float(regression_tolerance))
 
-    from thegent.cli.commands import impl as cli_impl
-
-    audit = cli_impl.session_contract_audit_impl(
+    audit = session_contract_audit_impl(
         owner=owner,
         all=all,
         missing_only=False,
@@ -260,7 +283,7 @@ def session_contract_health_gate_impl(
     ]
 
     payload = {
-        "schema_version": HEALTH_PAYLOAD_SCHEMA_VERSION,
+        "schema_version": _health_impl_payload_schema_version(),
         "payload_type": "session_contract_health_gate",
         "schema_compat_mode": "compat",
         "pass": ratio_pass,

@@ -32,9 +32,8 @@ pip install thegent
 git clone https://github.com/kooshapari/thegent
 cd thegent
 pip install -e .
-thegent install -t all
-thegent install-shims
-thegent setup --hooks
+thegent install --scope both
+thegent install -t all --scope both
 ```
 
 ## Shell Integration
@@ -49,7 +48,7 @@ source ~/.zshrc
 
 ```bash
 thegent doctor
-thegent run "installation smoke test" free
+thegent run free "installation smoke test"
 ```
 
 If verification fails, continue with [Operations Troubleshooting](/operations/troubleshooting).

@@ -16,11 +16,11 @@
 thegent doctor
 
 # 2) Execute work
-thegent run "implement feature and tests" codex
+thegent run agent "implement feature and tests" --agent codex
 
 # 3) Validate and review state
 thegent ps
-thegent plan do-next
+thegent plan next
 ```
 
 ## Recommended Team Defaults

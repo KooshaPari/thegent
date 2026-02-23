@@ -1428,7 +1428,7 @@ def bg_impl_core(
     cmd.extend(["--run-id", effective_run_id])
 
     # Phase P4: holdpty wrapper
-    if settings.use_holdpty:
+    if settings.use_holdpty is True:
         in_path = p.get("in")
         if in_path is None:
             raise RuntimeError("Session paths missing 'in' key")
@@ -1478,17 +1478,20 @@ def bg_impl_core(
     )
 
     stdin_handle = subprocess.DEVNULL
-    if settings.use_fifo:
+    if settings.use_fifo is True:
         try:
             # On Unix, create a FIFO
             if platform.system() != "Windows":
-                if not p["in"].exists():
-                    os.mkfifo(str(p["in"]))
+                in_path = p.get("in")
+                if in_path is None:
+                    raise RuntimeError("Session paths missing 'in' key")
+                if not in_path.exists():
+                    os.mkfifo(str(in_path))
                 # Open for reading in non-blocking mode to avoid hanging the parent
                 # but then set to blocking for the child if needed.
                 # Actually, opening a FIFO for reading will block until a writer opens it.
                 # To avoid blocking bg_impl, we should open it in the background or use O_NONBLOCK.
-                fifo_fd = os.open(str(p["in"]), os.O_RDONLY | os.O_NONBLOCK)
+                fifo_fd = os.open(str(in_path), os.O_RDONLY | os.O_NONBLOCK)
                 stdin_handle = fifo_fd
             else:
                 _log.warning("FIFO not supported on Windows; falling back to DEVNULL.")

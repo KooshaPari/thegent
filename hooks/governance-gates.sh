@@ -71,6 +71,13 @@ _GG_SELECTED_MODE=false
 if [[ -n "$_GG_SELECTED_GATES_CLEANED_RAW" ]]; then
   _GG_SELECTED_MODE=true
 fi
+_GG_GATE_SCOPE="full"
+if [[ "$_GG_SELECTED_MODE" == "true" ]]; then
+  _GG_GATE_SCOPE="selected"
+fi
+_GG_GATE_PROFILE="auto"
+_GG_GATE_CACHE_HIT="false"
+_GG_GATE_METRICS_PATH="$VERIFY_DIR/quality-metrics.json"
 
 # --- Cache check ---
 _gg_cache_scope="$HOOK_NAME"
@@ -80,6 +87,7 @@ fi
 _cache_key=$(hook_cache_key "$_gg_cache_scope")
 _gg_ttl="${HOOK_CACHE_TTL:-600}"
 if hook_cache_check "$_cache_key" "$_gg_ttl"; then
+    _GG_GATE_CACHE_HIT="true"
     hook_cache_read "$_cache_key"
     _cached_rc=$?
     [[ "$_cached_rc" -ne 0 ]] && echo "GOVERNANCE-GATES FAIL: cached result was non-zero ($_cached_rc)" >&2
@@ -201,6 +209,68 @@ _file_age_minutes() {
   printf '%d\n' $((age_seconds / 60))
 }
 
+_gg_ms_timestamp() {
+  local ts
+  ts="$(date +%s%3N 2>/dev/null || true)"
+  if [[ "$ts" =~ ^[0-9]+$ ]]; then
+    printf '%s\n' "$ts"
+    return 0
+  fi
+  ts="$(date +%s 2>/dev/null || printf 0)"
+  if [[ -z "$ts" ]]; then
+    ts=0
+  fi
+  printf '%s000\n' "$ts"
+}
+
+_gg_append_gate_metrics_entry() {
+  local name="$1"
+  local result="$2"
+  local duration_ms="$3"
+
+  local cache_hit_json="false"
+  local duration_num="$duration_ms"
+  local tmp
+
+  [[ "$_GG_GATE_CACHE_HIT" == "true" ]] && cache_hit_json="true"
+
+  if ! [[ "$duration_num" =~ ^[0-9]+$ ]]; then
+    duration_num=0
+  fi
+
+  mkdir -p "$(dirname "$_GG_GATE_METRICS_PATH")" 2>/dev/null || true
+  if [[ ! -f "$_GG_GATE_METRICS_PATH" ]]; then
+    printf '{"contract_version":"v1","generated_at":"%s","governance_gate_execution":[]}\n' "$now" > "$_GG_GATE_METRICS_PATH"
+  fi
+
+  tmp="$(mktemp)"
+  if ! $JQ_CMD \
+    --arg name "$name" \
+    --arg result "$result" \
+    --arg scope "$_GG_GATE_SCOPE" \
+    --arg profile "$_GG_GATE_PROFILE" \
+    --argjson cache_hit "$cache_hit_json" \
+    --argjson duration_ms "$duration_num" \
+    --arg now "$now" \
+    '.contract_version = "v1"
+       | .generated_at = $now
+       | .governance_gate_execution = (.governance_gate_execution // [])
+       | .governance_gate_execution += [{
+            "name": $name,
+            "result": $result,
+            "duration_ms": $duration_ms,
+            "cache_hit": $cache_hit,
+            "scope": $scope,
+            "profile": $profile
+         }]' \
+    "$_GG_GATE_METRICS_PATH" > "$tmp"; then
+    rm -f "$tmp"
+    echo "GOVERNANCE-GATES FAIL: unable to append governance gate metrics entry for $name" >&2
+    return 1
+  fi
+  mv "$tmp" "$_GG_GATE_METRICS_PATH"
+}
+
 _append_spiral_metric() {
   local metric_status="$1"
   local metric_severity="$2"
@@ -305,8 +375,8 @@ if [[ -f "$QUALITY_CONFIG" ]]; then
       (.governance.metric_contracts.enforce_gate // false | tostring)
     ] | @tsv
   ' "$QUALITY_CONFIG" 2>/dev/null || true)"
-  if [[ -n "$_qcfg_raw" ]]; then
-    IFS=$'\t' read -r \
+if [[ -n "$_qcfg_raw" ]]; then
+  IFS=$'\t' read -r \
       QCFG_DELIVERY_MODEL \
       QCFG_CRITICALITY \
       QCFG_STACKS \
@@ -326,6 +396,19 @@ if [[ -f "$QUALITY_CONFIG" ]]; then
       <<< "$_qcfg_raw"
   fi
   unset _qcfg_raw
+fi
+_GG_GATE_PROFILE="$QCFG_DELIVERY_MODEL"
+
+if [[ -f "$PROJECT_DIR/contracts/metric-contracts.json" ]]; then
+  _cfg_metrics_path="$($JQ_CMD -r '.enforcement.metrics_report_path // empty' "$PROJECT_DIR/contracts/metric-contracts.json" 2>/dev/null || true)"
+  if [[ -n "$_cfg_metrics_path" ]]; then
+    if [[ "$_cfg_metrics_path" == /* ]]; then
+      _GG_GATE_METRICS_PATH="$_cfg_metrics_path"
+    else
+      _GG_GATE_METRICS_PATH="$PROJECT_DIR/$_cfg_metrics_path"
+    fi
+  fi
+  unset _cfg_metrics_path
 fi
 
 # ==========================================================================
@@ -2312,30 +2395,56 @@ _gate_tmpdir=""
 # Usage: _run_gate <gate_function_name> <gate_label>
 _run_gate() {
   local func="$1" label="$2"
+  local start_ms=""
+  start_ms="$(_gg_ms_timestamp)"
 
   # Override gate result helpers to write to temp file (subshell-safe)
   _gate_pass() {
     local name="$1"
+    local end_ms=""
+    end_ms="$(_gg_ms_timestamp)"
     echo "pass 0 $name" > "$_gate_tmpdir/${label}.result"
+    echo "{\"name\":\"$name\",\"result\":\"pass\",\"duration_ms\":$(( end_ms - start_ms ))}" > "$_gate_tmpdir/${label}.metric"
   }
   _gate_na() {
     local name="$1" reason="${2:-skipped}"
+    local end_ms=""
+    end_ms="$(_gg_ms_timestamp)"
     echo "na 0 $name ($reason)" > "$_gate_tmpdir/${label}.result"
+    echo "{\"name\":\"$name\",\"result\":\"na\",\"duration_ms\":$(( end_ms - start_ms ))}" > "$_gate_tmpdir/${label}.metric"
   }
   _gate_fail() {
     local name="$1" reason="$2" fail_closed="${3:-false}"
     local fc=0
+    local end_ms=""
+    end_ms="$(_gg_ms_timestamp)"
     [[ "$fail_closed" == "true" ]] && fc=1
     echo "fail $fc $name - $reason" > "$_gate_tmpdir/${label}.result"
+    echo "{\"name\":\"$name\",\"result\":\"fail\",\"duration_ms\":$(( end_ms - start_ms ))}" > "$_gate_tmpdir/${label}.metric"
     echo "GOVERNANCE-GATES FAIL: [$name]: $reason" >&2
+  }
+  _gg_gate_write_fallback_metric() {
+    local fallback_ms=""
+    fallback_ms="$(_gg_ms_timestamp)"
+    [[ -f "$_gate_tmpdir/${label}.metric" ]] || {
+      echo "{\"name\":\"$label\",\"result\":\"fail\",\"duration_ms\":$(( fallback_ms - start_ms ))}" > "$_gate_tmpdir/${label}.metric"
+    }
+    return 0
   }
 
   "$func"
+  _gg_gate_write_fallback_metric "$?"
+  return 0
 }
 
 # Collect results from temp files into parent counters
 _collect_gate_results() {
   local f
+  local mf
+  local metric_json
+  local name
+  local result
+  local duration_ms
   while IFS= read -r -d '' f; do
     local line
     line="$(<"$f")"
@@ -2344,6 +2453,16 @@ _collect_gate_results() {
     line="${line#* }"
     fc="${line%% *}"
     rest="${line#* }"
+    mf="${f%.result}.metric"
+    metric_json="$(cat "$mf" 2>/dev/null || printf '')"
+    if [[ -n "$metric_json" ]]; then
+      name="$($JQ_CMD -r '.name // empty' <<< "$metric_json")"
+      result="$($JQ_CMD -r '.result // empty' <<< "$metric_json")"
+      duration_ms="$($JQ_CMD -r '.duration_ms // 0' <<< "$metric_json")"
+      if [[ -n "$name" && -n "$result" ]]; then
+        _gg_append_gate_metrics_entry "$name" "$result" "$duration_ms"
+      fi
+    fi
 
     case "$kind" in
       pass)
@@ -2367,6 +2486,7 @@ _collect_gate_results() {
 
 _clear_gate_results() {
   find "$_gate_tmpdir" -type f -name '*.result' -delete 2>/dev/null || true
+  find "$_gate_tmpdir" -type f -name '*.metric' -delete 2>/dev/null || true
 }
 
 _run_selected_gates() {

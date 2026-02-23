@@ -49,3 +49,21 @@ def test_mesh_discover_pattern_filter_registers_and_reports(monkeypatch, tmp_pat
     assert "- codex-222" in result.output
     assert mesh.pattern_calls == [["codex", "claude"]]
     assert mesh.registered[0][0] == "codex-222"
+
+
+def test_mesh_agents_without_agents(tmp_path) -> None:
+    result = runner.invoke(app, ["agents", "--mesh-root", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "No registered agents." in result.output
+
+
+def test_mesh_agents_lists_registered_agents(tmp_path) -> None:
+    (tmp_path / "agents").mkdir()
+    (tmp_path / "agents" / "codex-101.yaml").write_text(
+        "pid: 101\ntype: codex\nsource: auto\n",
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["agents", "--mesh-root", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "Registered agents: 1" in result.output
+    assert "codex-101: pid=101 type=codex source=auto" in result.output
