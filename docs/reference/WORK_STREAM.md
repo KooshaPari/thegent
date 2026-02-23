@@ -1644,7 +1644,18 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 
 | ID | Agent | Started | Notes |
 |----|-------|---------|-------|
-| _none_ | - | - | No active claims after WL-120/WL-136/WL-138 closeout sweep on 2026-02-21. |
+| CLIP-BUG-01 | child-a | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-11 | child-a | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-02 | child-b | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-12 | child-b | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-03 | child-c | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-04 | child-c | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-05 | child-d | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-06 | child-d | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-07 | child-e | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-08 | child-e | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-09 | child-f | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
+| CLIP-BUG-10 | child-f | 2026-02-23T00:17:17.000000+00:00 | Next-12 wave |
 
 ---
 
@@ -26701,6 +26712,8 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | CLIP-BUG-03 | #1513 | Nullable type arrays cause 400 error | TODO |
 | CLIP-BUG-04 | #1424 | Claude→Gemini translation fails (JSON Schema) | TODO |
 | CLIP-BUG-05 | #1477 | metadata fields in contents[] causing Gemini rejection | TODO |
+| CLIP-BUG-11 | #1535 | Invalid argument with claude-opus-4 translation | TODO |
+| CLIP-BUG-12 | #1530 | tool_choice.name and tools[].name mismatch for prefix handling | TODO |
 
 ### Phase 2: Streaming Bugs
 
