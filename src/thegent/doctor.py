@@ -1,5 +1,9 @@
 """Doctor module for comprehensive health and preflight checks of thegent environment."""
 
+# Backward compatibility - import from new submodule
+from thegent.doctor.checks_env import check_environment as _check_environment_impl
+from thegent.doctor.checks_env import check_shim_binaries as _check_shim_binaries_impl
+
 import os
 import re
 import shutil
