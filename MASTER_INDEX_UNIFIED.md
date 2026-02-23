@@ -29,6 +29,13 @@ Each project MUST maintain:
 | PRD_TRACKER.md | PRD items |
 | PLAN_STATUS.md | Implementation status |
 
+### Documentation Taxonomy
+See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
+- Human-facing docs (guides, tutorials, runbooks)
+- Technical specs (SPEC, PROTOCOL, CONTRACT)
+- Planning (ROADMAP, RESEARCH, VALIDATION)
+- Operational (PLAYBOOK, OBSERVATION)
+
 ---
 
 ## Project Inventory
