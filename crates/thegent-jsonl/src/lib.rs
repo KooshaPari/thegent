@@ -16,14 +16,17 @@
 //! ```
 
 pub mod audit;
+pub mod ledger;
+#[cfg(test)]
+mod ledger_tests;
 pub use audit::{AuditEntry, AuditLogger};
+pub use ledger::{IncidentLedger, IntegrityReport, LedgerVerifier};
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Stdin};
 use std::path::Path;
 
 use anyhow::Result;
-use pyo3::prelude::*;
 use serde_json::Value;
 
 // ---------------------------------------------------------------------------

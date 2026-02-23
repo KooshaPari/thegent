@@ -7,4 +7,3 @@ pytestmark = pytest.mark.skip(reason="Module import dependencies not yet resolve
 
 def test_placeholder():
     """Placeholder test - original tests are skipped."""
-    pass

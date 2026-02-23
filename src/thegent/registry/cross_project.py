@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml  # bundled via pyyaml (already in pyproject.toml dependencies)
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ _FRONTMATTER_FIELDS_CAPABILITIES = ("tools", "capabilities")
 
 
 @dataclass
-class PersonaRecord:
+class PersonaRecord(SerializableMixin):
     """Catalog entry for a single AI agent persona."""
 
     name: str

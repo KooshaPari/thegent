@@ -8,13 +8,24 @@ Active work tracking for **thegent** project.
 
 ## Current Sprint
 
-### Wave 71 - In Progress
+### Wave 72 - In Progress
 
 | Item | Status | Owner | ETA |
 |------|--------|-------|-----|
-| Documentation consolidation | 🟡 In Progress | Agent | 2026-02-23 |
-| GitHub Pages deployment fix | 🟢 Complete | Agent | 2026-02-23 |
-| Security alerts remediation | 🔴 Pending | Agent | TBD |
+| Documentation audit & alignment | 🟢 Complete | Agent | 2026-02-23 |
+| ADR-005/006/007 documentation | 🟢 Complete | Agent | 2026-02-23 |
+| FR Tracker expansion (13→95 FRs) | 🟢 Complete | Agent | 2026-02-23 |
+| User Stories (US-E1-E5) documentation | 🟢 Complete | Agent | 2026-02-23 |
+| CHANGELOG versioning (v0.1.0) | 🟢 Complete | Agent | 2026-02-23 |
+| pyproject.toml version addition | 🟢 Complete | Agent | 2026-02-23 |
+| Docs consolidation (.llms/docs→docs/) | 🟡 In Progress | Agent | 2026-02-23 |
+
+### Wave 71 - Completed (2026-02-22)
+
+| Item | Status |
+|------|--------|
+| Documentation consolidation | ✅ |
+| GitHub Pages deployment fix | ✅ |
 
 ---
 
@@ -120,3 +131,4 @@ Previous wave logs are stored in `reports/`:
 ---
 
 *Last updated: 2026-02-23*
+*Current version: 0.1.0*

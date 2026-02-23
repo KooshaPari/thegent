@@ -11,8 +11,6 @@ from typing import TYPE_CHECKING
 
 import typer
 
-if TYPE_CHECKING:
-    pass
 
 
 def create_dex_model_command(
