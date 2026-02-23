@@ -185,16 +185,17 @@ const config = defineConfig({
   },
 
   // Mermaid configuration
+  // Note: Mermaid doesn't support CSS variables - use actual color values
   mermaid: {
     theme: 'base',
     themeVariables: {
       primaryColor: '#42b883',
-      background: 'var(--vp-c-bg)',
-      primaryTextColor: 'var(--vp-c-text-1)',
-      primaryBorderColor: 'var(--vp-c-divider)',
-      lineColor: 'var(--vp-c-text-2)',
-      secondaryColor: 'var(--vp-c-brand-light)',
-      tertiaryColor: 'var(--vp-c-bg-soft)',
+      background: '#ffffff',
+      primaryTextColor: '#213547',
+      primaryBorderColor: '#e0e0e0',
+      lineColor: '#666666',
+      secondaryColor: '#747bff',
+      tertiaryColor: '#f5f5f5',
     },
     flowchart: {
       useMaxWidth: true,
