@@ -658,6 +658,10 @@ class AuditExporter:
             records = self._store.list_all()
 
         if kind_filter is not None:
+            valid_kinds = set(EvidenceKind.__args__)
+            unknown = [k for k in kind_filter if k not in valid_kinds]
+            if unknown:
+                raise ValueError(f"Unknown evidence kind: {', '.join(sorted(str(k) for k in unknown))}")
             records = [r for r in records if r.kind in kind_filter]
 
         integrity_ok = self._store.verify_integrity()
@@ -682,3 +686,33 @@ class AuditExporter:
             _wl051_log.info("Audit export written to %s (%d records)", out, len(records))
 
         return export
+
+    def reconcile_export(self, *, expected_count: int, since_days: int | None = None, kind_filter: list | None = None) -> dict:
+        """Validate exported record count against an expected value."""
+        exported = self.export_json(since_days=since_days, kind_filter=kind_filter)
+        actual = int(exported["record_count"])
+        if actual != expected_count:
+            raise RuntimeError(f"Export reconciliation mismatch: expected={expected_count}, actual={actual}")
+        return exported
+
+    def enforce_integrity(self) -> bool:
+        """Fail loudly when evidence chain integrity cannot be verified."""
+        ok = self._store.verify_integrity()
+        if not ok:
+            raise RuntimeError("integrity verification failed")
+        return True
+
+    def export_checkpoint(self, *, checkpoint_id: str, output_path: Path) -> dict:
+        """Export a deterministic checkpoint summary with evidence digest."""
+        records = self._store.list_all()
+        payload = [r.model_dump(mode="json") for r in records]
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+        checkpoint = {
+            "checkpoint_id": checkpoint_id,
+            "generated_at_utc": datetime.now(UTC).isoformat(),
+            "record_count": len(payload),
+            "evidence_digest_sha256": digest,
+        }
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(checkpoint, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        return checkpoint

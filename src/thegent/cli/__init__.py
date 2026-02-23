@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import os
+import signal
 import sys
+import time
 from typing import Any
 
 from thegent.cli.commands import cli as _cli_surface
@@ -66,8 +70,13 @@ __all__ = [
     "_safe_list",
     "_session_paths",
     "get_exit_message",
+    "json",
     "list_agent_names",
     "list_droid_names",
+    "os",
     "resolve_agent",
     "run_login",
+    "signal",
+    "sys",
+    "time",
 ]

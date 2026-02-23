@@ -233,7 +233,7 @@ class TestOR17HeadersForwardedToRouter:
         body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -276,7 +276,7 @@ class TestOR17HeadersForwardedToRouter:
         body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -316,7 +316,7 @@ class TestOR17HeadersForwardedToRouter:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -357,7 +357,7 @@ class TestOR17HeadersForwardedToRouter:
         body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -458,7 +458,7 @@ class TestOR18NativeResponsesForwarding:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-test-key"}),
@@ -502,7 +502,7 @@ class TestOR18NativeResponsesForwarding:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-real-key"}),
@@ -542,7 +542,7 @@ class TestOR18NativeResponsesForwarding:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-key"}),
@@ -589,7 +589,7 @@ class TestOR18NativeResponsesForwarding:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch("httpx.AsyncClient") as mock_client_cls,

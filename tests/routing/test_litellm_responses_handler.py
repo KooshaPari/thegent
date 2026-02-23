@@ -477,7 +477,7 @@ class TestHandleResponsesRequest:
         body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -510,7 +510,7 @@ class TestHandleResponsesRequest:
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -535,7 +535,7 @@ class TestHandleResponsesRequest:
         body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -562,7 +562,7 @@ class TestHandleResponsesRequest:
         body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -599,7 +599,7 @@ class TestHandleResponsesRequest:
         ).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -633,7 +633,7 @@ class TestHandleResponsesRequest:
         body = json.dumps(_make_responses_body(model="gpt-4o", temperature=0.3)).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -664,7 +664,7 @@ class TestHandleResponsesRequest:
         body = json.dumps(_make_responses_body(model="gpt-4o")).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -704,7 +704,7 @@ class TestHandleResponsesStream:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -743,7 +743,7 @@ class TestHandleResponsesStream:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -776,7 +776,7 @@ class TestHandleResponsesStream:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -803,7 +803,7 @@ class TestHandleResponsesStream:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -844,7 +844,7 @@ class TestHandleResponsesWebsocket:
             await handle_responses_websocket(websocket)
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette
@@ -882,7 +882,7 @@ class TestHandleResponsesWebsocket:
             await handle_responses_websocket(websocket)
 
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from starlette.applications import Starlette

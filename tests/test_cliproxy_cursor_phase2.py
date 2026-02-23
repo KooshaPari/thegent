@@ -126,7 +126,7 @@ class TestCursorTokenProvider:
         token_path = tmp_path / "cursor-token.txt"
         token_path.write_text("sk-discovered", encoding="utf-8")
         with patch(
-            "thegent.routing.cursor_provider._CURSOR_SERVER_TOKEN_CANDIDATES",
+            "thegent.utils.routing_impl.cursor_provider._CURSOR_SERVER_TOKEN_CANDIDATES",
             [token_path],
         ):
             prov = CursorTokenProvider.discover()

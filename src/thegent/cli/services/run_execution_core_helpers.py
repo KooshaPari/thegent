@@ -290,7 +290,7 @@ def run_impl_core(
         try:
             import importlib
 
-            routing_mod = importlib.import_module("thegent.routing")
+            routing_mod = importlib.import_module("thegent.utils.routing_impl")
             TaskRouter = getattr(routing_mod, "TaskRouter", None)
             if TaskRouter:
                 router = TaskRouter(settings)

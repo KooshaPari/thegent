@@ -199,7 +199,7 @@ def test_enrich_model_entry_exception_returns_entry() -> None:
 
     # Targeted patch: simulate has_model_metadata raising
     with patch(
-        "thegent.routing.model_metadata.has_model_metadata",
+        "thegent.utils.routing_impl.model_metadata.has_model_metadata",
         side_effect=RuntimeError("simulated failure"),
     ):
         result = enrich_model_entry(entry)
