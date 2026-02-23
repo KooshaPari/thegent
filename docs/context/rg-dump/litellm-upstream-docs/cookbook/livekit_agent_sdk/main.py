@@ -23,27 +23,27 @@ async def run_voice_agent():
     2. Sends a user message
     3. Streams back the response
     """
-    
+
     url = f"ws://{PROXY_URL.replace('http://', '').replace('https://', '')}/v1/realtime?model={MODEL}"
     headers = {"Authorization": f"Bearer {API_KEY}"}
-    
-    print(f"🎙️  Connecting to voice agent...")
+
+    print("🎙️  Connecting to voice agent...")
     print(f"   Model: {MODEL}")
     print(f"   Proxy: {PROXY_URL}")
     print()
-    
+
     async with websockets.connect(url, additional_headers=headers) as ws:
         # Receive initial connection event
         initial = json.loads(await ws.recv())
         print(f"✅ Connected! Event: {initial['type']}\n")
-        
+
         # Get user input
         user_message = input("💬 Your message: ").strip()
         if not user_message:
             user_message = "Tell me a fun fact about AI!"
-        
+
         print(f"\n🤖 Sending to {MODEL}...\n")
-        
+
         # Send user message
         await ws.send(json.dumps({
             "type": "conversation.item.create",
@@ -53,41 +53,41 @@ async def run_voice_agent():
                 "content": [{"type": "input_text", "text": user_message}]
             }
         }))
-        
+
         # Request response
         await ws.send(json.dumps({
             "type": "response.create",
             "response": {"modalities": ["text", "audio"]}
         }))
-        
+
         # Stream response
         print("🎤 Response: ", end='', flush=True)
         transcript = []
-        
+
         try:
             while True:
                 msg = await asyncio.wait_for(ws.recv(), timeout=15.0)
                 event = json.loads(msg)
-                
+
                 # Capture transcript deltas
                 if event['type'] == 'response.output_audio_transcript.delta':
                     delta = event.get('delta', '')
                     if delta:
                         print(delta, end='', flush=True)
                         transcript.append(delta)
-                
+
                 # Done when response completes
                 elif event['type'] == 'response.done':
                     break
-        
+
         except asyncio.TimeoutError:
             pass
-        
+
         print("\n")
-        
+
         if transcript:
             print(f"✅ Complete response: {''.join(transcript)}")
-        
+
         await ws.close()
 
 
@@ -97,7 +97,7 @@ def main():
     print("LiveKit xAI Voice Agent via LiteLLM Proxy")
     print("=" * 70)
     print()
-    
+
     try:
         asyncio.run(run_voice_agent())
     except KeyboardInterrupt:
@@ -105,7 +105,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         print("\nMake sure LiteLLM proxy is running:")
-        print(f"  litellm --config config.yaml --port 4000")
+        print("  litellm --config config.yaml --port 4000")
 
 
 if __name__ == "__main__":

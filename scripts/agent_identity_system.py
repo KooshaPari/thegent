@@ -52,13 +52,13 @@ class AgentIdentity:
     last_heartbeat: float = field(default_factory=time.time)
 
     # Capabilities and scope
-    capabilities: List[str] = field(default_factory=list)  # What this agent can do
-    scope_tags: Dict[str, str] = field(default_factory=dict)  # Key metadata tags
+    capabilities: list[str] = field(default_factory=list)  # What this agent can do
+    scope_tags: dict[str, str] = field(default_factory=dict)  # Key metadata tags
 
     # Relationships
     parent_agent_id: Optional[str] = None  # L2 reports to L1, L3 reports to L2
-    child_agent_ids: List[str] = field(default_factory=list)  # L1 manages L2s, L2 manages L3s
-    peer_agent_ids: List[str] = field(default_factory=list)  # Same level coordination
+    child_agent_ids: list[str] = field(default_factory=list)  # L1 manages L2s, L2 manages L3s
+    peer_agent_ids: list[str] = field(default_factory=list)  # Same level coordination
 
     # Status
     is_active: bool = True
@@ -68,7 +68,7 @@ class AgentIdentity:
     session_id: Optional[str] = None  # Current session or MCP connection
     mcp_endpoint: Optional[str] = None  # MCP server endpoint if available
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "project": self.project,
@@ -89,7 +89,7 @@ class AgentIdentity:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AgentIdentity":
+    def from_dict(cls, data: dict[str, Any]) -> "AgentIdentity":
         """Create from dictionary."""
         data = data.copy()
         if "level" in data and isinstance(data["level"], str):
@@ -130,7 +130,7 @@ class GlobalAgentRegistry:
         self.logger = logging.getLogger(__name__)
 
         # In-memory cache (synced to disk on changes)
-        self.agents: Dict[str, AgentIdentity] = {}
+        self.agents: dict[str, AgentIdentity] = {}
         self._load_from_disk()
 
     def _load_from_disk(self) -> None:
@@ -202,23 +202,23 @@ class GlobalAgentRegistry:
         """Get agent by ID."""
         return self.agents.get(agent_id)
 
-    def get_agents_by_project(self, project: str) -> List[AgentIdentity]:
+    def get_agents_by_project(self, project: str) -> list[AgentIdentity]:
         """Get all agents for a project."""
         return [a for a in self.agents.values() if a.project == project]
 
-    def get_agents_by_level(self, level: AgentLevel) -> List[AgentIdentity]:
+    def get_agents_by_level(self, level: AgentLevel) -> list[AgentIdentity]:
         """Get all agents at a specific level."""
         return [a for a in self.agents.values() if a.level == level]
 
-    def get_agents_by_role(self, role: AgentRole) -> List[AgentIdentity]:
+    def get_agents_by_role(self, role: AgentRole) -> list[AgentIdentity]:
         """Get all agents with a specific role."""
         return [a for a in self.agents.values() if a.role == role]
 
-    def get_active_agents(self) -> List[AgentIdentity]:
+    def get_active_agents(self) -> list[AgentIdentity]:
         """Get all active agents."""
         return [a for a in self.agents.values() if a.is_active]
 
-    def get_stale_agents(self, ttl_seconds: int = 300) -> List[AgentIdentity]:
+    def get_stale_agents(self, ttl_seconds: int = 300) -> list[AgentIdentity]:
         """Get agents with stale heartbeats."""
         cutoff_time = time.time() - ttl_seconds
         return [a for a in self.agents.values() if a.last_heartbeat < cutoff_time]
@@ -262,7 +262,7 @@ class GlobalAgentRegistry:
         self.logger.info(f"Set relationship: {parent_id} -> {child_id}")
         return True
 
-    def get_hierarchy(self, agent_id: str, levels: int = 3) -> Dict[str, Any]:
+    def get_hierarchy(self, agent_id: str, levels: int = 3) -> dict[str, Any]:
         """Get agent hierarchy (self + children + grandchildren).
 
         Args:
@@ -290,11 +290,11 @@ class GlobalAgentRegistry:
 
         return hierarchy
 
-    def list_all_agents(self) -> List[str]:
+    def list_all_agents(self) -> list[str]:
         """Get list of all agent IDs."""
         return list(self.agents.keys())
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get registry statistics."""
         agents_by_level = {}
         agents_by_role = {}
@@ -334,8 +334,8 @@ class AgentIdentityFactory:
         self,
         project: str,
         role: AgentRole = AgentRole.COORDINATOR,
-        capabilities: Optional[List[str]] = None,
-        scope_tags: Optional[Dict[str, str]] = None,
+        capabilities: Optional[list[str]] = None,
+        scope_tags: Optional[dict[str, str]] = None,
     ) -> AgentIdentity:
         """Create L1 strategic agent.
 
@@ -364,8 +364,8 @@ class AgentIdentityFactory:
         project: str,
         role: AgentRole,
         parent_l1_id: str,
-        capabilities: Optional[List[str]] = None,
-        scope_tags: Optional[Dict[str, str]] = None,
+        capabilities: Optional[list[str]] = None,
+        scope_tags: Optional[dict[str, str]] = None,
     ) -> AgentIdentity:
         """Create L2 worker agent.
 
@@ -396,8 +396,8 @@ class AgentIdentityFactory:
         self,
         project: str,
         parent_l2_id: str,
-        capabilities: Optional[List[str]] = None,
-        scope_tags: Optional[Dict[str, str]] = None,
+        capabilities: Optional[list[str]] = None,
+        scope_tags: Optional[dict[str, str]] = None,
     ) -> AgentIdentity:
         """Create L3 executor agent.
 

@@ -51,37 +51,37 @@ def detect_installed_harnesses() -> list[str]:
     """
     import os
     from pathlib import Path
-    
+
     detected = []
     home = Path.home()
-    
+
     for harness, config_path in HARNESS_CONFIG_PATHS.items():
         expanded = Path(os.path.expanduser(config_path))
         if expanded.exists():
             detected.append(harness)
-    
+
     # Check for Codex CLI
     if os.environ.get("CODEX_AVAILABLE") or (home / ".codex" / "mcp.json").exists():
         if "codex" not in detected:
             detected.append("codex")
-    
-    # Check for Claude CLI  
+
+    # Check for Claude CLI
     if (home / ".claude" / "settings.json").exists() or (home / ".claude.json").exists():
         if "claude-code" not in detected:
             detected.append("claude-code")
-    
+
     # Check for Cursor
     if (home / ".cursor" / "settings.json").exists():
         if "cursor" not in detected:
             detected.append("cursor")
-    
+
     # Check for Factory Droid
     if (home / ".factory" / "settings.json").exists() or (home / ".factory" / "config.json").exists():
         if "droid" not in detected:
             detected.append("droid")
         if "factory" not in detected:
             detected.append("factory")
-    
+
     return detected
 
 
@@ -100,10 +100,10 @@ def get_targets_for_install(
     """
     if target == "all":
         return INSTALLABLE_TARGETS.copy()
-    
+
     if target == "auto" and auto_detect:
         return detect_installed_harnesses()
-    
+
     # Handle comma-separated list
     if "," in target:
         targets = [t.strip() for t in target.split(",")]
@@ -116,7 +116,7 @@ def get_targets_for_install(
             else:
                 result.append(t)
         return result
-    
+
     return [target]
 
 SHELL_FILES = {

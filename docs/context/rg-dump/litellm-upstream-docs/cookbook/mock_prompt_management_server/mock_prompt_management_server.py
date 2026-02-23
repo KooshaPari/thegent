@@ -40,13 +40,13 @@ class PromptResponse(BaseModel):
     """Response format for the prompt management API"""
 
     prompt_id: str = Field(..., description="The ID of the prompt")
-    prompt_template: List[MessageContent] = Field(
+    prompt_template: list[MessageContent] = Field(
         ..., description="Array of messages in OpenAI format"
     )
     prompt_template_model: Optional[str] = Field(
         None, description="Optional model to use for this prompt"
     )
-    prompt_template_optional_params: Optional[Dict[str, Any]] = Field(
+    prompt_template_optional_params: Optional[dict[str, Any]] = Field(
         None, description="Optional parameters like temperature, max_tokens, etc."
     )
 
@@ -364,9 +364,9 @@ if __name__ == "__main__":
     print("=" * 70)
     print("Mock Prompt Management API Server")
     print("=" * 70)
-    print(f"\nStarting server on http://localhost:8080")
+    print("\nStarting server on http://localhost:8080")
     print(f"\nAvailable prompts: {len(PROMPTS_DB)}")
-    for prompt_id in PROMPTS_DB.keys():
+    for prompt_id in PROMPTS_DB:
         print(f"  - {prompt_id}")
     print(f"\nValid API tokens: {len(VALID_API_TOKENS)}")
     print("  - test-token-12345")

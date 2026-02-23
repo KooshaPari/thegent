@@ -43,7 +43,7 @@ class MCP_Resource:
         self.name = name
         self.description = description
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         return {
             "uri": self.uri,
             "name": self.name,
@@ -54,12 +54,12 @@ class MCP_Resource:
 class MCP_Tool:
     """MCP Tool definition."""
 
-    def __init__(self, name: str, description: str, input_schema: Dict[str, Any]):
+    def __init__(self, name: str, description: str, input_schema: dict[str, Any]):
         self.name = name
         self.description = description
         self.input_schema = input_schema
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -96,7 +96,7 @@ class CivilizationMCPServer:
         self.tools = self._initialize_tools()
 
         # Phase 4B: Heartbeat Streaming
-        self.heartbeat_subscribers: Set[str] = set()
+        self.heartbeat_subscribers: set[str] = set()
         self.heartbeat_stream_running = False
 
         # Phase 4C: Message Broker
@@ -106,7 +106,7 @@ class CivilizationMCPServer:
     # PHASE 4A: Resources
     # ========================================================================
 
-    def _initialize_resources(self) -> Dict[str, MCP_Resource]:
+    def _initialize_resources(self) -> dict[str, MCP_Resource]:
         """Initialize MCP resources."""
         return {
             "agents": MCP_Resource(
@@ -141,22 +141,22 @@ class CivilizationMCPServer:
             ),
         }
 
-    def read_resource(self, uri: str) -> Dict[str, Any]:
+    def read_resource(self, uri: str) -> dict[str, Any]:
         """Read a resource by URI."""
         if not self.enabled or not self.registry:
             return {"error": "MCP server not enabled"}
 
         # civilization://agents/{agent_id}
         if uri.startswith("civilization://agents/"):
-            agent_id = uri.split("/")[-1]
+            agent_id = uri.rsplit("/", maxsplit=1)[-1]
             agent = self.registry.get_agent(agent_id)
             if agent:
                 return asdict(agent) if AGENT_IDENTITY_AVAILABLE else agent.__dict__
             return {"error": f"Agent not found: {agent_id}"}
 
         # civilization://projects/{project}
-        elif uri.startswith("civilization://projects/"):
-            project = uri.split("/")[-1]
+        if uri.startswith("civilization://projects/"):
+            project = uri.rsplit("/", maxsplit=1)[-1]
             agents = self.registry.get_agents_by_project(project)
             return {
                 "project": project,
@@ -165,7 +165,7 @@ class CivilizationMCPServer:
             }
 
         # civilization://statistics
-        elif uri == "civilization://statistics":
+        if uri == "civilization://statistics":
             stats = self.registry.get_stats()
             return {
                 "total_agents": stats.get("total_agents", 0),
@@ -176,8 +176,8 @@ class CivilizationMCPServer:
             }
 
         # civilization://hierarchy/{parent_id}
-        elif uri.startswith("civilization://hierarchy/"):
-            parent_id = uri.split("/")[-1]
+        if uri.startswith("civilization://hierarchy/"):
+            parent_id = uri.rsplit("/", maxsplit=1)[-1]
             parent = self.registry.get_agent(parent_id)
             if not parent:
                 return {"error": f"Parent agent not found: {parent_id}"}
@@ -193,7 +193,7 @@ class CivilizationMCPServer:
             }
 
         # civilization://active
-        elif uri == "civilization://active":
+        if uri == "civilization://active":
             agents = self.registry.get_active_agents() if self.registry else []
             return {
                 "active_agents": [asdict(a) if AGENT_IDENTITY_AVAILABLE else a.__dict__ for a in agents],
@@ -201,21 +201,20 @@ class CivilizationMCPServer:
             }
 
         # civilization://stale
-        elif uri == "civilization://stale":
+        if uri == "civilization://stale":
             agents = self.registry.get_stale_agents() if self.registry else []
             return {
                 "stale_agents": [asdict(a) if AGENT_IDENTITY_AVAILABLE else a.__dict__ for a in agents],
                 "count": len(agents)
             }
 
-        else:
-            return {"error": f"Unknown resource: {uri}"}
+        return {"error": f"Unknown resource: {uri}"}
 
     # ========================================================================
     # PHASE 4A: Tools
     # ========================================================================
 
-    def _initialize_tools(self) -> Dict[str, MCP_Tool]:
+    def _initialize_tools(self) -> dict[str, MCP_Tool]:
         """Initialize MCP tools."""
         return {
             "update_heartbeat": MCP_Tool(
@@ -319,7 +318,7 @@ class CivilizationMCPServer:
             ),
         }
 
-    def call_tool(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+    def call_tool(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
         """Call an MCP tool."""
         if not self.enabled or not self.registry:
             return {"error": "MCP server not enabled"}
@@ -334,11 +333,11 @@ class CivilizationMCPServer:
                 "timestamp": time.time()
             }
 
-        elif tool_name == "register_agent":
+        if tool_name == "register_agent":
             # This would be more complex - skip for MVP
             return {"error": "register_agent not yet implemented"}
 
-        elif tool_name == "unregister_agent":
+        if tool_name == "unregister_agent":
             agent_id = args.get("agent_id")
             if agent_id and isinstance(agent_id, str):
                 self.registry.unregister_agent(agent_id)
@@ -347,7 +346,7 @@ class CivilizationMCPServer:
                 "agent_id": agent_id
             }
 
-        elif tool_name == "recover_stale":
+        if tool_name == "recover_stale":
             agent_id = args.get("agent_id")
             # Placeholder - actual recovery logic in SwarmController
             return {
@@ -356,10 +355,10 @@ class CivilizationMCPServer:
                 "message": "Recovery signal sent"
             }
 
-        elif tool_name == "get_civilization_status":
+        if tool_name == "get_civilization_status":
             return self.get_civilization_status()
 
-        elif tool_name == "query_agents":
+        if tool_name == "query_agents":
             filters = args.get("filters", {})
             level = filters.get("level")
             project = filters.get("project")
@@ -389,20 +388,19 @@ class CivilizationMCPServer:
                 "filters_applied": {"level": level, "project": project, "role": role, "status": status}
             }
 
-        elif tool_name == "memory_search":
+        if tool_name == "memory_search":
             return self._handle_memory_search(args)
 
-        elif tool_name == "memory_analytics_summary":
+        if tool_name == "memory_analytics_summary":
             return self._handle_memory_analytics_summary(args)
 
-        else:
-            return {"error": f"Unknown tool: {tool_name}"}
+        return {"error": f"Unknown tool: {tool_name}"}
 
     # ========================================================================
     # PHASE 6: Memory Tool Handlers
     # ========================================================================
 
-    def _handle_memory_search(self, args: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_memory_search(self, args: dict[str, Any]) -> dict[str, Any]:
         """Handle memory_search tool calls."""
         agent_id = args.get("agent_id")
         query = args.get("query")
@@ -436,7 +434,7 @@ class CivilizationMCPServer:
         except Exception as e:
             return {"error": str(e), "results": []}
 
-    def _handle_memory_analytics_summary(self, args: Dict[str, Any]) -> Dict[str, Any]:
+    def _handle_memory_analytics_summary(self, args: dict[str, Any]) -> dict[str, Any]:
         """Handle memory_analytics_summary tool calls."""
         agent_id = args.get("agent_id")
         days = args.get("days", 30)
@@ -538,7 +536,7 @@ class CivilizationMCPServer:
         self.heartbeat_subscribers.discard(subscriber_id)
         self.logger.debug(f"Subscriber removed: {subscriber_id}")
 
-    async def _broadcast_message(self, message: Dict[str, Any]) -> None:
+    async def _broadcast_message(self, message: dict[str, Any]) -> None:
         """Broadcast message to all subscribers."""
         # In real implementation, this would send to actual MCP clients
         # For now, just log
@@ -549,14 +547,14 @@ class CivilizationMCPServer:
     # ========================================================================
 
     async def send_agent_message(self, from_agent: str, to_agent: str,
-                                  message_type: str, payload: Dict[str, Any]) -> bool:
+                                  message_type: str, payload: dict[str, Any]) -> bool:
         """Send a message between agents."""
         return await self.message_broker.send_message(
             from_agent, to_agent, message_type, payload
         )
 
     async def broadcast_agent_message(self, from_agent: str,
-                                      message_type: str, payload: Dict[str, Any]) -> bool:
+                                      message_type: str, payload: dict[str, Any]) -> bool:
         """Broadcast message to all agents in project."""
         return await self.message_broker.broadcast_message(
             from_agent, message_type, payload
@@ -566,7 +564,7 @@ class CivilizationMCPServer:
     # Status/Stats Methods
     # ========================================================================
 
-    def get_civilization_status(self) -> Dict[str, Any]:
+    def get_civilization_status(self) -> dict[str, Any]:
         """Get civilization-wide status (dashboard format)."""
         if not self.enabled or not self.registry:
             return {"error": "MCP server not enabled"}
@@ -591,11 +589,11 @@ class CivilizationMCPServer:
             }
         }
 
-    def get_all_resources(self) -> List[Dict[str, Any]]:
+    def get_all_resources(self) -> list[dict[str, Any]]:
         """Get all available resources."""
         return [r.to_dict() for r in self.resources.values()]
 
-    def get_all_tools(self) -> List[Dict[str, Any]]:
+    def get_all_tools(self) -> list[dict[str, Any]]:
         """Get all available tools."""
         return [t.to_dict() for t in self.tools.values()]
 
@@ -611,12 +609,12 @@ class AgentMessage:
     from_agent: str
     to_agent: str
     type: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     timestamp: float
     ack: bool = False
     ack_timestamp: Optional[float] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -638,12 +636,12 @@ class AgentMessageBroker:
         self.logger = logging.getLogger("AgentMessageBroker")
 
         self.message_queue: asyncio.Queue = asyncio.Queue()
-        self.pending_acks: Dict[str, asyncio.Future] = {}
-        self.routes: Dict[str, Callable[[AgentMessage], Awaitable[None]]] = {}
-        self.message_history: List[AgentMessage] = []  # For debugging
+        self.pending_acks: dict[str, asyncio.Future] = {}
+        self.routes: dict[str, Callable[[AgentMessage], Awaitable[None]]] = {}
+        self.message_history: list[AgentMessage] = []  # For debugging
 
     async def send_message(self, from_agent: str, to_agent: str,
-                          message_type: str, payload: Dict[str, Any]) -> bool:
+                          message_type: str, payload: dict[str, Any]) -> bool:
         """Send message to specific agent."""
         if not self.enabled or not self.registry:
             return False
@@ -681,12 +679,12 @@ class AgentMessageBroker:
             self.pending_acks.pop(msg.id, None)
 
     async def broadcast_message(self, from_agent: str,
-                               message_type: str, payload: Dict[str, Any]) -> bool:
+                               message_type: str, payload: dict[str, Any]) -> bool:
         """Broadcast message to all agents in project."""
         if not self.enabled or not self.registry:
             return False
 
-        from_project = from_agent.split(":")[0]
+        from_project = from_agent.split(":", maxsplit=1)[0]
         agents = self.registry.get_agents_by_project(from_project)
 
         success_count = 0
@@ -731,7 +729,7 @@ class AgentMessageBroker:
             except Exception as e:
                 self.logger.error(f"Message processing error: {e}")
 
-    def get_message_stats(self) -> Dict[str, Any]:
+    def get_message_stats(self) -> dict[str, Any]:
         """Get message statistics."""
         return {
             "total_messages": len(self.message_history),

@@ -41,23 +41,23 @@ class OpenAPIBundler:
 
     def __init__(self, base_path: Path):
         self.base_path = base_path
-        self.cache: Dict[str, Any] = {}
-        self.resolved_refs: Dict[str, Any] = {}  # Cache resolved content
-        self.circular_schemas: Dict[str, Any] = {}  # Schemas with circular refs
-        self.in_progress: Set[str] = set()  # Track refs currently being resolved
+        self.cache: dict[str, Any] = {}
+        self.resolved_refs: dict[str, Any] = {}  # Cache resolved content
+        self.circular_schemas: dict[str, Any] = {}  # Schemas with circular refs
+        self.in_progress: set[str] = set()  # Track refs currently being resolved
 
-    def load_yaml(self, file_path: Path) -> Dict[str, Any]:
+    def load_yaml(self, file_path: Path) -> dict[str, Any]:
         """Load a YAML file and cache it."""
         abs_path = str(file_path.resolve())
         if abs_path in self.cache:
             return self.cache[abs_path]
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = yaml.safe_load(f)
             self.cache[abs_path] = content
             return content
 
-    def resolve_ref(self, ref: str, current_file: Path) -> Tuple[Any, Path, str]:
+    def resolve_ref(self, ref: str, current_file: Path) -> tuple[Any, Path, str]:
         """Resolve a $ref pointer to its actual content.
 
         Returns: (content, target_file, schema_name)
@@ -231,9 +231,8 @@ class OpenAPIBundler:
                             result = dict(resolved_content)
                             result.update(resolved_siblings)
                             return result
-                        else:
-                            # If resolved content is not a dict, can't merge
-                            return resolved_content
+                        # If resolved content is not a dict, can't merge
+                        return resolved_content
 
                     return resolved_content
                 finally:
@@ -246,7 +245,7 @@ class OpenAPIBundler:
                 for k, v in obj.items()
             }
 
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [
                 self.resolve_refs_recursive(item, current_file, depth + 1)
                 for item in obj
@@ -254,7 +253,7 @@ class OpenAPIBundler:
 
         return obj
 
-    def _resolve_circular_schemas(self, spec: Dict[str, Any], entry_path: Path) -> None:
+    def _resolve_circular_schemas(self, spec: dict[str, Any], entry_path: Path) -> None:
         """Resolve circular schemas and add them to components/schemas."""
         if not self.circular_schemas:
             return
@@ -332,7 +331,7 @@ class OpenAPIBundler:
                 for k, v in obj.items()
             }
 
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [
                 self._resolve_schema_refs(item, current_file, parent_schema, depth + 1)
                 for item in obj
@@ -340,7 +339,7 @@ class OpenAPIBundler:
 
         return obj
 
-    def bundle(self, entry_file: str = "openapi.yaml") -> Dict[str, Any]:
+    def bundle(self, entry_file: str = "openapi.yaml") -> dict[str, Any]:
         """Bundle the OpenAPI spec starting from the entry file."""
         entry_path = self.base_path / entry_file
         if not entry_path.exists():
@@ -355,7 +354,7 @@ class OpenAPIBundler:
         return resolved_spec
 
 
-def validate_spec(spec: Dict[str, Any]) -> bool:
+def validate_spec(spec: dict[str, Any]) -> bool:
     """Validate the OpenAPI spec (requires openapi-spec-validator)."""
     try:
         from openapi_spec_validator import validate

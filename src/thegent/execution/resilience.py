@@ -203,8 +203,8 @@ class ReplayManager:
 __all__ = [
     "CircuitBreakerRegistry",
     "ContinuityWatchdog",
-    "DeferralQueue",
     "DLQManager",
+    "DeferralQueue",
     "EscalationQueue",
     "FreshnessValidator",
     "HandoffManager",

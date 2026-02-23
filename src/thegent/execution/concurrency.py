@@ -123,7 +123,7 @@ class LoadClassifier:
         """Classify current load."""
         if active_count >= self._thresholds["high"]:
             return "high"
-        elif active_count >= self._thresholds["medium"]:
+        if active_count >= self._thresholds["medium"]:
             return "medium"
         return "low"
 

@@ -33,7 +33,7 @@ def test_config_loading():
 
     config = Config.from_yaml("config/swarm_controller_config.yaml")
 
-    print(f"✓ Config loaded successfully")
+    print("✓ Config loaded successfully")
     print(f"  - Health check interval: {config.health_check_interval}s")
     print(f"  - Stale threshold: {config.stale_threshold}s")
     print(f"  - Max concurrent agents: {config.max_concurrent_agents}")
@@ -61,7 +61,7 @@ def test_agent_metrics():
         memory_percent=32.1,
     )
 
-    print(f"✓ Agent metrics created")
+    print("✓ Agent metrics created")
     print(f"  - Agent ID: {metrics.agent_id}")
     print(f"  - PID: {metrics.pid}")
     print(f"  - Status: {metrics.status.value}")
@@ -73,7 +73,7 @@ def test_agent_metrics():
     data = metrics.to_dict()
     metrics2 = AgentMetrics.from_dict(data)
 
-    print(f"✓ Serialization/deserialization working")
+    print("✓ Serialization/deserialization working")
     assert metrics2.agent_id == metrics.agent_id
     assert metrics2.pid == metrics.pid
     assert metrics2.status == metrics.status
@@ -90,7 +90,7 @@ def test_resource_manager():
 
     # Get system resources
     cpu, mem = rm.get_system_resources()
-    print(f"✓ System resources retrieved")
+    print("✓ System resources retrieved")
     print(f"  - CPU: {cpu:.1f}%")
     print(f"  - Memory: {mem:.1f}%")
 
@@ -102,7 +102,7 @@ def test_resource_manager():
     import os
     pid = os.getpid()
     cpu_proc, mem_proc, files = rm.get_agent_resources(pid)
-    print(f"✓ Agent resources for current process")
+    print("✓ Agent resources for current process")
     print(f"  - CPU: {cpu_proc:.1f}%")
     print(f"  - Memory: {mem_proc:.1f}%")
     print(f"  - Open files: {files}")
@@ -118,7 +118,7 @@ def test_queue_manager():
     qm = QueueManager(config)
 
     stats = qm.get_queue_stats()
-    print(f"✓ Queue stats retrieved")
+    print("✓ Queue stats retrieved")
     print(f"  - Pending: {stats['pending']}")
     print(f"  - Claimed: {stats['claimed']}")
     print(f"  - Completed: {stats['completed']}")
@@ -140,7 +140,7 @@ def test_restart_policy():
     rp = RestartPolicy(config)
 
     # Test backoff delays
-    print(f"✓ Restart backoff sequence:")
+    print("✓ Restart backoff sequence:")
     for attempt in range(5):
         delay = rp.get_restart_delay(attempt)
         if delay is None:
@@ -195,7 +195,7 @@ def test_swarm_controller():
     config = Config.from_yaml("config/swarm_controller_config.yaml")
     controller = SwarmController(config)
 
-    print(f"✓ SwarmController initialized")
+    print("✓ SwarmController initialized")
     print(f"  - Log file: {config.log_file}")
     print(f"  - State file: {config.state_file}")
 
@@ -207,7 +207,7 @@ def test_swarm_controller():
         cpu_percent=45.2,
     )
 
-    print(f"✓ Agent metrics updated")
+    print("✓ Agent metrics updated")
 
     metrics = controller.metrics.get("test-agent-1")
     if metrics:
@@ -218,14 +218,14 @@ def test_swarm_controller():
 
     # Get status
     status = controller.get_status()
-    print(f"✓ Status retrieved")
+    print("✓ Status retrieved")
     print(f"  - Agents: {len(status['agents'])}")
     print(f"  - Queue pending: {status['queue']['pending']}")
 
     # Get health report
     report = controller.health_report()
-    print(f"✓ Health report generated")
-    print(f"  Report preview:")
+    print("✓ Health report generated")
+    print("  Report preview:")
     for line in report.split("\n")[:5]:
         print(f"    {line}")
 
@@ -280,9 +280,8 @@ def main():
     if failed == 0:
         print("\n✓ ALL TESTS PASSED")
         return 0
-    else:
-        print(f"\n✗ {failed} TEST(S) FAILED")
-        return 1
+    print(f"\n✗ {failed} TEST(S) FAILED")
+    return 1
 
 
 if __name__ == "__main__":

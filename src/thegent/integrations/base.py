@@ -173,8 +173,8 @@ class BaseIntegration(ABC):
 
 
 __all__ = [
-    "IntegrationStatus",
-    "IntegrationInfo",
-    "BaseIntegrationConfig",
     "BaseIntegration",
+    "BaseIntegrationConfig",
+    "IntegrationInfo",
+    "IntegrationStatus",
 ]

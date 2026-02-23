@@ -136,7 +136,7 @@ def _validate_validation_block(block: Any, path: Path, errors: list[str]) -> Non
         errors.append(f"{path}:validation must be an object")
         return
 
-    for field in {"commands", "results"}:
+    for field in ("commands", "results"):
         _ensure(field in block, f"missing required key {field}", errors, path, "validation")
 
     commands = _validate_list(block.get("commands"), 1, path, "validation.commands", errors)
@@ -153,7 +153,7 @@ def _validate_validation_block(block: Any, path: Path, errors: list[str]) -> Non
         if not isinstance(item, dict):
             errors.append(f"{path}:{prefix} must be an object")
             continue
-        for key in {"command", "status", "notes"}:
+        for key in ("command", "status", "notes"):
             _ensure(key in item, f"missing required key {key}", errors, path, prefix)
         _validate_string(item.get("command", ""), 1, path, f"{prefix}.command", errors)
         _validate_string(item.get("notes", ""), 1, path, f"{prefix}.notes", errors)

@@ -54,8 +54,7 @@ class TestReadJsonlMemories(unittest.TestCase):
                 {"memory_id": "m2", "content": {"text": "world"}},
             ]
             with open(jsonl_path, "w") as f:
-                for r in records:
-                    f.write(json.dumps(r) + "\n")
+                f.writelines(json.dumps(r) + "\n" for r in records)
 
             result = read_jsonl_memories(jsonl_path)
             self.assertEqual(len(result), 2)
@@ -99,8 +98,7 @@ class TestMigrateFile(unittest.TestCase):
         agent_dir.mkdir(parents=True, exist_ok=True)
         jsonl_path = agent_dir / "memory.jsonl"
         with open(jsonl_path, "w") as f:
-            for r in records:
-                f.write(json.dumps(r) + "\n")
+            f.writelines(json.dumps(r) + "\n" for r in records)
         return jsonl_path
 
     def test_migrate_file_basic(self):

@@ -16,7 +16,7 @@ batch_input_file = client.files.create(
 print(batch_input_file)
 
 # Create batch
-batch = client.batches.create( 
+batch = client.batches.create(
     input_file_id=batch_input_file.id,
     endpoint="/v1/chat/completions",
     completion_window="24h",

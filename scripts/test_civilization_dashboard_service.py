@@ -34,7 +34,7 @@ class MockAgent:
     last_heartbeat: Optional[float]
     created_at: Optional[float]
     parent_id: Optional[str] = None
-    children: Optional[List[str]] = None
+    children: Optional[list[str]] = None
 
     @property
     def project_scoped_id(self) -> str:
@@ -59,7 +59,7 @@ class MockMemoryType:
 class MockConflict:
     """Mock conflict record."""
     conflict_type: MockMemoryType
-    agents: List[MockAgent]
+    agents: list[MockAgent]
     detected_at: float
     status: MockMemoryType
 
@@ -127,7 +127,7 @@ class MockConflictResolver:
     def __init__(self):
         self.conflicts = []
 
-    def get_unresolved_conflicts(self) -> List[MockConflict]:
+    def get_unresolved_conflicts(self) -> list[MockConflict]:
         """Get unresolved conflicts."""
         return self.conflicts
 

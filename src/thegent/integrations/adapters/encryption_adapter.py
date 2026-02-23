@@ -19,11 +19,11 @@ def xor_encrypt(data: bytes, key: str) -> str:
     """
     key_bytes = key.encode()
     key_hash = hashlib.sha256(key_bytes).digest()
-    
+
     encrypted = bytearray()
     for i, byte in enumerate(data):
         encrypted.append(byte ^ key_hash[i % len(key_hash)])
-    
+
     return base64.b64encode(bytes(encrypted)).decode()
 
 
@@ -39,13 +39,13 @@ def xor_decrypt(payload: str, key: str) -> str:
     """
     key_bytes = key.encode()
     key_hash = hashlib.sha256(key_bytes).digest()
-    
+
     encrypted = base64.b64decode(payload.encode())
-    
+
     decrypted = bytearray()
     for i, byte in enumerate(encrypted):
         decrypted.append(byte ^ key_hash[i % len(key_hash)])
-    
+
     return bytes(decrypted).decode()
 
 
@@ -63,4 +63,4 @@ def compute_artifact_key(actor_id: str, artifact_id: str) -> str:
     return hashlib.sha256(combined.encode()).hexdigest()[:32]
 
 
-__all__ = ["xor_encrypt", "xor_decrypt", "compute_artifact_key"]
+__all__ = ["compute_artifact_key", "xor_decrypt", "xor_encrypt"]

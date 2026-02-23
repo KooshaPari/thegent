@@ -30,7 +30,7 @@ app = FastAPI(
 )
 
 
-def transform_braintrust_message(message: Dict[str, Any]) -> Dict[str, str]:
+def transform_braintrust_message(message: dict[str, Any]) -> dict[str, str]:
     """
     Transform a Braintrust message to LiteLLM format.
 
@@ -60,8 +60,8 @@ def transform_braintrust_message(message: Dict[str, Any]) -> Dict[str, str]:
 
 
 def transform_braintrust_response(
-    braintrust_response: Dict[str, Any],
-) -> Dict[str, Any]:
+    braintrust_response: dict[str, Any],
+) -> dict[str, Any]:
     """
     Transform Braintrust API response to LiteLLM prompt management format.
 
@@ -114,7 +114,7 @@ def transform_braintrust_response(
 
     # Extract optional parameters
     params = options.get("params", {})
-    optional_params: Dict[str, Any] = {}
+    optional_params: dict[str, Any] = {}
 
     # Map common parameters
     param_mapping = {
@@ -147,11 +147,11 @@ def transform_braintrust_response(
         optional_params["function_call"] = params["function_call"]
 
     # Add tools if present
-    if "tools" in prompt_info and prompt_info["tools"]:
+    if prompt_info.get("tools"):
         optional_params["tools"] = prompt_info["tools"]
 
     # Handle tool_functions from prompt_data
-    if "tool_functions" in prompt_data and prompt_data["tool_functions"]:
+    if prompt_data.get("tool_functions"):
         optional_params["tool_functions"] = prompt_data["tool_functions"]
 
     return {
@@ -264,7 +264,7 @@ def main():
     print(f"🚀 Starting Braintrust Prompt Wrapper Server on {host}:{port}")
     print(f"📚 API Documentation available at http://{host}:{port}/docs")
     print(
-        f"🔑 Make sure to set BRAINTRUST_API_KEY environment variable or pass token in Authorization header"
+        "🔑 Make sure to set BRAINTRUST_API_KEY environment variable or pass token in Authorization header"
     )
 
     uvicorn.run(app, host=host, port=port)

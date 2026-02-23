@@ -34,7 +34,7 @@ class BedrockContentItem(BaseModel):
 
 class BedrockRequest(BaseModel):
     source: Literal["INPUT", "OUTPUT"]
-    content: List[BedrockContentItem] = Field(default_factory=list)
+    content: list[BedrockContentItem] = Field(default_factory=list)
 
 
 class BedrockGuardrailOutput(BaseModel):
@@ -48,7 +48,7 @@ class TopicPolicyItem(BaseModel):
 
 
 class TopicPolicy(BaseModel):
-    topics: List[TopicPolicyItem] = Field(default_factory=list)
+    topics: list[TopicPolicyItem] = Field(default_factory=list)
 
 
 class ContentFilterItem(BaseModel):
@@ -58,7 +58,7 @@ class ContentFilterItem(BaseModel):
 
 
 class ContentPolicy(BaseModel):
-    filters: List[ContentFilterItem] = Field(default_factory=list)
+    filters: list[ContentFilterItem] = Field(default_factory=list)
 
 
 class CustomWord(BaseModel):
@@ -67,8 +67,8 @@ class CustomWord(BaseModel):
 
 
 class WordPolicy(BaseModel):
-    customWords: List[CustomWord] = Field(default_factory=list)
-    managedWordLists: List[Dict[str, Any]] = Field(default_factory=list)
+    customWords: list[CustomWord] = Field(default_factory=list)
+    managedWordLists: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class PiiEntity(BaseModel):
@@ -85,8 +85,8 @@ class RegexMatch(BaseModel):
 
 
 class SensitiveInformationPolicy(BaseModel):
-    piiEntities: List[PiiEntity] = Field(default_factory=list)
-    regexes: List[RegexMatch] = Field(default_factory=list)
+    piiEntities: list[PiiEntity] = Field(default_factory=list)
+    regexes: list[RegexMatch] = Field(default_factory=list)
 
 
 class ContextualGroundingFilter(BaseModel):
@@ -97,7 +97,7 @@ class ContextualGroundingFilter(BaseModel):
 
 
 class ContextualGroundingPolicy(BaseModel):
-    filters: List[ContextualGroundingFilter] = Field(default_factory=list)
+    filters: list[ContextualGroundingFilter] = Field(default_factory=list)
 
 
 class Assessment(BaseModel):
@@ -109,12 +109,12 @@ class Assessment(BaseModel):
 
 
 class BedrockGuardrailResponse(BaseModel):
-    usage: Dict[str, int] = Field(
+    usage: dict[str, int] = Field(
         default_factory=lambda: {"topicPolicyUnits": 1, "contentPolicyUnits": 1}
     )
     action: Literal["NONE", "GUARDRAIL_INTERVENED"] = "NONE"
-    outputs: List[BedrockGuardrailOutput] = Field(default_factory=list)
-    assessments: List[Assessment] = Field(default_factory=list)
+    outputs: list[BedrockGuardrailOutput] = Field(default_factory=list)
+    assessments: list[Assessment] = Field(default_factory=list)
 
 
 # ============================================================================
@@ -125,11 +125,11 @@ class BedrockGuardrailResponse(BaseModel):
 class GuardrailConfig(BaseModel):
     """Configuration for mock guardrail behavior"""
 
-    blocked_words: List[str] = Field(
+    blocked_words: list[str] = Field(
         default_factory=lambda: ["offensive", "inappropriate", "badword"]
     )
-    blocked_topics: List[str] = Field(default_factory=lambda: ["violence", "illegal"])
-    pii_patterns: Dict[str, str] = Field(
+    blocked_topics: list[str] = Field(default_factory=lambda: ["violence", "illegal"])
+    pii_patterns: dict[str, str] = Field(
         default_factory=lambda: {
             "EMAIL": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
             "PHONE": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
@@ -277,7 +277,7 @@ def check_pii(text: str) -> tuple[Optional[SensitiveInformationPolicy], str]:
 
 def process_guardrail_request(
     request: BedrockRequest,
-) -> tuple[BedrockGuardrailResponse, List[str]]:
+) -> tuple[BedrockGuardrailResponse, list[str]]:
     """
     Process a guardrail request and return the response.
 
@@ -389,16 +389,16 @@ This is a beta API. Please help us improve it.
 
 
 class LitellmBasicGuardrailRequest(BaseModel):
-    texts: List[str]
-    images: Optional[List[str]] = None
-    tools: Optional[List[dict]] = None
-    tool_calls: Optional[List[dict]] = None
-    request_data: Dict[str, Any] = Field(default_factory=dict)
-    additional_provider_specific_params: Dict[str, Any] = Field(default_factory=dict)
+    texts: list[str]
+    images: Optional[list[str]] = None
+    tools: Optional[list[dict]] = None
+    tool_calls: Optional[list[dict]] = None
+    request_data: dict[str, Any] = Field(default_factory=dict)
+    additional_provider_specific_params: dict[str, Any] = Field(default_factory=dict)
     input_type: Literal["request", "response"]
     litellm_call_id: Optional[str] = None
     litellm_trace_id: Optional[str] = None
-    structured_messages: Optional[List[Dict[str, Any]]] = None
+    structured_messages: Optional[list[dict[str, Any]]] = None
 
 
 class LitellmBasicGuardrailResponse(BaseModel):
@@ -406,8 +406,8 @@ class LitellmBasicGuardrailResponse(BaseModel):
         "BLOCKED", "NONE", "GUARDRAIL_INTERVENED"
     ]  # BLOCKED = litellm will raise an error, NONE = litellm will continue, GUARDRAIL_INTERVENED = litellm will continue, but the text was modified by the guardrail
     blocked_reason: Optional[str] = None  # only if action is BLOCKED, otherwise None
-    texts: Optional[List[str]] = None
-    images: Optional[List[str]] = None
+    texts: Optional[list[str]] = None
+    images: Optional[list[str]] = None
 
 
 @app.post(
@@ -434,7 +434,7 @@ async def beta_litellm_basic_guardrail_api(
         return LitellmBasicGuardrailResponse(
             action="BLOCKED", blocked_reason="Ishaan is not allowed"
         )
-    elif any("pii_value" in text for text in request.texts):
+    if any("pii_value" in text for text in request.texts):
         return LitellmBasicGuardrailResponse(
             action="GUARDRAIL_INTERVENED",
             texts=[
@@ -515,7 +515,7 @@ if __name__ == "__main__":
     print("=" * 80)
     print(f"Server starting on: http://{host}:{port}")
     print(f"Bearer Token: {bearer_token}")
-    print(f"Endpoint: POST /guardrail/{{id}}/version/{{version}}/apply")
+    print("Endpoint: POST /guardrail/{id}/version/{version}/apply")
     print("=" * 80)
     print("\nExample curl command:")
     print(

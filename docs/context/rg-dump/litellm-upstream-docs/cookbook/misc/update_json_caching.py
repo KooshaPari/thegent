@@ -21,7 +21,7 @@ models_to_update = [
 
 def update_model_prices(file_path):
     # Read the JSON file as text first to preserve number formatting
-    with open(file_path, "r") as file:
+    with open(file_path) as file:
         original_text = file.read()
         data = json.loads(original_text)
 
@@ -43,7 +43,7 @@ def update_model_prices(file_path):
         print("new pricing for model=")
         # Convert all float values to full decimal format before printing
         formatted_model = {
-            k: "{:.9f}".format(v) if isinstance(v, float) else v
+            k: f"{v:.9f}" if isinstance(v, float) else v
             for k, v in data[model_name].items()
         }
         print(json.dumps(formatted_model, indent=4))

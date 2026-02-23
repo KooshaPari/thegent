@@ -24,7 +24,7 @@ class InMemorySecretManager(CustomSecretManager):
         self,
         secret_name: str,
         optional_params: Optional[dict] = None,
-        timeout: Optional[Union[float, httpx.Timeout]] = None,
+        timeout: Optional[float | httpx.Timeout] = None,
     ) -> Optional[str]:
         """Read secret asynchronously"""
         print("READING SECRET ASYNCHRONOUSLY")
@@ -36,11 +36,11 @@ class InMemorySecretManager(CustomSecretManager):
         self,
         secret_name: str,
         optional_params: Optional[dict] = None,
-        timeout: Optional[Union[float, httpx.Timeout]] = None,
+        timeout: Optional[float | httpx.Timeout] = None,
     ) -> Optional[str]:
         """Read secret synchronously"""
         from litellm._logging import verbose_proxy_logger
-        
+
         verbose_proxy_logger.info(f"CUSTOM SECRET MANAGER: LOOKING FOR SECRET: {secret_name}")
         value = self.secrets.get(secret_name)
         verbose_proxy_logger.info(f"CUSTOM SECRET MANAGER: READ SECRET: {value}")
@@ -52,8 +52,8 @@ class InMemorySecretManager(CustomSecretManager):
         secret_value: str,
         description: Optional[str] = None,
         optional_params: Optional[dict] = None,
-        timeout: Optional[Union[float, httpx.Timeout]] = None,
-        tags: Optional[Union[dict, list]] = None,
+        timeout: Optional[float | httpx.Timeout] = None,
+        tags: Optional[dict | list] = None,
     ) -> dict:
         """Write a secret to the in-memory store"""
         self.secrets[secret_name] = secret_value
@@ -69,7 +69,7 @@ class InMemorySecretManager(CustomSecretManager):
         secret_name: str,
         recovery_window_in_days: Optional[int] = 7,
         optional_params: Optional[dict] = None,
-        timeout: Optional[Union[float, httpx.Timeout]] = None,
+        timeout: Optional[float | httpx.Timeout] = None,
     ) -> dict:
         """Delete a secret from the in-memory store"""
         if secret_name in self.secrets:

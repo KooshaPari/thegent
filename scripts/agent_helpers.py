@@ -26,12 +26,12 @@ def read_file_optimized(path: Path, offset: int = 0, limit: Optional[int] = None
     """Read a file with offset and limit to reduce tool call size."""
     if not path.exists():
         return ""
-    
-    with open(path, "r", errors="replace") as f:
+
+    with open(path, errors="replace") as f:
         if offset > 0:
             for _ in range(offset):
                 next(f, None)
-        
+
         if limit is not None:
             lines = []
             for _ in range(limit):
@@ -40,11 +40,10 @@ def read_file_optimized(path: Path, offset: int = 0, limit: Optional[int] = None
                     break
                 lines.append(line)
             return "".join(lines)
-        else:
-            return f.read()
+        return f.read()
 
 
-def batch_read_files(paths: List[Path]) -> Dict[str, str]:
+def batch_read_files(paths: list[Path]) -> dict[str, str]:
     """Read multiple files in one batch."""
     results = {}
     for p in paths:
@@ -52,7 +51,7 @@ def batch_read_files(paths: List[Path]) -> Dict[str, str]:
     return results
 
 
-def run_command(cmd: List[str], cwd: Optional[Path] = None, timeout: int = 30) -> subprocess.CompletedProcess:
+def run_command(cmd: list[str], cwd: Optional[Path] = None, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a shell command safely."""
     try:
         return subprocess.run(
@@ -78,10 +77,10 @@ def log_friction(task_id: str, category: str, friction_type: str, description: s
     log_path = Path("thegent/docs/research/FRICTION_LOG.md")
     if not log_path.exists():
         return
-    
+
     import datetime
     timestamp = datetime.datetime.now().isoformat()
-    
+
     entry = f"""
 ### {task_id}-{timestamp[:10]}
 

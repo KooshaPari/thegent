@@ -38,7 +38,7 @@ def _escape_cell(text: str) -> str:
 
 
 __all__ = [
-    "_normalize_image_paths",
     "_build_run_event_details",
     "_escape_cell",
+    "_normalize_image_paths",
 ]

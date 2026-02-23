@@ -119,10 +119,10 @@ def _get_flat():
         import importlib.util
         import sys
         from pathlib import Path
-        
+
         _EXECUTION_PY = Path(__file__).parent.parent / "execution.py"
         _MODULE_NAME = "thegent._execution_flat"
-        
+
         if _MODULE_NAME not in sys.modules:
             _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _EXECUTION_PY)
             if _spec is None or _spec.loader is None:
@@ -130,7 +130,7 @@ def _get_flat():
             _mod = importlib.util.module_from_spec(_spec)
             sys.modules[_MODULE_NAME] = _mod
             _spec.loader.exec_module(_mod)
-        
+
         _flat = sys.modules[_MODULE_NAME]
     return _flat
 

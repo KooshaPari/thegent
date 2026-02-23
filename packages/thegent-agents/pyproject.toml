@@ -1,14 +1,9 @@
 [build-system]
-<<<<<<< HEAD
 requires = ["hatchling", "hatch-vcs"]
-=======
-requires = ["hatchling"]
->>>>>>> chore/thegent-provider-plane-pr3
 build-backend = "hatchling.build"
 
 [project]
 name = "thegent-agents"
-<<<<<<< HEAD
 dynamic = ["version"]
 description = "Agent orchestration and persona management for thegent"
 authors = [
@@ -21,20 +16,10 @@ dependencies = [
     "tenacity>=9.0.0",
     "pydantic>=2.12.5",
     "httpx>=0.28.1",
-=======
-version = "0.1.0"
-description = "thegent agents sub-package - agent runner and orchestration layer"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "thegent-core>=0.1.0",
-    "pydantic>=2.0.0",
->>>>>>> chore/thegent-provider-plane-pr3
 ]
 
 [project.optional-dependencies]
 dev = [
-<<<<<<< HEAD
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
 ]
@@ -50,13 +35,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 120
 target-version = "py310"
-=======
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "ruff>=0.1.0",
-]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/thegent_agents"]
->>>>>>> chore/thegent-provider-plane-pr3
