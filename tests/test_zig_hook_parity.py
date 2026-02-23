@@ -160,7 +160,7 @@ class TestGateParity:
     def test_gate_pre_tool_use_parity(self, zig_dispatcher_bin):
         """
         PreToolUse gate should run the same checks in both implementations.
-        
+
         This gate validates:
         - Tool name is present and non-empty
         - Tool arguments are valid
@@ -185,7 +185,7 @@ class TestGateParity:
     def test_gate_post_tool_use_parity(self, zig_dispatcher_bin):
         """
         PostToolUse gate should validate tool results consistently.
-        
+
         This gate validates:
         - Tool execution completed
         - Tool output is well-formed
@@ -208,7 +208,7 @@ class TestGateParity:
     def test_gate_session_start_parity(self, zig_dispatcher_bin):
         """
         SessionStart gate should initialize session state identically.
-        
+
         This gate validates:
         - Session ID is valid UUID
         - Session environment is ready
@@ -225,7 +225,7 @@ class TestGateParity:
     def test_gate_stop_parity(self, zig_dispatcher_bin):
         """
         Stop gate should run all final validations identically.
-        
+
         This gate validates:
         - All required checks have run
         - Quality gate criteria are met
@@ -242,7 +242,7 @@ class TestGateParity:
     def test_gate_suppression_blocker_parity(self, zig_dispatcher_bin):
         """
         Suppression blocker gate should reject unwarranted suppressions.
-        
+
         The Zig implementation should detect:
         - Suppressions without justification
         - Suppressions that don't match inline comments
@@ -260,7 +260,7 @@ class TestGateParity:
     def test_gate_fallback_detector_parity(self, zig_dispatcher_bin):
         """
         Fallback detector gate should identify compatibility shims.
-        
+
         The Zig implementation should detect:
         - try/except fallback patterns
         - Legacy compatibility branches
@@ -277,7 +277,7 @@ class TestGateParity:
     def test_gate_ai_slop_parity(self, zig_dispatcher_bin):
         """
         AI slop detector gate should identify low-quality AI output.
-        
+
         The Zig implementation should detect:
         - Repetitive patterns (copy-paste code)
         - Placeholder comments
@@ -362,7 +362,7 @@ class TestGateDecisionLogic:
     def test_gate_pass_fail_consistency(self, zig_dispatcher_bin):
         """
         Both implementations should use same pass/fail/fail-closed states.
-        
+
         States:
         - PASS: gate criteria met
         - FAIL: gate criteria not met (advisory only)
