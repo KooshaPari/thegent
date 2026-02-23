@@ -1,15 +1,6 @@
 """IDE and tool integrations for thegent."""
 
-from thegent.integrations.auth_expiry import (
-    AuthExpiryDetector,
-    AuthExpiryInfo,
-    ExpiryStatus,
-)
-from thegent.integrations.connector_quota import (
-    ConnectorQuota,
-    QuotaBudgetManager,
-    QuotaExhaustedError,
-)
+# Auth and quota modules migrated to CLIProxy (Go)
 from thegent.integrations.drift_severity import (
     DriftEscalationThresholds,
     DriftSeverity,
@@ -45,12 +36,8 @@ from thegent.integrations.sync_provenance import (
 )
 
 __all__ = [
-    "AuthExpiryDetector",
-    "AuthExpiryInfo",
-    "ConnectorQuota",
     "DriftEscalationThresholds",
     "DriftSeverity",
-    "ExpiryStatus",
     "GHProjectSyncConfig",
     "GHProjectSyncResult",
     "GhosttyConfig",
@@ -60,8 +47,6 @@ __all__ = [
     "JetBrainsConfig",
     "JetBrainsIntegration",
     "LocalWorkItem",
-    "QuotaBudgetManager",
-    "QuotaExhaustedError",
     "ReconciliationMode",
     "ReconciliationPolicy",
     "SyncAuditor",
