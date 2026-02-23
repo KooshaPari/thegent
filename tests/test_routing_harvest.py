@@ -11,13 +11,12 @@ def test_harvest_routing_metrics(tmp_path):
     tracker.clear()
 
     session_id = "test-session-123"
-    tracker.record_request(
-        model="gpt-4",
+    tracker.track(
         provider="openai",
-        input_tokens=100,
-        output_tokens=50,
+        model="gpt-4",
+        usage={"prompt_tokens": 100, "completion_tokens": 50},
+        cost=0.003,
         latency_ms=500.0,
-        cost_usd=0.003,
         session_id=session_id,
     )
 
