@@ -20,6 +20,7 @@ from thegent.execution_event_builders import (
     build_schema_marker_event,
 )
 from thegent.execution_hash_helpers import calculate_stable_record_hash
+from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -97,6 +98,26 @@ def _as_int(value: Any, default: int) -> int:
 def _as_bool(value: Any, default: bool) -> bool:
     """Coerce arbitrary values to bool with a safe default."""
     return _as_bool_impl(value, default)
+
+
+def _process_run_entry(line: str, runs: dict[str, dict[str, Any]]) -> None:
+    """Process a single line from the registry file into a run entry."""
+    try:
+        entry = json.loads(line)
+        run_id = entry.get("run_id") or entry.get("id")
+        if run_id:
+            runs[run_id] = entry
+    except Exception:
+        pass
+
+
+def _check_session_id(line: str, session_id: str) -> bool:
+    """Check if a line contains the given session_id."""
+    try:
+        entry = json.loads(line)
+        return entry.get("session_id") == session_id
+    except Exception:
+        return False
 
 
 from .state import RunState, RunMeta, CheckpointMeta, CalibrationRegistry
