@@ -37,7 +37,7 @@ class BeadsWrapper:
             result = subprocess.run([binary, "version"], capture_output=True, timeout=5)
             if result.returncode == 0:
                 self._status = BeadsStatus.AVAILABLE
-        except:
+        except (subprocess.SubprocessError, OSError):
             pass
 
     @property

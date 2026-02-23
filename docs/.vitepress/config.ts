@@ -21,10 +21,20 @@ const docsBaseOverride = process.env.VITEPRESS_BASE
 const docsBase = docsBaseOverride ?? (isPagesBuild ? `/${repoName}/` : '/')
 const faviconHref = `${docsBase}favicon.ico`
 
+// Supported locales: en, zh-CN, zh-TW, fa, fa-Latn
+const locales = {
+  root: { label: "English", lang: "en", title: 'thegent', description: 'AI Agent Governance & MCP Server' },
+  "zh-CN": { label: "简体中文", lang: "zh-CN", title: 'thegent', description: 'AI 代理治理和 MCP 服务器' },
+  "zh-TW": { label: "繁體中文", lang: "zh-TW", title: 'thegent', description: 'AI 代理治理和 MCP 伺服器' },
+  fa: { label: "فارسی", lang: "fa", title: 'thegent', description: 'حکمرانی عامل هوش مصنوعی و سرور MCP' },
+  "fa-Latn": { label: "Pinglish", lang: "fa-Latn", title: 'thegent', description: 'AI Agent Governance (Latin)' }
+}
+
 const config = defineConfig({
   title: 'thegent',
   description: 'AI Agent Governance & MCP Server',
   base: docsBase,
+  locales,
   head: [
     ['link', { rel: 'icon', href: faviconHref }],
   ],
@@ -144,6 +154,16 @@ const config = defineConfig({
         text: 'API',
         link: '/api/'
       },
+      {
+        text: "🌐 Language",
+        items: [
+          { text: "English", link: "/" },
+          { text: "简体中文", link: "/zh-CN/" },
+          { text: "繁體中文", link: "/zh-TW/" },
+          { text: "فارسی", link: "/fa/" },
+          { text: "Pinglish", link: "/fa-Latn/" }
+        ]
+      }
     ],
 
     sidebar: sidebar,
