@@ -34,14 +34,29 @@ def test_domain_map_advisor_json_payload() -> None:
     assert payload["mode"] == "advisor"
     assert payload["domain"] == "app.example.com"
     assert payload["target"] == "http://localhost:3847"
+    assert payload["registrar"] == "porkbun"
+    assert payload["dns_provider"] == "cloudflare"
     assert payload["tunnel_name"] == "thegent"
     assert payload["steps"]
+    assert payload["assumptions"]
 
 
 def test_domain_map_invalid_domain_fails() -> None:
     result = runner.invoke(app, ["domain", "map", "localhost", "--target", "http://localhost:3847"])
     assert result.exit_code == 2
-    assert "domain must include at least one dot" in result.output
+    assert "domain must be a valid FQDN" in result.output
+
+
+def test_domain_map_invalid_target_fails() -> None:
+    result = runner.invoke(app, ["domain", "map", "example.com", "--target", "localhost:3847"])
+    assert result.exit_code == 2
+    assert "target must be an absolute URL" in result.output
+
+
+def test_domain_map_invalid_format_fails() -> None:
+    result = runner.invoke(app, ["domain", "map", "example.com", "--format", "yaml"])
+    assert result.exit_code == 2
+    assert "format must be rich, json, or md" in result.output
 
 
 def test_domain_map_apply_mode_not_implemented() -> None:

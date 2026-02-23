@@ -68,6 +68,32 @@ jobs:
       - name: Generate checksums
         run: sha256sum dist/* > dist/SHA256SUMS.txt
 
+      - name: Emit governance release control-plane artifacts
+        run: |
+          mkdir -p artifacts/quality
+          uv run python scripts/quality_control_plane_report.py \
+            --contract contracts/quality-control-plane-v1.json \
+            --json-out artifacts/quality/control-plane-readiness.json \
+            --md-out artifacts/quality/control-plane-readiness.md
+          uv run python scripts/attest_governance_contract_report.py \
+            --report-json artifacts/quality/control-plane-readiness.json \
+            --attestation-out dist/governance-control-plane-attestation.json
+
+      - name: Verify governance release attestation
+        run: |
+          uv run python scripts/verify_governance_contract_attestation.py \
+            --report-json artifacts/quality/control-plane-readiness.json \
+            --attestation-json dist/governance-control-plane-attestation.json
+
+      - name: Verify SBOM artifact was generated
+        run: |
+          test -s dist/sbom.spdx.json
+
+      - name: Stage release governance artifacts
+        run: |
+          cp artifacts/quality/control-plane-readiness.json dist/
+          cp artifacts/quality/control-plane-readiness.md dist/
+
       - name: Package docs artifact
         run: tar -czf dist/docs-dist.tar.gz docs-dist
 

@@ -32,6 +32,18 @@ if ! rg -q "THGENT_BOOTSTRAP_WORKTREE_GOVERNANCE" scripts/bootstrap.sh; then
   failed=1
 fi
 
+<<<<<<< HEAD
+=======
+if [ ! -x scripts/worktree_governance.sh ]; then
+  echo "[FAIL] scripts/worktree_governance.sh missing or not executable" >&2
+  failed=1
+else
+  if ! ./scripts/worktree_governance.sh check; then
+    failed=1
+  fi
+fi
+
+>>>>>>> codex/governance-wireup
 if [ "$failed" -ne 0 ]; then
   exit 1
 fi
