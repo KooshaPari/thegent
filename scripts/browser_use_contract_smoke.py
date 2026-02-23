@@ -27,20 +27,20 @@ def main() -> int:
             text=True,
             timeout=30
         )
-        
+
         if result.returncode != 0:
             raise RuntimeError(f"browser-use --version failed: {result.stderr}")
-        
+
         version = result.stdout.strip() or "unknown"
-        
+
     except FileNotFoundError:
         raise RuntimeError("uvx not found - install uv to run browser-use")
     except subprocess.TimeoutExpired:
         raise RuntimeError("browser-use --version timed out")
 
     print(json.dumps({
-        "ok": True, 
-        "target": "browser-use", 
+        "ok": True,
+        "target": "browser-use",
         "version": version,
         "status": "available"
     }))

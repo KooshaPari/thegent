@@ -1,5 +1,5 @@
 """Sanity checks for e2e README command guidance."""
-
+# noqa: PT018
 from __future__ import annotations
 
 from collections import Counter

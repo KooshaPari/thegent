@@ -4,14 +4,13 @@ NATS Event Bus Integration - Event bus for thegent orchestration.
 Full implementation for Phase 3 Spike Batch B.
 """
 
-import asyncio
 import json
 import logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable
+from typing import Callable
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)

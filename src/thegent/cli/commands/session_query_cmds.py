@@ -11,7 +11,6 @@ from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
-    _coerce_issue_types,
     _default_owner_tag,
     _find_session_meta,
     _is_pid_running,
@@ -22,7 +21,6 @@ from thegent.cli.commands._cli_shared import (
     _resolve_session_status,
     _session_paths,
     console,
-    EXIT_TIMEOUT,
     _LOG_FOLLOW_POLL_SECONDS,
 )
 from thegent.cli.commands.session_cmds_helpers import (

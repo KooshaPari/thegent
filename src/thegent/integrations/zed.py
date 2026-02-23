@@ -3,7 +3,6 @@ Zed Editor Integration - IDE-like functionality.
 """
 import logging
 import os
-import subprocess
 from dataclasses import dataclass
 from enum import Enum
 

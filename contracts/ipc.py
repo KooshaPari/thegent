@@ -11,8 +11,8 @@ class IPCRequest:
     command: str
     payload: dict
     source: str
-    
-@dataclass  
+
+@dataclass
 class IPCResponse:
     """IPC Response format."""
     request_id: str

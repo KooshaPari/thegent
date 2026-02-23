@@ -26,11 +26,11 @@ def main() -> int:
         raise RuntimeError(f"THEGENT_AUTH_PROVIDER is not 'kratos', got: {auth_provider}")
 
     public_url = _require_env("KRATOS_PUBLIC_URL")
-    
+
     try:
         import httpx
         import asyncio
-        
+
         async def check():
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -38,12 +38,12 @@ def main() -> int:
                     timeout=5
                 )
                 return response.status_code
-        
+
         status = asyncio.run(check())
-        
+
         if status != 200:
             raise RuntimeError(f"Kratos health check returned non-200 status: {status}")
-            
+
     except ImportError:
         # Try urllib fallback
         import urllib.request

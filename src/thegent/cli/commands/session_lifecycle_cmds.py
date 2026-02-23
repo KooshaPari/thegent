@@ -60,7 +60,6 @@ def stop_cmd(
     wind_down: bool = False,
     grace: int = 20,
 ) -> None:
-    from thegent.cli.commands._cli_shared import _session_paths
 
     sid = _resolve_session_id(session_id)
     settings = ThegentSettings()

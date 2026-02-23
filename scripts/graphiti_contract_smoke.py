@@ -25,13 +25,13 @@ def _require_env(name: str) -> str:
 def main() -> int:
     server_url = _require_env("GRAPHITI_SERVER_URL").rstrip("/")
     api_key = os.getenv("GRAPHITI_API_KEY", "")
-    
+
     url = f"{server_url}/health"
-    
+
     headers = {}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
-    
+
     try:
         request = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(request, timeout=5) as response:

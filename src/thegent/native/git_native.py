@@ -10,10 +10,9 @@ FR-GIT-001  @trace FR-GIT-001
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 
 _log = logging.getLogger(__name__)

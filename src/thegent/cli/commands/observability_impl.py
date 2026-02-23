@@ -12,6 +12,8 @@ from __future__ import annotations
 
 # Re-export all main implementation functions
 from thegent.cli.commands.observability_main_impl import (
+    _REVIEW_ALLOWED_TOOLS,
+    _REVIEW_SCHEMA_PREAMBLE,
     _append_observe_summary_snapshot,
     _extract_agent_from_line,
     _extract_review_json_payload,
@@ -71,6 +73,8 @@ __all__ = [
     "HEALTH_POLICY_PROFILES",
     "OBSERVE_SUMMARY_PAYLOAD_TYPES",
     "OBSERVE_SUMMARY_SCHEMA_VERSION",
+    "_REVIEW_ALLOWED_TOOLS",
+    "_REVIEW_SCHEMA_PREAMBLE",
     "_append_health_snapshot",
     "_append_observe_summary_snapshot",
     "_build_observe_summary_trend_scope",

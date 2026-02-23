@@ -20,11 +20,11 @@ def main() -> int:
 
     http_addr = os.getenv("POCKETBASE_HTTP_ADDR", "127.0.0.1:8090")
     base_url = f"http://{http_addr}"
-    
+
     try:
         import httpx
         import asyncio
-        
+
         async def check():
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -32,12 +32,12 @@ def main() -> int:
                     timeout=5
                 )
                 return response.status_code
-        
+
         status = asyncio.run(check())
-        
+
         if status != 200:
             raise RuntimeError(f"PocketBase health check returned non-200 status: {status}")
-            
+
     except ImportError:
         import urllib.request
         url = f"{base_url}/api/health"
