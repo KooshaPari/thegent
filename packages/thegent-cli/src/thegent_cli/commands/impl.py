@@ -225,8 +225,8 @@ __all__ = [
 ]
 
 
+import json
 import logging
-import time
 import subprocess
 import sys
 from pathlib import Path
@@ -236,9 +236,6 @@ if TYPE_CHECKING:
     from thegent.config_provider import ConfigProvider
 
 from rich.console import Console
-
-
-console = Console()
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
@@ -273,6 +270,8 @@ from thegent_cli.services import spawn_retry_helpers
 from thegent_cli.services import work_stream_orchestration
 from thegent.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
 from thegent.maif import MAIFRunner
+
+console = Console()
 
 SECONDS_PER_TOOL_CALL = 2.3
 _CONTINUATION_TAIL_CHARS = 8000
@@ -557,7 +556,7 @@ from thegent_cli.commands.dag_impl import (  # noqa: E402 -- re-export block
 )
 
 
-from thegent.output_parser import condense_stream_to_display, extract_condensed
+from thegent.output_parser import condense_stream_to_display, extract_condensed  # noqa: E402 -- re-export block
 
 ELICIT_CWD_MSG = "Working directory?"
 ELICIT_OWNER_MSG = "Session owner tag?"
@@ -669,7 +668,7 @@ def _apply_pareto_routing(
 
     try:
         from thegent.models.catalog import _get_catalog
-        from thegent.routing.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
+        from thegent.utils.routing_impl.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
 
         catalog = _get_catalog()
         candidates: list[RouteCandidate] = []
