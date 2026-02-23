@@ -1,42 +1,59 @@
-"""Thegent CLI session contract commands (from session_cmds.py)."""
+"""Thegent CLI session commands domain - extracted from cli.py (WL-124)."""
 
+# @trace WL-124
 from __future__ import annotations
 
 import orjson as json
+import os
+import signal
 import sys
+import time
 from pathlib import Path
 
 import typer
+
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
+    RunRegistry,
     ThegentSettings,
     _coerce_issue_types,
     _default_owner_tag,
+    _find_session_meta,
+    _is_pid_running,
     _normalize_output_format,
+    _read_session_meta,
+    _resolve_run_id,
+    _resolve_session_id,
+    _resolve_session_status,
     _safe_dict,
     _serialize_health_gate_md,
     _serialize_health_report_md,
     _serialize_health_trend_md,
+    _session_paths,
     _write_health_gate_export,
     _write_health_trend_export,
     _write_report_export,
     console,
+    EXIT_TIMEOUT,
     EXIT_HEALTH_GATE_FAILED,
+    _LOG_FOLLOW_POLL_SECONDS,
 )
-from thegent.cli.commands.session_cmds_helpers import resolve_export_format_with_notice
+from thegent.cli.commands.session_cmds_helpers import (
+    follow_log_stream,
+    parse_sources_csv,
+    print_high_session_count_tip,
+    render_ps_markdown,
+    render_ps_rich_table,
+    resolve_export_format_with_notice,
+)
 
-__all__ = [
-    "inbox_list_cmd",
-    "inbox_wait_cmd",
-    "session_contract_health_gate_cmd",
-    "session_contract_health_report_cmd",
-    "session_contract_health_trend_cmd",
-    "session_contract_negotiate_cmd",
-    "session_contract_trend_analysis_cmd",
-    "session_contracts_cmd",
-]
 
+"""Session contract management commands.
+
+Commands for viewing and managing session contracts.
+Extracted from session_cmds.py to manage module size.
+"""
 
 def session_contracts_cmd(
     all_sessions: bool = False,
@@ -409,141 +426,3 @@ def session_contract_health_trend_cmd(
             )
 
 
-def session_contract_negotiate_cmd(
-    contract_id: str,
-    supported_versions: str,
-    format: str | None = None,
-) -> None:
-    """Negotiate a contract version (WP-7001)."""
-    versions = [v.strip() for v in supported_versions.split(",") if v.strip()]
-    from thegent.cli.commands.impl import session_contract_negotiate_impl
-
-    res = session_contract_negotiate_impl(contract_id, versions)
-
-    if format == "json":
-        console.print(json.dumps(res, indent=2).decode().decode())
-    else:
-        from rich.panel import Panel
-
-        color = "green" if res["status"] == "success" else "yellow"
-        if res["status"] == "failure":
-            color = "red"
-
-        console.print(
-            Panel(
-                f"Contract: [bold]{contract_id}[/bold]\n"
-                f"Status: [bold {color}]{res['status']}[/bold {color}]\n"
-                f"Negotiated Version: [bold cyan]{res['version'] or 'N/A'}[/bold cyan]\n"
-                f"Reason: {res['reason']}",
-                title="Contract Negotiation",
-                border_style=color,
-            )
-        )
-
-
-def session_contract_trend_analysis_cmd() -> None:
-    """Detailed contract trend analysis (WP-7009/7010)."""
-    settings = ThegentSettings()
-    from thegent.contracts.telemetry import ContractTelemetry
-
-    ct = ContractTelemetry(settings.session_dir)
-    res = ct.get_trend_analysis()
-
-    table = Table(title="Contract Health Trend Analysis")
-    table.add_column("Metric", style="bold")
-    table.add_column("Value")
-
-    table.add_row("Status", f"[{'green' if res['status'] == 'healthy' else 'red'}]{res['status'].upper()}[/]")
-    table.add_row("Drift Issues", "\n".join(res["drift_issues"]) if res["drift_issues"] else "None")
-    table.add_row("Recommendation", res["recommendation"])
-
-    console.print(table)
-
-
-def inbox_list_cmd(
-    owner: str | None = None,
-    agent: str | None = None,
-    event_type: str | None = None,
-    status: str | None = None,
-    sources: str | None = None,
-    limit: int = 50,
-    format: str | None = None,
-) -> None:
-    """List unified inbox events (run registry + escalation) with optional filters."""
-    from thegent.cli.commands.impl import inbox_list_impl
-    from thegent.cli.commands.session_cmds_helpers import parse_sources_csv
-
-    src_tuple = parse_sources_csv(sources)
-    events = inbox_list_impl(
-        owner=owner,
-        agent=agent,
-        event_type=event_type,
-        status=status,
-        sources=src_tuple,
-        limit=limit,
-    )
-    if not format or format == "rich":
-        if not events:
-            console.print("[dim]No inbox events.[/dim]")
-            return
-        table = Table(title="Inbox")
-        table.add_column("Source", style="dim")
-        table.add_column("Event", style="magenta")
-        table.add_column("Run ID", style="cyan")
-        table.add_column("Owner", style="green")
-        table.add_column("Agent", style="yellow")
-        table.add_column("Timestamp", style="blue")
-        for ev in events:
-            ts = (ev.get("timestamp") or "")[:19].replace("T", " ")
-            table.add_row(
-                ev.get("source", "?"),
-                ev.get("event_type", "?"),
-                ev.get("run_id", "?")[:12],
-                ev.get("owner", "?") or "—",
-                ev.get("agent", "?") or "—",
-                ts,
-            )
-        console.print(table)
-    elif format == "json":
-        console.print_json(data=events)
-    else:
-        for ev in events:
-            console.print(ev)
-
-
-def inbox_wait_cmd(
-    _owner: str | None = None,
-    _agent: str | None = None,
-    _event_type: str | None = None,
-    _status: str | None = None,
-    _sources: str | None = None,
-    _poll: float = 2.0,
-    _timeout: float = 0.0,
-    _notify: bool = True,
-    format: str | None = None,
-) -> None:
-    """Wait for next inbox event matching filters. Blocks until new event or timeout."""
-    from thegent.cli.commands.impl import inbox_wait_impl
-    from thegent.cli.commands.session_cmds_helpers import parse_sources_csv
-
-    _src_tuple = parse_sources_csv(_sources)
-    events_result = inbox_wait_impl(
-        timeout=int(_timeout) if _timeout else None,
-    )
-    events = events_result.get("items", []) if isinstance(events_result, dict) else []
-    if not events:
-        console.print("[dim]No new events (timeout or empty).[/dim]")
-        return
-    if not format or format == "rich":
-        for ev in events:
-            ts = (ev.get("timestamp") or "")[:19].replace("T", " ")
-            console.print(
-                f"[green]→[/green] {ev.get('source')}/{ev.get('event_type')} "
-                f"[cyan]{ev.get('run_id', '?')[:12]}[/cyan] "
-                f"owner={ev.get('owner', '—')} agent={ev.get('agent', '—')} {ts}"
-            )
-    elif format == "json":
-        console.print_json(data=events)
-    else:
-        for ev in events:
-            console.print(ev)
