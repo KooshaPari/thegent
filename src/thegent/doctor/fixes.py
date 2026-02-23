@@ -36,7 +36,6 @@ from thegent.infra import run_subprocess_optimized
 import psutil
 
 
-@dataclass
 def _apply_fixes(results: list[CheckResult], dry_run: bool = False) -> list[dict]:
     """Attempt to automatically fix issues based on fix_hint strings.
 

@@ -181,7 +181,7 @@ class LearningRegistry:
 
         # Simple heuristic: if any latency > 2s, rollback
         latencies = candidate.metrics.get("latency", [])
-        if latencies and any(l > 2.0 for l in latencies):
+        if latencies and any(lat > 2.0 for lat in latencies):
             self.active_model = candidate.baseline_id
             return True
         return False

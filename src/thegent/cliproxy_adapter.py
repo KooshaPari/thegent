@@ -23,6 +23,7 @@ from starlette.routing import Route, WebSocketRoute
 from starlette.types import Send
 
 from thegent.config import ThegentSettings
+from thegent.integrations.bifrost import get_bifrost, BifrostValidationError
 from thegent.cliproxy_error_utils import (
     _ERROR_MESSAGES,
     _RETRY_MAX_ATTEMPTS,
@@ -1007,6 +1008,19 @@ def _backend_path(backend_url: str, request_path: str) -> str:
 
 async def proxy_handler(request: Request) -> Response:
     """Proxy /v1/* to backend. Transform /v1/responses to /v1/chat/completions."""
+    # Bifrost validation
+    bifrost = get_bifrost()
+    if bifrost.is_enabled:
+        try:
+            claims = {"api_key": request.headers.get("authorization", ""), "identifier": request.client.host}
+            bifrost.validate_claims(claims)
+        except BifrostValidationError as e:
+            return Response(
+                content=json.dumps({"error": {"message": str(e)}}).encode(),
+                status_code=403,
+                headers={"Content-Type": "application/json"},
+            )
+    
     backend = getattr(request.app.state, "backend_url", "http://127.0.0.1:8318/v1")
     path = request.url.path or "/v1/models"
 

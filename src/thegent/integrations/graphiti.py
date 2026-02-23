@@ -5,10 +5,11 @@ Full implementation for Phase 3 Spike Batch B.
 """
 
 import logging
-import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+
+from thegent.integrations.base import DataclassConfig
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,8 @@ class GraphitiStatus(Enum):
 
 
 @dataclass
-class GraphitiConfig:
+class GraphitiConfig(DataclassConfig):
     """Configuration for Graphiti memory integration."""
-    enabled: bool = False
     server_url: str = "http://localhost:8000"
     api_key: str = ""
     namespace: str = "thegent"
@@ -86,14 +86,10 @@ class GraphitiMemoryStore:
             logger.info("Graphiti memory store initialized (enabled)")
 
     def _load_config(self) -> GraphitiConfig:
-        return GraphitiConfig(
-            enabled=os.getenv("THEGENT_ENABLE_GRAPHITI", "").lower() in ("1", "true", "yes"),
-            server_url=os.getenv("GRAPHITI_SERVER_URL", "http://localhost:8000"),
-            api_key=os.getenv("GRAPHITI_API_KEY", ""),
-            namespace=os.getenv("GRAPHITI_NAMESPACE", "thegent"),
-            timeout_seconds=int(os.getenv("GRAPHITI_TIMEOUT_SECONDS", "30")),
-            max_context_items=int(os.getenv("GRAPHITI_MAX_CONTEXT_ITEMS", "10")),
-        )
+        config = GraphitiConfig.from_env("GRAPHITI_")
+        # Handle enable flag with THEGENT-specific env var
+        config.enabled = os.environ.get("THEGENT_ENABLE_GRAPHITI", "").lower() in ("1", "true", "yes")
+        return config
 
     @property
     def is_enabled(self) -> bool:

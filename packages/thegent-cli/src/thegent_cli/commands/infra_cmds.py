@@ -430,11 +430,11 @@ def cockpit_cmd() -> None:
 
     lanes: dict[str, int] = {}
     for r in runs:
-        l = r.get("lane", "standard")
-        lanes[l] = lanes.get(l, 0) + 1
+        lane = r.get("lane", "standard")
+        lanes[lane] = lanes.get(lane, 0) + 1
 
-    for l, count in sorted(lanes.items(), key=lambda x: x[1], reverse=True):
-        lane_table.add_row(l.capitalize(), str(count))
+    for lane, count in sorted(lanes.items(), key=lambda x: x[1], reverse=True):
+        lane_table.add_row(lane.capitalize(), str(count))
 
     console.print(lane_table)
 

@@ -36,7 +36,6 @@ from thegent.infra import run_subprocess_optimized
 import psutil
 
 
-@dataclass
 def _check_dependencies(deps: bool = False) -> list[CheckResult]:
     return _check_dependencies_impl(
         check_result_cls=CheckResult,

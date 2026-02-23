@@ -206,16 +206,13 @@ class WorkstreamAutosyncRunner:
         return self._connector_config_adapter.get_connector_timeout(connector, direction)
 
     def _autosync_metrics_export_path(self) -> Path:
-        default_path = Path("docs/reference/workstream_autosync_metrics.prom")
-        return self.config.autosync_prometheus_export_path or default_path
+        return self._state_adapter.get_autosync_metrics_path()
 
     def _cycle_metrics_path(self) -> Path:
-        default_cycle_metrics_path = Path("docs/reference/workstream_autosync_cycle_metrics.jsonl")
-        return self.config.cycle_metrics_path or default_cycle_metrics_path
+        return self._state_adapter.get_cycle_metrics_path()
 
     def _change_digest_path(self) -> Path:
-        default_change_digest_path = Path("artifacts/workstream_autosync_change_digest.jsonl")
-        return self.config.change_digest_path or default_change_digest_path
+        return self._state_adapter.get_change_digest_path()
 
     def _writer_lock_path(self) -> Path:
         if self.config.writer_lock_path is not None:
@@ -327,8 +324,7 @@ class WorkstreamAutosyncRunner:
         self._metrics.export_text_file(self._autosync_metrics_export_path())
 
     def _cycle_manifest_path(self) -> Path:
-        default_cycle_manifest_path = Path("artifacts/workstream_autosync_cycle_manifest.jsonl")
-        return self.config.cycle_manifest_path or default_cycle_manifest_path
+        return self._state_adapter.get_cycle_manifest_path()
 
     def _read_last_manifest_hash(self) -> str:
         path = self._cycle_manifest_path()
@@ -450,7 +446,7 @@ class WorkstreamAutosyncRunner:
         if not isinstance(ciphertext, str):
             raise WorkstreamAutosyncConfigError("Encrypted artifact is missing ciphertext_b64.")
         key = self._artifact_encryption_key()
-        decrypted_text = self._xor_decrypt(ciphertext, key)
+        decrypted_text = xor_decrypt(ciphertext, key)
         return json.loads(decrypted_text)
 
     def _compute_local_orphan_report(self, items: list[WorkstreamItem]) -> dict[str, Any]:
@@ -518,7 +514,7 @@ class WorkstreamAutosyncRunner:
         return hashlib.sha1(canonical.encode("utf-8")).hexdigest()
 
     def _trend_path(self) -> Path:
-        return self.config.trend_file_path or Path("docs/reference/autosync_trend.jsonl")
+        return self._state_adapter.get_trend_path()
 
     def _append_trend_sample(
         self,
@@ -725,12 +721,7 @@ class WorkstreamAutosyncRunner:
             handle.write(json.dumps(payload, sort_keys=True).decode().decode() + "\n")
 
     def _compact_snapshots(self, status_path: Path) -> None:
-        retention = max(1, int(self.config.snapshot_retention_count))
-        snapshots = sorted(status_path.parent.glob("autosync_snapshot_*.json"))
-        if len(snapshots) <= retention:
-            return
-        for snapshot in snapshots[: len(snapshots) - retention]:
-            snapshot.unlink(missing_ok=True)
+        self._state_adapter.compact_snapshots(max(1, int(self.config.snapshot_retention_count)))
 
     @staticmethod
     def simulate_connector_chaos(
@@ -2001,9 +1992,7 @@ class WorkstreamAutosyncRunner:
         self._clear_checkpoint(connector, direction)
 
     def _failure_queue_path(self) -> Path:
-        """Get failure queue persistence path."""
-        default_failure_queue_path = Path("docs/reference/workstream_autosync_failures.json")
-        return self.config.failure_queue_path or default_failure_queue_path
+        return self._state_adapter.get_failure_queue_path()
 
     def _load_failure_queue(self) -> None:
         """Load persisted failure queue entries."""
@@ -2071,9 +2060,7 @@ class WorkstreamAutosyncRunner:
         return 0
 
     def _checkpoint_path(self) -> Path:
-        """Get checkpoint persistence path."""
-        default_checkpoint_path = Path("docs/reference/workstream_autosync_checkpoint.json")
-        return self.config.checkpoint_file_path or default_checkpoint_path
+        return self._state_adapter.get_checkpoint_path("default")
 
     def _checkpoint_key(self) -> Path:
         """Compatibility alias for checkpoint naming."""

@@ -36,7 +36,6 @@ from thegent.infra import run_subprocess_optimized
 import psutil
 
 
-@dataclass
 def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_bytes: int = 1024) -> tuple[bool, str]:
     """
     Check if a process is actively working (not stuck) by monitoring CPU and I/O activity.

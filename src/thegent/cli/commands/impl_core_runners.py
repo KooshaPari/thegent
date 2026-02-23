@@ -21,6 +21,7 @@ from thegent.cli.services import prompt_constraint_helpers
 from thegent.cli.services import run_execution_core_helpers
 from thegent.cli.services import run_model_helpers
 from thegent.cli.services import run_session_helpers
+from thegent.cli.services import run_post_surface_helpers
 from thegent.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
 from thegent.memory.memory_manager import MemoryManager
 

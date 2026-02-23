@@ -4,6 +4,7 @@ import orjson as json
 import logging
 from pathlib import Path
 from typing import Any, cast
+from docs_engine.mcp.tools import register_tools as _register_doc_tools
 from fastmcp import FastMCP
 from fastmcp._vendor.docket_di import Depends
 from fastmcp.server.dependencies import CurrentContext
@@ -11,6 +12,7 @@ from fastmcp.server.elicitation import AcceptedElicitation, CancelledElicitation
 from fastmcp.server.lifespan import lifespan
 from fastmcp.server.transforms import PromptsAsTools, ResourcesAsTools
 from fastmcp.tools.tool import ToolResult
+from research_engine.mcp.tools import register_tools as _register_research_tools
 from thegent.cli.commands.impl import (
     ELICIT_CWD_MSG,
     ELICIT_OWNER_MSG,
@@ -276,31 +278,6 @@ _error_result = _shared_error_result
     session_contract_health_trend_impl=session_contract_health_trend_impl,
     stable_json=_stable_json,
 )
-
-
-def resource_session_contract_health_trend(
-    payload_type: str = "session_contract_health_report",
-    owner: str | None = None,
-    all: bool = False,
-    strict: bool = False,
-    policy_profile: str | None = None,
-    min_healthy_ratio: float = 1.0,
-    top_blocked: int = 25,
-    limit: int = 20,
-) -> str:
-    return resource_session_contract_health_trend_helper(
-        payload_type=payload_type,
-        owner=owner,
-        all=all,
-        strict=strict,
-        policy_profile=policy_profile,
-        min_healthy_ratio=min_healthy_ratio,
-        top_blocked=top_blocked,
-        limit=limit,
-        resource_impl=_server_resource_contracts.resource_session_contract_health_trend_impl,
-        session_contract_health_trend_impl=session_contract_health_trend_impl,
-        stable_json=_stable_json,
-    )
 
 
 (resource_observe_summary, resource_meta, resource_operations, resource_modes) = (
@@ -691,10 +668,8 @@ mcp.add_transform(PromptsAsTools(cast("Any", mcp)))
     journal_flush_batch,
     thegent_orchestration_events,
 ) = _server_journal_tools.register_journal_tools(mcp=mcp, logger=_log)
-from docs_engine.mcp.tools import register_tools as _register_doc_tools
 
 (_doc_new, _doc_search, _doc_list, _doc_export, _doc_sidebar, _doc_semantic, _doc_changelog) = _register_doc_tools(mcp)
-from research_engine.mcp.tools import register_tools as _register_research_tools
 
 (_research_search, _research_recent, _research_digest, _research_crawl, _research_topics, _research_sync) = (
     _register_research_tools(mcp)
