@@ -205,6 +205,10 @@ jobs:
         run: |
           task quality:max-lines
 
+      - name: Enforce worktree governance policy
+        run: |
+          ./scripts/governance_policy_check.sh
+
       - name: Run rust quality CI lane (fmt/clippy/test)
         run: |
           task quality:rust:ci

@@ -4,6 +4,7 @@ set -eu
 ROOT_DIR="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 METRICS_FILE="${THGENT_GOV_METRICS_FILE:-$ROOT_DIR/var/metrics/governance_policy_metrics.jsonl}"
+REQUIRED_POLICY_MARKER="$ROOT_DIR/.thegent-primary-main"
 
 emit_metric() {
   metric_name="$1"
@@ -30,6 +31,23 @@ for f in $required_files; do
   fi
 done
 
+current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+if [ -z "$current_branch" ] || [ "$current_branch" != "main" ]; then
+  echo "[FAIL] Governance precondition: primary checkout must be on main (found: ${current_branch:-unknown})" >&2
+  failed=1
+fi
+
+if [ ! -f "$REQUIRED_POLICY_MARKER" ]; then
+  echo "[FAIL] Governance precondition: missing ${REQUIRED_POLICY_MARKER}" >&2
+  failed=1
+elif ! rg -q "Keep this repository checkout on main" "$REQUIRED_POLICY_MARKER"; then
+  echo "[FAIL] Governance marker is malformed: expected policy text in .thegent-primary-main" >&2
+  failed=1
+elif ! rg -q "Use dedicated worktrees for branch development" "$REQUIRED_POLICY_MARKER"; then
+  echo "[FAIL] Governance marker is malformed: expected branch-worktree policy in .thegent-primary-main" >&2
+  failed=1
+fi
+
 if ! rg -q "WORKTREE_AND_DELEGATION_INDEX\\.md" AGENTS.md; then
   echo "[FAIL] AGENTS.md must reference docs/governance/WORKTREE_AND_DELEGATION_INDEX.md" >&2
   failed=1
@@ -44,12 +62,12 @@ if [ ! -x scripts/worktree_governance.sh ]; then
   echo "[FAIL] scripts/worktree_governance.sh missing or not executable" >&2
   failed=1
 else
-  wt_output="$(./scripts/worktree_governance.sh check 2>&1)" || wt_rc=$?
+  wt_output="$(THGENT_WORKTREE_ALLOW_LEGACY=0 ./scripts/worktree_governance.sh check 2>&1)" || wt_rc=$?
   wt_rc="${wt_rc:-0}"
   printf '%s\n' "$wt_output"
-  warn_count="$(printf '%s\n' "$wt_output" | rg -c "^\[WARN\]" || true)"
-  if [ "${warn_count:-0}" -gt 0 ]; then
-    emit_metric "worktree_policy_warn_total" "${warn_count}"
+  if printf '%s\n' "$wt_output" | rg -q "^\[WARN\]"; then
+    echo "[FAIL] Governance precondition: legacy worktree mode is not allowed." >&2
+    failed=1
   fi
   if [ "$wt_rc" -ne 0 ]; then
     emit_metric "worktree_policy_fail_total" 1

@@ -24,3 +24,9 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 
 1. `./scripts/worktree_governance.sh new <branch> [start-point]`
 2. `./scripts/worktree_governance.sh check`
+
+## Non-Negotiables
+
+1. Keep the primary checkout on `main` and retain `.thegent-primary-main`.
+2. Route feature/refactor development through dedicated, policy-compliant worktrees.
+3. Prevent legacy bypass in policy checks (`THGENT_WORKTREE_ALLOW_LEGACY=1` is not accepted by strict gates).
