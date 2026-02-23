@@ -93,3 +93,5 @@
 {"captured_at": "2026-02-23T02:17:35.514114+00:00", "correlation_id": null, "duration_seconds": 0.005654, "failure_queue_size": 47, "item_count": 0, "no_op": false, "no_op_reason": null, "orphan_count": 0}
 {"captured_at": "2026-02-23T03:32:06.925259+00:00", "correlation_id": "fce0af3e-3bf4-4550-a20b-5c1890f68748", "duration_seconds": 0.011062, "failure_queue_size": 48, "item_count": 1, "no_op": false, "no_op_reason": null, "orphan_count": 1}
 {"captured_at": "2026-02-23T03:32:07.043781+00:00", "correlation_id": "79aba33d-f803-411c-be08-40aeb60b2273", "duration_seconds": 0.006986, "failure_queue_size": 51, "item_count": 2, "no_op": false, "no_op_reason": null, "orphan_count": 2}
+{"captured_at": "2026-02-23T05:49:06.570095+00:00", "correlation_id": "50a9add5-13ea-4d41-a9dd-ac0097e8691c", "duration_seconds": 0.008564, "failure_queue_size": 51, "item_count": 1, "no_op": false, "no_op_reason": null, "orphan_count": 1}
+{"captured_at": "2026-02-23T05:49:06.611602+00:00", "correlation_id": "7fe3ec44-013e-4168-a5ab-1e1f35c95ad9", "duration_seconds": 0.003909, "failure_queue_size": 54, "item_count": 2, "no_op": false, "no_op_reason": null, "orphan_count": 2}

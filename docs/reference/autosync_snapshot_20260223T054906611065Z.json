@@ -1,17 +1,17 @@
 {
-  "last_cycle_at": "2026-02-23T02:08:10.526132+00:00",
+  "last_cycle_at": "2026-02-23T05:49:06.610866+00:00",
   "total_cycles": 1,
-  "last_error": "name 'timedelta' is not defined",
-  "health": "degraded",
+  "last_error": null,
+  "health": "ok",
   "runner": {
     "enabled": true,
     "is_running": false,
-    "last_sync_time": "2026-02-23T02:08:10.520444+00:00",
+    "last_sync_time": "2026-02-23T05:49:06.608187+00:00",
     "github_enabled": true,
     "linear_enabled": false,
     "last_operation": null,
     "open_blockers": [],
-    "failure_queue_size": 43,
+    "failure_queue_size": 54,
     "next_cycle_interval_seconds": 300,
     "connector_health": [
       {
@@ -24,16 +24,16 @@
       "status": "fresh",
       "age_seconds": 0
     },
-    "correlation_id": "4cd75ea8-634a-487f-b28a-1632a5e62f10",
+    "correlation_id": "7fe3ec44-013e-4168-a5ab-1e1f35c95ad9",
     "local_orphan_report": {
       "local_ids": [
-        "WL-160",
-        "WL-161"
+        "WL-189",
+        "WL-196"
       ],
       "mapped_remote_ids": [],
       "local_orphan_ids": [
-        "WL-160",
-        "WL-161"
+        "WL-189",
+        "WL-196"
       ],
       "orphan_count": 2
     },
@@ -43,7 +43,7 @@
     "trend_sample": null
   },
   "open_blockers": [],
-  "failure_queue_size": 43,
+  "failure_queue_size": 54,
   "checkpoint": null,
   "connector_health": [
     {
@@ -54,20 +54,18 @@
   ],
   "next_cycle_interval_seconds": 300,
   "incident_snapshot": {
-    "captured_at": "2026-02-23T02:08:10.524332+00:00",
-    "items_count": 0,
-    "snapshot_age_seconds": 1,
+    "captured_at": "2026-02-23T05:49:06.609743+00:00",
+    "items_count": 2,
+    "snapshot_age_seconds": 0,
     "snapshot_stale": false,
-    "correlation_id": "4cd75ea8-634a-487f-b28a-1632a5e62f10",
-    "slo_alerts": [
-      "autosync error budget hard-fail threshold reached"
-    ],
+    "correlation_id": "7fe3ec44-013e-4168-a5ab-1e1f35c95ad9",
+    "slo_alerts": [],
     "error_budget": {
-      "success_count": 0,
-      "failure_count": 1,
-      "consecutive_failures": 1,
+      "success_count": 1,
+      "failure_count": 0,
+      "consecutive_failures": 0,
       "total_operations": 1,
-      "current_failure_rate": 1.0
+      "current_failure_rate": 0.0
     },
     "connector_sla": {},
     "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
@@ -82,20 +80,20 @@
       "status": "fresh",
       "age_seconds": 0
     },
-    "last_error": "name 'timedelta' is not defined",
-    "failure_queue_size": 43,
+    "last_error": null,
+    "failure_queue_size": 54,
     "mutation_summary": null
   },
-  "correlation_id": "4cd75ea8-634a-487f-b28a-1632a5e62f10",
+  "correlation_id": "7fe3ec44-013e-4168-a5ab-1e1f35c95ad9",
   "local_orphan_report": {
     "local_ids": [
-      "WL-160",
-      "WL-161"
+      "WL-189",
+      "WL-196"
     ],
     "mapped_remote_ids": [],
     "local_orphan_ids": [
-      "WL-160",
-      "WL-161"
+      "WL-189",
+      "WL-196"
     ],
     "orphan_count": 2
   },

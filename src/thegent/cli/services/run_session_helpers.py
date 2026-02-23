@@ -26,16 +26,13 @@ def resolve_droids_dir(cwd: Path | None, settings: ThegentSettings) -> Path:
 
 
 def resolve_cwd(cd: Any) -> Path | None:
-    """Resolve cwd: explicit --cd, or infer from current dir if project-like.
-
-    Always returns a Path (defaults to Path.cwd() when project indicators exist).
-    """
+    """Resolve cwd: explicit --cd, or infer from current dir if project-like."""
     global _CWD_CACHE
     now = time.time()
 
     # Use absolute path string as cache key; for auto-inference include cwd so tests don't cross-pollute
     try:
-        cache_key = str(cd.expanduser().resolve()) if cd is not None else f"none:{Path.cwd()}"
+        cache_key = str(cd.expanduser()) if cd is not None else f"none:{Path.cwd()}"
     except Exception:
         cache_key = str(cd) if cd else f"none:{Path.cwd()}"
 
@@ -45,7 +42,10 @@ def resolve_cwd(cd: Any) -> Path | None:
 
     resolved_p: Path | None = None
     if cd is not None:
-        p = cd.expanduser().resolve()
+        try:
+            p = cd.expanduser()
+        except Exception:
+            p = Path(cd)
         if not p.is_dir():
             raise typer.BadParameter(f"Directory does not exist: {p}")
         resolved_p = p

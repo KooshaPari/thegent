@@ -189,3 +189,174 @@ class TestParetoRouterIntegration:
         # claude-sonnet ratio = 0.88/0.30 ≈ 2.93
         # claude-opus ratio = 0.95/2.50 = 0.38
         assert result.model == "claude-haiku-4.5"
+
+
+class TestParetoRouterSelectByStrategy:
+    """Tests for select_by_strategy covering all strategy branches."""
+
+    def test_strategy_speed_selects_cheapest(self) -> None:
+        """Speed strategy (proxied by cost) selects the cheapest frontier candidate."""
+        router = ParetoRouter()
+        cheap = _candidate("cheap", cost=0.05, quality=0.7)
+        premium = _candidate("premium", cost=0.8, quality=0.95)
+        result = router.select_by_strategy("speed", [cheap, premium])
+        assert result is cheap
+
+    def test_strategy_balanced_returns_best_ratio(self) -> None:
+        """Balanced (unknown) strategy falls back to best quality/cost ratio."""
+        router = ParetoRouter()
+        a = _candidate("a", cost=2.0, quality=0.9)   # ratio = 0.45
+        b = _candidate("b", cost=0.5, quality=0.6)   # ratio = 1.20
+        result = router.select_by_strategy("balanced", [a, b])
+        assert result is b
+
+    def test_strategy_unknown_returns_best_ratio(self) -> None:
+        """Unknown strategy also falls through to balanced selection."""
+        router = ParetoRouter()
+        a = _candidate("a", cost=1.0, quality=0.8)
+        b = _candidate("b", cost=0.1, quality=0.5)   # ratio = 5.0 vs 0.8
+        result = router.select_by_strategy("unknown_strategy", [a, b])
+        assert result is b
+
+    def test_strategy_empty_raises(self) -> None:
+        """Empty candidate list raises ValueError for any strategy."""
+        router = ParetoRouter()
+        with pytest.raises(ValueError, match="non-empty"):
+            router.select_by_strategy("cost", [])
+
+
+class TestGetQuality:
+    """Tests for _get_quality helper."""
+
+    def test_known_model_returns_proxy(self) -> None:
+        from thegent.routing.pareto_router import _get_quality
+
+        q = _get_quality("claude-opus-4.6")
+        assert q == 0.95
+
+    def test_partial_match_returns_proxy(self) -> None:
+        from thegent.routing.pareto_router import _get_quality
+
+        q = _get_quality("claude-haiku-4.5")
+        assert q == 0.75
+
+    def test_unknown_returns_default(self) -> None:
+        from thegent.routing.pareto_router import _get_quality
+
+        q = _get_quality("completely-unknown-model-xyz-9999")
+        assert q == 0.5
+
+    def test_empty_string_returns_some_quality(self) -> None:
+        from thegent.routing.pareto_router import _get_quality
+
+        # Empty string matches any model via substring, so it returns some quality value
+        q = _get_quality("")
+        assert isinstance(q, float)
+        assert 0.0 <= q <= 1.0
+
+
+class TestResolveRoleParams:
+    """Tests for _resolve_role_params internal function."""
+
+    def test_no_role_uses_tier_minimum(self) -> None:
+        from thegent.routing.pareto_router import _resolve_role_params
+
+        effective_min, order, mult = _resolve_role_params(
+            role=None,
+            complexity_tier="simple",
+            min_quality=0.0,
+            opt_order=("quality", "cost", "speed"),
+        )
+        assert effective_min == 0.5  # tier_min for "simple"
+        assert mult == 1.0
+
+    def test_complex_tier_sets_higher_min_quality(self) -> None:
+        from thegent.routing.pareto_router import _resolve_role_params
+
+        effective_min, _, _ = _resolve_role_params(
+            role=None,
+            complexity_tier="complex",
+            min_quality=0.0,
+            opt_order=("quality", "cost", "speed"),
+        )
+        assert effective_min == 0.75  # tier_min for "complex"
+
+    def test_user_min_quality_overrides_tier_when_higher(self) -> None:
+        from thegent.routing.pareto_router import _resolve_role_params
+
+        effective_min, _, _ = _resolve_role_params(
+            role=None,
+            complexity_tier="simple",
+            min_quality=0.9,   # user-specified > tier min (0.5)
+            opt_order=("quality", "cost", "speed"),
+        )
+        assert effective_min == 0.9
+
+    def test_unknown_tier_defaults_to_moderate(self) -> None:
+        from thegent.routing.pareto_router import _resolve_role_params
+
+        effective_min, _, _ = _resolve_role_params(
+            role=None,
+            complexity_tier="nonexistent_tier",
+            min_quality=0.0,
+            opt_order=("quality", "cost", "speed"),
+        )
+        assert effective_min == 0.6  # default tier_min
+
+
+class TestSelectOfferFunctions:
+    """Tests for select_offer and select_offer_with_fallbacks module-level functions."""
+
+    def test_select_offer_returns_tuple_or_none(self) -> None:
+        from thegent.routing.pareto_router import select_offer
+
+        result = select_offer(complexity_tier="moderate")
+        assert result is None or (isinstance(result, tuple) and len(result) == 2)
+
+    def test_select_offer_with_trace_returns_trace_or_none(self) -> None:
+        from thegent.routing.pareto_router import RouteTrace, select_offer_with_trace
+
+        result = select_offer_with_trace(complexity_tier="moderate")
+        assert result is None or isinstance(result, RouteTrace)
+
+    def test_select_offer_with_fallbacks_returns_list(self) -> None:
+        from thegent.routing.pareto_router import select_offer_with_fallbacks
+
+        result = select_offer_with_fallbacks(complexity_tier="moderate", k=3)
+        assert isinstance(result, list)
+        assert len(result) <= 3
+
+    def test_select_offer_with_trace_trace_has_required_fields(self) -> None:
+        """If a trace is returned, it must have all required fields."""
+        from thegent.routing.pareto_router import RouteTrace, select_offer_with_trace
+
+        result = select_offer_with_trace(complexity_tier="complex")
+        if result is None:
+            return  # No catalog available, skip validation
+        assert isinstance(result, RouteTrace)
+        assert result.provider
+        assert result.model_alias
+        assert isinstance(result.pareto_set, list)
+        assert isinstance(result.fallback_chain, list)
+        assert "quality" in result.scores
+
+
+class TestIsDegradedMode:
+    """Tests for _is_degraded_mode."""
+
+    def test_returns_bool(self) -> None:
+        from thegent.routing.pareto_router import _is_degraded_mode
+
+        result = _is_degraded_mode()
+        assert isinstance(result, bool)
+
+
+class TestGetShadowMultiplier:
+    """Tests for _get_shadow_multiplier."""
+
+    def test_returns_float_at_least_one(self) -> None:
+        from thegent.routing.pareto_router import _get_shadow_multiplier
+
+        result = _get_shadow_multiplier()
+        assert isinstance(result, float)
+        assert result >= 1.0

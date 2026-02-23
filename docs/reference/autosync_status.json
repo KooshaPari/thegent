@@ -1,17 +1,17 @@
 {
-  "last_cycle_at": "2026-02-23T03:32:07.041931+00:00",
+  "last_cycle_at": "2026-02-23T05:49:06.610866+00:00",
   "total_cycles": 1,
   "last_error": null,
   "health": "ok",
   "runner": {
     "enabled": true,
     "is_running": false,
-    "last_sync_time": "2026-02-23T03:32:07.037616+00:00",
+    "last_sync_time": "2026-02-23T05:49:06.608187+00:00",
     "github_enabled": true,
     "linear_enabled": false,
     "last_operation": null,
     "open_blockers": [],
-    "failure_queue_size": 51,
+    "failure_queue_size": 54,
     "next_cycle_interval_seconds": 300,
     "connector_health": [
       {
@@ -24,7 +24,7 @@
       "status": "fresh",
       "age_seconds": 0
     },
-    "correlation_id": "79aba33d-f803-411c-be08-40aeb60b2273",
+    "correlation_id": "7fe3ec44-013e-4168-a5ab-1e1f35c95ad9",
     "local_orphan_report": {
       "local_ids": [
         "WL-189",
@@ -43,7 +43,7 @@
     "trend_sample": null
   },
   "open_blockers": [],
-  "failure_queue_size": 51,
+  "failure_queue_size": 54,
   "checkpoint": null,
   "connector_health": [
     {
@@ -54,11 +54,11 @@
   ],
   "next_cycle_interval_seconds": 300,
   "incident_snapshot": {
-    "captured_at": "2026-02-23T03:32:07.041106+00:00",
+    "captured_at": "2026-02-23T05:49:06.609743+00:00",
     "items_count": 2,
     "snapshot_age_seconds": 0,
     "snapshot_stale": false,
-    "correlation_id": "79aba33d-f803-411c-be08-40aeb60b2273",
+    "correlation_id": "7fe3ec44-013e-4168-a5ab-1e1f35c95ad9",
     "slo_alerts": [],
     "error_budget": {
       "success_count": 1,
@@ -81,10 +81,10 @@
       "age_seconds": 0
     },
     "last_error": null,
-    "failure_queue_size": 51,
+    "failure_queue_size": 54,
     "mutation_summary": null
   },
-  "correlation_id": "79aba33d-f803-411c-be08-40aeb60b2273",
+  "correlation_id": "7fe3ec44-013e-4168-a5ab-1e1f35c95ad9",
   "local_orphan_report": {
     "local_ids": [
       "WL-189",
