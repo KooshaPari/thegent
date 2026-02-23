@@ -213,7 +213,9 @@ thegent skill select missing-skill
 - **[Quick Start Guide](./docs/guides/QUICK_START.md)** — Get up and running in 5 minutes.
 - **[Complete User Guide](./docs/guides/COMPLETE_USER_GUIDE.md)** — Deep dive into features.
 - **[Installation Guide](./docs/guides/INSTALLATION.md)** — Advanced setup options.
-- **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, and troubleshooting.
+- **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, GLM + MiniMax flows, and OpenCode/Zen integration notes.
+- **[Domain Mapping Guide](./docs/guides/DOMAIN_MAPPING_GUIDE.md)** — `thegent domain map` advisor mode for Porkbun + Cloudflare Tunnel domain exposure.
+- **[Release Supply Chain Controls](./docs/governance/RELEASE_SUPPLY_CHAIN_CONTROLS.md)** — SBOM, vulnerability scans, governance attestation, and release provenance artifacts.
 - **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
 - **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
 
