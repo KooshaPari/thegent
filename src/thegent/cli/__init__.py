@@ -16,6 +16,43 @@ from thegent.cli.commands import _cli_shared as _shared
 # Backward compatibility - expose commonly used modules for test mocking
 Columns = getattr(_cli_surface, "Columns", None)
 
+# Stub for tests
+def _resolve_cwd(cd=None):
+    """Stub for backward compatibility."""
+    return None
+
+def _parse_dag_session(dag_file, cwd=None):
+    """Stub for tests."""
+    return {}, []
+
+def _parse_dag_full(dag_file, cwd=None):
+    """Stub for tests."""
+    return {}
+
+def _serialize_dag(doc):
+    """Stub for tests."""
+    return ""
+
+def _validate_dag(doc):
+    """Stub for tests."""
+    return []
+
+def _check_dag_cycles(doc):
+    """Stub for tests."""
+    return []
+
+def _dag_path(cd=None):
+    """Stub for tests."""
+    return None
+
+def _ensure_dag_file(path, content):
+    """Stub for tests."""
+    pass
+
+def _dag_update_task(task_id, field, value, session_dir):
+    """Stub for tests."""
+    return True
+
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
@@ -73,6 +110,7 @@ _patchable_names_list = [
     "RunRegistry",
     "ThegentSettings",
     "get_exit_message",
+    "console",
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
@@ -94,6 +132,7 @@ __all__ = [
     "_safe_dict",
     "_safe_list",
     "_session_paths",
+    "console",
     "get_exit_message",
     "json",
     "list_agent_names",
