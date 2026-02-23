@@ -1367,9 +1367,9 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Run GH project sync in standalone mode with gh + local files only (THGENT_GH_PROJECT_STANDALONE_MODE)",
     )
-    workstream_autosync_enabled: bool = Field(
+    workstream_autosync_enabled_legacy: bool = Field(
         default=False,
-        description="Enable automatic bidirectional sync between WORK_STREAM.md and external trackers (THGENT_WORKSTREAM_AUTOSYNC_ENABLED)",
+        description="Legacy: enable bidirectional sync between WORK_STREAM.md and external trackers (THGENT_WORKSTREAM_AUTOSYNC_ENABLED)",
     )
     workstream_autosync_interval_sec: int = Field(
         default=60,
@@ -1381,9 +1381,9 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Enable Linear synchronization in autopilot loop (THGENT_LINEAR_SYNC_ENABLED)",
     )
-    linear_api_key: str = Field(
+    linear_api_key_legacy: str = Field(
         default="",
-        description="Linear API key for GraphQL synchronization (THGENT_LINEAR_API_KEY)",
+        description="Legacy: Linear API key for GraphQL synchronization (THGENT_LINEAR_API_KEY)",
     )
     linear_team_id: str = Field(
         default="",
@@ -1393,9 +1393,9 @@ class ThegentSettings(BaseSettings):
         default="",
         description="Optional Linear project ID filter for synchronization (THGENT_LINEAR_PROJECT_ID)",
     )
-    linear_direction: Literal["pull", "push", "both"] = Field(
+    linear_direction_legacy: Literal["pull", "push", "both"] = Field(
         default="both",
-        description="Default Linear sync direction (THGENT_LINEAR_DIRECTION)",
+        description="Legacy: default Linear sync direction (THGENT_LINEAR_DIRECTION)",
     )
     linear_api_url: str = Field(
         default="https://api.linear.app/graphql",
@@ -1411,26 +1411,26 @@ class ThegentSettings(BaseSettings):
     )
 
     # WL-157: GitHub Projects Bidirectional Sync
-    gh_project_sync_enabled: bool = Field(
+    gh_project_sync_enabled_legacy: bool = Field(
         default=False,
-        description="Enable bidirectional GitHub Projects v2 sync (THGENT_GH_PROJECT_SYNC_ENABLED)",
+        description="Legacy: enable bidirectional GitHub Projects v2 sync (THGENT_GH_PROJECT_SYNC_ENABLED)",
     )
-    gh_project_owner: str = Field(
+    gh_project_owner_legacy: str = Field(
         default="",
-        description="GitHub project owner (username or org; THGENT_GH_PROJECT_OWNER)",
+        description="Legacy: GitHub project owner (username or org; THGENT_GH_PROJECT_OWNER)",
     )
-    gh_project_number: int = Field(
+    gh_project_number_legacy: int = Field(
         default=0,
         ge=0,
-        description="GitHub project number (v2 projects only; THGENT_GH_PROJECT_NUMBER)",
+        description="Legacy: GitHub project number (v2 projects only; THGENT_GH_PROJECT_NUMBER)",
     )
-    gh_project_direction: str = Field(
+    gh_project_direction_legacy: str = Field(
         default="bidirectional",
-        description="Sync direction: read_only, write_only, bidirectional (THGENT_GH_PROJECT_DIRECTION)",
+        description="Legacy: sync direction read_only/write_only/bidirectional (THGENT_GH_PROJECT_DIRECTION)",
     )
-    gh_project_standalone_mode: bool = Field(
+    gh_project_standalone_mode_legacy: bool = Field(
         default=True,
-        description="Standalone-safe mode: skip gracefully when disabled or gh auth missing (THGENT_GH_PROJECT_STANDALONE_MODE)",
+        description="Legacy: standalone-safe mode for gh sync (THGENT_GH_PROJECT_STANDALONE_MODE)",
     )
 
     # WL-160: Workstream Autosync (GitHub Projects + Linear)

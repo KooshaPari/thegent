@@ -264,7 +264,7 @@ def snapshot_daily_index_cmd(
         tag=tag,
         since=since,
     )
-    payload = cast(dict[str, typing.Any], payload_raw)
+    payload = cast("dict[str, typing.Any]", payload_raw)
     if _normalize_output_format(format) == "json":
         sys.stdout.write(json.dumps(payload) + "\n")
         return
@@ -302,7 +302,7 @@ def snapshot_daily_totals_cmd(
     if _normalize_output_format(format) == "json":
         sys.stdout.write(json.dumps(payload) + "\n")
         return
-    payload_dict = cast(dict[str, Any], payload)
+    payload_dict = cast("dict[str, Any]", payload)
     console.print(
         "[bold cyan]Snapshot Daily Totals[/bold cyan] "
         f"days={payload_dict.get('total_days', 0)} snapshots={payload_dict.get('total_snapshots', 0)} "
