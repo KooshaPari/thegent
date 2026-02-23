@@ -121,13 +121,6 @@ override-dependencies = [
     "hf-xet==0.0.0; implementation_name == 'pypy'",
 ]
 
-[tool.uv.workspace]
-members = [
-    "sub-projects/thegent-cli",
-    "sub-projects/thegent-agents",
-    "sub-projects/thegent-mcp",
-]
-
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
@@ -211,7 +204,7 @@ ignore = [
     "UP045", "UP037", "RUF010", "FURB110", "TC003", "F821",
     "PLW0108", "DTZ011",
     # Additional non-blocking issues
-    "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203", "T201"
+    "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203"
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -219,14 +212,10 @@ ignore = [
     "ANN", "ARG001", "ARG002", "ARG003", "ARG005", "PLR2004", "S101", "FBT001", "FBT003",
     "S108", "SLF001", "ERA001", "SIM117", "PLR0915", "E741", "N806", "S104", "S105", "S106",
     "PT019", "PERF401", "E402", "PTH101", "S103", "PT011", "PLW2901", "S112", "BLE001", "PLC0415",
-    "PT018", "PTH118", "PTH120"
+    "PT018"
 ]
 "scripts/*" = ["ANN", "T201", "S603", "S607", "BLE001", "E402", "PLC0415", "PLR0912", "PLR0915", "FBT001", "FBT002", "S110"]
 "src/thegent/governance/heliosShield_bridge.py" = ["N999"]
-"contracts/ipc.py" = ["RUF013"]
-"test_discovery.py" = ["C401"]
-"test_implementation.py" = ["C401", "PTH100", "PTH107"]
-"typings/oyaml/__init__.pyi" = ["N803"]
 
 [tool.ty]
 [tool.ty.src]
@@ -282,3 +271,4 @@ dev = [
     "ruff>=0.15.1",
     "types-pyyaml>=6.0.12.20250915",
 ]
+"json_utils.py" = ["W293", "T201", "PLW0127"]
