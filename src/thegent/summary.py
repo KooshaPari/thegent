@@ -97,13 +97,13 @@ def get_time_range(period: str) -> tuple[datetime, datetime]:
 def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) -> GitCommitsResult:
     """Fetch git commits within the time range."""
     if not (project_path / ".git").exists():
-        error = {"type": "not_repo", "message": f"Missing .git in {project_path}"}
+        not_repo_error: dict[str, Any] = {"type": "not_repo", "message": f"Missing .git in {project_path}"}
         _log.warning(
             "Git commit collection skipped: not a git repo (cwd=%s, cmd=%s)",
             str(project_path),
             " ".join(cmd for cmd in ("git", "log")),
         )
-        return GitCommitsResult(commits=[], status="not_repo", error=error)
+        return GitCommitsResult(commits=[], status="not_repo", error=not_repo_error)
 
     since = start_dt.isoformat()
     until = end_dt.isoformat()
