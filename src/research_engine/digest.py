@@ -69,10 +69,13 @@ def build_hourly_change_digest(events: list[dict[str, Any]]) -> dict[str, Any]:
         connector = str(event.get("connector", "unknown")).strip() or "unknown"
         action = str(event.get("action", "unknown")).strip() or "unknown"
         outcome = str(event.get("outcome", "unknown")).strip() or "unknown"
+        count = int(event.get("count", 1)) if "count" in event else 1
+        if count <= 0:
+            continue
         if not timestamp:
             raise ValueError("each event must include a timestamp")
         hour_bucket = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).strftime("%Y-%m-%dT%H:00:00Z")
-        buckets[hour_bucket][connector][f"{action}:{outcome}"] += 1
+        buckets[hour_bucket][connector][f"{action}:{outcome}"] += count
 
     normalized: dict[str, Any] = {}
     for hour in sorted(buckets):

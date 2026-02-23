@@ -92,6 +92,31 @@ def test_hourly_change_digest_groups_by_connector_action_outcome() -> None:
     assert hour_bucket["linear"]["write:failure"] == 1
 
 
+def test_hourly_change_digest_accumulates_weighted_counts() -> None:
+    from research_engine.digest import build_hourly_change_digest
+
+    payload = build_hourly_change_digest(
+        [
+            {
+                "timestamp": "2026-02-22T10:10:00Z",
+                "connector": "github",
+                "action": "write",
+                "outcome": "failure",
+                "count": 2,
+            },
+            {
+                "timestamp": "2026-02-22T10:35:00Z",
+                "connector": "github",
+                "action": "write",
+                "outcome": "failure",
+                "count": 3,
+            },
+        ]
+    )
+    hour_bucket = payload["hours"]["2026-02-22T10:00:00Z"]
+    assert hour_bucket["github"]["write:failure"] == 5
+
+
 def test_hourly_change_digest_requires_timestamp() -> None:
     from research_engine.digest import build_hourly_change_digest
 

@@ -40,9 +40,7 @@ class FieldMappingWizard:
         """Initialize the field mapping wizard with an empty mapping registry."""
         self._mappings: dict[str, FieldMappingEntry] = {}
 
-    def add(
-        self, source_field: str, target_field: str, transform: str = "identity"
-    ) -> FieldMappingEntry:
+    def add(self, source_field: str, target_field: str, transform: str = "identity") -> FieldMappingEntry:
         """Add a new field mapping to the wizard.
 
         Args:
@@ -53,13 +51,9 @@ class FieldMappingWizard:
         Returns:
             The created FieldMappingEntry.
         """
-        entry = FieldMappingEntry(
-            source_field=source_field, target_field=target_field, transform=transform
-        )
+        entry = FieldMappingEntry(source_field=source_field, target_field=target_field, transform=transform)
         self._mappings[source_field] = entry
-        logger.debug(
-            f"Added field mapping: {source_field} -> {target_field} (transform: {transform})"
-        )
+        logger.debug(f"Added field mapping: {source_field} -> {target_field} (transform: {transform})")
         return entry
 
     def get(self, source_field: str) -> FieldMappingEntry:

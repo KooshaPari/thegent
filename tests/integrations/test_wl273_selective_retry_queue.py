@@ -28,9 +28,7 @@ class TestRetryItem:
     @pytest.mark.requirement("WL-273")
     def test_create_with_attempt(self) -> None:
         """Can create RetryItem with custom attempt."""
-        item = RetryItem(
-            item_id="task1", payload={"data": "value"}, attempt=2
-        )
+        item = RetryItem(item_id="task1", payload={"data": "value"}, attempt=2)
 
         assert item.item_id == "task1"
         assert item.attempt == 2

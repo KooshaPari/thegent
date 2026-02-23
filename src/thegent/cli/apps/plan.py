@@ -129,6 +129,20 @@ def plan_verify_workstream(
     plan_verify_workstream_cmd(cd=cd, format=format)
 
 
+@app.command("lint-workstream", help="Validate WORK_STREAM schema.")
+def plan_lint_workstream(cd: Path | None = typer.Option(None, "--cd", help="Working directory")) -> None:
+    from thegent.cli.commands.cli import plan_lint_workstream_cmd
+
+    plan_lint_workstream_cmd(cd=cd)
+
+
+@app.command("normalize-workstream", help="Sort and normalize WL sections in WORK_STREAM.")
+def plan_normalize_workstream(cd: Path | None = typer.Option(None, "--cd", help="Working directory")) -> None:
+    from thegent.cli.commands.cli import plan_normalize_workstream_cmd
+
+    plan_normalize_workstream_cmd(cd=cd)
+
+
 @app.command("progress", help="Show work stream progress summary.")
 def plan_progress(
     limit: int = typer.Option(10, "--limit", "-l", help="Number of items to show"),

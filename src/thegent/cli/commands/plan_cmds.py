@@ -375,6 +375,30 @@ def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None
     console.print(f"[green]Completed {item_id} (agent: {aid})[/green]")
 
 
+def plan_lint_workstream_cmd(cd: Path | None = None) -> None:
+    """Validate canonical WORK_STREAM schema structure."""
+    from thegent.utils.workstream_ops import WorkStreamOps
+
+    root = cd or Path.cwd()
+    ops = WorkStreamOps(base_dir=root)
+    errors = ops.lint_schema()
+    if errors:
+        for error in errors:
+            console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1)
+    console.print("[green]WORK_STREAM schema is valid.[/green]")
+
+
+def plan_normalize_workstream_cmd(cd: Path | None = None) -> None:
+    """Sort and normalize WL sections and status-line formatting."""
+    from thegent.utils.workstream_ops import WorkStreamOps
+
+    root = cd or Path.cwd()
+    ops = WorkStreamOps(base_dir=root)
+    ops.sort_and_normalize()
+    console.print("[green]WORK_STREAM normalized successfully.[/green]")
+
+
 def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Verify WORK_STREAM invariants for CLAIMED/COMPLETED overlap by exact ID match."""
     from thegent.planning.work_stream import WorkStreamManager
@@ -1081,7 +1105,9 @@ __all__ = [
     "plan_do_next_cmd",
     "plan_get_next_cmd",
     "plan_incorporate_cmd",
+    "plan_lint_workstream_cmd",
     "plan_loop_cmd",
+    "plan_normalize_workstream_cmd",
     "plan_progress_cmd",
     "plan_verify_workstream_cmd",
     "plan_wait_next_cmd",

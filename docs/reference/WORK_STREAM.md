@@ -2976,7 +2976,7 @@ Write immutable cycle manifests capturing all inputs/decisions/outputs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-243] Dual-Write Shadow Mode
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** rollout, safety
 **Effort:** M
@@ -2987,7 +2987,7 @@ Add observe-only shadow mode before enabling full external mutation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-244] HTML Diff Artifact
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** reporting, ux
 **Effort:** S
@@ -2998,7 +2998,7 @@ Generate side-by-side HTML diff artifacts for local/remote state comparisons.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-245] Ownership Metadata Propagation
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** metadata, sync
 **Effort:** M
@@ -3009,7 +3009,7 @@ Propagate per-item ownership metadata across local, GitHub, and Linear.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-246] Env Profile Drift Validator
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** config, validation
 **Effort:** S

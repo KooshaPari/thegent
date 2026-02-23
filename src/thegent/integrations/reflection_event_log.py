@@ -69,6 +69,7 @@ class ReflectionEventLog:
                 for line in f:
                     if line.strip():
                         event_dict = json.loads(line)
+                        event_dict.pop("annotation", None)
                         event = ReflectionDecision(**event_dict)
                         self._events.append(event)
         except (json.JSONDecodeError, KeyError):

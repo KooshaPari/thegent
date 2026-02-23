@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -44,6 +45,33 @@ class TestSyncAuditor:
         modes = {"github": "enforce", "gitlab": "warn"}
         auditor.set_policy_modes(modes)
         assert auditor._policy_modes == modes
+
+    @pytest.mark.requirement("WL-244")
+    def test_generate_html_diff_artifact_includes_expected_markers(self, tmp_path: Path):
+        """HTML diff artifact should be deterministic and include local/remote side labels."""
+        local_snapshot = {"status": "ok", "items": ["wl-1", "wl-2"]}
+        remote_snapshot = {"status": "drift", "items": ["wl-1"]}
+        output = tmp_path / "sync-diff.html"
+
+        SyncAuditor.generate_html_diff_artifact(local_snapshot, remote_snapshot, output)
+        second_path = tmp_path / "sync-diff-2.html"
+        SyncAuditor.generate_html_diff_artifact(local_snapshot, remote_snapshot, second_path)
+
+        html = output.read_text(encoding="utf-8")
+        second = second_path.read_text(encoding="utf-8")
+
+        def normalize(value: str) -> str:
+            value = re.sub(r"difflib_chg_to\d+__", "difflib_chg_to0__", value)
+            value = re.sub(r"from\d+_", "from0_", value)
+            value = re.sub(r"to\d+_", "to0_", value)
+            return value
+
+        assert output.exists()
+        assert second_path.exists()
+        assert normalize(html) == normalize(second)
+        assert '<table class="diff"' in html
+        assert 'colspan="2" class="diff_header">local' in html
+        assert 'colspan="2" class="diff_header">remote' in html
 
     @pytest.mark.requirement("WL-261")
     def test_audit_returns_audit_info(self):

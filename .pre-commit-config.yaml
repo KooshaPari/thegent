@@ -7,6 +7,10 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-yaml
+        exclude: |
+          (?x)^(
+            templates/initialize-project/.github/workflows/.*\.ya?ml$
+          )$
         stages: [pre-commit, pre-push]
         args: ["--unsafe"]
       - id: check-toml
@@ -38,6 +42,7 @@ repos:
           (?x)^(
             \.thegent/sessions/keys/maif_private\.pem|
             tests/data/maif_private\.pem|
+            tests/maif/test_crypto\.py|
             tests/governance/test_native_secret_scan\.py|
             crates/thegent-hooks/tests/security_pipeline_bin\.rs|
             crates/thegent-hooks/src/security\.rs

@@ -463,6 +463,12 @@ tasks:
           ACT_DOCKERLESS: "1"
           ACT_JOB: pre-push
 
+  ci:local-gha:stages:
+    desc: "Run both dockerless local hook stages in order: pre-commit then pre-push."
+    cmds:
+      - task: ci:local-gha:pre-commit
+      - task: ci:local-gha:pre-push
+
   ci:local-gha:job:
     desc: "Run a single GH Actions job in local act emulation."
     cmds:

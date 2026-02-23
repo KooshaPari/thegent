@@ -19,9 +19,7 @@ class TestSandboxConnector:
     @pytest.mark.requirement("WL-274")
     def test_create_default_sandbox(self) -> None:
         """Can create SandboxConnector with default sandbox=True."""
-        connector = SandboxConnector(
-            connector_id="github", project_id="proj1"
-        )
+        connector = SandboxConnector(connector_id="github", project_id="proj1")
 
         assert connector.connector_id == "github"
         assert connector.project_id == "proj1"
@@ -30,9 +28,7 @@ class TestSandboxConnector:
     @pytest.mark.requirement("WL-274")
     def test_create_production(self) -> None:
         """Can create SandboxConnector with sandbox=False."""
-        connector = SandboxConnector(
-            connector_id="github", project_id="proj1", sandbox=False
-        )
+        connector = SandboxConnector(connector_id="github", project_id="proj1", sandbox=False)
 
         assert connector.connector_id == "github"
         assert connector.sandbox is False

@@ -81,6 +81,8 @@ def test_generates_speedup_report_from_hyperfine_json(tmp_path: Path) -> None:
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     assert summary["scenarios"][0]["scenario"] == "tool_detection"
     assert summary["scenarios"][0]["speedup"] == 6.0
+    assert summary["mode_aggregates"]["cold"] is None
+    assert summary["mode_aggregates"]["warm"] is None
 
 
 def test_marks_speedup_na_when_current_result_missing(tmp_path: Path) -> None:
@@ -105,3 +107,51 @@ def test_marks_speedup_na_when_current_result_missing(tmp_path: Path) -> None:
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     assert summary["scenarios"][0]["scenario"] == "path_resolution"
     assert summary["scenarios"][0]["speedup"] is None
+    assert summary["mode_aggregates"]["cold"] is None
+    assert summary["mode_aggregates"]["warm"] is None
+
+
+def test_mode_aggregates_include_cold_and_warm(tmp_path: Path) -> None:
+    baseline_dir = tmp_path / "baseline"
+    current_dir = tmp_path / "current"
+
+    _write_hyperfine(
+        baseline_dir / "resolve_cold_bash.json",
+        command="thegent-tool-detect --json",
+        mean=0.100,
+        minimum=0.095,
+        maximum=0.110,
+        stddev=0.002,
+    )
+    _write_hyperfine(
+        current_dir / "resolve_cold_python.json",
+        command="thegent-tool-detect --json",
+        mean=0.050,
+        minimum=0.048,
+        maximum=0.052,
+        stddev=0.001,
+    )
+    _write_hyperfine(
+        baseline_dir / "search_warm_bash.json",
+        command="thegent-search --json",
+        mean=0.080,
+        minimum=0.075,
+        maximum=0.090,
+        stddev=0.002,
+    )
+    _write_hyperfine(
+        current_dir / "search_warm_python.json",
+        command="thegent-search --json",
+        mean=0.040,
+        minimum=0.038,
+        maximum=0.044,
+        stddev=0.001,
+    )
+
+    _, summary_path = _run_reporter(tmp_path, baseline_dir, current_dir)
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+
+    assert summary["mode_aggregates"]["cold"] is not None
+    assert summary["mode_aggregates"]["warm"] is not None
+    assert "baseline_mean_seconds" in summary["mode_aggregates"]["cold"]
+    assert "baseline_mean_seconds" in summary["mode_aggregates"]["warm"]
