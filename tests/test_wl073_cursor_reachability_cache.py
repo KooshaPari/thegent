@@ -23,7 +23,9 @@ class TestCursorApiReachabilityCache:
         """# @trace WL-073 — second call reuses cached True without a new HTTP request."""
         self._clear_cache()
 
-        with patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(True, False)) as mock_check:
+        with patch(
+            "thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(True, False)
+        ) as mock_check:
             from thegent.agents.cursor_api_runner import _is_cursor_api_reachable
 
             r1 = _is_cursor_api_reachable("http://localhost:7777", "tok")
@@ -37,7 +39,9 @@ class TestCursorApiReachabilityCache:
         """# @trace WL-073 — False result is cached; no retry within TTL."""
         self._clear_cache()
 
-        with patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(False, False)) as mock_check:
+        with patch(
+            "thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(False, False)
+        ) as mock_check:
             from thegent.agents.cursor_api_runner import _is_cursor_api_reachable
 
             r1 = _is_cursor_api_reachable("http://localhost:7777", "tok")
@@ -101,7 +105,9 @@ class TestCursorApiReachabilityCache:
         """# @trace WL-073 — underlying _check_cursor_api_reachable receives URL, token, timeout."""
         self._clear_cache()
 
-        with patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(True, False)) as mock_check:
+        with patch(
+            "thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(True, False)
+        ) as mock_check:
             from thegent.agents.cursor_api_runner import _is_cursor_api_reachable
 
             _is_cursor_api_reachable("http://cursor-host:8080", "my-token", 5.0)

@@ -9,11 +9,7 @@ from pathlib import Path
 def test_generated_python_antipattern_checker_fails_on_error(tmp_path: Path) -> None:
     src = tmp_path / "bad.py"
     src.write_text(
-        "value = eval('1 + 1')\n"
-        "try:\n"
-        "    pass\n"
-        "except:\n"
-        "    pass\n",
+        "value = eval('1 + 1')\ntry:\n    pass\nexcept:\n    pass\n",
         encoding="utf-8",
     )
     json_out = tmp_path / "report.json"

@@ -1,0 +1,29 @@
+# process_detection API Reference
+
+> **Source**: `src/thegent/mesh/process_detection.py`
+
+Process enumeration and agent detection for heliosShield.
+
+---
+
+## detect_agents
+
+```python
+detect_agents(patterns: dict[(str, str)])
+```
+
+Detect known agents from running processes using regex patterns.
+
+**Parameters**:
+
+- `patterns`: Dict of agent name -&gt; regex pattern
+
+---
+
+## get_processes
+
+Get list of running processes with PIDs and command lines.
+
+Uses /proc on Linux and ps on macOS.
+
+---

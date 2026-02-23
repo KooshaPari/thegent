@@ -61,12 +61,25 @@ def govern_vet(
     policy: str = typer.Option("default", "--policy", help="Vetter policy name"),
     session: str | None = typer.Option(None, "--session", help="Override session directory path"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview checks without executing"),
+    org: str | None = typer.Option(None, "--org", help="Federated policy namespace org"),
+    project: str | None = typer.Option(None, "--project", help="Federated policy namespace project"),
+    environment: str | None = typer.Option(None, "--environment", help="Federated policy namespace environment"),
+    policy_id: str | None = typer.Option(None, "--policy-id", help="Federated policy id override"),
     json_output: bool = typer.Option(False, "--json", help="Output JSON result"),
 ) -> None:
-    from thegent.cli.commands.impl import govern_vet_impl
+    from thegent.cli.services.governance import govern_vet_impl
 
     try:
-        result = govern_vet_impl(run_id=run_id, policy=policy, session=session, dry_run=dry_run)
+        result = govern_vet_impl(
+            run_id=run_id,
+            policy=policy,
+            session=session,
+            dry_run=dry_run,
+            org=org,
+            project=project,
+            environment=environment,
+            policy_id=policy_id,
+        )
         if json_output:
             typer.echo(json.dumps(result, indent=2))
             return

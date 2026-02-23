@@ -75,7 +75,9 @@ def _run_matrix(base_url: str, api_key: str, input_text: str) -> dict[str, Any]:
         if isinstance(model_id, str):
             by_provider[provider].append(model_id)
 
-    selected = {provider: sorted(model_ids, key=_score_model)[0] for provider, model_ids in by_provider.items() if model_ids}
+    selected = {
+        provider: sorted(model_ids, key=_score_model)[0] for provider, model_ids in by_provider.items() if model_ids
+    }
 
     rows: list[dict[str, Any]] = []
     for provider, model_id in sorted(selected.items()):
@@ -168,7 +170,9 @@ def main() -> int:
     parser.add_argument("--proxy-binary", default=os.environ.get("THGENT_CLIPROXY_BINARY", "cli-proxy-api-plus"))
     parser.add_argument(
         "--proxy-config",
-        default=os.environ.get("THGENT_CLIPROXY_CONFIG", str(Path.home() / ".config" / "thegent" / "cliproxy-config.yaml")),
+        default=os.environ.get(
+            "THGENT_CLIPROXY_CONFIG", str(Path.home() / ".config" / "thegent" / "cliproxy-config.yaml")
+        ),
     )
     parser.add_argument("--startup-timeout", type=int, default=8)
     parser.add_argument("--input", default="reply with exactly: ok")

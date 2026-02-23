@@ -101,9 +101,7 @@ def test_arxiv_relevance() -> None:
     """Fetch calculates relevance score."""
     from research_engine.crawlers.arxiv_crawler import ArxivCrawler
 
-    result = _make_result(
-        "Agent and learning", "https://arxiv.org/abs/2501.00001", "About agents and learning"
-    )
+    result = _make_result("Agent and learning", "https://arxiv.org/abs/2501.00001", "About agents and learning")
 
     with patch("arxiv.Search") as mock_search:
         mock_search.return_value.results.return_value = iter([result])

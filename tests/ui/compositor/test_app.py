@@ -120,6 +120,7 @@ def test_app_update_statusbar(app: CompositApp) -> None:
     # Increase pane count via action
     app._pane_count = 2
     import contextlib
+
     with contextlib.suppress(Exception):
         app._update_statusbar()
     assert hasattr(app, "_update_statusbar")

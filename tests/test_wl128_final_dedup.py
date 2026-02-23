@@ -5,6 +5,7 @@ after the B90-W2/W3 dedup cleanup passes.
 
 # @trace WL-128 B90-W3-C1
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,10 +21,7 @@ def test_taskfile_no_standalone_test_cov_task() -> None:
     text = TASKFILE.read_text(encoding="utf-8")
     # A standalone task definition looks like "  test:cov:" at line start with colon
     lines = text.splitlines()
-    standalone_cov_tasks = [
-        line for line in lines
-        if line.strip() == "test:cov:"
-    ]
+    standalone_cov_tasks = [line for line in lines if line.strip() == "test:cov:"]
     assert standalone_cov_tasks == [], (
         f"test:cov: is a standalone task in Taskfile.yml ({len(standalone_cov_tasks)} occurrence(s)). "
         "This deprecated alias must be removed."
@@ -61,26 +59,16 @@ def test_taskfile_no_duplicate_quality_tasks() -> None:
 def test_pyproject_no_duplicate_ruff_sections() -> None:
     """pyproject.toml must not contain duplicate [tool.ruff] sections."""
     text = PYPROJECT.read_text(encoding="utf-8")
-    count = sum(
-        1 for line in text.splitlines()
-        if line.strip() == "[tool.ruff]"
-    )
-    assert count <= 1, (
-        f"pyproject.toml has {count} [tool.ruff] sections. Only one is allowed."
-    )
+    count = sum(1 for line in text.splitlines() if line.strip() == "[tool.ruff]")
+    assert count <= 1, f"pyproject.toml has {count} [tool.ruff] sections. Only one is allowed."
 
 
 # @trace WL-128 B90-W3-C1
 def test_pyproject_no_duplicate_pytest_sections() -> None:
     """pyproject.toml must not contain duplicate [tool.pytest.ini_options] sections."""
     text = PYPROJECT.read_text(encoding="utf-8")
-    count = sum(
-        1 for line in text.splitlines()
-        if line.strip() == "[tool.pytest.ini_options]"
-    )
-    assert count <= 1, (
-        f"pyproject.toml has {count} [tool.pytest.ini_options] sections. Only one is allowed."
-    )
+    count = sum(1 for line in text.splitlines() if line.strip() == "[tool.pytest.ini_options]")
+    assert count <= 1, f"pyproject.toml has {count} [tool.pytest.ini_options] sections. Only one is allowed."
 
 
 # @trace WL-128 B90-W3-C1

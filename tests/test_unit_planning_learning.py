@@ -1,6 +1,12 @@
 """Unit tests for Phase 14: Autonomous Learning and Cost Sensing."""
 
+import builtins
+import types
+
+import pytest
+
 from thegent.planning.learning import LearningRegistry
+from thegent.planning.models_meta import MODEL_METADATA
 from thegent.planning.selector import ObjectiveSelector, get_objective_profile
 from thegent.planning.tuning import RunbookTuner
 
@@ -66,3 +72,53 @@ def test_wp_14004_runbook_tuning():
     tuner_cost = RunbookTuner(metrics_cost)
     recs_cost = tuner_cost.generate_recommendations()
     assert any(r.id == "TUNE-COST-001" for r in recs_cost)
+
+
+def test_objective_selector_logs_import_failure_and_uses_metadata_defaults(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    selector = ObjectiveSelector(get_objective_profile("balanced"))
+    meta = MODEL_METADATA["claude-opus-4.6"]
+
+    orig_import = builtins.__import__
+
+    def _failing_import(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: ANN001, ANN202
+        if name in {"thegent.models.quality_values", "thegent.models.speed_values"}:
+            raise ImportError("forced import failure")
+        return orig_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", _failing_import)
+    caplog.set_level("WARNING", logger="thegent.planning.selector")
+
+    score = selector._calculate_score(meta, "claude-opus-4.6")
+    assert score > 0
+    assert "Model score enrichment unavailable" in caplog.text
+
+
+def test_objective_selector_logs_lookup_failure_and_uses_metadata_defaults(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    selector = ObjectiveSelector(get_objective_profile("balanced"))
+    meta = MODEL_METADATA["claude-opus-4.6"]
+
+    def _bad_quality(_model_id: str) -> float:
+        raise ValueError("quality index unavailable")
+
+    def _good_speed(_model_id: str) -> float:
+        return 0.8
+
+    orig_import = builtins.__import__
+
+    def _mocked_import(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: ANN001, ANN202
+        if name == "thegent.models.quality_values":
+            return types.SimpleNamespace(get_model_quality_index=_bad_quality)
+        if name == "thegent.models.speed_values":
+            return types.SimpleNamespace(get_model_best_speed_index=_good_speed)
+        return orig_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", _mocked_import)
+    caplog.set_level("WARNING", logger="thegent.planning.selector")
+
+    score = selector._calculate_score(meta, "claude-opus-4.6")
+    assert score > 0
+    assert "Model score enrichment failed" in caplog.text

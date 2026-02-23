@@ -11,51 +11,36 @@ from __future__ import annotations
 
 from pathlib import Path
 
-REPORT_PATH = (
-    Path(__file__).parent.parent
-    / "docs"
-    / "reports"
-    / "2026-02-21-B90-W3-B5-cross-runtime-summary.md"
-)
+REPORT_PATH = Path(__file__).parent.parent / "docs" / "reports" / "2026-02-21-B90-W3-B5-cross-runtime-summary.md"
 
 
 def test_cross_runtime_summary_exists() -> None:
     """The B90-W3-B5 cross-runtime summary must exist at the expected path."""
-    assert REPORT_PATH.exists(), (
-        f"Expected cross-runtime summary at {REPORT_PATH}"
-    )
+    assert REPORT_PATH.exists(), f"Expected cross-runtime summary at {REPORT_PATH}"
 
 
 def test_cross_runtime_summary_mentions_python() -> None:
     """The summary must mention 'Python' as one of the 4 runtimes."""
     content = REPORT_PATH.read_text()
-    assert "Python" in content, (
-        "Cross-runtime summary must mention 'Python'"
-    )
+    assert "Python" in content, "Cross-runtime summary must mention 'Python'"
 
 
 def test_cross_runtime_summary_mentions_rust() -> None:
     """The summary must mention 'Rust' as one of the 4 runtimes."""
     content = REPORT_PATH.read_text()
-    assert "Rust" in content, (
-        "Cross-runtime summary must mention 'Rust'"
-    )
+    assert "Rust" in content, "Cross-runtime summary must mention 'Rust'"
 
 
 def test_cross_runtime_summary_mentions_zig() -> None:
     """The summary must mention 'Zig' as one of the 4 runtimes."""
     content = REPORT_PATH.read_text()
-    assert "Zig" in content, (
-        "Cross-runtime summary must mention 'Zig'"
-    )
+    assert "Zig" in content, "Cross-runtime summary must mention 'Zig'"
 
 
 def test_cross_runtime_summary_mentions_mojo() -> None:
     """The summary must mention 'Mojo' as one of the 4 runtimes."""
     content = REPORT_PATH.read_text()
-    assert "Mojo" in content, (
-        "Cross-runtime summary must mention 'Mojo'"
-    )
+    assert "Mojo" in content, "Cross-runtime summary must mention 'Mojo'"
 
 
 def test_cross_runtime_summary_has_wave4_or_next_action() -> None:

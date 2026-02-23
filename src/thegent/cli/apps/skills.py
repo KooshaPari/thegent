@@ -145,7 +145,7 @@ def skills_select(name: str = typer.Argument(..., help="Skill name")):
         console.print(f"[red]Skill not found: {cleaned_name}[/red]")
         raise typer.Exit(1)
     console.print(f"[green]Selected skill:[/green] {cleaned_name}")
-    console.print(f"[dim]Use with:[/dim] thegent run agent \"<prompt>\" --skill {shlex.quote(cleaned_name)}")
+    console.print(f'[dim]Use with:[/dim] thegent run agent "<prompt>" --skill {shlex.quote(cleaned_name)}')
 
 
 if __name__ == "__main__":

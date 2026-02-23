@@ -46,14 +46,18 @@ def _register_routes() -> tuple[Any, ...]:
     mock_mcp = SimpleNamespace(resource=_make_mcp_resource_collector(registered))
 
     sessions = SimpleNamespace(
-        resource_sessions_impl=lambda **kwargs: json.dumps({"items": [], "include_contract": kwargs["include_contract"]}),
+        resource_sessions_impl=lambda **kwargs: json.dumps(
+            {"items": [], "include_contract": kwargs["include_contract"]}
+        ),
         resource_session_meta_impl=lambda **kwargs: json.dumps({"id": kwargs["session_id"]}),
         resource_session_logs_impl=lambda **kwargs: "ok",
     )
     catalog = SimpleNamespace(
         resource_dag_impl=lambda **kwargs: json.dumps({"tasks": []}),
         resource_agents_impl=lambda **kwargs: json.dumps([]),
-        resource_models_impl=lambda **kwargs: json.dumps({"provider": kwargs["provider"], "include_contract": kwargs["include_contract"]}),
+        resource_models_impl=lambda **kwargs: json.dumps(
+            {"provider": kwargs["provider"], "include_contract": kwargs["include_contract"]}
+        ),
         resource_models_contract_impl=lambda: json.dumps({"contract": "ok"}),
     )
     workstream = SimpleNamespace(
@@ -87,7 +91,9 @@ def _register_routes() -> tuple[Any, ...]:
         server_resource_workstream=workstream,
         server_resource_contracts=contracts,
         resource_session_contract_health_gate_helper=_gate_helper,
-        resource_session_contract_health_report_helper=lambda **kwargs: kwargs["stable_json"]({"payload_type": "report"}),
+        resource_session_contract_health_report_helper=lambda **kwargs: kwargs["stable_json"](
+            {"payload_type": "report"}
+        ),
         resource_session_contract_health_trend_helper=lambda **kwargs: kwargs["stable_json"]({"payload_type": "trend"}),
         ps_impl=lambda **kwargs: [],
         status_impl=lambda **kwargs: {},

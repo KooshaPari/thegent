@@ -1,0 +1,122 @@
+# Remote Compute Implementation Detail
+
+**Purpose:** Full specification for `thegent run --remote` and remote session management. Extends HYBRID_ENV Phase 4.
+
+**Date:** 2026-02-16
+**Status:** Planning
+**Extends:** HYBRID_MAC_WIN_DEV_ENVIRONMENT.md, HYBRID_ENV_IMPLEMENTATION_PLAN.md
+
+---
+
+## 1. Architecture
+
+```
+Mac (client)                         Windows PC (compute)
+┌─────────────────────────────┐     ┌──────────────────────────────────────┐
+│ thegent run --remote        │     │ thegent (installed via Syncthing)    │
+│   windows-pc "Build"        │     │                                      │
+│         │                   │     │ ~/.thegent/ or D:\kush\.thegent\     │
+│         v                   │     │   run_registry.jsonl                 │
+│ ssh windows-pc              │ SSH │   sessions/                          │
+│   "cd D:/kush/thegent &&    │ ───>│   config.yaml                         │
+│    thegent run -d . 'Build'"│     │                                      │
+└─────────────────────────────┘     │ process-compose, Docker, etc.         │
+                                   └──────────────────────────────────────┘
+```
+
+---
+
+## 2. Remote Host Configuration
+
+### 2.1 Config File: `~/.thegent/remote_hosts.yaml`
+
+```yaml
+hosts:
+  windows-pc:
+    host: 192.168.1.100  # or hostname via Tailscale
+    user: kooshapari
+    platform: windows
+    path_mapping:
+      mac: "~/kush"
+      remote: "D:/kush"
+    ssh_config_alias: windows-pc  # from ~/.ssh/config
+
+  linux-server:
+    host: 10.0.0.5
+    user: deploy
+    platform: linux
+    path_mapping:
+      mac: "~/kush"
+      remote: "/home/deploy/kush"
+```
+
+### 2.2 Path Mapping
+
+- User specifies `-d ~/kush/thegent` on Mac
+- thegent maps to `D:/kush/thegent` on Windows before SSH
+- Remote `thegent run` receives `-d D:/kush/thegent`
+
+---
+
+## 3. CLI Interface
+
+### 3.1 Commands
+
+```bash
+# Run on remote
+thegent run --remote windows-pc -d ~/kush/thegent "Build project" gemini
+
+# Background on remote
+thegent bg --remote windows-pc -d ~/kush/thegent "Heavy tests" codex
+
+# List remote sessions
+thegent ps --remote windows-pc
+
+# Logs from remote session
+thegent logs --remote windows-pc <session_id>
+
+# Stop remote session
+thegent stop --remote windows-pc <session_id>
+
+# Wait for remote session
+thegent wait --remote windows-pc <session_id>
+```
+
+### 3.2 Implementation
+
+- `--remote HOST` loads host from `remote_hosts.yaml`
+- SSH exec: `ssh {user}@{host} "cd {remote_cwd} && thegent run -d . '{prompt}' {agent}"`
+- For `ps`, `logs`, `stop`, `wait`: SSH exec `thegent ps`, `thegent logs <id>`, etc.
+- Output streamed back to Mac
+
+---
+
+## 4. Session Registry on Remote
+
+- **Location:** `~/.thegent/sessions/` on remote (or `D:\kush\.thegent\sessions\`)
+- **run_registry.jsonl:** Written by remote thegent
+- **Optional sync:** Add `.thegent/sessions/` to Syncthing for unified `thegent ps` across hosts (future)
+
+---
+
+## 5. Task Breakdown (Extend HYBRID_ENV P4)
+
+| ID | Task | Est. | Depends |
+|----|------|------|---------|
+| P4.2.1a | Create `RemoteHost` dataclass and `load_remote_hosts()` | 30 min | None |
+| P4.2.1b | Implement `run_remote(host, cwd, prompt, agent)` via paramiko or subprocess+ssh | 1.5 hr | P4.1.7 |
+| P4.2.1c | Implement `ps_remote(host)`, `logs_remote(host, session_id)`, `stop_remote`, `wait_remote` | 1 hr | P4.2.1b |
+| P4.2.2 | Add `~/.thegent/remote_hosts.yaml` schema and validation | 30 min | P4.2.1a |
+| P4.2.3 | Path mapping in `run_remote`: resolve Mac path to remote path | 30 min | P4.2.1b |
+| P4.2.4 | Add `--remote` to `run`, `bg`, `ps`, `logs`, `stop`, `wait` in CLI | 1 hr | P4.2.1c |
+| P4.2.5 | Document in `docs/guides/HYBRID_ENV_QUICK_START.md` and CLI help | 30 min | P4.2.4 |
+
+---
+
+## 6. References
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — backlog (e.g. research-remote-compute-impl)
+- [00-MASTER-INDEX.md](./00-MASTER-INDEX.md) — plan index
+- [HYBRID_MAC_WIN_DEV_ENVIRONMENT.md](../architecture/HYBRID_MAC_WIN_DEV_ENVIRONMENT.md)
+- [HYBRID_ENV_IMPLEMENTATION_PLAN.md](./HYBRID_ENV_IMPLEMENTATION_PLAN.md)
+- [CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH.md](../research/CROSS_PLATFORM_GAPS_AND_EXTENSIONS_RESEARCH.md)

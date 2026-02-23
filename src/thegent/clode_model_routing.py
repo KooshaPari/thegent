@@ -66,15 +66,12 @@ CLODE_PROVIDER_MODEL: dict[str, str] = {
 
 
 def resolve_provider_for_model(model_alias: str) -> str:
-    """Resolve provider for model-first routing with round-robin balancing."""
-    canonical = MODEL_ALIAS.get(model_alias.lower(), model_alias)
-    providers = MODEL_PROVIDER_SETS.get(canonical)
-    if not providers:
-        return "nim"
-    idx = MODEL_COUNTER[canonical]
-    selected = providers[idx % len(providers)]
-    MODEL_COUNTER[canonical] = (idx + 1) % len(providers)
-    return selected
+    """Resolve provider for model-first routing.
+
+    Use cliproxy auto-routing so model aliases are not pinned to fixed providers.
+    """
+    _ = MODEL_ALIAS.get(model_alias.lower(), model_alias)
+    return "auto"
 
 
 def model_for_provider(provider: str) -> str:

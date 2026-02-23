@@ -39,6 +39,9 @@ __all__ += [
 from pathlib import Path
 
 import importlib.resources as pkg_resources
+import logging
+
+_LOG = logging.getLogger(__name__)
 
 
 def get_resource_path(relative_path: str) -> Path:
@@ -61,21 +64,44 @@ def get_resource_path(relative_path: str) -> Path:
                 project_root = current_file.parents[3]
                 if (project_root / ".git").exists():
                     is_dev = True
-    except Exception:
-        pass
+    except (ImportError, ModuleNotFoundError) as exc:
+        _LOG.warning(
+            "resource_dev_mode_detection_failed",
+            extra={
+                "failure_type": "config_import_error",
+                "error_type": type(exc).__name__,
+                "error_message": str(exc)[:180],
+            },
+        )
+    except (OSError, RuntimeError, ValueError, IndexError) as exc:
+        _LOG.warning(
+            "resource_dev_mode_detection_failed",
+            extra={
+                "failure_type": "path_inspection_error",
+                "error_type": type(exc).__name__,
+                "error_message": str(exc)[:180],
+            },
+        )
 
     if is_dev:
-        # In dev mode, resources are relative to the project root
-        # .../src/thegent/resources/__init__.py -> project root is two levels up from src
+        # In dev mode, resources are relative to the project root.
+        # .../src/thegent/resources/__init__.py -> project root is parents[3].
         try:
             current_file = Path(__file__).resolve()
             if "src/thegent" in str(current_file):
-                project_root = current_file.parents[2]
+                project_root = current_file.parents[3]
                 path = project_root / relative_path
                 if path.exists():
                     return path
-        except Exception:
-            pass
+        except (OSError, RuntimeError, ValueError, IndexError) as exc:
+            _LOG.warning(
+                "resource_dev_mode_path_resolution_failed",
+                extra={
+                    "failure_type": "dev_path_error",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc)[:180],
+                },
+            )
 
     # When installed as a package
     try:
@@ -95,7 +121,7 @@ def get_resource_path(relative_path: str) -> Path:
         # Default to main package
         with pkg_resources.path("thegent", relative_path) as p:
             return Path(p)
-    except Exception:
+    except (FileNotFoundError, ImportError, ModuleNotFoundError, OSError, RuntimeError, ValueError):
         # Final fallback: assume it might be relative to current module
         return Path(__file__).parent.parent / relative_path
 

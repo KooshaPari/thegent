@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 def test_research_item_roundtrip() -> None:
     from research_engine.schema import ResearchItem
+
     item = ResearchItem(
         slug="abc123def456",
         source="hn",
@@ -23,6 +24,7 @@ def test_research_item_roundtrip() -> None:
 
 def test_research_item_slug_from_url() -> None:
     from research_engine.schema import ResearchItem
+
     item = ResearchItem.from_url(
         url="https://news.ycombinator.com/item?id=42",
         source="hn",

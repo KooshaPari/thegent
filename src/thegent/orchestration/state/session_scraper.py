@@ -111,7 +111,9 @@ class SessionScraper:
     def _now_iso() -> str:
         return datetime.now(tz=timezone.utc).isoformat()
 
-    def _extract_structured_signals(self, content: str) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str]]:
+    def _extract_structured_signals(
+        self, content: str
+    ) -> tuple[list[str], list[str], list[str], list[str], list[str], list[str]]:
         prompts: list[str] = []
         commands: list[str] = []
         files: list[str] = []
@@ -133,7 +135,8 @@ class SessionScraper:
                 prompts.append(line)
 
             if line.startswith(("$ ", "> ")) and (
-                line.startswith("$ ") or any(token in line for token in ("git ", "rg ", "python ", "cargo ", "npm ", "uv "))
+                line.startswith("$ ")
+                or any(token in line for token in ("git ", "rg ", "python ", "cargo ", "npm ", "uv "))
             ):
                 commands.append(line[2:].strip())
 
@@ -534,7 +537,9 @@ class SessionScraper:
             "generated_at": datetime.now(tz=timezone.utc).isoformat(),
         }
 
-    def persist_snapshot_index(self, *, limit: int = 200, out_path: Path | None = None, root_dir: Path | None = None) -> Path:
+    def persist_snapshot_index(
+        self, *, limit: int = 200, out_path: Path | None = None, root_dir: Path | None = None
+    ) -> Path:
         """Persist snapshot summary index JSON for downstream dashboards/reporting."""
         summary = self.summarize_snapshots(limit=limit, root_dir=root_dir)
         target = out_path or (self.default_snapshot_dir / "snapshot-index.json")

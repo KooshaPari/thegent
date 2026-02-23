@@ -5,7 +5,7 @@ from __future__ import annotations
 import subprocess
 
 import typer
-from thegent.fanta_main import app as app
+from thegent.fanta_main import app
 
 from thegent import fanta_main as _fanta_main
 

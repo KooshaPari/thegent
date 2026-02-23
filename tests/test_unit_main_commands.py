@@ -59,6 +59,26 @@ def test_top_level_resume_with_skill_forwards_skills(mock_resume_cmd: MagicMock)
 
 
 @pytest.mark.unit
+@patch("thegent.doctor.run_doctor")
+def test_top_level_doctor_routes_to_run_doctor(mock_run_doctor: MagicMock) -> None:
+    """`thegent doctor` delegates to doctor implementation."""
+    mock_run_doctor.return_value = True
+    result = runner.invoke(app, ["doctor"])
+    assert result.exit_code == 0
+    mock_run_doctor.assert_called_once_with(fix=False, dry_run=False)
+
+
+@pytest.mark.unit
+@patch("thegent.doctor.run_doctor")
+def test_top_level_doctor_failure_propagates_exit_code(mock_run_doctor: MagicMock) -> None:
+    """Failure from run_doctor exits non-zero."""
+    mock_run_doctor.return_value = False
+    result = runner.invoke(app, ["doctor", "--fix", "--dry-run"])
+    assert result.exit_code == 1
+    mock_run_doctor.assert_called_once_with(fix=True, dry_run=True)
+
+
+@pytest.mark.unit
 @patch("thegent.cli.apps.run.run_ps")
 def test_top_level_ps_routes_to_run_ps(mock_run_ps: MagicMock) -> None:
     """`thegent ps` shortcut delegates to run-app session listing."""

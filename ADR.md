@@ -40,5 +40,11 @@ This document tracks the "Why" behind the core architectural shifts in `thegent`
 - **Status**: **ACCEPTED**
 - **Consequence**: Core/runtime paths can be measured and reduced independently, while tooling/test surfaces remain isolated from fast-lane runtime checks. Full detail: [ADR-016-two-python-surfaces.md](./docs/reference/ADR-016-two-python-surfaces.md)
 
+## ADR-017: Unified Quality Control Plane (GitHub SARIF-Native First)
+- **Context**: Unified quality work introduced multiple new checkers and hook artifacts, but no explicit long-term control-plane choice existed between Sonar-backed hybrid vs GitHub-native SARIF.
+- **Decision**: Adopt **GitHub+SARIF-native** as the default control plane for 2026 rollout, with optional Sonar bridge as a non-default adapter.
+- **Status**: **ACCEPTED**
+- **Consequence**: All quality/security/perf checkers must emit machine-readable artifacts (JSON and/or SARIF), and CI policy decisions are derived from contract-backed artifacts. Full detail: [ADR-017-unified-quality-control-plane.md](./docs/reference/ADR-017-unified-quality-control-plane.md)
+
 ---
 *Cross-ref: [ARCHITECTURE.md](./docs/plans/05-ARCHITECTURE.md)*

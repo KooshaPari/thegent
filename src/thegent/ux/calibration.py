@@ -38,9 +38,29 @@ class ConfidenceCalibrator:
         if not self.calibration_file.exists():
             return {}
         try:
-            return json.loads(self.calibration_file.read_text(encoding="utf-8"))
-        except Exception:
+            payload = json.loads(self.calibration_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            _log.warning("Failed to parse calibration JSON at %s: %s", self.calibration_file, exc)
             return {}
+        except OSError as exc:
+            _log.warning("Failed reading calibration file at %s: %s", self.calibration_file, exc)
+            return {}
+
+        if not isinstance(payload, dict):
+            _log.warning(
+                "Invalid calibration schema at %s: expected object, got %s", self.calibration_file, type(payload)
+            )
+            return {}
+
+        for agent_name, bias in payload.items():
+            if not isinstance(agent_name, str) or not isinstance(bias, int | float):
+                _log.warning(
+                    "Invalid calibration schema at %s: entries must be str->number mappings",
+                    self.calibration_file,
+                )
+                return {}
+
+        return {agent_name: float(bias) for agent_name, bias in payload.items()}
 
     def _save_calibration(self):
         self.settings.session_dir.mkdir(parents=True, exist_ok=True)

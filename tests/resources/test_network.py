@@ -448,6 +448,30 @@ class TestListInterfaces:
             result = monitor.list_interfaces()
         assert isinstance(result, list)
 
+    def test_include_diagnostics_distinguishes_empty_from_error(self, monitor: NetworkMonitor) -> None:
+        with (
+            patch("thegent.resources.network._PSUTIL_AVAILABLE", True),
+            patch("thegent.resources.network._psutil") as mock_psutil,
+        ):
+            mock_psutil.net_io_counters.return_value = {}
+            payload_empty = monitor.list_interfaces(include_diagnostics=True)
+
+            mock_psutil.net_io_counters.side_effect = OSError("permission denied")
+            payload_error = monitor.list_interfaces(include_diagnostics=True)
+
+        assert payload_empty["status"] == "empty"
+        assert payload_empty["interfaces"] == []
+        assert payload_error["status"] == "error"
+        assert payload_error["error"]["type"] == "OSError"
+
+    def test_include_diagnostics_reports_psutil_unavailable(self, monitor: NetworkMonitor) -> None:
+        with patch("thegent.resources.network._PSUTIL_AVAILABLE", False):
+            payload = monitor.list_interfaces(include_diagnostics=True)
+
+        assert payload["status"] == "unavailable"
+        assert payload["interfaces"] == []
+        assert payload["error"]["type"] == "psutil_unavailable"
+
 
 # ---------------------------------------------------------------------------
 # Package-level exports

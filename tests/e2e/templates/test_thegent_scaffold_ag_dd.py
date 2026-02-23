@@ -4,6 +4,7 @@ E2E test for: thegent scaffold ag-dd
 Agent Journey: Agent executes thegent scaffold ag-dd command
 Expected Behavior: Command executes successfully and returns expected output
 """
+
 import pytest
 from typer.testing import CliRunner
 
@@ -18,17 +19,17 @@ class TestScaffoldAgDd:
 
     def test_scaffold_ag_dd_exits_zero(self) -> None:
         """thegent scaffold ag-dd exits with code 0."""
-        result = runner.invoke(app, ['scaffold', 'ag-dd'])
+        result = runner.invoke(app, ["scaffold", "ag-dd"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_scaffold_ag_dd_produces_output(self) -> None:
         """thegent scaffold ag-dd produces expected output."""
-        result = runner.invoke(app, ['scaffold', 'ag-dd'])
+        result = runner.invoke(app, ["scaffold", "ag-dd"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_scaffold_ag_dd_help_exits_zero(self) -> None:
         """thegent scaffold ag-dd --help exits with code 0."""
-        result = runner.invoke(app, ['scaffold', 'ag-dd', '--help'])
+        result = runner.invoke(app, ["scaffold", "ag-dd", "--help"])
         assert result.exit_code == 0

@@ -121,7 +121,7 @@ class ComplianceSnapshotScheduler:
             # snapshot_YYYY-MM-DD format with hyphens is our pattern
             if filename.startswith("snapshot_") and len(filename) > len("snapshot_.json"):
                 # Extract the timestamp part (between snapshot_ and .json)
-                ts_part = filename[len("snapshot_"):-len(".json")]
+                ts_part = filename[len("snapshot_") : -len(".json")]
                 # Valid timestamps should have at least 10 chars for YYYY-MM-DD part
                 if len(ts_part) >= 10 and ts_part[:4].isdigit() and ts_part[5:7].isdigit():
                     snapshots.append(file)

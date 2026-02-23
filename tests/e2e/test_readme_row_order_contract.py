@@ -168,35 +168,27 @@ def test_governance_rows_have_strictly_increasing_table_indices() -> None:
     all_goals = _command_table_goal_rows()
     governance_positions = [index for index, goal in enumerate(all_goals) if goal in EXPECTED_GOVERNANCE_ROW_ORDER]
     assert governance_positions == sorted(governance_positions), (
-        "README governance rows must preserve table order with strictly increasing indices: "
-        f"{governance_positions}"
+        f"README governance rows must preserve table order with strictly increasing indices: {governance_positions}"
     )
     assert len(governance_positions) == len(set(governance_positions)), (
-        "README governance rows must not share table positions: "
-        f"{governance_positions}"
+        f"README governance rows must not share table positions: {governance_positions}"
     )
 
 
 def test_each_expected_governance_goal_maps_to_exactly_one_command_cell_occurrence() -> None:
     rows = _command_table_rows()
     occurrences_by_goal = {
-        goal: sum(1 for row_goal, _ in rows if row_goal == goal)
-        for goal in EXPECTED_GOVERNANCE_ROW_ORDER
+        goal: sum(1 for row_goal, _ in rows if row_goal == goal) for goal in EXPECTED_GOVERNANCE_ROW_ORDER
     }
     mismatches = {goal: count for goal, count in occurrences_by_goal.items() if count != 1}
     assert not mismatches, (
-        "Each expected governance goal must map to exactly one command cell occurrence in README table: "
-        f"{mismatches}"
+        f"Each expected governance goal must map to exactly one command cell occurrence in README table: {mismatches}"
     )
 
 
 def test_full_bundle_row_is_last_direct_governance_row_in_table_order() -> None:
     goals = _command_table_goal_rows()
-    direct_governance_goals = [
-        goal
-        for goal in goals
-        if goal in EXPECTED_GOVERNANCE_ROW_ORDER and "(direct)" in goal
-    ]
+    direct_governance_goals = [goal for goal in goals if goal in EXPECTED_GOVERNANCE_ROW_ORDER and "(direct)" in goal]
     assert direct_governance_goals, "README command table must include direct governance rows."
     assert direct_governance_goals[-1] == "Full e2e governance unit bundle (direct)", (
         "Full bundle governance row must remain the last direct governance row in table order: "
@@ -232,8 +224,7 @@ def test_governance_block_is_bounded_by_expected_first_and_last_rows() -> None:
         f"'{EXPECTED_GOVERNANCE_ROW_ORDER[0]}', found '{first_governance_goal}'."
     )
     assert last_governance_goal == EXPECTED_GOVERNANCE_ROW_ORDER[-1], (
-        "README governance block must end with "
-        f"'{EXPECTED_GOVERNANCE_ROW_ORDER[-1]}', found '{last_governance_goal}'."
+        f"README governance block must end with '{EXPECTED_GOVERNANCE_ROW_ORDER[-1]}', found '{last_governance_goal}'."
     )
 
 
@@ -255,9 +246,7 @@ def test_governance_rows_use_direct_backticked_pytest_commands() -> None:
         assert snippet.startswith("pytest -q "), (
             f"README governance row '{goal}' must present a direct `pytest -q` command: {snippet}"
         )
-        assert "tests/e2e/" in snippet, (
-            f"README governance row '{goal}' must target tests/e2e paths: {snippet}"
-        )
+        assert "tests/e2e/" in snippet, f"README governance row '{goal}' must target tests/e2e paths: {snippet}"
 
 
 def test_direct_governance_rows_are_lexicographic_by_referenced_test_filename() -> None:
@@ -278,9 +267,7 @@ def test_direct_governance_rows_are_lexicographic_by_referenced_test_filename() 
 
 def test_direct_governance_rows_have_unique_normalized_goal_slugs() -> None:
     direct_goals = [
-        goal
-        for goal in _command_table_goal_rows()
-        if goal in EXPECTED_GOVERNANCE_ROW_ORDER and "(direct)" in goal
+        goal for goal in _command_table_goal_rows() if goal in EXPECTED_GOVERNANCE_ROW_ORDER and "(direct)" in goal
     ]
     slugs_in_table_order = [_normalized_slug(goal) for goal in direct_goals]
     assert all(slug for slug in slugs_in_table_order), (
@@ -288,10 +275,7 @@ def test_direct_governance_rows_have_unique_normalized_goal_slugs() -> None:
         f"{list(zip(direct_goals, slugs_in_table_order, strict=False))}"
     )
     duplicates = sorted({slug for slug in slugs_in_table_order if slugs_in_table_order.count(slug) > 1})
-    assert not duplicates, (
-        "README direct governance row normalized slugs must be unique: "
-        + ", ".join(duplicates)
-    )
+    assert not duplicates, "README direct governance row normalized slugs must be unique: " + ", ".join(duplicates)
 
 
 def test_non_bundle_direct_governance_rows_do_not_duplicate_single_file_paths() -> None:
@@ -316,8 +300,7 @@ def test_non_bundle_direct_governance_rows_do_not_duplicate_single_file_paths() 
         duplicates.append((path, first_goal, goal))
 
     assert not duplicates, (
-        "README non-bundle direct governance rows must not duplicate exact single-file test paths: "
-        f"{duplicates}"
+        f"README non-bundle direct governance rows must not duplicate exact single-file test paths: {duplicates}"
     )
 
 
@@ -368,14 +351,12 @@ def test_alias_governance_trio_direct_paths_follow_canonical_increasing_order() 
         assert goal in command_by_goal, f"README governance row is missing from command table: '{goal}'"
         unique_paths = sorted(set(_referenced_e2e_test_paths(command_by_goal[goal])))
         assert len(unique_paths) == 1, (
-            f"README alias governance row '{goal}' must reference exactly one tests/e2e path: "
-            f"{command_by_goal[goal]}"
+            f"README alias governance row '{goal}' must reference exactly one tests/e2e path: {command_by_goal[goal]}"
         )
         trio_paths.append(unique_paths[0])
 
     assert trio_paths == sorted(trio_paths), (
-        "README alias governance trio direct paths must be in canonical increasing order: "
-        f"{trio_paths}"
+        f"README alias governance trio direct paths must be in canonical increasing order: {trio_paths}"
     )
 
 
@@ -409,22 +390,18 @@ def test_governance_block_has_no_duplicate_command_cells() -> None:
         normalized_command = command.strip()
         governance_commands.setdefault(normalized_command, []).append(goal)
 
-    duplicates = sorted(
-        (command, goals)
-        for command, goals in governance_commands.items()
-        if len(goals) > 1
-    )
+    duplicates = sorted((command, goals) for command, goals in governance_commands.items() if len(goals) > 1)
     assert not duplicates, (
-        "README governance block must not contain duplicate command cells across goals: "
-        f"{duplicates}"
+        f"README governance block must not contain duplicate command cells across goals: {duplicates}"
     )
 
 
 def test_expected_governance_row_order_labels_are_unique() -> None:
-    duplicates = sorted({goal for goal in EXPECTED_GOVERNANCE_ROW_ORDER if EXPECTED_GOVERNANCE_ROW_ORDER.count(goal) > 1})
-    assert not duplicates, (
-        "EXPECTED_GOVERNANCE_ROW_ORDER must not contain duplicate goal labels: "
-        + ", ".join(duplicates)
+    duplicates = sorted(
+        {goal for goal in EXPECTED_GOVERNANCE_ROW_ORDER if EXPECTED_GOVERNANCE_ROW_ORDER.count(goal) > 1}
+    )
+    assert not duplicates, "EXPECTED_GOVERNANCE_ROW_ORDER must not contain duplicate goal labels: " + ", ".join(
+        duplicates
     )
 
 
@@ -447,8 +424,7 @@ def test_suite_direct_multi_path_rows_keep_stable_path_ordering_by_basename() ->
         if paths != sorted(paths, key=lambda path: (Path(path).name, path))
     ]
     assert not out_of_order, (
-        "README suite direct rows with multiple paths must keep stable basename ordering: "
-        f"{out_of_order}"
+        f"README suite direct rows with multiple paths must keep stable basename ordering: {out_of_order}"
     )
 
 
@@ -473,6 +449,5 @@ def test_no_extra_governance_like_direct_rows_outside_expected_block() -> None:
             extras.append(goal)
 
     assert not extras, (
-        "README contains governance-like direct rows outside EXPECTED_GOVERNANCE_ROW_ORDER: "
-        + ", ".join(extras)
+        "README contains governance-like direct rows outside EXPECTED_GOVERNANCE_ROW_ORDER: " + ", ".join(extras)
     )

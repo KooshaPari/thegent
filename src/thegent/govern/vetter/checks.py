@@ -303,9 +303,7 @@ class QualityScoreVetterCheck:
             return model
         resolved = self.model_resolver("quality scoring", context)
         if not isinstance(resolved, str):
-            raise VetterConfigError(
-                "QualityScoreVetterCheck model_resolver must return a non-empty string model name"
-            )
+            raise VetterConfigError("QualityScoreVetterCheck model_resolver must return a non-empty string model name")
         model = resolved.strip()
         if not model:
             raise VetterConfigError("QualityScoreVetterCheck model_resolver returned empty model name")
@@ -389,7 +387,9 @@ class QualityScoreVetterCheck:
             raise VetterConfigError(f"QualityScoreVetterCheck missing score(s) for criterion: {', '.join(missing)}")
         unexpected = sorted(seen - expected)
         if unexpected:
-            raise VetterConfigError(f"QualityScoreVetterCheck unexpected score(s) for criterion: {', '.join(unexpected)}")
+            raise VetterConfigError(
+                f"QualityScoreVetterCheck unexpected score(s) for criterion: {', '.join(unexpected)}"
+            )
 
         scores = {criterion: int(parsed.scores[criterion]) for criterion in sorted(expected)}
         if any(score < 1 or score > 5 for score in scores.values()):
@@ -407,9 +407,7 @@ class QualityScoreVetterCheck:
             message = parsed.critique.strip()
             if not message:
                 failing = [
-                    f"{criterion}={score}"
-                    for criterion, score in scores.items()
-                    if score < self.min_criterion_score
+                    f"{criterion}={score}" for criterion, score in scores.items() if score < self.min_criterion_score
                 ]
                 details = ", ".join(failing) if failing else "no criterion fell below minimum score"
                 message = (

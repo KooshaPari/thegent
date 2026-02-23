@@ -23,6 +23,7 @@ SHELL_FILES = {
     ".zsh_safeguards.zsh": ".zsh_safeguards.zsh",
     ".zsh_optimization.zsh": ".zsh_optimization.zsh",
     ".zsh_advanced.zsh": ".zsh_advanced.zsh",
+    ".zsh_worktree_governance.zsh": ".zsh_worktree_governance.zsh",
     ".zshrc": ".zshrc",
 }
 SHELL_LOCAL_TEMPLATE = "zshrc.local.template"

@@ -144,6 +144,33 @@ class TestResponsesInputToMessages:
         assert isinstance(msgs[0]["content"], list)
         assert msgs[0]["content"] == content_parts
 
+    def test_content_list_strips_thinking_signatures(self) -> None:
+        """CLIP-BUG-09/10: cross-provider thinking signatures must not be forwarded."""
+        from thegent.routing.litellm_responses_handler import _responses_input_to_messages
+
+        content_parts = [
+            {
+                "type": "thinking",
+                "thinking": "internal",
+                "signature": "gemini-signature",
+                "thought_signature": "\\claude#abc",
+            },
+            {"type": "text", "text": "final"},
+        ]
+        items = [_make_message_item("assistant", content_parts)]
+        msgs = _responses_input_to_messages(items)
+        sanitized = msgs[0]["content"][0]
+        assert "signature" not in sanitized
+        assert "thought_signature" not in sanitized
+
+    def test_content_list_drops_metadata_blocks(self) -> None:
+        from thegent.routing.litellm_responses_handler import _responses_input_to_messages
+
+        content_parts = [{"type": "text", "text": "Caption", "metadata": {"trace": "abc"}}]
+        items = [_make_message_item("user", content_parts)]
+        msgs = _responses_input_to_messages(items)
+        assert msgs == [{"role": "user", "content": [{"type": "text", "text": "Caption"}]}]
+
     def test_non_message_type_items_are_ignored(self) -> None:
         from thegent.routing.litellm_responses_handler import _responses_input_to_messages
 
@@ -254,6 +281,76 @@ class TestResponsesToChatCompletions:
         body = _make_responses_body(stream=True)
         result = _responses_to_chat_completions(body)
         assert result["stream"] is True
+
+    def test_custom_tools_and_tool_choice_are_normalized(self) -> None:
+        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+
+        body = _make_responses_body(
+            tools=[
+                {
+                    "type": "custom",
+                    "name": "run_sql",
+                    "description": "Run SQL",
+                    "input_schema": {"type": "object", "properties": {"query": {"type": "string"}}},
+                }
+            ],
+            tool_choice={"type": "custom", "name": "run_sql"},
+        )
+        result = _responses_to_chat_completions(body)
+        assert result["tools"] == [
+            {
+                "type": "function",
+                "function": {
+                    "name": "run_sql",
+                    "description": "Run SQL",
+                    "parameters": {"type": "object", "properties": {"query": {"type": "string"}}},
+                },
+            }
+        ]
+        assert result["tool_choice"] == {"type": "function", "function": {"name": "run_sql"}}
+
+    def test_schema_normalization_strips_unsupported_and_nullable_type_arrays(self) -> None:
+        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+
+        body = _make_responses_body(
+            tools=[
+                {
+                    "type": "custom",
+                    "name": "save_doc",
+                    "input_schema": {
+                        "$id": "x",
+                        "type": "object",
+                        "patternProperties": {".*": {"type": "string"}},
+                        "properties": {"title": {"type": ["string", "null"]}},
+                    },
+                }
+            ]
+        )
+        result = _responses_to_chat_completions(body)
+        params = result["tools"][0]["function"]["parameters"]
+        assert "$id" not in params
+        assert "patternProperties" not in params
+        assert params["properties"]["title"] == {"type": "string", "nullable": True}
+
+    def test_messages_fallback_preserves_existing_payload(self) -> None:
+        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+
+        messages = [
+            {"role": "assistant", "content": [{"type": "thinking", "thinking": "x", "signature": "sig-1"}]},
+            {"role": "user", "content": "continue"},
+        ]
+        result = _responses_to_chat_completions({"model": "claude-opus-4-6-thinking", "messages": messages})
+        assert result["messages"] == messages
+
+    def test_tool_choice_proxy_prefix_is_normalized(self) -> None:
+        from thegent.routing.litellm_responses_handler import _responses_to_chat_completions
+
+        body = _make_responses_body(
+            tools=[{"type": "function", "function": {"name": "search"}}],
+            tool_choice={"type": "function", "function": {"name": "proxy_search"}},
+        )
+        result = _responses_to_chat_completions(body)
+        assert result["tool_choice"]["function"]["name"] == "search"
 
 
 # ---------------------------------------------------------------------------

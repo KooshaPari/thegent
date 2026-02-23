@@ -383,9 +383,10 @@ def get_router_config() -> RouterConfig:
         return RouterConfig()
 
 
-# TTLCache for get_litellm_router: keyed by policy, reuse router for 5 minutes
-# maxsize=1 since we only need one cached router instance
-_router_cache: TTLCache = TTLCache(maxsize=1, ttl=300)
+# TTLCache for get_litellm_router: keyed by policy, reuse router for 5 minutes.
+# Keep multiple policy variants cached concurrently to avoid rebuild churn when
+# callers switch between routing strategies.
+_router_cache: TTLCache = TTLCache(maxsize=8, ttl=300)
 _router_lock = Lock()
 
 # TTLCache for build_dynamic_fallback_router model list caching
@@ -686,7 +687,15 @@ class EnhancedRouter:
             RoutingResult with response and metadata
         """
         start_time = time.time()
-        selected_model = model
+        queue_metadata = kwargs.pop("queue_metadata", None)
+        if model is None and isinstance(queue_metadata, dict):
+            preferred_model = queue_metadata.get("model") or queue_metadata.get("preferred_model")
+            if isinstance(preferred_model, str) and preferred_model.strip():
+                selected_model = preferred_model.strip()
+            else:
+                selected_model = None
+        else:
+            selected_model = model
         is_fallback = False
 
         # Validate model metadata availability (silent check, no warning spam)

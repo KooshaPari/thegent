@@ -182,7 +182,10 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
         settings = settings or ThegentSettings()
         fallback_by_provider: dict[str, list[str]] = {}
         fallback_by_provider["cursor-agent"] = scrape_cursor() or [settings.default_cursor_model]
-        fallback_by_provider["cursor-api"] = scrape_cursor_api(settings) or ["claude-4.5-opus-high-thinking", "gpt-5.1-codex"]
+        fallback_by_provider["cursor-api"] = scrape_cursor_api(settings) or [
+            "claude-4.5-opus-high-thinking",
+            "gpt-5.1-codex",
+        ]
         fallback_by_provider["copilot"] = scrape_copilot() or [settings.default_copilot_model]
         fallback_by_provider["gemini"] = scrape_gemini() or [settings.default_gemini_model]
         fallback_by_provider["claude"] = scrape_claude() or [settings.default_claude_model]

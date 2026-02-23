@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_litellm_response(content: str) -> MagicMock:
     """Build a minimal litellm response mock."""
     message = SimpleNamespace(content=content)

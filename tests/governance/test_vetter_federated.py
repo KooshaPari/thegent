@@ -90,7 +90,9 @@ class _FakeFederatedPolicyManager:
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_uses_federated_manager_resolve_policy_when_namespace_context_present(tmp_path: Path) -> None:
+async def test_orchestrator_uses_federated_manager_resolve_policy_when_namespace_context_present(
+    tmp_path: Path,
+) -> None:
     fed_manager = _FakeFederatedPolicyManager(resolved_policy={"checks": ["fed_only"]})
     base_policy = VetterPolicy(checks=["base_only"])
 

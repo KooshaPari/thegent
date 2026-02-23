@@ -11,6 +11,8 @@ import socket
 import threading
 from pathlib import Path
 
+from thegent.agents.identity import verify_actor_signature
+
 logger = logging.getLogger(__name__)
 
 
@@ -105,3 +107,26 @@ class SSHIdentityProxy:
     def get_env(self) -> dict[str, str]:
         """Return the environment variable for L2 agents to use this proxy."""
         return {"SSH_AUTH_SOCK": str(self.proxy_socket_path), "THEGENT_IDENTITY_PROXY": "1"}
+
+    @staticmethod
+    def require_actor_identity(
+        *,
+        actor_id: str,
+        signature: str,
+        payload: str,
+        signing_key: str,
+    ) -> None:
+        """Require and validate actor identity metadata for write operations."""
+        if not actor_id.strip():
+            raise ValueError("actor_id must be non-empty")
+        if not signature.strip():
+            raise ValueError("signature must be non-empty")
+        if not signing_key.strip():
+            raise ValueError("signing_key must be non-empty")
+        if not verify_actor_signature(
+            actor_id=actor_id,
+            payload=payload,
+            signing_key=signing_key,
+            signature=signature,
+        ):
+            raise ValueError("invalid actor signature")

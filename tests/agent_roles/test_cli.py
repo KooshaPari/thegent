@@ -1,4 +1,5 @@
 """Agent roles CLI tests — TDD."""
+
 # @trace FR-AR-006
 from __future__ import annotations
 

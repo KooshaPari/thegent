@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class ExpiryStatus(str, Enum):
@@ -24,8 +24,8 @@ class AuthExpiryInfo:
     """Information about token expiry."""
 
     status: ExpiryStatus
-    expires_at: Optional[datetime] = None
-    hours_remaining: Optional[float] = None
+    expires_at: datetime | None = None
+    hours_remaining: float | None = None
     is_critical: bool = False
 
 
@@ -63,8 +63,7 @@ class AuthExpiryDetector:
 
         if expires_at is None:
             raise ValueError(
-                "token_info must contain expiry information "
-                "(expires_at, expiry_timestamp, ttl, or expires_in)"
+                "token_info must contain expiry information (expires_at, expiry_timestamp, ttl, or expires_in)"
             )
 
         now = datetime.now(timezone.utc)
@@ -87,7 +86,7 @@ class AuthExpiryDetector:
             is_critical=is_critical,
         )
 
-    def _extract_expiry_time(self, token_info: dict[str, Any]) -> Optional[datetime]:
+    def _extract_expiry_time(self, token_info: dict[str, Any]) -> datetime | None:
         """Extract expiry time from various token_info formats.
 
         Args:

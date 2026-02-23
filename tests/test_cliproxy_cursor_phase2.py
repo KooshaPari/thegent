@@ -58,9 +58,7 @@ class TestCursorTokenProvider:
         token = provider.get_token()
         assert token == "sk-testtoken123"
 
-    def test_get_token_caches_within_ttl(
-        self, provider: CursorTokenProvider, token_file: Path
-    ) -> None:
+    def test_get_token_caches_within_ttl(self, provider: CursorTokenProvider, token_file: Path) -> None:
         # @trace FR-CP-002
         t1 = provider.get_token()
         # Overwrite file; should NOT be re-read because TTL has not expired
@@ -68,9 +66,7 @@ class TestCursorTokenProvider:
         t2 = provider.get_token()
         assert t1 == t2 == "sk-testtoken123"
 
-    def test_get_token_refreshes_after_ttl(
-        self, provider: CursorTokenProvider, token_file: Path
-    ) -> None:
+    def test_get_token_refreshes_after_ttl(self, provider: CursorTokenProvider, token_file: Path) -> None:
         # @trace FR-CP-002
         provider.get_token()
         # Force TTL expiry by rewinding last_read_at
@@ -98,9 +94,7 @@ class TestCursorTokenProvider:
         with pytest.raises(FileNotFoundError, match="Cursor token file not found"):
             p.get_token()
 
-    def test_refresh_from_disk_returns_true_on_change(
-        self, provider: CursorTokenProvider, token_file: Path
-    ) -> None:
+    def test_refresh_from_disk_returns_true_on_change(self, provider: CursorTokenProvider, token_file: Path) -> None:
         # @trace FR-CP-002
         provider.get_token()
         # Force TTL expiry then change file
@@ -123,9 +117,7 @@ class TestCursorTokenProvider:
 
     def test_discover_returns_none_when_no_candidates(self, tmp_path: Path) -> None:
         # @trace FR-CP-002
-        with patch(
-            "thegent.routing.cursor_provider._CURSOR_SERVER_TOKEN_CANDIDATES", []
-        ):
+        with patch("thegent.routing.cursor_provider._CURSOR_SERVER_TOKEN_CANDIDATES", []):
             result = CursorTokenProvider.discover()
         assert result is None
 
@@ -171,9 +163,7 @@ class TestCursorExecutorManager:
         assert manager._active_clients == []
 
     @pytest.mark.asyncio
-    async def test_rebind_executors_noop_when_token_unchanged(
-        self, provider: CursorTokenProvider
-    ) -> None:
+    async def test_rebind_executors_noop_when_token_unchanged(self, provider: CursorTokenProvider) -> None:
         # @trace FR-CP-002
         token = provider.get_token()
         manager = CursorExecutorManager(provider=provider)
@@ -187,9 +177,7 @@ class TestCursorExecutorManager:
         client.aclose.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_rebind_executors_tolerates_client_aclose_error(
-        self, provider: CursorTokenProvider
-    ) -> None:
+    async def test_rebind_executors_tolerates_client_aclose_error(self, provider: CursorTokenProvider) -> None:
         # @trace FR-CP-002
         manager = CursorExecutorManager(provider=provider)
         manager._last_token = "sk-stale"

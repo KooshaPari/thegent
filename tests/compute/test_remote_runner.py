@@ -217,6 +217,7 @@ class TestRunAgentTaskAsync:
 
         # Verify the async method exists and has correct signature
         import inspect
+
         sig = inspect.signature(runner.run_agent_task_async)
         assert "prompt" in sig.parameters
         assert "agent" in sig.parameters

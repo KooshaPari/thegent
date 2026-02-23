@@ -18,7 +18,6 @@ runner = CompatCliRunner()
 
 
 @pytest.mark.e2e
-
 @pytest.mark.e2e
 class TestOrchestrateObserveRecoverStatusLogsWaitStopAlias:
     """E2E tests for orchestrate/observe/recover alias execution (status, logs, wait, stop)."""

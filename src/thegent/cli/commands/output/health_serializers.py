@@ -21,7 +21,7 @@ def _coerce_issue_types(value: Any) -> list[str]:
         return []
     if isinstance(value, dict):
         return [str(v) for v in value]
-    if isinstance(value, (list, tuple, set)):
+    if isinstance(value, (list | tuple | set)):
         return [str(v) for v in value]
     return [str(value)]
 

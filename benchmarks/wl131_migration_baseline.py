@@ -10,8 +10,9 @@ from __future__ import annotations
 
 import json
 import time
+import logging
 
-from thegent.routing.model_suffix_parser import parse_model_suffix  # noqa: WL-131
+from thegent.routing.model_suffix_parser import parse_model_suffix
 
 INPUTS = [
     "openai/gpt-4o",
@@ -40,4 +41,5 @@ def benchmark_parse_model_suffix() -> dict[str, float | int]:
 
 if __name__ == "__main__":
     result = benchmark_parse_model_suffix()
-    print(json.dumps(result, indent=2))
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logging.getLogger(__name__).info(json.dumps(result, indent=2))

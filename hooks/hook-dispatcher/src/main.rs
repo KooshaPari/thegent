@@ -1,3 +1,4 @@
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeSet, HashMap};
@@ -7,11 +8,10 @@ use std::io::{BufRead, BufReader, IsTerminal, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::OnceLock;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
-use regex::Regex;
-use std::sync::OnceLock;
 
 mod contract;
 mod dispatch;
@@ -20,7 +20,9 @@ mod io;
 
 use crate::contract::{HookInput, Mode};
 use crate::dispatch::dispatch_notification;
-use crate::governance_fs::{count_ai_slop, count_todos, scan_deep_nesting, scan_large_files, scan_secrets};
+use crate::governance_fs::{
+    count_ai_slop, count_todos, scan_deep_nesting, scan_large_files, scan_secrets,
+};
 use crate::io::{find_in_path, first_available, resolve_hooks_dir};
 
 // ---------------------------------------------------------------------------
@@ -56,20 +58,71 @@ fn get_named_secret_patterns() -> &'static Vec<SecretPattern> {
     static PATTERNS: OnceLock<Vec<SecretPattern>> = OnceLock::new();
     PATTERNS.get_or_init(|| {
         vec![
-            SecretPattern { kind: "openai_api_key",    regex: Regex::new(r"sk-[a-zA-Z0-9]{48}").unwrap() },
-            SecretPattern { kind: "openai_proj_key",   regex: Regex::new(r"sk-proj-[a-zA-Z0-9_-]{48,}").unwrap() },
-            SecretPattern { kind: "anthropic_api_key", regex: Regex::new(r"sk-ant-[a-zA-Z0-9_-]{90,}").unwrap() },
-            SecretPattern { kind: "google_cloud_key",  regex: Regex::new(r"AIza[0-9A-Za-z\-_]{35}").unwrap() },
-            SecretPattern { kind: "slack_token",       regex: Regex::new(r"xox[baprs]-[0-9A-Za-z\-]{10,}").unwrap() },
-            SecretPattern { kind: "private_key_block", regex: Regex::new(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----").unwrap() },
-            SecretPattern { kind: "square_access_token", regex: Regex::new(r"sq0atp-[0-9A-Za-z\-_]{22}").unwrap() },
-            SecretPattern { kind: "aws_access_key_id", regex: Regex::new(r"AKIA[0-9A-Z]{16}").unwrap() },
-            SecretPattern { kind: "aws_secret_key_context", regex: Regex::new(r"(?i)(aws_secret_access_key|secret_access_key)\s*[=:]\s*\S{20,}").unwrap() },
-            SecretPattern { kind: "github_pat",        regex: Regex::new(r"ghp_[a-zA-Z0-9]{36}").unwrap() },
-            SecretPattern { kind: "github_oauth",      regex: Regex::new(r"gho_[a-zA-Z0-9]{36}").unwrap() },
-            SecretPattern { kind: "github_app_token",  regex: Regex::new(r"ghs_[a-zA-Z0-9]{36}").unwrap() },
-            SecretPattern { kind: "generic_hex_secret", regex: Regex::new(r"(?i)(password|secret|token|api[_-]?key)\s*[=:]\s*[0-9a-f]{20,}").unwrap() },
-            SecretPattern { kind: "generic_base64_secret", regex: Regex::new(r"(?i)(password|secret|token|api[_-]?key)\s*[=:]\s*[A-Za-z0-9+/]{32,}={0,2}").unwrap() },
+            SecretPattern {
+                kind: "openai_api_key",
+                regex: Regex::new(r"sk-[a-zA-Z0-9]{48}").unwrap(),
+            },
+            SecretPattern {
+                kind: "openai_proj_key",
+                regex: Regex::new(r"sk-proj-[a-zA-Z0-9_-]{48,}").unwrap(),
+            },
+            SecretPattern {
+                kind: "anthropic_api_key",
+                regex: Regex::new(r"sk-ant-[a-zA-Z0-9_-]{90,}").unwrap(),
+            },
+            SecretPattern {
+                kind: "google_cloud_key",
+                regex: Regex::new(r"AIza[0-9A-Za-z\-_]{35}").unwrap(),
+            },
+            SecretPattern {
+                kind: "slack_token",
+                regex: Regex::new(r"xox[baprs]-[0-9A-Za-z\-]{10,}").unwrap(),
+            },
+            SecretPattern {
+                kind: "private_key_block",
+                regex: Regex::new(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----").unwrap(),
+            },
+            SecretPattern {
+                kind: "square_access_token",
+                regex: Regex::new(r"sq0atp-[0-9A-Za-z\-_]{22}").unwrap(),
+            },
+            SecretPattern {
+                kind: "aws_access_key_id",
+                regex: Regex::new(r"AKIA[0-9A-Z]{16}").unwrap(),
+            },
+            SecretPattern {
+                kind: "aws_secret_key_context",
+                regex: Regex::new(
+                    r"(?i)(aws_secret_access_key|secret_access_key)\s*[=:]\s*\S{20,}",
+                )
+                .unwrap(),
+            },
+            SecretPattern {
+                kind: "github_pat",
+                regex: Regex::new(r"ghp_[a-zA-Z0-9]{36}").unwrap(),
+            },
+            SecretPattern {
+                kind: "github_oauth",
+                regex: Regex::new(r"gho_[a-zA-Z0-9]{36}").unwrap(),
+            },
+            SecretPattern {
+                kind: "github_app_token",
+                regex: Regex::new(r"ghs_[a-zA-Z0-9]{36}").unwrap(),
+            },
+            SecretPattern {
+                kind: "generic_hex_secret",
+                regex: Regex::new(
+                    r"(?i)(password|secret|token|api[_-]?key)\s*[=:]\s*[0-9a-f]{20,}",
+                )
+                .unwrap(),
+            },
+            SecretPattern {
+                kind: "generic_base64_secret",
+                regex: Regex::new(
+                    r"(?i)(password|secret|token|api[_-]?key)\s*[=:]\s*[A-Za-z0-9+/]{32,}={0,2}",
+                )
+                .unwrap(),
+            },
         ]
     })
 }
@@ -246,7 +299,11 @@ fn read_spiral_metrics(path: &str) -> Vec<SpiralMetricRecord> {
         .collect()
 }
 
-fn build_spiral_trend(records: &[SpiralMetricRecord], source_file: &str, window: usize) -> SpiralTrendOutput {
+fn build_spiral_trend(
+    records: &[SpiralMetricRecord],
+    source_file: &str,
+    window: usize,
+) -> SpiralTrendOutput {
     if records.is_empty() {
         return SpiralTrendOutput {
             source_file: source_file.to_string(),
@@ -333,7 +390,8 @@ fn build_spiral_trend(records: &[SpiralMetricRecord], source_file: &str, window:
     } else {
         interrupt_count as f64 / window_used as f64
     };
-    let stale_total = stale_test_evidence_events + stale_build_evidence_events + stale_e2e_evidence_events;
+    let stale_total =
+        stale_test_evidence_events + stale_build_evidence_events + stale_e2e_evidence_events;
     let stale_rate = if window_used == 0 {
         0.0
     } else {
@@ -349,12 +407,11 @@ fn build_spiral_trend(records: &[SpiralMetricRecord], source_file: &str, window:
     } else {
         0.0
     };
-    let pressure_score =
-        (0.40 * breach_rate) +
-        (0.20 * interrupt_rate) +
-        (0.20 * stale_rate) +
-        (0.15 * streak_pressure) +
-        (0.05 * violations_delta_pressure);
+    let pressure_score = (0.40 * breach_rate)
+        + (0.20 * interrupt_rate)
+        + (0.20 * stale_rate)
+        + (0.15 * streak_pressure)
+        + (0.05 * violations_delta_pressure);
     let policy_band = if pressure_score >= 0.75 {
         "red"
     } else if pressure_score >= 0.45 {
@@ -449,8 +506,12 @@ fn parse_spiral_config_from_hook_yaml(content: &str) -> SpiralConfigOutput {
             "max_flaky_tests" => cfg.max_flaky_tests = value.to_string(),
             "max_missing_test_pairs" => cfg.max_missing_test_pairs = value.to_string(),
             "max_missing_test_types" => cfg.max_missing_test_types = value.to_string(),
-            "max_test_evidence_age_minutes" => cfg.max_test_evidence_age_minutes = value.to_string(),
-            "max_build_evidence_age_minutes" => cfg.max_build_evidence_age_minutes = value.to_string(),
+            "max_test_evidence_age_minutes" => {
+                cfg.max_test_evidence_age_minutes = value.to_string()
+            }
+            "max_build_evidence_age_minutes" => {
+                cfg.max_build_evidence_age_minutes = value.to_string()
+            }
             "max_e2e_evidence_age_minutes" => cfg.max_e2e_evidence_age_minutes = value.to_string(),
             "streak_trigger" => cfg.streak_trigger = value.to_string(),
             "require_e2e_first" => cfg.require_e2e_first = value.to_ascii_lowercase(),
@@ -459,7 +520,11 @@ fn parse_spiral_config_from_hook_yaml(content: &str) -> SpiralConfigOutput {
         }
     }
 
-    cfg.source = if in_settings { "hook-config".to_string() } else { cfg.source };
+    cfg.source = if in_settings {
+        "hook-config".to_string()
+    } else {
+        cfg.source
+    };
     cfg
 }
 
@@ -469,7 +534,8 @@ mod spiral_config_tests {
 
     #[test]
     fn spiral_parser_returns_defaults_when_block_missing() {
-        let cfg = parse_spiral_config_from_hook_yaml("settings:\n  cache_ttl: 600\nhooks:\n  x: y\n");
+        let cfg =
+            parse_spiral_config_from_hook_yaml("settings:\n  cache_ttl: 600\nhooks:\n  x: y\n");
         assert_eq!(cfg.max_failed_tests, "10");
         assert_eq!(cfg.max_flaky_tests, "8");
         assert_eq!(cfg.max_test_evidence_age_minutes, "90");
@@ -523,11 +589,22 @@ mod spiral_trend_tests {
 
     #[test]
     fn trend_computes_core_metrics() {
-        let rec = |ts: &str, violations: i64, streak: i64, interrupt: bool, status: &str, stale_test: i64, stale_build: i64, stale_e2e: i64| SpiralMetricRecord {
+        let rec = |ts: &str,
+                   violations: i64,
+                   streak: i64,
+                   interrupt: bool,
+                   status: &str,
+                   stale_test: i64,
+                   stale_build: i64,
+                   stale_e2e: i64| SpiralMetricRecord {
             generated_at: ts.to_string(),
             session_id: "s".to_string(),
             status: status.to_string(),
-            severity: if violations > 0 { "warning".to_string() } else { "info".to_string() },
+            severity: if violations > 0 {
+                "warning".to_string()
+            } else {
+                "info".to_string()
+            },
             reason: "".to_string(),
             violations,
             streak,
@@ -568,8 +645,16 @@ mod spiral_trend_tests {
         let rec = |ts: &str, violations: i64, streak: i64, interrupt: bool| SpiralMetricRecord {
             generated_at: ts.to_string(),
             session_id: "s".to_string(),
-            status: if interrupt { "critical_interrupt".to_string() } else { "warning".to_string() },
-            severity: if interrupt { "critical".to_string() } else { "warning".to_string() },
+            status: if interrupt {
+                "critical_interrupt".to_string()
+            } else {
+                "warning".to_string()
+            },
+            severity: if interrupt {
+                "critical".to_string()
+            } else {
+                "warning".to_string()
+            },
             reason: "".to_string(),
             violations,
             streak,
@@ -599,7 +684,10 @@ mod spiral_selector_tests {
     #[test]
     fn selector_csv_canonicalizes_sort_and_dedupe() {
         let out = canonicalize_selector_csv(" reliability,regression_spiral_guard,reliability ");
-        assert_eq!(out.cleaned_raw, "reliability,regression_spiral_guard,reliability");
+        assert_eq!(
+            out.cleaned_raw,
+            "reliability,regression_spiral_guard,reliability"
+        );
         assert_eq!(out.canonical, "regression_spiral_guard,reliability");
         assert!(out.selected_mode);
     }
@@ -641,17 +729,13 @@ fn get_noqa_justified_regex() -> &'static Regex {
 /// Return the lazily-initialized noqa-bare regex (any noqa annotation).
 fn get_noqa_bare_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(r"#\s*noq\x61").unwrap()
-    })
+    RE.get_or_init(|| Regex::new(r"#\s*noq\x61").unwrap())
 }
 
 /// Return the lazily-initialized TO\x44O/FIX\x4DE/HAC\x4B keyword regex.
 fn get_todo_keyword_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(r"(?i)\b(TO\x44O|FIX\x4DE|HAC\x4B|XXX)\b").unwrap()
-    })
+    RE.get_or_init(|| Regex::new(r"(?i)\b(TO\x44O|FIX\x4DE|HAC\x4B|XXX)\b").unwrap())
 }
 
 /// Return the lazily-initialized ticket reference regex.
@@ -798,10 +882,7 @@ fn scan_hardcoded_cred_violations(content: &str) -> Vec<GovernanceViolation> {
                     rule: "hardcoded-credential".to_string(),
                     severity: "error".to_string(),
                     line: idx + 1,
-                    message: format!(
-                        "Possible hardcoded credential at line {}.",
-                        idx + 1
-                    ),
+                    message: format!("Possible hardcoded credential at line {}.", idx + 1),
                 })
             } else {
                 None
@@ -840,7 +921,10 @@ fn cmd_governance(args: &[String]) -> ExitCode {
                     Ok(c) => c,
                     Err(e) => {
                         eprintln!("governance scan: cannot read {path:?}: {e}");
-                        let out = GovernanceScanOutput { violation_count: 0, violations: vec![] };
+                        let out = GovernanceScanOutput {
+                            violation_count: 0,
+                            violations: vec![],
+                        };
                         println!("{}", serde_json::to_string(&out).unwrap());
                         return ExitCode::from(1);
                     }
@@ -858,7 +942,11 @@ fn cmd_governance(args: &[String]) -> ExitCode {
                 violations,
             };
             println!("{}", serde_json::to_string(&out).unwrap());
-            if found { ExitCode::from(1) } else { ExitCode::from(0) }
+            if found {
+                ExitCode::from(1)
+            } else {
+                ExitCode::from(0)
+            }
         }
 
         "check-contract" => {
@@ -866,7 +954,9 @@ fn cmd_governance(args: &[String]) -> ExitCode {
             let contract_id = match args.get(3) {
                 Some(s) => s.clone(),
                 None => {
-                    eprintln!("usage: hook-dispatcher governance check-contract <contract_id> <file>");
+                    eprintln!(
+                        "usage: hook-dispatcher governance check-contract <contract_id> <file>"
+                    );
                     return ExitCode::from(1);
                 }
             };
@@ -879,7 +969,10 @@ fn cmd_governance(args: &[String]) -> ExitCode {
                     Ok(c) => c,
                     Err(e) => {
                         eprintln!("governance check-contract: cannot read {path:?}: {e}");
-                        let out = GovernanceScanOutput { violation_count: 0, violations: vec![] };
+                        let out = GovernanceScanOutput {
+                            violation_count: 0,
+                            violations: vec![],
+                        };
                         println!("{}", serde_json::to_string(&out).unwrap());
                         return ExitCode::from(1);
                     }
@@ -921,7 +1014,11 @@ fn cmd_governance(args: &[String]) -> ExitCode {
                 violations,
             };
             println!("{}", serde_json::to_string(&out).unwrap());
-            if found { ExitCode::from(1) } else { ExitCode::from(0) }
+            if found {
+                ExitCode::from(1)
+            } else {
+                ExitCode::from(0)
+            }
         }
 
         "spiral-config" => {
@@ -953,14 +1050,32 @@ fn cmd_governance(args: &[String]) -> ExitCode {
             if out_format == "env" {
                 println!("CFG_SPIRAL_MAX_FAILED_TESTS={}", cfg.max_failed_tests);
                 println!("CFG_SPIRAL_MAX_FLAKY_TESTS={}", cfg.max_flaky_tests);
-                println!("CFG_SPIRAL_MAX_MISSING_TEST_PAIRS={}", cfg.max_missing_test_pairs);
-                println!("CFG_SPIRAL_MAX_MISSING_TEST_TYPES={}", cfg.max_missing_test_types);
-                println!("CFG_SPIRAL_MAX_TEST_EVIDENCE_AGE_MINUTES={}", cfg.max_test_evidence_age_minutes);
-                println!("CFG_SPIRAL_MAX_BUILD_EVIDENCE_AGE_MINUTES={}", cfg.max_build_evidence_age_minutes);
-                println!("CFG_SPIRAL_MAX_E2E_EVIDENCE_AGE_MINUTES={}", cfg.max_e2e_evidence_age_minutes);
+                println!(
+                    "CFG_SPIRAL_MAX_MISSING_TEST_PAIRS={}",
+                    cfg.max_missing_test_pairs
+                );
+                println!(
+                    "CFG_SPIRAL_MAX_MISSING_TEST_TYPES={}",
+                    cfg.max_missing_test_types
+                );
+                println!(
+                    "CFG_SPIRAL_MAX_TEST_EVIDENCE_AGE_MINUTES={}",
+                    cfg.max_test_evidence_age_minutes
+                );
+                println!(
+                    "CFG_SPIRAL_MAX_BUILD_EVIDENCE_AGE_MINUTES={}",
+                    cfg.max_build_evidence_age_minutes
+                );
+                println!(
+                    "CFG_SPIRAL_MAX_E2E_EVIDENCE_AGE_MINUTES={}",
+                    cfg.max_e2e_evidence_age_minutes
+                );
                 println!("CFG_SPIRAL_STREAK_TRIGGER={}", cfg.streak_trigger);
                 println!("CFG_REQUIRE_E2E_FIRST={}", cfg.require_e2e_first);
-                println!("CFG_REQUIRE_ENV_READY_FIRST={}", cfg.require_env_ready_first);
+                println!(
+                    "CFG_REQUIRE_ENV_READY_FIRST={}",
+                    cfg.require_env_ready_first
+                );
                 println!("CFG_SPIRAL_SOURCE={}", cfg.source);
             } else {
                 println!("{}", serde_json::to_string(&cfg).unwrap());
@@ -970,7 +1085,8 @@ fn cmd_governance(args: &[String]) -> ExitCode {
 
         "spiral-trend" => {
             // args: governance spiral-trend [path] [--window N]
-            let mut metrics_path = ".claude/verification/regression-spiral-metrics.jsonl".to_string();
+            let mut metrics_path =
+                ".claude/verification/regression-spiral-metrics.jsonl".to_string();
             let mut window = 50usize;
             let mut i = 3usize;
             while i < args.len() {
@@ -1006,7 +1122,9 @@ fn cmd_governance(args: &[String]) -> ExitCode {
                         i += 2;
                     }
                     "--format" => {
-                        eprintln!("governance spiral-selector: --format requires a value (csv|json)");
+                        eprintln!(
+                            "governance spiral-selector: --format requires a value (csv|json)"
+                        );
                         return ExitCode::from(2);
                     }
                     s if s.starts_with("--") => {
@@ -1067,7 +1185,10 @@ fn cmd_scan_secrets(args: &[String]) -> ExitCode {
         match fs::read_to_string(path) {
             Ok(c) => c,
             Err(e) => {
-                let output = ScanSecretsOutput { found: false, matches: vec![] };
+                let output = ScanSecretsOutput {
+                    found: false,
+                    matches: vec![],
+                };
                 eprintln!("scan-secrets: cannot read {:?}: {e}", path);
                 println!("{}", serde_json::to_string(&output).unwrap());
                 return ExitCode::from(1);
@@ -1084,7 +1205,11 @@ fn cmd_scan_secrets(args: &[String]) -> ExitCode {
     let output = ScanSecretsOutput { found, matches };
     println!("{}", serde_json::to_string(&output).unwrap());
     // Exit 1 when secrets found (non-zero signals caller to block)
-    if found { ExitCode::from(1) } else { ExitCode::from(0) }
+    if found {
+        ExitCode::from(1)
+    } else {
+        ExitCode::from(0)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1116,10 +1241,16 @@ impl WorkerPool {
                     Err(_) => break,
                 }
             });
-            workers.push(Worker { id, thread: Some(thread) });
+            workers.push(Worker {
+                id,
+                thread: Some(thread),
+            });
         }
 
-        WorkerPool { workers, sender: Some(sender) }
+        WorkerPool {
+            workers,
+            sender: Some(sender),
+        }
     }
 
     fn execute<F>(&self, f: F)
@@ -1127,7 +1258,9 @@ impl WorkerPool {
         F: FnOnce() + Send + 'static,
     {
         if let Some(ref sender) = self.sender {
-            sender.send(Box::new(f)).expect("failed to send job to worker");
+            sender
+                .send(Box::new(f))
+                .expect("failed to send job to worker");
         }
     }
 }
@@ -1164,7 +1297,10 @@ fn run_doc_location_guard(_env_map: &HashMap<String, String>) -> i32 {
 }
 
 fn run_session_cleanup(env_map: &HashMap<String, String>) -> i32 {
-    let project_dir = env_map.get("PROJECT_DIR").map(|s| s.as_str()).unwrap_or(".");
+    let project_dir = env_map
+        .get("PROJECT_DIR")
+        .map(|s| s.as_str())
+        .unwrap_or(".");
 
     let change_log = format!("{}/.claude/session-changes.log", project_dir);
     let qa_state = format!("{}/.claude/qa-state.json", project_dir);
@@ -1175,8 +1311,12 @@ fn run_session_cleanup(env_map: &HashMap<String, String>) -> i32 {
     0
 }
 
-fn run_prompt_submit_guard(_env_map: &HashMap<String, String>, input_json: &serde_json::Value) -> i32 {
-    let prompt_text = input_json.get("tool_input")
+fn run_prompt_submit_guard(
+    _env_map: &HashMap<String, String>,
+    input_json: &serde_json::Value,
+) -> i32 {
+    let prompt_text = input_json
+        .get("tool_input")
         .and_then(|ti| ti.get("prompt").or_else(|| ti.get("content")))
         .or_else(|| input_json.get("content"))
         .and_then(|v| v.as_str())
@@ -1190,7 +1330,14 @@ fn run_prompt_submit_guard(_env_map: &HashMap<String, String>, input_json: &serd
     let mut antipatterns = Vec::new();
 
     // Test-skipping
-    let test_patterns = ["skip tests", "skip the tests", "don't write tests", "no tests", "dont write tests", "without tests"];
+    let test_patterns = [
+        "skip tests",
+        "skip the tests",
+        "don't write tests",
+        "no tests",
+        "dont write tests",
+        "without tests",
+    ];
     for p in &test_patterns {
         if prompt_lower.contains(p) {
             antipatterns.push(format!("test-skipping: \"{p}\""));
@@ -1208,7 +1355,12 @@ fn run_prompt_submit_guard(_env_map: &HashMap<String, String>, input_json: &serd
     }
 
     // Quality-skipping
-    let quality_patterns = ["just make it work", "just get it working", "just get it done", "make it work somehow"];
+    let quality_patterns = [
+        "just make it work",
+        "just get it working",
+        "just get it done",
+        "make it work somehow",
+    ];
     for p in &quality_patterns {
         if prompt_lower.contains(p) {
             antipatterns.push(format!("quality-shortcut: \"{p}\""));
@@ -1217,7 +1369,13 @@ fn run_prompt_submit_guard(_env_map: &HashMap<String, String>, input_json: &serd
     }
 
     // Error-suppression
-    let error_patterns = ["ignore the errors", "ignore errors", "suppress the", "suppress errors", "hide the errors"];
+    let error_patterns = [
+        "ignore the errors",
+        "ignore errors",
+        "suppress the",
+        "suppress errors",
+        "hide the errors",
+    ];
     for p in &error_patterns {
         if prompt_lower.contains(p) {
             antipatterns.push(format!("error-suppression: \"{p}\""));
@@ -1226,7 +1384,13 @@ fn run_prompt_submit_guard(_env_map: &HashMap<String, String>, input_json: &serd
     }
 
     // Dangerous git
-    let git_patterns = ["--no-verify", "--force", "force push", "force-push", "--force-with-lease"];
+    let git_patterns = [
+        "--no-verify",
+        "--force",
+        "force push",
+        "force-push",
+        "--force-with-lease",
+    ];
     for p in &git_patterns {
         if prompt_lower.contains(p) {
             antipatterns.push(format!("dangerous-git: \"{p}\""));
@@ -1244,7 +1408,20 @@ fn run_prompt_submit_guard(_env_map: &HashMap<String, String>, input_json: &serd
     }
 
     // Workflow triggers (Idea/Task)
-    let idea_patterns = ["idea", "research", "explore", "figure out", "add feature", "build", "implement", "design", "create", "task", "feature", "investigate"];
+    let idea_patterns = [
+        "idea",
+        "research",
+        "explore",
+        "figure out",
+        "add feature",
+        "build",
+        "implement",
+        "design",
+        "create",
+        "task",
+        "feature",
+        "investigate",
+    ];
     for p in &idea_patterns {
         if prompt_lower.contains(p) {
             eprintln!("\n--- Agent workflow (idea/task detected) ---");
@@ -1257,7 +1434,11 @@ fn run_prompt_submit_guard(_env_map: &HashMap<String, String>, input_json: &serd
     }
 
     // Special flags: $defer, $pending, $block, $idea
-    if prompt_text.contains("$defer") || prompt_text.contains("$pending") || prompt_text.contains("$block") || prompt_text.contains("$idea") {
+    if prompt_text.contains("$defer")
+        || prompt_text.contains("$pending")
+        || prompt_text.contains("$block")
+        || prompt_text.contains("$idea")
+    {
         return 99; // Sentinel value to trigger fallback
     }
 
@@ -1280,7 +1461,10 @@ fn run_governance_scan(project_dir: &str) -> i32 {
         }
     }
     if !missing.is_empty() {
-        eprintln!("GOVERNANCE [Dimension 1: Docs]: missing required doc subdirs: {:?}", missing);
+        eprintln!(
+            "GOVERNANCE [Dimension 1: Docs]: missing required doc subdirs: {:?}",
+            missing
+        );
         violation_count += 1;
     }
 
@@ -1310,7 +1494,10 @@ fn run_governance_scan(project_dir: &str) -> i32 {
     let mut large_files = Vec::new();
     scan_large_files(project_path, &mut large_files, 100 * 1024);
     if !large_files.is_empty() {
-        eprintln!("GOVERNANCE [Dimension 3: Size]: found {} file(s) > 100KB", large_files.len());
+        eprintln!(
+            "GOVERNANCE [Dimension 3: Size]: found {} file(s) > 100KB",
+            large_files.len()
+        );
         for f in large_files.iter().take(5) {
             eprintln!("  - {:?}", f);
         }
@@ -1318,41 +1505,68 @@ fn run_governance_scan(project_dir: &str) -> i32 {
     }
 
     // 4. TODO Sprawl
-    let todo_count = count_todos(project_path);
+    let todo_count = match count_todos(project_path) {
+        Ok(todo_count) => todo_count,
+        Err(err) => {
+            eprintln!(
+                "GOVERNANCE [Dimension 4: TODOs]: failed to scan TODO/FIXME markers: {}",
+                err
+            );
+            return 1;
+        }
+    };
     if todo_count > 50 {
-        eprintln!("GOVERNANCE [Dimension 4: TODOs]: high TODO count: {}", todo_count);
+        eprintln!(
+            "GOVERNANCE [Dimension 4: TODOs]: high TODO count: {}",
+            todo_count
+        );
         violation_count += 1;
     }
 
     // 5. AI Slop Detection (Dimension 5)
     let slop_count = count_ai_slop(project_path);
     if slop_count > 0 {
-        eprintln!("GOVERNANCE [Dimension 5: Slop]: detected {} instance(s) of AI slop", slop_count);
+        eprintln!(
+            "GOVERNANCE [Dimension 5: Slop]: detected {} instance(s) of AI slop",
+            slop_count
+        );
         violation_count += 1;
     }
 
     // 6. Secret Detection (Dimension 6)
     let secret_count = scan_secrets(project_path, get_secret_regexes());
     if secret_count > 0 {
-        eprintln!("GOVERNANCE [Dimension 6: Security]: detected {} potential secret(s)", secret_count);
+        eprintln!(
+            "GOVERNANCE [Dimension 6: Security]: detected {} potential secret(s)",
+            secret_count
+        );
         violation_count += 1;
     }
 
     // 7. Complexity (Dimension 7: Deep Nesting)
     let deep_files = scan_deep_nesting(project_path, 8);
     if !deep_files.is_empty() {
-        eprintln!("GOVERNANCE [Dimension 7: Complexity]: found {} file(s) nested deeper than 8 levels", deep_files.len());
+        eprintln!(
+            "GOVERNANCE [Dimension 7: Complexity]: found {} file(s) nested deeper than 8 levels",
+            deep_files.len()
+        );
         violation_count += 1;
     }
 
     // 8. License/Provenance (Dimension 8)
-    if !project_path.join("LICENSE").exists() && !project_path.join("COPYING").exists() && !project_path.join("LICENSE.md").exists() {
+    if !project_path.join("LICENSE").exists()
+        && !project_path.join("COPYING").exists()
+        && !project_path.join("LICENSE.md").exists()
+    {
         eprintln!("GOVERNANCE [Dimension 8: Provenance]: missing LICENSE file");
         violation_count += 1;
     }
 
     if violation_count > 0 {
-        eprintln!("GOVERNANCE: scan completed with {} dimension violation(s)", violation_count);
+        eprintln!(
+            "GOVERNANCE: scan completed with {} dimension violation(s)",
+            violation_count
+        );
     } else {
         println!("GOVERNANCE: all dimensions green.");
     }
@@ -1376,24 +1590,22 @@ fn get_skip_hooks(project_dir: &str) -> Vec<String> {
     }
 
     match fs::read_to_string(path) {
-        Ok(content) => {
-            match serde_json::from_str::<serde_json::Value>(&content) {
-                Ok(json) => {
-                    let mut skip_list = Vec::new();
-                    if let Some(hooks) = json.get("hooks").and_then(|h| h.get("skip")) {
-                        if let Some(arr) = hooks.as_array() {
-                            for item in arr {
-                                if let Some(s) = item.as_str() {
-                                    skip_list.push(s.to_string());
-                                }
+        Ok(content) => match serde_json::from_str::<serde_json::Value>(&content) {
+            Ok(json) => {
+                let mut skip_list = Vec::new();
+                if let Some(hooks) = json.get("hooks").and_then(|h| h.get("skip")) {
+                    if let Some(arr) = hooks.as_array() {
+                        for item in arr {
+                            if let Some(s) = item.as_str() {
+                                skip_list.push(s.to_string());
                             }
                         }
                     }
-                    skip_list
                 }
-                Err(_) => Vec::new(),
+                skip_list
             }
-        }
+            Err(_) => Vec::new(),
+        },
         Err(_) => Vec::new(),
     }
 }
@@ -1493,7 +1705,11 @@ fn build_env(
         .cwd
         .clone()
         .or_else(|| input.project_dir.clone())
-        .or_else(|| env::current_dir().ok().map(|p| p.to_string_lossy().into_owned()))
+        .or_else(|| {
+            env::current_dir()
+                .ok()
+                .map(|p| p.to_string_lossy().into_owned())
+        })
         .unwrap_or_default();
     let project_dir = resolved_dir.as_str();
     let session_id = input.session_id.as_deref().unwrap_or("");
@@ -1554,10 +1770,16 @@ fn build_env(
         first_available(&["gtimeout", "timeout"]),
     );
     env_map.insert("RG_CMD".into(), first_available(&["rg"]));
-    env_map.insert("RG_TIMEOUT_SEC".into(), env::var("RG_TIMEOUT_SEC").unwrap_or_else(|_| "30".into()));
+    env_map.insert(
+        "RG_TIMEOUT_SEC".into(),
+        env::var("RG_TIMEOUT_SEC").unwrap_or_else(|_| "30".into()),
+    );
     env_map.insert("FD_CMD".into(), first_available(&["fd", "fdfind"]));
     env_map.insert("PGREP_CMD".into(), first_available(&["pgrep"]));
-    env_map.insert("HASH_CMD".into(), first_available(&["b3sum", "sha256sum", "shasum"]));
+    env_map.insert(
+        "HASH_CMD".into(),
+        first_available(&["b3sum", "sha256sum", "shasum"]),
+    );
 
     // Timestamps
     let now = std::time::SystemTime::now();
@@ -1568,10 +1790,7 @@ fn build_env(
     env_map.insert("_TOOL_CACHE_LOADED".into(), "1".into());
 
     // Hooks dir for child scripts
-    env_map.insert(
-        "HOOKS_DIR".into(),
-        hooks_dir.to_string_lossy().into_owned(),
-    );
+    env_map.insert("HOOKS_DIR".into(), hooks_dir.to_string_lossy().into_owned());
 
     // Stop-mode extras: pre-compute git changed files
     if mode == Mode::Stop && !project_dir.is_empty() {
@@ -1727,8 +1946,30 @@ fn run_hook_with_idle_timeout(
     max_timeout: Duration,
 ) -> HookResult {
     // MTSP-20: Native Rust hook execution (avoid shell bridge)
-    if hook_name == "quality-gate.sh" || hook_name == "security-pipeline.sh" || hook_name == "stop-dispatcher.sh" || hook_name == "stop-reconcile.sh" || hook_name == "complexity-ratchet.sh" || hook_name == "spec-verifier.sh" || hook_name == "test-maturity.sh" || hook_name == "suppression-blocker.sh" || hook_name == "pre-write-validator.sh" || hook_name == "post-edit-checker.sh" || hook_name == "task-completion-verifier.sh" || hook_name == "doc-location-guard.sh" || hook_name == "change-doc-tracker.sh" || hook_name == "friction-detector.sh" || hook_name == "agent-antipattern-detector.sh" {
-        return run_hook(hooks_dir, hook_name, extra_args, env_map, temp_path, Some(max_timeout));
+    if hook_name == "quality-gate.sh"
+        || hook_name == "security-pipeline.sh"
+        || hook_name == "stop-dispatcher.sh"
+        || hook_name == "stop-reconcile.sh"
+        || hook_name == "complexity-ratchet.sh"
+        || hook_name == "spec-verifier.sh"
+        || hook_name == "test-maturity.sh"
+        || hook_name == "suppression-blocker.sh"
+        || hook_name == "pre-write-validator.sh"
+        || hook_name == "post-edit-checker.sh"
+        || hook_name == "task-completion-verifier.sh"
+        || hook_name == "doc-location-guard.sh"
+        || hook_name == "change-doc-tracker.sh"
+        || hook_name == "friction-detector.sh"
+        || hook_name == "agent-antipattern-detector.sh"
+    {
+        return run_hook(
+            hooks_dir,
+            hook_name,
+            extra_args,
+            env_map,
+            temp_path,
+            Some(max_timeout),
+        );
     }
 
     let script = hooks_dir.join(hook_name);
@@ -1760,7 +2001,12 @@ fn run_hook_with_idle_timeout(
 
     match shell_type {
         ShellType::Pwsh | ShellType::Powershell => {
-            cmd.args(["-NoProfile", "-NonInteractive", "-File", &script.to_string_lossy()]);
+            cmd.args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-File",
+                &script.to_string_lossy(),
+            ]);
         }
         _ => {
             cmd.arg(&script);
@@ -1893,11 +2139,7 @@ fn run_hook_with_idle_timeout(
                     thread::sleep(Duration::from_millis(50));
                     return HookResult {
                         name: hook_name.into(),
-                        rc: child
-                            .wait()
-                            .ok()
-                            .and_then(|s| s.code())
-                            .unwrap_or(1),
+                        rc: child.wait().ok().and_then(|s| s.code()).unwrap_or(1),
                         stdout: String::from_utf8_lossy(&stdout_buf.lock().unwrap()).into_owned(),
                         stderr: String::from_utf8_lossy(&stderr_buf.lock().unwrap()).into_owned(),
                     };
@@ -1930,7 +2172,36 @@ fn run_hook(
     timeout: Option<Duration>,
 ) -> HookResult {
     // MTSP-20: Native Rust hook execution (avoid shell bridge)
-    if hook_name == "quality-gate.sh" || hook_name == "security-pipeline.sh" || hook_name == "stop-dispatcher.sh" || hook_name == "stop-reconcile.sh" || hook_name == "complexity-ratchet.sh" || hook_name == "spec-verifier.sh" || hook_name == "test-maturity.sh" || hook_name == "suppression-blocker.sh" || hook_name == "pre-write-validator.sh" || hook_name == "post-edit-checker.sh" || hook_name == "task-completion-verifier.sh" || hook_name == "doc-location-guard.sh" || hook_name == "change-doc-tracker.sh" || hook_name == "friction-detector.sh" || hook_name == "agent-antipattern-detector.sh" || hook_name == "agileplus-cycle.sh" || hook_name == "teammate-reconcile.sh" || hook_name == "qa-artifact-quality-gate.sh" || hook_name == "qa-assurance-case-gate.sh" || hook_name == "qa-policy-engine.sh" || hook_name == "spec-preflight.sh" || hook_name == "prompt-submit-guard.sh" || hook_name == "subagent-quality-gate.sh" || hook_name == "pre-compact-snapshot.sh" || hook_name == "auto-checkpoint.sh" || hook_name == "task-completed.sh" || hook_name == "teammate-idle.sh" || hook_name == "harvest-idea-seeds-stop.sh" || hook_name == "harvest-pending-queue.sh" {
+    if hook_name == "quality-gate.sh"
+        || hook_name == "security-pipeline.sh"
+        || hook_name == "stop-dispatcher.sh"
+        || hook_name == "stop-reconcile.sh"
+        || hook_name == "complexity-ratchet.sh"
+        || hook_name == "spec-verifier.sh"
+        || hook_name == "test-maturity.sh"
+        || hook_name == "suppression-blocker.sh"
+        || hook_name == "pre-write-validator.sh"
+        || hook_name == "post-edit-checker.sh"
+        || hook_name == "task-completion-verifier.sh"
+        || hook_name == "doc-location-guard.sh"
+        || hook_name == "change-doc-tracker.sh"
+        || hook_name == "friction-detector.sh"
+        || hook_name == "agent-antipattern-detector.sh"
+        || hook_name == "agileplus-cycle.sh"
+        || hook_name == "teammate-reconcile.sh"
+        || hook_name == "qa-artifact-quality-gate.sh"
+        || hook_name == "qa-assurance-case-gate.sh"
+        || hook_name == "qa-policy-engine.sh"
+        || hook_name == "spec-preflight.sh"
+        || hook_name == "prompt-submit-guard.sh"
+        || hook_name == "subagent-quality-gate.sh"
+        || hook_name == "pre-compact-snapshot.sh"
+        || hook_name == "auto-checkpoint.sh"
+        || hook_name == "task-completed.sh"
+        || hook_name == "teammate-idle.sh"
+        || hook_name == "harvest-idea-seeds-stop.sh"
+        || hook_name == "harvest-pending-queue.sh"
+    {
         let tool = match hook_name {
             "quality-gate.sh" => "quality-gate",
             "security-pipeline.sh" => "security-pipeline",
@@ -1964,7 +2235,12 @@ fn run_hook(
             _ => unreachable!(),
         };
 
-        let mut cmd = Command::new(env_map.get("THEGENT_HOOKS_BIN").map(|s| s.as_str()).unwrap_or("thegent-hooks"));
+        let mut cmd = Command::new(
+            env_map
+                .get("THEGENT_HOOKS_BIN")
+                .map(|s| s.as_str())
+                .unwrap_or("thegent-hooks"),
+        );
         cmd.arg(tool);
         for arg in extra_args {
             cmd.arg(arg);
@@ -1972,12 +2248,25 @@ fn run_hook(
 
         let stdin_file = match fs::File::open(temp_path) {
             Ok(f) => f,
-            Err(e) => return HookResult { name: hook_name.into(), rc: 1, stdout: String::new(), stderr: format!("failed to open temp file: {e}") },
+            Err(e) => {
+                return HookResult {
+                    name: hook_name.into(),
+                    rc: 1,
+                    stdout: String::new(),
+                    stderr: format!("failed to open temp file: {e}"),
+                }
+            }
         };
 
-        cmd.stdin(Stdio::from(stdin_file)).stdout(Stdio::piped()).stderr(Stdio::piped());
-        for (k, v) in env_map { cmd.env(k, v); }
-        if let Some(project_dir) = env_map.get("PROJECT_DIR") { cmd.current_dir(project_dir); }
+        cmd.stdin(Stdio::from(stdin_file))
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        for (k, v) in env_map {
+            cmd.env(k, v);
+        }
+        if let Some(project_dir) = env_map.get("PROJECT_DIR") {
+            cmd.current_dir(project_dir);
+        }
 
         let output = cmd.output().unwrap();
         return HookResult {
@@ -2017,7 +2306,12 @@ fn run_hook(
 
     match shell_type {
         ShellType::Pwsh | ShellType::Powershell => {
-            cmd.args(["-NoProfile", "-NonInteractive", "-File", &script.to_string_lossy()]);
+            cmd.args([
+                "-NoProfile",
+                "-NonInteractive",
+                "-File",
+                &script.to_string_lossy(),
+            ]);
         }
         _ => {
             cmd.arg(&script);
@@ -2087,10 +2381,7 @@ fn run_hook(
                                 name: hook_name.into(),
                                 rc: 124,
                                 stdout: String::new(),
-                                stderr: format!(
-                                    "{hook_name}: timed out after {}s",
-                                    dur.as_secs()
-                                ),
+                                stderr: format!("{hook_name}: timed out after {}s", dur.as_secs()),
                             };
                         }
                         thread::sleep(Duration::from_millis(50));
@@ -2194,10 +2485,7 @@ fn run_combined_blocking(
     script.push_str("exit 0\n");
 
     // Write wrapper to temp file
-    let wrapper_path = PathBuf::from(format!(
-        "/tmp/hook-combined-{}.sh",
-        std::process::id()
-    ));
+    let wrapper_path = PathBuf::from(format!("/tmp/hook-combined-{}.sh", std::process::id()));
     if fs::write(&wrapper_path, &script).is_err() {
         // Fallback to individual execution
         return run_sequential_blocking(hooks, hooks_dir, env_map, temp_path);
@@ -2278,7 +2566,10 @@ fn run_combined_advisory(
             if !result.stderr.is_empty() {
                 eprint!("{}", result.stderr);
             }
-            eprintln!("{label} DISPATCHER: advisory failure: {}(rc={})", result.name, result.rc);
+            eprintln!(
+                "{label} DISPATCHER: advisory failure: {}(rc={})",
+                result.name, result.rc
+            );
         }
         return 0;
     }
@@ -2442,8 +2733,15 @@ fn run_parallel_with_idle_timeout(
 
         let handle = thread::spawn(move || {
             let args_refs: Vec<&str> = args_owned.iter().map(|s| s.as_str()).collect();
-            let result =
-                run_hook_with_idle_timeout(&hdir, &hook_name, &args_refs, &env_c, &tpath, idle_timeout, max_timeout);
+            let result = run_hook_with_idle_timeout(
+                &hdir,
+                &hook_name,
+                &args_refs,
+                &env_c,
+                &tpath,
+                idle_timeout,
+                max_timeout,
+            );
             res.lock().unwrap().push(result);
         });
         handles.push(handle);
@@ -2597,7 +2895,8 @@ fn main() -> ExitCode {
                 ("async-test-runner.sh", &[]),
                 ("speculative-stop-prewarmer.sh", &[]),
             ];
-            let rc = run_combined_advisory(&hooks, &hooks_dir, &env_map, &temp_file.path, "POSTTOOL");
+            let rc =
+                run_combined_advisory(&hooks, &hooks_dir, &env_map, &temp_file.path, "POSTTOOL");
             ExitCode::from(rc as u8)
         }
 
@@ -2605,7 +2904,8 @@ fn main() -> ExitCode {
         // Stop: parallel with timeout, propagate exit code
         // -----------------------------------------------------------------
         Mode::Stop => {
-            let stop_settings = read_stop_settings(&env_map.get("PROJECT_DIR").cloned().unwrap_or_default());
+            let stop_settings =
+                read_stop_settings(&env_map.get("PROJECT_DIR").cloned().unwrap_or_default());
             env_map.insert("THGENT_STOP_PROFILE".into(), stop_settings.profile.clone());
             env_map.insert(
                 "THGENT_STOP_IDLE_TIMEOUT_SEC".into(),
@@ -2633,14 +2933,9 @@ fn main() -> ExitCode {
 
             let hooks: Vec<(&str, &[&str])> = match stop_settings.profile.as_str() {
                 // Minimal floor for very tight loops.
-                "ultrafast" => vec![
-                    ("stop-reconcile.sh", &[]),
-                ],
+                "ultrafast" => vec![("stop-reconcile.sh", &[])],
                 // Hybrid fast profile: keep bounded runtime while still running stage-gated quality checks.
-                "fast" => vec![
-                    ("quality-gate.sh", &[]),
-                    ("stop-reconcile.sh", &[]),
-                ],
+                "fast" => vec![("quality-gate.sh", &[]), ("stop-reconcile.sh", &[])],
                 // Standard profile: adds task closure and orphan pruning.
                 "standard" => vec![
                     ("quality-gate.sh", &[]),
@@ -2720,10 +3015,7 @@ fn main() -> ExitCode {
             // Only print failure summary if there are actual failures
             // Silent on complete success (no output when all hooks pass)
             if !failures.is_empty() {
-                eprintln!(
-                    "STOP DISPATCHER: non-zero from: {}",
-                    failures.join("; ")
-                );
+                eprintln!("STOP DISPATCHER: non-zero from: {}", failures.join("; "));
             }
             let notify_msg = if failures.is_empty() {
                 format!(
@@ -2744,7 +3036,11 @@ fn main() -> ExitCode {
                 &env_map,
                 "stop",
                 if failures.is_empty() { "info" } else { "error" },
-                if failures.is_empty() { "Stop Complete" } else { "Stop Issues" },
+                if failures.is_empty() {
+                    "Stop Complete"
+                } else {
+                    "Stop Issues"
+                },
                 &notify_msg,
             );
             // Clamp to u8 range
@@ -2776,13 +3072,12 @@ fn main() -> ExitCode {
         // UserPromptSubmit: sequential, blocking (fail-fast)
         // -----------------------------------------------------------------
         Mode::PromptSubmit => {
-            let native_rc = run_prompt_submit_guard(&env_map, &serde_json::to_value(&input).unwrap());
+            let native_rc =
+                run_prompt_submit_guard(&env_map, &serde_json::to_value(&input).unwrap());
             if native_rc != 99 {
                 return ExitCode::from(native_rc as u8);
             }
-            let hooks: Vec<(&str, &[&str])> = vec![
-                ("prompt-submit-guard.sh", &[]),
-            ];
+            let hooks: Vec<(&str, &[&str])> = vec![("prompt-submit-guard.sh", &[])];
             let rc = run_combined_blocking(&hooks, &hooks_dir, &env_map, &temp_file.path);
             ExitCode::from(rc as u8)
         }
@@ -2825,13 +3120,8 @@ fn main() -> ExitCode {
                 ("pre-compact-snapshot.sh", &[]),
                 ("auto-checkpoint.sh", &[]),
             ];
-            let rc = run_combined_advisory(
-                &hooks,
-                &hooks_dir,
-                &env_map,
-                &temp_file.path,
-                "PRECOMPACT",
-            );
+            let rc =
+                run_combined_advisory(&hooks, &hooks_dir, &env_map, &temp_file.path, "PRECOMPACT");
             ExitCode::from(rc as u8)
         }
 
@@ -2882,7 +3172,14 @@ fn main() -> ExitCode {
         Mode::TeammateIdle => {
             // TeammateIdle is special: it can return exit 2 to signal feedback injection.
             // So we don't use run_single_advisory which forces exit 0.
-            let result = run_hook(&hooks_dir, "teammate-idle.sh", &[], &env_map, &temp_file.path, None);
+            let result = run_hook(
+                &hooks_dir,
+                "teammate-idle.sh",
+                &[],
+                &env_map,
+                &temp_file.path,
+                None,
+            );
             if !result.stdout.is_empty() {
                 eprint!("{}", result.stdout);
             }
@@ -2902,9 +3199,7 @@ fn main() -> ExitCode {
         // PostAgentRun: single script, blocking
         // -----------------------------------------------------------------
         Mode::PostAgentRun => {
-            let hooks: Vec<(&str, &[&str])> = vec![
-                ("post-agent-run-vetter.sh", &[]),
-            ];
+            let hooks: Vec<(&str, &[&str])> = vec![("post-agent-run-vetter.sh", &[])];
             let rc = run_combined_blocking(&hooks, &hooks_dir, &env_map, &temp_file.path);
             ExitCode::from(rc as u8)
         }

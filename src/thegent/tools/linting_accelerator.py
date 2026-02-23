@@ -177,14 +177,50 @@ class LintingAccelerator:
         fast: bool = True,
         oxlint_config: Path | None = None,
         eslint_config: Path | None = None,
-    ) -> list[LintResult]:
+        include_status: bool = False,
+    ) -> list[LintResult] | dict[str, Any]:
         """Unified lint entry point."""
         if fast:
             if self.is_oxlint_available():
-                return self.run_oxlint(paths, config=oxlint_config)
+                results = self.run_oxlint(paths, config=oxlint_config)
+                if include_status:
+                    return {
+                        "status": "ok",
+                        "engine": "oxlint",
+                        "results": results,
+                    }
+                return results
             if self.is_eslint_available():
-                return self.run_eslint(paths, config=eslint_config)
+                results = self.run_eslint(paths, config=eslint_config)
+                if include_status:
+                    return {
+                        "status": "ok",
+                        "engine": "eslint",
+                        "results": results,
+                    }
+                return results
+            if include_status:
+                return {
+                    "status": "unavailable",
+                    "engine": None,
+                    "results": [],
+                    "reason": "no_fast_linter_available",
+                }
             return []
         if self.is_eslint_available():
-            return self.run_eslint(paths, config=eslint_config)
+            results = self.run_eslint(paths, config=eslint_config)
+            if include_status:
+                return {
+                    "status": "ok",
+                    "engine": "eslint",
+                    "results": results,
+                }
+            return results
+        if include_status:
+            return {
+                "status": "unavailable",
+                "engine": None,
+                "results": [],
+                "reason": "eslint_not_available",
+            }
         return []

@@ -1,0 +1,110 @@
+# Math & Emoji Examples
+
+This page demonstrates math rendering and emoji support in VitePress.
+
+---
+
+## Math Support (KaTeX)
+
+### Inline Math
+
+You can use inline math like this: $E = mc^2$ or $\int_0^1 x^2 dx = \frac{1}{3}$.
+
+### Block Math
+
+Display math equations:
+
+$$
+\begin{aligned}
+\nabla \times \vec{\mathbf{B}} -\, \frac1c\, \frac{\partial\vec{\mathbf{E}}}{\partial t} &= \frac{4\pi}{c}\vec{\mathbf{j}} \\
+\nabla \cdot \vec{\mathbf{E}} &= 4 \pi \rho \\
+\nabla \times \vec{\mathbf{E}}\, +\, \frac1c\, \frac{\partial\vec{\mathbf{B}}}{\partial t} &= \vec{\mathbf{0}} \\
+\nabla \cdot \vec{\mathbf{B}} &= 0
+\end{aligned}
+$$
+
+### Complex Equations
+
+$$
+\begin{pmatrix}
+a & b \\
+c & d
+\end{pmatrix}
+\begin{pmatrix}
+x \\
+y
+\end{pmatrix}
+=
+\begin{pmatrix}
+ax + by \\
+cx + dy
+\end{pmatrix}
+$$
+
+---
+
+## Emoji Support
+
+### Common Emojis
+
+- :smile: Smile
+- :heart: Heart
+- :rocket: Rocket
+- :fire: Fire
+- :star: Star
+- :thumbsup: Thumbs up
+- :ok_hand: OK hand
+- :muscle: Muscle
+- :clap: Clap
+- :tada: Celebration
+
+### Technical Emojis
+
+- :computer: Computer
+- :keyboard: Keyboard
+- :mouse: Mouse
+- :floppy_disk: Floppy disk
+- :cd: CD
+- :dvd: DVD
+- :file_folder: File folder
+- :open_file_folder: Open folder
+- :page_facing_up: Document
+- :page_with_curl: Page
+
+### Status Emojis
+
+- :white_check_mark: Success
+- :x: Error
+- :warning: Warning
+- :information_source: Info
+- :question: Question
+- :bulb: Idea
+- :zap: Fast
+- :lock: Secure
+- :unlock: Unlock
+- :key: Key
+
+---
+
+## Combined Usage
+
+You can combine math and emojis: :rocket: The formula $v = \frac{d}{t}$ shows velocity calculation.
+
+Or use emojis in code comments:
+
+```python
+def calculate_velocity(distance: float, time: float) -> float:
+    """Calculate velocity :rocket:
+
+    Uses the formula: $v = \frac{d}{t}$
+    """
+    return distance / time  # :zap: Fast calculation
+```
+
+---
+
+## See Also
+
+- [Mermaid Examples](./mermaid-example.md) - Diagram examples
+- [Code Playground Examples](./code-playground-example.md) - Interactive code
+- [Demo GIF Examples](./demo-gif-example.md) - Demo GIFs

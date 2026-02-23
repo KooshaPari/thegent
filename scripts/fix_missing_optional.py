@@ -1,3 +1,4 @@
+from pathlib import Path
 import os
 import re
 
@@ -13,9 +14,9 @@ def fix_missing_optional(root_dir):
             if not file.endswith(".py"):
                 continue
 
-            file_path = os.path.join(root, file)
+            file_path = Path(root) / file
             try:
-                with open(file_path, encoding="utf-8") as f:
+                with file_path.open(encoding="utf-8") as f:
                     content = f.read()
 
                 if "Optional[" in content and "Optional" not in content.split("import")[0]:
@@ -33,8 +34,7 @@ def fix_missing_optional(root_dir):
                     else:
                         new_content = "from typing import Optional\n" + content
 
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(new_content)
+                    file_path.write_text(new_content, encoding="utf-8")
                     print(f"Fixed missing Optional in {file_path}")
             except Exception as e:
                 print(f"Error processing {file_path}: {e}")

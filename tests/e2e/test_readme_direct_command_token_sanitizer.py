@@ -88,8 +88,7 @@ def test_table_command_snippets_never_include_shell_redirection_tokens() -> None
     for snippet in snippets:
         tokens = shlex.split(snippet)
         assert not any(token in {">", ">>", "<"} for token in tokens), (
-            "README command snippets must not include shell redirection tokens ('>', '>>', '<'): "
-            f"{snippet!r}"
+            f"README command snippets must not include shell redirection tokens ('>', '>>', '<'): {snippet!r}"
         )
 
 
@@ -121,13 +120,10 @@ def test_direct_single_file_rows_contain_exactly_one_e2e_file_token() -> None:
         )
 
         e2e_tokens = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/") and token.endswith(".py")
         ]
         assert len(e2e_tokens) == 1, (
-            f"README direct single-file row '{goal}' must contain exactly one tests/e2e/*.py token: "
-            f"{snippets[0]!r}"
+            f"README direct single-file row '{goal}' must contain exactly one tests/e2e/*.py token: {snippets[0]!r}"
         )
 
 
@@ -160,8 +156,7 @@ def test_direct_row_command_snippet_is_single_line_without_shell_separators() ->
             f"README direct row '{goal}' command snippet must be single-line: {snippet!r}"
         )
         assert not re.search(r";|&&|\|\||\|", snippet), (
-            f"README direct row '{goal}' command snippet must not contain shell separators (; && || |): "
-            f"{snippet!r}"
+            f"README direct row '{goal}' command snippet must not contain shell separators (; && || |): {snippet!r}"
         )
 
 
@@ -172,8 +167,7 @@ def test_direct_pytest_rows_only_use_allowed_tokens() -> None:
     for tokens in commands:
         for token in tokens[2:]:
             assert token.startswith("tests/e2e/") and token.endswith(".py"), (
-                "Direct README governance pytest rows must contain only tests/e2e paths after `pytest -q`: "
-                f"{tokens!r}"
+                f"Direct README governance pytest rows must contain only tests/e2e paths after `pytest -q`: {tokens!r}"
             )
 
 
@@ -207,9 +201,7 @@ def test_direct_row_referenced_e2e_paths_exist_on_disk() -> None:
         for token in shlex.split(snippets[0]):
             if token.startswith("tests/e2e/") and token.endswith(".py"):
                 target = repo_root / token
-                assert target.exists(), (
-                    f"README direct row '{goal}' references missing tests/e2e path: {token!r}"
-                )
+                assert target.exists(), f"README direct row '{goal}' references missing tests/e2e path: {token!r}"
 
 
 def test_direct_rows_do_not_reference_command_surface_helper_path() -> None:
@@ -253,9 +245,7 @@ def test_direct_row_python_path_tokens_start_with_tests_e2e_prefix() -> None:
 
         tokens = shlex.split(snippets[0])
         path_tokens = [token for token in tokens if token.endswith(".py")]
-        assert path_tokens, (
-            f"README direct row '{goal}' must include at least one .py path token: {snippets[0]!r}"
-        )
+        assert path_tokens, f"README direct row '{goal}' must include at least one .py path token: {snippets[0]!r}"
 
         for token in path_tokens:
             assert token.startswith("tests/e2e/"), (
@@ -286,10 +276,7 @@ def test_non_bundle_direct_rows_do_not_duplicate_identical_command_snippets() ->
             continue
         duplicates.append((snippet, prior_goal, goal))
 
-    assert not duplicates, (
-        "README non-bundle direct rows must not duplicate identical command snippets: "
-        f"{duplicates}"
-    )
+    assert not duplicates, f"README non-bundle direct rows must not duplicate identical command snippets: {duplicates}"
 
 
 def test_each_direct_test_path_maps_to_single_goal_label() -> None:
@@ -308,9 +295,7 @@ def test_each_direct_test_path_maps_to_single_goal_label() -> None:
             f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         paths = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/test_") and token.endswith(".py")
         ]
         for path in paths:
             prior_goal = path_to_goal.get(path)
@@ -321,8 +306,7 @@ def test_each_direct_test_path_maps_to_single_goal_label() -> None:
                 collisions.append((path, prior_goal, goal))
 
     assert not collisions, (
-        "Each direct-row tests/e2e/test_*.py path must map to exactly one direct goal label: "
-        f"{collisions}"
+        f"Each direct-row tests/e2e/test_*.py path must map to exactly one direct goal label: {collisions}"
     )
 
 
@@ -339,9 +323,7 @@ def test_direct_single_file_rows_have_unique_path_basenames() -> None:
             f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         e2e_paths = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/") and token.endswith(".py")
         ]
         if len(e2e_paths) != 1:
             continue
@@ -355,10 +337,7 @@ def test_direct_single_file_rows_have_unique_path_basenames() -> None:
         if prior_path != path:
             collisions.append((basename, prior_path, path))
 
-    assert not collisions, (
-        "README direct single-file rows must use unique tests/e2e/*.py basenames: "
-        f"{collisions}"
-    )
+    assert not collisions, f"README direct single-file rows must use unique tests/e2e/*.py basenames: {collisions}"
 
 
 def test_each_direct_row_command_has_no_duplicate_whitespace_normalized_tokens() -> None:
@@ -396,9 +375,7 @@ def test_non_suite_non_bundle_direct_rows_are_goal_to_single_test_file_bijection
             f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         test_paths = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/test_") and token.endswith(".py")
         ]
         assert len(test_paths) == 1, (
             f"README non-suite/non-bundle direct row '{goal}' must map to exactly one tests/e2e/test_*.py path: "
@@ -416,8 +393,7 @@ def test_non_suite_non_bundle_direct_rows_are_goal_to_single_test_file_bijection
 
     assert goal_to_path, "Expected at least one non-suite/non-bundle direct row in README table."
     assert not collisions, (
-        "README non-suite/non-bundle direct rows must be a 1:1 goal->single-file mapping: "
-        f"{collisions}"
+        f"README non-suite/non-bundle direct rows must be a 1:1 goal->single-file mapping: {collisions}"
     )
 
 
@@ -431,9 +407,7 @@ def test_only_suite_or_bundle_direct_rows_may_reference_multiple_test_files() ->
             f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         test_paths = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/test_") and token.endswith(".py")
         ]
         if len(test_paths) <= 1:
             continue
@@ -456,9 +430,7 @@ def test_suite_direct_rows_do_not_duplicate_path_basenames_across_tokens() -> No
             f"README suite direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         path_tokens = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/") and token.endswith(".py")
         ]
         basenames = [Path(token).name for token in path_tokens]
         duplicates = sorted({name for name in basenames if basenames.count(name) > 1})
@@ -491,9 +463,7 @@ def test_alias_trio_direct_rows_each_have_exactly_one_test_path_token() -> None:
             f"README alias direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         test_paths = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/test_") and token.endswith(".py")
         ]
         assert len(test_paths) == 1, (
             "README alias trio direct-row command cell must contain exactly one tests/e2e/test_*.py token: "
@@ -525,9 +495,7 @@ def test_direct_rows_have_no_duplicate_test_path_tokens_within_row() -> None:
             f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         test_paths = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/test_") and token.endswith(".py")
         ]
         duplicates = sorted({path for path in test_paths if test_paths.count(path) > 1})
         assert not duplicates, (
@@ -552,9 +520,7 @@ def test_direct_non_bundle_single_file_rows_have_unique_basename_coverage() -> N
             f"README direct row '{goal}' must have exactly one backticked command snippet: {command_cell!r}"
         )
         test_paths = [
-            token
-            for token in shlex.split(snippets[0])
-            if token.startswith("tests/e2e/test_") and token.endswith(".py")
+            token for token in shlex.split(snippets[0]) if token.startswith("tests/e2e/test_") and token.endswith(".py")
         ]
         if len(test_paths) != 1:
             continue

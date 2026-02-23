@@ -10,10 +10,12 @@ version: '3'
 vars:
   PROJECT_NAME: "{{project_name}}"
 
+{% if include_qa_tools %}
 includes:
   quality:
     taskfile: ./templates/shared/Taskfile.quality.yml
     optional: true
+{% endif %}
 
 tasks:
   default:
@@ -21,6 +23,7 @@ tasks:
       - task --list
     silent: true
 
+{% if include_hooks %}
   hooks:install:
     desc: "Install git hooks (pre-commit, pre-push, commit-msg)"
     cmds:
@@ -34,12 +37,112 @@ tasks:
       - uv run pre-commit run --all-files
       - echo "Pre-commit parity check completed"
 
-  ci:local:
-    desc: "Run local CI-like checks (pre-commit + fast tests)."
+  hooks:run:pre-commit:
+    desc: "Run configured pre-commit hooks for pre-commit stage"
     cmds:
+      - uv run pre-commit run --all-files --hook-stage pre-commit
+
+  hooks:run:pre-push:
+    desc: "Run configured pre-commit hooks for pre-push stage"
+    cmds:
+      - uv run pre-commit run --all-files --hook-stage pre-push
+{% endif %}
+
+  ci:local:
+    desc: "Run local CI-like checks (hooks + quality)."
+    cmds:
+{% if include_hooks %}
       - task: hooks:run
-      - task: test:collect:baseline
-      - task: test:fast-lane
+{% endif %}
+      - task: quality
+
+  ci:local:pre-commit:
+    desc: "Run only local pre-commit hooks."
+    cmds:
+      - task: hooks:run:pre-commit
+
+  ci:local:pre-push:
+    desc: "Run only local pre-push hooks."
+    cmds:
+      - task: hooks:run:pre-push
+
+  ci:local:push:
+    desc: "Run pre-push hooks plus lightweight quality lane."
+    cmds:
+      - task: hooks:run:pre-push
+      - task: quality
+
+{% if include_act %}
+  ci:local-gh:
+    desc: "Run local CI workflow with act (push event) for parity."
+    cmds:
+      - task: ci:local-gh:push
+
+  ci:local-gh:push:
+    desc: "Run local GH Actions emulation for push event."
+    cmds:
+      - chmod +x scripts/ci_local_gha.sh
+      - THGENT_ACT_EVENT=push ./scripts/ci_local_gha.sh
+
+  ci:local-gh:pr:
+    desc: "Run local GH Actions emulation for pull_request event."
+    cmds:
+      - chmod +x scripts/ci_local_gha.sh
+      - THGENT_ACT_EVENT=pull_request ./scripts/ci_local_gha.sh
+
+  ci:local-gh:dockerless:
+    desc: "Run local GH Actions emulation in dockerless mode (PR-like lane)."
+    cmds:
+      - chmod +x scripts/ci_local_gha.sh
+      - THGENT_ACT_DOCKERLESS=1 THGENT_ACT_EVENT=pull_request ./scripts/ci_local_gha.sh
+
+  ci:local-gh:push:dockerless:
+    desc: "Run local GH Actions emulation in dockerless mode for push lane."
+    cmds:
+      - chmod +x scripts/ci_local_gha.sh
+      - THGENT_ACT_DOCKERLESS=1 THGENT_ACT_EVENT=push ./scripts/ci_local_gha.sh
+
+  ci:local-gh:pre-commit:
+    desc: "Run dockerless local pre-commit hooks lane through the act runner script."
+    cmds:
+      - chmod +x scripts/ci_local_gha.sh
+      - THGENT_ACT_DOCKERLESS=1 THGENT_ACT_EVENT=pull_request THGENT_ACT_JOB=pre-commit ./scripts/ci_local_gha.sh
+
+  ci:local-gh:pre-push:
+    desc: "Run dockerless local pre-push hooks lane through the act runner script."
+    cmds:
+      - chmod +x scripts/ci_local_gha.sh
+      - THGENT_ACT_DOCKERLESS=1 THGENT_ACT_EVENT=push THGENT_ACT_JOB=pre-push ./scripts/ci_local_gha.sh
+{% endif %}
+
+{% if include_pm_tools %}
+  pm:backlog:
+    desc: "Show local work-stream backlog snapshot."
+    cmds:
+      - |
+        if [ ! -f docs/reference/WORK_STREAM.md ]; then
+          echo "WORK_STREAM missing: docs/reference/WORK_STREAM.md" >&2
+          exit 1
+        fi
+        sed -n '1,120p' docs/reference/WORK_STREAM.md
+
+  pm:next:
+    desc: "Show top of backlog for quick execution planning."
+    cmds:
+      - |
+        if [ ! -f docs/reference/WORK_STREAM.md ]; then
+          echo "WORK_STREAM missing: docs/reference/WORK_STREAM.md" >&2
+          exit 1
+        fi
+        awk '/^#/{print;next} /^- \[/{print; exit}' docs/reference/WORK_STREAM.md
+
+{% if include_qa_tools %}
+  pm:quality-gate:
+    desc: "Run QA quality gate task when quality tooling is enabled."
+    cmds:
+      - task: quality:gate
+{% endif %}
+{% endif %}
 
 {% if language == "python" %}
   # -- Development --

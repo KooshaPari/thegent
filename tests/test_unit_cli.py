@@ -322,7 +322,10 @@ class TestSessionCommands:
 
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
             with patch("thegent.cli.commands.cli._is_pid_running", return_value=True):
-                with patch("thegent.cli.commands.cli.time.time", _fake_time), patch("thegent.cli.commands.cli.time.sleep"):
+                with (
+                    patch("thegent.cli.commands.cli.time.time", _fake_time),
+                    patch("thegent.cli.commands.cli.time.sleep"),
+                ):
                     with pytest.raises(typer.Exit) as exc:
                         logs_cmd(session_id=sid, follow=True, tail=20, timeout=1)
         assert exc.value.exit_code == 124

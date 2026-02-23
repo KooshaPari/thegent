@@ -4,6 +4,7 @@ Verifies that scripts/check_slo_gate.py exists, is valid Python syntax,
 and correctly exits 0 (no data / all green) or 1 (any red metric).
 # @trace WL-135 B90-W3-E1
 """
+
 from __future__ import annotations
 
 import ast
@@ -38,8 +39,7 @@ def test_gate_exits_0_when_no_file(tmp_path: Path) -> None:
         text=True,
     )
     assert result.returncode == 0, (
-        f"Expected exit 0 with no JSONL file, got {result.returncode}. "
-        f"stderr: {result.stderr}"
+        f"Expected exit 0 with no JSONL file, got {result.returncode}. stderr: {result.stderr}"
     )
 
 
@@ -55,10 +55,7 @@ def test_gate_exits_0_when_file_empty(tmp_path: Path) -> None:
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, (
-        f"Expected exit 0 with empty JSONL, got {result.returncode}. "
-        f"stderr: {result.stderr}"
-    )
+    assert result.returncode == 0, f"Expected exit 0 with empty JSONL, got {result.returncode}. stderr: {result.stderr}"
 
 
 def _all_green_record() -> dict:
@@ -96,9 +93,7 @@ def test_gate_exits_0_when_all_green(tmp_path: Path) -> None:
     quality_dir = tmp_path / ".quality"
     quality_dir.mkdir()
     jsonl_path = quality_dir / "slo-metrics.jsonl"
-    jsonl_path.write_text(
-        json.dumps(_all_green_record()) + "\n", encoding="utf-8"
-    )
+    jsonl_path.write_text(json.dumps(_all_green_record()) + "\n", encoding="utf-8")
 
     result = subprocess.run(
         [sys.executable, str(GATE_SCRIPT)],
@@ -107,8 +102,7 @@ def test_gate_exits_0_when_all_green(tmp_path: Path) -> None:
         text=True,
     )
     assert result.returncode == 0, (
-        f"Expected exit 0 with all-green metrics, got {result.returncode}. "
-        f"stderr: {result.stderr}"
+        f"Expected exit 0 with all-green metrics, got {result.returncode}. stderr: {result.stderr}"
     )
 
 
@@ -117,9 +111,7 @@ def test_gate_exits_1_when_all_red(tmp_path: Path) -> None:
     quality_dir = tmp_path / ".quality"
     quality_dir.mkdir()
     jsonl_path = quality_dir / "slo-metrics.jsonl"
-    jsonl_path.write_text(
-        json.dumps(_all_red_record()) + "\n", encoding="utf-8"
-    )
+    jsonl_path.write_text(json.dumps(_all_red_record()) + "\n", encoding="utf-8")
 
     result = subprocess.run(
         [sys.executable, str(GATE_SCRIPT)],
@@ -132,8 +124,7 @@ def test_gate_exits_1_when_all_red(tmp_path: Path) -> None:
         },
     )
     assert result.returncode == 1, (
-        f"Expected exit 1 with all-red metrics, got {result.returncode}. "
-        f"stderr: {result.stderr}"
+        f"Expected exit 1 with all-red metrics, got {result.returncode}. stderr: {result.stderr}"
     )
 
 
@@ -143,10 +134,7 @@ def test_gate_uses_last_record_only(tmp_path: Path) -> None:
     quality_dir.mkdir()
     jsonl_path = quality_dir / "slo-metrics.jsonl"
     # First record is all-red, last record is all-green
-    content = (
-        json.dumps(_all_red_record()) + "\n"
-        + json.dumps(_all_green_record()) + "\n"
-    )
+    content = json.dumps(_all_red_record()) + "\n" + json.dumps(_all_green_record()) + "\n"
     jsonl_path.write_text(content, encoding="utf-8")
 
     result = subprocess.run(
@@ -160,6 +148,5 @@ def test_gate_uses_last_record_only(tmp_path: Path) -> None:
         },
     )
     assert result.returncode == 0, (
-        f"Expected exit 0 when last record is green, got {result.returncode}. "
-        f"stderr: {result.stderr}"
+        f"Expected exit 0 when last record is green, got {result.returncode}. stderr: {result.stderr}"
     )

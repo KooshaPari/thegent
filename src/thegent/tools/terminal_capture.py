@@ -33,6 +33,8 @@ def _trim_to_n(lines: list[str], n: int) -> list[str]:
     if n <= 0:
         return lines
     return lines[-n:]
+
+
 def _capture_via_tmux(pane_id: str, n: int) -> CaptureResult | None:
     """Capture terminal output via tmux capture-pane.
 

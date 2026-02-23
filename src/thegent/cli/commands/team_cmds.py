@@ -1,4 +1,5 @@
 """Thegent CLI team/handoff commands domain - extracted from cli.py (WL-124)."""
+
 # @trace WL-124
 from __future__ import annotations
 
@@ -51,6 +52,7 @@ def _snapshot_payload_kwargs(
         payload_kwargs["since"] = since
 
     return payload_fn(scraper, **payload_kwargs)
+
 
 def summary_cmd(
     period: str = typer.Argument("today", help="Time period: today, yesterday, week, 7d, 30d, 1h etc."),
@@ -162,7 +164,7 @@ def snapshot_list_cmd(
         return
     console.print(f"[bold cyan]Snapshots[/bold cyan]: {payload.get('count', 0)}")
     for item in payload.get("items", []):
-        console.print(f"- {item.get('captured_at','?')} [{item.get('trigger','?')}] {item.get('path')}")
+        console.print(f"- {item.get('captured_at', '?')} [{item.get('trigger', '?')}] {item.get('path')}")
 
 
 def snapshot_index_cmd(
@@ -340,7 +342,9 @@ def snapshot_daily_export_cmd(
     if _normalize_output_format(format) == "json":
         sys.stdout.write(json.dumps(payload) + "\n")
         return
-    console.print(f"[green]Daily index exported[/green] json={payload.get('source_json')} md={payload.get('source_md')}")
+    console.print(
+        f"[green]Daily index exported[/green] json={payload.get('source_json')} md={payload.get('source_md')}"
+    )
 
 
 def dump_index_cmd(project: Path | None = None, format: str | None = None) -> None:
@@ -469,7 +473,6 @@ def fallbacks_cmd(run_id: str | None = None) -> None:
     console.print(table)
 
 
-
 def handoff_cmd(owner: str) -> None:
     """Create a continuity snapshot for a shift handoff (WP-4006, WP-3008)."""
     settings = ThegentSettings()
@@ -518,7 +521,6 @@ def handoff_cmd(owner: str) -> None:
     if next_steps:
         msg += "\nNext steps: " + "; ".join(next_steps)
     console.print(Panel(msg, title="Shift Handoff", border_style="green"))
-
 
 
 def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
@@ -624,7 +626,6 @@ def watchdog_cmd(max_idle_s: int = 3600) -> None:
     console.print(table)
 
 
-
 def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
     """List items in the Dead-Letter Queue (WP-Y2/WP-2008)."""
     settings = ThegentSettings()
@@ -662,7 +663,6 @@ def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
     console.print(table)
 
 
-
 def traffic_cmd() -> None:
     """TRAFFIC KPI Dashboard (WP-Y7)."""
     settings = ThegentSettings()
@@ -695,7 +695,6 @@ def traffic_cmd() -> None:
         table.add_row(*m)
 
     console.print(table)
-
 
 
 def drift_monitor_cmd(prompt: str, agents: list[str]) -> None:
@@ -789,7 +788,6 @@ def self_heal_tests_cmd(test_output: str | None = None) -> None:
         # simplified mapping
         table.add_row("Common Failures", "\n".join(recommendations))
         console.print(table)
-
 
 
 def teammates_list_cmd() -> None:
@@ -943,6 +941,7 @@ def project_list_cmd(
     from thegent.cli.commands.project_commands import project_list_cmd as _project_list_cmd_impl
 
     _project_list_cmd_impl(format=format, console=console)
+
 
 __all__ = [
     "dlq_list_cmd",

@@ -773,6 +773,7 @@ class TestWorktreePoolSmartMergerIntegration:
             with mock.patch.object(pool, "_git_worktree_remove", return_value=True):
                 with mock.patch.object(pool, "_try_delete_branch"):
                     import shutil as _shutil
+
                     with mock.patch.object(_shutil, "rmtree"):
                         pool._merge_and_remove("agent-x", tmp_path / "wt", "agent/agent-x")
 
@@ -792,14 +793,13 @@ class TestWorktreePoolSmartMergerIntegration:
                 with mock.patch.object(pool, "_git_worktree_remove", return_value=True):
                     with mock.patch.object(pool, "_try_delete_branch"):
                         import shutil as _shutil
+
                         with mock.patch.object(_shutil, "rmtree"):
                             result = pool._merge_and_remove("agent-y", tmp_path / "wt", "agent/agent-y")
 
         # Plain git merge path: should have called subprocess.run with git merge
         assert result is True
-        git_merge_calls = [
-            c for c in mock_run.call_args_list if "merge" in str(c)
-        ]
+        git_merge_calls = [c for c in mock_run.call_args_list if "merge" in str(c)]
         assert git_merge_calls
 
     def test_merge_result_failure_still_cleans_up(self, tmp_path):
@@ -807,9 +807,7 @@ class TestWorktreePoolSmartMergerIntegration:
         from thegent.mesh.git_parallelism import WorktreePool
 
         mock_merger = mock.Mock(spec=SmartMerger)
-        mock_merger.merge_worktree_changes.return_value = MergeResult(
-            success=False, conflicts=["foo.py"]
-        )
+        mock_merger.merge_worktree_changes.return_value = MergeResult(success=False, conflicts=["foo.py"])
 
         pool = WorktreePool(tmp_path, pool_root=tmp_path / ".pool", merger=mock_merger)
         pool._worktrees_ok = True
@@ -818,6 +816,7 @@ class TestWorktreePoolSmartMergerIntegration:
             with mock.patch.object(pool, "_git_worktree_remove", return_value=True) as mock_rm:
                 with mock.patch.object(pool, "_try_delete_branch"):
                     import shutil as _shutil
+
                     with mock.patch.object(_shutil, "rmtree"):
                         result = pool._merge_and_remove("agent-z", tmp_path / "wt", "agent/agent-z")
 

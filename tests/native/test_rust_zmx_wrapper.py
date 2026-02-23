@@ -78,9 +78,7 @@ def test_cargo_toml_exists_and_has_correct_name():
     """
     assert CARGO_TOML.is_file(), f"Missing {CARGO_TOML}"
     content = CARGO_TOML.read_text(encoding="utf-8")
-    assert 'name = "thegent-zmx"' in content, (
-        "Cargo.toml must set name = \"thegent-zmx\""
-    )
+    assert 'name = "thegent-zmx"' in content, 'Cargo.toml must set name = "thegent-zmx"'
 
 
 # ---------------------------------------------------------------------------
@@ -122,9 +120,7 @@ def test_lib_rs_declares_zmx_session():
     # @trace FR-ZMX-002
     """
     content = SRC_LIB.read_text(encoding="utf-8")
-    assert "pub struct ZmxSession" in content, (
-        "lib.rs must contain 'pub struct ZmxSession'"
-    )
+    assert "pub struct ZmxSession" in content, "lib.rs must contain 'pub struct ZmxSession'"
 
 
 # ---------------------------------------------------------------------------
@@ -154,8 +150,7 @@ def test_lib_rs_declares_zmx_client_methods():
     # @trace FR-ZMX-006
     """
     content = SRC_LIB.read_text(encoding="utf-8")
-    for method in ("pub fn new", "pub fn list_sessions", "pub fn attach",
-                   "pub fn capture", "pub fn send"):
+    for method in ("pub fn new", "pub fn list_sessions", "pub fn attach", "pub fn capture", "pub fn send"):
         assert method in content, f"Missing ZmxClient method: '{method}'"
 
 
@@ -171,9 +166,7 @@ def test_lib_rs_has_at_least_10_tests():
     """
     content = SRC_LIB.read_text(encoding="utf-8")
     test_count = len(re.findall(r"#\[test\]", content))
-    assert test_count >= 10, (
-        f"Expected ≥10 #[test] in lib.rs, found {test_count}"
-    )
+    assert test_count >= 10, f"Expected ≥10 #[test] in lib.rs, found {test_count}"
 
 
 # ---------------------------------------------------------------------------
@@ -187,9 +180,7 @@ def test_crate_registered_in_workspace():
     # @trace FR-ZMX-001
     """
     content = WORKSPACE_TOML.read_text(encoding="utf-8")
-    assert '"thegent-zmx"' in content, (
-        "thegent-zmx must be listed in crates/Cargo.toml [workspace] members"
-    )
+    assert '"thegent-zmx"' in content, "thegent-zmx must be listed in crates/Cargo.toml [workspace] members"
 
 
 # ---------------------------------------------------------------------------
@@ -221,9 +212,7 @@ def test_cargo_check_passes():
     # @trace FR-ZMX-001
     """
     result = _cargo_check()
-    assert result.returncode == 0, (
-        f"cargo check failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-    )
+    assert result.returncode == 0, f"cargo check failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
 
 
 # ---------------------------------------------------------------------------
@@ -267,9 +256,7 @@ def test_lib_rs_has_validate_session_name():
     # @trace FR-ZMX-004
     """
     content = SRC_LIB.read_text(encoding="utf-8")
-    assert "validate_session_name" in content, (
-        "lib.rs must define validate_session_name"
-    )
+    assert "validate_session_name" in content, "lib.rs must define validate_session_name"
 
 
 # ---------------------------------------------------------------------------
@@ -290,6 +277,4 @@ def test_cargo_test_passes():
         text=True,
         timeout=180,
     )
-    assert result.returncode == 0, (
-        f"cargo test failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-    )
+    assert result.returncode == 0, f"cargo test failed:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"

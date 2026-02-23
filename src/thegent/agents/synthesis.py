@@ -4,6 +4,9 @@ Ensures synthesized programs are correct and safe by construction.
 """
 
 import logging
+import time
+from dataclasses import dataclass
+from typing import Protocol
 
 from pydantic import BaseModel
 
@@ -21,23 +24,53 @@ class SynthesisResult(BaseModel):
     verified: bool
     verification_log: list[str]
     safety_violations: list[str]
+    generation_metadata: dict[str, str | int | float]
+
+
+@dataclass(frozen=True)
+class GenerationResponse:
+    """Provider generation response with observability metadata."""
+
+    source_code: str
+    provider: str
+    model: str
+    tokens_in: int = 0
+    tokens_out: int = 0
+
+
+class CodeGenerationProvider(Protocol):
+    """Provider contract used by ProgramSynthesizer."""
+
+    def generate_code(self, prompt: str, formal_spec: str | None = None) -> GenerationResponse:
+        """Generate source code for prompt + optional formal specification."""
+        ...
+
+
+class ConfiguredCodeGenerationProvider:
+    """Default provider that must be replaced by an injected runtime provider."""
+
+    def generate_code(self, prompt: str, formal_spec: str | None = None) -> GenerationResponse:
+        raise RuntimeError("No synthesis provider configured. Inject a CodeGenerationProvider into ProgramSynthesizer.")
 
 
 class ProgramSynthesizer:
     """Orchestrates neural-symbolic program generation."""
 
-    def __init__(self, run_id: str) -> None:
+    def __init__(self, run_id: str, provider: CodeGenerationProvider | None = None) -> None:
         self.run_id = run_id
         self.executor = SymbolicRiskExplorer(dag={})
         self.safety_checker = ToolSafetyChecker()
+        self.provider = provider or ConfiguredCodeGenerationProvider()
 
     def synthesize(self, prompt: str, formal_spec: str | None = None) -> SynthesisResult:
         """Synthesize a program from a prompt and optional formal spec."""
         _log.info("Starting neural-symbolic synthesis for run: %s", self.run_id)
 
-        # 1. Neural Generation (Simulated)
-        # This would call an LLM to generate code based on prompt and spec
-        code = self._mock_llm_generation(prompt)
+        # 1. Provider-backed neural generation
+        generation_started = time.perf_counter()
+        generated = self.provider.generate_code(prompt=prompt, formal_spec=formal_spec)
+        generation_latency_ms = round((time.perf_counter() - generation_started) * 1000, 2)
+        code = generated.source_code
 
         # 2. Symbolic Verification
         _log.info("Running symbolic verification on synthesized code...")
@@ -64,8 +97,11 @@ class ProgramSynthesizer:
             verified=is_correct and not violations,
             verification_log=verification_log,
             safety_violations=violations,
+            generation_metadata={
+                "provider": generated.provider,
+                "model": generated.model,
+                "latency_ms": generation_latency_ms,
+                "tokens_in": generated.tokens_in,
+                "tokens_out": generated.tokens_out,
+            },
         )
-
-    def _mock_llm_generation(self, prompt: str) -> str:
-        """Simulate LLM-based code generation."""
-        return f"# Synthesized code for: {prompt}\ndef run_task():\n    print('Executing task...')\n"

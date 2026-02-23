@@ -70,13 +70,7 @@ def build_sarif(input_paths: list[Path], tool_name: str) -> dict[str, Any]:
                     "ruleId": rule_id,
                     "level": level,
                     "message": {"text": f"{hook} check '{name}' reported status '{status}'"},
-                    "locations": [
-                        {
-                            "physicalLocation": {
-                                "artifactLocation": {"uri": str(path)}
-                            }
-                        }
-                    ],
+                    "locations": [{"physicalLocation": {"artifactLocation": {"uri": str(path)}}}],
                 }
             )
 

@@ -43,7 +43,9 @@ def write_worklog_entry(
         f"# WL-{seq:04d}: {commit_msg}\n\n"
         f"## What Changed\n{commit_msg}\n\n"
         f"## Files Touched\n{files_section}\n\n"
-        f"## Next\n<!-- TODO -->\n"
+        "## Next\n"
+        "- Add follow-up tasks for regression coverage or integration hardening if needed.\n"
+        "- Link any impacted Work Stream items to close the loop.\n"
     )
     path.write_text(f"---\n{fm_str}---\n\n{body}")
 

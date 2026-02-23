@@ -80,11 +80,7 @@ def _readme_direct_pytest_paths() -> set[str]:
     direct_paths: set[str] = set()
 
     for snippet in command_snippets:
-        paths = [
-            token
-            for token in shlex.split(snippet)
-            if token.startswith("tests/") and token.endswith(".py")
-        ]
+        paths = [token for token in shlex.split(snippet) if token.startswith("tests/") and token.endswith(".py")]
         if len(paths) == 1:
             direct_paths.add(paths[0])
 
@@ -102,9 +98,7 @@ def _readme_direct_row_paths() -> set[str]:
     for match in table_row_pattern.finditer(text):
         command = match.group(1)
         direct_row_paths.update(
-            token
-            for token in shlex.split(command)
-            if token.startswith("tests/e2e/") and token.endswith(".py")
+            token for token in shlex.split(command) if token.startswith("tests/e2e/") and token.endswith(".py")
         )
 
     return direct_row_paths
@@ -122,9 +116,7 @@ def _readme_non_direct_row_paths() -> set[str]:
         if "(direct)" in goal:
             continue
         non_direct_paths.update(
-            token
-            for token in shlex.split(command)
-            if token.startswith("tests/e2e/") and token.endswith(".py")
+            token for token in shlex.split(command) if token.startswith("tests/e2e/") and token.endswith(".py")
         )
 
     return non_direct_paths
@@ -166,9 +158,8 @@ def test_governance_helper_files_are_represented_in_required_list() -> None:
 
     missing = sorted(discovered_files - required_files)
 
-    assert not missing, (
-        "governance helper e2e tests missing from REQUIRED_E2E_GOVERNANCE_FILES: "
-        + ", ".join(_relative(path) for path in missing)
+    assert not missing, "governance helper e2e tests missing from REQUIRED_E2E_GOVERNANCE_FILES: " + ", ".join(
+        _relative(path) for path in missing
     )
 
 
@@ -178,9 +169,8 @@ def test_governance_bundle_command_paths_exist_and_match_required_set() -> None:
     command_paths = {test_split_hygiene.REPO_ROOT / token for token in path_tokens}
 
     missing_on_disk = sorted(path for path in command_paths if not path.exists())
-    assert not missing_on_disk, (
-        "REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND references missing paths: "
-        + ", ".join(_relative(path) for path in missing_on_disk)
+    assert not missing_on_disk, "REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND references missing paths: " + ", ".join(
+        _relative(path) for path in missing_on_disk
     )
 
     allowed_paths = _required_governance_files() | {Path(test_split_hygiene.__file__).resolve()}
@@ -203,8 +193,7 @@ def test_readme_direct_pytest_paths_are_registered_governance_tests() -> None:
 
     assert not unexpected, (
         "README direct governance rows reference tests not registered in "
-        "REQUIRED_E2E_GOVERNANCE_FILES: "
-        + ", ".join(unexpected)
+        "REQUIRED_E2E_GOVERNANCE_FILES: " + ", ".join(unexpected)
     )
 
 
@@ -243,19 +232,13 @@ def test_bundle_only_contract_paths_remain_bundle_only() -> None:
 def test_readme_direct_rows_do_not_reference_helper_modules() -> None:
     direct_paths = _readme_direct_pytest_paths()
     forbidden = sorted(direct_paths & FORBIDDEN_DIRECT_HELPER_MODULE_PATHS)
-    assert not forbidden, (
-        "README direct governance rows must not reference helper modules: "
-        + ", ".join(forbidden)
-    )
+    assert not forbidden, "README direct governance rows must not reference helper modules: " + ", ".join(forbidden)
 
 
 def test_readme_direct_rows_include_command_surface_contract_trio() -> None:
     direct_paths = _readme_direct_pytest_paths()
     missing = sorted(COMMAND_SURFACE_DIRECT_TRIO_PATHS - direct_paths)
-    assert not missing, (
-        "README direct governance rows missing command-surface contract trio: "
-        + ", ".join(missing)
-    )
+    assert not missing, "README direct governance rows missing command-surface contract trio: " + ", ".join(missing)
 
 
 def test_fast_governance_readme_paths_are_strict_subset_of_full_bundle() -> None:
@@ -271,8 +254,7 @@ def test_full_bundle_references_split_hygiene_once() -> None:
     tokens = shlex.split(test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND)
     split_hygiene_relpath = "tests/e2e/test_split_hygiene.py"
     assert tokens.count(split_hygiene_relpath) == 1, (
-        "REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND must include "
-        "tests/e2e/test_split_hygiene.py exactly once"
+        "REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND must include tests/e2e/test_split_hygiene.py exactly once"
     )
 
 
@@ -301,14 +283,11 @@ def test_readme_full_bundle_row_includes_readme_e2e_commands_contract() -> None:
     assert match is not None, "README missing Full e2e governance unit bundle (direct) row"
 
     bundle_paths = {
-        token
-        for token in shlex.split(match.group(1))
-        if token.startswith("tests/e2e/") and token.endswith(".py")
+        token for token in shlex.split(match.group(1)) if token.startswith("tests/e2e/") and token.endswith(".py")
     }
     required_path = "tests/e2e/test_readme_e2e_commands.py"
     assert required_path in bundle_paths, (
-        "README full e2e governance unit bundle row must include "
-        "tests/e2e/test_readme_e2e_commands.py"
+        "README full e2e governance unit bundle row must include tests/e2e/test_readme_e2e_commands.py"
     )
 
 
@@ -316,8 +295,7 @@ def test_readme_non_direct_rows_do_not_reference_cli_runner_compat_helper_module
     non_direct_paths = _readme_non_direct_row_paths()
     forbidden_path = "tests/e2e/cli_runner_compat.py"
     assert forbidden_path not in non_direct_paths, (
-        "README non-direct governance rows must not reference helper module: "
-        + forbidden_path
+        "README non-direct governance rows must not reference helper module: " + forbidden_path
     )
 
 
@@ -328,13 +306,11 @@ def test_readme_direct_non_bundle_rows_include_alias_and_command_surface_trios_o
     duplicated = sorted(path for path in required_once_paths if path_counts.get(path, 0) > 1)
 
     assert not missing, (
-        "README direct non-bundle governance rows missing alias/command-surface trio paths: "
-        + ", ".join(missing)
+        "README direct non-bundle governance rows missing alias/command-surface trio paths: " + ", ".join(missing)
     )
     assert not duplicated, (
         "README direct non-bundle governance rows must reference alias/command-surface trio "
-        "paths exactly once each: "
-        + ", ".join(duplicated)
+        "paths exactly once each: " + ", ".join(duplicated)
     )
 
 
@@ -345,17 +321,12 @@ def test_readme_full_bundle_command_tokens_match_required_bundle_tokens_when_nor
         (command for goal, command in goal_command_pairs if goal == full_bundle_goal),
         None,
     )
-    assert readme_full_bundle_command is not None, (
-        "README missing Full e2e governance unit bundle (direct) row"
-    )
+    assert readme_full_bundle_command is not None, "README missing Full e2e governance unit bundle (direct) row"
 
     normalized_readme_tokens = tuple(shlex.split(readme_full_bundle_command))
-    normalized_required_tokens = tuple(
-        shlex.split(test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND)
-    )
+    normalized_required_tokens = tuple(shlex.split(test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND))
     assert normalized_readme_tokens == normalized_required_tokens, (
-        "README full-bundle command tokens must match "
-        "REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND after normalization"
+        "README full-bundle command tokens must match REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND after normalization"
     )
 
 
@@ -369,26 +340,17 @@ def test_alias_direct_trio_goals_are_unique_and_map_to_single_direct_row_path() 
             continue
         seen_goal_counts[goal] = seen_goal_counts.get(goal, 0) + 1
         goal_to_paths[goal] = [
-            token
-            for token in shlex.split(command)
-            if token.startswith("tests/e2e/") and token.endswith(".py")
+            token for token in shlex.split(command) if token.startswith("tests/e2e/") and token.endswith(".py")
         ]
 
     missing = sorted(goal for goal in ALIAS_DIRECT_TRIO_GOALS if seen_goal_counts.get(goal, 0) == 0)
     duplicated = sorted(goal for goal, count in seen_goal_counts.items() if count > 1)
-    assert not missing, (
-        "README missing alias direct goals: " + ", ".join(missing)
-    )
-    assert not duplicated, (
-        "README alias direct goals must be unique: " + ", ".join(duplicated)
-    )
+    assert not missing, "README missing alias direct goals: " + ", ".join(missing)
+    assert not duplicated, "README alias direct goals must be unique: " + ", ".join(duplicated)
 
-    wrong_path_counts = sorted(
-        goal for goal, paths in goal_to_paths.items() if len(paths) != 1
-    )
+    wrong_path_counts = sorted(goal for goal, paths in goal_to_paths.items() if len(paths) != 1)
     assert not wrong_path_counts, (
-        "README alias direct goals must map to exactly one direct-row test path: "
-        + ", ".join(wrong_path_counts)
+        "README alias direct goals must map to exactly one direct-row test path: " + ", ".join(wrong_path_counts)
     )
 
     mismatched_paths = sorted(
@@ -396,31 +358,18 @@ def test_alias_direct_trio_goals_are_unique_and_map_to_single_direct_row_path() 
         for goal, expected_path in ALIAS_DIRECT_TRIO_GOALS.items()
         if goal_to_paths.get(goal, [None])[0] != expected_path
     )
-    assert not mismatched_paths, (
-        "README alias direct goal-to-path mapping mismatch for: " + ", ".join(mismatched_paths)
-    )
+    assert not mismatched_paths, "README alias direct goal-to-path mapping mismatch for: " + ", ".join(mismatched_paths)
 
 
 def test_non_direct_goals_do_not_use_direct_suffix() -> None:
-    non_direct_goals = [
-        goal
-        for goal, _command in _readme_table_goal_command_pairs()
-        if "(direct)" not in goal
-    ]
+    non_direct_goals = [goal for goal, _command in _readme_table_goal_command_pairs() if "(direct)" not in goal]
     assert non_direct_goals, "README command table must include non-direct goals"
     malformed = [goal for goal in non_direct_goals if goal.strip().endswith("(direct)")]
-    assert not malformed, (
-        "README non-direct goals must not use '(direct)' suffix: "
-        + ", ".join(malformed)
-    )
+    assert not malformed, "README non-direct goals must not use '(direct)' suffix: " + ", ".join(malformed)
 
 
 def test_direct_row_commands_are_shlex_roundtrip_token_stable() -> None:
-    direct_commands = [
-        command
-        for goal, command in _readme_table_goal_command_pairs()
-        if "(direct)" in goal
-    ]
+    direct_commands = [command for goal, command in _readme_table_goal_command_pairs() if "(direct)" in goal]
     assert direct_commands, "README command table must include direct rows"
 
     unstable: list[str] = []
@@ -430,17 +379,14 @@ def test_direct_row_commands_are_shlex_roundtrip_token_stable() -> None:
         if shlex.split(normalized) != tokens:
             unstable.append(command)
 
-    assert not unstable, (
-        "README direct-row commands must be stable under shlex roundtrip normalization: "
-        + "; ".join(unstable)
+    assert not unstable, "README direct-row commands must be stable under shlex roundtrip normalization: " + "; ".join(
+        unstable
     )
 
 
 def test_non_governance_non_direct_rows_exclude_governance_only_contract_paths() -> None:
     governance_only_paths = (
-        ALIAS_DIRECT_TRIO_PATHS
-        | COMMAND_SURFACE_DIRECT_TRIO_PATHS
-        | SPLIT_HYGIENE_README_CORE_PATHS
+        ALIAS_DIRECT_TRIO_PATHS | COMMAND_SURFACE_DIRECT_TRIO_PATHS | SPLIT_HYGIENE_README_CORE_PATHS
     )
     goal_command_pairs = _readme_table_goal_command_pairs()
     non_governance_non_direct_rows = [
@@ -448,22 +394,17 @@ def test_non_governance_non_direct_rows_exclude_governance_only_contract_paths()
         for goal, command in goal_command_pairs
         if "(direct)" not in goal and "governance" not in goal.lower()
     ]
-    assert non_governance_non_direct_rows, (
-        "README command table must include non-governance non-direct rows"
-    )
+    assert non_governance_non_direct_rows, "README command table must include non-governance non-direct rows"
 
     referenced_paths: set[str] = set()
     for _goal, command in non_governance_non_direct_rows:
         referenced_paths.update(
-            token
-            for token in shlex.split(command)
-            if token.startswith("tests/e2e/") and token.endswith(".py")
+            token for token in shlex.split(command) if token.startswith("tests/e2e/") and token.endswith(".py")
         )
 
     forbidden = sorted(referenced_paths & governance_only_paths)
     assert not forbidden, (
-        "README non-governance non-direct rows must not reference governance-only paths: "
-        + ", ".join(forbidden)
+        "README non-governance non-direct rows must not reference governance-only paths: " + ", ".join(forbidden)
     )
 
 
@@ -478,14 +419,10 @@ def test_fast_governance_row_is_strict_set_and_cardinality_subset_of_full_bundle
     assert full_command is not None, "README missing Full e2e governance unit bundle (direct) row"
 
     fast_paths = [
-        token
-        for token in shlex.split(fast_command)
-        if token.startswith("tests/e2e/") and token.endswith(".py")
+        token for token in shlex.split(fast_command) if token.startswith("tests/e2e/") and token.endswith(".py")
     ]
     full_paths = [
-        token
-        for token in shlex.split(full_command)
-        if token.startswith("tests/e2e/") and token.endswith(".py")
+        token for token in shlex.split(full_command) if token.startswith("tests/e2e/") and token.endswith(".py")
     ]
     fast_set = set(fast_paths)
     full_set = set(full_paths)
@@ -511,18 +448,11 @@ def test_fast_governance_row_is_strict_set_and_cardinality_subset_of_full_bundle
 
 def test_non_direct_rows_command_text_must_not_contain_direct_marker() -> None:
     goal_command_pairs = _readme_table_goal_command_pairs()
-    non_direct_commands = [
-        command
-        for goal, command in goal_command_pairs
-        if "(direct)" not in goal
-    ]
+    non_direct_commands = [command for goal, command in goal_command_pairs if "(direct)" not in goal]
     assert non_direct_commands, "README command table must include non-direct rows"
 
     malformed = [command for command in non_direct_commands if "(direct)" in command]
-    assert not malformed, (
-        "README non-direct row command text must not contain '(direct)': "
-        + "; ".join(malformed)
-    )
+    assert not malformed, "README non-direct row command text must not contain '(direct)': " + "; ".join(malformed)
 
 
 def test_readme_and_split_bundle_path_edges_stay_synchronized() -> None:
@@ -532,9 +462,7 @@ def test_readme_and_split_bundle_path_edges_stay_synchronized() -> None:
         (command for goal, command in goal_command_pairs if goal == full_bundle_goal),
         None,
     )
-    assert readme_full_bundle_command is not None, (
-        "README missing Full e2e governance unit bundle (direct) row"
-    )
+    assert readme_full_bundle_command is not None, "README missing Full e2e governance unit bundle (direct) row"
 
     readme_paths = [
         token
@@ -546,12 +474,8 @@ def test_readme_and_split_bundle_path_edges_stay_synchronized() -> None:
         for token in shlex.split(test_split_hygiene.REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND)
         if token.startswith("tests/e2e/") and token.endswith(".py")
     ]
-    assert len(readme_paths) >= 10, (
-        "README full e2e governance unit bundle row must include at least 10 test paths"
-    )
-    assert len(split_constant_paths) >= 10, (
-        "REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND must include at least 10 test paths"
-    )
+    assert len(readme_paths) >= 10, "README full e2e governance unit bundle row must include at least 10 test paths"
+    assert len(split_constant_paths) >= 10, "REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND must include at least 10 test paths"
 
     assert readme_paths[:5] == split_constant_paths[:5], (
         "README and REQUIRED_E2E_GOVERNANCE_BUNDLE_COMMAND first 5 bundle paths diverged: "
@@ -568,25 +492,18 @@ def test_non_direct_row_paths_are_disjoint_from_forbidden_direct_helper_modules(
     forbidden = sorted(non_direct_paths & FORBIDDEN_DIRECT_HELPER_MODULE_PATHS)
     assert not forbidden, (
         "README non-direct row path tokens must be disjoint from "
-        "FORBIDDEN_DIRECT_HELPER_MODULE_PATHS: "
-        + ", ".join(forbidden)
+        "FORBIDDEN_DIRECT_HELPER_MODULE_PATHS: " + ", ".join(forbidden)
     )
 
 
 def test_direct_non_bundle_rows_cover_command_surface_trio_exactly_once_by_path() -> None:
     path_counts = _readme_direct_non_bundle_row_path_counts()
     missing = sorted(path for path in COMMAND_SURFACE_DIRECT_TRIO_PATHS if path_counts.get(path, 0) == 0)
-    duplicated = sorted(
-        path for path in COMMAND_SURFACE_DIRECT_TRIO_PATHS if path_counts.get(path, 0) > 1
-    )
+    duplicated = sorted(path for path in COMMAND_SURFACE_DIRECT_TRIO_PATHS if path_counts.get(path, 0) > 1)
 
-    assert not missing, (
-        "README direct non-bundle rows missing command-surface trio paths: "
-        + ", ".join(missing)
-    )
+    assert not missing, "README direct non-bundle rows missing command-surface trio paths: " + ", ".join(missing)
     assert not duplicated, (
-        "README direct non-bundle rows must reference command-surface trio paths exactly once: "
-        + ", ".join(duplicated)
+        "README direct non-bundle rows must reference command-surface trio paths exactly once: " + ", ".join(duplicated)
     )
 
 
@@ -595,28 +512,19 @@ def test_direct_non_bundle_rows_cover_alias_trio_exactly_once_by_path() -> None:
     missing = sorted(path for path in ALIAS_DIRECT_TRIO_PATHS if path_counts.get(path, 0) == 0)
     duplicated = sorted(path for path in ALIAS_DIRECT_TRIO_PATHS if path_counts.get(path, 0) > 1)
 
-    assert not missing, (
-        "README direct non-bundle rows missing alias trio paths: " + ", ".join(missing)
-    )
-    assert not duplicated, (
-        "README direct non-bundle rows must reference alias trio paths exactly once: "
-        + ", ".join(duplicated)
+    assert not missing, "README direct non-bundle rows missing alias trio paths: " + ", ".join(missing)
+    assert not duplicated, "README direct non-bundle rows must reference alias trio paths exactly once: " + ", ".join(
+        duplicated
     )
 
 
 def test_readme_full_bundle_command_text_matches_split_constant_after_whitespace_collapse() -> None:
     full_bundle_goal = "Full e2e governance unit bundle (direct)"
     readme_full_bundle_command = next(
-        (
-            command
-            for goal, command in _readme_table_goal_command_pairs()
-            if goal == full_bundle_goal
-        ),
+        (command for goal, command in _readme_table_goal_command_pairs() if goal == full_bundle_goal),
         None,
     )
-    assert readme_full_bundle_command is not None, (
-        "README missing Full e2e governance unit bundle (direct) row"
-    )
+    assert readme_full_bundle_command is not None, "README missing Full e2e governance unit bundle (direct) row"
 
     collapse = lambda text: re.sub(r"\s+", " ", text).strip()
     assert collapse(readme_full_bundle_command) == collapse(
@@ -642,7 +550,6 @@ def test_readme_governance_rows_do_not_reference_tests_outside_tests_e2e() -> No
                 if not token.startswith("tests/e2e/"):
                     outside_paths.add(token)
 
-    assert not outside_paths, (
-        "README governance rows must not reference test paths outside tests/e2e/: "
-        + ", ".join(sorted(outside_paths))
+    assert not outside_paths, "README governance rows must not reference test paths outside tests/e2e/: " + ", ".join(
+        sorted(outside_paths)
     )

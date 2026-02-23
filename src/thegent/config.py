@@ -1457,6 +1457,15 @@ class ThegentSettings(BaseSettings):
         ge=0,
         description="GitHub project number for workstream autosync (THGENT_GITHUB_PROJECT_NUMBER)",
     )
+    github_sandbox_mode: bool = Field(
+        default=False,
+        description="Force writes to sandbox GitHub project target (THGENT_GITHUB_SANDBOX_MODE)",
+    )
+    github_sandbox_project_number: int = Field(
+        default=0,
+        ge=0,
+        description="Sandbox GitHub project number for autosync writes (THGENT_GITHUB_SANDBOX_PROJECT_NUMBER)",
+    )
     github_direction: str = Field(
         default="bidirectional",
         description="GitHub sync direction: read_only, write_only, bidirectional (THGENT_GITHUB_DIRECTION)",
@@ -1480,6 +1489,46 @@ class ThegentSettings(BaseSettings):
     workstream_autosync_standalone_mode: bool = Field(
         default=True,
         description="Standalone-safe mode for autosync: skip gracefully on errors (THGENT_AUTOSYNC_STANDALONE_MODE)",
+    )
+    workstream_adaptive_interval_enabled: bool = Field(
+        default=False,
+        description="Enable adaptive interval controller (THGENT_WORKSTREAM_ADAPTIVE_INTERVAL_ENABLED)",
+    )
+    workstream_adaptive_interval_min_seconds: int = Field(
+        default=30,
+        ge=1,
+        description="Minimum adaptive interval in seconds (THGENT_WORKSTREAM_ADAPTIVE_INTERVAL_MIN_SECONDS)",
+    )
+    workstream_adaptive_interval_max_seconds: int = Field(
+        default=900,
+        ge=1,
+        description="Maximum adaptive interval in seconds (THGENT_WORKSTREAM_ADAPTIVE_INTERVAL_MAX_SECONDS)",
+    )
+    metadata_ttl_seconds: int = Field(
+        default=3600,
+        ge=1,
+        description="Metadata freshness TTL in seconds (THGENT_METADATA_TTL_SECONDS)",
+    )
+    bootstrap_connector: str = Field(
+        default="github",
+        description="Connector name used for bootstrap field mapping checks (THGENT_BOOTSTRAP_CONNECTOR)",
+    )
+    bootstrap_required_fields: str = Field(
+        default="",
+        description="Comma-separated required bootstrap fields (THGENT_BOOTSTRAP_REQUIRED_FIELDS)",
+    )
+    connector_mapping_cache_path: Path | None = Field(
+        default=None,
+        description="Path override for connector mapping cache (THGENT_CONNECTOR_MAPPING_CACHE_PATH)",
+    )
+    sync_max_changes_per_cycle: int = Field(
+        default=100,
+        ge=1,
+        description="Maximum allowed write changes per sync cycle (THGENT_SYNC_MAX_CHANGES_PER_CYCLE)",
+    )
+    sync_pull_only_on_failure: bool = Field(
+        default=False,
+        description="Switch sync engine to pull-only mode after write failures (THGENT_SYNC_PULL_ONLY_ON_FAILURE)",
     )
 
 

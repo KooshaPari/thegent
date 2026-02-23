@@ -30,34 +30,27 @@ def _read_ci_yml() -> str:
 def test_ci_yml_contains_zig_readiness_job() -> None:
     """ci.yml must define the zig-readiness job."""
     text = _read_ci_yml()
-    assert "zig-readiness:" in text, (
-        "ci.yml missing 'zig-readiness:' job block (WL-132 B90-W2-D4)"
-    )
+    assert "zig-readiness:" in text, "ci.yml missing 'zig-readiness:' job block (WL-132 B90-W2-D4)"
 
 
 def test_ci_yml_zig_job_references_zmx_interop() -> None:
     """zig-readiness job must reference thegent-zmx-interop."""
     text = _read_ci_yml()
-    assert "thegent-zmx-interop" in text, (
-        "ci.yml zig-readiness job must reference 'thegent-zmx-interop'"
-    )
+    assert "thegent-zmx-interop" in text, "ci.yml zig-readiness job must reference 'thegent-zmx-interop'"
 
 
 def test_ci_yml_zig_job_is_non_blocking() -> None:
     """zig-readiness job must set continue-on-error: true (P2/experimental)."""
     text = _read_ci_yml()
     assert "continue-on-error: true" in text, (
-        "zig-readiness job must have 'continue-on-error: true' "
-        "(Zig is P2/experimental, must not block CI)"
+        "zig-readiness job must have 'continue-on-error: true' (Zig is P2/experimental, must not block CI)"
     )
 
 
 def test_ci_yml_zig_job_has_wl132_comment() -> None:
     """ci.yml must include WL-132 trace comment for the zig-readiness job."""
     text = _read_ci_yml()
-    assert "WL-132" in text, (
-        "ci.yml must include WL-132 reference comment in zig-readiness job"
-    )
+    assert "WL-132" in text, "ci.yml must include WL-132 reference comment in zig-readiness job"
 
 
 # ---------------------------------------------------------------------------
@@ -76,9 +69,7 @@ def test_ci_yml_zig_job_has_cargo_build() -> None:
 def test_ci_yml_zig_job_has_cargo_test() -> None:
     """zig-readiness job must include a cargo test step for zmx-interop."""
     text = _read_ci_yml()
-    assert "cargo test -p thegent-zmx-interop" in text, (
-        "zig-readiness job must run 'cargo test -p thegent-zmx-interop'"
-    )
+    assert "cargo test -p thegent-zmx-interop" in text, "zig-readiness job must run 'cargo test -p thegent-zmx-interop'"
 
 
 # ---------------------------------------------------------------------------
@@ -89,9 +80,7 @@ def test_ci_yml_zig_job_has_cargo_test() -> None:
 def test_ci_yml_zig_job_installs_rust() -> None:
     """zig-readiness job must set up a Rust toolchain."""
     text = _read_ci_yml()
-    assert "dtolnay/rust-toolchain" in text, (
-        "zig-readiness job must use dtolnay/rust-toolchain to set up Rust"
-    )
+    assert "dtolnay/rust-toolchain" in text, "zig-readiness job must use dtolnay/rust-toolchain to set up Rust"
 
 
 # ---------------------------------------------------------------------------
@@ -110,6 +99,4 @@ def test_ci_yml_is_valid_yaml() -> None:
     parsed = yaml.safe_load(text)
     assert isinstance(parsed, dict), "ci.yml must parse to a dict"
     assert "jobs" in parsed, "ci.yml must have a 'jobs' key"
-    assert "zig-readiness" in parsed["jobs"], (
-        "ci.yml jobs must include 'zig-readiness'"
-    )
+    assert "zig-readiness" in parsed["jobs"], "ci.yml jobs must include 'zig-readiness'"

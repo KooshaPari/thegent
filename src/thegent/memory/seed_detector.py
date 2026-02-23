@@ -258,13 +258,9 @@ class SeedDetector:
         model = os.environ.get("THGENT_SEED_DETECTOR_MODEL", "claude-3-5-haiku-latest")
         system = (
             "You classify whether input text is a software idea seed. "
-            "Respond ONLY JSON: {\"is_seed\": bool, \"confidence\": float, \"tags\": [str]}."
+            'Respond ONLY JSON: {"is_seed": bool, "confidence": float, "tags": [str]}.'
         )
-        user = (
-            "Classify this text:\n\n"
-            f"{text[:4000]}\n\n"
-            "Return strict JSON with keys is_seed, confidence (0..1), tags."
-        )
+        user = f"Classify this text:\n\n{text[:4000]}\n\nReturn strict JSON with keys is_seed, confidence (0..1), tags."
 
         headers = {
             "x-api-key": api_key,

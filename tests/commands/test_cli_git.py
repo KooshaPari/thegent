@@ -43,8 +43,8 @@ def test_git_lock_status_outputs_json() -> None:
         result = runner.invoke(app, ["git", "lock-status", "--json", "--stale-after", "120"])
 
     assert result.exit_code == 0
-    assert "\"exists\": true" in result.stdout
-    assert "\"is_stale\": true" in result.stdout
+    assert '"exists": true' in result.stdout
+    assert '"is_stale": true' in result.stdout
     fake_manager.index_lock_status.assert_called_once_with(stale_after_s=120.0)
 
 

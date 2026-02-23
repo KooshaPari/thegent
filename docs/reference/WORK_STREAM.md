@@ -13,6 +13,8 @@
 2. **When starting**: Append to CLAIMED (ID, Agent, Started). Use unique agent_id.
 3. **When completing**: Remove from CLAIMED; add to COMPLETED; update source plan if applicable.
 4. **Incorporator**: Run `thegent plan incorporate` to merge new fragments from plans, research, specs.
+5. **Sync loop**: Use `thegent sync work-stream` before planning, and run `thegent sync autopilot --once` plus `thegent sync autopilot-status` to keep remote boards aligned.
+6. **GitHub backlog bootstrap**: Use `task sync:bootstrap-gh` to create/reuse the sync-system issue/project board track.
 
 ---
 
@@ -459,7 +461,8 @@ After P0 tasks complete, implement remaining P1 OpenRouter features:
 
 ### [WL-070] Cache LiteLLM Router Instance — Eliminate Per-Request Model List Rebuild
 **Status:** COMPLETED
-**Completed:** 2026-02-20 — 13 Python perf tests. TTLCache(maxsize=1, ttl=300) was already implemented; added public invalidate_router_cache() for external callers.
+**Completed:** 2026-02-20 — 13 Python perf tests. TTLCache was implemented with invalidate_router_cache() for external callers.
+**Regression fix:** 2026-02-22 — policy-keyed cache resized to `maxsize=8` (from `1`) to preserve distinct policy entries within TTL; verified by `tests/test_wl070_litellm_router_cache.py` (7 passed).
 **Priority:** P1
 **Area:** performance
 **Effort:** S
@@ -1641,100 +1644,64 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 
 | ID | Agent | Started | Notes |
 |----|-------|---------|-------|
-| _none_ | - | - | No active claims after WL-120/WL-136/WL-138 closeout sweep on 2026-02-21. |
 
 ---
 
-| tenacity-add-jitter | child-a | 2026-02-22T10:17:47.456316+00:00 |
-| index-file-indexing | parent | 2026-02-22T10:18:24.867306+00:00 |
-| ghostty-terminal-integration | child-2 | 2026-02-22T10:18:25.428948+00:00 |
-| resource-network-bandwidth | child-2 | 2026-02-22T10:18:25.470001+00:00 |
-| resource-disk-queue-depth | child-2 | 2026-02-22T10:18:25.510678+00:00 |
-| resource-distributed-coordination | child-2 | 2026-02-22T10:18:25.550373+00:00 |
-| docs-claudemd-reference | child-2 | 2026-02-22T10:18:25.590639+00:00 |
-| docs-skill-examples | child-2 | 2026-02-22T10:18:25.634622+00:00 |
-| docs-cli-reference | child-2 | 2026-02-22T10:18:25.675435+00:00 |
-| docs-mcp-tool-docs | child-2 | 2026-02-22T10:18:25.716093+00:00 |
-| fastmcp-task-mode | child-2 | 2026-02-22T10:18:25.751798+00:00 |
-| setup-tailscale-nodes | child-2 | 2026-02-22T10:18:25.787904+00:00 |
-| impl-remote-executor | child-2 | 2026-02-22T10:18:25.822501+00:00 |
-| rollout-hook-rust-phase2 | child-2 | 2026-02-22T10:18:25.864630+00:00 |
-| impl-macos-desktop-automation | child-2 | 2026-02-22T10:18:25.903724+00:00 |
-| install-library-deps | child-2 | 2026-02-22T10:18:25.940006+00:00 |
-| impl-library-phase1 | child-2 | 2026-02-22T10:18:25.975372+00:00 |
-| research-cross-platform-remote | child-2 | 2026-02-22T10:18:26.011082+00:00 |
-| research-library-circuit-breaker | child-2 | 2026-02-22T10:18:26.049335+00:00 |
-| research-library-yaml | child-2 | 2026-02-22T10:18:26.089152+00:00 |
-| research-library-ansi | child-2 | 2026-02-22T10:18:26.128582+00:00 |
-| escalation-index-file-indexing | free-lane | 2026-02-22T10:19:15.841920+00:00 |
-| research-smart-robust-strategies | free-lane | 2026-02-22T10:19:15.878395+00:00 |
-| audit-delegation-friction | free-lane | 2026-02-22T10:19:15.914998+00:00 |
-| wp-16001-persona-registry | free-lane | 2026-02-22T10:19:15.948782+00:00 |
-| wp-16002-async-delegation | free-lane | 2026-02-22T10:19:15.987635+00:00 |
-| sharecli-git-parallelism | free-lane | 2026-02-22T10:19:16.026463+00:00 |
-| sharecli-smart-merge | free-lane | 2026-02-22T10:19:16.063576+00:00 |
-| sharecli-task-queue | free-lane | 2026-02-22T10:19:16.098058+00:00 |
-| compositor-cli-integration | free-lane | 2026-02-22T10:19:16.134725+00:00 |
-| ux-linting-accelerator | free-lane | 2026-02-22T10:19:16.173790+00:00 |
-| borrow-heliosguard-priority | free-lane | 2026-02-22T10:19:16.212462+00:00 |
-| borrow-heliosguard-backlog | free-lane | 2026-02-22T10:19:16.248771+00:00 |
-| borrow-thegent-mcp-tools | free-lane | 2026-02-22T10:19:16.282689+00:00 |
-| impl-cross-project-ipc | free-lane | 2026-02-22T10:19:16.316131+00:00 |
-| audit-teammate-collaboration | free-lane | 2026-02-22T10:19:16.349477+00:00 |
-| swarm-per-gate-logging | free-lane | 2026-02-22T10:19:16.382855+00:00 |
-| swarm-critical-lane | free-lane | 2026-02-22T10:19:16.417588+00:00 |
-| TGNT-P11.1 | free-lane | 2026-02-22T10:19:16.456806+00:00 |
-| TGNT-P14.1 | free-lane | 2026-02-22T10:19:16.496969+00:00 |
-| TGNT-P16.1 | free-lane | 2026-02-22T10:19:16.533516+00:00 |
-| TGNT-P16.2 | free-lane | 2026-02-22T10:19:16.568315+00:00 |
-| TGNT-P17.1 | free-lane | 2026-02-22T10:19:16.635982+00:00 |
-| TGNT-P18.2 | free-lane | 2026-02-22T10:19:16.700728+00:00 |
-| TGNT-P18.3 | free-lane | 2026-02-22T10:19:16.765380+00:00 |
-| SCLI-P1.2 | free-lane | 2026-02-22T10:19:16.805129+00:00 |
-| SCLI-P1.4 | free-lane | 2026-02-22T10:19:16.841270+00:00 |
-| SCLI-P7.1 | free-lane | 2026-02-22T10:19:16.878817+00:00 |
-| SCLI-P7.3 | free-lane | 2026-02-22T10:19:16.922848+00:00 |
-| SCLI-P13.2 | free-lane | 2026-02-22T10:19:16.960185+00:00 |
-| deferral-run_c56546ff | wave10to50 | 2026-02-22T10:37:35.474098+00:00 |
-| ~~heliosShield-smart-merge~~ | wave10to50 | 2026-02-22T10:37:35.595531+00:00 |
-| ~~compositor-caching~~ | wave10to50 | 2026-02-22T10:37:35.719598+00:00 |
-| ~~compositor-perf-profiling~~ | wave10to50 | 2026-02-22T10:37:35.867829+00:00 |
-| ~~compositor-cli-integration~~ | wave10to50 | 2026-02-22T10:37:36.290426+00:00 |
-| ~~ux-linting-accelerator~~ | wave10to50 | 2026-02-22T10:37:36.438243+00:00 |
-| ~~ux-terminal-keepalive~~ | wave10to50 | 2026-02-22T10:37:36.579491+00:00 |
-| ~~swarm-redis-concurrency~~ | wave10to50 | 2026-02-22T10:37:36.748083+00:00 |
-| ~~swarm-dag-prioritization~~ | wave10to50 | 2026-02-22T10:37:36.854031+00:00 |
-| ~~tenacity-migrate-cli~~ | wave10to50 | 2026-02-22T10:37:36.970240+00:00 |
-| ~~tenacity-migrate-loop~~ | wave10to50 | 2026-02-22T10:37:37.147191+00:00 |
-| ~~shell-consolidate-configs~~ | wave10to50 | 2026-02-22T10:37:37.259016+00:00 |
-| ~~bkm-10-jsonl-parser~~ | wave10to50 | 2026-02-22T10:37:37.354327+00:00 |
-| ~~acp-client-adapter~~ | wave10to50 | 2026-02-22T10:37:37.483613+00:00 |
-| ~~acp-mcp-bridge~~ | wave10to50 | 2026-02-22T10:37:37.577303+00:00 |
-| ~~resource-gpu-utilization~~ | wave10to50 | 2026-02-22T10:37:37.663916+00:00 |
-| ~~resource-network-bandwidth~~ | wave10to50 | 2026-02-22T10:37:37.775674+00:00 |
-| ~~fastmcp-elicitation-api~~ | wave10to50 | 2026-02-22T10:37:37.940501+00:00 |
-| ~~fastmcp-task-mode~~ | wave10to50 | 2026-02-22T10:37:38.072983+00:00 |
-| ~~research-governance-override-events~~ | wave10to50 | 2026-02-22T10:37:38.179504+00:00 |
-| ~~impl-pareto-router~~ | wave10to50 | 2026-02-22T10:37:38.326236+00:00 |
-| ~~impl-cost-aware-router~~ | wave10to50 | 2026-02-22T10:37:38.499392+00:00 |
-| ~~setup-tailscale-nodes~~ | wave10to50 | 2026-02-22T10:37:38.635044+00:00 |
-| ~~impl-library-phase1~~ | wave10to50 | 2026-02-22T10:37:38.759130+00:00 |
-| ~~prototype-federated-policy~~ | wave10to50 | 2026-02-22T10:37:38.883073+00:00 |
-| escalation-run_73623383 | wave10to50 | 2026-02-22T10:38:31.817391+00:00 |
-| escalation-run_56fb8042 | wave10to50 | 2026-02-22T10:38:31.880773+00:00 |
-| escalation-run_8aa7347a | wave10to50 | 2026-02-22T10:38:31.943953+00:00 |
-| deferral-run_b22258ca | wave10to50 | 2026-02-22T10:38:32.010869+00:00 |
-| deferral-run_2b97f82d | wave10to50 | 2026-02-22T10:38:32.078636+00:00 |
-| deferral-run_5ea86c0f | wave10to50 | 2026-02-22T10:38:32.206115+00:00 |
-| deferral-run_a0752f34 | wave10to50 | 2026-02-22T10:38:32.273281+00:00 |
-| deferral-run_def_f33667b2 | wave10to50 | 2026-02-22T10:38:32.337874+00:00 |
-| deferral-run_def_6ea77086 | wave10to50 | 2026-02-22T10:38:32.403838+00:00 |
+### Wave70 Claims (2026-02-22)
+
+
+| research-library-ansi | codex-24976 | 2026-02-23T01:36:08.456669+00:00 |
+| ~~acp-client-adapter~~ | codex-26970 | 2026-02-23T01:36:12.070561+00:00 |
+| ~~research-governance-override-events~~ | codex-30449 | 2026-02-23T01:36:20.170381+00:00 |
+| ~~ux-linting-accelerator~~ | codex-26970 | 2026-02-23T01:36:23.486846+00:00 |
+| swarm-critical-lane | codex-30449 | 2026-02-23T01:36:31.268445+00:00 |
+| install-library-deps | codex-26970 | 2026-02-23T01:36:34.013522+00:00 |
+| ~~swarm-dag-prioritization~~ | codex-30449 | 2026-02-23T01:36:42.271806+00:00 |
+| ~~resource-network-bandwidth~~ | codex-26970 | 2026-02-23T01:36:45.032668+00:00 |
+| _none_ | codex-30449 | 2026-02-23T01:36:52.712383+00:00 |
+| wave70-l4 | codex-30449 | 2026-02-23T01:37:05.303313+00:00 |
+| docs-cli-reference | codex-26970 | 2026-02-23T01:37:08.225371+00:00 |
+| ~~borrow-heliosguard-backlog~~ | codex-26970 | 2026-02-23T01:37:18.852120+00:00 |
+| wave70-l2 | codex-26970 | 2026-02-23T01:37:44.388215+00:00 |
+| ~~docs-claudemd-reference~~ | codex-26970 | 2026-02-23T01:37:56.908952+00:00 |
+| ~~SCLI-P7.1~~ | codex-26970 | 2026-02-23T01:38:24.452951+00:00 |
+| sharecli-smart-merge | codex-26970 | 2026-02-23T01:38:41.297906+00:00 |
+| sharecli-git-parallelism | codex-26970 | 2026-02-23T01:38:55.428057+00:00 |
+| ~~audit-delegation-friction~~ | codex-26970 | 2026-02-23T01:39:24.692432+00:00 |
+| escalation-index-file-indexing | codex-26970 | 2026-02-23T01:39:58.712689+00:00 |
+| docs-mcp-tool-docs | codex-26970 | 2026-02-23T01:40:12.286713+00:00 |
+| TGNT-P16.2 | codex-smoke | 2026-02-23T01:40:58.247759+00:00 |
+| research-smart-robust-strategies | codex-smoke | 2026-02-23T01:41:00.119425+00:00 |
+| ~~borrow-heliosguard-priority~~ | codex-smoke | 2026-02-23T01:41:00.259408+00:00 |
+| TGNT-P18.3 | codex-36397 | 2026-02-23T01:41:24.684994+00:00 |
+| ~~audit-teammate-collaboration~~ | codex-36397 | 2026-02-23T01:42:13.232032+00:00 |
+| ~~TGNT-P14.1~~ | codex-36397 | 2026-02-23T01:46:47.270912+00:00 |
+| ~~TGNT-P11.1~~ | codex-self-wave10 | 2026-02-23T01:48:38.010029+00:00 |
+| sharecli-task-queue | codex-self-wave10 | 2026-02-23T01:48:38.385069+00:00 |
+| TGNT-P18.2 | codex-self-wave10 | 2026-02-23T01:48:38.684327+00:00 |
+| rollout-hook-rust-phase2 | codex-self-wave10 | 2026-02-23T01:48:39.121995+00:00 |
+| docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.330964+00:00 |
+| wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.594937+00:00 |
+| ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.797259+00:00 |
+| wave70-l1 | codex-self-wave-next2 | 2026-02-23T01:50:21.485463+00:00 |
+| wp-16002-async-delegation | codex-self-wave-next2 | 2026-02-23T01:50:21.967715+00:00 |
+| ~~TGNT-P16.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.105584+00:00 |
+| wave70-l7 | codex-self-wave-next2 | 2026-02-23T01:50:22.231318+00:00 |
+| wave70-l3 | codex-self-wave-next2 | 2026-02-23T01:50:22.365737+00:00 |
+| TGNT-P17.1 | codex-self-wave-next2 | 2026-02-23T01:50:22.490878+00:00 |
 ## COMPLETED (historical reference)
 
 > All items below were completed by various agents between 2026-02-18 and 2026-02-20. See WORK_STREAM prior version for full entries with completion notes.
 
 | ID | Completed | Summary |
 |----|-----------|---------|
+| SCLI-P7.1 | 2026-02-23 | Verified singleflight dedup behavior and cache heat-map eviction via `tests/mesh/test_cache.py` (20 passed) |
+| SCLI-P7.3 | 2026-02-23 | Verified heat-based cache behavior and eviction ordering via `tests/mesh/test_cache.py` (20 passed) |
+| TGNT-P11.1 | 2026-02-23 | Hardened tmpfs-like mesh directory initialization with explicit `0o1777` chmod and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
+| TGNT-P14.1 | 2026-02-23 | Hardened AGENT template/context symlink management and added focused tests (`tests/infra/test_ipc_context_injection.py`) |
+| TGNT-P16.1 | 2026-02-23 | Verified Linux bubblewrap tier-2 worktree bind behavior in `tests/test_wl681x_lane_d.py -k tier2_bwrap` |
+| wave70-l5 | 2026-02-22 | Implemented WL-224 (workstream schema linter), WL-225 (wl sort/normalize), WL-226 (remote payload checksums), WL-227 (metadata enrichment), plus WL-259,260,222,223,228,229 with comprehensive test coverage (76 tests) |
+| wave70-l6 | 2026-02-22 | Implemented WL-234 (incident runbook), WL-235 (connector chaos tests), WL-236 (cold/warm benchmarks), WL-237 (hourly change digest) with comprehensive test coverage (56 tests) |
 | WL-155-156-next20-b4 | 2026-02-22 | Executed fourth next-20 memory/scraper batch: snapshot indexing/analytics/export APIs plus summary-flow index artifact wiring and targeted tests |
 | WL-155-156-next20-b3 | 2026-02-22 | Executed third next-20 memory/scraper batch: snapshot lifecycle utilities (list/load/latest/filter/export markdown), plus targeted unit tests and plan log updates |
 | WL-155-156-next20-b2 | 2026-02-22 | Executed second next-20 memory/scraper batch: runtime trigger wiring (`tool_use`/`error`/`session_change`), snapshot persistence integration, inferred dump tagging, and targeted test/doc updates |
@@ -1900,6 +1867,21 @@ Executed Wave-1 assignments with child-agent workflow and produced per-agent evi
 
 ---
 
+| CLIP-BUG-01 | codex-closeout | 2026-02-23T02:44:17.396127+00:00 |
+| CLIP-BUG-02 | codex-closeout | 2026-02-23T02:44:18.755867+00:00 |
+| CLIP-BUG-03 | codex-closeout | 2026-02-23T02:44:19.746595+00:00 |
+| CLIP-BUG-04 | codex-closeout | 2026-02-23T02:44:20.571724+00:00 |
+| CLIP-BUG-05 | codex-closeout | 2026-02-23T02:44:21.576003+00:00 |
+| CLIP-BUG-06 | codex-closeout | 2026-02-23T02:44:22.525598+00:00 |
+| CLIP-BUG-07 | codex-closeout | 2026-02-23T02:44:23.791120+00:00 |
+| CLIP-BUG-08 | codex-closeout | 2026-02-23T02:44:24.681246+00:00 |
+| CLIP-BUG-09 | codex-closeout | 2026-02-23T02:44:25.224764+00:00 |
+| CLIP-BUG-10 | codex-closeout | 2026-02-23T02:44:25.745853+00:00 |
+| CLIP-BUG-11 | codex-closeout | 2026-02-23T02:44:26.139078+00:00 |
+| CLIP-BUG-12 | codex-closeout | 2026-02-23T02:44:26.526508+00:00 |
+| SCLI-P1.2 | codex-closeout | 2026-02-23T02:44:26.999466+00:00 |
+| SCLI-P1.4 | codex-closeout | 2026-02-23T02:44:27.340791+00:00 |
+| SCLI-P13.2 | codex-closeout | 2026-02-23T02:44:27.691853+00:00 |
 ## STRATEGIC DIRECTION: Turn Codex into Ante
 
 > Added: 2026-02-20 | Reference: docs/context/ante.md
@@ -2271,7 +2253,7 @@ Add per-item provenance stamps for reflected updates in local markdown.
 
 Add per-connector quota budgets for controlled write/read consumption.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/capability_alerts.py`, `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`, `tests/test_wl305_capability_alerts.py`
 
 ### [WL-241] Auth Expiry Detector
 **Status:** COMPLETED
@@ -2406,7 +2388,7 @@ Reject duplicate Board IDs across all local and generated sync artifacts.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-310] Parallel Local Edit Merge Policy
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** merge, reliability
 **Effort:** M
@@ -2417,7 +2399,7 @@ Define deterministic merge policy for parallel local workstream edits.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-311] Versioned Mapping Registry
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** mappings, governance
 **Effort:** M
@@ -2450,7 +2432,7 @@ Add confidential-mode reports with minimized metadata exposure.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-314] Connector Latency Chaos Mode
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** testing, chaos
 **Effort:** M
@@ -2461,7 +2443,7 @@ Inject synthetic connector latency for resilience validation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-315] Governance Sign-Off Template
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** governance, docs
 **Effort:** S
@@ -2505,7 +2487,7 @@ Add pluggable alert routing hooks (webhook/email/event bus).
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-319] Symptom-to-Fix Docs Matrix
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, support
 **Effort:** S
@@ -2516,7 +2498,7 @@ Publish matrix mapping symptoms to commands and remediation actions.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-320] Enterprise Rollout Scorecard
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** enterprise, release
 **Effort:** S
@@ -2527,7 +2509,7 @@ Define rollout scorecard and go/no-go thresholds for enterprise adoption.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_H_2026-02-22.md`
 
 ### [WL-282] Connector Maintenance Calendar Ingestion
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** scheduling, connectors
 **Effort:** S
@@ -2538,7 +2520,7 @@ Ingest connector maintenance windows from config to avoid planned outages.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-283] Large-Range Partition Planner
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** scale, scheduling
 **Effort:** M
@@ -2549,7 +2531,7 @@ Plan WL-range partitions dynamically for very large workstreams.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-284] Rolling Checkpoint Resume
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** reliability, resume
 **Effort:** M
@@ -2560,7 +2542,7 @@ Create rolling checkpoints so long sync cycles can resume safely.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-285] Mutation Spike Anomaly Detector
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** observability, safety
 **Effort:** S
@@ -2571,7 +2553,7 @@ Detect abnormal mutation spikes and trigger protective throttling/escalation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-286] Adaptive Per-Connector Rate Limiter
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** performance, reliability
 **Effort:** M
@@ -2582,7 +2564,7 @@ Implement adaptive rate limits by connector and operation class.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-287] Label/Tag Parity
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** metadata, sync
 **Effort:** S
@@ -2593,7 +2575,7 @@ Synchronize labels/tags with parity across local and remote trackers.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-288] Local Tag Taxonomy Validator
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** validation, docs
 **Effort:** S
@@ -2604,7 +2586,7 @@ Validate local workstream tags against approved taxonomy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-289] Duplicate Title Guard
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** integrity, governance
 **Effort:** S
@@ -2615,7 +2597,7 @@ Add strict duplicate-title checks with explicit exception policy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-290] Local SLA Annotation Sync
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** sla, docs
 **Effort:** S
@@ -2626,7 +2608,7 @@ Reflect SLA metadata into local markdown block annotations.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-291] Open Blockers Digest
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** reporting, ops
 **Effort:** S
@@ -2637,7 +2619,7 @@ Generate per-cycle digest of currently open blockers and dependencies.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-292] Queue Pruning Lifecycle
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** maintenance, queue
 **Effort:** S
@@ -2648,7 +2630,7 @@ Auto-prune stale conflict and dead-letter entries with retention policy.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-293] Signed Capability Cache
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** security, connectors
 **Effort:** M
@@ -2659,7 +2641,7 @@ Sign connector capability cache entries and enforce TTL renewal.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
 
 ### [WL-294] Policy What-If Simulation
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** governance, cli
 **Effort:** S
@@ -2668,9 +2650,10 @@ Sign connector capability cache entries and enforce TTL renewal.
 Add policy simulation command for hypothetical sync policy changes.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-295] Pull Pagination Resilience Tests
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** tests, connectors
 **Effort:** M
@@ -2679,9 +2662,10 @@ Add policy simulation command for hypothetical sync policy changes.
 Test multi-page remote pull behavior with pagination edge cases.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-296] Restore Verifier
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** rollback, reliability
 **Effort:** S
@@ -2690,9 +2674,10 @@ Test multi-page remote pull behavior with pagination edge cases.
 Verify rollback/restore outputs match checkpoint expectations.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-297] Connector Cost Accounting
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** cost, observability
 **Effort:** S
@@ -2701,9 +2686,10 @@ Verify rollback/restore outputs match checkpoint expectations.
 Track per-connector API usage/cost metrics for budgeting.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Batch evidence:** `docs/reports/2026-02-22-wave70-batch1-wl293-297.md`
 
 ### [WL-298] Enterprise Topology Cookbook
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, architecture
 **Effort:** S
@@ -2711,10 +2697,10 @@ Track per-connector API usage/cost metrics for budgeting.
 
 Document common enterprise deployment topologies for autosync.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Evidence:** `docs/reference/AUTOSYNC_ENTERPRISE_TOPOLOGY_COOKBOOK.md`
 
 ### [WL-299] Reliability Score Targets
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** reliability, analytics
 **Effort:** S
@@ -2722,10 +2708,10 @@ Document common enterprise deployment topologies for autosync.
 
 Define reliability score computation and target thresholds over time.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/reliability_score_targets.py`, `tests/integrations/test_wl299_reliability_score_targets.py`, `docs/reports/2026-02-22-wave70-batch2-wl262-264-299-300.md`
 
 ### [WL-300] Default-On Guardrail Pack
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** migration, governance
 **Effort:** M
@@ -2733,10 +2719,10 @@ Define reliability score computation and target thresholds over time.
 
 Ship guardrail policy pack and migration script for default-on rollout.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_G_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/guardrail_pack_migration.py`, `tests/integrations/test_wl300_default_on_guardrail_pack.py`, `docs/reports/2026-02-22-wave70-batch2-wl262-264-299-300.md`
 
 ### [WL-262] Failure Remediation Suggestions
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** ux, diagnostics
 **Effort:** S
@@ -2744,10 +2730,10 @@ Ship guardrail policy pack and migration script for default-on rollout.
 
 Attach deterministic remediation suggestions to common sync failure classes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/remediation_suggestions.py`, `tests/integrations/test_wl262_failure_remediation_suggestions.py`, `docs/reports/2026-02-22-wave70-batch2-wl262-264-299-300.md`
 
 ### [WL-263] Credential Source Validator
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** auth, config
 **Effort:** S
@@ -2755,10 +2741,10 @@ Attach deterministic remediation suggestions to common sync failure classes.
 
 Validate credential source precedence and reject ambiguous auth configuration.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/credential_source_validator.py`, `tests/integrations/test_wl263_credential_source_validator.py`, `docs/reports/2026-02-22-wave70-batch2-wl262-264-299-300.md`
 
 ### [WL-264] WL Block Formatter
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** formatting, parser
 **Effort:** S
@@ -2766,10 +2752,10 @@ Validate credential source precedence and reject ambiguous auth configuration.
 
 Add strict formatter for WL block structure and metadata normalization.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/wl_block_formatter.py`, `tests/integrations/test_wl264_wl_block_formatter.py`, `docs/reports/2026-02-22-wave70-batch2-wl262-264-299-300.md`
 
 ### [WL-265] Field Mapping Bootstrap Wizard
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** setup, ux
 **Effort:** S
@@ -2777,10 +2763,10 @@ Add strict formatter for WL block structure and metadata normalization.
 
 Add first-time setup wizard for connector field/state mapping bootstrap.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/field_mapping_wizard.py`, `tests/test_wl265_field_mapping_wizard.py`
 
 ### [WL-266] Pre-Apply Connector Health Probe
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** reliability, safety
 **Effort:** S
@@ -2788,10 +2774,10 @@ Add first-time setup wizard for connector field/state mapping bootstrap.
 
 Run health probe before apply cycle and fail early on degraded connectors.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-267] Adaptive Sync Interval Controller
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** performance, scheduler
 **Effort:** M
@@ -2799,10 +2785,10 @@ Run health probe before apply cycle and fail early on degraded connectors.
 
 Adapt loop interval dynamically based on drift rate, error rate, and load.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/adaptive_sync_interval.py`, `tests/test_wl267_adaptive_sync_interval.py`
 
 ### [WL-268] Incident Snapshot Bundle
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** incident, audit
 **Effort:** S
@@ -2810,10 +2796,10 @@ Adapt loop interval dynamically based on drift rate, error rate, and load.
 
 Produce immutable incident snapshot bundles for postmortem workflows.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/incident_snapshot.py`, `tests/test_wl268_incident_snapshot.py`
 
 ### [WL-269] Conflict Triage Categories
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** conflicts, governance
 **Effort:** S
@@ -2821,10 +2807,10 @@ Produce immutable incident snapshot bundles for postmortem workflows.
 
 Classify conflicts by category/severity and assign owner routing metadata.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/conflict_triage.py`, `tests/test_wl269_conflict_triage.py`
 
 ### [WL-270] Metadata Freshness TTL
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** metadata, sync
 **Effort:** S
@@ -2835,7 +2821,7 @@ Enforce metadata freshness TTL and stale marker behavior.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-271] Split-Brain Remote State Detector
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** integrity, reliability
 **Effort:** M
@@ -2843,7 +2829,7 @@ Enforce metadata freshness TTL and stale marker behavior.
 
 Detect divergent remote states across connectors for the same board item.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/cross_connector_verifier.py`, `tests/test_wl301_cross_connector_verifier.py`
 
 ### [WL-272] Local Status Transition History Log
 **Status:** COMPLETED
@@ -2857,7 +2843,7 @@ Append-only history log for all local status transitions caused by sync.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-273] Selective Retry Queue
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** resilience, queue
 **Effort:** M
@@ -2868,7 +2854,7 @@ Queue transient failures for selective retry without replaying successful writes
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-274] Connector Sandbox Project Mode
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** testing, safety
 **Effort:** S
@@ -2879,7 +2865,7 @@ Support sandbox project targets for safe connector validation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-275] CI Benchmark Gates
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** ci, performance
 **Effort:** M
@@ -2890,7 +2876,7 @@ Add CI thresholds that fail on autosync latency/throughput regressions.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-276] Artifact Redaction Pipeline
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** security, compliance
 **Effort:** S
@@ -2901,7 +2887,7 @@ Redact sensitive fields from reports/artifacts using policy-driven rules.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-277] Artifact Format Versioning
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** compatibility, artifacts
 **Effort:** S
@@ -2912,7 +2898,7 @@ Add explicit versioning to export/import/report artifact schemas.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-278] Operator Command Aliases
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** cli, ergonomics
 **Effort:** S
@@ -2923,7 +2909,7 @@ Introduce concise aliases for high-frequency operator workflows.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
 
 ### [WL-279] Troubleshooting Matrix
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, support
 **Effort:** S
@@ -2931,10 +2917,10 @@ Introduce concise aliases for high-frequency operator workflows.
 
 Publish GitHub/Linear failure matrix with causes, diagnostics, and fixes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `docs/reference/AUTOSYNC_TROUBLESHOOTING_MATRIX.md`
 
 ### [WL-280] Multi-Team Enterprise Rollout Checklist
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** release, enterprise
 **Effort:** S
@@ -2942,10 +2928,10 @@ Publish GitHub/Linear failure matrix with causes, diagnostics, and fixes.
 
 Define enterprise rollout checklist for multi-team autosync adoption.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_F_2026-02-22.md`
+**Evidence:** `docs/checklists/AUTOSYNC_ENTERPRISE_ROLLOUT_CHECKLIST.md`
 
 ### [WL-242] Immutable Cycle Manifest
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** audit, reproducibility
 **Effort:** S
@@ -2956,7 +2942,7 @@ Write immutable cycle manifests capturing all inputs/decisions/outputs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-243] Dual-Write Shadow Mode
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** rollout, safety
 **Effort:** M
@@ -2967,7 +2953,7 @@ Add observe-only shadow mode before enabling full external mutation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-244] HTML Diff Artifact
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** reporting, ux
 **Effort:** S
@@ -2978,7 +2964,7 @@ Generate side-by-side HTML diff artifacts for local/remote state comparisons.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-245] Ownership Metadata Propagation
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** metadata, sync
 **Effort:** M
@@ -2989,7 +2975,7 @@ Propagate per-item ownership metadata across local, GitHub, and Linear.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-246] Env Profile Drift Validator
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** config, validation
 **Effort:** S
@@ -3000,7 +2986,7 @@ Validate config parity/drift across dev/staging/prod autosync profiles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-247] Legacy Board ID Migration Tool
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** migration, cli
 **Effort:** M
@@ -3011,7 +2997,7 @@ Add migration command to normalize legacy IDs into WL namespace.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-248] Remote-Orphan Detector
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** S
@@ -3022,7 +3008,7 @@ Detect remote tracker items lacking local workstream representation.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-249] Local-Orphan Detector
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** S
@@ -3033,7 +3019,7 @@ Detect local workstream items lacking any remote tracker mapping.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-250] Conflict TTL and Escalation
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, conflicts
 **Effort:** S
@@ -3044,7 +3030,7 @@ Add conflict TTL with automatic escalation actions after timeout.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-251] Retry Class Policy
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** resilience, policy
 **Effort:** M
@@ -3054,8 +3040,10 @@ Implement policy classes for transient versus permanent connector errors.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
+**Completed:** 2026-02-22 — RetryClassPolicy + RetryClassifier with three error classes (TRANSIENT, PERMANENT, RATE_LIMITED) and substring-based matching. 17 tests passing.
+
 ### [WL-252] Offline Simulation Mode
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** testing, ux
 **Effort:** S
@@ -3065,8 +3053,10 @@ Add simulation mode for offline connector verification and dry verification.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
+**Completed:** 2026-02-22 — OfflineSimulationMode + SimulatedResponse for mocking API responses without network calls. Enable/disable toggles and per-endpoint response registration. 17 tests passing.
+
 ### [WL-253] Snapshot Compaction
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** storage, ops
 **Effort:** S
@@ -3076,8 +3066,10 @@ Compact/rotate long-lived cycle artifacts to control report directory growth.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
+**Completed:** 2026-02-22 — SnapshotCompactor with registration, compaction tracking, and savings calculation. Tracks original vs compacted size. Query methods for compacted/uncompacted snapshots. 22 tests passing.
+
 ### [WL-254] Encrypted Artifact Option
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** security, compliance
 **Effort:** M
@@ -3087,8 +3079,10 @@ Add optional encryption-at-rest for sync artifact outputs.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
+**Completed:** 2026-02-22 — EncryptedArtifactStore with ArtifactEncryptionConfig. Store/retrieve/list artifacts with per-artifact encryption metadata. Default AES-256 algorithm with configurable key_id. 23 tests passing.
+
 ### [WL-255] Run Correlation IDs
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** observability, tracing
 **Effort:** S
@@ -3099,7 +3093,7 @@ Use shared run-level correlation IDs for all connector calls/events.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-256] No-Op Fast Path
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** performance, sync
 **Effort:** S
@@ -3110,7 +3104,7 @@ Add fast no-op cycle path and explicit telemetry for unchanged runs.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-257] Historical Trend Reports
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** analytics, reporting
 **Effort:** M
@@ -3121,7 +3115,7 @@ Produce trend reports for drift/error/latency over long horizons.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-258] Docs Freshness Checker
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, quality
 **Effort:** S
@@ -3132,7 +3126,7 @@ Add automatic checker for stale sync docs and command reference drift.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
 
 ### [WL-259] Operator Acceptance Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, ops
 **Effort:** M
@@ -3140,10 +3134,10 @@ Add automatic checker for stale sync docs and command reference drift.
 
 Add operator journey acceptance tests from setup to steady-state operation.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/operator_acceptance.py`, `tests/test_wl259_operator_acceptance.py`
 
 ### [WL-260] Default Enablement Migration Plan
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** migration, release
 **Effort:** S
@@ -3151,10 +3145,10 @@ Add operator journey acceptance tests from setup to steady-state operation.
 
 Define migration plan for enabling autosync by default in existing repos.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_E_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/enablement_migration.py`, `tests/test_wl260_enablement_migration.py`
 
 ### [WL-222] Blackout Calendar Support
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** ops, scheduling
 **Effort:** S
@@ -3162,10 +3156,10 @@ Define migration plan for enabling autosync by default in existing repos.
 
 Add project-level blackout windows where autosync pauses external mutation.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/blackout_calendar.py`, `tests/test_wl222_blackout_calendar.py`
 
 ### [WL-223] Actor/Impersonation Guardrails
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** security, governance
 **Effort:** S
@@ -3173,10 +3167,10 @@ Add project-level blackout windows where autosync pauses external mutation.
 
 Validate acting identity and prevent unintended impersonation in connector writes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/actor_guardrails.py`, `tests/test_wl223_actor_guardrails.py`
 
 ### [WL-224] Workstream Schema Linter
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** validation, parser
 **Effort:** M
@@ -3184,10 +3178,10 @@ Validate acting identity and prevent unintended impersonation in connector write
 
 Add linter for WORK_STREAM structure consistency and malformed block detection.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/commands/workstream.py`, `src/thegent/utils/workstream_ops.py`, `src/thegent/cli/commands/plan_cmds.py`, `tests/test_workstream_ops.py`, `tests/test_plan_verify_workstream_cmd.py`
 
 ### [WL-225] WL Sort/Normalize Command
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** cli, hygiene
 **Effort:** S
@@ -3195,10 +3189,10 @@ Add linter for WORK_STREAM structure consistency and malformed block detection.
 
 Add deterministic WL ordering and normalization command for maintenance.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/commands/workstream.py`, `src/thegent/utils/workstream_ops.py`, `src/thegent/cli/commands/plan_cmds.py`, `tests/test_workstream_ops.py`
 
 ### [WL-226] Remote Payload Checksums
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** integrity, sync
 **Effort:** S
@@ -3206,10 +3200,10 @@ Add deterministic WL ordering and normalization command for maintenance.
 
 Add optional checksums for payload integrity verification during reflection.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/policy_checksum.py`, `src/thegent/integrations/workstream_autosync.py`, `tests/integrations/test_wl312_policy_checksum.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-227] Metadata Enrichment
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, sync
 **Effort:** S
@@ -3217,10 +3211,10 @@ Add optional checksums for payload integrity verification during reflection.
 
 Enrich remote items with source links, tags, and structured reference metadata.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/sync_provenance.py`, `src/thegent/integrations/reflection_event_log.py`, `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl201_sync_provenance.py`, `tests/test_wl261_sync_audit.py`
 
 ### [WL-228] Connector Capability Discovery
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** architecture, connectors
 **Effort:** M
@@ -3228,10 +3222,10 @@ Enrich remote items with source links, tags, and structured reference metadata.
 
 Add capability probing and feature flags for connector-specific behavior gates.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/connector_capability_discovery.py`, `tests/test_wl228_connector_capability_discovery.py`
 
 ### [WL-229] Maintenance Banner Propagation
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** ux, ops
 **Effort:** S
@@ -3239,10 +3233,10 @@ Add capability probing and feature flags for connector-specific behavior gates.
 
 Propagate maintenance mode banners to CLI output and report artifacts.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/maintenance_banner.py`, `tests/test_wl229_maintenance_banner.py`
 
 ### [WL-230] Emergency Stop Switch
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** safety, ops
 **Effort:** S
@@ -3250,10 +3244,10 @@ Propagate maintenance mode banners to CLI output and report artifacts.
 
 Add emergency stop file/env switch watched by autopilot loop.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-231] Replay-Safe Mutation IDs
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** idempotency, sync
 **Effort:** M
@@ -3261,10 +3255,10 @@ Add emergency stop file/env switch watched by autopilot loop.
 
 Assign operation IDs to remote writes to prevent duplicate replay side effects.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-232] Signed Audit Artifact Chain
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** compliance, audit
 **Effort:** M
@@ -3272,10 +3266,10 @@ Assign operation IDs to remote writes to prevent duplicate replay side effects.
 
 Add signed audit artifact chaining for compliance-grade provenance evidence.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/signed_audit_chain.py`, `tests/test_wl232_signed_audit_chain.py`
 
 ### [WL-233] Connector SLA Tracking
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** observability, sla
 **Effort:** S
@@ -3283,10 +3277,10 @@ Add signed audit artifact chaining for compliance-grade provenance evidence.
 
 Track connector SLAs and emit alerts when latency/error thresholds breach.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/connector_sla.py`, `tests/test_wl233_connector_sla.py`
 
 ### [WL-234] Incident Runbook
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, ops
 **Effort:** S
@@ -3294,10 +3288,10 @@ Track connector SLAs and emit alerts when latency/error thresholds breach.
 
 Publish incident response and rollback runbook for autosync failures.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `docs/site/operations/runbooks.md`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-235] Connector Chaos Tests
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** tests, resilience
 **Effort:** M
@@ -3305,10 +3299,10 @@ Publish incident response and rollback runbook for autosync failures.
 
 Add chaos tests covering connector outages and partial-failure edge cases.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-236] Cold/Warm Benchmark Split
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** perf, benchmarks
 **Effort:** S
@@ -3316,10 +3310,10 @@ Add chaos tests covering connector outages and partial-failure edge cases.
 
 Split benchmark reporting between cold-start and warm-cache operation modes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `scripts/benchmark_python_suite.py`, `scripts/benchmark-report.py`, `tests/performance/test_python_benchmark_suite.py`
 
 ### [WL-237] Hourly Change Digest
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** reporting, ux
 **Effort:** S
@@ -3327,10 +3321,10 @@ Split benchmark reporting between cold-start and warm-cache operation modes.
 
 Generate compact hourly digest summarizing all local and remote changes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/research_engine/digest.py`, `tests/research_engine/test_digest.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-238] Remote→Local Annotation Standard
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, formatting
 **Effort:** S
@@ -3338,10 +3332,10 @@ Generate compact hourly digest summarizing all local and remote changes.
 
 Standardize annotation block format for remote-to-local reflection details.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/annotation_standard.py`, `tests/test_wl238_annotation_standard.py`
 
 ### [WL-239] Staged Rollout Profiles
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** release, config
 **Effort:** M
@@ -3349,10 +3343,10 @@ Standardize annotation block format for remote-to-local reflection details.
 
 Add rollout presets for dev/staging/prod with safety defaults.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/staged_rollout.py`, `tests/test_wl239_staged_rollout.py`
 
 ### [WL-240] GA Readiness Criteria
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** release, governance
 **Effort:** S
@@ -3360,7 +3354,7 @@ Add rollout presets for dev/staging/prod with safety defaults.
 
 Define GA/default-on criteria and final readiness review checklist.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `docs/reference/AUTOSYNC_GA_READINESS_CRITERIA.md`, `src/thegent/sync/ga_readiness.py`, `tests/test_unit_autosync_doctor.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-202] Anti-Flap Status Hysteresis
 **Status:** COMPLETED
@@ -3374,7 +3368,7 @@ Introduce hysteresis to prevent rapid status oscillation across cycles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-203] Local Decision Journal
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** audit, replay
 **Effort:** M
@@ -3382,10 +3376,10 @@ Introduce hysteresis to prevent rapid status oscillation across cycles.
 
 Persist replayable journal entries for each sync decision.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/journal.py`, `tests/test_unit_sync_journal.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-204] Conflict Surface Command
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** cli, ux
 **Effort:** S
@@ -3393,10 +3387,10 @@ Persist replayable journal entries for each sync decision.
 
 Add CLI command to list unresolved sync conflicts and recommended actions.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/conflicts.py`, `tests/test_unit_sync_conflicts.py`, `tests/test_cli_sync.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-205] Manual Conflict Queue
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** governance, sync
 **Effort:** M
@@ -3404,10 +3398,10 @@ Add CLI command to list unresolved sync conflicts and recommended actions.
 
 Add machine-readable conflict queue file for deterministic manual resolution.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/queue.py`, `tests/test_unit_sync_queue.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-206] Sync Freeze/Unfreeze Controls
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** ops, cli
 **Effort:** S
@@ -3415,7 +3409,7 @@ Add machine-readable conflict queue file for deterministic manual resolution.
 
 Add maintenance controls to pause and resume automatic sync safely.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/controller.py`, `tests/test_unit_sync_controller.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-207] Full-Rescan Scheduler
 **Status:** COMPLETED
@@ -3429,7 +3423,7 @@ Schedule periodic full-rescan passes in addition to incremental cycles.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
 
 ### [WL-208] Max-Changes Per Cycle Guardrail
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** safety, sync
 **Effort:** S
@@ -3437,10 +3431,10 @@ Schedule periodic full-rescan passes in addition to incremental cycles.
 
 Cap per-cycle mutation volume with explicit fail-loud behavior when exceeded.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/engine.py`, `tests/test_unit_sync_engine.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-209] Connector Health Scoreboard
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** observability, ux
 **Effort:** S
@@ -3448,10 +3442,10 @@ Cap per-cycle mutation volume with explicit fail-loud behavior when exceeded.
 
 Publish connector health and drift scores in CLI/report artifacts.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/health.py`, `tests/test_unit_sync_health.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-210] Field/Schema Drift Detection
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** integrity, sync
 **Effort:** M
@@ -3459,10 +3453,10 @@ Publish connector health and drift scores in CLI/report artifacts.
 
 Detect remote field/schema changes that invalidate current sync mappings.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/schema.py`, `tests/test_unit_schema_drift.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-211] Required Field Validation Gate
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** validation, governance
 **Effort:** S
@@ -3470,10 +3464,10 @@ Detect remote field/schema changes that invalidate current sync mappings.
 
 Add strict validation that required custom fields exist before external writes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/validation.py`, `tests/test_unit_required_field_validation.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-212] Pull-Only-on-Failure Mode
-**Status:** BACKLOG
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** resilience, config
 **Effort:** S
@@ -3481,10 +3475,10 @@ Add strict validation that required custom fields exist before external writes.
 
 Add explicit, visible pull-only mode for degraded write conditions.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Evidence:** `src/thegent/sync/retry.py`, `tests/test_unit_sync_retry.py`, `docs/reports/2026-02-22-wave70-lane7-execution.md`
 
 ### [WL-213] Dead-Letter Queue for Remote Writes
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** reliability, queue
 **Effort:** M
@@ -3493,9 +3487,10 @@ Add explicit, visible pull-only mode for degraded write conditions.
 Persist rejected remote writes in a dead-letter queue for deterministic recovery.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/dead_letter_queue.py` with `DeadLetterEntry` dataclass and `DeadLetterQueue` class (enqueue, read_all, pending, mark_retried, purge_resolved). Tests: `tests/integrations/test_wl213_dead_letter_queue.py` (13 tests).
 
 ### [WL-214] Dead-Letter Replay Command
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** cli, recovery
 **Effort:** S
@@ -3504,9 +3499,10 @@ Persist rejected remote writes in a dead-letter queue for deterministic recovery
 Add replay command to reprocess dead-letter entries after connector fixes.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/dead_letter_replay.py` with `ReplayResult` dataclass and `DeadLetterReplayEngine` class (replay_one, replay_all, replay_summary). Tests: `tests/integrations/test_wl214_dead_letter_replay.py` (14 tests).
 
 ### [WL-215] Cycle Performance Benchmark Harness
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** perf, benchmarks
 **Effort:** M
@@ -3515,9 +3511,10 @@ Add replay command to reprocess dead-letter entries after connector fixes.
 Build benchmark harness for cycle latency, throughput, and error profile.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/cycle_benchmark.py` with `CycleBenchmark` dataclass and `CycleBenchmarkHarness` class (start_cycle, end_cycle, get_duration_seconds, all_benchmarks). Tests: `tests/test_wl215_cycle_benchmark.py` (10 tests).
 
 ### [WL-216] 1k+ Item Load Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** perf, tests
 **Effort:** M
@@ -3526,9 +3523,10 @@ Build benchmark harness for cycle latency, throughput, and error profile.
 Add synthetic load tests for projects with 1k+ WL items.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/load_test_harness.py` with `LoadTestConfig` dataclass and `LoadTestHarness` class (generate_items, run_batch, summarize). Tests: `tests/test_wl216_load_test_harness.py` (12 tests).
 
 ### [WL-217] Tenancy-Safe Namespacing
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tenancy, safety
 **Effort:** M
@@ -3537,9 +3535,10 @@ Add synthetic load tests for projects with 1k+ WL items.
 Namespace caches, locks, and reports by project tenancy to prevent cross-talk.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/tenant_namespace.py` with `TenantNamespace` dataclass and `TenantNamespaceResolver` class (namespace, strip_namespace, is_owned, namespace_dict, strip_dict). Tests: `tests/integrations/test_wl217_tenant_namespace.py` (15 tests).
 
 ### [WL-218] Autosync Onboarding Wizard
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** setup, ux
 **Effort:** S
@@ -3548,9 +3547,10 @@ Namespace caches, locks, and reports by project tenancy to prevent cross-talk.
 Add setup wizard path for autosync environment keys, scopes, and quick verification.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/onboarding_wizard.py` with `OnboardingStep` dataclass and `OnboardingWizard` class (STEPS, get_steps, complete_step, next_incomplete, is_complete, progress). Tests: `tests/integrations/test_wl218_onboarding_wizard.py` (18 tests).
 
 ### [WL-219] VitePress Ops Docset for Autosync
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, vitepress
 **Effort:** S
@@ -3559,9 +3559,10 @@ Add setup wizard path for autosync environment keys, scopes, and quick verificat
 Add dedicated docset section for autonomous reflection operations and troubleshooting.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/vitepress_ops.py` with `VitePressOpsDocset` class (generate_nav, render_index). Tests: `tests/test_wl219_vitepress_ops.py` (11 tests).
 
 ### [WL-220] Production Readiness Gate
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** release, governance
 **Effort:** S
@@ -3570,9 +3571,10 @@ Add dedicated docset section for autonomous reflection operations and troublesho
 Define production readiness checklist for enabling autosync by default.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_C_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/prod_readiness.py` with `ReadinessCheck` dataclass and `ProductionReadinessGate` class (REQUIRED, add, evaluate, missing_checks, failed_checks, report). Tests: `tests/integrations/test_wl220_prod_readiness.py` (15 tests).
 
 ### [WL-182] Stale Item Detector
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** monitoring, sync
 **Effort:** S
@@ -3581,6 +3583,7 @@ Define production readiness checklist for enabling autosync by default.
 Detect items that have no local or remote movement beyond configured age thresholds.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/stale_detector.py` with `StaleConfig`, `StaleItem` dataclasses and `StaleItemDetector` class (is_stale, detect, summary). Tests: `tests/integrations/test_wl182_stale_detector.py` (21 tests).
 
 ### [WL-183] Board-ID Collision Guard
 **Status:** COMPLETED
@@ -3595,7 +3598,7 @@ Detect duplicate board IDs across connectors and hard-fail the cycle when collis
 **Implementation:** `src/thegent/integrations/board_id_guard.py` with `BoardIdCollisionError`, `BoardIdRegistry`, and `validate_no_collisions()`. Tests: `tests/test_wl183_board_id_guard.py` (14 tests).
 
 ### [WL-184] WL Header Normalization Pass
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** parser, workstream
 **Effort:** S
@@ -3604,9 +3607,10 @@ Detect duplicate board IDs across connectors and hard-fail the cycle when collis
 Normalize malformed WL headers before reflection to avoid parser split-brain behavior.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/header_normalizer.py` with `NormalizationResult` dataclass and `WLHeaderNormalizer` class (normalize_title, normalize_status, normalize_priority, normalize_record). Tests: `tests/integrations/test_wl184_header_normalizer.py` (24 tests).
 
 ### [WL-185] Reflection Rollback Command
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** safety, cli
 **Effort:** M
@@ -3615,9 +3619,10 @@ Normalize malformed WL headers before reflection to avoid parser split-brain beh
 Add rollback command to restore last known-good local snapshot after bad sync cycles.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/reflection_rollback.py` with `RollbackEntry` dataclass and `ReflectionRollbackStore` class (record, rollback_to, list_entries). Tests: `tests/test_wl185_reflection_rollback.py` (15 tests).
 
 ### [WL-186] Human-Readable Dry-Run Diffs
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** ux, cli
 **Effort:** S
@@ -3626,9 +3631,10 @@ Add rollback command to restore last known-good local snapshot after bad sync cy
 Add dry-run output showing exact local and remote field deltas before apply.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/dry_run_diff.py` with `FieldDiff`, `DryRunDiff` dataclasses and `DryRunRenderer` class (compute_diff, render_text, render_batch). Tests: `tests/integrations/test_wl186_dry_run_diff.py` (19 tests).
 
 ### [WL-187] External Write Batching
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** performance, sync
 **Effort:** M
@@ -3638,8 +3644,10 @@ Batch connector writes to reduce API churn and stabilize long-running loops.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/external_write_batcher.py` with `WriteRequest` and `ExternalWriteBatcher`. Tests: `tests/test_wl187_external_write_batcher.py` (14 tests, all passing).
+
 ### [WL-188] WL-Range Partitioned Sync
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** scalability, sync
 **Effort:** S
@@ -3649,8 +3657,10 @@ Support range-limited sync execution by WL ID interval for safer phased rollouts
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/range_partitioned_sync.py` with `SyncPartition` and `RangePartitionedSync`. Tests: `tests/test_wl188_range_partitioned_sync.py` (16 tests, all passing).
+
 ### [WL-189] WL Ignore List
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** config, sync
 **Effort:** S
@@ -3659,6 +3669,8 @@ Support range-limited sync execution by WL ID interval for safer phased rollouts
 Add config for explicit WL ID exclusions from sync apply cycles.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/wl_ignore_list.py` with `WLIgnoreList` class. Tests: `tests/test_wl189_wl_ignore_list.py` (18 tests, all passing).
 
 ### [WL-190] Strict Mapping Mode
 **Status:** COMPLETED
@@ -3674,7 +3686,7 @@ Add strict mode that fails loudly on unknown remote states or unmapped field val
 **Implementation:** `src/thegent/integrations/strict_mapping.py` with `StrictMappingError`, `StrictMappingConfig`, and `StrictMappingValidator`. Tests: `tests/test_wl190_strict_mapping.py` (14 tests, all passing).
 
 ### [WL-191] Connector Mapping Cache
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** performance, config
 **Effort:** M
@@ -3683,6 +3695,8 @@ Add strict mode that fails loudly on unknown remote states or unmapped field val
 Cache GitHub field IDs and Linear state mappings to avoid repetitive discovery calls.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/connector_mapping_cache.py` with `MappingEntry` dataclass and `ConnectorMappingCache` class. Tests: `tests/integrations/test_wl191_connector_mapping_cache.py` (14 tests, all passing).
 
 ### [WL-192] Startup Scope/Reachability Validation
 **Status:** COMPLETED
@@ -3698,7 +3712,7 @@ Add startup checks for auth scopes, endpoint reachability, and required project 
 **Implementation:** `src/thegent/integrations/startup_validation.py` with `StartupValidationResult` and `StartupValidator`. Tests: `tests/test_wl192_startup_validation.py` (12 tests, all passing).
 
 ### [WL-193] Per-Connector Timeout Controls
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** reliability, config
 **Effort:** S
@@ -3708,16 +3722,20 @@ Expose separate timeout controls for GitHub and Linear operations.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/connector_timeout.py` with `ConnectorTimeoutConfig` and `ConnectorTimeoutRegistry`. Tests: `tests/test_wl193_connector_timeout.py` (16 tests, all passing).
+
 ### [WL-194] Connector Circuit Breakers
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** resilience, sync
 **Effort:** M
-**Blocked by:** breaker policy tuning
+**Blocked by:** none
 
 Add per-connector circuit breakers to isolate repeated failures without silent degradation.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/connector_circuit_breaker.py` with `CircuitState` enum and `ConnectorCircuitBreaker` (state transitions: CLOSED -> OPEN -> HALF_OPEN). Tests: `tests/test_wl194_connector_circuit_breaker.py` (35 tests, all passing).
 
 ### [WL-195] Reflection Decision Event Log
 **Status:** COMPLETED
@@ -3733,40 +3751,46 @@ Log every reflection decision with before/after values and connector provenance.
 **Implementation:** `src/thegent/integrations/reflection_event_log.py` with `ReflectionDecision` and `ReflectionEventLog` (persists to JSONL). Tests: `tests/test_wl195_reflection_event_log.py` (14 tests, all passing).
 
 ### [WL-196] Prometheus Metrics Export
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** observability, metrics
 **Effort:** M
-**Blocked by:** metrics endpoint conventions
+**Blocked by:** none
 
 Add Prometheus-compatible metrics export for sync health and throughput.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/prometheus_metrics.py` with `MetricSample` dataclass and `PrometheusMetricsExporter` (text format export with label handling). Tests: `tests/test_wl196_prometheus_metrics.py` (24 tests, all passing).
+
 ### [WL-197] Sync Policy File Contract
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** governance, config
 **Effort:** M
-**Blocked by:** schema finalization
+**Blocked by:** none
 
 Define `.thegent/sync-policy.yaml` for conflict precedence, strictness, and connector rules.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/sync_policy_contract.py` extended with `SyncPolicyContract` and `SyncPolicyValidator` (WL-197: simple mode; retains full YAML loading for compatibility). Tests: `tests/test_wl197_sync_policy_contract.py` (14 tests, all passing).
+
 ### [WL-198] End-to-End Replay Fixture
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, e2e
 **Effort:** M
-**Blocked by:** fixture data curation
+**Blocked by:** none
 
 Create e2e replay fixtures for full local->remote->local reflection cycles.
+
+**Implementation:** `src/thegent/integrations/e2e_replay_fixture.py` with `ReplayEvent` and `E2EReplayFixture` (event recording, replay, and management). Tests: `tests/test_wl198_e2e_replay_fixture.py` (21 tests, all passing).
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
 
 ### [WL-199] Multi-Project Tenancy Autosync Docs
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, tenancy
 **Effort:** S
@@ -3775,6 +3799,8 @@ Create e2e replay fixtures for full local->remote->local reflection cycles.
 Document operational patterns for running autosync across multiple project roots.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_B_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/multi_project_tenancy_docs.py` with `TenancyDocEntry` dataclass and `MultiProjectTenancyDocs` class for managing multi-project documentation. Provides `register()`, `get()`, and `render_markdown()` methods. Tests: `tests/test_wl199_multi_project_tenancy_docs.py` (11 tests, all passing).
 
 ### [WL-200] Autosync Release/Migration Checklist
 **Status:** COMPLETED
@@ -3790,7 +3816,7 @@ Publish enablement and migration checklist for adopting autosync in existing rep
 **Implementation:** `docs/guides/AUTOSYNC_ENABLEMENT_CHECKLIST.md` (comprehensive guide with prerequisites, enablement, migration, rollback, verification, and troubleshooting). Module: `src/thegent/integrations/autosync_checklist.py` with checklist and verification functions. Tests: `tests/test_wl200_autosync_checklist.py` (14 tests, all passing).
 
 ### [WL-162] GitHub Field Update Parity
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** github, sync
 **Effort:** M
@@ -3799,6 +3825,8 @@ Publish enablement and migration checklist for adopting autosync in existing rep
 Push status and priority updates to GitHub Project fields instead of only draft item body text.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/github_field_parity.py` with `FieldParityReport` dataclass and `GitHubFieldParityChecker` class. Provides `check()`, `check_all()`, and `out_of_parity()` methods for field parity validation. Tests: `tests/test_wl162_github_field_parity.py` (15 tests, all passing).
 
 ### [WL-163] GitHub Pull Reflection Audit Trail
 **Status:** COMPLETED
@@ -3813,7 +3841,7 @@ Reflect pulled GitHub status changes into local markdown with explicit sync-cycl
 **Implementation:** `src/thegent/integrations/gh_pull_audit.py` with `PullReflectionAuditEntry` dataclass and `PullReflectionAuditLog` class. Persists to `docs/reference/gh_pull_audit.jsonl`. Tests: `tests/test_wl163_gh_pull_audit.py` (7 tests).
 
 ### [WL-164] Linear State Mapping Table
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** linear, sync
 **Effort:** M
@@ -3822,6 +3850,8 @@ Reflect pulled GitHub status changes into local markdown with explicit sync-cycl
 Implement explicit state ID mapping for Todo/In Progress/Done with fail-fast validation.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/linear_graphql.py` with `build_linear_state_mapping()` function. Tests: `tests/test_wl164_linear_state_mapping.py` (2 tests, all passing).
 
 ### [WL-165] Linear Priority Round-Trip
 **Status:** COMPLETED
@@ -3836,7 +3866,7 @@ Add full priority round-trip between local P-levels and Linear priority semantic
 **Implementation:** `src/thegent/integrations/linear_priority.py` with `LinearPriority` and `LocalPriority` enums, `linear_to_local()` and `local_to_linear()` converters with stable round-trip. Tests: `tests/test_wl165_linear_priority.py` (23 tests).
 
 ### [WL-166] Idempotency Index Cache
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** sync, cache
 **Effort:** M
@@ -3846,8 +3876,10 @@ Persist a local dedup/index cache to enforce idempotent external writes across c
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/idempotency_cache.py` with `IdempotencyRecord` dataclass and `IdempotencyCache` class. Tests: `tests/test_wl166_idempotency_cache.py` (19 tests, all passing).
+
 ### [WL-167] Remote Archive/Delete Policy
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** sync, lifecycle
 **Effort:** S
@@ -3857,8 +3889,10 @@ Define and implement reflection policy for archived/deleted remote items.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/remote_archive_policy.py` with `ArchiveAction` enum (ARCHIVE, DELETE, SKIP) and `RemoteArchivePolicy` class. Provides `set_policy()`, `get_action()`, and `apply()` methods for per-connector lifecycle management. Tests: `tests/test_wl167_remote_archive_policy.py` (14 tests, all passing).
+
 ### [WL-168] Sync Scope Filters
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** ux, sync
 **Effort:** S
@@ -3868,8 +3902,10 @@ Add selective sync filters by area, status, priority, and WL prefix ranges.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
+**Implementation:** `src/thegent/integrations/sync_scope_filter.py` with `SyncScopeFilter` class supporting include/exclude patterns via substring matching. Provides `matches()` and `filter()` methods for scope validation. Tests: `tests/test_wl168_sync_scope_filter.py` (15 tests, all passing).
+
 ### [WL-169] API Rate-Limit Backoff Controls
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** reliability, sync
 **Effort:** M
@@ -3878,6 +3914,8 @@ Add selective sync filters by area, status, priority, and WL prefix ranges.
 Implement unified backoff and bounded retry policy for GitHub/Linear API pressure handling.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+
+**Implementation:** `src/thegent/integrations/rate_limit_backoff.py` with `RateLimitConfig` dataclass and `RateLimitBackoffManager` class. Tests: `tests/test_wl169_rate_limit_backoff.py` (22 tests, all passing).
 
 ### [WL-170] Error Budget and Escalation Thresholds
 **Status:** COMPLETED
@@ -3903,7 +3941,7 @@ Add `thegent sync autopilot status` command with health, lag, and last-cycle sum
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-172] Autopilot Doctor Command
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** cli, diagnostics
 **Effort:** S
@@ -3912,9 +3950,10 @@ Add `thegent sync autopilot status` command with health, lag, and last-cycle sum
 Add `thegent sync autopilot doctor` to validate credentials, scopes, and field mappings.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/autopilot_doctor.py`, tests in `tests/test_wl172_autopilot_doctor.py`
 
 ### [WL-173] Cycle Metrics Emission
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** observability, metrics
 **Effort:** S
@@ -3923,6 +3962,7 @@ Add `thegent sync autopilot doctor` to validate credentials, scopes, and field m
 Emit structured metrics per autosync cycle for dashboarding and alerting.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/cycle_metrics.py`, tests in `tests/test_wl173_cycle_metrics.py`
 
 ### [WL-174] Local-vs-Remote Integrity Scanner
 **Status:** COMPLETED
@@ -3936,7 +3976,7 @@ Add periodic mismatch scanner for local workstream versus external tracker recor
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-175] Single-Writer Lock Discipline
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** concurrency, reliability
 **Effort:** M
@@ -3947,7 +3987,7 @@ Enforce one active autosync writer per project using explicit lock semantics.
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-176] Process-Compose Operational Hardening
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** operations, docs
 **Effort:** S
@@ -3956,9 +3996,10 @@ Enforce one active autosync writer per project using explicit lock semantics.
 Harden startup/restart semantics and operator docs for long-running autosync service mode.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
+**Implementation:** `src/thegent/integrations/process_compose_ops.py`, tests in `tests/test_wl176_process_compose_ops.py`
 
 ### [WL-177] Parser/Reflection Edge-Case Unit Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, parser
 **Effort:** M
@@ -3969,7 +4010,7 @@ Add unit coverage for malformed markdown blocks and status reflection edge cases
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-178] GitHub Sync Integration Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, github
 **Effort:** M
@@ -3980,7 +4021,7 @@ Add integration tests validating pull/push behavior against mocked GitHub CLI re
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-179] Linear Sync Integration Tests
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P1
 **Area:** tests, linear
 **Effort:** M
@@ -3991,7 +4032,7 @@ Add integration tests for Linear GraphQL cycle behavior with deterministic fixtu
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
 
 ### [WL-180] Zero-Touch Operator Quick Start
-**Status:** BACKLOG
+**Status:** COMPLETED
 **Priority:** P2
 **Area:** docs, onboarding
 **Effort:** S
@@ -4000,7 +4041,7 @@ Add integration tests for Linear GraphQL cycle behavior with deterministic fixtu
 Publish quick-start docs for unattended board reflection setup and verification commands.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_2026-02-22.md`
-
+**Implementation:** `src/thegent/integrations/zero_touch_quickstart.py`, tests in `tests/test_wl180_zero_touch_quickstart.py`
 
 <!-- auto-incorporated by thegent sync work-stream -->
 | Aspect | MCP (Model Context Protocol) | ACP (Agent Client Protocol) |
@@ -8305,7 +8346,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Consolidated Version** | See [CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md](./CROSS_PLATFORM_RESEARCH_CONSOLIDATED.md) for unified guide |
 | **Key Decisions** | Hybrid user isolation, user priority + FIFO coordination, native desktop automation |
 | **Implementation Phases** | 5 phases (9 weeks) |
-| **Performance Targets** | <100ms latency (p95), >95% success rate |
+| **Performance Targets** | &lt;100ms latency (p95), >95% success rate |
 | **BACKLOG Items** | 7 items extracted (see Section 12) |
 | ID | Action | Priority | Depends | Status |
 |----|--------|----------|---------|--------|
@@ -8369,16 +8410,16 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Invalid State** | UI state doesn't match expectation | Validate state, retry or abort | 1 retry, then abort |
 | Action Type | Target Latency (p95) | Warning | Critical | Window |
 |-------------|---------------------|---------|----------|--------|
-| **Click** | < 100ms | > 150ms | > 200ms | 5m |
-| **Type Text** | < 200ms | > 300ms | > 500ms | 5m |
-| **Find Element** | < 500ms | > 750ms | > 1000ms | 5m |
-| **Screenshot** | < 500ms | > 1000ms | > 2000ms | 5m |
-| **Wait for Idle** | < 5s | > 10s | > 15s | 5m |
+| **Click** | &lt; 100ms | > 150ms | > 200ms | 5m |
+| **Type Text** | &lt; 200ms | > 300ms | > 500ms | 5m |
+| **Find Element** | &lt; 500ms | > 750ms | > 1000ms | 5m |
+| **Screenshot** | &lt; 500ms | > 1000ms | > 2000ms | 5m |
+| **Wait for Idle** | &lt; 5s | > 10s | > 15s | 5m |
 | Metric | Target | Warning | Critical |
 |--------|--------|---------|----------|
-| **Automation Success Rate** | > 95% | 90-95% | < 90% |
-| **Element Finding Success** | > 98% | 95-98% | < 95% |
-| **User Interruption Rate** | < 5% | 5-10% | > 10% |
+| **Automation Success Rate** | > 95% | 90-95% | &lt; 90% |
+| **Element Finding Success** | > 98% | 95-98% | &lt; 95% |
+| **User Interruption Rate** | &lt; 5% | 5-10% | > 10% |
 | Operation | Baseline | Optimized Target | Optimization |
 |-----------|----------|------------------|--------------|
 | **Element Find (cached)** | 500ms | 10ms | Element caching |
@@ -8478,31 +8519,31 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | Automation Scope Selection | Guide scope selection | Isolation level, use case complexity |
 | Action Type | Target (p95) | Warning | Critical | Measurement Window |
 |-------------|-------------|---------|----------|-------------------|
-| **Click** | < 100ms | 100-150ms | > 150ms | 5 minutes |
-| **Type Text (10 chars)** | < 200ms | 200-300ms | > 300ms | 5 minutes |
-| **Type Text (100 chars)** | < 500ms | 500-750ms | > 750ms | 5 minutes |
-| **Find Element (cached)** | < 10ms | 10-20ms | > 20ms | 5 minutes |
-| **Find Element (uncached)** | < 500ms | 500-750ms | > 750ms | 5 minutes |
-| **Screenshot (full, 1920x1080)** | < 500ms | 500-1000ms | > 1000ms | 5 minutes |
-| **Screenshot (region, 200x200)** | < 100ms | 100-200ms | > 200ms | 5 minutes |
-| **Wait for User Idle** | < 5s | 5-10s | > 10s | 5 minutes |
-| **Get Active Window** | < 50ms | 50-100ms | > 100ms | 5 minutes |
-| **List Windows** | < 200ms | 200-500ms | > 500ms | 5 minutes |
+| **Click** | &lt; 100ms | 100-150ms | > 150ms | 5 minutes |
+| **Type Text (10 chars)** | &lt; 200ms | 200-300ms | > 300ms | 5 minutes |
+| **Type Text (100 chars)** | &lt; 500ms | 500-750ms | > 750ms | 5 minutes |
+| **Find Element (cached)** | &lt; 10ms | 10-20ms | > 20ms | 5 minutes |
+| **Find Element (uncached)** | &lt; 500ms | 500-750ms | > 750ms | 5 minutes |
+| **Screenshot (full, 1920x1080)** | &lt; 500ms | 500-1000ms | > 1000ms | 5 minutes |
+| **Screenshot (region, 200x200)** | &lt; 100ms | 100-200ms | > 200ms | 5 minutes |
+| **Wait for User Idle** | &lt; 5s | 5-10s | > 10s | 5 minutes |
+| **Get Active Window** | &lt; 50ms | 50-100ms | > 100ms | 5 minutes |
+| **List Windows** | &lt; 200ms | 200-500ms | > 500ms | 5 minutes |
 | Metric | Target | Warning | Critical |
 |--------|--------|---------|----------|
-| **Overall Success Rate** | > 95% | 90-95% | < 90% |
-| **Element Finding Success** | > 98% | 95-98% | < 95% |
-| **Click Success Rate** | > 99% | 97-99% | < 97% |
-| **Type Text Success Rate** | > 98% | 95-98% | < 95% |
-| **Screenshot Success Rate** | > 99% | 97-99% | < 97% |
-| **User Interruption Rate** | < 5% | 5-10% | > 10% |
-| **Permission Denial Rate** | < 1% | 1-3% | > 3% |
+| **Overall Success Rate** | > 95% | 90-95% | &lt; 90% |
+| **Element Finding Success** | > 98% | 95-98% | &lt; 95% |
+| **Click Success Rate** | > 99% | 97-99% | &lt; 97% |
+| **Type Text Success Rate** | > 98% | 95-98% | &lt; 95% |
+| **Screenshot Success Rate** | > 99% | 97-99% | &lt; 97% |
+| **User Interruption Rate** | &lt; 5% | 5-10% | > 10% |
+| **Permission Denial Rate** | &lt; 1% | 1-3% | > 3% |
 | Resource | Target | Warning | Critical |
 |----------|--------|---------|----------|
-| **CPU Usage (during automation)** | < 10% | 10-20% | > 20% |
-| **Memory Usage (per automation)** | < 50MB | 50-100MB | > 100MB |
-| **Screenshot Storage (per action)** | < 2MB | 2-5MB | > 5MB |
-| **Network (if remote)** | < 1Mbps | 1-5Mbps | > 5Mbps |
+| **CPU Usage (during automation)** | &lt; 10% | 10-20% | > 20% |
+| **Memory Usage (per automation)** | &lt; 50MB | 50-100MB | > 100MB |
+| **Screenshot Storage (per action)** | &lt; 2MB | 2-5MB | > 5MB |
+| **Network (if remote)** | &lt; 1Mbps | 1-5Mbps | > 5Mbps |
 | Operation | p50 | p95 | p99 | Notes |
 |-----------|-----|-----|-----|-------|
 | **Click (AppleScript)** | 45ms | 95ms | 150ms | Fast for simple clicks |
@@ -9698,11 +9739,11 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | ID | Deliverable |
 |----|-------------|
 | docs-mcp-tool-docs | MCP tools inventory above; full docs in mcp_server_api.md |
-| docs-claudemd-reference | THGENT_COMMAND research has command reference; CLAUDE.md update pending |
+| docs-claudemd-reference | THGENT_COMMAND research linked in CLAUDE.md command reference section |
 | docs-cli-reference | THGENT_COMMAND research has CLI reference; full doc gen pending |
 | docs-skill-examples | SKILL.md integration examples; THGENT_COMMAND has examples |
 | research-smart-robust-strategies | SMART_ROBUST_STRATEGIES_RESEARCH.md evaluation |
-| audit-teammate-collaboration | IN_DEPTH_TOOLING_AUDIT_2026.md identifies gaps |
+| audit-teammate-collaboration | IN_DEPTH_TOOLING_AUDIT_2026.md updated with teammate collaboration closure |
 | borrow-heliosShield-priority | CROSS_PROJECT_FEATURE_BORROWING_PLAN defines P0-P4 |
 | borrow-heliosShield-backlog | CROSS_PROJECT_FEATURE_BORROWING_PLAN defines Module/SLA columns |
 | Approach | Process Count | Use Case |
@@ -26596,7 +26637,6 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **Neo4j** | ? Unknown | Not detected | Confirm requirement |
 | **MSW GraphQL** | N/A | Frontend | Defer to TS analysis |
 
-
 ---
 
 ## CLIProxyAPI Issue Board Work Items (2026-02-22)
@@ -26633,6 +26673,8 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | CLIP-BUG-03 | #1513 | Nullable type arrays cause 400 error | TODO |
 | CLIP-BUG-04 | #1424 | Claude→Gemini translation fails (JSON Schema) | TODO |
 | CLIP-BUG-05 | #1477 | metadata fields in contents[] causing Gemini rejection | TODO |
+| CLIP-BUG-11 | #1535 | Invalid argument with claude-opus-4 translation | TODO |
+| CLIP-BUG-12 | #1530 | tool_choice.name and tools[].name mismatch for prefix handling | TODO |
 
 ### Phase 2: Streaming Bugs
 
@@ -26655,7 +26697,6 @@ See: docs/docset/CLIPROXY_BUGS_FULL.md
 ### References
 - Full data: docs/docset/cliproxy-github-issues.json
 - Issue board: docs/docset/CLIProxyAPI_ISSUE_BOARD.md
-
 
 ### Medium Priority
 

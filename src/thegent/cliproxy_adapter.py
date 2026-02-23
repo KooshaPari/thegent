@@ -53,6 +53,7 @@ from thegent.routing.cost_calculator import calculate_cost_from_response, format
 
 _log = logging.getLogger(__name__)
 
+
 # Backward-compatible symbol aliases for historical adapter import surface.
 class _LegacyModelsTransformResult(bytes):
     """Legacy test compatibility object that supports both old and new unpack protocols."""
@@ -76,12 +77,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
     try:
         raw = bytes(content) if isinstance(content, memoryview) else content
         parsed = json.loads(raw.decode(errors="replace"))
-        if (
-            isinstance(parsed, dict)
-            and "models" in parsed
-            and parsed.get("object") != "list"
-            and "data" not in parsed
-        ):
+        if isinstance(parsed, dict) and "models" in parsed and parsed.get("object") != "list" and "data" not in parsed:
             return None
 
         transformed = transform_models_response(content, inject_openrouter=inject_openrouter)
@@ -93,9 +89,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
         models = parsed.get("models", [])
         if not isinstance(models, list):
             return None
-        compact_models = [
-            {"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")
-        ]
+        compact_models = [{"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")]
         compact_body = json.dumps({"models": compact_models}).encode()
         return _LegacyModelsTransformResult(compact_body, full_body, etag)
     except (TypeError, json.JSONDecodeError):
@@ -109,17 +103,37 @@ def build_openrouter_passthrough_body(body: dict) -> dict:
 
 def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
     """Compatibility wrapper with legacy message formatting."""
+    collapse_text_content: list[bool] = []
+    input_messages = body.get("input")
+    if isinstance(input_messages, list):
+        for msg in input_messages:
+            collapse = False
+            if isinstance(msg, dict):
+                raw_content = msg.get("content")
+                if (
+                    isinstance(raw_content, list)
+                    and len(raw_content) == 1
+                    and isinstance(raw_content[0], dict)
+                    and raw_content[0].get("type") == "text"
+                    and "text" in raw_content[0]
+                    and len(raw_content[0]) == 2
+                ):
+                    collapse = True
+            collapse_text_content.append(collapse)
+
     transformed = _request_transform_to_chat_completions(body)
     messages = transformed.get("messages")
     if isinstance(messages, list):
         normalized: list[dict[str, Any]] = []
-        for message in messages:
+        for idx, message in enumerate(messages):
             if not isinstance(message, dict):
                 continue
             content = message.get("content")
             if isinstance(content, list):
                 if (
-                    len(content) == 1
+                    idx < len(collapse_text_content)
+                    and collapse_text_content[idx]
+                    and len(content) == 1
                     and isinstance(content[0], dict)
                     and content[0].get("type") == "text"
                     and "text" in content[0]
@@ -807,6 +821,7 @@ async def _proxy_stream(
         buffer = b""
         state = ResponsesStreamState(model=model) if transform_responses else None
         preamble_emitted = False
+        done_received = False
         async with httpx.AsyncClient(timeout=120.0) as client:
             async with client.stream("POST", url, content=body, headers=headers) as resp:
                 if resp.status_code != 200:
@@ -843,8 +858,11 @@ async def _proxy_stream(
                             if not line.startswith(b"data:"):
                                 continue
                             data_part = line[5:].strip()
-                            if not data_part or data_part == b"[DONE]":
+                            if not data_part:
                                 continue
+                            if data_part == b"[DONE]":
+                                done_received = True
+                                break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
                             except (json.JSONDecodeError, UnicodeDecodeError):
@@ -872,6 +890,8 @@ async def _proxy_stream(
                             out = _process_sse_line(line, False)
                             if out:
                                 yield out
+                    if done_received:
+                        break
                 if buffer.strip() and state is None:
                     out = _process_sse_line(buffer, False)
                     if out:
@@ -1069,6 +1089,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
             model = data.get("model", "proxy")
             state = ResponsesStreamState(model=model)
             preamble_emitted = False
+            done_received = False
             try:
                 async with client.stream("POST", url, content=body, headers=headers) as resp:
                     if resp.status_code != 200:
@@ -1092,8 +1113,11 @@ async def websocket_responses_handler(websocket: Any) -> None:
                             if not line.startswith(b"data:"):
                                 continue
                             data_part = line[5:].strip()
-                            if not data_part or data_part == b"[DONE]":
+                            if not data_part:
                                 continue
+                            if data_part == b"[DONE]":
+                                done_received = True
+                                break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
                             except (json.JSONDecodeError, UnicodeDecodeError):
@@ -1117,6 +1141,8 @@ async def websocket_responses_handler(websocket: Any) -> None:
                             if tool_calls:
                                 for ev in state.tool_call_delta_events(tool_calls):
                                     await websocket.send_json(ev)
+                        if done_received:
+                            break
                     # Emit closing sequence after stream ends
                     if not preamble_emitted:
                         for ev in state.preamble_events():

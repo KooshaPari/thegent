@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-007
 """
+
 from docs_engine.sidebar.generator import SidebarGenerator
 
 

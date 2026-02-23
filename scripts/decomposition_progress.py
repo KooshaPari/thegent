@@ -145,11 +145,7 @@ def build_progress_summary() -> dict:
     blockers = _identify_blockers(checked_items)
 
     # Next wave deps: items that are partial or pending represent open threads
-    next_wave_deps = [
-        f"{it['wl_id']}: {it['description']}"
-        for it in checked_items
-        if it["status"] != "complete"
-    ]
+    next_wave_deps = [f"{it['wl_id']}: {it['description']}" for it in checked_items if it["status"] != "complete"]
 
     return {
         "wave": 2,

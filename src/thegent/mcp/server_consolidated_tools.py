@@ -175,19 +175,23 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
         if action == "show":
             return ToolResult(content=session_show_impl(session_id=session_id, ps_impl=ps_impl))
         if action == "logs":
-            return ToolResult(content=session_logs_impl(
-                session_id=session_id,
-                stderr=stderr,
-                tail=tail,
-                logs_impl=logs_impl,
-            ))
+            return ToolResult(
+                content=session_logs_impl(
+                    session_id=session_id,
+                    stderr=stderr,
+                    tail=tail,
+                    logs_impl=logs_impl,
+                )
+            )
         if action == "send":
-            return ToolResult(content=session_send_impl(
-                session_id=session_id,
-                message=message,
-                msg_type=msg_type,
-                send_impl=raw_send_impl,
-            ))
+            return ToolResult(
+                content=session_send_impl(
+                    session_id=session_id,
+                    message=message,
+                    msg_type=msg_type,
+                    send_impl=raw_send_impl,
+                )
+            )
         if action == "attach":
             return ToolResult(content=session_attach_hint_impl(session_id=session_id, ps_impl=ps_impl))
         return ToolResult(content=f"Unknown action: {action}")

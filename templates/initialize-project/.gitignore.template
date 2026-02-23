@@ -57,6 +57,12 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+{% if include_act %}
+
+# Local GH Action emulation
+.github/act-events/
+artifacts/act/
+{% endif %}
 
 # Docs
 docs-dist/

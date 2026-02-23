@@ -1,0 +1,66 @@
+# Next Work Package: Robustness Hardening
+
+**Date:** 2026-02-18
+**Priority:** P0-P1
+**Status:** Ready to Start
+
+---
+
+## Verification Complete ✅
+
+All completed optimizations verified:
+- ✅ OPT-006: Lazy adapter loading (7 adapters loaded)
+- ✅ OPT-004: Connection pooling (httpx backend active)
+- ✅ OPT-008: Policy cache (1000 entry cache configured)
+
+---
+
+## Next Work Package: Robustness Hardening
+
+### Already Implemented ✅
+
+1. **ROB-001:** Sloppy XML recovery - ✅ Implemented in `tools/xml_repair.py`
+2. **ROB-013:** Configuration validation - ✅ Implemented in `config.py`
+3. **ROB-017:** Route resolution fallback - ✅ Implemented in `models/catalog.py`
+
+### Pending P0-P1 Items
+
+1. **ROB-002:** Partial-state validity markers (P1)
+   - Add validity markers during streaming parse
+   - Prevent invalid state exposure
+
+2. **ROB-004:** Circuit breaker per-provider (P1)
+   - Isolate provider failures
+   - Independent state per provider
+
+3. **ROB-005:** Idempotency tokens (P1)
+   - Add to all state-changing operations
+   - Prevent duplicate side effects
+
+4. **ROB-007:** Graceful shutdown (P1)
+   - In-flight request drain (30s)
+   - No dropped requests on restart
+
+5. **ROB-008:** Session state recovery (P1)
+   - Recover from file system after crash
+   - Resume without data loss
+
+6. **ROB-010:** Contract version downgrade prevention (P1)
+   - Prevent in critical lanes
+   - No silent quality regression
+
+7. **ROB-015:** Enhanced XML recovery (P1)
+   - Tag balancing heuristics
+   - Handle 95%+ incomplete XML
+
+---
+
+## Recommended Next Steps
+
+1. **Start with ROB-004:** Circuit breaker per-provider (high impact, isolates failures)
+2. **Then ROB-005:** Idempotency tokens (prevents duplicate operations)
+3. **Then ROB-002:** Partial-state validity markers (prevents invalid state)
+
+---
+
+**Status:** Ready to proceed with robustness hardening work package

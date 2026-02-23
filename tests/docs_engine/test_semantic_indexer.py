@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-011
 """
+
 from pathlib import Path
 from docs_engine.semantic.indexer import SemanticIndexer
 

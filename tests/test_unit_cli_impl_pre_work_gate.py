@@ -49,6 +49,40 @@ def test_pre_work_gate_returns_none_when_evidence_fresh(tmp_path: Path, monkeypa
 
 
 @pytest.mark.unit
+def test_pre_work_gate_reads_hook_yaml_thresholds_from_project_fixture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Project hook-config thresholds must override defaults for e2e requirement."""
+    from thegent.cli.commands.impl import _enforce_pre_work_hard_gate
+
+    home = tmp_path / "home"
+    _write_json(home / ".claude" / ".async-test-results.json")
+    monkeypatch.setenv("HOME", str(home))
+
+    project = tmp_path / "project"
+    _write_json(project / ".claude" / "verification" / "qa-state.json")
+    (project / "hooks").mkdir(parents=True, exist_ok=True)
+    (project / "hooks" / "hook-config.yaml").write_text(
+        "\n".join(
+            [
+                "settings:",
+                "  regression_spiral_guard:",
+                "    require_e2e_first: false",
+                "    max_test_evidence_age_minutes: 30",
+                "    max_build_evidence_age_minutes: 30",
+                "    max_e2e_evidence_age_minutes: 30",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    # No qa-attestation evidence is created; defaults would block here.
+    block = _enforce_pre_work_hard_gate(project)
+    assert block is None
+
+
+@pytest.mark.unit
 def test_work_stream_claim_impl_blocks_when_evidence_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Claim command returns success=false with governance block when evidence is missing."""
     from thegent.cli.commands.impl import work_stream_claim_impl

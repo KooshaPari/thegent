@@ -521,9 +521,9 @@ class TestScrapeAnte:
         """scrape_ante extracts model from ~/.ante/settings.json."""
         mock_settings_path = MagicMock()
         mock_settings_path.exists.return_value = True
-        mock_home.return_value = MagicMock(__truediv__=lambda self, x: (
-            mock_settings_path if x == ".ante" else MagicMock()
-        ))
+        mock_home.return_value = MagicMock(
+            __truediv__=lambda self, x: (mock_settings_path if x == ".ante" else MagicMock())
+        )
 
         settings_data = {
             "model": {"name": "claude-sonnet-4-5"},
@@ -543,9 +543,9 @@ class TestScrapeAnte:
         """scrape_ante returns default when ~/.ante/settings.json not found."""
         mock_settings_path = MagicMock()
         mock_settings_path.exists.return_value = False
-        mock_home.return_value = MagicMock(__truediv__=lambda self, x: (
-            mock_settings_path if x == ".ante" else MagicMock()
-        ))
+        mock_home.return_value = MagicMock(
+            __truediv__=lambda self, x: (mock_settings_path if x == ".ante" else MagicMock())
+        )
 
         from thegent.models.scrapers import scrape_ante
 
@@ -558,9 +558,9 @@ class TestScrapeAnte:
         """scrape_ante returns default when settings.json is malformed."""
         mock_settings_path = MagicMock()
         mock_settings_path.exists.return_value = True
-        mock_home.return_value = MagicMock(__truediv__=lambda self, x: (
-            mock_settings_path if x == ".ante" else MagicMock()
-        ))
+        mock_home.return_value = MagicMock(
+            __truediv__=lambda self, x: (mock_settings_path if x == ".ante" else MagicMock())
+        )
 
         with patch("builtins.open", create=True) as mock_open:
             mock_open.return_value.__enter__.return_value.read.side_effect = ValueError("invalid json")

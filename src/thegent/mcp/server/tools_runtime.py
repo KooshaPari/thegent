@@ -15,7 +15,7 @@ def _sanitize_config_value(obj: Any) -> Any:
         return {k: _sanitize_config_value(v) for k, v in obj.items()}
     if isinstance(obj, list):
         return [_sanitize_config_value(i) for i in obj]
-    if hasattr(obj, "__str__") and not isinstance(obj, (int, float, bool, str, type(None))):
+    if hasattr(obj, "__str__") and not isinstance(obj, (int | float | bool | str | None)):
         return str(obj)
     return obj
 

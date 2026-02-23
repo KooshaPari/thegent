@@ -279,8 +279,9 @@ class TestTryLaunchNextThrottle:
             patch("time.sleep"),
             patch(
                 "thegent.planning.auto_launch.sample_resources",
-                return_value=MagicMock(cpu_count=4, load_1m=0.5, fd_used=50, fd_limit=1024,
-                                       mem_rss_mb=200, mem_available_mb=8000),
+                return_value=MagicMock(
+                    cpu_count=4, load_1m=0.5, fd_used=50, fd_limit=1024, mem_rss_mb=200, mem_available_mb=8000
+                ),
             ),
             patch(
                 "thegent.planning.auto_launch.compute_dynamic_limit",
@@ -305,8 +306,9 @@ class TestTryLaunchNextThrottle:
             patch("time.sleep") as mock_sleep,
             patch(
                 "thegent.planning.auto_launch.sample_resources",
-                return_value=MagicMock(cpu_count=4, load_1m=0.5, fd_used=50, fd_limit=1024,
-                                       mem_rss_mb=200, mem_available_mb=8000),
+                return_value=MagicMock(
+                    cpu_count=4, load_1m=0.5, fd_used=50, fd_limit=1024, mem_rss_mb=200, mem_available_mb=8000
+                ),
             ),
             patch(
                 "thegent.planning.auto_launch.compute_dynamic_limit",

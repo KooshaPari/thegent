@@ -37,7 +37,9 @@ def test_wl125_append_health_snapshot_wrapper_delegates_with_impl_callbacks(monk
         compact_log_fn()
 
     compact_calls: list[str] = []
-    monkeypatch.setattr("thegent.cli.commands.impl._compact_health_snapshot_log", lambda: compact_calls.append("called"))
+    monkeypatch.setattr(
+        "thegent.cli.commands.impl._compact_health_snapshot_log", lambda: compact_calls.append("called")
+    )
     monkeypatch.setattr("thegent.cli.commands.impl.run_health_helpers.append_health_snapshot", _fake)
 
     payload = {"payload_type": "session_contract_health_report", "issue_counts": {"A": 1}}

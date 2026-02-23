@@ -27,7 +27,7 @@ def _supports_param(fn: Callable[..., object], param: str) -> bool:
 
 
 def _dynamic_cmd(fn: Callable[..., object]) -> Callable[..., None]:
-    return cast(Callable[..., None], fn)
+    return cast("Callable[..., None]", fn)
 
 
 @app.command("garden", help="Run the Gardener Agent: detect and update stale docs.")

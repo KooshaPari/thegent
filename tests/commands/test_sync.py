@@ -10,7 +10,7 @@ Traces to: FR-SYNC-021 through FR-SYNC-040
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -21,18 +21,30 @@ from thegent.commands.sync import (
     SyncOperationStatus,
     SyncResult,
 )
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
+from thegent.integrations.sync_policy_contract import ConnectorPolicy, SyncPolicyContract
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / helpers
 # ---------------------------------------------------------------------------
 
 
-def _make_cmd(tmp_path: Path, **kwargs: object) -> SyncCommand:
+def _make_cmd(
+    tmp_path: Path,
+    *,
+    agents_dir: Path | None = None,
+    hooks_dir: Path | None = None,
+    hook_config_path: Path | None = None,
+    work_stream_path: Path | None = None,
+) -> SyncCommand:
     """Return a SyncCommand rooted at a throwaway temp directory."""
-    return SyncCommand(project_root=tmp_path, **kwargs)
+    return SyncCommand(
+        project_root=tmp_path,
+        agents_dir=agents_dir,
+        hooks_dir=hooks_dir,
+        hook_config_path=hook_config_path,
+        work_stream_path=work_stream_path,
+    )
 
 
 def _agent_dir(tmp_path: Path, names: list[str]) -> Path:
@@ -207,6 +219,45 @@ class TestSyncStatus:
         assert any("unregistered" in c for c in op.changes)
 
 
+@pytest.mark.unit
+class TestSyncBoardPolicyResolution:
+    def test_connector_policy_for_source_returns_none_without_contract(self) -> None:
+        assert SyncCommand._connector_policy_for_source(None, "github") is None
+
+    def test_connector_policy_for_source_uses_contract_mapping(self) -> None:
+        policy = SyncPolicyContract(
+            connectors={
+                "github": ConnectorPolicy(
+                    enabled=True,
+                    mode="enforce",
+                    direction="bidirectional",
+                    quota_daily=100,
+                    board_id="42",
+                )
+            }
+        )
+        resolved = SyncCommand._connector_policy_for_source(policy, "github")
+        assert resolved is not None
+        assert resolved.board_id == "42"
+
+    def test_connector_policy_for_source_returns_none_for_missing_connector(self) -> None:
+        policy = SyncPolicyContract(
+            connectors={
+                "linear": ConnectorPolicy(
+                    enabled=True,
+                    mode="monitor",
+                    direction="bidirectional",
+                    quota_daily=50,
+                )
+            }
+        )
+        assert SyncCommand._connector_policy_for_source(policy, "github") is None
+
+    def test_connector_policy_for_source_returns_none_for_empty_connector_map(self) -> None:
+        policy = SyncPolicyContract(connectors={})
+        assert SyncCommand._connector_policy_for_source(policy, "github") is None
+
+
 # ---------------------------------------------------------------------------
 # push()
 # ---------------------------------------------------------------------------
@@ -223,36 +274,49 @@ class TestSyncPush:
     def test_push_succeeds_with_default_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-028
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(target)}):
+            op = cmd.push()
         assert op.ok is True
         assert op.operation == "push"
 
     def test_push_with_explicit_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-029
         cmd = _make_cmd(tmp_path)
-        op = cmd.push(target="https://sync.example.com")
+        target = tmp_path / "explicit-target"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         assert op.ok is True
-        assert op.details["target"] == "https://sync.example.com"
+        assert op.details["target"] == str(target.resolve())
 
     def test_push_respects_env_var(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-029
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "remote-server"}):
+        target = tmp_path / "remote-server"
+        target.mkdir()
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(target)}):
             op = cmd.push()
-        assert op.details["target"] == "remote-server"
+        assert op.details["target"] == str(target.resolve())
 
     def test_push_env_var_overridden_by_explicit_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-029
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "remote-server"}):
-            op = cmd.push(target="explicit-target")
-        assert op.details["target"] == "explicit-target"
+        env_target = tmp_path / "env-target"
+        explicit_target = tmp_path / "explicit-target"
+        env_target.mkdir()
+        explicit_target.mkdir()
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(env_target)}):
+            op = cmd.push(target=str(explicit_target))
+        assert op.details["target"] == str(explicit_target.resolve())
 
     def test_push_lists_agent_files_in_changes(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-030
         _agent_dir(tmp_path, ["alpha", "beta"])
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         change_paths = [c.replace("push: ", "") for c in op.changes]
         assert any("agents/alpha.md" in p for p in change_paths)
         assert any("agents/beta.md" in p for p in change_paths)
@@ -261,20 +325,25 @@ class TestSyncPush:
         # @trace FR-SYNC-030
         _hooks_dir(tmp_path, ["quality-gate"])
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         assert any("hooks/quality-gate.sh" in c for c in op.changes)
 
-    def test_push_stub_flag_set(self, tmp_path: Path) -> None:
+    def test_push_fails_for_unreachable_default_target(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-031
         cmd = _make_cmd(tmp_path)
         op = cmd.push()
-        assert op.details.get("stub") is True
+        assert op.ok is False
+        assert "unreachable target" in op.message.lower()
 
     def test_push_message_contains_file_count(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-031
         _agent_dir(tmp_path, ["agent-a"])
         cmd = _make_cmd(tmp_path)
-        op = cmd.push()
+        target = tmp_path / "remote"
+        target.mkdir()
+        op = cmd.push(target=str(target))
         assert "1" in op.message  # at least 1 file (the agent)
 
 
@@ -291,45 +360,57 @@ class TestSyncPull:
         op = cmd.pull()
         assert isinstance(op, OperationResult)
 
-    def test_pull_succeeds_with_default_source(self, tmp_path: Path) -> None:
+    def test_pull_fails_without_source(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-032
         cmd = _make_cmd(tmp_path)
         op = cmd.pull()
-        assert op.ok is True
+        assert op.ok is False
         assert op.operation == "pull"
+        assert "source is required" in op.message.lower()
 
-    def test_pull_with_explicit_source(self, tmp_path: Path) -> None:
+    def test_pull_with_explicit_source_directory(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-033
+        src = tmp_path / "remote"
+        (src / "agents").mkdir(parents=True)
+        (src / "hooks").mkdir(parents=True)
+        (src / "agents" / "agent-a.md").write_text("# from remote\n", encoding="utf-8")
+        (src / "hooks" / "quality-gate.sh").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        (src / "config.yaml").write_text("k: v\n", encoding="utf-8")
         cmd = _make_cmd(tmp_path)
-        op = cmd.pull(source="https://sync.example.com")
+        op = cmd.pull(source=str(src))
         assert op.ok is True
-        assert op.details["source"] == "https://sync.example.com"
+        assert op.details["source"] == str(src.resolve())
+        assert op.details["files_pulled"] >= 3
+        assert (tmp_path / "agents" / "agent-a.md").exists()
+        assert (tmp_path / "hooks" / "quality-gate.sh").exists()
+        assert (tmp_path / "config.yaml").exists()
 
     def test_pull_respects_env_var(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-033
+        src = tmp_path / "env-remote"
+        src.mkdir()
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "remote-server"}):
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(src)}):
             op = cmd.pull()
-        assert op.details["source"] == "remote-server"
+        assert op.details["source"] == str(src.resolve())
 
     def test_pull_env_var_overridden_by_explicit_source(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-033
+        env_src = tmp_path / "env-src"
+        explicit_src = tmp_path / "explicit-src"
+        env_src.mkdir()
+        explicit_src.mkdir()
         cmd = _make_cmd(tmp_path)
-        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": "should-be-ignored"}):
-            op = cmd.pull(source="explicit-source")
-        assert op.details["source"] == "explicit-source"
+        with patch.dict(os.environ, {"THGENT_SYNC_REMOTE": str(env_src)}):
+            op = cmd.pull(source=str(explicit_src))
+        assert op.details["source"] == str(explicit_src.resolve())
 
-    def test_pull_stub_flag_set(self, tmp_path: Path) -> None:
+    def test_pull_fails_for_invalid_source(self, tmp_path: Path) -> None:
         # @trace FR-SYNC-034
         cmd = _make_cmd(tmp_path)
-        op = cmd.pull()
-        assert op.details.get("stub") is True
-
-    def test_pull_files_pulled_is_empty_stub(self, tmp_path: Path) -> None:
-        # @trace FR-SYNC-034
-        cmd = _make_cmd(tmp_path)
-        op = cmd.pull()
-        assert op.details["files_pulled"] == []
+        op = cmd.pull(source=str(tmp_path / "missing"))
+        assert op.ok is False
+        assert "not a directory" in op.message.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -363,9 +444,7 @@ class TestSyncReset:
         cmd = _make_cmd(tmp_path)
         op = cmd.reset()
         # work_stream doesn't exist so nothing to reset
-        work_stream_str = str(
-            (tmp_path / "docs" / "reference" / "WORK_STREAM.md").relative_to(tmp_path)
-        )
+        work_stream_str = str((tmp_path / "docs" / "reference" / "WORK_STREAM.md").relative_to(tmp_path))
         assert work_stream_str not in op.details["files_would_reset"]
 
     def test_reset_reports_work_stream_when_present(self, tmp_path: Path) -> None:
@@ -412,6 +491,56 @@ class TestSyncReset:
         cmd.reset()
         # File must be unchanged — reset is currently a stub
         assert ws.read_text(encoding="utf-8") == original_content
+
+
+@pytest.mark.unit
+class TestSyncLocalOrphans:
+    """WL-249 local orphan detection."""
+
+    @pytest.fixture
+    def workspace_with_cache(self, tmp_path: Path) -> tuple[Path, Path]:
+        ws = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
+        ws.parent.mkdir(parents=True, exist_ok=True)
+        ws.write_text(
+            """### [WL-101] Mapped local item
+**Status:** BACKLOG
+
+### [WL-102] Unmapped item
+**Status:** IN PROGRESS
+""",
+            encoding="utf-8",
+        )
+        cache = tmp_path / "docs" / "reference" / "connector_mapping_cache.json"
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache_store = ConnectorMappingCache(cache_file=cache)
+        cache_store.put("github", "WL-101", "remote-1")
+        return ws, cache
+
+    def test_detect_local_orphans_fails_for_unmapped_items(
+        self, workspace_with_cache: tuple[Path, Path], tmp_path: Path
+    ) -> None:
+        # @trace WL-249
+        ws, cache = workspace_with_cache
+        cmd = _make_cmd(tmp_path, work_stream_path=ws)
+        op = cmd.detect_local_orphans(mapping_cache_path=cache)
+
+        assert op.status == SyncOperationStatus.FAILED
+        assert op.details["orphan_count"] == 1
+        assert op.details["local_orphan_ids"] == ["WL-102"]
+        assert "local orphan detected: WL-102" in op.errors
+
+    def test_detect_local_orphans_succeeds_when_mapped(
+        self, workspace_with_cache: tuple[Path, Path], tmp_path: Path
+    ) -> None:
+        # @trace WL-249
+        ws, cache = workspace_with_cache
+        ConnectorMappingCache(cache_file=cache).put("linear", "WL-102", "remote-2")
+        cmd = _make_cmd(tmp_path, work_stream_path=ws)
+        op = cmd.detect_local_orphans(mapping_cache_path=cache)
+
+        assert op.ok is True
+        assert op.details["orphan_count"] == 0
+        assert op.details["local_orphan_ids"] == []
 
 
 # ---------------------------------------------------------------------------
@@ -514,3 +643,81 @@ class TestSyncCLIRegistration:
         result = runner.invoke(sync_app, ["reset", "--help"])
         assert result.exit_code == 0
         assert "--yes" in result.output
+
+    def test_bootstrap_gh_command_exists(self) -> None:
+        # @trace WL-037
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["--help"])
+        assert result.exit_code == 0
+        assert "bootstrap-gh" in result.output
+
+    def test_bootstrap_gh_subcommand_help(self) -> None:
+        # @trace WL-037
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["bootstrap-gh", "--help"])
+        assert result.exit_code == 0
+        assert "--owner" in result.output
+
+    def test_local_orphans_command_exists(self) -> None:
+        # @trace WL-249
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["--help"])
+        assert result.exit_code == 0
+        assert "local-orphans" in result.output
+
+    def test_local_orphans_subcommand_help(self) -> None:
+        # @trace WL-249
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        runner = CliRunner()
+        result = runner.invoke(sync_app, ["local-orphans", "--help"])
+        assert result.exit_code == 0
+        assert "--mapping-cache" in result.output
+
+    def test_bootstrap_gh_invokes_script(self) -> None:
+        # @trace WL-037
+        from typer.testing import CliRunner
+
+        from thegent.main import sync_app
+
+        class _BootstrapModule:
+            @staticmethod
+            def bootstrap_sync_workflow_project(**kwargs: object) -> dict[str, int]:
+                _ = kwargs
+                return {
+                    "prepared_count": 10,
+                    "project_number": 7,
+                }
+
+        runner = CliRunner()
+        fake_module = _BootstrapModule()
+
+        with patch("thegent.cli.apps.sync._load_bootstrap_sync_module", return_value=fake_module):
+            result = runner.invoke(
+                sync_app,
+                [
+                    "bootstrap-gh",
+                    "--owner",
+                    "example",
+                    "--repo",
+                    "example/repo",
+                ],
+            )
+
+        assert result.exit_code == 0
+        assert "Prepared 10 sync workflow issues" in result.output
+        assert "Project number: 7" in result.output

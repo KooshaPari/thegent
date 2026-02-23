@@ -62,6 +62,10 @@ def register_prompt_and_handoff_wrappers(
         policy: str = "default",
         session: str | None = None,
         dry_run: bool = False,
+        org: str | None = None,
+        project: str | None = None,
+        environment: str | None = None,
+        policy_id: str | None = None,
     ) -> ToolResult:
         """
         Vet a recorded run using Vetter policy checks (WL-098).
@@ -72,6 +76,10 @@ def register_prompt_and_handoff_wrappers(
             policy=policy,
             session=session,
             dry_run=dry_run,
+            org=org,
+            project=project,
+            environment=environment,
+            policy_id=policy_id,
             govern_vet_impl=govern_vet_impl,
         )
 

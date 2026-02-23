@@ -121,9 +121,7 @@ def test_list_sessions_success() -> None:
         assert request.url.path == "/v1/sessions"
         return httpx.Response(
             200,
-            json=[
-                {"session_id": "s-1", "status": "running", "started_at": "2026-02-21T12:00:00Z", "agent": "codex"}
-            ],
+            json=[{"session_id": "s-1", "status": "running", "started_at": "2026-02-21T12:00:00Z", "agent": "codex"}],
         )
 
     client = _client_with_handler(httpx.MockTransport(handler))
@@ -286,7 +284,9 @@ def test_mcp_run_success_maps_structured_content() -> None:
             },
         )
 
-    client = ThegentClient("https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client = ThegentClient(
+        "https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
     result = client.run("hello")
     assert result.exit_code == 0
     assert result.stdout == "ok"
@@ -309,7 +309,9 @@ def test_mcp_list_sessions_parses_text_json_content() -> None:
             },
         )
 
-    client = ThegentClient("https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client = ThegentClient(
+        "https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
     sessions = client.list_sessions()
     assert len(sessions) == 1
     assert sessions[0].run_id == "r-1"
@@ -330,7 +332,9 @@ def test_mcp_resume_maps_structured_content() -> None:
             },
         )
 
-    client = ThegentClient("https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client = ThegentClient(
+        "https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
     result = client.resume("s-1")
     assert result.exit_code == 0
 
@@ -357,7 +361,9 @@ def test_mcp_error_payload_raises_client_error() -> None:
             },
         )
 
-    client = ThegentClient("https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler)))
+    client = ThegentClient(
+        "https://example.test", protocol="mcp", http_client=httpx.Client(transport=httpx.MockTransport(handler))
+    )
     with pytest.raises(ThegentClientError, match="Method not found"):
         client.run("hello")
 
@@ -510,7 +516,11 @@ async def test_async_mcp_run_uses_tools_call() -> None:
         assert body["params"]["name"] == "thegent_run"
         return httpx.Response(
             200,
-            json={"jsonrpc": "2.0", "id": body["id"], "result": {"structuredContent": {"exit_code": 0, "stdout": "ok", "stderr": ""}}},
+            json={
+                "jsonrpc": "2.0",
+                "id": body["id"],
+                "result": {"structuredContent": {"exit_code": 0, "stdout": "ok", "stderr": ""}},
+            },
         )
 
     client = _async_client_with_handler(httpx.MockTransport(handler), protocol="mcp")

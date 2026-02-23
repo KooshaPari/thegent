@@ -33,6 +33,10 @@ class TestModelMapping:
         assert _map_model_for_backend("gpt-5.3-codex") == "gpt-5.3-codex"
         assert _map_model_for_backend("minimax-m2.5") == "minimax-m2.5"
 
+    def test_claude_opus_thinking_alias_maps_to_supported_backend_id(self) -> None:
+        """CLIP-BUG-02: thinking alias maps to base model ID."""
+        assert _map_model_for_backend("claude-opus-4-6-thinking") == "claude-opus-4-6"
+
 
 @pytest.mark.unit
 class TestResponsesToChatCompletions:
@@ -63,6 +67,134 @@ class TestResponsesToChatCompletions:
         body = {"model": "x", "input": [], "max_output_tokens": 1024}
         out = _responses_to_chat_completions(body)
         assert out["max_tokens"] == 1024
+
+    def test_strips_thinking_signatures_in_content_blocks(self) -> None:
+        """CLIP-BUG-09/10: remove provider-specific signatures from content arrays."""
+        body = {
+            "model": "gemini-3",
+            "input": [
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "thinking",
+                            "thinking": "trace",
+                            "signature": "gemini-signature",
+                            "thought_signature": "\\claude#xyz",
+                        }
+                    ],
+                }
+            ],
+        }
+        out = _responses_to_chat_completions(body)
+        part = out["messages"][0]["content"][0]
+        assert "signature" not in part
+        assert "thought_signature" not in part
+
+    def test_custom_tool_is_converted_to_function_tool(self) -> None:
+        """CLIP-BUG-01: custom tool payloads are translated for chat-completions backends."""
+        body = {
+            "model": "claude-opus-4-6-thinking",
+            "input": [],
+            "tools": [
+                {
+                    "type": "custom",
+                    "name": "run_sql",
+                    "description": "Run SQL query",
+                    "input_schema": {"type": "object", "properties": {"query": {"type": "string"}}},
+                }
+            ],
+            "tool_choice": {"type": "custom", "name": "run_sql"},
+        }
+        out = _responses_to_chat_completions(body)
+        assert out["tools"] == [
+            {
+                "type": "function",
+                "function": {
+                    "name": "run_sql",
+                    "description": "Run SQL query",
+                    "parameters": {"type": "object", "properties": {"query": {"type": "string"}}},
+                },
+            }
+        ]
+        assert out["tool_choice"] == {"type": "function", "function": {"name": "run_sql"}}
+
+    def test_schema_normalization_strips_unsupported_fields_and_nullable_arrays(self) -> None:
+        """CLIP-BUG-03/04: normalize schema keys and nullable type arrays."""
+        body = {
+            "model": "claude-opus-4-6-thinking",
+            "input": [],
+            "tools": [
+                {
+                    "type": "custom",
+                    "name": "save_doc",
+                    "input_schema": {
+                        "$id": "x",
+                        "type": "object",
+                        "patternProperties": {".*": {"type": "string"}},
+                        "properties": {
+                            "title": {"type": ["string", "null"]},
+                        },
+                    },
+                }
+            ],
+        }
+        out = _responses_to_chat_completions(body)
+        params = out["tools"][0]["function"]["parameters"]
+        assert "$id" not in params
+        assert "patternProperties" not in params
+        assert params["properties"]["title"] == {"type": "string", "nullable": True}
+
+    def test_content_blocks_drop_metadata_key(self) -> None:
+        """CLIP-BUG-05: metadata keys inside content blocks are not forwarded."""
+        body = {
+            "model": "claude-opus-4-6-thinking",
+            "input": [
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Hello", "metadata": {"source": "x"}},
+                    ],
+                }
+            ],
+        }
+        out = _responses_to_chat_completions(body)
+        assert out["messages"] == [{"role": "user", "content": [{"type": "text", "text": "Hello"}]}]
+
+    def test_preserves_messages_payload_when_input_is_missing(self) -> None:
+        """CLIP-BUG-11: keep explicit messages payloads verbatim."""
+        messages = [
+            {"role": "assistant", "content": [{"type": "thinking", "thinking": "t", "signature": "sig-1"}]},
+            {"role": "user", "content": "continue"},
+        ]
+        body = {"model": "claude-opus-4-6-thinking", "messages": messages}
+        out = _responses_to_chat_completions(body)
+        assert out["messages"] == messages
+
+    def test_forwards_thinking_and_output_config(self) -> None:
+        """CLIP-BUG-11: preserve Claude request envelope fields."""
+        body = {
+            "model": "claude-opus-4-6-thinking",
+            "input": [],
+            "thinking": {"type": "enabled", "budget_tokens": 1024},
+            "output_config": {"effort": "high"},
+        }
+        out = _responses_to_chat_completions(body)
+        assert out["thinking"] == {"type": "enabled", "budget_tokens": 1024}
+        assert out["output_config"] == {"effort": "high"}
+
+    def test_tool_choice_proxy_prefix_normalized_to_declared_tool(self) -> None:
+        """CLIP-BUG-12: tool_choice.name must match tools[].name."""
+        body = {
+            "model": "claude-sonnet-4-6",
+            "input": [{"type": "message", "role": "user", "content": "hi"}],
+            "tools": [{"type": "function", "function": {"name": "write_file"}}],
+            "tool_choice": {"type": "function", "function": {"name": "proxy_write_file"}},
+        }
+        out = _responses_to_chat_completions(body)
+        assert out["tool_choice"]["function"]["name"] == "write_file"
 
 
 @pytest.mark.unit

@@ -173,7 +173,7 @@ def test_content_change_triggers_cache_miss() -> None:
     comp = Compositor()
     comp.add_panel(panel)
 
-    comp.render_panel("p")   # miss → "v0"
+    comp.render_panel("p")  # miss → "v0"
     log[0] = "v1"
     result = comp.render_panel("p")  # new hash → miss again
 
@@ -218,14 +218,14 @@ def test_invalidate_single_panel_clears_only_that_panel() -> None:
     comp.add_panel(panel_a)
     comp.add_panel(panel_b)
 
-    comp.render_all()   # 2 misses
+    comp.render_all()  # 2 misses
 
     comp.invalidate("a")
     log_a[0] = "a_v1"
 
     result = comp.render_all()
-    assert result["a"] == "a_v1"   # re-rendered
-    assert result["b"] == "b_v0"   # still from cache
+    assert result["a"] == "a_v1"  # re-rendered
+    assert result["b"] == "b_v0"  # still from cache
 
     stats = comp.cache_stats()
     # 2 original misses + 1 miss for re-render of a; 1 hit for b
@@ -243,9 +243,9 @@ def test_invalidate_all_panels_clears_entire_cache() -> None:
     comp.add_panel(Panel(name="p1", content_fn=lambda: "P1"))
     comp.add_panel(Panel(name="p2", content_fn=lambda: "P2"))
 
-    comp.render_all()      # 2 misses
-    comp.invalidate()      # clear all
-    comp.render_all()      # 2 more misses
+    comp.render_all()  # 2 misses
+    comp.invalidate()  # clear all
+    comp.render_all()  # 2 more misses
 
     assert comp.cache_stats()["misses"] == 4
     assert comp.cache_stats()["hits"] == 0

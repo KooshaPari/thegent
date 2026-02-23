@@ -37,6 +37,14 @@ def list_terminals(all: bool = typer.Option(False, "--all", "-a", help="Show all
     console.print(table)
 
 
+@app.command("ls")
+def list_terminals_alias(
+    all: bool = typer.Option(False, "--all", "-a", help="Show all panes, not just Claude Code"),
+):
+    """Alias for terminal list."""
+    list_terminals(all=all)
+
+
 @app.command("inspect")
 def inspect_terminal(pane_id: str):
     """View the last few lines of a terminal pane."""
@@ -48,6 +56,12 @@ def inspect_terminal(pane_id: str):
         console.print(f"[red]Could not capture pane {pane_id}[/red]")
 
 
+@app.command("i")
+def inspect_terminal_alias(pane_id: str):
+    """Alias for terminal inspect."""
+    inspect_terminal(pane_id=pane_id)
+
+
 @app.command("send")
 def send_to_terminal(pane_id: str, text: str):
     """Send a command to a terminal pane."""
@@ -55,6 +69,12 @@ def send_to_terminal(pane_id: str, text: str):
         console.print(f"[green]Sent command to {pane_id}[/green]")
     else:
         console.print(f"[red]Failed to send command to {pane_id}[/red]")
+
+
+@app.command("snd")
+def send_to_terminal_alias(pane_id: str, text: str):
+    """Alias for terminal send."""
+    send_to_terminal(pane_id=pane_id, text=text)
 
 
 @app.command("attach")

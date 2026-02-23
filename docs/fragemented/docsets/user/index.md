@@ -1,0 +1,10 @@
+# Technical User Docset
+
+For engineers and operators using thegent day-to-day.
+
+## Core Workflows
+
+1. [Quickstart](./quickstart.md)
+2. Session management (`thegent run`, `bg`, `ps`, `logs`, `stop`)
+3. Planning lifecycle (`thegent plan do-next`, `plan loop`)
+4. Governance checks (`thegent doctor`, audit commands)

@@ -1,5 +1,6 @@
 # @trace WL-120 B90-W3-F1
 """Regression validation tests for the WL-120 monolith-split operation."""
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -13,9 +14,7 @@ def test_f1_report_exists():
 
 def test_f1_report_mentions_regression():
     text = REPORT.read_text()
-    assert "regression" in text.lower() or "Regression" in text, (
-        "Report must mention 'regression' or 'Regression'"
-    )
+    assert "regression" in text.lower() or "Regression" in text, "Report must mention 'regression' or 'Regression'"
 
 
 def test_f1_report_mentions_cli_dag():

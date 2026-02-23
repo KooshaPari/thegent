@@ -147,7 +147,9 @@ def check_dependencies(*, check_result_cls: type[Any], deps: bool = False, proje
                 r.status = "ok"
                 r.message = "mise doctor: OK"
             else:
-                stderr = result.stderr if isinstance(result.stderr, str) else result.stderr.decode("utf-8", errors="replace")
+                stderr = (
+                    result.stderr if isinstance(result.stderr, str) else result.stderr.decode("utf-8", errors="replace")
+                )
                 r.status = "warn"
                 r.message = "mise doctor reported issues"
                 r.details = (stderr or "unknown issue")[:300]
@@ -169,7 +171,9 @@ def check_dependencies(*, check_result_cls: type[Any], deps: bool = False, proje
                 r.status = "ok"
                 r.message = "brew bundle check: OK"
             else:
-                stdout = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                stdout = (
+                    result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                )
                 r.status = "warn"
                 r.message = "brew bundle check reported missing packages"
                 r.details = (stdout or "bundle drift detected")[:300]

@@ -551,7 +551,7 @@ def _coerce_issue_types(value: Any) -> list[str]:
         return []
     if isinstance(value, dict):
         return [str(v) for v in value]
-    if isinstance(value, (list, tuple, set)):
+    if isinstance(value, (list | tuple | set)):
         return [str(v) for v in value]
     return [str(value)]
 
@@ -919,6 +919,31 @@ _REVIEW_SCHEMA_PREAMBLE = (
 )
 
 
+def _extract_review_json_payload(raw_stdout: str) -> dict[str, Any]:
+    """Parse review JSON payload, accepting optional fenced JSON blocks."""
+    try:
+        parsed = json.loads(raw_stdout)
+    except json.JSONDecodeError:
+        text = raw_stdout.strip()
+        if text.startswith("```"):
+            lines = text.splitlines()
+            if len(lines) >= 3 and lines[0].startswith("```") and lines[-1] == "```":
+                inner = "\n".join(lines[1:-1]).strip()
+                if inner.lower().startswith("json"):
+                    inner = inner[4:].lstrip()
+                try:
+                    parsed = json.loads(inner)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(f"Review output is not valid JSON: {exc}") from exc
+            else:
+                raise ValueError("Review output is not valid JSON: malformed fenced block.")
+        else:
+            raise ValueError("Review output is not valid JSON.")
+    if not isinstance(parsed, dict):
+        raise ValueError("Review output JSON root must be an object.")
+    return parsed
+
+
 def review_impl(
     prompt: str,
     agent: str | None = None,
@@ -958,10 +983,7 @@ def review_impl(
     raw_stdout = response.get("stdout", "")
     if not isinstance(raw_stdout, str):
         raise ValueError("Review output must be a JSON string in stdout.")
-    try:
-        parsed_json = json.loads(raw_stdout)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Review output is not valid JSON: {exc}") from exc
+    parsed_json = _extract_review_json_payload(raw_stdout)
 
     validated = validate_review_output(parsed_json)
     issues = validated["issues"]

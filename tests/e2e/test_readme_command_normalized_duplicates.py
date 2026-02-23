@@ -40,6 +40,5 @@ def test_no_normalized_duplicate_backticked_pytest_or_task_command_snippets() ->
     duplicates = [command for command, count in counts.items() if count > 1]
 
     assert not duplicates, (
-        "README should not duplicate pytest/task snippets after whitespace normalization: "
-        + "; ".join(duplicates)
+        "README should not duplicate pytest/task snippets after whitespace normalization: " + "; ".join(duplicates)
     )

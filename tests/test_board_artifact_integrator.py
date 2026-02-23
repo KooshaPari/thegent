@@ -43,10 +43,14 @@ class TestBoardArtifactParser:
     def test_parse_json_list(self, tmp_path: Path) -> None:
         """Test parsing JSON board artifact (list format)."""
         json_file = tmp_path / "board.json"
-        json_file.write_text(json.dumps([
-            {"id": "JB-001", "title": "Task A", "status": "BACKLOG", "priority": "P1"},
-            {"id": "JB-002", "title": "Task B", "status": "COMPLETED", "priority": "P2"},
-        ]))
+        json_file.write_text(
+            json.dumps(
+                [
+                    {"id": "JB-001", "title": "Task A", "status": "BACKLOG", "priority": "P1"},
+                    {"id": "JB-002", "title": "Task B", "status": "COMPLETED", "priority": "P2"},
+                ]
+            )
+        )
 
         parser = BoardArtifactParser()
         items = parser.parse_json(json_file)
@@ -58,12 +62,16 @@ class TestBoardArtifactParser:
     def test_parse_json_dict_with_items(self, tmp_path: Path) -> None:
         """Test parsing JSON board artifact (dict with items key)."""
         json_file = tmp_path / "board.json"
-        json_file.write_text(json.dumps({
-            "items": [
-                {"id": "JD-001", "title": "Task X", "priority": "P0"},
-                {"id": "JD-002", "title": "Task Y", "priority": "P1"},
-            ]
-        }))
+        json_file.write_text(
+            json.dumps(
+                {
+                    "items": [
+                        {"id": "JD-001", "title": "Task X", "priority": "P0"},
+                        {"id": "JD-002", "title": "Task Y", "priority": "P1"},
+                    ]
+                }
+            )
+        )
 
         parser = BoardArtifactParser()
         items = parser.parse_json(json_file)
@@ -97,10 +105,7 @@ class TestBoardArtifactParser:
     def test_parse_csv_missing_columns(self, tmp_path: Path) -> None:
         """Test parsing CSV with missing optional columns."""
         csv_file = tmp_path / "board.csv"
-        csv_file.write_text(
-            "id,title,status,priority\n"
-            "TEST-001,Task,BACKLOG,P1\n"
-        )
+        csv_file.write_text("id,title,status,priority\nTEST-001,Task,BACKLOG,P1\n")
 
         parser = BoardArtifactParser()
         items = parser.parse_csv(csv_file)
@@ -193,9 +198,7 @@ class TestBoardArtifactIntegrator:
         """Test that JSON takes precedence over CSV."""
         # Create JSON with different content
         json_file = board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
-        json_file.write_text(json.dumps([
-            {"id": "JSON-001", "title": "JSON task", "status": "BACKLOG"}
-        ]))
+        json_file.write_text(json.dumps([{"id": "JSON-001", "title": "JSON task", "status": "BACKLOG"}]))
 
         integrator = BoardArtifactIntegrator(board_artifacts_dir=board_dir)
         items = integrator.ingest_artifacts()
@@ -268,6 +271,7 @@ class TestBoardArtifactIntegrator:
 
         # Change to tmp_path to test auto-discovery
         import os
+
         old_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -303,9 +307,9 @@ class TestWL158Integration:
         )
 
         json_file = board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
-        json_file.write_text(json.dumps([
-            {"id": "JAB-001", "title": "JSON artifact task", "status": "BACKLOG", "priority": "P1"}
-        ]))
+        json_file.write_text(
+            json.dumps([{"id": "JAB-001", "title": "JSON artifact task", "status": "BACKLOG", "priority": "P1"}])
+        )
 
         md_file = board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.md"
         md_file.write_text(
@@ -316,9 +320,7 @@ class TestWL158Integration:
         )
 
         import_file = board_dir / "GITHUB_PROJECT_IMPORT_CLIPPROXYAPI_2000_2026-02-22.csv"
-        import_file.write_text(
-            "id,title\nGHI-001,GitHub import task\n"
-        )
+        import_file.write_text("id,title\nGHI-001,GitHub import task\n")
 
         # Test ingestion of each format
         integrator_csv = BoardArtifactIntegrator(board_artifacts_dir=board_dir)
@@ -359,10 +361,6 @@ class TestWL158Integration:
 
         # Test MD parsing (with minimum required columns for board table)
         md_file = tmp_path / "test.md"
-        md_file.write_text(
-            "| ID | Title | Status |\n"
-            "|-----|-------|--------|\n"
-            "| M-1 | Task | BACKLOG |\n"
-        )
+        md_file.write_text("| ID | Title | Status |\n|-----|-------|--------|\n| M-1 | Task | BACKLOG |\n")
         md_items = parser.parse_markdown(md_file)
         assert len(md_items) == 1

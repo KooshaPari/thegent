@@ -29,8 +29,29 @@ def test_thegent_govern_vet_impl_wraps_service_result() -> None:
     tools_governance = _load_tools_governance_module()
     calls: list[dict[str, object]] = []
 
-    def _stub(*, run_id: str, policy: str, session: str | None, dry_run: bool) -> dict[str, object]:
-        calls.append({"run_id": run_id, "policy": policy, "session": session, "dry_run": dry_run})
+    def _stub(
+        *,
+        run_id: str,
+        policy: str,
+        session: str | None,
+        dry_run: bool,
+        org: str | None,
+        project: str | None,
+        environment: str | None,
+        policy_id: str | None,
+    ) -> dict[str, object]:
+        calls.append(
+            {
+                "run_id": run_id,
+                "policy": policy,
+                "session": session,
+                "dry_run": dry_run,
+                "org": org,
+                "project": project,
+                "environment": environment,
+                "policy_id": policy_id,
+            }
+        )
         return {"run_id": run_id, "policy": policy, "verdict": "approved", "checks": []}
 
     result = tools_governance.thegent_govern_vet_impl(
@@ -38,10 +59,25 @@ def test_thegent_govern_vet_impl_wraps_service_result() -> None:
         policy="default",
         session="/tmp/session",
         dry_run=True,
+        org="acme",
+        project="thegent",
+        environment="production",
+        policy_id="vetter_default",
         govern_vet_impl=_stub,
     )
 
-    assert calls == [{"run_id": "run_123", "policy": "default", "session": "/tmp/session", "dry_run": True}]
+    assert calls == [
+        {
+            "run_id": "run_123",
+            "policy": "default",
+            "session": "/tmp/session",
+            "dry_run": True,
+            "org": "acme",
+            "project": "thegent",
+            "environment": "production",
+            "policy_id": "vetter_default",
+        }
+    ]
     assert result.structured_content == {"run_id": "run_123", "policy": "default", "verdict": "approved", "checks": []}
     assert _extract_json_content(result.content) == result.structured_content
     assert result.meta and result.meta["execution_time_ms"] >= 0

@@ -1,0 +1,563 @@
+# Thegent Phase 3–6 Closure Validator Python Implementation Blueprint
+
+**Status:** Implementation blueprint
+**Date:** 2026-02-15
+**Scope:** Concrete Python module design, interfaces, and failure semantics for runnable closure-validator execution.
+
+## 1) Purpose
+
+This blueprint defines the exact implementation structure for:
+
+- `scripts/validate/phase3_6_closure.py`
+- `scripts/validate/phase3_6_batch.py`
+- `scripts/validate/crosswave_check.py`
+- `scripts/events/{schema.py,validate.py,emit.py,signatures.py}`
+- `scripts/board/*` adapters and connector router
+- `src/thegent` CLI integration points
+
+Treat this as the engineering contract before coding or ticketing.
+
+## 2) Package boundary and imports
+
+Canonical package tree:
+
+```text
+scripts/
+  validate/
+    core.py
+    checker.py
+    phase3_6_closure.py
+    phase3_6_batch.py
+    crosswave_check.py
+  events/
+    schema.py
+    emit.py
+    validate.py
+    signatures.py
+  board/
+    connector.py
+    registry.py
+    zen_adapter.py
+    task_tool_adapter.py
+    crun_adapter.py
+    tracker_router.py
+  io/
+    policy.py
+    schema.py
+    files.py
+    checksums.py
+```
+
+### 2.1 Module responsibilities
+
+- `core.py` = shared domain models + exit code + timing + error types.
+- `checker.py` = deterministic check functions and rule registry.
+- `schema.py` (io) = schema loading + version enforcement.
+- `checksums.py` = artifact hash + manifest integrity.
+- `phase3_6_closure.py` = single WP pipeline.
+- `phase3_6_batch.py` = scoped multi-WP orchestration.
+- `crosswave_check.py` = phase continuity and downstream readiness checks.
+
+## 3) Core domain models
+
+### 3.1 Types (`scripts/validate/core.py`)
+
+Use typed dataclasses (or pydantic-like simple objects):
+
+```python
+from dataclasses import dataclass, field
+from enum import Enum
+from datetime import datetime
+
+class ResultCode(str, Enum):
+    PASS = "PASS"
+    WARN = "WARN"
+    FAIL = "FAIL"
+    BLOCK = "BLOCK"
+
+@dataclass
+class SeverityCounts:
+    P0: int = 0
+    P1: int = 0
+    P2: int = 0
+    P3: int = 0
+
+@dataclass
+class CheckViolation:
+    code: str
+    field: str
+    message: str
+    severity: str
+    phase: int | None = None
+    blocking: bool = False
+    hint: str | None = None
+
+@dataclass
+class CheckResult:
+    name: str
+    status: str
+    duration_ms: int
+    details: str
+    violations: list[CheckViolation] = field(default_factory=list)
+
+@dataclass
+class ValidationResult:
+    wp_id: str
+    phase: int
+    result: ResultCode
+    result_code: str
+    score: dict
+    can_transition: bool
+    violations: list[CheckViolation]
+    checks: list[CheckResult]
+    decision_hash: str | None = None
+    timing: dict | None = None
+```
+
+### 3.2 Canonical constants
+
+- `SCHEMA_ID`: `"phase3-6-closure-schema-v1"`
+- `EVENT_SCHEMA_ID`: `"phase3-6-closure-event-v1"`
+- `DEFAULT_SCHEMA_PATH`: `docs/docset/thegent-phase3-6-closure-validator-schema-v1.json`
+- `DEFAULT_EVENT_VERSION`: `phase3-6-closure-event-v1`
+
+## 4) Check registry and pipeline order
+
+`scripts/validate/checker.py` should expose:
+
+```python
+class CheckRegistry:
+    def __init__(self):
+        self._checks: list[tuple[str, callable]]
+    def register(self, name: str, fn: callable, phase: int | None = None, critical: bool = False): ...
+    def run(self, pack, context) -> list[CheckResult]: ...
+```
+
+Execution order (fixed):
+
+1. `schema`
+2. `required_fields`
+3. `evidence_pack`
+4. `test_pack`
+5. `signoff_pack`
+6. `continuity_pack`
+7. `drift_pack`
+8. `rollback_pack`
+9. `governance_pack`
+10. `next_phase_readiness`
+11. `risk_pack`
+12. `policy_guard`
+
+Each check returns `CheckResult` and contributes violations to aggregated result.
+
+### 4.1 Severity + stop-line logic
+
+- `P0` / `P2` as `BLOCK`-level when policy says critical.
+- `P1` usually `FAIL` with possible waiver path, unless policy hard line.
+- `P3` map to `WARN`.
+
+`check.result` to final result mapping:
+
+- if any BLOCK violation and no valid override => `BLOCK`
+- else if any FAIL and phase strict => `FAIL`
+- else if WARN exists => `WARN`
+- else `PASS`.
+
+## 5) Pack loading, schema, and policy resolution
+
+### 5.1 `scripts/io/schema.py`
+
+Functions:
+
+- `load_schema(path_or_id: str) -> dict`
+- `load_policy(path_or_default: str | None) -> dict`
+- `validate_schema_id(payload: dict, expected: str) -> None`
+- `assert_required(payload, required_keys)` etc.
+
+### 5.2 `scripts/io/checksums.py`
+
+Functions:
+
+- `sha256_file(path: Path) -> str`
+- `verify_checksum(expected: str, actual: str)`
+- `fingerprint_payload(payload: dict, include_order: bool=True) -> str`
+- `decision_hash(payload, result_code, run_id, schema_version) -> str`
+
+`fingerprint_payload` should sort keys recursively for determinism.
+
+### 5.3 `scripts/io/policy.py`
+
+Function:
+
+- `effective_policy(policy_path: str | None, *, strict_mode: bool, require_continuity: bool, require_next_phase_ready: bool) -> Policy`
+
+Policy object includes:
+
+- numeric thresholds,
+- `require_test_pass`,
+- `require_rollback_tested`,
+- `require_crosswave_ready`,
+- `event` emission modes,
+- `timeouts`.
+
+## 6) Single WP runner
+
+`scripts/validate/phase3_6_closure.py`
+
+#### CLI function signature
+
+```python
+def run_wp_validation(
+    wp_id: str,
+    pack_path: Path,
+    *,
+    schema: str | None = None,
+    policy_path: str | None = None,
+    phase: int | None = None,
+    strict: bool = False,
+    require_continuity: bool = False,
+    require_next_phase_ready: bool = False,
+    emit_event: bool = False,
+    event_out: Path | None = None,
+    run_id: str | None = None,
+    dry_run: bool = False,
+) -> tuple[ValidationResult, int]:
+    ...
+```
+
+#### Behavior
+
+- Validate `wp_id` regex early.
+- Load pack JSON.
+- Optional dry-run bypasses disk writes.
+- Apply check sequence.
+- Aggregate to `ValidationResult`.
+- Compute `decision_hash` and `timing`.
+- Persist result JSON.
+- Optionally emit event.
+- Return `(result, exit_code)`.
+
+### 6.1 Deterministic decision hash
+
+Formula:
+
+```
+sha256(wp_id + result + sorted(blocking_codes) + run_id + schema_version)
+```
+
+Use this in output, comments, and board notes.
+
+## 7) Batch runner
+
+`scripts/validate/phase3_6_batch.py`
+
+#### Scope model
+
+Load scope YAML into:
+
+```python
+@dataclass
+class Scope:
+    name: str
+    phase: int
+    bundles: list[str]
+    wp_ids: list[str]
+    requirements: dict
+```
+
+#### Execution behavior
+
+- parse scope file.
+- instantiate thread pool with `max_workers = requirements.max_parallelism or policy.default`.
+- run with queue + back-pressure.
+- on individual fail, continue unless `--fail-fast`.
+- produce batch summary object.
+- optionally write:
+  - one summary JSON
+  - one line-per-WP NDJSON.
+
+#### Summary output
+
+```json
+{
+  "run_id": "batch-2026-02-15-001",
+  "phase": 6,
+  "scope": "phase6_bundle_d",
+  "total": 3,
+  "pass": 1,
+  "warn": 1,
+  "fail": 1,
+  "block": 0,
+  "can_transition_count": 0,
+  "top_violations": [
+    {"code":"SIGNOFF_MISSING","wp_id":"WP-0603","severity":"P1","count":1}
+  ],
+  "results": [
+    {"wp_id":"WP-0601","result":"PASS","code":"CLOSE-OK"}
+  ],
+  "artifacts": {
+    "summary_sha256": "..."
+  }
+}
+```
+
+## 8) Crosswave check runner
+
+`scripts/validate/crosswave_check.py`
+
+- Inputs:
+  - `source_path` (crosswave source contract)
+  - `target_path` (target plan/doc)
+  - `phase` (source phase context)
+  - `scope` optional
+  - `require_readiness` bool
+- Checks:
+  - source closure contracts covered in target continuity matrix,
+  - open P1+ blockers -> `CROSSWAVE_BLOCK`,
+  - missing handoff notes -> `CROSSWAVE_GAP`.
+- Output:
+  - `closure.crosswave.blocked` when blocked,
+  - summary result.
+
+## 9) Checker modules (mandatory checks)
+
+### 9.1 evidence_checker.py
+
+Rules:
+
+- `artifacts` exists and non-empty.
+- each artifact has valid sha256 and readable path.
+- `coverage_ratio` numeric [0,1].
+- `critical_missing` empty for PASS in phase>=4 with strict mode.
+
+### 9.2 test_checker.py
+
+Rules:
+
+- `tests_required` and `tests_run` align.
+- all required tests present.
+- all statuses for required tests are `passed` unless policy exceptions.
+- `test_coverage` ratios numeric.
+
+### 9.3 signoff_checker.py
+
+Rules:
+
+- phase3: `platform_lead + governance_lead`.
+- phase4+: includes `qa_lead`.
+- phase6 critical_risk > 0 => `security_signoff`.
+- decision must be approved and timestamp parseable.
+
+### 9.4 continuity_checker.py
+
+Rules:
+
+- `legacy_contracts_preserved=True`.
+- continuity failed <= configured max.
+- phase6 requires bridging validity.
+
+### 9.5 drift_checker.py
+
+Rules:
+
+- `last_drift_scan` required.
+- if drift active and P1/P0 unresolved -> BLOCK or FAIL by policy.
+- P1 unresolved with policy timeout -> WARN/FAIL depending strict mode.
+
+### 9.6 rollback_checker.py
+
+Rules:
+
+- token presence when required.
+- rollback window >= 1.
+- rollback_tested for phase>=4.
+
+## 10) Error model and exception mapping
+
+Define `ValidationError` subclasses:
+
+- `SchemaError`
+- `PolicyError`
+- `ArtifactMissingError`
+- `CheckerError`
+- `CrosswaveError`
+- `ConnectorError`
+
+Map to exit codes:
+
+- schema/policy -> 5
+- runtime -> 7
+- timeout -> 6
+- all others from result result-code mapping.
+
+## 11) CLI integration surface
+
+`src/thegent/cli.py` additions:
+
+- `closure_validation_cmd` command group
+- `closure_validate_wp`
+- `closure_validate_scope`
+- `closure_validate_crosswave`
+- `closure_validate_waiver`
+- `closure_validate_board`
+
+`src/thegent/cli_impl.py` additions:
+
+- thin orchestrators for command handlers:
+  - no business logic in CLI layer.
+  - return command data only; exit handling done in CLI functions.
+
+### 11.1 Dependency on Python path
+
+- scripts package imports should be relative via `python -m scripts.validate...` when executed from repo root.
+- CLI path should use `subprocess` wrappers only if direct import fails.
+
+## 12) Board adapters
+
+`scripts/board/connector.py`:
+
+```python
+class Connector(Protocol):
+    def probe(self) -> dict
+    def read_issue(self, wp_id: str) -> dict
+    def set_state(self, issue_id: str, state: str, reason: str) -> dict
+    def add_comment(self, issue_id: str, text: str) -> dict
+    def set_labels(self, issue_id: str, labels: list[str]) -> dict
+    def append_worklog(self, issue_id: str, entry: str) -> dict
+    def emit_event(self, event: dict) -> dict
+```
+
+`scripts/board/registry.py`:
+
+- map `platform` argument to connector factory.
+- fallback chain with `strict`/`lenient` mode.
+
+## 13) Zen/task-tool/crun compatibility layer
+
+- `scripts/board/zen_adapter.py`: map task-like output fields into canonical event/issue models.
+- `scripts/board/task_tool_adapter.py`: support `<TaskUpdate>` and `task_graph` variants in non-strict mode; reject mismatches in strict mode.
+- `scripts/board/crun_adapter.py`: map CRUN node ID and consistency metadata into cross-reference fields.
+
+## 14) Configuration loading
+
+Create default policy docs:
+
+- `docs/config/phase3-6-closure-validator-policy.yaml`
+- `docs/config/phase3-6-closure-validator-scope-template.yaml`
+
+When missing, environment fallback should be:
+
+- strict by default for `release` mode,
+- standard for local/manual.
+
+## 15) Outputs and files
+
+Artifacts:
+
+- `artifacts/phase3-6/validation/{run_id}_wp_{wp}.json`
+- `artifacts/phase3-6/validation/batch_{run_id}.json`
+- `artifacts/phase3-6/validation/batch_{run_id}.ndjson`
+- `artifacts/phase3-6/events/closure_events_{run_id}.ndjson`
+- `artifacts/phase3-6/exceptions/{run_id}_exceptions.jsonl`
+
+Include:
+
+- `run_id`, `schema_version`, `validator_version`, `decision_hash`.
+
+## 16) Concurrency and performance
+
+- default parallelism: 4
+- max: 16
+- per-WP timeout: 30s
+- lock timeout: 12s
+- backoff: 1,2,4,8 sec (retry policy)
+
+Target performance:
+
+- p95 single WP < 20s
+- p95 phase6 batch of 12 < 180s
+- event write < 1.5s median
+
+## 17) Security and integrity hardening
+
+- path allowlist for artifact reads (repo root + `artifacts/` + `docs/docset/`).
+- sanitize stdout/stderr for token-like strings.
+- schema validation before any state writes.
+- checksum outputs and persist.
+- no shelling out from pack content.
+
+## 18) Observability and traceability
+
+- generate `correlation_id = run_id`.
+- emit structured logs:
+  - start,
+  - every check,
+  - decision,
+  - board sync result.
+- attach to `event_id` and `artifact_hash`.
+
+## 19) Test scaffolding and fixtures
+
+Create under repo-local `tests/` when implementing:
+
+- schema-valid pack fixture.
+- schema-invalid pack fixture.
+- corrupted checksum fixture.
+- expired waiver fixture.
+- crosswave blocked/unblocked fixture.
+- board connector timeout fixture.
+
+Expected behaviors:
+
+- deterministic output for same input.
+- consistent ordering of violations.
+- strict mode blocks unknown fields if configured.
+
+## 20) Rollout sequence (implementation chunks)
+
+Chunk A:
+
+- core models + checker registry + schema/policy loaders
+- single WP CLI happy path + tests
+
+Chunk B:
+
+- evidence/test/signoff/drift/rollback check modules
+- policy threshold and strict mode matrix
+
+Chunk C:
+
+- batch runner + scope parser + artifact manifests
+- summary + ndjson output
+
+Chunk D:
+
+- events: schema validate + signatures + emission
+- crosswave checks + mapping
+
+Chunk E:
+
+- board adapters + connector registry + board state sync
+- waiver command path and synthetic expiry events
+
+Chunk F:
+
+- CLI integration in `src/thegent`
+- workflow jobs + docs cross-reference + canary rollout
+
+## 21) Exit criteria for implementation
+
+- deterministic outputs on stable fixture matrix.
+- `thegent validate closure scope --phase 6` returns JSON summary and exit code:
+- `2` on controlled WARN,
+- `3/4` on hard blockers.
+- crosswave check can block/unblock with source and target updates.
+- at least one connector emits state transition + comment.
+
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

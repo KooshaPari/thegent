@@ -1,6 +1,5 @@
 """CLI commands for Unified Agent Registry."""
 
-
 import typer
 from rich.console import Console
 from rich.table import Table

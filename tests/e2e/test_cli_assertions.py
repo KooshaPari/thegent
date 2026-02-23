@@ -17,7 +17,7 @@ def test_load_cli_json_parses_plain_json_object() -> None:
 
 
 def test_load_cli_json_skips_non_json_leading_noise() -> None:
-    payload = "noise before output\n{\"status\": \"ready\", \"items\": [1, 2]}"
+    payload = 'noise before output\n{"status": "ready", "items": [1, 2]}'
 
     parsed = load_cli_json(payload)
 
@@ -44,8 +44,6 @@ def test_expected_trend_health_signature_is_deterministic() -> None:
 def test_expected_trend_health_signature_matches_policy_hash() -> None:
     policy, signature = expected_trend_health_signature()
 
-    expected = hashlib.sha256(
-        json.dumps(policy, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
+    expected = hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
     assert signature == expected

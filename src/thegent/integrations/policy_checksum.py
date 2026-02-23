@@ -13,6 +13,7 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +55,7 @@ class PolicyChecksumDriftDetector:
         json_str = json.dumps(policy_data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
-    def record_baseline(
-        self, policy_id: str, policy_data: dict, cycle_id: str
-    ) -> PolicyChecksum:
+    def record_baseline(self, policy_id: str, policy_data: dict, cycle_id: str) -> PolicyChecksum:
         """Record a baseline checksum for a policy.
 
         Args:
@@ -75,9 +74,7 @@ class PolicyChecksumDriftDetector:
             timestamp=datetime.now(timezone.utc),
         )
         self._baselines[policy_id] = baseline
-        logger.debug(
-            f"Recorded baseline for policy {policy_id} (checksum: {checksum})"
-        )
+        logger.debug(f"Recorded baseline for policy {policy_id} (checksum: {checksum})")
         return baseline
 
     def check_drift(self, policy_id: str, current_data: dict) -> bool:
@@ -104,8 +101,7 @@ class PolicyChecksumDriftDetector:
 
         if has_drift:
             logger.warning(
-                f"Drift detected in policy {policy_id}: "
-                f"baseline {baseline_checksum} != current {current_checksum}"
+                f"Drift detected in policy {policy_id}: baseline {baseline_checksum} != current {current_checksum}"
             )
         else:
             logger.debug(f"No drift in policy {policy_id}")
@@ -128,3 +124,18 @@ class PolicyChecksumDriftDetector:
             raise KeyError(f"No baseline found for policy {policy_id}")
 
         return self._baselines[policy_id]
+
+
+def compute_payload_checksum(payload: Any) -> str:
+    """Compute a deterministic SHA256 checksum for a JSON-compatible payload."""
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def verify_payload_checksum(payload: Any, expected_checksum: str) -> None:
+    """Validate payload checksum and fail loudly on mismatch."""
+    actual_checksum = compute_payload_checksum(payload)
+    if actual_checksum != expected_checksum:
+        raise ValueError(
+            f"Payload checksum mismatch: expected={expected_checksum} actual={actual_checksum}",
+        )

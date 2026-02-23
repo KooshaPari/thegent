@@ -4,6 +4,25 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 
 ---
 
+# Worktree Governance (Mandatory)
+
+- Keep the primary repo checkout on `main`.
+- Create/use dedicated branch worktrees for all feature/fix work.
+- Merge/cherry-pick from branch worktrees back into `main` from a controlled integration flow.
+- Do not repurpose the primary checkout for branch development.
+- If `.thegent-primary-main` exists at repo root, treat it as an enforced policy marker.
+
+Preferred helper:
+
+```bash
+thg_new_worktree <branch> [start-point] [worktree-path]
+```
+
+When operating through bootstrap and shell-managed dotfiles, this helper is installed via
+`~/.zsh_worktree_governance.zsh`.
+
+---
+
 # 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
 
 ## ⛔ FORBIDDEN: Killing Agent or Terminal Processes
@@ -1047,3 +1066,46 @@ For WBS/WORK_STREAM entries, structure sprint tasks as individually DAG-linked u
 | New CLI command | `commands/<command>/` + register in command dispatch |
 | New quality gate | `hooks/qa-<gate-name>.sh` following existing `qa-*.sh` patterns |
 | Shared hook utility | `hooks/lib/<utility>.sh` -- sourced by hook scripts, never called directly |
+
+## Anti-Slop Guardrails (Cheat Sheet)
+
+Use this block as an always-on policy for agentic code edits.
+
+### 1) Scope Lock
+- Change only files/functions explicitly in scope.
+- Preserve existing behavior outside scope.
+- If unsure, stop and ask instead of broad refactor.
+
+### 2) No Fallbacks / No Legacy Shims
+- Do not add fallback paths, compatibility flags, or silent defaults.
+- Required dependency missing: fail fast with explicit error.
+- Do not hide errors with broad `try/except` or implicit downgrade logic.
+
+### 3) Deterministic Prompts
+- Include: objective, non-goals, invariants, acceptance checks, and constraints.
+- Require: “no unrelated edits” and “no feature removals.”
+- Force explicit output contracts for migrations/refactors.
+
+### 4) Diff Hygiene
+- Small, reviewable diffs only.
+- No opportunistic cleanup unless requested.
+- Every behavior change must map to a stated requirement.
+
+### 5) Test-First / Regression Gates
+- Bug fix: write failing test first, then fix.
+- Refactor: prove parity before/after with focused tests.
+- New code path: add tests for success and failure modes.
+
+### 6) Hard Blockers Before Merge
+- Block on any new fallback/legacy patterns.
+- Block on silent error handling.
+- Block on missing test coverage for changed behavior.
+- Block on unresolved lints/type errors/security findings.
+
+### 7) Safety for AI Command Helpers
+- Suggestion-only by default; no auto-execution of generated commands.
+- Require explicit confirmation for destructive or privileged commands.
+- Keep audit trail of generated commands where possible.
+
+### 8) Prompt Snippet
+`Implement only <target-change>. Do not add fallback logic, legacy compatibility layers, feature flags, or silent error handlers. If a required dependency/contract is missing, fail explicitly with a clear error. Preserve all behavior outside stated scope and avoid unrelated edits.`

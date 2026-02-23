@@ -1,0 +1,207 @@
+# Thegent Phase 10–12 Release Readiness and Delta Pack
+
+**Status:** Operational delta pack for phased release transfer
+**Date:** 2026-02-15
+**Scope:** PRD/WBS/final gate readiness deltas, migration-safe handoff, and closure sequencing for Phases 10–12.
+
+This pack is intended for immediate transition into implementation and release coordination.
+
+## 1) What this pack adds
+
+- PRD finality deltas that were not yet closed by baseline cross-map.
+- WBS-to-release artifact gaps and explicit closure dependencies.
+- Gate handoff constraints for Bundles B–F.
+- Deterministic release-pack composition checklist for final approval.
+- A controlled migration map for moving from planning docs into tracker/handoff outputs.
+
+## 2) Delta matrix: PRD finality gaps vs implementation coverage
+
+### 2.1 Critical PRDs not yet fully closed by existing mappings
+
+| PRD item | Current mapping | Gap | Required closure action | Owner |
+|---|---|---|---|---|
+| FR-070 compatibility surface evolution | WP-10001/10002/10009 | Deterministic compatibility reasoning still mixed between docs and runtime behavior | Add `compatibility_result.schema_version` + `inferred_migration_path` in trace | Platform + API |
+| FR-074 migration UX clarity | WP-10006/10009 | Migration hints present but need confidence/impact metadata | Add confidence score + impact class in unknown-op responses | UX + Runtime |
+| FR-077 forecast drift handling | WP-11002/11003 | Drift control thresholds not consistently linked to rollback token and owner | Add per-event owner and rollback reference in forecast output | SRE + Governance |
+| FR-080/081 continuity safeguards | WP-11006/11007/11010 | Continuity risk model output lacks shift-boundary replay proof | Add continuity checkpoint replay fixture and shift-boundary drill evidence | Product + SRE |
+| FR-085 replay/what-if consistency | WP-12003/12004 | Branch replay path does not yet carry manifest evidence in every branch | Add branch manifest header + manifest hash for every branch output | Core runtime |
+| FR-086/089 handoff and persona coupling | WP-12005/12007 | Persona policy enforcement coverage for fallback and degrade paths not fully explicit | Add explicit deny matrix for fallback + fallback confidence threshold in handoff events | Governance + Security |
+
+### 2.2 NFR deltas that remain manual
+
+| NFR | Expected status | Current block | Closure action |
+|---|---|---|---|
+| NFR-029/030 (interface/perf) | PASS at G10 | Evidence mostly in tests, not cross-attached to all issue artifacts | Add artifact references in each issue and seed entry | Platform |
+| NFR-034 (stability) | PASS at G11 | Oscillation thresholds documented, but no sustained 7-day soak artifact for full control set | Add soak summary checksum in `WP-11001` + `WP-11010` pack | SRE |
+| NFR-039/040 (safety/reproducibility) | PASS at G12 draft | Determinism runbook exists, but seed replay hash not anchored in issue notes | Add seed hash and rerun hash in `WP-12009`, `WP-12010` | Compliance |
+
+## 3) Release artifact delta inventory
+
+### 3.1 Mandatory final artifacts (must all exist before closure handoff)
+
+1. `artifacts/phase10/g10_signoff_note.md`
+2. `artifacts/phase10/chunk_b/compatibility_matrix.ndjson`
+3. `artifacts/phase10/chunk_b/dispatch_trace_schema.ndjson`
+4. `artifacts/phase11/g11_readiness_pack.ndjson`
+5. `artifacts/phase11/g11_readiness_pack_signoff.md`
+6. `artifacts/phase12/evidence_graph.ndjson`
+7. `artifacts/phase12/replay_safety.ndjson`
+8. `artifacts/phase12/release_pack_summary.ndjson`
+9. `artifacts/phase12/release_pack_checksum.json`
+10. `artifacts/phase12/phase10_12_finality_bundle.md`
+11. `artifacts/phase12/closure_risk_residuals.md`
+12. `artifacts/phase12/seed_replay_hash.ndjson`
+
+### 3.2 Optional supporting artifacts
+
+- `artifacts/phase12/what_if_branch_decision_log.ndjson`
+- `artifacts/phase12/continuity_drift_study.ndjson`
+- `artifacts/phase11/forecast_drift_log.ndjson`
+- `artifacts/phase10/chunk_b/alias_contract.ndjson`
+
+## 4) Bundle handoff delta checks
+
+### 4.1 Bundle B -> C handoff
+
+- Preconditions:
+  - `WP-10007` traceability includes policy digest.
+  - unknown-op migration coverage for unsupported paths includes confidence.
+  - dispatch determinism evidence in both CLI and MCP.
+- Delta tasks:
+  1. Add control-safe fields to dispatch trace event contract.
+  2. Add explicit `phase11_autotune` dependency field in seed entries for control WPs.
+  3. Attach `requires-g10` hard gate artifact in all bundle C issue rows.
+
+### 4.2 Bundle C -> D handoff
+
+- Preconditions:
+  - calibration pause behavior and preemption rollback evidence exist.
+  - continuity risk outputs include shift window and confidence score.
+- Delta tasks:
+  1. Move adaptive shaping artifacts into stable naming (`adaptive_shaping.ndjson`) with deterministic event IDs.
+  2. Ensure policy guardrails include `policy_signed_change` for every learning update.
+  3. Add cross-link in `WP-11010` evidence pack to `WP-11001` and `WP-11003`.
+
+### 4.3 Bundle D -> E handoff
+
+- Preconditions:
+  - G11 lock is signed.
+  - safe-mode and policy-override routes are reversible.
+- Delta tasks:
+  1. Add explainability surface for prior control decisions in `WP-12001`.
+  2. Add replay manifest and provenance fields for each what-if branch.
+  3. Validate no direct replay mutation path in non-execute mode.
+
+### 4.4 Bundle E -> F handoff
+
+- Preconditions:
+  - explainability and evidence graph are structurally complete.
+  - persona policies are active and test-covered.
+- Delta tasks:
+  1. Add persona override edge-cases in handoff gate outputs.
+  2. Add closure risk register with open/closed states.
+  3. Add finality evidence manifest checksum and post-release observation trigger.
+
+## 5) PRD/WBS delta closure checklist for implementation handoff
+
+### 5.1 Before moving any WP to `Bundle QA`
+
+- [ ] PRD FR/NFR tuple exists and is referenced in ticket.
+- [ ] WBS ticket has gate preconditions that match current bundle state.
+- [ ] DAG node mapping in `thegent-dag-phase10-12-extension.md` is aligned with issue.
+- [ ] `required_artifacts` entry includes deterministic path and expected output format.
+- [ ] Seed row includes rollback token and gate fields.
+
+### 5.2 Before moving any WP to `Ready for Gate`
+
+- [ ] All required tests linked and green in tracker or CI state.
+- [ ] Evidence manifest hash exists and is checksummed.
+- [ ] No unresolved hard-stop conditions older than 24h in same bundle.
+- [ ] `release_pack_hash` anchor present for related phase artifact groups.
+
+### 5.3 Before final closure (`WP-12010`)
+
+- [ ] All `issue_key` statuses are `Done` for WP-10001..WP-12010.
+- [ ] Seed replay in CI returns same digest as initial import.
+- [ ] Closure package includes gate notes and risk residual matrix.
+- [ ] Final signoff by all required roles.
+
+## 6) Release pack composition and deterministic export
+
+### 6.1 Export scope
+
+`release_pack_summary.ndjson` must include:
+
+- `prd_snapshot`: FR/NFR IDs + coverage status at closure time
+- `wps_snapshot`: completed WP IDs + commit hash + ticket ids
+- `artifact_snapshot`: required artifact list + checksums
+- `gates_snapshot`: G10/G11/G12 status, approver, timestamp
+- `risk_snapshot`: open residual risks with owner and deadline
+- `reproducibility`: `seed_hash`, `git_sha`, `exporter_version`, `manifest_hash`
+
+### 6.2 Deterministic checks
+
+- Two exports from same tree + same seed produce identical `manifest_hash`.
+- Any non-deterministic field must be excluded or normalized.
+- Seed hash and git hash must be in artifact header.
+
+## 7) Migration-safe execution rules
+
+- Never remove historical issue artifact links; append supersession notes instead.
+- If artifact schema changes:
+  1. bump `manifest_schema_version`,
+  2. add migration script or compatibility note,
+  3. update issue references and evidence manifests.
+- Keep `seed_hash` history in at least last 3 runs.
+
+## 8) Governance handoff and sign-off map
+
+| Gate | Required owners | Required docs | Required artifacts |
+|---|---|---|---|
+| G10 | Platform, Security, Program | `g10_signoff_note.md` | `dispatch_trace_schema`, `compatibility_matrix`, chunk artifacts |
+| G11 | SRE, Governance, Product | `g11_readiness_pack` + evidence rollup | `forecast_quality`, `slo_regulator_events`, `self_heal_recommendations`, `g11_readiness_pack` |
+| G12 | Compliance, Product, Security, Program | `closure_readiness_manifest`, `closure_residual_risk_log` | `evidence_graph`, `replay_safety`, `release_pack_summary`, `finality_bundle` |
+
+## 9) Release freeze and rollback boundary
+
+- Freeze scope by phase:
+  - Pre-G10: no phase 11/12 runtime-affecting changes.
+  - Pre-G11: no adaptation or safe-mode param drift without policy approval.
+  - Pre-G12: no finality and packaging changes without release pack lock check.
+
+- Rollback boundary:
+  - If release artifact checksum mismatch appears, re-run deterministic export.
+  - If mismatch persists, suspend release and restore seed checkpoint artifacts.
+
+## 10) Residual risk triage order
+
+1. Safety control regression (control loop / safe mode / replay mutation).
+2. Evidence integrity gaps (missing manifest hash or dangling dependencies).
+3. Persona/policy bypass on fallback.
+4. Unresolved unknown-op migration quality.
+5. Oscillation-like behavior in high-load conditions.
+
+For each residual risk:
+- assign owner,
+- define mitigation window,
+- define reopen condition,
+- and set evidence of resolution.
+
+## 11) Handoff to next chunk
+
+When this delta pack is complete:
+- hand off to implementation queue execution engine with:
+  - updated crosswalk,
+  - updated ticket artifacts,
+  - seed import replay status,
+  - and closure scoring pack (`≥14/18`, no category below 2).
+
+This is the last handoff artifact before final phase-12 closure execution.
+
+
+
+---
+## See also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog
+- [00-MASTER-INDEX.md](../plans/00-MASTER-INDEX.md) — plan index

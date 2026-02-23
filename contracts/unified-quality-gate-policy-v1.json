@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "fail_if_summary_missing": true,
+  "modes": {
+    "pr": {
+      "fail_on_overall": ["fail"],
+      "warn_statuses": ["warn", "missing"],
+      "max_warn_components": 99,
+      "allowed_missing_components": [
+        "quality_gate_result",
+        "security_pipeline_result",
+        "hooks_sarif"
+      ]
+    },
+    "nightly": {
+      "fail_on_overall": ["fail", "warn"],
+      "warn_statuses": ["warn", "missing"],
+      "max_warn_components": 0,
+      "allowed_missing_components": []
+    }
+  }
+}

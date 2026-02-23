@@ -25,7 +25,9 @@ def _normalize_harness_key(raw: str) -> str:
 
 @app.command("run", help="Run one benchmark suite and append one result row.")
 def bench_run(
-    suite: str = typer.Option("smoke", "--suite", help="Benchmark suite ID (smoke, code-gen, file-ops, multi-step, tool-use)"),
+    suite: str = typer.Option(
+        "smoke", "--suite", help="Benchmark suite ID (smoke, code-gen, file-ops, multi-step, tool-use)"
+    ),
     harness: str = typer.Option("codex", "--harness", help="Harness/provider label for the recorded row"),
     test_id: str | None = typer.Option(None, "--test", help="Optional benchmark test ID for the run"),
     run_id: str | None = typer.Option(None, "--run-id", help="Optional explicit run ID for persisted row"),
@@ -168,7 +170,9 @@ def bench_compare(
         f"{payload['latency_delta_sec']:+.6f} ({payload['latency_delta_pct']:+.2f}%)",
     )
     table.add_row("Tokens Input", str(payload["baseline_tokens_input"]), str(payload["candidate_tokens_input"]), "n/a")
-    table.add_row("Tokens Output", str(payload["baseline_tokens_output"]), str(payload["candidate_tokens_output"]), "n/a")
+    table.add_row(
+        "Tokens Output", str(payload["baseline_tokens_output"]), str(payload["candidate_tokens_output"]), "n/a"
+    )
     table.add_row("Tool Calls", str(payload["baseline_tool_calls"]), str(payload["candidate_tool_calls"]), "n/a")
     table.add_row("Success", str(payload["baseline_success"]), str(payload["candidate_success"]), "n/a")
     table.add_row("Run ID", payload["baseline_run_id"], payload["candidate_run_id"], "n/a")

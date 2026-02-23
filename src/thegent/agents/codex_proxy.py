@@ -150,7 +150,6 @@ def _create_isolated_home(instance_id: str, base_dir: Path | None = None) -> Pat
     return isolated_home
 
 
-
 def _write_config_override(config_overrides: dict[str, str], temp_dir: Path) -> Path:
     """Write temporary config.toml with overrides.
 
@@ -169,7 +168,7 @@ def _write_config_override(config_overrides: dict[str, str], temp_dir: Path) -> 
         # Basic TOML formatting; quote string values
         if isinstance(value, bool):
             lines.append(f"{key} = {'true' if value else 'false'}")
-        elif isinstance(value, (int, float)):
+        elif isinstance(value, int | float):
             lines.append(f"{key} = {value}")
         else:
             lines.append(f'{key} = "{value}"')
@@ -608,6 +607,7 @@ class CodexProxyRunner(AgentRunner):
         audio_transcript: str | None = None
         if audio_paths:
             from thegent.agents.audio_inputs import inject_transcript_into_prompt, load_transcripts
+
             audio_transcript, _audio_sources = load_transcripts(audio_paths)
             if audio_transcript:
                 # Inject transcript into prompt for Codex

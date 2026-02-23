@@ -1,5 +1,6 @@
 import os
 import stat
+from pathlib import Path
 
 
 def rename_and_replace(root_dir, old_name, new_name):
@@ -34,20 +35,20 @@ def rename_and_replace(root_dir, old_name, new_name):
         ]
 
         for file in files:
-            file_path = os.path.join(root, file)
+            file_path = Path(root) / file
             # Check if it's a regular file (not a socket, pipe, etc.)
             try:
-                mode = os.lstat(file_path).st_mode
+                mode = os.lstat(str(file_path)).st_mode
                 if stat.S_ISREG(mode):
                     files_to_process.append(file_path)
             except OSError:
                 pass
 
         for dir_name in dirs:
-            names_to_rename.append(os.path.join(root, dir_name))
+            names_to_rename.append(str(Path(root) / dir_name))
 
         for file_name in files:
-            names_to_rename.append(os.path.join(root, file_name))
+            names_to_rename.append(str(Path(root) / file_name))
 
     # 2. Replace content in files
     for file_path in files_to_process:
@@ -74,7 +75,7 @@ def rename_and_replace(root_dir, old_name, new_name):
         base_name = os.path.basename(path)
         if old_name in base_name:
             new_base_name = base_name.replace(old_name, new_name)
-            new_path = os.path.join(os.path.dirname(path), new_base_name)
+            new_path = str(Path(path).with_name(new_base_name))
             try:
                 os.rename(path, new_path)
                 print(f"Renamed {path} to {new_path}")

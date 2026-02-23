@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, Callable, ClassVar, cast
 
 from thegent.infra.fast_file_watcher import FastFileWatcher
 
@@ -658,7 +658,6 @@ class HarnessActionError(Exception):
     """Raised when a harness action fails."""
 
 
-
 class HarnessTUIMapper:
     """Maps abstract actions to harness-specific TUI/CLI commands.
 
@@ -672,7 +671,7 @@ class HarnessTUIMapper:
     """
 
     # Abstract actions mapped to harness-specific commands
-    HARNESS_ACTIONS: dict[str, dict[str, str | dict[str, str]]] = {
+    HARNESS_ACTIONS: ClassVar["dict[str, dict[str, str | dict[str, str]]]"] = {
         "send_message": {
             "codex": "codex -p {prompt}",
             "claude": "claude --print {prompt}",
@@ -748,7 +747,7 @@ class HarnessTUIMapper:
         self._actions: dict[str, dict[str, str | dict[str, str]]] = dict(self.HARNESS_ACTIONS)
         if custom_actions:
             for k, v in custom_actions.items():
-                self._actions[k] = cast(dict[str, str | dict[str, str]], v)
+                self._actions[k] = cast("dict[str, str | dict[str, str]]", v)
 
     def register_host(
         self,
@@ -824,14 +823,10 @@ class HarnessTUIMapper:
             cmd_template = self._actions[action][harness.value]
 
         if not cmd_template:
-            raise HarnessActionError(
-                f"No command mapping for action={action} harness={harness.value}"
-            )
+            raise HarnessActionError(f"No command mapping for action={action} harness={harness.value}")
 
         if not isinstance(cmd_template, str):
-            raise HarnessActionError(
-                f"Command mapping for action={action} harness={harness.value} is not a string"
-            )
+            raise HarnessActionError(f"Command mapping for action={action} harness={harness.value} is not a string")
 
         # Substitute template variables
         try:
@@ -862,9 +857,7 @@ class HarnessTUIMapper:
                 "command": cmd,
             }
         except FileNotFoundError:
-            raise HarnessActionError(
-                f"Harness '{harness.value}' CLI not found. Is it installed?"
-            )
+            raise HarnessActionError(f"Harness '{harness.value}' CLI not found. Is it installed?")
 
     def list_actions(self) -> list[str]:
         """List all available abstract actions."""
@@ -874,7 +867,7 @@ class HarnessTUIMapper:
         """List harnesses that support a given action."""
         if action not in self._actions:
             return []
-        return [k for k in self._actions[action].keys() if not k.startswith("@")]
+        return [k for k in self._actions[action] if not k.startswith("@")]
 
     def get_command(self, harness: HarnessType, action: str) -> str | None:
         """Get the command template for a harness-action pair."""

@@ -260,9 +260,7 @@ class TestSendTask:
         assert "context" not in payload
 
     @pytest.mark.asyncio
-    async def test_send_task_missing_agent_id_in_response_uses_unknown(
-        self, client: ACPClient
-    ) -> None:
+    async def test_send_task_missing_agent_id_in_response_uses_unknown(self, client: ACPClient) -> None:
         """send_task() uses 'unknown' as agent_id when not in the response."""
         resp = _mock_response(200, {"result": "done"})
         ctx, _ = _patch_client(resp)
@@ -297,9 +295,7 @@ class TestSendTask:
             await client.send_task("task")
 
     @pytest.mark.asyncio
-    async def test_send_task_raises_unreachable_on_connect_error(
-        self, client: ACPClient
-    ) -> None:
+    async def test_send_task_raises_unreachable_on_connect_error(self, client: ACPClient) -> None:
         """send_task() raises ACPServerUnreachableError when server is unreachable."""
         mock_client_inst = AsyncMock()
         mock_client_inst.__aenter__ = AsyncMock(return_value=mock_client_inst)
@@ -383,9 +379,7 @@ class TestHealthCheck:
         assert healthy is False
 
     @pytest.mark.asyncio
-    async def test_health_check_returns_false_on_connect_error(
-        self, client: ACPClient
-    ) -> None:
+    async def test_health_check_returns_false_on_connect_error(self, client: ACPClient) -> None:
         """health_check() returns False when server is unreachable."""
         mock_client_inst = AsyncMock()
         mock_client_inst.__aenter__ = AsyncMock(return_value=mock_client_inst)

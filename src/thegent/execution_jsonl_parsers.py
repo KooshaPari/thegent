@@ -2,12 +2,54 @@
 
 import importlib.util
 import json
+import logging
 from datetime import UTC, datetime
 from typing import Any
 
 from thegent.config import ThegentSettings
 
 _thegent_parser: Any = None
+_log = logging.getLogger(__name__)
+_native_parse_diagnostics: dict[str, Any] = {
+    "total_failures": 0,
+    "by_parser": {},
+    "last_error_type": None,
+    "last_error_message": None,
+}
+
+
+def _record_native_parse_failure(parser: str, exc: Exception) -> None:
+    _native_parse_diagnostics["total_failures"] = int(_native_parse_diagnostics["total_failures"]) + 1
+    by_parser = _native_parse_diagnostics["by_parser"]
+    by_parser[parser] = int(by_parser.get(parser, 0)) + 1
+    _native_parse_diagnostics["last_error_type"] = type(exc).__name__
+    _native_parse_diagnostics["last_error_message"] = str(exc)
+    _log.warning(
+        "native_parser_failure",
+        extra={
+            "parser": parser,
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        },
+    )
+
+
+def get_native_parse_diagnostics() -> dict[str, Any]:
+    """Return snapshot of native parse diagnostics counters."""
+    return {
+        "total_failures": int(_native_parse_diagnostics["total_failures"]),
+        "by_parser": dict(_native_parse_diagnostics["by_parser"]),
+        "last_error_type": _native_parse_diagnostics["last_error_type"],
+        "last_error_message": _native_parse_diagnostics["last_error_message"],
+    }
+
+
+def reset_native_parse_diagnostics() -> None:
+    """Reset diagnostics counters (used by tests)."""
+    _native_parse_diagnostics["total_failures"] = 0
+    _native_parse_diagnostics["by_parser"] = {}
+    _native_parse_diagnostics["last_error_type"] = None
+    _native_parse_diagnostics["last_error_message"] = None
 
 
 def _get_native_parser() -> Any:
@@ -35,8 +77,8 @@ def parse_checkpoint_by_id(line: str, checkpoint_id: str) -> dict[str, Any] | No
             parsed = native.parse_checkpoint_by_id(line, checkpoint_id)
             if isinstance(parsed, dict):
                 return parsed
-        except Exception:
-            pass
+        except Exception as exc:
+            _record_native_parse_failure("parse_checkpoint_by_id", exc)
     try:
         data = json.loads(line)
         if data.get("checkpoint_id") == checkpoint_id:
@@ -59,8 +101,8 @@ def parse_circuit_failure(
                 ts_raw = parsed[1]
                 ts = datetime.fromisoformat(ts_raw) if isinstance(ts_raw, str) and ts_raw else None
                 return count, ts
-        except Exception:
-            pass
+        except Exception as exc:
+            _record_native_parse_failure("parse_circuit_failure", exc)
     try:
         data = json.loads(line)
         if (
@@ -87,8 +129,8 @@ def parse_override_unexpired(line: str, owner: str, now: datetime) -> bool:
             parsed = native.parse_override_unexpired(line, owner, now.isoformat())
             if isinstance(parsed, bool):
                 return parsed
-        except Exception:
-            pass
+        except Exception as exc:
+            _record_native_parse_failure("parse_override_unexpired", exc)
     try:
         data = json.loads(line)
         if data.get("owner") != owner:
@@ -109,8 +151,8 @@ def parse_fatigue_line(line: str, now: datetime, window_s: int) -> int:
         try:
             parsed = native.parse_fatigue_line(line, now.isoformat(), window_s)
             return int(parsed)
-        except Exception:
-            pass
+        except Exception as exc:
+            _record_native_parse_failure("parse_fatigue_line", exc)
     try:
         data = json.loads(line)
         ts = datetime.fromisoformat(data["timestamp"])
@@ -130,8 +172,8 @@ def parse_dlq_item(line: str, status: str | None, run_id: str | None) -> dict[st
             if isinstance(parsed, dict):
                 return parsed
             return None
-        except Exception:
-            pass
+        except Exception as exc:
+            _record_native_parse_failure("parse_dlq_item", exc)
     try:
         data = json.loads(line)
         if status and data.get("status") != status:
@@ -165,8 +207,8 @@ def parse_checkpoint_line(line: str) -> dict[str, Any] | None:
             if isinstance(parsed, dict):
                 return parsed
             return None
-        except Exception:
-            pass
+        except Exception as exc:
+            _record_native_parse_failure("parse_checkpoint_line", exc)
     try:
         return json.loads(line)
     except Exception:

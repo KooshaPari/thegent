@@ -1,4 +1,5 @@
 """Thegent CLI run commands domain - extracted from cli.py (WL-124)."""
+
 # @trace WL-124
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from thegent.cli.commands._cli_shared import (
     _resolve_session_id,
     console,
 )
+
 
 def run_cmd(
     agent: str | None,
@@ -161,7 +163,7 @@ def run_cmd(
         image_paths=image,
         audio_files=audio,
         google_grounding=google_grounding,
-        reasoning_effort=cast(Literal["minimal", "low", "medium", "high", "xhigh"] | None, reasoning),
+        reasoning_effort=cast("Literal['minimal', 'low', 'medium', 'high', 'xhigh'] | None", reasoning),
         config_provider=get_config_provider(),
     )
 
@@ -424,7 +426,6 @@ def retry_cmd(
     console.print("\n[dim]Retry with: thegent retry <run_id> [--failover][--override REASON][/dim]")
 
 
-
 def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
     """Decision replay and rationale snapshots (WP-4007)."""
     settings = ThegentSettings()
@@ -473,10 +474,8 @@ def trace_replay_cmd(run_id: str) -> None:
     console.print(f"Applied Constraints: {result.get('constraints_applied')}")
 
 
-
 def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
     """Automatically route a prompt to an active terminal session if matching."""
-
 
     from rich.console import Console
 
@@ -552,10 +551,8 @@ def deep_research_cmd(
         console.print(table)
 
 
-
 def takeover_cmd(session_id: str) -> None:
     """Take over an active terminal session via tmux (WP-4008)."""
-
 
     from rich.console import Console
 
@@ -682,4 +679,18 @@ def run_diff_cmd(run_a: str, run_b: str) -> None:
             else:
                 console.print(line)
 
-__all__ = ['bg_cmd', 'deep_research_cmd', 'loop_cmd', 'loop_send_cmd', 'loop_stop_cmd', 'replay_cmd', 'retry_cmd', 'run_cmd', 'run_diff_cmd', 'takeover_cmd', 'terminal_route_cmd', 'trace_replay_cmd']
+
+__all__ = [
+    "bg_cmd",
+    "deep_research_cmd",
+    "loop_cmd",
+    "loop_send_cmd",
+    "loop_stop_cmd",
+    "replay_cmd",
+    "retry_cmd",
+    "run_cmd",
+    "run_diff_cmd",
+    "takeover_cmd",
+    "terminal_route_cmd",
+    "trace_replay_cmd",
+]

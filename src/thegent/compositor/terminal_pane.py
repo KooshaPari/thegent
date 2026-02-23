@@ -5,9 +5,12 @@ Handles PTY allocation, shell spawning, and input/output management for individu
 
 import select
 import subprocess
+import logging
 from pathlib import Path
 
 from textual.widgets import Static
+
+_LOG = logging.getLogger(__name__)
 
 
 class TerminalPane(Static):
@@ -42,6 +45,7 @@ class TerminalPane(Static):
         self.process: subprocess.Popen | None = None
         self.output_buffer: str = ""
         self.is_active = True
+        self.last_cleanup_diagnostic: dict[str, str] | None = None
 
     def render(self) -> str:
         """Render the current output buffer to the pane."""
@@ -121,16 +125,38 @@ class TerminalPane(Static):
 
     def cleanup(self) -> None:
         """Clean up the terminal pane by terminating the shell process."""
+        self.last_cleanup_diagnostic = None
         if self.process is not None:
             try:
                 if self.process.poll() is None:
-                    self.process.terminate()
+                    try:
+                        self.process.terminate()
+                    except (ProcessLookupError, OSError, ValueError) as exc:
+                        self.last_cleanup_diagnostic = {
+                            "failure_type": "terminate_failed",
+                            "error_type": type(exc).__name__,
+                            "error_message": str(exc)[:180],
+                        }
+                        _LOG.warning("terminal_pane_cleanup_failed", extra=self.last_cleanup_diagnostic)
                     try:
                         self.process.wait(timeout=2)
                     except subprocess.TimeoutExpired:
-                        self.process.kill()
-            except Exception:
-                pass
+                        try:
+                            self.process.kill()
+                        except (ProcessLookupError, OSError, ValueError) as exc:
+                            self.last_cleanup_diagnostic = {
+                                "failure_type": "kill_failed",
+                                "error_type": type(exc).__name__,
+                                "error_message": str(exc)[:180],
+                            }
+                            _LOG.warning("terminal_pane_cleanup_failed", extra=self.last_cleanup_diagnostic)
+                    except (subprocess.SubprocessError, OSError, ValueError) as exc:
+                        self.last_cleanup_diagnostic = {
+                            "failure_type": "wait_failed",
+                            "error_type": type(exc).__name__,
+                            "error_message": str(exc)[:180],
+                        }
+                        _LOG.warning("terminal_pane_cleanup_failed", extra=self.last_cleanup_diagnostic)
             finally:
                 self.process = None
                 self.is_active = False

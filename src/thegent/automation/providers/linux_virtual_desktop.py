@@ -95,7 +95,8 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
         """Check if Xvfb is available."""
         try:
             result = await asyncio.create_subprocess_exec(
-                "which", "Xvfb",
+                "which",
+                "Xvfb",
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -107,7 +108,8 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
         """Check if xdotool is available."""
         try:
             result = await asyncio.create_subprocess_exec(
-                "which", "xdotool",
+                "which",
+                "xdotool",
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -119,7 +121,8 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
         """Check if Xpra is available."""
         try:
             result = await asyncio.create_subprocess_exec(
-                "which", "xpra",
+                "which",
+                "xpra",
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -138,7 +141,8 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
             if self._xpra_available:
                 # Use Xpra for better performance and features
                 proc = await asyncio.create_subprocess_exec(
-                    "xpra", "start",
+                    "xpra",
+                    "start",
                     "--start-via-proxy=no",
                     "--exit-with-client=no",
                     f"--desktop-prefix={desktop_id}",
@@ -152,10 +156,14 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
             elif self._xvfb_available:
                 # Use Xvfb as fallback
                 proc = await asyncio.create_subprocess_exec(
-                    "Xvfb", display,
-                    "-screen", "0", f"{width}x{height}x24",
+                    "Xvfb",
+                    display,
+                    "-screen",
+                    "0",
+                    f"{width}x{height}x24",
                     "-ac",  # Disable access control
-                    "+extension", "GLX",  # Enable OpenGL
+                    "+extension",
+                    "GLX",  # Enable OpenGL
                     "+render",  # Enable rendering
                     "-noreset",
                     stdout=asyncio.subprocess.DEVNULL,
@@ -186,7 +194,9 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
 
                 if self._xpra_available:
                     await asyncio.create_subprocess_exec(
-                        "xpra", "stop", display,
+                        "xpra",
+                        "stop",
+                        display,
                         stdout=asyncio.subprocess.DEVNULL,
                         stderr=asyncio.subprocess.DEVNULL,
                     )
@@ -217,7 +227,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
                 width=1920,
                 height=1080,
                 bytes_per_pixel=4,
-                data=b'\x00' * (1920 * 1080 * 4),
+                data=b"\x00" * (1920 * 1080 * 4),
             )
 
         display = desktop.get("display", os.environ.get("DISPLAY", ":0"))
@@ -227,7 +237,11 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
         try:
             # Use import (ImageMagick) for fast capture
             result = await asyncio.create_subprocess_exec(
-                "import", "-window", "root", "-display", display,
+                "import",
+                "-window",
+                "root",
+                "-display",
+                display,
                 "png:-",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -244,7 +258,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
                 width=width,
                 height=height,
                 bytes_per_pixel=4,
-                data=stdout[:width*height*4] if len(stdout) > 1000 else b'\x00' * (width * height * 4),
+                data=stdout[: width * height * 4] if len(stdout) > 1000 else b"\x00" * (width * height * 4),
             )
 
         except Exception as e:
@@ -254,7 +268,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
                 width=width,
                 height=height,
                 bytes_per_pixel=4,
-                data=b'\x00' * (width * height * 4),
+                data=b"\x00" * (width * height * 4),
             )
 
     async def inject_input(self, desktop_id: str, event: InputEvent) -> bool:
@@ -325,7 +339,12 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
         try:
             # Get all window IDs
             result = await asyncio.create_subprocess_exec(
-                "xdotool", "--display", display, "search", "--name", ".*",
+                "xdotool",
+                "--display",
+                display,
+                "search",
+                "--name",
+                ".*",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -337,7 +356,11 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
                     wid = line.strip()
                     # Get window name
                     name_result = await asyncio.create_subprocess_exec(
-                        "xdotool", "--display", display, "getwindowname", wid,
+                        "xdotool",
+                        "--display",
+                        display,
+                        "getwindowname",
+                        wid,
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.DEVNULL,
                     )
@@ -345,17 +368,23 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
 
                     # Get window geometry
                     geom_result = await asyncio.create_subprocess_exec(
-                        "xdotool", "--display", display, "getwindowgeometry", wid,
+                        "xdotool",
+                        "--display",
+                        display,
+                        "getwindowgeometry",
+                        wid,
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.DEVNULL,
                     )
                     geom, _ = await geom_result.communicate()
 
-                    windows.append({
-                        "id": wid,
-                        "title": name.decode().strip() if name else "",
-                        "raw": geom.decode() if geom else "",
-                    })
+                    windows.append(
+                        {
+                            "id": wid,
+                            "title": name.decode().strip() if name else "",
+                            "raw": geom.decode() if geom else "",
+                        }
+                    )
 
             return windows
 
@@ -373,7 +402,12 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
 
         try:
             result = await asyncio.create_subprocess_exec(
-                "xdotool", "--display", display, "getwindowgeometry", "--shell", window_id,
+                "xdotool",
+                "--display",
+                display,
+                "getwindowgeometry",
+                "--shell",
+                window_id,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )

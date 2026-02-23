@@ -1,8 +1,11 @@
 """Binary discovery helpers for clode."""
 
+import logging
 import os
 import shutil
 from pathlib import Path
+
+_log = logging.getLogger(__name__)
 
 
 def is_thegent_shim(path: str) -> bool:
@@ -12,8 +15,15 @@ def is_thegent_shim(path: str) -> bool:
     try:
         if p.is_symlink() and "thegent-shims" in str(p.readlink()):
             return True
-    except OSError:
-        pass
+    except OSError as exc:
+        _log.warning(
+            "shim_resolution_failed",
+            extra={
+                "path": path,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            },
+        )
     return False
 
 

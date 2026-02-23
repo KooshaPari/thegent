@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-008
 """
+
 import json
 from docs_engine.export.json_export import JsonExporter
 from docs_engine.db.indexer import DocIndexer

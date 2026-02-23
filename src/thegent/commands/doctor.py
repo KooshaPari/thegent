@@ -53,6 +53,7 @@ class DoctorRunner:
       10. ~/.config/thegent/ MCP config dir exists
       11. .shadow-* stale directory cleanup
       12. .shadow-* directory count > 50 warning
+      13. autosync GA readiness baseline checks
     """
 
     def run_checks(self) -> list[DoctorCheck]:
@@ -73,6 +74,7 @@ class DoctorRunner:
         checks.append(self._check_mcp_config_dir())
         checks.append(self._check_stale_shadow_dirs())
         checks.append(self._check_shadow_dirs_count())
+        checks.append(self._check_autosync_ga_readiness())
         return checks
 
     def apply_fixes(self, checks: list[DoctorCheck]) -> list[str]:
@@ -382,5 +384,30 @@ class DoctorRunner:
                 f"High number of .shadow-* dirs: {count} in {parent}. "
                 "Consider running `thegent mcp prune --shadow-dirs` to clean up."
             ),
+            fixable=False,
+        )
+
+    def _check_autosync_ga_readiness(self) -> DoctorCheck:
+        """Check the baseline GA readiness criteria for autosync rollout."""
+        from thegent.sync.ga_readiness import evaluate_ga_readiness
+
+        root = Path.cwd()
+        checks = {
+            "criteria_doc_exists": (root / "docs" / "reference" / "AUTOSYNC_GA_READINESS_CRITERIA.md").exists(),
+            "status_artifact_exists": (root / "docs" / "reference" / "autosync_status.json").exists(),
+            "autosync_enabled": os.environ.get("THGENT_WORKSTREAM_AUTOSYNC_ENABLED", "").strip().lower()
+            in {"1", "true", "yes", "on"},
+        }
+        readiness = evaluate_ga_readiness(checks)
+        if readiness.ready:
+            return DoctorCheck(
+                name="autosync_ga_readiness",
+                status="ok",
+                message="Autosync GA readiness baseline checks passed",
+            )
+        return DoctorCheck(
+            name="autosync_ga_readiness",
+            status="warn",
+            message=f"Autosync GA readiness missing checks: {', '.join(readiness.failed)}",
             fixable=False,
         )

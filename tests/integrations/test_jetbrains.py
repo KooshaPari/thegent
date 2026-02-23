@@ -233,9 +233,7 @@ class TestWriteMcpConfig:
         data = json.loads(path.read_text())
         assert isinstance(data, dict)
 
-    def test_written_config_contains_thegent_entry(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_written_config_contains_thegent_entry(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Written JSON contains mcpServers.thegent with the correct url. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="intellij", config_dir=tmp_path / "IntelliJIdea2024.1")
         integration.write_mcp_config(cfg)
@@ -244,19 +242,13 @@ class TestWriteMcpConfig:
         assert "thegent" in data["mcpServers"]
         assert data["mcpServers"]["thegent"]["url"] == DEFAULT_MCP_SERVER_URL
 
-    def test_creates_config_dir_if_missing(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_creates_config_dir_if_missing(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """write_mcp_config creates the config_dir if it does not exist. @trace FR-IDE-001"""
-        cfg = JetBrainsConfig(
-            ide_type="goland", config_dir=tmp_path / "new_dir" / "GoLand2024"
-        )
+        cfg = JetBrainsConfig(ide_type="goland", config_dir=tmp_path / "new_dir" / "GoLand2024")
         path = integration.write_mcp_config(cfg)
         assert path.exists()
 
-    def test_merges_existing_mcp_servers(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_merges_existing_mcp_servers(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Existing mcpServers entries are preserved when writing. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="webstorm", config_dir=tmp_path / "WebStorm2024.1")
         cfg.config_dir.mkdir(parents=True)
@@ -268,9 +260,7 @@ class TestWriteMcpConfig:
         assert "other-tool" in data["mcpServers"]
         assert "thegent" in data["mcpServers"]
 
-    def test_overwrites_stale_thegent_entry(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_overwrites_stale_thegent_entry(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Existing thegent entry is replaced with the current URL. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="clion", config_dir=tmp_path / "CLion2024.1")
         cfg.config_dir.mkdir()
@@ -299,18 +289,14 @@ class TestWriteMcpConfig:
         assert "env" in entry
         assert entry["env"]["SERENA_PROJECT_ROOT"] == root
 
-    def test_no_env_when_project_root_empty(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_no_env_when_project_root_empty(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """No env block appears when serena_project_root is empty. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="rider", config_dir=tmp_path / "Rider2024.1")
         integration.write_mcp_config(cfg)
         data = json.loads(cfg.mcp_config_path.read_text())
         assert "env" not in data["mcpServers"]["thegent"]
 
-    def test_returns_path_to_mcp_json(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_returns_path_to_mcp_json(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """write_mcp_config returns the Path to the written mcp.json. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="datagrip", config_dir=tmp_path / "DataGrip2024.1")
         result = integration.write_mcp_config(cfg)
@@ -326,9 +312,7 @@ class TestWriteMcpConfig:
 class TestReadExistingConfig:
     """Tests for JetBrainsIntegration.read_existing_config. @trace FR-IDE-001"""
 
-    def test_returns_none_when_file_missing(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_returns_none_when_file_missing(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Returns None when mcp.json does not exist. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="pycharm", config_dir=tmp_path / "PyCharm")
         assert integration.read_existing_config(cfg) is None
@@ -343,9 +327,7 @@ class TestReadExistingConfig:
         result = integration.read_existing_config(cfg)
         assert result == payload
 
-    def test_returns_none_on_invalid_json(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_returns_none_on_invalid_json(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Returns None when mcp.json contains invalid JSON. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="goland", config_dir=tmp_path / "GoLand")
         cfg.config_dir.mkdir()
@@ -353,9 +335,7 @@ class TestReadExistingConfig:
 
         assert integration.read_existing_config(cfg) is None
 
-    def test_returns_none_when_json_is_not_object(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_returns_none_when_json_is_not_object(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Returns None when mcp.json root is not a JSON object. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="webstorm", config_dir=tmp_path / "WebStorm")
         cfg.config_dir.mkdir()
@@ -363,9 +343,7 @@ class TestReadExistingConfig:
 
         assert integration.read_existing_config(cfg) is None
 
-    def test_preserves_all_top_level_keys(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_preserves_all_top_level_keys(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """All top-level keys in mcp.json are returned, not just mcpServers. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="clion", config_dir=tmp_path / "CLion")
         cfg.config_dir.mkdir()
@@ -388,16 +366,12 @@ class TestReadExistingConfig:
 class TestIsMcpPluginInstalled:
     """Tests for JetBrainsIntegration.is_mcp_plugin_installed. @trace FR-IDE-001"""
 
-    def test_false_when_no_config_file(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_false_when_no_config_file(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Returns False when mcp.json does not exist. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="pycharm", config_dir=tmp_path / "PyCharm")
         assert integration.is_mcp_plugin_installed(cfg) is False
 
-    def test_true_when_thegent_key_present(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_true_when_thegent_key_present(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Returns True when thegent entry exists in mcpServers. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="intellij", config_dir=tmp_path / "IntelliJ")
         cfg.config_dir.mkdir()
@@ -406,9 +380,7 @@ class TestIsMcpPluginInstalled:
 
         assert integration.is_mcp_plugin_installed(cfg) is True
 
-    def test_false_when_thegent_key_absent(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_false_when_thegent_key_absent(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Returns False when mcpServers exists but lacks thegent key. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="goland", config_dir=tmp_path / "GoLand")
         cfg.config_dir.mkdir()
@@ -417,9 +389,7 @@ class TestIsMcpPluginInstalled:
 
         assert integration.is_mcp_plugin_installed(cfg) is False
 
-    def test_false_when_config_is_invalid_json(
-        self, integration: JetBrainsIntegration, tmp_path: Path
-    ) -> None:
+    def test_false_when_config_is_invalid_json(self, integration: JetBrainsIntegration, tmp_path: Path) -> None:
         """Returns False when mcp.json is malformed. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="webstorm", config_dir=tmp_path / "WebStorm")
         cfg.config_dir.mkdir()

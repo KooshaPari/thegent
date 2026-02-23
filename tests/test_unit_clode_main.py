@@ -10,10 +10,14 @@ from typer.testing import CliRunner
 
 import thegent.clode_main as clode_main_module
 from thegent.clode_main import (
+    _CLODE_BYPASS_FLAG,
     _GLM_POLICY_COUNTER,
     _MODEL_ALIAS,
+    _run_sitback_codex,
     _resolve_clode_token,
     _run_claude_interactive,
+    _run_claude_print,
+    _run_sitback_droid,
     sitback_cmd,
     app,
 )
@@ -156,8 +160,8 @@ def test_clode_max_and_glm_aliases_forward_expected_token() -> None:
         )
         assert result.exit_code == 0
         _, kwargs = run_interactive.call_args
-        assert run_interactive.call_args[0][0] in {"minimax", "kilo"}
-        assert kwargs["model_override"] == "MiniMax-M2.5"
+        assert run_interactive.call_args[0][0] == "auto"
+        assert kwargs["model_override"] == "minimax-m2.5"
 
     with patch("thegent.clode_main._run_claude_interactive") as run_interactive:
         result = runner.invoke(
@@ -183,6 +187,30 @@ def test_clode_max_accepts_force_aliases() -> None:
         result = runner.invoke(app, ["max", "--force"])
         assert result.exit_code == 0
         assert run_interactive.call_count == 1
+        _, kwargs = run_interactive.call_args
+        assert "--model" in kwargs["extra_args"]
+        assert "minimax-m2.5" in kwargs["extra_args"]
+        assert "--force" not in kwargs["extra_args"]
+
+
+def test_clode_print_mode_uses_dangerous_skip_permissions_flag() -> None:
+    with (
+        patch("thegent.clode_main._is_triggered_by_agent_process", return_value=False),
+        patch("thegent.clode_main._ensure_provider_configured"),
+        patch(
+            "thegent.clode_main._get_claude_env",
+            return_value={"ANTHROPIC_BASE_URL": "http://127.0.0.1:8317", "CLAUDE_CONFIG_DIR": "/tmp/claude-config"},
+        ),
+        patch("thegent.clode_main._ensure_claude_config_isolation"),
+        patch("thegent.clode_main.wrap_with_caffeinate", side_effect=lambda cmd, _: cmd),
+        patch("thegent.clode_main._ensure_claude_installed", return_value="/usr/bin/claude"),
+        patch("thegent.clode_main.subprocess.run", return_value=type("RunResult", (), {"returncode": 0})()) as run,
+    ):
+        with pytest.raises(typer.Exit) as exit_info:
+            _run_claude_print("minimax", "hi", model_override="MiniMax-M2.5")
+        assert exit_info.value.exit_code == 0
+        assert run.call_count == 1
+        assert _CLODE_BYPASS_FLAG in run.call_args.args[0]
 
 
 def test_clode_provider_default_to_interactive() -> None:
@@ -207,14 +235,14 @@ def test_clode_high_and_xhigh_commands_forward_models() -> None:
         result = runner.invoke(app, ["high"])
         assert result.exit_code == 0
         _, kwargs = run_interactive.call_args
-        assert run_interactive.call_args[0][0] == "codex"
+        assert run_interactive.call_args[0][0] == "auto"
         assert kwargs["model_override"] == "gpt-5.3-codex-high"
 
     with patch("thegent.clode_main._run_claude_interactive") as run_interactive:
         result = runner.invoke(app, ["xhigh"])
         assert result.exit_code == 0
         _, kwargs = run_interactive.call_args
-        assert run_interactive.call_args[0][0] == "codex"
+        assert run_interactive.call_args[0][0] == "auto"
         assert kwargs["model_override"] == "gpt-5.3-codex-xhigh"
 
 
@@ -222,7 +250,7 @@ def test_clode_root_defaults_to_flash_interactive() -> None:
     with patch("thegent.clode_main._run_claude_interactive") as run_interactive:
         result = runner.invoke(app, [])
         assert result.exit_code == 0
-        assert run_interactive.call_args[0][0] == "gemini"
+        assert run_interactive.call_args[0][0] == "auto"
         assert run_interactive.call_args.kwargs["model_override"] == "gemini-3-flash"
 
 
@@ -257,6 +285,37 @@ def test_clode_run_and_bg_delegate_to_claude_cmd() -> None:
         assert kwargs["agent"] == "interactive_agent"
         assert kwargs["prompt"] == "hello world"
         assert kwargs["owner"] == "me"
+
+
+def test_clode_run_global_forwards_remote_to_run_cmd() -> None:
+    with (
+        patch(
+            "thegent.clode_main._get_claude_env",
+            return_value={"ANTHROPIC_MODEL": "glm-5", "CLAUDE_CONFIG_DIR": "/tmp/claude-config"},
+        ),
+        patch("thegent.clode_main.run_cmd") as run_cmd,
+    ):
+        result = runner.invoke(app, ["run", "nim", "hello world", "--remote", "10.0.0.2"])
+    assert result.exit_code == 0
+    _, kwargs = run_cmd.call_args
+    assert kwargs["remote"] == "10.0.0.2"
+    assert kwargs["prompt"] == "hello world"
+
+
+def test_clode_bg_global_forwards_remote_to_bg_cmd() -> None:
+    with (
+        patch(
+            "thegent.clode_main._get_claude_env",
+            return_value={"ANTHROPIC_MODEL": "glm-5", "CLAUDE_CONFIG_DIR": "/tmp/claude-config"},
+        ),
+        patch("thegent.clode_main.bg_cmd") as bg_cmd,
+    ):
+        result = runner.invoke(app, ["bg", "nim", "hello world", "--remote", "10.0.0.3", "--owner", "qa"])
+    assert result.exit_code == 0
+    _, kwargs = bg_cmd.call_args
+    assert kwargs["remote"] == "10.0.0.3"
+    assert kwargs["owner"] == "qa"
+    assert kwargs["prompt"] == "hello world"
 
 
 def test_clode_run_bg_accept_codex_tiers() -> None:
@@ -389,6 +448,33 @@ def test_sitback_codex_defaults_to_dex_model_alias() -> None:
         )
         run_codex.assert_called_once()
         assert run_codex.call_args[0][0] == "dex"
+
+
+def test_sitback_codex_includes_yolo_and_bypass_flags_when_not_agent() -> None:
+    with (
+        patch("thegent.clode_main.wrap_with_caffeinate", side_effect=lambda cmd, _: cmd),
+        patch("thegent.clode_main.os.execvpe") as execvpe,
+        patch("thegent.clode_main.shutil.which", return_value="/usr/bin/codex"),
+        patch("thegent.clode_main._is_triggered_by_agent_process", return_value=False),
+        patch("thegent.dex_main._resolve_provider_for_model", return_value="copilot"),
+        patch("thegent.dex_main._get_codex_env", return_value={"OPENAI_BASE_URL": "http://127.0.0.1:8317"}),
+    ):
+        _run_sitback_codex("max", {"OPENAI_BASE_URL": "http://127.0.0.1:8317"}, tmux=False)
+        command = execvpe.call_args.args[1]
+        assert "--yolo" in command
+        assert "--dangerously-bypass-approvals-and-sandbox" in command
+
+
+def test_sitback_droid_does_not_force_codex_or_droid_bypass_flags() -> None:
+    with (
+        patch("thegent.clode_main.wrap_with_caffeinate", side_effect=lambda cmd, _: cmd),
+        patch("thegent.clode_main.os.execvpe") as execvpe,
+        patch("thegent.clode_main.shutil.which", return_value="/usr/bin/droid"),
+    ):
+        _run_sitback_droid("flash", {"OPENAI_BASE_URL": "http://127.0.0.1:8317"}, tmux=False)
+        command = execvpe.call_args.args[1]
+        assert "--dangerously-bypass-approvals-and-sandbox" not in command
+        assert "--dangerously-skip-permissions" not in command
 
 
 def test_sitback_droid_defaults_to_flash_model_alias() -> None:
@@ -600,6 +686,7 @@ def test_sitback_direct_no_dashboard_flag_always_set_when_passed(
         run_codex.assert_called_once()
         env_with_flag = run_codex.call_args.args[1]
         assert env_with_flag[SITBACK_ENV_NO_DASHBOARD] == "1"
+
 
 def test_sitback_direct_tmux_flag_propagates_to_env() -> None:
     settings_patch, health_patch = _mock_sitback_health()

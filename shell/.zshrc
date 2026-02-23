@@ -13,6 +13,9 @@
 if [[ -n "${PS1:-}" ]] && [[ -f "$HOME/.zsh_safeguards.zsh" ]]; then
   source "$HOME/.zsh_safeguards.zsh"
 fi
+if [[ -f "$HOME/.zsh_worktree_governance.zsh" ]]; then
+  source "$HOME/.zsh_worktree_governance.zsh"
+fi
 
 # Lazy-load completions (optimized: skip security check for speed, defer for <50ms startup)
 # Only run full compinit once per day, otherwise use -C (skip security check)

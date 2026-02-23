@@ -110,4 +110,4 @@ def test_is_same_path(tmp_path):
 
 def test_sanitize_path():
     """sanitize_path replaces illegal characters."""
-    assert sanitize_path('file:with*illegal?chars.txt') == 'file_with_illegal_chars.txt'
+    assert sanitize_path("file:with*illegal?chars.txt") == "file_with_illegal_chars.txt"

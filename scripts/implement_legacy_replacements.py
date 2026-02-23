@@ -2,8 +2,10 @@
 """
 Implementation script for high-priority legacy replacements
 """
+
 import re
 from pathlib import Path
+
 
 def replace_lazy_static(file_path):
     """Replace lazy_static with std::sync::OnceLock"""
@@ -12,8 +14,8 @@ def replace_lazy_static(file_path):
         original = content
 
         # Remove lazy_static dependency
-        content = re.sub(r'lazy_static\s*=\s*"[^"]+"\s*\n', '', content)
-        content = re.sub(r'lazy_static\s*=\s*\{[^}]+\}\s*\n', '', content)
+        content = re.sub(r'lazy_static\s*=\s*"[^"]+"\s*\n', "", content)
+        content = re.sub(r"lazy_static\s*=\s*\{[^}]+\}\s*\n", "", content)
 
         if content != original:
             file_path.write_text(content)
@@ -24,6 +26,7 @@ def replace_lazy_static(file_path):
         print(f"✗ Error updating {file_path}: {e}")
         return False
 
+
 def replace_md5(file_path):
     """Replace md5 with sha2 or blake3"""
     try:
@@ -31,16 +34,16 @@ def replace_md5(file_path):
         original = content
 
         # Check if blake3 is already present
-        has_blake3 = 'blake3' in content.lower()
+        has_blake3 = "blake3" in content.lower()
 
         # Remove md5
-        content = re.sub(r'md5\s*=\s*"[^"]+"\s*\n', '', content)
-        content = re.sub(r'md5\s*=\s*\{[^}]+\}\s*\n', '', content)
+        content = re.sub(r'md5\s*=\s*"[^"]+"\s*\n', "", content)
+        content = re.sub(r"md5\s*=\s*\{[^}]+\}\s*\n", "", content)
 
         # Add sha2 if not present (safer default than blake3)
-        if 'sha2' not in content.lower() and 'md5' not in content.lower():
+        if "sha2" not in content.lower() and "md5" not in content.lower():
             # Find [dependencies] section and add sha2
-            deps_match = re.search(r'(\[dependencies\]\s*\n)', content)
+            deps_match = re.search(r"(\[dependencies\]\s*\n)", content)
             if deps_match:
                 insert_pos = deps_match.end()
                 content = content[:insert_pos] + 'sha2 = "0.10"\n' + content[insert_pos:]
@@ -53,6 +56,7 @@ def replace_md5(file_path):
     except Exception as e:
         print(f"✗ Error updating {file_path}: {e}")
         return False
+
 
 def replace_hex(file_path):
     """Replace hex with base16ct"""
@@ -73,6 +77,7 @@ def replace_hex(file_path):
         print(f"✗ Error updating {file_path}: {e}")
         return False
 
+
 def upgrade_thiserror(file_path):
     """Upgrade thiserror to 2.0"""
     try:
@@ -92,6 +97,7 @@ def upgrade_thiserror(file_path):
         print(f"✗ Error updating {file_path}: {e}")
         return False
 
+
 def replace_lib_pq(go_mod_path):
     """Replace lib/pq with pgx/v5 in go.mod"""
     try:
@@ -99,15 +105,15 @@ def replace_lib_pq(go_mod_path):
         original = content
 
         # Remove lib/pq
-        content = re.sub(r'github\.com/lib/pq\s+v[\d.]+\s*\n', '', content)
+        content = re.sub(r"github\.com/lib/pq\s+v[\d.]+\s*\n", "", content)
 
         # Add pgx/v5 if not present
-        if 'github.com/jackc/pgx/v5' not in content:
+        if "github.com/jackc/pgx/v5" not in content:
             # Find require block and add pgx
-            require_match = re.search(r'(require\s*\([^)]*)', content, re.DOTALL)
+            require_match = re.search(r"(require\s*\([^)]*)", content, re.DOTALL)
             if require_match:
                 insert_pos = require_match.end() - 1  # Before closing paren
-                content = content[:insert_pos] + '\tgithub.com/jackc/pgx/v5 v5.8.0\n' + content[insert_pos:]
+                content = content[:insert_pos] + "\tgithub.com/jackc/pgx/v5 v5.8.0\n" + content[insert_pos:]
 
         if content != original:
             go_mod_path.write_text(content)
@@ -117,6 +123,7 @@ def replace_lib_pq(go_mod_path):
     except Exception as e:
         print(f"✗ Error updating {go_mod_path}: {e}")
         return False
+
 
 def main():
     base_path = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush")
@@ -128,8 +135,7 @@ def main():
     print("\n📦 RUST REPLACEMENTS")
     print("-" * 80)
 
-    cargo_files = [f for f in base_path.rglob("Cargo.toml")
-                   if ".venv" not in str(f) and "venv" not in str(f)]
+    cargo_files = [f for f in base_path.rglob("Cargo.toml") if ".venv" not in str(f) and "venv" not in str(f)]
 
     lazy_static_count = 0
     md5_count = 0
@@ -139,10 +145,10 @@ def main():
     for cargo_file in cargo_files:
         try:
             content = cargo_file.read_text()
-            if 'lazy_static' in content:
+            if "lazy_static" in content:
                 if replace_lazy_static(cargo_file):
                     lazy_static_count += 1
-            if 'md5' in content and 'md5-simd' not in content:
+            if "md5" in content and "md5-simd" not in content:
                 if replace_md5(cargo_file):
                     md5_count += 1
             if re.search(r'hex\s*=\s*"0\.4', content):
@@ -154,7 +160,7 @@ def main():
         except Exception as e:
             print(f"✗ Error processing {cargo_file}: {e}")
 
-    print(f"\n✅ Rust replacements:")
+    print("\n✅ Rust replacements:")
     print(f"   - lazy_static removed: {lazy_static_count} files")
     print(f"   - md5 → sha2: {md5_count} files")
     print(f"   - hex → base16ct: {hex_count} files")
@@ -164,20 +170,19 @@ def main():
     print("\n📦 GO REPLACEMENTS")
     print("-" * 80)
 
-    go_mod_files = [f for f in base_path.rglob("go.mod")
-                    if ".venv" not in str(f) and "venv" not in str(f)]
+    go_mod_files = [f for f in base_path.rglob("go.mod") if ".venv" not in str(f) and "venv" not in str(f)]
 
     lib_pq_count = 0
     for go_mod in go_mod_files:
         try:
             content = go_mod.read_text()
-            if 'github.com/lib/pq' in content:
+            if "github.com/lib/pq" in content:
                 if replace_lib_pq(go_mod):
                     lib_pq_count += 1
         except Exception as e:
             print(f"✗ Error processing {go_mod}: {e}")
 
-    print(f"\n✅ Go replacements:")
+    print("\n✅ Go replacements:")
     print(f"   - lib/pq → pgx/v5: {lib_pq_count} files")
 
     print("\n" + "=" * 80)
@@ -200,6 +205,7 @@ def main():
     print("   - Change sql.Open() to pgx.Connect()")
     print("   - Update query patterns")
     print("\nRun 'cargo check' and 'go build' to identify code changes needed.")
+
 
 if __name__ == "__main__":
     main()

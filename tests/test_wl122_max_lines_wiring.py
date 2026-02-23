@@ -51,7 +51,7 @@ def test_ci_quality_job_uses_minimal_harness_contract_gate_wiring() -> None:
     assert "set -e" in run_script
     assert run_script.index("set +e") < run_script.index("task quality:sitback-contracts")
     assert run_script.index("task quality:harness-model-contracts") < run_script.index("set -e")
-    assert "if [ \"$sitback_rc\" -ne 0 ] || [ \"$harness_rc\" -ne 0 ]" in run_script
+    assert 'if [ "$sitback_rc" -ne 0 ] || [ "$harness_rc" -ne 0 ]' in run_script
     assert "exit 1" in run_script
 
     assert "Run strict core-boundary check (WL-121)" not in set(step_names)

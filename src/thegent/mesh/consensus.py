@@ -266,7 +266,7 @@ class CausalInfluenceTracker:
 
         total_abs = sum(abs(value) for value in totals.values())
         if total_abs == 0:
-            return {agent: 0.0 for agent in totals}
+            return dict.fromkeys(totals, 0.0)
         return {agent: value / total_abs for agent, value in totals.items()}
 
 
@@ -328,7 +328,9 @@ class EscalationWorkflow:
             json.dump(escalation_data, f)
         return True
 
-    def _enqueue_human_escalation(self, proposal_id: str, reason: str = "", metadata: dict[str, Any] | None = None) -> None:
+    def _enqueue_human_escalation(
+        self, proposal_id: str, reason: str = "", metadata: dict[str, Any] | None = None
+    ) -> None:
         """SCLI-P3.4 Async human escalation queue."""
         with open(self.human_escalation / f"human-{proposal_id}.json", "w") as f:
             json.dump(

@@ -176,6 +176,21 @@ include_ci:
     default: true
     help: Include GitHub Actions CI workflow
 
+include_act:
+    type: bool
+    default: true
+    help: Include local GitHub Actions emulation helpers (act)
+
+include_qa_tools:
+    type: bool
+    default: true
+    help: Include lightweight quality-engineering task presets and local QA bootstrap
+
+include_pm_tools:
+    type: bool
+    default: true
+    help: Include basic PM tooling and governance task presets
+
 include_docker:
     type: bool
     default: false

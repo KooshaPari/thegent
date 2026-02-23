@@ -13,6 +13,7 @@ import typer
 from rich.console import Console
 
 from thegent.config import ThegentSettings
+from thegent.mcp.hotreload import run_prod_hotreload
 from thegent.mcp.manage import (
     migrate_to_unimount,
     mcp_down,
@@ -84,20 +85,46 @@ def mcp_restart_cmd() -> None:
     raise typer.Exit(0 if ok else 1)
 
 
+@app.command("reload", help="Alias for restart (MCP + proxy services).")
+def mcp_reload_cmd() -> None:
+    ok, msg = mcp_restart()
+    console.print(f"[green]{msg}[/green]" if ok else f"[red]{msg}[/red]")
+    raise typer.Exit(0 if ok else 1)
+
+
+@app.command("hmr", help="Hot-reload MCP + proxy on source/config changes.")
+def mcp_hmr_cmd(
+    project_root: Path = typer.Option(
+        Path.cwd(),
+        "--project-root",
+        help="Project root to watch (defaults to current working directory).",
+    ),
+    debounce_s: float = typer.Option(
+        1.5,
+        "--debounce",
+        min=0.1,
+        help="Minimum seconds between automatic restarts.",
+    ),
+) -> None:
+    try:
+        run_prod_hotreload(project_root=project_root, debounce_s=debounce_s)
+    except Exception as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+
 @app.command("status", help="Show MCP service status.")
 def mcp_status() -> None:
     settings = ThegentSettings()
     ok, msg = service_status(settings)
     console.print(f"[green]{msg}[/green]" if ok else f"[red]{msg}[/red]")
-    console.print(f"URL: { 'http://' + settings.mcp_host + ':' + str(settings.mcp_port) + '/mcp'}")
+    console.print(f"URL: {'http://' + settings.mcp_host + ':' + str(settings.mcp_port) + '/mcp'}")
     raise typer.Exit(0 if ok else 1)
 
 
 @app.command("service", help="Run MCP service lifecycle commands.")
 def mcp_service(
-    action: str = typer.Argument(
-        "install", help="Action: install|start|stop|status|uninstall"
-    ),
+    action: str = typer.Argument("install", help="Action: install|start|stop|status|uninstall"),
 ) -> None:
     normalized = action.strip().lower()
     if normalized == "install":

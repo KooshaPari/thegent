@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-009
 """
+
 from pathlib import Path
 
 THEME_DIR = Path(__file__).parents[2] / "docs" / ".vitepress" / "theme"

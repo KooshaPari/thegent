@@ -97,9 +97,7 @@ class TestCommitTransaction:
         copied = audit_dir / "snapshots" / test_file.name
         assert copied.exists()
 
-    def test_commit_scrubs_secrets(
-        self, initialized_audit: ShadowAuditGit, audit_dir: Path, tmp_path: Path
-    ) -> None:
+    def test_commit_scrubs_secrets(self, initialized_audit: ShadowAuditGit, audit_dir: Path, tmp_path: Path) -> None:
         test_file = tmp_path / "workdir" / "config.env"
         test_file.parent.mkdir(parents=True, exist_ok=True)
         test_file.write_text("OPENAI_KEY=sk-abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmn")
@@ -134,9 +132,7 @@ class TestCommitTransaction:
 
 @pytest.mark.requirement("FR-VCS-001")
 class TestGetLog:
-    def test_get_log_returns_entries(
-        self, initialized_audit: ShadowAuditGit, tmp_path: Path
-    ) -> None:
+    def test_get_log_returns_entries(self, initialized_audit: ShadowAuditGit, tmp_path: Path) -> None:
         test_file = tmp_path / "workdir" / "f.txt"
         test_file.parent.mkdir(parents=True, exist_ok=True)
         test_file.write_text("data")
@@ -151,9 +147,7 @@ class TestGetLog:
         assert len(entries) >= 1
         assert any("ep-010" in e["message"] for e in entries)
 
-    def test_get_log_respects_limit(
-        self, initialized_audit: ShadowAuditGit, tmp_path: Path
-    ) -> None:
+    def test_get_log_respects_limit(self, initialized_audit: ShadowAuditGit, tmp_path: Path) -> None:
         test_file = tmp_path / "workdir" / "f.txt"
         test_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -168,9 +162,7 @@ class TestGetLog:
         entries = initialized_audit.get_log(limit=3)
         assert len(entries) == 3
 
-    def test_get_log_filter_episode(
-        self, initialized_audit: ShadowAuditGit, tmp_path: Path
-    ) -> None:
+    def test_get_log_filter_episode(self, initialized_audit: ShadowAuditGit, tmp_path: Path) -> None:
         test_file = tmp_path / "workdir" / "f.txt"
         test_file.parent.mkdir(parents=True, exist_ok=True)
         test_file.write_text("a")
@@ -194,9 +186,7 @@ class TestGetLog:
 
 @pytest.mark.requirement("FR-VCS-001")
 class TestGetDiff:
-    def test_get_diff_returns_content(
-        self, initialized_audit: ShadowAuditGit, tmp_path: Path
-    ) -> None:
+    def test_get_diff_returns_content(self, initialized_audit: ShadowAuditGit, tmp_path: Path) -> None:
         test_file = tmp_path / "workdir" / "f.txt"
         test_file.parent.mkdir(parents=True, exist_ok=True)
         test_file.write_text("new content")

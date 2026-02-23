@@ -136,6 +136,22 @@ def test_display_results_deduplicates_actionable_hints_with_trailing_punctuation
     assert rendered.count("Start local daemon with `ollama serve`.") == 1
 
 
+def test_display_results_deduplicates_actionable_hints_with_leading_list_markers(monkeypatch) -> None:
+    output = StringIO()
+    monkeypatch.setattr("thegent.doctor.console", Console(file=output, force_terminal=False, color_system=None))
+    first = CheckResult("One", "Runtime Infrastructure")
+    first.status = "warn"
+    first.fix_hint = "1. Start local daemon with `ollama serve`."
+
+    second = CheckResult("Two", "Runtime Infrastructure")
+    second.status = "warn"
+    second.fix_hint = "- Start local daemon with `ollama serve`"
+
+    _display_results([first, second])
+    rendered = output.getvalue()
+    assert rendered.count("1. Start local daemon with `ollama serve`.") == 1
+
+
 def test_display_results_sorts_actionable_hints_stably(monkeypatch) -> None:
     output = StringIO()
     monkeypatch.setattr("thegent.doctor.console", Console(file=output, force_terminal=False, color_system=None))

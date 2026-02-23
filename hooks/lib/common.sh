@@ -57,15 +57,9 @@ if [[ -z "${THEGENT_HOOKS_BIN:-}" ]]; then
   echo "CRITICAL: thegent Rust runtime (thegent-hooks) not found." >&2
 fi
 
-# Get script path in a cross-shell compatible way
-if [ -n "${ZSH_VERSION:-}" ]; then
-  _SCRIPT_PATH="${(%):-%x}"
-elif [ -n "${BASH_VERSION:-}" ]; then
-  _SCRIPT_PATH="${BASH_SOURCE[0]}"
-else
-  _SCRIPT_PATH="$0"
-fi
-_SCRIPT_DIR="${_SCRIPT_PATH%/*}"
+# Keep path helpers minimal for portability across shell runtimes.
+# This library is sourced by hooks; script path is optional.
+_SCRIPT_PATH="${BASH_SOURCE:-$0}"
 
 # Migration complete: Rust runtime enabled by default.
 
@@ -95,14 +89,11 @@ fi
 
 # Hash for cache keys (Rust blake3)
 hash_for_cache() {
-  if [[ $# -eq 0 ]]; then
-    local tmp; tmp="$(mktemp)"
-    cat > "$tmp"
-    hook_rust_runtime_invoke file-hash "$tmp" 2>/dev/null
-    rm -f "$tmp"
-  else
-    hook_rust_runtime_invoke file-hash "$1" 2>/dev/null
-  fi
+  local tmp
+  tmp="$(mktemp)"
+  cat > "$tmp"
+  hook_rust_runtime_invoke file-hash "$tmp" 2>/dev/null
+  rm -f "$tmp"
 }
 
 # sort_unique: always sort and unique.
@@ -150,7 +141,7 @@ _hook_runtime_apply_exports() {
     case "$key" in
       INPUT|CWD|SESSION_ID|TOOL_NAME|FILE_PATH|STOP_ACTIVE|PROJECT_DIR|VERIFY_DIR|QA_STATE|QUALITY_CONFIG|CHANGE_LOG|TOOL_CONTENT|TOOL_NEW_STRING|TOOL_OLD_STRING)
         printf -v "$key" '%s' "$value"
-        export "$key"
+        export "$key=$value"
         ;;
     esac
   done <<< "$payload"

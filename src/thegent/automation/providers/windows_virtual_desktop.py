@@ -59,6 +59,7 @@ if platform.system() == "Windows":
 @dataclass
 class WindowsDesktopHandle:
     """Handle to a Windows desktop."""
+
     desktop_name: str
     handle: int
     thread_id: int
@@ -133,18 +134,27 @@ class WindowsVirtualDesktopProvider(VirtualDesktopProvider):
         # Spawn a hidden process that will run in the background
         # This is less isolated but works without special permissions
         cmd = [
-            "cmd.exe", "/c", "start", "/b", "powershell",
-            "-NoProfile", "-Command",
-            f"Write-Host 'thegent agent {config.agent_id} session'; Get-Process | Select -First 1"
+            "cmd.exe",
+            "/c",
+            "start",
+            "/b",
+            "powershell",
+            "-NoProfile",
+            "-Command",
+            f"Write-Host 'thegent agent {config.agent_id} session'; Get-Process | Select -First 1",
         ]
 
         # Don't wait for output - just start it
-        asyncio.create_task(asyncio.create_subprocess_exec(
-            *cmd[:3],  # Just cmd /c start
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP if hasattr(subprocess, 'CREATE_NEW_PROCESS_GROUP') else 0,
-        ))
+        asyncio.create_task(
+            asyncio.create_subprocess_exec(
+                *cmd[:3],  # Just cmd /c start
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                if hasattr(subprocess, "CREATE_NEW_PROCESS_GROUP")
+                else 0,
+            )
+        )
 
         return desktop_id
 
@@ -196,7 +206,7 @@ class WindowsVirtualDesktopProvider(VirtualDesktopProvider):
                 width=1920,
                 height=1080,
                 bytes_per_pixel=4,
-                data=b'\x00' * (1920 * 1080 * 4),
+                data=b"\x00" * (1920 * 1080 * 4),
             )
 
     async def _capture_dxgi(self, desktop_id: str) -> ScreenFrame:
@@ -230,7 +240,10 @@ $graphics.Dispose()
 """
         try:
             result = await asyncio.create_subprocess_exec(
-                "powershell", "-NoProfile", "-Command", script,
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                script,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -242,7 +255,7 @@ $graphics.Dispose()
                 width=1920,
                 height=1080,
                 bytes_per_pixel=4,
-                data=stdout[:1920*1080*4] if len(stdout) > 1000 else b'\x00' * (1920 * 1080 * 4),
+                data=stdout[: 1920 * 1080 * 4] if len(stdout) > 1000 else b"\x00" * (1920 * 1080 * 4),
             )
         except Exception as e:
             logger.error(f"GDI capture failed: {e}")
@@ -376,7 +389,11 @@ public class KeyInput {{
     async def _run_powershell(self, script: str) -> None:
         """Run PowerShell script."""
         proc = await asyncio.create_subprocess_exec(
-            "powershell", "-NoProfile", "-NonInteractive", "-Command", script,
+            "powershell",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            script,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.DEVNULL,
         )
@@ -434,12 +451,16 @@ public class WindowList {
 """
         try:
             result = await asyncio.create_subprocess_exec(
-                "powershell", "-NoProfile", "-Command", script,
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                script,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             stdout, _ = await result.communicate()
             import json
+
             windows = json.loads(stdout.decode()) if stdout else []
             return windows if isinstance(windows, list) else [windows]
         except Exception as e:

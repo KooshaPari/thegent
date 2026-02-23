@@ -5,6 +5,6 @@ docgen-algolia-search|Integrate Algolia search with suggestions|P1|✅ Complete 
 docgen-content-tabs|Create content tabs component|P1|✅ Complete (ContentTabs.vue exists)
 docgen-api-typescript|Create TypeScript/JavaScript API generator|P1|✅ Complete (existing)
 docgen-performance-code-split|Optimize code splitting for faster loads|P1|✅ Complete (VitePress handles)
-docgen-performance-images|Image optimization (WebP/AVIF, lazy loading)|P1|-
+docgen-performance-images|Image optimization (WebP/AVIF; lazy loading pending)|P1|⚠️ Partial
 docgen-edit-links|Add edit-on-GitHub links|P1|✅ Complete (configured)
 docgen-link-checker|Automated link checking|P1|✅ Complete (scripts exists)

@@ -19,13 +19,16 @@ MAX_SUCCESSES = 2000
 SLEEP_TIME = 4.0
 COMMENT_LIMIT = 15
 
+
 def extract_links(text: str) -> list[str]:
     """Extract all URLs from text."""
     return re.findall(r'https?://[^\s<>"\'\)]+', text)
 
+
 def is_image_url(url: str) -> bool:
     """Check if a URL points to an image."""
-    return any(url.lower().endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp'])
+    return any(url.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"])
+
 
 def perform_ocr_from_url(url: str) -> str:
     """Download image and perform OCR."""
@@ -39,9 +42,45 @@ def perform_ocr_from_url(url: str) -> str:
         pass
     return ""
 
+
 def fetch_reddit_post(url: str) -> dict:
-    priority_subreddits = ["ClaudeAI", "ClaudeCode", "AI_Agents", "mcp", "LocalLLaMA", "golang", "Python", "zsh", "Supabase", "cursor", "nextjs", "LangChain", "vibecoding"]
-    skip_subreddits = ["ASU", "ASUOnline", "ApplyingToCollege", "AskSF", "AskLosAngeles", "ArsenalFC", "Apartmentliving", "BeyondWonderlandPNW", "BoJackHorseman", "CRedit", "CitiesSkylines", "worldnews", "CVS", "theydidthemath", "tmobile", "threejs", "thinkpad", "trashy", "traderjoes", "torrents"]
+    priority_subreddits = [
+        "ClaudeAI",
+        "ClaudeCode",
+        "AI_Agents",
+        "mcp",
+        "LocalLLaMA",
+        "golang",
+        "Python",
+        "zsh",
+        "Supabase",
+        "cursor",
+        "nextjs",
+        "LangChain",
+        "vibecoding",
+    ]
+    skip_subreddits = [
+        "ASU",
+        "ASUOnline",
+        "ApplyingToCollege",
+        "AskSF",
+        "AskLosAngeles",
+        "ArsenalFC",
+        "Apartmentliving",
+        "BeyondWonderlandPNW",
+        "BoJackHorseman",
+        "CRedit",
+        "CitiesSkylines",
+        "worldnews",
+        "CVS",
+        "theydidthemath",
+        "tmobile",
+        "threejs",
+        "thinkpad",
+        "trashy",
+        "traderjoes",
+        "torrents",
+    ]
 
     if any(f"/r/{s}/" in url for s in skip_subreddits):
         return {"error": "Skipping non-technical/noisy subreddit"}
@@ -55,10 +94,7 @@ def fetch_reddit_post(url: str) -> dict:
 
     try:
         result = subprocess.run(
-            ["curl", "-L", "-A", DEFAULT_USER_AGENT, "-s", clean_url],
-            capture_output=True,
-            text=True,
-            timeout=20
+            ["curl", "-L", "-A", DEFAULT_USER_AGENT, "-s", clean_url], capture_output=True, text=True, timeout=20
         )
         if result.returncode != 0:
             return {"error": f"Curl error: {result.stderr}"}
@@ -95,10 +131,7 @@ def fetch_reddit_post(url: str) -> dict:
                                 if ocr_text:
                                     ocr_results.append({"url": clink, "text": ocr_text})
 
-                        comments.append({
-                            "author": child["data"].get("author"),
-                            "body": body[:1000]
-                        })
+                        comments.append({"author": child["data"].get("author"), "body": body[:1000]})
 
             return {
                 "title": post_info.get("title"),
@@ -107,13 +140,14 @@ def fetch_reddit_post(url: str) -> dict:
                 "url": url,
                 "comments": comments,
                 "discovered_links": list(set(all_discovered_links)),
-                "ocr_images": ocr_results
+                "ocr_images": ocr_results,
             }
     except json.JSONDecodeError:
         return {"error": "JSON decode error (possibly rate limited or HTML response)"}
     except Exception as e:
         return {"error": str(e)}
     return {"error": "Unknown error or unparseable JSON"}
+
 
 def main():
     if not os.path.exists(LINKS_FILE):
@@ -137,7 +171,16 @@ def main():
 
     priority_links = []
     other_links = []
-    priority_subreddits_for_sorting = ["ClaudeAI", "ClaudeCode", "AI_Agents", "mcp", "LocalLLaMA", "cursor", "LangChain", "vibecoding"]
+    priority_subreddits_for_sorting = [
+        "ClaudeAI",
+        "ClaudeCode",
+        "AI_Agents",
+        "mcp",
+        "LocalLLaMA",
+        "cursor",
+        "LangChain",
+        "vibecoding",
+    ]
 
     for l in remaining_links_initial:
         if any(f"/r/{s}/" in l for s in priority_subreddits_for_sorting):
@@ -159,7 +202,7 @@ def main():
         if success_count >= MAX_SUCCESSES:
             break
 
-        print(f"[{i+1}/{len(to_process)}] Fetching: {link}")
+        print(f"[{i + 1}/{len(to_process)}] Fetching: {link}")
         result = fetch_reddit_post(link)
 
         if "error" in result:
@@ -172,8 +215,8 @@ def main():
                 consecutive_json_errors = 0
 
             if consecutive_json_errors > 15:
-                 print("Too many consecutive JSON errors. Likely hard rate limited. Stopping.")
-                 break
+                print("Too many consecutive JSON errors. Likely hard rate limited. Stopping.")
+                break
         else:
             processed_data.append(result)
             if "discovered_links" in result:
@@ -195,6 +238,7 @@ def main():
         json.dump(processed_data, f, indent=2)
 
     print(f"Batch complete. Success: {success_count}.")
+
 
 if __name__ == "__main__":
     main()

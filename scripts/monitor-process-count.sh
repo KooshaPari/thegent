@@ -30,7 +30,7 @@ if command -v dmesg &>/dev/null; then
 fi
 
 # Check thegent-related processes
-THEGENT_PROCS=$(ps aux | grep -cE "[t]hegent|[c]ommon\.sh|[h]ook" || echo "0")
+THEGENT_PROCS=$(pgrep -f "thegent|common\\.sh|hook" -c || echo "0")
 echo -e "${BLUE}thegent-related processes:${NC} $THEGENT_PROCS"
 
 # Analysis and recommendations

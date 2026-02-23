@@ -129,6 +129,20 @@ def plan_verify_workstream(
     plan_verify_workstream_cmd(cd=cd, format=format)
 
 
+@app.command("lint-workstream", help="Validate WORK_STREAM schema.")
+def plan_lint_workstream(cd: Path | None = typer.Option(None, "--cd", help="Working directory")) -> None:
+    from thegent.cli.commands.cli import plan_lint_workstream_cmd
+
+    plan_lint_workstream_cmd(cd=cd)
+
+
+@app.command("normalize-workstream", help="Sort and normalize WL sections in WORK_STREAM.")
+def plan_normalize_workstream(cd: Path | None = typer.Option(None, "--cd", help="Working directory")) -> None:
+    from thegent.cli.commands.cli import plan_normalize_workstream_cmd
+
+    plan_normalize_workstream_cmd(cd=cd)
+
+
 @app.command("progress", help="Show work stream progress summary.")
 def plan_progress(
     limit: int = typer.Option(10, "--limit", "-l", help="Number of items to show"),
@@ -156,6 +170,7 @@ def plan_sessions(
         result = harness_interact_impl(harness=harness, action="list_sessions")
     else:
         from thegent.cli.commands.impl import harness_list_actions_impl
+
         result = harness_list_actions_impl()
         console.print("[cyan]Available harnesses:[/cyan] cursor, codex, claude, ante, droid")
         console.print(f"[cyan]Actions:[/cyan] {result.get('actions', [])}")
@@ -163,6 +178,7 @@ def plan_sessions(
 
     if format == "json":
         import json
+
         console.print(json.dumps(result, indent=2))
     elif result.get("success"):
         console.print(result.get("stdout", ""))
@@ -185,6 +201,7 @@ def plan_harness_status(
 
     if format == "json":
         import json
+
         console.print(json.dumps(status, indent=2))
     else:
         console.print("[cyan]Registered Harness Types:[/cyan]")

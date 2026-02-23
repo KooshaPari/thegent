@@ -93,7 +93,7 @@ def test_wl101_skills_select_shell_quotes_name_with_spaces(
     monkeypatch.setattr("thegent.cli.apps.skills.load_skill", lambda _name: {"name": "x"})
     skills_select("team alpha")
     stdout = capsys.readouterr().out
-    assert '--skill \'team alpha\'' in stdout
+    assert "--skill 'team alpha'" in stdout
 
 
 def test_wl101_skills_select_trims_input_name(
@@ -155,7 +155,9 @@ def test_wl101_skills_list_json_output(monkeypatch: pytest.MonkeyPatch, capsys: 
     assert '"description": "Alpha skill"' in stdout
 
 
-def test_wl101_skills_list_json_output_empty(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
+def test_wl101_skills_list_json_output_empty(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     monkeypatch.setattr("thegent.cli.apps.skills.discover_skills", list)
     skills_list(json_output=True)
     stdout = capsys.readouterr().out

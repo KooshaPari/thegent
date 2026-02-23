@@ -88,12 +88,14 @@ class TestSkillDiscovery:
         skills_dir = tmp_path / "skills"
         skills_dir.mkdir()
         (skills_dir / "skill.json").write_text(
-            json.dumps({
-                "name": "json-skill",
-                "description": "A JSON skill",
-                "instructions": "Follow these steps",
-                "tags": ["tag1", "tag2"],
-            }),
+            json.dumps(
+                {
+                    "name": "json-skill",
+                    "description": "A JSON skill",
+                    "instructions": "Follow these steps",
+                    "tags": ["tag1", "tag2"],
+                }
+            ),
             encoding="utf-8",
         )
         sd = SkillDiscovery(search_dirs=[skills_dir])

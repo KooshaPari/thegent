@@ -14,9 +14,7 @@ def test_latest_dump_returns_newest_markdown_for_category_and_global(
 
     old_exec = dumper.dump_conversation("run-old-exec", "old", category="execution")
     new_exec = dumper.dump_conversation("run-new-exec", "new", category="execution")
-    newest_research = dumper.dump_conversation(
-        "run-newest-research", "newest", category="research"
-    )
+    newest_research = dumper.dump_conversation("run-newest-research", "newest", category="research")
 
     old_mtime = 1_700_000_001
     new_exec_mtime = 1_700_000_002
@@ -47,6 +45,7 @@ def test_latest_dump_json_only_returns_newest_json_companion(tmp_path: Path) -> 
 
 def test_load_dump_json_returns_dict_for_valid_and_none_for_invalid_json(
     tmp_path: Path,
+    caplog,
 ) -> None:
     dumper = ConversationDumper(docs_dir=tmp_path)
 
@@ -58,6 +57,13 @@ def test_load_dump_json_returns_dict_for_valid_and_none_for_invalid_json(
 
     assert dumper.load_dump_json(valid_path) == {"ok": True, "count": 2}
     assert dumper.load_dump_json(invalid_path) is None
+    assert f"Failed to parse JSON companion {invalid_path}" in caplog.text
+
+
+def test_load_dump_json_returns_none_for_missing_companion_file(tmp_path: Path) -> None:
+    dumper = ConversationDumper(docs_dir=tmp_path)
+    missing = tmp_path / "missing.json"
+    assert dumper.load_dump_json(missing) is None
 
 
 def test_summarize_dump_categories_returns_expected_counts(tmp_path: Path) -> None:
@@ -89,9 +95,7 @@ def test_persist_dump_index_and_export_markdown_create_expected_artifacts(
     assert md_index_path.exists()
 
     payload = json.loads(json_index_path.read_text(encoding="utf-8"))
-    assert {"generated_at", "docs_dir", "categories", "latest_dump", "latest_json_dump"} <= set(
-        payload
-    )
+    assert {"generated_at", "docs_dir", "categories", "latest_dump", "latest_json_dump"} <= set(payload)
     assert payload["categories"] == {"execution": 1, "research": 1}
     assert payload["latest_dump"]
     assert payload["latest_json_dump"]

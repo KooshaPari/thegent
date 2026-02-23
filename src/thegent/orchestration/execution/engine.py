@@ -3,7 +3,7 @@
 import contextlib
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.config import ThegentSettings
@@ -18,7 +18,7 @@ from thegent.routing.route_executor import (
 _log = logging.getLogger(__name__)
 
 # Global orchestrator for multi-agent routing coordination
-_orchestrator: Optional[RoutingOrchestratorBridge] = None
+_orchestrator: RoutingOrchestratorBridge | None = None
 
 
 def get_orchestrator() -> RoutingOrchestratorBridge:

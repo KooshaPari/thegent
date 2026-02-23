@@ -170,6 +170,17 @@ def test_lsp_hover_rejects_negative_coordinates(tmp_path: Path) -> None:
         lsp_hover(str(file_path), line=-1, character=0, adapter=_FakeAdapter())
 
 
+def test_lsp_hover_rejects_non_integer_coordinates(tmp_path: Path) -> None:
+    file_path = tmp_path / "a.py"
+    file_path.write_text("x = 1\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="line must be an integer"):
+        lsp_hover(str(file_path), line=1.5, character=0, adapter=_FakeAdapter())  # type: ignore[arg-type]
+
+    with pytest.raises(ValueError, match="character must be an integer"):
+        lsp_hover(str(file_path), line=1, character=0.5, adapter=_FakeAdapter())  # type: ignore[arg-type]
+
+
 def test_python_default_adapter_returns_syntax_diagnostic(tmp_path: Path) -> None:
     file_path = tmp_path / "bad.py"
     file_path.write_text("def broken(:\n", encoding="utf-8")
@@ -219,7 +230,9 @@ def test_lsp_diagnostics_tool_maps_unavailable_backend_error(tmp_path: Path) -> 
     assert "Configure THGENT_LSP_ADAPTER=python-ast" in result["remediation"]
 
 
-def test_lsp_diagnostics_tool_maps_unsupported_adapter_remediation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_lsp_diagnostics_tool_maps_unsupported_adapter_remediation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     file_path = tmp_path / "a.py"
     file_path.write_text("x = 1\n", encoding="utf-8")
     monkeypatch.setenv("THGENT_LSP_ADAPTER", "unknown")

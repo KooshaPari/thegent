@@ -188,6 +188,7 @@ def test_on_mount_exception_does_not_crash_compositor() -> None:
 
     # @trace FR-UI-COMP-003
     """
+
     def bad_mount(p: Panel) -> None:
         raise RuntimeError("mount exploded")
 
@@ -207,6 +208,7 @@ def test_on_unmount_exception_does_not_crash_compositor() -> None:
 
     # @trace FR-UI-COMP-003
     """
+
     def bad_unmount(p: Panel) -> None:
         raise ValueError("unmount exploded")
 
@@ -228,6 +230,7 @@ def test_mount_exception_logged(caplog: pytest.LogCaptureFixture) -> None:
 
     # @trace FR-UI-COMP-003
     """
+
     def bad_mount(p: Panel) -> None:
         raise RuntimeError("boom")
 
@@ -244,6 +247,7 @@ def test_unmount_exception_logged(caplog: pytest.LogCaptureFixture) -> None:
 
     # @trace FR-UI-COMP-003
     """
+
     def bad_unmount(p: Panel) -> None:
         raise RuntimeError("boom")
 
@@ -364,6 +368,7 @@ def test_one_panel_bad_hook_does_not_affect_others() -> None:
     def good_mount(name: str) -> Callable[[Panel], None]:
         def _hook(p: Panel) -> None:
             events.append(name)
+
         return _hook
 
     def bad_mount(p: Panel) -> None:
@@ -462,6 +467,7 @@ def test_render_swallows_content_fn_exception() -> None:
 
     # @trace FR-UI-COMP-008
     """
+
     def bad_content() -> str:
         raise RuntimeError("content broken")
 
@@ -480,6 +486,7 @@ def test_render_continues_after_one_panel_error() -> None:
 
     # @trace FR-UI-COMP-008
     """
+
     def bad_content() -> str:
         raise ValueError("oops")
 

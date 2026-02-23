@@ -59,6 +59,7 @@ def _bind_impl_namespace(impl_ns: Any) -> None:
             continue
         module_globals[key] = value
 
+
 def run_impl_core(
     agent: str | None,
     prompt: str,
@@ -1017,8 +1018,6 @@ def run_impl_core(
         _log.debug(f"Failed to write conversation dump: {e}")
 
     return payload
-
-
 
 
 def bg_impl_core(

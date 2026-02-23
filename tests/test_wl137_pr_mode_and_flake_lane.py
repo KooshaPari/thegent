@@ -18,6 +18,7 @@ ROOT = Path(__file__).parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
 TASKFILE = ROOT / "Taskfile.yml"
 SCRIPT = ROOT / "scripts" / "test_pytest_wave_artifacts.py"
+FR_TRACE_EXTRACTOR_SCRIPT = ROOT / "scripts" / "fr_trace_extractor.py"
 PR_GUIDE = ROOT / "docs" / "guides" / "PR_TEST_IMPACT_REDUCTION.md"
 PR_INI = ROOT / "pytest-pr.ini"
 PR_FLAKE_INI = ROOT / "pytest-pr-flake.ini"
@@ -38,7 +39,7 @@ def test_pr_lane_ini_files_exist() -> None:
     """Fast PR lane + anti-flake lane profiles should be present."""
     assert PR_INI.is_file(), "pytest-pr.ini missing"
     assert PR_FLAKE_INI.is_file(), "pytest-pr-flake.ini missing"
-    assert '--maxfail' in PR_FLAKE_INI.read_text(encoding="utf-8")
+    assert "--maxfail" in PR_FLAKE_INI.read_text(encoding="utf-8")
 
 
 def test_taskfile_pr_aliases_exist() -> None:
@@ -127,7 +128,7 @@ def _build_minimal_pytest_tree(root: Path) -> tuple[Path, Path]:
     (src_dir / "api.py").write_text("def add(a: int, b: int) -> int:\n    return a + b\n", encoding="utf-8")
     (tests_dir / "test_api.py").write_text(
         "import pytest\n\n"
-        "@pytest.mark.requirement(\"FR-TEST-001\")\n"
+        '@pytest.mark.requirement("FR-TEST-001")\n'
         "def test_with_requirement():\n    assert True\n\n"
         "def test_without_requirement():\n    assert True\n",
         encoding="utf-8",
@@ -278,6 +279,45 @@ def test_requirements_map_includes_uncovered_requirements(tmp_path: Path) -> Non
     assert "FR-TEST-002" in payload["requirement_coverage"]["uncovered_requirements"]
 
 
+def test_fr_trace_extractor_generates_requirements_map_artifact(tmp_path: Path) -> None:
+    """Dedicated FR extractor entrypoint should emit requirements-map/v1 output."""
+    tests_dir, _ = _build_minimal_pytest_tree(tmp_path)
+    tracker = tmp_path / "FR_TRACKER.md"
+    tracker.write_text("| FR-TEST-001 |\n| FR-TEST-002 |\n", encoding="utf-8")
+    output = tmp_path / "requirements-map.json"
+    csv_output = tmp_path / "requirements-map.csv"
+    summary = tmp_path / "requirements-map.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(FR_TRACE_EXTRACTOR_SCRIPT),
+            "--input-dir",
+            str(tests_dir),
+            "--fr-tracker",
+            str(tracker),
+            "--output",
+            str(output),
+            "--csv-output",
+            str(csv_output),
+            "--summary",
+            str(summary),
+        ],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["schema_version"] == "requirements-map/v1"
+    assert "FR-TEST-001" in payload["requirement_to_tests"]
+    assert payload["requirement_coverage"]["uncovered_requirements"] == ["FR-TEST-002"]
+    assert csv_output.exists()
+    assert summary.exists()
+
+
 def test_requirements_map_treats_trace_comments_as_secondary_evidence(tmp_path: Path) -> None:
     """Trace references without @pytest.mark.requirement are counted in secondary evidence."""
     tests_dir, _ = _build_minimal_pytest_tree(tmp_path)
@@ -285,7 +325,7 @@ def test_requirements_map_treats_trace_comments_as_secondary_evidence(tmp_path: 
     tracked_file.write_text(
         "from __future__ import annotations\n\n"
         "import pytest\n\n"
-        "@pytest.mark.requirement(\"FR-TRACE-MAIN\")\n"
+        '@pytest.mark.requirement("FR-TRACE-MAIN")\n'
         "def test_marked_trace():\n"
         "    assert True\n\n"
         "# @trace FR-TRACE-ONLY\n"
@@ -595,8 +635,7 @@ def test_requirements_diagram_output_respects_max_nodes_and_truncation(tmp_path:
             {
                 "schema_version": "requirements-map/v1",
                 "requirement_to_tests": {
-                    f"FR-TEST-{index:03d}": [f"tests/test_{index}.py::test_{index}"]
-                    for index in range(1, 7)
+                    f"FR-TEST-{index:03d}": [f"tests/test_{index}.py::test_{index}"] for index in range(1, 7)
                 },
                 "requirement_coverage": {"coverage_ratio": 1.0},
             },
@@ -636,9 +675,7 @@ def test_traceability_quarterly_cleanup_task_creates_issue_contract(tmp_path: Pa
     tests_dir.mkdir(parents=True, exist_ok=True)
     stale_test = tests_dir / "test_cleanup.py"
     stale_test.write_text(
-        "# @trace FR-OLD-001\n"
-        "def test_old_trace_only():\n"
-        "    assert True\n",
+        "# @trace FR-OLD-001\ndef test_old_trace_only():\n    assert True\n",
         encoding="utf-8",
     )
     stale_time = datetime.now().timestamp() - (4 * 24 * 60 * 60)

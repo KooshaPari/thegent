@@ -55,7 +55,7 @@ class FastJSONSchemaValidator:
         if FASTJSONSCHEMA_AVAILABLE:
             self._backend = "fastjsonschema"
             # Compile schema for fast validation
-            self._compiled_validator = cast(Callable[[Any], None], fastjsonschema.compile(schema))
+            self._compiled_validator = cast("Callable[[Any], None]", fastjsonschema.compile(schema))
         elif JSONSCHEMA_AVAILABLE:
             self._backend = "jsonschema"
             self._validator = jsonschema.Draft202012Validator(schema)

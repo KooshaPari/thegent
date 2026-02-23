@@ -1,0 +1,616 @@
+# Hook Runtime Rust Migration Complete Guide
+
+> **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
+> **Related**:
+> - [Hook Runtime Rust Design](./HOOK_RUNTIME_RUST_DESIGN.md)
+> - [Hook Rust Migration Complete](../research/HOOK_RUST_MIGRATION_COMPLETE.md)
+> - [Full Shell to Rust Where Beneficial](./FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md)
+
+## Table of Contents
+
+1. [Executive Summary](#1-executive-summary)
+2. [Architecture Overview](#2-architecture-overview)
+3. [Subcommands Reference](#3-subcommands-reference)
+4. [Implementation Details](#4-implementation-details)
+5. [Migration Strategy](#5-migration-strategy)
+6. [Performance Targets](#6-performance-targets)
+7. [Testing Strategy](#7-testing-strategy)
+8. [Configuration Reference](#8-configuration-reference)
+9. [References](#9-references)
+
+---
+
+## 1. Executive Summary
+
+### 1.1 Goals
+
+Replace `hooks/lib/common.sh` (~1685 lines) and its sourced layers with a Rust binary (`thegent-hooks`) that provides all hook functionality with:
+- **Performance**: 10-100x faster than shell equivalents
+- **DX/AX/UX**: Single binary, clear errors, better tooling
+- **Maintainability**: Type-safe, testable, single source of truth
+
+### 1.2 Current State
+
+| Component | Current | Target |
+|-----------|---------|--------|
+| **Hook Runtime** | `common.sh` (shell) | `thegent-hooks` (Rust) |
+| **Git Operations** | `git-cache.sh`, `git-wrapper.sh` | `thegent-hooks git` |
+| **Cache Management** | Shell functions | `thegent-hooks cache-*` |
+| **Config Reading** | Shell YAML parsing | `thegent-hooks config-get` |
+| **Hook Execution** | `bash hook.sh` | `thegent-hooks run-hook` (optional) |
+
+### 1.3 Benefits
+
+- **Performance**: 10-100x faster (Rust vs shell)
+- **Reliability**: Type-safe, no shell parsing errors
+- **Maintainability**: Single codebase, better testing
+- **DX**: Clear errors, better tooling support
+
+---
+
+## 2. Architecture Overview
+
+### 2.1 Single Binary: `thegent-hooks`
+
+```
+thegent-hooks
+├── init              # Read stdin JSON, resolve PROJECT_DIR, write env
+├── cache-key         # Compute cache key
+├── cache-check       # Check cache freshness
+├── cache-read        # Read cached output
+├── cache-write       # Write cache entry
+├── git               # Cached git or passthrough
+├── changed-files     # Get changed files list
+├── config-get        # Read hook-config.yaml
+├── skip              # Check skip list
+├── breaker-check     # Circuit breaker state
+├── debounce          # Debounce leader/follower
+├── incremental-check # Manifest-based check
+├── file-hash         # Content hash
+├── fr-ids            # Parse FR-* IDs
+├── fr-index          # Build file:FR index
+├── affected-tests    # Get affected tests
+├── prewarm           # Prewarm caches
+├── progress          # Emit progress
+├── report            # Write report JSON
+└── learning-record   # Learning-based skip
+```
+
+### 2.2 Data Flow
+
+```
+Hook Script / Dispatcher
+         ↓
+thegent-hooks init (stdin JSON)
+         ↓
+thegent-hooks cache-key
+         ↓
+thegent-hooks cache-check
+         ↓ (if miss)
+thegent-hooks git (cached)
+         ↓
+thegent-hooks changed-files
+         ↓
+Hook Logic (shell or Rust)
+         ↓
+thegent-hooks cache-write
+         ↓
+thegent-hooks report
+```
+
+---
+
+## 3. Subcommands Reference
+
+### 3.1 init
+
+**Purpose**: Read stdin JSON, resolve PROJECT_DIR, write env
+
+**Input**: JSON via stdin
+```json
+{
+  "tool_name": "write",
+  "tool_input": {"file_path": "test.py"},
+  "session_id": "session_123",
+  "cwd": "/path/to/project"
+}
+```
+
+**Output**: Environment variables (stdout)
+```
+PROJECT_DIR=/path/to/project
+CWD=/path/to/project
+SESSION_ID=session_123
+TOOL_NAME=write
+FILE_PATH=test.py
+...
+```
+
+**Implementation**:
+```rust
+use serde_json::Value;
+use std::io;
+
+fn init_subcommand() -> Result<(), Error> {
+    let mut input = String::new();
+    io::stdin().read_to_string(&mut input)?;
+
+    let json: Value = serde_json::from_str(&input)?;
+
+    let cwd = Path::new(json["cwd"].as_str().unwrap());
+    let project_dir = resolve_project_dir(cwd)?;
+
+    // Build env
+    let env = build_env(&json, &project_dir)?;
+
+    // Output env
+    for (key, value) in env {
+        println!("{}={}", key, value);
+    }
+
+    Ok(())
+}
+```
+
+### 3.2 cache-key
+
+**Purpose**: Compute cache key for hook
+
+**Input**: Hook name, optional extra material
+
+**Output**: Cache key (hex string)
+
+**Implementation**:
+```rust
+use blake3;
+
+fn cache_key_subcommand(hook_name: &str, extra: Option<&str>) -> Result<String, Error> {
+    let head_sha = get_head_sha()?;
+    let changed_files = get_changed_files()?;
+
+    let mut hasher = blake3::Hasher::new();
+    hasher.update(hook_name.as_bytes());
+    hasher.update(head_sha.as_bytes());
+    hasher.update(changed_files.join("\n").as_bytes());
+
+    if let Some(extra) = extra {
+        hasher.update(extra.as_bytes());
+    }
+
+    let hash = hasher.finalize();
+    Ok(hex::encode(hash.as_bytes()))
+}
+```
+
+### 3.3 git
+
+**Purpose**: Cached read-only git or passthrough
+
+**Implementation**:
+```rust
+use gix;
+
+fn git_subcommand(args: Vec<String>) -> Result<(String, i32), Error> {
+    // Check if agent passthrough
+    if args.first().map(|s| s.as_str()) == Some("codex")
+        || args.first().map(|s| s.as_str()) == Some("copilot")
+        || args.first().map(|s| s.as_str()) == Some("claude")
+        || args.first().map(|s| s.as_str()) == Some("cursor")
+    {
+        // Exec agent binary
+        std::process::Command::new(&args[0])
+            .args(&args[1..])
+            .exec()
+    }
+
+    // Check if read-only
+    if is_read_only(&args) {
+        // Check cache
+        if let Some(cached) = get_git_cache(&args)? {
+            return Ok((cached.output, cached.exit_code));
+        }
+
+        // Execute git
+        let result = execute_git(&args)?;
+
+        // Cache result
+        set_git_cache(&args, &result)?;
+
+        Ok((result.output, result.exit_code))
+    } else {
+        // Write operation: wait for lock
+        wait_for_git_lock()?;
+
+        // Execute git
+        let result = execute_git(&args)?;
+
+        // Invalidate cache
+        invalidate_git_cache()?;
+
+        Ok((result.output, result.exit_code))
+    }
+}
+
+fn is_read_only(args: &[String]) -> bool {
+    let read_only_commands = ["status", "diff", "rev-parse", "ls-files", "log", "show"];
+    args.first()
+        .and_then(|cmd| read_only_commands.iter().find(|&c| c == cmd))
+        .is_some()
+}
+```
+
+### 3.4 changed-files
+
+**Purpose**: Get shared changed files list
+
+**Implementation**:
+```rust
+fn changed_files_subcommand() -> Result<Vec<String>, Error> {
+    // Check shared file
+    let shared_file = get_shared_file("changed_files")?;
+    if shared_file.exists() && is_fresh(&shared_file)? {
+        return Ok(read_lines(&shared_file)?);
+    }
+
+    // Compute changed files
+    let mut changed = Vec::new();
+
+    // Git diff --name-only HEAD
+    let diff_output = execute_git(&["diff", "--name-only", "HEAD"])?;
+    changed.extend(diff_output.output.lines().map(|s| s.to_string()));
+
+    // Git ls-files --others --exclude-standard
+    let untracked_output = execute_git(&["ls-files", "--others", "--exclude-standard"])?;
+    changed.extend(untracked_output.output.lines().map(|s| s.to_string()));
+
+    // Filter (node_modules, .git, etc.)
+    changed.retain(|path| !should_exclude(path));
+
+    // Sort and dedupe
+    changed.sort();
+    changed.dedup();
+
+    // Write to shared file
+    write_lines(&shared_file, &changed)?;
+
+    Ok(changed)
+}
+```
+
+### 3.5 config-get
+
+**Purpose**: Read hook-config.yaml key
+
+**Implementation**:
+```rust
+use serde_yaml;
+
+fn config_get_subcommand(key: &str) -> Result<String, Error> {
+    let config_path = find_hook_config()?;
+    let config: Value = serde_yaml::from_str(&fs::read_to_string(&config_path)?)?;
+
+    // Navigate key path (e.g., "hooks.quality-gate.enabled")
+    let value = navigate_config(&config, key)?;
+
+    Ok(value.to_string())
+}
+```
+
+---
+
+## 4. Implementation Details
+
+### 4.1 Crate Structure
+
+```
+crates/thegent-hooks/
+├── Cargo.toml
+├── src/
+│   ├── main.rs              # CLI entry point
+│   ├── cli.rs               # Subcommand definitions (clap)
+│   ├── init.rs              # Init subcommand
+│   ├── cache.rs             # Cache operations
+│   ├── git.rs               # Git operations (cached + passthrough)
+│   ├── config.rs            # Config reading
+│   ├── hash.rs              # Content hashing
+│   ├── changed_files.rs     # Changed files logic
+│   ├── breaker.rs           # Circuit breaker
+│   ├── debounce.rs          # Debounce logic
+│   ├── incremental.rs       # Incremental checks
+│   ├── learning.rs          # Learning-based skip
+│   ├── affected_tests.rs    # Affected tests
+│   ├── prewarm.rs           # Prewarm logic
+│   ├── report.rs            # Report writing
+│   └── utils.rs             # Utilities
+```
+
+### 4.2 Dependencies
+
+```toml
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+blake3 = "1.5"
+gix = "0.60"  # Gitoxide
+anyhow = "1.0"
+thiserror = "1.0"
+directories = "5.0"
+regex = "1.10"
+tracing = "0.1"
+```
+
+### 4.3 Git Layer Implementation
+
+```rust
+use gix::Repository;
+
+pub struct GitManager {
+    repo: Repository,
+    cache_dir: PathBuf,
+}
+
+impl GitManager {
+    pub fn new(cwd: &Path) -> Result<Self, Error> {
+        let repo = Repository::discover(cwd)?;
+        let cache_dir = get_cache_dir()?;
+        Ok(Self { repo, cache_dir })
+    }
+
+    pub fn execute(&self, args: Vec<String>) -> Result<(String, i32), Error> {
+        // Agent passthrough logic
+        if self.is_agent_passthrough(&args) {
+            return self.exec_agent(&args);
+        }
+
+        // Read-only: check cache
+        if self.is_read_only(&args) {
+            if let Some(cached) = self.get_cache(&args)? {
+                return Ok((cached.output, cached.exit_code));
+            }
+
+            // Execute via gix or git
+            let result = self.execute_git(&args)?;
+            self.set_cache(&args, &result)?;
+            return Ok((result.output, result.exit_code));
+        }
+
+        // Write: wait for lock
+        self.wait_for_lock()?;
+
+        // Execute git
+        let result = self.execute_git(&args)?;
+
+        // Invalidate cache
+        self.invalidate_cache()?;
+
+        Ok((result.output, result.exit_code))
+    }
+
+    fn execute_git(&self, args: &[String]) -> Result<GitResult, Error> {
+        // Use gix for read-only operations
+        if self.is_read_only(args) {
+            match args[0].as_str() {
+                "status" => {
+                    let status = self.repo.status()?;
+                    // Convert to git status format
+                    Ok(GitResult { output: format_status(&status), exit_code: 0 })
+                }
+                "rev-parse" => {
+                    let head = self.repo.head()?;
+                    Ok(GitResult { output: head.id().to_string(), exit_code: 0 })
+                }
+                _ => {
+                    // Fallback to git command
+                    self.execute_git_command(args)
+                }
+            }
+        } else {
+            // Write operations: use git command
+            self.execute_git_command(args)
+        }
+    }
+
+    fn wait_for_lock(&self) -> Result<(), Error> {
+        let lock_file = self.repo.path().join("index.lock");
+
+        // Wait for lock with timeout
+        let timeout = Duration::from_secs(30);
+        let start = Instant::now();
+
+        while lock_file.exists() {
+            if start.elapsed() > timeout {
+                // Check if lock is stale
+                if self.is_lock_stale(&lock_file)? {
+                    // Steal stale lock
+                    fs::remove_file(&lock_file)?;
+                    return Ok(());
+                }
+                return Err(Error::LockTimeout);
+            }
+            thread::sleep(Duration::from_millis(100));
+        }
+
+        Ok(())
+    }
+}
+```
+
+---
+
+## 5. Migration Strategy
+
+### 5.1 Phase 0: CLI Skeleton (Week 1)
+
+**Tasks**:
+- Create `thegent-hooks` crate
+- Define all subcommands with clap
+- Stub implementations (call back to shell)
+
+**Deliverable**: CLI skeleton with all subcommands
+
+### 5.2 Phase 1: Core Functionality (Weeks 2-4)
+
+**Tasks**:
+- Implement `init` (JSON parse, PROJECT_DIR resolution)
+- Implement `cache-key` (blake3 hash)
+- Implement `cache-check`, `cache-read`, `cache-write`
+- Implement `git` (cached read-only, passthrough, lock wait)
+- Implement `changed-files` (git diff + ls-files, shared file)
+- Implement `config-get` (hook-config.yaml parsing)
+
+**Deliverable**: Core functionality working
+
+### 5.3 Phase 2: Advanced Features (Weeks 5-6)
+
+**Tasks**:
+- Implement `should-run` (changed files + pattern)
+- Implement `breaker-check`, `breaker-record`, `breaker-reset`
+- Implement `debounce` (file-based, flock)
+- Implement `incremental-check`, `incremental-record`
+- Implement `learning-record`, `learning-should-skip`
+
+**Deliverable**: Advanced features working
+
+### 5.4 Phase 3: Complex Features (Weeks 7-8)
+
+**Tasks**:
+- Implement `fr-ids` (parse FUNCTIONAL_REQUIREMENTS.md)
+- Implement `fr-index` (build file:FR index)
+- Implement `affected-tests` (pattern + coverage + imports)
+- Implement `prewarm` (background tasks)
+- Implement `report` (write JSON to VERIFY_DIR)
+
+**Deliverable**: All features working
+
+### 5.5 Phase 4: Optional Native Hook Implementations (Weeks 9-10)
+
+**Tasks**:
+- Implement `run-hook quality-gate` (native Rust)
+- Implement `run-hook security-pipeline` (native Rust)
+- Implement `run-hook test-maturity` (native Rust)
+
+**Deliverable**: Native hook implementations
+
+### 5.6 Phase 5: Deprecation & Cleanup (Week 11)
+
+**Tasks**:
+- Migrate all hooks to use `thegent-hooks`
+- Mark `common.sh` as deprecated
+- Remove `common.sh` when no callers remain
+
+**Deliverable**: Full migration complete
+
+---
+
+## 6. Performance Targets
+
+| Operation | Target | Current (shell) |
+|-----------|--------|-----------------|
+| **init** | < 5 ms | ~20-50 ms |
+| **cache-key** | < 2 ms | ~5-10 ms |
+| **git cached (hit)** | < 1 ms | ~5-10 ms |
+| **git cached (miss)** | < 50 ms | ~100-200 ms |
+| **changed-files (hit)** | < 1 ms | ~5-10 ms |
+| **changed-files (miss)** | < 100 ms | ~200-500 ms |
+
+---
+
+## 7. Testing Strategy
+
+### 7.1 Unit Tests
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cache_key() {
+        let key = cache_key_subcommand("test-hook", None).unwrap();
+        assert_eq!(key.len(), 64);  // blake3 hex
+    }
+
+    #[test]
+    fn test_git_cached() {
+        let manager = GitManager::new(Path::new(".")).unwrap();
+        let (output, code) = manager.execute(vec!["status".to_string()]).unwrap();
+        assert_eq!(code, 0);
+    }
+}
+```
+
+### 7.2 Integration Tests
+
+```rust
+#[test]
+fn test_init_subcommand() {
+    let input = r#"{"cwd": "/tmp/test", "tool_name": "write"}"#;
+    let output = run_init(input).unwrap();
+    assert!(output.contains("PROJECT_DIR"));
+}
+```
+
+### 7.3 Compatibility Tests
+
+```rust
+#[test]
+fn test_cache_key_compatibility() {
+    // Compare Rust cache-key with shell hook_cache_key
+    let rust_key = cache_key_subcommand("test", None).unwrap();
+    let shell_key = run_shell_hook_cache_key("test").unwrap();
+    assert_eq!(rust_key, shell_key);
+}
+```
+
+---
+
+## 8. Configuration Reference
+
+### 8.1 Environment Variables
+
+```bash
+# Hook cache
+HOOK_CACHE_DIR=$TMPDIR/claude-hook-cache-$UID
+
+# Git cache
+GIT_CACHE_DIR=$HOOK_CACHE_DIR/git
+
+# Config paths
+HOOK_CONFIG_PATH=.claude/hooks/hook-config.yaml
+QA_LOCAL_JSON_PATH=.claude/qa-local.json
+```
+
+### 8.2 Config File
+
+```yaml
+# hook-config.yaml
+hooks:
+  quality-gate:
+    enabled: true
+    timeout: 30
+  test-maturity:
+    enabled: true
+    timeout: 60
+```
+
+---
+
+## 9. References
+
+### 9.1 Related Documentation
+
+- [Hook Runtime Rust Design](./HOOK_RUNTIME_RUST_DESIGN.md) - Original design
+- [Hook Rust Migration Complete](../research/HOOK_RUST_MIGRATION_COMPLETE.md) - Migration guide
+- [Full Shell to Rust Where Beneficial](./FULL_SHELL_TO_RUST_WHERE_BENEFICIAL.md) - Shell inventory
+
+### 9.2 Implementation Files
+
+- **Hook Dispatcher**: `hooks/hook-dispatcher/` (existing Rust)
+- **thegent-hooks**: `crates/thegent-hooks/` (to be created)
+- **common.sh**: `hooks/lib/common.sh` (to be deprecated)
+
+---
+
+*Generated: 2026-02-16 | Version: 1.0 | Status: Complete*

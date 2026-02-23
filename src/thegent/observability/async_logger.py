@@ -51,12 +51,19 @@ class AsyncObservabilityLogger:
     """
 
     MAX_QUEUE_SIZE: ClassVar[int] = 10_000
+    DROP_LOG_INTERVAL_SEC: ClassVar[float] = 10.0
+    HANDLER_ERROR_LOG_INTERVAL_SEC: ClassVar[float] = 10.0
 
     def __init__(self, handlers: list[Callable[[ObservabilityEvent], None]] | None = None) -> None:
         self._queue: queue.Queue[ObservabilityEvent] = queue.Queue(maxsize=self.MAX_QUEUE_SIZE)
         self._handlers = handlers or [_default_log_handler]
         self._thread: threading.Thread = threading.Thread(target=self._worker, daemon=True, name="obs-logger")
         self._running = threading.Event()
+        self._dropped_events = 0
+        self._handled_events = 0
+        self._handler_failures = 0
+        self._last_drop_log_at = 0.0
+        self._last_handler_error_log_at = 0.0
         self._running.set()
         self._thread.start()
 
@@ -65,7 +72,20 @@ class AsyncObservabilityLogger:
         try:
             self._queue.put_nowait(event)
         except queue.Full:
-            pass  # Drop silently — never block the hot path
+            if not hasattr(self, "_dropped_events"):
+                self._dropped_events = 0
+            if not hasattr(self, "_last_drop_log_at"):
+                self._last_drop_log_at = 0.0
+            self._dropped_events += 1
+            now = time.monotonic()
+            if now - self._last_drop_log_at >= self.DROP_LOG_INTERVAL_SEC:
+                self._last_drop_log_at = now
+                _log.warning(
+                    "obs queue saturated; dropped_events=%s queue_size=%s max_queue_size=%s",
+                    self._dropped_events,
+                    self._queue.qsize(),
+                    self.MAX_QUEUE_SIZE,
+                )
 
     def log_request(
         self,
@@ -106,8 +126,19 @@ class AsyncObservabilityLogger:
                 for handler in self._handlers:
                     try:
                         handler(event)
-                    except Exception:
-                        pass  # Handler errors must never kill the worker
+                    except Exception as exc:
+                        self._handler_failures += 1
+                        now = time.monotonic()
+                        if now - self._last_handler_error_log_at >= self.HANDLER_ERROR_LOG_INTERVAL_SEC:
+                            self._last_handler_error_log_at = now
+                            handler_name = getattr(handler, "__name__", handler.__class__.__name__)
+                            _log.warning(
+                                "obs handler failed; handler=%s failures=%s error=%s",
+                                handler_name,
+                                self._handler_failures,
+                                type(exc).__name__,
+                            )
+                self._handled_events += 1
                 self._queue.task_done()
             except queue.Empty:
                 continue
@@ -120,6 +151,15 @@ class AsyncObservabilityLogger:
     def queue_size(self) -> int:
         """Return current queue depth (for monitoring)."""
         return self._queue.qsize()
+
+    def diagnostics(self) -> dict[str, int]:
+        """Return queue/worker diagnostics for saturation and handler errors."""
+        return {
+            "dropped_events": int(getattr(self, "_dropped_events", 0)),
+            "handled_events": int(getattr(self, "_handled_events", 0)),
+            "handler_failures": int(getattr(self, "_handler_failures", 0)),
+            "queue_size": self._queue.qsize(),
+        }
 
 
 # ---------------------------------------------------------------------------

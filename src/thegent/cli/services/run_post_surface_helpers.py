@@ -50,7 +50,7 @@ def resume_impl(
         return {
             "error": (
                 f"No resumable sessions found under {session_root}. "
-                "Start one with `thegent run agent --bg \"<prompt>\"` or provide --session-id."
+                'Start one with `thegent run agent --bg "<prompt>"` or provide --session-id.'
             ),
             "exit_code": 1,
         }
@@ -85,10 +85,7 @@ def resume_impl(
         }
     if payload_session_id != sid:
         return {
-            "error": (
-                f"Invalid state contract for session {sid}: session_id mismatch "
-                f"(found {payload_session_id!r})"
-            ),
+            "error": (f"Invalid state contract for session {sid}: session_id mismatch (found {payload_session_id!r})"),
             "exit_code": 1,
             "session_id": sid,
         }
@@ -340,6 +337,7 @@ def continuity_snapshot_impl(
         "state_summary": state_summary,
         "next_steps": next_steps,
     }
+
 
 def inbox_wait_impl(
     *,

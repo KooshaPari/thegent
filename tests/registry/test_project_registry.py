@@ -133,12 +133,7 @@ class TestRegistryInit:
     def test_tables_created(self, db_path: Path) -> None:
         ProjectRegistry(db_path=db_path)
         conn = sqlite3.connect(str(db_path))
-        tables = {
-            row[0]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
-        }
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
         conn.close()
         assert "projects" in tables
         assert "episodes" in tables
@@ -147,9 +142,7 @@ class TestRegistryInit:
     def test_schema_version_initialized(self, db_path: Path) -> None:
         ProjectRegistry(db_path=db_path)
         conn = sqlite3.connect(str(db_path))
-        version_row = conn.execute(
-            "SELECT version FROM schema_version ORDER BY id DESC LIMIT 1"
-        ).fetchone()
+        version_row = conn.execute("SELECT version FROM schema_version ORDER BY id DESC LIMIT 1").fetchone()
         conn.close()
         assert version_row is not None
         assert version_row[0] == 1
@@ -184,15 +177,8 @@ class TestRegistryInit:
         assert migrated.name == "legacy"
 
         conn = sqlite3.connect(str(db_path))
-        version_row = conn.execute(
-            "SELECT version FROM schema_version ORDER BY id DESC LIMIT 1"
-        ).fetchone()
-        tables = {
-            row[0]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
-        }
+        version_row = conn.execute("SELECT version FROM schema_version ORDER BY id DESC LIMIT 1").fetchone()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
         conn.close()
         assert version_row is not None
         assert version_row[0] == 1

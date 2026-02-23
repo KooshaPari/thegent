@@ -205,9 +205,13 @@ def test_request_event_id_propagation_from_request_to_created_and_failed_events(
     event_log_failed = tmp_path / "events-failed.jsonl"
 
     # Test 1: request_event_id propagation on SUCCESS
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", lambda: [])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["p1"])
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: [])
+    monkeypatch.setattr("thegent.orchestration.state.session_scraper.list_tmux_panes", list)
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_claude_history", lambda self: ["p1"]
+    )
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.scrape_ante_history", lambda self: []
+    )
 
     request_id_success = "req-propagation-success-001"
     scraper.persist_snapshot(
@@ -217,7 +221,9 @@ def test_request_event_id_propagation_from_request_to_created_and_failed_events(
         event_log=event_log_created,
     )
 
-    events_created = [json.loads(line) for line in event_log_created.read_text(encoding="utf-8").splitlines() if line.strip()]
+    events_created = [
+        json.loads(line) for line in event_log_created.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     assert len(events_created) == 1
     assert events_created[0]["event_name"] == "session.scraper.snapshot.created"
     assert events_created[0]["request_event_id"] == request_id_success
@@ -225,9 +231,11 @@ def test_request_event_id_propagation_from_request_to_created_and_failed_events(
 
     # Test 2: request_event_id propagation on FAILURE
     def _raise_on_collect(self, trigger: str = "manual"):
-        raise IOError("simulated IO error")
+        raise OSError("simulated IO error")
 
-    monkeypatch.setattr("thegent.orchestration.state.session_scraper.SessionScraper.collect_snapshot", _raise_on_collect)
+    monkeypatch.setattr(
+        "thegent.orchestration.state.session_scraper.SessionScraper.collect_snapshot", _raise_on_collect
+    )
 
     request_id_fail = "req-propagation-fail-001"
     try:
@@ -237,10 +245,12 @@ def test_request_event_id_propagation_from_request_to_created_and_failed_events(
             request_event_id=request_id_fail,
             event_log=event_log_failed,
         )
-    except IOError:
+    except OSError:
         pass
 
-    events_failed = [json.loads(line) for line in event_log_failed.read_text(encoding="utf-8").splitlines() if line.strip()]
+    events_failed = [
+        json.loads(line) for line in event_log_failed.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     assert len(events_failed) == 1
     assert events_failed[0]["event_name"] == "session.scraper.snapshot.failed"
     assert events_failed[0]["request_event_id"] == request_id_fail

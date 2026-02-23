@@ -23,14 +23,7 @@ from unittest.mock import MagicMock
 # Helpers
 # ---------------------------------------------------------------------------
 
-_MODULE_PATH = (
-    Path(__file__).parents[2]
-    / "src"
-    / "thegent"
-    / "mcp"
-    / "server"
-    / "tools_dynamic_registry.py"
-)
+_MODULE_PATH = Path(__file__).parents[2] / "src" / "thegent" / "mcp" / "server" / "tools_dynamic_registry.py"
 _MODULE_KEY = "thegent.mcp._server_tools_dynamic_registry_test"
 
 
@@ -85,9 +78,11 @@ def test_register_returns_three_callables() -> None:
 
     def _tool_decorator(*args: Any, **kwargs: Any):
         """Mock @mcp.tool() that returns the decorated function unchanged."""
+
         def _inner(fn: Any) -> Any:
             registered.append(fn.__name__)
             return fn
+
         return _inner
 
     mock_mcp = MagicMock()
@@ -118,6 +113,7 @@ def test_register_registers_expected_tool_names() -> None:
         def _inner(fn: Any) -> Any:
             registered_names.append(fn.__name__)
             return fn
+
         return _inner
 
     mock_mcp = MagicMock()
@@ -132,9 +128,7 @@ def test_register_registers_expected_tool_names() -> None:
     )
 
     expected = {"thegent_register_tool", "thegent_complete_tool_call", "thegent_list_dynamic_tools"}
-    assert expected <= set(registered_names), (
-        f"Missing tool names: {expected - set(registered_names)}"
-    )
+    assert expected <= set(registered_names), f"Missing tool names: {expected - set(registered_names)}"
 
 
 # ---------------------------------------------------------------------------
@@ -149,12 +143,11 @@ def test_server_module_still_has_dynamic_tool_names() -> None:
     except Exception as exc:
         # If the full server fails to init (no live DB etc.), skip gracefully.
         import pytest
+
         pytest.skip(f"server.py import raised: {exc}")
 
     for name in ("thegent_register_tool", "thegent_complete_tool_call", "thegent_list_dynamic_tools"):
-        assert hasattr(server_mod, name), (
-            f"server.py missing expected tool name: {name}"
-        )
+        assert hasattr(server_mod, name), f"server.py missing expected tool name: {name}"
 
 
 def test_tool_loader_dynamic_registry_contract_is_stable() -> None:
@@ -163,7 +156,9 @@ def test_tool_loader_dynamic_registry_contract_is_stable() -> None:
 
     captured: dict[str, object] = {}
 
-    def _fake_load_module(*, server_file: Path, module_filename: str, module_import_name: str, failure_message: str) -> object:
+    def _fake_load_module(
+        *, server_file: Path, module_filename: str, module_import_name: str, failure_message: str
+    ) -> object:
         captured["server_file"] = server_file
         captured["module_filename"] = module_filename
         captured["module_import_name"] = module_import_name
@@ -197,5 +192,11 @@ def test_server_source_keeps_impl_import_surface_for_command_routing() -> None:
 
     source = inspect.getsource(server_mod)
     assert "from thegent.cli.commands.impl import (" in source
-    for name in ("do_next_impl", "wait_next_impl", "incorporate_impl", "work_stream_claim_impl", "work_stream_complete_impl"):
+    for name in (
+        "do_next_impl",
+        "wait_next_impl",
+        "incorporate_impl",
+        "work_stream_claim_impl",
+        "work_stream_complete_impl",
+    ):
         assert name in source, f"Expected {name} import in server.py impl surface"

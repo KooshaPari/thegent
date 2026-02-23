@@ -13,6 +13,11 @@ from thegent.config import ThegentSettings
 _log = __import__("logging").getLogger(__name__)
 
 
+def _normalize_item_id(item_id: str) -> str:
+    """Normalize item ids for dedupe/claim handling."""
+    return item_id.strip().strip("~")
+
+
 def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
     """Find next actionable work items from work-stream and queue sources."""
     from thegent.cli.commands.impl import _resolve_cwd
@@ -53,18 +58,18 @@ def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
     except Exception as e:
         _log.debug("DB primary failed, falling back to direct sources: %s", e)
 
-    next_items: list[dict[str, Any]] = []
+    aggregated_items: list[dict[str, Any]] = []
     sources_checked: list[str] = []
     queued, q_sources = run_workstream_helpers.collect_queued_items(settings, limit)
-    next_items.extend(queued)
+    aggregated_items.extend(queued)
     sources_checked.extend(q_sources)
     ws_items, ws_sources = run_workstream_helpers.collect_work_stream_items(work_stream_path, limit)
-    next_items.extend(ws_items)
+    aggregated_items.extend(ws_items)
     sources_checked.extend(ws_sources)
-    next_items.sort(
+    aggregated_items.sort(
         key=lambda x: (x.pop("_sort_order", 5), run_workstream_helpers.priority_sort_key(x.get("priority", "P2")))
     )
-    next_items = next_items[:limit]
+    next_items = aggregated_items[:limit]
 
     if not next_items:
         example_task_path = cwd / "tasks" / "example-task.md"
@@ -174,14 +179,28 @@ def spawn_next_impl(
         }
     if "error" in result:
         return {"error": result["error"], "spawned": [], "errors": [], "count": 0}
-    items = result.get("next_items", [])
-    if not items:
+    raw_items = result.get("next_items", [])
+    if not raw_items:
         return {
             "spawned": [],
             "errors": [],
             "count": 0,
             "empty_reason": result.get("empty_reason"),
         }
+    # Remove duplicate/invalid items before claiming/spawning.
+    items: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for item in raw_items:
+        raw_item_id = str(item.get("id", "")).strip()
+        norm_item_id = _normalize_item_id(raw_item_id)
+        if not norm_item_id:
+            continue
+        if norm_item_id in seen_ids:
+            continue
+        seen_ids.add(norm_item_id)
+        item = dict(item)
+        item["id"] = norm_item_id
+        items.append(item)
 
     agent_id = "spawn-next"
     try:
@@ -211,6 +230,10 @@ def spawn_next_impl(
                         err["governance_blocked"] = True
                         err["remediation"] = claim_result.get("remediation")
                         err["governance_block"] = claim_result.get("governance_block")
+                    if claim_result.get("dependency_blocked"):
+                        err["dependency_blocked"] = True
+                        err["blocked_by"] = claim_result.get("blocked_by", [])
+                        err["remediation"] = claim_result.get("remediation")
                     errors.append(err)
                     continue
             except Exception as e:

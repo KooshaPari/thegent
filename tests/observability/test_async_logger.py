@@ -130,6 +130,8 @@ def test_async_logger_queue_full_drops_silently() -> None:
     logger.log(event)
     # Verify queue size didn't exceed maxsize
     assert logger._queue.qsize() == 2
+    diag = logger.diagnostics()
+    assert diag["dropped_events"] == 2
 
 
 @pytest.mark.requirement("FR-OBS-039")
@@ -150,6 +152,8 @@ def test_async_logger_handler_error_doesnt_kill_worker() -> None:
         logger.log(_make_event(event_id="tg-second22"))
         assert _wait_for(second_event_received), "Worker died after handler error"
         assert call_count[0] == 2
+        diag = logger.diagnostics()
+        assert diag["handler_failures"] >= 1
     finally:
         logger.stop()
 

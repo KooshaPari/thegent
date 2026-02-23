@@ -18,6 +18,11 @@ class ContextInjector:
 
     def render_agent_md(self, agent_info: dict[str, Any], mesh_state: dict[str, Any]) -> str:
         """Render AGENT.md from template with current mesh state."""
+        resources = mesh_state.get("resources", [])
+        if not isinstance(resources, list):
+            resources = [str(resources)]
+        shared_resources = ", ".join(resources) if resources else "none"
+
         template = """# AGENT IDENTITY
 ID: {id}
 Type: {type}
@@ -37,11 +42,11 @@ Shared Resources: {shared_resources}
             type=agent_info.get("type"),
             status=mesh_state.get("status"),
             agent_count=len(mesh_state.get("agents", [])),
-            shared_resources=", ".join(mesh_state.get("resources", [])),
+            shared_resources=shared_resources,
             port_range=mesh_state.get("port_range", "N/A"),
         )
 
-    def setup_tool_context(self, agent_dir: Path, agent_type: str):
+    def setup_tool_context(self, agent_dir: Path, agent_type: str) -> None:
         """Set up tool-specific context files (symlinks)."""
         rules_map = {
             "claude": ("CLAUDE.md", "AGENT.md"),
@@ -52,17 +57,21 @@ Shared Resources: {shared_resources}
 
         if agent_type in rules_map:
             target_name, source_name = rules_map[agent_type]
-            _source_path = agent_dir / source_name
+            source_path = agent_dir / source_name
             target_path = agent_dir / target_name
 
-            if not target_path.exists():
-                try:
-                    target_path.symlink_to(source_name)
-                    logger.info(f"Created context symlink for {agent_type}: {target_name} -> {source_name}")
-                except OSError as e:
-                    logger.error(f"Failed to create symlink: {e}")
+            if not source_path.exists():
+                raise FileNotFoundError(f"Missing required context source file: {source_path}")
 
-    def update_context(self, agent_id: str, agent_dir: Path, mesh_state: dict[str, Any]):
+            if target_path.exists() or target_path.is_symlink():
+                if target_path.is_symlink() and target_path.readlink() == Path(source_name):
+                    return
+                target_path.unlink()
+
+            target_path.symlink_to(source_name)
+            logger.info(f"Created context symlink for {agent_type}: {target_name} -> {source_name}")
+
+    def update_context(self, agent_id: str, agent_dir: Path, mesh_state: dict[str, Any]) -> None:
         """Dynamically update AGENT.md when mesh state changes."""
         agent_md = agent_dir / "AGENT.md"
         # We need agent_info, would normally fetch from registry
