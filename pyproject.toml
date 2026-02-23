@@ -42,9 +42,6 @@ antigma = "thegent.rust_wrappers:antigma"
 
 [tool.uv]
 managed = true
-<<<<<<< HEAD
-override-dependencies = [ "hf-xet==0.0.0; implementation_name == 'pypy'",]
-=======
 override-dependencies = [
     "hf-xet==0.0.0; implementation_name == 'pypy'",
 ]
@@ -98,7 +95,6 @@ relative_files = true
 fail_under = 100
 ignore_errors = false
 exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError"]
->>>>>>> fix/ci-remove-macos
 
 [tool.ruff]
 line-length = 120
