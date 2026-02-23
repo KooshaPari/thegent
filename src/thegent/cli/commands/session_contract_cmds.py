@@ -515,20 +515,20 @@ def inbox_wait_cmd(
     _owner: str | None = None,
     _agent: str | None = None,
     _event_type: str | None = None,
-    status: str | None = None,
-    sources: str | None = None,
-    poll: float = 2.0,
-    timeout: float = 0.0,
-    notify: bool = True,
+    _status: str | None = None,
+    _sources: str | None = None,
+    _poll: float = 2.0,
+    _timeout: float = 0.0,
+    _notify: bool = True,
     format: str | None = None,
 ) -> None:
     """Wait for next inbox event matching filters. Blocks until new event or timeout."""
     from thegent.cli.commands.impl import inbox_wait_impl
     from thegent.cli.commands.session_cmds_helpers import parse_sources_csv
 
-    _src_tuple = parse_sources_csv(sources)
+    _src_tuple = parse_sources_csv(_sources)
     events_result = inbox_wait_impl(
-        timeout=int(timeout) if timeout else None,
+        timeout=int(_timeout) if _timeout else None,
     )
     events = events_result.get("items", []) if isinstance(events_result, dict) else []
     if not events:

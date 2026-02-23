@@ -6,7 +6,6 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any
 
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
@@ -21,7 +20,7 @@ def concurrency_show_cmd(format: str | None = None) -> None:
     """Show current concurrency limit and utilization (WP-5001)."""
     from rich.table import Table
 
-    from thegent.cli.commands.impl import ps_impl
+    from thegent.cli.commands.session_ops_list_impl import ps_impl
     from thegent.orchestration.resource.load_based_limits import (
         LimitGateConfig,
         compute_dynamic_limit,

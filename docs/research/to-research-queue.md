@@ -1,5 +1,411 @@
 
 
+---
+
+# CONSOLIDATED EXTERNAL RESEARCH CATALOG
+
+**Last Updated:** 2026-02-23
+**Purpose:** Single source of truth for all external tools, libraries, frameworks, and projects researched for thegent ecosystem.
+**Related Documents:**
+- `docs/research/WATCH_LIST_2026-02-23.md` - Repos under observation
+- `docs/research/AVOID_LIST_2026-02-23.md` - Repos to avoid
+- `docs/research/MASTER_AGENT_RESEARCH_INDEX_2026-02-23.md` - Master roadmap
+
+---
+
+## Status Legend
+
+| Status | Meaning |
+|--------|---------|
+| ✅ ADOPT | Integrated or recommended for integration |
+| 👁️ WATCH | Monitoring for maturity, needs validation |
+| ⚠️ AVOID | Do not use (archived, security risks, hype) |
+| 🔍 EVAL | Needs further evaluation |
+| 📚 REF | Reference only, not for integration |
+
+---
+
+## 1. MCP Tools & Servers
+
+### Core Infrastructure
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **MCP Specification** | https://modelcontextprotocol.io/ | ✅ ADOPT | Official MCP v1.0 spec |
+| **MCP Registry** | https://registry.modelcontextprotocol.io/ | ✅ ADOPT | Official server registry |
+| **FastMCP** | https://gofastmcp.com/ | ✅ ADOPT | Python MCP framework |
+| **FastMCP GitHub** | https://github.com/jlowin/fastmcp | ✅ ADOPT | FastMCP source |
+
+### MCP Servers - Code & Development
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **Serena** | https://github.com/oraios/serena | ✅ ADOPT | Semantic code search |
+| **GitHub MCP** | https://github.com/modelcontextprotocol/servers/tree/main/src/github | ✅ ADOPT | GitHub operations |
+| **Git MCP** | https://github.com/modelcontextprotocol/servers/tree/main/src/git | ✅ ADOPT | Git operations |
+| **JetBrains MCP Plugin** | https://plugins.jetbrains.com/plugin/26071-mcp-server | ✅ ADOPT | IDE integration |
+| **Serena JetBrains** | https://plugins.jetbrains.com/plugin/28946-serena | ✅ ADOPT | Serena for JetBrains |
+
+### MCP Servers - Browser & Search
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **Puppeteer MCP** | https://github.com/modelcontextprotocol/servers/tree/main/src/puppeteer | ✅ ADOPT | Browser automation |
+| **Brave Search MCP** | https://github.com/modelcontextprotocol/servers/tree/main/src/brave_search | ✅ ADOPT | Web search |
+
+### MCP Servers - Database & Storage
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **Postgres MCP** | https://github.com/modelcontextprotocol/servers/tree/main/src/postgres | ✅ ADOPT | PostgreSQL integration |
+| **SQLite MCP** | https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite | ✅ ADOPT | SQLite integration |
+| **Memory MCP** | https://github.com/modelcontextprotocol/servers/tree/main/src/memory | ✅ ADOPT | Persistent memory |
+
+### Specialized MCP Servers
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **HexStrike AI** | https://github.com/0x4m4/hexstrike-ai | 7K | 🔍 EVAL | 150+ security tools |
+| **NotebookLM MCP** | https://github.com/jacob-bd/notebooklm-cli | 1K+ | 🔍 EVAL | NotebookLM CLI |
+| **Context7** | Various | N/A | ✅ ADOPT | Context management |
+
+---
+
+## 2. Agent Frameworks & Orchestration
+
+### Tier 1: Major Frameworks
+
+| Project | URL | Stars | Status | Key Features |
+|---------|-----|-------|--------|--------------|
+| **LangGraph** | https://github.com/langchain-ai/langgraph | 50K+ | ✅ ADOPT | DAG-based orchestration |
+| **CrewAI** | https://github.com/joaomdmoura/crewAI | 35K+ | ✅ ADOPT | Role-based multi-agent |
+| **AutoGen v0.4** | https://github.com/microsoft/autogen | 40K+ | 👁️ WATCH | Event-driven, merging with Semantic Kernel |
+| **OpenAI Agents SDK** | https://github.com/openai/openai-agents-sdk | 30K+ | ✅ ADOPT | Production-ready handoffs |
+| **Temporal.io** | https://github.com/temporalio/temporal | 15K+ | ✅ ADOPT | Deterministic workflows |
+| **Prefect** | https://github.com/PrefectHQ/prefect | 18K+ | ✅ ADOPT | Workflow-first, cost tracking |
+
+### Tier 2: Emerging Frameworks
+
+| Project | URL | Stars | Status | Key Features |
+|---------|-----|-------|--------|--------------|
+| **Superpowers** | https://github.com/obra/superpowers | 55K+ | 🔍 EVAL | Skills-based framework |
+| **agentic-flow** | https://github.com/ruvnet/agentic-flow | 5K+ | 🔍 EVAL | 352x faster execution |
+| **claude-code-flow** | https://github.com/ruvnet/claude-code-flow | 3K+ | 🔍 EVAL | Multi-agent orchestration |
+| **Klavis AI** | https://github.com/Klavis-AI/klavis | 5K+ | ✅ ADOPT | MCP integration, OAuth2 |
+| **mcp-use** | https://github.com/mcp-use/mcp-use | 9K+ | ✅ ADOPT | Fullstack MCP framework |
+| **Heurist Agent Framework** | https://github.com/heurist-network/heurist-agent-framework | 775 | 🔍 EVAL | Blockchain-native |
+| **PySpur** | https://github.com/PySpur-Dev/pyspur | 5K+ | 🔍 EVAL | Visual workflow builder |
+| **OctoTools** | https://github.com/octotools/octotools | 1K+ | 🔍 EVAL | Extensible tool system |
+| **SE-Agent** | https://github.com/JARVIS-Xs/SE-Agent | 233 | 🔍 EVAL | Self-evolution |
+| **Open-AgentRL** | https://github.com/Gen-Verse/Open-AgentRL | 277 | 🔍 EVAL | RL training framework |
+| **VERL-Tool** | https://github.com/TIGER-AI-Lab/verl-tool | 874 | 🔍 EVAL | Versatile RL toolkit |
+
+---
+
+## 3. AI Gateways & Proxies
+
+### Production Gateways
+
+| Project | URL | Stars | Status | Key Features |
+|---------|-----|-------|--------|--------------|
+| **LiteLLM** | https://github.com/BerriAI/litellm | 15K+ | ✅ ADOPT | 100+ providers, load balancing |
+| **OpenRouter** | https://openrouter.ai/ | N/A | ✅ ADOPT | Multi-provider routing |
+| **Portkey** | https://github.com/Portkey-AI/portkey | 5K+ | ✅ ADOPT | Observability, retries |
+| **Cloudflare AI Gateway** | https://developers.cloudflare.com/ai-gateway/ | N/A | ✅ ADOPT | Edge gateway |
+| **Kong AI Gateway** | https://github.com/Kong/kong | 40K+ | ✅ ADOPT | Enterprise API gateway |
+| **Vercel AI Gateway** | https://vercel.com/ai | N/A | ✅ ADOPT | Edge-first gateway |
+| **Bifrost** | https://github.com/maximhq/bifrost | 1K+ | 👁️ WATCH | Gateway claims need validation |
+
+---
+
+## 4. Observability & Monitoring
+
+| Project | URL | Stars | Status | Key Features |
+|---------|-----|-------|--------|--------------|
+| **AgentOps** | https://github.com/AgentOps-AI/agentops | 3K+ | ✅ ADOPT | Agent observability, cost tracking |
+| **LangSmith** | https://www.langchain.com/langsmith | N/A | 👁️ WATCH | LLM tracing (LangChain-centric) |
+| **Helicone** | https://github.com/Helicone/helicone | 3K+ | ✅ ADOPT | Open-source LLM observability |
+| **Agentic-Radar** | https://github.com/splx-ai/agentic-radar | 914 | 🔍 EVAL | Security monitoring |
+| **Datadog** | https://www.datadoghq.com/ | N/A | ✅ ADOPT | APM, metrics, logging |
+| **OpenTelemetry GenAI** | https://opentelemetry.io/docs/specs/semconv/gen-ai/ | N/A | ✅ ADOPT | Semantic conventions |
+
+---
+
+## 5. Vector Databases & Memory
+
+| Project | URL | Stars | Status | Key Features |
+|---------|-----|-------|--------|--------------|
+| **ruvector** | https://github.com/ruvnet/ruvector | 1K+ | 🔍 EVAL | Rust, WASM, 61μs latency |
+| **rvlite** | https://github.com/ruvnet/ruvector/tree/main/rvlite | N/A | 🔍 EVAL | Lightweight WASM vector DB |
+| **Cognee** | https://github.com/topoteretes/cognee | 2K+ | 👁️ WATCH | Alt memory engine |
+| **Supermemory** | https://github.com/supermemoryai/supermemory | 5K+ | 🔍 EVAL | AI memory layer |
+| **mem0** | https://github.com/mem0ai/mem0 | 20K+ | ✅ ADOPT | Memory baseline |
+| **Graphiti** | https://github.com/getzep/graphiti | 3K+ | 👁️ WATCH | Graph-based memory |
+
+---
+
+## 6. Security & Governance
+
+### Policy & Access Control
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **Open Policy Agent** | https://github.com/open-policy-agent/opa | ✅ ADOPT | Policy-as-code |
+| **NeMo Guardrails** | https://github.com/NVIDIA-NeMo/Guardrails | ✅ ADOPT | LLM guardrails |
+| **Oso** | https://www.osohq.com/ | ✅ ADOPT | Authorization for AI agents |
+| **Guardrails AI** | https://github.com/guardrails-ai/guardrails | ✅ ADOPT | Input/output validation |
+
+### Security Tools
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **HexStrike AI** | https://github.com/0x4m4/hexstrike-ai | 7K | 🔍 EVAL | 150+ security tools via MCP |
+| **Pyscan** | https://github.com/aswinnnn/pyscan | 500+ | 🔍 EVAL | Python dependency security |
+| **gitleaks** | https://github.com/gitleaks/gitleaks | 15K+ | ✅ ADOPT | Secrets scanning |
+
+---
+
+## 7. CLI Tools & Developer Experience
+
+### Modern CLI Tools (Adopt)
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **ripgrep** | https://github.com/BurntSushi/ripgrep | 50K+ | ✅ ADOPT | Fast search |
+| **fd** | https://github.com/sharkdp/fd | 35K+ | ✅ ADOPT | Fast find |
+| **bat** | https://github.com/sharkdp/bat | 50K+ | ✅ ADOPT | Cat with syntax |
+| **dust** | https://github.com/bootandy/dust | 8K+ | ✅ ADOPT | Disk usage |
+| **hyperfine** | https://github.com/sharkdp/hyperfine | 20K+ | ✅ ADOPT | Benchmarking |
+| **zoxide** | https://github.com/ajeetdsouza/zoxide | 20K+ | ✅ ADOPT | Smart cd |
+| **VHS** | https://github.com/charmbracelet/vhs | 15K+ | ✅ ADOPT | Terminal GIFs |
+| **trurl** | https://github.com/curl/trurl | 2K+ | ✅ ADOPT | URL parsing (curl creator) |
+
+### CLI Tools (Evaluate)
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **mq** | https://github.com/harehare/mq | 500+ | 🔍 EVAL | Markdown processing (jq-like) |
+| **open-codex** | https://github.com/open-codex/open-codex | 1K+ | 🔍 EVAL | Open-source Codex CLI |
+
+### Git Tools
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **Gitoxide** | https://github.com/GitoxideLabs/gitoxide | 10K+ | ✅ ADOPT | Rust Git implementation |
+| **GitHub CLI** | https://github.com/cli/cli | 40K+ | ✅ ADOPT | Official GitHub CLI |
+| **Stargazer** | https://github.com/gennaro-tedesco/stargazer | 500+ | 📚 REF | GitHub stats CLI |
+| **unreleased** | https://github.com/dhth/unreleased | 200+ | 📚 REF | View commits since release |
+| **GitSlice** | https://github.com/05sanjaykumar/gitslice | 100+ | 📚 REF | Extract folders from repos |
+
+### Terminal Frameworks
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **Zellij** | https://zellij.dev/ | 20K+ | ✅ ADOPT | Terminal multiplexer |
+| **ratatui** | https://github.com/ratatui-org/ratatui | 10K+ | ✅ ADOPT | Rust TUI framework |
+| **Textual** | https://github.com/Textualize/textual | 25K+ | ✅ ADOPT | Python TUI framework |
+| **Starship** | https://starship.rs/ | 45K+ | ✅ ADOPT | Cross-shell prompt |
+| **Ghostty** | https://ghostty.org/ | 30K+ | ✅ ADOPT | Fast terminal emulator |
+
+---
+
+## 8. Documentation Tools
+
+### Documentation Frameworks
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **VitePress** | https://vitepress.dev/ | 30K+ | ✅ ADOPT | Vue-powered docs |
+| **MkDocs Material** | https://squidfunk.github.io/mkdocs-material/ | 20K+ | ✅ ADOPT | Material design docs |
+| **Docusaurus** | https://docusaurus.io/ | 50K+ | ✅ ADOPT | React docs |
+| **Sphinx** | https://www.sphinx-doc.org/ | 6K+ | ✅ ADOPT | Python docs |
+
+### API Documentation
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **Swagger UI** | https://swagger.io/tools/swagger-ui/ | ✅ ADOPT | OpenAPI UI |
+| **Redocly** | https://redocly.com/ | ✅ ADOPT | API docs |
+| **Scalar** | https://github.com/scalar/scalar | 5K+ | ✅ ADOPT | Modern API docs |
+| **RapiDoc** | https://rapidocweb.com/ | ✅ ADOPT | OpenAPI viewer |
+
+### Documentation Linting
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **Vale** | https://github.com/errata-ai/vale | 5K+ | ✅ ADOPT | Prose linter |
+| **testthedocs** | https://github.com/testthedocs | N/A | ✅ ADOPT | Doc testing tools |
+| **Doc Detective** | https://github.com/doc-detective/doc-detective | 500+ | 🔍 EVAL | Doc testing framework |
+| **Lychee** | https://github.com/lycheeverse/lychee | 5K+ | ✅ ADOPT | Link checker |
+
+### Style Guides
+
+| Resource | URL | Status | Description |
+|----------|-----|--------|-------------|
+| **18F Content Guide** | https://guides.18f.gov/content-guide/ | ✅ ADOPT | Government content |
+| **Diátaxis** | https://diataxis.fr/ | ✅ ADOPT | Doc framework |
+| **Write the Docs** | https://www.writethedocs.org/guide/ | ✅ ADOPT | Doc community |
+
+---
+
+## 9. Search APIs & Retrieval
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **Tavily** | https://docs.tavily.com/ | ✅ ADOPT | Agentic search |
+| **SerpAPI** | https://serpapi.com/search-api | ✅ ADOPT | Search results API |
+| **Exa** | https://docs.exa.ai/ | ✅ ADOPT | AI-native search |
+| **Firecrawl** | https://docs.firecrawl.dev/ | ✅ ADOPT | Web scraping |
+| **Perplexity API** | https://docs.perplexity.ai/ | ✅ ADOPT | Search + generation |
+
+---
+
+## 10. LLM Providers & APIs
+
+### Provider Documentation
+
+| Provider | API URL | Status | Notes |
+|----------|---------|--------|-------|
+| **Anthropic** | https://api.anthropic.com | ✅ ADOPT | Claude models |
+| **OpenAI** | https://api.openai.com | ✅ ADOPT | GPT models |
+| **OpenRouter** | https://openrouter.ai/api/v1 | ✅ ADOPT | Multi-provider |
+| **LiteLLM** | http://localhost:4000 (proxy) | ✅ ADOPT | Self-hosted proxy |
+| **MiniMax** | https://platform.minimax.io/api/paas/v4 | ✅ ADOPT | Codex CLI support |
+| **Zhipu (GLM)** | https://open.bigmodel.cn/api/paas/v4 | ✅ ADOPT | Chinese provider |
+| **Kilo** | https://api.kilo.ai/v1 | 👁️ WATCH | Emerging provider |
+| **Roo Code** | https://api.roocode.com/v1 | 👁️ WATCH | Emerging provider |
+
+---
+
+## 11. Infrastructure & Deployment
+
+### Container & Orchestration
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **Docker Compose-for-Agents** | https://github.com/docker/compose-for-agents | 843 | ✅ ADOPT | Official Docker agent tooling |
+| **AgentGateway** | https://github.com/agentgateway/agentgateway | 1K+ | 🔍 EVAL | Rust agentic proxy |
+| **Sandbox** | https://github.com/agent-infra/sandbox | 2K+ | 🔍 EVAL | All-in-one agent sandbox |
+| **E2B** | https://e2b.dev/ | 10K+ | ✅ ADOPT | Code execution sandbox |
+
+### CI/CD
+
+| Project | URL | Status | Description |
+|---------|-----|--------|-------------|
+| **GitHub Actions** | https://docs.github.com/en/actions | ✅ ADOPT | CI/CD platform |
+| **Codecov** | https://about.codecov.io/ | ✅ ADOPT | Coverage |
+| **Renovate** | https://github.com/renovatebot/renovate | ✅ ADOPT | Dependency updates |
+| **check-jsonschema** | https://github.com/python-jsonschema/check-jsonschema | ✅ ADOPT | Schema validation |
+
+---
+
+## 12. Protocol Specifications
+
+| Protocol | URL | Status | Description |
+|----------|-----|--------|-------------|
+| **MCP v1.0** | https://modelcontextprotocol.io/ | ✅ ADOPT | Model Context Protocol |
+| **ACP** | https://agentclientprotocol.com/ | ✅ ADOPT | Agent Client Protocol |
+| **MCP SEPs** | https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/seps | 📚 REF | Protocol extensions |
+| **OpenAI Responses API** | https://platform.openai.com/docs/api-reference/responses | ✅ ADOPT | Responses API |
+| **Spec Kit** | https://github.com/github/spec-kit | ✅ ADOPT | Spec-driven workflows |
+
+---
+
+## 13. External Project Ecosystem
+
+### ruvnet Ecosystem (Watch)
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **ruvector** | https://github.com/ruvnet/ruvector | 1K+ | 🔍 EVAL | High-performance vector DB |
+| **agentic-flow** | https://github.com/ruvnet/agentic-flow | 5K+ | 🔍 EVAL | Agent framework |
+| **claude-code-flow** | https://github.com/ruvnet/claude-code-flow | 3K+ | 🔍 EVAL | Multi-agent orchestration |
+
+### bar181 Ecosystem (Reference)
+
+| Project | URL | Stars | Status | Description |
+|---------|-----|-------|--------|-------------|
+| **aisp-open-core** | https://github.com/bar181/aisp-open-core | 500+ | 📚 REF | Spec-driven development |
+| **fastapi-agents** | https://github.com/bar181/fastapi-agents | 200+ | 📚 REF | FastAPI agent patterns |
+
+---
+
+## 14. Avoid List
+
+> See `docs/research/AVOID_LIST_2026-02-23.md` for details
+
+### Critical Avoid
+
+| Project | Reason | Severity |
+|---------|--------|----------|
+| `textcortex/claude-code-sandbox` | ARCHIVED | Critical |
+| `mediar-ai/MCP-server-client-computer-use-ai-sdk` | High-privilege, unclear security | Critical |
+
+### Avoid Patterns (Not Specific Projects)
+
+| Pattern | Reason |
+|---------|--------|
+| "Fully autonomous while you sleep" | Hype, omits failure costs |
+| "Do-everything" agents without boundaries | Fragility, context blowups |
+| Token reduction without quality benchmarks | Hidden regressions |
+| Security automation without isolation | Prompt injection risks |
+| ruvnet social signals (Reddit, LinkedIn) | Anecdotal only, not technical |
+
+---
+
+## 15. Adopt/Watch/Avoid Summary Matrix
+
+### Adopt Now (Tier 1)
+1. **MCP ecosystem** with curated server set (Context7, GitHub, browser/search, DB, memory)
+2. **Spec-driven workflows** (Spec Kit, GoopSpec, PRD-first flows)
+3. **Cost/limit observability** (cclimits, usage bars, ai-heatmap)
+4. **Multi-agent orchestration** with strict boundaries (subagents, task tool patterns)
+5. **Memory tooling** (markdown-backed/project-local memory, historian/context engines)
+6. **Vale linter** for documentation quality
+7. **Quality/governance baseline** (pre-commit, actionlint, lychee, cspell, gitleaks)
+
+### Watch (Tier 2)
+1. **OpenCode ecosystem tools** (Flowchestra, bars/companions, remote triggers)
+2. **Token compression/pruning approaches** (SWE-Pruner, managed MCP routing)
+3. **Agent deployment platforms** ("Vercel for agents", cloud sandboxes)
+4. **ruvnet ecosystem** (strict validation required)
+5. **Augment Code Context Engine** (pilot with hard gates)
+
+### Avoid Hype
+1. "Fully autonomous while you sleep" claims
+2. Broad "do-everything" agents without domain boundaries
+3. Token reduction claims without quality benchmarks
+4. Security-sensitive automation without isolation
+
+---
+
+## Summary Statistics
+
+| Category | Count | Primary Status |
+|----------|-------|----------------|
+| MCP Tools & Servers | 20+ | Mostly Adopt |
+| Agent Frameworks | 17 | Mixed (Adopt/Watch/Eval) |
+| AI Gateways | 7 | Adopt |
+| Observability | 6 | Adopt |
+| Vector DBs | 6 | Eval/Watch |
+| Security Tools | 6 | Adopt/Eval |
+| CLI Tools | 25+ | Mostly Adopt |
+| Documentation | 15+ | Adopt |
+| Search APIs | 5 | Adopt |
+| Infrastructure | 10+ | Adopt/Eval |
+| **Total Projects** | **120+** | - |
+
+---
+
+## Maintenance Notes
+
+1. **Update Cadence**: Quarterly review recommended
+2. **Status Changes**: Document any status changes with rationale
+3. **New Additions**: Add to appropriate category with full research
+4. **Deprecations**: Move to Avoid List with clear reason
+
+---
+
 ## Deep Research Expansion (204 links discovered)
 
 ### Reddit (r/github)

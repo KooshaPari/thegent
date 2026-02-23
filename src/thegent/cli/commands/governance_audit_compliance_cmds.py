@@ -24,7 +24,7 @@ from thegent.cli.commands._cli_shared import (
 
 def data_protection_cmd(format: str | None = None) -> None:
     """Show status of data protection and privacy controls."""
-    from thegent.cli.commands.impl import get_data_protection_status_impl
+    from thegent.cli.commands.observability_main_impl import get_data_protection_status_impl
 
     status = get_data_protection_status_impl()
 
@@ -56,7 +56,7 @@ def compliance_report_cmd(
     output: Path | None = None,
 ) -> None:
     """Generate compliance evidence retention report (WP-3006)."""
-    from thegent.cli.commands.impl import get_compliance_report_impl
+    from thegent.cli.commands.observability_main_impl import get_compliance_report_impl
 
     report = get_compliance_report_impl()
     fmt = _normalize_output_format(format)

@@ -124,8 +124,8 @@ def pause_cmd(session_id: str | None = None) -> None:
 
 def resume_cmd(
     session_id: str | None = None,
-    prompt: str | None = None,
-    skills: list[str] | None = None,
+    _prompt: str | None = None,
+    _skills: list[str] | None = None,
 ) -> None:
     """Resume a session in the registry state machine."""
     from thegent.execution import RunRegistry
