@@ -1,116 +1,45 @@
-"""Execution module - organizes execution.py classes by domain.
+"""Execution module - re-exports all symbols from execution.py for backward compatibility.
 
-This module re-exports all classes from execution.py for backward compatibility.
-The execution.py file contains 35+ classes spanning multiple domains:
-
-- State & Metadata: RunState, RunMeta, CheckpointMeta, etc.
-- Concurrency: ConcurrencyController, IdempotencyManager, LaneController
-- Resilience: DLQManager, DeferralQueue, ReplayManager, CircuitBreakerRegistry
-- Policy: PolicyEngine, ProviderScorer, TrustBoundaryValidator
-- Audit: AuditRegistry, CheckpointRegistry, RunRegistry
-- History: ChatHistory, MessageRegistry
-- Diagnostics: get_execution_diagnostics, reset_execution_diagnostics
-
-For a full modular refactor, consider splitting into:
-- execution/state.py - RunState, RunMeta, CheckpointMeta
-- execution/resilience.py - DLQManager, DeferralQueue, CircuitBreakerRegistry
-- execution/policy.py - PolicyEngine, ProviderScorer
-- execution/audit.py - AuditRegistry, CheckpointRegistry
-- execution/history.py - ChatHistory, MessageRegistry
+The flat execution.py file contains 35+ classes. This package __init__ forwards
+all attribute lookups to that file via importlib so both
+`from thegent.execution import X` and `import thegent.execution; thegent.execution.X`
+continue to work.
 """
 
-from thegent.execution import (
-    # State Enums
-    AgentSource,
-    InteractivityMode,
-    RunState,
-    # Metadata Models
-    CheckpointMeta,
-    ContinuityPacket,
-    MAIFArtifact,
-    RunMeta,
-    # Concurrency
-    ConcurrencyController,
-    IdempotencyManager,
-    LaneController,
-    LoadClassifier,
-    # Resilience
-    CircuitBreakerRegistry,
-    DeferralQueue,
-    DLQManager,
-    EscalationQueue,
-    HandoffManager,
-    ReplayManager,
-    # Tracking
-    CalibrationRegistry,
-    ContinuityWatchdog,
-    FreshnessValidator,
-    InterruptionTracker,
-    KPIManager,
-    # Policy
-    EvidenceLinter,
-    OverrideRegistry,
-    PolicyEngine,
-    ProviderScorer,
-    TrustBoundaryValidator,
-    # History
-    AuditEntry,
-    AuditRegistry,
-    ChatEntry,
-    ChatHistory,
-    CheckpointRegistry,
-    MessageEntry,
-    MessageRegistry,
-    RunRegistry,
-    # Diagnostics
-    get_execution_diagnostics,
-    reset_execution_diagnostics,
-)
+from __future__ import annotations
 
-__all__ = [
-    # State Enums
-    "AgentSource",
-    "InteractivityMode",
-    "RunState",
-    # Metadata Models
-    "CheckpointMeta",
-    "ContinuityPacket",
-    "MAIFArtifact",
-    "RunMeta",
-    # Concurrency
-    "ConcurrencyController",
-    "IdempotencyManager",
-    "LaneController",
-    "LoadClassifier",
-    # Resilience
-    "CircuitBreakerRegistry",
-    "DeferralQueue",
-    "DLQManager",
-    "EscalationQueue",
-    "HandoffManager",
-    "ReplayManager",
-    # Tracking
-    "CalibrationRegistry",
-    "ContinuityWatchdog",
-    "FreshnessValidator",
-    "InterruptionTracker",
-    "KPIManager",
-    # Policy
-    "EvidenceLinter",
-    "OverrideRegistry",
-    "PolicyEngine",
-    "ProviderScorer",
-    "TrustBoundaryValidator",
-    # History
-    "AuditEntry",
-    "AuditRegistry",
-    "ChatEntry",
-    "ChatHistory",
-    "CheckpointRegistry",
-    "MessageEntry",
-    "MessageRegistry",
-    "RunRegistry",
-    # Diagnostics
-    "get_execution_diagnostics",
-    "reset_execution_diagnostics",
-]
+import importlib
+import importlib.util
+import sys
+from pathlib import Path
+from typing import Any
+
+# Load the flat execution.py file as a sibling module.
+# It lives at src/thegent/execution.py which is shadowed by this package,
+# so we load it explicitly by file path.
+_EXECUTION_PY = Path(__file__).parent.parent / "execution.py"
+_MODULE_NAME = "thegent._execution_flat"
+
+if _MODULE_NAME not in sys.modules:
+    _spec = importlib.util.spec_from_file_location(_MODULE_NAME, _EXECUTION_PY)
+    if _spec is None or _spec.loader is None:
+        raise ImportError(f"Cannot load {_EXECUTION_PY}")
+    _mod = importlib.util.module_from_spec(_spec)
+    sys.modules[_MODULE_NAME] = _mod
+    _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
+
+_flat = sys.modules[_MODULE_NAME]
+
+# Re-export every public name from the flat module into this package namespace.
+_PUBLIC = [name for name in dir(_flat) if not name.startswith("_")]
+for _name in _PUBLIC:
+    globals()[_name] = getattr(_flat, _name)
+
+__all__ = _PUBLIC
+
+
+def __getattr__(name: str) -> Any:
+    try:
+        return getattr(_flat, name)
+    except AttributeError:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None
