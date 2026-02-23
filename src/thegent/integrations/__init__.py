@@ -24,8 +24,8 @@ from thegent.integrations.connector_timeout import (
     ConnectorTimeoutRegistry,
 )
 from thegent.integrations.connector_sla import (
-    ConnectorSLAConfig,
-    ConnectorSLARegistry,
+
+
 )
 from thegent.integrations.connector_toggle import (
     ConnectorToggle,
@@ -128,8 +128,8 @@ __all__ = [
     "SignedCapabilityConfig",
     "ToggleState",
     # Connector
-    "ConnectorSLAConfig",
-    "ConnectorSLARegistry",
+    
+    
     "ConnectorTimeoutConfig",
     "ConnectorTimeoutRegistry",
     "ConnectorToggle",
