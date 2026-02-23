@@ -48,8 +48,8 @@ def test_validate_explicit_ollama_provider_returns_model_install_message() -> No
     from thegent.cli.commands.impl import _validate_explicit_ollama_provider
 
     with (
-        patch("thegent.routing.ollama_provider.assert_ollama_available", return_value=None),
-        patch("thegent.routing.ollama_provider.get_available_models", return_value=[]),
+        patch("thegent.utils.routing_impl.ollama_provider.assert_ollama_available", return_value=None),
+        patch("thegent.utils.routing_impl.ollama_provider.get_available_models", return_value=[]),
     ):
         msg = _validate_explicit_ollama_provider(provider="ollama-local", model="llama3.3")
 
@@ -62,8 +62,8 @@ def test_validate_explicit_ollama_provider_returns_none_when_model_is_installed(
     from thegent.cli.commands.impl import _validate_explicit_ollama_provider
 
     with (
-        patch("thegent.routing.ollama_provider.assert_ollama_available", return_value=None),
-        patch("thegent.routing.ollama_provider.get_available_models", return_value=["llama3.3", "mistral"]),
+        patch("thegent.utils.routing_impl.ollama_provider.assert_ollama_available", return_value=None),
+        patch("thegent.utils.routing_impl.ollama_provider.get_available_models", return_value=["llama3.3", "mistral"]),
     ):
         msg = _validate_explicit_ollama_provider(provider="ollama", model="ollama/llama3.3")
 

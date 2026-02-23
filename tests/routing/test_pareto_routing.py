@@ -76,7 +76,7 @@ class TestApplyParetoRouting:
     def test_selected_provider_and_model_returned(self):
         """The provider and model from ParetoRouter.select() are returned as agent and model."""
         # @trace FR-ROU-001
-        with patch("thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE):
+        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE):
             agent, model, _, _ = self._call()
         assert agent == _FAKE_CANDIDATE.provider
         assert model == _FAKE_CANDIDATE.model
@@ -109,7 +109,7 @@ class TestApplyParetoRouting:
     def test_no_op_when_agent_set(self):
         """ParetoRouter.select() must NOT be called when agent is already specified."""
         # @trace FR-ROU-001
-        with patch("thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
             agent, _model, _, _ = self._call(agent="existing-agent")
         assert not mock_select.called
         assert agent == "existing-agent"
@@ -119,7 +119,7 @@ class TestApplyParetoRouting:
     def test_no_op_when_model_set(self):
         """ParetoRouter.select() must NOT be called when model is already specified."""
         # @trace FR-ROU-001
-        with patch("thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
             _agent, model, _, _ = self._call(model="some-model")
         assert not mock_select.called
         assert model == "some-model"
@@ -129,7 +129,7 @@ class TestApplyParetoRouting:
     def test_no_op_when_routing_not_pareto(self):
         """ParetoRouter.select() must NOT be called when routing != 'pareto'."""
         # @trace FR-ROU-001
-        with patch("thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
             agent, model, _, _ = self._call(routing="prefer_direct")
         assert not mock_select.called
         assert agent is None  # unchanged
@@ -140,7 +140,7 @@ class TestApplyParetoRouting:
     def test_include_contract_populates_metadata(self):
         """When include_contract=True, route_contract and route_request are populated."""
         # @trace FR-ROU-001
-        with patch("thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE):
+        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE):
             _, _, rc, rr = self._call(include_contract=True)
         assert rc is not None, "route_contract should be populated"
         assert rc.get("routing_policy") == "pareto"
@@ -155,7 +155,7 @@ class TestApplyParetoRouting:
         # @trace FR-ROU-001
         orig_rc = {"existing": "value"}
         orig_rr = {"existing": "value"}
-        with patch("thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE):
+        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE):
             _, _, rc, rr = self._call(
                 include_contract=False,
                 route_contract=orig_rc,
@@ -168,7 +168,7 @@ class TestApplyParetoRouting:
     def test_none_routing_is_no_op(self):
         """routing=None leaves agent and model unchanged."""
         # @trace FR-ROU-001
-        with patch("thegent.routing.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
             agent, model, _, _ = self._call(routing=None)
         assert not mock_select.called
         assert agent is None

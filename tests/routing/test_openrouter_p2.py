@@ -620,7 +620,7 @@ class TestAppendGenerationId:
 
         store = tmp_path / ".thegent" / "generation_id_store.jsonl"
 
-        with patch("thegent.routing.litellm_responses_handler._GENERATION_ID_STORE", store):
+        with patch("thegent.utils.routing_impl.litellm_responses_handler._GENERATION_ID_STORE", store):
             _append_generation_id("req-001", "gen-abc")
 
         assert store.exists()
@@ -633,7 +633,7 @@ class TestAppendGenerationId:
 
         store = tmp_path / ".thegent" / "generation_id_store.jsonl"
 
-        with patch("thegent.routing.litellm_responses_handler._GENERATION_ID_STORE", store):
+        with patch("thegent.utils.routing_impl.litellm_responses_handler._GENERATION_ID_STORE", store):
             _append_generation_id("req-001", "gen-aaa")
             _append_generation_id("req-002", "gen-bbb")
             _append_generation_id("req-003", "gen-ccc")
@@ -649,7 +649,7 @@ class TestAppendGenerationId:
 
         store = tmp_path / "deep" / "nested" / "dir" / "store.jsonl"
 
-        with patch("thegent.routing.litellm_responses_handler._GENERATION_ID_STORE", store):
+        with patch("thegent.utils.routing_impl.litellm_responses_handler._GENERATION_ID_STORE", store):
             _append_generation_id("req-x", "gen-x")
 
         assert store.exists()
@@ -659,7 +659,7 @@ class TestAppendGenerationId:
 
         store = tmp_path / "store.jsonl"
 
-        with patch("thegent.routing.litellm_responses_handler._GENERATION_ID_STORE", store):
+        with patch("thegent.utils.routing_impl.litellm_responses_handler._GENERATION_ID_STORE", store):
             _append_generation_id("req-json", 'gen-with-"quotes"')
 
         line = store.read_text().strip()
@@ -697,8 +697,8 @@ class TestOR19GenerationIdCaptureFromStream:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with (
-            patch("thegent.routing.litellm_responses_handler.get_litellm_router", return_value=mock_router),
-            patch("thegent.routing.litellm_responses_handler._GENERATION_ID_STORE", store),
+            patch("thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router", return_value=mock_router),
+            patch("thegent.utils.routing_impl.litellm_responses_handler._GENERATION_ID_STORE", store),
         ):
             from starlette.applications import Starlette
             from starlette.routing import Route
@@ -733,8 +733,8 @@ class TestOR19GenerationIdCaptureFromStream:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with (
-            patch("thegent.routing.litellm_responses_handler.get_litellm_router", return_value=mock_router),
-            patch("thegent.routing.litellm_responses_handler._GENERATION_ID_STORE", store),
+            patch("thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router", return_value=mock_router),
+            patch("thegent.utils.routing_impl.litellm_responses_handler._GENERATION_ID_STORE", store),
         ):
             from starlette.applications import Starlette
             from starlette.routing import Route
@@ -763,8 +763,8 @@ class TestOR19GenerationIdCaptureFromStream:
         body = json.dumps(_make_responses_body(model="gpt-4o", stream=True)).encode()
 
         with (
-            patch("thegent.routing.litellm_responses_handler.get_litellm_router", return_value=mock_router),
-            patch("thegent.routing.litellm_responses_handler._GENERATION_ID_STORE", store),
+            patch("thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router", return_value=mock_router),
+            patch("thegent.utils.routing_impl.litellm_responses_handler._GENERATION_ID_STORE", store),
         ):
             from starlette.applications import Starlette
             from starlette.routing import Route

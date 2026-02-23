@@ -34,7 +34,7 @@ class TestIsOllamaAvailable:
 
         mock_resp = MagicMock()
         mock_resp.status_code = 200
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=mock_resp):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=mock_resp):
             assert is_ollama_available() is True
 
     def test_returns_false_on_non_200(self) -> None:
@@ -44,7 +44,7 @@ class TestIsOllamaAvailable:
 
         mock_resp = MagicMock()
         mock_resp.status_code = 503
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=mock_resp):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=mock_resp):
             assert is_ollama_available() is False
 
     def test_returns_false_on_connect_error(self) -> None:
@@ -52,7 +52,7 @@ class TestIsOllamaAvailable:
         # @trace WL-118
         from thegent.utils.routing_impl.ollama_provider import is_ollama_available
 
-        with patch("thegent.routing.ollama_provider.httpx.get", side_effect=httpx.ConnectError("refused")):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", side_effect=httpx.ConnectError("refused")):
             assert is_ollama_available() is False
 
     def test_returns_false_on_timeout(self) -> None:
@@ -73,7 +73,7 @@ class TestIsOllamaAvailable:
 
         mock_resp = MagicMock()
         mock_resp.status_code = 200
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=mock_resp) as mock_get:
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=mock_resp) as mock_get:
             is_ollama_available()
             call_url = mock_get.call_args[0][0]
             assert call_url == OLLAMA_TAGS_ENDPOINT
@@ -97,7 +97,7 @@ class TestGetAvailableModels:
         from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [{"name": "mistral:latest"}, {"name": "llama3.3:latest"}])
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=resp):
             models = get_available_models()
         assert models == ["llama3.3", "mistral"]
 
@@ -107,7 +107,7 @@ class TestGetAvailableModels:
         from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [{"name": "qwen2.5-coder:7b"}])
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=resp):
             models = get_available_models()
         assert "qwen2.5-coder" in models
 
@@ -117,7 +117,7 @@ class TestGetAvailableModels:
         from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [])
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=resp):
             assert get_available_models() == []
 
     def test_raises_on_connect_error(self) -> None:
@@ -140,7 +140,7 @@ class TestGetAvailableModels:
         resp = MagicMock()
         resp.status_code = 500
         resp.content = b""
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=resp):
             with pytest.raises(OllamaUnavailableError, match="HTTP 500"):
                 get_available_models()
 
@@ -150,7 +150,7 @@ class TestGetAvailableModels:
         from thegent.utils.routing_impl.ollama_provider import get_available_models
 
         resp = self._make_response(200, [{"name": "mistral:latest"}, {"name": "mistral:7b"}])
-        with patch("thegent.routing.ollama_provider.httpx.get", return_value=resp):
+        with patch("thegent.utils.routing_impl.ollama_provider.httpx.get", return_value=resp):
             models = get_available_models()
         assert models.count("mistral") == 1
 
@@ -163,7 +163,7 @@ class TestAssertOllamaAvailable:
         # @trace WL-118
         from thegent.utils.routing_impl.ollama_provider import assert_ollama_available
 
-        with patch("thegent.routing.ollama_provider.is_ollama_available", return_value=True):
+        with patch("thegent.utils.routing_impl.ollama_provider.is_ollama_available", return_value=True):
             assert_ollama_available()  # should not raise
 
     def test_raises_when_unavailable(self) -> None:
@@ -171,7 +171,7 @@ class TestAssertOllamaAvailable:
         # @trace WL-118
         from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, assert_ollama_available
 
-        with patch("thegent.routing.ollama_provider.is_ollama_available", return_value=False):
+        with patch("thegent.utils.routing_impl.ollama_provider.is_ollama_available", return_value=False):
             with pytest.raises(OllamaUnavailableError):
                 assert_ollama_available()
 
@@ -180,7 +180,7 @@ class TestAssertOllamaAvailable:
         # @trace WL-118
         from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, assert_ollama_available
 
-        with patch("thegent.routing.ollama_provider.is_ollama_available", return_value=False):
+        with patch("thegent.utils.routing_impl.ollama_provider.is_ollama_available", return_value=False):
             with pytest.raises(OllamaUnavailableError, match="ollama serve"):
                 assert_ollama_available()
 
