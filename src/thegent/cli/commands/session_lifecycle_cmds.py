@@ -230,10 +230,6 @@ def stop_cmd(
     wind_down: bool = False,
     grace: int = 20,
 ) -> None:
-<<<<<<< HEAD
-=======
-
->>>>>>> fix/ci-remove-macos
     sid = _resolve_session_id(session_id)
     settings = ThegentSettings()
     meta_path = _find_session_meta(settings, sid)

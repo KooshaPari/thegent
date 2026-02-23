@@ -68,6 +68,9 @@
   - Local AI (10+)
   - 2026 Resources (15+)
 
+### NEW: External Research Batch 5 - 2024-2025 Edition (2026-02-23)
+- [EXTERNAL_RESEARCH_BATCH5_2024_2025.md](./EXTERNAL_RESEARCH_BATCH5_2024_2025.md) - 500+ established 2024-2025 items
+
 
 
 
