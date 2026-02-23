@@ -1,6 +1,7 @@
 # Worklog Wave 81 - Lane B (2026-02-23)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ## 1) Covered items table (issue id/title/status)
 
 | Issue | Title | Status |
@@ -55,6 +56,8 @@
 2. Add compatibility tests for Bash tool argument mapping (Kiro/Ampcode shape) and verify expected normalized request body.
 3. Draft a short triage addendum mapping #1521/#1514/#1508/#201 as external dependencies with explicit escalation owner and evidence needed for handoff.
 =======
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332
 ## Scope
 - Cover WL-323 and WL-324 from `docs/reference/WORK_STREAM.md:26777-26797`, both marked as small connector reliability/resume initiatives that should produce deterministic, traceable outputs for watchdog instrumentation (`WL-323`) and connector diff reporting (`WL-324`).
 - Highlight the current connector watchdog/autosync apertures and the diff-rendering tooling that already exists so the lane can scope follow-up work.
@@ -76,4 +79,7 @@
 ## Remaining Gaps
 - WL-323 still needs direct integration with the autosync cycle (e.g., log/alert connectors that open the circuit breaker, persist the failure snapshot, and expose the failure digest to downstream telemetry) even though the runner already houses a failure queue, breaker registry, and metric paths.
 - WL-324 requires wiring `DryRunDiff` + `HtmlDiffArtifact` outputs into a connector diff workflow so spinning up/resuming connectors can provide side-by-side comparisons of local vs. remote states; the current code offers renderers but no executor that feeds the renderer from autosync snapshots.
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332

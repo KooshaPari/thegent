@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Worklog Wave 81 - Lane D (Bugs 28-36)
 
 ## 1) Covered items table
@@ -52,6 +53,8 @@
 2. Add a failing regression test for unsupported `user` parameter on OpenAI-compatible route and implement explicit route-aware handling (map or hard-fail with actionable error).
 3. Create a Gemini payload regression test set for empty content/tool-call edge cases (#1293/#1269) and document expected fail-fast errors in local troubleshooting docs.
 =======
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332
 # Wave 81 Lane D Worklog (2026-02-23)
 
 - Scope: analyze WL-327 (Connector policy initiative) and WL-328 (Connector checkpoint initiative) to surface the available evidence about connector reliability/retry-resume hardening and determine what follow-up work is needed.
@@ -73,4 +76,7 @@
 - `nl -ba docs/reports/bulk-wi-b1-lane-c.md | sed -n '610,820p'`
 - `sed -n '60,140p' docs/AUDIT_MODERNIZATION_PLAN.md`
 - `find docs -iname 'WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md' -print`
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
+=======
+>>>>>>> codex/wave81-backlog-reports-321-332
