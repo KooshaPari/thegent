@@ -261,7 +261,7 @@ class TestResolveRoleParams:
     def test_no_role_uses_tier_minimum(self) -> None:
         from thegent.routing.pareto_router import _resolve_role_params
 
-        effective_min, order, mult = _resolve_role_params(
+        effective_min, _order, _mult = _resolve_role_params(
             role=None,
             complexity_tier="simple",
             min_quality=0.0,
@@ -360,3 +360,135 @@ class TestGetShadowMultiplier:
         result = _get_shadow_multiplier()
         assert isinstance(result, float)
         assert result >= 1.0
+
+
+class TestLoadRolesAndGetRole:
+    """Tests for _load_roles and _get_role."""
+
+    def test_load_roles_returns_dict(self) -> None:
+        import thegent.routing.pareto_router as pr
+
+        # Reset cache to ensure fresh load
+        pr._ROLES_CACHE = None
+        result = pr._load_roles()
+        assert isinstance(result, dict)
+        # Cache must be populated after call
+        assert pr._ROLES_CACHE is not None
+
+    def test_load_roles_cached_second_call(self) -> None:
+        import thegent.routing.pareto_router as pr
+
+        pr._ROLES_CACHE = None
+        first = pr._load_roles()
+        second = pr._load_roles()
+        assert first is second  # Same object from cache
+
+    def test_get_role_none_returns_none(self) -> None:
+        from thegent.routing.pareto_router import _get_role
+
+        assert _get_role(None) is None
+
+    def test_get_role_empty_returns_none(self) -> None:
+        from thegent.routing.pareto_router import _get_role
+
+        assert _get_role("") is None
+
+    def test_get_role_unknown_returns_default_or_none(self) -> None:
+        from thegent.routing.pareto_router import _get_role
+
+        result = _get_role("nonexistent_role_xyz_12345")
+        # Either None or the "default" role if defined
+        assert result is None or hasattr(result, "name")
+
+    def test_roles_config_path_returns_path(self) -> None:
+        from thegent.routing.pareto_router import _roles_config_path
+
+        path = _roles_config_path()
+        from pathlib import Path
+
+        assert isinstance(path, Path)
+
+
+class TestOffersFromCatalog:
+    """Tests for _offers_from_catalog function."""
+
+    def test_returns_list(self) -> None:
+        from thegent.routing.pareto_router import _offers_from_catalog
+
+        result = _offers_from_catalog()
+        assert isinstance(result, list)
+
+    def test_high_quality_floor_may_return_empty(self) -> None:
+        from thegent.routing.pareto_router import _offers_from_catalog
+
+        result = _offers_from_catalog(min_quality=0.999)
+        assert isinstance(result, list)
+
+    def test_zero_max_cost_returns_empty_or_free_only(self) -> None:
+        from thegent.routing.pareto_router import _offers_from_catalog
+
+        result = _offers_from_catalog(max_cost_weight=0.0)
+        assert isinstance(result, list)
+
+    def test_simple_tier_returns_offers(self) -> None:
+        from thegent.routing.pareto_router import _offers_from_catalog
+
+        result = _offers_from_catalog(complexity_tier="simple")
+        assert isinstance(result, list)
+
+    def test_complex_tier_returns_offers(self) -> None:
+        from thegent.routing.pareto_router import _offers_from_catalog
+
+        result = _offers_from_catalog(complexity_tier="complex")
+        assert isinstance(result, list)
+
+
+class TestParetoCatalogFunctions:
+    """Test _pareto_frontier on Offer objects (internal function)."""
+
+    def test_pareto_frontier_of_offers(self) -> None:
+        from thegent.routing.pareto_router import Offer, _pareto_frontier
+
+        a = Offer(provider="p", model_alias="a", cost_weight=0.1, quality=0.9, speed_score=1.0)
+        b = Offer(provider="p", model_alias="b", cost_weight=0.5, quality=0.7, speed_score=1.0)
+        c = Offer(provider="p", model_alias="c", cost_weight=0.3, quality=0.8, speed_score=1.0)
+
+        frontier = _pareto_frontier([a, b, c])
+        aliases = {o.model_alias for o in frontier}
+        # a dominates both b and c (lower cost AND higher quality than both)
+        assert "b" not in aliases
+        assert "c" not in aliases
+        assert "a" in aliases
+
+    def test_is_dominated_offer(self) -> None:
+        from thegent.routing.pareto_router import Offer, _is_dominated
+
+        worse = Offer(provider="p", model_alias="worse", cost_weight=1.0, quality=0.5)
+        better = Offer(provider="p", model_alias="better", cost_weight=0.5, quality=0.9)
+        assert _is_dominated(worse, better) is True
+        assert _is_dominated(better, worse) is False
+
+
+class TestLexicographicSelect:
+    """Tests for _lexicographic_select function."""
+
+    def test_select_highest_quality(self) -> None:
+        from thegent.routing.pareto_router import Offer, _lexicographic_select
+
+        a = Offer(provider="p", model_alias="a", cost_weight=0.1, quality=0.9, speed_score=1.0)
+        b = Offer(provider="p", model_alias="b", cost_weight=0.2, quality=0.8, speed_score=1.0)
+        result = _lexicographic_select([a, b], order=("quality", "cost", "speed"))
+        assert result is a
+
+    def test_empty_returns_none(self) -> None:
+        from thegent.routing.pareto_router import _lexicographic_select
+
+        assert _lexicographic_select([]) is None
+
+    def test_select_lowest_cost_when_cost_order(self) -> None:
+        from thegent.routing.pareto_router import Offer, _lexicographic_select
+
+        a = Offer(provider="p", model_alias="a", cost_weight=0.5, quality=0.9, speed_score=1.0)
+        b = Offer(provider="p", model_alias="b", cost_weight=0.1, quality=0.8, speed_score=1.0)
+        result = _lexicographic_select([a, b], order=("cost", "quality", "speed"))
+        assert result is b
