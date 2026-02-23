@@ -40,7 +40,8 @@ _last_provider_metadata: dict[str, Any] = {
 
 def _attach_provider_metadata(provider: ConfigProvider, metadata: dict[str, Any]) -> ConfigProvider:
     try:
-        provider.provider_metadata = dict(metadata)
+        provider_any: Any = provider
+        provider_any.provider_metadata = dict(metadata)
     except (AttributeError, TypeError):
         logger.debug("Failed to attach provider metadata to %s", type(provider).__name__, exc_info=True)
     return provider

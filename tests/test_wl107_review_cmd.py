@@ -140,6 +140,23 @@ def test_review_impl_raises_on_invalid_json_stdout(monkeypatch: pytest.MonkeyPat
         review_impl(prompt="check code")
 
 
+def test_review_impl_accepts_fenced_json_stdout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """review_impl accepts ```json fenced payloads from model output. # @trace WL-107"""
+    fenced = """```json
+{"summary":"All good.","overall_rating":100,"issues":[]}
+```"""
+    monkeypatch.setattr(
+        "thegent.cli.commands.impl.run_impl",
+        lambda **_kw: {"exit_code": 0, "stdout": fenced},
+    )
+
+    from thegent.cli.commands.impl import review_impl
+
+    result = review_impl(prompt="check code")
+    assert result["exit_code"] == 0
+    assert result["issues"] == []
+
+
 def test_review_impl_raises_when_stdout_is_not_string(monkeypatch: pytest.MonkeyPatch) -> None:
     """review_impl raises ValueError when stdout is not a JSON string. # @trace WL-107"""
     monkeypatch.setattr(

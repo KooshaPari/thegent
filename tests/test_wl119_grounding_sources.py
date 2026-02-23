@@ -44,6 +44,12 @@ def test_normalize_grounding_source_url_removes_default_root_trailing_slash() ->
     assert normalize_grounding_source_url("https://docs.example.com/path/") == "https://docs.example.com/path/"
 
 
+def test_normalize_grounding_source_url_unwraps_wrapped_literals() -> None:
+    assert normalize_grounding_source_url("<https://docs.example.com/ref>") == "https://docs.example.com/ref"
+    assert normalize_grounding_source_url("(https://docs.example.com/ref)") == "https://docs.example.com/ref"
+    assert normalize_grounding_source_url("[https://docs.example.com/ref]") == "https://docs.example.com/ref"
+
+
 def test_extract_grounding_sources_from_payload_grounding_metadata() -> None:
     payload = {
         "groundingMetadata": {

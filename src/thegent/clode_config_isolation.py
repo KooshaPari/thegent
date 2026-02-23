@@ -5,10 +5,38 @@ import json
 import logging
 import shutil
 from pathlib import Path
+from typing import TypedDict
 
 _LOG = logging.getLogger(__name__)
 _WARNING_LIMIT = 3
-_isolation_diagnostics: dict[str, object] = {
+
+
+class SettingsCopyDiagnostics(TypedDict):
+    status: str
+    error_type: str | None
+    error_message: str | None
+
+
+class CleanupFailure(TypedDict):
+    target: str
+    failure_type: str
+    error_type: str
+    error_message: str
+
+
+class CleanupDiagnostics(TypedDict):
+    missing_targets: int
+    permission_denied: int
+    failure_count: int
+    last_failure: CleanupFailure | None
+
+
+class IsolationDiagnostics(TypedDict):
+    settings_copy: SettingsCopyDiagnostics
+    cleanup: CleanupDiagnostics
+
+
+_isolation_diagnostics: IsolationDiagnostics = {
     "settings_copy": {
         "status": "not_attempted",
         "error_type": None,
@@ -24,10 +52,21 @@ _isolation_diagnostics: dict[str, object] = {
 _warning_count = 0
 
 
-def get_isolation_diagnostics() -> dict[str, object]:
+def get_isolation_diagnostics() -> IsolationDiagnostics:
     """Return diagnostics for config isolation setup."""
-    settings_copy = dict(_isolation_diagnostics["settings_copy"])  # type: ignore[arg-type]
-    cleanup = dict(_isolation_diagnostics["cleanup"])  # type: ignore[arg-type]
+    raw_settings = _isolation_diagnostics["settings_copy"]
+    settings_copy: SettingsCopyDiagnostics = {
+        "status": raw_settings["status"],
+        "error_type": raw_settings["error_type"],
+        "error_message": raw_settings["error_message"],
+    }
+    raw_cleanup = _isolation_diagnostics["cleanup"]
+    cleanup: CleanupDiagnostics = {
+        "missing_targets": raw_cleanup["missing_targets"],
+        "permission_denied": raw_cleanup["permission_denied"],
+        "failure_count": raw_cleanup["failure_count"],
+        "last_failure": raw_cleanup["last_failure"],
+    }
     return {"settings_copy": settings_copy, "cleanup": cleanup}
 
 
@@ -103,7 +142,7 @@ def ensure_claude_config_isolation(config_dir: Path) -> None:
             if item.name == "settings.json":
                 continue
             target = config_dir / item.name
-            cleanup = _isolation_diagnostics["cleanup"]  # type: ignore[assignment]
+            cleanup = _isolation_diagnostics["cleanup"]
             if not target.exists():
                 cleanup["missing_targets"] = int(cleanup["missing_targets"]) + 1
             if target.exists() and not target.is_symlink():

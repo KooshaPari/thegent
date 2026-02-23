@@ -7,7 +7,7 @@ import asyncio
 import importlib.util
 import json
 import os
-from dataclasses import asdict, is_dataclass
+from dataclasses import is_dataclass
 from pathlib import Path
 from typing import Any
 
@@ -38,10 +38,10 @@ def _serialize_model_data(value: Any) -> dict[str, Any]:
             return dumped
         raise TypeError("dict() must return a mapping")
 
-    if is_dataclass(value):
-        dumped = asdict(value)
-        if isinstance(dumped, dict):
-            return dumped
+    if not isinstance(value, type) and is_dataclass(value):
+        field_names = getattr(value, "__dataclass_fields__", {})
+        if isinstance(field_names, dict):
+            return {str(name): getattr(value, name) for name in field_names}
 
     if isinstance(value, dict):
         return value
@@ -124,7 +124,10 @@ def sync_bootstrap_github(
 ):
     """Run `scripts/bootstrap_sync_workflow_project.py` via an in-process module load."""
     module = _load_bootstrap_sync_module()
-    summary = module.bootstrap_sync_workflow_project(  # type: ignore[union-attr]
+    bootstrap_sync = getattr(module, "bootstrap_sync_workflow_project", None)
+    if not callable(bootstrap_sync):
+        raise RuntimeError("bootstrap_sync_workflow_project() missing from bootstrap module")
+    summary = bootstrap_sync(
         owner=owner,
         repo=repo,
         project_title=project_title,
@@ -608,6 +611,7 @@ def sync_audit(
         console.print(json.dumps(payload, indent=2))
     elif format == "table":
         audit_result = auditor.audit_as_dict()
+        tenancy = contract.tenancy
         console.print("[bold]Sync Policy Audit[/bold]")
         console.print(f"Timestamp: {audit_result['timestamp']}")
         console.print(f"Status: {audit_result['audit_status']}")
@@ -617,10 +621,13 @@ def sync_audit(
         console.print(f"Enabled Connectors: {audit_result['enabled_connectors']}")
         console.print(f"Quota Budgets: {audit_result['quota_budgets']}")
         console.print(f"Policy Modes: {audit_result['policy_modes']}")
-        console.print(
-            f"Tenancy Mode: {contract.tenancy.mode} (projects={len(contract.tenancy.projects)}, "
-            f"default_tenant={contract.tenancy.default_tenant})"
-        )
+        if tenancy is None:
+            console.print("Tenancy Mode: n/a")
+        else:
+            console.print(
+                f"Tenancy Mode: {tenancy.mode} (projects={len(tenancy.projects)}, "
+                f"default_tenant={tenancy.default_tenant})"
+            )
     else:
         console.print(f"[red]Unknown format: {format}[/red]")
         raise typer.Exit(1)

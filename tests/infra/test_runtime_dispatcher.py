@@ -1,14 +1,30 @@
-"""Unit tests for runtime_dispatcher._python_route_logic().
+"""Unit tests for runtime_dispatcher module.
 
 Tests the pure Python JIT-friendly routing logic for task classification
 and agent selection based on keyword matching.
+Also tests PerformanceModule, dispatchers, and runtime status functions.
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from thegent.infra.runtime_dispatcher import _python_route_logic
+from thegent.infra.runtime_dispatcher import (
+    IS_PYPY,
+    HAS_FREETHREADING,
+    PerformanceModule,
+    _python_route_logic,
+    json_dumps_dispatcher,
+    json_loads_dispatcher,
+    toml_loads_dispatcher,
+    WasmDispatcher,
+    HAS_EXTISM,
+    get_json_dumps,
+    get_json_loads,
+    get_toml_loads,
+    get_router,
+    get_runtime_status,
+)
 
 
 class MockAgent:
@@ -366,6 +382,304 @@ class TestPythonRouteLogicEdgeCases:
         # "implementation" contains "implement"
         result = _python_route_logic("implementation needed", agents)
         assert result is implementer
+
+
+class TestRuntimeFlags:
+    """Tests for runtime identification flags."""
+
+    def test_is_pypy_is_boolean(self):
+        """Test IS_PYPY is a boolean."""
+        assert isinstance(IS_PYPY, bool)
+
+    def test_has_freethreading_is_boolean(self):
+        """Test HAS_FREETHREADING is a boolean."""
+        assert isinstance(HAS_FREETHREADING, bool)
+
+    def test_is_pypy_matches_implementation(self):
+        """Test IS_PYPY matches sys.implementation.name."""
+        import sys
+
+        expected = sys.implementation.name == "pypy"
+        assert IS_PYPY == expected
+
+
+class TestPerformanceModule:
+    """Tests for PerformanceModule class."""
+
+    def test_init_sets_name(self):
+        """Test initialization sets the module name."""
+        pm = PerformanceModule("test_module")
+        assert pm.name == "test_module"
+
+    def test_init_empty_implementations(self):
+        """Test initialization starts with empty implementations."""
+        pm = PerformanceModule("test_module")
+        assert pm._implementations == {}
+
+    def test_init_selected_is_none(self):
+        """Test initialization starts with no selected implementation."""
+        pm = PerformanceModule("test_module")
+        assert pm._selected is None
+
+    def test_register_stores_implementation(self):
+        """Test register stores an implementation."""
+        pm = PerformanceModule("test_module")
+        impl = lambda x: x
+        pm.register("python", impl)
+        assert pm._implementations["python"] is impl
+
+    def test_register_multiple_implementations(self):
+        """Test registering multiple implementations."""
+        pm = PerformanceModule("test_module")
+        pm.register("python", lambda: "py")
+        pm.register("native", lambda: "native")
+        pm.register("pypy", lambda: "pypy")
+        assert len(pm._implementations) == 3
+
+    def test_get_impl_returns_cached_selection(self):
+        """Test get_impl returns cached selection without re-evaluation."""
+        pm = PerformanceModule("test_module")
+        pm._selected = lambda: "cached"
+        result = pm.get_impl()
+        assert result() == "cached"
+
+    def test_get_impl_selects_native_on_cpython(self):
+        """Test get_impl selects native on CPython when available."""
+        # Create a fresh module to avoid cache
+        pm = PerformanceModule("test_module")
+        native_impl = lambda: "native"
+        python_impl = lambda: "python"
+        pm.register("native", native_impl)
+        pm.register("python", python_impl)
+
+        # On CPython (not PyPy), native should be selected
+        if not IS_PYPY:
+            result = pm.get_impl()
+            assert result is native_impl
+
+    def test_get_impl_selects_pypy_on_pypy(self):
+        """Test get_impl selects pypy on PyPy when available."""
+        pm = PerformanceModule("test_module")
+        pypy_impl = lambda: "pypy"
+        python_impl = lambda: "python"
+        pm.register("pypy", pypy_impl)
+        pm.register("python", python_impl)
+
+        # On PyPy, pypy implementation should be selected
+        if IS_PYPY:
+            result = pm.get_impl()
+            assert result is pypy_impl
+
+    def test_get_impl_falls_back_to_python(self):
+        """Test get_impl falls back to python implementation."""
+        pm = PerformanceModule("test_module")
+        python_impl = lambda: "python"
+        pm.register("python", python_impl)
+
+        result = pm.get_impl()
+        assert result is python_impl
+
+    def test_get_impl_returns_none_when_no_python_fallback(self):
+        """Test get_impl returns None when no python fallback exists."""
+        pm = PerformanceModule("test_module")
+        # No implementations registered
+        result = pm.get_impl()
+        assert result is None
+
+    def test_get_impl_caches_selection(self):
+        """Test get_impl caches the selected implementation."""
+        pm = PerformanceModule("test_module")
+        python_impl = lambda: "python"
+        pm.register("python", python_impl)
+
+        result1 = pm.get_impl()
+        result2 = pm.get_impl()
+
+        # Same object should be returned (cached)
+        assert result1 is result2
+        assert pm._selected is python_impl
+
+
+class TestJsonDumpsDispatcher:
+    """Tests for json_dumps_dispatcher."""
+
+    def test_dispatcher_exists(self):
+        """Test json_dumps_dispatcher is initialized."""
+        assert json_dumps_dispatcher is not None
+        assert isinstance(json_dumps_dispatcher, PerformanceModule)
+
+    def test_dispatcher_has_implementations(self):
+        """Test json_dumps_dispatcher has implementations registered."""
+        assert len(json_dumps_dispatcher._implementations) > 0
+
+    def test_dumps_returns_string(self):
+        """Test json dumps returns a string."""
+        dumps = get_json_dumps()
+        result = dumps({"key": "value"})
+        assert isinstance(result, str)
+        assert "key" in result
+
+    def test_dumps_with_kwargs(self):
+        """Test json dumps with keyword arguments."""
+        dumps = get_json_dumps()
+        result = dumps({"key": "value"}, indent=2)
+        assert isinstance(result, str)
+
+
+class TestJsonLoadsDispatcher:
+    """Tests for json_loads_dispatcher."""
+
+    def test_dispatcher_exists(self):
+        """Test json_loads_dispatcher is initialized."""
+        assert json_loads_dispatcher is not None
+        assert isinstance(json_loads_dispatcher, PerformanceModule)
+
+    def test_loads_returns_dict(self):
+        """Test json loads returns a dict."""
+        loads = get_json_loads()
+        result = loads('{"key": "value"}')
+        assert isinstance(result, dict)
+        assert result["key"] == "value"
+
+    def test_loads_with_bytes(self):
+        """Test json loads accepts bytes."""
+        loads = get_json_loads()
+        result = loads(b'{"key": "value"}')
+        assert isinstance(result, dict)
+        assert result["key"] == "value"
+
+    def test_loads_with_kwargs(self):
+        """Test json loads with keyword arguments."""
+        loads = get_json_loads()
+        result = loads('{"key": "value"}')
+        assert result["key"] == "value"
+
+
+class TestTomlLoadsDispatcher:
+    """Tests for toml_loads_dispatcher."""
+
+    def test_dispatcher_exists(self):
+        """Test toml_loads_dispatcher is initialized."""
+        assert toml_loads_dispatcher is not None
+        assert isinstance(toml_loads_dispatcher, PerformanceModule)
+
+    def test_loads_returns_dict(self):
+        """Test toml loads returns a dict."""
+        loads = get_toml_loads()
+        toml_str = '[section]\nkey = "value"\n'
+        result = loads(toml_str)
+        assert isinstance(result, dict)
+
+    def test_loads_parses_section(self):
+        """Test toml loads parses sections."""
+        loads = get_toml_loads()
+        toml_str = '[database]\nhost = "localhost"\nport = 5432\n'
+        result = loads(toml_str)
+        assert "database" in result
+        assert result["database"]["host"] == "localhost"
+
+
+class TestWasmDispatcher:
+    """Tests for WasmDispatcher class."""
+
+    def test_call_plugin_raises_without_extism(self):
+        """Test call_plugin raises ImportError when extism not installed."""
+        if not HAS_EXTISM:
+            with pytest.raises(ImportError, match="extism not installed"):
+                WasmDispatcher.call_plugin("/fake/path.wasm", "func", b"data")
+
+    def test_has_extism_is_boolean(self):
+        """Test HAS_EXTISM is a boolean."""
+        assert isinstance(HAS_EXTISM, bool)
+
+
+class TestGetRouter:
+    """Tests for get_router function."""
+
+    def test_returns_callable(self):
+        """Test get_router returns a callable."""
+        router = get_router()
+        assert callable(router)
+
+    def test_router_dispatcher_exists(self):
+        """Test router_dispatcher is properly initialized."""
+        from thegent.infra.runtime_dispatcher import router_dispatcher
+
+        assert router_dispatcher is not None
+        assert router_dispatcher.name == "router"
+
+
+class TestGetRuntimeStatus:
+    """Tests for get_runtime_status function."""
+
+    def test_returns_dict(self):
+        """Test get_runtime_status returns a dict."""
+        status = get_runtime_status()
+        assert isinstance(status, dict)
+
+    def test_has_implementation_key(self):
+        """Test status has implementation key."""
+        status = get_runtime_status()
+        assert "implementation" in status
+        assert isinstance(status["implementation"], str)
+
+    def test_has_version_key(self):
+        """Test status has version key."""
+        status = get_runtime_status()
+        assert "version" in status
+        assert isinstance(status["version"], str)
+
+    def test_has_freethreading_key(self):
+        """Test status has freethreading key."""
+        status = get_runtime_status()
+        assert "freethreading" in status
+        assert isinstance(status["freethreading"], bool)
+
+    def test_has_jit_key(self):
+        """Test status has jit key."""
+        status = get_runtime_status()
+        assert "jit" in status
+        assert isinstance(status["jit"], bool)
+
+    def test_has_active_extensions_key(self):
+        """Test status has active_extensions key."""
+        status = get_runtime_status()
+        assert "active_extensions" in status
+        assert isinstance(status["active_extensions"], dict)
+
+    def test_active_extensions_has_expected_keys(self):
+        """Test active_extensions has expected extension keys."""
+        status = get_runtime_status()
+        ext = status["active_extensions"]
+        assert "orjson" in ext
+        assert "ujson" in ext
+        assert "rtoml" in ext
+        assert "rust_router" in ext
+
+    def test_extension_flags_are_booleans(self):
+        """Test extension flags are booleans."""
+        status = get_runtime_status()
+        for key, value in status["active_extensions"].items():
+            assert isinstance(value, bool), f"{key} should be bool, got {type(value)}"
+
+
+class TestGlobalAccessFunctions:
+    """Tests for global access functions."""
+
+    def test_get_json_dumps_returns_callable(self):
+        """Test get_json_dumps returns a callable."""
+        dumps = get_json_dumps()
+        assert callable(dumps)
+
+    def test_get_json_loads_returns_callable(self):
+        """Test get_json_loads returns a callable."""
+        loads = get_json_loads()
+        assert callable(loads)
+
+    def test_get_toml_loads_returns_callable(self):
+        """Test get_toml_loads returns a callable."""
+        loads = get_toml_loads()
+        assert callable(loads)
 
 
 if __name__ == "__main__":

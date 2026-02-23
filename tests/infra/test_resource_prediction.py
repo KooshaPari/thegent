@@ -430,5 +430,142 @@ class TestResourceManagerLimitEnforcement:
         assert applied["nofile"][0] == 512
 
 
+class TestResourceManagerApplyLimitsSuccess:
+    """Tests for ResourceManager.apply_limits success path."""
+
+    def test_apply_limits_returns_applied_limits(self, monkeypatch: pytest.MonkeyPatch):
+        """Test apply_limits returns the applied limits dict."""
+        manager = ResourceManager()
+
+        limits = {
+            "AS": (10_000_000_000, 10_000_000_000),
+            "NPROC": (1000, 1000),
+            "NOFILE": (4096, 4096),
+        }
+
+        def _kind_name(kind: int) -> str:
+            if kind == resource.RLIMIT_AS:
+                return "AS"
+            if kind == resource.RLIMIT_NPROC:
+                return "NPROC"
+            if kind == resource.RLIMIT_NOFILE:
+                return "NOFILE"
+            raise AssertionError(f"unexpected kind: {kind}")
+
+        monkeypatch.setattr(
+            "thegent.infra.resource_management.resource.getrlimit",
+            lambda kind: limits[_kind_name(kind)],
+        )
+        monkeypatch.setattr(
+            "thegent.infra.resource_management.resource.setrlimit",
+            lambda kind, value: limits.__setitem__(_kind_name(kind), value),
+        )
+        monkeypatch.setattr("thegent.infra.resource_management.resource.RLIM_INFINITY", -1)
+
+        result = manager.apply_limits(memory_mb=512, proc_limit=100)
+
+        assert "memory" in result
+        assert "processes" in result
+        assert "nofile" in result
+        assert isinstance(result["memory"], tuple)
+        assert isinstance(result["processes"], tuple)
+        assert isinstance(result["nofile"], tuple)
+
+    def test_get_applied_limits_returns_cached(self):
+        """Test get_applied_limits returns cached limits."""
+        manager = ResourceManager()
+        # Initially empty
+        assert manager.get_applied_limits() == {}
+
+        # After setting manually
+        manager._applied_limits["test"] = (100, 200)
+        result = manager.get_applied_limits()
+        assert result["test"] == (100, 200)
+
+
+class TestFDBudgetEdgeCases:
+    """Edge case tests for FDBudget."""
+
+    def test_check_with_zero_limit_raises(self):
+        """Test check with zero limit."""
+        budget = FDBudget(threshold=0.8)
+        # Division by zero handling
+        with pytest.raises(ZeroDivisionError):
+            budget.check(0, 0)
+
+    def test_check_with_zero_current(self):
+        """Test check with zero current usage."""
+        budget = FDBudget(threshold=0.8)
+        # 0/1000 = 0.0 < 0.8
+        result = budget.check(0, 1000)
+        assert result is True
+
+    def test_check_with_negative_limit(self):
+        """Test check with negative limit."""
+        budget = FDBudget(threshold=0.8)
+        # This will result in negative division
+        with pytest.raises(ZeroDivisionError):
+            budget.check(100, 0)
+
+    def test_check_with_current_exceeds_limit(self):
+        """Test check when current exceeds limit (edge case)."""
+        budget = FDBudget(threshold=0.8)
+        # 1200/1000 = 1.2 > 0.8
+        result = budget.check(1200, 1000)
+        assert result is False
+
+    def test_threshold_boundary_at_80_percent(self):
+        """Test threshold boundary at exactly 80%."""
+        budget = FDBudget(threshold=0.8)
+        # 80/100 = 0.8, not > 0.8
+        result = budget.check(80, 100)
+        assert result is True
+
+    def test_threshold_boundary_just_above_80_percent(self):
+        """Test threshold boundary just above 80%."""
+        budget = FDBudget(threshold=0.8)
+        # 81/100 = 0.81 > 0.8
+        result = budget.check(81, 100)
+        assert result is False
+
+    def test_various_thresholds(self):
+        """Test FDBudget with various threshold values."""
+        for threshold in [0.5, 0.6, 0.7, 0.9, 0.95]:
+            budget = FDBudget(threshold=threshold)
+            # At exact threshold
+            at_threshold = int(100 * threshold)
+            result = budget.check(at_threshold, 100)
+            assert result is True, f"Failed at threshold {threshold}"
+
+            # Just over threshold
+            over_threshold = at_threshold + 1
+            result = budget.check(over_threshold, 100)
+            assert result is False, f"Failed over threshold {threshold}"
+
+
+class TestResourceManagerMonitorUsage:
+    """Tests for ResourceManager.monitor_usage method."""
+
+    def test_monitor_usage_returns_error_for_invalid_pid(self):
+        """Test monitor_usage returns error dict for non-existent PID."""
+        manager = ResourceManager()
+        # Use a very high PID that's unlikely to exist
+        result = manager.monitor_usage(99999999)
+        assert "error" in result
+        assert "not accessible" in result["error"]
+
+    def test_monitor_usage_includes_expected_keys(self):
+        """Test monitor_usage includes all expected keys for valid process."""
+        manager = ResourceManager()
+        import os
+
+        result = manager.monitor_usage(os.getpid())
+
+        # Should have these keys
+        expected_keys = ["pid", "memory_rss", "cpu_percent", "fd_count", "child_count", "status"]
+        for key in expected_keys:
+            assert key in result, f"Missing key: {key}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -211,7 +211,7 @@ class McpGateway:
         )
 
     def _parse_mcp_response(self, stdout: str) -> tuple[dict[str, object], bool]:
-        payload = {"result": None, "error": None}
+        payload: dict[str, object] = {"result": None, "error": None}
         has_payload = False
         for raw_line in stdout.splitlines():
             line = raw_line.strip()

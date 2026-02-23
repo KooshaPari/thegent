@@ -115,9 +115,10 @@ class SyncAuditor:
     ) -> SyncPolicyContract:
         """Load `.thegent/sync-policy.yaml` and map it into audit surfaces."""
         contract = load_sync_policy_contract(project_root=project_root, explicit_path=explicit_path)
-        enabled = [name for name, policy in contract.connectors.items() if policy.enabled]
-        quota_budgets = {name: policy.quota_daily for name, policy in contract.connectors.items()}
-        policy_modes = {name: policy.mode for name, policy in contract.connectors.items()}
+        connector_policies = contract.connectors or {}
+        enabled = [name for name, policy in connector_policies.items() if policy.enabled]
+        quota_budgets = {name: policy.quota_daily for name, policy in connector_policies.items()}
+        policy_modes = {name: policy.mode for name, policy in connector_policies.items()}
         self.set_enabled_connectors(enabled)
         self.set_quota_budgets(quota_budgets)
         self.set_policy_modes(policy_modes)

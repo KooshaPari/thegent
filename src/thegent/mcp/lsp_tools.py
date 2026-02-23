@@ -144,6 +144,10 @@ def _ensure_position(line: int, character: int) -> tuple[int, int]:
         raise ValueError("line must be an integer, not bool")
     if isinstance(character, bool):
         raise ValueError("character must be an integer, not bool")
+    if not isinstance(line, int):
+        raise ValueError("line must be an integer")
+    if not isinstance(character, int):
+        raise ValueError("character must be an integer")
     if line < 0:
         raise ValueError("line must be >= 0")
     if character < 0:

@@ -27,7 +27,9 @@ def test_wl6882_get_git_commits_non_repo_path_reports_not_repo(tmp_path: Path) -
     assert result.error["type"] == "not_repo"
 
 
-def test_wl6882_get_git_commits_git_command_failure_reports_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_wl6882_get_git_commits_git_command_failure_reports_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     (tmp_path / ".git").mkdir()
     start, end = _time_range()
 
@@ -55,9 +57,7 @@ def test_wl6882_get_git_commits_empty_range_reports_empty(monkeypatch: pytest.Mo
     monkeypatch.setattr(
         summary.subprocess,
         "run",
-        lambda *_args, **_kwargs: subprocess.CompletedProcess(
-            ["git", "log"], 0, stdout="", stderr=""
-        ),
+        lambda *_args, **_kwargs: subprocess.CompletedProcess(["git", "log"], 0, stdout="", stderr=""),
     )
 
     result = summary.get_git_commits(tmp_path, start, end)

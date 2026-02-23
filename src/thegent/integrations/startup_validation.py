@@ -42,8 +42,10 @@ class StartupValidator:
             return "network_error"
         if isinstance(exc, UnsupportedProtocol):
             return "invalid_endpoint"
-        if isinstance(exc, HTTPError):
+        if isinstance(exc, httpx.HTTPStatusError):
             return f"http_status_{exc.response.status_code}"
+        if isinstance(exc, HTTPError):
+            return "http_error"
         return "unknown_error"
 
     def check_auth_scopes(self, required_scopes: list[str], available_scopes: list[str]) -> bool:

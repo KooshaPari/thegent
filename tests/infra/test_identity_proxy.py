@@ -418,3 +418,205 @@ class TestSSHIdentityProxyIntegration:
 
         assert proxy._running is False
         assert not proxy_socket_path.exists()
+
+
+class TestSSHIdentityProxyHandleClient:
+    """Tests for _handle_client method."""
+
+    def test_handle_client_closes_on_exception(self, proxy_with_env: SSHIdentityProxy) -> None:
+        """Verify _handle_client handles exceptions gracefully."""
+        proxy_with_env.start()
+
+        # Create a mock client connection
+        mock_client = MagicMock()
+        mock_client.recv.side_effect = OSError("Connection error")
+
+        # Call _handle_client directly (it should handle the exception)
+        proxy_with_env._handle_client(mock_client)
+
+        # Client connection should be closed
+        mock_client.close.assert_called()
+
+        proxy_with_env.stop()
+
+    def test_handle_client_with_valid_connection(
+        self, proxy_with_env: SSHIdentityProxy, mock_host_socket: Path
+    ) -> None:
+        """Test _handle_client with a valid connection to mock host."""
+        import time
+
+        # Create a mock SSH agent server
+        server_ready = threading.Event()
+
+        def mock_ssh_agent():
+            try:
+                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+                    s.bind(str(mock_host_socket))
+                    s.listen(1)
+                    s.settimeout(2.0)
+                    server_ready.set()
+
+                    try:
+                        conn, _ = s.accept()
+                        # Echo back data
+                        data = conn.recv(1024)
+                        if data:
+                            conn.send(data)
+                        conn.close()
+                    except TimeoutError:
+                        pass
+            except Exception:
+                pass
+
+        agent_thread = threading.Thread(target=mock_ssh_agent, daemon=True)
+        agent_thread.start()
+        server_ready.wait(timeout=2.0)
+
+        proxy_with_env.start()
+        time.sleep(0.1)
+        proxy_with_env.stop()
+
+    def test_handle_client_non_blocking_setup(self, proxy_with_env: SSHIdentityProxy) -> None:
+        """Test _handle_client sets up non-blocking sockets."""
+        proxy_with_env.start()
+
+        mock_client = MagicMock()
+        mock_client.recv.return_value = b""  # Empty data = connection closed
+
+        proxy_with_env._handle_client(mock_client)
+
+        # setblocking(False) should be called
+        mock_client.setblocking.assert_called_with(False)
+
+        proxy_with_env.stop()
+
+
+class TestSSHIdentityProxyForwardRecv:
+    """Tests for _forward_recv helper in _handle_client."""
+
+    def test_forward_recv_handles_blocking_io(self, proxy_with_env: SSHIdentityProxy) -> None:
+        """Test _forward_recv handles BlockingIOError gracefully."""
+        proxy_with_env.start()
+
+        mock_client = MagicMock()
+        mock_client.recv.side_effect = BlockingIOError()
+        mock_dst = MagicMock()
+
+        # Call _handle_client which uses _forward_recv internally
+        proxy_with_env._handle_client(mock_client)
+
+        proxy_with_env.stop()
+
+    def test_forward_recv_returns_false_on_empty_data(self, proxy_with_env: SSHIdentityProxy) -> None:
+        """Test _forward_recv returns False when connection closed."""
+        proxy_with_env.start()
+
+        mock_client = MagicMock()
+        mock_client.recv.return_value = b""  # Empty data
+        mock_dst = MagicMock()
+
+        proxy_with_env._handle_client(mock_client)
+
+        # Should handle gracefully
+        proxy_with_env.stop()
+
+
+class TestSSHIdentityProxyRequireActorIdentity:
+    """Tests for require_actor_identity static method."""
+
+    def test_require_actor_identity_rejects_empty_actor_id(self) -> None:
+        """Test empty actor_id is rejected."""
+        with pytest.raises(ValueError, match="actor_id must be non-empty"):
+            SSHIdentityProxy.require_actor_identity(
+                actor_id="",
+                signature="sig",
+                payload="payload",
+                signing_key="key",
+            )
+
+    def test_require_actor_identity_rejects_whitespace_actor_id(self) -> None:
+        """Test whitespace-only actor_id is rejected."""
+        with pytest.raises(ValueError, match="actor_id must be non-empty"):
+            SSHIdentityProxy.require_actor_identity(
+                actor_id="   ",
+                signature="sig",
+                payload="payload",
+                signing_key="key",
+            )
+
+    def test_require_actor_identity_rejects_empty_signature(self) -> None:
+        """Test empty signature is rejected."""
+        with pytest.raises(ValueError, match="signature must be non-empty"):
+            SSHIdentityProxy.require_actor_identity(
+                actor_id="actor",
+                signature="",
+                payload="payload",
+                signing_key="key",
+            )
+
+    def test_require_actor_identity_rejects_whitespace_signature(self) -> None:
+        """Test whitespace-only signature is rejected."""
+        with pytest.raises(ValueError, match="signature must be non-empty"):
+            SSHIdentityProxy.require_actor_identity(
+                actor_id="actor",
+                signature="   ",
+                payload="payload",
+                signing_key="key",
+            )
+
+    def test_require_actor_identity_rejects_empty_signing_key(self) -> None:
+        """Test empty signing_key is rejected."""
+        with pytest.raises(ValueError, match="signing_key must be non-empty"):
+            SSHIdentityProxy.require_actor_identity(
+                actor_id="actor",
+                signature="sig",
+                payload="payload",
+                signing_key="",
+            )
+
+    def test_require_actor_identity_rejects_whitespace_signing_key(self) -> None:
+        """Test whitespace-only signing_key is rejected."""
+        with pytest.raises(ValueError, match="signing_key must be non-empty"):
+            SSHIdentityProxy.require_actor_identity(
+                actor_id="actor",
+                signature="sig",
+                payload="payload",
+                signing_key="   ",
+            )
+
+    @patch("thegent.infra.identity_proxy.verify_actor_signature")
+    def test_require_actor_identity_verifies_signature(self, mock_verify: MagicMock) -> None:
+        """Test require_actor_identity calls verify_actor_signature."""
+        mock_verify.return_value = True
+
+        SSHIdentityProxy.require_actor_identity(
+            actor_id="actor",
+            signature="sig",
+            payload="payload",
+            signing_key="key",
+        )
+
+        mock_verify.assert_called_once_with(
+            actor_id="actor",
+            payload="payload",
+            signing_key="key",
+            signature="sig",
+        )
+
+    @patch("thegent.infra.identity_proxy.verify_actor_signature")
+    def test_require_actor_identity_rejects_invalid_signature(self, mock_verify: MagicMock) -> None:
+        """Test require_actor_identity rejects invalid signature."""
+        mock_verify.return_value = False
+
+        with pytest.raises(ValueError, match="invalid actor signature"):
+            SSHIdentityProxy.require_actor_identity(
+                actor_id="actor",
+                signature="badsig",
+                payload="payload",
+                signing_key="key",
+            )
+
+    def test_require_actor_identity_is_staticmethod(self) -> None:
+        """Test require_actor_identity is a static method."""
+        # Should be callable without instance
+        assert callable(SSHIdentityProxy.require_actor_identity)

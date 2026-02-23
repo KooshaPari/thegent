@@ -4,19 +4,32 @@ import logging
 import os
 import platform
 from enum import Enum
+from typing import TypedDict
 
 _LOG = logging.getLogger(__name__)
 _PROC_VERSION_WARNING_LIMIT = 3
-_platform_diagnostics: dict[str, object] = {
+
+
+class PlatformDiagnostics(TypedDict):
+    proc_version_read_failures: int
+    last_proc_version_error_type: str | None
+    last_proc_version_error_message: str | None
+
+
+_platform_diagnostics: PlatformDiagnostics = {
     "proc_version_read_failures": 0,
     "last_proc_version_error_type": None,
     "last_proc_version_error_message": None,
 }
 
 
-def get_platform_detection_diagnostics() -> dict[str, object]:
+def get_platform_detection_diagnostics() -> PlatformDiagnostics:
     """Return diagnostics for platform detection edge cases."""
-    return dict(_platform_diagnostics)
+    return {
+        "proc_version_read_failures": _platform_diagnostics["proc_version_read_failures"],
+        "last_proc_version_error_type": _platform_diagnostics["last_proc_version_error_type"],
+        "last_proc_version_error_message": _platform_diagnostics["last_proc_version_error_message"],
+    }
 
 
 def reset_platform_detection_diagnostics() -> None:
@@ -59,7 +72,7 @@ def detect_platform() -> Platform:
                     if "microsoft" in version_info or "wsl" in version_info:
                         return Platform.WSL2
             except OSError as exc:
-                failures = int(_platform_diagnostics["proc_version_read_failures"]) + 1
+                failures = _platform_diagnostics["proc_version_read_failures"] + 1
                 _platform_diagnostics["proc_version_read_failures"] = failures
                 _platform_diagnostics["last_proc_version_error_type"] = type(exc).__name__
                 _platform_diagnostics["last_proc_version_error_message"] = str(exc)

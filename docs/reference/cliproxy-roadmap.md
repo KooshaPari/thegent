@@ -49,7 +49,7 @@ description: Temporal roadmap, milestone tracking, and retrospective analysis
 Issues Resolved per Sprint
 
 Sprint 1 (Nov W4): ██████████ 45
-Sprint 2 (Dec W1): ██████████████ 55  
+Sprint 2 (Dec W1): ██████████████ 55
 Sprint 3 (Dec W2): █████████████ 50
 Sprint 4 (Dec W3): ██████████████ 60
 Sprint 5 (Dec W4): ███████████████ 65

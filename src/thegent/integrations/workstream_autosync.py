@@ -423,8 +423,8 @@ class WorkstreamAutosyncRunner:
                     f"Connector capability mismatch for {connector}: missing {', '.join(missing)}",
                 )
         if self.config.payload_checksum_enforced:
-            payload = [item.to_dict() for item in items]
-            verify_payload_checksum(payload, self.config.expected_payload_checksum)
+            checksum_payload = [item.to_dict() for item in items]
+            verify_payload_checksum(checksum_payload, self.config.expected_payload_checksum)
 
     @staticmethod
     def _xor_encrypt(data: bytes, key: str) -> str:

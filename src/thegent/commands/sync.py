@@ -1518,7 +1518,7 @@ class SyncCommand:
         """Resolve status conflict precedence for sync writes."""
         if policy_contract is None:
             return "board_id_first"
-        return policy_contract.conflict_precedence
+        return str(policy_contract.conflict_precedence)
 
     @staticmethod
     def _normalize_status(status: str) -> str:

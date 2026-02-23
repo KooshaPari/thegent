@@ -11,6 +11,7 @@ case "$STAGE" in
     exit 1
     ;;
 esac
+shift
 
 run_scope="${THEGENT_PRE_COMMIT_SCOPE:-changed}"
 if [[ "$run_scope" == "full" || "${THEGENT_PRE_COMMIT_FULL:-0}" == "1" ]]; then
@@ -24,7 +25,9 @@ raw_candidates="$(mktemp)"
 uniq_candidates="$(mktemp)"
 trap 'rm -f "$raw_candidates" "$uniq_candidates"' EXIT
 
-if [ -n "${THEGENT_PRE_COMMIT_FILES:-}" ]; then
+if [ "$#" -gt 0 ]; then
+  printf '%s\n' "$@" > "$raw_candidates"
+elif [ -n "${THEGENT_PRE_COMMIT_FILES:-}" ]; then
   printf '%s\n' "$THEGENT_PRE_COMMIT_FILES" > "$raw_candidates"
 else
   if [ "$STAGE" = "pre-commit" ]; then

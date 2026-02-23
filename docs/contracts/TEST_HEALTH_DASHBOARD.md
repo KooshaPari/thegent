@@ -119,7 +119,7 @@ Output contract (`artifacts/pytest/traceability/requirements-map.json`) must inc
 Command sample:
 
 ```bash
-uv run python scripts/test_pytest_wave_artifacts.py requirements-map \
+uv run python scripts/fr_trace_extractor.py \
   --input-dir tests \
   --fr-tracker docs/reference/FR_TRACKER.md \
   --output artifacts/pytest/traceability/requirements-map.json \

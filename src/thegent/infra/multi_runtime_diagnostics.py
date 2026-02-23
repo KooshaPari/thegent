@@ -315,7 +315,7 @@ def check_hardware() -> dict[str, Any]:
     return hw_info
 
 
-def check_network_latency(target_host: str = "127.0.0.1") -> dict[str, float]:
+def check_network_latency(target_host: str = "127.0.0.1") -> dict[str, float | list[str]]:
     """Check network latency to a target host."""
     import time
 

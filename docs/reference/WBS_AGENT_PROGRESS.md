@@ -116,51 +116,36 @@
 | ~~swarm-dag-prioritization~~ | codex-30449 | 2026-02-23T01:36:42.297850+00:00 |
 | ~~resource-network-bandwidth~~ | codex-26970 | 2026-02-23T01:36:45.065057+00:00 |
 | _none_ | codex-30449 | 2026-02-23T01:36:52.748006+00:00 |
-| SCLI-P1.4 | codex-26970 | 2026-02-23T01:36:55.806035+00:00 |
 | wave70-l4 | codex-30449 | 2026-02-23T01:37:05.331360+00:00 |
 | docs-cli-reference | codex-26970 | 2026-02-23T01:37:08.249307+00:00 |
 | ~~borrow-heliosguard-backlog~~ | codex-26970 | 2026-02-23T01:37:18.877570+00:00 |
-| CLIP-BUG-01 | codex-26970 | 2026-02-23T01:37:30.332181+00:00 |
 | wave70-l2 | codex-26970 | 2026-02-23T01:37:44.423705+00:00 |
 | ~~docs-claudemd-reference~~ | codex-26970 | 2026-02-23T01:37:56.932719+00:00 |
-| CLIP-BUG-10 | codex-26970 | 2026-02-23T01:38:08.336818+00:00 |
 | ~~SCLI-P7.1~~ | codex-26970 | 2026-02-23T01:38:24.486723+00:00 |
 | sharecli-smart-merge | codex-26970 | 2026-02-23T01:38:41.336182+00:00 |
 | sharecli-git-parallelism | codex-26970 | 2026-02-23T01:38:55.476511+00:00 |
 | ~~audit-delegation-friction~~ | codex-26970 | 2026-02-23T01:39:24.735614+00:00 |
-| CLIP-BUG-12 | codex-26970 | 2026-02-23T01:39:44.348310+00:00 |
 | escalation-index-file-indexing | codex-26970 | 2026-02-23T01:39:58.744060+00:00 |
 | docs-mcp-tool-docs | codex-26970 | 2026-02-23T01:40:12.332895+00:00 |
-| CLIP-BUG-03 | codex-26970 | 2026-02-23T01:40:24.824682+00:00 |
-| SCLI-P13.2 | codex-26970 | 2026-02-23T01:40:36.354473+00:00 |
-| CLIP-BUG-08 | codex-26970 | 2026-02-23T01:40:48.818460+00:00 |
 | TGNT-P16.2 | codex-smoke | 2026-02-23T01:40:58.480970+00:00 |
-| CLIP-BUG-02 | codex-smoke | 2026-02-23T01:40:59.442548+00:00 |
-| CLIP-BUG-07 | codex-smoke | 2026-02-23T01:40:59.891854+00:00 |
 | research-smart-robust-strategies | codex-smoke | 2026-02-23T01:41:00.155637+00:00 |
 | ~~borrow-heliosguard-priority~~ | codex-smoke | 2026-02-23T01:41:00.298403+00:00 |
 | TGNT-P18.3 | codex-36397 | 2026-02-23T01:41:24.733601+00:00 |
 | ~~audit-teammate-collaboration~~ | codex-36397 | 2026-02-23T01:42:13.304865+00:00 |
 | ~~TGNT-P14.1~~ | codex-36397 | 2026-02-23T01:46:47.662490+00:00 |
-| CLIP-BUG-06 | codex-self-wave10 | 2026-02-23T01:48:37.670312+00:00 |
 | ~~TGNT-P11.1~~ | codex-self-wave10 | 2026-02-23T01:48:38.082874+00:00 |
 | sharecli-task-queue | codex-self-wave10 | 2026-02-23T01:48:38.430608+00:00 |
 | TGNT-P18.2 | codex-self-wave10 | 2026-02-23T01:48:38.754110+00:00 |
-| CLIP-BUG-09 | codex-self-wave10 | 2026-02-23T01:48:39.010468+00:00 |
 | rollout-hook-rust-phase2 | codex-self-wave10 | 2026-02-23T01:48:39.160507+00:00 |
 | docs-skill-examples | codex-self-wave10 | 2026-02-23T01:48:39.371943+00:00 |
 | wp-16001-persona-registry | codex-self-wave10 | 2026-02-23T01:48:39.631792+00:00 |
 | ~~SCLI-P7.3~~ | codex-self-wave10 | 2026-02-23T01:48:39.849268+00:00 |
-| CLIP-BUG-11 | codex-self-wave10 | 2026-02-23T01:48:40.114438+00:00 |
 | wave70-l1 | codex-self-wave-next2 | 2026-02-23T01:50:21.534408+00:00 |
-| SCLI-P1.2 | codex-self-wave-next2 | 2026-02-23T01:50:21.695239+00:00 |
-| CLIP-BUG-04 | codex-self-wave-next2 | 2026-02-23T01:50:21.849428+00:00 |
 | wp-16002-async-delegation | codex-self-wave-next2 | 2026-02-23T01:50:22.001517+00:00 |
 | ~~TGNT-P16.1~~ | codex-self-wave-next2 | 2026-02-23T01:50:22.132460+00:00 |
 | wave70-l7 | codex-self-wave-next2 | 2026-02-23T01:50:22.261922+00:00 |
 | wave70-l3 | codex-self-wave-next2 | 2026-02-23T01:50:22.394271+00:00 |
 | TGNT-P17.1 | codex-self-wave-next2 | 2026-02-23T01:50:22.527150+00:00 |
-| CLIP-BUG-05 | codex-self-wave-next2 | 2026-02-23T01:50:22.646319+00:00 |
 ## COMPLETED (this session / recent)
 
 | WP | Agent | Completed |
@@ -223,6 +208,21 @@
 | item-xp-1 | auto-launch | 2026-02-19T11:45:53.730053+00:00 |
 | item-xp-1 | auto-launch | 2026-02-19T11:51:36.441897+00:00 |
 | occ-verify-clean | kooshapari-43046 | 2026-02-20T12:26:23.864659+00:00 |
+| CLIP-BUG-01 | codex-closeout | 2026-02-23T02:44:17.959645+00:00 |
+| CLIP-BUG-02 | codex-closeout | 2026-02-23T02:44:18.796073+00:00 |
+| CLIP-BUG-03 | codex-closeout | 2026-02-23T02:44:20.057073+00:00 |
+| CLIP-BUG-04 | codex-closeout | 2026-02-23T02:44:20.924831+00:00 |
+| CLIP-BUG-05 | codex-closeout | 2026-02-23T02:44:21.904077+00:00 |
+| CLIP-BUG-06 | codex-closeout | 2026-02-23T02:44:23.062073+00:00 |
+| CLIP-BUG-07 | codex-closeout | 2026-02-23T02:44:23.869180+00:00 |
+| CLIP-BUG-08 | codex-closeout | 2026-02-23T02:44:24.759112+00:00 |
+| CLIP-BUG-09 | codex-closeout | 2026-02-23T02:44:25.405287+00:00 |
+| CLIP-BUG-10 | codex-closeout | 2026-02-23T02:44:25.806493+00:00 |
+| CLIP-BUG-11 | codex-closeout | 2026-02-23T02:44:26.275002+00:00 |
+| CLIP-BUG-12 | codex-closeout | 2026-02-23T02:44:26.567848+00:00 |
+| SCLI-P1.2 | codex-closeout | 2026-02-23T02:44:27.033528+00:00 |
+| SCLI-P1.4 | codex-closeout | 2026-02-23T02:44:27.442213+00:00 |
+| SCLI-P13.2 | codex-closeout | 2026-02-23T02:44:27.722483+00:00 |
 ## See also
 
 - [WORK_STREAM.md](../reference/WORK_STREAM.md) — canonical backlog

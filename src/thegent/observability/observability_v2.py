@@ -3,6 +3,7 @@ Includes JSONL structured logging, advanced metrics, and mesh management CLI.
 """
 
 import json
+import importlib
 import logging
 import os
 import time
@@ -123,7 +124,7 @@ class MeshCLI:
         if not agents_dir.exists():
             return {"mesh_dir": str(mesh_dir), "total_agents": 0, "alive_agents": 0, "agents": []}
 
-        import psutil
+        psutil_module = importlib.import_module("psutil")
 
         agents: list[dict[str, Any]] = []
         alive_agents = 0
@@ -135,7 +136,7 @@ class MeshCLI:
             alive = False
             if pid > 0:
                 try:
-                    alive = psutil.Process(pid).is_running()
+                    alive = bool(psutil_module.Process(pid).is_running())
                 except Exception:
                     alive = False
             if alive:
