@@ -24,6 +24,50 @@ from thegent.doc_tools import (  # type: ignore
 )
 
 
+def _mock_playwright(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _FakePage:
+        async def close(self) -> None:
+            return None
+
+    class _FakeContext:
+        def set_default_timeout(self, _value: int) -> None:
+            return None
+
+        def set_default_navigation_timeout(self, _value: int) -> None:
+            return None
+
+        async def new_page(self) -> _FakePage:
+            return _FakePage()
+
+        async def close(self) -> None:
+            return None
+
+    class _FakeBrowser:
+        async def new_context(self, **_kwargs) -> _FakeContext:
+            return _FakeContext()
+
+        async def close(self) -> None:
+            return None
+
+    class _FakeBrowserType:
+        async def launch(self, **_kwargs) -> _FakeBrowser:
+            return _FakeBrowser()
+
+    class _FakePlaywright:
+        chromium = _FakeBrowserType()
+        firefox = _FakeBrowserType()
+        webkit = _FakeBrowserType()
+
+        async def stop(self) -> None:
+            return None
+
+    class _FakeAsyncPlaywright:
+        async def start(self) -> _FakePlaywright:
+            return _FakePlaywright()
+
+    monkeypatch.setattr("thegent.doc_tools.playwright_recorder.async_playwright", lambda: _FakeAsyncPlaywright())
+
+
 class TestRecordingConfig:
     """Test RecordingConfig model."""
 
@@ -219,8 +263,9 @@ class TestPlaywrightRecorder:
             assert output_dir.exists()
 
     @pytest.mark.asyncio
-    async def test_recorder_context_manager(self) -> None:
+    async def test_recorder_context_manager(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test recorder as async context manager."""
+        _mock_playwright(monkeypatch)
         config = RecordingConfig(headless=True)
 
         async with PlaywrightRecorder(config) as recorder:
@@ -231,8 +276,9 @@ class TestPlaywrightRecorder:
         assert recorder.browser is not None
 
     @pytest.mark.asyncio
-    async def test_recorder_launches_and_closes(self) -> None:
+    async def test_recorder_launches_and_closes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test recorder launch and close."""
+        _mock_playwright(monkeypatch)
         config = RecordingConfig(headless=True)
         recorder = PlaywrightRecorder(config)
 
