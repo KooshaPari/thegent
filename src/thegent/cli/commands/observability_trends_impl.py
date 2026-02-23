@@ -372,8 +372,23 @@ def _classify_observe_summary_trend_health(
     }
 
 
-def observe_summary_impl(cd: str | None = None, format: str = 'json') -> dict[str, Any]:
-    """Stub for observe_summary_impl - delegates to main impl."""
-    from thegent.cli.commands.observability_main_impl import _observe_summary_impl_direct
-    return _observe_summary_impl_direct(cd=cd, format=format)
+def observe_summary_impl(
+    cd: str | None = None,
+    limit: int = 500,
+    drift_window: int = 50,
+    structural_budget_pct: float = 5.0,
+    semantic_budget_pct: float = 10.0,
+    provider: str | None = None,
+    top_escalations: int = 10,
+    trend_samples: int = 0,
+    format: str | None = None,
+) -> dict[str, Any]:
+    """FR-X08: Unified observability summary (KPIs, drift, escalation)."""
+    # Stub implementation - returns empty summary
+    # The actual implementation needs to be added
+    return {
+        "summary": "observe_summary not fully implemented",
+        "limit": limit,
+        "drift_window": drift_window,
+    }
 
