@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import subprocess
 import sys
 from pathlib import Path
@@ -681,7 +681,7 @@ def test_traceability_quarterly_cleanup_task_creates_issue_contract(tmp_path: Pa
         "# @trace FR-OLD-001\ndef test_old_trace_only():\n    assert True\n",
         encoding="utf-8",
     )
-    stale_time = datetime.now().timestamp() - (4 * 24 * 60 * 60)
+    stale_time = datetime.now(timezone.utc).timestamp() - (4 * 24 * 60 * 60)
     os.utime(stale_test, (stale_time, stale_time))
 
     debt_output = tmp_path / "requirements-cleanup.json"

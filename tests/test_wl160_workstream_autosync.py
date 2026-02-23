@@ -1285,7 +1285,7 @@ Extra: owner/repo#456
         status_path.parent.mkdir(parents=True, exist_ok=True)
         snapshot_path = status_path.parent / "autosync_snapshot_old.json"
         snapshot_path.write_text("{}", encoding="utf-8")
-        old_time = datetime.now().timestamp() - 3_600
+        old_time = datetime.now(timezone.utc).timestamp() - 3_600
         os.utime(snapshot_path, (old_time, old_time))
 
         config = WorkstreamAutosyncConfig(
