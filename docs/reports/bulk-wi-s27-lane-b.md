@@ -20,18 +20,18 @@
 **Title:** Distinguish git-log invocation failure from true empty commit windows.
 **Source Path+Line:** [thegent/src/thegent/summary.py:60]
 **Acceptance Checklist:**
-- [ ] Replace blanket exception fallback with structured command-failure signaling.
-- [ ] Preserve empty-list output only for legitimate no-commit ranges.
-- [ ] Add tests for non-repo paths, git command failures, and valid empty windows.
+- [x] Replace blanket exception fallback with structured command-failure signaling.
+- [x] Preserve empty-list output only for legitimate no-commit ranges.
+- [x] Add tests for non-repo paths, git command failures, and valid empty windows.
 **Notes:** Returning `[]` for both failure and empty windows under-reports activity issues.
 
 ### [WL-6883]
 **Title:** Track malformed summary JSONL records instead of silently skipping parse failures.
 **Source Path+Line:** [thegent/src/thegent/summary.py:79]
 **Acceptance Checklist:**
-- [ ] Record parse-failure counts while maintaining line-by-line ingestion.
-- [ ] Include bounded malformed-record context for diagnostics.
-- [ ] Add tests for mixed valid and malformed summary lines.
+- [x] Record parse-failure counts while maintaining line-by-line ingestion.
+- [x] Include bounded malformed-record context for diagnostics.
+- [x] Add tests for mixed valid and malformed summary lines.
 **Notes:** Silent JSON parse drops reduce confidence in generated summary completeness.
 
 ### [WL-6884]

@@ -46,97 +46,108 @@ class SessionTUI:
             }
             _LOG.warning("session_tui_subagent_probe_failed", extra=self._last_diag)
 
+        def _normalize_cmd_line(cmdline: list[str]) -> str:
+            return " ".join(cmdline[:3]) if len(cmdline) > 0 else ""
+
         try:
             meta = session_meta_impl(session_id)
-            if "error" in meta:
-                _record_subagent_failure(
-                    {
-                        "failure_type": "metadata_error",
-                        "error_message": str(meta.get("error")),
-                    }
-                )
+        except (RuntimeError, ValueError, OSError, TypeError) as exc:
+            _record_subagent_failure(
+                {
+                    "failure_type": "metadata_lookup_failed",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                }
+            )
+            return []
+
+        if "error" in meta:
+            _record_subagent_failure(
+                {
+                    "failure_type": "metadata_error",
+                    "error_message": str(meta.get("error")),
+                }
+            )
+            return []
+
+        try:
+            pid = meta.get("pid", 0)
+            if not pid or not _is_pid_running(pid):
                 return []
+        except (RuntimeError, TypeError, ValueError) as exc:
+            _record_subagent_failure(
+                {
+                    "failure_type": "pid_probe_failed",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                }
+            )
+            return []
 
-            try:
-                pid = meta.get("pid", 0)
-                if not pid or not _is_pid_running(pid):
-                    return []
-            except Exception as exc:
-                _record_subagent_failure(
-                    {
-                        "failure_type": "pid_probe_failed",
-                        "error_type": type(exc).__name__,
-                        "error_message": str(exc),
-                    }
-                )
-                return []
+        # QOL: Enhanced human-only monitoring
+        is_agent = self.settings.agent_id != "default-agent"
 
-            # QOL: Enhanced human-only monitoring
-            is_agent = self.settings.agent_id != "default-agent"
+        # Find child processes
+        subagents = []
+        try:
+            parent = psutil.Process(pid)
+            for child in parent.children(recursive=True):
+                try:
+                    cmd_str = _normalize_cmd_line(child.cmdline())
 
-            # Find child processes
-            subagents = []
-            try:
-                parent = psutil.Process(pid)
-                for child in parent.children(recursive=True):
-                    try:
-                        cmdline = child.cmdline()
-                        cmd_str = " ".join(cmdline[:3]) if len(cmdline) > 0 else ""
+                    # Check if it's an agent process
+                    cmd_lower = cmd_str.lower()
+                    agent_name = "unknown"
+                    if any(
+                        agent in cmd_lower
+                        for agent in ["thegent", "codex", "copilot", "claude", "cursor", "uv", "bun", "cargo"]
+                    ):
+                        if "thegent" in cmd_lower:
+                            agent_name = "thegent"
+                        elif "codex" in cmd_lower:
+                            agent_name = "codex"
+                        elif "copilot" in cmd_lower:
+                            agent_name = "copilot"
+                        elif "claude" in cmd_lower:
+                            agent_name = "claude"
+                        elif "cursor" in cmd_lower:
+                            agent_name = "cursor"
+                        elif "uv" in cmd_lower:
+                            agent_name = "uv"
+                        elif "bun" in cmd_lower:
+                            agent_name = "bun"
+                        elif "cargo" in cmd_lower:
+                            agent_name = "cargo"
 
-                        # Check if it's an agent process
-                        agent_name = "unknown"
-                        if any(
-                            agent in cmd_str.lower()
-                            for agent in ["thegent", "codex", "copilot", "claude", "cursor", "uv", "bun", "cargo"]
-                        ):
-                            if "thegent" in cmd_str.lower():
-                                agent_name = "thegent"
-                            elif "codex" in cmd_str.lower():
-                                agent_name = "codex"
-                            elif "copilot" in cmd_str.lower():
-                                agent_name = "copilot"
-                            elif "claude" in cmd_str.lower():
-                                agent_name = "claude"
-                            elif "cursor" in cmd_str.lower():
-                                agent_name = "cursor"
-                            elif "uv" in cmd_str.lower():
-                                agent_name = "uv"
-                            elif "bun" in cmd_str.lower():
-                                agent_name = "bun"
-                            elif "cargo" in cmd_str.lower():
-                                agent_name = "cargo"
+                    # DX: Richer info for humans
+                    cpu_percent = child.cpu_percent(interval=0.1)
+                    memory_info = child.memory_info()
+                    memory_mb = memory_info.rss / 1024 / 1024
 
-                        # DX: Richer info for humans
-                        cpu_percent = child.cpu_percent(interval=0.1)
-                        memory_info = child.memory_info()
-                        memory_mb = memory_info.rss / 1024 / 1024
-
-                        subagents.append(
-                            {
-                                "pid": child.pid,
-                                "ppid": child.ppid(),
-                                "agent": agent_name,
-                                "cmd": cmd_str[:60] + ("..." if len(cmd_str) > 60 else ""),
-                                "memory_mb": memory_mb,
-                                "cpu_percent": cpu_percent,
-                                "status": child.status(),
-                                "num_fds": child.num_fds() if not is_agent and hasattr(child, "num_fds") else "N/A",
-                                "create_time": child.create_time(),
-                            }
-                        )
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
-                        continue
-            except (psutil.NoSuchProcess, psutil.AccessDenied) as exc:
-                _record_subagent_failure(
-                    {
-                        "failure_type": "child_enumeration_failed",
-                        "error_type": type(exc).__name__,
-                        "error_message": str(exc),
-                    }
-                )
-
-            return subagents
-        except Exception as exc:
+                    subagents.append(
+                        {
+                            "pid": child.pid,
+                            "ppid": child.ppid(),
+                            "agent": agent_name,
+                            "cmd": cmd_str[:60] + ("..." if len(cmd_str) > 60 else ""),
+                            "memory_mb": memory_mb,
+                            "cpu_percent": cpu_percent,
+                            "status": child.status(),
+                            "num_fds": child.num_fds() if not is_agent and hasattr(child, "num_fds") else "N/A",
+                            "create_time": child.create_time(),
+                        }
+                    )
+                except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
+                    continue
+        except (psutil.NoSuchProcess, psutil.AccessDenied) as exc:
+            _record_subagent_failure(
+                {
+                    "failure_type": "child_enumeration_failed",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc),
+                }
+            )
+        except (RuntimeError, ValueError, OSError) as exc:
             _record_subagent_failure(
                 {
                     "failure_type": "enumeration_failed",
@@ -144,7 +155,8 @@ class SessionTUI:
                     "error_message": str(exc),
                 }
             )
-            return []
+
+        return subagents
 
     def _get_session_details(self, session_id: str) -> dict[str, Any]:
         """Get detailed session information."""
@@ -316,7 +328,13 @@ class SessionTUI:
             status_color = "green" if status == "running" else "yellow"
 
             # Get subagent count
-            subagent_count = len(self._get_subagents_for_session(session_id)) if status == "running" else 0
+            subagent_count = "0"
+            if status == "running":
+                subagents = self._get_subagents_for_session(session_id)
+                if self._last_diag and self._last_diag.get("component") == "subagents":
+                    subagent_count = "ERR"
+                else:
+                    subagent_count = str(len(subagents))
 
             prompt_preview = s.get("prompt_preview", "")[:40] + ("..." if len(s.get("prompt_preview", "")) > 40 else "")
 

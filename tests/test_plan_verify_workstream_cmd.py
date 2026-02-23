@@ -53,10 +53,12 @@ def test_cli_shim_exports_plan_lint_workstream_cmd() -> None:
     assert cli_shim.plan_lint_workstream_cmd is plan_lint_workstream_cmd
 
 
+@pytest.mark.requirement("WL-225")
 def test_cli_shim_exports_plan_normalize_workstream_cmd() -> None:
     assert cli_shim.plan_normalize_workstream_cmd is plan_normalize_workstream_cmd
 
 
+@pytest.mark.requirement("WL-224")
 def test_plan_verify_workstream_exits_nonzero_on_invariant_violation(tmp_path: Path) -> None:
     _write_work_stream_with_overlap(tmp_path)
     with pytest.raises(typer.Exit) as exc:

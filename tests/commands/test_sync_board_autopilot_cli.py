@@ -156,6 +156,37 @@ class _SyncCommandDeadLetterReplayStub:
         )
 
 
+class _SyncCommandLocalOrphansStub:
+    def __init__(self, *, project_root):
+        _ = project_root
+
+    def detect_local_orphans(self, *, mapping_cache_path: Path) -> OperationResult:
+        _ = mapping_cache_path
+        return OperationResult(
+            operation="local-orphans",
+            status=SyncOperationStatus.SUCCESS,
+            message="No local orphan items detected.",
+            details={"orphan_count": 0, "local_orphan_ids": []},
+            changes=[],
+        )
+
+
+class _SyncCommandLocalOrphansFailedStub:
+    def __init__(self, *, project_root):
+        _ = project_root
+
+    def detect_local_orphans(self, *, mapping_cache_path: Path) -> OperationResult:
+        _ = mapping_cache_path
+        return OperationResult(
+            operation="local-orphans",
+            status=SyncOperationStatus.FAILED,
+            message="Detected 1 local orphan item(s).",
+            details={"orphan_count": 1, "local_orphan_ids": ["WL-999"]},
+            errors=["local orphan detected: WL-999"],
+            changes=["orphan: WL-999"],
+        )
+
+
 @pytest.mark.unit
 def test_sync_board_success_path(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandStub)
@@ -227,6 +258,26 @@ def test_sync_dead_letter_replay_success_path(monkeypatch: pytest.MonkeyPatch) -
     assert result.exit_code == 0
     assert "replayed=1" in result.stdout
     assert "WL-213" in result.stdout
+
+
+@pytest.mark.unit
+def test_sync_local_orphans_success_path(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandLocalOrphansStub)
+
+    result = CliRunner().invoke(app, ["local-orphans"])
+
+    assert result.exit_code == 0
+    assert "No local orphan items detected." in result.stdout
+
+
+@pytest.mark.unit
+def test_sync_local_orphans_failed_path_exits_nonzero(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandLocalOrphansFailedStub)
+
+    result = CliRunner().invoke(app, ["local-orphans"])
+
+    assert result.exit_code == 1
+    assert "Detected 1 local orphan item(s)." in result.stdout
 
 
 class _ValidConfig:

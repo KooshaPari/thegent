@@ -4,6 +4,7 @@ E2E test for: thegent sync freeze
 Agent Journey: Agent executes thegent sync freeze command
 Expected Behavior: Command executes successfully and returns expected output
 """
+
 import pytest
 from typer.testing import CliRunner
 
@@ -18,17 +19,17 @@ class TestSyncFreeze:
 
     def test_sync_freeze_exits_zero(self) -> None:
         """thegent sync freeze exits with code 0."""
-        result = runner.invoke(app, ['sync', 'freeze'])
+        result = runner.invoke(app, ["sync", "freeze"])
         assert result.exit_code == 0, f"Command failed: {result.stdout} {result.stderr}"
 
     def test_sync_freeze_produces_output(self) -> None:
         """thegent sync freeze produces expected output."""
-        result = runner.invoke(app, ['sync', 'freeze'])
+        result = runner.invoke(app, ["sync", "freeze"])
         assert result.exit_code == 0
         # TODO: Add specific output assertions based on command behavior
         assert len(result.stdout) > 0 or len(result.stderr) == 0
 
     def test_sync_freeze_help_exits_zero(self) -> None:
         """thegent sync freeze --help exits with code 0."""
-        result = runner.invoke(app, ['sync', 'freeze', '--help'])
+        result = runner.invoke(app, ["sync", "freeze", "--help"])
         assert result.exit_code == 0

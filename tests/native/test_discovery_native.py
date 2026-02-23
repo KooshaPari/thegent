@@ -278,6 +278,21 @@ class TestDiscoveryClientErrorFallback:
         mock_fb.assert_called_once()
         assert result == []
 
+    def test_sessions_fallback_empty_state_preserves_success_status(self, tmp_path: Path) -> None:
+        client = self._make_native_client(tmp_path)
+        with (
+            patch.object(client, "_run", return_value=None),
+            patch(
+                "thegent.native.discovery_native._fallback_sessions",
+                return_value={"sessions": [], "fallback": {"status": "empty", "session_count": 0}},
+            ) as mock_fb,
+        ):
+            result = client.sessions()
+        mock_fb.assert_called_once()
+        assert result == []
+        assert client.last_fallback_metadata["sessions"]["status"] == "empty"
+        assert client.last_fallback_metadata["sessions"]["session_count"] == 0
+
     def test_sessions_fallback_records_metadata(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
         with (
@@ -303,7 +318,7 @@ class TestDiscoveryClientErrorFallback:
             result = client.tools()
         mock_fb.assert_called_once()
         assert result == []
-        assert client.last_fallback_metadata["tools"]["status"] == "degraded"
+        assert client.last_fallback_metadata["tools"]["status"] == "probe_failed"
         assert client.last_fallback_metadata["tools"]["error_type"] == "path_probe_missing"
 
     def test_processes_falls_back_on_none(self, tmp_path: Path) -> None:
@@ -318,7 +333,7 @@ class TestDiscoveryClientErrorFallback:
             result = client.processes()
         mock_fb.assert_called_once()
         assert result == []
-        assert client.last_fallback_metadata["processes"]["status"] == "degraded"
+        assert client.last_fallback_metadata["processes"]["status"] == "probe_failed"
         assert client.last_fallback_metadata["processes"]["error_type"] == "psutil_missing"
 
     def test_all_falls_back_on_none(self, tmp_path: Path) -> None:
@@ -342,9 +357,9 @@ class TestDiscoveryClientErrorFallback:
         assert "sessions" in result
         assert "tools" in result
         assert "processes" in result
-        assert result["fallback_metadata"]["sessions"]["status"] == "degraded"
-        assert result["fallback_metadata"]["tools"]["status"] == "degraded"
-        assert result["fallback_metadata"]["processes"]["status"] == "degraded"
+        assert result["fallback_metadata"]["sessions"]["status"] == "ok"
+        assert result["fallback_metadata"]["tools"]["status"] == "ok"
+        assert result["fallback_metadata"]["processes"]["status"] == "ok"
 
     def test_all_falls_back_on_timeout_with_native_metadata(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
@@ -368,6 +383,27 @@ class TestDiscoveryClientErrorFallback:
         assert client.last_run_diagnostics["error_type"] == "timeout"
         assert result["fallback_metadata"]["sessions"]["native_run"]["status"] == "error"
         assert result["fallback_metadata"]["tools"]["native_run"]["error_type"] == "timeout"
+
+    def test_all_falls_back_on_tmux_probe_failure(self, tmp_path: Path) -> None:
+        client = self._make_native_client(tmp_path)
+        with (
+            patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="thegent-discovery", timeout=15)),
+            patch(
+                "thegent.native.discovery_native._fallback_sessions",
+                return_value={"sessions": [], "fallback": {"status": "probe_failed", "error_type": "tmux_missing"}},
+            ),
+            patch(
+                "thegent.native.discovery_native._fallback_tools",
+                return_value={"tools": [], "fallback": {"status": "ok"}},
+            ),
+            patch(
+                "thegent.native.discovery_native._fallback_processes",
+                return_value={"processes": [], "fallback": {"status": "ok"}},
+            ),
+        ):
+            result = client.all()
+        assert result["fallback_metadata"]["sessions"]["status"] == "probe_failed"
+        assert result["fallback_metadata"]["sessions"]["error_type"] == "tmux_missing"
 
     def test_run_timeout_returns_none(self, tmp_path: Path) -> None:
         client = self._make_native_client(tmp_path)
@@ -476,6 +512,17 @@ class TestFallbackSessions:
         assert sessions[0]["source"] == "tmux"
         assert sessions[0]["attached"] is True
 
+    def test_returns_empty_list_with_empty_status(self) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = ""
+        with patch("subprocess.run", return_value=mock_result):
+            payload = _fallback_sessions(include_meta=True)
+        assert payload["sessions"] == []
+        assert payload["fallback"]["status"] == "empty"
+        assert payload["fallback"]["session_count"] == 0
+        assert "error_type" not in payload["fallback"]
+
     def test_returns_list_on_tmux_failure(self) -> None:
         mock_result = MagicMock()
         mock_result.returncode = 1
@@ -487,8 +534,22 @@ class TestFallbackSessions:
 
     def test_handles_subprocess_exception(self) -> None:
         with patch("subprocess.run", side_effect=FileNotFoundError("tmux not found")):
-            sessions = _fallback_sessions()
-        assert isinstance(sessions, list)
+            payload = _fallback_sessions(include_meta=True)
+        assert payload["sessions"] == []
+        assert payload["fallback"]["status"] == "probe_failed"
+        assert payload["fallback"]["error_type"] == "tmux_missing"
+
+    def test_returns_error_on_nonzero_exit(self) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 2
+        mock_result.stdout = ""
+        mock_result.stderr = "tmux failed"
+        with patch("subprocess.run", return_value=mock_result):
+            payload = _fallback_sessions(include_meta=True)
+        assert payload["sessions"] == []
+        assert payload["fallback"]["status"] == "probe_failed"
+        assert payload["fallback"]["error_type"] == "nonzero_exit"
+        assert payload["fallback"]["returncode"] == 2
 
     def test_timeout_metadata(self) -> None:
         with patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="tmux", timeout=5)):

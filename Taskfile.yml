@@ -337,11 +337,23 @@ tasks:
       - task: test:collect:fast-gate
       - task: test:fast-lane
 
+  ci:local:full:
+    desc: "Run local CI-like checks with full pre-commit/pre-push scans."
+    cmds:
+      - task: hooks:run:full
+      - task: test:collect:fast-gate
+      - task: test:fast-lane
+
   ci:local:hooks:
-    desc: "Run local hook-only checks for pre-commit + pre-push stages."
+    desc: "Run local hook-only checks for pre-commit + pre-push stages (changed files only)."
     cmds:
       - task: hooks:run:pre-commit
       - task: hooks:run:pre-push
+
+  ci:local:hooks:full:
+    desc: "Run local hook-only checks across all files."
+    cmds:
+      - task: hooks:run:full
 
   ci:local:pre-commit:
     desc: "Run only local pre-commit hooks."
@@ -409,6 +421,122 @@ tasks:
           ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
           ACT_JOB: preflight
 
+  ci:local-gha:preflight:dockerless:
+    desc: "Run only the CI preflight job in dockerless mode."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: preflight
+
+  ci:local-gha:test:
+    desc: "Run only the test job with dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "pull_request"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: test
+
+  ci:local-gha:quality:
+    desc: "Run only the quality job with dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "pull_request"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: quality
+
+  ci:local-gha:quality-unified:
+    desc: "Run only unified quality job with dockerless mapping (pull_request/schedule only)."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "pull_request"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: quality-unified
+
+  ci:local-gha:coverage:
+    desc: "Run only the coverage job with dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "push"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: coverage
+
+  ci:local-gha:template-collect:
+    desc: "Run template-collect-nightly job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: template-collect-nightly
+
+  ci:local-gha:leak-detection:
+    desc: "Run leak-detection job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: leak-detection
+
+  ci:local-gha:integration:
+    desc: "Run integration job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: integration
+
+  ci:local-gha:zig-readiness:
+    desc: "Run zig readiness job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: zig-readiness
+
+  ci:local-gha:all:
+    desc: "Run the dockerless local job set (PR event) for all major CI jobs."
+    cmds:
+      - task: ci:local-gha:preflight:dockerless
+      - task: ci:local-gha:test
+      - task: ci:local-gha:quality
+      - task: ci:local-gha:quality-unified
+      - task: ci:local-gha:coverage
+      - task: ci:local-gha:integration
+      - task: ci:local-gha:template-collect
+      - task: ci:local-gha:leak-detection
+      - task: ci:local-gha:zig-readiness
+      - task: ci:local-gha:stages
+
+  ci:local-gha:all:push:
+    desc: "Run dockerless local job set for push-like event."
+    cmds:
+      - task: ci:local-gha:preflight:dockerless
+      - task: ci:local-gha:test
+      - task: ci:local-gha:quality
+      - task: ci:local-gha:coverage
+      - task: ci:local-gha:integration
+      - task: ci:local-gha:leak-detection
+      - task: ci:local-gha:zig-readiness
+      - task: ci:local-gha:stages
+
   ci:local-gha:
     desc: "Run local GH Actions emulation (pull_request event) with act."
     cmds:
@@ -463,11 +591,29 @@ tasks:
           ACT_DOCKERLESS: "1"
           ACT_JOB: pre-push
 
+  ci:local-gha:pre-commit:full:
+    desc: "Run dockerless local pre-commit stage with full file scope."
+    cmds:
+      - |
+        THEGENT_PRE_COMMIT_SCOPE=full task ci:local-gha:pre-commit
+
+  ci:local-gha:pre-push:full:
+    desc: "Run dockerless local pre-push stage with full file scope."
+    cmds:
+      - |
+        THEGENT_PRE_COMMIT_SCOPE=full task ci:local-gha:pre-push
+
   ci:local-gha:stages:
     desc: "Run both dockerless local hook stages in order: pre-commit then pre-push."
     cmds:
       - task: ci:local-gha:pre-commit
       - task: ci:local-gha:pre-push
+
+  ci:local-gha:stages:full:
+    desc: "Run both dockerless local hook stages with full file scope."
+    cmds:
+      - |
+        THEGENT_PRE_COMMIT_SCOPE=full task ci:local-gha:stages
 
   ci:local-gha:job:
     desc: "Run a single GH Actions job in local act emulation."
@@ -1335,9 +1481,9 @@ tasks:
       - uv run pre-commit run --all-files
 
   hooks:run:pre-commit:
-    desc: "Run configured pre-commit hooks for the pre-commit stage"
+    desc: "Run configured pre-commit hooks for the pre-commit stage (changed-files by default)."
     cmds:
-      - uv run pre-commit run --all-files --hook-stage pre-commit
+      - ./scripts/run_pre_commit_stage.sh pre-commit
 
   hooks:run:pre-push:
     desc: "Run configured pre-commit hooks for the pre-push stage"
@@ -1347,7 +1493,23 @@ tasks:
   hooks:run:push:
     desc: "Run pre-commit hooks for pre-push stage"
     cmds:
-      - uv run pre-commit run --all-files --hook-stage pre-push
+      - ./scripts/run_pre_commit_stage.sh pre-push
+
+  hooks:run:pre-commit:full:
+    desc: "Run full-file local pre-commit hooks."
+    cmds:
+      - THEGENT_PRE_COMMIT_SCOPE=full ./scripts/run_pre_commit_stage.sh pre-commit
+
+  hooks:run:pre-push:full:
+    desc: "Run full-file local pre-push hooks."
+    cmds:
+      - THEGENT_PRE_COMMIT_SCOPE=full ./scripts/run_pre_commit_stage.sh pre-push
+
+  hooks:run:full:
+    desc: "Run both local pre-commit and pre-push stages across all files."
+    cmds:
+      - task: hooks:run:pre-commit:full
+      - task: hooks:run:pre-push:full
 
   # -- Memory cache (Supermemory integration) --
 

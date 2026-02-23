@@ -136,6 +136,29 @@ class TestBoardSyncWorkflow:
         assert result.details["source"] == "linear"
         assert result.details["items_synced"] >= 3
 
+    @pytest.mark.requirement("WL-229")
+    def test_board_sync_includes_maintenance_banner_when_active(self, temp_project: Path, monkeypatch) -> None:
+        """Maintenance mode should propagate a banner into board sync outputs."""
+        work_stream = temp_project / "docs" / "reference" / "WORK_STREAM.md"
+        work_stream.write_text(
+            """# WORK_STREAM
+
+### [WL-159] Cross-Repo Board Sync
+**Status:** IN PROGRESS
+""",
+            encoding="utf-8",
+        )
+
+        monkeypatch.setenv("THGENT_SYNC_MAINTENANCE_ACTIVE", "true")
+        monkeypatch.setenv("THGENT_SYNC_MAINTENANCE_REASON", "release-window")
+        cmd = SyncCommand(project_root=temp_project)
+        result = cmd.sync_board(board_id="123", source="github", dry_run=True)
+
+        assert result.status == SyncOperationStatus.DRY_RUN
+        assert "[MAINTENANCE] connector=github reason=release-window" in result.message
+        assert result.changes
+        assert "[MAINTENANCE] connector=github reason=release-window" in result.changes[0]
+
     def test_parse_work_stream_items(self, temp_project: Path) -> None:
         """Test parsing of WORK_STREAM.md items with status."""
         work_stream = temp_project / "docs" / "reference" / "WORK_STREAM.md"

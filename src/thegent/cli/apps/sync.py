@@ -421,6 +421,28 @@ def sync_remote_orphans(
     raise typer.Exit(1 if op.status == SyncOperationStatus.FAILED else 0)
 
 
+@app.command("local-orphans", help="Detect local WORK_STREAM items lacking remote mappings. (WL-249)")
+def sync_local_orphans(
+    mapping_cache: Path = typer.Option(
+        Path("docs/reference/connector_mapping_cache.json"),
+        "--mapping-cache",
+        help="Connector mapping cache path (default: docs/reference/connector_mapping_cache.json).",
+    ),
+    project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
+):
+    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+
+    root = (project or Path.cwd()).resolve()
+    cmd = SyncCommand(project_root=root)
+    mapping_cache_path = mapping_cache if mapping_cache.is_absolute() else root / mapping_cache
+    op = cmd.detect_local_orphans(mapping_cache_path=mapping_cache_path)
+    color = "red" if op.status == SyncOperationStatus.FAILED else "green"
+    console.print(f"[{color}]{op.message}[/{color}]")
+    for change in op.changes:
+        console.print(f"  [dim]{change}[/dim]")
+    raise typer.Exit(1 if op.status == SyncOperationStatus.FAILED else 0)
+
+
 @app.command("conflicts", help="List unresolved sync conflicts with recommended actions. (WL-204)")
 def sync_conflicts(
     queue_file: Path = typer.Option(

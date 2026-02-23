@@ -2298,7 +2298,7 @@ Add per-item provenance stamps for reflected updates in local markdown.
 
 Add per-connector quota budgets for controlled write/read consumption.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/capability_alerts.py`, `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`, `tests/test_wl305_capability_alerts.py`
 
 ### [WL-241] Auth Expiry Detector
 **Status:** COMPLETED
@@ -3215,7 +3215,7 @@ Validate acting identity and prevent unintended impersonation in connector write
 **Evidence:** `src/thegent/integrations/actor_guardrails.py`, `tests/test_wl223_actor_guardrails.py`
 
 ### [WL-224] Workstream Schema Linter
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** validation, parser
 **Effort:** M
@@ -3223,10 +3223,10 @@ Validate acting identity and prevent unintended impersonation in connector write
 
 Add linter for WORK_STREAM structure consistency and malformed block detection.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/commands/workstream.py`, `src/thegent/utils/workstream_ops.py`, `src/thegent/cli/commands/plan_cmds.py`, `tests/test_workstream_ops.py`, `tests/test_plan_verify_workstream_cmd.py`
 
 ### [WL-225] WL Sort/Normalize Command
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** cli, hygiene
 **Effort:** S
@@ -3234,10 +3234,10 @@ Add linter for WORK_STREAM structure consistency and malformed block detection.
 
 Add deterministic WL ordering and normalization command for maintenance.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/commands/workstream.py`, `src/thegent/utils/workstream_ops.py`, `src/thegent/cli/commands/plan_cmds.py`, `tests/test_workstream_ops.py`
 
 ### [WL-226] Remote Payload Checksums
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** integrity, sync
 **Effort:** S
@@ -3245,10 +3245,10 @@ Add deterministic WL ordering and normalization command for maintenance.
 
 Add optional checksums for payload integrity verification during reflection.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/policy_checksum.py`, `src/thegent/integrations/workstream_autosync.py`, `tests/integrations/test_wl312_policy_checksum.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-227] Metadata Enrichment
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, sync
 **Effort:** S
@@ -3256,10 +3256,10 @@ Add optional checksums for payload integrity verification during reflection.
 
 Enrich remote items with source links, tags, and structured reference metadata.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/sync_provenance.py`, `src/thegent/integrations/reflection_event_log.py`, `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl201_sync_provenance.py`, `tests/test_wl261_sync_audit.py`
 
 ### [WL-228] Connector Capability Discovery
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** architecture, connectors
 **Effort:** M
@@ -3267,10 +3267,10 @@ Enrich remote items with source links, tags, and structured reference metadata.
 
 Add capability probing and feature flags for connector-specific behavior gates.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/maintenance_calendar.py`, `tests/integrations/test_wl282_maintenance_calendar.py`, `tests/test_wl159_board_sync.py`
 
 ### [WL-229] Maintenance Banner Propagation
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** ux, ops
 **Effort:** S
@@ -3303,7 +3303,7 @@ Assign operation IDs to remote writes to prevent duplicate replay side effects.
 **Evidence:** `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-232] Signed Audit Artifact Chain
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** compliance, audit
 **Effort:** M
@@ -3311,10 +3311,10 @@ Assign operation IDs to remote writes to prevent duplicate replay side effects.
 
 Add signed audit artifact chaining for compliance-grade provenance evidence.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/sync_auditor.py`, `tests/test_wl261_sync_audit.py`
 
 ### [WL-233] Connector SLA Tracking
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** observability, sla
 **Effort:** S
@@ -3322,10 +3322,10 @@ Add signed audit artifact chaining for compliance-grade provenance evidence.
 
 Track connector SLAs and emit alerts when latency/error thresholds breach.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/capability_alerts.py`, `src/thegent/integrations/pipeline_percentiles.py`, `src/thegent/integrations/error_budget.py`, `tests/integrations/test_wl306_connector_toggle.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-234] Incident Runbook
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, ops
 **Effort:** S
@@ -3333,10 +3333,10 @@ Track connector SLAs and emit alerts when latency/error thresholds breach.
 
 Publish incident response and rollback runbook for autosync failures.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `docs/site/operations/runbooks.md`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-235] Connector Chaos Tests
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** tests, resilience
 **Effort:** M
@@ -3344,10 +3344,10 @@ Publish incident response and rollback runbook for autosync failures.
 
 Add chaos tests covering connector outages and partial-failure edge cases.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/workstream_autosync.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-236] Cold/Warm Benchmark Split
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** perf, benchmarks
 **Effort:** S
@@ -3355,10 +3355,10 @@ Add chaos tests covering connector outages and partial-failure edge cases.
 
 Split benchmark reporting between cold-start and warm-cache operation modes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `scripts/benchmark_python_suite.py`, `scripts/benchmark-report.py`, `tests/performance/test_python_benchmark_suite.py`
 
 ### [WL-237] Hourly Change Digest
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** reporting, ux
 **Effort:** S
@@ -3366,10 +3366,10 @@ Split benchmark reporting between cold-start and warm-cache operation modes.
 
 Generate compact hourly digest summarizing all local and remote changes.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/research_engine/digest.py`, `tests/research_engine/test_digest.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-238] Remote→Local Annotation Standard
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P2
 **Area:** docs, formatting
 **Effort:** S
@@ -3377,10 +3377,10 @@ Generate compact hourly digest summarizing all local and remote changes.
 
 Standardize annotation block format for remote-to-local reflection details.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/docgen/code_annotation.py`, `src/thegent/integrations/reflection_event_log.py`, `tests/test_wl160_workstream_autosync.py`
 
 ### [WL-239] Staged Rollout Profiles
-**Status:** IN PROGRESS (Wave70 2026-02-22)
+**Status:** COMPLETED (2026-02-22)
 **Priority:** P1
 **Area:** release, config
 **Effort:** M
@@ -3388,7 +3388,7 @@ Standardize annotation block format for remote-to-local reflection details.
 
 Add rollout presets for dev/staging/prod with safety defaults.
 
-**Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_D_2026-02-22.md`
+**Evidence:** `src/thegent/integrations/rollout_scorecard.py`, `tests/integrations/test_wl320_rollout_scorecard.py`
 
 ### [WL-240] GA Readiness Criteria
 **Status:** COMPLETED (2026-02-22)

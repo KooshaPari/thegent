@@ -19,6 +19,7 @@ class TestPolicyChecksum:
     """Test PolicyChecksum dataclass. @trace WL-312"""
 
     @pytest.mark.requirement("WL-312")
+    @pytest.mark.requirement("WL-226")
     def test_create_policy_checksum(self) -> None:
         """Can create a PolicyChecksum with all fields."""
         now = datetime.now(timezone.utc)
@@ -201,6 +202,7 @@ class TestPolicyChecksumDriftDetector:
             detector.get_baseline("nonexistent")
 
     @pytest.mark.requirement("WL-312")
+    @pytest.mark.requirement("WL-226")
     def test_workflow_baseline_and_check(self, detector: PolicyChecksumDriftDetector) -> None:
         """Typical workflow: record baseline, then check for drift."""
         policy_id = "policy-rbac-001"

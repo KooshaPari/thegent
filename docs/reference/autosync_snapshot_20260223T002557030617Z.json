@@ -1,0 +1,136 @@
+{
+  "last_cycle_at": "2026-02-23T00:25:57.029640+00:00",
+  "total_cycles": 1,
+  "last_error": null,
+  "health": "ok",
+  "runner": {
+    "enabled": true,
+    "is_running": false,
+    "last_sync_time": "2026-02-23T00:25:57.020327+00:00",
+    "github_enabled": true,
+    "linear_enabled": false,
+    "last_operation": {
+      "operation_id": "gh-read-f7886328c220",
+      "platform": "github",
+      "direction": "read",
+      "items_processed": 2,
+      "items_successful": 1,
+      "items_failed": 1,
+      "errors": [],
+      "correlation_id": "64b24571-c162-41f8-bf2c-e7aa575640f8",
+      "started_at": "2026-02-23T00:25:57.024931+00:00",
+      "completed_at": "2026-02-23T00:25:57.026216+00:00",
+      "duration_seconds": 0.001285
+    },
+    "open_blockers": [
+      "WL-160:Full Automatic Workstream Reflection -> external credentials"
+    ],
+    "failure_queue_size": 38,
+    "next_cycle_interval_seconds": 300,
+    "connector_health": [
+      {
+        "connector": "github",
+        "status": "healthy",
+        "reason": null
+      }
+    ],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "correlation_id": "64b24571-c162-41f8-bf2c-e7aa575640f8",
+    "local_orphan_report": {
+      "local_ids": [
+        "WL-160",
+        "WL-161"
+      ],
+      "mapped_remote_ids": [],
+      "local_orphan_ids": [
+        "WL-160",
+        "WL-161"
+      ],
+      "orphan_count": 2
+    },
+    "ignored_wl_ids": [],
+    "scope_filtered_wl_ids": [],
+    "no_op_summary": null,
+    "trend_sample": null
+  },
+  "open_blockers": [
+    "WL-160:Full Automatic Workstream Reflection -> external credentials"
+  ],
+  "failure_queue_size": 38,
+  "checkpoint": null,
+  "connector_health": [
+    {
+      "connector": "github",
+      "status": "healthy",
+      "reason": null
+    }
+  ],
+  "next_cycle_interval_seconds": 300,
+  "incident_snapshot": {
+    "captured_at": "2026-02-23T00:25:57.028004+00:00",
+    "items_count": 2,
+    "snapshot_age_seconds": 114,
+    "snapshot_stale": false,
+    "correlation_id": "64b24571-c162-41f8-bf2c-e7aa575640f8",
+    "slo_alerts": [],
+    "error_budget": {
+      "success_count": 1,
+      "failure_count": 0,
+      "consecutive_failures": 0,
+      "total_operations": 1,
+      "current_failure_rate": 0.0
+    },
+    "connector_sla": {},
+    "policy_hash": "2e9e6033105acd2d226cceed532a2784296cc127",
+    "connector_health": [
+      {
+        "connector": "github",
+        "status": "healthy",
+        "reason": null
+      }
+    ],
+    "metadata": {
+      "status": "fresh",
+      "age_seconds": 0
+    },
+    "last_error": null,
+    "failure_queue_size": 38,
+    "mutation_summary": {
+      "operation_id": "gh-read-f7886328c220",
+      "platform": "github",
+      "direction": "read",
+      "items_processed": 2,
+      "items_successful": 1,
+      "items_failed": 1,
+      "errors": [],
+      "correlation_id": "64b24571-c162-41f8-bf2c-e7aa575640f8",
+      "started_at": "2026-02-23T00:25:57.024931+00:00",
+      "completed_at": "2026-02-23T00:25:57.026216+00:00",
+      "duration_seconds": 0.001285
+    }
+  },
+  "correlation_id": "64b24571-c162-41f8-bf2c-e7aa575640f8",
+  "local_orphan_report": {
+    "local_ids": [
+      "WL-160",
+      "WL-161"
+    ],
+    "mapped_remote_ids": [],
+    "local_orphan_ids": [
+      "WL-160",
+      "WL-161"
+    ],
+    "orphan_count": 2
+  },
+  "ignored_wl_ids": [],
+  "scope_filtered_wl_ids": [],
+  "no_op_summary": null,
+  "trend_sample": null,
+  "change_digest": {
+    "bucket": "hourly",
+    "hours": {}
+  }
+}

@@ -145,6 +145,39 @@ def test_wl6912_read_log_file_readable(tmp_path: Path) -> None:
     assert payload["entries"] == 1
 
 
+def test_wl6912_read_log_file_with_malformed_and_valid_records(tmp_path: Path) -> None:
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    end = datetime(2026, 1, 31, tzinfo=UTC)
+    log_file = tmp_path / "mixed.jsonl"
+    log_file.write_text(
+        "\n".join(
+            [
+                "not-json",
+                json.dumps(
+                    {"type": "assistant", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "ok"}}
+                ),
+                json.dumps({"type": "assistant", "timestamp": "bad"}),
+                json.dumps(
+                    {"type": "system", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "skip"}}
+                ),
+                json.dumps({"type": "user", "timestamp": "2026-01-10T10:01:00+00:00", "message": {"content": "valid"}}),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    payload = summary._read_log_file(log_file, start, end, include_diagnostics=True)
+
+    assert payload["status"] == "ok"
+    assert payload["entries"] == 2
+    parse_counts = payload["parse_counts"]
+    assert parse_counts["malformed_json"] == 1
+    assert parse_counts["invalid_timestamp"] == 1
+    assert parse_counts["unsupported_type"] == 1
+    assert any("malformed_json" in sample for sample in parse_counts["sampled_errors"])
+    assert any("unsupported_type" in sample for sample in parse_counts["sampled_errors"])
+
+
 def test_wl6912_read_log_file_missing_file(tmp_path: Path) -> None:
     start = datetime(2026, 1, 1, tzinfo=UTC)
     end = datetime(2026, 1, 31, tzinfo=UTC)

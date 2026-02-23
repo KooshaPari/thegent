@@ -35,10 +35,7 @@ class RemoteOrphanDetector:
             List of OrphanRecord objects for items in remote_ids not in local_ids
         """
         orphaned = remote_ids - local_ids
-        return [
-            OrphanRecord(item_id=item_id, source=source)
-            for item_id in sorted(orphaned)
-        ]
+        return [OrphanRecord(item_id=item_id, source=source) for item_id in sorted(orphaned)]
 
     def filter_known(
         self,

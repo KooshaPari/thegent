@@ -1348,10 +1348,12 @@ class SyncCommand:
 
             if dry_run or shadow_mode:
                 _record_cycle_status("success")
+                message_prefix = f"{maintenance_banner} " if maintenance_banner else ""
                 return OperationResult(
                     operation=op,
                     status=SyncOperationStatus.DRY_RUN,
                     message=(
+                        f"{message_prefix}"
                         f"Board sync {'shadow-mode' if shadow_mode else 'dry-run'}: "
                         f"would sync {len(reconciled_items)} item(s) to {normalized_source}."
                     ),
@@ -1532,8 +1534,20 @@ class SyncCommand:
         """Read remote status snapshots for configured work-stream items."""
         from thegent.sync.board_adapters import resolve_board_adapter
 
-        adapter = resolve_board_adapter(source)
-        status_map = adapter.fetch_remote_status(board_id=board_id, work_stream_items=work_stream_items)
+        try:
+            adapter = resolve_board_adapter(source)
+            status_map = adapter.fetch_remote_status(
+                board_id=board_id,
+                work_stream_items=work_stream_items,
+            )
+        except Exception as exc:
+            _log.warning(
+                "Skipping remote status reconciliation for source=%s board_id=%s: %s",
+                source,
+                board_id,
+                exc,
+            )
+            return {}
         normalized: dict[str, str] = {}
         for item_id, status in status_map.items():
             normalized[item_id.upper()] = self._normalize_status(str(status))
@@ -1685,4 +1699,37 @@ class SyncCommand:
             details=report.to_dict(),
             changes=[f"orphan: {item_id}" for item_id in report.orphan_ids],
             errors=[f"remote orphan detected: {item_id}" for item_id in report.orphan_ids],
+        )
+
+    def detect_local_orphans(self, mapping_cache_path: Path | None = None) -> OperationResult:
+        """Detect local WORK_STREAM items missing remote tracker mappings."""
+        from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
+        from thegent.integrations.sync_auditor import SyncAuditor
+
+        t0 = time.monotonic()
+        operation = "local-orphans"
+        local_ids = [item["id"] for item in self._parse_work_stream_items()]
+
+        remote_ids = set[str]()
+        if mapping_cache_path is None:
+            mapping_cache_path = Path("docs/reference/connector_mapping_cache.json")
+        if mapping_cache_path.exists():
+            mapping_cache = ConnectorMappingCache(cache_file=mapping_cache_path)
+            remote_ids.update(mapping_cache.list_cached_wl_ids("github"))
+            remote_ids.update(mapping_cache.list_cached_wl_ids("linear"))
+
+        report = SyncAuditor.detect_local_orphans(local_ids=local_ids, mapped_remote_ids=sorted(remote_ids))
+        has_orphans = report.orphan_count > 0
+        return OperationResult(
+            operation=operation,
+            status=SyncOperationStatus.FAILED if has_orphans else SyncOperationStatus.SUCCESS,
+            message=(
+                f"Detected {report.orphan_count} local orphan item(s)."
+                if has_orphans
+                else "No local orphan items detected."
+            ),
+            duration=time.monotonic() - t0,
+            details=report.to_dict(),
+            changes=[f"orphan: {item_id}" for item_id in report.local_orphan_ids],
+            errors=[f"local orphan detected: {item_id}" for item_id in report.local_orphan_ids],
         )

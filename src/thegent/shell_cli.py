@@ -3,6 +3,7 @@
 import os
 import subprocess
 from pathlib import Path
+from typing import Final, Literal, TypeAlias
 
 import typer
 from rich.console import Console
@@ -10,6 +11,35 @@ from rich.table import Table
 
 shell_app = typer.Typer(name="shell", help="Shell environment management commands")
 console = Console()
+
+AliasProbeStatus: TypeAlias = Literal["ok", "execution_failed", "timeout", "unavailable", "other_error"]
+AliasProbeResult: TypeAlias = tuple[AliasProbeStatus, str | None, str]
+_ALIAS_PROBE_CMD: Final = "alias ls 2>/dev/null | command grep -E '(tree|recursive|-R)' || true"
+_ALIAS_PROBE_TIMEOUT: Final = 2
+
+
+def _run_alias_probe() -> AliasProbeResult:
+    """Run a focused shell alias probe and return a typed status + reason."""
+    try:
+        result = subprocess.run(
+            ["zsh", "-c", _ALIAS_PROBE_CMD],
+            capture_output=True,
+            text=True,
+            timeout=_ALIAS_PROBE_TIMEOUT,
+            env={**os.environ, "RIPGREP_CONFIG_PATH": "", "GREP_OPTIONS": ""},
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return "timeout", _classify_subprocess_probe_error(exc), ""
+    except FileNotFoundError as exc:
+        return "unavailable", _classify_subprocess_probe_error(exc), ""
+    except subprocess.SubprocessError as exc:
+        return "other_error", _classify_subprocess_probe_error(exc), ""
+
+    if result.returncode != 0:
+        return "execution_failed", _classify_subprocess_probe_execution(result), ""
+
+    return "ok", None, result.stdout
 
 
 def _classify_subprocess_probe_error(exc: BaseException) -> str:
@@ -27,9 +57,7 @@ def _classify_subprocess_probe_error(exc: BaseException) -> str:
     return f"unexpected error ({type(exc).__name__}): {exc}"
 
 
-def _classify_subprocess_probe_execution(
-    result: subprocess.CompletedProcess[str]
-) -> str:
+def _classify_subprocess_probe_execution(result: subprocess.CompletedProcess[str]) -> str:
     reason = f"execution failed (exit {result.returncode})"
     stderr = result.stderr.strip()
     stdout = result.stdout.strip()
@@ -224,51 +252,27 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
                 fixes.append("Run: thegent install --target system")
 
     # Check for problematic aliases
-    try:
-        result = subprocess.run(
-            ["zsh", "-c", "alias ls 2>/dev/null | command grep -E '(tree|recursive|-R)' || true"],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            env={**os.environ, "RIPGREP_CONFIG_PATH": "", "GREP_OPTIONS": ""},
-            check=False,
-        )
-        if result.returncode != 0:
-            reason = _classify_subprocess_probe_execution(result)
-            warnings.append(f"Alias probe execution failed ({reason}). Check zsh startup and rerun: thegent shell doctor.")
-            if fix:
-                fixes.append("Fix zsh startup errors or rerun with a clean PATH.")
-        elif result.stdout.strip():
+    probe_status, probe_reason, probe_stdout = _run_alias_probe()
+    if probe_status == "ok":
+        if probe_stdout.strip():
             issues.append("ls is aliased to tree/recursive output")
             if fix:
                 fixes.append("Safeguards should fix this automatically")
-    except subprocess.TimeoutExpired as exc:
-        reason = _classify_subprocess_probe_error(exc)
+    elif probe_status == "execution_failed":
         warnings.append(
-            f"Alias probe timed out: {reason}. Check zsh startup time and rerun: thegent shell doctor --fix"
+            f"Alias probe execution failed ({probe_reason}). Check zsh startup and rerun: thegent shell doctor."
+        )
+        if fix:
+            fixes.append("Fix zsh startup errors or rerun with a clean PATH.")
+    elif probe_status == "timeout":
+        warnings.append(
+            f"Alias probe timed out: {probe_reason}. Check zsh startup time and rerun: thegent shell doctor --fix"
         )
         if fix:
             fixes.append("Increase shell probe timeout or skip alias checks temporarily.")
-    except FileNotFoundError as exc:
-        reason = _classify_subprocess_probe_error(exc)
+    else:
         warnings.append(
-            f"Alias probe unavailable ({reason}). Verify zsh is installed and runnable, "
-            "then rerun: thegent shell doctor."
-        )
-        if fix:
-            fixes.append("Install or fix zsh in PATH, then rerun: thegent shell doctor.")
-    except subprocess.SubprocessError as exc:
-        reason = _classify_subprocess_probe_error(exc)
-        warnings.append(
-            f"Alias probe unavailable ({reason}). Verify zsh is installed and runnable, "
-            "then rerun: thegent shell doctor."
-        )
-        if fix:
-            fixes.append("Install or fix zsh in PATH, then rerun: thegent shell doctor.")
-    except OSError as exc:
-        reason = _classify_subprocess_probe_error(exc)
-        warnings.append(
-            f"Alias probe unavailable ({reason}). Verify zsh is installed and runnable, "
+            f"Alias probe unavailable ({probe_reason}). Verify zsh is installed and runnable, "
             "then rerun: thegent shell doctor."
         )
         if fix:
@@ -596,11 +600,11 @@ def shell_platform() -> None:
             table.add_row("Zsh Version", "Unknown")
     except FileNotFoundError as exc:
         reason = _classify_subprocess_probe_error(exc)
-        table.add_row("Zsh Status", f"Probe failed ({reason})")
+        table.add_row("Zsh Status", f"Not installed ({reason})")
         table.add_row("Zsh Version", "Unknown")
     except subprocess.TimeoutExpired as exc:
         reason = _classify_subprocess_probe_error(exc)
-        table.add_row("Zsh Status", f"Probe failed ({reason})")
+        table.add_row("Zsh Status", f"Probe timed out ({reason})")
         table.add_row("Zsh Version", "Unknown")
     except subprocess.SubprocessError as exc:
         reason = _classify_subprocess_probe_error(exc)

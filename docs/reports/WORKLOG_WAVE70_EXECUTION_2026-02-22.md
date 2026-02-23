@@ -40,12 +40,26 @@
 - Global gate before closure: `task quality` (currently running in this environment; finalize after completion).
 
 ## Status in WORK_STREAM
-- All 70 listed items are moved from `BACKLOG` to `IN PROGRESS (Wave70 2026-02-22)`.
-- Ownership is tracked by lane in the CLAIMED section.
+- As of this pass, all 70 listed items from Wave70 are `COMPLETED` in `docs/reference/WORK_STREAM.md`.
+- Lane coverage remains mapped in the CLAIMED section.
 
 ## Completed in this pass
 - WL-230 Emergency Stop Switch
 - WL-231 Replay-Safe Mutation IDs
+- WL-224 Workstream Schema Linter
+- WL-225 WL Sort/Normalize Command
+- WL-226 Remote Payload Checksums
+- WL-227 Metadata Enrichment
+- WL-228 Connector Capability Discovery
+- WL-229 Maintenance Banner Propagation
+- WL-232 Signed Audit Artifact Chain
+- WL-233 Connector SLA Tracking
+- WL-234 Incident Runbook
+- WL-235 Connector Chaos Tests
+- WL-236 Cold/Warm Benchmark Split
+- WL-237 Hourly Change Digest
+- WL-238 Remote→Local Annotation Standard
+- WL-239 Staged Rollout Profiles
 - WL-240 GA Readiness Criteria
 - WL-266 Pre-Apply Connector Health Probe
 - WL-271 Split-Brain Remote State Detector

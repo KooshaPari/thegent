@@ -1,0 +1,23 @@
+import { ssrRenderAttrs } from "vue/server-renderer";
+import { useSSRContext } from "vue";
+import { a as _export_sfc } from "./vue.DCJT_Tnz.js";
+import "./app.js";
+import "@vueuse/core";
+import "./mermaid.OkLrB7RK.js";
+import "mermaid";
+const __pageData = JSON.parse('{"title":"MCP Tool SLO Targets (G-OP-08)","description":"","frontmatter":{},"headers":[],"relativePath":"reference/SLO_TARGETS.md","filePath":"reference/SLO_TARGETS.md","lastUpdated":1771753292000}');
+const _sfc_main = { name: "reference/SLO_TARGETS.md" };
+function _sfc_ssrRender(_ctx, _push, _parent, _attrs, $props, $setup, $data, $options) {
+  _push(`<div${ssrRenderAttrs(_attrs)}><h1 id="mcp-tool-slo-targets-g-op-08" tabindex="-1">MCP Tool SLO Targets (G-OP-08) <a class="header-anchor" href="#mcp-tool-slo-targets-g-op-08" aria-label="Permalink to &quot;MCP Tool SLO Targets (G-OP-08)&quot;">​</a></h1><p>undefined<strong>Purpose:</strong> Aspirational latency targets for thegent MCP tools. Not enforced; use for monitoring and runbook guidance. undefined<strong>Source:</strong> FASTMCP_OPTIMIZATION_AUDIT.md §5</p><hr><h2 id="tool-targets" tabindex="-1">Tool Targets <a class="header-anchor" href="#tool-targets" aria-label="Permalink to &quot;Tool Targets&quot;">​</a></h2><table tabindex="0"><thead><tr><th>Tool</th><th>Target</th><th>Notes</th></tr></thead><tbody><tr><td>thegent_ps</td><td>p50 &lt; 50ms</td><td>Cached (TTL 30s); list operation</td></tr><tr><td>thegent_status</td><td>p50 &lt; 20ms</td><td>Lightweight session lookup</td></tr><tr><td>thegent_list_agents</td><td>p50 &lt; 30ms</td><td>Static list</td></tr><tr><td>thegent_list_droids</td><td>p50 &lt; 30ms</td><td>Dir scan</td></tr><tr><td>thegent_list_models</td><td>p50 &lt; 200ms</td><td>Scraped catalog; cache hit ~50ms</td></tr><tr><td>thegent_run</td><td>N/A</td><td>Depends on agent; timeout 90s</td></tr><tr><td>thegent_bg</td><td>N/A</td><td>Fire-and-forget; returns immediately</td></tr><tr><td>thegent_logs</td><td>p95 &lt; 500ms</td><td>File read; tail limit 500k</td></tr><tr><td>thegent_wait</td><td>N/A</td><td>Blocks until session completes or timeout</td></tr><tr><td>thegent_inspect</td><td>p95 &lt; 1s</td><td>Multi-session; scales with session count</td></tr></tbody></table><hr><h2 id="supporting-infrastructure" tabindex="-1">Supporting Infrastructure <a class="header-anchor" href="#supporting-infrastructure" aria-label="Permalink to &quot;Supporting Infrastructure&quot;">​</a></h2><table tabindex="0"><thead><tr><th>Component</th><th>Purpose</th></tr></thead><tbody><tr><td>ResponseCachingMiddleware</td><td>30s TTL for read-only tools</td></tr><tr><td>ResponseLimitingMiddleware</td><td>500KB cap for logs</td></tr><tr><td>execution_time_ms</td><td>ToolResult.meta for observability</td></tr></tbody></table><hr><h2 id="cross-references" tabindex="-1">Cross-References <a class="header-anchor" href="#cross-references" aria-label="Permalink to &quot;Cross-References&quot;">​</a></h2><ul><li>docs/FASTMCP_OPTIMIZATION_AUDIT.md</li><li>docs/reference/TOOLING_AND_GLOBAL_OPTIMIZATIONS_AUDIT.md</li></ul><hr><h2 id="extension-summary" tabindex="-1">EXTENSION_SUMMARY <a class="header-anchor" href="#extension-summary" aria-label="Permalink to &quot;EXTENSION_SUMMARY&quot;">​</a></h2><p>undefined<strong>Extended on:</strong> 2026-02-17 undefined<strong>Extended by:</strong> Claude Code</p><h3 id="changes-made" tabindex="-1">Changes Made <a class="header-anchor" href="#changes-made" aria-label="Permalink to &quot;Changes Made&quot;">​</a></h3><ol><li>Added practical implementation patterns</li><li>Added configuration examples</li><li>Enhanced cross-references to related documentation</li></ol><h3 id="cross-references-added" tabindex="-1">Cross-References Added <a class="header-anchor" href="#cross-references-added" aria-label="Permalink to &quot;Cross-References Added&quot;">​</a></h3><ul><li>Related research and implementation guides</li><li>WORK_STREAM.md for tracking</li></ul><h3 id="practical-additions" tabindex="-1">Practical Additions <a class="header-anchor" href="#practical-additions" aria-label="Permalink to &quot;Practical Additions&quot;">​</a></h3><ul><li>Implementation templates</li><li>Configuration examples</li><li>Best practices</li></ul></div>`);
+}
+const _sfc_setup = _sfc_main.setup;
+_sfc_main.setup = (props, ctx) => {
+  const ssrContext = useSSRContext();
+  (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("reference/SLO_TARGETS.md");
+  return _sfc_setup ? _sfc_setup(props, ctx) : void 0;
+};
+const SLO_TARGETS = /* @__PURE__ */ _export_sfc(_sfc_main, [["ssrRender", _sfc_ssrRender]]);
+export {
+  __pageData,
+  SLO_TARGETS as default
+};
