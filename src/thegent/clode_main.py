@@ -101,7 +101,7 @@ def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> b
             shims_path = str(candidate)
     if not shims_path:
         console.print(
-            "[red]thegent-shims not found.[/red] Install it first with: [dim]zsh scripts/install-thegent-shims.sh[/dim]"
+            "[red]thegent-shims not found.[/red] Install it first with: [dim]thegent install-shims --all[/dim]"
         )
         raise typer.Exit(1)
 
