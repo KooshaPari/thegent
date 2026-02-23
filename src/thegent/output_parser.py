@@ -251,7 +251,8 @@ def _extract_from_plain_text(stdout: str) -> str:
     if not meaningful:
         return stdout.strip() or ""
     # Prefer last paragraph (split by blank lines)
-    blocks = re.split(r"\n\s*\n", "\n".join(meaningful))
+    # QW-006: Use pre-compiled regex singleton
+    blocks = _PARAGRAPH_SPLIT_PATTERN.split("\n".join(meaningful))
     last_block = blocks[-1].strip() if blocks else ""
     if last_block:
         return last_block
@@ -264,6 +265,16 @@ _WORKER_REPORT_START = re.compile(
     r"(\*\*Summary\*\*|##\s*Summary|##\s*Worker Status|##\s*Status Report)",
     re.IGNORECASE,
 )
+
+# QW-006: Cached regex patterns for _compact_report
+_SUMMARY_PATTERN = re.compile(
+    r"\*\*Summary\*\*\s*(.+?)(?=\*\*[A-Za-z]|\Z)",
+    re.DOTALL | re.IGNORECASE,
+)
+_SENTENCE_SPLIT_PATTERN = re.compile(r"[.!?]\s+")
+
+# QW-006: Cached regex pattern for _extract_from_plain_text paragraph split
+_PARAGRAPH_SPLIT_PATTERN = re.compile(r"\n\s*\n")
 
 
 def _strip_think_blocks(text: str) -> str:
@@ -299,11 +310,12 @@ def _unescape_content(text: str) -> str:
 def _compact_report(text: str) -> str:
     """Compact worker report for messaging: prefer Summary as primary message."""
     text = _unescape_content(text)
-    summary_m = re.search(r"\*\*Summary\*\*\s*(.+?)(?=\*\*[A-Za-z]|\Z)", text, re.DOTALL | re.IGNORECASE)
+    # QW-006: Use pre-compiled regex singletons
+    summary_m = _SUMMARY_PATTERN.search(text)
     if summary_m:
         summary = summary_m.group(1).strip()
         if len(summary) > 200:
-            first_sent = re.split(r"[.!?]\s+", summary, maxsplit=1)[0]
+            first_sent = _SENTENCE_SPLIT_PATTERN.split(summary, maxsplit=1)[0]
             if first_sent:
                 summary = first_sent.rstrip() + ("." if not first_sent.rstrip().endswith(".") else "")
         return summary
