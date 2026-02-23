@@ -1794,20 +1794,6 @@ class TestAnnotationAndReflectionStandard:
 
     @pytest.mark.requirement("WL-238")
     def test_reflection_event_log_writes_annotation_block(self, tmp_path) -> None:
-
-
-class TestAutosyncRunbookCoverage:
-    """Runbook documentation coverage for autosync incidents."""
-
-    @pytest.mark.requirement("WL-234")
-    def test_runbook_contains_autosync_incident_and_recovery_steps(self) -> None:
-        runbook_path = os.path.join(os.getcwd(), "docs", "site", "operations", "runbooks.md")
-        with open(runbook_path, encoding="utf-8") as fp:
-            content = fp.read()
-
-        assert "Autosync Incident" in content
-        assert "Rollback" in content
-        assert "autosync" in content.lower()
         log_path = tmp_path / "reflection.jsonl"
         log = ReflectionEventLog(log_path)
         decision = ReflectionDecision(
@@ -1823,6 +1809,19 @@ class TestAutosyncRunbookCoverage:
         raw = log_path.read_text(encoding="utf-8").strip()
         assert '"annotation"' in raw
         assert '"schema": "reflection-annotation-v1"' in raw
+
+class TestAutosyncRunbookCoverage:
+    """Runbook documentation coverage for autosync incidents."""
+
+    @pytest.mark.requirement("WL-234")
+    def test_runbook_contains_autosync_incident_and_recovery_steps(self) -> None:
+        runbook_path = Path(os.getcwd()) / "docs" / "site" / "operations" / "runbooks.md"
+        with open(runbook_path, encoding="utf-8") as fp:
+            content = fp.read()
+
+        assert "Autosync Incident" in content
+        assert "Rollback" in content
+        assert "autosync" in content.lower()
 
     @pytest.mark.asyncio
     async def test_graceful_skip_when_credentials_missing(self):
