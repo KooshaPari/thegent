@@ -370,3 +370,10 @@ def _classify_observe_summary_trend_health(
         },
         "trend_snapshot_recommendations": recommendations,
     }
+
+
+def observe_summary_impl(cd: str | None = None, format: str = 'json') -> dict[str, Any]:
+    """Stub for observe_summary_impl - delegates to main impl."""
+    from thegent.cli.commands.observability_main_impl import _observe_summary_impl_direct
+    return _observe_summary_impl_direct(cd=cd, format=format)
+

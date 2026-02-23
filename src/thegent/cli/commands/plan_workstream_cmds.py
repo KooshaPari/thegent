@@ -301,6 +301,11 @@ def plan_analyze_cmd(
     format: str | None = None,
 ) -> None:
     """Run planning simulation overlays (XD1–XD3): PERT, resource contention, continuity risk."""
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
+        raise typer.Exit(1)
+
     from thegent.cli.commands.impl import plan_analyze_impl
 
     result = plan_analyze_impl(cd=cd, pert=pert, resources=resources, continuity=continuity)
