@@ -24,6 +24,20 @@ def __getattr__(name: str) -> Any:
 
         globals()[name] = AGENT_LABELS
         return AGENT_LABELS
+    
+    # Lazy load model list commands
+    _model_list_funcs = (
+        "_list_minimax_models", "_list_glm_models", "_list_cursor_models",
+        "_list_gemini_models", "_list_copilot_models", "_list_claude_models",
+        "_list_codex_models", "_list_antigravity_models", "_list_kiro_models",
+    )
+    if name in _model_list_funcs:
+        from thegent.cli.commands import model_cmds_config
+        func = getattr(model_cmds_config, name, None)
+        if func:
+            globals()[name] = func
+            return func
+    
     if hasattr(_cli_surface, name):
         return getattr(_cli_surface, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
