@@ -1137,6 +1137,7 @@ def bg_impl_core(
             }
         agent = route[0]
     agent = resolve_agent(agent) or "unknown"
+    assert isinstance(agent, str), "agent must be str after resolution"
 
     # WP-X1/V7: Contract Migration & Version Negotiation
     from thegent.contracts.migration import MigrationController
