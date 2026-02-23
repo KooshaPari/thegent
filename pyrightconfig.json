@@ -83,18 +83,43 @@
       "root": "src",
       "pythonVersion": "3.12",
       "pythonPlatform": "All",
-      "extraPaths": []
+      "extraPaths": [
+        "packages/thegent-agents/src",
+        "packages/thegent-cli/src",
+        "packages/thegent-mcp/src"
+      ]
     },
     {
       "root": "tests",
       "pythonVersion": "3.12",
       "pythonPlatform": "All",
-      "extraPaths": ["src"]
+      "extraPaths": [
+        "src",
+        "packages/thegent-agents/src",
+        "packages/thegent-cli/src",
+        "packages/thegent-mcp/src"
+      ]
+    },
+    {
+      "root": "packages",
+      "pythonVersion": "3.12",
+      "pythonPlatform": "All",
+      "extraPaths": [
+        "src",
+        "packages/thegent-agents/src",
+        "packages/thegent-cli/src",
+        "packages/thegent-mcp/src"
+      ]
     }
   ],
 
   "stubPath": "typings",
   "venvPath": ".",
   "venv": ".venv",
-  "extraPaths": ["src"]
+  "extraPaths": [
+    "src",
+    "packages/thegent-agents/src",
+    "packages/thegent-cli/src",
+    "packages/thegent-mcp/src"
+  ]
 }
