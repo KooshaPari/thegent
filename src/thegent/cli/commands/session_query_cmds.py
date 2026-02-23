@@ -164,7 +164,7 @@ def ps_cmd(
     format: str | None = None,
     include_contract: bool = False,
 ) -> None:
-    from thegent.cli.commands.impl import ps_impl
+    from thegent.cli.commands.session_ops_impl import ps_impl
 
     settings = ThegentSettings()
     own = owner or _default_owner_tag()
@@ -241,7 +241,8 @@ def inspect_cmd(
     include_contract: bool = False,
 ) -> None:
     """Show status and logs for one or more sessions. No shell loop needed."""
-    from thegent.cli.commands.impl import logs_impl, ps_impl, status_impl
+    from thegent.cli.commands.impl import logs_impl, status_impl
+    from thegent.cli.commands.session_ops_impl import ps_impl
 
     if not session_ids and not owner:
         raise typer.BadParameter("Provide session_ids or --owner")
