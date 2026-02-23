@@ -10,10 +10,9 @@ FR-GIT-001  @trace FR-GIT-001
 from __future__ import annotations
 
 import logging
-import os
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 
 _log = logging.getLogger(__name__)
@@ -104,8 +103,8 @@ class GitNative:
         Returns:
             ``{"files_changed": N, "insertions": N, "deletions": N}``
         """
-        if _native_available and hasattr(thegent_git, "get_diff_stat"):
-            return thegent_git.get_diff_stat(self.repo_path)
+        if _native_available and hasattr(thegent_git, "get_diff_stat"):  # type: ignore[reportAttributeAccessIssue]
+            return thegent_git.get_diff_stat(self.repo_path)  # type: ignore[reportAttributeAccessIssue]
 
         # Fallback to subprocess
         diff = _run_git_command(self.repo_path, "diff", "--stat")

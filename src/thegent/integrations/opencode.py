@@ -31,7 +31,7 @@ class OpenCodeConfig:
 
 
 class OpenCodeClient:
-    def __init__(self, config: OpenCodeConfig = None):
+    def __init__(self, config: OpenCodeConfig | None = None):
         self._config = config or self._load_config()
         self._status = OpenCodeStatus.DISABLED
         if self._config.enabled:

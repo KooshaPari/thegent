@@ -118,9 +118,11 @@ class TaskWorkerPool:
                     duration_s=duration,
                 )
 
-                # Write result
+                # Write result atomically to a temp file, then rename
                 result_file = self.results / f"{task.id}.json"
-                result_file.write_text(json.dumps(result.__dict__))
+                temp_file = self.results / f"{task.id}.tmp"
+                temp_file.write_text(json.dumps(result.__dict__))
+                temp_file.rename(result_file)
                 _log.info("Worker %d completed task %s with exit code %d", worker_id, task.id, result.exit_code)
 
             except Exception as e:

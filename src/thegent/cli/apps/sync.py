@@ -8,6 +8,7 @@ import importlib.util
 import json
 import os
 from dataclasses import is_dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -633,6 +634,95 @@ def sync_audit(
     else:
         console.print(f"[red]Unknown format: {format}[/red]")
         raise typer.Exit(1)
+
+
+@app.command(
+    "dead-letter-queue",
+    help="Inspect dead-letter replay queue candidates without mutating state. (WL-331)",
+)
+def sync_dead_letter_queue(
+    source: str | None = typer.Option(None, "--source", "-s", help="Filter connector source (github|linear)."),
+    board_id: str | None = typer.Option(None, "--board", "-b", help="Filter board ID."),
+    limit: int = typer.Option(
+        50,
+        "--limit",
+        "-l",
+        min=1,
+        max=1000,
+        help="Maximum due replay candidates to render.",
+    ),
+    output_format: str = typer.Option("table", "--format", "-F", help="Output format (table|json)."),
+    project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
+):
+    """``thegent sync dead-letter-queue`` — inspect replay queue candidates.
+
+    Read-only command that reports pending queue records and due replay candidates.
+
+    # @trace WL-331
+    """
+    from thegent.commands.sync import SyncCommand
+
+    root = (project or Path.cwd()).resolve()
+    try:
+        cmd = SyncCommand(project_root=root)
+        queue = cmd._dead_letter_queue()
+        pending_records = queue.pending(source=source, board_id=board_id)
+        due_records = queue.candidates_for_replay(now=datetime.now(UTC), source=source, board_id=board_id)
+    except Exception as exc:
+        console.print(f"[red]dead-letter queue inspection failed: {exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    selected_records = due_records[:limit]
+    payload = {
+        "operation": "dead-letter-queue",
+        "queue_path": str(queue.queue_path),
+        "filters": {"source": source, "board_id": board_id, "limit": limit},
+        "counts": {
+            "pending_total": len(pending_records),
+            "due_total": len(due_records),
+            "selected": len(selected_records),
+        },
+        "candidates": [
+            {
+                "entry_id": record.entry_id,
+                "source": record.source,
+                "board_id": record.board_id,
+                "item_id": record.item.get("id"),
+                "status": record.status,
+                "attempts": record.attempts,
+                "max_attempts": record.max_attempts,
+                "next_attempt_at": record.next_attempt_at,
+                "last_attempt_at": record.last_attempt_at,
+                "error": record.error,
+            }
+            for record in selected_records
+        ],
+    }
+
+    if output_format == "json":
+        typer.echo(json.dumps(payload, indent=2))
+        return
+
+    if output_format != "table":
+        console.print(f"[red]Unknown format: {output_format}[/red]")
+        raise typer.Exit(1)
+
+    console.print(
+        "[bold]Dead-letter queue[/bold] "
+        f"pending={payload['counts']['pending_total']} "
+        f"due={payload['counts']['due_total']} "
+        f"selected={payload['counts']['selected']}"
+    )
+    if not selected_records:
+        console.print("[yellow]No due replay candidates.[/yellow]")
+        return
+
+    for record in selected_records:
+        item_id = record.item.get("id", "<unknown>")
+        console.print(
+            f"{record.entry_id} source={record.source} board={record.board_id} "
+            f"item={item_id} attempts={record.attempts}/{record.max_attempts}"
+        )
 
 
 @app.command(

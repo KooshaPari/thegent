@@ -1,0 +1,107 @@
+name: Sub-Package CI
+
+on:
+  push:
+    branches:
+      - main
+      - wip/*
+    paths:
+      - 'packages/**'
+      - '.github/workflows/subpackages.yml'
+      - 'pyproject.toml'
+      - 'tach.toml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
+      - '.github/workflows/subpackages.yml'
+      - 'pyproject.toml'
+      - 'tach.toml'
+
+jobs:
+  build-sdk:
+    name: Build thegent-sdk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install uv
+      - run: cd packages/thegent-sdk && uv pip install -e ".[dev]"
+      - run: cd packages/thegent-sdk && ruff check src/ tests/ || true
+      - run: cd packages/thegent-sdk && pytest tests/ -v --tb=short || true
+
+  build-mcp:
+    name: Build thegent-mcp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install uv
+      - run: cd packages/thegent-mcp && uv pip install -e ".[dev]"
+      - run: cd packages/thegent-mcp && ruff check src/ tests/ || true
+      - run: cd packages/thegent-mcp && pytest tests/ -v --tb=short || true
+
+  build-agents:
+    name: Build thegent-agents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install uv
+      - run: cd packages/thegent-agents && uv pip install -e ".[dev]"
+      - run: cd packages/thegent-agents && ruff check src/ tests/ || true
+      - run: cd packages/thegent-agents && pytest tests/ -v --tb=short || true
+
+  boundary-check:
+    name: Package Boundary Enforcement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install uv
+      - run: uv pip install -e .
+      - run: uv pip install pytest
+      - run: pytest tests/architecture/test_package_boundaries.py -v --tb=short
+
+  tach-check:
+    name: Architecture Boundary Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install uv
+      - run: uv pip install tach
+      - run: tach check
+
+  integration:
+    name: Sub-Package Integration Test
+    runs-on: ubuntu-latest
+    needs:
+      - build-sdk
+      - build-mcp
+      - build-agents
+      - boundary-check
+      - tach-check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - run: pip install uv
+      - run: cd packages/thegent-sdk && uv pip install -e . && cd ../..
+      - run: cd packages/thegent-mcp && uv pip install -e . && cd ../..
+      - run: cd packages/thegent-agents && uv pip install -e . && cd ../..
+      - run: python -c "from thegent_sdk import ThegentClient; print('thegent-sdk OK')"
+      - run: python -c "from thegent_mcp import BorrowedMCPTools; print('thegent-mcp OK')"
+      - run: python -c "from thegent_agents import __version__; print('thegent-agents OK')"

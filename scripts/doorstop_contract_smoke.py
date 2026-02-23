@@ -27,20 +27,20 @@ def main() -> int:
             text=True,
             timeout=10
         )
-        
+
         if result.returncode != 0:
             raise RuntimeError(f"doorstop --version failed: {result.stderr}")
-        
+
         version = result.stdout.strip() or result.stderr.strip()
-        
+
     except FileNotFoundError:
         raise RuntimeError("doorstop CLI not found - install doorstop")
     except subprocess.TimeoutExpired:
         raise RuntimeError("doorstop --version timed out")
 
     print(json.dumps({
-        "ok": True, 
-        "target": "doorstop", 
+        "ok": True,
+        "target": "doorstop",
         "version": version,
         "status": "available"
     }))

@@ -31,7 +31,7 @@ class PortkeyConfig:
 
 
 class PortkeyClient:
-    def __init__(self, config: PortkeyConfig = None):
+    def __init__(self, config: PortkeyConfig | None = None):
         self._config = config or self._load_config()
         self._status = PortkeyStatus.DISABLED
         if self._config.enabled:

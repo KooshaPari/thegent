@@ -8,6 +8,12 @@ resolution-markers = [
 ]
 
 [manifest]
+members = [
+    "thegent",
+    "thegent-agents",
+    "thegent-cli",
+    "thegent-mcp",
+]
 overrides = [{ name = "hf-xet", marker = "implementation_name == 'pypy'", specifier = "==0.0.0" }]
 
 [[package]]
@@ -4716,6 +4722,66 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=1.3.0" },
     { name = "ruff", specifier = ">=0.15.1" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
+]
+
+[[package]]
+name = "thegent-agents"
+source = { editable = "sub-projects/thegent-agents" }
+dependencies = [
+    { name = "fastmcp", extra = ["tasks"] },
+    { name = "httpx" },
+    { name = "litellm" },
+    { name = "pydantic" },
+    { name = "structlog" },
+    { name = "tenacity" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", extras = ["tasks"], specifier = ">=3.0.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "litellm", specifier = ">=1.81.13" },
+    { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "structlog", specifier = ">=24.0.0" },
+    { name = "tenacity", specifier = ">=9.0.0" },
+]
+
+[[package]]
+name = "thegent-cli"
+source = { editable = "sub-projects/thegent-cli" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "rich" },
+    { name = "structlog" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "structlog", specifier = ">=24.0.0" },
+    { name = "typer", specifier = ">=0.16.0" },
+]
+
+[[package]]
+name = "thegent-mcp"
+source = { editable = "sub-projects/thegent-mcp" }
+dependencies = [
+    { name = "fastmcp", extra = ["tasks"] },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "structlog" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", extras = ["tasks"], specifier = ">=3.0.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "pydantic", specifier = ">=2.12.5" },
+    { name = "structlog", specifier = ">=24.0.0" },
 ]
 
 [[package]]

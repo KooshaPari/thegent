@@ -121,6 +121,13 @@ override-dependencies = [
     "hf-xet==0.0.0; implementation_name == 'pypy'",
 ]
 
+[tool.uv.workspace]
+members = [
+    "sub-projects/thegent-cli",
+    "sub-projects/thegent-agents",
+    "sub-projects/thegent-mcp",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
