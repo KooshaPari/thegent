@@ -116,10 +116,10 @@ _session_status_for = _lazy_import("thegent.cli.commands.impl", "_session_status
 _validate_agent = _lazy_import("thegent.cli.commands.impl", "_validate_agent")
 _validate_dag = _lazy_import("thegent.cli.commands.impl", "_validate_dag")
 _validate_task_id = _lazy_import("thegent.cli.commands.impl", "_validate_task_id")
-dag_ready_impl = _lazy_import("thegent.cli.commands.impl", "dag_ready_impl")
-dag_recover_impl = _lazy_import("thegent.cli.commands.impl", "dag_recover_impl")
-dag_run_impl = _lazy_import("thegent.cli.commands.impl", "dag_run_impl")
-dag_sync_impl = _lazy_import("thegent.cli.commands.impl", "dag_sync_impl")
+dag_ready_impl = _lazy_import("thegent.cli.commands.dag_impl_ops", "dag_ready_impl")
+dag_recover_impl = _lazy_import("thegent.cli.commands.dag_impl_ops", "dag_recover_impl")
+dag_run_impl = _lazy_import("thegent.cli.commands.dag_impl_ops", "dag_run_impl")
+dag_sync_impl = _lazy_import("thegent.cli.commands.dag_impl_ops", "dag_sync_impl")
 
 
 # thegent.config & execution
