@@ -172,3 +172,6 @@ class A2ARouter:
         """Return sorted list of registered target agent names."""
         with self._lock:
             return sorted(self._handlers.keys())
+
+# Alias for protocol-level interface
+A2AProtocol = A2ARouter
