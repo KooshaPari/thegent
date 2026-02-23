@@ -4,12 +4,7 @@ NATS Event Bus Integration - Event bus for thegent orchestration.
 Full implementation for Phase 3 Spike Batch B.
 """
 
-<<<<<<< HEAD:src/thegent/integrations/archive/nats_event_bus.py
-import orjson as json
-=======
-import json
->>>>>>> fix/ci-remove-macos:src/thegent/integrations/nats_event_bus.py
-import logging
+import orjson as jsonimport logging
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
