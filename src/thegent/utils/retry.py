@@ -29,7 +29,7 @@ def retry(max_attempts=3, backoff=2.0, min_wait=1.0, max_wait=60.0, reraise=True
 
 class CircuitBreaker:
     """Simple circuit breaker."""
-
+    
     def __init__(self, threshold=5, timeout=60.0, exception=Exception):
         self.threshold = threshold
         self.timeout = timeout
@@ -37,7 +37,7 @@ class CircuitBreaker:
         self.count = 0
         self.last_fail = None
         self.state = "closed"
-
+    
     def call(self, func):
         if self.state == "open":
             if self.last_fail and time.time() - self.last_fail >= self.timeout:
@@ -58,4 +58,4 @@ class CircuitBreaker:
             raise
 
 
-__all__ = ["CircuitBreaker", "retry"]
+__all__ = ["retry", "CircuitBreaker"]
