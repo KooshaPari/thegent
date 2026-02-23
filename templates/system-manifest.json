@@ -959,6 +959,30 @@
         "config_files": [
           "~/.jdk"
         ]
+      },
+      "bun": {
+        "install_method": "direct",
+        "config_files": [
+          "~/.bun"
+        ]
+      },
+      "deno": {
+        "install_method": "direct",
+        "config_files": [
+          "~/.deno"
+        ]
+      },
+      "pnpm": {
+        "install_method": "npm",
+        "config_files": [
+          "~/.pnpmrc"
+        ]
+      },
+      "yarn": {
+        "install_method": "npm",
+        "config_files": [
+          "~/.yarnrc"
+        ]
       }
     },
     "dotfiles": {
@@ -1048,6 +1072,221 @@
         "source": "thegent/templates/shared/systemd",
         "platforms": [
           "linux"
+        ]
+      }
+    },
+    "apps": {
+      "arc": {
+        "config_files": [
+          "~/Library/Application Support/Arc"
+        ],
+        "source": "thegent/templates/shared/apps/arc",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "brave": {
+        "config_files": [
+          "~/Library/Application Support/BraveSoftware"
+        ],
+        "source": "thegent/templates/shared/apps/brave",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "raycast": {
+        "config_files": [
+          "~/.config/raycast"
+        ],
+        "source": "thegent/templates/shared/apps/raycast",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "alfred": {
+        "config_files": [
+          "~/Library/Application Support/Alfred"
+        ],
+        "source": "thegent/templates/shared/apps/alfred",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "hammerspoon": {
+        "config_files": [
+          "~/.hammerspoon"
+        ],
+        "source": "thegent/templates/shared/apps/hammerspoon",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "karabiner": {
+        "config_files": [
+          "~/.config/karabiner"
+        ],
+        "source": "thegent/templates/shared/apps/karabiner",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "rectangle": {
+        "config_files": [
+          "~/Library/Application Support/Rectangle"
+        ],
+        "source": "thegent/templates/shared/apps/rectangle",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "obsidian": {
+        "config_files": [
+          "~/.obsidian"
+        ],
+        "source": "thegent/templates/shared/apps/obsidian",
+        "platforms": [
+          "darwin",
+          "linux"
+        ]
+      },
+      "typora": {
+        "config_files": [
+          "~/Library/Application Support/Typora"
+        ],
+        "source": "thegent/templates/shared/apps/typora",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "notion": {
+        "config_files": [
+          "~/Library/Application Support/Notion"
+        ],
+        "source": "thegent/templates/shared/apps/notion",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "slack": {
+        "config_files": [
+          "~/Library/Application Support/Slack"
+        ],
+        "source": "thegent/templates/shared/apps/slack",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "discord": {
+        "config_files": [
+          "~/Library/Application Support/Discord"
+        ],
+        "source": "thegent/templates/shared/apps/discord",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "spotify": {
+        "config_files": [
+          "~/Library/Application Support/Spotify"
+        ],
+        "source": "thegent/templates/shared/apps/spotify",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "1password": {
+        "config_files": [
+          "~/Library/Application Support/1Password 8"
+        ],
+        "source": "thegent/templates/shared/apps/1password",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "dropbox": {
+        "config_files": [
+          "~/Library/Application Support/Dropbox"
+        ],
+        "source": "thegent/templates/shared/apps/dropbox",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "istatmenus": {
+        "config_files": [
+          "~/Library/Application Support/iStat Menus"
+        ],
+        "source": "thegent/templates/shared/apps/istatmenus",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "bartender": {
+        "config_files": [
+          "~/Library/Application Support/Bartender"
+        ],
+        "source": "thegent/templates/shared/apps/bartender",
+        "platforms": [
+          "darwin"
+        ]
+      },
+      "bettertouchtool": {
+        "config_files": [
+          "~/Library/Application Support/BetterTouchTool"
+        ],
+        "source": "thegent/templates/shared/apps/bettertouchtool",
+        "platforms": [
+          "darwin"
+        ]
+      }
+    },
+    "services": {
+      "docker": {
+        "config_files": [
+          "~/.docker/config.json"
+        ],
+        "source": "thegent/templates/shared/services/docker"
+      },
+      "postgresql": {
+        "config_files": [
+          "~/.psqlrc"
+        ],
+        "source": "thegent/templates/shared/services/postgresql"
+      },
+      "mysql": {
+        "config_files": [
+          "~/.my.cnf"
+        ],
+        "source": "thegent/templates/shared/services/mysql"
+      },
+      "redis": {
+        "config_files": [
+          "~/.redisrc"
+        ],
+        "source": "thegent/templates/shared/services/redis"
+      },
+      "nginx": {
+        "config_files": [
+          "~/.nginx"
+        ],
+        "source": "thegent/templates/shared/services/nginx"
+      },
+      "systemd": {
+        "config_files": [
+          "~/.config/systemd/user"
+        ],
+        "source": "thegent/templates/shared/services/systemd",
+        "platforms": [
+          "linux"
+        ]
+      },
+      "launchd": {
+        "config_files": [
+          "~/Library/LaunchAgents"
+        ],
+        "source": "thegent/templates/shared/services/launchd",
+        "platforms": [
+          "darwin"
         ]
       }
     }
@@ -1152,6 +1391,39 @@
         "tools.emacs",
         "tools.zed",
         "tools.helix"
+      ]
+    },
+    "apps": {
+      "description": "macOS app configurations",
+      "includes": [
+        "apps.raycast",
+        "apps.alfred",
+        "apps.hammerspoon",
+        "apps.karabiner",
+        "apps.rectangle",
+        "apps.obsidian"
+      ]
+    },
+    "services": {
+      "description": "Service configurations",
+      "includes": [
+        "services.docker",
+        "services.postgresql",
+        "services.redis",
+        "services.systemd"
+      ]
+    },
+    "complete": {
+      "description": "Everything - complete system",
+      "includes": [
+        "core",
+        "dev",
+        "terminal",
+        "productivity",
+        "security",
+        "apps",
+        "services",
+        "dotfiles"
       ]
     }
   },
