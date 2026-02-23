@@ -272,10 +272,13 @@ def run_impl_core(
 
     prompt = _inject_time_constraint(prompt, int(effective_timeout), summary_mode=not full)
 
-    # _resolve_cwd() now defaults to Path.cwd() if no project indicators found
-    # This removes the need for "cd &&" patterns - thegent works from any directory
     cwd = _resolve_cwd(cd)
-    assert cwd is not None, "_resolve_cwd() should always return a Path (defaults to cwd)"
+    if cwd is None:
+        return {
+            "error": "Ambiguous cwd detected. Run inside a project directory or pass --cd with a valid project path.",
+            "exit_code": 1,
+            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
+        }
 
     # Terminal reuse suggestion (light management)
     if impl_ns is None:
@@ -431,6 +434,11 @@ def run_impl_core(
     policy_engine = PolicyEngine(settings)
     auditor = Auditor(registry.registry_path)
     maif_runner = MAIFRunner()
+    escalation_sla_minutes = 30
+    try:
+        escalation_sla_minutes = int(settings.escalation_sla_minutes)
+    except (TypeError, ValueError):
+        escalation_sla_minutes = 30
 
     # WP-3007: Trust Boundary Checks
     last_env = trust_boundary.get_last_environment()
@@ -460,7 +468,16 @@ def run_impl_core(
     from thegent.execution import FreshnessValidator
 
     fv = FreshnessValidator(settings.session_dir)
-    freshness_issues = fv.validate_action([registry.registry_path])
+    registry_path = getattr(registry, "registry_path", None)
+    if isinstance(registry_path, (str, Path, os.PathLike)):
+        registry_path = Path(registry_path)
+    else:
+        if registry_path is not None:
+            _log.warning("Skipping freshness check; unexpected registry path type: %r", type(registry_path))
+        registry_path = None
+    freshness_issues: list[str] = []
+    if registry_path is not None:
+        freshness_issues = fv.validate_action([registry_path])
     if freshness_issues:
         _log.warning("Freshness issues detected: %s", freshness_issues)
         if lane == "critical":
@@ -483,8 +500,6 @@ def run_impl_core(
     _task_spec: Any = None  # thegent.models.task_io.TaskSpec when available
     if task_id:
         try:
-            from pathlib import Path
-
             from thegent.models.task_io import TaskInput, TaskSpec
             from thegent.task import parse_task_file
 
@@ -519,6 +534,8 @@ def run_impl_core(
         except Exception as e:
             _log.warning("Failed to load task metadata for %s: %s", task_id, e)
 
+    resolved_domain_tag = str(domain) if domain else str(settings.default_domain_tag)
+
     run_meta = RunMeta(
         run_id=run_id or f"run_{uuid.uuid4().hex[:8]}",
         correlation_id=correlation_id,
@@ -539,7 +556,7 @@ def run_impl_core(
         idempotency_token=idempotency_token,
         override_reason=override_reason,
         override_by=effective_owner if override_reason else None,
-        domain_tag=domain or settings.default_domain_tag,
+        domain_tag=resolved_domain_tag,
         contract_version=requested_version,
         arbitration=arbitration,
     )
@@ -570,7 +587,7 @@ def run_impl_core(
         escalate_add_impl(
             run_id=run_meta.run_id,
             reason=pol_reason,
-            sla_minutes=settings.escalation_sla_minutes,
+            sla_minutes=escalation_sla_minutes,
             owner=run_meta.owner,
             agent=run_meta.agent,
             lane=run_meta.lane,
@@ -603,7 +620,7 @@ def run_impl_core(
         escalate_add_impl(
             run_id=run_meta.run_id,
             reason=f"HITL Pause: {pol_reason}",
-            sla_minutes=settings.escalation_sla_minutes,
+            sla_minutes=escalation_sla_minutes,
             owner=run_meta.owner,
             agent=run_meta.agent,
             lane=run_meta.lane,
@@ -1169,6 +1186,13 @@ def bg_impl_core(
         )
         effective_timeout = max(effective_timeout, _min_claude)
     cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {
+            "error": "Ambiguous cwd detected. Run inside a project directory or pass --cd with a valid project path.",
+            "exit_code": 1,
+            "session_id": "failed",
+            "run_id": run_id or f"bg_err_{uuid.uuid4().hex[:8]}",
+        }
 
     full = full or True
 
@@ -1223,6 +1247,11 @@ def bg_impl_core(
     auditor = Auditor(registry.registry_path)
     policy_engine = PolicyEngine(settings)
     _effective_owner = owner or _default_owner_tag(cwd)
+    escalation_sla_minutes = 30
+    try:
+        escalation_sla_minutes = int(settings.escalation_sla_minutes)
+    except (TypeError, ValueError):
+        escalation_sla_minutes = 30
 
     # WP-3007: Trust Boundary Checks
     last_env = trust_boundary.get_last_environment()
@@ -1233,6 +1262,8 @@ def bg_impl_core(
             "exit_code": 1,
             "session_id": "failed",
         }
+
+    resolved_domain_tag = str(domain) if domain else str(settings.default_domain_tag)
 
     run_meta = RunMeta(
         run_id=effective_run_id,
@@ -1254,7 +1285,7 @@ def bg_impl_core(
         task_id=task_id,
         route_contract=route_contract,
         route_request=route_request,
-        domain_tag=domain or settings.default_domain_tag,
+        domain_tag=resolved_domain_tag,
         lane=lane or "standard",
         confidence=confidence,
         idempotency_token=idempotency_token,
@@ -1279,7 +1310,7 @@ def bg_impl_core(
         escalate_add_impl(
             run_id=run_meta.run_id,
             reason=pol_reason,
-            sla_minutes=settings.escalation_sla_minutes,
+            sla_minutes=escalation_sla_minutes,
             owner=run_meta.owner,
             agent=run_meta.agent,
             lane=run_meta.lane,
@@ -1311,7 +1342,7 @@ def bg_impl_core(
         escalate_add_impl(
             run_id=run_meta.run_id,
             reason=f"HITL Pause (bg): {pol_reason}",
-            sla_minutes=settings.escalation_sla_minutes,
+            sla_minutes=escalation_sla_minutes,
             owner=run_meta.owner,
             agent=run_meta.agent,
             lane=run_meta.lane,
