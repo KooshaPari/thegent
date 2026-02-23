@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import orjson as json
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -253,7 +253,7 @@ class VetterOrchestrator:
         self._write_event(
             event={
                 "event_type": "vetter_decision",
-                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+                "timestamp": datetime.now(tz=UTC).isoformat(),
                 "session_id": session_id,
                 "run_id": run_id,
                 "verdict": verdict.value,
@@ -267,7 +267,7 @@ class VetterOrchestrator:
         events_file: Path = self.session_dir / "governance_events.jsonl"
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with events_file.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(event).decode().decode() + "\n")
+            fh.write(json.dumps(event).decode() + "\n")
         if self.event_log is not None:
             self.event_log.emit(event)
 
@@ -282,7 +282,7 @@ class VetterOrchestrator:
         self._write_event(
             event={
                 "event_type": "vetter_escalation",
-                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+                "timestamp": datetime.now(tz=UTC).isoformat(),
                 "session_id": session_id,
                 "run_id": run_id,
                 "status": "pending",

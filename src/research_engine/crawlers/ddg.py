@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 import httpx
 
@@ -36,7 +36,7 @@ class DDGCrawler(BaseCrawler):
         resp = httpx.get(_DDG_API, params={"q": query, "format": "json", "no_html": 1})
         resp.raise_for_status()
         data = resp.json()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         items = []
         for topic in data.get("RelatedTopics", [])[:20]:
             url = topic.get("FirstURL", "")

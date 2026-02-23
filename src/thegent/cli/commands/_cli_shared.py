@@ -385,7 +385,7 @@ def _bootstrap_metric_contracts(project_dir: Path, force: bool = False) -> tuple
         metric_contracts["enforce_gate"] = True
         governance["metric_contracts"] = metric_contracts
         quality_data["governance"] = governance
-        quality_path.write_text(json.dumps(quality_data, indent=2).decode().decode() + "\n", encoding="utf-8")
+        quality_path.write_text(json.dumps(quality_data, indent=2) + "\n", encoding="utf-8")
         updated_quality = True
 
     return created_contract, updated_quality

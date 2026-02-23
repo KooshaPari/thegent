@@ -61,7 +61,7 @@ def dispatch_post_agent_run_hook(
 
     proc = shim_run(
         ["hook-dispatcher", "postagentrun"],
-        input=json.dumps(payload).decode().decode(),
+        input=json.dumps(payload).decode(),
         capture_output=True,
         text=True,
         check=False,

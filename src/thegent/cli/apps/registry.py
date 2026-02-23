@@ -42,7 +42,7 @@ def registry_recommend(
             }
             for r in recommendations
         ]
-        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(payload).decode() + "\n")
         return
 
     if not recommendations:
@@ -100,7 +100,7 @@ def registry_doctor(
             }
             for r in results
         ]
-        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(payload).decode() + "\n")
         if fail_on_issues and any(not r.healthy for r in results):
             raise typer.Exit(1)
         return
@@ -167,7 +167,7 @@ def registry_list(
             }
             for a in agents
         ]
-        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(payload).decode() + "\n")
         return
 
     if not agents:

@@ -332,7 +332,7 @@ class ProjectTenancy:
     def _save_registry(self, payload: TenancyRegistryPayload) -> None:
         self._registry_path.parent.mkdir(parents=True, exist_ok=True)
         temp_path = self._registry_path.with_suffix(".json.tmp")
-        content = json.dumps(payload.model_dump(mode="json").decode().decode(), indent=2, sort_keys=True)
+        content = json.dumps(payload.model_dump(mode="json").decode(), indent=2, sort_keys=True)
         temp_path.write_text(f"{content}\n", encoding="utf-8")
         temp_path.replace(self._registry_path)
 

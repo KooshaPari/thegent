@@ -473,7 +473,7 @@ class TestPassCheck:
 
         try:
             stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=self.timeout_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()  # Non-async; asyncio.subprocess.Process.kill() is synchronous
             await proc.wait()
             return VetterCheckResult(

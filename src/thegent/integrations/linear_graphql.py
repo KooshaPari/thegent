@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -313,7 +313,7 @@ def sync_to_linear(config: LinearGraphQLConfig, workstream_data: list[dict[str, 
         "items_updated": items_updated,
         "items_synced": items_created + items_updated,
         "errors": errors,
-        "synced_at": datetime.now(timezone.utc).isoformat(),
+        "synced_at": datetime.now(UTC).isoformat(),
     }
 
 
@@ -346,5 +346,5 @@ def sync_from_linear(config: LinearGraphQLConfig) -> dict[str, Any]:
         "items_imported": len(results),
         "items": results,
         "errors": [],
-        "synced_at": datetime.now(timezone.utc).isoformat(),
+        "synced_at": datetime.now(UTC).isoformat(),
     }

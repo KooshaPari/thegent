@@ -67,4 +67,4 @@ class GlobalServiceRegistry:
 
     def _save(self):
         data = {k: v.model_dump() for k, v in self.services.items()}
-        self.storage_path.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
+        self.storage_path.write_text(json.dumps(data, indent=2), encoding="utf-8")

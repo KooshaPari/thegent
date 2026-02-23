@@ -137,5 +137,5 @@ class ToolRouter:
         injection = "\n\n### RELEVANT TOOLS FOR THIS TASK ###\n"
         for tool in relevant_tools:
             injection += f"- **{tool.name}**: {tool.description}\n"
-            injection += f"  Params: {json.dumps(tool.parameters).decode().decode()}\n"
+            injection += f"  Params: {json.dumps(tool.parameters).decode()}\n"
         return injection

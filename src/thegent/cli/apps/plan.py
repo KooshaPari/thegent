@@ -179,7 +179,7 @@ def plan_sessions(
     if format == "json":
         import json
 
-        console.print(json.dumps(result, indent=2).decode().decode())
+        console.print(json.dumps(result, indent=2))
     elif result.get("success"):
         console.print(result.get("stdout", ""))
     else:
@@ -202,7 +202,7 @@ def plan_harness_status(
     if format == "json":
         import json
 
-        console.print(json.dumps(status, indent=2).decode().decode())
+        console.print(json.dumps(status, indent=2))
     else:
         console.print("[cyan]Registered Harness Types:[/cyan]")
         for h in status["harnesses"]:

@@ -29,7 +29,7 @@ class PullReflectionAuditEntry:
 
     def to_json_line(self) -> str:
         """Convert to JSONL format (single line)."""
-        return json.dumps(self.to_dict().decode().decode())
+        return json.dumps(self.to_dict().decode())
 
 
 class PullReflectionAuditLog:

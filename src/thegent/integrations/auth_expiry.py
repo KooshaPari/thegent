@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from enum import Enum
 from typing import Any
 
@@ -66,7 +66,7 @@ class AuthExpiryDetector:
                 "token_info must contain expiry information (expires_at, expiry_timestamp, ttl, or expires_in)"
             )
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         hours_remaining = (expires_at - now).total_seconds() / 3600
 
         if expires_at <= now:
@@ -101,14 +101,14 @@ class AuthExpiryDetector:
             if isinstance(expires_at, datetime):
                 # Ensure timezone aware
                 if expires_at.tzinfo is None:
-                    return expires_at.replace(tzinfo=timezone.utc)
+                    return expires_at.replace(tzinfo=UTC)
                 return expires_at
             if isinstance(expires_at, str):
                 # Try parsing ISO format
                 try:
                     dt = datetime.fromisoformat(expires_at)
                     if dt.tzinfo is None:
-                        return dt.replace(tzinfo=timezone.utc)
+                        return dt.replace(tzinfo=UTC)
                     return dt
                 except (ValueError, TypeError):
                     return None
@@ -117,7 +117,7 @@ class AuthExpiryDetector:
         if "expiry_timestamp" in token_info:
             try:
                 timestamp = int(token_info["expiry_timestamp"])
-                return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                return datetime.fromtimestamp(timestamp, tz=UTC)
             except (ValueError, TypeError, OSError):
                 return None
 
@@ -125,7 +125,7 @@ class AuthExpiryDetector:
         if "ttl" in token_info:
             try:
                 ttl_seconds = int(token_info["ttl"])
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 return now + timedelta(seconds=ttl_seconds)
             except (ValueError, TypeError):
                 return None
@@ -134,7 +134,7 @@ class AuthExpiryDetector:
         if "expires_in" in token_info:
             try:
                 expires_in = int(token_info["expires_in"])
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 return now + timedelta(seconds=expires_in)
             except (ValueError, TypeError):
                 return None

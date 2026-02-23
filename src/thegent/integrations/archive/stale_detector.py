@@ -8,7 +8,7 @@ Detects items with no local or remote activity beyond age thresholds.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 @dataclass
@@ -65,13 +65,13 @@ class StaleItemDetector:
             True if age_days >= stale_after_days.
         """
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         # Ensure both datetimes are timezone-aware
         if last_activity.tzinfo is None:
-            last_activity = last_activity.replace(tzinfo=timezone.utc)
+            last_activity = last_activity.replace(tzinfo=UTC)
         if now.tzinfo is None:
-            now = now.replace(tzinfo=timezone.utc)
+            now = now.replace(tzinfo=UTC)
 
         age_seconds = (now - last_activity).total_seconds()
         age_days = age_seconds / (24 * 3600)
@@ -95,7 +95,7 @@ class StaleItemDetector:
             List of StaleItem objects for items that are stale (only).
         """
         if now is None:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
         stale_items = []
 
@@ -110,7 +110,7 @@ class StaleItemDetector:
 
             # Ensure timezone-aware
             if last_activity.tzinfo is None:
-                last_activity = last_activity.replace(tzinfo=timezone.utc)
+                last_activity = last_activity.replace(tzinfo=UTC)
 
             if self.is_stale(last_activity, now):
                 age_seconds = (now - last_activity).total_seconds()

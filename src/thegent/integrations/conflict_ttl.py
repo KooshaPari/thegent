@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 @dataclass
@@ -45,7 +45,7 @@ class ConflictTTLManager:
         """
         record = ConflictRecord(
             conflict_id=conflict_id,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             escalated=False,
         )
         self._conflicts[conflict_id] = record
@@ -64,7 +64,7 @@ class ConflictTTLManager:
             KeyError: If the conflict_id is not registered
         """
         record = self._conflicts[conflict_id]
-        age_seconds = (datetime.now(timezone.utc) - record.created_at).total_seconds()
+        age_seconds = (datetime.now(UTC) - record.created_at).total_seconds()
         return age_seconds > self.ttl_seconds
 
     def needs_escalation(self, conflict_id: str) -> bool:
@@ -80,7 +80,7 @@ class ConflictTTLManager:
             KeyError: If the conflict_id is not registered
         """
         record = self._conflicts[conflict_id]
-        age_seconds = (datetime.now(timezone.utc) - record.created_at).total_seconds()
+        age_seconds = (datetime.now(UTC) - record.created_at).total_seconds()
         return age_seconds > self.escalation_seconds and age_seconds <= self.ttl_seconds and not record.escalated
 
     def escalate(self, conflict_id: str) -> None:
@@ -101,7 +101,7 @@ class ConflictTTLManager:
         Returns:
             List of conflict IDs with age > ttl_seconds
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return [
             conflict_id
             for conflict_id, record in self._conflicts.items()

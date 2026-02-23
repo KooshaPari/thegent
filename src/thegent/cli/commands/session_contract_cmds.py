@@ -84,11 +84,11 @@ def session_contracts_cmd(
 
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(audit).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(audit).decode() + "\n")
         return
     if fmt == "md":
         if summary_only:
-            console.print(f"summary: {json.dumps(summary).decode().decode()}")
+            console.print(f"summary: {json.dumps(summary).decode()}")
             return
         console.print("## Session Contract Audit")
         console.print(
@@ -217,7 +217,7 @@ def session_contract_health_gate_cmd(
 
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if fmt == "md":
         console.print(_serialize_health_gate_md(result))
@@ -295,7 +295,7 @@ def session_contract_health_report_cmd(
 
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if fmt == "md":
         console.print(_serialize_health_report_md(result))
@@ -321,7 +321,7 @@ def session_contract_health_report_cmd(
         console.print(f"strict_checks_enabled={result['strict_checks_enabled']}")
         if result.get("generated_at_utc"):
             console.print(f"generated_at_utc={result['generated_at_utc']}")
-            console.print(f"generated_query={json.dumps(result['generated_query']).decode().decode()}")
+            console.print(f"generated_query={json.dumps(result['generated_query']).decode()}")
         if result.get("trend_summary"):
             trend = result["trend_summary"]
             console.print(
@@ -389,7 +389,7 @@ def session_contract_health_trend_cmd(
         console.print(f"exported session-contract-health-trend to: {output} (format={written_as})")
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if fmt == "md":
         console.print(_serialize_health_trend_md(result))
@@ -407,7 +407,7 @@ def session_contract_health_trend_cmd(
             f"snapshot_count={result['snapshot_count']} limit={result['limit']} "
             f"retention_max_lines={result.get('snapshot_retention_max_lines', '')}"
         )
-        console.print(f"scope_key={json.dumps(result['scope_key']).decode().decode()}")
+        console.print(f"scope_key={json.dumps(result['scope_key']).decode()}")
         delta = result.get("delta_summary", {})
         console.print(
             f"delta blocked_ratio={result.get('blocked_ratio_delta', delta.get('blocked_ratio_delta', None))} "

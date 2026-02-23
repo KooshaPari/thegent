@@ -114,7 +114,7 @@ class IdempotencyCache:
                 "records": [record.to_dict() for record in self._records.values()],
             }
             self.cache_path.write_text(
-                json.dumps(data, indent=2, sort_keys=True).decode().decode(),
+                json.dumps(data, indent=2), sort_keys=True).decode(),
                 encoding="utf-8",
             )
         except Exception as e:

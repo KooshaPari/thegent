@@ -18,7 +18,7 @@ Usage:
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -191,7 +191,7 @@ class TracedAgentRunner(AgentRunner):
         """
         self._tool_call_count += 1
         record = ToolCallRecord(
-            timestamp=datetime.now(timezone.utc).isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat() + "Z",
             sequence_id=self._tool_call_count,
             tool=tool_type,
             tool_name=tool_name,

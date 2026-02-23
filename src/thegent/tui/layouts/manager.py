@@ -88,7 +88,7 @@ class LayoutManager:
             "updated_at": state.updated_at,
             "metadata": state.metadata,
         }
-        (self._storage_dir / f"{state.name}.json").write_text(json.dumps(data, indent=2).decode().decode())
+        (self._storage_dir / f"{state.name}.json").write_text(json.dumps(data, indent=2))
 
     def _serialize_config(self, config: SplitConfig | PaneConfig) -> dict:
         """Serialize a config to dict."""

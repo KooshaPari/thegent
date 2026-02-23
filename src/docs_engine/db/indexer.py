@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 
 import orjson
@@ -27,7 +27,7 @@ class DocIndexer:
             conn.executescript(schema_sql)
 
     def upsert_doc(self, path: str, frontmatter: dict) -> None:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         with self._conn() as conn:
             conn.execute(
                 """
@@ -55,9 +55,9 @@ class DocIndexer:
                     frontmatter.get("author", "agent"),
                     frontmatter.get("session_id", ""),
                     frontmatter.get("git_commit", ""),
-                    orjson.dumps(frontmatter.get("tags", []).decode().decode()).decode(),
-                    orjson.dumps(frontmatter.get("relates_to", []).decode().decode()).decode(),
-                    orjson.dumps(frontmatter.get("traces_to", []).decode().decode()).decode(),
+                    orjson.dumps(frontmatter.get("tags", []).decode()).decode(),
+                    orjson.dumps(frontmatter.get("relates_to", []).decode()).decode(),
+                    orjson.dumps(frontmatter.get("traces_to", []).decode()).decode(),
                     now,
                 ),
             )

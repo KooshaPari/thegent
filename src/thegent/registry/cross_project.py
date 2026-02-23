@@ -223,7 +223,7 @@ class CrossProjectRegistry:
         payload = [r.to_dict() for r in self._records.values()]
         tmp = self._registry_file.with_suffix(".tmp")
         try:
-            tmp.write_text(json.dumps(payload, indent=2).decode().decode(), encoding="utf-8")
+            tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
             tmp.replace(self._registry_file)
         except OSError as exc:
             logger.error("Failed to save persona registry: %s", exc)

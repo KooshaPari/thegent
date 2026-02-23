@@ -5,7 +5,7 @@ Extracts cycle logic from workstream_autosync.py to reach target LOC.
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +30,7 @@ class WorkstreamCycle:
     async def run_cycle(self) -> dict[str, Any]:
         """Execute one complete sync cycle."""
         result = {
-            "started_at": datetime.now(timezone.utc),
+            "started_at": datetime.now(UTC),
             "items_synced": 0,
             "errors": [],
         }
@@ -59,7 +59,7 @@ class WorkstreamCycle:
             result["errors"].append(str(e))
             logger.error(f"Cycle error: {e}")
 
-        result["completed_at"] = datetime.now(timezone.utc)
+        result["completed_at"] = datetime.now(UTC)
         return result
 
     async def _load_items(self) -> list[WorkstreamItem]:
@@ -138,7 +138,7 @@ class WorkstreamCycle:
             start_index=0,
             partition_size=partition_count,
             partition_count=partition_count,
-            started_at=datetime.now(timezone.utc).isoformat(),
+            started_at=datetime.now(UTC).isoformat(),
         )
         self.runner._write_checkpoint()
         return 0
@@ -152,7 +152,7 @@ class WorkstreamCycle:
     def checkpoint_complete(self) -> None:
         """Mark checkpoint as complete."""
         if self.runner._checkpoint:
-            self.runner._checkpoint.completed_at = datetime.now(timezone.utc).isoformat()
+            self.runner._checkpoint.completed_at = datetime.now(UTC).isoformat()
             self.runner._write_checkpoint()
             self.runner._clear_checkpoint()
 

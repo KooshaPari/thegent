@@ -235,7 +235,7 @@ def audit_verify_cmd(format: str | None = None) -> None:
     res = auditor.verify_registry()
 
     if format == "json":
-        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(res).decode() + "\n")
         return
 
     if res["status"] == "passed":

@@ -6,7 +6,7 @@ Full implementation for Phase 3 Spike Batch B.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from enum import Enum
 from thegent.integrations.base import DataclassConfig
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class MemoryFact:
 
     def __post_init__(self):
         if not self.timestamp:
-            self.timestamp = datetime.now(tz=timezone.utc).isoformat()
+            self.timestamp = datetime.now(tz=UTC).isoformat()
 
 
 @dataclass
@@ -145,7 +145,7 @@ class GraphitiMemoryStore:
                 "target": target,
                 "namespace": self._config.namespace,
                 "metadata": metadata or {},
-                "timestamp": datetime.now(tz=timezone.utc).isoformat(),
+                "timestamp": datetime.now(tz=UTC).isoformat(),
             }
 
             headers = {"Content-Type": "application/json"}

@@ -164,7 +164,7 @@ class CostTracker:
         try:
             self._log_path.parent.mkdir(parents=True, exist_ok=True)
             with self._log_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(entry.to_json().decode().decode()) + "\n")
+                f.write(json.dumps(entry.to_json().decode()) + "\n")
         except OSError as e:
             logger.warning("Failed to write cost log %s: %s", self._log_path, e)
 

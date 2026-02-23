@@ -15,7 +15,7 @@ is suitable for single-machine, single-repository environments.
 import orjson as json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -90,12 +90,12 @@ class SingleWriterLock:
         try:
             lock_data = {
                 "owner": owner_id,
-                "acquired_at": datetime.now(timezone.utc).isoformat(),
+                "acquired_at": datetime.now(UTC).isoformat(),
             }
             flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
             fd = os.open(self.lock_path, flags, 0o644)
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write(json.dumps(lock_data, indent=2).decode().decode())
+                handle.write(json.dumps(lock_data, indent=2))
             logger.debug("Lock acquired by %s at %s", owner_id, self.lock_path)
             return True
         except FileExistsError:

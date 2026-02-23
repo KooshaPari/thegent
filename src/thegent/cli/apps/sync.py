@@ -266,7 +266,7 @@ def sync_status(
     if output_format == "json":
         import json
 
-        console.print(json.dumps({"ok": op.ok, "message": op.message, "changes": op.changes}).decode().decode())
+        console.print(json.dumps({"ok": op.ok, "message": op.message, "changes": op.changes}).decode())
         return
 
     if op.status == SyncOperationStatus.FAILED:
@@ -570,7 +570,7 @@ def sync_ga_readiness(
     result = evaluate_ga_readiness(checks)
     payload = {"ready": result.ready, "passed": result.passed, "failed": result.failed}
     if format == "json":
-        console.print(json.dumps(payload, sort_keys=True).decode().decode())
+        console.print(json.dumps(payload, sort_keys=True).decode())
     elif format == "rich":
         status = "[green]ready[/green]" if result.ready else "[red]not-ready[/red]"
         console.print(f"Autosync GA readiness: {status}")
@@ -611,7 +611,7 @@ def sync_audit(
         payload["conflict_precedence"] = contract.conflict_precedence
         payload["strict_mode"] = contract.strict_mode
         payload["tenancy"] = _serialize_model_data(contract.tenancy) if contract.tenancy is not None else None
-        console.print(json.dumps(payload, indent=2).decode().decode())
+        console.print(json.dumps(payload, indent=2))
     elif format == "table":
         audit_result = auditor.audit_as_dict()
         tenancy = contract.tenancy
@@ -1035,7 +1035,7 @@ def sync_autopilot(
         cycle_status = runner.get_status()
 
         if output_format == "json":
-            console.print(json.dumps(cycle_status, indent=2, default=str).decode().decode())
+            console.print(json.dumps(cycle_status, indent=2), default=str).decode())
         else:
             console.print("[green]Autopilot cycle complete[/green]")
             if cycle_status["last_operation"]:
@@ -1180,7 +1180,7 @@ def _run_autopilot_doctor(*, config: Any, output_format: str) -> None:
     }
 
     if output_format == "json":
-        typer.echo(json.dumps(payload, indent=2, sort_keys=True).decode().decode())
+        typer.echo(json.dumps(payload, indent=2), sort_keys=True).decode())
         return
 
     color = "green" if payload["ok"] else "red"
@@ -1318,7 +1318,7 @@ def sync_autopilot_status(
 
     # Output in requested format
     if format == "json":
-        typer.echo(json.dumps(status, indent=2, default=str).decode().decode())
+        typer.echo(json.dumps(status, indent=2), default=str).decode())
     else:
         # Create rich table
         table = Table(title="Autopilot Status")

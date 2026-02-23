@@ -148,7 +148,7 @@ def harness_interact_impl(
             prompt=prompt or "",
             session_id=session_id or "",
         )
-        return json.dumps(result, indent=2).decode().decode()
+        return json.dumps(result, indent=2)
     except HarnessActionError as e:
         return json.dumps(
             {

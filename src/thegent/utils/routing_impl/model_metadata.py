@@ -1,6 +1,6 @@
 """Model metadata registry for all models."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 from typing import Any
 from thegent.utils.routing_impl.harness_model_mapping import resolve_model_for_backend
 
@@ -394,7 +394,7 @@ def stamp_metadata_freshness(
     """Return metadata with freshness envelope fields."""
     if ttl_seconds <= 0:
         raise ValueError("ttl_seconds must be > 0")
-    now = fetched_at or datetime.now(timezone.utc)
+    now = fetched_at or datetime.now(UTC)
     envelope = dict(metadata)
     envelope["fetched_at"] = now.isoformat()
     envelope["expires_at"] = (now + timedelta(seconds=ttl_seconds)).isoformat()
@@ -416,7 +416,7 @@ def validate_metadata_freshness(
     now: datetime | None = None,
 ) -> dict[str, Any]:
     """Return metadata with explicit freshness marker based on expires_at."""
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     expires_at_raw = metadata.get("expires_at")
     if not isinstance(expires_at_raw, str):
         return mark_metadata_stale(metadata)

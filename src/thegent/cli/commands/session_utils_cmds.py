@@ -284,7 +284,7 @@ def ps_cmd(
 
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(rows).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(rows).decode() + "\n")
         return
     if fmt == "md":
         render_ps_markdown(console=console, rows=rows, include_contract=include_contract)

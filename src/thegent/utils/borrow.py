@@ -514,7 +514,7 @@ class ToolBorrower:
         existing.setdefault("mcpServers", {})
         existing["mcpServers"].update(server_config)
 
-        target.write_text(json.dumps(existing, indent=2, sort_keys=True).decode().decode(), encoding="utf-8")
+        target.write_text(json.dumps(existing, indent=2), sort_keys=True).decode(), encoding="utf-8")
         _log.info("Wrote mcp.json to %s", target)
         return target
 

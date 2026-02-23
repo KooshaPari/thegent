@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import orjson as json
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ class ComplianceSnapshotScheduler:
             if not isinstance(artifact, dict):
                 raise ValueError("All artifacts must be dicts")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         timestamp = now.isoformat().replace("+00:00", "Z").replace(":", "-").replace(".", "-")
         filename = f"snapshot_{timestamp}.json"
         filepath = self.snapshot_dir / filename
@@ -98,7 +98,7 @@ class ComplianceSnapshotScheduler:
         if last_run is None:
             return True
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         elapsed_hours = (now - last_run).total_seconds() / 3600
         return elapsed_hours >= self.schedule_interval_hours
 

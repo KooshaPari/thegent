@@ -143,7 +143,7 @@ class RunCostTracker:
         """Save run summary to JSON file."""
         run_file = self.cost_dir / f"{summary['run_id']}.json"
         try:
-            run_file.write_text(json.dumps(summary, indent=2).decode().decode(), encoding="utf-8")
+            run_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         except OSError as e:
             logger.error("Failed to save run summary: %s", e)
 

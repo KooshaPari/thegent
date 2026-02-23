@@ -313,6 +313,6 @@ class CalibrationRegistry:
             "updated_at_utc": datetime.now(UTC).isoformat(),
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
+        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 

@@ -314,7 +314,7 @@ class ThemeManager:
         themes_dir.mkdir(parents=True, exist_ok=True)
 
         data = theme.to_dict()
-        (themes_dir / f"{theme.name}.json").write_text(json.dumps(data, indent=2).decode().decode())
+        (themes_dir / f"{theme.name}.json").write_text(json.dumps(data, indent=2))
 
     def add_theme(self, theme: ThemeDefinition) -> None:
         """Add a custom theme."""
@@ -390,7 +390,7 @@ class ThemeManager:
         """Export a theme to a JSON file."""
         theme = self._themes.get(name)
         if theme:
-            path.write_text(json.dumps(theme.to_dict().decode().decode(), indent=2))
+            path.write_text(json.dumps(theme.to_dict().decode(), indent=2))
             return True
         return False
 

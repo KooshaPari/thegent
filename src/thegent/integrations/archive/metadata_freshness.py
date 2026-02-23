@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class MetadataFreshnessTTL:
         record = MetadataRecord(
             key=key,
             value=value,
-            fetched_at=datetime.now(timezone.utc),
+            fetched_at=datetime.now(UTC),
         )
         self._records[key] = record
         logger.debug(f"Stored metadata: {key}")
@@ -97,7 +97,7 @@ class MetadataFreshnessTTL:
         if record is None:
             return False
 
-        age_seconds = (datetime.now(timezone.utc) - record.fetched_at).total_seconds()
+        age_seconds = (datetime.now(UTC) - record.fetched_at).total_seconds()
         return age_seconds < self._ttl_seconds
 
     def evict_stale(self) -> int:
@@ -106,7 +106,7 @@ class MetadataFreshnessTTL:
         Returns:
             Number of records evicted.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         stale_keys = [
             key
             for key, record in self._records.items()

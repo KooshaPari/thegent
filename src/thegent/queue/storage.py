@@ -52,7 +52,7 @@ class PromptQueue:
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.queue_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry).decode().decode() + "\n")
+            f.write(json.dumps(entry).decode() + "\n")
 
         return self.get_pending_count()
 
@@ -207,7 +207,7 @@ class PromptQueue:
             "ts": datetime.now(UTC).isoformat(),
         }
         with self.retry_path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(entry).decode().decode() + "\n")
+            handle.write(json.dumps(entry).decode() + "\n")
         return True
 
     def mark_retry_acknowledged(self, *, operation_id: str) -> int:
@@ -223,7 +223,7 @@ class PromptQueue:
                 entry["status"] = "acknowledged"
                 updated += 1
         self.retry_path.write_text(
-            "".join(json.dumps(entry).decode().decode() + "\n" for entry in entries),
+            "".join(json.dumps(entry).decode() + "\n" for entry in entries),
             encoding="utf-8",
         )
         return updated

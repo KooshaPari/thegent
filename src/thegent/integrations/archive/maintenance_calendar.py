@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +53,14 @@ class MaintenanceCalendar:
             True if connector has an active maintenance window at the given time.
         """
         if at is None:
-            at = datetime.now(timezone.utc)
+            at = datetime.now(UTC)
 
         return any(window.connector == connector and window.start <= at <= window.end for window in self._windows)
 
     def is_project_in_blackout(self, project: str, connector: str, at: datetime | None = None) -> bool:
         """Check if a project-scoped blackout window is active."""
         if at is None:
-            at = datetime.now(timezone.utc)
+            at = datetime.now(UTC)
 
         project_key = project.strip().lower()
         connector_key = connector.strip().lower()
@@ -82,7 +82,7 @@ class MaintenanceCalendar:
             List of maintenance windows starting after 'after', sorted by start.
         """
         if after is None:
-            after = datetime.now(timezone.utc)
+            after = datetime.now(UTC)
 
         upcoming = [window for window in self._windows if window.connector == connector and window.start >= after]
 

@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 @dataclass
@@ -37,7 +37,7 @@ class CycleBenchmarkHarness:
         """
         benchmark = CycleBenchmark(
             cycle_id=cycle_id,
-            start_time=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
         )
         self._benchmarks[cycle_id] = benchmark
         return benchmark
@@ -56,7 +56,7 @@ class CycleBenchmarkHarness:
             KeyError: If the cycle was not started.
         """
         benchmark = self._benchmarks[cycle_id]
-        benchmark.end_time = datetime.now(timezone.utc)
+        benchmark.end_time = datetime.now(UTC)
         benchmark.item_count = item_count
         return benchmark
 

@@ -12,7 +12,7 @@ import hashlib
 import orjson as json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class PolicyChecksumDriftDetector:
             SHA256 hex digest of the sorted JSON serialization.
         """
         # Use separators and sort_keys for deterministic serialization
-        json_str = json.dumps(policy_data, sort_keys=True, separators=(",", ":").decode().decode())
+        json_str = json.dumps(policy_data, sort_keys=True, separators=(",", ":").decode())
         return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
 
     def record_baseline(self, policy_id: str, policy_data: dict, cycle_id: str) -> PolicyChecksum:
@@ -71,7 +71,7 @@ class PolicyChecksumDriftDetector:
             policy_id=policy_id,
             checksum=checksum,
             cycle_id=cycle_id,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
         )
         self._baselines[policy_id] = baseline
         logger.debug(f"Recorded baseline for policy {policy_id} (checksum: {checksum})")
@@ -128,7 +128,7 @@ class PolicyChecksumDriftDetector:
 
 def compute_payload_checksum(payload: Any) -> str:
     """Compute a deterministic SHA256 checksum for a JSON-compatible payload."""
-    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":").decode())
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 

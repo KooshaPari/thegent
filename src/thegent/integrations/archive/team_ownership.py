@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import orjson as json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 
 
@@ -29,7 +29,7 @@ class TeamOwnership:
     team: str
     owner: str
     backup_owner: str
-    assigned_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    assigned_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class OwnershipRegistry:

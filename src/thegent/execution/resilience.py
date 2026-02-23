@@ -139,7 +139,7 @@ class InterruptionTracker:
             "severity": severity,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def get_fatigue_score(self, window_s: int = 3600) -> float:
         """Calculate fatigue score based on recent interruptions (0.0-1.0)."""
@@ -211,7 +211,7 @@ class HandoffManager:
             "confirmed": False,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
         return snapshot_id
 
     def confirm_handoff(self, snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> bool:
@@ -227,7 +227,7 @@ class HandoffManager:
                 "reason": "snapshot_not_found",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode().decode() + "\n")
+                f.write(json.dumps(invalid_event).decode() + "\n")
             return False
 
         if confidence < 0.0 or confidence > 1.0:
@@ -241,7 +241,7 @@ class HandoffManager:
                 "reason": "confidence_out_of_range",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode().decode() + "\n")
+                f.write(json.dumps(invalid_event).decode() + "\n")
             return False
 
         snapshot = self.get_snapshot(snapshot_id)
@@ -256,7 +256,7 @@ class HandoffManager:
                 "reason": "invalid_snapshot_shape",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode().decode() + "\n")
+                f.write(json.dumps(invalid_event).decode() + "\n")
             return False
 
         confidence_state = "high"
@@ -278,7 +278,7 @@ class HandoffManager:
                 "run_count": len(snapshot.get("run_ids", [])),
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(low_confidence_event).decode().decode() + "\n")
+                f.write(json.dumps(low_confidence_event).decode() + "\n")
 
         self._confirmed_handoffs.add(snapshot_id)
         # Update registry record (simplified: append confirmation event)
@@ -294,7 +294,7 @@ class HandoffManager:
             "continuity_envelope_version": "v2.0",  # WP-12005
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
         return True
 
     def get_snapshot(self, snapshot_id: str) -> dict[str, Any] | None:
@@ -365,7 +365,7 @@ class DeferralQueue:
             "status": "deferred",
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def list_deferred(self) -> list[dict[str, Any]]:
         """List all currently deferred tasks."""
@@ -398,7 +398,7 @@ class DeferralQueue:
                 if data.get("run_id") == run_id and data.get("status") == "deferred":
                     data["status"] = "resumed"
                     found = True
-                lines.append(json.dumps(data).decode().decode() + "\n")
+                lines.append(json.dumps(data).decode() + "\n")
         if found:
             with self.path.open("w", encoding="utf-8") as f:
                 f.writelines(lines)
@@ -521,7 +521,7 @@ class DLQManager:
             event["poison_pill_count"] = existing[0].get("poison_pill_count", 0) + 1
 
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
         # WP-3008: Integrate EscalationQueue with DLQ (Option C)
         try:
@@ -695,7 +695,7 @@ class CircuitBreakerRegistry:
             "error_hash": error_hash,
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def is_open(self, target: str, category: str = "agent") -> bool:
         """Check if the circuit for a target in a category is open (blocked)."""
@@ -741,7 +741,7 @@ class OverrideRegistry:
             "expires_at_utc": datetime.fromtimestamp(expires_at, tz=UTC).isoformat(),
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def has_unexpired(self, owner: str) -> bool:
         """True if owner has an override that has not yet expired."""
@@ -789,7 +789,7 @@ class EscalationQueue:
             "status": "pending",
         }
         with self.queue_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def list_pending(self, past_sla_only: bool = False, limit: int = 50) -> list[dict[str, Any]]:
         """List escalation items. If past_sla_only, return only items past escalate_by."""
@@ -835,7 +835,7 @@ class EscalationQueue:
                     data["status"] = resolution
                     data["resolved_at_utc"] = datetime.now(UTC).isoformat()
                     updated = True
-                new_lines.append(json.dumps(data).decode().decode())
+                new_lines.append(json.dumps(data).decode())
             except Exception:
                 new_lines.append(line)
         if updated:

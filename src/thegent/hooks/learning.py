@@ -81,4 +81,4 @@ class LearningSubcommands:
 
     def _save_db(self) -> None:
         """Save learning database."""
-        self.learning_db_path.write_text(json.dumps(self.learning_db, indent=2).decode().decode())
+        self.learning_db_path.write_text(json.dumps(self.learning_db, indent=2))

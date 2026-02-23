@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class HistoricalTrendReport:
         Returns:
             TrendDataPoint for the recorded value.
         """
-        point = TrendDataPoint(timestamp=datetime.now(timezone.utc), metric=metric, value=value)
+        point = TrendDataPoint(timestamp=datetime.now(UTC), metric=metric, value=value)
         if metric not in self._data:
             self._data[metric] = []
         self._data[metric].append(point)

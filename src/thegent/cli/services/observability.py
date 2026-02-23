@@ -224,7 +224,7 @@ def build_observe_summary_trend(
         top_escalations=top_escalations,
     )
     trend_scope_signature = hash_scope_fn(trend_scope_key)
-    trend_scope_key_json = json.dumps(trend_scope_key, sort_keys=True, separators=(",", ":").decode().decode())
+    trend_scope_key_json = json.dumps(trend_scope_key, sort_keys=True, separators=(",", ":").decode())
     trend_records: list[dict[str, Any]] = []
     if trend_previous_samples_requested:
         trend_records = load_snapshots_fn(

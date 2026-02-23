@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ class CycleManifestStore:
         """
         manifest = CycleManifest(
             cycle_id=cycle_id,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             items=tuple(items),
         )
         self._manifests[cycle_id] = manifest

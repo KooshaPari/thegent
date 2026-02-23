@@ -113,7 +113,7 @@ def install_to_cursor(
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -122,7 +122,7 @@ def install_to_claude_code(url: str = DEFAULT_MCP_URL) -> bool:
     config_path = Path.home() / ".claude.json"
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -137,7 +137,7 @@ def install_to_codex(url: str = DEFAULT_MCP_URL) -> bool:
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
         config = _set_compatible_mcp_servers(config, url=url)
-        config_path.write_text(json.dumps(config, indent=2).decode().decode())
+        config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -148,7 +148,7 @@ def install_to_claude_desktop(url: str = DEFAULT_MCP_URL) -> bool:
         return False
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -159,7 +159,7 @@ def install_to_droid(url: str, workspace: Path | None = None) -> bool:
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -521,7 +521,7 @@ def remove_servers_from_client(
                 touched += 1
                 total_removed += pre_count - len(mcp_servers)
                 config["mcpServers"] = mcp_servers
-                config_path.write_text(json.dumps(config, indent=2).decode().decode())
+                config_path.write_text(json.dumps(config, indent=2))
 
         if total_removed == 0:
             return True, f"No matching servers found for {normalized_client}"
@@ -555,7 +555,7 @@ def migrate_to_unimount(
                 mcp_servers = {}
             config["mcpServers"] = mcp_servers
             config = _set_compatible_mcp_servers(config, url=mcp_url)
-            config_path.write_text(json.dumps(config, indent=2).decode().decode())
+            config_path.write_text(json.dumps(config, indent=2))
         return True, f"Migrated {normalized_client} to uni-mount"
     except Exception as e:
         return False, str(e)

@@ -185,7 +185,7 @@ class TerminalKeepalive:
 def keepalive(
     interval_s: float = 30.0,
     message: str = ".",
-) -> Generator[TerminalKeepalive, None, None]:
+) -> Generator[TerminalKeepalive]:
     """Context manager convenience wrapper for :class:`TerminalKeepalive`.
 
     Suppresses output when stdout is not a TTY (CI/pipe).

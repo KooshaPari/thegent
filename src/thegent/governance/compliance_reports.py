@@ -36,7 +36,7 @@ class ComplianceReporter:
         }
 
         if format == "json":
-            return json.dumps(report, indent=2).decode().decode()
+            return json.dumps(report, indent=2)
         if format == "markdown":
             return self._generate_markdown(report)
         if format == "html":

@@ -150,7 +150,7 @@ class LMCacheBackend:
             if self._config.backend == "redis" and REDIS_AVAILABLE:
                 client = await self._get_redis_client()
                 if client:
-                    data = json.dumps(response).decode().decode() if not isinstance(response, str) else response
+                    data = json.dumps(response).decode() if not isinstance(response, str) else response
                     await client.setex(
                         cache_key,
                         self._config.ttl_seconds,

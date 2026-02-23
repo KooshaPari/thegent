@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ class AdaptiveRateLimiter:
             raise ValueError("rpm must be >= 1.0")
 
         self._limits[connector] = rpm
-        self._last_updated[connector] = datetime.now(timezone.utc)
+        self._last_updated[connector] = datetime.now(UTC)
         logger.debug(f"Set limit for {connector} to {rpm} rpm")
 
     def get_limit(self, connector: str) -> float:
@@ -81,7 +81,7 @@ class AdaptiveRateLimiter:
         current_limit = self.get_limit(connector)
         new_limit = max(1.0, current_limit * 0.8)
         self._limits[connector] = new_limit
-        self._last_updated[connector] = datetime.now(timezone.utc)
+        self._last_updated[connector] = datetime.now(UTC)
 
         logger.debug(f"Recorded throttle for {connector}: {current_limit} -> {new_limit} rpm")
 
@@ -97,7 +97,7 @@ class AdaptiveRateLimiter:
         max_limit = self._default_rpm * 10
         new_limit = min(max_limit, current_limit * 1.05)
         self._limits[connector] = new_limit
-        self._last_updated[connector] = datetime.now(timezone.utc)
+        self._last_updated[connector] = datetime.now(UTC)
 
         logger.debug(f"Recorded success for {connector}: {current_limit} -> {new_limit} rpm")
 
@@ -111,7 +111,7 @@ class AdaptiveRateLimiter:
             Current rate limit state for the connector.
         """
         rpm = self.get_limit(connector)
-        last_updated = self._last_updated.get(connector, datetime.now(timezone.utc))
+        last_updated = self._last_updated.get(connector, datetime.now(UTC))
 
         return RateLimitState(
             connector=connector,

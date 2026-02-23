@@ -44,7 +44,7 @@ def session_list(
     sessions = session_list_impl(all_sessions=all_sessions, owner=owner, limit=limit)
 
     if output_format == "json":
-        console.print_json(json.dumps(sessions).decode().decode())
+        console.print_json(json.dumps(sessions).decode())
         return
 
     if not sessions:

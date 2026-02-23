@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, UTC
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class DocsFreshnessChecker:
         Returns:
             List of stale DocRecord objects.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         max_age = timedelta(days=max_age_days)
         stale_docs = []
 

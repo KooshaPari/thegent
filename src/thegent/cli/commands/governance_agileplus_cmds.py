@@ -34,7 +34,7 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
     except FileNotFoundError:
         fmt = _normalize_output_format(format)
         if fmt == "json":
-            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}).decode().decode() + "\n")
+            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}).decode() + "\n")
         else:
             console.print("[yellow]Govern not configured.[/yellow]")
             console.print("[dim]Run: thegent govern configure[/dim]")
@@ -65,7 +65,7 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
                 "target": dim.target,
                 "status": dim.status.value if hasattr(dim.status, "value") else str(dim.status),
             }
-        sys.stdout.write(json.dumps(output, indent=2).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(output, indent=2) + "\n")
         return
 
     band = get_band(health.score)
@@ -185,7 +185,7 @@ def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str
             "error": "",
             "skipped": not should_run,
         }
-        sys.stdout.write(json.dumps(output, indent=2).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(output, indent=2) + "\n")
         return
 
     band = get_band(health.score)

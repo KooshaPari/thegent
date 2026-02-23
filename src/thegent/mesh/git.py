@@ -324,7 +324,7 @@ class GitParallelismManager:
             "new_hash": new_hash or "",
         }
         with queue_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(entry).decode().decode() + "\n")
+            fh.write(json.dumps(entry).decode() + "\n")
         return queue_path
 
     def try_auto_merge_commit(self, ours_commit: str, theirs_commit: str, message: str) -> str | None:

@@ -60,5 +60,5 @@ class QueueLock:
         self._file.seek(0)
         self._file.truncate()
         for entry in entries:
-            self._file.write(json.dumps(entry).decode().decode() + "\n")
+            self._file.write(json.dumps(entry).decode() + "\n")
         self._file.flush()

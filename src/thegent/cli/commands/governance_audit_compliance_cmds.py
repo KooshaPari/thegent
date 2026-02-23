@@ -30,7 +30,7 @@ def data_protection_cmd(format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(status).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(status).decode() + "\n")
         return
 
     table = Table(title="Data Protection & Privacy Status (WP-3006)")
@@ -62,7 +62,7 @@ def compliance_report_cmd(
     fmt = _normalize_output_format(format)
 
     if fmt == "json":
-        out = json.dumps(report, indent=2).decode().decode()
+        out = json.dumps(report, indent=2)
     else:
         ts = report["tiered_storage"]
         rm = report["retention_matrix"]
@@ -109,7 +109,7 @@ def audit_verify_cmd(format: str | None = None) -> None:
     res = auditor.verify_registry()
 
     if format == "json":
-        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(res).decode() + "\n")
         return
 
     if res["status"] == "passed":
@@ -192,7 +192,7 @@ def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(artifacts).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(artifacts).decode() + "\n")
         return
 
     if not artifacts:
@@ -237,7 +237,7 @@ def signatures_verify_cmd(run_id: str) -> None:
         all_blocks_valid = True
         for block in blocks:
             payload = block.get("payload")
-            body = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
+            body = json.dumps(payload, sort_keys=True, separators=(",", ":").decode())
             actual_hash = hashlib.sha256(body.encode()).hexdigest()
 
             if actual_hash != block.get("payload_hash"):
@@ -292,7 +292,7 @@ def trust_status_cmd(format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(res).decode() + "\n")
         return
 
     console.print("[bold]Trust Boundary Status (WP-3007)[/bold]")

@@ -64,7 +64,7 @@ class ContractTelemetry:
             "errors": errors or [],
         }
         with self.telemetry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def emit_drift_event(
         self,
@@ -87,7 +87,7 @@ class ContractTelemetry:
             "details": details or {},
         }
         with self.telemetry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(drift_event).decode().decode() + "\n")
+            f.write(json.dumps(drift_event).decode() + "\n")
 
     def get_drift_budget_status(
         self,

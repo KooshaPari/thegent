@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
@@ -116,7 +116,7 @@ class CapabilityMismatchDetector:
             "connector": connector_name,
             "missing": missing,
             "severity": severity,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -157,7 +157,7 @@ class ConnectorSLAEvaluator:
 
         return {
             "connector": connector_name,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "thresholds": {
                 "p95_latency_ms": thresholds.p95_latency_ms,
                 "max_failure_rate": thresholds.max_failure_rate,

@@ -259,4 +259,4 @@ class HeadlessLSPManager:
             },
             "updated_at": time.time(),
         }
-        self.lockfile.write_text(json.dumps(state, indent=2).decode().decode())
+        self.lockfile.write_text(json.dumps(state, indent=2))

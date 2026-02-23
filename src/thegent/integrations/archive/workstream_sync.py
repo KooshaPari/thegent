@@ -54,7 +54,7 @@ class GitHubSync:
         except GHProjectSyncError as e:
             logger.error(f"GitHub sync error: {e}")
             return {"error": str(e)}
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {"error": "timeout"}
 
     async def sync_from_github(

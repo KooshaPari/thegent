@@ -6,7 +6,7 @@ Target: Under 800 LOC.
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from pathlib import Path
 from typing import Any
 
@@ -80,7 +80,7 @@ class WorkstreamAutosyncRunner:
     async def _run_cycle(self) -> None:
         """Execute one cycle - delegates to specialized methods."""
         self.total_cycles += 1
-        self.last_sync_time = datetime.now(timezone.utc)
+        self.last_sync_time = datetime.now(UTC)
 
         # Delegate to cycle module
         from thegent.autosync.cycle import run_sync_cycle

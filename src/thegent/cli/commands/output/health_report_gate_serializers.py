@@ -131,7 +131,7 @@ def serialize_health_report_jsonl(result: dict[str, Any]) -> str:
     summary_row["record_type"] = "summary"
     summary_row["payload_signature_algorithm"] = _safe_dict(result.get("payload_signature")).get("algorithm", "sha256")
     summary_row["payload_signature_value"] = _safe_dict(result.get("payload_signature")).get("value", "")
-    lines.append(json.dumps(summary_row, sort_keys=True).decode().decode())
+    lines.append(json.dumps(summary_row, sort_keys=True).decode())
     for row in result["top_blocked"]:
         row_copy = dict(row)
         row_copy["record_type"] = "blocked_session"
@@ -156,7 +156,7 @@ def serialize_health_report_jsonl(result: dict[str, Any]) -> str:
         row_copy["payload_signature_value"] = _safe_dict(result.get("payload_signature")).get("value", "")
         row_copy["generated_at_utc"] = result.get("generated_at_utc", "")
         row_copy["generated_query"] = _safe_dict(result.get("generated_query"))
-        lines.append(json.dumps(row_copy, sort_keys=True).decode().decode())
+        lines.append(json.dumps(row_copy, sort_keys=True).decode())
     return "\n".join(lines) + ("\n" if lines else "")
 
 
@@ -277,7 +277,7 @@ def serialize_health_gate_jsonl(result: dict[str, Any]) -> str:
     lines: list[str] = []
     summary_row = dict(result)
     summary_row["record_type"] = "summary"
-    lines.append(json.dumps(summary_row, sort_keys=True).decode().decode())
+    lines.append(json.dumps(summary_row, sort_keys=True).decode())
     for row in result.get("blocked_sessions", []):
         blocked_row = dict(row)
         blocked_row["record_type"] = "blocked_session"
@@ -303,5 +303,5 @@ def serialize_health_gate_jsonl(result: dict[str, Any]) -> str:
         )
         blocked_row["payload_signature_value"] = _safe_dict(result.get("payload_signature")).get("value", "")
         blocked_row["generated_query"] = _safe_dict(result.get("generated_query"))
-        lines.append(json.dumps(blocked_row, sort_keys=True).decode().decode())
+        lines.append(json.dumps(blocked_row, sort_keys=True).decode())
     return "\n".join(lines) + ("\n" if lines else "")

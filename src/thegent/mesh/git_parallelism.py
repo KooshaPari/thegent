@@ -305,7 +305,7 @@ class WorktreePool:
             return success
 
     @contextmanager
-    def worktree(self, agent_id: str) -> Generator[WorktreeContext, None, None]:
+    def worktree(self, agent_id: str) -> Generator[WorktreeContext]:
         """Context manager: acquire on enter, release on exit.
 
         Example::

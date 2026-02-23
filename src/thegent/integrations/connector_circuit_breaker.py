@@ -9,7 +9,7 @@ graceful degradation when a connector experiences repeated failures.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, UTC
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -63,13 +63,13 @@ class ConnectorCircuitBreaker:
 
         if self._failure_count >= self._failure_threshold and self._state == CircuitState.CLOSED:
             self._state = CircuitState.OPEN
-            self._opened_at = datetime.now(timezone.utc)
+            self._opened_at = datetime.now(UTC)
             logger.warning(
                 f"Circuit breaker opened after {self._failure_count} failures (threshold={self._failure_threshold})"
             )
         elif self._state == CircuitState.HALF_OPEN:
             self._state = CircuitState.OPEN
-            self._opened_at = datetime.now(timezone.utc)
+            self._opened_at = datetime.now(UTC)
             logger.warning("Circuit breaker returned to OPEN after failure in HALF_OPEN state")
 
     def record_success(self) -> None:
@@ -95,7 +95,7 @@ class ConnectorCircuitBreaker:
         """
         # If OPEN and recovery timeout has elapsed, transition to HALF_OPEN
         if self._state == CircuitState.OPEN and self._opened_at is not None:
-            elapsed = (datetime.now(timezone.utc) - self._opened_at).total_seconds()
+            elapsed = (datetime.now(UTC) - self._opened_at).total_seconds()
             if elapsed >= self._recovery_timeout_seconds:
                 self._state = CircuitState.HALF_OPEN
                 logger.info("Circuit breaker transitioned to HALF_OPEN for recovery attempt")
@@ -112,7 +112,7 @@ class ConnectorCircuitBreaker:
         """
         # Trigger half-open check if needed
         if self._state == CircuitState.OPEN and self._opened_at is not None:
-            elapsed = (datetime.now(timezone.utc) - self._opened_at).total_seconds()
+            elapsed = (datetime.now(UTC) - self._opened_at).total_seconds()
             if elapsed >= self._recovery_timeout_seconds:
                 self._state = CircuitState.HALF_OPEN
 

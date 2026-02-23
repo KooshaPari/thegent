@@ -82,7 +82,7 @@ class WorktreeManager:
     def _save_registry(self, registry: dict[str, dict[str, str]]) -> None:
         """Persist the branch registry to disk."""
         self._registry_path.parent.mkdir(parents=True, exist_ok=True)
-        self._registry_path.write_text(json.dumps(registry, indent=2).decode().decode(), encoding="utf-8")
+        self._registry_path.write_text(json.dumps(registry, indent=2), encoding="utf-8")
 
     def _register_branch(self, agent_id: str, branch: str) -> None:
         """Register a branch as owned by *agent_id*."""

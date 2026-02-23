@@ -32,7 +32,7 @@ class CrossProjectIPC:
             Path to message file
         """
         message_file = self.ipc_dir / f"{target_project}_{int(time.time())}.json"
-        message_file.write_text(json.dumps(message, indent=2).decode().decode())
+        message_file.write_text(json.dumps(message, indent=2))
         logger.info(f"Sent message to {target_project}")
         return message_file
 

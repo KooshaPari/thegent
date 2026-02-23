@@ -1,14 +1,10 @@
 [build-system]
-<<<<<<< HEAD
 requires = ["hatchling", "hatch-vcs"]
-=======
 requires = ["hatchling"]
->>>>>>> fix/ci-remove-macos
 build-backend = "hatchling.build"
 
 [project]
 name = "thegent-mcp"
-<<<<<<< HEAD
 dynamic = ["version"]
 description = "FastMCP server integration for thegent"
 authors = [
@@ -20,21 +16,18 @@ license = { text = "MIT" }
 dependencies = [
     "fastmcp[tasks]>=3.0.0",
     "starlette>=0.46.0",
-=======
 version = "0.1.0"
 description = "thegent MCP server - FastMCP 3.x protocol layer for agent integration and tool orchestration"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastmcp[tasks]>=3.0.0",
->>>>>>> fix/ci-remove-macos
     "pydantic>=2.0.0",
     "httpx>=0.28.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-<<<<<<< HEAD
     "pytest>=9.0.2",
 ]
 
@@ -50,14 +43,12 @@ testpaths = ["tests"]
 line-length = 120
 target-version = "py310"
 
-=======
     "pytest>=7.4.0",
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.1.0",
     "ruff>=0.1.0",
 ]
 
->>>>>>> fix/ci-remove-macos
 [project.scripts]
 thegent-mcp = "thegent_mcp.server:main"
 
