@@ -58,8 +58,6 @@ __all__ = [
     "list_session_contracts_impl",
     "session_contract_audit_impl",
     "session_contract_health_gate_impl",
-    "session_contract_health_report_impl",
-    "session_contract_health_trend_impl",
 ]
 
 
@@ -404,10 +402,8 @@ def session_contract_health_gate_impl(
     return payload
 
 
-# Re-export from sub-module for backward-compat import surface
-from thegent.cli.commands.session_health_report_impl import (  # noqa: F401, E402
-    session_contract_health_report_impl,
-)
-from thegent.cli.commands.session_health_trend_impl import (  # noqa: F401, E402
-    session_contract_health_trend_impl,
-)
+# Note: session_contract_health_report_impl and session_contract_health_trend_impl
+# are NOT re-exported here due to circular import dependencies. Import them directly
+# from their respective modules:
+# from thegent.cli.commands.session_health_report_impl import session_contract_health_report_impl
+# from thegent.cli.commands.session_health_trend_impl import session_contract_health_trend_impl
