@@ -113,7 +113,7 @@ tasks:
       - task: cliproxy:ensure-config
       - task: polyglot:setup
       - mkdir -p ~/.local/bin
-      - zsh scripts/install-thegent-shims.sh
+      - uv run thegent install-shims --all
       - uv run thegent install -t shell
       - task: shims:guard
       - task: shims:probe
@@ -306,7 +306,10 @@ tasks:
 
   ci:preflight:
     desc: "Bootstrap CI baseline checks: collect-only, coverage-contract, required-provider smoke."
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - uv run pytest --collect-only -q
       - uv run pytest -q tests/e2e/test_coverage_contract.py
       - uv run python scripts/cliproxy_provider_smoke.py
@@ -340,7 +343,10 @@ tasks:
 
   test:fast-lane:
     desc: "Run fast pytest lane (WL-134): fail-fast, exclude slow/integration/e2e/load markers."
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - uv run pytest -c pytest-fast.ini -W ignore::pytest.PytestRemovedIn9Warning --maxfail=1 -p no:tach -q --no-header --no-summary
 
   test:fast:
@@ -724,7 +730,10 @@ tasks:
 
   test:collect:fast-gate:
     desc: "Run collection gate with fast-lane selector and fail on collection errors."
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - mkdir -p artifacts/pytest/baseline
       - |
         PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
@@ -783,7 +792,10 @@ tasks:
 
   test:collect:templates:
     desc: "Run template-tree collect-only for template-only regression detection."
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - mkdir -p artifacts/pytest/baseline
       - |
         PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
@@ -813,7 +825,10 @@ tasks:
 
   test:pr-gate:
     desc: "Run PR fast gate equivalent (collect, mapping gate, and mapped test run)."
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - |
         mkdir -p artifacts/pytest/collect
         mkdir -p artifacts/pytest/requirements
@@ -1004,7 +1019,10 @@ tasks:
 
   coverage:ci:
     desc: "CI coverage lifecycle: clean -> run -> report"
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - task: coverage:run
       - task: coverage:report
 
@@ -1291,7 +1309,10 @@ tasks:
 
   quality:ci:unified:
     desc: "Unified quality CI lane (contract+artifact first)"
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - task: quality:aggregate:artifacts
 
   quality:harness-contracts:strict:
@@ -1371,7 +1392,10 @@ tasks:
 
   quality:
     desc: "Run full strict quality pipeline (max-lines/lint/type/test/traceability)"
+    env:
+      UV_CACHE_DIR: .cache/uv
     cmds:
+      - mkdir -p .cache/uv
       - task: shims:guard
       - task: shims:probe
       - task: quality:rust:links-conflicts

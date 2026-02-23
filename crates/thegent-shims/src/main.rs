@@ -586,6 +586,22 @@ fn inject_force_alias(name: &str, args: &[String], force_mode: bool) -> Vec<Stri
     out
 }
 
+fn dedupe_exact_flags(args: &[String], flags: &[&str]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::with_capacity(args.len());
+    let mut seen: std::collections::HashSet<&str> = std::collections::HashSet::new();
+    for arg in args {
+        let as_str = arg.as_str();
+        if flags.contains(&as_str) {
+            if seen.contains(as_str) {
+                continue;
+            }
+            seen.insert(as_str);
+        }
+        out.push(arg.clone());
+    }
+    out
+}
+
 /// Run agent with thegent integration
 fn run_agent(name: &str, args: &[String]) -> ExitCode {
     let lowered_name = name.to_lowercase();
@@ -618,6 +634,15 @@ fn run_agent(name: &str, args: &[String]) -> ExitCode {
             } else {
                 filtered
             };
+            let passthrough_args = dedupe_exact_flags(
+                &passthrough_args,
+                &[
+                    "--dangerously-bypass-approvals-and-sandbox",
+                    "--dangerously-skip-permissions",
+                    "--allow-dangerously-skip-permissions",
+                    "--skip-permissions-unsafe",
+                ],
+            );
             cmd.args(&passthrough_args);
 
             // Preserve thegent environment
@@ -961,9 +986,9 @@ mod tests {
     use std::env;
 
     use super::{
-        dex_proxy_env_defaults, inject_force_alias, inject_harness_defaults, normalize_harness_command_labels,
-        normalize_harness_exec_legacy_args, should_inject_proxy_env_defaults, split_force_flag, split_native_flag,
-        inject_native_force_alias,
+        dedupe_exact_flags, dex_proxy_env_defaults, inject_force_alias, inject_harness_defaults,
+        inject_native_force_alias, normalize_harness_command_labels, normalize_harness_exec_legacy_args,
+        should_inject_proxy_env_defaults, split_force_flag, split_native_flag,
     };
 
     fn v(args: &[&str]) -> Vec<String> {
@@ -1155,6 +1180,26 @@ mod tests {
             .count();
         assert_eq!(search_count, 1);
         assert_eq!(bypass_count, 1);
+    }
+
+    #[test]
+    fn dedupe_exact_flags_collapses_duplicate_dangerous_bypass_flag() {
+        let out = dedupe_exact_flags(
+            &v(&[
+                "--dangerously-bypass-approvals-and-sandbox",
+                "exec",
+                "--dangerously-bypass-approvals-and-sandbox",
+                "resume",
+            ]),
+            &["--dangerously-bypass-approvals-and-sandbox"],
+        );
+        let bypass_count = out
+            .iter()
+            .filter(|a| a.as_str() == "--dangerously-bypass-approvals-and-sandbox")
+            .count();
+        assert_eq!(bypass_count, 1);
+        assert!(out.contains(&"exec".to_string()));
+        assert!(out.contains(&"resume".to_string()));
     }
 
     #[test]
