@@ -38,10 +38,8 @@ def discovery_register_cmd(
     mcp_errors: list[str] | None = typer.Option(None, "--mcp-error", help="MCP startup error(s)"),
 ) -> None:
     """Register or update a discovered external agent (WP-4008)."""
-=======
     import json
 
->>>>>>> fix/ci-remove-macos
     from thegent.discovery import register_discovered_agent
 
     token_usage = None

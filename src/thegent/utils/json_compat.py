@@ -6,7 +6,7 @@ Use this instead of json for 3-5x performance improvement.
 
 try:
     import orjson
-    
+
     def dumps(obj, **kwargs):
         """Serialize obj to JSON string.
         
@@ -22,10 +22,10 @@ try:
             opts |= orjson.OPT_SORT_KEYS
         if kwargs.get("indent"):
             opts |= orjson.OPT_INDENT_2
-        
+
         result = orjson.dumps(obj, option=opts)
         return result.decode("utf-8")
-    
+
     def loads(s):
         """Deserialize JSON string to object.
         
@@ -38,7 +38,7 @@ try:
         if isinstance(s, str):
             s = s.encode("utf-8")
         return orjson.loads(s)
-    
+
     def dump(obj, fp, **kwargs):
         """Serialize obj to file.
         
@@ -48,7 +48,7 @@ try:
             **kwargs: Additional options
         """
         fp.write(dumps(obj, **kwargs))
-    
+
     def load(fp):
         """Deserialize file to object.
         
@@ -59,7 +59,7 @@ try:
             Deserialized object
         """
         return loads(fp.read())
-    
+
     JSON = type("JSONModule", (), {
         "dumps": staticmethod(dumps),
         "loads": staticmethod(loads),
@@ -76,4 +76,4 @@ except ImportError:
     load = json.load
 
 
-__all__ = ["JSON", "dumps", "loads", "dump", "load"]
+__all__ = ["JSON", "dump", "dumps", "load", "loads"]

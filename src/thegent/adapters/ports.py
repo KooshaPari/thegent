@@ -9,7 +9,7 @@ from typing import Any, Protocol
 
 class AdapterPort(Protocol):
     """Protocol all adapters must implement"""
-    
+
     def call(self, **kwargs) -> dict[str, Any]:
         ...
 
@@ -36,22 +36,22 @@ class StorageAdapter(AdapterPort):
 # Unified adapter registry
 class AdapterRegistry:
     _adapters: dict[str, AdapterPort] = {}
-    
+
     @classmethod
     def register(cls, name: str, adapter: AdapterPort):
         """Register an adapter by name"""
         cls._adapters[name] = adapter
-    
+
     @classmethod
     def get(cls, name: str) -> AdapterPort:
         """Get adapter by name"""
         return cls._adapters.get(name)
-    
+
     @classmethod
     def all(cls) -> dict[str, AdapterPort]:
         """Get all registered adapters"""
         return cls._adapters.copy()
-    
+
     @classmethod
     def unregister(cls, name: str):
         """Unregister an adapter"""

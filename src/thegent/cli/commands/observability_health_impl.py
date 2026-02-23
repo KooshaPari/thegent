@@ -9,12 +9,10 @@ from typing import Any
 
 from thegent.config import ThegentSettings
 
-=======
 _log = logging.getLogger(__name__)
 
 # --- Constants ---
 
->>>>>>> fix/ci-remove-macos
 HEALTH_PAYLOAD_SCHEMA_VERSION = "health-schema-v1"
 HEALTH_PAYLOAD_TYPES = (
     "session_contract_health_gate",
