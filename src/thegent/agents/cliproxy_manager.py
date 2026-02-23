@@ -5,7 +5,6 @@ existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
 """
 
-import contextlib
 import json
 import logging
 import os
@@ -1044,8 +1043,7 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
             env=os.environ.copy(),
             timeout=None,
             close_fds=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         return proc.returncode
