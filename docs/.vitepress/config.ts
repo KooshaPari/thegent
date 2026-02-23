@@ -15,12 +15,14 @@ const algoliaApiKey = process.env.VITEPRESS_ALGOLIA_API_KEY
 const algoliaIndexName = process.env.VITEPRESS_ALGOLIA_INDEX_NAME
 const hasAlgolia = Boolean(algoliaAppId && algoliaApiKey && algoliaIndexName)
 const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'thegent'
-const isCi = process.env.GITHUB_ACTIONS === 'true'
+const isPagesBuild = process.env.GITHUB_ACTIONS === 'true' || process.env.GITHUB_PAGES === 'true'
+const docsBaseOverride = process.env.VITEPRESS_BASE
+const docsBase = docsBaseOverride ?? (isPagesBuild ? `/${repoName}/` : '/')
 
 const config = defineConfig({
   title: 'thegent',
   description: 'AI Agent Governance & MCP Server',
-  base: isCi ? `/${repoName}/` : '/',
+  base: docsBase,
   appearance: true,
   lastUpdated: true,
 
