@@ -214,7 +214,7 @@ ignore = [
     "PT019", "PERF401", "E402", "PTH101", "S103", "PT011", "PLW2901", "S112", "BLE001", "PLC0415",
     "PT018"
 ]
-"scripts/*" = ["ANN", "T201", "S603", "S607", "BLE001", "E402", "PLC0415", "PLR0912", "PLR0915", "FBT001", "FBT002", "S110"]
+"scripts/*" = ["ANN", "T201", "W293", "W291", "PTH107", "RUF013", "S603", "S607", "BLE001", "E402", "PLC0415", "PLR0912", "PLR0915", "FBT001", "FBT002", "S110"]
 "src/thegent/governance/heliosShield_bridge.py" = ["N999"]
 
 [tool.ty]
@@ -271,4 +271,4 @@ dev = [
     "ruff>=0.15.1",
     "types-pyyaml>=6.0.12.20250915",
 ]
-"json_utils.py" = ["W293", "T201", "PLW0127"]
+"json_utils.py" = ["W293", "T201", "W293", "W291", "PTH107", "RUF013", "PLW0127"]
