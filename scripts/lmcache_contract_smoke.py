@@ -25,32 +25,31 @@ async def _check_lmcache() -> dict:
     enabled = os.getenv("LMCACHE_ENABLED", "").lower()
     if enabled not in ("1", "true", "yes"):
         return {"ok": False, "target": "lmcache", "error": "LMCACHE_ENABLED not set"}
-    
+
     backend = os.getenv("LMCACHE_BACKEND", "redis")
-    
+
     if backend == "redis":
         return await _check_redis()
-    elif backend == "http":
+    if backend == "http":
         return await _check_http()
-    else:
-        return {"ok": False, "target": "lmcache", "error": f"Unknown backend: {backend}"}
+    return {"ok": False, "target": "lmcache", "error": f"Unknown backend: {backend}"}
 
 
 async def _check_redis() -> dict:
     """Check Redis backend."""
     try:
         import redis
-        
+
         host = os.getenv("LMCACHE_REDIS_HOST", "localhost")
         port = int(os.getenv("LMCACHE_REDIS_PORT", "6379"))
         db = int(os.getenv("LMCACHE_REDIS_DB", "0"))
         password = os.getenv("LMCACHE_REDIS_PASSWORD", None) or None
-        
+
         r = redis.Redis(host=host, port=port, db=db, password=password, socket_timeout=5)
         r.ping()
-        
+
         return {"ok": True, "target": "lmcache", "backend": "redis", "status": "connected"}
-        
+
     except ImportError:
         return {"ok": False, "target": "lmcache", "error": "redis-py not installed"}
     except Exception as exc:
@@ -61,16 +60,16 @@ async def _check_http() -> dict:
     """Check HTTP backend."""
     server_url = os.getenv("LMCACHE_SERVER_URL", "http://localhost:8080").rstrip("/")
     url = f"{server_url}/health"
-    
+
     try:
         import urllib.request
         request = urllib.request.Request(url)
         with urllib.request.urlopen(request, timeout=5) as response:
             status = response.getcode()
             body = response.read(512).decode("utf-8", errors="replace")
-            
+
         return {"ok": True, "target": "lmcache", "backend": "http", "status": status, "body": body[:120]}
-        
+
     except Exception as exc:
         return {"ok": False, "target": "lmcache", "error": str(exc)}
 
@@ -78,12 +77,12 @@ async def _check_http() -> dict:
 def main() -> int:
     import asyncio
     result = asyncio.run(_check_lmcache())
-    
+
     print(json.dumps(result))
-    
+
     if not result.get("ok"):
         raise RuntimeError(f"LMCache health check failed: {result.get('error')}")
-    
+
     return 0
 
 

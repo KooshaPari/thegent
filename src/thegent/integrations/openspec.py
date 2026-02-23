@@ -24,7 +24,7 @@ class OpenSpecConfig:
 class OpenSpecAdapter:
     """Adapter for openspec binary."""
 
-    def __init__(self, config: OpenSpecConfig = None):
+    def __init__(self, config: OpenSpecConfig | None = None):
         self._config = config or self._load_config()
         self._status = OpenSpecStatus.DISABLED
         if self._config.enabled:

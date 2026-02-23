@@ -140,7 +140,7 @@ task quality:max-lines
 Notes:
 - This task is the supported local entrypoint for max-lines enforcement.
 - `scripts/max-lines-gate.sh` is an internal implementation detail used by task wiring.
-- Pre-commit and CI should call the canonical task path (`task quality:max-lines`) instead of invoking the script directly.
+- Pre-commit (`pre-commit`, changed-file scope) and CI should call the canonical task path (`task quality:max-lines`) instead of invoking the script directly.
 
 ### 2.4 Canonical Contract Reinforcement Bundle (WL-104/WL-106/WL-111/WL-117/WL-122)
 

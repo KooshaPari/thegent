@@ -16,8 +16,8 @@ from uuid import uuid4
 logger = logging.getLogger(__name__)
 
 try:
-    import nats
-    from nats.js import JetStreamContext
+    import nats  # type: ignore[import-not-found]
+    from nats.js import JetStreamContext  # type: ignore[import-not-found]
     NATS_AVAILABLE = True
 except ImportError:
     NATS_AVAILABLE = False

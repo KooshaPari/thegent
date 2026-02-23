@@ -15,6 +15,9 @@
 //! }
 //! ```
 
+pub mod audit;
+pub use audit::{AuditEntry, AuditLogger};
+
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Stdin};
 use std::path::Path;

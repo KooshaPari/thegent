@@ -18,7 +18,7 @@ class SearXNGConfig:
     server_url: str = "http://localhost:8888"
 
 class SearXNGSearch:
-    def __init__(self, config: SearXNGConfig = None):
+    def __init__(self, config: SearXNGConfig | None = None):
         self._config = config or self._load_config()
         self._status = SearXNGStatus.DISABLED
         if self._config.enabled:

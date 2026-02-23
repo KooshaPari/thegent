@@ -2,9 +2,11 @@
 
 import json
 import os
-import pytest
 import sys
+from pathlib import Path
 from unittest.mock import patch, MagicMock
+
+import pytest
 
 
 # Add scripts directory to path for imports
