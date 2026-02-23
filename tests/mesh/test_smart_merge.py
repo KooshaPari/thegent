@@ -836,19 +836,19 @@ class TestMeshInitExports:
 
     def test_smart_merger_exported(self):
         """SmartMerger is accessible from thegent.mesh. @trace FR-MESH-007"""
-        from thegent.mesh import SmartMerger as _SM
+        from thegent.mesh import SmartMerger as _SM  # noqa: N814
 
         assert _SM is SmartMerger
 
     def test_smart_merge_config_exported(self):
         """SmartMergeConfig is accessible from thegent.mesh. @trace FR-MESH-007"""
-        from thegent.mesh import SmartMergeConfig as _SMC
+        from thegent.mesh import SmartMergeConfig as _SMC  # noqa: N814
 
         assert _SMC is SmartMergeConfig
 
     def test_merge_result_exported(self):
         """MergeResult is accessible from thegent.mesh. @trace FR-MESH-007"""
-        from thegent.mesh import MergeResult as _MR
+        from thegent.mesh import MergeResult as _MR  # noqa: N814
 
         assert _MR is MergeResult
 

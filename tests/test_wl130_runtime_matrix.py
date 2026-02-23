@@ -131,3 +131,4 @@ def test_all_workloads_have_non_empty_description(matrix: dict):
 def test_all_workloads_have_non_empty_owner(matrix: dict):
     for w in matrix["workloads"]:
         assert w.get("owner", "").strip(), f"Workload {w['id']!r} has empty owner"
+# noqa: PT018

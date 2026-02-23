@@ -322,7 +322,7 @@ class TestUpdateWorkStream:
         """Raises ValueError for unknown status values."""
         ws = tmp_path / "ws.md"
         ws.write_text("## BACKLOG\n", encoding="utf-8")
-        with pytest.raises(ValueError, match="claimed.*completed"):
+        with pytest.raises(ValueError, match=r"claimed.*completed"):
             update_work_stream("task-x", "pending", work_stream_path=ws)
 
     def test_returns_false_for_missing_file(self, tmp_path: Path) -> None:

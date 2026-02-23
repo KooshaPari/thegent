@@ -150,3 +150,4 @@ def test_activate_skill_strips_whitespace_before_backend_call() -> None:
     data = result.structured_content
     assert backend.activate_calls == ["alpha"]
     assert data["skill"]["name"] == "alpha"
+# noqa: PT018

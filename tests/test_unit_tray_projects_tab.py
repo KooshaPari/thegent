@@ -2,13 +2,14 @@
 
 import ast
 import os
+from pathlib import Path
 
 import pytest
 
 
 def get_module_ast(file_path: str) -> ast.Module:
     """Parse a Python file and return its AST."""
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         source = f.read()
     return ast.parse(source, filename=file_path)
 
@@ -29,8 +30,8 @@ class TestProjectEditDialog:
 
     def test_class_exists_in_source(self):
         """ProjectEditDialog class exists in projects.py."""
-        file_path = os.path.join(
-            os.path.dirname(__file__),
+        file_path = Path(
+            Path(__file__).parent,
             "..",
             "src",
             "thegent",
@@ -46,8 +47,8 @@ class TestProjectEditDialog:
 
     def test_get_data_method_in_source(self):
         """get_data method exists in ProjectEditDialog source."""
-        file_path = os.path.join(
-            os.path.dirname(__file__),
+        file_path = Path(
+            Path(__file__).parent,
             "..",
             "src",
             "thegent",
@@ -75,8 +76,8 @@ class TestProjectsTab:
 
     def test_class_exists_in_source(self):
         """ProjectsTab class exists in projects.py."""
-        file_path = os.path.join(
-            os.path.dirname(__file__),
+        file_path = Path(
+            Path(__file__).parent,
             "..",
             "src",
             "thegent",
@@ -92,8 +93,8 @@ class TestProjectsTab:
 
     def test_tab_id_constant_exists(self):
         """ProjectsTab has TAB_ID constant."""
-        file_path = os.path.join(
-            os.path.dirname(__file__),
+        file_path = Path(
+            Path(__file__).parent,
             "..",
             "src",
             "thegent",
@@ -118,8 +119,8 @@ class TestProjectsTab:
 
     def test_has_required_methods(self):
         """ProjectsTab has required methods."""
-        file_path = os.path.join(
-            os.path.dirname(__file__),
+        file_path = Path(
+            Path(__file__).parent,
             "..",
             "src",
             "thegent",
@@ -144,8 +145,8 @@ class TestProjectsTab:
 
     def test_accepts_api_client_parameter(self):
         """ProjectsTab.__init__ accepts api_client parameter."""
-        file_path = os.path.join(
-            os.path.dirname(__file__),
+        file_path = Path(
+            Path(__file__).parent,
             "..",
             "src",
             "thegent",
@@ -176,8 +177,8 @@ class TestGetTabFunction:
 
     def test_get_tab_function_exists(self):
         """get_tab function exists in projects.py."""
-        file_path = os.path.join(
-            os.path.dirname(__file__),
+        file_path = Path(
+            Path(__file__).parent,
             "..",
             "src",
             "thegent",
@@ -199,10 +200,11 @@ class TestTabsPackage:
     def test_tabs_package_exports(self):
         """tabs package exports required items."""
         import os
+from pathlib import Path
         import sys
 
         # Add src to path
-        src_path = os.path.join(os.path.dirname(__file__), "..", "src")
+        src_path = Path(__file__).parent.parent.parent / "src")
         if src_path not in sys.path:
             sys.path.insert(0, src_path)
 

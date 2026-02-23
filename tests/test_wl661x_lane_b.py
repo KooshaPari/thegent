@@ -331,3 +331,4 @@ class TestWL6618BottleneckStatusPayload:
         assert set(payload.keys()) == {"slow_points", "resource_contention"}
         assert payload["slow_points"] == [{"component": "cpu"}]
         assert payload["resource_contention"] == [{"resource": "memory"}]
+# noqa: PT018

@@ -1,6 +1,5 @@
 """Contract tests for thegent-mcp package."""
 
-import pytest
 
 
 class TestMcpContract:

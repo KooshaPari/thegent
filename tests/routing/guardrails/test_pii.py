@@ -117,6 +117,6 @@ def test_mask_pii_result_token_map():
     text = "Reach me at dev@example.net"
     result = mask_pii(text)
     assert len(result.token_map) == 1
-    token = list(result.token_map.keys())[0]
+    token = next(iter(result.token_map.keys()))
     assert token == "[EMAIL_1]"
     assert result.token_map[token] == "dev@example.net"

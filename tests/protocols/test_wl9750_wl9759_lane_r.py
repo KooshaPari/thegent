@@ -82,22 +82,14 @@ def test_wl9754_recovery_dispatch_suppresses_terminal_notification_errors() -> N
 
 def test_wl9755_discovery_rejects_unsupported_method() -> None:
     # @trace WL-9755
-    try:
+    with pytest.raises(ValueError, match="Unsupported turn cancel method"):
         server._discover_turn_cancel_route("turn/submit")
-    except ValueError as exc:
-        assert "Unsupported turn cancel method" in str(exc)
-    else:
-        raise AssertionError("expected ValueError for unsupported method")
 
 
 def test_wl9756_binding_rejects_unsupported_route() -> None:
     # @trace WL-9756
-    try:
+    with pytest.raises(ValueError, match="Unsupported turn cancel route"):
         server._bind_turn_cancel_phases("pause")
-    except ValueError as exc:
-        assert "Unsupported turn cancel route" in str(exc)
-    else:
-        raise AssertionError("expected ValueError for unsupported route")
 
 
 def test_wl9757_parse_phase_preserves_not_found_boundary() -> None:
