@@ -1438,7 +1438,8 @@ tasks:
   quality:rust:links-conflicts:
     desc: "Fail if Rust workspace resolves multiple packages for the same native links value."
     cmds:
-      - uv run python scripts/check_rust_links_conflicts.py
+      - mkdir -p .cache/uv
+      - UV_CACHE_DIR=.cache/uv uv run python scripts/check_rust_links_conflicts.py
 
   quality:core-boundary:
     desc: "Advisory check for thegent-core import boundary (WL-121)."
