@@ -176,7 +176,7 @@ class TestRouteRegistration:
         """Isolated Starlette app with wired routes must accept POST /v1/responses."""
         mock_router = _make_mock_router()
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -200,7 +200,7 @@ class TestNonStreamingResponseFormat:
         """POST /v1/responses returns 200 with a mocked router."""
         mock_router = _make_mock_router("Hello clode")
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -213,7 +213,7 @@ class TestNonStreamingResponseFormat:
         """Non-streaming response has 'output' array."""
         mock_router = _make_mock_router("Hi there")
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -229,7 +229,7 @@ class TestNonStreamingResponseFormat:
         """Response output item has type='message'."""
         mock_router = _make_mock_router("Answer")
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -243,7 +243,7 @@ class TestNonStreamingResponseFormat:
         """Response output item has role='assistant'."""
         mock_router = _make_mock_router("Reply")
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -258,7 +258,7 @@ class TestNonStreamingResponseFormat:
         expected = "This is the LiteLLM response"
         mock_router = _make_mock_router(expected)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -272,7 +272,7 @@ class TestNonStreamingResponseFormat:
         """Non-streaming POST /v1/responses returns Content-Type: application/json."""
         mock_router = _make_mock_router("ok")
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -285,7 +285,7 @@ class TestNonStreamingResponseFormat:
         """Router.acompletion is called with the model from the request body."""
         mock_router = _make_mock_router()
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -299,7 +299,7 @@ class TestNonStreamingResponseFormat:
         """Router.acompletion is called with messages converted from input."""
         mock_router = _make_mock_router()
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -324,7 +324,7 @@ class TestStreamingSSEResponseFormat:
         chunks = [_make_chunk("Hello"), _make_chunk(None, "stop")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -338,7 +338,7 @@ class TestStreamingSSEResponseFormat:
         chunks = [_make_chunk("Hi")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -351,7 +351,7 @@ class TestStreamingSSEResponseFormat:
         """Streaming response has Cache-Control: no-cache."""
         mock_router = _make_streaming_mock_router([])
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -365,7 +365,7 @@ class TestStreamingSSEResponseFormat:
         chunks = [_make_chunk("A"), _make_chunk("B")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -381,7 +381,7 @@ class TestStreamingSSEResponseFormat:
         chunks = [_make_chunk("Hello")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -402,7 +402,7 @@ class TestStreamingSSEResponseFormat:
         chunks = [_make_chunk("Hi")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -418,7 +418,7 @@ class TestStreamingSSEResponseFormat:
         chunks = [_make_chunk("Part1"), _make_chunk("Part2"), _make_chunk("Part3")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -443,7 +443,7 @@ class TestErrorHandling:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(side_effect=Exception("rate limit exceeded"))
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -457,7 +457,7 @@ class TestErrorHandling:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(side_effect=RuntimeError("internal boom"))
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -471,7 +471,7 @@ class TestErrorHandling:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(side_effect=ValueError("bad request params"))
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -487,7 +487,7 @@ class TestErrorHandling:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenRaise(RuntimeError("upstream down"))
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -504,7 +504,7 @@ class TestErrorHandling:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(side_effect=Exception("authentication failed"))
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             app, _ = _build_isolated_app()
@@ -527,7 +527,7 @@ class TestWebSocketResponsesRoute:
         chunks = [_make_chunk("Hello"), _make_chunk(" world")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_websocket
@@ -553,7 +553,7 @@ class TestWebSocketResponsesRoute:
         chunks = [_make_chunk("First chunk")]
         mock_router = _make_streaming_mock_router(chunks)
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_websocket
@@ -577,7 +577,7 @@ class TestWebSocketResponsesRoute:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenRaise(ValueError("bad model"))
         with patch(
-            "thegent.routing.litellm_responses_handler.get_litellm_router",
+            "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
             return_value=mock_router,
         ):
             from thegent.utils.routing_impl.litellm_responses_handler import handle_responses_websocket

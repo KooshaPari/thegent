@@ -31,6 +31,7 @@ class DriftDetector:
             "expired_overrides": [],
             "policy_mismatches": [],
             "drift_detected": False,
+            "baseline_established": False,
         }
 
         # 1. Check for expired overrides that haven't been cleaned up
@@ -39,8 +40,51 @@ class DriftDetector:
             for f in overrides_dir.glob("*.json"):
                 self._check_override_file(f, report)
 
-        # 2. Check for policy configuration drift (placeholder for future hash-based check)
-        # In a real system, we'd compare contracts/ against a signed baseline
+        # 2. Check policy contract drift against persisted baseline
+        baseline_path = self.settings.session_dir / "policy_contracts_baseline.json"
+        current_contracts_dir = self.settings.session_dir / "contracts"
+        current_contracts: dict[str, str] = {}
+        if current_contracts_dir.exists():
+            for p in sorted(current_contracts_dir.glob("*.json")):
+                current_contracts[p.name] = p.read_text(encoding="utf-8")
+
+        if not baseline_path.exists():
+            baseline_path.write_text(
+                json.dumps(
+                    {
+                        "generated_at_utc": datetime.now(UTC).isoformat(),
+                        "contracts": current_contracts,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            report["baseline_established"] = True
+        else:
+            baseline_doc = json.loads(baseline_path.read_text(encoding="utf-8"))
+            contracts_obj = baseline_doc.get("contracts")
+            if not isinstance(contracts_obj, dict):
+                raise ValueError("Invalid policy baseline format")
+            baseline_contracts: dict[str, str] = {
+                str(k): str(v) for k, v in contracts_obj.items() if isinstance(k, str) and isinstance(v, str)
+            }
+            for name, base_content in baseline_contracts.items():
+                if name not in current_contracts:
+                    report["policy_mismatches"].append({"contract": name, "type": "removed", "diff": f"baseline/{name}"})
+                    report["drift_detected"] = True
+                    continue
+                cur_content = current_contracts[name]
+                if cur_content != base_content:
+                    report["policy_mismatches"].append(
+                        {"contract": name, "type": "changed", "diff": f"baseline/{name} -> current/{name}"}
+                    )
+                    report["drift_detected"] = True
+            for name in current_contracts:
+                if name not in baseline_contracts:
+                    report["policy_mismatches"].append({"contract": name, "type": "added", "diff": f"current/{name}"})
+                    report["drift_detected"] = True
 
         if report["drift_detected"]:
             self._log_drift(report)

@@ -41,7 +41,57 @@ class ComplianceReporter:
             return self._generate_markdown(report)
         if format == "html":
             return self._generate_html(report)
-        return json.dumps(report, indent=2)
+        raise ValueError("Unsupported compliance report format")
+
+    def generate_governance_rollup(self, evidence: list[dict[str, Any]]) -> dict[str, Any]:
+        """Build deterministic governance rollup aggregates."""
+        by_kind: dict[str, int] = {}
+        by_actor: dict[str, int] = {}
+        action_required = 0
+        for item in evidence:
+            kind = str(item.get("kind", "unknown"))
+            actor = str(item.get("actor", "unknown"))
+            by_kind[kind] = by_kind.get(kind, 0) + 1
+            by_actor[actor] = by_actor.get(actor, 0) + 1
+            payload = item.get("payload")
+            if isinstance(payload, dict) and bool(payload.get("requires_action")):
+                action_required += 1
+        return {
+            "total_records": len(evidence),
+            "action_required_records": action_required,
+            "by_kind": dict(sorted(by_kind.items())),
+            "by_actor": dict(sorted(by_actor.items())),
+        }
+
+    def build_governance_queue(self, evidence: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Create action queue ordered by severity then time."""
+        severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        queue: list[dict[str, Any]] = []
+        for item in evidence:
+            payload = item.get("payload")
+            if not isinstance(payload, dict) or not bool(payload.get("requires_action")):
+                continue
+            severity = str(payload.get("severity", "low")).lower()
+            queue.append(
+                {
+                    "evidence_id": item.get("evidence_id"),
+                    "timestamp_utc": item.get("timestamp_utc"),
+                    "severity": severity,
+                    "reason": payload.get("reason", ""),
+                }
+            )
+        queue.sort(key=lambda x: (severity_rank.get(str(x["severity"]), 99), str(x["timestamp_utc"])))
+        return queue
+
+    def generate_governance_telemetry(self, *, rollup: dict[str, Any], queue: list[dict[str, Any]]) -> dict[str, Any]:
+        """Project key telemetry counters from rollup and queue."""
+        return {
+            "total_records": int(rollup.get("total_records", 0)),
+            "unique_kinds": len(dict(rollup.get("by_kind", {}))),
+            "unique_actors": len(dict(rollup.get("by_actor", {}))),
+            "queue_depth": len(queue),
+            "action_required_records": int(rollup.get("action_required_records", 0)),
+        }
 
     def _generate_markdown(self, report: dict[str, Any]) -> str:
         """Generate markdown report.

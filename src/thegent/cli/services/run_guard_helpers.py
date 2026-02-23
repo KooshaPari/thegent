@@ -22,7 +22,7 @@ def suggest_terminal_reuse(*, settings: ThegentSettings, cwd: Path, console: Con
     try:
         import importlib
 
-        routing_mod = importlib.import_module("thegent.routing")
+        routing_mod = importlib.import_module("thegent.utils.routing_impl")
         task_router = getattr(routing_mod, "TaskRouter", None)
         if task_router:
             router = task_router(settings)

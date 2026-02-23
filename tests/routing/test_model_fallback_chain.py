@@ -177,7 +177,7 @@ class TestBuildDynamicFallbackRouter:
             },
         ]
         with patch(
-            "thegent.routing.litellm_router.build_litellm_model_list",
+            "thegent.utils.routing_impl.litellm_router.build_litellm_model_list",
             return_value=minimal_model_list,
         ):
             router = build_dynamic_fallback_router(["gpt-4o", "claude-sonnet-4.6"])
@@ -206,7 +206,7 @@ class TestBuildDynamicFallbackRouter:
             },
         ]
         with patch(
-            "thegent.routing.litellm_router.build_litellm_model_list",
+            "thegent.utils.routing_impl.litellm_router.build_litellm_model_list",
             return_value=minimal_model_list,
         ):
             router = build_dynamic_fallback_router(["gpt-4o", "claude-sonnet-4.6", "deepseek-v3.2"])
@@ -235,7 +235,7 @@ class TestBuildDynamicFallbackRouter:
 
         # Empty catalog — all models unknown
         with patch(
-            "thegent.routing.litellm_router.build_litellm_model_list",
+            "thegent.utils.routing_impl.litellm_router.build_litellm_model_list",
             return_value=[],
         ):
             router = build_dynamic_fallback_router(["unknown-model-x", "unknown-model-y"])
@@ -288,11 +288,11 @@ class TestSingleModelUsesDefaultRouter:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch(
-                "thegent.routing.litellm_responses_handler.build_dynamic_fallback_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.build_dynamic_fallback_router",
                 side_effect=_track_dynamic,
             ),
         ):
@@ -337,11 +337,11 @@ class TestSingleModelUsesDefaultRouter:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch(
-                "thegent.routing.litellm_responses_handler.build_dynamic_fallback_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.build_dynamic_fallback_router",
                 side_effect=_track_dynamic,
             ),
         ):
@@ -401,11 +401,11 @@ class TestMultiModelUsesDynamicRouter:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch(
-                "thegent.routing.litellm_responses_handler.build_dynamic_fallback_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.build_dynamic_fallback_router",
                 side_effect=_capture_dynamic,
             ),
         ):
@@ -448,11 +448,11 @@ class TestMultiModelUsesDynamicRouter:
 
         with (
             patch(
-                "thegent.routing.litellm_responses_handler.get_litellm_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
                 return_value=mock_router,
             ),
             patch(
-                "thegent.routing.litellm_responses_handler.build_dynamic_fallback_router",
+                "thegent.utils.routing_impl.litellm_responses_handler.build_dynamic_fallback_router",
                 return_value=mock_router,
             ),
         ):

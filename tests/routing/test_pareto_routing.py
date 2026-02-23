@@ -67,7 +67,7 @@ class TestApplyParetoRouting:
         """When routing="pareto" and no agent/model set, ParetoRouter.select() must be called."""
         # @trace FR-ROU-001
         with patch(
-            "thegent.routing.pareto_router.ParetoRouter.select",
+            "thegent.utils.routing_impl.pareto_router.ParetoRouter.select",
             return_value=_FAKE_CANDIDATE,
         ) as mock_select:
             self._call()
@@ -97,7 +97,7 @@ class TestApplyParetoRouting:
         """When ParetoRouter.select() raises, falls back gracefully."""
         # @trace FR-ROU-001
         with patch(
-            "thegent.routing.pareto_router.ParetoRouter.select",
+            "thegent.utils.routing_impl.pareto_router.ParetoRouter.select",
             side_effect=RuntimeError("simulated pareto failure"),
         ):
             agent, model, _, _ = self._call()

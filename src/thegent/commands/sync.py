@@ -679,6 +679,15 @@ class SyncCommand:
         relative_files = [Path("agents") / f"{a}.md" for a in local_agents] + [
             Path("hooks") / f"{h}.sh" for h in hook_scripts
         ]
+        if not relative_files:
+            return OperationResult(
+                operation=op,
+                status=SyncOperationStatus.FAILED,
+                message="Push failed: no local agent or hook artifacts found.",
+                duration=time.monotonic() - t0,
+                details={"target": effective_target, "transfers": []},
+                errors=["No local artifacts found to push."],
+            )
 
         target_dir = self._resolve_sync_target(effective_target)
         if target_dir is None:

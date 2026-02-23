@@ -61,7 +61,7 @@ class TestIsOllamaAvailable:
         from thegent.utils.routing_impl.ollama_provider import is_ollama_available
 
         with patch(
-            "thegent.routing.ollama_provider.httpx.get",
+            "thegent.utils.routing_impl.ollama_provider.httpx.get",
             side_effect=httpx.TimeoutException("timed out"),
         ):
             assert is_ollama_available() is False
@@ -126,7 +126,7 @@ class TestGetAvailableModels:
         from thegent.utils.routing_impl.ollama_provider import OllamaUnavailableError, get_available_models
 
         with patch(
-            "thegent.routing.ollama_provider.httpx.get",
+            "thegent.utils.routing_impl.ollama_provider.httpx.get",
             side_effect=httpx.ConnectError("refused"),
         ):
             with pytest.raises(OllamaUnavailableError):
