@@ -10,11 +10,11 @@ export const sidebar = {
           "items": [
             {
               "text": "Module Dependencies",
-              "link": "/diagrams/module-dependencies.md"
+              "link": "/architecture/diagrams/module-dependencies.md"
             },
             {
               "text": "Package Structure",
-              "link": "/diagrams/package-structure.md"
+              "link": "/architecture/diagrams/package-structure.md"
             }
           ]
         },
@@ -4952,11 +4952,11 @@ export const sidebar = {
       "items": [
         {
           "text": "Module Dependencies",
-          "link": "/diagrams/module-dependencies.md"
+          "link": "/architecture/diagrams/module-dependencies.md"
         },
         {
           "text": "Package Structure",
-          "link": "/diagrams/package-structure.md"
+          "link": "/architecture/diagrams/package-structure.md"
         }
       ]
     },
