@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QFrame,
     QHBoxLayout,
-    QHeaderView,
     QLabel,
     QProgressBar,
     QPushButton,
@@ -497,7 +496,7 @@ class CostsTab(QWidget):
             self._monthly_cost = {
                 "spend": monthly.monthly_spend,
                 "budget": monthly.monthly_budget,
-                "percent": monthly.monthly_percent,
+                "percent": monthly.monthly_percent,  # type: ignore[reportAttributeAccessIssue]
             }
 
             # Load alerts

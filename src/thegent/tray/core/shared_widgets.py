@@ -2,7 +2,7 @@
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QGridLayout, QGroupBox, QLabel, QWidget
+from PySide6.QtWidgets import QGridLayout, QGroupBox, QLabel
 
 # CSS string for metric cards
 CARD_STYLE = """
@@ -63,7 +63,7 @@ def create_status_badge(status: str) -> QLabel:
         A QLabel with appropriate styling
     """
     badge = QLabel(status.capitalize())
-    badge.setAlignment(Qt.AlignCenter)
+    badge.setAlignment(Qt.AlignmentFlag.AlignCenter)  # type: ignore[reportAttributeAccessIssue]
 
     # Define colors for each status
     colors = {
