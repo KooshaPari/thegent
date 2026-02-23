@@ -16,15 +16,8 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
-from thegent.integrations.auth_expiry import AuthExpiryDetector, ExpiryStatus
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 # ========================================================================
@@ -478,17 +471,19 @@ class TestOAuthTokenParity:
 
     def test_parity_with_actual_cliproxy(self) -> None:
         """Integration test against actual CLIProxy server if available."""
-        if not _is_cliproxy_running():
+        if not self._is_cliproxy_running():
             pytest.skip("CLIProxy server not running")
         pytest.skip("CLIProxy integration test not yet implemented")
 
+    @staticmethod
+    def _is_cliproxy_running() -> bool:
+        """Check if CLIProxy server is running on expected port."""
+        try:
+            import httpx
 
-def _is_cliproxy_running() -> bool:
-    """Check if CLIProxy server is running on expected port."""
-    try:
-        import requests
-
-        response = requests.get("http://localhost:8080/health", timeout=1)
-        return response.status_code == 200
-    except Exception:
-        return False
+            client = httpx.Client(timeout=1.0)
+            response = client.get("http://localhost:8080/health")
+            client.close()
+            return response.status_code == 200
+        except Exception:
+            return False

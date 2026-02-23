@@ -17,12 +17,6 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING
-
-import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 # ========================================================================
@@ -303,7 +297,7 @@ class TestQuotaEnforcerThreadSafety:
 
         def record_usage_repeatedly() -> None:
             try:
-                for i in range(100):
+                for _ in range(100):
                     enforcer.record_usage(
                         UsageRecord(tokens_used=10.0, cost_used=1.0)
                     )
@@ -313,7 +307,7 @@ class TestQuotaEnforcerThreadSafety:
 
         def check_repeatedly() -> None:
             try:
-                for i in range(100):
+                for _ in range(100):
                     result = enforcer.check_quota(10.0, 1.0)
                     check_results.append(result)
                     time.sleep(0.0001)
@@ -494,11 +488,9 @@ class TestQuotaEnforcerParity:
 
         # First check (triggers reset)
         enforcer.check_quota(10.0, 0.0)
-        first_reset_at = enforcer.reset_at
 
         # Second check (should trigger reset again, but reset_at should be updated)
         enforcer.check_quota(10.0, 0.0)
-        second_reset_at = enforcer.reset_at
 
         # Both resets should have cleared usage
         assert enforcer.get_usage().tokens_used == 0.0

@@ -1,7 +1,52 @@
 """Thegent CLI package."""
 
-# Expose command functions for backward compatibility
+import inspect
+import os
+import subprocess
+import time
+import functools
+from rich.columns import Columns
+import typer
+
+from thegent.agents.registry import AGENT_LABELS
+
 from .commands._cli_shared import (
+    _atomic_write,
+    _check_dag_cycles,
+    _dag_path,
+    _dag_update_task,
+    _default_owner_tag,
+    _ensure_dag_file,
+    _find_session_meta,
+    _get_ready_task_ids,
+    _infer_export_format,
+    _export_format_from_suffix,
+    _is_pid_running,
+    _scope_key,
+    _compose_owner_tag,
+    _normalize_output_format,
+    _parse_dag_full,
+    _parse_dag_session,
+    _read_session_meta,
+    _resolve_cwd,
+    _resolve_droids_dir,
+    _resolve_prompt,
+    _resolve_session_status,
+    _serialize_dag,
+    _session_paths,
+    _session_status_for,
+    _validate_agent,
+    _validate_dag,
+    _validate_task_id,
+    RunRegistry,
+    ThegentSettings,
+    _write_report_export,
+    console,
+    get_exit_message,
+    list_agent_names,
+    list_droid_names,
+    resolve_agent,
+    run_login,
     _serialize_health_report_csv,
     _serialize_health_report_jsonl,
     _serialize_health_report_md,
@@ -10,8 +55,8 @@ from .commands._cli_shared import (
     _serialize_health_trend_md,
     _write_health_gate_export,
     _write_health_trend_export,
-    _write_report_export,
 )
+# Expose command functions for backward compatibility
 from .commands.cli import (
     archive_cmd,
     audit_verify_cmd,
@@ -58,6 +103,7 @@ from .commands.cli import (
     escalate_resolve_cmd,
     explorer_cmd,
     feedback_cmd,
+    events_cmd,
     forensics_snapshot_cmd,
     govern_configure_cmd,
     govern_go_cycle_cmd,
@@ -73,6 +119,14 @@ from .commands.cli import (
     list_agents_cmd,
     list_droids_cmd,
     list_models_cmd,
+    _list_antigravity_models,
+    _list_claude_models,
+    _list_codex_models_fallback,
+    _list_copilot_models_fallback,
+    _list_cursor_models,
+    _list_gemini_models,
+    _list_glm_models,
+    _list_minimax_models,
     load_status_cmd,
     logs_cmd,
     loop_cmd,
@@ -101,7 +155,7 @@ from .commands.cli import (
     session_fork_cmd,
     retry_cmd,
     rules_sync_cmd,
-    run_cmd,
+    run_cmd as _run_cmd_impl,
     session_contract_health_gate_cmd,
     session_contract_health_report_cmd,
     session_contract_health_trend_cmd,
@@ -131,17 +185,58 @@ from .commands.cli import (
     workstream_dashboard_cmd,
     workstream_query_cmd,
     workstream_stats_cmd,
+    observe_summary_cmd,
 )
 
 __all__ = [
+    "AGENT_LABELS",
+    "Columns",
+    "RunRegistry",
+    "ThegentSettings",
+    "_atomic_write",
+    "_check_dag_cycles",
+    "_compose_owner_tag",
+    "_dag_path",
+    "_dag_update_task",
+    "_default_owner_tag",
+    "_ensure_dag_file",
+    "_export_format_from_suffix",
+    "_find_session_meta",
+    "_get_ready_task_ids",
+    "_infer_export_format",
+    "_is_pid_running",
+    "_list_antigravity_models",
+    "_list_claude_models",
+    "_list_codex_models_fallback",
+    "_list_copilot_models_fallback",
+    "_list_cursor_models",
+    "_list_gemini_models",
+    "_list_glm_models",
+    "_list_minimax_models",
+    "_normalize_output_format",
+    "_parse_dag_full",
+    "_parse_dag_session",
+    "_read_session_meta",
+    "_resolve_cwd",
+    "_resolve_droids_dir",
+    "_resolve_prompt",
+    "_resolve_session_status",
+    "_scope_key",
+    "_serialize_dag",
     "_serialize_health_report_csv",
     "_serialize_health_report_jsonl",
     "_serialize_health_report_md",
     "_serialize_health_trend_csv",
     "_serialize_health_trend_jsonl",
     "_serialize_health_trend_md",
+    "_session_paths",
+    "_session_status_for",
+    "_validate_agent",
+    "_validate_dag",
+    "_validate_task_id",
     "_write_health_gate_export",
     "_write_health_trend_export",
+    "_write_report_export",
     "_write_report_export",
     "archive_cmd",
     "audit_verify_cmd",
@@ -154,6 +249,7 @@ __all__ = [
     "concurrency_set_cmd",
     "concurrency_show_cmd",
     "config_check_cmd",
+    "console",
     "contracts_conformance_cmd",
     "contracts_registry_cmd",
     "cost_status_cmd",
@@ -165,12 +261,14 @@ __all__ = [
     "dag_probe_cmd",
     "dag_ready_cmd",
     "dag_reconcile_cmd",
+    "dag_reconcile_cmd",
     "dag_recover_cmd",
     "dag_remove_cmd",
     "dag_rollback_cmd",
     "dag_run_cmd",
     "dag_status_cmd",
     "dag_sync_cmd",
+    "dag_update_cmd",
     "dag_update_cmd",
     "dag_validate_cmd",
     "data_protection_cmd",
@@ -186,9 +284,11 @@ __all__ = [
     "escalate_approve_cmd",
     "escalate_list_cmd",
     "escalate_resolve_cmd",
+    "events_cmd",
     "explorer_cmd",
     "feedback_cmd",
     "forensics_snapshot_cmd",
+    "get_exit_message",
     "govern_configure_cmd",
     "govern_go_cycle_cmd",
     "govern_go_health_cmd",
@@ -200,7 +300,9 @@ __all__ = [
     "inspect_cmd",
     "interruption_list_cmd",
     "interruption_snooze_cmd",
+    "list_agent_names",
     "list_agents_cmd",
+    "list_droid_names",
     "list_droids_cmd",
     "list_models_cmd",
     "load_status_cmd",
@@ -210,7 +312,9 @@ __all__ = [
     "loop_stop_cmd",
     "migration_cmd",
     "modes_cmd",
+    "observe_summary_cmd",
     "operations_cmd",
+    "os",
     "pause_cmd",
     "plan_analyze_cmd",
     "plan_claim_cmd",
@@ -226,11 +330,13 @@ __all__ = [
     "project_register_cmd",
     "ps_cmd",
     "purge_cmd",
+    "resolve_agent",
     "resolve_model_route_cmd",
     "resume_cmd",
     "retry_cmd",
     "rules_sync_cmd",
     "run_cmd",
+    "run_login",
     "session_contract_health_gate_cmd",
     "session_contract_health_report_cmd",
     "session_contract_health_trend_cmd",
@@ -249,6 +355,7 @@ __all__ = [
     "snapshot_prune_cmd",
     "status_cmd",
     "stop_cmd",
+    "subprocess",
     "summary_cmd",
     "sweep_cmd",
     "takeover_cmd",
@@ -256,9 +363,62 @@ __all__ = [
     "team_task_add_cmd",
     "team_task_list_cmd",
     "terminal_route_cmd",
+    "time",
     "usage_cmd",
     "wait_cmd",
     "workstream_dashboard_cmd",
     "workstream_query_cmd",
     "workstream_stats_cmd",
 ]
+
+
+def _normalize_typer_defaults(fn):
+    signature = inspect.signature(fn)
+    default_values = {
+        name: param.default.default if isinstance(param.default, typer.models.OptionInfo) else param.default
+        for name, param in signature.parameters.items()
+        if param.default is not inspect._empty
+    }
+
+    def wrapped(*args, **kwargs):
+        bound = signature.bind_partial(*args, **kwargs)
+        for key, value in default_values.items():
+            if key not in bound.arguments:
+                bound.arguments[key] = value
+        module_globals = fn.__globals__
+        previous_console = module_globals.get("console", None)
+        module_globals["console"] = globals().get("console", None)
+        try:
+            return fn(*bound.args, **bound.kwargs)
+        finally:
+            module_globals["console"] = previous_console
+
+    return wrapped
+
+
+run_cmd = _normalize_typer_defaults(_run_cmd_impl)
+
+
+def _bind_console_dynamically(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        module_globals = fn.__globals__
+        global_console = globals().get("console", None)
+        previous_console = module_globals.get("console", None)
+        module_globals["console"] = global_console
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            module_globals["console"] = previous_console
+
+    return wrapper
+
+
+def _patch_command_console_bindings() -> None:
+    for name in __all__:
+        obj = globals().get(name)
+        if inspect.isfunction(obj):
+            globals()[name] = _bind_console_dynamically(obj)
+
+
+_patch_command_console_bindings()
