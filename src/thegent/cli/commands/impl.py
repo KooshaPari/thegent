@@ -162,6 +162,7 @@ __all__ = [
     "isolation_check_impl",
     "list_agent_names",
     "list_agents_impl",
+    "list_droid_names",
     "list_droids_impl",
     "list_models_impl",
     "list_session_contracts_impl",
@@ -240,7 +241,12 @@ console = Console()
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
-from thegent.agents import get_fallback_agents, list_agent_names as base_list_agent_names, resolve_agent as base_resolve_agent
+from thegent.agents import (
+    get_fallback_agents,
+    list_agent_names as base_list_agent_names,
+    list_droid_names,
+    resolve_agent as base_resolve_agent,
+)
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.resilience import is_usage_limit
 from thegent.config import ThegentSettings
@@ -460,7 +466,10 @@ _default_owner_tag = run_session_helpers.default_owner_tag
 _compose_owner_tag = run_session_helpers.compose_owner_tag
 _session_dir = run_session_helpers.session_dir
 _session_scope_dirs = run_session_helpers.session_scope_dirs
-_session_paths = run_session_helpers.session_paths
+
+
+def _session_paths(base: Path, session_id: str) -> dict[str, Path]:
+    return run_session_helpers.session_paths(base=base, session_id=session_id)
 
 
 def _make_load_classifier(settings: "ThegentSettings") -> Any:
@@ -473,7 +482,8 @@ def _make_load_classifier(settings: "ThegentSettings") -> Any:
     )
 
 
-_new_session_id = run_session_helpers.new_session_id
+def _new_session_id(agent: str, owner: str | None = None) -> str:
+    return run_session_helpers.new_session_id(agent=agent, owner=owner)
 _is_pid_running = process_helpers.is_pid_running
 _parse_dag_full = run_dag_helpers.parse_dag_full
 _serialize_dag = run_dag_helpers.serialize_dag
@@ -909,7 +919,11 @@ list_agents_impl = run_post_surface_helpers.list_agents_impl
 
 def list_droids_impl(cd: Any = None) -> list[str]:
     return run_post_surface_helpers.list_droids_impl(
-        cd=cd, resolve_cwd=_resolve_cwd, resolve_droids_dir=_resolve_droids_dir, settings_factory=ThegentSettings
+        cd=cd,
+        resolve_cwd=_resolve_cwd,
+        resolve_droids_dir=_resolve_droids_dir,
+        list_droid_names_fn=list_droid_names,
+        settings_factory=ThegentSettings,
     )
 
 
