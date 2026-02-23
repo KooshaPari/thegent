@@ -54,7 +54,7 @@ irm https://raw.githubusercontent.com/kooshapari/thegent/main/scripts/install.ps
 
 ### 2. 配置与验证
 ```bash
-thegent setup    # 按照向导登录 AI 提供商
+thegent install -t all --scope both --full    # 以安装向导完成全部初始化（含用户/系统安装）
 thegent doctor   # 验证环境健康状态
 ```
 
@@ -77,7 +77,7 @@ thegent run "分析当前目录结构" free
 git clone https://github.com/kooshapari/thegent
 cd thegent
 pip install -e .
-thegent install -t all
+thegent install -t all --scope both --setup
 thegent install-shims
 thegent setup --hooks
 ```

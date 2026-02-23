@@ -49,9 +49,9 @@ Report orchestration performance metrics (WP-6001).
 
 ---
 
-## `thegent bg`
+## `thegent run`
 
-<CodePlayground lang='bash' code='thegent bg' />
+<CodePlayground lang='bash' code='thegent run agent "Analyze repository docs" --agent codex --bg' />
 
 ---
 
@@ -434,12 +434,12 @@ Rollback DAG state to a specific checkpoint.
 
 ## `thegent dag-run`
 
-Spawn thegent bg for each ready task; update status=running and session_id.
+Spawn background `thegent run agent` tasks for each ready task; update status=running and session_id.
 
 <details>
 <summary>Full documentation</summary>
 
-Spawn thegent bg for each ready task; update status=running and session_id.
+Spawn background `thegent run agent` tasks for each ready task; update status=running and session_id.
 
 </details>
 
@@ -1493,7 +1493,7 @@ Show active governance policies and thresholds.
 
 ---
 
-## `thegent project-list`
+## `thegent project list`
 
 List all registered projects (WP-4008).
 
@@ -1504,11 +1504,11 @@ List all registered projects (WP-4008).
 
 </details>
 
-<CodePlayground lang='bash' code='thegent project-list' />
+<CodePlayground lang='bash' code='thegent project list' />
 
 ---
 
-## `thegent project-register`
+## `thegent project init`
 
 Register a new project (WP-4008).
 
@@ -1519,7 +1519,67 @@ Register a new project (WP-4008).
 
 </details>
 
-<CodePlayground lang='bash' code='thegent project-register --path VALUE --name VALUE' />
+<CodePlayground lang='bash' code='thegent project init --path VALUE --name VALUE --tenant VALUE --template VALUE' />
+
+---
+
+## `thegent project greenfield`
+
+Create a new project scaffold via initialize-project presets.
+
+<details>
+<summary>Full documentation</summary>
+
+Greenfield bootstrap variant that uses preset scaffolds and optional runtime install.
+
+</details>
+
+<CodePlayground lang='bash' code='thegent project greenfield DESTINATION --profile service_api --name VALUE --install-runtime' />
+
+---
+
+## `thegent project brownfield`
+
+Migrate or adopt an existing project into Thegent project tenancy.
+
+<details>
+<summary>Full documentation</summary>
+
+Brownfield migration with optional template adoption mode (`auto`, `ag-dd`, `none`).
+
+</details>
+
+<CodePlayground lang='bash' code='thegent project brownfield /path/to/repo --template ag-dd --register --install-runtime' />
+
+---
+
+## `thegent project ag-dd`
+
+Brownfield variant locked to AG-DD template mode.
+
+<details>
+<summary>Full documentation</summary>
+
+Use AG-DD-specific migration mode when adapting existing projects.
+
+</details>
+
+<CodePlayground lang='bash' code='thegent project ag-dd /path/to/repo --install-runtime --dry-run' />
+
+---
+
+## `thegent project none`
+
+Brownfield variant with no template overlay.
+
+<details>
+<summary>Full documentation</summary>
+
+Adopt an existing project without applying a new template overlay.
+
+</details>
+
+<CodePlayground lang='bash' code='thegent project none /path/to/repo --install-runtime --dry-run' />
 
 ---
 
@@ -1716,7 +1776,7 @@ Run an agent or droid with the given prompt. Model-first: agent=None, model set.
 
 </details>
 
-<CodePlayground lang='bash' code='thegent run --agent VALUE --prompt VALUE --cd VALUE ...' />
+<CodePlayground lang='bash' code='thegent run agent "VALUE" --agent VALUE --cd VALUE ...' />
 
 ---
 

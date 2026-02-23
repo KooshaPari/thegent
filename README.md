@@ -55,8 +55,17 @@ irm https://raw.githubusercontent.com/kooshapari/thegent/main/scripts/install.ps
 
 ### 2. Configure & Verify
 ```bash
-thegent setup    # Follow the wizard to log in to providers
+thegent install -t all --scope both --full   # Bootstrap user/system assets + provider setup
 thegent doctor   # Verify environment health
+```
+
+Project onboarding commands:
+
+```bash
+thegent scaffold greenfield ./new-project --profile cli_tool
+thegent scaffold brownfield ./existing-project
+thegent scaffold ag-dd ./existing-project
+thegent scaffold none ./existing-project
 ```
 
 ### 3. Run Your First Agent
@@ -78,7 +87,7 @@ thegent run "Analyze the current directory structure" free
 git clone https://github.com/kooshapari/thegent
 cd thegent
 pip install -e .
-thegent install -t all
+thegent install -t all --scope both --setup
 thegent install-shims
 thegent setup --hooks
 ```
@@ -103,36 +112,21 @@ thg_new_worktree <branch> [start-point] [worktree-path]
 
 This helper refuses to branch from a dirty/non-main primary checkout.
 
-### Automated Tool Management with mise
+### Toolchain Setup
 
-thegent integrates with [mise](https://mise.jdx.dev/) for automated, per-project tool version management. mise replaces manual `nvm`, `pyenv`, and `rbenv` usage with a single, fast tool that activates automatically when you enter a project directory.
+`thegent` uses explicit setup/install surface controls (for runtime assets, shims, hooks, and profiles).  
+`--system-deps`, `--verify-mise`, and `--uninstall-mise-hooks` are legacy references and are not
+part of the current parser surface.
 
-**Install mise and register shell hooks automatically:**
-
-```bash
-thegent install --system-deps
-```
-
-This installs mise via Homebrew (or Nix with `--nix`), then writes the activation hook into your shell config (`~/.zshenv`, `~/.bashrc`, `config.fish`, etc.) so tools activate automatically in every new shell.
-
-**Manual mise setup:**
+For mise/toolchain setup, use one of:
 
 ```bash
-# Via Homebrew
+# Use the project-standard bootstrap/install flow first.
+thegent install -t all --scope both --setup
+
+# Then manage mise with your preferred shell/toolchain installer separately.
 brew install mise
 echo 'eval "$(mise activate zsh)"' >> ~/.zshenv
-
-# Verify setup
-thegent install --verify-mise
-
-# Remove mise shell hooks without uninstalling mise
-thegent install --uninstall-mise-hooks
-```
-
-**Dry-run (no system changes):**
-
-```bash
-thegent install --system-deps --dry-run
 ```
 
 ---

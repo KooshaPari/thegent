@@ -20,19 +20,21 @@ from pathlib import Path
 from typing import Any
 
 import typer
-
-from thegent.cli.commands.session_meta_impl import (
-    _find_session_meta,
-    _normalize_contract_string,
-    _read_session_meta,
-    _resolve_session_status,
-)
-from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 
 _LOG_FOLLOW_POLL_SECONDS = 0.5
+
+
+def _session_meta_impl():
+    from thegent.cli.commands import impl as cli_impl
+
+    return cli_impl
+
+
+def _settings() -> Any:
+    return _session_meta_impl().ThegentSettings()
 
 
 def ps_impl(
@@ -58,7 +60,7 @@ def ps_impl(
     """
     from thegent.cli.commands.impl import _default_owner_tag, _is_pid_running, _session_paths
 
-    settings = ThegentSettings()
+    settings = _settings()
     own = owner or _default_owner_tag()
     registry = RunRegistry(settings.session_dir)
 
@@ -123,21 +125,26 @@ def ps_impl(
             if any(r.get("id") == sid or r.get("run_id") == sid for r in rows):
                 continue
             try:
-                m = _read_session_meta(json_file)
+                m = _session_meta_impl()._read_session_meta(json_file)
+                owner_value = m.get("owner")
+                if not all and owner_value and owner_value != own:
+                    continue
                 sid_value = m.get("session_id") or sid
                 pid = int(m.get("pid", 0) or 0)
                 running = pid > 0 and _is_pid_running(pid)
-                rc_path = _session_paths(base=scope_dir, session_id=sid)["rc"]
+                rc_path = _session_paths(base=scope_dir, session_id=sid_value)["rc"]
                 rc = rc_path.read_text(encoding="utf-8").strip() if rc_path.exists() else ""
                 status_value = "running" if running else ("exited:" + rc if rc else m.get("status", "unknown"))
                 row = {
                     "id": sid_value,
                     "run_id": m.get("run_id") or sid_value,
                     "agent": m.get("agent", "?"),
-                    "owner": m.get("owner", scope_dir.name),
+                    "owner": owner_value or scope_dir.name.replace("_", ":"),
                     "status": status_value,
                     "pid": pid,
-                    "prompt_preview": m.get("prompt", "")[:40],
+                    "prompt_preview": (m.get("prompt", "")[:40] + "...")
+                    if len(m.get("prompt", "")) > 40
+                    else m.get("prompt", "") or "\u2014",
                 }
                 if include_contract:
                     row["route_contract"] = m.get("route_contract")
@@ -167,7 +174,7 @@ def session_list_impl(
 
     from thegent.cli.commands.impl import _default_owner_tag
 
-    settings = ThegentSettings()
+    settings = _settings()
     own = owner or _default_owner_tag()
     root = settings.session_dir.expanduser().resolve()
 
@@ -179,8 +186,8 @@ def session_list_impl(
         except Exception:
             continue
 
-        session_id = _normalize_contract_string(payload.get("session_id"))
-        run_id = _normalize_contract_string(payload.get("run_id"))
+        session_id = _session_meta_impl()._normalize_contract_string(payload.get("session_id"))
+        run_id = _session_meta_impl()._normalize_contract_string(payload.get("run_id"))
         if session_id is None or run_id is None:
             continue
 
@@ -214,7 +221,7 @@ def session_list_impl(
     existing_session_ids = {r["session_id"] for r in rows if r.get("session_id")}
 
     for r in runs:
-        correlation_id = _normalize_contract_string(r.get("correlation_id") or r.get("run_id"))
+        correlation_id = _session_meta_impl()._normalize_contract_string(r.get("correlation_id") or r.get("run_id"))
         if correlation_id is None:
             continue
         if correlation_id in existing_session_ids:
@@ -233,7 +240,7 @@ def session_list_impl(
 
             row = {
                 "session_id": correlation_id,
-                "run_id": _normalize_contract_string(r.get("run_id")),
+                "run_id": _session_meta_impl()._normalize_contract_string(r.get("run_id")),
                 "agent": r.get("agent"),
                 "model": r.get("model"),
                 "owner": r.get("owner"),
@@ -280,16 +287,16 @@ def status_impl(
                 return None
         return None
 
-    settings = ThegentSettings()
+    settings = _settings()
     try:
-        meta_path = _find_session_meta(settings, session_id)
+        meta_path = _session_meta_impl()._find_session_meta(settings, session_id)
     except typer.BadParameter as e:
         return {"error": str(e), "session_id": session_id}
     p = _session_paths(base=meta_path.parent, session_id=session_id)
-    m = _read_session_meta(meta_path)
+    m = _session_meta_impl()._read_session_meta(meta_path)
     pid = int(m.get("pid", 0) or 0)
     running = _is_pid_running(pid)
-    status = _resolve_session_status(m, p["rc"], running=running)
+    status = _session_meta_impl()._resolve_session_status(m, p["rc"], running=running)
     exit_code = _resolve_exit_code(m, p["rc"], is_running=running)
     payload: dict[str, Any] = {
         "session_id": session_id,
@@ -355,9 +362,9 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
     from thegent.execution import AuditEntry, AuditRegistry
 
     console = Console()
-    settings = ThegentSettings()
+    settings = _settings()
     try:
-        meta_path = _find_session_meta(settings, session_id)
+        meta_path = _session_meta_impl()._find_session_meta(settings, session_id)
     except Exception as e:
         return f"Error: {e}"
 

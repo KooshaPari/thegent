@@ -143,6 +143,17 @@ def _assert_alert_schema(alert: dict) -> None:
     assert isinstance(alert["remediation_directive"], str)
 
 
+def _read_governance_gate_execution(project_dir: Path) -> list[dict]:
+    verify_dir = project_dir / ".claude" / "verification"
+    metrics_path = verify_dir / "quality-metrics.json"
+    if not metrics_path.exists():
+        return []
+    payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+    entries = payload.get("governance_gate_execution", [])
+    assert isinstance(entries, list)
+    return entries
+
+
 def _run_governance_selected(
     tmp_path: Path,
     *,
@@ -369,6 +380,34 @@ def test_selector_is_canonicalized_for_display_and_execution(tmp_path: Path) -> 
     assert proc.returncode == 0
     assert "selected mode gates=regression_spiral_guard,reliability" in proc.stdout
     assert "tier-enforcer" not in proc.stdout
+
+
+@pytest.mark.unit
+def test_selector_records_per_gate_execution_metrics(tmp_path: Path) -> None:
+    proc = _run_governance_selected(
+        tmp_path,
+        selected="regression_spiral_guard",
+        async_results_payload={"total": 10, "failed": 0, "flaky": 0},
+    )
+    assert proc.returncode == 0
+
+    entries = _read_governance_gate_execution(tmp_path / "project")
+    assert entries, "missing governance_gate_execution entries"
+
+    regression_entries = [
+        entry
+        for entry in entries
+        if entry.get("name") in {"regression_spiral_guard", "regression-spiral-guard"}
+    ]
+    assert regression_entries, "missing regression_spiral_guard metric entry"
+    entry = regression_entries[-1]
+
+    assert entry["result"] == "pass"
+    assert entry["cache_hit"] is False
+    assert entry["scope"] == "selected"
+    assert entry["profile"] == "auto"
+    assert isinstance(entry["duration_ms"], int)
+    assert entry["duration_ms"] >= 0
 
 
 @pytest.mark.unit

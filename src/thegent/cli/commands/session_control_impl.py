@@ -32,19 +32,24 @@ from thegent.cli.commands.session_meta_impl import (
     _find_session_meta,
     _read_session_meta,
 )
-from thegent.config import ThegentSettings
 from thegent.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
+
+
+def _impl_settings():
+    from thegent.cli.commands import impl as cli_impl
+
+    return cli_impl.ThegentSettings()
 
 
 def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
     """
     Wait for a background session to complete.
     """
-    from thegent.cli.commands.impl import _is_pid_running, _session_paths
+    from thegent.cli.commands.impl import _is_pid_running, _session_paths, time
 
-    settings = ThegentSettings()
+    settings = _impl_settings()
     try:
         meta_path = _find_session_meta(settings, session_id)
     except typer.BadParameter as e:
@@ -72,7 +77,7 @@ def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt")
     from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd
     from thegent.execution import AuditEntry, AuditRegistry, MessageEntry, MessageRegistry
 
-    settings = ThegentSettings()
+    settings = _impl_settings()
     try:
         meta_path = _find_session_meta(settings, session_id)
     except Exception as e:
@@ -133,7 +138,7 @@ def stop_impl(session_id: str, force: bool = False) -> dict[str, Any]:
     """
     from thegent.cli.commands.impl import _is_pid_running
 
-    settings = ThegentSettings()
+    settings = _impl_settings()
     try:
         meta_path = _find_session_meta(settings, session_id)
     except typer.BadParameter as e:
@@ -156,8 +161,10 @@ def history_impl(limit: int = 50) -> list[dict[str, Any]]:
     """
     List execution history from the run registry.
     """
-    settings = ThegentSettings()
-    registry = RunRegistry(settings.session_dir)
+    settings = _impl_settings()
+    from thegent.cli.commands import impl as cli_impl
+
+    registry = cli_impl.RunRegistry(settings.session_dir)
     return registry.list_runs(limit=limit)
 
 
@@ -184,7 +191,7 @@ def prune_sessions_impl(days: int | None = None) -> dict[str, Any]:
     """Prune old session data (WP-3006)."""
     from thegent.cli.commands.impl import _is_pid_running, _session_paths
 
-    settings = ThegentSettings()
+    settings = _impl_settings()
     retention_days = days or settings.retention_days_sessions
     cutoff = datetime.now(UTC) - timedelta(days=retention_days)
 
@@ -221,7 +228,7 @@ def events_impl(run_id: str | None = None, limit: int = 100) -> list[dict[str, A
     """
     List raw telemetry events from the run registry.
     """
-    settings = ThegentSettings()
+    settings = _impl_settings()
     registry_path = settings.session_dir / "run_registry.jsonl"
     if not registry_path.exists():
         return []
@@ -242,7 +249,7 @@ def events_impl(run_id: str | None = None, limit: int = 100) -> list[dict[str, A
 
 def session_meta_impl(session_id: str) -> dict[str, Any]:
     """Get full session metadata. Returns meta dict or error."""
-    settings = ThegentSettings()
+    settings = _impl_settings()
     try:
         meta_path = _find_session_meta(settings, session_id)
         return _read_session_meta(meta_path)
@@ -264,7 +271,7 @@ def purge_impl(dry_run: bool = True) -> dict[str, int]:
     """WP-3006: Tiered retention purge implementation (G-GP-07)."""
     from typing import cast
 
-    settings = ThegentSettings()
+    settings = _impl_settings()
     registry = RunRegistry(settings.session_dir)
 
     default_days = settings.retention_days_registry
@@ -281,7 +288,7 @@ def purge_impl(dry_run: bool = True) -> dict[str, int]:
 
 def explain_run_impl(run_id: str) -> dict[str, Any]:
     """WP-4002: Multi-tier explanation framework for run decisions."""
-    settings = ThegentSettings()
+    settings = _impl_settings()
     registry = RunRegistry(settings.session_dir)
 
     runs = registry.list_runs(limit=100)

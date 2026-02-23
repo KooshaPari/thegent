@@ -95,8 +95,8 @@ def install_callback(
     system_prefix: str | None = typer.Option(
         None, "--system-prefix", help="System install prefix (default: /opt/thegent)"
     ),
-    scope: str = typer.Option("user", "--scope", help="Install scope: user, system, or both."),
-    setup: bool = typer.Option(False, "--setup", help="Run the setup wizard after install."),
+    scope: str = typer.Option("both", "--scope", help="Install scope: user, system, or both."),
+    setup: bool = typer.Option(True, "--setup/--no-setup", help="Run the setup wizard after install."),
 ) -> None:
     """Install user/system runtime assets and optionally launch the setup wizard."""
     if ctx.invoked_subcommand is not None:

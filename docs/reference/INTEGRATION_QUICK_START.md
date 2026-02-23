@@ -413,7 +413,7 @@ export THGENT_ROUTING_CONSTRAINTS_ENABLED=true
 
 # Check policy evaluation
 export THGENT_DEBUG=true  # Enables detailed logging
-thegent run --agent claude "Your task"
+	thegent run agent "Your task" --agent claude
 
 # Look for policy_result in registry
 grep '"policy_result":"deny"' ~/.cache/thegent/sessions/run_registry.jsonl

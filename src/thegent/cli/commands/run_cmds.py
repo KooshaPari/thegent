@@ -88,21 +88,39 @@ def run_cmd(
         from thegent.models.catalog import normalize_route_policy
 
         policy = normalize_route_policy(routing or settings.default_routing)
-        resolved = resolve_route(
-            model,
-            provider_hint=provider,
-            policy=policy,
-            quality_floor=getattr(settings, "cost_quality_min_weight", 0.1),
-            lane="standard",
-        )
-        if resolved is None:
-            routes = ModelCatalog.routes_for(model)
-            available = ", ".join(sorted({r.provider for r in routes})) if routes else "none"
-            console.print(
-                f"[red]Model '{model}' not available via provider '{provider or 'any'}'. Available: {available}.[/red]"
+        routes = ModelCatalog.routes_for(model)
+        available = ", ".join(sorted({str(r.provider) for r in routes if getattr(r, "provider", None) is not None}))
+        if not available:
+            available = "none"
+
+        resolved = None
+        if provider:
+            resolved = resolve_route(
+                model,
+                provider_hint=provider,
+                policy=policy,
+                quality_floor=getattr(settings, "cost_quality_min_weight", 0.1),
+                lane="standard",
             )
+            if resolved is None:
+                provider_routes = [r for r in routes if str(getattr(r, "provider", "")) == str(provider)]
+                if provider_routes:
+                    resolved = provider_routes[0]
+        elif routes:
+            resolved = routes[0]
+
+        if resolved is None:
+            if provider:
+                console.print(
+                    f"[red]Model '{model}' not available via provider '{provider}'. Available: {available}.[/red]"
+                )
+            else:
+                console.print(f"[red]Model '{model}' has no available providers.[/red]")
             raise typer.Exit(1)
-        effective_agent = resolved[0]
+        if hasattr(resolved, "provider") and not isinstance(resolved, (list, tuple)):
+            effective_agent = resolved.provider
+        else:
+            effective_agent = resolved
 
     # WP-5002: Session-start warning when session count high (memory optimization)
     settings = ThegentSettings()
@@ -200,7 +218,7 @@ def run_cmd(
         console.print(res["stdout"])
 
     if res.get("timed_out"):
-        console.print("[yellow]Run exceeded time budget.[/yellow]")
+        console.print("[yellow]Run exceeded the safety ceiling (time budget).[/yellow]")
 
     if res.get("exit_code") != 0:
         raise typer.Exit(res.get("exit_code", 1))
@@ -272,6 +290,7 @@ def loop_stop_cmd(session_id: str | None = None) -> None:
 def bg_cmd(
     *,
     agent: str | None,
+    droid: str | None = None,
     prompt: str,
     cd: Path | None,
     mode: str,
@@ -301,6 +320,9 @@ def bg_cmd(
     image: list[str] | None = None,
     skills: list[str] | None = None,
 ) -> str:
+    if agent is None and droid is not None:
+        agent = droid
+
     from thegent.cli.commands.impl import bg_impl
 
     # WP-5002: Session-start warning when session count high (memory optimization)

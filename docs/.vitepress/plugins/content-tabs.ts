@@ -153,12 +153,20 @@ export function contentTabsPlugin(md: MarkdownIt) {
     const { tabs } = parsed
 
     if (closingLine === -1) {
-      return false
+      const markerToken = state.push('tabs_marker', '', 0)
+      markerToken.content = JSON.stringify({ error: 'tabs block is missing closing :::', tabs: [] })
+      markerToken.map = [startLine, endLine]
+      state.line = endLine + 1
+      return true
     }
 
     // Get the content between opening and closing
     if (tabs.length === 0) {
-      return false
+      const markerToken = state.push('tabs_marker', '', 0)
+      markerToken.content = JSON.stringify({ error: 'tabs block has no valid tab sections', tabs: [] })
+      markerToken.map = [startLine, closingLine]
+      state.line = closingLine + 1
+      return true
     }
 
     // Generate a unique ID for this tabs instance
@@ -186,6 +194,9 @@ export function contentTabsPlugin(md: MarkdownIt) {
     const token = tokens[idx]
     try {
       const data = JSON.parse(token.content)
+      if (data.error) {
+        return `<div class=\"content-tabs-error\">${data.error}</div>`
+      }
       const tabs = data.tabs.map((t: {id: string, label: string}) => {
         const id = normalizeTabId(t.id)
         return {
@@ -196,7 +207,7 @@ export function contentTabsPlugin(md: MarkdownIt) {
 
       // Generate the Vue component HTML with pre-rendered content
       let html = `<div class="content-tabs-wrapper" data-tabs-id="${data.tabsId}">`
-      html += `<div class="content-tabs" data-tabs='${JSON.stringify(tabs)}'>`
+      html += `<div class="content-tabs">`
       html += `<div class="tab-headers">`
 
       tabs.forEach((tab: {id: string, label: string}, idx: number) => {

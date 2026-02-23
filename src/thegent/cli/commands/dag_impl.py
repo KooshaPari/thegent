@@ -389,7 +389,9 @@ def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
     """List DAG tasks. Returns {frontmatter, tasks} or error."""
     from thegent.cli.commands.impl import _resolve_cwd
 
-    cwd = _resolve_cwd(cd) or Path.cwd()
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {"error": "Ambiguous cwd; use --cd to specify project root."}
     dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}", "frontmatter": {}, "tasks": []}
@@ -401,7 +403,9 @@ def dag_raw_impl(cd: Path | None = None) -> str:
     """Get raw DAG markdown content. Returns markdown string or error message."""
     from thegent.cli.commands.impl import _resolve_cwd
 
-    cwd = _resolve_cwd(cd) or Path.cwd()
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return "# Error\nAmbiguous cwd; use --cd to specify project root."
     dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return f"# Error\nDAG not found: {dag_path}"

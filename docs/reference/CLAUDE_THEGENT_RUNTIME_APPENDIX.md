@@ -35,7 +35,7 @@ thegent is an **MCP server + agent hook system** for governing AI agent lifecycl
 
 **Ports**: MCP 3847, proxy 8317. Canonical source at `../cliproxyapi-plusplus`; metrics at `GET /v1/metrics/providers`.
 
-**Debug**: `thegent run --debug` / `thegent bg --debug` sets `THGENT_DEBUG=1`; proxy gets `-debug` when env set. See `docs/plans/DEBUG_TAGS_AND_METRICS.md`.
+**Debug**: `thegent run --debug` sets `THGENT_DEBUG=1`; proxy gets `-debug` when env set. See `docs/plans/DEBUG_TAGS_AND_METRICS.md`.
 
 ### Key Ports and Interfaces
 
@@ -79,12 +79,12 @@ Idea/task prompts, quality green, and "next thing to do" are wired at multiple l
 | **MCP resource** | `thegent://workstream` | Work stream (canonical backlog) |
 | **MCP prompts** | `thegent_workflow_idea`, `thegent_workflow_quality_green`, `thegent_workflow_next_item`, `thegent_workflow_gardening` | Template prompts for structured invocation |
 | **MCP resource** | `thegent://workflow/gardening` | Gardening workflow (converge to empty backlog + green) |
-| **MCP tool** | `thegent_do_next` | Find next actionable items from WORK_STREAM (canonical), PLAN_STATUS, FR_TRACKER, docs/plans/, escalation; returns prompt_suggestion for thegent_run/thegent_bg |
-| **CLI** | `thegent plan do-next` | Same as thegent_do_next |
+| **MCP tool** | `thegent_do_next` | Find next actionable items from WORK_STREAM (canonical), PLAN_STATUS, FR_TRACKER, docs/plans/, escalation; returns prompt_suggestion for `thegent run` |
+| **CLI** | `thegent plan next` | Same as thegent_do_next |
 
 **Unified work stream**: Single source of truth is `docs/reference/WORK_STREAM.md`. All agents read it for work items; claim in CLAIMED before starting; update COMPLETED when done. Incorporator agent (`work-stream-incorporator`) merges fragments from plans, research, specs into the stream. See [UNIFIED_WORK_STREAM_DESIGN.md](docs/reference/UNIFIED_WORK_STREAM_DESIGN.md).
 
-**Idea/task** → dump research to docs/research/, specs to docs/docset/, work items to unified stream. **Quality green** → `task quality-a-r`. **Next item** → `thegent_do_next` (or read WORK_STREAM.md), pick highest-priority, execute via `thegent_run`/`thegent_bg` with `prompt_suggestion`. **Gardening** → check gov traceability, tests, plan items; dispatch; converge to empty backlog and complete green (`thegent govern go health`, `go cycle`, `task quality-a-r`).
+**Idea/task** → dump research to docs/research/, specs to docs/docset/, work items to unified stream. **Quality green** → `task quality-a-r`. **Next item** → `thegent_do_next` (or read WORK_STREAM.md), pick highest-priority, execute via `thegent run`/`--bg` with `prompt_suggestion`. **Gardening** → check gov traceability, tests, plan items; dispatch; converge to empty backlog and complete green (`thegent govern go health`, `go cycle`, `task quality-a-r`).
 
 ### Cycleloop Loops
 
@@ -98,7 +98,7 @@ Idea/task prompts, quality green, and "next thing to do" are wired at multiple l
 | `--continuation <session_id>` | Resume from prior session (adds resumption appendix) |
 | `--resume` (Codex/Claude) | Use when agent supports native resume |
 
-**Premature session end:** If Codex/Claude supports `--resume`, use it. Otherwise: `thegent run/bg --continuation <prior_session_id> "Task"` — builds context from prior stdout + resumption appendix.
+**Premature session end:** If Codex/Claude supports `--resume`, use it. Otherwise: `thegent run agent --continuation <prior_session_id> "Task"` — builds context from prior stdout + resumption appendix.
 
 ### WBS Agent Coordination (Multi-Agent "Do All")
 

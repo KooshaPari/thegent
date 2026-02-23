@@ -20,6 +20,15 @@ def status(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path
     mesh_status_cmd(root)
 
 
+@app.command("agents")
+def agents(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path to mesh root")):
+    """List registered mesh agents."""
+    from thegent.config import ThegentSettings
+
+    root = mesh_root or Path(ThegentSettings().harness_root)
+    mesh_status_cmd(root)
+
+
 @app.command("init")
 def init(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path to mesh root")):
     """Initialize agent mesh."""

@@ -30,11 +30,15 @@ def resolve_cwd(cd: Any) -> Path | None:
     global _CWD_CACHE
     now = time.time()
 
-    # Use absolute path string as cache key; for auto-inference include cwd so tests don't cross-pollute
-    try:
-        cache_key = str(cd.expanduser()) if cd is not None else f"none:{Path.cwd()}"
-    except Exception:
-        cache_key = str(cd) if cd else f"none:{Path.cwd()}"
+    # Canonical cache key follows resolved path when available so tests can
+    # consistently retrieve deterministic values and clear specific entries.
+    if cd is not None:
+        try:
+            cache_key = str(cd.expanduser().resolve())
+        except Exception:
+            cache_key = str(cd)
+    else:
+        cache_key = f"none:{Path.cwd().resolve()}"
 
     if cache_key in _CWD_CACHE:
         cached_p, _ = _CWD_CACHE[cache_key]
@@ -43,18 +47,18 @@ def resolve_cwd(cd: Any) -> Path | None:
     resolved_p: Path | None = None
     if cd is not None:
         try:
-            p = cd.expanduser()
+            p = cd.expanduser().resolve()
         except Exception:
-            p = Path(cd)
+            p = Path(cd).resolve()
         if not p.is_dir():
             raise typer.BadParameter(f"Directory does not exist: {p}")
         resolved_p = p
     else:
-        cwd = Path.cwd()
+        cwd = Path.cwd().resolve()
 
         if (cwd / ".git").exists() or (cwd / ".factory").exists() or (cwd / "pyproject.toml").exists():
             resolved_p = cwd
-        elif (cwd.parent / ".factory").exists():
+        elif (cwd.parent / ".factory").exists() and cwd.parent != cwd:
             resolved_p = cwd.parent
         else:
             resolved_p = None

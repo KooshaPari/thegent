@@ -264,13 +264,13 @@ def _resolve_session_status(payload: dict[str, Any], rc_path: Path, running: boo
     if exit_code is not None:
         return f"exited:{int(exit_code)}"
 
-        if rc_path.exists():
-            try:
-                rc_raw = rc_path.read_text(encoding="utf-8").strip()
-                if rc_raw:
-                    return f"exited:{int(rc_raw)}"
-            except (OSError, ValueError) as exc:
-                _log.warning("Failed to read exit code from rc path %s: %s", rc_path, exc)
+    if rc_path.exists():
+        try:
+            rc_raw = rc_path.read_text(encoding="utf-8").strip()
+            if rc_raw:
+                return f"exited:{int(rc_raw)}"
+        except (OSError, ValueError) as exc:
+            _log.warning("Failed to read exit code from rc path %s: %s", rc_path, exc)
     return "exited"
 
 

@@ -17,16 +17,16 @@ curl -fsSL https://raw.githubusercontent.com/kooshapari/thegent/main/scripts/boo
 ## Initial Setup
 
 ```bash
-thegent setup
+thegent install -t all --scope both --setup
 thegent doctor
 ```
 
-`thegent setup` configures provider credentials. `thegent doctor` verifies runtime health.
+`thegent install ... --setup` installs all scoped assets and runs provider setup; `thegent doctor` verifies runtime health.
 
 ## First Successful Run
 
 ```bash
-thegent run "summarize this repository structure" codex
+thegent run agent "summarize this repository structure" --agent codex
 ```
 
 Then inspect session status:
@@ -39,10 +39,10 @@ thegent ps
 
 ```bash
 # Find next actionable item
-thegent plan do-next
+thegent plan next
 
 # Execute one foreground task
-thegent run "implement the selected item" claude
+thegent run agent "implement the selected item" --agent claude
 
 # Check and select a skill for focused runs
 thegent skill list
@@ -50,7 +50,7 @@ thegent skill select thegent-skills
 thegent run agent "implement with policy skill guidance" --skill thegent-skills
 
 # Run a longer background task
-thegent bg "generate implementation notes" gemini
+thegent run agent "generate implementation notes" --agent gemini --bg
 ```
 
 ## Next Reads

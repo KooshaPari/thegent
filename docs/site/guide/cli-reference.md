@@ -10,17 +10,15 @@ thegent <command> [subcommand] [flags]
 
 Global options are available on most commands:
 
-- `--debug` for verbose runtime diagnostics.
-- `--json` for machine-readable output where supported.
 - `--help` for command-specific usage.
 
 ## Session Commands
 
 | Command | What it does | Common usage |
 |---------|---------------|--------------|
-| `thegent run <prompt> [provider]` | Foreground run | One-off tasks and interactive work |
+| `thegent run agent <prompt>` | Foreground run | One-off tasks and interactive work |
 | `thegent run agent <prompt> --skill <name>` | Foreground run with selected skill instructions | Skill-guided execution |
-| `thegent bg <prompt> [provider]` | Background run | Longer jobs or parallel work |
+| `thegent run agent <prompt> --bg` | Background run | Longer jobs or parallel work |
 | `thegent ps` | Session list | Inspect active/recent sessions |
 | `thegent stop <session_id>` | Stop session | Cancel or cleanup |
 | `thegent takeover <session_id>` | Attach to session | Continue from existing context |
@@ -30,9 +28,9 @@ Global options are available on most commands:
 Examples:
 
 ```bash
-thegent run "audit this codepath" codex
+thegent run agent "audit this codepath" --agent codex
 thegent run agent "refactor this module" --skill thegent-skills
-thegent bg "implement docs update" claude
+thegent run agent "implement docs update" --agent claude --bg
 thegent ps
 thegent stop sess_abc123
 thegent run fork sess_abc123 --from-turn 4 --new-session-id sess_branch_01
@@ -71,14 +69,14 @@ thegent skill select missing-skill
 
 | Command | Purpose |
 |---------|---------|
-| `thegent plan do-next` | Select highest-priority actionable work item |
+| `thegent plan next` | Select highest-priority actionable work item |
 | `thegent plan loop` | Continuously execute available tasks |
 | `thegent orchestrate loop "prompt" "todo"` | Worker/checker lifecycle loop |
 
 Example:
 
 ```bash
-thegent plan do-next
+thegent plan next
 thegent orchestrate loop "execute sprint tasks" "docs/reference/WORK_STREAM.md"
 ```
 
@@ -120,9 +118,10 @@ uv run python scripts/check_python_benchmark_regression.py \
 
 | Command | Purpose |
 |---------|---------|
-| `thegent setup` | Bootstrap credentials and runtime defaults |
+| `thegent install -t all --scope both --setup` | Install user/system runtime assets and launch provider/setup wizard |
+| `thegent setup` | Legacy compatibility alias to provider/setup wizard only |
 | `thegent doctor` | Verify dependencies and runtime health |
-| `thegent install-shims` | Install command shims into PATH |
+| `thegent install -t all` | Install runtime assets into user scope |
 | `thegent shell-init <bash|zsh|fish>` | Print shell integration snippet |
 
 ## MCP and Service Commands

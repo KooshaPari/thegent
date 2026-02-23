@@ -261,7 +261,7 @@ class TestResolveRoleParams:
     def test_no_role_uses_tier_minimum(self) -> None:
         from thegent.routing.pareto_router import _resolve_role_params
 
-        effective_min, _order, _mult = _resolve_role_params(
+        effective_min, _order, mult = _resolve_role_params(
             role=None,
             complexity_tier="simple",
             min_quality=0.0,

@@ -226,6 +226,7 @@ __all__ = [
 
 
 import logging
+import time
 import subprocess
 import sys
 from pathlib import Path
@@ -394,7 +395,40 @@ _parse_observe_summary_timestamp = run_observe_helpers.parse_observe_summary_tim
 _parse_observe_summary_env_float = run_observe_helpers.parse_observe_summary_env_float
 _parse_observe_summary_env_int = run_observe_helpers.parse_observe_summary_env_int
 _observe_summary_freshness_bucket = run_observe_helpers.observe_summary_freshness_bucket
-_load_observe_summary_snapshots = run_observe_helpers.load_observe_summary_snapshots
+def _load_observe_summary_snapshots(
+    scope_signature: str,
+    scope_key_json: str,
+    limit: int,
+) -> list[dict[str, Any]]:
+    path = _health_snapshot_log_path()
+    if not path.exists():
+        return []
+    snapshots: list[dict[str, Any]] = []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    requested_limit = max(0, int(limit))
+    for line in reversed(lines):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if rec.get("record_type") != "observe_summary_snapshot":
+            continue
+        if (
+            rec.get("trend_scope_signature") != scope_signature
+            and rec.get("scope_signature") != scope_signature
+            and rec.get("scope_key_json") != scope_key_json
+        ):
+            continue
+        snapshots.append(rec)
+        if requested_limit and len(snapshots) >= requested_limit:
+            break
+    return snapshots
 _classify_observe_summary_trend_health = run_observe_helpers.classify_observe_summary_trend_health
 _append_observe_summary_snapshot = run_observe_helpers.append_observe_summary_snapshot
 

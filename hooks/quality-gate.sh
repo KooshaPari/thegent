@@ -18,16 +18,12 @@ run_local_pre_commit() {
 }
 
 run_local_pre_push() {
-  if ! command -v bash >/dev/null 2>&1; then
-    echo "quality-gate: bash is required for local pre-push emulation" >&2
-    exit 1
-  fi
-  if ! command -v task >/dev/null 2>&1; then
-    echo "quality-gate: task is required for local pre-push emulation but is not installed" >&2
-    exit 1
-  fi
-  export THEGENT_HOOK_PROFILE="pre-push"
-  THEGENT_HOOK_PROFILE=pre-push bash scripts/ci-local-emulator.sh
+  # Native path: execute Rust quality-gate runtime directly for pre-push.
+  resolve_rust_gate
+  export PROJECT_DIR="$REPO_ROOT"
+  mkdir -p "$REPO_ROOT/artifacts/hooks"
+  export THEGENT_QUALITY_GATE_RESULT_JSON="$REPO_ROOT/artifacts/hooks/quality-gate-result.json"
+  exec "$BIN_PATH" quality-gate
 }
 
 resolve_rust_gate() {

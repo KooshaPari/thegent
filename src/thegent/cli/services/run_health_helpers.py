@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import os
 from typing import Any, Callable
 
 from thegent.config import ThegentSettings
@@ -61,15 +62,17 @@ def health_snapshot_log_path() -> Path:
 
 def health_snapshot_max_lines() -> int:
     """Resolve health snapshot retention line-count with sane fallback bounds."""
-    settings = ThegentSettings()
-    raw = str(settings.health_snapshot_max_lines)
-    if not raw:
-        return 5000
-    try:
-        value = int(raw)
-    except ValueError:
-        return 5000
-    return max(100, value)
+    default_lines = 5000
+    env_value = os.environ.get("THGENT_HEALTH_SNAPSHOT_MAX_LINES")
+    if env_value is not None:
+        raw_env = str(env_value).strip()
+        if not raw_env:
+            return default_lines
+        try:
+            return max(100, int(raw_env))
+        except ValueError:
+            return default_lines
+    return default_lines
 
 
 def compact_health_snapshot_log(

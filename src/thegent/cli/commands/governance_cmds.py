@@ -159,14 +159,16 @@ def escalate_add_cmd(
     """Add a blocked run to the escalation queue (WP-3008)."""
     from thegent.cli.commands.impl import escalate_add_impl
 
-    escalate_add_impl(
-        run_id=run_id,
-        reason=reason,
-        sla_minutes=sla_minutes,
-        owner=owner,
-        lane=lane,
-        priority=priority,
-    )
+    payload = {
+        "run_id": run_id,
+        "reason": reason,
+        "sla_minutes": sla_minutes,
+        "owner": owner,
+        "lane": lane,
+    }
+    if priority:
+        payload["priority"] = priority
+    escalate_add_impl(**payload)
     console.print(
         f"[green]Added run_id={run_id} to escalation queue (SLA: {sla_minutes} min, priority: {priority})[/green]"
     )
@@ -263,7 +265,7 @@ def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved"
     if ok:
         console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
     else:
-        console.print(f"[red]Escalation {rid} not found or already resolved.[/red]")
+        console.print(f"[red]Escalation {rid} not pending.[/red]")
 
 
 def escalate_approve_cmd(run_id: str | None = None) -> None:

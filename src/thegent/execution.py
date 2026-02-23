@@ -2232,18 +2232,26 @@ class PolicyEngine:
         G-GP-01: Optional OPA integration. POST to /v1/data/thegent/allow.
         Returns (result, reason) or None if OPA not configured or unreachable.
         """
-        opa_url = (getattr(self.settings, "opa_url", None) or "").strip().rstrip("/")
+        raw_opa_url = getattr(self.settings, "opa_url", "")
+        if not isinstance(raw_opa_url, str):
+            opa_url = ""
+        else:
+            opa_url = raw_opa_url.strip().rstrip("/")
         if not opa_url:
             return None
         url = f"{opa_url}/v1/data/thegent/allow"
         timeout_ms = _as_float(getattr(self.settings, "opa_timeout_ms", 500), 500.0)
         timeout_s = max(0.1, timeout_ms / 1000.0)
+        environment = getattr(self.settings, "environment", "development")
+        if not isinstance(environment, str) or not environment:
+            environment = "development"
+        trust_score_threshold = _as_float(getattr(self.settings, "trust_score_threshold", 0.8), 0.8)
         payload = {
             "input": {
                 "run_meta": run.model_dump(mode="json"),
                 "context": {
-                    "environment": getattr(self.settings, "environment", "development"),
-                    "trust_score_threshold": getattr(self.settings, "trust_score_threshold", 0.8),
+                    "environment": environment,
+                    "trust_score_threshold": trust_score_threshold,
                 },
             },
         }
@@ -2305,7 +2313,8 @@ class PolicyEngine:
             if run.model and cb.is_open(run.model, category="model"):
                 return "deny", f"Circuit breaker is OPEN for model '{run.model}'. Repeated failures detected."
 
-        opa_url = (getattr(self.settings, "opa_url", None) or "").strip()
+        raw_opa_url = getattr(self.settings, "opa_url", None)
+        opa_url = raw_opa_url.strip() if isinstance(raw_opa_url, str) else ""
         if opa_url:
             opa_result = self._query_opa(run)
             if opa_result is not None:
@@ -2315,7 +2324,7 @@ class PolicyEngine:
                 return "allow", "OPA unreachable; fallback allow per config"
             return "deny", "OPA unreachable; fallback deny per config (set THGENT_OPA_FALLBACK_ALLOW=1 to allow)"
 
-        env = self.settings.environment.lower()
+        env = str(getattr(self.settings, "environment", "development")).lower()
 
         # WP-0004/WP-4008: Trust Score Calibration
         # Adjust confidence based on historical performance if registry provided

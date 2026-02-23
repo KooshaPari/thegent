@@ -499,7 +499,7 @@ Rollback DAG state to a specific checkpoint.
 dag_run(cd: Any, dry_run: bool, task: Any, max_parallel: Any, lane: Any, check_drift: bool, contract_version: Any)
 ```
 
-Spawn thegent bg for each ready task; update status=running and session_id.
+Spawn background tasks for each ready item; update status=running and session_id.
 
 ---
 
@@ -673,7 +673,7 @@ Capture a forensic snapshot of the current environment.
 free(prompt: str, cd: Any, mode: str, timeout: int, do_next: bool, repeat: int, live: bool, bg: bool, diff: bool, lane: str)
 ```
 
-Base free tier: Copilot gpt-5-mini. Alias for thegent run "`<prompt>`" free.
+Base free tier: Copilot gpt-5-mini. Alias for thegent run free "`<prompt>`".
 
 ---
 
@@ -1890,9 +1890,9 @@ Find next actionable work items from PLAN_STATUS, FR_TRACKER, docs/plans/, escal
 **Examples**:
 
 ```python
-thegent plan do-next
-thegent plan do-next -l 10
-thegent run "$(thegent plan get-next)" free
+thegent plan next
+thegent plan next -l 10
+thegent run free "$(thegent plan get-next)"
 ```
 
 ---
@@ -2122,9 +2122,9 @@ Run a foreground agent invocation. Use -M `<model>` without agent for model-firs
 **Examples**:
 
 ```python
-thegent run "Fix bug in auth.py" free
-thegent run "Implement feature" -M gemini-3-flash
-thegent run "Review code" --mode read-only
+thegent run free "Fix bug in auth.py"
+thegent run free "Implement feature" --model gemini-3-flash
+thegent run free "Review code" --mode read-only
 ```
 
 ---
