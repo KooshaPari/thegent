@@ -3,8 +3,10 @@
 # @trace WL-124
 from __future__ import annotations
 
+import json
 import re
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -54,6 +56,91 @@ def _assert_str(value: str | None) -> str:
     """Assert yaml.dump returned str (always true when stream=None)."""
     assert value is not None, "yaml.dump returned None unexpectedly"
     return value
+
+
+_CLIPROXYCTL_SCHEMA_VERSION = "cliproxyctl.machine.v1"
+_CLIPROXYCTL_NOT_FOUND_MSG = (
+    "cliproxyctl not found. Install cliproxyctl and ensure it is on PATH, "
+    "or set THGENT_CLIPROXYCTL_BINARY=/path/to/cliproxyctl"
+)
+
+
+def _resolve_cliproxyctl_binary() -> str:
+    """Resolve cliproxyctl binary path from env or PATH."""
+    configured = os.environ.get("THGENT_CLIPROXYCTL_BINARY", "cliproxyctl").strip() or "cliproxyctl"
+    if "/" in configured or "~" in configured:
+        return str(Path(configured).expanduser())
+    found = shutil.which(configured)
+    return found if found else configured
+
+
+def _binary_exists(binary: str) -> bool:
+    return Path(binary).exists() or shutil.which(binary) is not None
+
+
+def _coerce_subprocess_output(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return "" if value is None else str(value)
+
+
+def _parse_cliproxyctl_envelope(stdout_text: str, *, expected_command: str) -> dict[str, Any]:
+    """Parse and validate cliproxyctl machine JSON envelope."""
+    try:
+        payload = json.loads(stdout_text)
+    except json.JSONDecodeError as exc:  # pragma: no cover - explicit error branch in tests
+        raise ValueError(f"Invalid cliproxyctl JSON envelope: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("Invalid cliproxyctl JSON envelope: expected top-level object")
+    schema_version = payload.get("schema_version")
+    if not isinstance(schema_version, str):
+        raise ValueError("Invalid cliproxyctl JSON envelope: missing schema_version")
+    if schema_version != _CLIPROXYCTL_SCHEMA_VERSION:
+        raise ValueError(
+            "Unsupported cliproxyctl schema_version: "
+            f"{schema_version} (expected {_CLIPROXYCTL_SCHEMA_VERSION})"
+        )
+    command = payload.get("command")
+    if not isinstance(command, str):
+        raise ValueError("Invalid cliproxyctl JSON envelope: missing command")
+    if command != expected_command:
+        raise ValueError(f"cliproxyctl command mismatch: expected '{expected_command}', got '{command}'")
+    ok = payload.get("ok")
+    if not isinstance(ok, bool):
+        raise ValueError("Invalid cliproxyctl JSON envelope: missing boolean 'ok'")
+    return payload
+
+
+def _run_cliproxyctl_machine_command(command: str, *, args: list[str] | None = None) -> dict[str, Any]:
+    """Run cliproxyctl command with --json and enforce envelope validation."""
+    binary = _resolve_cliproxyctl_binary()
+    if not _binary_exists(binary):
+        raise FileNotFoundError(_CLIPROXYCTL_NOT_FOUND_MSG)
+    argv = [binary, command, *(args or []), "--json"]
+    run_subprocess_optimized = _get_run_subprocess_optimized()
+    proc = run_subprocess_optimized(argv, check=False, capture_output=True, text=True)
+    stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
+    stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
+    envelope = _parse_cliproxyctl_envelope(stdout_text, expected_command=command)
+    if proc.returncode != 0:
+        error = envelope.get("error")
+        error_message = ""
+        if isinstance(error, dict):
+            code = error.get("code")
+            message = error.get("message")
+            error_message = f"{code}: {message}" if code or message else str(error)
+        if not error_message:
+            error_message = stderr_text.strip() or envelope.get("message", "")
+        raise RuntimeError(f"cliproxyctl {command} failed with exit code {proc.returncode}: {error_message}".strip())
+    if not envelope["ok"]:
+        error = envelope.get("error")
+        detail = error if isinstance(error, str) else json.dumps(error) if error is not None else ""
+        message = str(envelope.get("message", "")).strip()
+        combined = ": ".join([part for part in [message, detail] if part]).strip()
+        raise RuntimeError(f"cliproxyctl {command} reported failure{': ' + combined if combined else ''}")
+    return envelope
 
 
 # Copilot: only gpt-5-mini and haiku (no gemini-3.1-pro).
@@ -462,22 +549,20 @@ def _list_kiro_models() -> None:
 
 
 def cliproxy_login_cmd(provider: str, force: bool = False) -> None:
-    """Run login for provider. Unified flow: open URL + prompt for API key. Preflight checks existing credentials."""
-    from rich.prompt import Prompt
-
-    settings = ThegentSettings()
-
-    def prompt_key(msg: str) -> str:
-        return Prompt.ask(msg, default="", show_default=False).strip()
-
+    """Run provider login by delegating to cliproxyctl machine JSON surface."""
     try:
-        rc = run_login(settings, provider, prompt_func=prompt_key, force=force)
-        raise typer.Exit(rc)
-    except ValueError as e:
-        console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1)
-    except FileNotFoundError as e:
-        console.print(f"[red]{e}[/red]")
+        console.print(f"\n[bold cyan]Delegating provider login to cliproxyctl ({provider})...[/bold cyan]")
+        args = [provider]
+        if force:
+            args.append("--force")
+        envelope = _run_cliproxyctl_machine_command("login", args=args)
+        message = str(envelope.get("message", "")).strip() or f"Delegated login completed for provider '{provider}'."
+        console.print(f"[green]{message}[/green]")
+        raise typer.Exit(0)
+    except typer.Exit:
+        raise
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        console.print(f"[red]Delegated login failed: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -616,24 +701,20 @@ def setup_cmd(
     should_delegate_setup = (
         wizard
         and os.environ.get("THGENT_SETUP_USE_CLIPROXY", "1") == "1"
-        and not (agents or "").strip()
         and not any(v for v in overrides.values())
     )
     if should_delegate_setup:
-        from thegent.agents.cliproxy_manager import _binary_available, _resolve_binary
-
-        run_subprocess_optimized = _get_run_subprocess_optimized()
-        binary = _resolve_binary(settings)
-        if not _binary_available(binary):
-            console.print("[red]Delegated setup failed: cli-proxy-api-plus not found.[/red]")
+        delegation_args: list[str] = []
+        selected_agents = (agents or "").strip()
+        if selected_agents:
+            delegation_args.extend(["--providers", selected_agents])
+        try:
+            console.print("\n[bold cyan]Delegating provider setup to cliproxyctl...[/bold cyan]")
+            envelope = _run_cliproxyctl_machine_command("setup", args=delegation_args)
+        except (ValueError, RuntimeError, FileNotFoundError) as exc:
+            console.print(f"[red]Delegated setup failed: {exc}[/red]")
             raise typer.Exit(1)
-        config_path = _ensure_config(settings)
-        console.print("\n[bold cyan]Delegating provider setup to cli-proxy-api-plus...[/bold cyan]")
-        proc = run_subprocess_optimized([binary, "-config", str(config_path), "-setup"], check=False)
-        if proc.returncode != 0:
-            console.print(f"[red]Delegated setup failed with exit code {proc.returncode}.[/red]")
-            raise typer.Exit(proc.returncode)
-        any_configured = True
+        any_configured = bool(envelope.get("ok"))
     else:
         any_configured = configure_providers(
             providers=all_providers,
