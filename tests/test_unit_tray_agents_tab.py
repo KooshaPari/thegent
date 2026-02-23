@@ -1,10 +1,13 @@
 """Unit tests for tray agents tab."""
 
+import pytest
+
+pytest.importorskip("PySide6")
+
 import ast
 import os
 from pathlib import Path
 
-import pytest
 
 
 def get_module_ast(file_path: str) -> ast.Module:
@@ -240,11 +243,11 @@ class TestAgentsTabPackage:
     def test_tabs_package_exports_agents(self):
         """tabs package exports agents tab."""
         import os
-from pathlib import Path
+        from pathlib import Path
         import sys
 
         # Add src to path
-        src_path = Path(__file__).parent.parent.parent / "src")
+        src_path = Path(__file__).parent.parent.parent / "src"
         if src_path not in sys.path:
             sys.path.insert(0, src_path)
 
