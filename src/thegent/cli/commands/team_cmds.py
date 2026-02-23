@@ -12,6 +12,7 @@ This module is a thin re-export facade for command groups extracted to focused m
 # @trace WL-124
 from __future__ import annotations
 
+from thegent.cli.commands._cli_shared import console
 from thegent.cli.commands.team_snapshot_cmds import (
     snapshot_daily_export_cmd,
     snapshot_daily_index_cmd,
