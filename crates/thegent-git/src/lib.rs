@@ -285,6 +285,165 @@ pub fn merge_base(
     }
 }
 
+/// List branches (git branch equivalent)
+#[pyfunction]
+#[pyo3(signature = (path=None, all_remotes=false))]
+pub fn list_branches(path: Option<String>, all_remotes: bool) -> PyResult<Vec<String>> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(&p).arg("branch");
+    
+    if all_remotes {
+        cmd.arg("-a");
+    }
+    
+    cmd.arg("--format=%(refname:short)");
+
+    match cmd.output() {
+        Ok(out) if out.status.success() => {
+            let output = String::from_utf8_lossy(&out.stdout);
+            let branches: Vec<String> = output
+                .lines()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+            Ok(branches)
+        }
+        _ => Ok(Vec::new()),
+    }
+}
+
+/// List remotes (git remote -v equivalent)
+#[pyfunction]
+#[pyo3(signature = (path=None))]
+pub fn list_remotes(py: Python<'_>, path: Option<String>) -> PyResult<PyObject> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(&p)
+        .arg("remote")
+        .arg("-v")
+        .output();
+
+    let dict = pyo3::types::PyDict::new(py);
+
+    match output {
+        Ok(out) if out.status.success() => {
+            let output_str = String::from_utf8_lossy(&out.stdout);
+            for line in output_str.lines() {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    let name = parts[0];
+                    let url = parts[1];
+                    if dict.get_item(name)?.is_none() {
+                        dict.set_item(name, url)?;
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+
+    Ok(dict.into_any().unbind())
+}
+
+/// Get commit log (git log equivalent)
+#[pyfunction]
+#[pyo3(signature = (path=None, max_count=10, oneline=true))]
+pub fn get_log(path: Option<String>, max_count: i32, oneline: bool) -> PyResult<Vec<String>> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(&p).arg("log");
+    cmd.arg(format!("--max-count={}", max_count));
+    
+    if oneline {
+        cmd.arg("--oneline");
+    }
+
+    match cmd.output() {
+        Ok(out) if out.status.success() => {
+            let output = String::from_utf8_lossy(&out.stdout);
+            let commits: Vec<String> = output
+                .lines()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect();
+            Ok(commits)
+        }
+        _ => Ok(Vec::new()),
+    }
+}
+
+/// Fetch from remotes (git fetch equivalent)
+#[pyfunction]
+#[pyo3(signature = (path=None, remote=None, prune=false))]
+pub fn fetch(path: Option<String>, remote: Option<String>, prune: bool) -> PyResult<bool> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(&p).arg("fetch");
+    
+    if let Some(r) = remote {
+        cmd.arg(&r);
+    }
+    
+    if prune {
+        cmd.arg("--prune");
+    }
+
+    match cmd.output() {
+        Ok(out) => Ok(out.status.success()),
+        Err(_) => Ok(false),
+    }
+}
+
+/// Get current HEAD ref name
+#[pyfunction]
+#[pyo3(signature = (path=None))]
+pub fn get_head_ref(path: Option<String>) -> PyResult<Option<String>> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(&p)
+        .arg("symbolic-ref")
+        .arg("--quiet")
+        .arg("HEAD")
+        .output();
+
+    match output {
+        Ok(out) if out.status.success() => Ok(Some(
+            String::from_utf8_lossy(&out.stdout).trim().to_string(),
+        )),
+        _ => Ok(None),
+    }
+}
+
+/// Check if repo has uncommitted changes
+#[pyfunction]
+#[pyo3(signature = (path=None))]
+pub fn has_changes(path: Option<String>) -> PyResult<bool> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(&p)
+        .arg("status")
+        .arg("--porcelain")
+        .output();
+
+    match output {
+        Ok(out) => {
+            let output_str = String::from_utf8_lossy(&out.stdout);
+            Ok(!output_str.trim().is_empty())
+        }
+        Err(_) => Ok(false),
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Module Definition
 // ---------------------------------------------------------------------------
