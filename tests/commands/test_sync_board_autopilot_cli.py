@@ -8,8 +8,11 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
+from thegent.cli.apps import sync as sync_app
 from thegent.cli.apps.sync import app
+from thegent.commands import sync as sync_commands
 from thegent.commands.sync import OperationResult, SyncOperationStatus
+from thegent.integrations import workstream_autosync
 
 
 class _SyncCommandStub:
@@ -189,7 +192,7 @@ class _SyncCommandLocalOrphansFailedStub:
 
 @pytest.mark.unit
 def test_sync_board_success_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandStub)
+    monkeypatch.setattr(sync_commands, "SyncCommand", _SyncCommandStub)
 
     result = CliRunner().invoke(app, ["board", "--board", "42", "--source", "github"])
 
@@ -200,7 +203,7 @@ def test_sync_board_success_path(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.unit
 def test_sync_board_dry_run_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandDryRunStub)
+    monkeypatch.setattr(sync_commands, "SyncCommand", _SyncCommandDryRunStub)
 
     result = CliRunner().invoke(app, ["board", "--board", "42", "--source", "linear", "--dry-run"])
 
@@ -211,7 +214,7 @@ def test_sync_board_dry_run_path(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.unit
 def test_sync_board_failed_path_exits_nonzero(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandFailedStub)
+    monkeypatch.setattr(sync_commands, "SyncCommand", _SyncCommandFailedStub)
 
     result = CliRunner().invoke(app, ["board", "--board", "42", "--source", "github"])
 
@@ -222,7 +225,7 @@ def test_sync_board_failed_path_exits_nonzero(monkeypatch: pytest.MonkeyPatch) -
 
 @pytest.mark.unit
 def test_sync_board_passes_wl_range_and_batch_size(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandRangeStub)
+    monkeypatch.setattr(sync_commands, "SyncCommand", _SyncCommandRangeStub)
 
     result = CliRunner().invoke(
         app,
@@ -248,7 +251,7 @@ def test_sync_board_passes_wl_range_and_batch_size(monkeypatch: pytest.MonkeyPat
 
 @pytest.mark.unit
 def test_sync_dead_letter_replay_success_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandDeadLetterReplayStub)
+    monkeypatch.setattr(sync_commands, "SyncCommand", _SyncCommandDeadLetterReplayStub)
 
     result = CliRunner().invoke(
         app,
@@ -262,7 +265,7 @@ def test_sync_dead_letter_replay_success_path(monkeypatch: pytest.MonkeyPatch) -
 
 @pytest.mark.unit
 def test_sync_local_orphans_success_path(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandLocalOrphansStub)
+    monkeypatch.setattr(sync_commands, "SyncCommand", _SyncCommandLocalOrphansStub)
 
     result = CliRunner().invoke(app, ["local-orphans"])
 
@@ -272,7 +275,7 @@ def test_sync_local_orphans_success_path(monkeypatch: pytest.MonkeyPatch) -> Non
 
 @pytest.mark.unit
 def test_sync_local_orphans_failed_path_exits_nonzero(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("thegent.commands.sync.SyncCommand", _SyncCommandLocalOrphansFailedStub)
+    monkeypatch.setattr(sync_commands, "SyncCommand", _SyncCommandLocalOrphansFailedStub)
 
     result = CliRunner().invoke(app, ["local-orphans"])
 
@@ -283,7 +286,7 @@ def test_sync_local_orphans_failed_path_exits_nonzero(monkeypatch: pytest.Monkey
 class _ValidConfig:
     cycle_interval_seconds = 300
     dry_run = False
-    bootstrap_required_fields: list[str] = []
+    bootstrap_required_fields: tuple[str, ...] = ()
     bootstrap_mapping_cache_path = None
     bootstrap_connector = "github"
 
@@ -300,7 +303,7 @@ class _ValidConfig:
 class _InvalidConfig:
     cycle_interval_seconds = 300
     dry_run = False
-    bootstrap_required_fields: list[str] = []
+    bootstrap_required_fields: tuple[str, ...] = ()
     bootstrap_mapping_cache_path = None
     bootstrap_connector = "github"
 
@@ -338,7 +341,7 @@ class _RunnerStub:
 class _ConfigSurfaceCapture:
     cycle_interval_seconds = 300
     dry_run = False
-    bootstrap_required_fields: list[str] = []
+    bootstrap_required_fields: tuple[str, ...] = ()
     bootstrap_mapping_cache_path = None
     bootstrap_connector = "github"
     simulation_mode = False
@@ -372,11 +375,13 @@ def test_sync_autopilot_once_json_path(monkeypatch: pytest.MonkeyPatch) -> None:
     runner = _RunnerStub(config=_ValidConfig())
 
     monkeypatch.setattr(
-        "thegent.integrations.workstream_autosync.load_autosync_config_from_env",
+        workstream_autosync,
+        "load_autosync_config_from_env",
         lambda: _ValidConfig(),
     )
     monkeypatch.setattr(
-        "thegent.integrations.workstream_autosync.WorkstreamAutosyncRunner",
+        workstream_autosync,
+        "WorkstreamAutosyncRunner",
         lambda config: runner,
     )
 
@@ -402,11 +407,13 @@ def test_sync_autopilot_once_surface_flags_map_to_config(monkeypatch: pytest.Mon
             captured["config"] = config
 
     monkeypatch.setattr(
-        "thegent.integrations.workstream_autosync.load_autosync_config_from_env",
+        workstream_autosync,
+        "load_autosync_config_from_env",
         load_config,
     )
     monkeypatch.setattr(
-        "thegent.integrations.workstream_autosync.WorkstreamAutosyncRunner",
+        workstream_autosync,
+        "WorkstreamAutosyncRunner",
         lambda config: _RunnerSurfaceStub(config),
     )
 
@@ -435,7 +442,8 @@ def test_sync_autopilot_once_surface_flags_map_to_config(monkeypatch: pytest.Mon
 @pytest.mark.unit
 def test_sync_autopilot_invalid_config_exits_zero_with_guidance(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "thegent.integrations.workstream_autosync.load_autosync_config_from_env",
+        workstream_autosync,
+        "load_autosync_config_from_env",
         lambda: _InvalidConfig(),
     )
 
@@ -572,3 +580,20 @@ tenancy:
     assert payload["schema_version"] == "sync-policy/v1"
     assert payload["enabled_connectors"] == ["github"]
     assert payload["policy_modes"] == {"github": "enforce"}
+    assert payload["tenancy"]["mode"] == "single_project"
+    assert payload["tenancy"]["default_tenant"] == "tenant-default"
+
+
+@pytest.mark.unit
+def test_sync_serialize_model_data_supports_pydantic_shapes() -> None:
+    class _PydanticV2:
+        def model_dump(self, mode: str = "python") -> dict[str, Any]:
+            assert mode == "python"
+            return {"source": "v2"}
+
+    class _PydanticV1:
+        def dict(self) -> dict[str, Any]:
+            return {"source": "v1"}
+
+    assert sync_app._serialize_model_data(_PydanticV2()) == {"source": "v2"}
+    assert sync_app._serialize_model_data(_PydanticV1()) == {"source": "v1"}

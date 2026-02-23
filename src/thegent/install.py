@@ -152,8 +152,8 @@ def setup_hooks(cwd: Path | None = None, dry_run: bool = False, verbose: bool = 
 
     # Map git hook names to thegent hook scripts
     hook_map = {
-        "pre-commit": "quality-gate.sh",  # Primary; fallback to pre-commit-docs if project has docs
-        "pre-push": "quality-gate.sh",
+        "pre-commit": "pre-commit-quality.sh",
+        "pre-push": "pre-push-quality.sh",
     }
 
     for hook_name, default_script in hook_map.items():
@@ -175,9 +175,12 @@ def _setup_git_hook(
     dst = git_hooks / hook_name
     hook_script = hooks_src / default_script
     if not hook_script.exists():
-        hook_script = next(
-            (hooks_src / s for s in ("pre-commit-docs.sh", "quality-gate.sh") if (hooks_src / s).exists()), None
-        )
+        fallback_map = {
+            "pre-commit": ("pre-commit-docs.sh", "quality-gate.sh"),
+            "pre-push": ("quality-gate.sh",),
+        }
+        candidates = fallback_map.get(hook_name, ("quality-gate.sh",))
+        hook_script = next((hooks_src / s for s in candidates if (hooks_src / s).exists()), None)
     if not hook_script or not hook_script.exists():
         return
     wrapper = f"""#!/bin/sh

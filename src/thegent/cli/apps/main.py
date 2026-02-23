@@ -213,6 +213,18 @@ def review_cmd(
     raise typer.Exit(1 if issues else 0)
 
 
+@app.command("doctor", help="Run system doctor checks.")
+def doctor_cmd(
+    fix: bool = typer.Option(False, "--fix", "-f", help="Attempt to apply automatic fixes"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show planned fixes without applying them"),
+) -> None:
+    """Run thegent doctor from the unified top-level command surface."""
+    from thegent.doctor import run_doctor
+
+    success = run_doctor(fix=fix, dry_run=dry_run)
+    raise typer.Exit(0 if success else 1)
+
+
 @app.command("resume", help="Resume a session (shortcut for `thegent run resume`).")
 def resume_top_level(
     session_id: str | None = typer.Argument(None, help="Session ID to resume (defaults to latest resumable)"),

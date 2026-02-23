@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import time
 import os
+import stat
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
@@ -166,6 +167,16 @@ class TestDetectAgents:
         found = detect_agents(patterns)
         assert found == []
 
+    # @trace SCLI-P1.2
+    @patch("thegent.mesh.process_detection.get_processes")
+    def test_invalid_regex_raises_value_error(self, mock_procs: MagicMock) -> None:
+        """Invalid pattern config fails loudly with agent key context."""
+        mock_procs.return_value = [{"pid": 1, "cmd": "claude-code"}]
+        patterns = {"claude": r"[unterminated"}
+
+        with pytest.raises(ValueError, match="claude"):
+            detect_agents(patterns)
+
 
 # ---------------------------------------------------------------------------
 # TGNT-P12.1 - MeshManager.discover_agents (psutil-based)
@@ -248,6 +259,28 @@ class TestManifest:
 
         data = yaml.safe_load((mgr.agents_dir / "agent-003.yaml").read_text())
         assert data["pid"] == 200
+
+
+class TestMeshInit:
+    """SCLI-P1.4 mesh directory initialization contract."""
+
+    # @trace SCLI-P1.4
+    def test_mesh_init_creates_required_directories(self, tmp_path: Path) -> None:
+        mgr = MeshManager(mesh_root=tmp_path / "mesh")
+        assert mgr.agents_dir.is_dir()
+        assert mgr.queue_dir.is_dir()
+        assert mgr.tasks_dir.is_dir()
+        assert mgr.intents_dir.is_dir()
+        assert mgr.locks_dir.is_dir()
+        assert mgr.metrics_dir.is_dir()
+
+    # @trace SCLI-P1.4
+    def test_mesh_init_sets_sticky_bit_on_shared_dirs(self, tmp_path: Path) -> None:
+        mgr = MeshManager(mesh_root=tmp_path / "mesh")
+        queue_mode = mgr.queue_dir.stat().st_mode
+        locks_mode = mgr.locks_dir.stat().st_mode
+        assert queue_mode & stat.S_ISVTX
+        assert locks_mode & stat.S_ISVTX
 
 
 # ---------------------------------------------------------------------------

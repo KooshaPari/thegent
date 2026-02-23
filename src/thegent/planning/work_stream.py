@@ -168,7 +168,7 @@ class WorkStreamManager:
         item_id = cells[0]
         if not item_id or item_id.upper() == "ID" or item_id.startswith("*(") or all(ch in "-:" for ch in item_id):
             return None
-        return item_id
+        return item_id.strip().strip("~")
 
     def _extract_section_ids(self, content: str, section_header: str) -> list[str]:
         ids: list[str] = []

@@ -70,9 +70,11 @@ _FORWARD_HEADERS: frozenset[str] = frozenset({"x-session-id", "x-anthropic-beta"
 
 # OR-18: Providers that support the Responses API natively (no transform required).
 _NATIVE_RESPONSES_PROVIDERS: frozenset[str] = frozenset({"openrouter"})
+_UNSUPPORTED_SCHEMA_KEYS: frozenset[str] = frozenset({"$id", "patternProperties"})
 
 # OR-19: Path to the generation-id store (append-only JSONL).
 _GENERATION_ID_STORE: Path = Path.home() / ".thegent" / "generation_id_store.jsonl"
+_THINKING_SIGNATURE_KEYS: frozenset[str] = frozenset({"signature", "thought_signature", "metadata"})
 
 
 def _extract_forward_headers(request: Request) -> dict[str, str]:
@@ -217,7 +219,7 @@ def _to_json_compatible(value: Any, _seen: set[int] | None = None) -> Any:
     if value is None:
         return None
 
-    if isinstance(value, (str, int, float, bool)):
+    if isinstance(value, str | int | float | bool):
         return value
 
     if isinstance(value, (list | tuple)):
@@ -241,6 +243,21 @@ def _to_json_compatible(value: Any, _seen: set[int] | None = None) -> Any:
     return str(value)
 
 
+def _strip_thinking_signatures(content: Any) -> Any:
+    """Strip provider-specific thinking signatures from message content blocks."""
+    if not isinstance(content, list):
+        return content
+
+    sanitized: list[dict[str, Any]] = []
+    for part in content:
+        if isinstance(part, dict):
+            sanitized.append({k: v for k, v in part.items() if k not in _THINKING_SIGNATURE_KEYS})
+            continue
+        if isinstance(part, str):
+            sanitized.append({"type": "text", "text": part})
+    return sanitized or [{"type": "text", "text": ""}]
+
+
 def _responses_input_to_messages(input_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Convert Responses API input items to Chat Completions messages.
 
@@ -255,19 +272,124 @@ def _responses_input_to_messages(input_items: list[dict[str, Any]]) -> list[dict
             role = item.get("role", "user")
             content = item.get("content")
             if isinstance(content, list):
-                # OR-16: preserve full content array — do NOT collapse to plain string;
-                # collapsing discards cache_control and other per-block annotations.
-                enriched: list[dict[str, Any]] = []
-                for c in content:
-                    if isinstance(c, dict):
-                        enriched.append(c)
-                    elif isinstance(c, str):
-                        enriched.append({"type": "text", "text": c})
-                content = enriched or [{"type": "text", "text": ""}]
+                # OR-16: preserve full content arrays while dropping stale signature blocks.
+                content = _strip_thinking_signatures(content)
             elif not isinstance(content, str):
                 content = str(content) if content else ""
             messages.append({"role": role, "content": content})
     return messages
+
+
+def _normalize_tool_choice_name(chat_body: dict[str, Any]) -> None:
+    """Align tool_choice naming with tools[] declarations."""
+    tools = chat_body.get("tools")
+    tool_choice = chat_body.get("tool_choice")
+    if not isinstance(tools, list) or not isinstance(tool_choice, dict):
+        return
+
+    declared_names: set[str] = set()
+    for tool in tools:
+        if not isinstance(tool, dict):
+            continue
+        fn = tool.get("function")
+        if isinstance(fn, dict):
+            fn_name = fn.get("name")
+            if isinstance(fn_name, str) and fn_name:
+                declared_names.add(fn_name)
+                continue
+        raw_name = tool.get("name")
+        if isinstance(raw_name, str) and raw_name:
+            declared_names.add(raw_name)
+
+    if not declared_names:
+        return
+
+    fn_choice = tool_choice.get("function")
+    if isinstance(fn_choice, dict):
+        choice_name = fn_choice.get("name")
+        if isinstance(choice_name, str) and choice_name.startswith("proxy_"):
+            unprefixed = choice_name.removeprefix("proxy_")
+            if unprefixed in declared_names:
+                fn_choice["name"] = unprefixed
+        return
+
+    choice_name = tool_choice.get("name")
+    if isinstance(choice_name, str) and choice_name.startswith("proxy_"):
+        unprefixed = choice_name.removeprefix("proxy_")
+        if unprefixed in declared_names:
+            tool_choice["name"] = unprefixed
+
+
+def _normalize_schema_for_provider(value: Any) -> Any:
+    """Normalize tool schema payloads for provider compatibility."""
+    if isinstance(value, list):
+        return [_normalize_schema_for_provider(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+
+    normalized: dict[str, Any] = {}
+    for key, raw in value.items():
+        if key in _UNSUPPORTED_SCHEMA_KEYS:
+            continue
+        normalized[key] = _normalize_schema_for_provider(raw)
+
+    schema_type = normalized.get("type")
+    if isinstance(schema_type, list):
+        string_types = [entry for entry in schema_type if isinstance(entry, str)]
+        non_null_types = [entry for entry in string_types if entry != "null"]
+        has_null = "null" in string_types
+        if has_null and len(non_null_types) == 1:
+            normalized["type"] = non_null_types[0]
+            normalized["nullable"] = True
+        elif non_null_types:
+            normalized.pop("type", None)
+            any_of = [{"type": entry} for entry in non_null_types]
+            if has_null:
+                any_of.append({"type": "null"})
+            normalized["anyOf"] = any_of
+        else:
+            normalized.pop("type", None)
+    return normalized
+
+
+def _normalize_tool(tool: dict[str, Any]) -> dict[str, Any]:
+    """Normalize OpenAI Responses-style tool definitions for Chat Completions."""
+    tool_type = tool.get("type")
+    if tool_type == "custom":
+        function_name = tool.get("name")
+        if not isinstance(function_name, str) or not function_name:
+            return tool
+        function: dict[str, Any] = {
+            "name": function_name,
+            "parameters": _normalize_schema_for_provider(tool.get("input_schema") or {}),
+        }
+        description = tool.get("description")
+        if isinstance(description, str) and description:
+            function["description"] = description
+        converted: dict[str, Any] = {"type": "function", "function": function}
+        if "strict" in tool:
+            converted["strict"] = tool["strict"]
+        return converted
+    if tool_type == "function":
+        function = tool.get("function")
+        if isinstance(function, dict) and "parameters" in function:
+            converted = dict(tool)
+            converted_function = dict(function)
+            converted_function["parameters"] = _normalize_schema_for_provider(function.get("parameters"))
+            converted["function"] = converted_function
+            return converted
+    return tool
+
+
+def _normalize_tool_choice(chat_body: dict[str, Any]) -> None:
+    """Normalize tool_choice payloads before name-alignment logic."""
+    tool_choice = chat_body.get("tool_choice")
+    if not isinstance(tool_choice, dict):
+        return
+    if tool_choice.get("type") == "custom":
+        name = tool_choice.get("name")
+        if isinstance(name, str) and name:
+            chat_body["tool_choice"] = {"type": "function", "function": {"name": name}}
 
 
 def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
@@ -283,6 +405,8 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(input_items, list):
         input_items = []
     messages = _responses_input_to_messages(input_items)
+    if not messages and isinstance(body.get("messages"), list):
+        messages = body.get("messages")
     if not messages:
         messages = [{"role": "user", "content": ""}]
 
@@ -313,6 +437,8 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
         "tool_choice",
         "parallel_tool_calls",
         "stream_options",
+        "thinking",
+        "output_config",
     ):
         val = body.get(_field)
         if val is not None:
@@ -338,6 +464,23 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
         if val is not None:
             chat[_or_field] = val
 
+    tools = chat.get("tools")
+    if isinstance(tools, list):
+        chat["tools"] = [_normalize_tool(tool) for tool in tools if isinstance(tool, dict)]
+
+    response_format = chat.get("response_format")
+    if isinstance(response_format, dict):
+        updated_response_format = dict(response_format)
+        json_schema = updated_response_format.get("json_schema")
+        if isinstance(json_schema, dict) and "schema" in json_schema:
+            updated_json_schema = dict(json_schema)
+            updated_json_schema["schema"] = _normalize_schema_for_provider(json_schema.get("schema"))
+            updated_response_format["json_schema"] = updated_json_schema
+        chat["response_format"] = updated_response_format
+
+    if "structured_outputs" in chat:
+        chat["structured_outputs"] = _normalize_schema_for_provider(chat["structured_outputs"])
+
     # GW-12: extract models[] array for fallback chain support.
     # Stored as _models (underscore prefix) to avoid collision with LiteLLM's
     # model param. When present and len > 1, handle_responses_request uses
@@ -349,6 +492,8 @@ def _responses_to_chat_completions(body: dict[str, Any]) -> dict[str, Any]:
         if not chat.get("model"):
             chat["model"] = models_list[0]
 
+    _normalize_tool_choice(chat)
+    _normalize_tool_choice_name(chat)
     return chat
 
 
@@ -533,21 +678,17 @@ async def _forward_native_responses(
 
     # WL-071: Reuse persistent client — no context manager; client lives for process lifetime.
     client = _get_http_client()
-    post_target: httpx.AsyncClient = client
-    aenter = getattr(client, "__aenter__", None)
-    if callable(aenter):
-        entered_client = aenter()
-        post_target = cast(
-            "httpx.AsyncClient", await entered_client if inspect.isawaitable(entered_client) else entered_client
-        )
-
-    post_result = post_target.post(target_url, content=raw_body, headers=headers)
+    post_result = client.post(target_url, content=raw_body, headers=headers)
     resp = await post_result if inspect.isawaitable(post_result) else post_result
+
+    resp_headers = resp.headers
+    if inspect.isawaitable(resp_headers):
+        resp_headers = await resp_headers
 
     return Response(
         content=resp.content,
         status_code=resp.status_code,
-        headers={k: v for k, v in resp.headers.items() if k.lower() not in ("transfer-encoding", "connection")},
+        headers={k: v for k, v in resp_headers.items() if k.lower() not in ("transfer-encoding", "connection")},
     )
 
 

@@ -25,6 +25,9 @@ CODEX_TO_BACKEND_MODEL: dict[str, str] = {
     # Kilo, Roo
     "codex-kilo-default": "kilo-default",
     "codex-roo-default": "roo-default",
+    # Claude thinking aliases
+    "claude-opus-4-6-thinking": "claude-opus-4-6",
+    "claude-opus-4.6-thinking": "claude-opus-4-6",
 }
 
 # Thegent canonical alias -> OpenRouter model ID

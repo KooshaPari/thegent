@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """ConfigProvider abstraction for control plane integration.
 
 Phase 1: EnvConfigProvider wraps ThegentSettings.
@@ -36,12 +38,11 @@ _last_provider_metadata: dict[str, Any] = {
 }
 
 
-def _attach_provider_metadata(provider: Any, metadata: dict[str, Any]) -> ConfigProvider:
+def _attach_provider_metadata(provider: ConfigProvider, metadata: dict[str, Any]) -> ConfigProvider:
     try:
         provider.provider_metadata = dict(metadata)
     except (AttributeError, TypeError):
-        if isinstance(provider, dict):
-            provider["provider_metadata"] = dict(metadata)
+        logger.debug("Failed to attach provider metadata to %s", type(provider).__name__, exc_info=True)
     return provider
 
 

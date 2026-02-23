@@ -75,28 +75,28 @@ repos:
     hooks:
       - id: dx-audit
         name: DX Standards Audit
-        stages: [pre-commit, pre-push]
+        stages: [pre-push]
         entry: bash scripts/dx-audit.sh
         language: system
         pass_filenames: false
 
       - id: max-lines-gate
         name: Canonical Max-Lines Gate
-        stages: [pre-commit, pre-push]
+        stages: [pre-push]
         entry: task quality:max-lines
         language: system
         pass_filenames: false
 
       - id: tach
         name: Architectural Boundary Check
-        stages: [pre-commit, pre-push]
+        stages: [pre-push]
         entry: tach check
         language: system
         pass_filenames: false
 
       - id: ty
         name: Fast Type Check (ty) (Gate 3)
-        stages: [pre-commit, pre-push]
+        stages: [pre-push]
         entry: uv run ty check src/
         language: system
         pass_filenames: false
@@ -104,7 +104,7 @@ repos:
 
       - id: basedpyright
         name: Strict Type Check (basedpyright) (Gate 3)
-        stages: [pre-commit, pre-push]
+        stages: [pre-push]
         entry: uv run basedpyright src/
         language: system
         pass_filenames: false

@@ -4,6 +4,8 @@ Tests the resource prediction engine for forecasting spawn impact
 and managing historical usage data.
 """
 
+import resource
+
 import pytest
 
 from thegent.infra.resource_management import (
@@ -346,6 +348,86 @@ class TestResourceManagerBasics:
         # Should have these keys for a valid process
         assert "pid" in result
         assert result["pid"] == os.getpid()
+
+
+class TestResourceManagerLimitEnforcement:
+    """Tests for hard resource limit enforcement in apply_limits."""
+
+    def test_apply_limits_rejects_invalid_inputs(self):
+        manager = ResourceManager()
+        with pytest.raises(ValueError, match="memory_mb"):
+            manager.apply_limits(memory_mb=0, proc_limit=100)
+        with pytest.raises(ValueError, match="proc_limit"):
+            manager.apply_limits(memory_mb=512, proc_limit=0)
+
+    def test_apply_limits_sets_expected_targets(self, monkeypatch: pytest.MonkeyPatch):
+        manager = ResourceManager()
+
+        limits = {
+            "AS": (10_000_000_000, 10_000_000_000),
+            "NPROC": (1000, 1000),
+            "NOFILE": (4096, 4096),
+        }
+        set_calls: list[tuple[int, tuple[int, int]]] = []
+
+        def _kind_name(kind: int) -> str:
+            if kind == resource.RLIMIT_AS:
+                return "AS"
+            if kind == resource.RLIMIT_NPROC:
+                return "NPROC"
+            if kind == resource.RLIMIT_NOFILE:
+                return "NOFILE"
+            raise AssertionError(f"unexpected kind: {kind}")
+
+        def _fake_getrlimit(kind: int):
+            return limits[_kind_name(kind)]
+
+        def _fake_setrlimit(kind: int, value: tuple[int, int]):
+            set_calls.append((kind, value))
+            limits[_kind_name(kind)] = value
+
+        monkeypatch.setattr("thegent.infra.resource_management.resource.getrlimit", _fake_getrlimit)
+        monkeypatch.setattr("thegent.infra.resource_management.resource.setrlimit", _fake_setrlimit)
+        monkeypatch.setattr("thegent.infra.resource_management.resource.RLIM_INFINITY", -1)
+
+        applied = manager.apply_limits(memory_mb=512, proc_limit=200)
+        assert applied["memory"][0] == 512 * 1024 * 1024
+        assert applied["processes"][0] == 200
+        assert applied["nofile"][0] == 1024
+        assert len(set_calls) == 3
+
+    def test_apply_limits_clamps_to_hard_limit(self, monkeypatch: pytest.MonkeyPatch):
+        manager = ResourceManager()
+
+        as_hard = 256 * 1024 * 1024
+        limits = {
+            "AS": (as_hard, as_hard),
+            "NPROC": (64, 64),
+            "NOFILE": (512, 512),
+        }
+
+        def _kind_name(kind: int) -> str:
+            if kind == resource.RLIMIT_AS:
+                return "AS"
+            if kind == resource.RLIMIT_NPROC:
+                return "NPROC"
+            if kind == resource.RLIMIT_NOFILE:
+                return "NOFILE"
+            raise AssertionError(f"unexpected kind: {kind}")
+
+        monkeypatch.setattr(
+            "thegent.infra.resource_management.resource.getrlimit", lambda kind: limits[_kind_name(kind)]
+        )
+        monkeypatch.setattr(
+            "thegent.infra.resource_management.resource.setrlimit",
+            lambda kind, value: limits.__setitem__(_kind_name(kind), value),
+        )
+        monkeypatch.setattr("thegent.infra.resource_management.resource.RLIM_INFINITY", -1)
+
+        applied = manager.apply_limits(memory_mb=1024, proc_limit=1000)
+        assert applied["memory"][0] == as_hard
+        assert applied["processes"][0] == 64
+        assert applied["nofile"][0] == 512
 
 
 if __name__ == "__main__":

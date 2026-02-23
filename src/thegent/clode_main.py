@@ -66,6 +66,9 @@ _MODEL_COUNTER = _clode_model_routing.MODEL_COUNTER
 _MODEL_PROVIDERS = _clode_model_routing.MODEL_PROVIDERS
 _CLODE_PROVIDER_MODEL = _clode_model_routing.CLODE_PROVIDER_MODEL
 _GLM_POLICY_COUNTER: Counter[str] = Counter()
+_CLODE_BYPASS_FLAG = "--dangerously-skip-permissions"
+_SITBACK_CLODE_YOLO_FLAG = "--yolo"
+_SITBACK_CLODE_BYPASS_FLAG = "--dangerously-bypass-approvals-and-sandbox"
 
 
 @app.callback(invoke_without_command=True)
@@ -186,7 +189,7 @@ def _get_claude_env(provider: str, model_override: str | None = None) -> dict[st
     env["ANTHROPIC_SMALL_FAST_MODEL"] = model
     env["CLAUDE_MODEL"] = model
     env["API_TIMEOUT_MS"] = "300000"
-    if provider == "glm" or settings.sitback:
+    if provider in ("glm", "auto") or settings.sitback:
         env["THGENT_ROUTING"] = "round_robin"
     env["PATH"] = os.environ.get("PATH", "")
     return env
@@ -268,7 +271,7 @@ def _run_claude_print(
 
     cmd = [claude_path, "-p", prompt]
     if not _is_triggered_by_agent_process():
-        cmd.insert(1, "--force")
+        cmd.insert(1, _CLODE_BYPASS_FLAG)
     extra = _clode_passthrough_args(cd=cd, add_dir=add_dir, output_format=output_format)
     cmd.extend(extra)
 
@@ -279,11 +282,19 @@ def _run_claude_print(
     cmd = wrap_with_caffeinate(cmd, "claude")
 
     console.print(f"[bold green]Claude print (headless) via {provider}...[/bold green]")
-    os.execvpe(cmd[0], cmd, env)
+    timeout_seconds = int(env.get("THGENT_CLODE_PRINT_TIMEOUT", "45"))
+    try:
+        result = subprocess.run(cmd, env=env, check=False, timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        console.print(f"[red]Error: clode print timed out after {timeout_seconds}s.[/red]")
+        raise typer.Exit(124)
+    raise typer.Exit(result.returncode)
 
 
 def _ensure_provider_configured(provider: str) -> None:
     """Check if provider is configured in cliproxy; offer to run setup if not."""
+    if provider == "auto":
+        return
     settings = _get_settings()
     config_path = settings.cliproxy_config_path.expanduser().resolve()
     if not config_path.exists():
@@ -344,10 +355,10 @@ def _run_claude_interactive(
     # WP-Y11: Human-driven runs get bypass by default; agent-triggered runs never do
     cmd = [claude_path]
     if not _is_triggered_by_agent_process():
-        cmd.append("--force")
+        cmd.append(_CLODE_BYPASS_FLAG)
     if extra_args:
         for arg in extra_args:
-            if arg != "--force":
+            if arg not in {"--force", _CLODE_BYPASS_FLAG}:
                 cmd.append(arg)
 
     # Wrap with caffeinate to prevent sleep on macOS
@@ -372,7 +383,7 @@ def create_provider_app(provider: str) -> typer.Typer:
             model = env["ANTHROPIC_MODEL"]
             extra = ["--model", model]
             if not _is_triggered_by_agent_process():
-                extra.append("--force")
+                extra.append(_CLODE_BYPASS_FLAG)
             _run_claude_interactive(
                 provider,
                 model_override=model,
@@ -604,7 +615,7 @@ def _run_model_interactive(
 
     extra: list[str] = ["--model", model]
     if not _is_triggered_by_agent_process():
-        extra.append("--force")
+        extra.append(_CLODE_BYPASS_FLAG)
     extra.extend(
         _clode_passthrough_args(
             cd=cd, debug=debug, add_dir=add_dir, output_format=output_format, continue_session=continue_session
@@ -992,6 +1003,11 @@ def clode_run_global(
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
     mode: str = typer.Option("write", "--mode", "-m", help="write | read-only"),
     timeout: int = typer.Option(90, "--timeout", "-t", help="Timeout in seconds"),
+    remote: str | None = typer.Option(
+        None,
+        "--remote",
+        help="Execute on remote node by hostname/IP (e.g. remote.example.com)",
+    ),
 ) -> None:
     """Run a task via Claude Code. Model-first, no provider filter."""
     canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
@@ -1004,6 +1020,7 @@ def clode_run_global(
         mode=mode,
         timeout=timeout,
         model=canonical,
+        remote=remote,
     )
 
 
@@ -1017,6 +1034,11 @@ def clode_bg_global(
     mode: str = typer.Option("write", "--mode", "-m", help="write | read-only"),
     timeout: int = typer.Option(90, "--timeout", "-t", help="Timeout in seconds"),
     owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag"),
+    remote: str | None = typer.Option(
+        None,
+        "--remote",
+        help="Execute on remote node by hostname/IP (e.g. remote.example.com)",
+    ),
 ) -> None:
     """Start a background task via Claude Code. Model-first, no provider filter."""
     canonical = _MODEL_ALIAS.get(model_alias.lower(), model_alias)
@@ -1031,6 +1053,7 @@ def clode_bg_global(
         full=False,
         model=canonical,
         owner=owner,
+        remote=remote,
     )
 
 
@@ -1207,7 +1230,7 @@ def _run_sitback_claude(
     model = env.get("ANTHROPIC_MODEL", "MiniMax-M2.5")
     cmd = [claude_path, "--model", model]
     if not _is_triggered_by_agent_process():
-        cmd.insert(1, "--force")
+        cmd.insert(1, _CLODE_BYPASS_FLAG)
     if startup_path:
         prompt = Path(startup_path).read_text()
         cmd.append(prompt)
@@ -1301,7 +1324,7 @@ def _run_sitback_codex(
 
     cmd = [codex_path]
     if not _is_triggered_by_agent_process():
-        cmd.append("--dangerously-bypass-approvals-and-sandbox")
+        cmd.extend([_SITBACK_CLODE_YOLO_FLAG, _SITBACK_CLODE_BYPASS_FLAG])
     cmd.extend(["--model", canonical])
     if startup_path:
         cmd.append(Path(startup_path).read_text())

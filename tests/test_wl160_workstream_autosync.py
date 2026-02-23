@@ -10,6 +10,7 @@ Tests cover:
 """
 
 import os
+from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import json
 from unittest.mock import patch
@@ -922,6 +923,7 @@ Extra: owner/repo#456
         valid_github_config.github_auto_close_comment = "Closed via autosync."
 
         runner = WorkstreamAutosyncRunner(valid_github_config)
+        runner._idempotency_cache = IdempotencyCache(cache_path=tmp_path / "idempotency_cache.json")
         items = WorkstreamParser.parse_items(work_stream)
 
         with (
@@ -951,7 +953,7 @@ Extra: owner/repo#456
 
         assert close_mock.call_count == 1
         called_args, called_kwargs = close_mock.call_args
-        assert called_args[0] == ["owner/repo#123"]
+        assert set(called_args[0]) == {"#123", "owner/repo#123", "#456", "owner/repo#456"}
         assert called_kwargs["close_comment"] == "Closed via autosync."
 
     @pytest.mark.asyncio
@@ -1809,6 +1811,7 @@ class TestAnnotationAndReflectionStandard:
         raw = log_path.read_text(encoding="utf-8").strip()
         assert '"annotation"' in raw
         assert '"schema": "reflection-annotation-v1"' in raw
+
 
 class TestAutosyncRunbookCoverage:
     """Runbook documentation coverage for autosync incidents."""

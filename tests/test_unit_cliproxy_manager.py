@@ -443,6 +443,16 @@ class TestRunLoginAdditionalProviders:
         cmd = mock_run.call_args[0][0]
         assert "-login" in cmd
 
+    @patch("thegent.agents.cliproxy_manager.run_login_unified")
+    def test_qwen_login_uses_api_key_flow(self, mock_unified: MagicMock) -> None:
+        """CLIP-BUG-08: qwen login should use unified API-key flow, not OAuth flag."""
+        mock_unified.return_value = 0
+
+        rc = run_login(ThegentSettings(), "qwen")
+
+        assert rc == 0
+        mock_unified.assert_called_once()
+
     @patch("thegent.agents.cliproxy_manager._resolve_binary")
     @patch("thegent.agents.cliproxy_manager._binary_available")
     def test_login_binary_not_found_raises(

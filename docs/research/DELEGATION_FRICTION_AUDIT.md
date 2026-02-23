@@ -73,4 +73,12 @@
 
 ---
 
-**Status:** ✅ **IMPROVEMENTS DELEGATED TO AGENTS**
+**Status:** ✅ **FRICTION AUDIT CLOSED**
+
+## Closure Evidence (2026-02-23)
+
+The friction points identified in this audit now map to implemented command surface:
+
+1. Status visibility is available through `thegent status <id>`, `thegent ps`, and `thegent wait <id>`.
+2. Teammate delegation is available through `thegent teammates delegate` and `thegent teammates list`.
+3. Work-stream continuation is available through `thegent free --do-next` and `thegent free --do-next --repeat N`.

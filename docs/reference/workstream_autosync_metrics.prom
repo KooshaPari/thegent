@@ -32,7 +32,7 @@ thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="read",le="10"} 2
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="read",le="+Inf"} 2
 thegent_autosync_connector_operation_duration_seconds_count{connector="github",direction="read"} 2
-thegent_autosync_connector_operation_duration_seconds_sum{connector="github",direction="read"} 2.82346
+thegent_autosync_connector_operation_duration_seconds_sum{connector="github",direction="read"} 2.6658
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="write",le="0.005"} 1
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="write",le="0.01"} 1
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="write",le="0.025"} 1
@@ -46,7 +46,7 @@ thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="write",le="10"} 1
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="write",le="+Inf"} 1
 thegent_autosync_connector_operation_duration_seconds_count{connector="github",direction="write"} 1
-thegent_autosync_connector_operation_duration_seconds_sum{connector="github",direction="write"} 0.00163163
+thegent_autosync_connector_operation_duration_seconds_sum{connector="github",direction="write"} 0.000420083
 # HELP thegent_autosync_cycle_duration_seconds Autosync cycle duration in seconds
 # TYPE thegent_autosync_cycle_duration_seconds histogram
 thegent_autosync_cycle_duration_seconds_bucket{status="success",le="0.005"} 3
@@ -62,4 +62,4 @@ thegent_autosync_cycle_duration_seconds_bucket{status="success",le="5"} 5
 thegent_autosync_cycle_duration_seconds_bucket{status="success",le="10"} 5
 thegent_autosync_cycle_duration_seconds_bucket{status="success",le="+Inf"} 5
 thegent_autosync_cycle_duration_seconds_count{status="success"} 5
-thegent_autosync_cycle_duration_seconds_sum{status="success"} 2.85899
+thegent_autosync_cycle_duration_seconds_sum{status="success"} 2.69802

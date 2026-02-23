@@ -54,12 +54,19 @@ def detect_agents(patterns: dict[str, str]) -> list[dict[str, Any]]:
     Args:
         patterns: Dict of agent name -> regex pattern
     """
+    compiled_patterns: list[tuple[str, re.Pattern[str]]] = []
+    for name, pattern in patterns.items():
+        try:
+            compiled_patterns.append((name, re.compile(pattern, re.IGNORECASE)))
+        except re.error as exc:
+            raise ValueError(f"Invalid regex for agent pattern '{name}': {pattern}") from exc
+
     processes = get_processes()
-    detected = []
+    detected: list[dict[str, Any]] = []
 
     for proc in processes:
-        for name, pattern in patterns.items():
-            if re.search(pattern, proc["cmd"], re.IGNORECASE):
+        for name, pattern in compiled_patterns:
+            if pattern.search(proc["cmd"]):
                 detected.append({"agent": name, "pid": proc["pid"], "cmd": proc["cmd"]})
                 break  # only detect one agent per PID
 

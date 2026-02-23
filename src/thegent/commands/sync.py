@@ -7,7 +7,6 @@ subcommands: all, work-stream, config, agents, hooks.
 from __future__ import annotations
 
 import contextlib
-import json
 import os
 import re
 import shutil
@@ -16,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -30,6 +29,9 @@ from thegent.sync.dead_letter_queue import (
 )
 
 _log = structlog.get_logger(__name__)
+
+if TYPE_CHECKING:
+    from thegent.integrations.sync_policy_contract import ConnectorPolicy, SyncPolicyContract
 
 
 def render_maintenance_banner(*, maintenance_active: bool, connector: str, reason: str = "") -> str:
@@ -133,15 +135,6 @@ class SyncResult:
             "total_duration": self.total_duration,
             "operations": [op.to_dict() for op in self.operations],
         }
-
-
-@dataclass
-class _RemoteWriteDeadLetterQueueConfig:
-    """Configuration for remote write dead-letter retry metadata."""
-
-    max_attempts: int = DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS
-    retry_interval_seconds: float = DEFAULT_BOARD_DEAD_LETTER_RETRY_DELAY_SECONDS
-    backoff_multiplier: float = DEFAULT_BOARD_DEAD_LETTER_BACKOFF_MULTIPLIER
 
 
 # ---------------------------------------------------------------------------
@@ -1062,7 +1055,7 @@ class SyncCommand:
                 self._extract_fragments_from_file(fragments, md_file)
         return fragments
 
-    def _load_sync_policy_contract_if_present(self):
+    def _load_sync_policy_contract_if_present(self) -> SyncPolicyContract | None:
         """Load sync policy contract when configured on disk."""
         from thegent.integrations.sync_policy_contract import (
             load_sync_policy_contract,
@@ -1073,6 +1066,15 @@ class SyncCommand:
         if not path.exists():
             return None
         return load_sync_policy_contract(project_root=self._root)
+
+    @staticmethod
+    def _connector_policy_for_source(
+        policy_contract: SyncPolicyContract | None,
+        source: str,
+    ) -> ConnectorPolicy | None:
+        if policy_contract is None or policy_contract.connectors is None:
+            return None
+        return policy_contract.connectors.get(source)
 
     def _dead_letter_queue_path(self) -> Path:
         """Resolve dead-letter queue path for board write failures."""
@@ -1280,9 +1282,8 @@ class SyncCommand:
             )
             settings = ThegentSettings()
             policy_contract = self._load_sync_policy_contract_if_present()
-            connector_policy = None
-            if policy_contract is not None:
-                connector_policy = policy_contract.connector_policy(normalized_source)
+            connector_policy = self._connector_policy_for_source(policy_contract, normalized_source)
+            if connector_policy is not None:
                 if not connector_policy.enabled or connector_policy.mode == "disabled":
                     _record_cycle_status("skipped")
                     return OperationResult(
