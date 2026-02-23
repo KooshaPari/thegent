@@ -7535,9 +7535,9 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | 1. Shell & shims | Done (Optional, agent shims, Zsh, Ghostty) | [SETUP-RESTORE.md](../SETUP-RESTORE.md) | — |
 | 2. TUI research | Merged | [UNIFIED_SYSTEM_APPLICATION_PLAN.md](../plans/UNIFIED_SYSTEM_APPLICATION_PLAN.md) | — |
 | 3. Compositor + menu | Merged | Same | — |
-| 4. Compute offloading | Architecture done; impl not started | [HYBRID_ENV_IMPLEMENTATION_PLAN.md](../plans/HYBRID_ENV_IMPLEMENTATION_PLAN.md), [REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md](../plans/REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md) | research-remote-compute-impl |
+| 4. Compute offloading | Research done; implementation not started | [HYBRID_ENV_IMPLEMENTATION_PLAN.md](../plans/HYBRID_ENV_IMPLEMENTATION_PLAN.md), [REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md](../plans/REMOTE_COMPUTE_IMPLEMENTATION_DETAIL.md) | research-remote-compute-impl |
 | 5. Cursor 2/16 recovery | Manual export from Cursor chat history | — | pending-cursor-2-16-export |
-| 6. Always-write-dumps | Add rule to CLAUDE.md | CLAUDE.md (project root) | research-always-write-dumps |
+| 6. Always-write-dumps | ✅ Complete | CLAUDE.md (project root) | research-always-write-dumps |
 | ID | Title | Source | Priority | Depends |
 |----|-------|--------|----------|---------|
 | research-remote-compute-impl | Implement `thegent run --remote` (Phase 4 compute offload) | CONVERSATION_DUMP_2026-02-16.md §4 | P2 | — |
@@ -10708,18 +10708,18 @@ Publish quick-start docs for unattended board reflection setup and verification 
 |--------|-------------|--------|--------|
 | A | EscalationQueue with add(blocked_run, sla_minutes) | 2–3 days | ✓ Done |
 | B | `thegent govern escalate list` — list items past SLA | 1 day | ✓ Done |
-| C | Integrate with DLQ: when recovery exhausted, add to escalation queue | 1–2 days | Deferred |
+| C | Integrate with DLQ: when recovery exhausted, add to escalation queue | 1–2 days | ✅ Done |
 | D | Priority dispatch; continuity snapshots; handoff confirm | 1 day | ✓ Done |
 | ID | Title | Source | Priority | Notes |
 |----|-------|--------|----------|-------|
 | gov-wp-3003-enhance | Emit governance.override.expired when cached override used but record expired | GOVERNANCE_WP_GAPS.md §WP-3003 | P3 | Optional enhancement |
-| gov-wp-3008-dlq | Integrate EscalationQueue with DLQ: when recovery exhausted, add to escalation | GOVERNANCE_WP_GAPS.md §WP-3008 | P2 | Option C deferred |
+| gov-wp-3008-dlq | Integrate EscalationQueue with DLQ: when recovery exhausted, add to escalation | GOVERNANCE_WP_GAPS.md §WP-3008 | P2 | Option A done |
 | ID | Title | Priority | Depends | Options |
 |----|-------|----------|---------|---------|
 | **research-governance-override-events** | Add override expiry event emission | P3 | WP-3003 | Option A: Add event emission<br>Option B: Defer (low priority) |
 | ID | Title | Priority | Depends | Options |
 |----|-------|----------|---------|---------|
-| **research-governance-escalation-dlq** | Integrate escalation queue with DLQ | P2 | WP-3008, WP-2002 | Option A: Auto-add to escalation when DLQ exhausted<br>Option B: Manual escalation only<br>Option C: Defer integration |
+| **research-governance-escalation-dlq** | Integrate escalation queue with DLQ | P2 | WP-3008, WP-2002 | Option A: Auto-add to escalation when DLQ exhausted (✅ Done)<br>Option B: Manual escalation only<br>Option C: Defer integration |
 | ID | Title | Priority | Depends | Options |
 |----|-------|----------|---------|---------|
 | **research-governance-policy-federation** | Multi-tenant policy federation | P1 | WP-3001, research-phase13-policy-federation | Option A: Centralized policy server<br>Option B: Distributed consensus<br>Option C: Hybrid approach |
