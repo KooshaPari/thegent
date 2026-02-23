@@ -12,10 +12,112 @@ VALID_TARGETS = {
     "system",
     "git-lock-cleanup",
     "all",
+    "auto",
     "claude",
     "factory",
     "both",
 }
+
+# Actual installable targets (excludes meta-targets like "all", "both", "claude")
+INSTALLABLE_TARGETS = [
+    "claude-code",
+    "claude-desktop",
+    "cursor",
+    "codex",
+    "droid",
+    "envrc",
+    "shell",
+    "harness",
+    "factory",
+    "system",
+    "git-lock-cleanup",
+]
+
+# Mapping of harness names to their config directories
+HARNESS_CONFIG_PATHS = {
+    "claude-code": "~/.claude",
+    "claude-desktop": "~/.config/Claude",  # Linux, or ~/Library/Application Support/Claude on macOS
+    "cursor": "~/.cursor",
+    "codex": "~/.codex",
+    "droid": "~/.factory",
+    "factory": "~/.factory",
+}
+
+
+def detect_installed_harnesses() -> list[str]:
+    """Auto-detect which harnesses are installed on the system.
+    
+    Returns list of detected harness names (e.g., ["claude-code", "codex", "droid"])
+    """
+    import os
+    from pathlib import Path
+    
+    detected = []
+    home = Path.home()
+    
+    for harness, config_path in HARNESS_CONFIG_PATHS.items():
+        expanded = Path(os.path.expanduser(config_path))
+        if expanded.exists():
+            detected.append(harness)
+    
+    # Check for Codex CLI
+    if os.environ.get("CODEX_AVAILABLE") or (home / ".codex" / "mcp.json").exists():
+        if "codex" not in detected:
+            detected.append("codex")
+    
+    # Check for Claude CLI  
+    if (home / ".claude" / "settings.json").exists() or (home / ".claude.json").exists():
+        if "claude-code" not in detected:
+            detected.append("claude-code")
+    
+    # Check for Cursor
+    if (home / ".cursor" / "settings.json").exists():
+        if "cursor" not in detected:
+            detected.append("cursor")
+    
+    # Check for Factory Droid
+    if (home / ".factory" / "settings.json").exists() or (home / ".factory" / "config.json").exists():
+        if "droid" not in detected:
+            detected.append("droid")
+        if "factory" not in detected:
+            detected.append("factory")
+    
+    return detected
+
+
+def get_targets_for_install(
+    target: str,
+    auto_detect: bool = True,
+) -> list[str]:
+    """Get list of targets to install based on target parameter.
+    
+    Args:
+        target: Target string ("all", "auto", specific target, or comma-separated list)
+        auto_detect: If True and target="auto", detect installed harnesses
+    
+    Returns:
+        List of target names to install
+    """
+    if target == "all":
+        return INSTALLABLE_TARGETS.copy()
+    
+    if target == "auto" and auto_detect:
+        return detect_installed_harnesses()
+    
+    # Handle comma-separated list
+    if "," in target:
+        targets = [t.strip() for t in target.split(",")]
+        result = []
+        for t in targets:
+            if t == "all":
+                result.extend(INSTALLABLE_TARGETS)
+            elif t == "auto" and auto_detect:
+                result.extend(detect_installed_harnesses())
+            else:
+                result.append(t)
+        return result
+    
+    return [target]
 
 SHELL_FILES = {
     ".zshenv": ".zshenv",
