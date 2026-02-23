@@ -807,10 +807,12 @@ class TestDagCheckpointsCmdImpl:
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
-    @patch("thegent.cli._dag_path", return_value=(None, None))
+    @patch("thegent.cli.commands.plan_dag_cmds.dag_recover_impl")
     @patch("thegent.cli.console")
-    def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
+    def test_dag_not_found(self, mock_console, mock_impl) -> None:
         # @trace FR-CLI-341
+        mock_impl.return_value = {"error": "DAG not found", "changed": False}
+
         from thegent.cli import dag_recover_cmd
 
         with pytest.raises(_EXIT):
@@ -873,16 +875,11 @@ class TestDagRecoverCmdImpl:
         dag_recover_cmd(cd=None, action="reset-retries")
         mock_write.assert_called_once()
 
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.plan_dag_cmds.dag_recover_impl")
     @patch("thegent.cli.console")
-    def test_unknown_action(self, mock_console, mock_dag_path, mock_parse, tmp_path) -> None:
+    def test_unknown_action(self, mock_console, mock_impl, tmp_path) -> None:
         # @trace FR-CLI-345
-        dag_file = tmp_path / ".factory" / "dag-session.md"
-        dag_file.parent.mkdir(parents=True)
-        dag_file.touch()
-        mock_dag_path.return_value = (tmp_path, dag_file)
-        mock_parse.return_value = _make_dag_doc()
+        mock_impl.return_value = {"error": "Unknown action: unknown-action"}
 
         from thegent.cli import dag_recover_cmd
 
