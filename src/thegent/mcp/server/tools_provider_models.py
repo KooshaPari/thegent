@@ -5,7 +5,9 @@ from __future__ import annotations
 from fastmcp import FastMCP
 
 
-def register_provider_model_tools(*, mcp: FastMCP) -> tuple[
+def register_provider_model_tools(
+    *, mcp: FastMCP
+) -> tuple[
     object,
     object,
     object,

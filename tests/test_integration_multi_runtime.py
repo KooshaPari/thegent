@@ -75,7 +75,7 @@ class TestMultiRuntimeBridge:
     async def test_dispatch_creates_task_message(self, bridge, tmp_path):
         """Test that dispatch creates proper task message."""
         # Mock start_worker to avoid actually starting processes
-        with patch.object(bridge, 'start_worker', new_callable=AsyncMock) as mock_start:
+        with patch.object(bridge, "start_worker", new_callable=AsyncMock) as mock_start:
             mock_start.return_value = None
 
             task = RuntimeTask(
@@ -172,7 +172,7 @@ class TestMultiRuntimeBridgeHealth:
         bridge.active_workers[RuntimeType.PYPY] = mock_process
 
         # Mock the start_worker to avoid actual process spawning
-        with patch.object(bridge, 'start_worker', new_callable=AsyncMock) as mock_start:
+        with patch.object(bridge, "start_worker", new_callable=AsyncMock) as mock_start:
             mock_start.return_value = None
 
             # Run one iteration of the health monitor

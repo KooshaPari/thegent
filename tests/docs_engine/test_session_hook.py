@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-004
 """
+
 from docs_engine.capture.session_hook import write_conversation_dump
 from docs_engine.db.queries import DocQueries
 

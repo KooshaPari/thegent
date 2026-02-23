@@ -47,10 +47,23 @@ def thegent_govern_vet_impl(
     policy: str,
     session: str | None,
     dry_run: bool,
+    org: str | None,
+    project: str | None,
+    environment: str | None,
+    policy_id: str | None,
     govern_vet_impl: Callable[..., dict[str, Any]],
 ) -> ToolResult:
     start_time = time.perf_counter()
-    result = govern_vet_impl(run_id=run_id, policy=policy, session=session, dry_run=dry_run)
+    result = govern_vet_impl(
+        run_id=run_id,
+        policy=policy,
+        session=session,
+        dry_run=dry_run,
+        org=org,
+        project=project,
+        environment=environment,
+        policy_id=policy_id,
+    )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
         content=json.dumps(result),

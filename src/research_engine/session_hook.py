@@ -1,4 +1,5 @@
 """Session hook for injecting research context into agent sessions. @trace FR-RES-030"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,9 +12,7 @@ if TYPE_CHECKING:
 log = structlog.get_logger(__name__)
 
 
-def inject_session_context(
-    store: "ResearchStore", *, hours: int = 24, limit: int = 10
-) -> str:
+def inject_session_context(store: "ResearchStore", *, hours: int = 24, limit: int = 10) -> str:
     """Return a markdown snippet of recent research to inject into session context.
 
     Args:
@@ -31,7 +30,9 @@ def inject_session_context(
     lines = ["## Recent Research Context", ""]
     for item in items:
         tag_str = ", ".join(item.tags) if item.tags else "—"
-        lines.append(f"- **[{item.title}]({item.url})** ({item.source}) — score {item.score}, relevance {item.relevance:.0%}")
+        lines.append(
+            f"- **[{item.title}]({item.url})** ({item.source}) — score {item.score}, relevance {item.relevance:.0%}"
+        )
         lines.append(f"  Tags: {tag_str}")
         lines.append(f"  {item.summary[:200]}")
         lines.append("")

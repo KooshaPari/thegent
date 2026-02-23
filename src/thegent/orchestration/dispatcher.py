@@ -15,6 +15,7 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from thegent.agents.capability_index import AgentRecommendation, CapabilityIndex
@@ -283,7 +284,11 @@ class SubAgentDispatcher:
             await self._check_hitl_gate(node, recommendation)
 
         # Execute the task (placeholder - integrate with actual runner)
-        output, success, error = await self._execute_task(node, runner_name)
+        output, success, error = await self._execute_task(
+            node=node,
+            runner_name=runner_name,
+            recommendation=recommendation,
+        )
 
         elapsed = time.monotonic() - start_time
 
@@ -371,20 +376,18 @@ class SubAgentDispatcher:
             checkpoint="pre_execution",
         )
 
-        # In a real implementation, this would wait for approval
-        # For now, we log and continue (approval is external)
-        _log.debug("HITL approval requested for run_id=%s", run_id)
+        if not bool(node.metadata.get("approval_granted", False)):
+            raise RuntimeError(f"HITL approval blocked execution for node {node.id}")
+
+        _log.debug("HITL approval granted for run_id=%s", run_id)
 
     async def _execute_task(
         self,
         node: PlanNode,
         runner_name: str | None,
+        recommendation: AgentRecommendation | None = None,
     ) -> tuple[str, bool, str | None]:
         """Execute the task via the selected runner.
-
-        This is a placeholder implementation. In production, this would
-        integrate with the actual runner infrastructure (AgentRunner,
-        InProcessAgentRunner, FlashAgent, etc.).
 
         Args:
             node: The PlanNode to execute.
@@ -395,10 +398,51 @@ class SubAgentDispatcher:
 
         # @trace WL-082
         """
-        # Placeholder execution - in production, integrate with actual runner
-        # For now, return a placeholder result
-        output = f"Executed node {node.id} with runner {runner_name or 'default'}"
-        return output, True, None
+        if self._config.hitl_enabled and self._policy_engine is not None:
+            await self._check_hitl_gate(node, recommendation)
+
+        resolved_runner_name = runner_name
+        if resolved_runner_name is None and recommendation is not None:
+            resolved_runner_name = recommendation.runner
+
+        if not resolved_runner_name:
+            return "", False, f"No runner resolved for node {node.id}"
+
+        from thegent.agents.registry import get_runner
+
+        runner = get_runner(resolved_runner_name)
+        if runner is None:
+            return "", False, f"Runner '{resolved_runner_name}' not found"
+
+        timeout = int(node.metadata.get("timeout_seconds", self._config.default_timeout))
+        cwd_raw = node.metadata.get("cwd")
+        cwd = Path(cwd_raw).expanduser().resolve() if isinstance(cwd_raw, str) and cwd_raw else Path.cwd()
+        mode = str(node.metadata.get("mode", "write"))
+
+        def _run_once() -> Any:
+            return runner.run(prompt=node.task, cwd=cwd, mode=mode, timeout=timeout)
+
+        try:
+            result = await asyncio.to_thread(_run_once)
+        except Exception as exc:
+            return "", False, f"{type(exc).__name__}: {exc}"
+
+        if hasattr(result, "exit_code"):
+            exit_code = int(getattr(result, "exit_code", 1))
+            stdout = str(getattr(result, "stdout", "") or "")
+            stderr = str(getattr(result, "stderr", "") or "")
+            if exit_code == 0:
+                return stdout, True, None
+            return stdout, False, stderr or f"Runner exited with code {exit_code}"
+
+        if isinstance(result, dict):
+            status = str(result.get("status", "")).lower()
+            success = bool(result.get("success", status in {"ok", "success", "completed"}))
+            output = str(result.get("stdout", result.get("output", "")) or "")
+            error = result.get("error")
+            return output, success, str(error) if error else (None if success else "Runner reported failure")
+
+        return str(result), True, None
 
 
 # ------------------------------------------------------------------

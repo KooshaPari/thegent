@@ -43,6 +43,4 @@ def test_design_mentions_import_boundary() -> None:
 def test_tasks_mentions_wave4_extractions() -> None:
     """tasks.md must reference Wave-4 remaining extractions."""
     content = (_ADR_DIR / "tasks.md").read_text(encoding="utf-8")
-    assert "Wave-4" in content or "wave-4" in content.lower(), (
-        "tasks.md must mention Wave-4 remaining extractions"
-    )
+    assert "Wave-4" in content or "wave-4" in content.lower(), "tasks.md must mention Wave-4 remaining extractions"

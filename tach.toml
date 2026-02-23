@@ -31,23 +31,23 @@ depends_on = []
 
 [[modules]]
 path = "thegent.output_parser"
-depends_on = ["thegent.contracts"]
+depends_on = ["thegent.contracts", "thegent.config"]
 
 [[modules]]
 path = "thegent.contracts"
-depends_on = ["thegent.output_parser"]
+depends_on = ["thegent.output_parser", "thegent.config"]
 
 [[modules]]
 path = "thegent.models"
-depends_on = ["thegent.config", "thegent.agents"]
+depends_on = ["thegent.config", "thegent.agents", "thegent.routing"]
 
 [[modules]]
 path = "thegent.execution"
-depends_on = [ "thegent.contracts", "thegent.cli_impl"]
+depends_on = [ "thegent.contracts", "thegent.cli", "thegent.config"]
 
 [[modules]]
 path = "thegent.agents"
-depends_on = ["thegent.config", "thegent.contracts", "thegent.observability"]
+depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.cli", "thegent.execution", "thegent.routing"]
 
 [[modules]]
 path = "thegent.operations"
@@ -59,28 +59,15 @@ depends_on = []
 
 [[modules]]
 path = "thegent.planning"
-depends_on = []
+depends_on = ["thegent.routing", "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
 
 [[modules]]
 path = "thegent.routing"
-depends_on = [ "thegent.execution"]
+depends_on = [ "thegent.execution", "thegent.config", "thegent.contracts", "thegent.models"]
 
 [[modules]]
 path = "thegent.observability"
-depends_on = []
-
-[[modules]]
-path = "thegent.cli_impl"
-depends_on = [
-    "thegent.config",
-    "thegent.contracts",
-    "thegent.models",
-    "thegent.execution",
-    "thegent.agents",
-    "thegent.output_parser",
-    "thegent.operations",
-    "thegent.orchestration_modes",
-    "thegent.observability"]
+depends_on = ["thegent.config"]
 
 [[modules]]
 path = "thegent.cli"
@@ -90,32 +77,19 @@ depends_on = [
     "thegent.models",
     "thegent.execution",
     "thegent.agents",
-    "thegent.cli_impl",
     "thegent.operations",
     "thegent.orchestration_modes",
     "thegent.planning",
     "thegent.exit_codes",
     "thegent.routing"
-]
+, "thegent.output_parser", "thegent.observability"]
 
 [[modules]]
 path = "thegent.mcp_server"
-depends_on = [
-    "thegent.config",
-    "thegent.models",
-    "thegent.agents",
-    "thegent.operations",
-    "thegent.orchestration_modes",
-    "thegent.cli_impl"
-, "thegent.output_parser"]
+depends_on = []
 
 [[modules]]
 path = "thegent.main"
 depends_on = [
-    "thegent.config",
-    "thegent.models",
-    "thegent.agents",
-    "thegent.cli_impl",
-    "thegent.cli",
-    "thegent.mcp_server"
-, "thegent.contracts"]
+    "thegent.cli"
+]

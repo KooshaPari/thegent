@@ -344,11 +344,13 @@ async def test_safety_check_fails_on_violations():
 async def test_llm_judge_check_passes_good_output():
     # @trace WL-090
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 5, "completeness": 4, "safety": 5},
-        "pass_verdict": True,
-        "critique": "",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 5, "completeness": 4, "safety": 5},
+            "pass_verdict": True,
+            "critique": "",
+        }
+    )
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = LLMJudgeCheck(pass_threshold=0.75)
         result = await check.check("run-1", "good output", {"task": "write a function"})
@@ -361,11 +363,13 @@ async def test_llm_judge_check_passes_good_output():
 async def test_llm_judge_check_fails_low_score():
     # @trace WL-090
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 1, "completeness": 2, "safety": 1},
-        "pass_verdict": False,
-        "critique": "Output is incomplete and incorrect",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 1, "completeness": 2, "safety": 1},
+            "pass_verdict": False,
+            "critique": "Output is incomplete and incorrect",
+        }
+    )
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = LLMJudgeCheck(pass_threshold=0.75)
         result = await check.check("run-1", "bad output", {"task": "write a function"})
@@ -382,11 +386,13 @@ async def test_llm_judge_check_fails_low_score():
 async def test_quality_score_check_passes_when_all_thresholds_met():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 0.95, "completeness": 0.85, "safety": 0.9},
-        "pass_verdict": True,
-        "critique": "",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 0.95, "completeness": 0.85, "safety": 0.9},
+            "pass_verdict": True,
+            "critique": "",
+        }
+    )
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck(
             pass_threshold=0.8,
@@ -403,11 +409,13 @@ async def test_quality_score_check_passes_when_all_thresholds_met():
 async def test_quality_score_check_fails_on_aggregate_threshold():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 0.6, "completeness": 0.6, "safety": 0.6},
-        "pass_verdict": True,
-        "critique": "Average quality is too low",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 0.6, "completeness": 0.6, "safety": 0.6},
+            "pass_verdict": True,
+            "critique": "Average quality is too low",
+        }
+    )
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck(pass_threshold=0.75, min_criterion_score=0.5)
         result = await check.check("run-qs-2", "mediocre output", {"task": "write code"})
@@ -419,11 +427,13 @@ async def test_quality_score_check_fails_on_aggregate_threshold():
 async def test_quality_score_check_fails_on_min_criterion_threshold():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 0.9, "completeness": 0.85, "safety": 0.2},
-        "pass_verdict": True,
-        "critique": "Safety score is unacceptable",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 0.9, "completeness": 0.85, "safety": 0.2},
+            "pass_verdict": True,
+            "critique": "Safety score is unacceptable",
+        }
+    )
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck(pass_threshold=0.7, min_criterion_score=0.5)
         result = await check.check("run-qs-3", "unsafe output", {"task": "write code"})
@@ -457,11 +467,13 @@ async def test_quality_score_check_raises_on_invalid_payload_shape():
 async def test_quality_score_check_auto_model_uses_capability_index_recommendation():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 0.8, "completeness": 0.8, "safety": 0.8},
-        "pass_verdict": True,
-        "critique": "",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 0.8, "completeness": 0.8, "safety": 0.8},
+            "pass_verdict": True,
+            "critique": "",
+        }
+    )
 
     fake_agent = MagicMock()
     fake_agent.path = Path("/tmp/quality-agent.md")
@@ -517,11 +529,13 @@ async def test_quality_score_check_raises_when_auto_model_has_no_configured_mode
 async def test_quality_score_check_prefers_explicit_model_resolver_when_provided():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 0.8, "completeness": 0.8, "safety": 0.8},
-        "pass_verdict": True,
-        "critique": "",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 0.8, "completeness": 0.8, "safety": 0.8},
+            "pass_verdict": True,
+            "critique": "",
+        }
+    )
     resolver = MagicMock(return_value="gpt-4.1-mini")
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck(judge_model="auto", model_resolver=resolver)
@@ -545,11 +559,13 @@ async def test_quality_score_check_raises_when_auto_model_resolver_returns_empty
 async def test_quality_score_check_builds_deterministic_failure_message_without_critique():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({
-        "scores": {"correctness": 5, "completeness": 4, "safety": 2},
-        "pass_verdict": True,
-        "critique": "   ",
-    })
+    mock_response.choices[0].message.content = json.dumps(
+        {
+            "scores": {"correctness": 5, "completeness": 4, "safety": 2},
+            "pass_verdict": True,
+            "critique": "   ",
+        }
+    )
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck(pass_threshold=0.8, min_criterion_score=3)
         result = await check.check("run-qs-10", "output", {"task": "task"})
@@ -668,9 +684,6 @@ def test_extract_changed_py_files_parses_unified_diff():
 
 def test_extract_changed_py_files_deduplicates():
     # @trace WL-090
-    diff = (
-        "--- a/foo.py\n+++ b/foo.py\n"
-        "--- a/foo.py\n+++ b/foo.py\n"
-    )
+    diff = "--- a/foo.py\n+++ b/foo.py\n--- a/foo.py\n+++ b/foo.py\n"
     files = _extract_changed_py_files(diff)
     assert files.count("foo.py") == 1

@@ -62,14 +62,18 @@ def main() -> int:
             contexts = {}
         file_to_contexts: dict[int, set[int]] = {}
         # line_bits: (file_id, context_id, numbits); arc: (file_id, context_id, fromno, tono)
-        for table in ("line_bits", "arc"):
-            try:
-                for row in conn.execute(f"SELECT file_id, context_id FROM {table}"):
-                    fid, cid = row
-                    file_to_contexts.setdefault(fid, set()).add(cid)
-                break
-            except sqlite3.OperationalError:
-                continue
+        try:
+            for row in conn.execute("SELECT file_id, context_id FROM line_bits"):
+                fid, cid = row
+                file_to_contexts.setdefault(fid, set()).add(cid)
+        except sqlite3.OperationalError:
+            pass
+        try:
+            for row in conn.execute("SELECT file_id, context_id FROM arc"):
+                fid, cid = row
+                file_to_contexts.setdefault(fid, set()).add(cid)
+        except sqlite3.OperationalError:
+            pass
     finally:
         conn.close()
 

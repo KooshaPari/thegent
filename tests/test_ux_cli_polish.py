@@ -192,8 +192,7 @@ class TestJsonOutputProjectList:
 
         projects_file = tmp_path / "projects.jsonl"
         projects_file.write_text(
-            '{"name": "alpha", "path": "/projects/alpha"}\n'
-            '{"name": "beta", "path": "/projects/beta"}\n',
+            '{"name": "alpha", "path": "/projects/alpha"}\n{"name": "beta", "path": "/projects/beta"}\n',
             encoding="utf-8",
         )
         mock_settings = MagicMock()
@@ -318,9 +317,7 @@ class TestProgressSpinners:
         import thegent.doctor as doctor_mod
 
         src = inspect.getsource(doctor_mod._apply_fixes)
-        assert "Progress" in src, (
-            "_apply_fixes must reference rich Progress for spinner feedback (WP-4005)"
-        )
+        assert "Progress" in src, "_apply_fixes must reference rich Progress for spinner feedback (WP-4005)"
 
     def test_spinner_context_available(self) -> None:
         """Verify that spinner_context exists in infra.progress."""
@@ -415,9 +412,7 @@ class TestDoctorRunnerChecks:
         thegent_dir = tmp_path / ".thegent"
         thegent_dir.mkdir()
         # Write invalid YAML (unbalanced brace)
-        (thegent_dir / "config.yaml").write_text(
-            "key: {bad yaml: [unclosed\n", encoding="utf-8"
-        )
+        (thegent_dir / "config.yaml").write_text("key: {bad yaml: [unclosed\n", encoding="utf-8")
         with patch("pathlib.Path.home", return_value=tmp_path):
             check = runner._check_config_yaml()
         assert check.status == "error"

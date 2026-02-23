@@ -1,7 +1,10 @@
 """WP-Y7: TRAFFIC KPI dashboard."""
 
+import json
 import logging
+from collections.abc import Iterable
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
@@ -15,18 +18,76 @@ class KPIDashboard:
     def __init__(self, settings: ThegentSettings) -> None:
         self.settings = settings
 
+    def _iter_run_registry_rows(self) -> Iterable[dict[str, Any]]:
+        run_registry = Path(self.settings.session_dir) / "run_registry.jsonl"
+        if not run_registry.exists():
+            return []
+        rows: list[dict[str, Any]] = []
+        for line in run_registry.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                record = json.loads(line)
+            except Exception:
+                continue
+            if isinstance(record, dict):
+                rows.append(record)
+        return rows
+
+    @staticmethod
+    def _safe_ratio(num: int, den: int) -> float:
+        if den <= 0:
+            return 1.0
+        return max(0.0, min(1.0, num / den))
+
+    def _compute_runtime_kpis(self, now: datetime) -> dict[str, float]:
+        started = 0
+        ended = 0
+        completed = 0
+
+        for row in self._iter_run_registry_rows():
+            ts_raw = row.get("ts") or row.get("timestamp")
+            event = row.get("event")
+            if not isinstance(ts_raw, str) or not isinstance(event, str):
+                continue
+            try:
+                ts = datetime.fromisoformat(ts_raw)
+            except ValueError:
+                continue
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=UTC)
+            if (now - ts).total_seconds() > 3600:
+                continue
+
+            if event == "start":
+                started += 1
+            if event == "end":
+                ended += 1
+                if row.get("status") == "completed":
+                    completed += 1
+
+        throughput = float(completed)
+        reliability = self._safe_ratio(completed, ended)
+        availability = self._safe_ratio(ended, started) if started > 0 else 1.0
+        return {
+            "throughput": max(0.0, throughput),
+            "reliability": reliability,
+            "availability": availability,
+        }
+
     def get_metrics(self) -> dict[str, Any]:
         """Aggregate KPIs from various subsystems."""
-        # This would call CostAggregator, LoadClassifier, etc.
+        now = datetime.now(UTC)
+        runtime = self._compute_runtime_kpis(now)
         metrics = {
-            "throughput": 0,  # Placeholder
-            "reliability": 1.0,
-            "availability": 1.0,
+            "throughput": runtime["throughput"],
+            "reliability": runtime["reliability"],
+            "availability": runtime["availability"],
             "finance": 0.0,  # Cost in USD
             "fatigue": 0.0,  # 0.0 to 1.0
             "integrity": 1.0,
             "continuity": 1.0,
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": now.isoformat(),
         }
 
         # WP-5003: Cost awareness

@@ -28,7 +28,9 @@ def _bench(label: str, fn: Any, *, iterations: int) -> dict[str, Any]:
     }
 
 
-def run_suite(iterations: int) -> dict[str, Any]:
+def run_suite(iterations: int, *, mode: str = "warm") -> dict[str, Any]:
+    if mode not in {"cold", "warm"}:
+        raise ValueError("mode must be 'cold' or 'warm'")
     rows: list[dict[str, Any]] = []
     rows.append(_bench("coerce_issue_types_list", lambda: _coerce_issue_types(["a", "b", "c"]), iterations=iterations))
     rows.append(
@@ -51,12 +53,13 @@ def run_suite(iterations: int) -> dict[str, Any]:
             iterations=max(1_000, iterations // 10),
         )
     )
-    return {"suite": "python-benchmark-suite-v1", "benchmarks": rows}
+    return {"suite": "python-benchmark-suite-v1", "mode": mode, "benchmarks": rows}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run WL-078 Python benchmark suite.")
     parser.add_argument("--iterations", type=int, default=100_000)
+    parser.add_argument("--mode", choices=("cold", "warm"), default="warm")
     parser.add_argument("--output", type=Path, default=Path("benchmarks/results/python/latest.json"))
     parser.add_argument(
         "--overwrite",
@@ -65,7 +68,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    payload = run_suite(iterations=max(1, int(args.iterations)))
+    payload = run_suite(iterations=max(1, int(args.iterations)), mode=args.mode)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if args.output.exists() and not args.overwrite:
         raise FileExistsError(f"Refusing to overwrite existing benchmark output: {args.output} (use --overwrite)")

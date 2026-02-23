@@ -431,9 +431,7 @@ class TestMCPToolChoice:
         accepted.data = "gemini"
         ctx = _make_ctx(elicit_return=accepted)
 
-        result = await tool_fns["thegent_elicit_choice"](
-            message="Select model:", options=["gpt-4", "gemini"], ctx=ctx
-        )
+        result = await tool_fns["thegent_elicit_choice"](message="Select model:", options=["gpt-4", "gemini"], ctx=ctx)
         data = _json_content(result)
         assert data["choice"] == "gemini"
         assert data["status"] == "accepted"
@@ -543,9 +541,7 @@ class TestMCPToolText:
         accepted.data = "/tmp/result"
         ctx = _make_ctx(elicit_return=accepted)
 
-        result = await tool_fns["thegent_elicit_text"](
-            message="Enter path:", placeholder="/tmp/example", ctx=ctx
-        )
+        result = await tool_fns["thegent_elicit_text"](message="Enter path:", placeholder="/tmp/example", ctx=ctx)
         data = _json_content(result)
         assert data["text"] == "/tmp/result"
         assert data["status"] == "accepted"

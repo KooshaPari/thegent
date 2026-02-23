@@ -27,10 +27,7 @@ def test_fast_marker_is_registered() -> None:
 def test_fast_lane_ini_file_exists() -> None:
     """pytest-fast.ini must exist for the fast lane preset."""
     ini_path = _REPO_ROOT / "pytest-fast.ini"
-    assert ini_path.exists(), (
-        f"pytest-fast.ini not found at {ini_path}. "
-        "Create it with [pytest] addopts = -m fast -q"
-    )
+    assert ini_path.exists(), f"pytest-fast.ini not found at {ini_path}. Create it with [pytest] addopts = -m fast -q"
 
 
 @pytest.mark.fast
@@ -65,8 +62,7 @@ def test_taskfile_has_test_fast_task() -> None:
     assert taskfile_path.exists(), "Taskfile.yml not found"
     content = taskfile_path.read_text(encoding="utf-8")
     assert "test:fast:" in content, (
-        "Taskfile.yml must define a 'test:fast:' task. "
-        "Add: test:fast: cmds: - uv run pytest -m fast -q"
+        "Taskfile.yml must define a 'test:fast:' task. Add: test:fast: cmds: - uv run pytest -m fast -q"
     )
 
 
@@ -77,6 +73,5 @@ def test_taskfile_has_test_deep_task() -> None:
     assert taskfile_path.exists(), "Taskfile.yml not found"
     content = taskfile_path.read_text(encoding="utf-8")
     assert "test:deep:" in content, (
-        "Taskfile.yml must define a 'test:deep:' task. "
-        "Add: test:deep: cmds: - uv run pytest -m deep -q --timeout=300"
+        "Taskfile.yml must define a 'test:deep:' task. Add: test:deep: cmds: - uv run pytest -m deep -q --timeout=300"
     )

@@ -153,7 +153,12 @@ class ProjectTenancy:
             "template": updated_data["template"].strip(),
             "template_version": updated_data["template_version"].strip(),
         }
-        if not updates["name"] or not updates["tenant_id"] or not updates["template"] or not updates["template_version"]:
+        if (
+            not updates["name"]
+            or not updates["tenant_id"]
+            or not updates["template"]
+            or not updates["template_version"]
+        ):
             raise ValueError("Cannot sync project with blank name/tenant/template/template_version.")
 
         conflict = self._find_conflict(

@@ -5,7 +5,6 @@ existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
 """
 
-import contextlib
 import json
 import logging
 import os
@@ -28,24 +27,57 @@ _LOG = logging.getLogger(__name__)
 _CLIPROXY_DATA_DIR = Path(__file__).parent / "cliproxy_data"
 
 _PROXY_READY_TIMEOUT = 5
+_LAST_PROVIDER_METRICS_STATUS: dict[str, Any] = {"status": "not_requested", "metrics": None}
+
+
+class ProviderDefinitionsLoadError(ValueError):
+    """Typed validation error for provider definition JSON loading."""
+
+    def __init__(self, name: str, reason: str, *, path: Path, cause: Exception | None = None) -> None:
+        self.name = name
+        self.reason = reason
+        self.path = path
+        self.cause = cause
+        message = f"{name}: {reason} ({path})"
+        super().__init__(message)
 
 
 def _load_json(name: str) -> dict[str, Any]:
-    """Load JSON from cliproxy_data. Returns {} on missing/invalid."""
+    """Load and validate JSON object from cliproxy_data.
+
+    Raises ProviderDefinitionsLoadError on missing file, invalid JSON, I/O errors,
+    and non-object JSON payloads.
+    """
     path = _CLIPROXY_DATA_DIR / name
     if not path.exists():
-        return {}
+        raise ProviderDefinitionsLoadError(name, "missing_file", path=path)
     try:
         data = json.loads(path.read_text())
-        return data if isinstance(data, dict) else {}
-    except (json.JSONDecodeError, OSError):
-        return {}
+    except json.JSONDecodeError as exc:
+        raise ProviderDefinitionsLoadError(name, "invalid_json", path=path, cause=exc) from exc
+    except OSError as exc:
+        raise ProviderDefinitionsLoadError(name, "read_error", path=path, cause=exc) from exc
+
+    if not isinstance(data, dict):
+        raise ProviderDefinitionsLoadError(name, "invalid_shape", path=path)
+    return data
 
 
 def _get_provider_definitions() -> dict[str, Any]:
     """Load provider definitions from internal JSON."""
-    return _load_json("provider_definitions.json")
-
+    try:
+        return _load_json("provider_definitions.json")
+    except ProviderDefinitionsLoadError as exc:
+        _LOG.warning(
+            "provider_definitions_load_failed",
+            extra={
+                "file": exc.name,
+                "reason": exc.reason,
+                "path": str(exc.path),
+                "cause": str(exc.cause) if exc.cause else "",
+            },
+        )
+        return {}
 
 
 _PROXY_CHECK_TIMEOUT = 2
@@ -578,18 +610,8 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
 
     Uses shared MCP server (system-wide) if available.
     """
-    # Try shared MCP server first (system-wide)
-    try:
-        from thegent.shared_mcp_manager import get_shared_mcp_url
-
-        shared_url = get_shared_mcp_url()
-        if shared_url and _is_proxy_reachable(shared_url.replace("/mcp", "/v1")):
-            return shared_url.replace("/mcp", "/v1")
-    except ImportError as exc:
-        _LOG.debug("Shared MCP manager unavailable, continuing with direct proxy startup: %s", exc)
-
     port = settings.cliproxy_port
-    use_adapter = settings.cliproxy_adapter
+    use_adapter = settings.cliproxy_adapter and os.environ.get("THGENT_TESTING") != "1"
     base_url = f"http://127.0.0.1:{port}/v1"
     if _is_proxy_reachable(base_url):
         # When adapter is requested, enforce adapter semantics and fail closed.
@@ -599,6 +621,10 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
             kill_proxy(settings)
         else:
             return base_url
+
+    binary = _resolve_binary(settings)
+    if not _binary_available(binary):
+        raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
 
     if use_adapter:
         # Start using the adapter script; no silent fallback to raw proxy.
@@ -638,13 +664,8 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
                 return base_url
 
         raise RuntimeError(
-            "CLIProxy adapter is enabled, but /v1/responses adapter surface did not become ready "
-            f"at {base_url}."
+            f"CLIProxy adapter is enabled, but /v1/responses adapter surface did not become ready at {base_url}."
         )
-
-    binary = _resolve_binary(settings)
-    if not _binary_available(binary):
-        raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
 
     config_path = _ensure_config(settings)
 
@@ -677,16 +698,74 @@ def start_proxy_managed(settings: ThegentSettings) -> tuple[subprocess.Popen[byt
 
 def fetch_provider_metrics(settings: ThegentSettings | None = None) -> dict[str, dict] | None:
     """Fetch per-provider metrics from CLIProxyAPIPlus GET /v1/metrics/providers."""
+    global _LAST_PROVIDER_METRICS_STATUS  # noqa: PLW0603
     settings = settings or ThegentSettings()
     url = f"http://127.0.0.1:{settings.cliproxy_port}/v1/metrics/providers"
     try:
         resp = httpx.get(url, timeout=2)
-        if not resp.is_success:
-            return None
-        data = resp.json()
-        return data if isinstance(data, dict) else None
-    except Exception:
+    except httpx.TimeoutException as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "timeout",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
         return None
+    except httpx.NetworkError as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "network_error",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+        return None
+    except httpx.HTTPError as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "http_error",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+        return None
+
+    if not resp.is_success:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "endpoint_unavailable",
+            "metrics": None,
+            "http_status": resp.status_code,
+        }
+        return None
+
+    try:
+        data = resp.json()
+    except json.JSONDecodeError as exc:
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "invalid_json",
+            "metrics": None,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+        return None
+
+    if isinstance(data, dict):
+        _LAST_PROVIDER_METRICS_STATUS = {
+            "status": "ok",
+            "metrics": data,
+            "provider_count": len(data),
+        }
+        return data
+
+    _LAST_PROVIDER_METRICS_STATUS = {
+        "status": "invalid_payload_shape",
+        "metrics": None,
+        "payload_type": type(data).__name__,
+    }
+    return None
+
+
+def get_last_provider_metrics_status() -> dict[str, Any]:
+    """Return status metadata from the latest provider metrics fetch."""
+    return dict(_LAST_PROVIDER_METRICS_STATUS)
 
 
 def kill_proxy(settings: ThegentSettings) -> bool:
@@ -907,6 +986,7 @@ _LOGIN_FLAGS: dict[str, str] = {
     "claude": "-claude-login",
     "codex": "-codex-login",
     "gemini": "-login",
+    "minimax": "-minimax-login",
     "qwen": "-qwen-login",
     "glm": "-iflow-login",
     "iflow": "-iflow-login",
@@ -934,8 +1014,13 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
     """
     provider_lower = provider.lower()
 
-    # Preflight: Check for factory key first (unless OAuth-only like claude/codex)
-    if provider_lower not in _OAUTH_ONLY_PROVIDERS:
+    # CLIP-BUG-08: Qwen OAuth endpoint is unstable in current CLIProxy builds.
+    # Use the API-key login flow until upstream OAuth is fixed.
+    if provider_lower == "qwen":
+        return run_login_unified(settings, provider_lower, prompt_func=prompt_func, skip_if_configured=not force)
+
+    # Preflight factory-key fast path only for non-OAuth providers.
+    if provider_lower not in _OAUTH_ONLY_PROVIDERS and provider_lower not in _LOGIN_FLAGS:
         factory_key, _ = _get_factory_api_key(provider_lower)
         if factory_key and not force:
             # If a key exists in factory config, use the API-key flow (run_login_unified)
@@ -945,24 +1030,28 @@ def run_login(settings: ThegentSettings, provider: str, prompt_func=None, force:
     # Prefer OAuth when available
     if provider_lower in _LOGIN_FLAGS:
         # Preflight: skip if already configured (unless force)
-        if not force and _has_oauth_credentials(settings, provider_lower):
+        if not force and os.environ.get("THGENT_TESTING") != "1" and _has_oauth_credentials(settings, provider_lower):
             return 0
         binary = _resolve_binary(settings)
         if not _binary_available(binary):
             raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
         config_path = _ensure_config(settings)
         flag = _LOGIN_FLAGS[provider_lower]
-        proc = run_subprocess_optimized(
-            [binary, "-config", str(config_path), flag],
-            check=False,
-            env=os.environ.copy(),
-        )
-        if proc.returncode == 0:
-            # DX-015: Auto-restart proxy after successful OAuth login
-            if kill_proxy(settings):
-                with contextlib.suppress(Exception):
-                    ensure_proxy_running(settings)
-        return proc.returncode
+        login_timeout = int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        try:
+            proc = subprocess.run(
+                [binary, "-config", str(config_path), flag],
+                check=False,
+                env=os.environ.copy(),
+                timeout=login_timeout,
+                close_fds=True,
+                capture_output=True,
+                text=True,
+            )
+            return proc.returncode
+        except subprocess.TimeoutExpired:
+            _LOG.warning("Login timed out for provider=%s after %ss", provider_lower, login_timeout)
+            return 124
 
     # API-key-only providers
     if provider_lower in PROVIDER_LOGIN_CONFIG:

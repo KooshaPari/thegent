@@ -213,6 +213,7 @@ class TestGenerateAlert:
         ts = alert["timestamp"]
         # Should parse as valid ISO datetime
         from datetime import datetime
+
         dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         assert dt is not None
 

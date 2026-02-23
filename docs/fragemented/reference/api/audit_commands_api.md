@@ -1,0 +1,37 @@
+# audit_commands API Reference
+
+> **Source**: `src/thegent/commands/audit_commands.py`
+
+CLI commands for the shadow audit log.
+
+Provides ``thegent audit log`` and ``thegent audit diff`` subcommands
+for inspecting the immutable audit trail of agent git operations.
+
+WBS: wp-71004-audit-cli
+FR Traceability: FR-VER-005 (audit log and diff CLI)
+
+Commands:
+    thegent audit log  [--project NAME] [--limit N]
+    thegent audit diff &lt;sha1&gt; &lt;sha2&gt; [--project NAME]
+
+---
+
+## audit_diff
+
+```python
+audit_diff(sha1: str, sha2: str, project: Annotated[(str, Any)])
+```
+
+Show diff between two audit entries.
+
+---
+
+## audit_log
+
+```python
+audit_log(project: Annotated[(str, Any)], limit: Annotated[(Any, Any)])
+```
+
+Show audit log entries for a project.
+
+---

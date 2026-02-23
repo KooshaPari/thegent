@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 # Add src to sys.path
-sys.path.append(os.path.abspath("src"))
+sys.path.append(str(Path("src").resolve()))
 
 import inspect
 
@@ -26,10 +26,12 @@ def check_group(group):
     for sub_group in group.registered_groups:
         check_group(sub_group.typer_instance)
 
+
 print("Checking app commands...")
 try:
     check_group(app)
 except Exception as e:
     print(f"Fatal error during check: {e}")
     import traceback
+
     traceback.print_exc()

@@ -10,7 +10,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -84,7 +84,7 @@ class DecisionJournal:
 
     DEFAULT_JOURNAL_FILE = Path("docs/reference/decision_journal.jsonl")
 
-    def __init__(self, journal_file: Optional[Path] = None) -> None:
+    def __init__(self, journal_file: Path | None = None) -> None:
         """Initialize the decision journal.
 
         Args:

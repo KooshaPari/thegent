@@ -52,9 +52,7 @@ class TestBearerAuthSettingsCache:
         fake_settings = MagicMock()
         fake_settings.mcp_auth_mode = "none"
 
-        with patch.object(
-            _auth, "get_settings", return_value=fake_settings
-        ) as mock_get:
+        with patch.object(_auth, "get_settings", return_value=fake_settings) as mock_get:
             middleware = BearerAuthMiddleware(app=MagicMock())
             call_next = AsyncMock(return_value=MagicMock())
 
@@ -76,9 +74,7 @@ class TestBearerAuthSettingsCache:
         fake_b = MagicMock()
         fake_b.mcp_auth_mode = "none"
 
-        with patch.object(
-            _auth, "get_settings", side_effect=[fake_a, fake_b]
-        ) as mock_get:
+        with patch.object(_auth, "get_settings", side_effect=[fake_a, fake_b]) as mock_get:
             middleware = BearerAuthMiddleware(app=MagicMock())
             call_next = AsyncMock(return_value=MagicMock())
 

@@ -285,10 +285,7 @@ class TestSubAgentDispatcherRemoteBackend:
         index = CapabilityIndex()
         dispatcher = SubAgentDispatcher(capability_index=index, remote_backend=backend)
 
-        requests = [
-            _make_request(request_id=f"req-{i}", agent_type="batch-agent")
-            for i in range(3)
-        ]
+        requests = [_make_request(request_id=f"req-{i}", agent_type="batch-agent") for i in range(3)]
         results = dispatcher.dispatch_concurrent(requests)
         assert len(results) == 3
         assert all(r.status == SubAgentStatus.COMPLETED for r in results)

@@ -1,0 +1,581 @@
+# Thegent Optimization, Polish, and Robustness Addendum
+
+**Date:** 2026-02-14
+**Status:** Comprehensive optimization guide for maximizing platform quality
+**Version:** 1.0
+**Scope:** Cross-domain polish, hardening, intuition, and engineering excellence
+
+**Cross-References:**
+- `thegent-mega-research-synthesis-2026-02-14.md` (114 patterns, leverage points, anti-patterns)
+- `thegent-patterns-enhancement-synthesis.md` (Enhancement synthesis and missing patterns)
+- `thegent-wbs-final.md` (Work packages and phase structure)
+- `thegent-orchestration-optimization-prd.md` (Primary PRD)
+- `PRD_TEST_PLAN_MATRIX.md` (Test governance and traceability)
+
+---
+
+## 1. The Last 10% That Makes It Great
+
+What separates a good orchestration platform from a great one is not breadth of features—it's *depth of execution*. The thegent platform has solid foundational architecture, comprehensive pattern coverage (114 patterns across 9 domains), and clear phase-gated evolution. What separates "production-ready" from "great" is:
+
+1. **Intuitive defaults**: Every configuration, error message, and workflow should guide operators toward success without requiring deep documentation reading.
+2. **Defensive depth**: Not just handling happy-path flows, but anticipating adversarial conditions, edge cases, and failure cascades.
+3. **Polish at boundaries**: Errors that make operators' lives easier. Logging that enables debugging in 30 seconds, not 30 minutes. Naming that makes intent self-evident.
+4. **Engineering rigor**: Code quality, test coverage, documentation consistency, and reproducibility baked into CI/CD, not added as afterthoughts.
+5. **Observability that tells a story**: Metrics and logs that enable operators to understand *why* something failed, not just *that* it failed.
+
+The 73 optimization items in this addendum target these dimensions. They are organized by domain to support both top-down strategic planning and bottom-up incremental implementation.
+
+---
+
+## 2. Per-Domain Optimization Items
+
+### Domain A: Contract and Schema Design
+
+**Current State:** Core task-tool 18-tag model established; Zen 26-tag extensions researched; namespace versioning pattern identified; doc-vs-code mismatch flagged. Schema registry concept pending formalization.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-A-001 | Schema versioning with automatic capability negotiation | Polish | P1 | Small | WP-X1 | P-004, P-005, P-006 | Operators never manually manage schema compatibility; system auto-selects compatible version on connection. | Add schema_version to connection handshake; implement version registry query during adapter initialization. |
+| OPT-A-002 | Tag deprecation lifecycle with migration warnings | Robustness | P1 | Medium | WP-X8 | P-010 | Smooth schema evolution; operators get clear roadmap before breaking changes. | Define deprecation_date + replacement_tag in schema registry; warn on use of deprecated tags; emit telemetry. |
+| OPT-A-003 | Self-generating schema documentation from TypedSchema | Polish | P2 | Small | WP-X2 | P-001, P-002 | Single source of truth for schema; docs auto-sync with code. | Use Pydantic model_json_schema() to generate OpenAPI-compatible schema docs; commit to git as part of schema registry. |
+| OPT-A-004 | Inline schema validation with helpful error messages | Polish | P1 | Medium | WP-X4 | P-007, P-011 | Operators understand *exactly* what they did wrong in one error message, not buried in debug logs. | On validation failure, return error with: (tag name, expected type/cardinality, what was received, correction example). |
+| OPT-A-005 | Schema extension points as explicit plugin hooks | Enhancement | P2 | Medium | WP-X2 | P-001, P-002 | Domains can safely extend schema without forking; reduces tech debt. | Define extension_namespace in registry; allow domain-specific tags in namespace_prefix:tag_name format. |
+| OPT-A-006 | Contract compliance scorecard in observability | Optimization | P2 | Small | WP-X7 | P-019 | Continuous visibility into how well providers conform to schema contracts. | Emit per-provider metric: schema_compliance_score = (conforming_messages / total_messages). Plot in observability dashboard. |
+| OPT-A-007 | Shadow validation mode for zero-risk schema testing | Polish | P2 | Medium | WP-X4 | P-005 | Test new schema on production traffic without breaking old consumers. | Add --shadow-validation flag; run new schema validator in parallel, emit results to separate telemetry stream. |
+| OPT-A-008 | Canonical error type taxonomy with recovery hints | Robustness | P1 | Medium | WP-X5 | P-008 | Errors are actionable; operators know what to try next. | Create ErrorKind enum with (code, name, description, recovery_hints: List[str]). Populate recovery_hints with domain knowledge. |
+| OPT-A-009 | Tag cardinality testing in conformance suite | Robustness | P1 | Small | WP-X5 | P-003, P-007 | Catch cardinality violations in test suite, not production. | Add test vectors for each tag with: (0 instances, 1 instance, 2+ instances, mixed types) and assert correct behavior per cardinality constraint. |
+| OPT-A-010 | Backward-compat mode with explicit compatibility matrix | Robustness | P2 | Medium | WP-X8 | P-010, P-009 | Operators understand exactly which old versions they can interop with. | Define compatibility_matrix in schema registry: version -> [compatible_versions]. CLI option --check-compat-with=<version>. |
+
+---
+
+### Domain B: Parsing and Streaming
+
+**Current State:** XMLPullParser pattern identified; sloppy-xml fallback researched; partial-state commit lifecycle in Zen; multi-level regex extraction documented. Parser performance target (< 50ms p95) pending validation.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-B-001 | Parser latency SLO enforcement with automated tuning | Optimization | P1 | Medium | WP-X3 | P-013, P-014 | Parsing never becomes a bottleneck; system auto-optimizes parser strategy per provider. | Emit parser.latency_p95 metric; set alert on breach of < 50ms SLO; auto-switch fallback strategy if sloppy-mode latency > threshold. |
+| OPT-B-002 | Streaming progress callbacks for long-running streams | Intuition | P2 | Small | WP-X3 | P-015 | Operators see real-time progress; improves perceived responsiveness. | Expose on_partial_parse(parsed_tags, remaining_buffer) callback; emit to UI as progress indicator. |
+| OPT-B-003 | Confident partial-state detection and early termination | Robustness | P2 | Medium | WP-X3 | P-015 | Don't wait for stream EOF if we have high-confidence complete state. | Add heuristic: if (STATE is terminal) and (confidence > 0.95), stop parsing and commit early. Avoid unnecessary buffer accumulation. |
+| OPT-B-004 | Fallback confidence score visualization in logs | Polish | P1 | Small | WP-X6 | P-016 | Operators immediately see where output came from (structured vs fallback). | Log format: "parsing_result confidence=1.0 source=mcp_structured" or "confidence=0.5 source=raw_text_fallback". |
+| OPT-B-005 | Multi-level extraction strategy profiling | Optimization | P2 | Medium | WP-X3 | P-017 | Identify which extraction strategy works best per provider; adapt strategy selection. | Profile extraction strategies on historical data; emit strategy_used + success_rate metrics; auto-reorder strategy list for future calls. |
+| OPT-B-006 | XML tag ordering normalization | Polish | P2 | Small | WP-X2 | P-001, P-013 | Prevent false validation failures due to tag ordering differences. | Post-parse, sort tags alphabetically before semantic validation. Treat order as cosmetic, not semantic. |
+| OPT-B-007 | Streaming parser with configurable chunk size tuning | Optimization | P2 | Medium | WP-X3 | P-013 | Chunk size affects parse latency; auto-tune based on bandwidth + provider latency. | Add config: chunk_size_bytes (default 8KB, range 1KB-64KB). Monitor latency; auto-adjust on sustained SLO breach. |
+| OPT-B-008 | Malformed XML repair heuristics (common LLM mistakes) | Polish | P2 | Small | WP-X3 | P-014 | Handle common LLM XML mistakes (forgotten closing tag at EOF, unescaped &, duplicate opening tags) without full fallback. | Pre-parse repair: auto-close unclosed tags at EOF, escape unescaped &/</>. Emit repair.count metric. |
+| OPT-B-009 | Parser state machine visualization for debugging | Polish | P1 | Small | WP-X3 | P-013 | Operators can trace exactly what the parser did during troubleshooting. | On parse failure, emit state machine trace: (chunk_N, parser_state_after, emitted_events). Log to debug logger. |
+| OPT-B-010 | Fallback state machine telemetry with transition audit | Robustness | P1 | Medium | WP-X6 | P-018 | Audit trail of all fallback decisions; detect systemic patterns (e.g., always falling back for provider X). | Emit event: fallback_transition from=primary to=degraded reason=parse_failure provider=gemini. Aggregate for root cause analysis. |
+
+---
+
+### Domain C: Provider Management and Routing
+
+**Current State:** Adapter factory pattern established; 4-factor provider scoring (reliability, latency, cost, capability-match) researched; 7-ensemble routing methods documented; speculative execution + geographic routing identified. Prompt-characteristic routing (Martian/Not Diamond) needs formalization.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-C-001 | Provider scoring model with real-time metric refresh | Optimization | P1 | Medium | WP-1001, WP-Y8 | P-021 | Routing decisions reflect actual provider performance, not stale metrics. | Emit provider_score(provider, timestamp, reliability, latency_p95, cost, capability_match) every 60s. Use sliding window (last 24h) for scoring. |
+| OPT-C-002 | Routing strategy A/B testing framework | Enhancement | P2 | Medium | WP-1001, WP-Y8 | P-030, P-032 | Test new routing strategies on small traffic percentage before rollout. | Add routing_strategy = "control"|"test_a"|"test_b". Emit routing.strategy_metric with assignment. Compare outcome quality. |
+| OPT-C-003 | Cost optimization mode with quality SLO | Optimization | P2 | Medium | WP-1007, WP-Y8 | P-024, P-025 | Route to cheapest provider that meets minimum quality threshold; maximize ROI. | Expose cost_optimization_mode flag. Route to provider where cost_per_call * (1 - quality_delta) is minimized. |
+| OPT-C-004 | Prompt classification for smart routing decisions | Enhancement | P1 | Large | WP-1007, WP-Y8 | P-024, P-029 | Route coding tasks to coding-optimized providers; reasoning tasks to reasoning-optimized providers. | Build prompt_classifier(prompt) -> (domain, complexity, required_capability). Train on historical data. Use in provider selection heuristic. |
+| OPT-C-005 | Rate limit forecasting with burst smoothing | Robustness | P1 | Medium | WP-5001 | P-026 | Never hit rate limits; predict when we're approaching limits and proactively slow down. | Track per-provider: requests_this_window, limit_threshold. If (requests_this_window / limit_threshold) > 0.7, apply adaptive backoff. |
+| OPT-C-006 | Speculative execution decision tree | Optimization | P2 | Medium | WP-5001 | P-027 | Only use speculative execution when latency critical + cost acceptable. | Route with speculative=true only if (priority=high) AND (cost_multiplier <= 1.5) AND (provider_pool_size >= 2). |
+| OPT-C-007 | Geographic routing with automatic region failover | Optimization | P2 | Medium | WP-1001 | P-028 | Reduce latency by routing to closest provider region; auto-failover on regional outage. | Maintain region_health_table with (region, latency_p95, error_rate, last_update_ts). Route to lowest-latency region; failover on error_rate > threshold. |
+| OPT-C-008 | Semantic intent routing integration | Enhancement | P2 | Large | WP-1001, WP-1007 | P-029 | System understands *what* the user is trying to do, not just what to call. | Integrate intent classifier; map intent -> preferred_domain -> provider. Example: "help me debug" (intent) -> coding_domain (domain) -> claude|copilot (providers). |
+| OPT-C-009 | Provider capability self-advertising | Polish | P1 | Small | WP-1007 | P-031 | Operators know which providers support which capabilities without reading docs. | On adapter init, emit provider_capabilities event: (provider, supported_tasks: List[str], max_context_tokens, supported_formats, pricing_tier). |
+| OPT-C-010 | Custom routing strategy plugin registration | Enhancement | P2 | Medium | WP-1001 | P-032 | Domain teams can add their own routing strategies without modifying core. | Define routing_strategy_plugin interface. Allow registration via config: [[routing_strategies]] plugin_path = "my_domain/my_router.py". |
+
+---
+
+### Domain D: Reliability and Recovery
+
+**Current State:** 3-state circuit breaker pattern documented; exponential backoff + jitter standard; idempotency-key model formalized; compensation handlers identified; checkpointing via PostgresSaver researched; MAST 14-mode failure taxonomy defined; recovery playbook selection concept pending implementation. Dead-letter queue + poison pill detection pattern in WP-Y2.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-D-001 | Circuit breaker with gradual state machine visualization | Polish | P1 | Small | WP-2003 | P-034 | Operators see exactly where circuit breaker is and why. | Log: circuit_breaker_state(provider, state=CLOSED, failures_in_window=2/5, next_state_transition_at=...). Plot in dashboard. |
+| OPT-D-002 | Adaptive backoff tuning based on recovery patterns | Optimization | P2 | Medium | WP-2002 | P-035 | Backoff delays auto-tune based on provider's actual recovery time. | Profile provider recovery: when it starts responding again after failures. Auto-adjust max_retries + backoff_multiplier. |
+| OPT-D-003 | Idempotency key format validation | Robustness | P1 | Small | WP-1003, WP-2004 | P-036 | Catch malformed idempotency keys before they cause silent duplicates. | Validate idempotency key format: (run_id, step_index, action_type, content_hash) matches regex. Reject malformed keys. |
+| OPT-D-004 | Compensation handler testing in test suite | Robustness | P1 | Medium | WP-2001 | P-037 | Rollbacks work correctly before production needs them. | Add test: for each compensatable action, execute action + compensation, assert system returns to initial state. |
+| OPT-D-005 | Checkpoint snapshot size optimization | Optimization | P2 | Medium | WP-2001 | P-038 | Store checkpoints efficiently; don't bloat the database with full state snapshots. | Compress checkpoints with gzip; store deltas between consecutive checkpoints, not full snapshots. Monitor checkpoint.size_bytes metric. |
+| OPT-D-006 | Time-travel debugging UI with execution comparison | Enhancement | P2 | Large | WP-2001, WP-4007 | P-039 | Operators can visually compare "what happened" vs "what would happen now" for regression detection. | Build UI: slider to jump to any checkpoint, side-by-side view of old vs new execution trace, diff overlay. |
+| OPT-D-007 | MAST failure taxonomy with automated recovery routing | Robustness | P1 | Large | WP-2005 | P-040 | System automatically applies correct recovery strategy for each failure class. | For each FailureKind (infrastructure_timeout, model_overload, tool_unavailable, etc.), define recovery_strategy automatically executed. |
+| OPT-D-008 | Recovery playbook performance tracking | Optimization | P2 | Medium | WP-2004 | P-041 | Know which recovery strategies actually work; disable ones that don't. | Emit metric: recovery_playbook_efficacy (playbook_id, success_rate, median_recovery_time). Track + alert on sustained < 50% efficacy. |
+| OPT-D-009 | Dead-letter queue with automatic replay orchestration | Enhancement | P2 | Medium | WP-Y2 | P-042 | Failed items can be replayed with one click; don't manually re-execute. | Expose DLQ API: list_dlq_items(), replay(dlq_item_id, strategy="retry_fresh"|"replay_with_context"). Auto-requeue on success. |
+| OPT-D-010 | Poison pill detection with cost anomaly alerts | Robustness | P1 | Small | WP-Y2 | P-042 | Catch permanently-failing items early; don't waste tokens on impossible tasks. | Emit alert: content_hash X failed across 5+ attempts with different providers. Recommend move to manual review queue. |
+
+---
+
+### Domain E: Orchestration and Multi-Agent Coordination
+
+**Current State:** Three orchestration modes (sequential, parallel consensus, hierarchical) documented; 8-state session state machine researched; conflict resolution with majority-vote + confidence weighting identified; JSON-RPC inter-agent transport standard; tool approval loop concept pending formalization.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-E-001 | Mode selection heuristic based on task characteristics | Enhancement | P1 | Medium | WP-1004, WP-Y5 | P-050 | System auto-selects orchestration mode (sequential vs parallel vs hierarchical) based on task type. | Classifier: if task_requires_sequential_dependencies -> sequential; if independent_subtasks -> parallel; if complex_hierarchy -> hierarchical. |
+| OPT-E-002 | Session state machine with transition guards | Robustness | P1 | Medium | WP-1004 | P-051 | Prevent invalid state transitions (e.g., EXECUTING -> CREATED). | Define state_transition_guards: (from_state, to_state) -> required_preconditions. Assert preconditions before transition. |
+| OPT-E-003 | Conflict resolution confidence thresholding | Polish | P1 | Small | WP-1004 | P-052 | When agents disagree, system shows confidence weights; operators understand the tie-breaker. | On tie: emit event: conflict_resolution choice=agent_A weight=agent_A.confidence vs choice=agent_B weight=agent_B.confidence. |
+| OPT-E-004 | JSON-RPC request/response schema versioning | Robustness | P1 | Medium | WP-1004 | P-053 | Inter-agent communication contracts don't break as system evolves. | Add jsonrpc_version: "2.0", schema_version: "2.0.0" to every JSON-RPC envelope. Validate on receive. |
+| OPT-E-005 | Tool approval loop with risk-based gating | Enhancement | P1 | Large | WP-3004 | P-054 | Automatic approval for low-risk tools; human approval for high-risk. | Define risk_level per tool (low/medium/high). Auto-approve low-risk. Gate high-risk on human approval (async). |
+| OPT-E-006 | Multi-agent result merging with conflict detection | Polish | P2 | Medium | WP-1004 | P-052 | When parallel agents produce different results, system highlights conflicts clearly. | Implement merge_results(results: List[AgentResult]) -> (merged_result, conflicts: List[ConflictRecord]). Emit conflicts for review. |
+| OPT-E-007 | Hierarchical task decomposition validation | Robustness | P2 | Medium | WP-1004 | P-055 | Decomposed subtasks logically reconstruct original task; no gaps or overlaps. | Validator: (original_task, subtasks) -> (coverage_score, overlap_score). Alert if coverage < 0.95 or overlap > 0.05. |
+| OPT-E-008 | Delegation audit trail with decision justification | Polish | P1 | Small | WP-1004 | P-056 | Operators understand why each task was delegated to which agent. | Log: delegation(task_id, agent_id, reason="capability_match" reason_details={...}). Archive for compliance. |
+| OPT-E-009 | Parallel consensus with early termination on quorum | Optimization | P2 | Medium | WP-1004 | P-057 | Don't wait for all agents; commit once quorum (e.g., 3/5) agree with sufficient confidence. | Track voting progress; commit early if (votes_for > total_agents/2) AND (confidence_avg > threshold). |
+| OPT-E-010 | Agent capability drift detection | Robustness | P1 | Small | WP-1004 | P-031 | If agent's capabilities change unexpectedly (e.g., context window shrinks), alert. | Monitor registered_capabilities vs actual_capabilities. If drift detected, emit agent.capability_drift event and trigger re-registration. |
+
+---
+
+### Domain F: Governance, Policy, and Compliance
+
+**Current State:** Policy gate framework concept pending; admission control policies identified; ABAC (Attribute-Based Access Control) researched; audit logging infrastructure needed; compliance checklist frameworks (SOC 2, HIPAA) pending formalization; data residency + encryption policies documented at concept level.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-F-001 | Policy gate enforcement with clear denial reasons | Robustness | P1 | Medium | WP-3001 | P-066 | When a policy gate denies an action, operators know exactly why. | On policy denial: emit event policy_denial(gate_id, rule_violated, context={...}, remediation_steps=[...]). |
+| OPT-F-002 | Admission control policy testing in sandbox | Enhancement | P2 | Medium | WP-3001 | P-067 | Test policies on non-critical traffic before production rollout. | Add --test-policy flag. Apply policy to shadow traffic; emit telemetry without blocking. Compare with production baseline. |
+| OPT-F-003 | ABAC rule visualization and conflict detection | Polish | P2 | Medium | WP-3002 | P-068 | Operators understand their ABAC rules and spot conflicting rules. | Build rule conflict detector: analyze rules for contradictions. Visualize rule precedence. Warn on redundant rules. |
+| OPT-F-004 | Audit log immutability with cryptographic proofs | Robustness | P1 | Large | WP-3003 | P-069 | Audit logs cannot be tampered with; regulatory compliance confidence. | Append-only audit log with Merkle tree linking. Emit audit_log_hash periodically. Validate chain on read. |
+| OPT-F-005 | Fine-grained data residency enforcement | Robustness | P1 | Medium | WP-3005 | P-070 | Operators ensure data never leaves their region; GDPR compliance. | Add residency_requirement to run config. Pre-flight check: all selected providers have endpoint in required region. Reject if not. |
+| OPT-F-006 | Encryption key rotation automation with zero downtime | Robustness | P2 | Large | WP-3006 | P-071 | Keys rotate automatically; operators don't manage rotation manually. | Implement dual-key system: current_key, next_key. On rotation event, encrypt new data with next_key. Re-encrypt old data async. |
+| OPT-F-007 | Compliance checklist automation | Enhancement | P2 | Medium | WP-3007 | P-072 | Operators verify compliance requirements are met with CLI checks. | Build compliance_checker(standard="SOC2"|"HIPAA"|"PCI-DSS") -> (checks: List[ComplianceCheck], pass_count, fail_count). Remediation guidance. |
+| OPT-F-008 | Policy change audit trail with rollback capability | Robustness | P1 | Medium | WP-3001 | P-073 | When policies change, old admins know what changed and why. Rollback to previous policy set if needed. | Store policy_version with timestamp + author. Enable policy diff view. Provide rollback_to_version CLI. |
+| OPT-F-009 | Sensitive data tagging with automatic redaction in logs | Robustness | P1 | Medium | WP-3008 | P-074 | Sensitive data (API keys, PII) never appears in logs. | Tag sensitive fields at schema level. Auto-redact on serialization: "***REDACTED[api_key]***". Expose only to authorized log viewers. |
+| OPT-F-010 | Token expiry enforcement with graceful renewal | Robustness | P1 | Small | WP-3006 | P-075 | Expired tokens don't cause cascading failures; system auto-renews. | Track token_expires_at. If (expires_at - now) < 5min, proactively refresh. Emit token_refresh event. Fall back to manual if refresh fails. |
+
+---
+
+### Domain G: Observability and Telemetry
+
+**Current State:** OTel GenAI instrumentation on tool calls (P-074) researched; distributed tracing with parent-child hierarchy in WP-Y6; golden signals framework (latency, error rate, saturation, traffic) identified; metric cardinality explosion risks documented. Dashboard design patterns pending formalization.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-G-001 | Golden signals dashboards with one-click drill-down | Polish | P1 | Medium | WP-4003, WP-Y6 | P-080 | Operators see system health at a glance; drill down when something's wrong. | Dashboard: 4 panes (latency p50/p95/p99, error_rate, saturation %, traffic). Clicking any pane opens detailed breakdown. |
+| OPT-G-002 | Metric cardinality explosion prevention | Robustness | P1 | Medium | WP-4003, WP-Y6 | P-081 | High-cardinality tags don't blow up time-series database. | Set cardinality limits per metric tag. On overflow, hash excess values into __other__ bucket. Emit cardinality_exceeded alert. |
+| OPT-G-003 | Distributed trace sampling with intelligent decision trees | Optimization | P2 | Medium | WP-4003, WP-Y6 | P-082 | Sample errors at 100%, successes at 1%; always have traces when you need them. | Define sampling_rules: (error_rate > threshold) -> always_sample; (duration > p99) -> always_sample; else -> sample_1_percent. |
+| OPT-G-004 | Trace context propagation across async boundaries | Robustness | P1 | Medium | WP-4003, WP-Y6 | P-083 | Distributed traces don't break when code goes async. Maintain parent-child links across task boundaries. | Store trace_context in async task context. Extract on task resumption. Emit span with parent_span_id. |
+| OPT-G-005 | Log correlation ID injection in all messages | Polish | P1 | Small | WP-4003 | P-084 | Find related logs in seconds using correlation ID. | On request start: generate correlation_id = uuid(). Inject into logging context. Include in every log line + metric label. |
+| OPT-G-006 | Histogram buckets tuned to actual latency distribution | Optimization | P2 | Medium | WP-4003, WP-Y6 | P-085 | Latency histograms have buckets where data actually lives; reduce noise in quantiles. | Profile latency distribution for each provider/operation. Auto-configure histogram buckets based on p50, p95, p99. |
+| OPT-G-007 | Custom metrics registration with validation | Robustness | P1 | Small | WP-4003 | P-086 | New metrics are validated (name format, type correctness, cardinality safety) before emission. | Meter registry: validate metric_name matches pattern, type matches declared type, label cardinality < limit. Emit registration_error if invalid. |
+| OPT-G-008 | Telemetry-driven alerting with dynamic thresholds | Enhancement | P2 | Large | WP-4003 | P-087 | Alert thresholds adapt based on seasonal trends + recent baselines. | Implement dynamic threshold: alert if (metric > baseline_p95 + 2*stddev) OR (metric > absolute_threshold). Re-baseline daily. |
+| OPT-G-009 | Export format flexibility for observability tool interchange | Polish | P2 | Small | WP-4003, WP-Y6 | P-088 | Export metrics/traces/logs to any observability platform (Datadog, New Relic, Grafana, etc.). | Expose exporters for: Datadog, New Relic, Prometheus, Loki, OTLP. Configure via --exporter flag. |
+| OPT-G-010 | Root cause analysis automation with pattern matching | Enhancement | P2 | Large | WP-4003, WP-4007 | P-089 | System identifies most likely root cause based on correlated metrics + logs. | Build pattern DB: (symptom_signature: correlation of metrics/logs) -> (likely_cause, remediation). Match on incident query. |
+
+---
+
+### Domain H: UX, Operator Experience, and Human-in-the-Loop
+
+**Current State:** Operator onboarding flow concept pending; progressive complexity exposure researched; self-documenting API principle identified; error message quality standards needed; default configuration pitfalls documented; "pit of success" design principle pending systematic application.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-H-001 | CLI quick-start wizard with sane defaults | Polish | P1 | Medium | WP-4001 | P-090 | New operators get running in 5 minutes, not 5 hours. | Build: thegent init --quick (interactive wizard) -> generates config with sensible defaults + explanations. |
+| OPT-H-002 | Progressive disclosure of advanced features | Intuition | P1 | Medium | WP-4001 | P-091 | Beginners see simple interface; advanced operators can unlock power features. | Default: --simple flag shows basic options. --advanced shows 5x more. --expert unlocks dangerous options. |
+| OPT-H-003 | Configuration validation with fix suggestions | Polish | P1 | Small | WP-4002 | P-092 | Invalid config shows what's wrong + how to fix it. | On config load error: emit error with (field_name, expected_format, what_you_provided, example_correct_value). |
+| OPT-H-004 | Error messages with remediation steps | Polish | P1 | Medium | WP-4002 | P-093 | Errors are not dead-ends; they come with actionable next steps. | Error format: [ERROR] provider_timeout: timeout waiting for gemini (30s). Try: increase timeout to 60s, switch provider, or check network. |
+| OPT-H-005 | Human-in-the-loop approval flows with context | Enhancement | P2 | Medium | WP-4004 | P-094 | High-risk decisions require human approval; operators see enough context to decide quickly. | Approval UI: (proposed_action, risk_level, context={...}, recommended_action, consequences, links_to_docs). |
+| OPT-H-006 | Audit log tail for security-minded operators | Polish | P1 | Small | WP-4002 | P-095 | Operators can tail audit logs in real time to see who did what. | Expose: thegent logs audit --tail --filter="actor:admin OR action:deploy OR severity:high". |
+| OPT-H-007 | "Pit of success" defaults for reliability | Intuition | P1 | Medium | WP-4001 | P-096 | Default config makes system reliable; deviating from defaults requires explicit effort. | Default: circuit_breaker=enabled, retry=3, idempotency=enabled, audit_logging=enabled. Disable only with --risky-mode. |
+| OPT-H-008 | Self-healing suggestions based on telemetry | Enhancement | P2 | Large | WP-4003, WP-4005 | P-097 | When issues occur, system suggests fixes based on observability data. | Pattern: if (error_rate > threshold for provider X) suggest "consider switching provider X to fallback provider Y". |
+| OPT-H-009 | Status page with incident context | Polish | P2 | Medium | WP-4006 | P-098 | Operators understand what's happening now + why + when it'll be fixed. | Status page: (component_status, incident_description, root_cause, fix_ETA, workaround). Auto-update from incident tracking. |
+| OPT-H-010 | Onboarding checklist with compliance verification | Robustness | P2 | Medium | WP-4001, WP-3007 | P-099 | New operators verify they've completed all required setup before going live. | Checklist: api_keys_set, policies_configured, alerts_enabled, audit_logging_enabled, compliance_checks_passing. Emit deployment_ready_status. |
+
+---
+
+### Domain I: Architecture and Infrastructure (Cross-Cutting)
+
+**Current State:** Hexagonal architecture principles identified across multiple systems (Zen, Crun, Pheno); layer boundary enforcement (tach, grimp, deply) researched; dependency injection patterns (Kimaki) documented; testing patterns (chaos, property-based, contract-based) pending systematic integration. Infrastructure concerns (scaling, HA, disaster recovery) in foundational phase.
+
+**Optimization Opportunities:**
+
+| Item ID | Title | Category | Priority | Effort | WP Mapping | Pattern Reference | Impact | Implementation Hint |
+|---------|-------|----------|----------|--------|-----------|-------------------|--------|---------------------|
+| OPT-I-001 | Architecture boundary enforcement in CI | Robustness | P1 | Small | WP-0001 | P-100 | Prevent accidental cross-layer dependencies before they go to production. | Add to CI: tach-check (Python), grimp (Python), deply (Go), eslint-plugin-boundaries (JS). Fail build if violations detected. |
+| OPT-I-002 | Dependency injection container with auto-wiring | Enhancement | P1 | Medium | WP-1005 | P-101 | Services discover dependencies automatically; less manual configuration. | Use dependency_injector (Python) or tsyringe (JS) for DI. Scan codebase for injectable services. Register automatically. |
+| OPT-I-003 | Testable seams with mock provider factories | Robustness | P1 | Medium | WP-6001 | P-102 | Tests can easily mock external providers without complex setup. | Create mock_provider_factory(provider_type) -> MockProvider with controllable responses. Use in all integration tests. |
+| OPT-I-004 | Chaos engineering test suite with fault injection | Robustness | P2 | Large | WP-Y3 | P-043 | Verify system recovers from failures systematically. | Build chaos suite: inject network partition, timeout, malformed response, state corruption. Measure recovery time + correctness. |
+| OPT-I-005 | Property-based testing for invariant verification | Robustness | P2 | Large | WP-6001 | P-103 | Discover edge cases that hand-written tests miss. | Use hypothesis (Python) or fast-check (JS). Generate inputs. Verify: (item_count_before + inserted_count == item_count_after). |
+| OPT-I-006 | Contract-based testing for service boundaries | Robustness | P1 | Large | WP-6001 | P-104 | Provider APIs can't break consumers without detection. | Define provider contracts. Generate test vectors from contracts. Run contracts both consumer-side (verify provider behaves) + provider-side (verify compliance). |
+| OPT-I-007 | Horizontal scalability patterns with shared nothing design | Enhancement | P2 | Large | WP-5004 | P-105 | Add capacity by adding servers; no coordination overhead. | Stateless orchestrator: all state in distributed store (PostgreSQL, Redis). Session affinity not needed. |
+| OPT-I-008 | Multi-region disaster recovery automation | Robustness | P2 | Large | WP-5005 | P-106 | Primary region fails, system auto-promotes secondary with <1min RTO. | Implement: dual-region setup, continuous replication, DNS failover automation, automatic promotion triggers. |
+| OPT-I-009 | Cost optimization through resource pooling | Optimization | P2 | Medium | WP-5006 | P-107 | Shared resource pools (DB connections, thread pools) reduce waste. | Implement connection pooling (max_overflow logic), thread pool sizing (CPU+memory based). Monitor utilization. |
+| OPT-I-010 | API versioning strategy with deprecation path | Robustness | P2 | Medium | WP-6002 | P-108 | New API versions don't break old consumers. Deprecation is planned. | Support 2 major API versions simultaneously. Mark old version as deprecated. Require explicit version selection. Retire after 12mo. |
+
+---
+
+## 3. Engineering Excellence Items
+
+Cross-cutting quality improvements that apply across all domains:
+
+### Code Quality and Maintainability
+
+- **OPT-EX-001**: Type hints on all functions and module-level exports; 100% type coverage target. Run `mypy --strict` in CI.
+- **OPT-EX-002**: Cyclomatic complexity limit of 10 per function, cognitive complexity limit of 15. Run `radon` + `pylint` in CI. Block PRs exceeding limits.
+- **OPT-EX-003**: Docstring coverage target 95%; every public function has a docstring explaining intent, parameters, return value, raises. Enforce with `interrogate` in CI.
+- **OPT-EX-004**: Import ordering and consistency; use `isort` (Python), `eslint-plugin-import` (JS). Commit sorted imports to make diffs readable.
+- **OPT-EX-005**: No magic numbers; extract to named constants with explanatory comments. `# N = 3 because we need quorum in conflict resolution`.
+
+### Test Quality and Coverage
+
+- **OPT-EX-006**: Target 80% line coverage, 70% branch coverage, 0% dead code. Use `coverage` (Python) + `Istanbul` (JS). Fail builds if coverage regresses.
+- **OPT-EX-007**: Test naming convention: `test_[behavior]_when_[condition]` (e.g., `test_route_provider_succeeds_when_score_high`). Enables scanning tests by scenario.
+- **OPT-EX-008**: Assertion messages explain *why* failure matters, not just what failed. `assert result.status == "success", f"Expected success but got {result.status}: {result.error_message}"`.
+- **OPT-EX-009**: Test fixtures factory pattern; create builder objects (FluentBuilder pattern) for complex test data. Example: `ProviderBuilder().with_latency(100).with_cost(0.01).build()`.
+- **OPT-EX-010**: Mock behavior is verified (mock.assert_called_once_with(...)) not just existence. Prevents brittle tests that pass even if mocks aren't used.
+
+### Documentation Quality
+
+- **OPT-EX-011**: README in every package/module explaining purpose, quick-start example, config reference. Generated from docstrings where possible.
+- **OPT-EX-012**: Architecture Decision Records (ADRs) for every non-trivial choice. ADR format: Context | Decision | Consequences | Alternatives Considered.
+- **OPT-EX-013**: API docs auto-generated from code and kept in sync via CI validation. Example: use Swagger for HTTP APIs, auto-extract from type hints.
+- **OPT-EX-014**: Changelog following Semantic Versioning convention. Every release: breaking changes, new features, bug fixes, deprecations, security updates.
+- **OPT-EX-015**: Configuration documentation with inline comments explaining purpose, valid values, default, and impact of each setting.
+
+### API Design Consistency
+
+- **OPT-EX-016**: Consistent naming across APIs: verbs for actions (route_to, execute, recover), nouns for entities (provider, task, checkpoint). No verb tense inconsistency.
+- **OPT-EX-017**: Consistent error response format: { code, message, details, recovery_hints }. All APIs return same structure.
+- **OPT-EX-018**: HTTP methods follow REST conventions: GET (read), POST (create), PUT (replace), PATCH (update), DELETE (remove). Treat orchestration APIs as resources.
+- **OPT-EX-019**: Pagination consistently implemented across list APIs: limit, offset, total_count, has_more. No custom pagination patterns per endpoint.
+- **OPT-EX-020**: Request/response schema versioning in all APIs. Version headers: Accept: application/json; version=2. Support 2 major versions simultaneously.
+
+### Error Message Quality
+
+- **OPT-EX-021**: Error messages follow 3-part format: (1) what went wrong, (2) why it matters, (3) how to fix it. Example: "Circuit breaker open for provider:gemini (too many errors in last 60s). Requests queued. Retry in 30s or switch provider."
+- **OPT-EX-022**: Error messages are actionable, not vague. ✗ "Invalid argument" ✓ "config.chunk_size_bytes must be >= 1024, got 512".
+- **OPT-EX-023**: Error context includes relevant details without overwhelming. Log full stack trace at DEBUG level; emit summary at ERROR level.
+- **OPT-EX-024**: Errors suggest the most common fix first. "Did you forget to set PROVIDER_API_KEY? See setup.md for details."
+- **OPT-EX-025**: Errors for configuration mistakes include example correct config snippets.
+
+### Configuration Management
+
+- **OPT-EX-026**: Config schema validation on startup. Reject invalid configs before processing. Include validation errors with remediation hints.
+- **OPT-EX-027**: Environment variable support for all config items. Convention: env var = THEGENT_SECTION_FIELD (e.g., THEGENT_PROVIDERS_TIMEOUT_MS).
+- **OPT-EX-028**: Config defaults are secure-by-default. Insecure settings require explicit opt-in (e.g., --allow-insecure-fallback).
+- **OPT-EX-029**: Config hot-reload capability for non-critical settings (log level, metric flush interval). Restart required only for critical settings (provider list, schema version).
+- **OPT-EX-030**: Config audit trail: log every config change with timestamp, actor, before/after values. Support config diff/rollback.
+
+### Dependency Management
+
+- **OPT-EX-031**: Pin major+minor versions of dependencies; allow patch versions to float. Update patches weekly. Review major version bumps in dedicated sprints.
+- **OPT-EX-032**: Security audit of all dependencies on every release. Run `pip-audit` (Python), `npm audit` (JS), `cargo-audit` (Rust) in CI. Fail on unpatched vulnerabilities.
+- **OPT-EX-033**: Minimize external dependencies. Prefer stdlib when reasonable. Justify each external dependency (cost of maintenance vs benefit).
+- **OPT-EX-034**: SBOM (Software Bill of Materials) generation on every build. Export in SPDX format. Track for supply-chain security compliance.
+- **OPT-EX-035**: Deprecated dependency detection. When deps are deprecated, proactively migrate before support ends. Assign owner for each migration task.
+
+### Build and CI Pipeline
+
+- **OPT-EX-036**: Fail CI on linting errors, type errors, security findings. No warnings that get ignored. Make developers fix issues.
+- **OPT-EX-037**: Build cache strategy for reproducible, fast builds. Docker layer caching, dependency caching. Document cache invalidation strategy.
+- **OPT-EX-038**: CI/CD pipeline stages: lint -> type-check -> unit-test -> integration-test -> security-scan -> build -> deploy. Each stage gates next stage.
+- **OPT-EX-039**: Artifact curation: publish only essential artifacts (binary, docs, SBOM). No build artifacts left lying around.
+- **OPT-EX-040**: Deployment rollout stages: dev -> staging -> prod. Staging runs exact same tests as prod. Catch configuration issues before production.
+
+---
+
+## 4. Robustness Hardening Checklist
+
+Per-component checklist ensuring defensive-depth:
+
+### Input Validation at Every Boundary
+- [ ] All HTTP endpoint inputs validated against schema.
+- [ ] All CLI arguments type-checked and range-checked.
+- [ ] All config file inputs validated on load.
+- [ ] All provider API responses validated against expected schema.
+- [ ] Size limits enforced (max payload, max string length, max array length).
+- [ ] Type coercion explicit; no implicit conversions that hide bugs.
+
+### Error Handling for Every External Call
+- [ ] Every API call wrapped in try-catch; no unhandled exceptions bubble up.
+- [ ] Error response from external service is inspected; transient vs permanent errors differentiated.
+- [ ] Timeout configured for every network call; no indefinite hangs.
+- [ ] Partial response handling; what if the provider returns 500 bytes instead of full response?
+- [ ] Error context preserved (what call failed? with what args? at what timestamp?).
+
+### Timeout on Every Network Operation
+- [ ] Streaming requests have chunk-level timeouts in addition to overall timeout.
+- [ ] DNS resolution timeouts configured (2s default).
+- [ ] TLS handshake timeouts configured (5s default).
+- [ ] Request body write timeout configured (10s default).
+- [ ] Response body read timeout configured (30s default).
+- [ ] Total request timeout < sum of component timeouts to allow graceful timeout cascade.
+
+### Circuit Breaker on Every Provider
+- [ ] Circuit breaker per provider with configurable thresholds.
+- [ ] Failure rate trigger (e.g., 5 failures in 60s).
+- [ ] Success rate trigger for half-open state exit.
+- [ ] Reset timeout configurable (e.g., 30s before attempting recovery).
+- [ ] Circuit state exported to observability for monitoring.
+
+### Idempotency on Every Mutation
+- [ ] Idempotency key generated on request creation.
+- [ ] Idempotency key stored in request context (passed to all downstream calls).
+- [ ] Idempotency key preserved across retries.
+- [ ] Idempotency result cached by content-hash, not just request ID.
+- [ ] Idempotency cache TTL defined (e.g., 24 hours for completed tasks).
+
+### Logging at Every Decision Point
+- [ ] Routing decision logged with (task_id, selected_provider, reason, scores_of_all_providers).
+- [ ] Fallback activation logged with (from_strategy, to_strategy, reason, confidence_delta).
+- [ ] Policy gate decision logged with (gate_name, rule_evaluated, deny_reason, remediation).
+- [ ] State transitions logged with (from_state, to_state, trigger_event, timestamp).
+- [ ] Configuration choices logged on startup (active providers, routing strategy, policy gates).
+
+### Metrics at Every Performance-Sensitive Path
+- [ ] Routing latency tracked (metric: provider_selection_latency_ms).
+- [ ] Parsing latency tracked (metric: parsing_latency_ms with percentiles).
+- [ ] Provider call latency tracked by provider and operation type.
+- [ ] Orchestration latency tracked (task queuing, execution, result serialization).
+- [ ] Cache hit rate tracked for idempotency cache, DNS cache, connection pool reuse.
+
+### Observability Completeness
+- [ ] Every error emits a structured event with error_code, error_message, error_context.
+- [ ] Every network call emits a trace span with request/response summary.
+- [ ] Every policy decision emits an audit log entry.
+- [ ] Every retry attempt logged with attempt_number, backoff_duration, next_retry_at.
+- [ ] Every resource limit hit (rate limit, connection pool exhaustion) emitted as alert.
+
+---
+
+## 5. Intuition and Usability Polish
+
+### Naming Conventions Consistency
+
+- **Entities**: task, provider, checkpoint, policy_gate, failure_mode, recovery_strategy (nouns, singular).
+- **Actions**: route_to, execute, recover, checkpoint, replay, approve (verbs, infinitive).
+- **States**: CREATED, RUNNING, COMPLETED, FAILED (capitals, past-participles or present-participles).
+- **Configuration**: chunk_size_bytes (snake_case), not chunkSizeBytes (camelCase) or CHUNK_SIZE_BYTES (ALL_CAPS).
+- **Error types**: NetworkTimeoutError, PolicyDenialError, SchemaValidationError (descriptive, ends in Error).
+- **Metric names**: provider_routing_latency_ms (lowercase_underscore, includes unit suffix).
+
+### Error Message Clarity Standards
+
+- **Formatting**: Single-line error message for logging, extended message (multi-line) for CLI display.
+- **Context**: Always include what was attempted (task ID, provider name, operation type).
+- **Specificity**: "Invalid chunk_size 512" not just "Invalid config". Include expected range: "must be >= 1024".
+- **Actionability**: Suggest next step. "Circuit breaker open. Try: wait 30s, switch provider, increase failure_threshold."
+- **Tone**: Professional, not condescending. "Expected format..." not "You forgot...".
+
+### Default Configuration Quality
+
+- **Secure-by-default**: Circuit breaker enabled, audit logging enabled, policy gates enabled. Operators must opt-in to reduced safety.
+- **Reliable-by-default**: Retry enabled (3 retries), timeouts configured, idempotency enabled. Operators can disable for specific lanes if latency critical.
+- **Observable-by-default**: OTel tracing sampling enabled (1% of successes, 100% of errors). Metrics exported to stdout by default (easy local testing).
+- **Compatible-by-default**: Schema version negotiated on connection. Supports 1 major version back. Fallback parsers enabled.
+
+### Progressive Complexity Exposure
+
+- **Level 0 (Beginner)**: `thegent init --quick` → generates working config with 5 key settings. Hides 95% of options.
+- **Level 1 (Intermediate)**: `--advanced` flag shows 20 additional settings with explanations. Covers 90% of real-world use cases.
+- **Level 2 (Advanced)**: `--expert` flag unlocks performance tuning, low-level fallback policies, custom routing strategies.
+- **Level 3 (Platform Engineer)**: Direct code configuration via Python/JS API for systems-level customization.
+
+### Self-Documenting APIs
+
+- **Function names tell the story**: `route_provider_with_fallback_and_idempotency()` vs `route()`. Names encode intent.
+- **Parameter names are explicit**: `timeout_ms`, `max_retries`, `failure_threshold_rate` not just `t`, `r`, `ft`.
+- **Enums instead of magic strings**: `routing_strategy=RoutingStrategy.COST_OPTIMIZED` not `routing_strategy="cost"`.
+- **Type hints make contracts clear**: `route(task: Task, providers: List[Provider]) -> ProviderSelection` tells caller what to expect.
+- **Builders for complex objects**: `TaskBuilder().with_priority("high").with_timeout(60000).build()` more readable than 10-arg constructor.
+
+### Operator Onboarding Flow
+
+1. **0-5 min**: `thegent init --quick` → config generated, user reads summary.
+2. **5-15 min**: `thegent status` → shows current system state, alerts if config incomplete.
+3. **15-30 min**: `thegent test-providers` → connects to all configured providers, reports capability matrix.
+4. **30-45 min**: `thegent run-checklist --compliance=SOC2` → verifies required settings, highlights gaps.
+5. **45+ min**: `thegent start` → system ready, CLI ready for commands.
+
+### "Pit of Success" Design Choices
+
+- **Choice: Circuit Breaker Enabled**: Default ON. Requires explicit --disable-circuit-breaker to turn off. Prevents cascading failures by default.
+- **Choice: Audit Logging**: Default ON. Requires --disable-audit-logging to turn off. Compliance by default.
+- **Choice: Schema Validation**: Default STRICT. Requires --lenient-validation to allow partial matches. Catches bugs in strict mode.
+- **Choice: Retry with Backoff**: Default ON (3 retries, exponential backoff). Requires --no-retry to disable. Resilient by default.
+- **Choice: Telemetry Sampling**: Default 1% of successes, 100% of errors. Easy to enable full sampling (--telemetry-100pct) for debugging.
+
+---
+
+## 6. Performance Optimization
+
+### Hot Path Identification
+
+1. **Provider selection**: Called for every task. Optimize: cache scoring results for 60s, avoid full re-score on every call.
+2. **Parsing XML**: Called for every provider response. Optimize: XMLPullParser with streaming, avoid full buffer accumulation.
+3. **Idempotency lookup**: Called on every request retry. Optimize: in-memory cache (LRU, 10k entries), fallback to DB.
+4. **Policy gate evaluation**: Called on every action. Optimize: pre-compile policy rules to bytecode, cache rule evaluation results.
+5. **Checkpoint serialization**: Called on state mutation. Optimize: delta-based snapshots (store changes, not full state), compression (gzip).
+
+### Caching Strategies Per Layer
+
+| Layer | What to Cache | TTL | Size | Lookup | Eviction |
+|-------|---------------|-----|------|--------|----------|
+| Routing | Provider scores | 60s | unbounded | (provider_id) | LRU |
+| Parsing | Parsed message schema | 1h | 1000 | (schema_version) | LRU |
+| Idempotency | Action results | 24h | 10k | (content_hash) | LRU + TTL |
+| Policy | Rule evaluation | 5m | 100 | (rule_id, context) | LRU |
+| Provider | Capability ads | 10m | 100 | (provider_id) | LRU + TTL |
+
+### Connection Pooling Tuning
+
+- **DB connections**: min_size=5, max_size=25 (for 4-core machine), increment in multiples of 5 as load increases.
+- **HTTP connections**: per_host_size=10, total_size=50. Reuse for keep-alive. Timeout idle connections after 30s.
+- **gRPC connections**: single connection per endpoint; use multiplexing for concurrent requests.
+
+### Query Optimization
+
+- **Checkpoint retrieval**: Add index on (run_id, timestamp) for fast point-in-time queries.
+- **Audit log search**: Add index on (actor_id, action, timestamp) for compliance queries.
+- **Policy rule lookup**: In-memory trie of policy rules; no DB query on hot path.
+
+### Memory Management
+
+- **Streaming buffer size**: Default 8KB, max 64KB. Larger buffers for slow networks, smaller for resource-constrained environments.
+- **Checkpoint delta compression**: gzip at rest, decompress on load. Reduces checkpoint size by 70-80% typical.
+- **Metric buffer flushing**: Batch metrics into 1000-item chunks, flush every 10s or on buffer full. Balance throughput vs latency.
+
+### Startup Time Optimization
+
+- **Lazy initialization**: Load provider adapters only when first used, not on startup.
+- **Config parsing**: Cache parsed config to disk; skip re-parsing on restart if config unchanged.
+- **Policy rule compilation**: Pre-compile policy rules to bytecode on first startup; cache bytecode.
+- **Schema registry warmup**: Load only schemas needed for configured providers; skip unused schemas.
+
+---
+
+## 7. Security Hardening Addendum
+
+### Input Sanitization
+
+- **SQL injection prevention**: Use parameterized queries everywhere. Never string-interpolate SQL.
+- **XML bomb prevention**: Disable XXE entity expansion in XML parsers. Set max nesting depth (< 20 levels).
+- **Path traversal prevention**: Normalize file paths; reject paths containing `..` or absolute paths.
+- **Command injection prevention**: Use subprocess.run([...], shell=False) never subprocess.run(..., shell=True).
+
+### Secret Management
+
+- **Never log secrets**: Tag secrets in schema. Auto-redact in all serialization. Enforce in lint/test.
+- **Secret rotation**: Store secrets with expiry dates. Alert before expiry. Auto-rotate on expiry.
+- **Secret storage**: Use environment variables for dev, HashiCorp Vault / AWS Secrets Manager for prod.
+- **Secret access audit**: Log every secret access (who, when, what secret). Alert on unusual patterns.
+
+### Transport Encryption
+
+- **TLS for all network calls**: No http:// in production. Verify certificates; no INSECURE_SKIP_VERIFY.
+- **Mutual TLS (mTLS)**: Client certs for internal service-to-service communication. Revoke certs on compromise.
+- **Perfect forward secrecy**: Use TLS 1.3+ with ephemeral key exchange. Avoid static keys.
+
+### Audit Trail Completeness
+
+- **Audit log immutability**: Append-only log with cryptographic hashing. Tamper detection via Merkle tree validation.
+- **Audit log retention**: Keep for 7 years (typical compliance requirement). Archive old logs to cold storage.
+- **Audit log export**: Support compliance queries (who made policy changes in last 30 days?) via structured export.
+
+### Access Control Review
+
+- **RBAC mapping**: Document role -> permissions matrix. Review quarterly.
+- **Least privilege principle**: Grant minimum permissions needed per role. Regular audit of actual permissions used.
+- **Delegation limits**: Users can't delegate higher permissions than they have. Prevent privilege escalation.
+
+### Dependency Vulnerability Scanning
+
+- **Automated scanning**: Run `pip-audit`, `npm audit`, `cargo audit` on every CI run. Block on unpatched critical vulnerabilities.
+- **Vulnerability tracking**: Build SCA (Software Composition Analysis) dashboard. Track remediation progress per dependency.
+- **Transitive deps**: Audit not just direct deps but transitive dependencies. Tools like `syft` for SBOM generation.
+
+---
+
+## 8. Priority Matrix
+
+| Priority | Count | Total Effort | Phase Mapping | Representative Items |
+|----------|-------|--------------|---------------|-----------------------|
+| P0 (Critical) | 28 | 80 agent-calls | Phase 1-2 | Schema versioning (OPT-A-001), circuit breaker enforcement (OPT-D-001), audit logging (OPT-F-009), parsing latency SLO (OPT-B-001) |
+| P1 (High) | 32 | 120 agent-calls | Phase 1-3 | Config validation (OPT-H-003), error messages (OPT-H-004), dependency injection (OPT-I-002), type coverage (OPT-EX-001) |
+| P2 (Medium) | 10 | 45 agent-calls | Phase 3-4 | Progressive disclosure (OPT-H-002), telemetry sampling (OPT-G-003), horizontal scaling (OPT-I-007) |
+| P3 (Low) | 3 | 15 agent-calls | Phase 5-6 | Custom routing strategies (OPT-C-010), semantic routing (OPT-C-008) |
+
+**Effort Allocation**: 73 optimization items, ~260 total agent-calls / ~8-10 weeks wall-clock for full implementation with agent-led parallel execution.
+
+---
+
+## 9. "Things We'll Thank Ourselves For Later"
+
+Forward-looking items that prevent technical debt:
+
+### API Versioning Strategy
+- **Decision**: Support 2 major API versions simultaneously. New version released annually.
+- **Deprecation**: Mark old version as deprecated 6mo before EOL. Require explicit version header.
+- **Migration guide**: Publish upgrade guide for each version. Map old endpoints to new. Provide script to auto-migrate client code.
+- **Benefit**: Customers don't face forced migrations. Thegent team can iterate faster knowing 2-version support suffices.
+
+### Schema Evolution Plan
+- **Strategy**: Tag-based versioning. New tags added to extension blocks. Old consumers ignore unknown tags.
+- **Backward compat**: Dual-read (accept old schema + new schema). Dual-write (emit both formats during migration window).
+- **Forward compat**: New code reads old schema format. Graceful degradation if new tags missing.
+- **Benefit**: Smooth schema evolution without breaking deployments.
+
+### Configuration Migration Path
+- **Versioned config format**: Config file version in header. Migrations applied auto on load.
+- **Migration scripts**: Explicit migrate_config(old_version, new_version) functions. Tested migrations.
+- **Benefit**: Config changes don't force manual edits across all deployments.
+
+### Deprecation Workflow
+- **Phase 1 (Mark)**: Old feature marked as deprecated. Warning on use. Docs link to replacement.
+- **Phase 2 (Warn)**: Logs warning every time deprecated feature used. Email summary to active users.
+- **Phase 3 (EOL)**: Feature removed. EOL date published 6mo in advance.
+- **Benefit**: Users have clear timeline to migrate. No surprise breaking changes.
+
+### Backward Compatibility Testing
+- **Test Matrix**: (old_client, current_server), (current_client, old_server). Run on every release.
+- **Golden Corpus**: Record provider responses. Use golden corpus in tests; don't depend on live APIs.
+- **Benefit**: Catch compatibility breaks before release.
+
+---
+
+## 10. Integration Checklist with Existing Artifacts
+
+**These 73 optimization items integrate with existing documentation as follows:**
+
+| Artifact | Mapping |
+|----------|---------|
+| `thegent-wbs-final.md` | OPT items map to specific WPs. Example: OPT-A-001 (schema versioning) -> WP-X1 (XML contract registry). |
+| `thegent-orchestration-optimization-prd.md` | OPT items provide implementation details for FRs. Example: OPT-F-001 (policy gate denial reasons) implements FR-037 (governance clarity). |
+| `thegent-mega-research-synthesis-2026-02-14.md` | OPT items leverage patterns from Part 5 (114 patterns). Cross-references embedded in each OPT item. |
+| `PRD_TEST_PLAN_MATRIX.md` | OPT-EX-* (engineering excellence) items feed into test categories. Example: OPT-EX-006 (80% coverage target) aligns with test maturity level 3. |
+| `thegent-patterns-enhancement-synthesis.md` | OPT items address gaps identified in enhancement synthesis. Example: OPT-E-001 (mode selection heuristic) closes gap in orchestration mode selection. |
+
+---
+
+## 11. Closing Perspective
+
+The 73 optimization items in this addendum are not new features—they are the *depth* and *rigor* that transform thegent from a solid foundation into an exceptionally well-engineered platform. Each item is sized for agent-led implementation (1-3 weeks per domain at scale), making the full optimization roadmap achievable in 8-10 weeks with parallel execution.
+
+The items prioritize:
+1. **Robustness first** (defensive depth prevents cascading failures)
+2. **Intuition second** (operators succeed without reading manuals)
+3. **Polish third** (attention to detail in UX and messaging)
+4. **Optimization last** (latency and throughput matter after reliability and usability)
+
+Implementation can proceed incrementally, domain-by-domain, with each optimization improving observability and reducing operator burden. The infrastructure and documentation are already in place. These items are execution details that ensure success at scale.
+
+---
+
+**Document Version**: 1.0
+**Last Updated**: 2026-02-14
+**Status**: Ready for implementation sequencing

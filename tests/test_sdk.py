@@ -12,6 +12,7 @@ import pytest
 # FR-SDK-102: SDK module imports
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.requirement("FR-SDK-102")
 class TestSDKImports:
     """Verify the sdk module is importable and exposes the expected surface."""
@@ -55,6 +56,7 @@ class TestSDKImports:
 # FR-SDK-102: Public types
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.requirement("FR-SDK-102")
 class TestSDKPublicTypes:
     """Verify public types are importable and well-formed."""
@@ -95,6 +97,7 @@ class TestSDKPublicTypes:
 # ---------------------------------------------------------------------------
 # FR-SDK-102: SDK functions
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.requirement("FR-SDK-102")
 class TestSDKFunctions:

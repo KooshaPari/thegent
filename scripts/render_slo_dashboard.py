@@ -76,7 +76,9 @@ def _status_cell(value: float, green_threshold: float, red_threshold: float, low
 def _render_dashboard(metrics: dict) -> str:
     now = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     is_sample = metrics.get("_sample", False)
-    source_note = "(sample data — run collect_loc_metrics.py to populate)" if is_sample else f"(source: {LOC_METRICS_PATH})"
+    source_note = (
+        "(sample data — run collect_loc_metrics.py to populate)" if is_sample else f"(source: {LOC_METRICS_PATH})"
+    )
 
     t = _THRESHOLDS
 

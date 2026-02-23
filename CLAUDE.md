@@ -37,6 +37,21 @@ When layers conflict, higher precedence wins. Project docs should extend global 
 
 ---
 
+# Worktree Governance (Mandatory)
+
+- Keep the primary checkout on `main`; do not do branch development there.
+- Create branch worktrees and do implementation inside them.
+- Integrate into `main` via merge/cherry-pick from those worktrees.
+- Respect `.thegent-primary-main` as a policy marker when present.
+
+Bootstrap + shell dotfile management installs helper tooling:
+
+```bash
+thg_new_worktree <branch> [start-point] [worktree-path]
+```
+
+---
+
 # 🔒 CRITICAL SECURITY RULES - NEVER VIOLATE
 
 ## ⛔ FORBIDDEN: Killing Agent or Terminal Processes
@@ -270,6 +285,7 @@ See: `~/.claude/docs/friction-reduction.md` for full helpers, detection patterns
 # Thegent Command Reference
 
 > Full reference with all options, patterns, and providers: `~/.claude/docs/thegent-commands.md`
+> Repo research source: `docs/research/THGENT_COMMAND_MODEL_OPTIONS_AND_AGENT_FEATURES_RESEARCH.md`
 
 ## Command Selection
 
@@ -721,3 +737,40 @@ Context docs link to each other. Common patterns:
 - Auth docs → harness integration guides
 
 Search within `docs/context/INDEX.md` and linked docs; use Ctrl+F to navigate.
+
+## Anti-Slop Guardrails (Cheat Sheet)
+
+### Scope Lock
+- Edit only in-scope files/functions.
+- Preserve behavior outside scope.
+- Avoid broad refactors unless explicitly requested.
+
+### No Fallbacks / No Legacy Compatibility
+- Do not add fallback code paths or compatibility shims.
+- Missing required dependency must fail loudly and clearly.
+- No silent error handling.
+
+### Prompt Contract
+- Always specify objective, non-goals, invariants, and acceptance checks.
+- Require no unrelated edits and no feature removals.
+- Ask for explicit error behavior on missing prerequisites.
+
+### Diff + Test Discipline
+- Keep diffs small and reviewable.
+- For bug fixes: failing test first.
+- For refactors: parity tests before and after.
+- Map each behavior change to a requirement.
+
+### Pre-Merge Blocks
+- New fallback or legacy patterns.
+- Silent defaults that hide failures.
+- Missing regression tests.
+- Unresolved lint/type/security failures.
+
+### AI Command Safety
+- AI-generated commands are suggestion-only by default.
+- Explicit confirmation required for destructive actions.
+- Prefer auditable command history.
+
+### Prompt Snippet
+`Implement only <target-change>. Do not add fallback logic, legacy compatibility layers, feature flags, or silent error handlers. If required dependency/contract is missing, fail explicitly with a clear error. Preserve all behavior outside stated scope.`

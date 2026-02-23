@@ -78,9 +78,7 @@ class TestComputeModelsEtag:
 
     def test_matches_manual_sha256(self) -> None:
         models = [{"id": "gpt-5.3-codex"}, {"id": "claude-haiku-4.5"}]
-        expected = hashlib.sha256(
-            ",".join(sorted(["gpt-5.3-codex", "claude-haiku-4.5"])).encode()
-        ).hexdigest()
+        expected = hashlib.sha256(",".join(sorted(["gpt-5.3-codex", "claude-haiku-4.5"])).encode()).hexdigest()
         assert _compute_models_etag(models) == expected
 
     def test_skips_non_dict_entries(self) -> None:

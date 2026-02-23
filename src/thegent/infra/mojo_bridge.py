@@ -9,7 +9,10 @@ compiled Mojo binaries, with future support for C-ABI integration when stable.
 
 import asyncio
 import contextlib
+import importlib
+import inspect
 import json
+import logging
 import os
 import platform
 import shutil
@@ -20,6 +23,8 @@ from pathlib import Path
 from typing import Any
 
 from thegent.infra.cache_v2 import CacheV2
+
+logger = logging.getLogger(__name__)
 
 
 class MojoNotAvailableError(Exception):
@@ -96,6 +101,55 @@ fn main():
     let result = {"score": floor(bounded * 1000.0) / 1000.0, "success": True}
     print(json_mod.dumps(result))
 """
+
+
+def build_python_dispatch_kernel_script(module: str, function: str) -> str:
+    """Build a Mojo script that dispatches to a Python module/function target."""
+    module_json = json.dumps(module)
+    function_json = json.dumps(function)
+    return f"""
+from python import Python
+
+fn main():
+    let env = Python.import_module("os").environ
+    let json_mod = Python.import_module("json")
+    let inspect_mod = Python.import_module("inspect")
+    let raw_args = env.get("THEGENT_MOJO_ARGS", "{{}}")
+    let args = json_mod.loads(raw_args)
+    let target_module = Python.import_module({module_json})
+    let target_fn = getattr(target_module, {function_json})
+    let result = target_fn(**args)
+    if inspect_mod.iscoroutine(result):
+        result = Python.import_module("asyncio").run(result)
+    print(json_mod.dumps({{"success": True, "result": result}}))
+"""
+
+
+def build_dispatch_script(task: MojoTask) -> str:
+    """Build a dispatch script for the requested task target."""
+    if not isinstance(task.args, dict):
+        raise ValueError(f"Malformed args payload for {task.module}.{task.function}: expected object")
+
+    contract_key = (task.module, task.function)
+    if contract_key in MOJO_KERNEL_CONTRACTS:
+        validate_kernel_contract(task.module, task.function, task.args)
+        return build_provider_score_kernel_script()
+
+    try:
+        module_obj = importlib.import_module(task.module)
+    except ModuleNotFoundError as exc:
+        raise ValueError(f"Unknown module '{task.module}' for Mojo dispatch.") from exc
+
+    target_fn = getattr(module_obj, task.function, None)
+    if target_fn is None or not callable(target_fn):
+        raise ValueError(f"Unknown function '{task.function}' in module '{task.module}'.")
+
+    try:
+        inspect.signature(target_fn).bind(**task.args)
+    except TypeError as exc:
+        raise ValueError(f"Signature mismatch for {task.module}.{task.function}: {exc}") from exc
+
+    return build_python_dispatch_kernel_script(task.module, task.function)
 
 
 class MojoBridge:
@@ -404,19 +458,14 @@ Visit https://docs.modular.com/mojo/manual/install/ for platform-specific instru
         if cached:
             return cached
 
-        validate_kernel_contract(task.module, task.function, task.args)
+        if not self.is_available:
+            return {
+                "error": "mojo_not_available",
+                "message": "Mojo is not installed. " + self.install_instructions(),
+                "task_id": task.task_id,
+            }
 
-        # Build a simple Mojo script to execute the function.
-        mojo_code = """
-from python import Python
-
-fn main():
-    # This is a placeholder - actual implementation would call the module
-    let args = Python.import_module("os").environ.get("THEGENT_MOJO_ARGS", "{}")
-    print(args)
-"""
-        if (task.module, task.function) == ("math", "calculate_provider_score"):
-            mojo_code = build_provider_score_kernel_script()
+        mojo_code = build_dispatch_script(task)
 
         try:
             result = await self.run_mojo_script(mojo_code, task.args, task.timeout)
@@ -482,8 +531,9 @@ fn main():
 
     async def shutdown(self) -> None:
         """Clean up resources."""
-        # Clear cache if needed
+        logger.debug("Shutting down MojoBridge cache at %s", self.cache_root)
         await self._cache.clear_expired()
+        await self._cache.clear()
 
 
 # Global bridge instance

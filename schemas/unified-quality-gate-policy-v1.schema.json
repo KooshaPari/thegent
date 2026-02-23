@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://thegent.dev/schemas/unified-quality-gate-policy-v1.schema.json",
+  "title": "Unified Quality Gate Policy v1",
+  "type": "object",
+  "required": ["version", "fail_if_summary_missing", "modes"],
+  "properties": {
+    "version": { "type": "string", "minLength": 1 },
+    "fail_if_summary_missing": { "type": "boolean" },
+    "modes": {
+      "type": "object",
+      "required": ["pr", "nightly"],
+      "properties": {
+        "pr": { "$ref": "#/definitions/modePolicy" },
+        "nightly": { "$ref": "#/definitions/modePolicy" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "definitions": {
+    "modePolicy": {
+      "type": "object",
+      "required": [
+        "fail_on_overall",
+        "warn_statuses",
+        "max_warn_components",
+        "allowed_missing_components"
+      ],
+      "properties": {
+        "fail_on_overall": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["ok", "warn", "fail"] },
+          "minItems": 1
+        },
+        "warn_statuses": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["warn", "missing", "fail"] },
+          "minItems": 1
+        },
+        "max_warn_components": { "type": "integer", "minimum": 0 },
+        "allowed_missing_components": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -261,7 +261,9 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             meta={"execution_time_ms": elapsed},
         )
 
-    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_confirmation)
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(
+        thegent_elicit_confirmation
+    )
 
     async def thegent_elicit_choice(
         message: str,
@@ -309,7 +311,9 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             meta={"execution_time_ms": elapsed},
         )
 
-    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_choice)
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(
+        thegent_elicit_choice
+    )
 
     async def thegent_elicit_text(
         message: str,
@@ -349,7 +353,9 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             meta={"execution_time_ms": elapsed},
         )
 
-    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_text)
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(
+        thegent_elicit_text
+    )
 
     async def thegent_elicit_structured(
         message: str,
@@ -409,7 +415,9 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             meta={"execution_time_ms": elapsed},
         )
 
-    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(thegent_elicit_structured)
+    mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})(
+        thegent_elicit_structured
+    )
 
     _log.info(
         "registered elicitation tools: thegent_elicit_confirmation, thegent_elicit_choice, thegent_elicit_text, thegent_elicit_structured"

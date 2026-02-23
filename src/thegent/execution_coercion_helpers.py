@@ -8,7 +8,7 @@ def as_float(value: Any, default: float) -> float:
     try:
         if isinstance(value, bool):
             return float(value)
-        if isinstance(value, (int, float, str)):
+        if isinstance(value, (int | float | str)):
             return float(value)
     except (TypeError, ValueError):
         pass
@@ -20,7 +20,7 @@ def as_int(value: Any, default: int) -> int:
     try:
         if isinstance(value, bool):
             return int(value)
-        if isinstance(value, (int, float, str)):
+        if isinstance(value, (int | float | str)):
             return int(value)
     except (TypeError, ValueError):
         pass
@@ -37,6 +37,6 @@ def as_bool(value: Any, default: bool) -> bool:
             return True
         if normalized in {"0", "false", "no", "off"}:
             return False
-    if isinstance(value, (int, float)):
+    if isinstance(value, (int | float)):
         return bool(value)
     return default

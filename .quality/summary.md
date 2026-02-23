@@ -1,19 +1,19 @@
 # Quality Run Summary
 
-- Timestamp: 2026-02-21T11:36:58Z
-- Fail mode: hard
-- Passed: 2
-- Failed: 0
+- Timestamp: 2026-02-22T11:39:50Z
+- Fail mode: soft
+- Passed: 1
+- Failed: 1
 - Skipped: 0
 - Blocked: 0
-- Total step runtime (sum): 28.19s
+- Total step runtime (sum): 151.26s
 
 ## Step Results
 
 | Step | Display | Status | Duration (s) |
 | --- | --- | --- | ---: |
-| instruction-architecture | Instruction architecture contracts | passed | 0.31 |
-| quality | Canonical umbrella quality suite | passed | 27.87 |
+| instruction-architecture | Instruction architecture contracts | passed | 0.38 |
+| quality | Canonical umbrella quality suite | failed(201) | 150.88 |
 
 ## Logs
 

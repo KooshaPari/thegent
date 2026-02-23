@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import threading
+from unittest.mock import patch
 
 import pytest
 
@@ -85,7 +86,7 @@ def test_get_server_missing() -> None:
 
 
 @pytest.mark.requirement("FR-MCP-064")
-def test_execute_stub_returns_result() -> None:
+def test_execute_returns_result() -> None:
     gw = McpGateway()
     gw.register_server(_make_config("fs"))
     call = McpToolCall(
@@ -93,7 +94,9 @@ def test_execute_stub_returns_result() -> None:
         tool="read_file",
         arguments={"path": "/tmp/foo.txt"},
     )
-    result = gw.execute(call)
+    proc = type("Proc", (), {"stdout": '{"jsonrpc":"2.0","result":{"ok":true}}\n', "returncode": 0, "stderr": ""})()
+    with patch("thegent.mcp.gateway.subprocess.run", return_value=proc):
+        result = gw.execute(call)
     assert isinstance(result, McpToolResult)
     assert result.error == ""
     assert result.server_id == "fs"

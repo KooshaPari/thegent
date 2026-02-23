@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-001
 """
+
 import pytest
 from docs_engine.schema.base import DocFrontmatter, DocType, DocStatus
 

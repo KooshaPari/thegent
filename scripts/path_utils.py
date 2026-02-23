@@ -119,9 +119,7 @@ def safe_join(base: str | Path, *parts: str | Path) -> Path:
     resolved_candidate = _resolve(candidate)
 
     if not is_within(resolved_candidate, resolved_base):
-        raise ValueError(
-            f"Path escapes base '{resolved_base}': resolved to '{resolved_candidate}'"
-        )
+        raise ValueError(f"Path escapes base '{resolved_base}': resolved to '{resolved_candidate}'")
 
     return resolved_candidate
 
@@ -242,6 +240,7 @@ def ensure_dir(path: str | Path) -> Path:
 # ---------------------------------------------------------------------------
 # Retained helpers from prior implementation
 # ---------------------------------------------------------------------------
+
 
 def path_to_str(path: str | Path | None) -> str:
     """Convert a path to a string, handling ``None`` gracefully.
@@ -365,6 +364,7 @@ def strip_common_prefix(paths: list[str | Path]) -> list[str]:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+
 def _resolve(path: Path) -> Path:
     """Resolve a path, falling back gracefully when it does not exist.
 
@@ -402,6 +402,7 @@ if __name__ == "__main__":
     print(f"rel_to_cwd(cwd / 'scripts' / 'path_utils.py') -> {rel_to_cwd(cwd / 'scripts' / 'path_utils.py')}")
 
     import tempfile
+
     with tempfile.TemporaryDirectory() as td:
         created = ensure_dir(Path(td) / "a" / "b" / "c")
         print(f"ensure_dir created: {created} (exists={created.exists()})")

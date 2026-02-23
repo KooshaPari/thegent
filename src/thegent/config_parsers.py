@@ -13,18 +13,12 @@ def parse_retention_by_domain(value: object) -> dict[str, int]:
         try:
             parsed = json.loads(value)
             if isinstance(parsed, dict):
-                return {
-                    str(k): int(val) if isinstance(val, (int, float, str)) else 0
-                    for k, val in parsed.items()
-                }
+                return {str(k): int(val) if isinstance(val, (int | float | str)) else 0 for k, val in parsed.items()}
             return {}
         except (json.JSONDecodeError, ValueError, TypeError):
             return {}
     if isinstance(value, dict):
-        return {
-            str(k): int(val) if isinstance(val, (int, float, str)) else 0
-            for k, val in value.items()
-        }
+        return {str(k): int(val) if isinstance(val, (int | float | str)) else 0 for k, val in value.items()}
     return {}
 
 
@@ -48,7 +42,7 @@ def parse_bool_or_env_flag(value: object, env_var: str) -> bool:
 
 def parse_optional_path(value: object, env_var: str) -> Path | None:
     """Parse optional path-like value, or auto-detect from environment."""
-    if isinstance(value, (str, Path)) and value:
+    if isinstance(value, (str | Path)) and value:
         return Path(value) if isinstance(value, str) else value
     detected = os.environ.get(env_var)
     return Path(detected) if detected else None

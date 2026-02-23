@@ -24,7 +24,11 @@ def test_helper_governance_targets_all_e2e_tests_not_just_runner_tests() -> None
 def test_helper_governance_file_keeps_forbidden_helper_list_non_empty() -> None:
     module = _module()
     assigns = [n for n in ast.walk(module) if isinstance(n, ast.Assign)]
-    values = [a.value for a in assigns if any(isinstance(t, ast.Name) and t.id == "FORBIDDEN_LOCAL_HELPERS" for t in a.targets)]
+    values = [
+        a.value
+        for a in assigns
+        if any(isinstance(t, ast.Name) and t.id == "FORBIDDEN_LOCAL_HELPERS" for t in a.targets)
+    ]
     assert values, "FORBIDDEN_LOCAL_HELPERS assignment missing"
     set_node = values[0]
     assert isinstance(set_node, (ast.Set, ast.Call))

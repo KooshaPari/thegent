@@ -22,3 +22,11 @@ def test_workstream_launch_cmd_is_bound_to_extracted_plan_module() -> None:
 
 def test_workstream_dependencies_cmd_is_bound_to_extracted_plan_module() -> None:
     assert cli.workstream_dependencies_cmd is plan_cmds.workstream_dependencies_cmd
+
+
+def test_plan_lint_workstream_cmd_is_bound_to_extracted_plan_module() -> None:
+    assert cli.plan_lint_workstream_cmd is plan_cmds.plan_lint_workstream_cmd
+
+
+def test_plan_normalize_workstream_cmd_is_bound_to_extracted_plan_module() -> None:
+    assert cli.plan_normalize_workstream_cmd is plan_cmds.plan_normalize_workstream_cmd

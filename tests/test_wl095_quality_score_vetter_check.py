@@ -389,9 +389,7 @@ def test_score_below_1_raises_config_error():
 
 def test_missing_criterion_score_raises_config_error():
     # @trace WL-095
-    check = QualityScoreVetterCheck(
-        judge_model="gpt-4o-mini", rubric=["correctness", "completeness"]
-    )
+    check = QualityScoreVetterCheck(judge_model="gpt-4o-mini", rubric=["correctness", "completeness"])
     # Only "correctness" returned, "completeness" missing
     mock_resp = _make_litellm_response(scores={"correctness": 4}, pass_verdict=True)
     with patch("litellm.acompletion", new=AsyncMock(return_value=mock_resp)):
@@ -578,7 +576,9 @@ def test_auto_model_uses_capability_index_recommend():
     mock_resp = _make_litellm_response(scores={"correctness": 5}, pass_verdict=True)
 
     with (
-        patch("thegent.govern.vetter.checks.QualityScoreVetterCheck._resolve_auto_model", return_value="gpt-4o-quality"),
+        patch(
+            "thegent.govern.vetter.checks.QualityScoreVetterCheck._resolve_auto_model", return_value="gpt-4o-quality"
+        ),
         patch("litellm.acompletion", new=AsyncMock(return_value=mock_resp)) as mock_call,
     ):
         result = _run(check.check("run-18", "output", {}))

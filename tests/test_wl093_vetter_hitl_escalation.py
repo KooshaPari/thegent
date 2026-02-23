@@ -44,9 +44,7 @@ def _failing_check(name: str, message: str = "failed") -> Any:
     """Return an async VetterCheck mock that always fails. # @trace WL-093"""
     check = MagicMock()
     check.name = name
-    check.check = AsyncMock(
-        return_value=VetterCheckResult(check_name=name, passed=False, message=message)
-    )
+    check.check = AsyncMock(return_value=VetterCheckResult(check_name=name, passed=False, message=message))
     return check
 
 
@@ -54,9 +52,7 @@ def _passing_check(name: str) -> Any:
     """Return an async VetterCheck mock that always passes. # @trace WL-093"""
     check = MagicMock()
     check.name = name
-    check.check = AsyncMock(
-        return_value=VetterCheckResult(check_name=name, passed=True)
-    )
+    check.check = AsyncMock(return_value=VetterCheckResult(check_name=name, passed=True))
     return check
 
 
@@ -72,11 +68,7 @@ def _load_events(session_dir: Path) -> list[dict[str, Any]]:
     path = session_dir / "governance_events.jsonl"
     if not path.exists():
         return []
-    return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 def _events_of_type(session_dir: Path, event_type: str) -> list[dict[str, Any]]:
@@ -123,9 +115,7 @@ async def test_escalation_event_has_correct_event_type(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-002"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-002"})
 
     ev = _events_of_type(tmp_path, "vetter_escalation")[0]
     assert ev["event_type"] == "vetter_escalation"
@@ -142,9 +132,7 @@ async def test_escalation_event_has_status_pending(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-003"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-003"})
 
     ev = _events_of_type(tmp_path, "vetter_escalation")[0]
     assert ev["status"] == "pending"
@@ -161,9 +149,7 @@ async def test_escalation_event_has_run_id(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-004"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-004"})
 
     ev = _events_of_type(tmp_path, "vetter_escalation")[0]
     assert ev["run_id"] == "run-esc-004"
@@ -180,9 +166,7 @@ async def test_escalation_event_has_timestamp(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-005"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-005"})
 
     ev = _events_of_type(tmp_path, "vetter_escalation")[0]
     assert "timestamp" in ev
@@ -243,9 +227,7 @@ async def test_escalation_event_has_reason_field(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-008"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-008"})
 
     ev = _events_of_type(tmp_path, "vetter_escalation")[0]
     assert "reason" in ev
@@ -292,9 +274,7 @@ async def test_hitl_await_approval_called_on_escalation(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output="change_diff"), policy=policy, run_context={"run_id": "run-esc-009"}
-    )
+    await orch.evaluate(result=MagicMock(output="change_diff"), policy=policy, run_context={"run_id": "run-esc-009"})
 
     hitl.await_approval.assert_called_once()
 
@@ -331,9 +311,7 @@ async def test_hitl_await_approval_called_with_vetter_escalation_policy(tmp_path
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-011"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-011"})
 
     call_kwargs = hitl.await_approval.call_args.kwargs
     assert call_kwargs["policy"] == "vetter_escalation"
@@ -350,9 +328,7 @@ async def test_hitl_await_approval_called_with_post_execution_checkpoint(tmp_pat
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-012"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-012"})
 
     call_kwargs = hitl.await_approval.call_args.kwargs
     assert call_kwargs["checkpoint"] == "post_execution"
@@ -391,9 +367,7 @@ async def test_hitl_not_called_when_verdict_is_approved(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["style"], escalate_on=[])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-014"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-014"})
 
     hitl.await_approval.assert_not_called()
 
@@ -409,9 +383,7 @@ async def test_hitl_not_called_when_verdict_is_rejected_no_escalate_on(tmp_path:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["style"], escalate_on=[])  # style not in escalate_on
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-015"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-015"})
 
     hitl.await_approval.assert_not_called()
 
@@ -433,9 +405,7 @@ async def test_escalated_verdict_without_hitl_raises_runtime_error(tmp_path: Pat
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
 
     with pytest.raises(RuntimeError, match="hitl_workflow"):
-        await orch.evaluate(
-            result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-016"}
-        )
+        await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-016"})
 
 
 # ---------------------------------------------------------------------------
@@ -532,9 +502,7 @@ async def test_escalation_emits_both_decision_and_escalation_events(tmp_path: Pa
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-020"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-020"})
 
     all_events = _load_events(tmp_path)
     event_types = {ev["event_type"] for ev in all_events}
@@ -553,9 +521,7 @@ async def test_escalation_vetter_decision_event_has_escalated_verdict(tmp_path: 
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-021"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-021"})
 
     decision_events = _events_of_type(tmp_path, "vetter_decision")
     assert len(decision_events) == 1
@@ -573,9 +539,7 @@ async def test_escalation_decision_event_emitted_before_escalation_event(tmp_pat
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-022"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-022"})
 
     all_events = _load_events(tmp_path)
     types_in_order = [ev["event_type"] for ev in all_events]
@@ -600,9 +564,7 @@ async def test_escalated_result_has_escalated_verdict(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    result = await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-023"}
-    )
+    result = await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-023"})
 
     assert result.verdict == VetterVerdict.ESCALATED
 
@@ -618,9 +580,7 @@ async def test_escalated_result_has_escalation_reason(tmp_path: Path) -> None:
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
-    result = await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-024"}
-    )
+    result = await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-024"})
 
     assert result.escalation_reason is not None
     assert len(result.escalation_reason) > 0
@@ -637,9 +597,7 @@ async def test_escalated_result_escalation_reason_names_failed_check(tmp_path: P
         hitl_workflow=hitl,
     )
     policy = VetterPolicy(checks=["my_safety_check"], escalate_on=["my_safety_check"])
-    result = await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-025"}
-    )
+    result = await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-025"})
 
     assert "my_safety_check" in (result.escalation_reason or "")
 
@@ -653,9 +611,7 @@ async def test_non_escalated_result_has_no_escalation_reason(tmp_path: Path) -> 
         check_registry={"style": good},
     )
     policy = VetterPolicy(checks=["style"])
-    result = await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-026"}
-    )
+    result = await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-esc-026"})
 
     assert result.escalation_reason is None
 
@@ -677,12 +633,8 @@ async def test_multiple_escalations_each_emit_own_events(tmp_path: Path) -> None
     )
     policy = VetterPolicy(checks=["safety"], escalate_on=["safety"])
 
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-multi-esc-1"}
-    )
-    await orch.evaluate(
-        result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-multi-esc-2"}
-    )
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-multi-esc-1"})
+    await orch.evaluate(result=MagicMock(output=""), policy=policy, run_context={"run_id": "run-multi-esc-2"})
 
     esc_events = _events_of_type(tmp_path, "vetter_escalation")
     assert len(esc_events) == 2
@@ -728,7 +680,7 @@ async def test_multiple_escalations_govern_list_shows_all_pending(tmp_path: Path
 @pytest.mark.asyncio
 async def test_only_checks_in_escalate_on_trigger_escalation(tmp_path: Path) -> None:
     """Only failed checks listed in escalate_on produce ESCALATED verdict. # @trace WL-093"""
-    bad_style = _failing_check("style")   # NOT in escalate_on
+    bad_style = _failing_check("style")  # NOT in escalate_on
     bad_safety = _failing_check("safety")  # IN escalate_on
     hitl = _make_hitl_mock()
     orch = VetterOrchestrator(

@@ -152,9 +152,7 @@ def crew_execute_cmd(
             crew.add_task(task)
 
         # Create harness executor
-        agent_exec = create_agent_executor(
-            cwd=Path(cwd) if cwd else None, mode=mode, timeout=timeout, model=model
-        )
+        agent_exec = create_agent_executor(cwd=Path(cwd) if cwd else None, mode=mode, timeout=timeout, model=model)
 
         # Setup executor
         task_executor = TaskExecutor(agent_executor=agent_exec)

@@ -32,14 +32,7 @@ from thegent.skills.discovery import (
 
 # tools_skills lives in a sibling directory named "server/" which has the same
 # name as the module file "server.py", so we load it directly via importlib.
-_TOOLS_SKILLS_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "src"
-    / "thegent"
-    / "mcp"
-    / "server"
-    / "tools_skills.py"
-)
+_TOOLS_SKILLS_PATH = Path(__file__).resolve().parents[1] / "src" / "thegent" / "mcp" / "server" / "tools_skills.py"
 _spec = importlib.util.spec_from_file_location("_tools_skills_wl101", _TOOLS_SKILLS_PATH)
 assert _spec is not None and _spec.loader is not None
 _tools_skills_mod = importlib.util.module_from_spec(_spec)

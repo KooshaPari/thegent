@@ -173,9 +173,7 @@ class TestMAIFRunnerEnabled:
 class TestMAIFRunnerErrorHandling:
     """Errors inside MAIFRunner must never propagate to the caller."""
 
-    def test_record_run_start_swallows_generator_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_record_run_start_swallows_generator_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """If the artifact generator raises, record_run_start returns None silently."""
         monkeypatch.setenv("THGENT_MAIF_ENABLED", "1")
         runner = MAIFRunner()
@@ -189,9 +187,7 @@ class TestMAIFRunnerErrorHandling:
             )
         assert result is None
 
-    def test_record_run_end_swallows_store_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_record_run_end_swallows_store_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """If the store raises, record_run_end returns None silently."""
         monkeypatch.setenv("THGENT_MAIF_ENABLED", "1")
         runner = MAIFRunner()
@@ -206,9 +202,7 @@ class TestMAIFRunnerErrorHandling:
         # Either way, no exception should escape.
         assert result is None or isinstance(result, str)
 
-    def test_record_run_start_swallows_import_error(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_record_run_start_swallows_import_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """If MAIF module imports fail, record_run_start returns None silently."""
         monkeypatch.setenv("THGENT_MAIF_ENABLED", "1")
         runner = MAIFRunner()

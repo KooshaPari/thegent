@@ -17,6 +17,7 @@
 #   THGENT_BOOTSTRAP_SYSTEM_SHIMS=1  Run install-shims --system (nix/direnv)
 #   THGENT_BOOTSTRAP_DEPS=1          Install optional tools (rg, fd, jq) via brew/apt
 #   THGENT_BOOTSTRAP_QUIET=1        Suppress non-critical warnings
+#   THGENT_BOOTSTRAP_WORKTREE_GOVERNANCE=1  Create .thegent-primary-main marker in current repo
 
 set -e
 
@@ -66,6 +67,7 @@ Environment:
   THGENT_BOOTSTRAP_SYSTEM_SHIMS=1  Install git wrapper to system path
   THGENT_BOOTSTRAP_DEPS=1          Install ripgrep, fd, jq (brew/apt)
   THGENT_BOOTSTRAP_QUIET=1         Suppress non-critical warnings
+  THGENT_BOOTSTRAP_WORKTREE_GOVERNANCE=1  Write .thegent-primary-main in current git repo
 
 Examples:
   curl -fsSL ${GITHUB_RAW}/scripts/bootstrap.sh | sh -s -- install
@@ -77,6 +79,7 @@ EOF
 run_setup=1
 use_full_setup=0
 install_deps=0
+install_worktree_governance="${THGENT_BOOTSTRAP_WORKTREE_GOVERNANCE:-1}"
 [ -n "$THGENT_BOOTSTRAP_DEPS" ] && install_deps=1
 
 for arg in "$@"; do
@@ -171,6 +174,20 @@ fi
 # --- Phase 6: Verify ---
 step "Running thegent doctor..."
 if thegent doctor; then
+  if [ "$install_worktree_governance" = 1 ]; then
+    repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+    if [ -n "$repo_root" ]; then
+      marker="$repo_root/.thegent-primary-main"
+      if [ ! -f "$marker" ]; then
+        cat > "$marker" <<'EOF'
+# thegent primary checkout policy marker
+# Keep this repository checkout on main.
+# Use dedicated worktrees for branch development.
+EOF
+        echo "Created policy marker: $marker"
+      fi
+    fi
+  fi
   echo ""
   echo "Bootstrap complete. Try: thegent run \"Hello\" free"
 else

@@ -14,6 +14,18 @@ def normalize_grounding_source_url(url: str) -> str:
     raw = (url or "").strip()
     if not raw:
         return ""
+    # Some providers return wrapped URL literals like "<https://...>".
+    while len(raw) > 1:
+        if raw.startswith("<") and raw.endswith(">"):
+            raw = raw[1:-1].strip()
+            continue
+        if raw.startswith("(") and raw.endswith(")"):
+            raw = raw[1:-1].strip()
+            continue
+        if raw.startswith("[") and raw.endswith("]"):
+            raw = raw[1:-1].strip()
+            continue
+        break
     trimmed = raw.rstrip(".,;:!?")
     parts = urlsplit(trimmed)
     if not parts.scheme or not parts.netloc:

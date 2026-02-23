@@ -19,12 +19,12 @@ _log = logging.getLogger(__name__)
 
 __all__ = [
     "DiscoveredAgent",
+    "_is_triggered_by_agent_process",
     "get_current_agent_id",
-    "register_discovered_agent",
     "list_discovered_agents",
+    "register_discovered_agent",
     "scan_agent_processes",
     "scan_harness_agents",
-    "_is_triggered_by_agent_process",
 ]
 
 # BKM-08: lazy-loaded native discovery client (avoids import cost when unused)

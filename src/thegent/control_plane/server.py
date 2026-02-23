@@ -194,7 +194,7 @@ async def resolve_config(request: Request) -> JSONResponse:
                 return {k: _sanitize(v) for k, v in obj.items()}
             if isinstance(obj, list):
                 return [_sanitize(i) for i in obj]
-            if hasattr(obj, "__str__") and not isinstance(obj, (int, float, bool, str, type(None))):
+            if hasattr(obj, "__str__") and not isinstance(obj, (int | float | bool | str | None)):
                 return str(obj)
             return obj
 

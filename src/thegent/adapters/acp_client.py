@@ -91,7 +91,7 @@ def _is_retryable(exc: BaseException) -> bool:
     """
     if isinstance(exc, httpx.HTTPStatusError):
         return exc.response.status_code in (429, 503)
-    if isinstance(exc, (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError)):
+    if isinstance(exc, (httpx.ConnectError | httpx.TimeoutException | httpx.RemoteProtocolError)):
         return True
     return False
 

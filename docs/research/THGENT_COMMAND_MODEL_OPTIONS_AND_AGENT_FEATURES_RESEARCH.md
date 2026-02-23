@@ -3,7 +3,7 @@
 **Purpose**: Comprehensive research and documentation of thegent CLI commands, model options, routing features, and agent capabilities for proper agent usage.
 
 **Date**: 2026-02-17
-**Status**: Research Complete, Documentation Updates Pending
+**Status**: Research Complete, CLAUDE.md command reference integrated
 **Priority**: P1
 
 ---
@@ -894,12 +894,11 @@ Thegent exposes MCP tools for:
 
 ### 12.1 CLAUDE.md Updates
 
-**Add Section**: "Thegent Command Reference for Agents"
-- Core commands (`run`, `bg`, `free`)
-- Work stream integration (`plan do-next`, `plan loop`, `plan wait-next`)
-- Model routing and options
-- Background execution patterns
-- Idle waiting patterns
+**Completed**: "Thegent Command Reference for Agents" section present in `CLAUDE.md`
+- Core commands (`run`, `bg`, `free`) documented
+- Work stream integration (`plan do-next`, `plan loop`, `plan wait-next`) documented
+- Model routing examples documented
+- Background execution and idle waiting patterns documented
 
 **Update Section**: "Delegate to Subagents"
 - Replace generic `thegent free` references with specific command patterns

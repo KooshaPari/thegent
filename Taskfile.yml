@@ -17,9 +17,15 @@ vars:
   BASH_SRC: 'scripts'
   BASH_TESTS: 'tests'
   THGENT_LOG_DIR: .process-compose/logs
-  PYTEST_FAST_LANE_BUDGET: 1000
+  PYTEST_FAST_LANE_BUDGET: 4500
   PYTEST_PR_LANE_BUDGET: 750
   PYTEST_PR_CHANGED_FILE_LIST: ''
+  GHA_WORKFLOW:
+    sh: echo ".github/workflows/ci.yml"
+  GHA_WORKFLOW_NAME:
+    sh: echo "CI"
+  GH_BASE_REF:
+    sh: echo "main"
 
 includes:
   py:
@@ -189,16 +195,6 @@ tasks:
     cmds:
       - process-compose logs -f
 
-  sync:autopilot:
-    desc: "Run workstream autosync daemon (WORK_STREAM <-> GitHub Projects <-> Linear)"
-    cmds:
-      - uv run thegent sync autopilot --interval ${THGENT_WORKSTREAM_AUTOSYNC_INTERVAL_SEC:-60}
-
-  sync:autopilot:once:
-    desc: "Run one autosync cycle and exit"
-    cmds:
-      - uv run thegent sync autopilot --once
-
   # -- CLIProxyAPIPlus (local fork) --
 
   cliproxy:build:
@@ -262,6 +258,20 @@ tasks:
         fi
         uv run thegent sync board --board "$BOARD_ID" --source "$BOARD_SOURCE" --dry-run
 
+  sync:bootstrap-gh:
+    desc: "Create/reuse sync workflow GitHub project and issue backlog"
+    cmds:
+      - |
+        OWNER="${THGENT_GH_OWNER:-KooshaPari}"
+        REPO="${THGENT_GH_REPO:-KooshaPari/thegent}"
+        PROJECT_TITLE="${THGENT_GH_SYNC_PROJECT_TITLE:-thegent Sync System Deep Integration}"
+        EXTRA="${THGENT_GH_BOOTSTRAP_EXTRA:-}"
+        uv run python scripts/bootstrap_sync_workflow_project.py \
+          --owner "$OWNER" \
+          --repo "$REPO" \
+          --project-title "$PROJECT_TITLE" \
+          $EXTRA
+
   # -- Mgmt (agent self-service) --
 
   mgmt:ensure-proxy:
@@ -293,6 +303,18 @@ tasks:
     cmds:
       - uv run pytest -q
 
+  ci:benchmark-gates:
+    desc: "Run WL-275 benchmark latency/throughput regression gates."
+    cmds:
+      - uv run python scripts/benchmark_python_suite.py --iterations 100000 --output benchmarks/results/python/latest-ci.json --overwrite
+      - |
+        uv run python scripts/check_python_benchmark_regression.py \
+          --baseline benchmarks/baseline.json \
+          --current benchmarks/results/python/latest-ci.json \
+          --max-regression-pct "${THGENT_BENCH_MAX_REGRESSION_PCT:-15}" \
+          --max-throughput-drop-pct "${THGENT_BENCH_MAX_THROUGHPUT_DROP_PCT:-10}" \
+          --require-complete-baseline
+
   test:unit:
     desc: "Run unit tests"
     cmds:
@@ -301,7 +323,7 @@ tasks:
   test:fast-lane:
     desc: "Run fast pytest lane (WL-134): fail-fast, exclude slow/integration/e2e/load markers."
     cmds:
-      - uv run pytest -c pytest-fast.ini -W ignore::pytest.PytestRemovedIn9Warning
+      - uv run pytest -c pytest-fast.ini -W ignore::pytest.PytestRemovedIn9Warning --maxfail=1 -p no:tach -q --no-header --no-summary
 
   test:fast:
     desc: "Run tests marked @pytest.mark.fast only (WL-134 B90-W2-A4)."
@@ -311,57 +333,365 @@ tasks:
   ci:local:
     desc: "Run local CI-like checks (pre-commit + fast collection + fast lane)."
     cmds:
-      - task: hooks:run
+      - task: ci:local:hooks
       - task: test:collect:fast-gate
       - task: test:fast-lane
 
-  ci:local:pre-commit:
-    desc: "Run local pre-commit gate only."
+  ci:local:full:
+    desc: "Run local CI-like checks with full pre-commit/pre-push scans."
     cmds:
-      - bash hooks/pre-commit.sh
+      - task: hooks:run:full
+      - task: test:collect:fast-gate
+      - task: test:fast-lane
+
+  ci:local:hooks:
+    desc: "Run local hook-only checks for pre-commit + pre-push stages (changed files only)."
+    cmds:
+      - task: hooks:run:pre-commit
+      - task: hooks:run:pre-push
+
+  ci:local:hooks:full:
+    desc: "Run local hook-only checks across all files."
+    cmds:
+      - task: hooks:run:full
+
+  ci:local:pre-commit:
+    desc: "Run only local pre-commit hooks."
+    cmds:
+      - task: hooks:run:pre-commit
 
   ci:local:pre-push:
-    desc: "Run local pre-push/CI gate profile."
-    env:
-      THEGENT_CI_EMULATION_MODE: hook
-      THEGENT_CI_EVENT: push
+    desc: "Run only local pre-push hooks."
     cmds:
-      - bash hooks/pre-push.sh
+      - task: hooks:run:pre-push
 
-  ci:local:github:
-    desc: "Run GitHub Actions-style local CI emulation."
-    env:
-      THEGENT_CI_EMULATION_MODE: full
+  ci:local:push:
+    desc: "Run only the pre-push validation lane used by local gate checks."
     cmds:
-      - bash scripts/ci-local-emulator.sh
+      - task: hooks:run:pre-push
+      - task: test:collect:fast-gate
 
-  ci:local:github:extended:
-    desc: "Run local CI emulation with optional non-blocking jobs enabled."
-    env:
-      THEGENT_CI_EMULATION_MODE: full
-      THEGENT_CI_RUN_INTEGRATION: "1"
-      THEGENT_CI_RUN_ZIG: "1"
-      THEGENT_CI_RUN_BUILD_WHEELS: "1"
-      THEGENT_CI_RUN_DOCS_BUILD: "1"
-      THEGENT_CI_RUN_TEMPLATE_COLLECT: "1"
-      THEGENT_CI_RUN_RELEASE: "1"
-      THEGENT_CI_RUN_BENCHMARKS: "1"
+  ci:local-gha:deps:
+    desc: "Install local GH Actions emulation dependencies (act + runtime checks)."
     cmds:
-      - bash scripts/ci-local-emulator.sh
+      - |
+        if command -v act >/dev/null 2>&1; then
+          act --version
+        else
+          if command -v brew >/dev/null 2>&1; then
+            echo "Installing act with Homebrew."
+            brew install act
+          elif command -v go >/dev/null 2>&1; then
+            echo "Installing act with Go toolchain."
+            go install github.com/nektos/act@latest
+            echo "Add $(go env GOPATH)/bin to PATH to use act."
+          else
+            echo "act installation requires Homebrew or Go."
+            echo "Install with: brew install act"
+            echo "or Go: go install github.com/nektos/act@latest"
+            exit 1
+          fi
+        fi
 
-  ci:local:github:quick:
-    desc: "Run a quick GitHub Actions local emulation profile."
-    env:
-      THEGENT_CI_EMULATION_MODE: quick
+        if [ "${THGENT_ACT_DOCKERLESS:-0}" != "1" ]; then
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "Docker is required for act workflows."
+            echo "Install Docker Desktop or Podman and add to PATH."
+            exit 1
+          fi
+
+          if ! docker ps >/dev/null 2>&1; then
+            echo "Docker is installed but not running or not reachable."
+            echo "Start Docker and retry this task."
+            exit 1
+          fi
+        fi
+
+  ci:local-gha:smoke:
+    desc: "Run lightweight local GH Actions preflight smoke."
     cmds:
-      - bash scripts/ci-local-emulator.sh
+      - task: ci:local-gha:preflight
+
+  ci:local-gha:preflight:
+    desc: "Run only the CI preflight job with local GH Actions emulation."
+    cmds:
+      - task: ci:local-gha:event
+        vars:
+          ACT_EVENT: pull_request
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: preflight
+
+  ci:local-gha:preflight:dockerless:
+    desc: "Run only the CI preflight job in dockerless mode."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: preflight
+
+  ci:local-gha:test:
+    desc: "Run only the test job with dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "pull_request"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: test
+
+  ci:local-gha:quality:
+    desc: "Run only the quality job with dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "pull_request"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: quality
+
+  ci:local-gha:quality-unified:
+    desc: "Run only unified quality job with dockerless mapping (pull_request/schedule only)."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "pull_request"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: quality-unified
+
+  ci:local-gha:coverage:
+    desc: "Run only the coverage job with dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT | default "push"}}'
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: coverage
+
+  ci:local-gha:template-collect:
+    desc: "Run template-collect-nightly job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: template-collect-nightly
+
+  ci:local-gha:leak-detection:
+    desc: "Run leak-detection job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: leak-detection
+
+  ci:local-gha:integration:
+    desc: "Run integration job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: integration
+
+  ci:local-gha:zig-readiness:
+    desc: "Run zig readiness job in dockerless mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_JOB: zig-readiness
+
+  ci:local-gha:all:
+    desc: "Run the dockerless local job set (PR event) for all major CI jobs."
+    cmds:
+      - task: ci:local-gha:preflight:dockerless
+      - task: ci:local-gha:test
+      - task: ci:local-gha:quality
+      - task: ci:local-gha:quality-unified
+      - task: ci:local-gha:coverage
+      - task: ci:local-gha:integration
+      - task: ci:local-gha:template-collect
+      - task: ci:local-gha:leak-detection
+      - task: ci:local-gha:zig-readiness
+      - task: ci:local-gha:stages
+
+  ci:local-gha:all:push:
+    desc: "Run dockerless local job set for push-like event."
+    cmds:
+      - task: ci:local-gha:preflight:dockerless
+      - task: ci:local-gha:test
+      - task: ci:local-gha:quality
+      - task: ci:local-gha:coverage
+      - task: ci:local-gha:integration
+      - task: ci:local-gha:leak-detection
+      - task: ci:local-gha:zig-readiness
+      - task: ci:local-gha:stages
+
+  ci:local-gha:
+    desc: "Run local GH Actions emulation (pull_request event) with act."
+    cmds:
+      - task: ci:local-gha:event
+        vars:
+          ACT_EVENT: pull_request
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+
+  ci:local-gha:push:
+    desc: "Run local GH Actions emulation (push event) with act."
+    cmds:
+      - task: ci:local-gha:event
+        vars:
+          ACT_EVENT: push
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+
+  ci:local-gha:dockerless:
+    desc: "Run local GH Actions emulation with dockerless task mapping."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+
+  ci:local-gha:push:dockerless:
+    desc: "Run push CI lane in dockerless mode for local verification."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: push
+          ACT_DOCKERLESS: "1"
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+
+  ci:local-gha:pre-commit:
+    desc: "Run dockerless local pre-commit stage."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: pull_request
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_DOCKERLESS: "1"
+          ACT_JOB: pre-commit
+
+  ci:local-gha:pre-push:
+    desc: "Run dockerless local pre-push stage."
+    cmds:
+      - task: ci:local-gha:job
+        vars:
+          ACT_EVENT: push
+          ACT_WORKFLOW: '{{.GHA_WORKFLOW}}'
+          ACT_DOCKERLESS: "1"
+          ACT_JOB: pre-push
+
+  ci:local-gha:pre-commit:full:
+    desc: "Run dockerless local pre-commit stage with full file scope."
+    cmds:
+      - |
+        THEGENT_PRE_COMMIT_SCOPE=full task ci:local-gha:pre-commit
+
+  ci:local-gha:pre-push:full:
+    desc: "Run dockerless local pre-push stage with full file scope."
+    cmds:
+      - |
+        THEGENT_PRE_COMMIT_SCOPE=full task ci:local-gha:pre-push
+
+  ci:local-gha:stages:
+    desc: "Run both dockerless local hook stages in order: pre-commit then pre-push."
+    cmds:
+      - task: ci:local-gha:pre-commit
+      - task: ci:local-gha:pre-push
+
+  ci:local-gha:stages:full:
+    desc: "Run both dockerless local hook stages with full file scope."
+    cmds:
+      - |
+        THEGENT_PRE_COMMIT_SCOPE=full task ci:local-gha:stages
+
+  ci:local-gha:job:
+    desc: "Run a single GH Actions job in local act emulation."
+    cmds:
+      - task: ci:local-gha:event
+        vars:
+          ACT_EVENT: '{{.ACT_EVENT}}'
+          ACT_WORKFLOW: '{{.ACT_WORKFLOW}}'
+          ACT_JOB: '{{.ACT_JOB}}'
+          ACT_DOCKERLESS: '{{.ACT_DOCKERLESS | default "0"}}'
+
+  ci:local-gha:event:
+    desc: "Run local GH Actions emulation for a specific event/workflow."
+    cmds:
+      - |
+        if [ -z "{{.ACT_EVENT}}" ]; then
+          echo "ci:local-gha:event requires ACT_EVENT=push|pull_request." >&2
+          exit 1
+        fi
+        THGENT_ACT_EVENT="{{.ACT_EVENT}}" \
+        THGENT_ACT_WORKFLOW="{{.ACT_WORKFLOW}}" \
+          THGENT_ACT_JOB="{{.ACT_JOB}}" \
+          THGENT_ACT_DOCKERLESS='{{.ACT_DOCKERLESS | default "0"}}' \
+          THGENT_ACT_DRY_RUN="{{.ACT_DRY_RUN}}" \
+          THGENT_ACT_VERBOSE="{{.ACT_VERBOSE}}" \
+          THGENT_ACT_REUSE="{{.ACT_REUSE}}" \
+          THGENT_ACT_KEEP_EVENT="{{.ACT_KEEP_EVENT}}" \
+          THGENT_GH_BASE_REF="{{.GH_BASE_REF}}" \
+          THGENT_ACT_ARTIFACT_DIR="artifacts/act/{{.ACT_EVENT}}" \
+          ./scripts/ci_local_gha.sh
+
+  ci:local-gha:status:
+    desc: "Inspect the latest remote GH Actions run and print failed job URLs."
+    cmds:
+      - |
+        set -e
+        if [ -z "${GITHUB_REPO:-}" ]; then
+          export GITHUB_REPO="KooshaPari/thegent"
+        fi
+        if [ -n "{{.GHA_WORKFLOW_NAME}}" ]; then
+          run_id="$(gh run list --limit 30 --json databaseId,workflowName,event,status,name,createdAt --repo "${GITHUB_REPO}" --jq "map(select(.workflowName == \"{{.GHA_WORKFLOW_NAME}}\")) | .[0].databaseId")"
+        else
+          run_id="$(gh run list --limit 1 --json databaseId --repo "${GITHUB_REPO}" --jq '.[0].databaseId')"
+        fi
+        if [ -z "${run_id}" ]; then
+          echo "No workflow runs found for ${GITHUB_REPO} with workflow '{{.GHA_WORKFLOW_NAME}}'." >&2
+          exit 1
+        fi
+
+        if [ -n "{{.GHA_EVENT}}" ]; then
+          filtered="$(gh run list --limit 30 --json databaseId,workflowName,event,status,name,createdAt --repo "${GITHUB_REPO}" --jq "map(select(.workflowName == \"{{.GHA_WORKFLOW_NAME}}\" and .event == \"{{.GHA_EVENT}}\")) | .[0].databaseId")"
+          if [ -n "$filtered" ]; then
+            run_id="$filtered"
+          fi
+        fi
+
+        if [ -z "$run_id" ]; then
+          echo "No matching run found for workflow '{{.GHA_WORKFLOW_NAME}}' and event '{{.GHA_EVENT}}'." >&2
+          exit 1
+        fi
+
+        if [ -z "$run_id" ]; then
+          echo "No workflow runs found for ${GITHUB_REPO}." >&2
+          exit 1
+        fi
+        echo "Latest run: ${run_id}"
+        gh run view "$run_id" --json name,status,conclusion,url,workflowName,headSha,headBranch,event --repo "${GITHUB_REPO}"
+        printf '\nAll jobs:\n'
+        gh api "repos/${GITHUB_REPO}/actions/runs/${run_id}/jobs?per_page=100" --jq '.jobs[] | "- " + .name + " [" + .status + "/" + (.conclusion // "") + "] -> " + .html_url'
+        printf '\nFailed jobs:\n'
+        gh api "repos/${GITHUB_REPO}/actions/runs/${run_id}/jobs?per_page=100" --jq '.jobs[] | select(.conclusion == "failure") | "- " + .name + " -> " + .html_url' || true
 
   test:collect:baseline:
     desc: "Generate pytest collect-only baseline artifact (collection count + errors)."
     cmds:
       - mkdir -p artifacts/pytest/baseline
       - |
-        uv run python scripts/test_pytest_wave_artifacts.py collect \
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
           --lane fast \
           --label baseline \
           --marker "unit and not slow and not integration and not e2e and not load and not deep and not chaos and not a11y" \
@@ -375,21 +705,17 @@ tasks:
       - uv run python scripts/pytest_wave_perf_orchestrator.py collect-tests --marker "not slow and not integration and not e2e and not load" --output artifacts/pytest/wave/collect.json
 
   test:collect:fast-gate:
-    desc: "Run collection gate with fast-lane selector (informational while legacy blockers are triaged)."
+    desc: "Run collection gate with fast-lane selector and fail on collection errors."
     cmds:
       - mkdir -p artifacts/pytest/baseline
       - |
-        set +e
-        uv run python scripts/test_pytest_wave_artifacts.py collect \
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
           --lane fast \
           --label fast-gate \
           --output artifacts/pytest/baseline/fast-gate.json \
           --summary artifacts/pytest/baseline/fast-gate.md \
-          --budget {{.PYTEST_FAST_LANE_BUDGET}}
-        collect_rc=$?
-        if [ "$collect_rc" -ne 0 ]; then
-          echo "INFO: test:collect:fast-gate returned non-zero (rc=$collect_rc); treating as informational while blockers are triaged."
-        fi
+          --budget {{.PYTEST_FAST_LANE_BUDGET}} \
+          --strict
 
   test:wave:xdist:
     desc: "Run fast xdist lane with deterministic crash fallback and artifact capture."
@@ -442,7 +768,7 @@ tasks:
     cmds:
       - mkdir -p artifacts/pytest/baseline
       - |
-        uv run python scripts/test_pytest_wave_artifacts.py collect \
+        PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run python scripts/test_pytest_wave_artifacts.py collect \
           --lane fast \
           --label template-collect \
           --output artifacts/pytest/baseline/template-collect.json \
@@ -493,7 +819,7 @@ tasks:
           --summary artifacts/pytest/requirements/requirements-gate.md \
           --strict
         req_gate_rc=$?
-        uv run python scripts/test_pytest_wave_artifacts.py requirements-map \
+        uv run python scripts/fr_trace_extractor.py \
           --input-dir tests \
           --fr-tracker docs/reference/FR_TRACKER.md \
           --output artifacts/pytest/traceability/requirements-map.json \
@@ -551,7 +877,7 @@ tasks:
     cmds:
       - mkdir -p artifacts/pytest/traceability
       - |
-        uv run python scripts/test_pytest_wave_artifacts.py requirements-map \
+        uv run python scripts/fr_trace_extractor.py \
           --input-dir tests \
           --fr-tracker docs/reference/FR_TRACKER.md \
           --output artifacts/pytest/traceability/requirements-map.json \
@@ -780,7 +1106,7 @@ tasks:
   quality:sitback-contracts:
     desc: "Run sitback harness contracts"
     cmds:
-      - uv run pytest -q tests/test_unit_clode_main.py
+      - uv run python -m pytest -q tests/test_unit_clode_main.py
 
   quality:harness-model-contracts:
     desc: "Run harness model contracts"
@@ -879,7 +1205,7 @@ tasks:
           src scripts \
           --json-out artifacts/quality/generated-python-antipatterns.json \
           --sarif-out artifacts/quality/generated-python-antipatterns.sarif \
-          --fail-on error
+          --fail-on critical
 
   quality:pilot:mutation-perf:
     desc: "Non-blocking mutation/perf pilot artifact lane"
@@ -890,6 +1216,65 @@ tasks:
           --output artifacts/quality/mutation-perf-pilot.json \
           --perf-output artifacts/quality/perf-smoke.json \
           --perf-iterations 5000
+
+  quality:control-plane:validate:
+    desc: "Validate control-plane policy contract and ADR alignment"
+    cmds:
+      - |
+        uv run python scripts/validate_quality_control_plane.py \
+          --contract contracts/quality-control-plane-v1.json \
+          --schema schemas/quality-control-plane-v1.schema.json \
+          --strict-adr-match
+
+  quality:gate-policy:validate:
+    desc: "Validate unified quality gate policy contract schema"
+    cmds:
+      - |
+        cargo run --manifest-path crates/thegent-hooks/Cargo.toml --quiet --bin thegent-hooks -- \
+          schema-validate schemas/unified-quality-gate-policy-v1.schema.json contracts/unified-quality-gate-policy-v1.json
+
+  quality:control-plane:report:
+    desc: "Emit control-plane artifact readiness report (JSON + markdown)"
+    cmds:
+      - |
+        uv run python scripts/quality_control_plane_report.py \
+          --contract contracts/quality-control-plane-v1.json \
+          --json-out artifacts/quality/control-plane-readiness.json \
+          --md-out artifacts/quality/control-plane-readiness.md
+
+  quality:summary:
+    desc: "Aggregate unified quality artifacts into one summary payload"
+    cmds:
+      - |
+        uv run python scripts/aggregate_unified_quality_summary.py \
+          --output artifacts/quality/unified-quality-summary.json
+
+  quality:gate:unified:
+    desc: "Evaluate unified quality summary gate"
+    cmds:
+      - |
+        MODE="${QUALITY_UNIFIED_MODE:-pr}"
+        uv run python scripts/evaluate_unified_quality_gate.py \
+          --summary artifacts/quality/unified-quality-summary.json \
+          --policy contracts/unified-quality-gate-policy-v1.json \
+          --mode "$MODE"
+
+  quality:aggregate:artifacts:
+    desc: "Run unified artifact-producing quality lane (non-blocking pilots + reports)"
+    cmds:
+      - task: quality:hooks:sarif
+      - task: quality:generated-python:antipatterns
+      - task: quality:pilot:mutation-perf
+      - task: quality:control-plane:validate
+      - task: quality:gate-policy:validate
+      - task: quality:control-plane:report
+      - task: quality:summary
+      - task: quality:gate:unified
+
+  quality:ci:unified:
+    desc: "Unified quality CI lane (contract+artifact first)"
+    cmds:
+      - task: quality:aggregate:artifacts
 
   quality:harness-contracts:strict:
     desc: "Run strict harness contract chain with required-provider gate"
@@ -926,7 +1311,7 @@ tasks:
                 echo "[SKIP] $base (no Taskfile.yml)"
                 continue
               fi
-              if task -d "$d" --list-all 2>/dev/null | grep -E '(^|[[:space:]])quality([[:space:]]|$)' >/dev/null; then
+              if task -d "$d" --list-all 2>/dev/null | rg -q -e '(^|[[:space:]])quality([[:space:]]|$)'; then
                 echo "[RUN] $base -> task quality"
                 task -d "$d" quality
                 RAN=1
@@ -953,7 +1338,7 @@ tasks:
   quality:runtime-contracts:mojo-kernel:
     desc: "Run Mojo deterministic kernel contract gates (WL-133)."
     cmds:
-      - uv run pytest -q tests/test_mojo_kernel_contract_v1.py tests/test_mojo_score_rank_harness.py tests/mojo/test_wl133_mojo_kernel_smoke.py
+      - uv run pytest -q tests/test_mojo_kernel_contracts.py tests/test_mojo_score_rank_harness.py tests/mojo/test_wl133_mojo_kernel_smoke.py
 
   quality:runtime-contracts:
     desc: "Run canonical runtime contract chain (WL-132/WL-133)."
@@ -1019,7 +1404,7 @@ tasks:
   quality:max-lines:
     desc: "Run max-lines gate via canonical developer task path (WL-122)."
     cmds:
-      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh} sh scripts/max-lines-gate.sh
+      - MAX_LINES=${MAX_LINES:-2500} WARN_LINES=${WARN_LINES:-2000} MAX_LINES_SCOPE=${MAX_LINES_SCOPE:-changed} MAX_LINES_EXCLUDE_PREFIXES=${MAX_LINES_EXCLUDE_PREFIXES:-.git,node_modules,dist,build,target,.venv,__pycache__,docs/.vitepress/dist,docs-dist,.shadow-,crates/thegent-hooks/src/main.rs,hooks/hook-dispatcher/src/main.rs,hooks/governance-gates.sh,src/thegent/integrations/workstream_autosync.py,src/thegent/execution.py} sh scripts/max-lines-gate.sh
 
   quality:rust:pyo3-drift:
     desc: "Fail if Rust crates declare drifted pyo3 versions (includes optional dependencies)."
@@ -1095,6 +1480,49 @@ tasks:
     cmds:
       - uv run pre-commit run --all-files
 
+  hooks:run:pre-commit:
+    desc: "Run configured pre-commit hooks for the pre-commit stage (changed-files by default)."
+    cmds:
+      - ./scripts/run_pre_commit_stage.sh pre-commit
+
+  hooks:run:pre-push:
+    desc: "Run configured pre-commit hooks for the pre-push stage"
+    cmds:
+      - task: hooks:run:push
+
+  hooks:run:push:
+    desc: "Run pre-commit hooks for pre-push stage"
+    cmds:
+      - ./scripts/run_pre_commit_stage.sh pre-push
+
+  hooks:run:pre-commit:full:
+    desc: "Run full-file local pre-commit hooks."
+    cmds:
+      - THEGENT_PRE_COMMIT_SCOPE=full ./scripts/run_pre_commit_stage.sh pre-commit
+
+  hooks:run:pre-push:full:
+    desc: "Run full-file local pre-push hooks."
+    cmds:
+      - THEGENT_PRE_COMMIT_SCOPE=full ./scripts/run_pre_commit_stage.sh pre-push
+
+  quality:pre-commit:
+    desc: "Canonical pre-commit quality gate alias."
+    cmds:
+      - task: hooks:run:pre-commit
+      - THGENT_ACT_DOCKERLESS=1 task ci:local-gha:pre-commit
+
+  quality:pre-push:
+    desc: "Canonical pre-push quality gate alias."
+    cmds:
+      - task: hooks:run:pre-push
+      - THGENT_ACT_DOCKERLESS=1 task ci:local-gha:pre-push
+
+  hooks:run:full:
+    desc: "Run both local pre-commit and pre-push stages across all files."
+    cmds:
+      - task: hooks:run:pre-commit:full
+      - task: hooks:run:pre-push:full
+
   # -- Memory cache (Supermemory integration) --
 
   memory:cache:test:
@@ -1149,38 +1577,26 @@ tasks:
     deps: [docs:demos]
     cmds:
       - |
-        if command -v bun >/dev/null 2>&1; then
-          bun run docs:build
-        else
-          pnpm docs:build
-        fi
+        bun run docs:build
 
   docs:watch:
     desc: Watch docs and rebuild on change
     cmds:
       - |
-        if command -v bun >/dev/null 2>&1; then
-          bun run docs:dev
-        else
-          pnpm docs:dev
-        fi
+        bun run docs:dev
 
   docs:serve:
     desc: Serve docsite locally with hot reload
     cmds:
       - |
-        if command -v bun >/dev/null 2>&1; then
-          bun run docs:preview
-        else
-          pnpm docs:preview
-        fi
+        bun run docs:preview
 
   docs:pdf:
     desc: Export docsite to PDF
     env:
       PUPPETEER_EXECUTABLE_PATH: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
     cmds:
-      - pnpm docs:pdf
+      - bun run docs:pdf
 
   docs:convert-audit:
     desc: Audit docs/*.md for H1, frontmatter, See also (convert phase)

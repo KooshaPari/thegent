@@ -2,6 +2,7 @@
 
 # @trace FR-DOCS-002
 """
+
 import pytest
 from docs_engine.db.indexer import DocIndexer
 from docs_engine.db.queries import DocQueries
@@ -49,8 +50,13 @@ def test_upsert_updates_existing(tmp_db):
 
 def test_search_by_title(tmp_db):
     indexer, queries = tmp_db
-    indexer.upsert_doc("a.md", {"type": "research", "status": "active", "title": "SQLite performance", "layer": 1, "date": "2026-02-21"})
-    indexer.upsert_doc("b.md", {"type": "research", "status": "active", "title": "VitePress setup", "layer": 1, "date": "2026-02-21"})
+    indexer.upsert_doc(
+        "a.md",
+        {"type": "research", "status": "active", "title": "SQLite performance", "layer": 1, "date": "2026-02-21"},
+    )
+    indexer.upsert_doc(
+        "b.md", {"type": "research", "status": "active", "title": "VitePress setup", "layer": 1, "date": "2026-02-21"}
+    )
     results = queries.search("SQLite")
     assert len(results) == 1
     assert "SQLite" in results[0]["title"]
@@ -58,8 +64,12 @@ def test_search_by_title(tmp_db):
 
 def test_get_by_status(tmp_db):
     indexer, queries = tmp_db
-    indexer.upsert_doc("a.md", {"type": "idea", "status": "draft", "title": "Draft doc", "layer": 1, "date": "2026-02-21"})
-    indexer.upsert_doc("b.md", {"type": "idea", "status": "published", "title": "Published doc", "layer": 1, "date": "2026-02-21"})
+    indexer.upsert_doc(
+        "a.md", {"type": "idea", "status": "draft", "title": "Draft doc", "layer": 1, "date": "2026-02-21"}
+    )
+    indexer.upsert_doc(
+        "b.md", {"type": "idea", "status": "published", "title": "Published doc", "layer": 1, "date": "2026-02-21"}
+    )
     drafts = queries.get_by_status("draft")
     assert len(drafts) == 1
     assert drafts[0]["title"] == "Draft doc"

@@ -25,7 +25,7 @@ class MetricsCollector:
             self.metrics[metric_name] = []
         self.metrics[metric_name].append(value)
 
-    def get_stats(self, metric_name: str) -> dict[str, float]:
+    def get_stats(self, metric_name: str) -> dict[str, float | int | None]:
         """Get statistics for metric.
 
         Args:
@@ -36,7 +36,12 @@ class MetricsCollector:
         """
         values = self.metrics.get(metric_name, [])
         if not values:
-            return {}
+            return {
+                "count": 0,
+                "min": None,
+                "max": None,
+                "avg": None,
+            }
 
         return {
             "count": len(values),

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 from collections.abc import Mapping
 from pathlib import Path
+
+_LOG = logging.getLogger(__name__)
 
 
 def canonical_model(model_alias: str, alias_map: Mapping[str, str]) -> str:
@@ -65,13 +68,7 @@ def add_filtered_interactive_args(cmd: list[str], extra_args: list[str] | None, 
 
 def extract_dex_command_args(argv: list[str]) -> list[str]:
     """Extract arguments after the dex command token from argv."""
-    cmd_args: list[str] = []
-    try:
-        for index, arg in enumerate(argv):
-            if "dex" in arg and (arg.endswith("dex") or arg == "dex" or "/dex" in arg):
-                if index + 1 < len(argv):
-                    cmd_args = argv[index + 1 :]
-                break
-    except Exception:
-        pass
-    return cmd_args
+    for index, arg in enumerate(argv):
+        if "dex" in arg and (arg.endswith("dex") or arg == "dex" or "/dex" in arg):
+            return argv[index + 1 :] if index + 1 < len(argv) else []
+    return []

@@ -225,9 +225,7 @@ class TestSaveDiscovery:
         """save_discovery calls client.add(content, tags=[agent_id])."""
         mgr, client_mock = mgr_with_mock
         await mgr.save_discovery("claude", "Agent discovered X causes Y")
-        client_mock.add.assert_awaited_once_with(
-            "Agent discovered X causes Y", tags=["claude"]
-        )
+        client_mock.add.assert_awaited_once_with("Agent discovered X causes Y", tags=["claude"])
 
     @pytest.mark.asyncio
     async def test_save_discovery_skips_empty_content(self, mgr_with_mock):
@@ -398,6 +396,4 @@ class TestRunImplMemoryIntegration:
         ctx = await mgr.load_context("codex")
         assert ctx == ["prior result A", "prior result B"]
         await mgr.save_discovery("codex", "Discovered that Y implies Z")
-        client_mock.add.assert_awaited_once_with(
-            "Discovered that Y implies Z", tags=["codex"]
-        )
+        client_mock.add.assert_awaited_once_with("Discovered that Y implies Z", tags=["codex"])

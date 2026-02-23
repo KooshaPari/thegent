@@ -1,4 +1,5 @@
 """Thegent CLI model/agent commands domain - extracted from cli.py (WL-124)."""
+
 # @trace WL-124
 from __future__ import annotations
 
@@ -46,11 +47,12 @@ from thegent.cli.commands.model_cmds_setup_helpers import (
     configure_providers,
     set_env_line,
 )
+
+
 def _assert_str(value: str | None) -> str:
     """Assert yaml.dump returned str (always true when stream=None)."""
     assert value is not None, "yaml.dump returned None unexpectedly"
     return value
-
 
 
 # Copilot: only gpt-5-mini and haiku (no gemini-3.1-pro).
@@ -58,6 +60,7 @@ _COPILOT_ALLOWED_MODELS: tuple[str, ...] = (
     "claude-haiku-4.5",
     "gpt-5-mini",
 )
+
 
 def _models_table(title: str) -> Table:
     t = Table(title=title)
@@ -754,4 +757,31 @@ def rules_sync_cmd(
         for target in result["synced"]:
             console.print(f"[green]Synced: {target}[/green]")
 
-__all__ = ['_list_antigravity_models', '_list_claude_models', '_list_codex_models', '_list_codex_models_fallback', '_list_copilot_models', '_list_copilot_models_fallback', '_list_cursor_api_models', '_list_cursor_models', '_list_gemini_models', '_list_glm_models', '_list_kiro_models', '_list_minimax_models', '_models_table', 'cliproxy_login_cmd', 'cost_values_cmd', 'list_agents_cmd', 'list_droids_cmd', 'list_model_contract_schema_cmd', 'list_models_cmd', 'metrics_cmd', 'quality_index_cmd', 'resolve_model_route_cmd', 'rules_sync_cmd', 'setup_cmd', 'speed_index_cmd']
+
+__all__ = [
+    "_list_antigravity_models",
+    "_list_claude_models",
+    "_list_codex_models",
+    "_list_codex_models_fallback",
+    "_list_copilot_models",
+    "_list_copilot_models_fallback",
+    "_list_cursor_api_models",
+    "_list_cursor_models",
+    "_list_gemini_models",
+    "_list_glm_models",
+    "_list_kiro_models",
+    "_list_minimax_models",
+    "_models_table",
+    "cliproxy_login_cmd",
+    "cost_values_cmd",
+    "list_agents_cmd",
+    "list_droids_cmd",
+    "list_model_contract_schema_cmd",
+    "list_models_cmd",
+    "metrics_cmd",
+    "quality_index_cmd",
+    "resolve_model_route_cmd",
+    "rules_sync_cmd",
+    "setup_cmd",
+    "speed_index_cmd",
+]

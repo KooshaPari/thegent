@@ -277,9 +277,7 @@ class TestSingleModelUsesDefaultRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(
-            _make_responses_body(model="gpt-4o", models=["gpt-4o"])
-        ).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", models=["gpt-4o"])).encode()
 
         dynamic_router_call_count = 0
 
@@ -494,9 +492,7 @@ class TestBuildFallbackChainExtra:
     def test_three_models_fallbacks_contains_all_non_primary(self) -> None:
         from thegent.routing.litellm_responses_handler import _build_fallback_chain_extra
 
-        result = _build_fallback_chain_extra(
-            ["gpt-4o", "claude-sonnet-4.6", "deepseek-v3.2"], "gpt-4o"
-        )
+        result = _build_fallback_chain_extra(["gpt-4o", "claude-sonnet-4.6", "deepseek-v3.2"], "gpt-4o")
         assert result == {"fallbacks": [{"gpt-4o": ["claude-sonnet-4.6", "deepseek-v3.2"]}]}
 
     @pytest.mark.requirement("FR-ROUTE-012")

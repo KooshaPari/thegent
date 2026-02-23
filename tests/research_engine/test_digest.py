@@ -1,6 +1,7 @@
 # tests/research_engine/test_digest.py
 # @trace FR-RE-011
 """DigestGenerator — markdown digest rendering tests."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -59,3 +60,67 @@ def test_digest_empty_store(tmp_path: Path) -> None:
     md = gen.generate(hours=24, limit=10)
     assert "## Research Digest" in md
     assert "No new items" in md
+
+
+@pytest.mark.requirement("WL-237")
+def test_hourly_change_digest_groups_by_connector_action_outcome() -> None:
+    from research_engine.digest import build_hourly_change_digest
+
+    payload = build_hourly_change_digest(
+        [
+            {
+                "timestamp": "2026-02-22T10:15:00Z",
+                "connector": "github",
+                "action": "write",
+                "outcome": "success",
+            },
+            {
+                "timestamp": "2026-02-22T10:25:00Z",
+                "connector": "github",
+                "action": "write",
+                "outcome": "success",
+            },
+            {
+                "timestamp": "2026-02-22T10:45:00Z",
+                "connector": "linear",
+                "action": "write",
+                "outcome": "failure",
+            },
+        ]
+    )
+    hour_bucket = payload["hours"]["2026-02-22T10:00:00Z"]
+    assert hour_bucket["github"]["write:success"] == 2
+    assert hour_bucket["linear"]["write:failure"] == 1
+
+
+@pytest.mark.requirement("WL-237")
+def test_hourly_change_digest_accumulates_weighted_counts() -> None:
+    from research_engine.digest import build_hourly_change_digest
+
+    payload = build_hourly_change_digest(
+        [
+            {
+                "timestamp": "2026-02-22T10:10:00Z",
+                "connector": "github",
+                "action": "write",
+                "outcome": "failure",
+                "count": 2,
+            },
+            {
+                "timestamp": "2026-02-22T10:35:00Z",
+                "connector": "github",
+                "action": "write",
+                "outcome": "failure",
+                "count": 3,
+            },
+        ]
+    )
+    hour_bucket = payload["hours"]["2026-02-22T10:00:00Z"]
+    assert hour_bucket["github"]["write:failure"] == 5
+
+
+def test_hourly_change_digest_requires_timestamp() -> None:
+    from research_engine.digest import build_hourly_change_digest
+
+    with pytest.raises(ValueError, match="timestamp"):
+        build_hourly_change_digest([{"connector": "github", "action": "write", "outcome": "success"}])

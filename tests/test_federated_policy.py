@@ -238,9 +238,7 @@ def test_load_from_file_registers_rules() -> None:
             "priority": 5,
         },
     ]
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", delete=False
-    ) as fh:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as fh:
         json.dump(data, fh)
         tmp_path = Path(fh.name)
 
@@ -303,9 +301,7 @@ def fed_manager(fed_base: Path) -> FederatedPolicyManager:
     return FederatedPolicyManager(base_dir=fed_base, session_dir=fed_base)
 
 
-def _write_fed_policy(
-    base_dir: Path, org: str, project: str, env: str, policy_id: str, data: dict
-) -> None:
+def _write_fed_policy(base_dir: Path, org: str, project: str, env: str, policy_id: str, data: dict) -> None:
     d = base_dir / org / project / env
     d.mkdir(parents=True, exist_ok=True)
     (d / f"{policy_id}.json").write_text(json.dumps(data), encoding="utf-8")
@@ -369,9 +365,7 @@ def test_fed_001_repr_is_dotted_string() -> None:
 
 
 @pytest.mark.unit
-def test_fed_002_env_level_policy_found(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_002_env_level_policy_found(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-002
     _write_fed_policy(fed_base, "acme", "pay", "prod", "base", {"allow": True})
     ns = PolicyNamespace("acme", "pay", "prod")
@@ -380,9 +374,7 @@ def test_fed_002_env_level_policy_found(
 
 
 @pytest.mark.unit
-def test_fed_002_project_default_fallback(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_002_project_default_fallback(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-002
     _write_fed_policy(fed_base, "acme", "pay", "default", "base", {"risk_threshold": 0.8})
     ns = PolicyNamespace("acme", "pay", "staging")
@@ -391,9 +383,7 @@ def test_fed_002_project_default_fallback(
 
 
 @pytest.mark.unit
-def test_fed_002_org_default_fallback(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_002_org_default_fallback(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-002
     _write_fed_policy(fed_base, "acme", "default", "default", "base", {"risk_threshold": 0.7})
     ns = PolicyNamespace("acme", "unknown_proj", "staging")
@@ -402,9 +392,7 @@ def test_fed_002_org_default_fallback(
 
 
 @pytest.mark.unit
-def test_fed_002_env_overrides_org_default(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_002_env_overrides_org_default(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-002
     _write_fed_policy(fed_base, "acme", "default", "default", "base", {"risk_threshold": 0.7})
     _write_fed_policy(fed_base, "acme", "pay", "prod", "base", {"risk_threshold": 0.5})
@@ -558,27 +546,21 @@ def test_fed_004_relay_namespace_fields(fed_manager: FederatedPolicyManager) -> 
 @pytest.mark.unit
 def test_fed_005_risk_threshold_takes_min(fed_manager: FederatedPolicyManager) -> None:
     # @trace FR-FED-005
-    result = fed_manager.arbitrate_conflict(
-        [{"risk_threshold": 0.9}, {"risk_threshold": 0.6}]
-    )
+    result = fed_manager.arbitrate_conflict([{"risk_threshold": 0.9}, {"risk_threshold": 0.6}])
     assert result["risk_threshold"] == 0.6
 
 
 @pytest.mark.unit
 def test_fed_005_human_in_loop_or(fed_manager: FederatedPolicyManager) -> None:
     # @trace FR-FED-005
-    result = fed_manager.arbitrate_conflict(
-        [{"human_in_loop_required": False}, {"human_in_loop_required": True}]
-    )
+    result = fed_manager.arbitrate_conflict([{"human_in_loop_required": False}, {"human_in_loop_required": True}])
     assert result["human_in_loop_required"] is True
 
 
 @pytest.mark.unit
 def test_fed_005_audit_retention_takes_max(fed_manager: FederatedPolicyManager) -> None:
     # @trace FR-FED-005
-    result = fed_manager.arbitrate_conflict(
-        [{"audit_retention_days": 365}, {"audit_retention_days": 2555}]
-    )
+    result = fed_manager.arbitrate_conflict([{"audit_retention_days": 365}, {"audit_retention_days": 2555}])
     assert result["audit_retention_days"] == 2555
 
 
@@ -596,9 +578,7 @@ def test_fed_005_empty_policies_returns_empty(fed_manager: FederatedPolicyManage
 
 
 @pytest.mark.unit
-def test_fed_005_arbitration_log_written(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_005_arbitration_log_written(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-005
     fed_manager.arbitrate_conflict(
         [{"risk_threshold": 0.9}, {"risk_threshold": 0.5}],
@@ -616,9 +596,7 @@ def test_fed_005_arbitration_log_written(
 @pytest.mark.unit
 def test_fed_005_require_audit_or(fed_manager: FederatedPolicyManager) -> None:
     # @trace FR-FED-005
-    result = fed_manager.arbitrate_conflict(
-        [{"require_audit": False}, {"require_audit": True}]
-    )
+    result = fed_manager.arbitrate_conflict([{"require_audit": False}, {"require_audit": True}])
     assert result["require_audit"] is True
 
 
@@ -636,9 +614,7 @@ def test_fed_006_empty_base_dir_reports_empty(fed_manager: FederatedPolicyManage
 
 
 @pytest.mark.unit
-def test_fed_006_populated_reports_healthy(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_006_populated_reports_healthy(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-006
     _write_fed_policy(fed_base, "acme", "pay", "prod", "base", {})
     health = fed_manager.get_federation_health()
@@ -647,9 +623,7 @@ def test_fed_006_populated_reports_healthy(
 
 
 @pytest.mark.unit
-def test_fed_006_health_lists_namespaces(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_006_health_lists_namespaces(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-006
     _write_fed_policy(fed_base, "acme", "pay", "prod", "base", {})
     health = fed_manager.get_federation_health()
@@ -657,9 +631,7 @@ def test_fed_006_health_lists_namespaces(
 
 
 @pytest.mark.unit
-def test_fed_006_drift_detected_no_org_default(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_006_drift_detected_no_org_default(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-006
     _write_fed_policy(fed_base, "acme", "pay", "prod", "base", {})
     health = fed_manager.get_federation_health()
@@ -670,9 +642,7 @@ def test_fed_006_drift_detected_no_org_default(
 
 
 @pytest.mark.unit
-def test_fed_006_no_drift_when_org_default_exists(
-    fed_manager: FederatedPolicyManager, fed_base: Path
-) -> None:
+def test_fed_006_no_drift_when_org_default_exists(fed_manager: FederatedPolicyManager, fed_base: Path) -> None:
     # @trace FR-FED-006
     _write_fed_policy(fed_base, "acme", "default", "default", "base", {})
     _write_fed_policy(fed_base, "acme", "pay", "prod", "base", {})

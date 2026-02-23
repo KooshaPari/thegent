@@ -7,6 +7,7 @@ core modules like agents/, mcp/, routing/, governance/, or orchestration/.
 
 # @trace WL-136 B90-W3-C4
 """
+
 from __future__ import annotations
 
 import sys

@@ -68,3 +68,10 @@ class UniquenesEnforcer:
         This method resets the registry to an empty state.
         """
         self._registry.clear()
+
+
+def validate_unique_board_ids(board_ids: list[str]) -> None:
+    """Validate a list of canonical board IDs is globally unique."""
+    enforcer = UniquenesEnforcer()
+    for board_id in board_ids:
+        enforcer.register_id(board_id)

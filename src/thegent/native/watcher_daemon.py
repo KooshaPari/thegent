@@ -467,6 +467,6 @@ __all__ = [
     "WatchEvent",
     "WatchSpec",
     "WatcherDaemon",
-    "get_watcher_daemon",
     "_reset_singleton",
+    "get_watcher_daemon",
 ]

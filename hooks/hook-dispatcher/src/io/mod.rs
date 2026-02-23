@@ -37,7 +37,8 @@ pub(crate) fn resolve_hooks_dir() -> PathBuf {
         let mut dir = exe.parent().map(|p| p.to_path_buf());
         for _ in 0..5 {
             if let Some(ref d) = dir {
-                if d.join("pretool-dispatcher.sh").exists() || d.join("doc-location-guard.sh").exists()
+                if d.join("pretool-dispatcher.sh").exists()
+                    || d.join("doc-location-guard.sh").exists()
                 {
                     return d.clone();
                 }

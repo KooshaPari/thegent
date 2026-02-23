@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from thegent.observability.prometheus import (
@@ -256,6 +258,54 @@ def test_render_text_label_sorting(collector: MetricsCollector) -> None:
     text = collector.render_text()
     # model < provider < status alphabetically
     assert 'thegent_requests_total{model="gpt-4o",provider="openai",status="success"}' in text
+
+
+@pytest.mark.requirement("WL-196")
+def test_record_autosync_cycle_and_export_file(collector: MetricsCollector, tmp_path: Path) -> None:
+    """Autosync metrics are emitted and can be exported to a text file."""
+    collector.record_autosync_cycle(items_count=5, ignored_count=2, had_error=False)
+    collector.record_autosync_connector_operation(
+        connector="github",
+        direction="write",
+        result="success",
+        duration_seconds=0.12,
+    )
+    collector.record_autosync_circuit_open(connector="linear", direction="read")
+
+    output_path = tmp_path / "metrics.prom"
+    collector.export_text_file(output_path)
+    text = output_path.read_text(encoding="utf-8")
+
+    assert "thegent_autosync_cycles_total 1" in text
+    assert 'thegent_autosync_items_total{kind="ignored"} 2' in text
+    assert (
+        'thegent_autosync_connector_operations_total{connector="github",direction="write",result="success"} 1' in text
+    )
+    assert 'thegent_autosync_circuit_open_total{connector="linear",direction="read"} 1' in text
+
+
+@pytest.mark.requirement("WL-159")
+def test_record_board_sync_cycle(collector: MetricsCollector) -> None:
+    """Board sync cycle counters and duration histogram are exported."""
+    collector.record_board_sync_cycle(
+        source="github",
+        status="success",
+        duration_seconds=0.42,
+    )
+
+    text = collector.render_text()
+    assert 'thegent_board_sync_cycles_total{source="github",status="success"} 1' in text
+    assert "thegent_board_sync_cycle_duration_seconds_count" in text
+
+
+@pytest.mark.requirement("WL-160")
+def test_record_autosync_cycle_result(collector: MetricsCollector) -> None:
+    """Autosync cycle outcomes emit labeled counters and duration histograms."""
+    collector.record_autosync_cycle_result(status="failed", duration_seconds=0.31)
+
+    text = collector.render_text()
+    assert 'thegent_autosync_cycle_outcomes_total{status="failed"} 1' in text
+    assert "thegent_autosync_cycle_duration_seconds_count" in text
 
 
 @pytest.mark.requirement("FR-OBS-034")

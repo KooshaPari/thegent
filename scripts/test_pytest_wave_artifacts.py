@@ -35,6 +35,10 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Iterable, Sequence
 
+from pytest_wave_health_helpers import _derive_pr_targets
+from pytest_wave_health_helpers import _discover_changed_files
+from pytest_wave_health_helpers import run_health
+
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT_DIR = ROOT / "tests"
 DEFAULT_COLLECT_PATH = (str(DEFAULT_INPUT_DIR),)
@@ -97,8 +101,14 @@ LANE_MARKER_MAP = {
     "ci-flake": "flake_lane_marker",
 }
 
+PARSER_PARITY_TARGET_NAMES = {
+    "test_wl131_parser_parity.py",
+    "test_wl131_rust_python_parity.py",
+}
+
 # Quarterly cleanup cadence and debt windows are intentionally explicit for deterministic governance.
 TRACEABILITY_STALE_WINDOW_DAYS = 90
+
 
 def _iso_to_datetime(value: str | None) -> datetime:
     if not value:
@@ -109,6 +119,7 @@ def _iso_to_datetime(value: str | None) -> datetime:
         return datetime.fromisoformat(value)
     except ValueError:
         return datetime.fromtimestamp(0, tz=timezone.utc)
+
 
 def _mermaid_id(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_]", "_", value)[:90]
@@ -126,6 +137,7 @@ class LanePromotionConfig:
     min_coverage_ratio: float
     max_flake_ratio: float
     acceptable_fail_budget: int
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -242,7 +254,7 @@ def _extract_string_values(node: ast.AST) -> list[str]:
         values.append(node.value)
         return values
 
-    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+    if isinstance(node, ast.List | ast.Tuple | ast.Set):
         for item in node.elts:
             values.extend(_extract_string_values(item))
 
@@ -497,7 +509,7 @@ def _gather_test_nodes(
             )
         return records
 
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+    if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
         node_markers, node_requirements = _iter_markers_and_requirements(node.decorator_list)
         markers = sorted(set(inherited_markers + node_markers))
         requirements = sorted(set(inherited_requirements + node_requirements))
@@ -618,8 +630,13 @@ def run_collect(
     command.append("--strict-markers")
     command.extend(test_paths or list(DEFAULT_COLLECT_PATH))
 
+    # Collection should stay lightweight and deterministic; opt out of plugin
+    # auto-discovery by default unless caller explicitly overrides.
+    collect_env = os.environ.copy()
+    collect_env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+
     started = datetime.now().timestamp()
-    proc = subprocess.run(command, capture_output=True, text=True)
+    proc = subprocess.run(command, capture_output=True, text=True, env=collect_env)
     ended = datetime.now().timestamp()
 
     collected, errors = _parse_collect_metrics(proc.stdout, proc.stderr)
@@ -731,7 +748,7 @@ def run_trace_scan(records: list[TestRecord], output: Path) -> None:
                     "line": row.line,
                     "markers": row.markers,
                     "trace_requirements": [req for req, _ in trace_references],
-                    "trace_confidence": {req: confidence for req, confidence in trace_references},
+                    "trace_confidence": dict(trace_references),
                     "message": "trace evidence present but no @pytest.mark.requirement marker",
                 }
             )
@@ -759,7 +776,7 @@ def run_trace_scan(records: list[TestRecord], output: Path) -> None:
                 "markers": row.markers,
                 "requirements": row.requirements,
                 "trace_requirements": [req for req, _ in row.trace_references],
-                "trace_confidence": {req: confidence for req, confidence in row.trace_references},
+                "trace_confidence": dict(row.trace_references),
                 "source_loc": row.source_loc,
                 "trace_evidence_confidence": max((confidence for _, confidence in row.trace_references), default=0.0),
                 "evidence": [
@@ -794,8 +811,7 @@ def run_heavy_untagged(records: list[TestRecord], output: Path, min_loc: int) ->
     heavy = [
         record
         for record in records
-        if not record.requirements
-        and (set(record.markers).intersection(HEAVY_MARKERS) or record.source_loc >= min_loc)
+        if not record.requirements and (set(record.markers).intersection(HEAVY_MARKERS) or record.source_loc >= min_loc)
     ]
 
     payload = {
@@ -890,9 +906,7 @@ def run_requirements_map(
             "mapped_requirements": secondary_mapped_count,
             "uncovered_requirements": secondary_uncovered,
             "trace_only_tests": trace_only_tests,
-            "trace_requirements": {
-                req_id: trace_to_tests[req_id] for req_id in sorted(trace_to_tests)
-            },
+            "trace_requirements": {req_id: trace_to_tests[req_id] for req_id in sorted(trace_to_tests)},
         },
     }
 
@@ -963,10 +977,7 @@ def run_requirements_diagram(payload: dict[str, object], output: Path, max_nodes
         coverage_ratio = coverage.get("coverage_ratio")
 
     if visible_requirements:
-        req_lines = [
-            f"    req_{_mermaid_id(req_id)}[\"{req_id}\"]"
-            for req_id, _ in visible_requirements
-        ]
+        req_lines = [f'    req_{_mermaid_id(req_id)}["{req_id}"]' for req_id, _ in visible_requirements]
     else:
         req_lines = []
 
@@ -990,7 +1001,7 @@ def run_requirements_diagram(payload: dict[str, object], output: Path, max_nodes
     if not node_refs:
         for uncovered in payload.get("requirement_coverage", {}).get("uncovered_requirements", []):
             req_node = f"req_{_mermaid_id(uncovered)}"
-            req_lines.append(f"    {req_node}[\"{uncovered} (uncovered)\"]")
+            req_lines.append(f'    {req_node}["{uncovered} (uncovered)"]')
 
     truncated_requirements = len(requirement_to_tests) > len(visible_requirements)
     truncated = truncated_requirements or truncated_edges
@@ -1018,7 +1029,7 @@ def run_requirements_diagram(payload: dict[str, object], output: Path, max_nodes
         lines.append("    end")
     else:
         lines.append("    classDef warn fill:#fee,stroke:#900,color:#900")
-        lines.append("    warn(\"No mapped requirements detected\"):::warn")
+        lines.append('    warn("No mapped requirements detected"):::warn')
 
     if edges:
         lines.extend(edges)
@@ -1026,9 +1037,7 @@ def run_requirements_diagram(payload: dict[str, object], output: Path, max_nodes
     lines.extend(["```", ""])
 
     if truncated:
-        lines.append(
-            "This diagram is truncated for readability. Regenerate with larger limits to view full edges."
-        )
+        lines.append("This diagram is truncated for readability. Regenerate with larger limits to view full edges.")
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -1098,9 +1107,7 @@ def run_trace_cleanup(
         "timestamp": _now_iso(),
         "cleanup_cadence_days": 90,
         "stale_window_days": stale_window_days,
-        "total_traced_tests_without_marker": sum(
-            1 for row in records if not row.requirements and row.trace_references
-        ),
+        "total_traced_tests_without_marker": sum(1 for row in records if not row.requirements and row.trace_references),
         "deprecated_marker_debt_count": len(deprecated_marker_items),
         "deprecated_marker_debt": sorted(
             deprecated_marker_items,
@@ -1138,9 +1145,7 @@ def run_trace_cleanup(
             "deprecated_marker_breach": payload["deprecated_marker_breach"],
             "stale_debt_count": payload["stale_debt_count"],
             "deprecated_marker_debt_count": payload["deprecated_marker_debt_count"],
-            "recommended_action": (
-                "open" if issue_open else "monitor"
-            ),
+            "recommended_action": ("open" if issue_open else "monitor"),
             "cleanup_plan": {
                 "run_cleanup": "task test:traceability:quarterly-cleanup",
                 "fallback_action": "open cleanup tracker ticket and schedule next release slice",
@@ -1187,10 +1192,7 @@ def _coerce_artifact_status(payload: dict[str, object]) -> str:
 
 def _collect_run_metrics(run_artifacts: list[Path] | None) -> dict[str, object]:
     artifacts = run_artifacts or []
-    entries = [
-        _safe_load_artifact(path)
-        for path in artifacts
-    ]
+    entries = [_safe_load_artifact(path) for path in artifacts]
 
     run_payloads = [payload for payload in entries if isinstance(payload, dict)]
     if not run_payloads:
@@ -1263,7 +1265,7 @@ def _requirements_promotion_payload(
     coverage_data = map_payload.get("requirement_coverage", {})
     if isinstance(coverage_data, dict):
         raw_ratio = coverage_data.get("coverage_ratio")
-        if isinstance(raw_ratio, (int, float)):
+        if isinstance(raw_ratio, int | float):
             coverage_ratio = float(raw_ratio)
 
     blocked_count = gate_payload.get("blocked_count", 0)
@@ -1274,10 +1276,13 @@ def _requirements_promotion_payload(
     health_score = health_payload.get("overall_health_score")
     if isinstance(health_score, str) and health_score.isdigit():
         health_score = int(health_score)
-    if not isinstance(health_score, (int, float)):
+    if not isinstance(health_score, int | float):
         health_score = None
 
-    has_map = isinstance(map_payload.get("schema_version"), str) and map_payload.get("schema_version") == REQUIREMENTS_MAP_SCHEMA_VERSION
+    has_map = (
+        isinstance(map_payload.get("schema_version"), str)
+        and map_payload.get("schema_version") == REQUIREMENTS_MAP_SCHEMA_VERSION
+    )
 
     run_metrics = _collect_run_metrics(run_artifacts)
     run_count = run_metrics["run_count"]
@@ -1286,11 +1291,9 @@ def _requirements_promotion_payload(
     observed_flake_ratio = run_metrics["observed_flake_ratio"]
     stability_ratio = run_metrics["stability_ratio"]
 
-    promote_coverage = (
-        coverage_ratio is not None and coverage_ratio >= min_coverage_ratio
-    )
+    promote_coverage = coverage_ratio is not None and coverage_ratio >= min_coverage_ratio
     promote_blocked = blocked_count == 0
-    promote_health = isinstance(health_score, (int, float)) and float(health_score) >= 90.0
+    promote_health = isinstance(health_score, int | float) and float(health_score) >= 90.0
     promote_min_runs = isinstance(run_count, int) and run_count >= min_runs
     promote_stability = isinstance(stability_ratio, float) and stability_ratio >= (1.0 - max_flake_ratio)
     promote_flake = isinstance(observed_flake_ratio, float) and observed_flake_ratio <= max_flake_ratio
@@ -1494,511 +1497,6 @@ def _is_exempt(record: TestRecord, exemptions: list[dict[str, str]]) -> str | No
     return None
 
 
-def _to_artifact_path(path: Path) -> str:
-    try:
-        return str(path.relative_to(ROOT))
-    except ValueError:
-        return str(path)
-
-
-def _safe_load_artifact(path: Path) -> dict[str, object]:
-    if not path.exists():
-        return {
-            "status": "missing",
-            "path": str(path),
-            "error": "artifact_not_found",
-            "timestamp": _now_iso(),
-        }
-
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        return {
-            "status": "invalid",
-            "path": str(path),
-            "error": f"invalid_json:{exc}",
-            "timestamp": _now_iso(),
-        }
-
-    if not isinstance(payload, dict):
-        return {
-            "status": "invalid",
-            "path": str(path),
-            "error": "artifact_payload_not_object",
-            "timestamp": _now_iso(),
-        }
-
-    return payload
-
-
-def _int_or_zero(value: object) -> int:
-    if isinstance(value, bool):
-        return 1 if value else 0
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str) and value.isdigit():
-        return int(value)
-    return 0
-
-
-def _bool_or_false(value: object) -> bool:
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.strip().lower() in {"1", "true", "yes", "on"}
-    return False
-
-
-def _build_health_alert(
-    *,
-    severity: str,
-    code: str,
-    title: str,
-    details: str,
-    artifact: str,
-    action: str,
-) -> dict[str, str]:
-    return {
-        "severity": severity,
-        "code": code,
-        "title": title,
-        "details": details,
-        "artifact": artifact,
-        "recommended_action": action,
-    }
-
-
-def _derive_pr_targets(changed_files: list[Path], tests_dir: Path) -> tuple[list[Path], list[Path], bool]:
-    if not changed_files:
-        return [], [], True
-
-    targets: set[Path] = set()
-    untestable: set[Path] = set()
-    has_unknown = False
-
-    for changed in changed_files:
-        path = changed
-        if not path.exists():
-            candidate = ROOT / path
-            if candidate.exists():
-                path = candidate
-            else:
-                has_unknown = True
-                untestable.add(path)
-                continue
-
-        if path.suffix != ".py":
-            has_unknown = True
-            untestable.add(path)
-            continue
-
-        if "tests" in path.parts:
-            if path.exists() and path.is_file():
-                targets.add(path)
-            else:
-                has_unknown = True
-                untestable.add(path)
-            continue
-
-        stem = path.stem
-        mapped_for_file = False
-
-        for candidate in sorted(tests_dir.glob(f"test_{stem}.py")):
-            targets.add(candidate)
-            mapped_for_file = True
-
-        for candidate in sorted(tests_dir.glob(f"**/*test_{stem}*.py")):
-            if candidate.is_file() and candidate.name.startswith("test_"):
-                targets.add(candidate)
-                mapped_for_file = True
-
-        for candidate in sorted(tests_dir.glob(f"*{stem}*.py")):
-            if not candidate.name.startswith("test_"):
-                continue
-            if candidate not in targets:
-                targets.add(candidate)
-                mapped_for_file = True
-
-        if path.parent.as_posix() != ".":
-            relative_parent = path.relative_to(ROOT / "src/thegent") if "src/thegent" in path.parts else path.parent
-            related_dir = tests_dir / relative_parent
-            if related_dir.is_dir():
-                for candidate in sorted(related_dir.glob("test_*.py")):
-                    targets.add(candidate)
-                    mapped_for_file = True
-
-        if not mapped_for_file:
-            has_unknown = True
-            untestable.add(path)
-
-    normalized = {_to_artifact_path(candidate) for candidate in targets}
-    normalized_untestable = {_to_artifact_path(candidate) for candidate in untestable}
-    return (
-        [Path(item) for item in sorted(normalized)],
-        [Path(item) for item in sorted(normalized_untestable)],
-        has_unknown,
-    )
-
-
-def run_health(
-    *,
-    collect_artifact: Path,
-    requirements_gate_artifact: Path,
-    pr_run_artifact: Path,
-    requirements_map_artifact: Path | None,
-    output: Path,
-    summary: Path | None,
-    strict: bool,
-    fail_on_warning: bool = False,
-    min_health_score: int | None = None,
-) -> int:
-    collect_payload = _safe_load_artifact(collect_artifact)
-    requirements_gate_payload = _safe_load_artifact(requirements_gate_artifact)
-    run_payload = _safe_load_artifact(pr_run_artifact)
-
-    requirements_map_payload = (
-        _safe_load_artifact(requirements_map_artifact)
-        if requirements_map_artifact is not None
-        else None
-    )
-
-    alerts: list[dict[str, str]] = []
-
-    collect_status = str(collect_payload.get("status", collect_payload.get("returncode", "passed")))
-    if collect_status == "missing" or collect_payload.get("status") == "missing":
-        alerts.append(
-            _build_health_alert(
-                severity="error",
-                code="collect.artifact_missing",
-                title="Collection artifact missing",
-                details=f"Missing file: {collect_artifact}",
-                artifact=str(collect_artifact),
-                action=(
-                    "Run `task test:collect:fast-gate` (or `task test:pr-gate`) to regenerate collection output."
-                ),
-            )
-        )
-    elif collect_status == "invalid" or collect_payload.get("status") == "invalid":
-        alerts.append(
-            _build_health_alert(
-                severity="error",
-                code="collect.artifact_invalid",
-                title="Collection artifact invalid",
-                details=f"Could not parse collect artifact: {collect_artifact}",
-                artifact=str(collect_artifact),
-                action="Re-run collection with `task test:collect:fast-gate` and verify writable artifacts directory.",
-            )
-        )
-    else:
-        returncode = _int_or_zero(collect_payload.get("returncode"))
-        errors = _int_or_zero(collect_payload.get("errors"))
-        if returncode != 0:
-            alerts.append(
-                _build_health_alert(
-                    severity="error",
-                    code="collect.returncode_nonzero",
-                    title="Collection returned non-zero",
-                    details=f"collect returncode={returncode}",
-                    artifact=str(collect_artifact),
-                    action="Fix pytest collection errors before merging or gate on legacy-only exceptions.",
-                )
-            )
-        elif errors > 0:
-            alerts.append(
-                _build_health_alert(
-                    severity="error",
-                    code="collect.errors_detected",
-                    title="Collection errors detected",
-                    details=f"collect errors={errors}",
-                    artifact=str(collect_artifact),
-                    action="Address or quarantine collection failures with explicit skip markers.",
-                )
-            )
-
-        if _bool_or_false(collect_payload.get("over_budget")):
-            alerts.append(
-                _build_health_alert(
-                    severity="warning",
-                    code="collect.budget_exceeded",
-                    title="Collection exceeded budget",
-                    details=f"collected={collect_payload.get('collected')}, budget={collect_payload.get('budget')}",
-                    artifact=str(collect_artifact),
-                    action="Review marker boundaries in `pyproject.toml` lane definitions.",
-                )
-            )
-
-    req_status = str(requirements_gate_payload.get("status", "unknown"))
-    if req_status == "missing" or requirements_gate_payload.get("status") == "missing":
-        alerts.append(
-            _build_health_alert(
-                severity="warning",
-                code="requirements.gate_missing",
-                title="Requirements gate artifact missing",
-                details=f"Missing file: {requirements_gate_artifact}",
-                artifact=str(requirements_gate_artifact),
-                action="Run `task test:requirements:gate` when evaluating PR changes.",
-            )
-        )
-    elif req_status == "invalid" or requirements_gate_payload.get("status") == "invalid":
-        alerts.append(
-            _build_health_alert(
-                severity="error",
-                code="requirements.gate_invalid",
-                title="Requirements gate artifact invalid",
-                details=f"Could not parse file: {requirements_gate_artifact}",
-                artifact=str(requirements_gate_artifact),
-                action="Re-run `task test:requirements:gate` and verify JSON output path.",
-            )
-        )
-    else:
-        blocked_count = _int_or_zero(requirements_gate_payload.get("blocked_count"))
-        fallback = _bool_or_false(requirements_gate_payload.get("fallback_to_fast_lane"))
-        total_checked = _int_or_zero(requirements_gate_payload.get("total_checked"))
-        if blocked_count > 0:
-            alerts.append(
-                _build_health_alert(
-                    severity="warning",
-                    code="requirements.missing_marker",
-                    title="Unmapped changed tests",
-                    details=f"blocked={blocked_count} (checked {total_checked})",
-                    artifact=str(requirements_gate_artifact),
-                    action=(
-                        "Add `@pytest.mark.requirement(\"FR-...\")` annotations or add an explicit exemption entry."
-                    ),
-                )
-            )
-        if fallback:
-            alerts.append(
-                _build_health_alert(
-                    severity="warning",
-                    code="requirements.fallback_to_fast_lane",
-                    title="Fallback lane used",
-                    details="No changelist mapping or non-test changes detected.",
-                    artifact=str(requirements_gate_artifact),
-                    action=(
-                        "Review changed-file mapping; ensure changed files include test entry points or add mapping guidance."
-                    ),
-                )
-            )
-
-    run_status = str(run_payload.get("status", "unknown"))
-    if run_status == "missing" or run_payload.get("status") == "missing":
-        alerts.append(
-            _build_health_alert(
-                severity="warning",
-                code="run.artifact_missing",
-                title="PR run artifact missing",
-                details=f"Missing file: {pr_run_artifact}",
-                artifact=str(pr_run_artifact),
-                action="Run `task test:pr` or `task test:pr-gate` to execute and write run summary.",
-            )
-        )
-    elif run_status == "invalid" or run_payload.get("status") == "invalid":
-        alerts.append(
-            _build_health_alert(
-                severity="error",
-                code="run.artifact_invalid",
-                title="PR run artifact invalid",
-                details=f"Could not parse file: {pr_run_artifact}",
-                artifact=str(pr_run_artifact),
-                action="Re-run PR gate task with a writable artifacts path.",
-            )
-        )
-    else:
-        if run_payload.get("returncode", 0) not in (0, "0", None):
-            alerts.append(
-                _build_health_alert(
-                    severity="error",
-                    code="run.failed",
-                    title="Mapped PR run failed",
-                    details=f"status={run_status}, returncode={run_payload.get('returncode')}",
-                    artifact=str(pr_run_artifact),
-                    action="Re-run with `task test:pr`, fix failing tests, then rerun gate.",
-                )
-            )
-
-        if _bool_or_false(run_payload.get("fallback_to_fast_lane")):
-            alerts.append(
-                _build_health_alert(
-                    severity="info",
-                    code="run.fallback_to_fast_lane",
-                    title="Mapped run used fast-lane fallback",
-                    details="No PR targets were resolvable for mapped execution.",
-                    artifact=str(pr_run_artifact),
-                    action=(
-                        "Review file mapping and add stable test targets for changed paths under `tests/`."
-                    ),
-                )
-            )
-
-    if requirements_map_payload is None:
-        alerts.append(
-            _build_health_alert(
-                severity="info",
-                code="requirements_map.missing_input",
-                title="Requirements map not included",
-                details="No requirements map artifact supplied.",
-                artifact="",
-                action="Run `task test:requirements:map` to add coverage trend context.",
-            )
-        )
-    else:
-        if requirements_map_payload.get("status") in {"missing", "invalid"}:
-            alerts.append(
-                _build_health_alert(
-                    severity="warning",
-                    code="requirements_map.invalid",
-                    title="Requirements coverage artifact invalid",
-                    details=f"Could not parse map file: {requirements_map_artifact}",
-                    artifact=str(requirements_map_artifact),
-                    action="Re-run `task test:requirements:map` and verify marker annotations in tests.",
-                )
-            )
-        else:
-            coverage = requirements_map_payload.get("requirement_coverage", {})
-            coverage_ratio = coverage.get("coverage_ratio")
-            if isinstance(coverage_ratio, (int, float)) and coverage_ratio < 0.95:
-                alerts.append(
-                    _build_health_alert(
-                        severity="warning",
-                        code="requirements_map.low_coverage",
-                        title="Requirement coverage below target",
-                        details=f"coverage_ratio={coverage_ratio}",
-                        artifact=str(requirements_map_artifact),
-                        action=(
-                            "Add missing `@pytest.mark.requirement(...)` markers or justify exclusions."
-                        ),
-                    )
-                )
-
-    score = 100
-    for alert in alerts:
-        if alert["severity"] == "error":
-            score -= 30
-        elif alert["severity"] == "warning":
-            score -= 10
-        else:
-            score -= 3
-    score = max(0, min(100, score))
-
-    has_error = any(alert["severity"] == "error" for alert in alerts)
-    has_warning = any(alert["severity"] == "warning" for alert in alerts)
-    overall_status = "failed" if has_error else "warn" if has_warning else "passed"
-
-    payload = {
-        "schema_version": "pytest-health/v1",
-        "timestamp": _now_iso(),
-        "overall_status": overall_status,
-        "overall_health_score": score,
-        "collect": collect_payload,
-        "requirements_gate": requirements_gate_payload,
-        "pr_run": run_payload,
-        "requirements_map": requirements_map_payload,
-        "alerts": alerts,
-        "artifact_inputs": {
-            "collect": str(collect_artifact),
-            "requirements_gate": str(requirements_gate_artifact),
-            "pr_run": str(pr_run_artifact),
-            "requirements_map": str(requirements_map_artifact)
-            if requirements_map_artifact is not None
-            else None,
-        },
-        "runbook": {
-            "collection_error_threshold": 0,
-            "requirement_gate_blocked_error_threshold": 1,
-            "requirement_map_coverage_target": 0.95,
-            "status_threshold": {
-                "passed": ">=90",
-                "warn": "80-89",
-                "failed": "<80",
-            },
-            "min_health_score": min_health_score,
-            "fail_on_warning": fail_on_warning,
-        },
-    }
-
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-
-    if summary:
-        lines = [
-            "# Pytest Health Summary",
-            "",
-            f"- Overall status: `{overall_status}`",
-            f"- Health score: `{score}`",
-            f"- Alerts: `{len(alerts)}`",
-            "",
-            "## Alert surface",
-        ]
-
-        for alert in alerts:
-            lines.extend(
-                [
-                    f"### {alert['severity'].upper()}: `{alert['code']}`",
-                    f"- title: {alert['title']}",
-                    f"- details: {alert['details']}",
-                    f"- artifact: `{alert['artifact']}`",
-                    f"- action: {alert['recommended_action']}",
-                    "",
-                ]
-            )
-
-        summary.write_text("\n".join(lines) + "\n", encoding="utf-8")
-
-    if strict and has_error:
-        return 1
-
-    if fail_on_warning and has_warning:
-        return 1
-
-    if min_health_score is not None and score < min_health_score:
-        return 1
-
-    return 0
-
-
-def _discover_changed_files(*, base_ref: str | None, head_ref: str = "HEAD") -> list[Path]:
-    if base_ref is None:
-        base_ref = os.environ.get("PR_BASE_REF") or os.environ.get("GITHUB_BASE_REF")
-
-    if base_ref:
-        try:
-            merge_base = subprocess.check_output(
-                ["git", "-C", str(ROOT), "merge-base", base_ref, head_ref],
-                text=True,
-                stderr=subprocess.DEVNULL,
-            ).strip()
-        except subprocess.CalledProcessError:
-            merge_base = f"{base_ref}...{head_ref}"
-
-        try:
-            raw_paths = subprocess.check_output(
-                ["git", "-C", str(ROOT), "diff", "--name-only", merge_base, head_ref],
-                text=True,
-            ).splitlines()
-            return [Path(path) for path in raw_paths if path.strip()]
-        except subprocess.CalledProcessError:
-            pass
-
-    try:
-        staged = subprocess.check_output(
-            ["git", "-C", str(ROOT), "diff", "--name-only", "HEAD"],
-            text=True,
-        ).splitlines()
-        if staged:
-            return [Path(path) for path in staged if path.strip()]
-    except subprocess.CalledProcessError:
-        pass
-
-    try:
-        return [Path(path) for path in subprocess.check_output(
-            ["git", "-C", str(ROOT), "ls-files", "--other", "--exclude-standard"],
-            text=True,
-        ).splitlines() if path.strip()]
-    except subprocess.CalledProcessError:
-        return []
-
-
 def run_requirements_gate(
     *,
     config: RequirementGateConfig,
@@ -2137,6 +1635,10 @@ def run_pr_targets(config: PrTargetConfig) -> dict[str, object]:
     return payload
 
 
+def _targets_require_parser_parity(targets: Sequence[Path]) -> bool:
+    return any(target.name in PARSER_PARITY_TARGET_NAMES for target in targets)
+
+
 def run_pr_lane(config: RunPrLaneConfig) -> int:
     changed: list[Path] = []
     if config.changed_files:
@@ -2154,17 +1656,21 @@ def run_pr_lane(config: RunPrLaneConfig) -> int:
         marker_fallback=config.lane,
     )
 
-    command = [sys.executable, "-m", "pytest", f"--maxfail={config.maxfail}", "-q"]
+    command = [sys.executable, "-m", "pytest", f"--maxfail={config.maxfail}", "-q", "--no-header", "--no-summary"]
     if config.config:
         command.extend(["-c", config.config])
     if resolved_targets:
-        command.extend(str(target.resolve()) for target in resolved_targets)
+        command.extend(str(target) for target in resolved_targets)
     elif lane_expr:
         command.extend(["-m", lane_expr])
     command.append("--strict-markers")
 
+    env = os.environ.copy()
+    if _targets_require_parser_parity(resolved_targets):
+        env["THEGENT_PARSER_PARITY_REQUIRED"] = "1"
+
     started = datetime.now().timestamp()
-    proc = subprocess.run(command, capture_output=True, text=True)
+    proc = subprocess.run(command, env=env, capture_output=True, text=True)
     ended = datetime.now().timestamp()
 
     payload = {
@@ -2178,7 +1684,8 @@ def run_pr_lane(config: RunPrLaneConfig) -> int:
         "targets": [str(path) for path in resolved_targets],
         "mapped_targets": [str(path) for path in targets],
         "untestable_files": [str(path) for path in untestable_files],
-        "fallback_to_fast_lane": (has_unknown and not config.include_untestable) or (not bool(resolved_targets) and bool(lane_expr)),
+        "fallback_to_fast_lane": (has_unknown and not config.include_untestable)
+        or (not bool(resolved_targets) and bool(lane_expr)),
         "stdout_tail": proc.stdout.splitlines()[-8:],
         "stderr_tail": proc.stderr.splitlines()[-8:],
     }
@@ -2251,7 +1758,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     trace_cleanup = sub.add_parser("trace-cleanup", help="report stale traceability debt candidates")
     _add_trace_cleanup_args(trace_cleanup)
-    trace_cleanup_alias = sub.add_parser("traceability-cleanup", help="alias for trace-cleanup with quarter cadence intent")
+    trace_cleanup_alias = sub.add_parser(
+        "traceability-cleanup", help="alias for trace-cleanup with quarter cadence intent"
+    )
     _add_trace_cleanup_args(trace_cleanup_alias)
 
     promote = sub.add_parser("requirements-promotion-criteria", help="compute lane promotion signal")
@@ -2313,14 +1822,25 @@ def build_parser() -> argparse.ArgumentParser:
 
     health = sub.add_parser("health", help="aggregate pytest artifacts into health summary")
     health.add_argument("--collect-artifact", required=False, default="artifacts/pytest/collect/pr-collect.json")
-    health.add_argument("--requirements-gate-artifact", required=False, default="artifacts/pytest/requirements/requirements-gate.json")
+    health.add_argument(
+        "--requirements-gate-artifact", required=False, default="artifacts/pytest/requirements/requirements-gate.json"
+    )
     health.add_argument("--pr-run-artifact", required=False, default="artifacts/pytest/pr/run.json")
-    health.add_argument("--requirements-map-artifact", required=False, default="artifacts/pytest/traceability/requirements-map.json")
+    health.add_argument(
+        "--requirements-map-artifact", required=False, default="artifacts/pytest/traceability/requirements-map.json"
+    )
     health.add_argument("--output", required=True)
     health.add_argument("--summary")
     health.add_argument("--strict", action="store_true")
-    health.add_argument("--fail-on-warning", action="store_true", help="exit non-zero when any warning alerts are present")
-    health.add_argument("--min-health-score", type=int, default=None, help="exit non-zero when overall_health_score is below this threshold")
+    health.add_argument(
+        "--fail-on-warning", action="store_true", help="exit non-zero when any warning alerts are present"
+    )
+    health.add_argument(
+        "--min-health-score",
+        type=int,
+        default=None,
+        help="exit non-zero when overall_health_score is below this threshold",
+    )
 
     return parser
 
@@ -2404,12 +1924,8 @@ def main(argv: list[str] | None = None) -> int:
             LanePromotionConfig(
                 output=Path(args.output),
                 lane=args.lane,
-                requirements_map_artifact=Path(args.requirements_map)
-                if args.requirements_map
-                else None,
-                requirements_gate_artifact=Path(args.requirements_gate)
-                if args.requirements_gate
-                else None,
+                requirements_map_artifact=Path(args.requirements_map) if args.requirements_map else None,
+                requirements_gate_artifact=Path(args.requirements_gate) if args.requirements_gate else None,
                 health_artifact=Path(args.health) if args.health else None,
                 run_artifacts=[Path(item) for item in args.run_artifact],
                 min_runs=args.min_runs,
@@ -2477,9 +1993,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if args.command == "health":
-        requirements_map_path = (
-            Path(args.requirements_map_artifact) if args.requirements_map_artifact else None
-        )
+        requirements_map_path = Path(args.requirements_map_artifact) if args.requirements_map_artifact else None
         return run_health(
             collect_artifact=Path(args.collect_artifact),
             requirements_gate_artifact=Path(args.requirements_gate_artifact),

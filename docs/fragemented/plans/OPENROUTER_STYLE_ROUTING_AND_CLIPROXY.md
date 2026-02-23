@@ -1,0 +1,129 @@
+# OpenRouter-Style Routing + CLIProxyAPIPlus Integration
+
+**Status:** Design
+**Date:** 2026-02-15
+**Scope:** Model-first routing with measured cost/throughput/latency; Bifrost vs LiteLLM; CLIProxyAPIPlus responsibilities.
+
+---
+
+## Current State
+
+| Question | Answer |
+|----------|--------|
+| **Bifrost** | Not used. No dependency. Design doc (LITELLM_CLIPROXY_BIFROST_HARMONY) recommends against for thegent (no Python SDK; agent-scale doesn't need 50x speed). |
+| **LiteLLM** | Not used. No dependency. WP-1001 (LiteLLM fallback chains) is "Not Started". Design recommends "Future LiteLLM" as in-process router. |
+| **CLIProxyAPIPlus** | Used. Go project at `../cliproxyapi-plusplus/`. Holds auth (OAuth, API keys), API execution, model routing by config. |
+| **thegent** | Python. Config generation, credential copy from factory, agent selection, model mapping. No live TPS/latency/cost measurement. |
+
+---
+
+## Division of Responsibility (Target)
+
+**CLIProxyAPIPlus (Go) should hold:**
+- Auth: OAuth flows, token storage, API key handling, refresh
+- API execution: HTTP to providers (minimax, kilo, nim, openrouter, etc.)
+- Model→provider routing by config (openai-compatibility, minimax:, kilo:, etc.)
+- Per-request metrics: latency, token usage, success/failure (for downstream routing)
+
+**thegent (Python) should hold:**
+- Agent orchestration, MCP server, CLI
+- Config generation and factory-cred copy into cliproxy
+- High-level routing policy (which provider to prefer) when informed by metrics
+
+**Routing by measured cost/throughput/latency:**
+- Option A: In CLIProxy — proxy selects best provider for model using its own metrics
+- Option B: In thegent — proxy exposes metrics; thegent picks provider and passes hint
+- Option C: LiteLLM Proxy as front door — LiteLLM routes; CLIProxy is backend for OAuth providers
+
+---
+
+## Bifrost vs LiteLLM
+
+| Criterion | Bifrost | LiteLLM |
+|-----------|---------|---------|
+| **Language** | Go | Python |
+| **Integration** | Separate process; extensions (bifrost-cliproxy) | In-process Router class or Proxy server |
+| **Provider count** | 15–21 | 100+ |
+| **thegent fit** | Would need Go extension; thegent is Python | Native Python; can use Router in-process |
+| **Auth** | Bifrost has its own; CLIProxy has OAuth | LiteLLM proxies to backends; CLIProxy = OAuth backend |
+| **Recommendation** | Out for now | Preferred for routing layer |
+
+---
+
+## CLIProxyAPIPlus Integration Needs
+
+### 1. Metrics Endpoint (New)
+
+Expose per-provider metrics for routing decisions:
+
+```
+GET /v1/metrics/providers
+→ {
+  "nim": {"latency_p50_ms": 1200, "latency_p95_ms": 2500, "tps_1m": 45, "cost_per_1k": 0.22, "success_rate": 0.98},
+  "kilo": {...},
+  "minimax": {...},
+  ...
+}
+```
+
+**Implementation:** CLIProxy already has usage logging. Add rolling window aggregation; expose via HTTP.
+
+### 2. NIM Model Support (Config)
+
+- NIM uses `openai-compatibility` (no native block)
+- NIM serves: glm-5, step-3.5-flash (NOT minimax)
+- thegent uses internal `provider_definitions.json` for nim (glm-5, step-3.5-flash); run `thegent cliproxy login nim`
+- **CLIProxy:** No code change if config is correct. Ensure openai-compat executor routes model aliases (glm-5, step-3.5-flash) to the nim entry.
+
+### 3. Provider Selection Hint (Optional)
+
+If routing lives in thegent:
+- thegent calls `GET /v1/metrics/providers`, picks best provider for model
+- thegent sends request with header `X-Provider-Hint: nim` or similar
+- CLIProxy uses hint when multiple providers serve the model (or ignores if not supported)
+
+**CLIProxy change:** Optional. Parse header; prefer that provider when resolving model→provider.
+
+---
+
+## Implementation Phases
+
+### Phase 1: NIM Fix (Done)
+- [x] clode_main: nim → glm-5, remove nim from minimax-m2.5 providers
+- [x] cliproxy_manager: NIM branch for ngc.nvidia.com/build.nvidia.com
+- [x] Tests updated
+
+### Phase 2: Metrics in CLIProxy ✓
+- [x] Add metrics aggregation (request count, success rate, tokens) per provider
+- [x] Expose `GET /v1/metrics/providers` (no auth, for localhost)
+- [x] `internal/usage/metrics.go` + `internal/usage/metrics_test.go`
+
+### Phase 3: Routing in thegent ✓
+- [x] `_fetch_provider_metrics()` calls proxy GET /v1/metrics/providers
+- [x] Policy `cheapest` uses measured cost when available, fallback to _GLM_OFFER_COST
+- [x] Tie-break by success_rate (prefer higher)
+
+### Phase 4: LiteLLM (Optional)
+- [ ] Add litellm as optional dependency
+- [ ] Use LiteLLM Router for direct-API providers; CLIProxy for OAuth
+- [ ] Or: LiteLLM Proxy as front door, CLIProxy as backend (Option B from LITELLM doc)
+
+---
+
+## Test Coverage Gaps
+
+| Area | Current | Needed |
+|------|---------|--------|
+| Models (all) | Unit tests for minimax, glm, nim | Extend to validate all model→provider mappings |
+| TPS measurement | None | Integration test: proxy records TPS; endpoint returns it |
+| Latency measurement | test_load_mcp (p95 for ps) | Per-provider latency from proxy |
+| Cost/usage limits | CostAggregator, CostEstimator | Tests for usage-limit detection, budget enforcement |
+
+---
+
+## References
+
+- [LITELLM_CLIPROXY_BIFROST_HARMONY.md](./LITELLM_CLIPROXY_BIFROST_HARMONY.md)
+- [CATALOG_CLIPROXY_FORK_ALIGNMENT.md](./CATALOG_CLIPROXY_FORK_ALIGNMENT.md)
+- OpenRouter: model → provider by cost/throughput/latency
+- WP-1001: LiteLLM fallback chains (Not Started)

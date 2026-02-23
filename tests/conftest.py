@@ -31,8 +31,9 @@ def _preload_src_package(name: str) -> None:
     sys.modules[name] = mod
     spec.loader.exec_module(mod)  # type: ignore[attr-defined]
 
+
 _preload_src_package("research_engine")
 _preload_src_package("agent_roles")
 
 # Mock the thegent_fs module before any imports
-sys.modules['thegent_fs'] = MagicMock()
+sys.modules["thegent_fs"] = MagicMock()

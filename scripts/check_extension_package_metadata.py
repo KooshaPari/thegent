@@ -74,7 +74,9 @@ def validate_extension_package(extension_dir: Path) -> list[str]:
         if len(normalized_events) != len(activation_events):
             errors.append(f"{package_path}: `activationEvents` entries must be unique non-empty strings")
 
-    commands = (((package.get("contributes") or {}).get("commands")) if isinstance(package.get("contributes"), dict) else None)
+    commands = (
+        ((package.get("contributes") or {}).get("commands")) if isinstance(package.get("contributes"), dict) else None
+    )
     if not isinstance(commands, list) or not commands:
         errors.append(f"{package_path}: `contributes.commands` must be a non-empty list")
     else:
@@ -96,7 +98,9 @@ def validate_extension_package(extension_dir: Path) -> list[str]:
                 seen_command_ids.add(command_id)
             activation_name = f"onCommand:{command_id}"
             if normalized_events and activation_name not in normalized_events:
-                errors.append(f"{package_path}: missing activation event `{activation_name}` for command `{command_id}`")
+                errors.append(
+                    f"{package_path}: missing activation event `{activation_name}` for command `{command_id}`"
+                )
 
     readme_path = extension_dir / "README.md"
     if not readme_path.exists():
@@ -124,7 +128,9 @@ def validate_extension_package(extension_dir: Path) -> list[str]:
 def build_report(extensions_root: Path) -> dict[str, Any]:
     errors: list[str] = []
     checked_extensions: list[str] = []
-    extension_dirs = sorted(path for path in extensions_root.iterdir() if path.is_dir()) if extensions_root.exists() else []
+    extension_dirs = (
+        sorted(path for path in extensions_root.iterdir() if path.is_dir()) if extensions_root.exists() else []
+    )
     if not extension_dirs:
         errors.append(f"No extension directories found in {extensions_root}")
         return {"ok": False, "checked_extensions": checked_extensions, "errors": errors}
@@ -138,7 +144,9 @@ def build_report(extensions_root: Path) -> dict[str, Any]:
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--extensions-root", type=Path, default=Path("extensions"), help="Root directory containing extension packages.")
+    parser.add_argument(
+        "--extensions-root", type=Path, default=Path("extensions"), help="Root directory containing extension packages."
+    )
     parser.add_argument("--format", choices=["text", "json"], default="text")
     parser.add_argument("--strict", action="store_true", help="Exit non-zero if metadata checks fail.")
     return parser.parse_args(argv)
@@ -153,7 +161,9 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("WL-117 extension package metadata check")
         print(f"- ok: {report['ok']}")
-        print(f"- checked_extensions: {', '.join(report['checked_extensions']) if report['checked_extensions'] else 'none'}")
+        print(
+            f"- checked_extensions: {', '.join(report['checked_extensions']) if report['checked_extensions'] else 'none'}"
+        )
         for error in report["errors"]:
             print(f"- error: {error}")
 

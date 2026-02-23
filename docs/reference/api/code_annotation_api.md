@@ -52,6 +52,28 @@ Parse annotations from code (comments like # @annotation).
 
 ---
 
+#### CodeAnnotationGenerator.format_reflection_annotation
+
+```python
+format_reflection_annotation(self: Any, payload: dict[(str, Any)])
+```
+
+Normalize remote->local reflection annotations to canonical schema order.
+
+**Required Keys (in canonical order)**:
+
+1. `schema`
+2. `wl_id`
+3. `connector`
+4. `direction`
+5. `decision`
+6. `mutation_id`
+7. `timestamp`
+
+**Returns**: Canonically ordered annotation dictionary
+
+---
+
 ---
 
 ## generate_annotation_component

@@ -3,9 +3,7 @@
 # Flags: -h (headless), -r (reload until green)
 set -euo pipefail
 
-if [ -n "${ZSH_VERSION:-}" ]; then
-  _SCRIPT_PATH="${(%):-%x}"
-elif [ -n "${BASH_VERSION:-}" ]; then
+if [ -n "${BASH_VERSION:-}" ]; then
   _SCRIPT_PATH="${BASH_SOURCE[0]}"
 else
   _SCRIPT_PATH="$0"

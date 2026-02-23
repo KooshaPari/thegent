@@ -273,11 +273,15 @@ class TestPredictMergeConflicts:
     def test_overlapping_line_ranges_conflict(self):
         """Modify intents with overlapping line ranges conflict. @trace TGNT-P7.2"""
         a = EditIntent(
-            agent_id="a1", file_path="f.py", operation="modify",
+            agent_id="a1",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(10, 20)],
         )
         b = EditIntent(
-            agent_id="a2", file_path="f.py", operation="modify",
+            agent_id="a2",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(15, 25)],
         )
         result = predict_merge_conflicts(a, b)
@@ -287,11 +291,15 @@ class TestPredictMergeConflicts:
     def test_nonoverlapping_line_ranges_no_conflict(self):
         """Modify intents with disjoint line ranges do not conflict. @trace TGNT-P7.2"""
         a = EditIntent(
-            agent_id="a1", file_path="f.py", operation="modify",
+            agent_id="a1",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(1, 10)],
         )
         b = EditIntent(
-            agent_id="a2", file_path="f.py", operation="modify",
+            agent_id="a2",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(20, 30)],
         )
         result = predict_merge_conflicts(a, b)
@@ -315,11 +323,15 @@ class TestPredictMergeConflicts:
     def test_adjacent_line_ranges_no_conflict(self):
         """Adjacent but non-overlapping ranges (1-10, 11-20) do not conflict. @trace TGNT-P7.2"""
         a = EditIntent(
-            agent_id="a1", file_path="f.py", operation="modify",
+            agent_id="a1",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(1, 10)],
         )
         b = EditIntent(
-            agent_id="a2", file_path="f.py", operation="modify",
+            agent_id="a2",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(11, 20)],
         )
         result = predict_merge_conflicts(a, b)
@@ -328,11 +340,15 @@ class TestPredictMergeConflicts:
     def test_touching_line_ranges_conflict(self):
         """Touching ranges (1-10, 10-20) overlap at boundary. @trace TGNT-P7.2"""
         a = EditIntent(
-            agent_id="a1", file_path="f.py", operation="modify",
+            agent_id="a1",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(1, 10)],
         )
         b = EditIntent(
-            agent_id="a2", file_path="f.py", operation="modify",
+            agent_id="a2",
+            file_path="f.py",
+            operation="modify",
             line_ranges=[(10, 20)],
         )
         result = predict_merge_conflicts(a, b)
@@ -356,7 +372,9 @@ class TestEditIntent:
     def test_explicit_timestamp_preserved(self):
         """An explicitly provided timestamp is not overwritten."""
         intent = EditIntent(
-            agent_id="a1", file_path="f.py", operation="modify",
+            agent_id="a1",
+            file_path="f.py",
+            operation="modify",
             timestamp="12345:0000",
         )
         assert intent.timestamp == "12345:0000"

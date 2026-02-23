@@ -4,10 +4,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 import time
 
+
 class AppMode(Enum):
     STANDALONE = "standalone"
     TUI_TANDEM = "tui_tandem"
     TRAY_TANDEM = "tray_tandem"
+
 
 @dataclass
 class AgentSession:
@@ -20,12 +22,14 @@ class AgentSession:
     messages: list = field(default_factory=list)
     output: str = ""
 
+
 @dataclass
 class DesktopAppConfig:
     mode: AppMode = AppMode.STANDALONE
     window_size: tuple = (1400, 900)
     theme: str = "dark"
     font_size: int = 14
+
 
 class DesktopApp:
     def __init__(self, config=None):
@@ -82,22 +86,29 @@ class DesktopApp:
         if session:
             session.output += output
 
+
 _desktop_app_manager = None
+
 
 def get_desktop_app_manager():
     global _desktop_app_manager
     if _desktop_app_manager is None:
+
         class Manager:
             def __init__(self):
                 self._apps = {}
+
             def create_app(self, config=None, name="default"):
                 app = DesktopApp(config)
                 self._apps[name] = app
                 return app
+
             def get_app(self, name):
                 return self._apps.get(name)
+
         _desktop_app_manager = Manager()
     return _desktop_app_manager
+
 
 def get_desktop_app(name="default"):
     mgr = get_desktop_app_manager()

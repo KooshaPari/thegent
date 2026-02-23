@@ -233,7 +233,6 @@ if TYPE_CHECKING:
 from rich.console import Console
 
 
-
 console = Console()
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
@@ -287,7 +286,9 @@ def _resolve_grounding_sources_for_output(
     stdout: str,
     result_grounding_sources: list[str] | None,
 ) -> list[str]:
-    return run_input_helpers.resolve_grounding_sources_for_output(stdout=stdout, result_grounding_sources=result_grounding_sources)
+    return run_input_helpers.resolve_grounding_sources_for_output(
+        stdout=stdout, result_grounding_sources=result_grounding_sources
+    )
 
 
 def _resolve_audio_transcript_for_output(
@@ -295,11 +296,15 @@ def _resolve_audio_transcript_for_output(
     injected_audio_transcript: str | None,
     result_audio_transcript: str | None,
 ) -> str | None:
-    return run_event_helpers.resolve_audio_transcript_for_output(injected_audio_transcript=injected_audio_transcript, result_audio_transcript=result_audio_transcript)
+    return run_event_helpers.resolve_audio_transcript_for_output(
+        injected_audio_transcript=injected_audio_transcript, result_audio_transcript=result_audio_transcript
+    )
 
 
 def _build_audio_summary_metadata(*, audio_transcript: str | None, audio_sources: list[str]) -> dict[str, Any] | None:
-    return run_audio_helpers.build_audio_summary_metadata(audio_transcript=audio_transcript, audio_sources=audio_sources)
+    return run_audio_helpers.build_audio_summary_metadata(
+        audio_transcript=audio_transcript, audio_sources=audio_sources
+    )
 
 
 def _build_run_event_details(
@@ -309,7 +314,12 @@ def _build_run_event_details(
     audio_sources: list[str],
     context_usage_ratio: float | None,
 ) -> dict[str, Any] | None:
-    return run_event_helpers.build_run_event_details(grounding_sources=grounding_sources, audio_transcript=audio_transcript, audio_sources=audio_sources, context_usage_ratio=context_usage_ratio)
+    return run_event_helpers.build_run_event_details(
+        grounding_sources=grounding_sources,
+        audio_transcript=audio_transcript,
+        audio_sources=audio_sources,
+        context_usage_ratio=context_usage_ratio,
+    )
 
 
 def _model_supports_vision(model: str) -> bool:
@@ -332,7 +342,12 @@ def _resolve_health_policy(
     strict: bool,
     min_healthy_ratio: float,
 ) -> dict[str, Any]:
-    return run_health_helpers.resolve_health_policy(policy_profile=policy_profile, strict=strict, min_healthy_ratio=min_healthy_ratio, health_policy_profiles=HEALTH_POLICY_PROFILES)
+    return run_health_helpers.resolve_health_policy(
+        policy_profile=policy_profile,
+        strict=strict,
+        min_healthy_ratio=min_healthy_ratio,
+        health_policy_profiles=HEALTH_POLICY_PROFILES,
+    )
 
 
 _health_snapshot_log_path = run_health_helpers.health_snapshot_log_path
@@ -340,7 +355,9 @@ _health_snapshot_max_lines = run_health_helpers.health_snapshot_max_lines
 
 
 def _compact_health_snapshot_log() -> None:
-    run_health_helpers.compact_health_snapshot_log(log_path_resolver=_health_snapshot_log_path, max_lines_resolver=_health_snapshot_max_lines)
+    run_health_helpers.compact_health_snapshot_log(
+        log_path_resolver=_health_snapshot_log_path, max_lines_resolver=_health_snapshot_max_lines
+    )
 
 
 _health_scope_key = run_health_helpers.health_scope_key
@@ -352,7 +369,13 @@ def _load_previous_health_snapshot(scope_key: dict[str, Any]) -> dict[str, Any] 
 
 
 def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) -> None:
-    run_health_helpers.append_health_snapshot(payload, scope_key, log_path_resolver=_health_snapshot_log_path, compact_log_fn=_compact_health_snapshot_log, coerce_issue_types_fn=_coerce_issue_types)
+    run_health_helpers.append_health_snapshot(
+        payload,
+        scope_key,
+        log_path_resolver=_health_snapshot_log_path,
+        compact_log_fn=_compact_health_snapshot_log,
+        coerce_issue_types_fn=_coerce_issue_types,
+    )
 
 
 _hash_observe_summary_payload = run_observe_helpers.hash_observe_summary_payload
@@ -415,7 +438,9 @@ def _resolve_agent_model(
 
 
 def _inject_time_constraint(prompt: str, timeout: int, *, summary_mode: bool = True) -> str:
-    return prompt_constraint_helpers.inject_time_constraint(prompt=prompt, timeout=timeout, seconds_per_tool_call=SECONDS_PER_TOOL_CALL, summary_mode=summary_mode)
+    return prompt_constraint_helpers.inject_time_constraint(
+        prompt=prompt, timeout=timeout, seconds_per_tool_call=SECONDS_PER_TOOL_CALL, summary_mode=summary_mode
+    )
 
 
 _scope_key = run_session_helpers.scope_key
@@ -429,7 +454,11 @@ _session_paths = run_session_helpers.session_paths
 def _make_load_classifier(settings: "ThegentSettings") -> Any:
     from thegent.execution import LoadClassifier
 
-    return LoadClassifier(session_dir=settings.session_dir.expanduser().resolve(), spike_threshold=settings.concurrency_min_slots, surge_threshold=settings.max_concurrency)
+    return LoadClassifier(
+        session_dir=settings.session_dir.expanduser().resolve(),
+        spike_threshold=settings.concurrency_min_slots,
+        surge_threshold=settings.max_concurrency,
+    )
 
 
 _new_session_id = run_session_helpers.new_session_id
@@ -451,9 +480,24 @@ dag_ready_impl = run_dag_helpers.dag_ready_impl
 
 
 from thegent.cli.commands.dag_impl import (  # noqa: E402 -- re-export block
-    TASK_ID_RE, DagDocument, _atomic_write, _check_dag_cycles, _dag_path, _ensure_contract_version_header,
-    _ensure_dag_file, _ensure_evidence_header, _escape_cell, _resolve_prompt, _session_status_for, dag_list_impl,
-    dag_raw_impl, dag_recover_impl, dag_run_impl, dag_status_impl, dag_sync_impl, rules_sync_impl,
+    TASK_ID_RE,
+    DagDocument,
+    _atomic_write,
+    _check_dag_cycles,
+    _dag_path,
+    _ensure_contract_version_header,
+    _ensure_dag_file,
+    _ensure_evidence_header,
+    _escape_cell,
+    _resolve_prompt,
+    _session_status_for,
+    dag_list_impl,
+    dag_raw_impl,
+    dag_recover_impl,
+    dag_run_impl,
+    dag_status_impl,
+    dag_sync_impl,
+    rules_sync_impl,
 )
 
 
@@ -462,28 +506,82 @@ from thegent.output_parser import condense_stream_to_display, extract_condensed
 ELICIT_CWD_MSG = "Working directory?"
 ELICIT_OWNER_MSG = "Session owner tag?"
 from thegent.cli.commands.observability_impl import (  # noqa: E402 -- re-export block
-    HEALTH_PAYLOAD_SCHEMA_VERSION, HEALTH_PAYLOAD_TYPES, HEALTH_POLICY_PROFILES, OBSERVE_SUMMARY_PAYLOAD_TYPES,
-    OBSERVE_SUMMARY_SCHEMA_VERSION, _REVIEW_ALLOWED_TOOLS, _REVIEW_SCHEMA_PREAMBLE, _extract_agent_from_line,
-    _process_run_line, escalate_add_impl, escalate_approve_impl, escalate_list_impl, escalate_resolve_impl,
-    get_compliance_report_impl, get_data_protection_status_impl, get_server_meta_impl, govern_approve_impl,
-    govern_list_pending_impl, govern_reject_impl, govern_vet_impl, observe_summary_impl, review_impl,
-    sitback_dashboard_impl, sweep_impl, update_calibration_impl,
+    HEALTH_PAYLOAD_SCHEMA_VERSION,
+    HEALTH_PAYLOAD_TYPES,
+    HEALTH_POLICY_PROFILES,
+    OBSERVE_SUMMARY_PAYLOAD_TYPES,
+    OBSERVE_SUMMARY_SCHEMA_VERSION,
+    _REVIEW_ALLOWED_TOOLS,
+    _REVIEW_SCHEMA_PREAMBLE,
+    _extract_agent_from_line,
+    _process_run_line,
+    escalate_add_impl,
+    escalate_approve_impl,
+    escalate_list_impl,
+    escalate_resolve_impl,
+    get_compliance_report_impl,
+    get_data_protection_status_impl,
+    get_server_meta_impl,
+    govern_approve_impl,
+    govern_list_pending_impl,
+    govern_reject_impl,
+    govern_vet_impl,
+    observe_summary_impl,
+    review_impl,
+    sitback_dashboard_impl,
+    sweep_impl,
+    update_calibration_impl,
 )
 
 from thegent.cli.commands.session_impl import (  # noqa: E402 -- re-export block
-    _build_continuation_prompt, _extract_blocked_ratio, _find_session_meta, _is_non_empty_contract_string,
-    _load_prior_session_output, _normalize_contract_string, _normalize_output_format, _parse_contract_timestamp,
-    _read_session_meta, _resolve_latest_session_id, _resolve_session_status, _run_background_session_observer,
-    _save_session_meta, _session_state_path, _write_session_state, events_impl, explain_run_impl, history_impl,
-    inspect_impl, list_session_contracts_impl, logs_impl, metrics_impl, prune_sessions_impl, ps_impl, purge_impl,
-    session_contract_audit_impl, session_contract_health_gate_impl, session_contract_health_report_impl,
-    session_contract_health_trend_impl, session_contract_negotiate_impl, session_list_impl, session_meta_impl,
-    session_send_impl, status_impl, stop_impl, wait_impl,
+    _build_continuation_prompt,
+    _extract_blocked_ratio,
+    _find_session_meta,
+    _is_non_empty_contract_string,
+    _load_prior_session_output,
+    _normalize_contract_string,
+    _normalize_output_format,
+    _parse_contract_timestamp,
+    _read_session_meta,
+    _resolve_latest_session_id,
+    _resolve_session_status,
+    _run_background_session_observer,
+    _save_session_meta,
+    _session_state_path,
+    _write_session_state,
+    events_impl,
+    explain_run_impl,
+    history_impl,
+    inspect_impl,
+    list_session_contracts_impl,
+    logs_impl,
+    metrics_impl,
+    prune_sessions_impl,
+    ps_impl,
+    purge_impl,
+    session_contract_audit_impl,
+    session_contract_health_gate_impl,
+    session_contract_health_report_impl,
+    session_contract_health_trend_impl,
+    session_contract_negotiate_impl,
+    session_list_impl,
+    session_meta_impl,
+    session_send_impl,
+    status_impl,
+    stop_impl,
+    wait_impl,
 )
 
 from thegent.cli.commands.infra_impl import (  # noqa: E402 -- re-export block
-    concurrency_set_impl, concurrency_show_impl, isolation_check_impl, lock_resource_impl,
-    monitor_impl, orchestrate_plan_impl, orchestrate_run_impl, unlock_resource_impl, verify_context_impl,
+    concurrency_set_impl,
+    concurrency_show_impl,
+    isolation_check_impl,
+    lock_resource_impl,
+    monitor_impl,
+    orchestrate_plan_impl,
+    orchestrate_run_impl,
+    unlock_resource_impl,
+    verify_context_impl,
 )
 
 
@@ -576,18 +674,43 @@ _validate_explicit_ollama_provider = run_model_helpers.validate_explicit_ollama_
 
 
 def run_impl(
-    agent: str | None, prompt: str, cd: Path | None = None, mode: str = "write", timeout: int | None = None,
-    full: bool = False, live: bool = True, model: str | None = None, provider: str | None = None,
-    run_id: str | None = None, owner: str | None = None, include_contract: bool = False,
-    route_contract: dict[str, Any] | None = None, route_request: dict[str, Any] | None = None,
-    lane: str = "standard", confidence: float | None = None, override_reason: str | None = None,
-    contract_version: str | None = None, domain: str | None = None, idempotency_token: str | None = None,
-    correlation_id: str | None = None, speculative: bool = False, arbitration: str | None = None,
-    routing: str | None = None, enable_search: bool = False, debug: bool = False, task_id: str | None = None,
-    shadow: bool = False, lock: list[str] | None = None, remote: str | None = None,
-    config_provider: "ConfigProvider | None" = None, tenant_id: str | None = None,
-    previous_session_id: str | None = None, reasoning_effort: Literal["minimal", "low", "medium", "high", "xhigh"] | None = None,
-    output_schema: str | None = None, image_paths: list[str] | None = None, audio_files: list[str] | None = None,
+    agent: str | None,
+    prompt: str,
+    cd: Path | None = None,
+    mode: str = "write",
+    timeout: int | None = None,
+    full: bool = False,
+    live: bool = True,
+    model: str | None = None,
+    provider: str | None = None,
+    run_id: str | None = None,
+    owner: str | None = None,
+    include_contract: bool = False,
+    route_contract: dict[str, Any] | None = None,
+    route_request: dict[str, Any] | None = None,
+    lane: str = "standard",
+    confidence: float | None = None,
+    override_reason: str | None = None,
+    contract_version: str | None = None,
+    domain: str | None = None,
+    idempotency_token: str | None = None,
+    correlation_id: str | None = None,
+    speculative: bool = False,
+    arbitration: str | None = None,
+    routing: str | None = None,
+    enable_search: bool = False,
+    debug: bool = False,
+    task_id: str | None = None,
+    shadow: bool = False,
+    lock: list[str] | None = None,
+    remote: str | None = None,
+    config_provider: "ConfigProvider | None" = None,
+    tenant_id: str | None = None,
+    previous_session_id: str | None = None,
+    reasoning_effort: Literal["minimal", "low", "medium", "high", "xhigh"] | None = None,
+    output_schema: str | None = None,
+    image_paths: list[str] | None = None,
+    audio_files: list[str] | None = None,
     google_grounding: bool = False,
 ) -> dict[str, Any]:
     import asyncio
@@ -603,16 +726,45 @@ def run_impl(
 
     # Execute the core run
     result = run_execution_core_helpers.run_impl_core(
-        agent=agent, prompt=prompt, cd=cd, mode=mode, timeout=timeout, full=full, live=live,
-        model=model, provider=provider, run_id=run_id, owner=owner, include_contract=include_contract,
-        route_contract=route_contract, route_request=route_request, lane=lane, confidence=confidence,
-        override_reason=override_reason, contract_version=contract_version, domain=domain,
-        idempotency_token=idempotency_token, correlation_id=correlation_id, speculative=speculative,
-        arbitration=arbitration, routing=routing, enable_search=enable_search, debug=debug,
-        task_id=task_id, shadow=shadow, lock=lock, remote=remote, config_provider=config_provider,
-        tenant_id=tenant_id, previous_session_id=previous_session_id, reasoning_effort=reasoning_effort,
-        output_schema=output_schema, image_paths=image_paths, audio_files=audio_files,
-        google_grounding=google_grounding, impl_ns=sys.modules[__name__]
+        agent=agent,
+        prompt=prompt,
+        cd=cd,
+        mode=mode,
+        timeout=timeout,
+        full=full,
+        live=live,
+        model=model,
+        provider=provider,
+        run_id=run_id,
+        owner=owner,
+        include_contract=include_contract,
+        route_contract=route_contract,
+        route_request=route_request,
+        lane=lane,
+        confidence=confidence,
+        override_reason=override_reason,
+        contract_version=contract_version,
+        domain=domain,
+        idempotency_token=idempotency_token,
+        correlation_id=correlation_id,
+        speculative=speculative,
+        arbitration=arbitration,
+        routing=routing,
+        enable_search=enable_search,
+        debug=debug,
+        task_id=task_id,
+        shadow=shadow,
+        lock=lock,
+        remote=remote,
+        config_provider=config_provider,
+        tenant_id=tenant_id,
+        previous_session_id=previous_session_id,
+        reasoning_effort=reasoning_effort,
+        output_schema=output_schema,
+        image_paths=image_paths,
+        audio_files=audio_files,
+        google_grounding=google_grounding,
+        impl_ns=sys.modules[__name__],
     )
 
     # Save discoveries after successful run
@@ -624,23 +776,78 @@ def run_impl(
     return result
 
 
-
-
 def bg_impl(
-    *, agent: str | None, prompt: str, cd: Path | None, mode: str = "write", timeout: int = 90, full: bool = False,
-    droid: str | None = None, model: str | None = None, provider: str | None = None, owner: str | None = None,
-    continue_from: str | None = None, continuation_include_stderr: bool = False, include_contract: bool = False,
-    route_contract: dict[str, Any] | None = None, route_request: dict[str, str] | None = None,
-    routing: str | None = None, failover: bool = False, run_id: str | None = None, lane: str | None = None,
-    confidence: float | None = None, contract_version: str | None = None, domain: str | None = None,
-    idempotency_token: str | None = None, speculative: bool = False, arbitration: str | None = None,
-    override_reason: str | None = None, debug: bool = False, task_id: str | None = None,
-    remote: str | None = None, image_paths: list[str] | None = None, config_provider: "ConfigProvider | None" = None,
+    *,
+    agent: str | None,
+    prompt: str,
+    cd: Path | None,
+    mode: str = "write",
+    timeout: int = 90,
+    full: bool = False,
+    droid: str | None = None,
+    model: str | None = None,
+    provider: str | None = None,
+    owner: str | None = None,
+    continue_from: str | None = None,
+    continuation_include_stderr: bool = False,
+    include_contract: bool = False,
+    route_contract: dict[str, Any] | None = None,
+    route_request: dict[str, str] | None = None,
+    routing: str | None = None,
+    failover: bool = False,
+    run_id: str | None = None,
+    lane: str | None = None,
+    confidence: float | None = None,
+    contract_version: str | None = None,
+    domain: str | None = None,
+    idempotency_token: str | None = None,
+    speculative: bool = False,
+    arbitration: str | None = None,
+    override_reason: str | None = None,
+    debug: bool = False,
+    task_id: str | None = None,
+    remote: str | None = None,
+    image_paths: list[str] | None = None,
+    config_provider: "ConfigProvider | None" = None,
     tenant_id: str | None = None,
 ) -> dict[str, Any]:
     from thegent.cli.services import run_execution_core_helpers
 
-    return run_execution_core_helpers.bg_impl_core(agent=agent, prompt=prompt, cd=cd, mode=mode, timeout=timeout, full=full, droid=droid, model=model, provider=provider, owner=owner, continue_from=continue_from, continuation_include_stderr=continuation_include_stderr, include_contract=include_contract, route_contract=route_contract, route_request=route_request, routing=routing, failover=failover, run_id=run_id, lane=lane, confidence=confidence, contract_version=contract_version, domain=domain, idempotency_token=idempotency_token, speculative=speculative, arbitration=arbitration, override_reason=override_reason, debug=debug, task_id=task_id, remote=remote, image_paths=image_paths, config_provider=config_provider, tenant_id=tenant_id, impl_ns=sys.modules[__name__])
+    return run_execution_core_helpers.bg_impl_core(
+        agent=agent,
+        prompt=prompt,
+        cd=cd,
+        mode=mode,
+        timeout=timeout,
+        full=full,
+        droid=droid,
+        model=model,
+        provider=provider,
+        owner=owner,
+        continue_from=continue_from,
+        continuation_include_stderr=continuation_include_stderr,
+        include_contract=include_contract,
+        route_contract=route_contract,
+        route_request=route_request,
+        routing=routing,
+        failover=failover,
+        run_id=run_id,
+        lane=lane,
+        confidence=confidence,
+        contract_version=contract_version,
+        domain=domain,
+        idempotency_token=idempotency_token,
+        speculative=speculative,
+        arbitration=arbitration,
+        override_reason=override_reason,
+        debug=debug,
+        task_id=task_id,
+        remote=remote,
+        image_paths=image_paths,
+        config_provider=config_provider,
+        tenant_id=tenant_id,
+        impl_ns=sys.modules[__name__],
+    )
 
 
 def resume_impl(
@@ -648,7 +855,17 @@ def resume_impl(
     prompt: str | None = None,
     skills: list[str] | None = None,
 ) -> dict[str, Any]:
-    return run_post_surface_helpers.resume_impl(session_id=session_id, prompt=prompt, skills=skills, resolve_latest_session_id=_resolve_latest_session_id, session_state_path=_session_state_path, normalize_contract_string=_normalize_contract_string, session_send_impl=lambda sid, message: session_send_impl(sid, message, msg_type="reprompt"), settings_factory=ThegentSettings, run_registry_cls=RunRegistry)
+    return run_post_surface_helpers.resume_impl(
+        session_id=session_id,
+        prompt=prompt,
+        skills=skills,
+        resolve_latest_session_id=_resolve_latest_session_id,
+        session_state_path=_session_state_path,
+        normalize_contract_string=_normalize_contract_string,
+        session_send_impl=lambda sid, message: session_send_impl(sid, message, msg_type="reprompt"),
+        settings_factory=ThegentSettings,
+        run_registry_cls=RunRegistry,
+    )
 
 
 def loop_impl(
@@ -661,14 +878,27 @@ def loop_impl(
     on_worker_output: Any = None,
     on_progress: Any = None,
 ) -> dict[str, Any]:
-    return run_post_surface_helpers.loop_impl(agent=agent, prompt=prompt, todo_spec=todo_spec, checker=checker, mode=mode, cd=cd, on_worker_output=on_worker_output, on_progress=on_progress, bg_impl=bg_impl, settings_factory=ThegentSettings)
+    return run_post_surface_helpers.loop_impl(
+        agent=agent,
+        prompt=prompt,
+        todo_spec=todo_spec,
+        checker=checker,
+        mode=mode,
+        cd=cd,
+        on_worker_output=on_worker_output,
+        on_progress=on_progress,
+        bg_impl=bg_impl,
+        settings_factory=ThegentSettings,
+    )
 
 
 list_agents_impl = run_post_surface_helpers.list_agents_impl
 
 
 def list_droids_impl(cd: Any = None) -> list[str]:
-    return run_post_surface_helpers.list_droids_impl(cd=cd, resolve_cwd=_resolve_cwd, resolve_droids_dir=_resolve_droids_dir, settings_factory=ThegentSettings)
+    return run_post_surface_helpers.list_droids_impl(
+        cd=cd, resolve_cwd=_resolve_cwd, resolve_droids_dir=_resolve_droids_dir, settings_factory=ThegentSettings
+    )
 
 
 def list_models_impl(
@@ -678,7 +908,14 @@ def list_models_impl(
     include_contract: bool = False,
     by_model: bool = False,
 ) -> dict[str, Any]:
-    return run_post_surface_helpers.list_models_impl(provider=provider, use_scraped=use_scraped, refresh=refresh, include_contract=include_contract, by_model=by_model, settings_factory=ThegentSettings)
+    return run_post_surface_helpers.list_models_impl(
+        provider=provider,
+        use_scraped=use_scraped,
+        refresh=refresh,
+        include_contract=include_contract,
+        by_model=by_model,
+        settings_factory=ThegentSettings,
+    )
 
 
 _parse_work_stream_md = run_workstream_helpers.parse_work_stream_md
@@ -688,13 +925,16 @@ _collect_work_stream_items = run_workstream_helpers.collect_work_stream_items
 _collect_queued_items = run_workstream_helpers.collect_queued_items
 
 
-def _pre_work_gate_defaults() -> dict[str, Any]: return pre_work_gate_helpers.pre_work_gate_defaults()
+def _pre_work_gate_defaults() -> dict[str, Any]:
+    return pre_work_gate_helpers.pre_work_gate_defaults()
 
 
-def _pre_work_gate_thresholds(project_dir: Path) -> tuple[dict[str, Any], str]: return pre_work_gate_helpers.pre_work_gate_thresholds(project_dir)
+def _pre_work_gate_thresholds(project_dir: Path) -> tuple[dict[str, Any], str]:
+    return pre_work_gate_helpers.pre_work_gate_thresholds(project_dir)
 
 
-def _evidence_age_minutes(path: Path) -> int: return pre_work_gate_helpers.evidence_age_minutes(path)
+def _evidence_age_minutes(path: Path) -> int:
+    return pre_work_gate_helpers.evidence_age_minutes(path)
 
 
 def _pre_work_governance_block_payload(
@@ -704,13 +944,17 @@ def _pre_work_governance_block_payload(
     violations: list[dict[str, Any]],
     config_source: str,
 ) -> dict[str, Any]:
-    return pre_work_gate_helpers.pre_work_governance_block_payload(project_dir=project_dir, thresholds=thresholds, violations=violations, config_source=config_source)
+    return pre_work_gate_helpers.pre_work_governance_block_payload(
+        project_dir=project_dir, thresholds=thresholds, violations=violations, config_source=config_source
+    )
 
 
-def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None: return pre_work_gate_helpers.enforce_pre_work_hard_gate(project_dir)
+def _enforce_pre_work_hard_gate(project_dir: Path) -> dict[str, Any] | None:
+    return pre_work_gate_helpers.enforce_pre_work_hard_gate(project_dir)
 
 
-def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]: return work_stream_orchestration.do_next_impl(cd=cd, limit=limit)
+def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
+    return work_stream_orchestration.do_next_impl(cd=cd, limit=limit)
 
 
 def wait_next_impl(
@@ -732,19 +976,25 @@ def spawn_next_impl(
     override_reason: str = "manual-next-step",
     claim: bool = True,
 ) -> dict[str, Any]:
-    return work_stream_orchestration.spawn_next_impl(cd=cd, agent=agent, limit=limit, timeout=timeout, lane=lane, override_reason=override_reason, claim=claim)
+    return work_stream_orchestration.spawn_next_impl(
+        cd=cd, agent=agent, limit=limit, timeout=timeout, lane=lane, override_reason=override_reason, claim=claim
+    )
 
 
-def work_stream_claim_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]: return work_stream_orchestration.work_stream_claim_impl(item_id=item_id, agent_id=agent_id, cd=cd)
+def work_stream_claim_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]:
+    return work_stream_orchestration.work_stream_claim_impl(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
-def work_stream_complete_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]: return work_stream_orchestration.work_stream_complete_impl(item_id=item_id, agent_id=agent_id, cd=cd)
+def work_stream_complete_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]:
+    return work_stream_orchestration.work_stream_complete_impl(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
-def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]: return work_stream_orchestration.incorporate_impl(cd=cd, dry_run=dry_run)
+def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
+    return work_stream_orchestration.incorporate_impl(cd=cd, dry_run=dry_run)
 
 
-def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str, Any]]) -> None: return work_stream_orchestration._validate_task_and_record_errors(tf, validation_errors)
+def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str, Any]]) -> None:
+    return work_stream_orchestration._validate_task_and_record_errors(tf, validation_errors)
 
 
 def continuity_snapshot_impl(
@@ -754,7 +1004,9 @@ def continuity_snapshot_impl(
     state_summary: dict[str, Any] | None = None,
     next_steps: list[str] | None = None,
 ) -> dict[str, Any]:
-    return work_stream_orchestration.continuity_snapshot_impl(owner=owner, run_ids=run_ids, state_summary=state_summary, next_steps=next_steps)
+    return work_stream_orchestration.continuity_snapshot_impl(
+        owner=owner, run_ids=run_ids, state_summary=state_summary, next_steps=next_steps
+    )
 
 
 def inbox_wait_impl(timeout: int | None = None) -> dict[str, Any]:
@@ -769,7 +1021,16 @@ def inbox_list_impl(
     sources: tuple[str, ...] = ("registry", "escalation"),
     limit: int = 50,
 ) -> list[dict[str, Any]]:
-    return run_post_surface_helpers.inbox_list_impl(owner=owner, agent=agent, event_type=event_type, status=status, sources=sources, limit=limit, settings_factory=ThegentSettings, run_registry_cls=RunRegistry)
+    return run_post_surface_helpers.inbox_list_impl(
+        owner=owner,
+        agent=agent,
+        event_type=event_type,
+        status=status,
+        sources=sources,
+        limit=limit,
+        settings_factory=ThegentSettings,
+        run_registry_cls=RunRegistry,
+    )
 
 
 def plan_analyze_impl(
@@ -778,7 +1039,14 @@ def plan_analyze_impl(
     resources: bool = False,
     continuity: bool = False,
 ) -> dict[str, Any]:
-    return run_post_surface_helpers.plan_analyze_impl(cd=cd, pert=pert, resources=resources, continuity=continuity, resolve_cwd=_resolve_cwd, parse_dag_full=_parse_dag_full)
+    return run_post_surface_helpers.plan_analyze_impl(
+        cd=cd,
+        pert=pert,
+        resources=resources,
+        continuity=continuity,
+        resolve_cwd=_resolve_cwd,
+        parse_dag_full=_parse_dag_full,
+    )
 
 
 def retry_impl(
@@ -788,7 +1056,18 @@ def retry_impl(
     cd: Path | None = None,
     override_reason: str | None = None,
 ) -> dict[str, Any]:
-    return run_post_surface_helpers.retry_impl(run_id=run_id, agent_override=agent_override, failover=failover, cd=cd, override_reason=override_reason, resolve_cwd=_resolve_cwd, bg_impl=bg_impl, settings_factory=ThegentSettings, run_registry_cls=RunRegistry, get_fallback_agents_fn=get_fallback_agents)
+    return run_post_surface_helpers.retry_impl(
+        run_id=run_id,
+        agent_override=agent_override,
+        failover=failover,
+        cd=cd,
+        override_reason=override_reason,
+        resolve_cwd=_resolve_cwd,
+        bg_impl=bg_impl,
+        settings_factory=ThegentSettings,
+        run_registry_cls=RunRegistry,
+        get_fallback_agents_fn=get_fallback_agents,
+    )
 
 
 harness_interact_impl = run_post_surface_helpers.harness_interact_impl

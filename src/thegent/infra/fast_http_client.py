@@ -112,7 +112,7 @@ class FastHTTPClient:
         def _execute():
             if self._backend == "curl_cffi":
                 impersonate = kwargs.pop("impersonate", self.impersonate)
-                return curl_cffi.request(cast(_CurlMethod, method), url, impersonate=impersonate, **kwargs)
+                return curl_cffi.request(cast("_CurlMethod", method), url, impersonate=impersonate, **kwargs)
             if self._backend == "httpx":
                 return (
                     self._client.request(method, url, **kwargs)

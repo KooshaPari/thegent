@@ -89,12 +89,14 @@ def _render_frontmatter(fm: DocFrontmatter) -> str:
 
 def _render_body(fm: DocFrontmatter, title: str) -> str:
     tpl_path = _TEMPLATES_DIR / f"{fm.type.value}.md.j2"
-    if tpl_path.exists():
-        from jinja2 import Environment, FileSystemLoader
+    from jinja2 import Environment, FileSystemLoader
 
-        env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=False)  # noqa: S701 -- templates are agent-authored markdown, not user-facing HTML
+    env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=False)  # noqa: S701 -- templates are agent-authored markdown, not user-facing HTML
+    if tpl_path.exists():
         return env.get_template(f"{fm.type.value}.md.j2").render(title=title, fm=fm)
-    return f"# {title}\n\n<!-- TODO: fill in content -->\n"
+
+    available = sorted({p.name for p in _TEMPLATES_DIR.glob("*.md.j2")})
+    raise ValueError(f"Missing template for doc type {fm.type.value!r}; available templates: {', '.join(available)}")
 
 
 class DocWriter:

@@ -14,7 +14,6 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ class IdempotencyCache:
 
     DEFAULT_CACHE_PATH = Path("docs/reference/idempotency_cache.json")
 
-    def __init__(self, cache_path: Optional[Path] = None):
+    def __init__(self, cache_path: Path | None = None):
         """Initialize the cache.
 
         Args:
@@ -86,6 +85,7 @@ class IdempotencyCache:
         """
         self.cache_path = cache_path or self.DEFAULT_CACHE_PATH
         self._records: dict[str, IdempotencyRecord] = {}
+        self._content_index: dict[tuple[str, str, str], IdempotencyRecord] = {}
         self._load()
 
     def _load(self) -> None:
@@ -99,6 +99,7 @@ class IdempotencyCache:
             for record_dict in data.get("records", []):
                 record = IdempotencyRecord.from_dict(record_dict)
                 self._records[record.operation_id] = record
+                self._index_record(record)
             logger.debug("Loaded %d records from idempotency cache", len(self._records))
         except Exception as e:
             logger.error("Failed to load idempotency cache: %s", e)
@@ -130,6 +131,20 @@ class IdempotencyCache:
         """
         return operation_id in self._records
 
+    def check_content(self, connector: str, wl_id: str, content_hash: str) -> bool:
+        """Check whether equivalent content was already recorded.
+
+        Args:
+            connector: Connector name (for example: github, linear).
+            wl_id: Work item identifier.
+            content_hash: Deterministic content hash for the mutation payload.
+
+        Returns:
+            True when an equivalent record exists in the idempotency index.
+        """
+        key = (connector.strip().lower(), wl_id.strip().upper(), content_hash.strip().lower())
+        return key in self._content_index
+
     def record(
         self,
         operation_id: str,
@@ -153,6 +168,7 @@ class IdempotencyCache:
             content_hash=content_hash,
         )
         self._records[operation_id] = record
+        self._index_record(record)
         self._save()
         logger.debug("Recorded operation %s for %s via %s", operation_id, wl_id, connector)
 
@@ -165,6 +181,8 @@ class IdempotencyCache:
             operation_id: The operation to remove.
         """
         if operation_id in self._records:
+            record = self._records[operation_id]
+            self._deindex_record(record)
             del self._records[operation_id]
             self._save()
             logger.debug("Invalidated operation %s", operation_id)
@@ -193,6 +211,8 @@ class IdempotencyCache:
                 removed += 1
 
         for key in keys_to_remove:
+            record = self._records[key]
+            self._deindex_record(record)
             del self._records[key]
 
         if removed > 0:
@@ -208,3 +228,17 @@ class IdempotencyCache:
             List of all IdempotencyRecord objects.
         """
         return list(self._records.values())
+
+    @staticmethod
+    def _index_key(record: IdempotencyRecord) -> tuple[str, str, str]:
+        return (
+            record.connector.strip().lower(),
+            record.wl_id.strip().upper(),
+            record.content_hash.strip().lower(),
+        )
+
+    def _index_record(self, record: IdempotencyRecord) -> None:
+        self._content_index[self._index_key(record)] = record
+
+    def _deindex_record(self, record: IdempotencyRecord) -> None:
+        self._content_index.pop(self._index_key(record), None)

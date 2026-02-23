@@ -1,0 +1,1741 @@
+# Session Research Complete — Comprehensive Deep-Dive
+
+> **Status**: Complete | **Version**: 1.0 | **Date**: 2026-02-16
+> **Related**:
+> - [Supermemory Integration Plan](../plans/2026-02-16-supermemory-integration-plan.md)
+> - [Unified WBS](../plans/02-UNIFIED-WBS.md)
+> - [Work Stream](../reference/WORK_STREAM.md)
+> - [Pareto Routing Design](../reference/PARETO_ROUTING_DESIGN.md)
+> - [Economic Governance Depth](../reference/ECONOMIC_GOVERNANCE_DEPTH.md)
+> - [MAIF Artifact Spec](../reference/MAIF_ARTIFACT_SPEC_DEPTH.md)
+> - [Simulation and Sandbox Depth](../reference/SIMULATION_AND_SANDBOX_DEPTH.md)
+
+## Overview
+
+This document provides comprehensive research and implementation guidance for five critical concepts identified during session deep-dives on 2026-02-15. Each concept is expanded with full breadth (alternatives, dependencies, integration points) and depth (interfaces, metrics, implementation details).
+
+## Table of Contents
+
+1. [Supermemory.ai Universal Memory (WP-5001-SM)](#1-supermemoryai-universal-memory-wp-5001-sm)
+2. [Pareto Routing & Hysteresis (WP-1004 / WP-5001)](#2-pareto-routing--hysteresis-wp-1004--wp-5001)
+3. [Economic Governance (WP-5003)](#3-economic-governance-wp-5003)
+4. [MAIF Action Artifacts (WP-3002)](#4-maif-action-artifacts-wp-3002)
+5. [Simulation & Sandbox (WP-4007)](#5-simulation--sandbox-wp-4007)
+
+---
+
+## 1. Supermemory.ai Universal Memory (WP-5001-SM)
+
+### 1.1 Concept Overview
+
+**Supermemory.ai** provides a cloud-scale RAG (Retrieval-Augmented Generation) + Knowledge Graph system that serves as the universal memory provider for thegent's L3 (Long-term) and L4 (Archival) memory tiers.
+
+**Key Value Proposition**:
+- **Scalability**: Cloud-scale storage eliminates local memory constraints
+- **Cross-Platform**: Accessible from any device/platform
+- **Graph Relationships**: Knowledge Graph enables relationship tracking between agents, decisions, and artifacts
+- **Multi-Tenant**: Project-scoped isolation via `x-sm-project` header
+- **Immutable Audit**: L4 archival provides tamper-proof audit logs
+
+### 1.2 Architecture & Memory Mapping
+
+#### 4-Tier Memory Architecture
+
+| Tier | Role | Storage | thegent Integration | Supermemory Mapping |
+|------|------|---------|---------------------|---------------------|
+| **L1** | Working Memory | Context Window | Orchestrator managed | N/A (ephemeral) |
+| **L2** | Short-term Cache | Redis / local JSONL | Context management service | N/A (local) |
+| **L3** | Long-term Memory | **Supermemory Knowledge Graph** | Persistent knowledge, past decisions, swarm relationships | Conversations/Knowledge API |
+| **L4** | Archival Memory | **Supermemory Documents** | Immutable audit logs, MAIF artifacts, historical specs | Documents API |
+
+#### Integration Points
+
+1. **Conversations API** → L3 Memory
+   - Stores agent conversations and decisions
+   - Enables semantic search for past decisions
+   - Tracks relationships between agents in swarms
+   - Supports continuity packet generation
+
+2. **Documents API** → L4 Archival
+   - Stores MAIF (Model-Agent Interaction Format) artifacts
+   - Provides immutable audit trail
+   - Enables historical spec retrieval
+   - Supports hash chain verification
+
+3. **Knowledge Graph** → Relationship Tracking
+   - Agent-to-agent relationships
+   - Decision-to-decision dependencies
+   - Artifact-to-artifact links
+   - Context-to-context connections
+
+### 1.3 Implementation Details
+
+#### MCP Integration
+
+**Server URL**: `https://mcp.supermemory.ai/mcp`
+
+**Authentication**:
+- **API Key**: `sm_...` format (recommended for CLI)
+- **OAuth**: For web-based integrations
+- **Multi-Tenant**: `x-sm-project` header for project isolation
+
+**MCP Configuration** (`config/mcp_servers.json`):
+```json
+{
+  "mcpServers": {
+    "supermemory": {
+      "url": "https://mcp.supermemory.ai/mcp",
+      "headers": {
+        "x-sm-project": "${THEGENT_PROJECT_ID}"
+      },
+      "auth": {
+        "type": "api_key",
+        "key": "${SUPERMEMORY_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+#### Code Integration
+
+**Provider Implementation** (`src/thegent/orchestration/context.py`):
+```python
+from typing import Optional
+from thegent.orchestration.memory import MemoryProvider, ContinuityPacket
+
+class SupermemoryProvider(MemoryProvider):
+    """Supermemory.ai provider for L3/L4 memory."""
+
+    def __init__(self, api_key: str, project_id: str):
+        self.api_key = api_key
+        self.project_id = project_id
+        self.mcp_client = MCPClient("https://mcp.supermemory.ai/mcp", {
+            "x-sm-project": project_id,
+            "Authorization": f"Bearer {api_key}"
+        })
+
+    async def store_conversation(
+        self,
+        agent_id: str,
+        conversation: dict,
+        relationships: Optional[list[dict]] = None
+    ) -> str:
+        """Store conversation in L3 (Knowledge Graph)."""
+        # Store conversation
+        conv_id = await self.mcp_client.call_tool(
+            "conversations_create",
+            {
+                "agent_id": agent_id,
+                "content": conversation,
+                "metadata": {"project": self.project_id}
+            }
+        )
+
+        # Store relationships if provided
+        if relationships:
+            await self.mcp_client.call_tool(
+                "knowledge_graph_create_relationships",
+                {
+                    "source": conv_id,
+                    "relationships": relationships
+                }
+            )
+
+        return conv_id
+
+    async def search_past_decisions(
+        self,
+        query: str,
+        agent_id: Optional[str] = None,
+        limit: int = 10
+    ) -> list[dict]:
+        """Semantic search for past decisions (L3)."""
+        return await self.mcp_client.call_tool(
+            "conversations_search",
+            {
+                "query": query,
+                "agent_id": agent_id,
+                "limit": limit,
+                "project": self.project_id
+            }
+        )
+
+    async def store_artifact(
+        self,
+        artifact: dict,
+        hash_chain: Optional[str] = None
+    ) -> str:
+        """Store MAIF artifact in L4 (Documents API)."""
+        return await self.mcp_client.call_tool(
+            "documents_create",
+            {
+                "content": artifact,
+                "hash_chain": hash_chain,
+                "metadata": {
+                    "type": "maif_artifact",
+                    "project": self.project_id
+                }
+            }
+        )
+
+    async def generate_continuity_packet(
+        self,
+        agent_id: str,
+        context_window_size: int = 10000
+    ) -> ContinuityPacket:
+        """Generate continuity packet from L3 memory."""
+        # Retrieve relevant conversations
+        conversations = await self.search_past_decisions(
+            f"agent:{agent_id}",
+            agent_id=agent_id,
+            limit=50
+        )
+
+        # Build continuity packet
+        return ContinuityPacket(
+            agent_id=agent_id,
+            conversations=conversations[:context_window_size],
+            relationships=self._extract_relationships(conversations),
+            metadata={"source": "supermemory_l3"}
+        )
+```
+
+### 1.4 Alternatives Considered
+
+1. **Local File-Based Storage**
+   - ❌ Limited scalability
+   - ❌ No cross-platform access
+   - ❌ No relationship tracking
+   - ✅ Simple implementation
+
+2. **Vector Database (Pinecone, Weaviate)**
+   - ✅ Good for semantic search
+   - ❌ No graph relationships
+   - ❌ No multi-tenant isolation
+   - ❌ Additional infrastructure
+
+3. **Graph Database (Neo4j, ArangoDB)**
+   - ✅ Excellent relationship tracking
+   - ❌ Complex setup
+   - ❌ No built-in RAG
+   - ❌ Self-hosted complexity
+
+4. **Supermemory.ai** ✅ **SELECTED**
+   - ✅ Cloud-scale
+   - ✅ Graph + RAG combined
+   - ✅ Multi-tenant
+   - ✅ MCP integration
+   - ✅ Managed service
+
+### 1.5 Dependencies
+
+- **WP-3002**: MAIF Artifact Spec (for L4 storage format)
+- **WP-4007**: Simulation & Sandbox (uses L3 for decision replay)
+- **WP-5003**: Economic Governance (cost tracking in L4)
+- **MCP Server**: FastMCP server for tool exposure
+
+### 1.6 Performance Considerations
+
+- **Latency**: Cloud API calls add 50-200ms latency
+- **Caching**: Cache frequently accessed L3 data in L2
+- **Batching**: Batch multiple operations when possible
+- **Rate Limits**: Respect Supermemory API rate limits
+- **Cost**: Monitor API usage costs
+
+### 1.7 Metrics & Monitoring
+
+- **Storage Metrics**:
+  - L3 conversations stored per day
+  - L4 artifacts stored per day
+  - Graph relationships created per day
+
+- **Performance Metrics**:
+  - L3 search latency (p50, p95, p99)
+  - L4 write latency
+  - API error rate
+
+- **Cost Metrics**:
+  - API calls per day
+  - Storage used (GB)
+  - Cost per agent decision
+
+### 1.8 Troubleshooting
+
+**Issue**: High latency on L3 searches
+- **Solution**: Implement L2 caching layer
+- **Solution**: Use async/parallel searches
+- **Solution**: Optimize query structure
+
+**Issue**: Rate limit errors
+- **Solution**: Implement exponential backoff
+- **Solution**: Batch operations
+- **Solution**: Use connection pooling
+
+**Issue**: Multi-tenant isolation concerns
+- **Solution**: Verify `x-sm-project` header is set
+- **Solution**: Audit API calls for project scope
+- **Solution**: Implement access control checks
+
+### 1.9 Integration Checklist
+
+- [ ] Implement `SupermemoryProvider` class
+- [ ] Add MCP server configuration
+- [ ] Implement authentication (`thegent login supermemory`)
+- [ ] Integrate L3 storage for conversations
+- [ ] Integrate L4 storage for MAIF artifacts
+- [ ] Implement semantic search for past decisions
+- [ ] Implement relationship tracking
+- [ ] Add monitoring and metrics
+- [ ] Add error handling and retries
+- [ ] Add cost tracking
+- [ ] Update documentation
+
+### 1.10 References
+
+- [Supermemory Integration Plan](../plans/2026-02-16-supermemory-integration-plan.md)
+- [Context Management Depth](../reference/CONTEXT_MANAGEMENT_DEPTH.md)
+- [Work Stream](../reference/WORK_STREAM.md) - WP-5001-SM
+
+---
+
+## 2. Pareto Routing & Hysteresis (WP-1004 / WP-5001)
+
+### 2.1 Concept Overview
+
+**Pareto Routing** implements the 80/20 principle: route 80% of low-risk tasks to the efficient "Lifecycle" loop, while routing 20% of high-risk tasks to "The Gent" (Plan/Operator/Reviewer) for comprehensive handling.
+
+**Hysteresis** prevents "thrashing" by using a damping band (e.g., 5-minute dwell time) when switching between normal and protective scale modes, avoiding rapid oscillation of concurrency caps.
+
+### 2.2 Architecture
+
+#### Routing Decision Tree
+
+```
+Task Arrives
+    │
+    ├─ Risk Assessment
+    │   ├─ Low Risk (80%) → Lifecycle Loop
+    │   │   ├─ Fast execution
+    │   │   ├─ Minimal overhead
+    │   │   └─ High throughput
+    │   │
+    │   └─ High Risk (20%) → The Gent
+    │       ├─ Plan phase
+    │       ├─ Operator review
+    │       └─ Reviewer approval
+    │
+    └─ Scale Mode Assessment
+        ├─ Normal Mode → Standard concurrency
+        └─ Protective Mode → Reduced concurrency
+            └─ Hysteresis: 5-minute dwell time
+```
+
+#### Risk Classification
+
+**Low Risk** (Lifecycle Loop):
+- Simple code changes
+- Well-understood patterns
+- Low impact scope
+- High confidence predictions
+- Standard operations
+
+**High Risk** (The Gent):
+- Complex refactoring
+- Unknown patterns
+- High impact scope
+- Low confidence predictions
+- Critical operations
+- Security-sensitive changes
+
+### 2.3 Implementation Details
+
+#### Routing Logic (`src/thegent/orchestration/routing.py`):
+
+```python
+from enum import Enum
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Optional
+
+class RiskLevel(Enum):
+    LOW = "low"
+    HIGH = "high"
+
+class ScaleMode(Enum):
+    NORMAL = "normal"
+    PROTECTIVE = "protective"
+
+@dataclass
+class RoutingDecision:
+    route: str  # "lifecycle" or "thegent"
+    risk_level: RiskLevel
+    scale_mode: ScaleMode
+    concurrency_limit: int
+    reason: str
+
+class ParetoRouter:
+    """Pareto routing with hysteresis."""
+
+    def __init__(
+        self,
+        low_risk_threshold: float = 0.8,
+        hysteresis_window: timedelta = timedelta(minutes=5),
+        normal_concurrency: int = 10,
+        protective_concurrency: int = 3
+    ):
+        self.low_risk_threshold = low_risk_threshold
+        self.hysteresis_window = hysteresis_window
+        self.normal_concurrency = normal_concurrency
+        self.protective_concurrency = protective_concurrency
+
+        # Hysteresis state
+        self.scale_mode_transitions: dict[str, datetime] = {}
+        self.current_scale_mode = ScaleMode.NORMAL
+
+    def route_task(self, task: dict) -> RoutingDecision:
+        """Route task based on Pareto principle."""
+        # Assess risk
+        risk_level = self._assess_risk(task)
+
+        # Determine route
+        if risk_level == RiskLevel.LOW:
+            route = "lifecycle"
+        else:
+            route = "thegent"
+
+        # Determine scale mode with hysteresis
+        scale_mode = self._determine_scale_mode_with_hysteresis(task)
+
+        # Get concurrency limit
+        concurrency_limit = (
+            self.normal_concurrency
+            if scale_mode == ScaleMode.NORMAL
+            else self.protective_concurrency
+        )
+
+        return RoutingDecision(
+            route=route,
+            risk_level=risk_level,
+            scale_mode=scale_mode,
+            concurrency_limit=concurrency_limit,
+            reason=self._generate_reason(task, risk_level, scale_mode)
+        )
+
+    def _assess_risk(self, task: dict) -> RiskLevel:
+        """Assess task risk level."""
+        risk_score = 0.0
+
+        # Complexity factor
+        if task.get("complexity", "low") == "high":
+            risk_score += 0.3
+
+        # Impact factor
+        impact = task.get("impact", "low")
+        if impact == "high":
+            risk_score += 0.4
+        elif impact == "medium":
+            risk_score += 0.2
+
+        # Confidence factor
+        confidence = task.get("confidence", 1.0)
+        risk_score += (1.0 - confidence) * 0.3
+
+        # Security factor
+        if task.get("security_sensitive", False):
+            risk_score += 0.2
+
+        # Classify
+        return RiskLevel.HIGH if risk_score > (1.0 - self.low_risk_threshold) else RiskLevel.LOW
+
+    def _determine_scale_mode_with_hysteresis(
+        self,
+        task: dict
+    ) -> ScaleMode:
+        """Determine scale mode with hysteresis to prevent thrashing."""
+        # Check if we should switch to protective mode
+        should_protect = (
+            task.get("impact") == "high" or
+            task.get("security_sensitive", False) or
+            self._has_recent_failures()
+        )
+
+        current_time = datetime.now()
+        transition_key = f"{self.current_scale_mode.value}_to_{ScaleMode.PROTECTIVE.value}"
+
+        if should_protect:
+            # Check if we recently switched modes
+            last_transition = self.scale_mode_transitions.get(transition_key)
+
+            if last_transition is None or \
+               (current_time - last_transition) > self.hysteresis_window:
+                # Safe to switch
+                self.current_scale_mode = ScaleMode.PROTECTIVE
+                self.scale_mode_transitions[transition_key] = current_time
+            # Otherwise, stay in current mode (hysteresis)
+        else:
+            # Check if we should switch back to normal
+            transition_key = f"{ScaleMode.PROTECTIVE.value}_to_{ScaleMode.NORMAL.value}"
+            last_transition = self.scale_mode_transitions.get(transition_key)
+
+            if self.current_scale_mode == ScaleMode.PROTECTIVE:
+                if last_transition is None or \
+                   (current_time - last_transition) > self.hysteresis_window:
+                    # Safe to switch back
+                    self.current_scale_mode = ScaleMode.NORMAL
+                    self.scale_mode_transitions[transition_key] = current_time
+
+        return self.current_scale_mode
+
+    def _has_recent_failures(self) -> bool:
+        """Check if there have been recent failures."""
+        # Implementation: Check failure rate in last 5 minutes
+        # Return True if failure rate > threshold
+        return False  # Placeholder
+
+    def _generate_reason(
+        self,
+        task: dict,
+        risk_level: RiskLevel,
+        scale_mode: ScaleMode
+    ) -> str:
+        """Generate human-readable routing reason."""
+        reasons = []
+
+        if risk_level == RiskLevel.LOW:
+            reasons.append("Low risk task")
+        else:
+            reasons.append("High risk task")
+
+        if scale_mode == ScaleMode.PROTECTIVE:
+            reasons.append("Protective mode (recent failures or high impact)")
+
+        return "; ".join(reasons)
+```
+
+### 2.4 Hysteresis Mechanism
+
+**Purpose**: Prevent rapid oscillation between normal and protective modes.
+
+**Implementation**:
+1. Track last transition time for each mode switch
+2. Require minimum dwell time (5 minutes) before switching back
+3. Maintain current mode during hysteresis window
+4. Log all transitions for analysis
+
+**Benefits**:
+- Prevents thrashing
+- Reduces overhead from mode switches
+- Provides stability during transient issues
+- Allows system to recover gracefully
+
+### 2.5 Alternatives Considered
+
+1. **Fixed Routing** (No Pareto)
+   - ❌ All tasks go through same path
+   - ❌ No optimization for low-risk tasks
+   - ✅ Simple implementation
+
+2. **Dynamic Routing** (No Hysteresis)
+   - ✅ Adapts to conditions
+   - ❌ Thrashing risk
+   - ❌ Unstable behavior
+
+3. **Pareto + Hysteresis** ✅ **SELECTED**
+   - ✅ Optimizes for common case (80%)
+   - ✅ Prevents thrashing
+   - ✅ Stable behavior
+   - ✅ Efficient resource usage
+
+### 2.6 Dependencies
+
+- **WP-5001**: Scale & Cost optimization
+- **WP-1004**: Lifecycle loop implementation
+- **WP-4007**: Simulation (for risk assessment)
+- **WP-5003**: Economic Governance (cost-aware routing)
+
+### 2.7 Performance Considerations
+
+- **Routing Overhead**: < 1ms per task
+- **Hysteresis State**: In-memory (fast lookups)
+- **Risk Assessment**: Cache results for similar tasks
+- **Mode Transitions**: Logged for analysis
+
+### 2.8 Metrics & Monitoring
+
+- **Routing Distribution**:
+  - % tasks routed to Lifecycle vs The Gent
+  - Actual vs target (80/20) distribution
+
+- **Hysteresis Metrics**:
+  - Mode transition frequency
+  - Dwell time distribution
+  - Thrashing incidents (should be 0)
+
+- **Performance Metrics**:
+  - Lifecycle loop throughput
+  - The Gent processing time
+  - Overall system throughput
+
+### 2.9 Troubleshooting
+
+**Issue**: Too many tasks routed to The Gent (>20%)
+- **Solution**: Review risk assessment thresholds
+- **Solution**: Improve confidence scoring
+- **Solution**: Add more low-risk patterns
+
+**Issue**: Thrashing between modes
+- **Solution**: Increase hysteresis window
+- **Solution**: Review failure detection logic
+- **Solution**: Add smoothing to risk assessment
+
+**Issue**: Lifecycle loop overloaded
+- **Solution**: Increase concurrency limit
+- **Solution**: Review routing thresholds
+- **Solution**: Add queue management
+
+### 2.10 Integration Checklist
+
+- [ ] Implement `ParetoRouter` class
+- [ ] Implement risk assessment logic
+- [ ] Implement hysteresis mechanism
+- [ ] Add routing decision logging
+- [ ] Add metrics collection
+- [ ] Integrate with Lifecycle loop
+- [ ] Integrate with The Gent
+- [ ] Add configuration options
+- [ ] Add monitoring dashboard
+- [ ] Update documentation
+
+### 2.11 References
+
+- [Pareto Routing Design](../reference/PARETO_ROUTING_DESIGN.md)
+- [Lifecycle Loop Design](../plans/12-LIFECYCLE-LOOP-DESIGN.md)
+- [Work Stream](../reference/WORK_STREAM.md) - WP-1004, WP-5001
+
+---
+
+## 3. Economic Governance (WP-5003)
+
+### 3.1 Concept Overview
+
+**Economic Governance** weights agent decisions by cost-to-value ratio, ensuring that expensive operations are only used when they provide sufficient value. This is implemented via `CostAwareRouter` in `catalog.py`, which uses provider scoring based on reliability, latency, and cost.
+
+### 3.2 Architecture
+
+#### Cost-Aware Decision Framework
+
+```
+Decision Required
+    │
+    ├─ Value Assessment
+    │   ├─ High Value → Can use expensive providers
+    │   ├─ Medium Value → Balanced providers
+    │   └─ Low Value → Cost-efficient providers
+    │
+    ├─ Provider Scoring
+    │   ├─ Reliability (0-1)
+    │   ├─ Latency (ms)
+    │   └─ Cost ($/token)
+    │
+    └─ Cost-Value Optimization
+        └─ Select provider with best cost-value ratio
+```
+
+#### Provider Scoring Formula
+
+```
+Score = (Reliability × Value_Weight) - (Latency × Latency_Weight) - (Cost × Cost_Weight)
+
+Where:
+- Reliability: 0.0 to 1.0 (higher is better)
+- Latency: milliseconds (lower is better)
+- Cost: $/token (lower is better)
+- Weights: Configurable based on task priority
+```
+
+### 3.3 Implementation Details
+
+#### CostAwareRouter (`src/thegent/orchestration/catalog.py`):
+
+```python
+from dataclasses import dataclass
+from typing import Optional
+from enum import Enum
+
+class TaskPriority(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+@dataclass
+class ProviderScore:
+    provider_id: str
+    reliability: float  # 0.0 to 1.0
+    latency_ms: float
+    cost_per_token: float
+    overall_score: float
+
+@dataclass
+class TaskValue:
+    priority: TaskPriority
+    estimated_value: float  # 0.0 to 1.0
+    time_sensitivity: float  # 0.0 to 1.0
+
+class CostAwareRouter:
+    """Route tasks based on cost-value optimization."""
+
+    def __init__(
+        self,
+        reliability_weight: float = 0.4,
+        latency_weight: float = 0.3,
+        cost_weight: float = 0.3
+    ):
+        self.reliability_weight = reliability_weight
+        self.latency_weight = latency_weight
+        self.cost_weight = cost_weight
+
+        # Provider registry
+        self.providers: dict[str, dict] = {}
+
+    def register_provider(
+        self,
+        provider_id: str,
+        reliability: float,
+        avg_latency_ms: float,
+        cost_per_token: float
+    ):
+        """Register a provider with its characteristics."""
+        self.providers[provider_id] = {
+            "reliability": reliability,
+            "latency_ms": avg_latency_ms,
+            "cost_per_token": cost_per_token
+        }
+
+    def select_provider(
+        self,
+        task_value: TaskValue,
+        required_reliability: Optional[float] = None
+    ) -> str:
+        """Select best provider based on cost-value optimization."""
+        # Calculate weights based on task priority
+        weights = self._calculate_weights(task_value)
+
+        # Score all providers
+        scores = []
+        for provider_id, provider_data in self.providers.items():
+            # Filter by reliability if required
+            if required_reliability and \
+               provider_data["reliability"] < required_reliability:
+                continue
+
+            score = self._calculate_score(
+                provider_data,
+                weights,
+                task_value
+            )
+
+            scores.append(ProviderScore(
+                provider_id=provider_id,
+                reliability=provider_data["reliability"],
+                latency_ms=provider_data["latency_ms"],
+                cost_per_token=provider_data["cost_per_token"],
+                overall_score=score
+            ))
+
+        if not scores:
+            raise ValueError("No suitable provider found")
+
+        # Select provider with highest score
+        best = max(scores, key=lambda s: s.overall_score)
+        return best.provider_id
+
+    def _calculate_weights(self, task_value: TaskValue) -> dict:
+        """Calculate weights based on task priority and value."""
+        base_weights = {
+            "reliability": self.reliability_weight,
+            "latency": self.latency_weight,
+            "cost": self.cost_weight
+        }
+
+        # Adjust weights based on priority
+        if task_value.priority == TaskPriority.CRITICAL:
+            # Prioritize reliability and latency
+            base_weights["reliability"] *= 1.5
+            base_weights["latency"] *= 1.2
+            base_weights["cost"] *= 0.5
+        elif task_value.priority == TaskPriority.HIGH:
+            base_weights["reliability"] *= 1.2
+            base_weights["latency"] *= 1.1
+            base_weights["cost"] *= 0.7
+        elif task_value.priority == TaskPriority.LOW:
+            # Prioritize cost
+            base_weights["reliability"] *= 0.8
+            base_weights["latency"] *= 0.8
+            base_weights["cost"] *= 1.5
+
+        # Adjust for time sensitivity
+        if task_value.time_sensitivity > 0.7:
+            base_weights["latency"] *= 1.3
+            base_weights["cost"] *= 0.8
+
+        return base_weights
+
+    def _calculate_score(
+        self,
+        provider_data: dict,
+        weights: dict,
+        task_value: TaskValue
+    ) -> float:
+        """Calculate overall provider score."""
+        # Normalize values
+        reliability_score = provider_data["reliability"] * weights["reliability"]
+
+        # Latency: lower is better (inverse)
+        max_latency = 5000  # 5 seconds
+        latency_score = (1.0 - (provider_data["latency_ms"] / max_latency)) * weights["latency"]
+
+        # Cost: lower is better (inverse)
+        max_cost = 0.01  # $0.01 per token
+        cost_score = (1.0 - (provider_data["cost_per_token"] / max_cost)) * weights["cost"]
+
+        # Value multiplier: higher value tasks can afford higher costs
+        value_multiplier = 1.0 + (task_value.estimated_value * 0.5)
+
+        overall = (reliability_score + latency_score + cost_score) * value_multiplier
+
+        return overall
+```
+
+### 3.4 Provider Scoring
+
+#### Scoring Components
+
+1. **Reliability** (0.0 to 1.0)
+   - Based on success rate over time window
+   - Weighted by recency (recent failures count more)
+   - Includes error rate, timeout rate
+
+2. **Latency** (milliseconds)
+   - Average response time
+   - P95 latency for worst-case
+   - Network latency included
+
+3. **Cost** ($/token)
+   - Input token cost
+   - Output token cost
+   - API call overhead
+
+#### Dynamic Scoring
+
+- **Recent Performance**: Weight recent metrics more heavily
+- **Time-of-Day**: Adjust for provider load patterns
+- **Task Type**: Different providers excel at different tasks
+- **Historical Trends**: Learn from past performance
+
+### 3.5 Alternatives Considered
+
+1. **Fixed Provider Selection**
+   - ❌ No cost optimization
+   - ❌ No adaptation
+   - ✅ Simple
+
+2. **Random Provider Selection**
+   - ❌ No optimization
+   - ❌ Unpredictable
+   - ✅ Simple
+
+3. **Cost-Only Optimization**
+   - ✅ Low cost
+   - ❌ Ignores reliability/latency
+   - ❌ Poor quality
+
+4. **Cost-Aware with Scoring** ✅ **SELECTED**
+   - ✅ Balances cost, reliability, latency
+   - ✅ Adapts to task value
+   - ✅ Optimizes for overall value
+
+### 3.6 Dependencies
+
+- **WP-5001**: Scale & Cost optimization
+- **WP-1004**: Pareto Routing (uses cost-aware routing)
+- **Provider Registry**: Provider metadata and metrics
+- **Cost Tracking**: Real-time cost monitoring
+
+### 3.7 Performance Considerations
+
+- **Scoring Overhead**: < 1ms per decision
+- **Provider Lookup**: O(1) with hash map
+- **Score Caching**: Cache scores for similar tasks
+- **Metric Updates**: Async updates to avoid blocking
+
+### 3.8 Metrics & Monitoring
+
+- **Cost Metrics**:
+  - Total cost per day/week/month
+  - Cost per task type
+  - Cost per provider
+  - Cost savings vs fixed routing
+
+- **Quality Metrics**:
+  - Reliability by provider
+  - Latency by provider
+  - Task success rate
+
+- **Optimization Metrics**:
+  - Provider selection distribution
+  - Cost-value ratio trends
+  - Routing efficiency
+
+### 3.9 Troubleshooting
+
+**Issue**: High costs despite optimization
+- **Solution**: Review cost weights
+- **Solution**: Check provider cost data accuracy
+- **Solution**: Review task value assessment
+
+**Issue**: Poor reliability despite optimization
+- **Solution**: Increase reliability weight
+- **Solution**: Update provider reliability metrics
+- **Solution**: Add reliability thresholds
+
+**Issue**: Slow performance despite optimization
+- **Solution**: Increase latency weight
+- **Solution**: Update provider latency metrics
+- **Solution**: Add latency thresholds
+
+### 3.10 Integration Checklist
+
+- [ ] Implement `CostAwareRouter` class
+- [ ] Implement provider scoring
+- [ ] Add provider registry
+- [ ] Add cost tracking
+- [ ] Add metrics collection
+- [ ] Integrate with routing system
+- [ ] Add configuration options
+- [ ] Add monitoring dashboard
+- [ ] Update documentation
+
+### 3.11 References
+
+- [Economic Governance Depth](../reference/ECONOMIC_GOVERNANCE_DEPTH.md)
+- [Work Stream](../reference/WORK_STREAM.md) - WP-5003
+- [Pareto Routing](#2-pareto-routing--hysteresis-wp-1004--wp-5001)
+
+---
+
+## 4. MAIF Action Artifacts (WP-3002)
+
+### 4.1 Concept Overview
+
+**MAIF (Model-Agent Interaction Format)** provides signed artifacts for every significant agent action, enabling auditability, reproducibility, and trust. Artifacts are persisted in Supermemory L4 with hash chains for verification.
+
+### 4.2 Architecture
+
+#### MAIF Artifact Structure
+
+```json
+{
+  "maif_version": "1.0",
+  "artifact_id": "maif_20260216_123456_abc123",
+  "timestamp": "2026-02-16T12:34:56Z",
+  "agent_id": "agent_thegent_planner",
+  "action_type": "plan_generation",
+  "input": {
+    "user_query": "...",
+    "context": {...}
+  },
+  "output": {
+    "plan": {...},
+    "confidence": 0.85
+  },
+  "metadata": {
+    "model_used": "claude-3-5-sonnet",
+    "tokens_used": 1234,
+    "latency_ms": 234
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "public_key": "...",
+    "signature": "..."
+  },
+  "hash_chain": {
+    "previous_hash": "...",
+    "current_hash": "..."
+  }
+}
+```
+
+#### Hash Chain Verification
+
+```
+Artifact 1: hash_1 = hash(artifact_1_content)
+Artifact 2: hash_2 = hash(artifact_2_content + hash_1)
+Artifact 3: hash_3 = hash(artifact_3_content + hash_2)
+...
+```
+
+This creates an immutable chain where any modification breaks the chain.
+
+### 4.3 Implementation Details
+
+#### MAIF Artifact Generation (`src/thegent/artifacts/maif.py`):
+
+```python
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from typing import Optional, Any
+import hashlib
+import json
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives import serialization
+
+@dataclass
+class MAIFArtifact:
+    """MAIF (Model-Agent Interaction Format) artifact."""
+    maif_version: str = "1.0"
+    artifact_id: str = ""
+    timestamp: str = ""
+    agent_id: str = ""
+    action_type: str = ""
+    input: dict = None
+    output: dict = None
+    metadata: dict = None
+    signature: dict = None
+    hash_chain: dict = None
+
+    def __post_init__(self):
+        if self.input is None:
+            self.input = {}
+        if self.output is None:
+            self.output = {}
+        if self.metadata is None:
+            self.metadata = {}
+        if self.timestamp == "":
+            self.timestamp = datetime.utcnow().isoformat() + "Z"
+        if self.artifact_id == "":
+            self.artifact_id = self._generate_id()
+
+    def _generate_id(self) -> str:
+        """Generate unique artifact ID."""
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        random_suffix = hashlib.sha256(
+            f"{self.agent_id}{self.timestamp}".encode()
+        ).hexdigest()[:6]
+        return f"maif_{timestamp}_{random_suffix}"
+
+    def sign(self, private_key: ed25519.Ed25519PrivateKey):
+        """Sign artifact with private key."""
+        # Serialize artifact (without signature)
+        artifact_dict = asdict(self)
+        artifact_dict.pop("signature", None)
+        artifact_json = json.dumps(artifact_dict, sort_keys=True)
+
+        # Sign
+        signature_bytes = private_key.sign(artifact_json.encode())
+
+        # Get public key
+        public_key = private_key.public_key()
+        public_key_bytes = public_key.public_bytes(
+            encoding=serialization.Encoding.Raw,
+            format=serialization.PublicFormat.Raw
+        )
+
+        # Store signature
+        self.signature = {
+            "algorithm": "ed25519",
+            "public_key": public_key_bytes.hex(),
+            "signature": signature_bytes.hex()
+        }
+
+    def verify(self) -> bool:
+        """Verify artifact signature."""
+        if not self.signature:
+            return False
+
+        try:
+            # Reconstruct public key
+            public_key_bytes = bytes.fromhex(self.signature["public_key"])
+            public_key = ed25519.Ed25519PublicKey.from_public_bytes(public_key_bytes)
+
+            # Serialize artifact (without signature)
+            artifact_dict = asdict(self)
+            artifact_dict.pop("signature", None)
+            artifact_json = json.dumps(artifact_dict, sort_keys=True)
+
+            # Verify signature
+            signature_bytes = bytes.fromhex(self.signature["signature"])
+            public_key.verify(signature_bytes, artifact_json.encode())
+
+            return True
+        except Exception:
+            return False
+
+    def add_to_hash_chain(self, previous_hash: Optional[str] = None):
+        """Add artifact to hash chain."""
+        # Calculate current hash
+        artifact_dict = asdict(self)
+        artifact_dict.pop("hash_chain", None)
+        artifact_json = json.dumps(artifact_dict, sort_keys=True)
+
+        if previous_hash:
+            content_to_hash = artifact_json + previous_hash
+        else:
+            content_to_hash = artifact_json
+
+        current_hash = hashlib.sha256(content_to_hash.encode()).hexdigest()
+
+        # Store hash chain
+        self.hash_chain = {
+            "previous_hash": previous_hash or "",
+            "current_hash": current_hash
+        }
+
+    def verify_hash_chain(self, previous_hash: Optional[str] = None) -> bool:
+        """Verify hash chain integrity."""
+        if not self.hash_chain:
+            return False
+
+        # Recalculate hash
+        artifact_dict = asdict(self)
+        artifact_dict.pop("hash_chain", None)
+        artifact_json = json.dumps(artifact_dict, sort_keys=True)
+
+        if previous_hash:
+            content_to_hash = artifact_json + previous_hash
+        else:
+            content_to_hash = artifact_json
+
+        expected_hash = hashlib.sha256(content_to_hash.encode()).hexdigest()
+
+        # Verify
+        return self.hash_chain["current_hash"] == expected_hash and \
+               self.hash_chain["previous_hash"] == (previous_hash or "")
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary."""
+        return asdict(self)
+
+    def to_json(self) -> str:
+        """Convert to JSON string."""
+        return json.dumps(self.to_dict(), indent=2)
+```
+
+#### Artifact Storage (`src/thegent/artifacts/storage.py`):
+
+```python
+from typing import Optional
+from thegent.artifacts.maif import MAIFArtifact
+from thegent.orchestration.context import SupermemoryProvider
+
+class MAIFStorage:
+    """Storage for MAIF artifacts."""
+
+    def __init__(self, supermemory_provider: SupermemoryProvider):
+        self.supermemory = supermemory_provider
+        self.last_hash: Optional[str] = None
+
+    async def store(self, artifact: MAIFArtifact) -> str:
+        """Store MAIF artifact in L4."""
+        # Add to hash chain
+        artifact.add_to_hash_chain(self.last_hash)
+
+        # Store in Supermemory L4
+        artifact_id = await self.supermemory.store_artifact(
+            artifact.to_dict(),
+            artifact.hash_chain["current_hash"]
+        )
+
+        # Update last hash
+        self.last_hash = artifact.hash_chain["current_hash"]
+
+        return artifact_id
+
+    async def retrieve(self, artifact_id: str) -> Optional[MAIFArtifact]:
+        """Retrieve MAIF artifact from L4."""
+        artifact_dict = await self.supermemory.retrieve_artifact(artifact_id)
+        if not artifact_dict:
+            return None
+
+        # Reconstruct artifact
+        artifact = MAIFArtifact(**artifact_dict)
+        return artifact
+
+    async def verify_chain(self, artifact_id: str) -> bool:
+        """Verify hash chain integrity."""
+        artifact = await self.retrieve(artifact_id)
+        if not artifact:
+            return False
+
+        # Get previous artifact
+        previous_hash = artifact.hash_chain.get("previous_hash")
+        if previous_hash:
+            # Would need to retrieve previous artifact to verify
+            # For now, just verify current artifact
+            pass
+
+        return artifact.verify_hash_chain(previous_hash)
+```
+
+### 4.4 Alternatives Considered
+
+1. **Unsigned Artifacts**
+   - ❌ No authentication
+   - ❌ No tamper detection
+   - ✅ Simple
+
+2. **Centralized Signature Authority**
+   - ✅ Centralized trust
+   - ❌ Single point of failure
+   - ❌ Complex infrastructure
+
+3. **Hash Chains Only** (No Signatures)
+   - ✅ Tamper detection
+   - ❌ No authentication
+   - ❌ No non-repudiation
+
+4. **MAIF with Signatures + Hash Chains** ✅ **SELECTED**
+   - ✅ Authentication
+   - ✅ Tamper detection
+   - ✅ Non-repudiation
+   - ✅ Immutable audit trail
+
+### 4.5 Dependencies
+
+- **WP-5001-SM**: Supermemory integration (for L4 storage)
+- **Cryptography**: Ed25519 for signatures
+- **Hash Functions**: SHA-256 for hash chains
+
+### 4.6 Performance Considerations
+
+- **Signature Generation**: ~1ms per artifact
+- **Hash Calculation**: < 1ms per artifact
+- **Storage Latency**: Depends on Supermemory API (50-200ms)
+- **Verification**: ~1ms per artifact
+
+### 4.7 Metrics & Monitoring
+
+- **Artifact Metrics**:
+  - Artifacts created per day
+  - Artifact storage size
+  - Verification success rate
+
+- **Security Metrics**:
+  - Signature verification failures
+  - Hash chain integrity failures
+  - Tamper detection events
+
+### 4.8 Troubleshooting
+
+**Issue**: Signature verification failures
+- **Solution**: Check key management
+- **Solution**: Verify artifact serialization
+- **Solution**: Review signature algorithm
+
+**Issue**: Hash chain breaks
+- **Solution**: Verify storage integrity
+- **Solution**: Check hash calculation
+- **Solution**: Review chain ordering
+
+**Issue**: Storage latency too high
+- **Solution**: Batch artifact storage
+- **Solution**: Use async storage
+- **Solution**: Implement local cache
+
+### 4.9 Integration Checklist
+
+- [ ] Implement `MAIFArtifact` class
+- [ ] Implement signature generation/verification
+- [ ] Implement hash chain generation/verification
+- [ ] Implement `MAIFStorage` class
+- [ ] Integrate with Supermemory L4
+- [ ] Add artifact generation to agent actions
+- [ ] Add verification endpoints
+- [ ] Add monitoring and metrics
+- [ ] Update documentation
+
+### 4.10 References
+
+- [MAIF Artifact Spec Depth](../reference/MAIF_ARTIFACT_SPEC_DEPTH.md)
+- [Work Stream](../reference/WORK_STREAM.md) - WP-3002
+- [Supermemory Integration](#1-supermemoryai-universal-memory-wp-5001-sm)
+
+---
+
+## 5. Simulation & Sandbox (WP-4007)
+
+### 5.1 Concept Overview
+
+**Simulation & Sandbox** enables deterministic replay of past decisions, allowing agents to test changes before applying them. Uses Supermemory L3 to retrieve past decision context and replay scenarios in a sandboxed environment.
+
+### 5.2 Architecture
+
+#### Simulation Flow
+
+```
+1. User Request: "What if we had done X instead?"
+   │
+2. Retrieve Past Decision from L3
+   │   ├─ Decision context
+   │   ├─ Input state
+   │   └─ Output state
+   │
+3. Create Sandbox Environment
+   │   ├─ Clone input state
+   │   ├─ Apply alternative action X
+   │   └─ Isolate from production
+   │
+4. Replay Decision with Alternative
+   │   ├─ Execute in sandbox
+   │   ├─ Capture results
+   │   └─ Compare with original
+   │
+5. Return Comparison
+   │   ├─ Original outcome
+   │   ├─ Alternative outcome
+   │   └─ Difference analysis
+```
+
+#### Sandbox Isolation
+
+- **File System**: Copy-on-write filesystem
+- **Network**: Isolated network namespace
+- **State**: Snapshot-based state management
+- **Resources**: Limited CPU/memory
+
+### 5.3 Implementation Details
+
+#### Simulation Engine (`src/thegent/ux/replay.py`):
+
+```python
+from typing import Optional, Dict, Any
+from dataclasses import dataclass
+from thegent.orchestration.context import SupermemoryProvider
+from thegent.artifacts.maif import MAIFArtifact
+
+@dataclass
+class SimulationResult:
+    """Result of a simulation."""
+    original_outcome: dict
+    alternative_outcome: dict
+    differences: list[dict]
+    confidence: float
+    metadata: dict
+
+class SimulationEngine:
+    """Engine for simulating alternative decisions."""
+
+    def __init__(self, supermemory_provider: SupermemoryProvider):
+        self.supermemory = supermemory_provider
+        self.sandbox_manager = SandboxManager()
+
+    async def simulate_alternative(
+        self,
+        decision_id: str,
+        alternative_action: dict,
+        sandbox_config: Optional[dict] = None
+    ) -> SimulationResult:
+        """Simulate alternative action for past decision."""
+        # Retrieve original decision from L3
+        original_decision = await self._retrieve_decision(decision_id)
+        if not original_decision:
+            raise ValueError(f"Decision {decision_id} not found")
+
+        # Create sandbox
+        sandbox = await self.sandbox_manager.create_sandbox(
+            original_decision.input_state,
+            config=sandbox_config
+        )
+
+        try:
+            # Execute alternative action in sandbox
+            alternative_outcome = await self._execute_in_sandbox(
+                sandbox,
+                alternative_action,
+                original_decision.context
+            )
+
+            # Compare outcomes
+            differences = self._compare_outcomes(
+                original_decision.output_state,
+                alternative_outcome
+            )
+
+            # Calculate confidence
+            confidence = self._calculate_confidence(
+                original_decision,
+                alternative_outcome,
+                differences
+            )
+
+            return SimulationResult(
+                original_outcome=original_decision.output_state,
+                alternative_outcome=alternative_outcome,
+                differences=differences,
+                confidence=confidence,
+                metadata={
+                    "decision_id": decision_id,
+                    "sandbox_id": sandbox.id,
+                    "execution_time_ms": sandbox.execution_time_ms
+                }
+            )
+        finally:
+            # Cleanup sandbox
+            await self.sandbox_manager.destroy_sandbox(sandbox.id)
+
+    async def _retrieve_decision(self, decision_id: str) -> Optional[dict]:
+        """Retrieve decision context from L3."""
+        # Search Supermemory L3 for decision
+        results = await self.supermemory.search_past_decisions(
+            f"decision_id:{decision_id}",
+            limit=1
+        )
+
+        if not results:
+            return None
+
+        return results[0]
+
+    async def _execute_in_sandbox(
+        self,
+        sandbox: Sandbox,
+        action: dict,
+        context: dict
+    ) -> dict:
+        """Execute action in sandboxed environment."""
+        # Apply action to sandbox state
+        await sandbox.apply_action(action)
+
+        # Execute decision logic with context
+        outcome = await sandbox.execute_decision_logic(context)
+
+        return outcome
+
+    def _compare_outcomes(
+        self,
+        original: dict,
+        alternative: dict
+    ) -> list[dict]:
+        """Compare original and alternative outcomes."""
+        differences = []
+
+        # Compare keys
+        all_keys = set(original.keys()) | set(alternative.keys())
+
+        for key in all_keys:
+            original_val = original.get(key)
+            alternative_val = alternative.get(key)
+
+            if original_val != alternative_val:
+                differences.append({
+                    "key": key,
+                    "original": original_val,
+                    "alternative": alternative_val,
+                    "type": self._get_difference_type(original_val, alternative_val)
+                })
+
+        return differences
+
+    def _get_difference_type(self, original: Any, alternative: Any) -> str:
+        """Classify difference type."""
+        if isinstance(original, dict) and isinstance(alternative, dict):
+            return "nested"
+        elif isinstance(original, list) and isinstance(alternative, list):
+            return "list"
+        elif type(original) != type(alternative):
+            return "type_change"
+        else:
+            return "value_change"
+
+    def _calculate_confidence(
+        self,
+        original_decision: dict,
+        alternative_outcome: dict,
+        differences: list[dict]
+    ) -> float:
+        """Calculate confidence in simulation result."""
+        # Base confidence
+        confidence = 0.8
+
+        # Reduce confidence for large differences
+        if len(differences) > 10:
+            confidence -= 0.2
+        elif len(differences) > 5:
+            confidence -= 0.1
+
+        # Reduce confidence for type changes
+        type_changes = sum(1 for d in differences if d["type"] == "type_change")
+        if type_changes > 0:
+            confidence -= 0.1 * type_changes
+
+        # Ensure confidence is in valid range
+        return max(0.0, min(1.0, confidence))
+```
+
+#### Sandbox Manager (`src/thegent/ux/sandbox.py`):
+
+```python
+from typing import Optional, Dict
+from dataclasses import dataclass
+from datetime import datetime
+import uuid
+
+@dataclass
+class Sandbox:
+    """Sandboxed execution environment."""
+    id: str
+    input_state: dict
+    current_state: dict
+    created_at: datetime
+    execution_time_ms: int = 0
+
+class SandboxManager:
+    """Manages sandboxed execution environments."""
+
+    def __init__(self):
+        self.sandboxes: Dict[str, Sandbox] = {}
+
+    async def create_sandbox(
+        self,
+        input_state: dict,
+        config: Optional[dict] = None
+    ) -> Sandbox:
+        """Create new sandbox with cloned state."""
+        sandbox_id = str(uuid.uuid4())
+
+        # Deep clone input state
+        cloned_state = self._deep_clone(input_state)
+
+        sandbox = Sandbox(
+            id=sandbox_id,
+            input_state=input_state,
+            current_state=cloned_state,
+            created_at=datetime.utcnow()
+        )
+
+        self.sandboxes[sandbox_id] = sandbox
+
+        # Apply sandbox configuration
+        if config:
+            await self._apply_config(sandbox, config)
+
+        return sandbox
+
+    async def destroy_sandbox(self, sandbox_id: str):
+        """Destroy sandbox and cleanup resources."""
+        if sandbox_id in self.sandboxes:
+            # Cleanup resources
+            await self._cleanup_resources(sandbox_id)
+
+            # Remove from registry
+            del self.sandboxes[sandbox_id]
+
+    def _deep_clone(self, obj: dict) -> dict:
+        """Deep clone dictionary."""
+        import copy
+        return copy.deepcopy(obj)
+
+    async def _apply_config(self, sandbox: Sandbox, config: dict):
+        """Apply sandbox configuration."""
+        # Apply resource limits
+        if "cpu_limit" in config:
+            # Set CPU limit
+            pass
+
+        if "memory_limit" in config:
+            # Set memory limit
+            pass
+
+        if "network_isolated" in config:
+            # Isolate network
+            pass
+
+    async def _cleanup_resources(self, sandbox_id: str):
+        """Cleanup sandbox resources."""
+        # Cleanup files, processes, etc.
+        pass
+```
+
+### 5.4 Alternatives Considered
+
+1. **No Simulation** (Direct Execution)
+   - ❌ No safety
+   - ❌ No comparison
+   - ✅ Simple
+
+2. **Manual Testing**
+   - ✅ Human oversight
+   - ❌ Slow
+   - ❌ Not deterministic
+
+3. **Deterministic Replay** ✅ **SELECTED**
+   - ✅ Safe testing
+   - ✅ Deterministic
+   - ✅ Fast comparison
+   - ✅ Automated
+
+### 5.5 Dependencies
+
+- **WP-5001-SM**: Supermemory L3 (for decision retrieval)
+- **WP-3002**: MAIF Artifacts (for decision context)
+- **Sandbox Infrastructure**: Isolation mechanisms
+
+### 5.6 Performance Considerations
+
+- **Sandbox Creation**: 50-100ms
+- **Decision Retrieval**: 50-200ms (Supermemory L3)
+- **Simulation Execution**: Varies by complexity
+- **Cleanup**: 10-50ms
+
+### 5.7 Metrics & Monitoring
+
+- **Simulation Metrics**:
+  - Simulations run per day
+  - Average execution time
+  - Success rate
+
+- **Sandbox Metrics**:
+  - Sandboxes created/destroyed
+  - Resource usage
+  - Isolation effectiveness
+
+### 5.8 Troubleshooting
+
+**Issue**: Simulation results don't match expectations
+- **Solution**: Verify decision context retrieval
+- **Solution**: Check sandbox state isolation
+- **Solution**: Review alternative action application
+
+**Issue**: Sandbox creation too slow
+- **Solution**: Optimize state cloning
+- **Solution**: Use copy-on-write filesystem
+- **Solution**: Pre-warm sandbox templates
+
+**Issue**: Resource exhaustion
+- **Solution**: Limit concurrent sandboxes
+- **Solution**: Implement resource quotas
+- **Solution**: Add cleanup timeouts
+
+### 5.9 Integration Checklist
+
+- [ ] Implement `SimulationEngine` class
+- [ ] Implement `SandboxManager` class
+- [ ] Integrate with Supermemory L3
+- [ ] Implement sandbox isolation
+- [ ] Add simulation API endpoints
+- [ ] Add monitoring and metrics
+- [ ] Add resource limits
+- [ ] Update documentation
+
+### 5.10 References
+
+- [Simulation and Sandbox Depth](../reference/SIMULATION_AND_SANDBOX_DEPTH.md)
+- [Work Stream](../reference/WORK_STREAM.md) - WP-4007
+- [Supermemory Integration](#1-supermemoryai-universal-memory-wp-5001-sm)
+- [MAIF Artifacts](#4-maif-action-artifacts-wp-3002)
+
+---
+
+## Summary
+
+This comprehensive research document expands five critical concepts from session fragments into complete, production-ready research with:
+
+- **Full Breadth**: Alternatives, dependencies, integration points
+- **Full Depth**: Implementation details, code examples, interfaces
+- **Optimization**: Performance considerations, best practices
+- **Robustness**: Error handling, edge cases, troubleshooting
+- **Practicality**: Real-world examples, step-by-step guides
+- **Holistic Integration**: Cross-references, related docs, system context
+- **Harmonious Design**: Consistent structure, unified terminology
+
+Each concept is ready for implementation with clear guidance, code examples, and integration checklists.
+
+---
+
+---
+
+## See Also
+
+- [WORK_STREAM.md](../reference/WORK_STREAM.md) - Unified work stream (5 BACKLOG items)
+- [SESSION_RESEARCH_FRAGMENTS_EXPANDED.md](./SESSION_RESEARCH_FRAGMENTS_EXPANDED.md) - Expanded fragments
+- [RESEARCH_SEED_FRAGMENT_INVENTORY](./RESEARCH_SEED_FRAGMENT_INVENTORY_AND_SPRAWL_TODO.md) - Fragment inventory
+- [02-UNIFIED-WBS.md](../plans/02-UNIFIED-WBS.md) - Work breakdown structure
+
+---
+
+*Generated: 2026-02-16 | Version: 1.0 | Status: Complete*
+
+---
+
+## Gate Failure Playbook
+
+| Gate | Failure Signal | Immediate Action | Recovery Command | Exit Criteria |
+|------|----------------|------------------|------------------|---------------|
+| Quality Gate | `task quality` exits non-zero | Freeze feature edits and isolate first failing rule | `task quality` | Full pipeline passes with zero suppressions |
+| Test Gate | Targeted or suite tests fail | Reproduce with smallest failing scope, then patch root cause | `python -m pytest -q` | Failing tests pass and no new regressions |
+| Governance Health | `thegent govern go health` reports blockers | Triage failing contract, update mapped implementation/doc | `thegent govern go health` | Health report returns green status |
+| Workstream Closure | Item done but not reflected in tracking | Sync completion in canonical stream and related references | `thegent_do_next` | No stale CLAIMED items; next actionable item returned |
+
+## Execution Cadence Calendar
+
+| Cadence | Focus | Command Set | Deliverable |
+|--------|-------|-------------|-------------|
+| Session Start (0-10 min) | Baseline state + backlog target | `pwd && git status -s && thegent_do_next` | Confirmed task target and clean execution scope |
+| Build Loop (10-45 min) | Implement one scoped increment | `task quality` (or focused check before full pass) | One validated increment with no gate debt |
+| Verification Loop (45-55 min) | Full validation + governance sync | `task quality && thegent govern go health` | Green quality and governance checks |
+| Session Close (55-60 min) | Tracking + handoff update | Update `WORK_STREAM.md` and related status docs | Closed loop with explicit DONE/next-item state |
+
+---
+
+## 7. EXTENSION_SUMMARY
+
+**Extended on:** 2026-02-17
+**Extended by:** Claude Code
+
+### Changes Made
+1. Added practical implementation patterns
+2. Added configuration examples
+3. Enhanced cross-references to related docs
+
+### Cross-References Added
+- Related research and implementation guides
+- WORK_STREAM.md for tracking
+
+### Practical Additions
+- Implementation templates
+- Configuration examples
+- Best practices
+
+## Gate Escalation Ladder
+
+| Level | Trigger | Owner | Timebox | Required Action |
+|-------|---------|-------|---------|-----------------|
+| L1 | First gate failure in current loop | Implementer | 15 min | Reproduce locally, patch root cause, rerun failing gate |
+| L2 | Same gate fails twice after fix attempt | Pair reviewer | 30 min | Run focused review, narrow blast radius, approve corrective path |
+| L3 | Gate blocked by cross-stream dependency | Stream lead | 60 min | Reprioritize dependent item, assign unblock task, publish decision |
+| L4 | Blocker threatens weekly closure target | Program owner | Same day | Declare escalation, lock new scope, execute recovery plan |
+
+## Weekly Closure Rhythm
+
+- Monday: Select top closure candidates, confirm owners, and freeze non-critical intake.
+- Tuesday: Drive implementation on prioritized items and clear L1/L2 gate failures.
+- Wednesday: Run midweek health sweep (`task quality`, governance checks) and re-sequence blockers.
+- Thursday: Close validation loops, update workstream status, and finalize evidence links.
+- Friday: Execute closure review, mark DONE items, and queue next-week first actions.
+
+## Escalation Response SLAs
+
+| Escalation Level | Initial Acknowledgement | Technical Triage Complete | Comms Update Cadence | Containment Target |
+|------------------|-------------------------|----------------------------|----------------------|--------------------|
+| L1 | 10 minutes | 30 minutes | Every 60 minutes | Same working session |
+| L2 | 15 minutes | 45 minutes | Every 45 minutes | Within 4 hours |
+| L3 | 20 minutes | 60 minutes | Every 30 minutes | Within same business day |
+| L4 | 30 minutes | 90 minutes | Every 15 minutes | Immediate scope freeze + recovery plan in 2 hours |
+
+## Daily Validation Set
+
+- Run `task quality` and record pass/fail with timestamp.
+- Run `python -m pytest -q` for regression detection on current branch.
+- Run `thegent govern go health` and log any red/yellow contracts.
+- Run `thegent_do_next` and clear stale CLAIMED ownership before close.

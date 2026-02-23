@@ -28,6 +28,7 @@ class WorkItem(BaseModel):
 
 
 _TABLE_ROW_RE = re.compile(r"^\|(.+)\|$")
+_WL_HEADER_RE = re.compile(r"^###\s+\[(WL-(\d+))\]\s+(.+?)$", re.MULTILINE)
 
 
 def _parse_table_row(line: str) -> list[str]:
@@ -36,6 +37,14 @@ def _parse_table_row(line: str) -> list[str]:
     if not m:
         return []
     return [cell.strip() for cell in m.group(1).split("|")]
+
+
+def normalize_owner_identifier(owner: str) -> str:
+    """Normalize owner identifiers across local and remote systems."""
+    normalized = owner.strip()
+    if not normalized:
+        raise ValueError("owner must not be empty")
+    return normalized
 
 
 def parse_workstream(path: Path) -> list[WorkItem]:
@@ -129,7 +138,7 @@ def claim_item(path: Path, item_id: str, owner: str) -> None:
             insert_at = i + 1
 
     timestamp = datetime.now(UTC).isoformat()
-    claim_line = f"| {item_id} | {owner} | {timestamp} |"
+    claim_line = f"| {item_id} | {normalize_owner_identifier(owner)} | {timestamp} |"
     lines.insert(insert_at, claim_line)
     path.write_text("\n".join(lines) + "\n")
 
@@ -148,3 +157,49 @@ def mark_completed(path: Path, item_id: str) -> None:
     # Strike through the item ID in the backlog
     updated = text.replace(f"| {item_id} |", f"| ~~{item_id}~~ |")
     path.write_text(updated)
+
+
+def lint_workstream_schema(path: Path) -> list[str]:
+    """Validate canonical WORK_STREAM structural requirements."""
+    text = path.read_text(encoding="utf-8")
+    errors: list[str] = []
+
+    for section in ("## BACKLOG", "## CLAIMED", "## COMPLETED"):
+        if section not in text:
+            errors.append(f"missing required section: {section}")
+
+    required_header = "| ID | Title | Source | Priority | Depends |"
+    if required_header not in text:
+        errors.append("missing required BACKLOG table header")
+
+    if not _WL_HEADER_RE.search(text):
+        errors.append("missing WL section headers (### [WL-<id>] Title)")
+
+    return errors
+
+
+def normalize_workstream_sections(path: Path) -> str:
+    """Sort WL sections by numeric ID and normalize status line formatting."""
+    text = path.read_text(encoding="utf-8")
+    matches = list(_WL_HEADER_RE.finditer(text))
+    if not matches:
+        return text
+
+    sections: list[tuple[int, str]] = []
+    for idx, match in enumerate(matches):
+        start = match.start()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+        raw = text[start:end].rstrip() + "\n"
+        normalized = re.sub(
+            r"^\*\*Status:\*\*\s+(.+)$",
+            lambda m: f"**Status:** {m.group(1).strip().upper()}",
+            raw,
+            flags=re.MULTILINE,
+        )
+        sections.append((int(match.group(2)), normalized))
+
+    ordered = "".join(section for _, section in sorted(sections, key=lambda item: item[0]))
+    prefix = text[: matches[0].start()]
+    normalized_text = f"{prefix}{ordered}"
+    path.write_text(normalized_text, encoding="utf-8")
+    return normalized_text

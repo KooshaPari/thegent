@@ -67,6 +67,7 @@ class TestDoctorCheck:
 
     def test_apply_fix_on_ok_check_with_fn(self) -> None:
         """apply_fix returns result even for ok checks with a fn (fn is always called if fixable=True)."""
+
         def my_fix() -> str:
             return "ran"
 

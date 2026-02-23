@@ -157,9 +157,7 @@ class TestPolicyEngineDisabled:
         decision = engine_disabled.evaluate_hitl(ctx)
         assert decision.required is False
 
-    def test_gate_disabled_no_event_emitted(
-        self, engine_disabled: PolicyEngine, tmp_session: Path
-    ) -> None:
+    def test_gate_disabled_no_event_emitted(self, engine_disabled: PolicyEngine, tmp_session: Path) -> None:
         # @trace G-GP-05 / WL-019-A
         ctx = _critical_ctx(confidence=None)
         engine_disabled.evaluate_hitl(ctx)
@@ -188,9 +186,7 @@ class TestPolicyEngineCriticalLane:
         decision = engine_enabled.evaluate_hitl(ctx)
         assert decision.required is True
 
-    def test_critical_lane_high_confidence_does_not_fire(
-        self, engine_enabled: PolicyEngine
-    ) -> None:
+    def test_critical_lane_high_confidence_does_not_fire(self, engine_enabled: PolicyEngine) -> None:
         # @trace G-GP-05 / WL-019-A
         ctx = _critical_ctx(confidence=0.95)
         decision = engine_enabled.evaluate_hitl(ctx)
@@ -223,9 +219,7 @@ class TestPolicyEngineProductionNoConf:
         assert decision.required is True
         assert "production_no_confidence" in decision.policy
 
-    def test_production_with_confidence_does_not_fire(
-        self, engine_enabled: PolicyEngine
-    ) -> None:
+    def test_production_with_confidence_does_not_fire(self, engine_enabled: PolicyEngine) -> None:
         # @trace G-GP-05 / WL-019-A
         ctx = RunContext(
             run_id="run_prod_conf",

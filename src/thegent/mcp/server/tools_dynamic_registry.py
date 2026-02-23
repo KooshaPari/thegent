@@ -121,8 +121,7 @@ def register_dynamic_registry_tools(
             {
                 "session_id": session_id,
                 "tools": [
-                    {"name": t.name, "description": t.description, "input_schema": t.input_schema}
-                    for t in tools
+                    {"name": t.name, "description": t.description, "input_schema": t.input_schema} for t in tools
                 ],
             },
             indent=2,

@@ -42,6 +42,7 @@ class ProcessInfo:
     create_time: float
     status: str = "unknown"
 
+
 console = Console()
 _project_root_cache: Path | None = None
 
@@ -201,7 +202,6 @@ def _check_configuration() -> list[CheckResult]:
 
 def _check_isolation() -> list[CheckResult]:
     return _check_isolation_impl(check_result_cls=CheckResult)
-
 
 
 def _check_connectivity(auto_start: bool = True) -> list[CheckResult]:
@@ -1089,7 +1089,9 @@ def _check_process_health_v2(
 
         # Check file descriptors
         try:
-            num_fds = proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.net_connections())
+            num_fds = (
+                proc.num_fds() if hasattr(proc, "num_fds") else len(proc.open_files()) + len(proc.net_connections())
+            )
             if num_fds > 100:  # > 100 FDs
                 high_fd_processes.append((info.pid, info.name, num_fds, info.cmdline[:80]))
         except (psutil.AccessDenied, AttributeError):
@@ -1128,9 +1130,7 @@ def _check_process_leaks() -> list[CheckResult]:
 
         # Analyze processes
         process_infos = []
-        for proc in psutil.process_iter(
-            ["pid", "name", "cmdline", "status", "memory_info", "num_fds", "create_time"]
-        ):
+        for proc in psutil.process_iter(["pid", "name", "cmdline", "status", "memory_info", "num_fds", "create_time"]):
             info = _extract_process_info(proc)
             if info:
                 process_infos.append(info)
@@ -1292,8 +1292,7 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
             severity="warning",
             message="Ollama CLI not found in PATH; local ollama provider runs are unavailable.",
             fix_hint=(
-                "Install Ollama from https://ollama.com/download, then run "
-                "`ollama serve` and `ollama pull llama3.3`."
+                "Install Ollama from https://ollama.com/download, then run `ollama serve` and `ollama pull llama3.3`."
             ),
         )
         res_list.append(r)
@@ -1347,8 +1346,7 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
                 severity="error",
                 message=f"Ollama validation failed ({type(e).__name__}).",
                 fix_hint=(
-                    "Ensure `ollama serve` is running and a model is installed "
-                    "(for example: `ollama pull llama3.3`)."
+                    "Ensure `ollama serve` is running and a model is installed (for example: `ollama pull llama3.3`)."
                 ),
             )
     res_list.append(r)
@@ -1489,24 +1487,58 @@ def _check_mcp_tools() -> list[CheckResult]:
 
     # MCP Tools Availability
     r = CheckResult("MCP Tools", "MCP Tools & Sessions")
+    health_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
     try:
         # Check if MCP server is reachable (already checked in connectivity, but verify tools work)
         try:
-            resp = httpx.get(f"http://{settings.mcp_host}:{settings.mcp_port}/health", timeout=2.0)
+            resp = httpx.get(health_url, timeout=2.0)
             if resp.status_code == 200:
-                r.status = "ok"
-                r.message = "MCP tools available"
+                try:
+                    payload = resp.json()
+                except ValueError as exc:
+                    r.status = "warn"
+                    r.message = "MCP health endpoint returned malformed JSON"
+                    r.details = f"{type(exc).__name__}: {str(exc)[:200]}"
+                    r.fix_hint = "Run: thegent mcp up"
+                else:
+                    if isinstance(payload, dict):
+                        r.status = "ok"
+                        r.message = "MCP tools available"
+                    else:
+                        r.status = "warn"
+                        r.message = "MCP health endpoint returned unexpected payload"
+                        r.details = f"payload_type={type(payload).__name__}"
+                        r.fix_hint = "Run: thegent mcp up"
             else:
                 r.status = "warn"
-                r.message = f"MCP server returned {resp.status_code}"
+                r.message = f"MCP health probe failed: HTTP {resp.status_code}"
+                r.details = f"status_code={resp.status_code}; url={health_url}; body={resp.text[:120]}"
                 r.fix_hint = "Run: thegent mcp up"
-        except Exception:
+        except httpx.TimeoutException as exc:
+            r.status = "warn"
+            r.message = "MCP server health probe timed out"
+            r.details = f"{type(exc).__name__}: {str(exc)[:200]}"
+            r.fix_hint = "Run: thegent mcp up"
+        except httpx.ConnectError as exc:
+            r.status = "warn"
+            r.message = "MCP server connection refused (tools unavailable)"
+            r.details = f"{type(exc).__name__}: {str(exc)[:200]}"
+            r.fix_hint = "Run: thegent mcp up"
+        except httpx.HTTPError as exc:
+            r.status = "warn"
+            r.message = "MCP server health probe failed with protocol/network error"
+            r.details = f"{type(exc).__name__}: {str(exc)[:200]}"
+            r.fix_hint = "Run: thegent mcp up"
+        except OSError as exc:
             r.status = "warn"
             r.message = "MCP server not reachable (tools unavailable)"
+            r.details = f"{type(exc).__name__}: {str(exc)[:200]}"
             r.fix_hint = "Run: thegent mcp up"
     except Exception as e:
         r.status = "warn"
         r.message = f"Could not check MCP tools: {e}"
+        r.details = f"{type(e).__name__}: {str(e)[:200]}"
+        r.fix_hint = "Run: thegent mcp up"
     res_list.append(r)
 
     return res_list
@@ -1947,6 +1979,7 @@ def _display_results(results: list[CheckResult]) -> bool:
 
     def _normalize_hint_for_dedupe(raw_hint: str) -> str:
         collapsed = " ".join(raw_hint.split()).casefold().strip()
+        collapsed = re.sub(r"^(?:[-*]\s+|\d+[.)]\s+)", "", collapsed)
         return collapsed.rstrip(" .;:!?")
 
     for r in results:

@@ -84,7 +84,9 @@ def sys_mcp(
         if "all" in clients:
             clients = ["cursor", "claude-code", "codex", "claude-desktop", "droid"]
         for client in clients:
-            ok, msg = remove_servers_from_client(client=client, server_names=sorted(FAILING_MCP_SERVERS), workspace=Path.cwd())
+            ok, msg = remove_servers_from_client(
+                client=client, server_names=sorted(FAILING_MCP_SERVERS), workspace=Path.cwd()
+            )
             if not ok:
                 console.print(f"[red]{msg}[/red]")
                 raise typer.Exit(1)
@@ -123,9 +125,7 @@ def sys_mcp(
         console.print(f"[green]{msg}[/green]")
         return
 
-    raise typer.BadParameter(
-        f"Unknown action '{action}'. Expected: list|add|remove|prune|fix|migrate|migrate-unimount"
-    )
+    raise typer.BadParameter(f"Unknown action '{action}'. Expected: list|add|remove|prune|fix|migrate|migrate-unimount")
 
 
 @app.command("lsp", help="Manage Language Server Protocol (LSP) processes.")

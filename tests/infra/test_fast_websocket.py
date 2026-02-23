@@ -4,7 +4,8 @@ Tests the async WebSocket client with automatic backend selection,
 including the websocket-client fallback for async operations.
 """
 
-from unittest.mock import AsyncMock, MagicMock
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -350,6 +351,118 @@ class TestConvenienceFunctions:
         # Here we test the pattern
         await ws.connect_async()
         assert ws._backend is not None
+
+    def test_websocket_connect_sync_returns_connected_ws(self):
+        """Test websocket_connect_sync returns connected WebSocket."""
+        if not WEBSOCKET_CLIENT_AVAILABLE:
+            pytest.skip("websocket-client not available")
+
+        ws = FastWebSocket("ws://localhost:8080")
+        # Mock connect_sync
+        original_connect = ws.connect_sync
+
+        def mock_connect():
+            ws._backend = "websocket-client"
+            ws._ws = MagicMockWebSocket()
+
+        ws.connect_sync = mock_connect
+
+        # The convenience function should call connect_sync
+        ws.connect_sync()
+        assert ws._backend == "websocket-client"
+
+    @pytest.mark.asyncio
+    async def test_websocket_connect_async_convenience_function(self):
+        """Test websocket_connect_async convenience function creates and connects."""
+        if not WEBSOCKETS_AVAILABLE and not WEBSOCKET_CLIENT_AVAILABLE:
+            pytest.skip("No WebSocket library available")
+
+        # Create a mock connection
+        with patch.object(FastWebSocket, 'connect_async', new_callable=AsyncMock) as mock_connect:
+            ws = await websocket_connect_async("ws://localhost:8080")
+            assert isinstance(ws, FastWebSocket)
+            mock_connect.assert_called_once()
+
+    def test_websocket_connect_sync_convenience_function(self):
+        """Test websocket_connect_sync convenience function creates and connects."""
+        if not WEBSOCKET_CLIENT_AVAILABLE:
+            pytest.skip("websocket-client not available")
+
+        with patch.object(FastWebSocket, 'connect_sync') as mock_connect:
+            ws = websocket_connect_sync("ws://localhost:8080")
+            assert isinstance(ws, FastWebSocket)
+            mock_connect.assert_called_once()
+
+
+class TestFastWebSocketErrorHandling:
+    """Tests for error handling paths."""
+
+    def test_recv_async_raises_when_not_connected(self):
+        """Test recv_async raises RuntimeError when not connected."""
+        ws = FastWebSocket("ws://localhost:8080")
+        ws._backend = None
+        ws._ws = None
+
+        with pytest.raises(RuntimeError):
+            asyncio.run(ws.recv_async())
+
+    @pytest.mark.asyncio
+    async def test_recv_async_raises_with_unknown_backend(self):
+        """Test recv_async raises with unknown backend."""
+        ws = FastWebSocket("ws://localhost:8080")
+        ws._backend = "unknown"
+        ws._ws = MagicMock()
+
+        with pytest.raises(RuntimeError, match="Not connected"):
+            await ws.recv_async()
+
+    def test_send_sync_with_valid_backend(self):
+        """Test send_sync with valid websocket-client backend."""
+        ws = FastWebSocket("ws://localhost:8080")
+        ws._backend = "websocket-client"
+        mock_ws = MagicMock()
+        mock_ws.send = MagicMock()
+        ws._ws = mock_ws
+
+        ws.send_sync("test message")
+        mock_ws.send.assert_called_once_with("test message")
+
+    @pytest.mark.asyncio
+    async def test_close_async_with_websocket_client_async_backend(self):
+        """Test close_async with websocket-client-async backend."""
+        ws = FastWebSocket("ws://localhost:8080")
+        ws._backend = "websocket-client-async"
+        mock_ws = MagicMock()
+        mock_ws.close = MagicMock()
+        ws._ws = mock_ws
+
+        # Should not raise
+        await ws.close_async()
+
+    @pytest.mark.asyncio
+    async def test_async_context_manager_full_lifecycle(self):
+        """Test full async context manager lifecycle."""
+        ws = FastWebSocket("ws://localhost:8080")
+        ws._backend = "websockets"
+        mock_ws = MagicMock()
+        mock_ws.close = AsyncMock()
+        ws._ws = mock_ws
+
+        # Simulate __aexit__
+        await ws.__aexit__(None, None, None)
+        mock_ws.close.assert_called()
+
+    def test_sync_context_manager_full_lifecycle(self):
+        """Test full sync context manager lifecycle."""
+        ws = FastWebSocket("ws://localhost:8080")
+        ws._backend = "websocket-client"
+        mock_ws = MagicMock()
+        mock_ws.close = MagicMock()
+        ws._ws = mock_ws
+
+        # Simulate __exit__
+        ws.__exit__(None, None, None)
+        mock_ws.close.assert_called()
 
 
 class TestFastWebSocketBackendFlags:

@@ -98,7 +98,9 @@ def check_nix_daemon_status() -> tuple[bool, str]:
                 timeout=5,
             )
             if result.returncode == 0 and result.stdout:
-                output = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                output = (
+                    result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                )
                 if "com.determinate.nix-daemon" in output or "nix-daemon" in output.lower():
                     return True, "Running (launchd)"
                 if "determinate-nixd" in output.lower():
@@ -131,25 +133,40 @@ def check_nix(*, check_result_cls: type[Any], project_root: Path) -> list[Any]:
     if nix_path:
         try:
             result = run_subprocess_optimized(["nix", "--version"], capture_output=True, timeout=5)
-            if result.returncode == 0 and result.stdout:
-                ver = (
-                    result.stdout.strip()
-                    if isinstance(result.stdout, str)
-                    else result.stdout.decode("utf-8", errors="replace").strip()
-                )
+            stdout = (
+                result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+            )
+            stderr = (
+                result.stderr if isinstance(result.stderr, str) else result.stderr.decode("utf-8", errors="replace")
+            )
+            if result.returncode == 0 and stdout.strip():
                 r.status = "ok"
-                r.message = f"Found Nix: {ver}"
+                r.message = f"Found Nix: {stdout.strip()}"
+            elif result.returncode == 0:
+                r.status = "warn"
+                r.message = "Nix command returned empty version output"
+                r.details = "nix --version exited 0 but emitted no stdout"
+                r.fix_hint = "Reinstall or repair Nix; then re-run doctor."
+            else:
+                r.status = "fail"
+                r.message = f"Nix binary found, but '--version' failed (exit {result.returncode})"
+                bounded_stderr = stderr.strip()[:200] if stderr else "<no stderr>"
+                r.details = f"stderr: {bounded_stderr}"
+                r.fix_hint = "Run 'nix --version' manually and repair the Nix installation."
         except subprocess.TimeoutExpired:
             r.status = "warn"
             r.message = "Nix command timed out"
             r.fix_hint = "Nix may be initializing. Try again in a moment."
-        except Exception:
-            if Path("/nix/var/nix/profiles/default/bin/nix").exists():
-                r.status = "ok"
-                r.message = "Found Nix (Determinate Systems)"
-            else:
-                r.status = "ok"
-                r.message = "Found Nix in PATH"
+        except PermissionError as exc:
+            r.status = "fail"
+            r.message = "Nix binary found but not executable"
+            r.details = f"{type(exc).__name__}: {str(exc)[:200]}"
+            r.fix_hint = f"Check execute permissions for {nix_path}."
+        except (subprocess.SubprocessError, OSError) as exc:
+            r.status = "fail"
+            r.message = "Nix binary found but invocation failed"
+            r.details = f"{type(exc).__name__}: {str(exc)[:200]}"
+            r.fix_hint = "Run 'nix --version' manually and repair shell/path/runtime issues."
     elif Path("/nix/var/nix/profiles/default/bin/nix").exists():
         r.status = "warn"
         r.message = "Nix installed but not in PATH"

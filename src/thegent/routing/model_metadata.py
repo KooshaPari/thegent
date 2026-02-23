@@ -1,5 +1,6 @@
 """Model metadata registry for all models."""
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from thegent.routing.harness_model_mapping import resolve_model_for_backend
 
@@ -382,6 +383,49 @@ MODEL_METADATA: dict[str, dict[str, Any]] = {
         "backend": "direct",
     },
 }
+
+
+def stamp_metadata_freshness(
+    metadata: dict[str, Any],
+    *,
+    fetched_at: datetime | None = None,
+    ttl_seconds: int = 3600,
+) -> dict[str, Any]:
+    """Return metadata with freshness envelope fields."""
+    if ttl_seconds <= 0:
+        raise ValueError("ttl_seconds must be > 0")
+    now = fetched_at or datetime.now(timezone.utc)
+    envelope = dict(metadata)
+    envelope["fetched_at"] = now.isoformat()
+    envelope["expires_at"] = (now + timedelta(seconds=ttl_seconds)).isoformat()
+    envelope["ttl_seconds"] = ttl_seconds
+    envelope["freshness_status"] = "fresh"
+    return envelope
+
+
+def mark_metadata_stale(metadata: dict[str, Any]) -> dict[str, Any]:
+    """Mark metadata envelope as stale."""
+    stale = dict(metadata)
+    stale["freshness_status"] = "stale"
+    return stale
+
+
+def validate_metadata_freshness(
+    metadata: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Return metadata with explicit freshness marker based on expires_at."""
+    current = now or datetime.now(timezone.utc)
+    expires_at_raw = metadata.get("expires_at")
+    if not isinstance(expires_at_raw, str):
+        return mark_metadata_stale(metadata)
+    expires_at = datetime.fromisoformat(expires_at_raw.replace("Z", "+00:00"))
+    if current > expires_at:
+        return mark_metadata_stale(metadata)
+    fresh = dict(metadata)
+    fresh["freshness_status"] = "fresh"
+    return fresh
 
 
 def _normalize_model_id_token(model_id: str) -> str:

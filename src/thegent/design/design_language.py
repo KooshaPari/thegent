@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from typing import Any
 
+from rich.theme import Theme
+
 from thegent.thg_platform import Platform, detect_platform
 
 __all__ = ["DesignLanguage", "DesignToken"]
@@ -97,8 +99,40 @@ class DesignLanguage:
     def apply_to_cli(self) -> None:
         """Apply design language to CLI.
 
-        Configures Rich console with design tokens.
-        This is a placeholder - full implementation would configure
-        Rich console styles based on tokens.
+        Configures a Rich Theme map from design tokens and stores it in
+        ``self.cli_theme`` for CLI surfaces to consume.
         """
-        # Placeholder - would configure Rich console
+        plat = detect_platform()
+        platform_name = {
+            Platform.MACOS: "macos",
+            Platform.WINDOWS: "windows",
+            Platform.LINUX: "linux",
+        }.get(plat, "linux")
+
+        primary = self._required_token("color.primary")
+        error = self._required_token("color.error")
+        warning = self._required_token("color.warning")
+        success = self._required_token("color.success")
+        info = self._required_token("color.info")
+        mono = self._required_token("font.mono")
+        system_font = self.get_token("font.system", platform=platform_name)
+        if system_font is None:
+            raise KeyError(f"Missing required token: font.system ({platform_name})")
+
+        styles = {
+            "primary": f"bold {primary}",
+            "error": f"bold {error}",
+            "warning": f"bold {warning}",
+            "success": f"bold {success}",
+            "info": info,
+            "code": "bold cyan",
+            "body": "white",
+        }
+        self.cli_theme = Theme(styles)
+        self.cli_typography = {"mono": mono, "system": system_font}
+
+    def _required_token(self, name: str) -> Any:
+        value = self.get_token(name)
+        if value is None:
+            raise KeyError(f"Missing required token: {name}")
+        return value

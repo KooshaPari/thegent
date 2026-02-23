@@ -139,7 +139,7 @@ def _parse_snapshot(snapshot_path: Path) -> dict[str, Any]:
         "path": str(snapshot_path),
         "flags": sorted(set(FLAG_RE.findall(text))),
         "env_vars": sorted(set(ENV_RE.findall(text))),
-        "ante_commands": sorted(set(m.strip() for m in ANTE_CMD_RE.findall(text))),
+        "ante_commands": sorted({m.strip() for m in ANTE_CMD_RE.findall(text)}),
     }
 
 

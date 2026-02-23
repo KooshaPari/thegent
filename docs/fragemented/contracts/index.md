@@ -1,0 +1,12 @@
+# Consolidated Index
+
+## Files
+
+* `ATOMS_CLEAN_DEPLOY_KNOWLEDGE_BASE.md`
+* `CONTRACT_AUTHORITY.md`
+* `FALLBACK_POLICY.md`
+* `PROVIDER_ADAPTER_CONTRACTS.md`
+* `TEST_HEALTH_DASHBOARD.md`
+* `UPGRADE_PLAYBOOK.md`
+
+## Subdirectories

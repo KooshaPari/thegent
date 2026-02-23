@@ -30,7 +30,8 @@ class RuntimeStatus:
     recommendations: list[str] = field(default_factory=list)
 
     def __post_init__(self):
-        pass
+        if self.performance_tier is None:
+            self.performance_tier = "optimal" if self.available else "unavailable"
 
 
 def check_pypy() -> RuntimeStatus:
@@ -66,8 +67,8 @@ def check_pypy() -> RuntimeStatus:
             if result.returncode != 0:
                 status.issues.append("ujson not available (recommended for PyPy)")
                 status.recommendations.append("Install ujson: uv pip install ujson")
-        except Exception:
-            pass
+        except Exception as exc:
+            status.issues.append(f"ujson probe failed: {exc}")
 
     if not status.available:
         status.performance_tier = "unavailable"
@@ -108,8 +109,8 @@ def check_cpython_313() -> RuntimeStatus:
             if result.returncode != 0:
                 status.issues.append("orjson not available (recommended for CPython)")
                 status.recommendations.append("Install orjson: uv pip install orjson")
-        except Exception:
-            pass
+        except Exception as exc:
+            status.issues.append(f"orjson probe failed: {exc}")
 
     if not status.available:
         status.performance_tier = "unavailable"
@@ -150,8 +151,8 @@ def check_cpython_314() -> RuntimeStatus:
             if result.returncode != 0:
                 status.issues.append("orjson not available (recommended for CPython)")
                 status.recommendations.append("Install orjson: uv pip install orjson")
-        except Exception:
-            pass
+        except Exception as exc:
+            status.issues.append(f"orjson probe failed: {exc}")
 
     if not status.available:
         status.performance_tier = "unavailable"
@@ -247,8 +248,8 @@ def check_mojo() -> RuntimeStatus:
             status.version = stdout_text.strip()
             status.performance_tier = "optimal"
             status.path = "system"
-    except Exception:
-        pass
+    except Exception as exc:
+        status.issues.append(f"Mojo check failed: {exc}")
 
     if not status.available:
         status.performance_tier = "unavailable"
@@ -271,8 +272,8 @@ def check_zig() -> RuntimeStatus:
             status.version = stdout_text.strip()
             status.performance_tier = "optimal"
             status.path = "system"
-    except Exception:
-        pass
+    except Exception as exc:
+        status.issues.append(f"Zig check failed: {exc}")
 
     if not status.available:
         status.performance_tier = "unavailable"
@@ -303,8 +304,9 @@ def check_hardware() -> dict[str, Any]:
         try:
             if Path("/proc/sys/kernel/io_uring_disabled").exists():
                 hw_info["io_uring_available"] = True
-        except Exception:
-            pass
+        except Exception as exc:
+            hw_info["io_uring_available"] = False
+            hw_info["io_uring_error"] = str(exc)
 
         # Check for LTO or other flags in /proc/config.gz if available
         # This is very distro-specific, so just a basic check
@@ -313,11 +315,12 @@ def check_hardware() -> dict[str, Any]:
     return hw_info
 
 
-def check_network_latency(target_host: str = "127.0.0.1") -> dict[str, float]:
+def check_network_latency(target_host: str = "127.0.0.1") -> dict[str, float | list[str]]:
     """Check network latency to a target host."""
     import time
 
     latencies = []
+    errors: list[str] = []
     for _ in range(5):
         start = time.perf_counter()
         try:
@@ -327,15 +330,15 @@ def check_network_latency(target_host: str = "127.0.0.1") -> dict[str, float]:
             else:
                 run_subprocess_optimized(["ping", "-c", "1", target_host], capture_output=True, timeout=2)
             latencies.append((time.perf_counter() - start) * 1000)
-        except Exception:
-            pass
+        except Exception as exc:
+            errors.append(str(exc))
 
     if not latencies:
-        return {"avg_ms": -1.0, "jitter_ms": -1.0}
+        return {"avg_ms": -1.0, "jitter_ms": -1.0, "errors": errors}
 
     avg = sum(latencies) / len(latencies)
     jitter = max(latencies) - min(latencies)
-    return {"avg_ms": avg, "jitter_ms": jitter}
+    return {"avg_ms": avg, "jitter_ms": jitter, "errors": errors}
 
 
 def check_ipc_mesh(mesh_root: Path) -> dict[str, Any]:

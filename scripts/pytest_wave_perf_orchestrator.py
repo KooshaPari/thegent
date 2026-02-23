@@ -319,10 +319,16 @@ def _update_duration_history(
     cache_dir.mkdir(parents=True, exist_ok=True)
     _duration_cache_path(cache_dir).write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
 
-    return {test_id: value["duration"] for test_id, value in samples.items() if isinstance(value, dict) and _safe_float(value.get("duration")) is not None}, updated
+    return {
+        test_id: value["duration"]
+        for test_id, value in samples.items()
+        if isinstance(value, dict) and _safe_float(value.get("duration")) is not None
+    }, updated
 
 
-def _run_pytest(command: list[str], env: dict[str, str]) -> tuple[subprocess.CompletedProcess[str], float, PytestSummary]:
+def _run_pytest(
+    command: list[str], env: dict[str, str]
+) -> tuple[subprocess.CompletedProcess[str], float, PytestSummary]:
     start = time.perf_counter()
     proc = subprocess.run(command, capture_output=True, text=True, env=env, check=False)
     elapsed = round(time.perf_counter() - start, 3)
@@ -443,7 +449,9 @@ def _run_xdist(
     cache_dir_arg: str | None,
     cache_ttl_days: int,
 ) -> int:
-    cache_dir = _resolve_cache_dir(raw_cache_root=cache_root, raw_cache_dir=cache_dir_arg, prefix=DEFAULT_XDIST_CACHE_PREFIX)
+    cache_dir = _resolve_cache_dir(
+        raw_cache_root=cache_root, raw_cache_dir=cache_dir_arg, prefix=DEFAULT_XDIST_CACHE_PREFIX
+    )
     removed = _prune_cache(cache_dir, cache_ttl_days)
     env = os.environ.copy()
 
@@ -590,11 +598,7 @@ def _run_testmon(
     gate_pass = hit_rate is not None and hit_rate >= required_hit_rate
     fallback_candidate = (summary.deselected or 0) > 0
     fallback_required = proc.returncode != 0 or (hit_rate is not None and hit_rate < required_hit_rate)
-    false_negative_risk = (
-        (summary.failed or 0) > 0
-        or (summary.xfailed or 0) > 0
-        or (summary.deselected or 0) > 0
-    )
+    false_negative_risk = (summary.failed or 0) > 0 or (summary.xfailed or 0) > 0 or (summary.deselected or 0) > 0
 
     artifact = PytestArtifact(
         timestamp=_now_iso(),
@@ -889,8 +893,8 @@ def _run_shard_plan(
                 raw_cache_dir=cache_dir_arg,
                 prefix=DEFAULT_SHARD_CACHE_PREFIX,
             ).as_posix()
-                if cache_dir_arg is not None or cache_root is not None
-                else None,
+            if cache_dir_arg is not None or cache_root is not None
+            else None,
             "assignment_stats": {
                 "max_load": round(max_load, 6),
                 "min_load": round(min_load, 6),

@@ -1,0 +1,363 @@
+# Full Shell → Rust Where Beneficial
+
+**Purpose:** Single plan for migrating all shell usage to Rust where benefit (performance, correctness, multi-tenant, DX) outweighs cost. Keep shell only where it stays beneficial (thin wrappers, one-off scripts, user-editable). **Also covers:** Py–Rust/Go frontmatter/backmatter (BKM), existing Py/TS/Go items, value-to-port candidates, and lib-audit anti-sprawl to avoid custom impl sprawl.
+**Status:** Plan
+**Supersedes/extends:** RUST_GO_MIGRATION_PLAN, HOOK_RUNTIME_RUST_DESIGN, PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN, LIBRARY_FIRST_AUDIT_AND_PLAN, LIBRARY_REPLACEMENT_AUDIT_DEEP
+**Date:** 2026-02-17
+
+---
+
+## 1. Benefit Criteria (When to Migrate)
+
+| Criterion | Migrate to Rust | Keep Shell |
+|-----------|-----------------|------------|
+| **Hot path** | Run on every hook, every git call, or every tool invocation | Run once per session or manually |
+| **Performance** | Subprocess spawn, PATH scan, 100+ lines parsed per call | <10ms, trivial logic |
+| **Multi-tenant** | Shared state (cache, lock, git); many concurrent agents | Single-user or stateless |
+| **Correctness** | Parsing, hashing, env build; bugs cause cascade failures | Simple glue, easy to audit |
+| **Maintainability** | 500+ lines, many callers, complex control flow | <50 lines, single purpose |
+| **Cross-platform** | Must behave identically on macOS/Linux/WSL | Dev-only or macOS-only |
+
+**Default:** If in doubt and the script is in thegent’s hot path (hooks, install shims in PATH), prefer Rust. One-off dev/ops scripts can stay shell.
+
+---
+
+## 2. Full Shell Inventory
+
+### 2.1 Hooks library (`hooks/lib/`)
+
+| File | Lines (approx) | Role | Benefit |
+|------|----------------|------|--------|
+| **common.sh** | ~1685 | hook_init, hook_init_full, cache key/check/read/write, tool detection, git wrapper routing, shared changed files, breaker, debounce, incremental, config, learning, prewarm, reports, affected_tests | **HIGH** — sourced on many hook runs; 1600+ lines + 7 files |
+| **common-lite.sh** | small | Minimal subset when `_HOOK_LITE_ONLY` | **HIGH** — same hot path, less surface |
+| **git-cache.sh** | ~100+ | TTL cache for read-only git; key by (cwd, argv, HEAD) | **HIGH** — every git read in hooks |
+| **git-wrapper.sh** | ~80+ | Agent passthrough; index.lock wait; route to git_cached or real git | **HIGH** — every git in hooks |
+| **fd-wrapper.sh** | ~40 | Prefer fd, fallback find; filter -q for macOS | **MEDIUM** — called by hooks |
+| **grep-wrapper.sh** | ~30 | Prefer rg, fallback grep | **MEDIUM** — called by hooks |
+| **procs-wrapper.sh** | ~30 | Prefer procs, fallback ps | **MEDIUM** — process listing in hooks |
+| **builtin-wrapper.sh** | small | Safe builtin routing | **LOW** — thin |
+| **pkg-wrapper.sh** | small | Package manager routing | **LOW** — rare |
+| **linting-accelerator.sh** | ~50 | Ruff/shellcheck path setup | **MEDIUM** — quality-gate path |
+| **git-changed.sh** | ~40 | Wrapper around git diff + ls-files | **HIGH** — used for changed-files |
+| **dispatch-patterns.sh** | small | Pattern helpers | **LOW** |
+| **nameref-patterns.sh** | small | Zsh/nameref helpers | **LOW** |
+| **test-phase4-patterns.sh** | small | Test patterns | **LOW** |
+
+### 2.2 Hook dispatchers (`hooks/`)
+
+| File | Role | Benefit |
+|------|------|--------|
+| **posttool-dispatcher.sh** | Source common.sh once, run PostToolUse hooks (source each) | **HIGH** — entry point for PostToolUse; already have Rust hook-dispatcher, can obsolete this when hooks call thegent-hooks |
+| **pretool-dispatcher.sh** | Same for PreToolUse | **HIGH** — same as above |
+| **stop-dispatcher.sh** | Same for Stop | **HIGH** — same |
+
+*Note:* Rust **hook-dispatcher** already exists and is used when Claude/Cursor invoke it; shell dispatchers are used when something invokes the .sh directly. Unifying on hook-dispatcher + thegent-hooks makes shell dispatchers redundant.
+
+### 2.3 Event hooks (`hooks/*.sh` — non-lib, non-dispatch)
+
+| Category | Examples | Benefit |
+|----------|----------|--------|
+| **Critical path (run often)** | quality-gate.sh, security-pipeline.sh, test-maturity.sh, async-test-runner.sh | **HIGH** — complex logic, cache, git, many subprocesses; native Rust “run-hook” for 1–2 gives largest win |
+| **Session/lifecycle** | session-cleanup.sh, session-start-*.sh, task-completed.sh, teammate-idle.sh, doc-location-guard.sh, prompt-submit-guard.sh | **MEDIUM** — some already native in hook-dispatcher (doc_location_guard, session_cleanup, prompt_submit_guard); rest can call thegent-hooks |
+| **QA / governance** | governance-gates.sh, spec-verifier.sh, qa-preflight.sh, qa-*-gate.sh (many) | **MEDIUM** — governance_scan already in Rust; individual gates can stay shell that call thegent-hooks for init/cache/git |
+| **Gardener / XP** | gardener-xp.sh, gardener-loop.sh, gardener-spawn.sh, gardener-*.sh | **MEDIUM** — invoked from Python (main.py); can become Rust binary or stay shell calling thegent-hooks |
+| **Harvest / ideas** | harvest-pending-queue.sh, harvest-idea-seeds-stop.sh | **LOW** — called from prompts.py; can stay shell or become small Rust CLI |
+| **Other** | complexity-ratchet.sh, auto-checkpoint.sh, change-doc-tracker.sh, pre-compact-snapshot.sh, hook-watcher.sh, speculative-stop-prewarmer.sh, stop-reconcile.sh, prune-orphans-stop.sh, suppression-*.sh, pre-commit-docs.sh, docs-build.sh | **LOW–MEDIUM** — keep as thin shell that call thegent-hooks for init/cache/git; or migrate hot ones later |
+| **Tests** | test_cache_*.sh | **LOW** — dev only |
+
+### 2.4 Install-generated shims (`install.py` → `~/.local/bin/`)
+
+| Shim | Role | Benefit |
+|------|------|--------|
+| **git** | resolve_real_binary git; agent passthrough (codex/copilot/dex/claude/cursor); exec real git | **HIGH** — on every git in terminals/agents; already minimal (no common.sh). Replace with **Rust binary** that does resolve + passthrough + exec to avoid any bash. |
+| **grep** | resolve real grep; prefer rg, exec | **MEDIUM** — replace with Rust that exec’s rg or grep |
+| **find** | resolve real find; filter -q/--quiet; exec fd or find | **MEDIUM** — replace with Rust that filters args and exec’s |
+| **codex, copilot, dex, claude, cursor** | PATH prepend ~/.local/bin; resolve agent binary (dex→codex fallback); exec | **MEDIUM** — replace with single Rust binary `thegent-agent-shim <agent> argv...` to avoid bash + PATH parsing |
+| **run, bg, logs, status, …** | exec thegent &lt;role&gt; "$@" | **KEEP SHELL** — one-liner; or replace with one Rust “role shim” that exec’s thegent. **LOW** benefit. |
+
+### 2.5 Scripts (`thegent/scripts/`)
+
+| Script | Role | Benefit |
+|--------|------|--------|
+| **install_zsh_plugins.sh** | Install zsh plugins (fzf-tab, etc.) | **KEEP SHELL** — run once per setup; user-facing |
+| **harvest-idea-seeds.sh** | Harvest idea seeds (prompts.py calls it) | **LOW** — could be Rust CLI later |
+| **build-all-rust-extensions.sh** | Build Rust crates | **KEEP SHELL** — dev; cargo is the real work |
+| **build-discovery-extension.sh** | Maturin build thegent-discovery | **KEEP SHELL** — dev |
+| **optimize-runtime.sh** | Diagnose/fix zsh startup | **KEEP SHELL** — dev/ops |
+| **fix-which-timeout.sh** | Fix which timeout | **KEEP SHELL** — one-off fix |
+| **identify-shell-migration-candidates.sh** | Find migration candidates | **KEEP SHELL** — meta |
+| **fix_shell_corruption.sh**, **emergency_fix_shell.sh** | Repair shell config | **KEEP SHELL** — recovery |
+| **guard-shim-forks.sh** | Guard against fork bombs | **LOW** — could be Rust daemon |
+| **quality-agent.sh**, **quality-fix-agent.sh** | Agent runners | **LOW** — orchestration |
+| **monitor-process-count.sh**, **benchmark-comprehensive.sh** | Metrics/bench | **KEEP SHELL** — dev |
+| **dx-audit.sh**, **traceability-validator.sh**, **test-pyramid-validator.sh** | Audits | **LOW** — can stay shell |
+| **start_proxy_dev.sh**, **generate_demos.sh** | Dev helpers | **KEEP SHELL** |
+| **build-docs.sh** (templates) | Build VitePress/docs | **KEEP SHELL** |
+
+### 2.6 Python-invoked shell
+
+| Caller | Invokes | Action |
+|--------|--------|--------|
+| main.py | hook-watcher.sh | Keep or replace with thegent-watcher (Rust) when that covers hook-watcher use case |
+| main.py | gardener-xp.sh (award, progress) | Replace with Rust CLI or MCP once gardener state is stable |
+| prompts.py | harvest-idea-seeds.sh | Can stay shell or become Rust later |
+
+---
+
+## 3. Rust Target Map (Where Each Shell Goes)
+
+### 3.1 thegent-hooks (new crate, or extend hook-dispatcher)
+
+**Replaces:** All of `hooks/lib/common.sh` behavior + `git-cache.sh` + `git-wrapper.sh` semantics when called from hooks.
+
+| Shell surface | Rust surface |
+|---------------|--------------|
+| hook_init, hook_init_full | `thegent-hooks init` |
+| hook_cache_key, hash_for_cache | `thegent-hooks cache-key`, `file-hash` |
+| hook_cache_check/read/write | `thegent-hooks cache-check`, `cache-read`, `cache-write` |
+| git_cached, git() (read + lock + passthrough) | `thegent-hooks git` |
+| hook_shared_changed_files, git-changed.sh | `thegent-hooks changed-files` |
+| hook_share_result, hook_get_shared | `thegent-hooks share`, `get-shared` |
+| hook_should_run, hook_should_skip | `thegent-hooks should-run`, `skip` |
+| hook_config_get, hook_config_true | `thegent-hooks config-get` |
+| hook_breaker_* | `thegent-hooks breaker-check`, `breaker-record`, `breaker-reset` |
+| hook_debounce_file | `thegent-hooks debounce` |
+| hook_incremental_* | `thegent-hooks incremental-check`, `incremental-record` |
+| hook_shared_fr_ids, hook_shared_fr_index | `thegent-hooks fr-ids`, `fr-index` |
+| get_affected_tests, affected_tests_* | `thegent-hooks affected-tests` |
+| hook_prewarm_all | `thegent-hooks prewarm` |
+| write_*_report | `thegent-hooks report` |
+| hook_learning_* | `thegent-hooks learning-record`, `learning-should-skip` |
+
+**Also:** fd-wrapper, grep-wrapper, procs-wrapper *behavior* can be “config + exec”: thegent-hooks init (or tool-detect) exports FD_CMD, RG_CMD; hooks or thegent-hooks run subprocess with that. No need for separate Rust “fd” implementation; prefer exec(rg)/exec(fd). Wrappers disappear when hooks stop sourcing common.sh.
+
+### 3.2 Install shims → Rust binaries
+
+| Current (shell shim) | Rust binary | Notes |
+|----------------------|-------------|--------|
+| ~/.local/bin/git | **thegent-git-shim** (new) or **thegent-shims** | Single binary: `thegent-shims git -- argv...` — resolve real git, agent passthrough, exec. No bash. |
+| ~/.local/bin/grep | **thegent-shims grep -- argv...** | Resolve rg or grep, exec. |
+| ~/.local/bin/find | **thegent-shims find -- argv...** | Filter -q/--quiet, exec fd or find. |
+| ~/.local/bin/codex, copilot, dex, claude, cursor | **thegent-shims agent <name> -- argv...** | One binary; symlinks codex→thegent-shims agent codex, etc. PATH prepend, resolve, exec. |
+
+**Role shims** (run, bg, logs, …): Keep as minimal shell `exec thegent "$role" "$@"` or replace with `thegent-shims role <name> -- argv...` that exec’s `thegent <name> "$@"`. **LOW** priority.
+
+### 3.3 Hook-dispatcher (existing Rust)
+
+- **Keep:** Orchestration, stdin JSON → env, timeout, skip list, running hook scripts.
+- **Add:** Call into thegent-hooks (lib) for env build, cache key, changed-files so dispatcher doesn’t need to spawn thegent-hooks for every hook when running bash; or have each hook script be thin and call `thegent-hooks init`, `thegent-hooks cache-key`, etc.
+- **Already native:** doc_location_guard, session_cleanup, prompt_submit_guard, governance_scan.
+
+### 3.4 thegent-git (existing crate)
+
+- **Keep:** Python extension (get_head_sha, get_status_short, get_diff, etc.) for Python callers.
+- **Use from:** thegent-hooks (via ffi or re-exports) for head_sha, status, diff when implementing cache-key and changed-files in Rust; or use gix for pure-Rust path.
+
+### 3.5 thegent-tool-detect (existing)
+
+- **Keep:** Already provides JQ_CMD, RG_CMD, FD_CMD, etc. (--export, --json).
+- **Use from:** thegent-hooks init can call it or link it to set tool paths in env so hooks don’t need wrapper scripts.
+
+### 3.6 Keep as shell (no migration)
+
+- hooks/lib: **builtin-wrapper.sh**, **pkg-wrapper.sh**, **dispatch-patterns.sh**, **nameref-patterns.sh**, **test-phase4-patterns.sh** — thin or dev.
+- hooks: **test_cache_*.sh**, **suppression-*.sh** (unless we fold into one runner), **pre-commit-docs.sh**, **docs-build.sh** — low frequency or dev.
+- scripts: **install_zsh_plugins.sh**, **fix_*.sh**, **optimize-runtime.sh**, **build-*.sh**, **monitor-*.sh**, **benchmark-*.sh**, **dx-audit.sh**, **generate_demos.sh**, **start_proxy_dev.sh**, **traceability-validator.sh**, **test-pyramid-validator.sh** — dev/ops/user one-offs.
+- Role shims (run, bg, …): keep one-line shell or single Rust “role” shim later.
+
+---
+
+## 4. Phased Migration Order
+
+### Phase 0: Foundation (no shell removal yet)
+
+- Add crate **thegent-hooks** (or extend hook-dispatcher) with CLI skeleton: init, cache-key, cache-check/read/write, git, changed-files, config-get, skip, breaker-*, etc. Stub or delegate to shell where needed.
+- Add crate **thegent-shims** (or thegent-runtime extension): single binary with subcommands `git`, `grep`, `find`, `agent <name>`, optionally `role <name>`. Implement git: resolve real git, agent passthrough, exec. Implement find: filter -q/--quiet, exec. Implement agent: PATH prepend, resolve (dex→codex), exec.
+- **Deliverable:** thegent-hooks and thegent-shims binaries; install can optionally install Rust shims instead of bash.
+
+### Phase 1: Hook runtime core (replace common.sh hot path)
+
+- Implement in **thegent-hooks**: init (stdin JSON → env, PROJECT_DIR), cache-key (blake3), cache-check/read/write, git (cached read + lock + passthrough), changed-files, config-get.
+- Migrate one or two hooks to “thin shell”: no source common.sh; call `thegent-hooks init` (or use env from dispatcher), `thegent-hooks cache-key`, `thegent-hooks cache-check`, `thegent-hooks git`, `thegent-hooks changed-files`. Validate parity.
+- **Deliverable:** quality-gate.sh (or similar) and one other hook run without sourcing common.sh; thegent-hooks is source of truth for init/cache/git/changed-files.
+
+### Phase 2: Install shims → Rust
+
+- **install.py:** When installing “accelerators”, build/install **thegent-shims** and write symlinks (or thin wrappers) so `git` → thegent-shims git, `grep` → thegent-shims grep, `find` → thegent-shims find, `codex` → thegent-shims agent codex, etc. Remove generation of bash git/grep/find/agent shims (or keep as fallback if Rust binary missing).
+- **Deliverable:** `thegent install` puts Rust shims in ~/.local/bin for git, grep, find, codex, copilot, dex, claude, cursor; no bash for those.
+
+### Phase 3: Full hook library in Rust
+
+- Implement in **thegent-hooks**: should-run, skip, breaker, debounce, incremental, fr-ids, fr-index, affected-tests, prewarm, report, learning.
+- Migrate all hooks that still source common.sh to thin shell calling thegent-hooks. Deprecate **common.sh**, **common-lite.sh**, **git-cache.sh**, **git-wrapper.sh**, **fd-wrapper.sh**, **grep-wrapper.sh**, **procs-wrapper.sh**, **git-changed.sh** (replaced by thegent-hooks or env from dispatcher).
+- **Deliverable:** No hook sources common.sh; hooks/lib only optional legacy fallbacks or removed.
+
+### Phase 4: Dispatchers and optional native hooks
+
+- Ensure **hook-dispatcher** (Rust) is the single entry point for all hook events when invoked by Claude/Cursor; remove or redirect **posttool-dispatcher.sh**, **pretool-dispatcher.sh**, **stop-dispatcher.sh** so they are not needed (or make them thin wrappers that exec hook-dispatcher).
+- Optionally implement **thegent-hooks run-hook quality-gate** (and 1–2 others) natively in Rust (run ruff, semgrep, etc. via std::process or task runner). Then dispatcher can call `thegent-hooks run-hook quality-gate` instead of `bash quality-gate.sh`.
+- **Deliverable:** Single dispatcher path (Rust); optional native run-hook for hottest hooks.
+
+### Phase 5: Gardener / watcher / scripts (optional)
+
+- **gardener-xp.sh**: Replace with Rust CLI or integrate into thegent so main.py calls Rust or MCP instead of subprocess.run(["hooks/gardener-xp.sh", ...]).
+- **hook-watcher.sh**: Replace with thegent-watcher (Rust) if it covers the same behavior.
+- **harvest-idea-seeds.sh**: Replace with Rust CLI if prompts.py is updated to call it.
+- **Deliverable:** No remaining shell in hot path; scripts/ and one-off hooks stay shell where beneficial.
+
+---
+
+## 5. Summary Table: Shell → Rust Where Beneficial
+
+| Area | Migrate to Rust | Keep shell |
+|------|-----------------|------------|
+| **hooks/lib** | common.sh, common-lite.sh, git-cache.sh, git-wrapper.sh, fd/grep/procs wrappers, git-changed.sh → **thegent-hooks** (+ tool paths from thegent-tool-detect) | builtin-wrapper, pkg-wrapper, small pattern scripts |
+| **Dispatchers** | Obsolete when hook-dispatcher + thegent-hooks are single path | pretool/posttool/stop-dispatcher.sh until Phase 4 |
+| **Event hooks** | Logic of quality-gate, security-pipeline (optionally) → **thegent-hooks run-hook**; all others become thin callers of thegent-hooks | Thin hooks that only call thegent-hooks; test/dev hooks |
+| **Install shims** | git, grep, find, codex/copilot/dex/claude/cursor → **thegent-shims** | Role shims (run, bg, …) as one-liners or later Rust |
+| **Scripts** | — | install_zsh_plugins, fix_*, build-*, benchmark, dx-audit, harvest (optional later), gardener (optional later) |
+| **Python-invoked** | gardener-xp, hook-watcher → Rust/MCP when beneficial | harvest-idea-seeds as shell until Phase 5 |
+
+---
+
+## 6. References
+
+- [HOOK_RUNTIME_RUST_DESIGN.md](./HOOK_RUNTIME_RUST_DESIGN.md) — thegent-hooks subcommands and migration phases
+- [HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md](../research/HOOK_RUST_MIGRATION_RESEARCH_SYNTHESIS.md) — research and alignment with existing plans
+- [RUST_GO_MIGRATION_PLAN.md](../migration/RUST_GO_MIGRATION_PLAN.md) — original shell→Rust/Go priority list
+- [PROCESS_OPTIMIZATION_PLAN.md](./PROCESS_OPTIMIZATION_PLAN.md) — MTSP, hook-dispatcher, Phase 3 native hooks
+- [PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md](../research/PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md) — BKM tasks, Py–Rust/Go frontmatter
+- [FRONTMATTER_BACKMATTER_INTEGRATION_POINTS.md](../reference/FRONTMATTER_BACKMATTER_INTEGRATION_POINTS.md) — integration points
+- [LIBRARY_FIRST_AUDIT_AND_PLAN.md](../research/LIBRARY_FIRST_AUDIT_AND_PLAN.md) — library-first, avoid custom impl
+- [LIBRARY_REPLACEMENT_AUDIT_DEEP.md](../research/LIBRARY_REPLACEMENT_AUDIT_DEEP.md) — file-level replacements, anti-sprawl extension §12
+
+---
+
+## 7. Py–Rust/Go Frontmatter & Backmatter (BKM)
+
+**Principle:** Python = frontmatter (CLI, MCP, orchestration); Rust/Go = backmatter (hot path, resources, parsing, git, state). See [PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md](../research/PYTHON_FRONTMATTER_NATIVE_BACKMATTER_AUDIT_PLAN.md) and [FRONTMATTER_BACKMATTER_ARCHITECTURE.md](../architecture/FRONTMATTER_BACKMATTER_ARCHITECTURE.md).
+
+### 7.1 BKM Task Summary (Existing + Planned)
+
+| Task | Crate / Binary | Status | Interface |
+|------|----------------|--------|-----------|
+| **BKM-01** | thegent-resources | ✅ Done | Subprocess JSON; PyO3-ready |
+| **BKM-02** | thegent-parser | ✅ Done | PyO3 extract_xml_tags, strip_noise, strip_think_blocks |
+| **BKM-03** | thegent-crypto | ✅ Done | PyO3 sign_artifact, verify_signature, artifact_hash |
+| **BKM-04** | load_based_limits.py | ✅ Done | Python wrapper around BKM-01 |
+| **BKM-05** | thegent-shm | Pending | State-SHM (circuit breaker, XP in mmap) |
+| **BKM-06** | thegent-git | ✅ Done (libgit2) | PyO3 get_head_sha, get_status_short, get_diff |
+| **BKM-07** | hook-dispatcher | Partial | Native secret scan (extend); governance already native |
+| **BKM-08** | thegent-discovery | Exists | Binary; PATH resolution, process scan |
+| **BKM-09** | thegent-watcher | Exists | Daemon; file watching |
+| **BKM-10** | thegent-parser | Pending | JSONL streaming in Rust |
+| **BKM-11** | hook-dispatcher / scanner | Pending | Native governance scanner (replace Python spawns) |
+
+**Hook runtime (thegent-hooks)** is out-of-BKM scope but aligns: it replaces shell common.sh with Rust; BKM-06 (thegent-git) can feed thegent-hooks for head_sha/diff when called from Python or from hooks.
+
+### 7.2 Integration Points (Quick Ref)
+
+- **Python → Rust:** PyO3 (thegent_parser, thegent_crypto, thegent_git), subprocess JSON (thegent-resources, thegent-discovery), MCP tools that call native.
+- **Hooks → Rust:** hook-dispatcher (Rust) runs bash hooks; thegent-hooks (when built) will provide init/cache/git/changed-files so hooks stop sourcing common.sh.
+- **Install shims:** Today bash (install.py); target thegent-shims (Rust) for git/grep/find/agent.
+
+---
+
+## 8. Existing Py / TS / Go Items
+
+### 8.1 Python (Hot Paths & Value to Port)
+
+| Module / Area | Current | Port / Consolidate |
+|---------------|---------|--------------------|
+| **Subprocess-heavy** | discovery.py (git, ps, npx); load_based_limits (lsof, vm_stat — BKM-01 done); forensics/snapshot (git); governance/scanner (ruff, bandit); cli_impl (tmux, ps, lsof) | BKM-08 discovery binary; BKM-06 for git; extend hook-dispatcher for scan |
+| **Regex/parse hot path** | output_parser.py, contracts/parser.py, tools/xml_repair.py | BKM-02 done; BKM-10 streaming later |
+| **Crypto** | governance/signatures.py, execution.py | BKM-03 done |
+| **State** | circuit_breaker.py, shm_context.py | BKM-05 State-SHM |
+| **HTTP** | 7+ files urllib | → httpx (LIBRARY_REPLACEMENT_AUDIT_DEEP Phase 1) |
+| **Retry** | cli_impl, loop_controller manual loops | → tenacity (TENACITY_RETRY_AUDIT_PLAN) |
+| **File watching** | governance/triggers (os.walk polling) | → watchdog or thegent-watcher |
+| **Caching** | tools/cache.py, _CWD_CACHE, various TTL | → cachetools/diskcache or thegent-hooks cache |
+
+### 8.2 TypeScript / JS
+
+| Item | Location | Role | Port / Note |
+|------|----------|------|-------------|
+| **Docs / VitePress** | templates/vitepress-full, build-docs.sh | Docs build | Keep; build-docs.sh stays shell |
+| **MCP servers (TS)** | next-devtools, sequential-thinking, etc. | MCP tools | Keep; mounted in thegent serve |
+| **Config.${version}.ts** | build-docs.sh | Versioned docs | Keep (COMPREHENSIVE_NON_CANONICAL_AUDIT: legitimate) |
+| **RUNTIME_OPTIMIZATION** | — | Recommends Bun over Node | Use Bun where TS/JS runs; no port to Rust needed |
+
+No thegent core logic in TS; TS is docs and external MCPs. No TS→Rust migration in scope.
+
+### 8.3 Go
+
+| Item | Location | Role | Port / Note |
+|------|----------|------|-------------|
+| **ultra-shim** | ULTRA_SHIM_CONSOLIDATION_COMPLETE, ULTRA_SHIM_FORK_FAILURE_FIX | Single Go binary: find, grep, git, cat, ls, du, node, npm, npx, python, pip (cache + exec) | **Superseded by thegent-shims (Rust)** in this plan. Go binary had fork exhaustion; we standardize on Rust thegent-shims for git/grep/find/agent. |
+| **RUST_GO_MIGRATION_PLAN** | — | “Hook dispatchers → Go binary” | Design chose **Rust** (hook-dispatcher + thegent-hooks); no Go dispatcher. |
+
+**Conclusion:** No active Go in thegent core. ultra-shim is legacy; new shims = Rust (thegent-shims).
+
+---
+
+## 9. Value to Port (Beyond Shell)
+
+Items worth porting or consolidating to avoid duplication and custom impl sprawl:
+
+| Source | Target | Rationale |
+|--------|--------|-----------|
+| **Python subprocess for git** | Use thegent-git (BKM-06) or thegent-hooks git | Single place for git metadata; no repeated git spawns |
+| **Python custom cache (TTL, file)** | cachetools / diskcache or thegent-hooks cache | LIBRARY_FIRST; one cache strategy |
+| **Python custom retry loops** | tenacity | TENACITY_RETRY_AUDIT_PLAN |
+| **Python urllib** | httpx | LIBRARY_REPLACEMENT_AUDIT_DEEP Phase 1 |
+| **Python os.walk polling** | watchdog or thegent-watcher | LIBRARY_REPLACEMENT_AUDIT_DEEP Phase 3 |
+| **Python ANSI strip (5+ copies)** | rich.strip_control_codes | LIBRARY_REPLACEMENT_AUDIT_DEEP Phase 4 |
+| **Shell common.sh (init, cache, git)** | thegent-hooks | Single Rust binary; no 1600-line shell |
+| **Install bash shims (git, grep, find, agent)** | thegent-shims | Single Rust binary; no PATH parsing in bash |
+| **Custom ToolCircuitBreaker** | pybreaker or BKM-05 State-SHM | LIBRARY_FIRST; or native state in Rust |
+| **Duplicate regex/XML in Python** | thegent-parser (BKM-02) | Already done; ensure all callers use it |
+| **ID generation (uuid4().hex[:8])** | shortuuid / nanoid (lib) or keep | LIBRARY_REPLACEMENT_AUDIT_DEEP |
+| **YAML round-trip** | ruamel.yaml | Preserve comments (LIBRARY_REPLACEMENT_AUDIT_DEEP) |
+
+---
+
+## 10. Lib Audits & Anti-Sprawl Extension
+
+### 10.1 Existing Lib Audits (Refs)
+
+- **[LIBRARY_FIRST_AUDIT_AND_PLAN.md](../research/LIBRARY_FIRST_AUDIT_AND_PLAN.md):** Prefer library + thin wrapper over custom. Categories: retry (tenacity), cache (cachetools/diskcache), file watch (watchdog), circuit breaker (pybreaker), HTTP (httpx), logging (structlog).
+- **[LIBRARY_REPLACEMENT_AUDIT_DEEP.md](../research/LIBRARY_REPLACEMENT_AUDIT_DEEP.md):** File-level replacements (urllib→httpx, ANSI→rich, retry→tenacity, os.walk→watchdog, custom cache→cachetools, XML→defusedxml/lxml, etc.); proposed new libs (slugify, parse, shortuuid, ruamel.yaml, pathspec, platformdirs); Phase DWBs.
+- **[LIBRARY_REPLACEMENT_PHASE_DWBS.md](../research/LIBRARY_REPLACEMENT_PHASE_DWBS.md):** Per-phase task breakdown for lib replacement.
+
+### 10.2 Anti-Sprawl Rule (Before Adding Custom Impl)
+
+Before implementing custom logic, check in order:
+
+1. **Existing thegent native:** Is there already a Rust crate or BKM task? (thegent-parser, thegent-crypto, thegent-git, thegent-resources, thegent-hooks, thegent-shims, hook-dispatcher.)
+2. **Python stdlib:** Can stdlib do it? (json, hashlib, subprocess, pathlib, sqlite3, graphlib.)
+3. **Existing Py dependency:** Is it already in pyproject? (pydantic, httpx, tenacity, rich, typer.)
+4. **Library (PyPI / crates.io):** Is there a mature lib? (cachetools, diskcache, watchdog, pybreaker, orjson, ruamel.yaml.)
+5. **Shell vs Rust:** If the logic is in shell (hooks, shims), should it move to thegent-hooks or thegent-shims instead of adding more shell?
+6. **Document:** If you still add custom code, add a one-line comment or doc reference: “No suitable lib; see LIBRARY_FIRST_AUDIT.”
+
+### 10.3 Consolidation Matrix (Capability → Preferred Source)
+
+| Capability | Prefer | Avoid |
+|------------|--------|-------|
+| Retry/backoff | tenacity | Manual for/while + sleep |
+| Cache (TTL, file) | cachetools, diskcache, or thegent-hooks cache | Custom dict + mtime |
+| HTTP client | httpx | urllib.request |
+| Git metadata (HEAD, status, diff) | thegent-git, thegent-hooks git | subprocess.run(["git", ...]) |
+| XML/JSONL parse (hot path) | thegent-parser (BKM-02) | Many re.compile + hand-written loops |
+| Crypto (sign/verify/hash) | thegent-crypto (BKM-03) | hashlib + custom HMAC in hot path |
+| Resource sampling (FD, mem) | thegent-resources (BKM-01) | lsof, vm_stat subprocess |
+| File watching | watchdog or thegent-watcher | os.walk polling |
+| Circuit breaker | pybreaker or BKM-05 State-SHM | Custom failure list + timer |
+| Hook init/cache/changed-files | thegent-hooks | common.sh sourcing |
+| PATH / tool resolution | thegent-tool-detect, thegent-discovery | command -v in shell |
+| Install shims (git, grep, find, agent) | thegent-shims (Rust) | Bash scripts in install.py |
+| ANSI strip | rich.strip_control_codes | re.sub(r"\x1b\[...") in 5 places |
+| YAML (round-trip) | ruamel.yaml | PyYAML where comments matter |
+| ID generation | shortuuid/nanoid or stdlib uuid | uuid4().hex[:8] scattered |
+
+This matrix is extended in [LIBRARY_REPLACEMENT_AUDIT_DEEP.md](../research/LIBRARY_REPLACEMENT_AUDIT_DEEP.md) §12 (Anti-Sprawl Extension).

@@ -1,7 +1,6 @@
 """KaTeX math support for documentation."""
 
 
-
 class MathSupport:
     """KaTeX math rendering support."""
 

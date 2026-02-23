@@ -144,7 +144,53 @@ class TestAutopilotStatusCommand:
             with open(status_path, "w") as f:
                 f.write("{invalid json content")
 
-            result = runner.invoke(app, ["autopilot-status", "--format", "rich"])
+            result = runner.invoke(app, ["autopilot-status", "--format", "json"])
 
-        # Should still succeed and use defaults
+        # Should still succeed and surface parse error in normalized status payload
         assert result.exit_code == 0
+        try:
+            status = json.loads(result.stdout)
+            assert status["health"] == "degraded"
+            assert "Failed to parse" in (status["last_error"] or "")
+            assert "runner" in status
+            assert "open_blockers" in status
+            assert "failure_queue_size" in status
+        except json.JSONDecodeError:
+            assert '"health": "degraded"' in result.stdout
+            assert "Failed to parse" in result.stdout
+
+    @pytest.mark.requirement("WL-171")
+    def test_autopilot_status_normalizes_invalid_contract_types(self) -> None:
+        """# @trace WL-171 — autopilot-status normalizes malformed contract fields."""
+        runner = CliRunner()
+
+        with runner.isolated_filesystem():
+            docs_dir = Path("docs/reference")
+            docs_dir.mkdir(parents=True)
+            status_path = docs_dir / "autosync_status.json"
+            with open(status_path, "w") as f:
+                json.dump(
+                    {
+                        "last_cycle_at": 123,
+                        "total_cycles": "not-an-int",
+                        "last_error": {"detail": "boom"},
+                        "health": "UNKNOWN",
+                        "runner": "invalid-runner",
+                        "open_blockers": "invalid",
+                        "failure_queue_size": "nan",
+                    },
+                    f,
+                )
+
+            result = runner.invoke(app, ["autopilot-status", "--format", "json"])
+
+        assert result.exit_code == 0
+        status = json.loads(result.stdout)
+        assert status["last_cycle_at"] is None
+        assert status["total_cycles"] == 0
+        assert status["health"] == "degraded"
+        assert status["last_error"] == "{'detail': 'boom'}"
+        assert status["runner"]["enabled"] is False
+        assert status["runner"]["failure_queue_size"] == 0
+        assert status["open_blockers"] == []
+        assert status["failure_queue_size"] == 0

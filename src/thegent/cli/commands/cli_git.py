@@ -69,10 +69,7 @@ def worktree_status(
         if not agents:
             console.print("[]")
             return
-        payload = [
-            {"agent_id": agent_id, "branch": branch}
-            for agent_id, branch in agents
-        ]
+        payload = [{"agent_id": agent_id, "branch": branch} for agent_id, branch in agents]
         import json
 
         console.print(json.dumps(payload, indent=2))
@@ -97,10 +94,7 @@ def worktree_list(
     pool = _build_worktree_pool(project_root, target_branch=target_branch, pool_root=pool_root)
     agents = _worktree_agents(pool)
     if json_output:
-        payload = [
-            {"agent_id": agent_id, "branch": branch}
-            for agent_id, branch in agents
-        ]
+        payload = [{"agent_id": agent_id, "branch": branch} for agent_id, branch in agents]
         import json
 
         console.print(json.dumps(payload, indent=2))

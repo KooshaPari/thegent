@@ -46,7 +46,9 @@ def test_register_execution_tools_registers_expected_names() -> None:
         write_session_control_file=lambda **kwargs: None,
         normalize_bg_routing=lambda **kwargs: ("prefer_direct", "prefer_direct", "prefer_direct", False),
         build_route_request_payload=lambda **kwargs: kwargs,
-        settings_factory=lambda: SimpleNamespace(default_routing="prefer_direct", default_timeout_free=90, session_dir="."),
+        settings_factory=lambda: SimpleNamespace(
+            default_routing="prefer_direct", default_timeout_free=90, session_dir="."
+        ),
         default_owner_tag=lambda _cwd: "owner",
         resolve_cwd_elicitation=lambda _response: (None, "declined"),
         resolve_owner_elicitation=lambda _response, default_owner_tag: (default_owner_tag, None),
@@ -97,7 +99,9 @@ def test_execution_contract_negotiate_passes_session_contract_impl() -> None:
         write_session_control_file=lambda **kwargs: None,
         normalize_bg_routing=lambda **kwargs: ("prefer_direct", "prefer_direct", "prefer_direct", False),
         build_route_request_payload=lambda **kwargs: kwargs,
-        settings_factory=lambda: SimpleNamespace(default_routing="prefer_direct", default_timeout_free=90, session_dir="."),
+        settings_factory=lambda: SimpleNamespace(
+            default_routing="prefer_direct", default_timeout_free=90, session_dir="."
+        ),
         default_owner_tag=lambda _cwd: "owner",
         resolve_cwd_elicitation=lambda _response: (None, "declined"),
         resolve_owner_elicitation=lambda _response, default_owner_tag: (default_owner_tag, None),

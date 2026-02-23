@@ -27,14 +27,13 @@ class DummyResult:
 
 def _expected_skip_message(argv: list[str]) -> str:
     attempted_command_path = " ".join(argv)
-    return (
-        f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} "
-        f"{ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} {attempted_command_path}"
-    )
+    return f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} {ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} {attempted_command_path}"
 
 
 def test_invoke_skips_when_no_such_command_in_stdout(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(cli_runner_compat_module.CliRunner, "invoke", lambda *args, **kwargs: DummyResult(stdout="No such command: foo"))
+    monkeypatch.setattr(
+        cli_runner_compat_module.CliRunner, "invoke", lambda *args, **kwargs: DummyResult(stdout="No such command: foo")
+    )
 
     runner = CompatCliRunner()
     argv = ["foo", "bar"]
@@ -45,7 +44,9 @@ def test_invoke_skips_when_no_such_command_in_stdout(monkeypatch: pytest.MonkeyP
 
 
 def test_invoke_skips_when_no_such_command_in_stderr(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(cli_runner_compat_module.CliRunner, "invoke", lambda *args, **kwargs: DummyResult(stderr="No such command: bar"))
+    monkeypatch.setattr(
+        cli_runner_compat_module.CliRunner, "invoke", lambda *args, **kwargs: DummyResult(stderr="No such command: bar")
+    )
 
     runner = CompatCliRunner()
     argv = ["bar", "baz"]
@@ -393,19 +394,13 @@ def test_build_command_surface_drift_skip_message_handles_tuple_argv() -> None:
 def test_build_command_surface_drift_skip_message_handles_scalar_positional_argv() -> None:
     message = _build_command_surface_drift_skip_message("app", "logs")
 
-    assert message == (
-        f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} "
-        f"{ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} logs"
-    )
+    assert message == (f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} {ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} logs")
 
 
 def test_build_command_surface_drift_skip_message_handles_missing_args() -> None:
     message = _build_command_surface_drift_skip_message("app")
 
-    assert message == (
-        f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} "
-        f"{ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} <unspecified>"
-    )
+    assert message == (f"{COMMAND_SURFACE_DRIFT_SKIP_MESSAGE} {ATTEMPTED_ARGV_COMMAND_PATH_PREFIX} <unspecified>")
 
 
 def test_extract_invoke_app_extracts_positional_app() -> None:

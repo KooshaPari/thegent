@@ -74,7 +74,7 @@ class TestPerformanceModule:
         module.register("native", native_impl)
         module.register("python", python_impl)
 
-        with patch('thegent.infra.runtime_dispatcher.IS_PYPY', False):
+        with patch("thegent.infra.runtime_dispatcher.IS_PYPY", False):
             result = module.get_impl()
             assert result is native_impl
 
@@ -90,7 +90,7 @@ class TestPerformanceModule:
         module.register("native", native_impl)
         module.register("python", python_impl)
 
-        with patch('thegent.infra.runtime_dispatcher.IS_PYPY', True):
+        with patch("thegent.infra.runtime_dispatcher.IS_PYPY", True):
             # Reset selection to test selection logic
             module._selected = None
             result = module.get_impl()
@@ -244,7 +244,7 @@ class TestWasmDispatcher:
 
     def test_wasm_dispatcher_has_static_method(self):
         """Test WasmDispatcher has call_plugin method."""
-        assert hasattr(WasmDispatcher, 'call_plugin')
+        assert hasattr(WasmDispatcher, "call_plugin")
         assert callable(WasmDispatcher.call_plugin)
 
     def test_wasm_dispatcher_raises_when_not_available(self):

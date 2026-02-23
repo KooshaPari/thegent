@@ -218,7 +218,10 @@ class TestMigrateToUnimount:
 
     def test_preserves_other_servers(self, tmp_path: Path) -> None:
         """Migration updates only thegent aliases and preserves existing MCP entries."""
-        existing = {"mcpServers": {"other-server": {"url": "http://old"}, "legacy": {"url": "http://legacy"}}, "other_key": 7}
+        existing = {
+            "mcpServers": {"other-server": {"url": "http://old"}, "legacy": {"url": "http://legacy"}},
+            "other_key": 7,
+        }
         codex_dir = tmp_path / ".codex"
         codex_dir.mkdir(parents=True, exist_ok=True)
         (codex_dir / "mcp.json").write_text(json.dumps(existing))

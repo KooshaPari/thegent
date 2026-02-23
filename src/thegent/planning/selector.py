@@ -1,9 +1,12 @@
 """WP-14001: Cost-aware objective selector for multi-objective optimization."""
 
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 from thegent.planning.models_meta import MODEL_METADATA, ModelMetadata
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -71,15 +74,26 @@ class ObjectiveSelector:
             try:
                 from thegent.models.quality_values import get_model_quality_index
                 from thegent.models.speed_values import get_model_best_speed_index
-
-                q = get_model_quality_index(model_id)
-                if 0 <= q <= 1:
-                    quality_score = q
-                s = get_model_best_speed_index(model_id)
-                if 0 <= s <= 1:
-                    speed_score = s
-            except Exception:
-                pass
+            except ImportError as exc:
+                _log.warning(
+                    "Model score enrichment unavailable for %s; using metadata defaults: %s",
+                    model_id,
+                    exc,
+                )
+            else:
+                try:
+                    q = get_model_quality_index(model_id)
+                    if 0 <= q <= 1:
+                        quality_score = q
+                    s = get_model_best_speed_index(model_id)
+                    if 0 <= s <= 1:
+                        speed_score = s
+                except (RuntimeError, ValueError, TypeError, KeyError, AttributeError) as exc:
+                    _log.warning(
+                        "Model score enrichment failed for %s; using metadata defaults: %s",
+                        model_id,
+                        exc,
+                    )
 
         # Normalize Cost (Lower is better)
         total_cost = meta.cost_per_1k_input + meta.cost_per_1k_output

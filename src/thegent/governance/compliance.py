@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class ComplianceProfileType(Enum):
@@ -350,8 +350,8 @@ class EvidenceStore:
         kind: EvidenceKind,
         actor: str,
         resource: str = "",
-        payload: Optional[dict] = None,
-        evidence_id: Optional[str] = None,
+        payload: dict | None = None,
+        evidence_id: str | None = None,
     ) -> ComplianceEvidence:
         """Append a new evidence record and return it."""
         import uuid as _uuid
@@ -507,7 +507,7 @@ class ConsentRecord(_BaseModel):
     data_category: str = _Field(min_length=1)
     granted: bool
     granted_at: str = _Field(min_length=1)
-    withdrawn_at: Optional[str] = None
+    withdrawn_at: str | None = None
 
 
 class RetentionEnforcer:
@@ -546,7 +546,7 @@ class RetentionEnforcer:
         """Append a consent record."""
         self._append_jsonl(self._consent_path, record.model_dump(mode="json"))
 
-    def list_consents(self, tenant_id: Optional[str] = None) -> list:
+    def list_consents(self, tenant_id: str | None = None) -> list:
         records = [ConsentRecord.model_validate(r) for r in self._read_jsonl(self._consent_path)]
         if tenant_id is not None:
             records = [r for r in records if r.tenant_id == tenant_id]
@@ -638,9 +638,9 @@ class AuditExporter:
     def export_json(
         self,
         *,
-        output_path: Optional[Path] = None,
-        since_days: Optional[int] = None,
-        kind_filter: Optional[list] = None,
+        output_path: Path | None = None,
+        since_days: int | None = None,
+        kind_filter: list | None = None,
     ) -> dict:
         """Export evidence to a structured JSON document.
 

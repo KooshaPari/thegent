@@ -62,3 +62,43 @@ thegent serve
 ```bash
 thegent mcp prune
 ```
+
+## Runbook: Autosync Incident and Recovery
+
+Trigger conditions:
+1. `docs/reference/autosync_status.json` reports `"health": "degraded"` for 2+ cycles.
+2. Emergency stop sentinel exists or `THGENT_AUTOSYNC_EMERGENCY_STOP=1`.
+3. Failure queue grows continuously (`failure_queue_size` increasing across runs).
+
+Immediate containment:
+1. Enable emergency stop:
+
+```bash
+export THGENT_AUTOSYNC_EMERGENCY_STOP=1
+```
+
+2. Confirm no new write-capable sync activity (status snapshot should keep `last_error`).
+
+Rollback and recovery:
+1. Capture current state:
+
+```bash
+thegent sync autopilot-status
+```
+
+2. Remove/repair bad local changes, then clear emergency stop only after validation:
+
+```bash
+unset THGENT_AUTOSYNC_EMERGENCY_STOP
+```
+
+3. Run one controlled cycle:
+
+```bash
+thegent sync autopilot --once
+```
+
+Validation checkpoints:
+1. `last_error` is empty in `docs/reference/autosync_status.json`.
+2. `failure_queue_size` is stable or decreasing.
+3. `docs/reference/WORK_STREAM.md` reflects expected statuses only.

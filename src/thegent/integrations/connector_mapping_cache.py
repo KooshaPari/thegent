@@ -6,10 +6,12 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Optional
+
+WL_ID_PATTERN = re.compile(r"^WL-\d+$")
 
 
 @dataclass
@@ -36,7 +38,7 @@ class ConnectorMappingCache:
 
     DEFAULT_CACHE_FILE = Path("docs/reference/connector_mapping_cache.json")
 
-    def __init__(self, cache_file: Optional[Path] = None) -> None:
+    def __init__(self, cache_file: Path | None = None) -> None:
         """Initialize the mapping cache.
 
         Args:
@@ -75,7 +77,45 @@ class ConnectorMappingCache:
 
     def _make_key(self, connector: str, field_name: str) -> str:
         """Create a cache key from connector and field name."""
-        return f"{connector}:{field_name}"
+        return f"{self._normalize_connector(connector)}:{self._normalize_field_name(field_name)}"
+
+    @staticmethod
+    def _normalize_connector(connector: str) -> str:
+        normalized = connector.strip().lower()
+        if not normalized:
+            raise ValueError("connector cannot be empty")
+        return normalized
+
+    @staticmethod
+    def _normalize_field_name(field_name: str) -> str:
+        normalized = field_name.strip()
+        if not normalized:
+            raise ValueError("field_name cannot be empty")
+        return normalized
+
+    def bootstrap_required(self, connector: str, required_fields: list[str]) -> bool:
+        """Return whether bootstrap mappings are missing for required fields.
+
+        A bootstrap is required when at least one required field has no
+        non-stale mapping in the cache for the given connector.
+        """
+        normalized_required = [field.strip() for field in required_fields if field.strip()]
+        if not normalized_required:
+            return False
+        return any(self.get(connector, field_name) is None for field_name in normalized_required)
+
+    def bootstrap(self, connector: str, mappings: dict[str, str], ttl_seconds: int = 3600) -> None:
+        """Persist an initial mapping set for a connector.
+
+        Raises:
+            ValueError: If any field name or field id is empty.
+        """
+        for field_name, field_id in mappings.items():
+            if not field_name.strip():
+                raise ValueError("mapping field_name cannot be empty")
+            if not field_id.strip():
+                raise ValueError("mapping field_id cannot be empty")
+            self.put(connector, field_name.strip(), field_id.strip(), ttl_seconds=ttl_seconds)
 
     def is_stale(self, entry: MappingEntry) -> bool:
         """Check if an entry has expired based on TTL.
@@ -90,7 +130,7 @@ class ConnectorMappingCache:
         elapsed = current_time - entry.cached_at
         return elapsed > entry.ttl_seconds
 
-    def get(self, connector: str, field_name: str) -> Optional[str]:
+    def get(self, connector: str, field_name: str) -> str | None:
         """Get cached field_id for a connector+field_name pair.
 
         Returns None if not cached, expired, or not found.
@@ -115,6 +155,24 @@ class ConnectorMappingCache:
 
         return entry.field_id
 
+    def get_with_status(self, connector: str, field_name: str) -> dict[str, object]:
+        """Get mapping state with explicit freshness marker.
+
+        Returns:
+            Dict containing:
+                - field_id: str | None
+                - status: "missing" | "stale" | "fresh"
+        """
+        key = self._make_key(connector, field_name)
+        entry = self._entries.get(key)
+        if entry is None:
+            return {"field_id": None, "status": "missing"}
+        if self.is_stale(entry):
+            del self._entries[key]
+            self._save()
+            return {"field_id": None, "status": "stale"}
+        return {"field_id": entry.field_id, "status": "fresh"}
+
     def put(self, connector: str, field_name: str, field_id: str, ttl_seconds: int = 3600) -> None:
         """Cache a connector field mapping.
 
@@ -124,11 +182,16 @@ class ConnectorMappingCache:
             field_id: Remote field identifier.
             ttl_seconds: Time-to-live in seconds (default: 3600 = 1 hour).
         """
-        key = self._make_key(connector, field_name)
+        normalized_connector = self._normalize_connector(connector)
+        normalized_field_name = self._normalize_field_name(field_name)
+        normalized_field_id = field_id.strip()
+        if not normalized_field_id:
+            raise ValueError("field_id cannot be empty")
+        key = self._make_key(normalized_connector, normalized_field_name)
         entry = MappingEntry(
-            connector=connector,
-            field_id=field_id,
-            field_name=field_name,
+            connector=normalized_connector,
+            field_id=normalized_field_id,
+            field_name=normalized_field_name,
             cached_at=time.time(),
             ttl_seconds=ttl_seconds,
         )
@@ -161,3 +224,36 @@ class ConnectorMappingCache:
             self._save()
 
         return len(stale_keys)
+
+    def list_entries(self, connector: str, *, include_stale: bool = False) -> list[MappingEntry]:
+        """List entries for one connector.
+
+        Args:
+            connector: Connector name.
+            include_stale: Whether stale records should be included.
+        """
+        normalized = self._normalize_connector(connector)
+        results: list[MappingEntry] = []
+        stale_keys: list[str] = []
+        for key, entry in self._entries.items():
+            if entry.connector != normalized:
+                continue
+            if not include_stale and self.is_stale(entry):
+                stale_keys.append(key)
+                continue
+            results.append(entry)
+
+        if stale_keys:
+            for key in stale_keys:
+                del self._entries[key]
+            self._save()
+
+        return sorted(results, key=lambda entry: entry.field_name)
+
+    def list_cached_wl_ids(self, connector: str) -> list[str]:
+        """Return WL IDs cached as field names for a connector."""
+        wl_ids: list[str] = []
+        for entry in self.list_entries(connector):
+            if WL_ID_PATTERN.fullmatch(entry.field_name):
+                wl_ids.append(entry.field_name)
+        return sorted(wl_ids)

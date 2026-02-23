@@ -47,7 +47,9 @@ def parse_run_result(payload: dict[str, Any]) -> RunResult:
         context_tokens_used=(
             int(payload["context_tokens_used"]) if payload.get("context_tokens_used") is not None else None
         ),
-        context_window_max=int(payload["context_window_max"]) if payload.get("context_window_max") is not None else None,
+        context_window_max=int(payload["context_window_max"])
+        if payload.get("context_window_max") is not None
+        else None,
         context_usage_ratio=(
             float(payload["context_usage_ratio"]) if payload.get("context_usage_ratio") is not None else None
         ),

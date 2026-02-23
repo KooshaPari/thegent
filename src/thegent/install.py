@@ -1,13 +1,15 @@
 """Install module for managed installation and synchronization of thegent components."""
 
 import json
+import logging
 import platform
 import shutil
 import subprocess
 import sys
+from importlib import import_module
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
@@ -95,18 +97,35 @@ __all__ = [
 
 from thegent.mcp.manage import service_install, service_start, service_uninstall
 
+_LOG = logging.getLogger(__name__)
+
 
 def _get_thegent_root() -> Path:
     """Return thegent root (has hooks/, skills/). Works for dev and installed package."""
     # Installed: hooks/skills are force-included at thegent/hooks, thegent/skills
     try:
-        import thegent
-
-        pkg = Path(thegent.__file__).resolve().parent
-        if (pkg / "hooks").exists() or (pkg / "skills").exists():
-            return pkg
-    except Exception:
-        pass
+        module = import_module("thegent")
+    except (ImportError, ModuleNotFoundError) as exc:
+        _LOG.warning(
+            "install_root_detection_fallback",
+            extra={"failure_type": "import_error", "error_type": type(exc).__name__, "error_message": str(exc)[:180]},
+        )
+    else:
+        try:
+            module_file = getattr(module, "__file__", None)
+            if module_file:
+                pkg = Path(module_file).resolve().parent
+                if (pkg / "hooks").exists() or (pkg / "skills").exists():
+                    return pkg
+        except (OSError, RuntimeError, ValueError, TypeError) as exc:
+            _LOG.warning(
+                "install_root_detection_fallback",
+                extra={
+                    "failure_type": "path_resolution_error",
+                    "error_type": type(exc).__name__,
+                    "error_message": str(exc)[:180],
+                },
+            )
     # Dev: install.py is at src/thegent/install.py -> project root is parent.parent.parent
     return Path(__file__).resolve().parent.parent.parent
 
@@ -133,8 +152,8 @@ def setup_hooks(cwd: Path | None = None, dry_run: bool = False, verbose: bool = 
 
     # Map git hook names to thegent hook scripts
     hook_map = {
-        "pre-commit": "pre-commit.sh",
-        "pre-push": "pre-push.sh",
+        "pre-commit": "pre-commit-quality.sh",
+        "pre-push": "pre-push-quality.sh",
     }
 
     for hook_name, default_script in hook_map.items():
@@ -156,25 +175,18 @@ def _setup_git_hook(
     dst = git_hooks / hook_name
     hook_script = hooks_src / default_script
     if not hook_script.exists():
-        hook_script = next(
-            (
-                hooks_src / s
-                for s in (
-                    "pre-commit.sh",
-                    "pre-push.sh",
-                    "pre-commit-docs.sh",
-                    "quality-gate.sh",
-                )
-                if (hooks_src / s).exists()
-            ),
-            None,
-        )
+        fallback_map = {
+            "pre-commit": ("pre-commit-docs.sh", "quality-gate.sh"),
+            "pre-push": ("quality-gate.sh",),
+        }
+        candidates = fallback_map.get(hook_name, ("quality-gate.sh",))
+        hook_script = next((hooks_src / s for s in candidates if (hooks_src / s).exists()), None)
     if not hook_script or not hook_script.exists():
         return
     wrapper = f"""#!/bin/sh
 # thegent setup --hooks
 set -e
-exec "{hook_script}" "$@"
+exec sh "{hook_script}" "$@"
 """
     if dry_run:
         counts["installed"] += 1
@@ -946,13 +958,13 @@ class InstallManager:
                 if dst_mtime >= src_mtime:
                     if self.verbose:
                         sys.stdout.write(f"  Skipped (up to date or user modified): {target}\n")
-                    return FileAction.SKIPPED
+                    return cast("FileAction", FileAction.SKIPPED)
             elif mode == InstallMode.INTERACTIVE:
                 # In non-interactive shells, this might hang. We should check if sys.stdin.isatty()
                 if not sys.stdin.isatty():
                     if self.verbose:
                         sys.stderr.write(f"  Non-interactive shell, skipping conflict: {target}\n")
-                    return FileAction.CONFLICT
+                    return cast("FileAction", FileAction.CONFLICT)
 
                 choice = Prompt.ask(
                     f"Conflict detected for {target}. [o]verwrite, [s]kip, [b]ackup & overwrite?",
@@ -960,8 +972,8 @@ class InstallManager:
                     default="s",
                 )
                 if choice == "s":
-                    return FileAction.SKIPPED
-                mode = InstallMode.SMART if choice == "b" else InstallMode.FORCE
+                    return cast("FileAction", FileAction.SKIPPED)
+                mode = cast("InstallMode", InstallMode.SMART if choice == "b" else InstallMode.FORCE)
 
         # Perform action
         backup_path = None
@@ -975,13 +987,13 @@ class InstallManager:
 
             if mode == InstallMode.EDITABLE:
                 target.symlink_to(source)
-                action = FileAction.SYMLINKED
+                action = cast("FileAction", FileAction.SYMLINKED)
             else:
                 if source.is_dir():
                     copy_tree(source, target)
                 else:
                     copy_file(source, target)
-                action = FileAction.COPIED
+                action = cast("FileAction", FileAction.COPIED)
 
             # Register in manifest
             self.manifest.files[str(target)] = FileManifest(
@@ -992,7 +1004,7 @@ class InstallManager:
                 backup=str(backup_path) if backup_path else None,
             )
         else:
-            action = FileAction.COPIED if mode != InstallMode.EDITABLE else FileAction.SYMLINKED
+            action = cast("FileAction", FileAction.COPIED if mode != InstallMode.EDITABLE else FileAction.SYMLINKED)
             if self.verbose:
                 sys.stdout.write(f"  Would {'symlink' if mode == InstallMode.EDITABLE else 'copy'}: {target}\n")
 
@@ -1721,7 +1733,7 @@ def run_install(
             src_local = shell_dir / SHELL_LOCAL_TEMPLATE
             dst_local = home / ".zshrc.local"
             if src_local.exists() and not dst_local.exists():
-                res = mgr.install_file(src_local, dst_local, InstallMode.SMART)
+                res = mgr.install_file(src_local, dst_local, cast("InstallMode", InstallMode.SMART))
                 key = res.value if hasattr(res, "value") else str(res)
                 counts[key] = counts.get(key, 0) + 1
 

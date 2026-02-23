@@ -3,6 +3,7 @@
 import os
 import subprocess
 from pathlib import Path
+from typing import Final, Literal, TypeAlias
 
 import typer
 from rich.console import Console
@@ -10,6 +11,63 @@ from rich.table import Table
 
 shell_app = typer.Typer(name="shell", help="Shell environment management commands")
 console = Console()
+
+AliasProbeStatus: TypeAlias = Literal["ok", "execution_failed", "timeout", "unavailable", "other_error"]
+AliasProbeResult: TypeAlias = tuple[AliasProbeStatus, str | None, str]
+_ALIAS_PROBE_CMD: Final = "alias ls 2>/dev/null | command grep -E '(tree|recursive|-R)' || true"
+_ALIAS_PROBE_TIMEOUT: Final = 2
+
+
+def _run_alias_probe() -> AliasProbeResult:
+    """Run a focused shell alias probe and return a typed status + reason."""
+    try:
+        result = subprocess.run(
+            ["zsh", "-c", _ALIAS_PROBE_CMD],
+            capture_output=True,
+            text=True,
+            timeout=_ALIAS_PROBE_TIMEOUT,
+            env={**os.environ, "RIPGREP_CONFIG_PATH": "", "GREP_OPTIONS": ""},
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return "timeout", _classify_subprocess_probe_error(exc), ""
+    except FileNotFoundError as exc:
+        return "unavailable", _classify_subprocess_probe_error(exc), ""
+    except subprocess.SubprocessError as exc:
+        return "other_error", _classify_subprocess_probe_error(exc), ""
+
+    if result.returncode != 0:
+        return "execution_failed", _classify_subprocess_probe_execution(result), ""
+
+    return "ok", None, result.stdout
+
+
+def _classify_subprocess_probe_error(exc: BaseException) -> str:
+    if isinstance(exc, subprocess.TimeoutExpired):
+        timeout_s = getattr(exc, "timeout", None)
+        if isinstance(timeout_s, int | float):
+            return f"timeout after {timeout_s}s"
+        return "timeout"
+    if isinstance(exc, FileNotFoundError):
+        return "zsh executable not found"
+    if isinstance(exc, subprocess.SubprocessError):
+        return f"subprocess error ({type(exc).__name__}): {exc}"
+    if isinstance(exc, OSError):
+        return f"os error ({type(exc).__name__}): {exc}"
+    return f"unexpected error ({type(exc).__name__}): {exc}"
+
+
+def _classify_subprocess_probe_execution(result: subprocess.CompletedProcess[str]) -> str:
+    reason = f"execution failed (exit {result.returncode})"
+    stderr = result.stderr.strip()
+    stdout = result.stdout.strip()
+    if stderr and stdout:
+        return f"{reason}: stderr='{stderr}', stdout='{stdout}'"
+    if stderr:
+        return f"{reason}: {stderr}"
+    if stdout:
+        return f"{reason}: {stdout}"
+    return reason
 
 
 @shell_app.command("status")
@@ -69,6 +127,12 @@ def shell_status() -> None:
     console.print(env_table)
 
 
+@shell_app.command("stat")
+def shell_status_alias() -> None:
+    """Alias for shell status."""
+    shell_status()
+
+
 @shell_app.command("profile")
 def shell_profile(
     enable: bool = typer.Option(False, "--enable", help="Enable profiling"),
@@ -106,6 +170,15 @@ def shell_profile(
         console.print("[yellow]Profiling is disabled.[/yellow]")
 
 
+@shell_app.command("prof")
+def shell_profile_alias(
+    enable: bool = typer.Option(False, "--enable", help="Enable profiling"),
+    disable: bool = typer.Option(False, "--disable", help="Disable profiling"),
+) -> None:
+    """Alias for shell profile."""
+    shell_profile(enable=enable, disable=disable)
+
+
 @shell_app.command("clear-cache")
 def shell_clear_cache() -> None:
     """Clear shell optimization cache (eval cache, tool cache, etc.)."""
@@ -133,11 +206,29 @@ def shell_reload() -> None:
 
     # Try to source .zshrc
     try:
-        subprocess.run(["zsh", "-c", "source ~/.zshrc"], check=False)
-        console.print("[green]✓ Shell configuration reloaded.[/green]")
-    except Exception as e:
+        result = subprocess.run(
+            ["zsh", "-c", "source ~/.zshrc"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            console.print("[green]✓ Shell configuration reloaded.[/green]")
+            return
+
+        console.print(f"[red]Shell reload failed (exit code {result.returncode}).[/red]")
+        stdout_snippet = result.stdout.strip()
+        stderr_snippet = result.stderr.strip()
+        if stdout_snippet:
+            console.print(f"[yellow]stdout:[/yellow] {stdout_snippet[:500]}")
+        if stderr_snippet:
+            console.print(f"[yellow]stderr:[/yellow] {stderr_snippet[:500]}")
+        console.print("[yellow]Try running: source ~/.zshrc[/yellow]")
+        raise typer.Exit(1)
+    except (subprocess.SubprocessError, OSError) as e:
         console.print(f"[red]Error reloading: {e}[/red]")
         console.print("[yellow]Try running: exec zsh[/yellow]")
+        raise typer.Exit(1)
 
 
 @shell_app.command("doctor")
@@ -146,6 +237,7 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
     home = Path.home()
     issues = []
     fixes = []
+    warnings = []
 
     # Check for missing files
     required_files = {
@@ -160,21 +252,31 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
                 fixes.append("Run: thegent install --target system")
 
     # Check for problematic aliases
-    try:
-        result = subprocess.run(
-            ["zsh", "-c", "alias ls 2>/dev/null | command grep -E '(tree|recursive|-R)' || true"],
-            capture_output=True,
-            text=True,
-            timeout=2,
-            env={**os.environ, "RIPGREP_CONFIG_PATH": "", "GREP_OPTIONS": ""},
-            check=False,
-        )
-        if result.stdout.strip():
+    probe_status, probe_reason, probe_stdout = _run_alias_probe()
+    if probe_status == "ok":
+        if probe_stdout.strip():
             issues.append("ls is aliased to tree/recursive output")
             if fix:
                 fixes.append("Safeguards should fix this automatically")
-    except Exception:
-        pass
+    elif probe_status == "execution_failed":
+        warnings.append(
+            f"Alias probe execution failed ({probe_reason}). Check zsh startup and rerun: thegent shell doctor."
+        )
+        if fix:
+            fixes.append("Fix zsh startup errors or rerun with a clean PATH.")
+    elif probe_status == "timeout":
+        warnings.append(
+            f"Alias probe timed out: {probe_reason}. Check zsh startup time and rerun: thegent shell doctor --fix"
+        )
+        if fix:
+            fixes.append("Increase shell probe timeout or skip alias checks temporarily.")
+    else:
+        warnings.append(
+            f"Alias probe unavailable ({probe_reason}). Verify zsh is installed and runnable, "
+            "then rerun: thegent shell doctor."
+        )
+        if fix:
+            fixes.append("Install or fix zsh in PATH, then rerun: thegent shell doctor.")
 
     # Check cache directory permissions
     cache_dir = Path.home() / ".cache" / "thegent"
@@ -192,8 +294,18 @@ def shell_doctor(fix: bool = typer.Option(False, "--fix", help="Attempt to fix i
             console.print("\n[yellow]Suggested fixes:[/yellow]")
             for fix_cmd in fixes:
                 console.print(f"  • {fix_cmd}")
-    else:
+    if warnings:
+        console.print("\n[yellow]Warnings:[/yellow]")
+        for warning in warnings:
+            console.print(f"  • {warning}")
+    if not issues and not warnings:
         console.print("[green]✓ No issues found. Shell environment is healthy.[/green]")
+
+
+@shell_app.command("doc")
+def shell_doctor_alias(fix: bool = typer.Option(False, "--fix", help="Attempt to fix issues")) -> None:
+    """Alias for shell doctor."""
+    shell_doctor(fix=fix)
 
 
 @shell_app.command("benchmark")
@@ -474,9 +586,33 @@ def shell_platform() -> None:
     # Check shell
     try:
         result = subprocess.run(["zsh", "--version"], capture_output=True, text=True, timeout=2, check=False)
-        zsh_version = result.stdout.strip().split()[1] if result.returncode == 0 else "Unknown"
-        table.add_row("Zsh Version", zsh_version)
-    except Exception:
-        table.add_row("Zsh Version", "Not available")
+        if result.returncode == 0:
+            parts = result.stdout.strip().split()
+            if len(parts) > 1:
+                table.add_row("Zsh Status", "Available")
+                table.add_row("Zsh Version", parts[1])
+            else:
+                table.add_row("Zsh Status", "Malformed version output")
+                table.add_row("Zsh Version", result.stdout.strip() or "Unknown")
+        else:
+            reason = _classify_subprocess_probe_execution(result)
+            table.add_row("Zsh Status", f"Execution failed ({reason})")
+            table.add_row("Zsh Version", "Unknown")
+    except FileNotFoundError as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Not installed ({reason})")
+        table.add_row("Zsh Version", "Unknown")
+    except subprocess.TimeoutExpired as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Probe timed out ({reason})")
+        table.add_row("Zsh Version", "Unknown")
+    except subprocess.SubprocessError as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Probe failed ({reason})")
+        table.add_row("Zsh Version", "Unknown")
+    except OSError as exc:
+        reason = _classify_subprocess_probe_error(exc)
+        table.add_row("Zsh Status", f"Probe failed ({reason})")
+        table.add_row("Zsh Version", "Unknown")
 
     console.print(table)

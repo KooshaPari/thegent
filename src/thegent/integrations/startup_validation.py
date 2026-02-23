@@ -5,7 +5,13 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
+
+import httpx
+from httpx import HTTPError, NetworkError, RequestError, TimeoutException, UnsupportedProtocol
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -26,6 +32,22 @@ class StartupValidationResult:
 class StartupValidator:
     """Validator for startup configuration and connectivity."""
 
+    endpoint_timeout: float = 2.0
+
+    @staticmethod
+    def _classify_endpoint_error(exc: Exception) -> str:
+        if isinstance(exc, TimeoutException):
+            return "timeout"
+        if isinstance(exc, NetworkError):
+            return "network_error"
+        if isinstance(exc, UnsupportedProtocol):
+            return "invalid_endpoint"
+        if isinstance(exc, httpx.HTTPStatusError):
+            return f"http_status_{exc.response.status_code}"
+        if isinstance(exc, HTTPError):
+            return "http_error"
+        return "unknown_error"
+
     def check_auth_scopes(self, required_scopes: list[str], available_scopes: list[str]) -> bool:
         """Check that all required scopes are available.
 
@@ -40,11 +62,26 @@ class StartupValidator:
         required_set = set(required_scopes)
         return required_set.issubset(available_set)
 
+    def _is_endpoint_reachable(self, endpoint: str) -> bool:
+        """Check reachability of a single endpoint with bounded timeout.
+
+        Args:
+            endpoint: Endpoint URL to check.
+
+        Returns:
+            True when the endpoint responds with a 2xx/3xx status code.
+        """
+        try:
+            response = httpx.get(endpoint, timeout=self.endpoint_timeout, follow_redirects=True)
+            # Any 2xx/3xx indicates a healthy reachable endpoint.
+            return 200 <= response.status_code < 400
+        except (RequestError, TimeoutException, UnsupportedProtocol, TypeError, ValueError) as exc:
+            reason = self._classify_endpoint_error(exc)
+            _log.warning("Endpoint probe failed for %s: %s", endpoint, reason)
+            return False
+
     def check_endpoint_reachability(self, endpoints: list[str]) -> dict[str, bool]:
         """Check reachability of endpoints.
-
-        This is a stub implementation that returns all endpoints as reachable.
-        In production, this would perform actual network checks.
 
         Args:
             endpoints: List of endpoint URLs to check.
@@ -52,7 +89,12 @@ class StartupValidator:
         Returns:
             Dictionary mapping endpoint URL to reachability status.
         """
-        return dict.fromkeys(endpoints, True)
+        reachability: dict[str, bool] = {}
+        for endpoint in endpoints:
+            if endpoint in reachability:
+                continue
+            reachability[endpoint] = self._is_endpoint_reachable(endpoint)
+        return reachability
 
     def validate_all(self, config: dict) -> StartupValidationResult:
         """Validate all startup configuration.

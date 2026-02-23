@@ -130,6 +130,10 @@ uv run python scripts/check_python_benchmark_regression.py \
 | Command | Purpose |
 |---------|---------|
 | `thegent serve` | Start MCP server for clients/tools |
+| `thegent mcp reload` | Alias for `thegent mcp restart` (restart MCP + proxy services) |
+| `thegent mcp hmr` | Watch project changes and auto-restart MCP + proxy |
+| `thegent reload` | Top-level shortcut for `thegent mcp reload` |
+| `thegent hmr` | Top-level shortcut for `thegent mcp hmr` |
 | `thegent mcp prune` | Cleanup stale MCP resources safely |
 
 If you run into startup errors, use [Operations Troubleshooting](/operations/troubleshooting).

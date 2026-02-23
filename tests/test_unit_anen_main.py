@@ -125,7 +125,7 @@ def test_install_links_writes_anen_wrappers(tmp_path: Path) -> None:
 
 def test_resolve_anen_cmd_skips_thegent_wrapper(tmp_path: Path, monkeypatch) -> None:
     wrapper = tmp_path / "ante-wrapper"
-    wrapper.write_text("#!/usr/bin/env sh\nexec thegent anen \"$@\"\n", encoding="utf-8")
+    wrapper.write_text('#!/usr/bin/env sh\nexec thegent anen "$@"\n', encoding="utf-8")
     wrapper.chmod(0o755)
 
     native = tmp_path / "ante-native"

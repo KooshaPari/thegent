@@ -32,7 +32,7 @@ def _safe_attr_name(node: ast.expr) -> str | None:
 def _extract_decorated_commands(tree: ast.AST) -> list[str]:
     commands: list[str] = []
     for node in ast.walk(tree):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if not isinstance(node, (ast.FunctionDef | ast.AsyncFunctionDef)):
             continue
         for decorator in node.decorator_list:
             if not isinstance(decorator, ast.Call):
@@ -40,7 +40,11 @@ def _extract_decorated_commands(tree: ast.AST) -> list[str]:
             decorator_name = _safe_attr_name(decorator.func)
             if decorator_name is None or not decorator_name.endswith(".command"):
                 continue
-            if decorator.args and isinstance(decorator.args[0], ast.Constant) and isinstance(decorator.args[0].value, str):
+            if (
+                decorator.args
+                and isinstance(decorator.args[0], ast.Constant)
+                and isinstance(decorator.args[0].value, str)
+            ):
                 commands.append(decorator.args[0].value)
             else:
                 commands.append(node.name)
@@ -50,7 +54,7 @@ def _extract_decorated_commands(tree: ast.AST) -> list[str]:
 def _extract_top_level_functions(tree: ast.Module) -> list[str]:
     names: list[str] = []
     for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, (ast.FunctionDef | ast.AsyncFunctionDef)):
             names.append(node.name)
     return names
 
@@ -96,8 +100,12 @@ def _render_text(payload: dict[str, dict[str, object]]) -> str:
     for wl_id in sorted(payload):
         info = payload[wl_id]
         lines.append(f"{wl_id} :: {info['path']}")
-        lines.append(f"  lines={info['line_count']} top_level_functions={info['top_level_function_count']} classes={info['class_count']}")
-        lines.append(f"  async_functions={info['async_function_count']} command_decorators={info['command_decorator_count']}")
+        lines.append(
+            f"  lines={info['line_count']} top_level_functions={info['top_level_function_count']} classes={info['class_count']}"
+        )
+        lines.append(
+            f"  async_functions={info['async_function_count']} command_decorators={info['command_decorator_count']}"
+        )
     return "\n".join(lines)
 
 

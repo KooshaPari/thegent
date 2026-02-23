@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 
 @dataclass
@@ -47,7 +46,7 @@ class HysteresisGate:
     changes based on configurable stable cycle counts and cooldown periods.
     """
 
-    def __init__(self, config: Optional[HysteresisConfig] = None):
+    def __init__(self, config: HysteresisConfig | None = None):
         """Initialize the hysteresis gate.
 
         Args:
@@ -81,9 +80,7 @@ class HysteresisGate:
 
         # Clean up old transitions (older than cooldown period)
         cutoff = now - timedelta(seconds=self.config.cooldown_seconds)
-        self._transition_history[wl_id] = [
-            t for t in history if t.timestamp > cutoff
-        ]
+        self._transition_history[wl_id] = [t for t in history if t.timestamp > cutoff]
         history = self._transition_history[wl_id]
 
         # If no recent transitions, allow
@@ -112,9 +109,7 @@ class HysteresisGate:
 
         return True
 
-    def record_transition(
-        self, wl_id: str, from_status: str, to_status: str
-    ) -> None:
+    def record_transition(self, wl_id: str, from_status: str, to_status: str) -> None:
         """Record a transition that was applied.
 
         Args:

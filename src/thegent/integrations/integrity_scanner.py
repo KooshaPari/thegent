@@ -100,11 +100,7 @@ class IntegrityScanner:
             # Check priority field
             local_priority = local_item.get("priority")
             remote_priority = remote_item.get("priority")
-            if (
-                local_priority != remote_priority
-                and local_priority is not None
-                and remote_priority is not None
-            ):
+            if local_priority != remote_priority and local_priority is not None and remote_priority is not None:
                 mismatches.append(
                     IntegrityMismatch(
                         wl_id=local_id,

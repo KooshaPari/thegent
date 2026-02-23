@@ -3,6 +3,7 @@
 
 import json
 import sys
+import logging
 from pathlib import Path
 
 # Add src to path
@@ -22,15 +23,17 @@ SEARCHES = [
 ]
 
 if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     all_results = {}
     for query in SEARCHES:
-        print(f"Searching: {query}")
+        logger.info("Searching: %s", query)
         results = ddg_search(query, max_results=8)
         all_results[query] = results
-        print(f"  Found {len(results)} results")
+        logger.info("  Found %s results", len(results))
 
     # Save results
     output_file = Path(__file__).parent / "git_audit_search_results.json"
     with open(output_file, "w") as f:
         json.dump(all_results, f, indent=2)
-    print(f"\nResults saved to {output_file}")
+    logger.info("Results saved to %s", output_file)

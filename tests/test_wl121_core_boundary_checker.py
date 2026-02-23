@@ -253,9 +253,7 @@ def test_main_violations_jsonl_format_emits_line_delimited_entries(tmp_path: Pat
     _write_boundary_config(config_path)
     (core_dir / "bad.py").write_text("import thegent\n", encoding="utf-8")
 
-    exit_code = MODULE.main(
-        ["--core-dir", str(core_dir), "--config", str(config_path), "--format", "violations-jsonl"]
-    )
+    exit_code = MODULE.main(["--core-dir", str(core_dir), "--config", str(config_path), "--format", "violations-jsonl"])
 
     assert exit_code == 0
     lines = [json.loads(line) for line in capsys.readouterr().out.strip().splitlines()]
@@ -275,4 +273,6 @@ def test_wl121_ci_uses_strict_mode_and_local_task_stays_advisory() -> None:
     ) in qa_guide
     assert "| allow | `thegent.core` | `from thegent.core import prompt_queue` | Allowed |" in qa_guide
     assert "| block | `thegent` | `from thegent.mcp import server` | Blocked unless also allowlisted |" in qa_guide
-    assert taskfile["tasks"]["quality:core-boundary"]["cmds"] == ["uv run python scripts/check_thegent_core_boundary.py"]
+    assert taskfile["tasks"]["quality:core-boundary"]["cmds"] == [
+        "uv run python scripts/check_thegent_core_boundary.py"
+    ]

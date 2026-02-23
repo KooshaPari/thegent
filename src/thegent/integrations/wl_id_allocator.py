@@ -57,16 +57,11 @@ class WLIdAllocator:
             raise ValueError(f"start ({start}) must be <= end ({end})")
 
         if self.check_overlap(start, end):
-            raise ValueError(
-                f"Range [{start}, {end}] overlaps with existing reservations"
-            )
+            raise ValueError(f"Range [{start}, {end}] overlaps with existing reservations")
 
         wl_range = WLRange(start=start, end=end, label=label, reserved_by=reserved_by)
         self._ranges.append(wl_range)
-        logger.debug(
-            f"Reserved WL range [{start}, {end}] labeled '{label}' "
-            f"by {reserved_by}"
-        )
+        logger.debug(f"Reserved WL range [{start}, {end}] labeled '{label}' by {reserved_by}")
         return wl_range
 
     def next_available(self, after: int = 0) -> int:

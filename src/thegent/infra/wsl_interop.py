@@ -4,6 +4,7 @@ import os
 import platform
 import re
 import subprocess
+from hashlib import sha256
 
 
 class WslInterop:
@@ -16,6 +17,11 @@ class WslInterop:
     def __init__(self) -> None:
         self.is_wsl = self._detect_wsl()
         self.is_windows = platform.system().lower() == "windows"
+        self._sid_uid_namespace = "thegent:wsl-sid-to-uid:v1"
+        self._sid_uid_min = 2000
+        self._sid_uid_max = 9000
+        self._uid_assignments: dict[str, int] = {}
+        self._used_uids: dict[int, str] = {}
 
         # Pre-calculated drive mount points (default /mnt/c/)
         self.wsl_mount_root = "/mnt/"
@@ -111,9 +117,31 @@ class WslInterop:
         Map a Windows SID to a WSL2 UID.
 
         Implementation logic:
-        1. deterministic hash-based mapping (similar to sub-user system).
-        2. /etc/wsl.conf [user] default=<uid> if needed.
+        1. deterministic SID fingerprinting with bounded UID search.
+        2. collision-aware probing when a UID collision occurs.
+        3. deterministic fallback namespace for reproducible outputs.
         """
-        # Deterministic mapping logic (placeholder for now)
-        # Using the same logic as UidPool but for SIDs
-        return 2000 + (hash(sid) % 1000)
+        if not sid:
+            raise ValueError("sid must be a non-empty string")
+
+        existing = self._uid_assignments.get(sid)
+        if existing is not None:
+            return existing
+
+        uid_span = self._sid_uid_max - self._sid_uid_min + 1
+        for probe in range(uid_span):
+            fingerprint = self._sid_fingerprint(sid, probe)
+            uid = self._sid_uid_min + (fingerprint % uid_span)
+            owner_sid = self._used_uids.get(uid)
+            if owner_sid is None:
+                self._uid_assignments[sid] = uid
+                self._used_uids[uid] = sid
+                return uid
+            if owner_sid == sid:
+                return uid
+
+        raise RuntimeError(f"Unable to allocate a stable UID for SID {sid}")
+
+    def _sid_fingerprint(self, sid: str, probe: int) -> int:
+        payload = f"{self._sid_uid_namespace}|{sid}|{probe}".encode()
+        return int.from_bytes(sha256(payload).digest()[:8], "big")

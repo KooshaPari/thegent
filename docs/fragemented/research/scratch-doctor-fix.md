@@ -1,0 +1,93 @@
+# Proactive Doctor --fix Feature - Implementation Status
+
+> **WORK_STREAM ID:** scratch-doctor-fix
+> **Priority:** P2
+> **Status:** ✅ Complete
+
+## Summary
+
+This work item implements proactive `doctor --fix` functionality that automatically fixes detected environment issues.
+
+## Implementation Status
+
+### ✅ Implementation Complete
+
+The proactive `doctor --fix` feature is implemented in `src/thegent/doctor.py`:
+
+1. **Main Entry Point** (`run_doctor(fix: bool = False)`):
+   - Runs all health checks
+   - If `fix=True`, applies automatic fixes
+   - Reports results and fix attempts
+
+2. **Fix Application** (`_apply_fixes(results: list[CheckResult])`):
+   - Iterates through failed checks
+   - Applies fixes where possible
+   - Reports fix success/failure
+
+### Implementation Details
+
+```python
+# src/thegent/doctor.py
+def run_doctor(fix: bool = False) -> bool:
+    """Run all health checks and report results."""
+    # ... run checks ...
+
+    # Apply fixes if requested
+    if fix:
+        _apply_fixes(results)
+
+    # Display results
+    success = _display_results(results)
+
+    return success
+```
+
+### Fix Categories
+
+The doctor checks and fixes issues in:
+
+1. **Dependencies**: Node.js, Claude Code, Codex, CLIProxyAPIPlus, tools (git, rg, fd, jq)
+2. **Configuration**: `.env` file, settings validation
+3. **Isolation & Persistence**: Session directories, isolation providers
+4. **Connectivity**: MCP server, proxy endpoints
+5. **Environment & Shims**: PATH, tool shims, shim versions
+6. **Shim Binaries**: `thegent-hooks`, `thegent-shims` availability
+7. **Shell**: Zsh configuration, shell startup optimization
+8. **Nix Support**: Nix daemon, Nix paths
+9. **Providers & Headless**: Provider configuration, headless mode
+10. **Runtime Infrastructure**: Process management, resource limits
+11. **Process Leaks**: Orphaned processes, resource cleanup
+12. **MCP Tools & Sessions**: MCP tool availability, session management
+13. **Project Hints**: Project-specific recommendations
+
+### Usage
+
+```bash
+# Run checks only (no fixes)
+thegent doctor
+
+# Run checks and apply automatic fixes
+thegent doctor --fix
+```
+
+### Fix Examples
+
+- **Missing dependencies**: Provides install hints
+- **Configuration issues**: Validates and suggests fixes
+- **Shim problems**: Checks shim versions and binary availability
+- **Shell issues**: Validates shell configuration
+- **Process leaks**: Identifies orphaned processes
+
+## Acceptance Criteria
+
+- [x] Proactive `doctor --fix` implemented
+- [x] Automatic fixes for common issues
+- [x] Fix reporting and feedback
+- [x] Integration with all check categories
+- [x] Usage documented
+
+## References
+
+- [doctor.py](../../src/thegent/doctor.py) - Implementation
+- [scratchpad/session_review.md](../scratchpad/session_review.md) - Original requirement
+- [WORK_STREAM.md](../reference/WORK_STREAM.md)

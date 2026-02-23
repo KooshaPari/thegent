@@ -351,9 +351,7 @@ class TestOpenTab:
         """Command argument is forwarded to _run_ghostty_open_tab. @trace FR-IDE-002"""
         fake = mock.MagicMock()
         fake.returncode = 0
-        with mock.patch(
-            "thegent.integrations.ghostty._run_ghostty_open_tab", return_value=fake
-        ) as mocked:
+        with mock.patch("thegent.integrations.ghostty._run_ghostty_open_tab", return_value=fake) as mocked:
             integration.open_tab("htop")
             mocked.assert_called_once_with("htop")
 
@@ -370,9 +368,7 @@ class TestSendNotification:
         """Returns True when osascript exits 0. @trace FR-IDE-002"""
         fake = mock.MagicMock()
         fake.returncode = 0
-        with mock.patch(
-            "thegent.integrations.ghostty._run_osascript_notification", return_value=fake
-        ):
+        with mock.patch("thegent.integrations.ghostty._run_osascript_notification", return_value=fake):
             assert integration.send_notification("Title", "Body") is True
 
     def test_returns_false_when_osascript_not_found(self, integration: GhosttyIntegration) -> None:
@@ -388,9 +384,7 @@ class TestSendNotification:
         fake = mock.MagicMock()
         fake.returncode = 1
         fake.stderr = "error"
-        with mock.patch(
-            "thegent.integrations.ghostty._run_osascript_notification", return_value=fake
-        ):
+        with mock.patch("thegent.integrations.ghostty._run_osascript_notification", return_value=fake):
             assert integration.send_notification("T", "B") is False
 
     def test_returns_false_on_timeout(self, integration: GhosttyIntegration) -> None:
@@ -405,9 +399,7 @@ class TestSendNotification:
         """Double-quotes in title are escaped before passing to osascript. @trace FR-IDE-002"""
         fake = mock.MagicMock()
         fake.returncode = 0
-        with mock.patch(
-            "thegent.integrations.ghostty._run_osascript_notification", return_value=fake
-        ) as mocked:
+        with mock.patch("thegent.integrations.ghostty._run_osascript_notification", return_value=fake) as mocked:
             integration.send_notification('Say "hello"', "body")
             call_args = mocked.call_args[0]
             assert '\\"hello\\"' in call_args[0]
@@ -416,9 +408,7 @@ class TestSendNotification:
         """Double-quotes in body are escaped before passing to osascript. @trace FR-IDE-002"""
         fake = mock.MagicMock()
         fake.returncode = 0
-        with mock.patch(
-            "thegent.integrations.ghostty._run_osascript_notification", return_value=fake
-        ) as mocked:
+        with mock.patch("thegent.integrations.ghostty._run_osascript_notification", return_value=fake) as mocked:
             integration.send_notification("title", 'Body with "quotes"')
             call_args = mocked.call_args[0]
             assert '\\"quotes\\"' in call_args[1]
@@ -439,8 +429,14 @@ class TestGetEnvInfo:
     def test_contains_expected_keys(self, integration: GhosttyIntegration) -> None:
         """Result contains all expected env-var keys. @trace FR-IDE-002"""
         info = integration.get_env_info()
-        for key in ("TERM_PROGRAM", "TERM", "COLORTERM", "TERM_PROGRAM_VERSION",
-                    "GHOSTTY_RESOURCES_DIR", "GHOSTTY_BIN_DIR"):
+        for key in (
+            "TERM_PROGRAM",
+            "TERM",
+            "COLORTERM",
+            "TERM_PROGRAM_VERSION",
+            "GHOSTTY_RESOURCES_DIR",
+            "GHOSTTY_BIN_DIR",
+        ):
             assert key in info
 
     def test_reflects_env_values(self, integration: GhosttyIntegration) -> None:
@@ -452,8 +448,9 @@ class TestGetEnvInfo:
 
     def test_absent_keys_return_empty_string(self, integration: GhosttyIntegration) -> None:
         """Missing env vars produce empty-string values, not None. @trace FR-IDE-002"""
-        env = {k: v for k, v in __import__("os").environ.items()
-               if k not in ("GHOSTTY_RESOURCES_DIR", "GHOSTTY_BIN_DIR")}
+        env = {
+            k: v for k, v in __import__("os").environ.items() if k not in ("GHOSTTY_RESOURCES_DIR", "GHOSTTY_BIN_DIR")
+        }
         with mock.patch.dict("os.environ", env, clear=True):
             info = integration.get_env_info()
         assert info["GHOSTTY_RESOURCES_DIR"] == ""
@@ -488,9 +485,7 @@ class TestNonGhosttyEnvironment:
         ):
             assert integration.open_tab() is False
 
-    def test_send_notification_returns_false_on_linux(
-        self, integration: GhosttyIntegration
-    ) -> None:
+    def test_send_notification_returns_false_on_linux(self, integration: GhosttyIntegration) -> None:
         """send_notification returns False on Linux where osascript is absent. @trace FR-IDE-002"""
         with mock.patch(
             "thegent.integrations.ghostty._run_osascript_notification",
@@ -498,9 +493,7 @@ class TestNonGhosttyEnvironment:
         ):
             assert integration.send_notification("Title", "Body") is False
 
-    def test_get_env_info_returns_all_keys_outside_ghostty(
-        self, integration: GhosttyIntegration
-    ) -> None:
+    def test_get_env_info_returns_all_keys_outside_ghostty(self, integration: GhosttyIntegration) -> None:
         """get_env_info always returns all keys even outside Ghostty. @trace FR-IDE-002"""
         info = integration.get_env_info()
         assert len(info) == 6

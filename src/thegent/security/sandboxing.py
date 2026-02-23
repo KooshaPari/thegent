@@ -3,9 +3,12 @@ Includes bubblewrap (Linux) and seatbelt (macOS) profile generation, and 5-tier 
 """
 
 import logging
+import os
 import platform
 from pathlib import Path
 from typing import ClassVar
+
+from thegent.security.macos_sandbox import MacOSSandbox, SandboxLevel
 
 logger = logging.getLogger(__name__)
 
@@ -26,32 +29,59 @@ class SandboxProvider:
 
     def _bwrap_wrap(self, command: list[str], tier: int) -> list[str]:
         """Bubblewrap wrapper for Linux."""
-        args = ["bwrap", "--unshare-all", "--dev", "/dev", "--proc", "/proc"]
-
-        if tier >= 1:  # Read
-            args.extend(["--ro-bind", "/", "/"])
-
-        if tier >= 2:  # Worktree
-            # Would bind specifically to worktree
-            pass
+        args = ["bwrap", "--unshare-all", "--dev", "/dev", "--proc", "/proc", "--die-with-parent"]
 
         if tier >= 5:  # Production
             args.extend(["--bind", "/", "/"])
+            return [*args, "--", *command]
+
+        if tier >= 2:  # Worktree
+            worktree = Path(os.environ.get("THGENT_SANDBOX_WORKTREE", str(Path.cwd()))).expanduser().resolve()
+            args.extend(["--bind", str(worktree), str(worktree), "--chdir", str(worktree)])
+            allowed_reads = [
+                p.strip() for p in os.environ.get("THGENT_SANDBOX_ALLOWED_READS", "/usr,/bin,/lib,/lib64").split(",")
+            ]
+            for read_path in allowed_reads:
+                if not read_path:
+                    continue
+                rp = Path(read_path).expanduser()
+                if rp.exists():
+                    args.extend(["--ro-bind", str(rp), str(rp)])
+            args.extend(["--tmpfs", "/tmp", "--tmpfs", "/var/tmp"])
+        elif tier >= 1:  # Read-only full filesystem for baseline read tier
+            args.extend(["--ro-bind", "/", "/"])
 
         return [*args, "--", *command]
 
     def _seatbelt_wrap(self, command: list[str], tier: int) -> list[str]:
         """Seatbelt (sandbox-exec) wrapper for macOS."""
-        profile = self._generate_seatbelt_profile(tier)
-        profile_path = Path("/tmp/harness-sandbox.sb")
-        profile_path.write_text(profile)
-        return ["sandbox-exec", "-f", str(profile_path), *command]
+        sandbox = MacOSSandbox()
+        if not sandbox.is_sandbox_available():
+            raise RuntimeError("sandbox-exec is required for macOS seatbelt sandboxing")
+
+        level = self._sandbox_level_for_tier(tier)
+        project_root = Path(os.environ.get("THGENT_SANDBOX_WORKTREE", str(Path.cwd()))).expanduser().resolve()
+        return sandbox.apply_to_command(command, level, project_root=project_root)
+
+    def _sandbox_level_for_tier(self, tier: int) -> SandboxLevel:
+        """Map autonomy tier to macOS sandbox level."""
+        if tier >= 5:
+            return SandboxLevel.FULL
+        if tier >= 4:
+            return SandboxLevel.NETWORKED
+        if tier >= 2:
+            return SandboxLevel.RESTRICTED
+        return SandboxLevel.READONLY
 
     def _generate_seatbelt_profile(self, tier: int) -> str:
         """Generate macOS seatbelt profile."""
-        if tier == 1:
-            return "(version 1)\n(deny default)\n(allow file-read*)\n(allow process-exec)"
-        return "(version 1)\n(allow default)"
+        level = self._sandbox_level_for_tier(tier)
+        sandbox = MacOSSandbox()
+        if level in (SandboxLevel.NONE, SandboxLevel.FULL):
+            return "(version 1)\n(allow default)"
+
+        project_root = Path(os.environ.get("THGENT_SANDBOX_WORKTREE", str(Path.cwd()))).expanduser().resolve()
+        return sandbox.generate_profile(level, project_root)
 
 
 class AutonomyEnforcer:

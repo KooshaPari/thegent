@@ -37,10 +37,20 @@ def generate_mock_data():
         source = random.choice(sources)
 
         # Use execute_query for direct insert since we don't have a simple method for items yet
-        db.execute_query(f"""
+        db.execute_query(
+            """
             INSERT OR REPLACE INTO workstream_items (item_id, title, source, priority, status, created_at)
-            VALUES ('{item_id}', 'Mock task {i}', '{source}', '{priority}', '{status}', '{datetime.now(UTC).isoformat()}')
-        """)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                item_id,
+                f"Mock task {i}",
+                source,
+                priority,
+                status,
+                datetime.now(UTC).isoformat(),
+            ),
+        )
         item_ids.append(item_id)
 
     # 2. Mock Sessions
@@ -55,11 +65,24 @@ def generate_mock_data():
         lane = random.choice(lanes)
         started_at = (datetime.now(UTC) - timedelta(minutes=random.randint(1, 60))).isoformat()
 
-        db.execute_query(f"""
+        db.execute_query(
+            """
             INSERT OR REPLACE INTO sessions
             (session_id, agent, prompt, status, started_at, workstream_item_id, lane, model, owner_tag)
-            VALUES ('{session_id}', '{agent}', 'Mock prompt for {item_id}', '{status}', '{started_at}', '{item_id}', '{lane}', '{agent}', 'test-user')
-        """)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                session_id,
+                agent,
+                f"Mock prompt for {item_id}",
+                status,
+                started_at,
+                item_id,
+                lane,
+                agent,
+                "test-user",
+            ),
+        )
 
         if status == "exited":
             exit_code = random.choice([0, 0, 0, 1])  # 75% success
@@ -74,9 +97,10 @@ def generate_mock_data():
     for i in range(7):
         date = (datetime.now(UTC) - timedelta(days=i)).date().isoformat()
         for _ in range(5):
-            db.record_cost(f"hist-{uuid.uuid4().hex[:4]}", random.uniform(0.1, 2.0), model="gpt-5-mini")
+            session_id = f"hist-{uuid.uuid4().hex[:4]}"
+            db.record_cost(session_id, random.uniform(0.1, 2.0), model="gpt-5-mini")
             # Update the date manually since record_cost uses current date
-            db.execute_query(f"UPDATE cost_tracking SET date = '{date}' WHERE session_id LIKE 'hist-%'")
+            db.execute_query("UPDATE cost_tracking SET date = ? WHERE session_id LIKE 'hist-%'", (date,))
 
     print("✅ Mock data generated successfully.")
     print("Run 'thegent workstream dashboard' to see the results.")

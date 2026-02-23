@@ -29,9 +29,7 @@ from typing import IO
 # ---------------------------------------------------------------------------
 # Default path – override via parse_work_stream(path=...)
 # ---------------------------------------------------------------------------
-DEFAULT_WORK_STREAM_PATH = (
-    Path(__file__).parent.parent / "docs" / "reference" / "WORK_STREAM.md"
-)
+DEFAULT_WORK_STREAM_PATH = Path(__file__).parent.parent / "docs" / "reference" / "WORK_STREAM.md"
 
 # Priority order (lower index = higher priority)
 _PRIORITY_ORDER = ["P0", "P1", "P2", "P3", "P4"]
@@ -461,10 +459,7 @@ def add_backlog_item(
             return False  # duplicate
 
         depends = item.depends or "-"
-        new_row = (
-            f"| {item.id} | {item.title} | {item.source} "
-            f"| {item.priority} | {depends} |\n"
-        )
+        new_row = f"| {item.id} | {item.title} | {item.source} | {item.priority} | {depends} |\n"
         content = _insert_into_backlog(content, new_row)
 
         fh.seek(0)

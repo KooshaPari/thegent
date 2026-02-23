@@ -268,9 +268,7 @@ class TestCheckTripleLock:
 class TestRunCycleDryRun:
     """Tests that run_cycle never kills without explicit confirmation."""
 
-    def _make_pruner_with_eligible_session(
-        self, tmp_path: Path
-    ) -> tuple[SmartPruner, dict[str, Any]]:
+    def _make_pruner_with_eligible_session(self, tmp_path: Path) -> tuple[SmartPruner, dict[str, Any]]:
         """Return a pruner and a fake session that passes all Triple-Lock criteria."""
         research = tmp_path / "docs" / "research"
         research.mkdir(parents=True)

@@ -10,7 +10,7 @@ from pathlib import Path
 
 import typer
 
-from thegent.agents.routing_contracts import GEMINI_FLASH_MODEL, GEMINI_FLASH_PROVIDER
+from thegent.agents.routing_contracts import GEMINI_FLASH_MODEL
 from thegent.dex_cli_helpers import (
     add_filtered_interactive_args,
     build_codex_exec_command,
@@ -45,8 +45,8 @@ def _is_thegent_shim(path: str) -> bool:
     try:
         if p.is_symlink() and "thegent-shims" in str(p.readlink()):
             return True
-    except OSError:
-        pass
+    except OSError as exc:
+        raise RuntimeError(f"Failed to inspect codex symlink at {p}") from exc
     return False
 
 
@@ -113,9 +113,21 @@ def _dex_global_callback(
         settings = _get_settings()
         settings.dex_force_yolo = True
     if native:
-        passthrough = [arg for arg in sys.argv[1:] if arg not in {"--native", "--force-yolo", "--force", "-f"}]
+        passthrough = [
+            arg
+            for arg in sys.argv[1:]
+            if arg
+            not in {
+                "--native",
+                "--force-yolo",
+                "--force",
+                "-f",
+                "--yolo",
+                _DEX_BYPASS_FLAG,
+            }
+        ]
         if force and "--force-yolo" not in passthrough:
-            passthrough = ["--force-yolo", *passthrough]
+            passthrough = ["--force-yolo", _DEX_YOLO_FLAG, _DEX_BYPASS_FLAG, *passthrough]
         _exec_native_codex(passthrough)
 
 
@@ -180,43 +192,16 @@ _CURSOR_OFFER_SET: tuple[str, ...] = ("cursor",)
 
 # Codex uses --dangerously-bypass-approvals-and-sandbox (or --yolo) per Codex CLI reference
 _DEX_BYPASS_FLAG = "--dangerously-bypass-approvals-and-sandbox"
+_DEX_YOLO_FLAG = "--yolo"
 
 
 def _resolve_provider_for_model(model_alias: str) -> str:
-    """Resolve provider for model-first routing. Round-robin across available providers."""
-    canonical = canonical_model(model_alias, _MODEL_ALIAS)
+    """Resolve provider for model-first routing.
 
-    if canonical == "composer-1.5":
-        return _CURSOR_OFFER_SET[0]
-    if canonical == "minimax-m2.5":
-        idx = _M2_COUNTER["max"]
-        providers = _M2_OFFER_SET
-        selected = providers[idx % len(providers)]
-        _M2_COUNTER["max"] = (idx + 1) % len(providers)
-        return selected
-    if canonical == "glm-5":
-        idx = _GLM_COUNTER["glm"]
-        providers = _GLM_OFFER_SET
-        selected = providers[idx % len(providers)]
-        _GLM_COUNTER["glm"] = (idx + 1) % len(providers)
-        return selected
-    if canonical in ("claude-haiku-4.5", "claude-opus-4.6", "claude-sonnet-4.5", "claude-sonnet-4.5-1m"):
-        idx = _CLAUDE_COUNTER["claude"]
-        providers = _CLAUDE_OFFER_SET
-        selected = providers[idx % len(providers)]
-        _CLAUDE_COUNTER["claude"] = (idx + 1) % len(providers)
-        return selected
-    if canonical == "step-3.5-flash":
-        return "nim"
-    if canonical == "gpt-5-mini":
-        return "copilot"
-    if canonical in ("gpt-5.3-codex", "gpt-5.3-codex-high", "gpt-5.3-codex-xhigh"):
-        return "codex"
-    if canonical == GEMINI_FLASH_MODEL:
-        return GEMINI_FLASH_PROVIDER
-
-    # Fallback: nim for other proxy models
-    return "nim"
+    Use cliproxy auto-routing so model aliases are not pinned to fixed providers.
+    """
+    _ = canonical_model(model_alias, _MODEL_ALIAS)
+    return "auto"
 
 
 def _install_harness_link(bin_dir: Path, harness: str, force: bool = False) -> bool:
@@ -375,6 +360,7 @@ def _run_codex_exec(
         bypass_approved=_should_bypass_approvals(),
         bypass_flag=_DEX_BYPASS_FLAG,
     )
+    cmd.extend(["--output-last-message", "/dev/stdout"])
 
     # Wrap with caffeinate to prevent sleep on macOS
     cmd = wrap_with_caffeinate(cmd, "codex")
@@ -411,7 +397,7 @@ def _run_codex_interactive(
 
     cmd = [codex_path]
     if dangerously_bypass and _should_bypass_approvals():
-        cmd.append(_DEX_BYPASS_FLAG)
+        cmd.extend([_DEX_YOLO_FLAG, _DEX_BYPASS_FLAG])
     cmd.extend(["--model", canonical])
     add_filtered_interactive_args(cmd, extra_args, _DEX_BYPASS_FLAG)
 
@@ -428,12 +414,13 @@ def _run_model_cmd(
     cd: Path | None = None,
     mode: str = "write",
     timeout: int = 90,
+    remote: str | None = None,
 ) -> None:
     """Run model-first (no provider). Uses thegent run -M <model>."""
     from thegent.cli import run_cmd
 
     canonical = canonical_model(model_alias, _MODEL_ALIAS)
-    run_cmd(agent=None, prompt=prompt, cd=cd, mode=mode, timeout=timeout, model=canonical)
+    run_cmd(agent=None, prompt=prompt, cd=cd, mode=mode, timeout=timeout, model=canonical, remote=remote)
 
 
 def _bg_model_cmd(
@@ -443,6 +430,7 @@ def _bg_model_cmd(
     mode: str = "write",
     timeout: int = 90,
     owner: str | None = None,
+    remote: str | None = None,
 ) -> None:
     """Bg model-first (no provider). Uses thegent bg -M <model>."""
     from thegent.cli import bg_cmd
@@ -457,6 +445,7 @@ def _bg_model_cmd(
         full=False,
         model=canonical,
         owner=owner,
+        remote=remote,
     )
 
 
@@ -1080,6 +1069,11 @@ def dex_run(
     cd: Path | None = typer.Option(None, "--cd", "-C", "-d", help="Working directory"),
     mode: str = typer.Option("write", "--mode", "-m", help="Union[write, read]-only"),
     timeout: int = typer.Option(90, "--timeout", "-t", help="Timeout in seconds"),
+    remote: str | None = typer.Option(
+        None,
+        "--remote",
+        help="Execute on remote node by hostname/IP (e.g. remote.example.com)",
+    ),
 ) -> None:
     """Run a task. Model-first, no provider filter."""
     canonical = canonical_model(model_alias, _MODEL_ALIAS)
@@ -1088,7 +1082,7 @@ def dex_run(
             f"[red]Unknown model '{model_alias}'. Allowed: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini[/red]"
         )
         raise typer.Exit(1)
-    _run_model_cmd(model_alias, prompt, cd=cd, mode=mode, timeout=timeout)
+    _run_model_cmd(model_alias, prompt, cd=cd, mode=mode, timeout=timeout, remote=remote)
 
 
 @app.command("bg")
@@ -1101,6 +1095,11 @@ def dex_bg(
     mode: str = typer.Option("write", "--mode", "-m", help="Union[write, read]-only"),
     timeout: int = typer.Option(90, "--timeout", "-t", help="Timeout in seconds"),
     owner: str | None = typer.Option(None, "--owner", "-o", help="Owner tag"),
+    remote: str | None = typer.Option(
+        None,
+        "--remote",
+        help="Execute on remote node by hostname/IP (e.g. remote.example.com)",
+    ),
 ) -> None:
     """Start a background task. Model-first, no provider filter."""
     canonical = canonical_model(model_alias, _MODEL_ALIAS)
@@ -1109,7 +1108,7 @@ def dex_bg(
             f"[red]Unknown model '{model_alias}'. Allowed: dex, high, xhigh, max, glm, haiku, opus, sonnet, ultra, flash, mini[/red]"
         )
         raise typer.Exit(1)
-    _bg_model_cmd(model_alias, prompt, cd=cd, mode=mode, timeout=timeout, owner=owner)
+    _bg_model_cmd(model_alias, prompt, cd=cd, mode=mode, timeout=timeout, owner=owner, remote=remote)
 
 
 @app.command("ps")

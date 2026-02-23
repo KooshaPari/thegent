@@ -11,6 +11,18 @@ from rich.console import Console
 from thegent.config import ThegentSettings
 
 
+def _classify_httpx_error(exc: BaseException) -> str:
+    if isinstance(exc, httpx.TimeoutException):
+        return "timeout"
+    if isinstance(exc, httpx.ConnectError):
+        return "connection_error"
+    if isinstance(exc, httpx.NetworkError):
+        return "network_error"
+    if isinstance(exc, httpx.HTTPError):
+        return "http_error"
+    return type(exc).__name__
+
+
 def check_configuration(*, check_result_cls: type[Any]) -> list[Any]:
     res_list = []
     settings = ThegentSettings()
@@ -99,28 +111,45 @@ def check_isolation(*, check_result_cls: type[Any]) -> list[Any]:
 def ensure_mcp_running(*, settings: ThegentSettings, console: Console, timeout: int = 30) -> bool:
     """Ensure MCP server and CLIProxy are running. Returns True if started successfully."""
     mcp_url = f"http://{settings.mcp_host}:{settings.mcp_port}/health"
+    preflight_failure = None
     try:
         resp = httpx.get(mcp_url, timeout=2.0)
         if resp.status_code == 200:
             return True
-    except Exception:
-        pass
+        preflight_failure = f"HTTP {resp.status_code}"
+    except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError, httpx.HTTPError) as exc:
+        preflight_failure = f"{_classify_httpx_error(exc)}: {exc}"
 
-    console.print("[yellow]MCP server not running. Starting automatically...[/yellow]")
+    if preflight_failure:
+        console.print(
+            f"[yellow]MCP preflight health check failed ({preflight_failure}). Starting automatically...[/yellow]"
+        )
+    else:
+        console.print("[yellow]MCP server not running. Starting automatically...[/yellow]")
     try:
         from thegent.mcp.manage import mcp_up
 
         success, msg = mcp_up()
         if success:
+            retry_failures: dict[str, int] = {}
             for _ in range(timeout * 2):
                 time.sleep(0.5)
                 try:
                     resp = httpx.get(mcp_url, timeout=1.0)
                     if resp.status_code == 200:
+                        if retry_failures:
+                            detail = ", ".join(f"{reason}={count}" for reason, count in sorted(retry_failures.items()))
+                            console.print(f"[dim]MCP startup retry diagnostics: {detail}[/dim]")
                         console.print("[green]MCP server started successfully.[/green]")
                         return True
-                except Exception:
-                    continue
+                    retry_failures[f"http_{resp.status_code}"] = retry_failures.get(f"http_{resp.status_code}", 0) + 1
+                except (httpx.TimeoutException, httpx.ConnectError, httpx.NetworkError, httpx.HTTPError) as exc:
+                    reason = _classify_httpx_error(exc)
+                    retry_failures[reason] = retry_failures.get(reason, 0) + 1
+
+            if retry_failures:
+                detail = ", ".join(f"{reason}={count}" for reason, count in sorted(retry_failures.items()))
+                console.print(f"[dim]MCP startup retry diagnostics: {detail}[/dim]")
             console.print("[red]Timeout waiting for MCP server to start.[/red]")
             return False
         console.print(f"[red]Failed to start MCP server: {msg}[/red]")
@@ -177,10 +206,28 @@ def check_connectivity(*, check_result_cls: type[Any], console: Console, auto_st
         else:
             r.status = "warn"
             r.message = f"CLIProxy returned {resp.status_code} at {proxy_url}"
+            r.details = f"CLIProxy responded with HTTP {resp.status_code}"
             r.fix_hint = "Run: thegent mcp up (starts proxy + MCP)"
-    except Exception:
+    except httpx.TimeoutException as exc:
         r.status = "warn"
-        r.message = "CLIProxy not currently running"
+        r.message = f"CLIProxy request timed out: {exc}"
+        r.details = "CLIProxy transport status: timeout"
+        r.fix_hint = "Run: thegent mcp up (starts proxy + MCP)"
+    except httpx.ConnectError as exc:
+        r.status = "warn"
+        r.message = f"CLIProxy connection error: {exc}"
+        r.details = "CLIProxy transport status: connection_error"
+        r.fix_hint = "Run: thegent mcp up (starts proxy + MCP)"
+    except (httpx.NetworkError, httpx.HTTPError) as exc:
+        err_type = _classify_httpx_error(exc)
+        r.status = "warn"
+        r.message = f"CLIProxy transport error ({err_type}): {exc}"
+        r.details = f"CLIProxy transport status: {err_type}"
+        r.fix_hint = "Run: thegent mcp up (starts proxy + MCP)"
+    except OSError as exc:
+        r.status = "warn"
+        r.message = f"CLIProxy OS error: {exc}"
+        r.details = "CLIProxy transport status: os_error"
         r.fix_hint = "Run: thegent mcp up (starts proxy + MCP)"
     res_list.append(r)
 

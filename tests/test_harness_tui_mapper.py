@@ -96,6 +96,7 @@ class TestHarnessTUIMapper:
     def test_execute_timeout(self, mock_run):
         """Execute a command that times out."""
         import subprocess
+
         mock_run.side_effect = subprocess.TimeoutExpired("cmd", 30)
 
         mapper = HarnessTUIMapper()
@@ -169,11 +170,13 @@ class TestHarnessTUIMapper:
 
     def test_custom_actions_override(self):
         """Custom actions override default mappings."""
-        mapper = HarnessTUIMapper(custom_actions={
-            "send_message": {
-                "codex": "custom-codex {prompt}",
+        mapper = HarnessTUIMapper(
+            custom_actions={
+                "send_message": {
+                    "codex": "custom-codex {prompt}",
+                }
             }
-        })
+        )
 
         cmd = mapper.get_command(HarnessType.CODEX, "send_message")
         assert cmd == "custom-codex {prompt}"

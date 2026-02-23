@@ -9,6 +9,7 @@ from fastmcp.server.event_store import EventStore
 from starlette.requests import Request
 from starlette.responses import Response
 
+
 def register_runtime_entry(
     *,
     mcp: Any,

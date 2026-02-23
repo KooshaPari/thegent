@@ -177,9 +177,7 @@ class SubAgentDispatcher:
     ) -> None:
         self._capability_index = capability_index
         self._budget_tracker = budget_tracker
-        self._event_queue: SubAgentEventQueue = (
-            event_queue if event_queue is not None else get_global_event_queue()
-        )
+        self._event_queue: SubAgentEventQueue = event_queue if event_queue is not None else get_global_event_queue()
         self._remote_backend = remote_backend
         self._compute_pool = compute_pool
 

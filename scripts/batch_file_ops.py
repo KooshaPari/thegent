@@ -201,12 +201,10 @@ class BatchFileOps:
                                 next(f)
                             except StopIteration:
                                 break
-                        lines_read = 0
-                        for line in f:
+                        for lines_read, line in enumerate(f):
                             if limit and lines_read >= limit:
                                 break
                             content_lines.append(line.rstrip("\n\r"))
-                            lines_read += 1
                     content = "\n".join(content_lines)
                 else:
                     content = file_path.read_text(encoding=encoding)

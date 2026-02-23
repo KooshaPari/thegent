@@ -37,7 +37,7 @@ _canonicalize_gate_selector() {
   local raw_csv="${1:-}"
   local native_out=""
   if native_out="$(hook_rust_runtime_invoke governance spiral-selector --format csv "$raw_csv" 2>/dev/null)"; then
-    if [[ "$native_out" =~ '^[A-Za-z0-9_,-]*$' ]]; then
+    if [[ "$native_out" =~ ^[A-Za-z0-9_,\\-]*$ ]]; then
       printf '%s\n' "$native_out"
       return 0
     fi

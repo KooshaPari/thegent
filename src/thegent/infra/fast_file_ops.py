@@ -15,7 +15,102 @@ Performance improvements:
 import os
 import shutil
 import sys
+from collections import defaultdict
+from errno import ENOSYS, EOPNOTSUPP, EPERM, ENOTSUP
+from logging import getLogger
 from pathlib import Path
+from typing import Any
+
+SEND_FILE_THRESHOLD_BYTES = 10_000_000
+_SEND_FILE_FALLBACK_COUNTS: defaultdict[str, int] = defaultdict(int)
+_SEND_FILE_FALLBACK_DIAGNOSTICS: dict[str, Any] = {}
+_log = getLogger(__name__)
+
+
+def _sendfile_fallback_reason(exc: BaseException) -> str:
+    if isinstance(exc, AttributeError):
+        return "unsupported"
+    if isinstance(exc, PermissionError):
+        return "permission"
+    if isinstance(exc, OSError):
+        if exc.errno in {ENOSYS, ENOTSUP, EOPNOTSUPP}:
+            return "unsupported"
+        if exc.errno == EPERM:
+            return "permission"
+        return "os_error"
+    return type(exc).__name__
+
+
+def _init_sendfile_diagnostics() -> dict[str, Any]:
+    return {
+        "status": "unused",
+        "reason": None,
+        "error_type": None,
+        "error_message": None,
+        "src": None,
+        "dst": None,
+        "platform": sys.platform,
+        "preserve_metadata": None,
+        "src_size": None,
+    }
+
+
+_SEND_FILE_FALLBACK_DIAGNOSTICS.update(_init_sendfile_diagnostics())
+
+
+def _record_sendfile_fallback(exc: BaseException, src: Path, dst: Path, preserve_metadata: bool) -> None:
+    reason = _sendfile_fallback_reason(exc)
+    _SEND_FILE_FALLBACK_COUNTS[reason] += 1
+    _SEND_FILE_FALLBACK_DIAGNOSTICS.update(
+        {
+            "status": "fallback",
+            "reason": reason,
+            "error_type": type(exc).__name__,
+            "error_message": str(exc),
+            "src": str(src),
+            "dst": str(dst),
+            "platform": sys.platform,
+            "preserve_metadata": preserve_metadata,
+            "src_size": src.stat().st_size if src.exists() else None,
+        }
+    )
+    _log.warning(
+        "sendfile fallback engaged: reason=%s src=%s dst=%s error=%s",
+        reason,
+        src,
+        dst,
+        str(exc)[:200],
+    )
+
+
+def get_sendfile_fallback_counts() -> dict[str, int]:
+    return dict(_SEND_FILE_FALLBACK_COUNTS)
+
+
+def reset_sendfile_fallback_counts() -> None:
+    _SEND_FILE_FALLBACK_COUNTS.clear()
+    reset_sendfile_fallback_diagnostics()
+
+
+def get_sendfile_fallback_diagnostics() -> dict[str, Any]:
+    return {
+        "status": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("status"),
+        "reason": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("reason"),
+        "error_type": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("error_type"),
+        "error_message": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("error_message"),
+        "src": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("src"),
+        "dst": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("dst"),
+        "platform": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("platform"),
+        "preserve_metadata": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("preserve_metadata"),
+        "src_size": _SEND_FILE_FALLBACK_DIAGNOSTICS.get("src_size"),
+        "count_by_reason": get_sendfile_fallback_counts(),
+        "total_failures": sum(_SEND_FILE_FALLBACK_COUNTS.values()),
+    }
+
+
+def reset_sendfile_fallback_diagnostics() -> None:
+    _SEND_FILE_FALLBACK_DIAGNOSTICS.clear()
+    _SEND_FILE_FALLBACK_DIAGNOSTICS.update(_init_sendfile_diagnostics())
 
 
 class FastFileOps:
@@ -46,7 +141,7 @@ class FastFileOps:
         # Use sendfile() on Linux for large files (zero-copy, much faster)
         if sys.platform == "linux" and src_path.is_file():
             file_size = src_path.stat().st_size
-            if file_size > 10_000_000:  # > 10MB
+            if file_size > SEND_FILE_THRESHOLD_BYTES:  # > 10MB
                 try:
                     with open(src_path, "rb") as fsrc:
                         with open(dst_path, "wb") as fdst:
@@ -60,9 +155,9 @@ class FastFileOps:
                         os.utime(dst_path, (stat.st_atime, stat.st_mtime))
 
                     return
-                except (OSError, AttributeError):
+                except Exception as exc:
                     # Fallback to shutil if sendfile fails
-                    pass
+                    _record_sendfile_fallback(exc, src_path, dst_path, preserve_metadata=preserve_metadata)
 
         # Standard copy (works on all platforms, preserves metadata)
         if preserve_metadata:

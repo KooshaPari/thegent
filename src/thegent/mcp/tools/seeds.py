@@ -485,5 +485,11 @@ def register_seed_tools(mcp: "FastMCP") -> None:
                 meta={"execution_time_ms": 0},
             )
 
-    _ = (thegent_seed_detect, thegent_seed_store, thegent_seed_list, thegent_seed_update,
-         thegent_seed_export, thegent_seed_stats)
+    _ = (
+        thegent_seed_detect,
+        thegent_seed_store,
+        thegent_seed_list,
+        thegent_seed_update,
+        thegent_seed_export,
+        thegent_seed_stats,
+    )

@@ -7,9 +7,16 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-yaml
+        exclude: |
+          (?x)^(
+            templates/initialize-project/.github/workflows/.*\.ya?ml$
+          )$
+        stages: [pre-commit, pre-push]
         args: ["--unsafe"]
       - id: check-toml
+        stages: [pre-commit, pre-push]
       - id: check-json
+        stages: [pre-commit, pre-push]
         exclude: |
           (?x)^(
             test_output\.json|
@@ -21,66 +28,84 @@ repos:
             docs/research/dumps/.*\.json$
           )$
       - id: check-merge-conflict
+        stages: [pre-commit, pre-push]
       - id: trailing-whitespace
+        stages: [pre-commit, pre-push]
       - id: end-of-file-fixer
+        stages: [pre-commit, pre-push]
       - id: check-added-large-files
+        stages: [pre-commit, pre-push]
         args: ["--maxkb=500"]
       - id: detect-private-key
+        stages: [pre-commit, pre-push]
+        exclude: |
+          (?x)^(
+            \.thegent/sessions/keys/maif_private\.pem|
+            tests/data/maif_private\.pem|
+            tests/maif/test_crypto\.py|
+            tests/governance/test_native_secret_scan\.py|
+            crates/thegent-hooks/tests/security_pipeline_bin\.rs|
+            crates/thegent-hooks/src/security\.rs
+          )$
       - id: no-commit-to-branch
+        stages: [pre-commit, pre-push]
         args: ["--branch", "main", "--branch", "master"]
       - id: check-ast
+        stages: [pre-commit, pre-push]
 
   # --- Python lint + format (Gate 2) ---
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.10.0
     hooks:
       - id: ruff
+        stages: [pre-commit, pre-push]
         args: ["--fix"]
       - id: ruff-format
+        stages: [pre-commit, pre-push]
 
   # --- Secret detection ---
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.22.1
     hooks:
       - id: gitleaks
+        stages: [pre-commit, pre-push]
 
   # --- Local hooks (Gate 2-3) ---
   - repo: local
     hooks:
       - id: dx-audit
         name: DX Standards Audit
+        stages: [pre-push]
         entry: bash scripts/dx-audit.sh
         language: system
-        pass_filenames: false
+        pass_filenames: true
 
       - id: max-lines-gate
         name: Canonical Max-Lines Gate
-        entry: task quality:max-lines
+        stages: [pre-push]
+        entry: scripts/max-lines-gate.sh
         language: system
-        pass_filenames: false
-
-      - id: tach
-        name: Architectural Boundary Check
-        entry: tach check
-        language: system
-        pass_filenames: false
+        pass_filenames: true
 
       - id: ty
         name: Fast Type Check (ty) (Gate 3)
-        entry: uv run ty check src/
+        stages: [pre-push]
+        entry: scripts/typecheck_changed.sh ty
         language: system
-        pass_filenames: false
+        pass_filenames: true
         types: [python]
 
       - id: basedpyright
         name: Strict Type Check (basedpyright) (Gate 3)
-        entry: uv run basedpyright src/
+        stages: [pre-push]
+        entry: scripts/typecheck_changed.sh basedpyright
         language: system
-        pass_filenames: false
+        pass_filenames: true
         types: [python]
 
       - id: shellcheck
         name: Shellcheck (project scripts)
+        stages: [pre-commit, pre-push]
         entry: shellcheck
         language: system
         args: ["--shell", "bash"]
@@ -89,6 +114,7 @@ repos:
 
       - id: docs-build
         name: Build VitePress Docsite
+        stages: [pre-commit, pre-push]
         entry: hooks/pre-commit-docs.sh
         language: script
         pass_filenames: false

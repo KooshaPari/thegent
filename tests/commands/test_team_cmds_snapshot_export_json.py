@@ -87,7 +87,9 @@ def test_snapshot_daily_index_cmd_rich_prefers_snapshots_when_present(monkeypatc
     assert "snapshots=7" in out
 
 
-def test_snapshot_daily_index_cmd_rich_falls_back_to_count_without_snapshots(monkeypatch, capsys, tmp_path: Path) -> None:
+def test_snapshot_daily_index_cmd_rich_falls_back_to_count_without_snapshots(
+    monkeypatch, capsys, tmp_path: Path
+) -> None:
     payload = {
         "days": [
             {

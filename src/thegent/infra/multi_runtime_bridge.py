@@ -7,6 +7,7 @@ This module allows a single program to orchestrate tasks across multiple Python 
 import asyncio
 from asyncio import subprocess
 import contextlib
+import logging
 import os
 import platform
 import tempfile
@@ -17,6 +18,8 @@ from pathlib import Path
 from typing import Any
 
 from thegent.infra.ipc import IPCMesh, MaildirQueue
+
+logger = logging.getLogger(__name__)
 
 
 class RuntimeType(Enum):
@@ -137,11 +140,16 @@ class MultiRuntimeBridge:
             if "[HEARTBEAT]" in text:
                 self.worker_heartbeats[runtime] = time.time()
             else:
-                pass
+                logger.debug("Worker %s log: %s", runtime.name, text)
 
         err_data = await process.stderr.read()
         if err_data:
-            pass
+            try:
+                stderr_text = err_data.decode("utf-8", errors="replace").strip()
+            except Exception as exc:
+                logger.warning("Failed decoding stderr for %s: %s", runtime.name, exc)
+            else:
+                logger.warning("Worker %s stderr: %s", runtime.name, stderr_text)
 
         await process.wait()
         if runtime in self.active_workers:

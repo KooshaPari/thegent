@@ -5,9 +5,25 @@ Manages system-wide shared MCP servers, scoping down to per-project only when ne
 """
 
 import json
+import logging
 import os
 import time
+from errno import ESRCH
 from pathlib import Path
+
+_LOG = logging.getLogger(__name__)
+
+
+def _remove_lockfile(lockfile: Path, *, reason: str) -> tuple[bool, str | None]:
+    try:
+        lockfile.unlink()
+    except FileNotFoundError:
+        return True, None
+    except PermissionError as exc:
+        return False, f"Failed to remove {reason} lockfile ({lockfile}): {type(exc).__name__}: {exc}"
+    except OSError as exc:
+        return False, f"Failed to remove {reason} lockfile ({lockfile}): {type(exc).__name__}: {exc}"
+    return True, None
 
 
 def get_server_scope(project_root: Path | None = None) -> tuple[str, Path]:
@@ -54,15 +70,41 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
                 pid = data.get("pid")
                 port = data.get("port", 3847)
 
+                if not isinstance(pid, int):
+                    _LOG.warning(
+                        "shared_mcp_lockfile_invalid_pid",
+                        extra={
+                            "failure_type": "invalid_pid_type",
+                            "lockfile": str(lockfile),
+                            "pid_type": type(pid).__name__,
+                        },
+                    )
+                    return False, f"Invalid lockfile pid type in {lockfile}: {type(pid).__name__}"
                 # Check if process still alive
                 try:
                     os.kill(pid, 0)  # Check if process exists
                     return False, f"http://127.0.0.1:{port}/mcp"
-                except OSError:
+                except OSError as exc:
+                    if exc.errno != ESRCH:
+                        return False, f"Unable to validate lockfile process {pid}: {exc}"
                     # Process dead, remove stale lockfile
-                    lockfile.unlink()
-        except Exception:
-            lockfile.unlink()
+                    ok, message = _remove_lockfile(lockfile, reason="stale")
+                    if not ok:
+                        return False, message
+        except json.JSONDecodeError as exc:
+            ok, message = _remove_lockfile(lockfile, reason="corrupt")
+            if not ok:
+                return False, message
+            _LOG.warning(
+                "shared_mcp_lockfile_corrupt_json",
+                extra={"failure_type": "corrupt_json", "lockfile": str(lockfile), "error_message": str(exc)[:180]},
+            )
+        except FileNotFoundError:
+            pass
+        except PermissionError as exc:
+            return False, f"Lockfile read permission denied ({lockfile}): {exc}"
+        except OSError as exc:
+            return False, f"Lockfile read failure ({lockfile}): {exc}"
 
     # Start new server (system-wide)
     from thegent.mcp.manage import _get_mcp_url, mcp_up

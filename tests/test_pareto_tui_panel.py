@@ -25,6 +25,7 @@ from thegent.routing.route_executor import RouterStatus
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_audit_record(
     provider: str = "lifecycle",
     model: str = "gemini-3-flash",
@@ -149,9 +150,7 @@ class TestParetoTuiSession:
         assert data["providers"] == []
         assert data["history"] == []
 
-    def test_get_audit_history_malformed_json_raises_value_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_get_audit_history_malformed_json_raises_value_error(self, tmp_path: Path) -> None:
         """get_audit_history raises ValueError on malformed JSON lines."""
         audit = tmp_path / "routing_audit.jsonl"
         audit.write_text("{not valid json}\n", encoding="utf-8")

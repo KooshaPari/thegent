@@ -2,6 +2,7 @@
 
 @trace FR-RE-003
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

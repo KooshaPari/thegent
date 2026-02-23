@@ -545,12 +545,7 @@ class TestReplaceManagedSection:
 
     def test_replaces_existing_section(self) -> None:
         # @trace FR-HAX-002
-        existing = (
-            "# Preamble\n\n"
-            "<!-- thegent:rules:start -->\n"
-            "Old content\n"
-            "<!-- thegent:rules:end -->\n"
-        )
+        existing = "# Preamble\n\n<!-- thegent:rules:start -->\nOld content\n<!-- thegent:rules:end -->\n"
         new = "<!-- thegent:rules:start -->\nNew content\n<!-- thegent:rules:end -->\n"
         result = _replace_managed_section(existing, new)
         assert "New content" in result
@@ -559,10 +554,7 @@ class TestReplaceManagedSection:
 
     def test_existing_content_after_section_preserved(self) -> None:
         # @trace FR-HAX-002
-        existing = (
-            "<!-- thegent:rules:start -->\nOld\n<!-- thegent:rules:end -->\n"
-            "\n# After section\n"
-        )
+        existing = "<!-- thegent:rules:start -->\nOld\n<!-- thegent:rules:end -->\n\n# After section\n"
         new = "<!-- thegent:rules:start -->\nNew\n<!-- thegent:rules:end -->\n"
         result = _replace_managed_section(existing, new)
         assert "# After section" in result

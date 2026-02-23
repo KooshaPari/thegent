@@ -52,3 +52,28 @@ class ComplianceProfile:
             True if compliant
         """
         return feature in self.get_requirements()
+
+
+def validate_profile_drift(
+    profiles: dict[str, dict[str, str]],
+    required_keys: set[str],
+    allowlist: set[str] | None = None,
+) -> tuple[bool, dict[str, list[str]]]:
+    """Validate profile key presence and cross-environment drift."""
+    allowlist = allowlist or set()
+    drift: dict[str, list[str]] = {}
+    envs = sorted(profiles.keys())
+
+    for env in envs:
+        missing = sorted(k for k in required_keys if k not in profiles[env])
+        if missing:
+            drift[f"{env}:missing"] = missing
+
+    for key in sorted(required_keys):
+        if key in allowlist:
+            continue
+        values = {profiles[env].get(key, "") for env in envs}
+        if len(values) > 1:
+            drift[f"drift:{key}"] = sorted(values)
+
+    return len(drift) == 0, drift

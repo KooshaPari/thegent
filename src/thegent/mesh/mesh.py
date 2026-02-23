@@ -32,12 +32,23 @@ class MeshManager:
         self.tasks_dir = self.mesh_root / "var" / "tasks"
         self.intents_dir = self.mesh_root / "var" / "intents"
         self.locks_dir = self.mesh_root / "locks"
+        self.metrics_dir = self.mesh_root / "metrics"
         self._init_mesh()
 
     def _init_mesh(self) -> None:
-        """Initialize mesh directories."""
-        for d in [self.agents_dir, self.queue_dir, self.tasks_dir, self.intents_dir, self.locks_dir]:
-            d.mkdir(parents=True, exist_ok=True, mode=0o1777)
+        """Initialize mesh directories with explicit permissions (SCLI-P1.4)."""
+        (self.mesh_root / "var").mkdir(parents=True, exist_ok=True)
+        mode_map = {
+            self.agents_dir: 0o755,
+            self.queue_dir: 0o1777,
+            self.tasks_dir: 0o755,
+            self.intents_dir: 0o755,
+            self.locks_dir: 0o1777,
+            self.metrics_dir: 0o755,
+        }
+        for path, mode in mode_map.items():
+            path.mkdir(parents=True, exist_ok=True)
+            path.chmod(mode)
 
     def _check_process(self, proc: psutil.Process, patterns: list[str]) -> dict[str, Any] | None:
         """Check if a process matches patterns. Returns process info or None."""

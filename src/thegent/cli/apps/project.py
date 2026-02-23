@@ -83,7 +83,9 @@ def install_callback(
     url: str | None = typer.Option(None, "--url", help="MCP URL override"),
     install_service: bool = typer.Option(False, "--install-service", help="Install service hooks where supported"),
     system: bool = typer.Option(False, "--system", help="Install system-wide assets under /opt/thegent"),
-    system_prefix: str | None = typer.Option(None, "--system-prefix", help="System install prefix (default: /opt/thegent)"),
+    system_prefix: str | None = typer.Option(
+        None, "--system-prefix", help="System install prefix (default: /opt/thegent)"
+    ),
     scope: str = typer.Option("user", "--scope", help="Install scope: user, system, or both."),
     setup: bool = typer.Option(False, "--setup", help="Run the setup wizard after install."),
 ) -> None:
@@ -165,11 +167,34 @@ def install_callback(
 
 @scaffold_app.command("greenfield", help="Create a new project from initialize-project presets.")
 def scaffold_greenfield(
-    destination: Annotated[str | None, typer.Argument(help="Destination directory for generated project scaffold")] = None,
+    destination: Annotated[
+        str | None, typer.Argument(help="Destination directory for generated project scaffold")
+    ] = None,
     profile: Annotated[str, typer.Option("--profile", "-p", help="Preset profile name")] = "cli_tool",
     name: Annotated[str, typer.Option("--name", help="Project name (defaults to destination name)")] = "",
     description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
     language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    include_act: Annotated[
+        bool,
+        typer.Option(
+            "--include-act/--no-include-act",
+            help="Forward local GitHub Actions emulation assets flag",
+        ),
+    ] = True,
+    include_qa_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-qa-tools/--no-include-qa-tools",
+            help="Forward QA tooling preset flag",
+        ),
+    ] = True,
+    include_pm_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-pm-tools/--no-include-pm-tools",
+            help="Forward PM tooling preset flag",
+        ),
+    ] = True,
     register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
     install_runtime: Annotated[
         bool,
@@ -192,6 +217,9 @@ def scaffold_greenfield(
         name=name,
         description=description,
         language=language,
+        include_act=include_act,
+        include_qa_tools=include_qa_tools,
+        include_pm_tools=include_pm_tools,
         register=register,
         install_runtime=install_runtime,
         tenant=tenant,
@@ -251,9 +279,7 @@ def scaffold_brownfield(
 
 @scaffold_app.command("ag-dd", help="Brownfield alias to migrate an existing project as AG-DD template mode.")
 def scaffold_brownfield_agdd(
-    project: Annotated[
-        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
-    ] = None,
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[
         str,
         typer.Option("--name", "-n", help="Project name (defaults to directory name)."),
@@ -301,9 +327,7 @@ def scaffold_brownfield_agdd(
 
 @scaffold_app.command("none", help="Brownfield alias to migrate an existing project without template overlay.")
 def scaffold_brownfield_none(
-    project: Annotated[
-        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
-    ] = None,
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[
         str,
         typer.Option("--name", "-n", help="Project name (defaults to directory name)."),
@@ -413,6 +437,27 @@ def setup_project_greenfield(
     name: Annotated[str, typer.Option("--name", help="Project name (defaults to destination name)")] = "",
     description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
     language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    include_act: Annotated[
+        bool,
+        typer.Option(
+            "--include-act/--no-include-act",
+            help="Forward local GitHub Actions emulation assets flag",
+        ),
+    ] = True,
+    include_qa_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-qa-tools/--no-include-qa-tools",
+            help="Forward QA tooling preset flag",
+        ),
+    ] = True,
+    include_pm_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-pm-tools/--no-include-pm-tools",
+            help="Forward PM tooling preset flag",
+        ),
+    ] = True,
     register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
     install_runtime: Annotated[
         bool,
@@ -435,6 +480,9 @@ def setup_project_greenfield(
         name=name,
         description=description,
         language=language,
+        include_act=include_act,
+        include_qa_tools=include_qa_tools,
+        include_pm_tools=include_pm_tools,
         register=register,
         install_runtime=install_runtime,
         tenant=tenant,
@@ -445,9 +493,7 @@ def setup_project_greenfield(
 
 @setup_project_app.command("ag-dd", help="Top-level brownfield variant forcing AG-DD template mode.")
 def setup_project_brownfield_agdd(
-    project: Annotated[
-        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
-    ] = None,
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
     tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
     mode: Annotated[
@@ -489,9 +535,7 @@ def setup_project_brownfield_agdd(
 
 @setup_project_app.command("none", help="Top-level brownfield variant forcing no template overlay.")
 def setup_project_brownfield_none(
-    project: Annotated[
-        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
-    ] = None,
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
     tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
     mode: Annotated[
@@ -539,7 +583,6 @@ def setup_project_brownfield_none(
 def _slug(name: str) -> str:
     """Convert a project name to a safe tenant_id slug."""
     return "".join(c if (c.isalnum() or c in "-_") else "-" for c in name.lower()).strip("-")
-
 
 
 _SCAFFOLD_PROFILES: dict[str, dict[str, object]] = {
@@ -599,7 +642,15 @@ _SCAFFOLD_PROFILES: dict[str, dict[str, object]] = {
 _DEFAULT_TEMPLATE_VERSION = "1.0.0"
 
 
-def _build_scaffold_data(profile: str, name: str, description: str, language: str) -> dict[str, object]:
+def _build_scaffold_data(
+    profile: str,
+    name: str,
+    description: str,
+    language: str,
+    include_act: bool = True,
+    include_qa_tools: bool = True,
+    include_pm_tools: bool = True,
+) -> dict[str, object]:
     """Return Copier data-file payload for a scaffold preset profile."""
     if profile not in _SCAFFOLD_PROFILES:
         valid = ", ".join(sorted(_SCAFFOLD_PROFILES))
@@ -613,6 +664,9 @@ def _build_scaffold_data(profile: str, name: str, description: str, language: st
         "include_docs": True,
         "include_ci": True,
         "include_hooks": True,
+        "include_act": include_act,
+        "include_qa_tools": include_qa_tools,
+        "include_pm_tools": include_pm_tools,
         **profile_defaults,
     }
 
@@ -713,7 +767,9 @@ def _scaffold_profile_names() -> list[str]:
     return sorted(_SCAFFOLD_PROFILES)
 
 
-@setup_project_app.command("migrate", help="Convert or reconcile an existing repo into the thegent tenant/runtime model.")
+@setup_project_app.command(
+    "migrate", help="Convert or reconcile an existing repo into the thegent tenant/runtime model."
+)
 def project_migrate(
     project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
@@ -784,9 +840,9 @@ def project_migrate(
 
     reconcile_updates: dict[str, str] = {}
     if existing and template == "auto":
-        if existing.template == "none" and detected_template != existing.template:
-            reconcile_updates["template"] = detected_template
-        elif existing.template != "ag-dd" and detected_template == "ag-dd":
+        if (existing.template == "none" and detected_template != existing.template) or (
+            existing.template != "ag-dd" and detected_template == "ag-dd"
+        ):
             reconcile_updates["template"] = detected_template
         if lock_state and lock_state[1] != existing.template_version:
             reconcile_updates["template_version"] = lock_state[1]
@@ -797,14 +853,14 @@ def project_migrate(
     else:
         if existing and lock_state and lock_state[1] != existing.template_version:
             reconcile_updates["template_version"] = lock_state[1]
-        if template != "auto" and template != existing.template:
+        if template != "auto":
             reconcile_updates["template"] = template
 
     registration: dict[str, object] = {}
     if existing is None:
         if not register:
             console.print(
-                f"[red]Error: project is not registered. Use --register to adopt this brownfield project[/red]",
+                "[red]Error: project is not registered. Use --register to adopt this brownfield project[/red]",
             )
             raise typer.Exit(1)
         project_name = name.strip() or project_path.name
@@ -941,7 +997,9 @@ def project_migrate(
         payload = {
             "project": {
                 "name": existing.name if existing else name.strip() or project_path.name,
-                "tenant_id": existing.tenant_id if existing else (tenant.strip() or _slug(name.strip() or project_path.name)),
+                "tenant_id": existing.tenant_id
+                if existing
+                else (tenant.strip() or _slug(name.strip() or project_path.name)),
                 "path": str(project_path),
                 "registered": existing is not None,
             },
@@ -952,11 +1010,7 @@ def project_migrate(
         typer.echo(json.dumps(payload, indent=2))
         raise typer.Exit(0 if not runtime_result.get("errors") else 1)
 
-    baseline_label = (
-        "adopted"
-        if registration.get("status") in {"adopted", "adopted (dry-run)"}
-        else "reconciled"
-    )
+    baseline_label = "adopted" if registration.get("status") in {"adopted", "adopted (dry-run)"} else "reconciled"
     console.print(f"[green]Migration baseline: {baseline_label}[/green]")
     console.print(f"  path: {project_path}")
     if existing:
@@ -976,10 +1030,10 @@ def project_migrate(
         for warning in warnings:
             console.print(f"[yellow]Warning:[/yellow] {warning}")
     if install_runtime and runtime_result:
-        installed = list(cast(Iterable[object], runtime_result.get("installed", [])))
-        skipped = list(cast(Iterable[object], runtime_result.get("skipped", [])))
-        errors = list(cast(Iterable[object], runtime_result.get("errors", [])))
-        for note in cast(Iterable[object], runtime_result.get("notes", [])):
+        installed = list(cast("Iterable[object]", runtime_result.get("installed", [])))
+        skipped = list(cast("Iterable[object]", runtime_result.get("skipped", [])))
+        errors = list(cast("Iterable[object]", runtime_result.get("errors", [])))
+        for note in cast("Iterable[object]", runtime_result.get("notes", [])):
             console.print(f"  [yellow]runtime note:[/yellow] {note}")
         if dry_run:
             console.print("[yellow]Dry-run mode for runtime migration enabled[/yellow]")
@@ -991,7 +1045,9 @@ def project_migrate(
             for err in errors:
                 console.print(f"  [red]runtime error:[/red] {err}")
     if not snapshot["has_thegent_dir"]:
-        console.print("[yellow]Tip: .thegent dir missing before migration; runtime install will create it when --install-runtime is enabled.[/yellow]")
+        console.print(
+            "[yellow]Tip: .thegent dir missing before migration; runtime install will create it when --install-runtime is enabled.[/yellow]"
+        )
 
     if runtime_result.get("errors"):
         raise typer.Exit(1)
@@ -1084,6 +1140,27 @@ def project_scaffold(
     name: Annotated[str, typer.Option("--name", "-n", help="Project name override")] = "",
     description: Annotated[str, typer.Option("--description", "-d", help="Project description")] = "",
     language: Annotated[str, typer.Option("--language", "-l", help="Primary language")] = "python",
+    include_act: Annotated[
+        bool,
+        typer.Option(
+            "--include-act/--no-include-act",
+            help="Include local GitHub Actions emulation assets",
+        ),
+    ] = True,
+    include_qa_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-qa-tools/--no-include-qa-tools",
+            help="Include lightweight QA tooling presets and workflows",
+        ),
+    ] = True,
+    include_pm_tools: Annotated[
+        bool,
+        typer.Option(
+            "--include-pm-tools/--no-include-pm-tools",
+            help="Include PM/workstream tooling presets",
+        ),
+    ] = True,
     register: Annotated[bool, typer.Option("--register", help="Register scaffolded project tenancy")] = False,
     install_runtime: Annotated[
         bool,
@@ -1116,6 +1193,9 @@ def project_scaffold(
             name=project_name,
             description=project_description,
             language=language,
+            include_act=include_act,
+            include_qa_tools=include_qa_tools,
+            include_pm_tools=include_pm_tools,
         )
     except ValueError as exc:
         console.print(f"[red]Error: {exc}[/red]")
@@ -1199,6 +1279,9 @@ def project_scaffold(
         "profile": profile,
         "project_name": project_name,
         "language": language,
+        "include_act": include_act,
+        "include_qa_tools": include_qa_tools,
+        "include_pm_tools": include_pm_tools,
         "dry_run": dry_run,
         "register": register,
         "tenant_id": effective_tenant,
@@ -1602,9 +1685,7 @@ def install_project_cmd(
 
 @install_project_app.command("brownfield", help="Adopt and install an unregistered or partial brownfield project.")
 def install_project_brownfield(
-    project: Annotated[
-        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
-    ] = None,
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
     tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
     template: Annotated[
@@ -1653,9 +1734,7 @@ def install_project_brownfield(
 
 @install_project_app.command("ag-dd", help="Adopt and install a project using AG-DD brownfield template mode.")
 def install_project_brownfield_agdd(
-    project: Annotated[
-        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
-    ] = None,
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
     tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
     mode: Annotated[
@@ -1697,9 +1776,7 @@ def install_project_brownfield_agdd(
 
 @install_project_app.command("none", help="Adopt and install a project without template overlay.")
 def install_project_none(
-    project: Annotated[
-        str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")
-    ] = None,
+    project: Annotated[str | None, typer.Argument(help="Existing project directory to migrate or reconcile.")] = None,
     name: Annotated[str, typer.Option("--name", "-n", help="Project name (defaults to directory name).")] = "",
     tenant: Annotated[str, typer.Option("--tenant", "-t", help="Tenant ID override.")] = "",
     mode: Annotated[

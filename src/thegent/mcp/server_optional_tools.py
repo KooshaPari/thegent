@@ -164,10 +164,7 @@ def register_optional_tools(
         async def thegent_configure_agent(ctx: Any = current_context()) -> str:
             result = await elicitation_mod.elicit_structured(ctx, "Configure the agent", AgentConfig)
             if result:
-                return (
-                    f"Agent configured: {result.name} "
-                    f"(timeout={result.timeout_secs}s, retries={result.retry_count})"
-                )
+                return f"Agent configured: {result.name} (timeout={result.timeout_secs}s, retries={result.retry_count})"
             return "Agent configuration declined or cancelled."
 
         @mcp.tool()

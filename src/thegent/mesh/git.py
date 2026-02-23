@@ -197,8 +197,7 @@ class GitParallelismManager:
         """Create or refresh the per-agent index file."""
         system_index = self.git_dir / "index"
         if not self.agent_index.exists() or (
-            system_index.exists()
-            and system_index.stat().st_mtime > self.agent_index.stat().st_mtime
+            system_index.exists() and system_index.stat().st_mtime > self.agent_index.stat().st_mtime
         ):
             if system_index.exists():
                 shutil.copy2(system_index, self.agent_index)
@@ -235,12 +234,16 @@ class GitParallelismManager:
             return None
         tree_sha = tree_res.stdout.strip()
 
-        commit_args = ["commit-tree", tree_sha, "-m", message, "-p", parent_hash] if parent_hash else [
-            "commit-tree",
-            tree_sha,
-            "-m",
-            message,
-        ]
+        commit_args = (
+            ["commit-tree", tree_sha, "-m", message, "-p", parent_hash]
+            if parent_hash
+            else [
+                "commit-tree",
+                tree_sha,
+                "-m",
+                message,
+            ]
+        )
         commit_res = self._run_git(commit_args)
         if commit_res.returncode != 0:
             return None
@@ -330,9 +333,7 @@ class GitParallelismManager:
             if probe.returncode != 0 or "CONFLICT" in probe.stdout:
                 return None
 
-            tree_proc = self._run_git(
-                ["merge-tree", "--write-tree", ours_commit, theirs_commit], use_index=False
-            )
+            tree_proc = self._run_git(["merge-tree", "--write-tree", ours_commit, theirs_commit], use_index=False)
             if tree_proc.returncode != 0:
                 return None
 
@@ -390,10 +391,11 @@ class GitParallelismManager:
 
 def harness_git_status_view(agent_id: str) -> None:
     """Display git status for a specific agent."""
-    print(f"Agent: {agent_id}")
+    logger.info("Agent: %s", agent_id)
     manager = GitParallelismManager(Path.cwd(), agent_id)
     status = manager.get_agent_status()
     if status:
-        print(status)
+        for line in status.split("\n"):
+            logger.info("%s", line)
     else:
-        print("No staged changes")
+        logger.info("No staged changes")

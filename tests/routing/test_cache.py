@@ -265,6 +265,7 @@ def test_diskcache_expired_returns_none_and_deletes(tmp_path):
 
     # Rewrite file with a past created_at to force expiry
     import json as _json
+
     data = _json.loads(path.read_text())
     data["created_at"] = time.monotonic() - 9999.0
     path.write_text(_json.dumps(data))
@@ -310,6 +311,7 @@ def test_diskcache_clear_namespace(tmp_path):
 def test_diskcache_atomic_write(tmp_path):
     """set() must produce no partial files — final file must be valid JSON."""
     import json as _json
+
     cache = DiskCache(cache_dir=str(tmp_path))
     key = "atomickey0000000"
     cache.set(key, _sample_response("atomic"))

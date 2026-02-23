@@ -9,6 +9,8 @@ from typer.testing import CliRunner
 from thegent.agents.routing_contracts import GEMINI_FLASH_MODEL, GEMINI_FLASH_PROVIDER
 from thegent.dex_main import (
     _DEX_BYPASS_FLAG,
+    _DEX_YOLO_FLAG,
+    _run_codex_interactive,
     _MODEL_ALIAS,
     _run_model_cmd,
     _resolve_provider_for_model,
@@ -261,6 +263,15 @@ def test_dex_run_dex_uses_codex_canonical_model() -> None:
     assert result.exit_code == 0
     run_cmd.assert_called_once()
     assert run_cmd.call_args.kwargs["model"] == "gpt-5.3-codex"
+    assert run_cmd.call_args.kwargs["remote"] is None
+
+
+def test_dex_run_global_forwards_remote_to_run_cmd() -> None:
+    with patch("thegent.cli.run_cmd") as run_cmd:
+        result = runner.invoke(app, ["run", "dex", "hello", "--remote", "node-12"])
+    assert result.exit_code == 0
+    run_cmd.assert_called_once()
+    assert run_cmd.call_args.kwargs["remote"] == "node-12"
 
 
 def test_dex_bg_dex_uses_codex_canonical_model() -> None:
@@ -269,6 +280,15 @@ def test_dex_bg_dex_uses_codex_canonical_model() -> None:
     assert result.exit_code == 0
     bg_cmd.assert_called_once()
     assert bg_cmd.call_args.kwargs["model"] == "gpt-5.3-codex"
+
+
+def test_dex_bg_global_forwards_remote_to_bg_cmd() -> None:
+    with patch("thegent.cli.bg_cmd") as bg_cmd:
+        result = runner.invoke(app, ["bg", "dex", "hello", "--remote", "node-77", "--owner", "qa"])
+    assert result.exit_code == 0
+    bg_cmd.assert_called_once()
+    assert bg_cmd.call_args.kwargs["remote"] == "node-77"
+    assert bg_cmd.call_args.kwargs["owner"] == "qa"
 
 
 @pytest.mark.parametrize(
@@ -329,9 +349,11 @@ def test_default_dex_callback_uses_flash_table_driven(
 def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec() -> None:
     """Regression: direct callback invocation should not hit native exec via OptionInfo defaults."""
     ctx = type("Ctx", (), {"invoked_subcommand": None})()
-    with patch("sys.argv", ["dex"]), patch("thegent.dex_main._exec_native_codex") as exec_native, patch(
-        "thegent.dex_main._run_codex_interactive"
-    ) as run_interactive:
+    with (
+        patch("sys.argv", ["dex"]),
+        patch("thegent.dex_main._exec_native_codex") as exec_native,
+        patch("thegent.dex_main._run_codex_interactive") as run_interactive,
+    ):
         default_dex(ctx, force=False, native=False)  # type: ignore[arg-type]
 
     exec_native.assert_not_called()
@@ -340,12 +362,28 @@ def test_default_dex_direct_callback_explicit_flags_do_not_trigger_native_exec()
 
 def test_default_dex_native_force_includes_force_yolo_for_native_path() -> None:
     ctx = type("Ctx", (), {"invoked_subcommand": None})()
-    with patch("sys.argv", ["dex", "--native", "--force"]), patch(
-        "thegent.dex_main._exec_native_codex"
-    ) as exec_native, patch("thegent.dex_main._run_codex_interactive"):
+    with (
+        patch("sys.argv", ["dex", "--native", "--force"]),
+        patch("thegent.dex_main._exec_native_codex") as exec_native,
+        patch("thegent.dex_main._run_codex_interactive"),
+    ):
         default_dex(ctx, force=True, native=True)  # type: ignore[arg-type]
 
-    exec_native.assert_called_once_with(["--force-yolo"])
+    exec_native.assert_called_once_with(["--force-yolo", _DEX_YOLO_FLAG, _DEX_BYPASS_FLAG])
+
+
+def test_run_codex_interactive_includes_yolo_and_dangerously_bypass_flags() -> None:
+    with (
+        patch("thegent.dex_main._resolve_provider_for_model", return_value="copilot"),
+        patch("thegent.dex_main._get_codex_env", return_value={"OPENAI_BASE_URL": "http://127.0.0.1:8317"}),
+        patch("thegent.dex_main.resolve_codex_cli_path", return_value="/usr/bin/codex"),
+        patch("thegent.dex_main.os.execvpe") as execvpe,
+        patch("thegent.dex_main.wrap_with_caffeinate", side_effect=lambda cmd, _: cmd),
+    ):
+        _run_codex_interactive("max", dangerously_bypass=True)
+        command = execvpe.call_args.args[1]
+        assert _DEX_YOLO_FLAG in command
+        assert _DEX_BYPASS_FLAG in command
 
 
 @pytest.mark.parametrize("subcommand", ["run", "bg"])

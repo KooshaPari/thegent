@@ -67,8 +67,16 @@ def test_governance_selector_jobs_use_summary_script_contract(
 @pytest.mark.parametrize(
     ("job_name", "run_step_name", "log_path"),
     [
-        ("governance-selector-fast", "Run selector fast lane with fail-closed reporting", ".quality/governance-selector-fast.log"),
-        ("governance-selector-strict", "Run selector strict lane with fail-closed reporting", ".quality/governance-selector-strict.log"),
+        (
+            "governance-selector-fast",
+            "Run selector fast lane with fail-closed reporting",
+            ".quality/governance-selector-fast.log",
+        ),
+        (
+            "governance-selector-strict",
+            "Run selector strict lane with fail-closed reporting",
+            ".quality/governance-selector-strict.log",
+        ),
     ],
 )
 def test_governance_selector_jobs_keep_fail_closed_signal_grep_contract(

@@ -1,4 +1,5 @@
 """Thegent CLI session commands domain - extracted from cli.py (WL-124)."""
+
 # @trace WL-124
 from __future__ import annotations
 
@@ -46,6 +47,7 @@ from thegent.cli.commands.session_cmds_helpers import (
     render_ps_rich_table,
     resolve_export_format_with_notice,
 )
+
 
 def history_cmd(limit: int = 50, format: str | None = None) -> None:
     """List execution run history (sync and background)."""
@@ -741,8 +743,7 @@ def inspect_cmd(
                     }
                     console.print_json(data=output)
                 continue
-            else:
-                console.print(st.get("status", ""))
+            console.print(st.get("status", ""))
         except Exception as e:
             console.print(f"[red]status error: {e}[/red]")
             continue
@@ -1087,4 +1088,30 @@ def deferral_resume_cmd(run_id: str) -> None:
     else:
         console.print(f"[red]Error:[/red] Run [cyan]{run_id}[/cyan] not found in deferral queue.")
 
-__all__ = ['deferral_list_cmd', 'deferral_resume_cmd', 'events_cmd', 'feedback_cmd', 'history_cmd', 'inbox_list_cmd', 'inbox_wait_cmd', 'inspect_cmd', 'logs_cmd', 'pause_cmd', 'ps_cmd', 'resume_cmd', 'session_cmd', 'session_contract_health_gate_cmd', 'session_contract_health_report_cmd', 'session_contract_health_trend_cmd', 'session_contract_negotiate_cmd', 'session_contract_trend_analysis_cmd', 'session_contracts_cmd', 'session_fork_cmd', 'session_rollback_cmd', 'status_cmd', 'stop_cmd', 'wait_cmd']
+
+__all__ = [
+    "deferral_list_cmd",
+    "deferral_resume_cmd",
+    "events_cmd",
+    "feedback_cmd",
+    "history_cmd",
+    "inbox_list_cmd",
+    "inbox_wait_cmd",
+    "inspect_cmd",
+    "logs_cmd",
+    "pause_cmd",
+    "ps_cmd",
+    "resume_cmd",
+    "session_cmd",
+    "session_contract_health_gate_cmd",
+    "session_contract_health_report_cmd",
+    "session_contract_health_trend_cmd",
+    "session_contract_negotiate_cmd",
+    "session_contract_trend_analysis_cmd",
+    "session_contracts_cmd",
+    "session_fork_cmd",
+    "session_rollback_cmd",
+    "status_cmd",
+    "stop_cmd",
+    "wait_cmd",
+]

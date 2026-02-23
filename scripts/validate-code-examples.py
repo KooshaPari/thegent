@@ -28,7 +28,7 @@ def validate_python_examples(md_file: Path) -> list[str]:
                 # Remove trailing newlines and use single-line for signature check
                 clean_code = code.strip().replace("\n", " ")
                 ast.parse(f"def dummy_func({clean_code}): pass")
-                continue # It's a valid signature/parameter list
+                continue  # It's a valid signature/parameter list
             except SyntaxError:
                 pass
 
@@ -40,7 +40,7 @@ def validate_python_examples(md_file: Path) -> list[str]:
                     ast.parse(f"def {clean_code}: pass")
                 else:
                     ast.parse(f"def {clean_code} pass")
-                continue # It's a valid function/method signature
+                continue  # It's a valid function/method signature
             except SyntaxError:
                 pass
 
@@ -60,7 +60,7 @@ def validate_python_examples(md_file: Path) -> list[str]:
 
             # If all attempts fail, report the original error
             line_no = e.lineno or 0
-            errors.append(f"Python block {i+1} syntax error at line {line_no}: {e.msg}")
+            errors.append(f"Python block {i + 1} syntax error at line {line_no}: {e.msg}")
 
     return errors
 
@@ -83,7 +83,7 @@ def validate_json_examples(md_file: Path) -> list[str]:
         try:
             json.loads(code)
         except json.JSONDecodeError as e:
-            errors.append(f"JSON block {i+1} error: {e}")
+            errors.append(f"JSON block {i + 1} error: {e}")
 
     return errors
 

@@ -1,0 +1,171 @@
+# CI workflow for scaffolded project
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+{% if language == "python" %}
+env:
+  PYTHON_VERSION: "3.12"
+{% elif language == "typescript" %}
+env:
+  NODE_VERSION: "20"
+{% endif %}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      {% if language == "python" %}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: {% raw %}${{ env.PYTHON_VERSION }}{% endraw %}
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync
+      {% elif language == "typescript" %}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: {% raw %}${{ env.NODE_VERSION }}{% endraw %}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install dependencies
+        run: pnpm install
+      {% elif language == "go" %}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      {% else %}
+      - name: Ensure shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      {% endif %}
+      - name: Run lint
+        run: task lint
+
+  test:
+    name: Test
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      {% if language == "python" %}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: {% raw %}${{ env.PYTHON_VERSION }}{% endraw %}
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync
+      {% elif language == "typescript" %}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: {% raw %}${{ env.NODE_VERSION }}{% endraw %}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install dependencies
+        run: pnpm install
+      {% elif language == "go" %}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      {% else %}
+      - name: Install shell utilities
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      {% endif %}
+      - name: Run tests
+        run: task test
+
+  security:
+    name: Security
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      {% if language == "python" %}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: {% raw %}${{ env.PYTHON_VERSION }}{% endraw %}
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync
+      - name: Security lint
+        run: uv run ruff check --select S .
+      {% elif language == "typescript" %}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: {% raw %}${{ env.NODE_VERSION }}{% endraw %}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install dependencies
+        run: pnpm install
+      - name: Security checks
+        run: pnpm audit
+      {% elif language == "go" %}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Build and test
+        run: go test ./...
+      - name: Static checks
+        run: go vet ./...
+      {% else %}
+      - name: Shell security lint
+        run: shellcheck -x scripts/**/*.sh
+      {% endif %}
+      - name: Secret scan
+        run: |
+          if command -v trufflehog >/dev/null 2>&1; then
+            trufflehog git file://. --only-verified
+          else
+            echo "trufflehog not installed; skipping secret scan"
+          fi
+
+{% if include_qa_tools %}
+  quality:
+    name: Quality Gate
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      {% if language == "python" %}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: {% raw %}${{ env.PYTHON_VERSION }}{% endraw %}
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - name: Install dependencies
+        run: uv sync
+      {% elif language == "typescript" %}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: {% raw %}${{ env.NODE_VERSION }}{% endraw %}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install dependencies
+        run: pnpm install
+      {% elif language == "go" %}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      {% else %}
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      {% endif %}
+      - name: Run quality task
+        run: task quality
+{% endif %}

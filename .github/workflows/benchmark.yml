@@ -94,7 +94,8 @@ jobs:
         uses: arduino/setup-task@v2
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Build Rust extensions
         run: bash scripts/build-all-rust-extensions.sh
@@ -137,7 +138,8 @@ jobs:
         uses: arduino/setup-task@v2
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Build Rust extensions
         run: bash scripts/build-all-rust-extensions.sh
@@ -180,7 +182,8 @@ jobs:
         uses: arduino/setup-task@v2
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Build Rust extensions
         run: bash scripts/build-all-rust-extensions.sh
@@ -223,7 +226,8 @@ jobs:
         uses: arduino/setup-task@v2
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev
+        run: bash ./scripts/ci_uv_sync.sh
+        shell: bash
 
       - name: Build Rust extensions
         run: bash scripts/build-all-rust-extensions.sh

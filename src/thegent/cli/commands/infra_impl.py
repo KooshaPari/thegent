@@ -13,7 +13,6 @@ from thegent.config import ThegentSettings
 _log = logging.getLogger(__name__)
 
 
-
 def lock_resource_impl(resource_path: str, agent_id: str, ttl: int = 60, cd: Path | None = None) -> dict[str, Any]:
     """Claim a lease on a resource (file or directory)."""
     from thegent.cli.commands.impl import _resolve_cwd

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from thegent.config import ThegentSettings
 from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
@@ -46,6 +46,66 @@ from thegent.execution_run_scan_helpers import process_token_match as _process_t
 from thegent.execution_run_scan_helpers import update_run_state as _update_run_state_impl
 
 _log = logging.getLogger(__name__)
+_EXECUTION_WARNING_LIMIT = 3
+_execution_warning_count = 0
+_admission_import_warning_once: set[str] = set()
+_execution_diagnostics: dict[str, Any] = {
+    "optional_gate_import_failures": 0,
+    "optional_gate_last_error_type": None,
+    "optional_gate_last_error_message": None,
+    "deadline_unregister": {
+        "import_failures": 0,
+        "runtime_failures": 0,
+        "last_error_type": None,
+        "last_error_message": None,
+    },
+    "message_parse": {
+        "invalid_rows": 0,
+        "non_pending_rows": 0,
+        "last_error_type": None,
+        "last_error_message": None,
+    },
+}
+
+
+def _warn_bounded(message: str, *args: object) -> None:
+    global _execution_warning_count
+    _execution_warning_count += 1
+    if _execution_warning_count <= _EXECUTION_WARNING_LIMIT:
+        _log.warning(message, *args)
+
+
+def get_execution_diagnostics() -> dict[str, Any]:
+    """Return diagnostics snapshot for execution-path degradation."""
+    return {
+        "optional_gate_import_failures": _execution_diagnostics["optional_gate_import_failures"],
+        "optional_gate_last_error_type": _execution_diagnostics["optional_gate_last_error_type"],
+        "optional_gate_last_error_message": _execution_diagnostics["optional_gate_last_error_message"],
+        "deadline_unregister": dict(_execution_diagnostics["deadline_unregister"]),
+        "message_parse": dict(_execution_diagnostics["message_parse"]),
+    }
+
+
+def reset_execution_diagnostics() -> None:
+    """Reset execution diagnostics (test helper)."""
+    global _execution_warning_count
+    _execution_warning_count = 0
+    _admission_import_warning_once.clear()
+    _execution_diagnostics["optional_gate_import_failures"] = 0
+    _execution_diagnostics["optional_gate_last_error_type"] = None
+    _execution_diagnostics["optional_gate_last_error_message"] = None
+    _execution_diagnostics["deadline_unregister"] = {
+        "import_failures": 0,
+        "runtime_failures": 0,
+        "last_error_type": None,
+        "last_error_message": None,
+    }
+    _execution_diagnostics["message_parse"] = {
+        "invalid_rows": 0,
+        "non_pending_rows": 0,
+        "last_error_type": None,
+        "last_error_message": None,
+    }
 
 
 def _as_float(value: Any, default: float) -> float:
@@ -338,9 +398,20 @@ class ConcurrencyController:
                             _log.info(
                                 f"gate passed: gate=bottleneck severity=high limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
                             )
-            except ImportError:
-                # Advanced features not available, use basic resource-based limits
-                pass
+            except ImportError as exc:
+                # Advanced features not available, use basic resource-based limits.
+                mod = "thegent.orchestration.resource.resource_management"
+                _execution_diagnostics["optional_gate_import_failures"] = (
+                    int(_execution_diagnostics["optional_gate_import_failures"]) + 1
+                )
+                _execution_diagnostics["optional_gate_last_error_type"] = type(exc).__name__
+                _execution_diagnostics["optional_gate_last_error_message"] = str(exc)
+                if mod not in _admission_import_warning_once:
+                    _admission_import_warning_once.add(mod)
+                    _warn_bounded(
+                        "Concurrency admission degraded: optional module %s unavailable; advanced gates skipped",
+                        mod,
+                    )
 
             # Apply critical lane reservation (swarm-critical-lane).
             # Critical runs can use all slots (no cap adjustment).
@@ -445,8 +516,24 @@ class ConcurrencyController:
             from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
 
             get_deadline_monitor().unregister(run_id or owner)
-        except Exception:
-            pass
+        except ImportError as exc:
+            deadline = _execution_diagnostics["deadline_unregister"]
+            deadline["import_failures"] = int(deadline["import_failures"]) + 1
+            deadline["last_error_type"] = type(exc).__name__
+            deadline["last_error_message"] = str(exc)
+            _warn_bounded(
+                "ResourceCoordinator.release: deadline monitor import unavailable; unregister skipped (%s)",
+                type(exc).__name__,
+            )
+        except Exception as exc:
+            deadline = _execution_diagnostics["deadline_unregister"]
+            deadline["runtime_failures"] = int(deadline["runtime_failures"]) + 1
+            deadline["last_error_type"] = type(exc).__name__
+            deadline["last_error_message"] = str(exc)
+            _warn_bounded(
+                "ResourceCoordinator.release: deadline monitor unregister failed (%s)",
+                type(exc).__name__,
+            )
 
     def get_usage_stats(self) -> dict[str, Any]:
         """Return per-owner usage statistics as a serializable dict.
@@ -460,16 +547,17 @@ class ConcurrencyController:
     def get_bottlenecks(self) -> dict[str, Any]:
         """Get current bottlenecks and slow points."""
         if self.bottleneck_detector is None:
-            return {}
+            return {
+                "detector_available": False,
+                "reason": "bottleneck_detector_unavailable",
+            }
 
         slow_points = self.bottleneck_detector.identify_slow_points()
         from thegent.orchestration.resource.resource_management import sample_extended_resources
 
         snapshot = sample_extended_resources()
         harness_cards = self.harness_cards if self.harness_cards is not None else {}
-        contentions = self.bottleneck_detector.detect_resource_contention(
-            snapshot, harness_cards
-        )
+        contentions = self.bottleneck_detector.detect_resource_contention(snapshot, harness_cards)
 
         return {
             "slow_points": slow_points,
@@ -557,10 +645,23 @@ class FreshnessValidator:
 class HandoffManager:
     """WP-4006/9004: Manages shift handoffs and continuity snapshots with enforcement."""
 
-    def __init__(self, session_dir: Path) -> None:
+    def __init__(
+        self,
+        session_dir: Path,
+        warning_threshold: float | None = None,
+        escalation_threshold: float | None = None,
+    ) -> None:
         self.session_dir = session_dir
         self.path = session_dir / "handoff_registry.jsonl"
         self._confirmed_handoffs: set[str] = set()
+        configured_warning = warning_threshold
+        if configured_warning is None:
+            configured_warning = _as_float(os.environ.get("THGENT_HANDOFF_WARNING_THRESHOLD"), 0.8)
+        configured_escalation = escalation_threshold
+        if configured_escalation is None:
+            configured_escalation = _as_float(os.environ.get("THGENT_HANDOFF_ESCALATION_THRESHOLD"), 0.6)
+        self.warning_threshold = min(max(configured_warning, 0.0), 1.0)
+        self.escalation_threshold = min(max(configured_escalation, 0.0), self.warning_threshold)
 
     def create_snapshot(self, owner: str, run_ids: list[str]) -> str:
         """Create a continuity snapshot for a handoff."""
@@ -580,12 +681,68 @@ class HandoffManager:
     def confirm_handoff(self, snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> bool:
         """WP-9004/12005: Incoming owner confirms handoff completeness with confidence."""
         if not self.verify_integrity(snapshot_id):
+            self.session_dir.mkdir(parents=True, exist_ok=True)
+            invalid_event = {
+                "snapshot_id": snapshot_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "incoming_owner": incoming_owner,
+                "confidence": confidence,
+                "event_type": "handoff_invalid_snapshot",
+                "reason": "snapshot_not_found",
+            }
+            with self.path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(invalid_event) + "\n")
             return False
 
-        # WP-12005: Handoff confidence threshold
-        if confidence < 0.8:
-            # Record low confidence handoff
-            pass
+        if confidence < 0.0 or confidence > 1.0:
+            self.session_dir.mkdir(parents=True, exist_ok=True)
+            invalid_event = {
+                "snapshot_id": snapshot_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "incoming_owner": incoming_owner,
+                "confidence": confidence,
+                "event_type": "handoff_invalid_snapshot",
+                "reason": "confidence_out_of_range",
+            }
+            with self.path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(invalid_event) + "\n")
+            return False
+
+        snapshot = self.get_snapshot(snapshot_id)
+        if not isinstance(snapshot, dict) or not isinstance(snapshot.get("run_ids"), list):
+            self.session_dir.mkdir(parents=True, exist_ok=True)
+            invalid_event = {
+                "snapshot_id": snapshot_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "incoming_owner": incoming_owner,
+                "confidence": confidence,
+                "event_type": "handoff_invalid_snapshot",
+                "reason": "invalid_snapshot_shape",
+            }
+            with self.path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(invalid_event) + "\n")
+            return False
+
+        confidence_state = "high"
+        if confidence < self.warning_threshold:
+            confidence_state = "low_warning"
+            event_type = "handoff_low_confidence_warning"
+            if confidence < self.escalation_threshold:
+                confidence_state = "low_escalated"
+                event_type = "handoff_low_confidence_escalation"
+            low_confidence_event = {
+                "snapshot_id": snapshot_id,
+                "timestamp": datetime.now(UTC).isoformat(),
+                "incoming_owner": incoming_owner,
+                "confidence": confidence,
+                "event_type": event_type,
+                "confidence_state": confidence_state,
+                "warning_threshold": self.warning_threshold,
+                "escalation_threshold": self.escalation_threshold,
+                "run_count": len(snapshot.get("run_ids", [])),
+            }
+            with self.path.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(low_confidence_event) + "\n")
 
         self._confirmed_handoffs.add(snapshot_id)
         # Update registry record (simplified: append confirmation event)
@@ -595,6 +752,9 @@ class HandoffManager:
             "incoming_owner": incoming_owner,
             "confidence": confidence,
             "event_type": "handoff_confirmed",
+            "confidence_state": confidence_state,
+            "warning_threshold": self.warning_threshold,
+            "escalation_threshold": self.escalation_threshold,
             "continuity_envelope_version": "v2.0",  # WP-12005
         }
         with self.path.open("a", encoding="utf-8") as f:
@@ -1043,18 +1203,68 @@ class KPIManager:
         runs = registry.list_runs(limit=1000)
         ct = ContractTelemetry(self.session_dir)
         stats = ct.get_stats(limit=100)
+        now = datetime.now(UTC)
+        run_count = len(runs)
+        finished_runs = [r for r in runs if r.get("status") in {"completed", "failed", "timed_out"}]
+        success_runs = [r for r in finished_runs if r.get("status") == "completed"]
+        confidence_values = [float(r.get("confidence", 0.0)) for r in runs if r.get("confidence") is not None]
+        cost_values = [float(r.get("cost_usd", 0.0)) for r in runs if r.get("cost_usd") is not None]
+        recent_runs = []
+        for run in runs:
+            started = run.get("started_at_utc")
+            if not started:
+                continue
+            try:
+                ts = datetime.fromisoformat(str(started))
+            except ValueError:
+                continue
+            if (now - ts.astimezone(UTC)).total_seconds() <= 86400:
+                recent_runs.append(run)
 
+        throughput = run_count
+        routing_accuracy = (len(success_runs) / len(finished_runs)) if finished_runs else 0.0
+        accuracy = (
+            sum(confidence_values) / len(confidence_values)
+            if confidence_values
+            else float(stats.get("avg_confidence", 0.0) or 0.0)
+        )
+        freshness = (len(recent_runs) / run_count) if run_count else 0.0
+        fallback_rate = float(stats.get("fallback_rate", 0.0) or 0.0)
+        interruption_rate = float(stats.get("interruption_rate", 0.0) or 0.0)
+        cost_per_run = (sum(cost_values) / len(cost_values)) if cost_values else 0.0
+        knowledge_coverage = sum(1 for r in runs if r.get("agent") and r.get("model")) / run_count if run_count else 0.0
+        rollback_sla = routing_accuracy
+        continuity_score = max(0.0, min(1.0, (freshness + (1.0 - interruption_rate) + rollback_sla) / 3.0))
+        coverage_points = {
+            "runs_total": run_count,
+            "finished_runs": len(finished_runs),
+            "telemetry_events": int(stats.get("total", 0) or 0),
+            "confidence_samples": len(confidence_values),
+            "cost_samples": len(cost_values),
+        }
+        data_availability = "full" if run_count >= 10 and int(stats.get("total", 0) or 0) >= 10 else "sparse"
+        confidence_score = min(
+            1.0,
+            (
+                (1.0 if coverage_points["runs_total"] >= 5 else coverage_points["runs_total"] / 5.0)
+                + (1.0 if coverage_points["telemetry_events"] >= 5 else coverage_points["telemetry_events"] / 5.0)
+            )
+            / 2.0,
+        )
         return {
-            "throughput": len(runs),
-            "routing_accuracy": 0.92,  # placeholder
-            "accuracy": 0.88,  # placeholder
-            "freshness": 0.95,  # placeholder
-            "fallback_rate": stats.get("fallback_rate", 0.0),
-            "interruption_rate": 0.05,  # placeholder
-            "cost_per_run": 0.12,  # placeholder
-            "knowledge_coverage": 0.85,  # placeholder
-            "rollback_sla": 0.98,  # placeholder
-            "continuity_score": 0.90,  # placeholder
+            "throughput": throughput,
+            "routing_accuracy": routing_accuracy,
+            "accuracy": accuracy,
+            "freshness": freshness,
+            "fallback_rate": fallback_rate,
+            "interruption_rate": interruption_rate,
+            "cost_per_run": cost_per_run,
+            "knowledge_coverage": knowledge_coverage,
+            "rollback_sla": rollback_sla,
+            "continuity_score": continuity_score,
+            "data_availability": data_availability,
+            "kpi_confidence": confidence_score,
+            "coverage_points": coverage_points,
         }
 
 
@@ -1397,8 +1607,17 @@ def _parse_message_line(line: str) -> "MessageEntry | None":
         msg = MessageEntry.model_validate_json(line)
         if msg.status == "pending":
             return msg
-    except Exception:
-        pass
+        message_parse = _execution_diagnostics["message_parse"]
+        message_parse["non_pending_rows"] = int(message_parse["non_pending_rows"]) + 1
+    except (ValidationError, json.JSONDecodeError, ValueError, TypeError) as exc:
+        message_parse = _execution_diagnostics["message_parse"]
+        message_parse["invalid_rows"] = int(message_parse["invalid_rows"]) + 1
+        message_parse["last_error_type"] = type(exc).__name__
+        message_parse["last_error_message"] = str(exc)
+        _warn_bounded(
+            "_parse_message_line: malformed message registry row ignored (%s)",
+            type(exc).__name__,
+        )
     return None
 
 
@@ -1415,6 +1634,7 @@ class RunRegistry:
         self.registry_path = session_dir / "run_registry.jsonl"
         # OPT-019: Set-based fast negative lookups (O(1) session existence checks)
         self._bloom_filter: set[str] = set()
+        self._last_hash_status: dict[str, Any] = {"status": "uninitialized", "error_type": None, "error_message": None}
         self._ensure_version_marker()
 
     def get_latest_session_id(self) -> str | None:
@@ -1449,6 +1669,11 @@ class RunRegistry:
     def _get_last_hash(self) -> str | None:
         """Return the hash of the last record in the registry."""
         if not self.registry_path.exists():
+            self._last_hash_status = {
+                "status": "empty_registry",
+                "error_type": None,
+                "error_message": None,
+            }
             return None
 
         try:
@@ -1457,12 +1682,60 @@ class RunRegistry:
                 for line in f:
                     if line.strip():
                         last_line = line
-                if last_line:
-                    data = json.loads(last_line)
-                    return data.get("hash")
-        except Exception:
-            pass
+                if not last_line:
+                    self._last_hash_status = {
+                        "status": "empty_chain",
+                        "error_type": None,
+                        "error_message": None,
+                    }
+                    return None
+
+                data = json.loads(last_line)
+                if not isinstance(data, dict):
+                    self._last_hash_status = {
+                        "status": "invalid_record_type",
+                        "error_type": "TypeError",
+                        "error_message": f"expected object, got {type(data).__name__}",
+                    }
+                    _warn_bounded("RunRegistry._get_last_hash: invalid trailing record type=%s", type(data).__name__)
+                    return None
+
+                hash_value = data.get("hash")
+                if hash_value is None:
+                    self._last_hash_status = {
+                        "status": "missing_hash",
+                        "error_type": "KeyError",
+                        "error_message": "trailing record missing hash",
+                    }
+                    return None
+
+                self._last_hash_status = {
+                    "status": "ok",
+                    "error_type": None,
+                    "error_message": None,
+                }
+                return str(hash_value)
+        except json.JSONDecodeError as exc:
+            self._last_hash_status = {
+                "status": "malformed_record",
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            }
+            _warn_bounded("RunRegistry._get_last_hash: malformed trailing record (%s)", type(exc).__name__)
+            return None
+        except OSError as exc:
+            self._last_hash_status = {
+                "status": "io_error",
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+            }
+            _warn_bounded("RunRegistry._get_last_hash: read failed (%s)", type(exc).__name__)
+            return None
         return None
+
+    def get_last_hash_status(self) -> dict[str, Any]:
+        """Return status metadata for the last _get_last_hash call."""
+        return dict(self._last_hash_status)
 
     def _calculate_hash(self, data: dict[str, Any]) -> str:
         """Calculate a stable hash for a record, excluding the hash itself."""
@@ -1781,11 +2054,19 @@ class AuditRegistry:
             f.write(entry.model_dump_json() + "\n")
 
 
-def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
+_LAST_POLL_MESSAGES_META: dict[str, Any] = {"status": "not_checked"}
+
+
+def poll_session_messages(
+    session_id: str | None = None,
+    *,
+    include_meta: bool = False,
+) -> list[MessageEntry] | dict[str, Any]:
     """Poll for pending messages for the current session (WP-9004).
 
     If session_id is None, tries to read from THGENT_SESSION_ID env var (runtime value, not a setting).
     """
+    global _LAST_POLL_MESSAGES_META  # noqa: PLW0603
     if session_id is None:
         # session_id is a runtime value, not a configuration setting
         # Keep using os.environ for runtime values that change per execution
@@ -1794,7 +2075,9 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
         session_id = os.environ.get("THGENT_SESSION_ID")
 
     if not session_id:
-        return []
+        _LAST_POLL_MESSAGES_META = {"status": "missing_session_id"}
+        missing_payload: dict[str, Any] = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
+        return missing_payload if include_meta else []
 
     from thegent.cli.commands.impl import _find_session_meta
     from thegent.config import ThegentSettings
@@ -1804,9 +2087,51 @@ def poll_session_messages(session_id: str | None = None) -> list[MessageEntry]:
         meta_path = _find_session_meta(settings, session_id)
         msg_path = meta_path.parent / f"{session_id}.messages.jsonl"
         registry = MessageRegistry(msg_path)
-        return registry.list_pending()
-    except Exception:
-        return []
+        messages = registry.list_pending()
+        _LAST_POLL_MESSAGES_META = {
+            "status": "ok",
+            "session_id": session_id,
+            "pending_count": len(messages),
+            "messages_path": str(msg_path),
+        }
+        ok_payload: dict[str, Any] = {"messages": messages, "meta": dict(_LAST_POLL_MESSAGES_META)}
+        return ok_payload if include_meta else messages
+    except FileNotFoundError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "meta_missing",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+    except PermissionError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "unreadable_messages",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+    except ValueError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "parser_failure",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+    except OSError as exc:
+        _LAST_POLL_MESSAGES_META = {
+            "status": "io_failure",
+            "session_id": session_id,
+            "error_type": type(exc).__name__,
+            "detail": str(exc)[:200],
+        }
+
+    empty_payload: dict[str, Any] = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
+    return empty_payload if include_meta else []
+
+
+def get_last_poll_session_messages_meta() -> dict[str, Any]:
+    """Return diagnostics metadata for the latest poll_session_messages call."""
+    return dict(_LAST_POLL_MESSAGES_META)
 
 
 class CheckpointRegistry:

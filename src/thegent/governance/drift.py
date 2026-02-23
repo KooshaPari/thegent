@@ -69,7 +69,7 @@ class DriftDetector:
                 data = json.load(f_in)
                 # WP-3003 stores as float time
                 expires_at = data.get("expires_at")
-                if expires_at and isinstance(expires_at, (int, float)):
+                if expires_at and isinstance(expires_at, (int | float)):
                     if expires_at < time.time():
                         report["expired_overrides"].append(
                             {

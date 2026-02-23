@@ -2,6 +2,8 @@
 Consolidates all legacy command sprawl into a clean, logical hierarchy.
 """
 
+from pathlib import Path
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -57,6 +59,7 @@ except ImportError as exc:
             return
         console.print("[red]Git coordination unavailable: install thegent-git dependency.[/red]")
         raise typer.Exit(1)
+
 
 app.add_typer(run.app, name="run", help="Execution: Agent tasks, background runs, and history.")
 app.add_typer(bench.app, name="bench", help="Benchmark: run benchmark suites and persist result rows.")
@@ -210,6 +213,18 @@ def review_cmd(
     raise typer.Exit(1 if issues else 0)
 
 
+@app.command("doctor", help="Run system doctor checks.")
+def doctor_cmd(
+    fix: bool = typer.Option(False, "--fix", "-f", help="Attempt to apply automatic fixes"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show planned fixes without applying them"),
+) -> None:
+    """Run thegent doctor from the unified top-level command surface."""
+    from thegent.doctor import run_doctor
+
+    success = run_doctor(fix=fix, dry_run=dry_run)
+    raise typer.Exit(0 if success else 1)
+
+
 @app.command("resume", help="Resume a session (shortcut for `thegent run resume`).")
 def resume_top_level(
     session_id: str | None = typer.Argument(None, help="Session ID to resume (defaults to latest resumable)"),
@@ -272,6 +287,38 @@ def quick_ps(
         format=format,
         include_contract=include_contract,
     )
+
+
+@app.command("reload", help="Quick alias for `thegent mcp reload`.")
+def reload_top_level() -> None:
+    from thegent.mcp.manage import mcp_restart
+
+    ok, msg = mcp_restart()
+    console.print(f"[green]{msg}[/green]" if ok else f"[red]{msg}[/red]")
+    raise typer.Exit(0 if ok else 1)
+
+
+@app.command("hmr", help="Quick alias for `thegent mcp hmr` hot-reload loop.")
+def hmr_top_level(
+    project_root: Path = typer.Option(
+        Path.cwd(),
+        "--project-root",
+        help="Project root to watch (defaults to current working directory).",
+    ),
+    debounce_s: float = typer.Option(
+        1.5,
+        "--debounce",
+        min=0.1,
+        help="Minimum seconds between automatic restarts.",
+    ),
+) -> None:
+    from thegent.mcp.hotreload import run_prod_hotreload
+
+    try:
+        run_prod_hotreload(project_root=project_root, debounce_s=debounce_s)
+    except Exception as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
 
 
 @app.command("list-agents", help="List available agents (OBSERVE operation).")
@@ -463,7 +510,14 @@ def main_welcome(ctx: typer.Context):
                 "  [green]thegent run[/green]       Execute agent tasks\n"
                 "  [green]thegent sync[/green]      Synchronize system state\n"
                 "  [green]thegent audit[/green]     Check system health/risk\n"
-                "  [green]thegent plan[/green]      Manage the roadmap\n",
+                "  [green]thegent plan[/green]      Manage the roadmap\n"
+                "\n"
+                "Team Discovery:\n"
+                "  [green]thegent team teammates list[/green] Discover teammate personas\n"
+                "\n"
+                "Support Commands:\n"
+                "  [green]thegent setup[/green]       Run setup wizard\n"
+                "  [green]thegent doctor[/green]      Run system doctor checks\n",
                 title="thegent",
                 border_style="blue",
             )

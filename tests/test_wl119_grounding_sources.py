@@ -44,6 +44,12 @@ def test_normalize_grounding_source_url_removes_default_root_trailing_slash() ->
     assert normalize_grounding_source_url("https://docs.example.com/path/") == "https://docs.example.com/path/"
 
 
+def test_normalize_grounding_source_url_unwraps_wrapped_literals() -> None:
+    assert normalize_grounding_source_url("<https://docs.example.com/ref>") == "https://docs.example.com/ref"
+    assert normalize_grounding_source_url("(https://docs.example.com/ref)") == "https://docs.example.com/ref"
+    assert normalize_grounding_source_url("[https://docs.example.com/ref]") == "https://docs.example.com/ref"
+
+
 def test_extract_grounding_sources_from_payload_grounding_metadata() -> None:
     payload = {
         "groundingMetadata": {
@@ -92,7 +98,10 @@ def test_run_registry_finish_event_can_persist_grounding_sources(tmp_path: Path)
         audio_sources=[],
         context_usage_ratio=0.55,
     )
-    assert event_details == {"grounding_sources": ["https://a.example/1", "https://b.example/2"], "context_usage_ratio": 0.55}
+    assert event_details == {
+        "grounding_sources": ["https://a.example/1", "https://b.example/2"],
+        "context_usage_ratio": 0.55,
+    }
     registry.register_end(
         run_id="run-grounding",
         exit_code=0,
