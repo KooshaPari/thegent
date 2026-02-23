@@ -78,11 +78,7 @@ class ConnectorCapabilityRegistry:
         Returns:
             List of connector IDs that have the capability.
         """
-        return [
-            connector_id
-            for connector_id, capabilities in self._registry.items()
-            if capability in capabilities
-        ]
+        return [connector_id for connector_id, capabilities in self._registry.items() if capability in capabilities]
 
     def get(self, connector_id: str) -> ConnectorCapability:
         """Get capabilities for a connector.
@@ -99,6 +95,4 @@ class ConnectorCapabilityRegistry:
         if connector_id not in self._registry:
             raise KeyError(f"Connector {connector_id} not found in registry")
 
-        return ConnectorCapability(
-            connector_id=connector_id, capabilities=self._registry[connector_id]
-        )
+        return ConnectorCapability(connector_id=connector_id, capabilities=self._registry[connector_id])

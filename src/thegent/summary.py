@@ -110,15 +110,29 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
     cmd = ["git", "log", f"--since={since}", f"--until={until}", "--pretty=format:%h %ad %s", "--date=short"]
     try:
         res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
+    except subprocess.TimeoutExpired as exc:
+        error = {"type": type(exc).__name__, "message": str(exc)[:200], "returncode": getattr(exc, "returncode", None)}
+        _log.warning(
+            "Git commit collection failed: cwd=%s cmd=%s timeout=%s",
+            str(project_path),
+            " ".join(cmd),
+            getattr(exc, "timeout", None),
+        )
+        return GitCommitsResult(commits=[], status="error", error=error)
+    except subprocess.SubprocessError as exc:
+        error = {"type": type(exc).__name__, "message": str(exc)[:200]}
+        _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
+        return GitCommitsResult(commits=[], status="error", error=error)
     except OSError as exc:
         error = {"type": type(exc).__name__, "message": str(exc)[:200]}
         _log.warning("Git commit collection failed: cwd=%s cmd=%s error=%s", str(project_path), " ".join(cmd), exc)
         return GitCommitsResult(commits=[], status="error", error=error)
 
     stdout = (res.stdout or "").strip()
-    stderr = (res.stderr or "").strip().lower()
+    stderr = (res.stderr or "").strip()
+    stderr_l = stderr.lower()
     if res.returncode != 0:
-        if not stdout and any(marker in stderr for marker in _NO_COMMIT_STMTS):
+        if not stdout and any(marker in stderr_l for marker in _NO_COMMIT_STMTS):
             return GitCommitsResult(commits=[], status="empty", error=None)
 
         error = {

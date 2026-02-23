@@ -79,16 +79,17 @@ def test_wl6880_shell_doctor_alias_probe_execution_failure(monkeypatch: pytest.M
     monkeypatch.setattr(
         shell_cli.subprocess,
         "run",
-        lambda *args, **kwargs: subprocess.CompletedProcess(
-            args[0], 1, stdout="", stderr="rc=1 during startup"
-        ),
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 1, stdout="", stderr="rc=1 during startup"),
     )
     collector = _PrintCollector()
     monkeypatch.setattr(shell_cli, "console", collector)
 
     shell_cli.shell_doctor(fix=False)
 
-    assert any("Alias probe execution failed (execution failed (exit 1): rc=1 during startup)." in message for message in collector.messages)
+    assert any(
+        "Alias probe execution failed (execution failed (exit 1): rc=1 during startup)." in message
+        for message in collector.messages
+    )
 
 
 def test_wl6881_shell_platform_probe_success(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -103,7 +104,9 @@ def test_wl6881_shell_platform_probe_success(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setattr(
         shell_cli.subprocess,
         "run",
-        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, stdout="zsh 5.9 (x86_64-apple-darwin)\n", stderr=""),
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args[0], 0, stdout="zsh 5.9 (x86_64-apple-darwin)\n", stderr=""
+        ),
     )
 
     shell_cli.shell_platform()

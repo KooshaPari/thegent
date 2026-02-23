@@ -102,7 +102,7 @@ def test_shell_doctor_records_alias_probe_execution_failure(
     result = runner.invoke(shell_cli_module.shell_app, ["doctor"])
     assert result.exit_code == 0
     assert "Warnings:" in result.output
-    normalized_output = result.output.replace("\n", " ")
+    normalized_output = " ".join(result.output.split())
     assert "Alias probe execution failed (execution failed (exit 2): rc=2 during startup)." in normalized_output
 
 

@@ -37,9 +37,7 @@ class TestAuditEntry:
     @pytest.mark.requirement("WL-232")
     def test_create_entry_default_prev_signature(self) -> None:
         """Can create an AuditEntry with default prev_signature."""
-        entry = AuditEntry(
-            entry_id="entry_001", data={"action": "create"}, signature="abc123"
-        )
+        entry = AuditEntry(entry_id="entry_001", data={"action": "create"}, signature="abc123")
 
         assert entry.entry_id == "entry_001"
         assert entry.prev_signature == ""
@@ -156,9 +154,7 @@ class TestSignedAuditArtifactChain:
         assert len(chain.entries()) == 1
 
     @pytest.mark.requirement("WL-232")
-    def test_multiple_appends_preserve_order(
-        self, chain: SignedAuditArtifactChain
-    ) -> None:
+    def test_multiple_appends_preserve_order(self, chain: SignedAuditArtifactChain) -> None:
         """Multiple appends preserve entry order."""
         chain.append("entry_001", {"seq": 1})
         chain.append("entry_002", {"seq": 2})
