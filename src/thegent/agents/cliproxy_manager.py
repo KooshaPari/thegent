@@ -532,6 +532,18 @@ def _adapter_script_path() -> Path | None:
         return None
 
 
+def _is_adapter_fallback_allowed() -> bool:
+    return os.environ.get("THGENT_CLIPROXY_STRICT_ADAPTER", "").lower() not in {"1", "true", "yes", "on"}
+
+
+def _start_raw_proxy(settings: ThegentSettings, base_url: str) -> str:
+    """Start raw CLIProxyAPIPlus (no Responses adapter) and return the base URL."""
+    binary = _resolve_binary(settings)
+    config_path = _ensure_config(settings)
+    _start_proxy_and_wait(binary, config_path, base_url, settings, use_adapter=False)
+    return base_url
+
+
 def _start_proxy_and_wait(
     binary: str, config_path: Path, base_url: str, settings: ThegentSettings, use_adapter: bool = False
 ) -> subprocess.Popen[bytes]:
@@ -612,6 +624,7 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
     """
     port = settings.cliproxy_port
     use_adapter = settings.cliproxy_adapter and os.environ.get("THGENT_TESTING") != "1"
+    fallback_allowed = _is_adapter_fallback_allowed()
     base_url = f"http://127.0.0.1:{port}/v1"
     if _is_proxy_reachable(base_url):
         # When adapter is requested, enforce adapter semantics and fail closed.
@@ -632,6 +645,12 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
 
         script_path = get_resource_path("scripts/start_proxy_with_adapter.py")
         if not script_path.exists():
+            if fallback_allowed:
+                _LOG.warning(
+                    "CLIProxy adapter launcher missing; using raw proxy mode for compatibility. "
+                    "Set THGENT_CLIPROXY_STRICT_ADAPTER=1 to fail hard."
+                )
+                return _start_raw_proxy(settings, base_url)
             raise RuntimeError(
                 "CLIProxy adapter is enabled but adapter launcher is missing. "
                 "Expected scripts/start_proxy_with_adapter.py in thegent resources."
@@ -663,6 +682,12 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
             if _is_proxy_reachable(base_url) and _is_adapter_running(base_url):
                 return base_url
 
+        if fallback_allowed:
+            _LOG.warning(
+                "CLIProxy adapter failed to expose /v1/responses; using raw proxy mode for compatibility. "
+                "Set THGENT_CLIPROXY_STRICT_ADAPTER=1 to fail hard."
+            )
+            return _start_raw_proxy(settings, base_url)
         raise RuntimeError(
             f"CLIProxy adapter is enabled, but /v1/responses adapter surface did not become ready at {base_url}."
         )
@@ -692,7 +717,16 @@ def start_proxy_managed(settings: ThegentSettings) -> tuple[subprocess.Popen[byt
 
     config_path = _ensure_config(settings)
     use_adapter = settings.cliproxy_adapter
-    proc = _start_proxy_and_wait(binary, config_path, base_url, settings, use_adapter=use_adapter)
+    strict_adapter = os.environ.get("THGENT_CLIPROXY_STRICT_ADAPTER", "").lower() in {"1", "true", "yes", "on"}
+    try:
+        proc = _start_proxy_and_wait(binary, config_path, base_url, settings, use_adapter=use_adapter)
+    except RuntimeError as exc:
+        if use_adapter and not strict_adapter:
+            _LOG.warning("Adapter startup failed; falling back to raw proxy mode: %s", exc)
+            kill_proxy(settings)
+            proc = _start_proxy_and_wait(binary, config_path, base_url, settings, use_adapter=False)
+        else:
+            raise
     return (proc, base_url)
 
 
