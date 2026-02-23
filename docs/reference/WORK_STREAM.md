@@ -28951,3 +28951,13 @@ Advance analytics, scorecards, slos, continuous improvement with deterministic b
 Advance analytics, scorecards, slos, continuous improvement with deterministic behavior and traceable outputs for WL-520.
 
 **Evidence:** `docs/research/WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_R_2026-02-22.md`
+| WL-9730 | 2026-02-23 | Added lane-L regression proving `turn/cancel` parse-phase rejects missing `turn_id` with no state mutation (`tests/protocols/test_wl9730_wl9739_lane_l.py`) |
+| WL-9731 | 2026-02-23 | Added lane-L regression proving turn-cancel success path transitions awaiting-approval turns to `cancelled` |
+| WL-9732 | 2026-02-23 | Added lane-L regression for turn-cancel lookup miss behavior (`Turn not found`, `-32002`) |
+| WL-9733 | 2026-02-23 | Added lane-L regression proving turn-cancel response payload preserves serialized turn identity and status fields |
+| WL-9734 | 2026-02-23 | Added lane-L regression proving terminal-turn cancel attempts fail fast with `Turn already terminal` |
+| WL-9735 | 2026-02-23 | Added lane-L regression proving notification-style `turn/cancel` requests apply cancellation effects without emitting a response |
+| WL-9736 | 2026-02-23 | Added lane-L regression proving recovery path preserves already-resolved approval state on terminal-turn cancellation attempts |
+| WL-9737 | 2026-02-23 | Added lane-L regression proving requested approvals transition to `cancelled` when parent turn is cancelled |
+| WL-9738 | 2026-02-23 | Added lane-L regression proving non-requested approval statuses are preserved during turn cancellation |
+| WL-9739 | 2026-02-23 | Added lane-L regression proving invalid `params` type is rejected before cancel execution (`params_must_be_object`) |

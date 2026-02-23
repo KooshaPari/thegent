@@ -14,6 +14,7 @@ __all__ = [
     "_CONTINUATION_MULTI_HOP_TOTAL_CAP",
     "_CONTINUATION_STDERR_CHARS",
     "_CONTINUATION_TAIL_CHARS",
+    "_CWD_CACHE",
     "_EAGAIN_ERRNOS",
     "_LOG_FOLLOW_POLL_SECONDS",
     "_MODEL_INDEXES_PATH",
@@ -159,6 +160,7 @@ __all__ = [
     "inspect_impl",
     "is_usage_limit",
     "isolation_check_impl",
+    "list_agent_names",
     "list_agents_impl",
     "list_droids_impl",
     "list_models_impl",
@@ -179,6 +181,7 @@ __all__ = [
     "prune_sessions_impl",
     "ps_impl",
     "purge_impl",
+    "resolve_agent",
     "resume_impl",
     "retry_helpers",
     "retry_impl",
@@ -237,7 +240,7 @@ console = Console()
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
-from thegent.agents import get_fallback_agents
+from thegent.agents import get_fallback_agents, list_agent_names as base_list_agent_names, resolve_agent as base_resolve_agent
 from thegent.agents.base import AgentRunner, RunResult
 from thegent.agents.resilience import is_usage_limit
 from thegent.config import ThegentSettings
@@ -426,6 +429,7 @@ def _backoff_delay(attempt: int, max_delay: float = 60.0) -> float:
 
 _resolve_droids_dir = run_session_helpers.resolve_droids_dir
 _resolve_cwd = run_session_helpers.resolve_cwd
+_CWD_CACHE = run_session_helpers._CWD_CACHE
 
 
 def _resolve_agent_model(
@@ -435,6 +439,14 @@ def _resolve_agent_model(
     settings: ThegentSettings,
 ) -> str | None:
     return run_model_helpers.resolve_agent_model(agent=agent, model=model, mode=mode, settings=settings)
+
+
+def list_agent_names() -> list[str]:
+    return base_list_agent_names()
+
+
+def resolve_agent(agent_name: str | None) -> str | None:
+    return base_resolve_agent(agent_name)
 
 
 def _inject_time_constraint(prompt: str, timeout: int, *, summary_mode: bool = True) -> str:
@@ -1073,3 +1085,6 @@ def retry_impl(
 harness_interact_impl = run_post_surface_helpers.harness_interact_impl
 harness_list_actions_impl = run_post_surface_helpers.harness_list_actions_impl
 harness_register_host_impl = run_post_surface_helpers.harness_register_host_impl
+
+
+# Public compatibility aliases are defined by the functions above.

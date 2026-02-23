@@ -52,7 +52,7 @@ def list_session_contracts_impl(
     """
     Return sessions with route-request/route-contract metadata and contract quality signal.
     """
-    from thegent.cli.commands.session_ops_impl import ps_impl
+    from thegent.cli.commands import impl as cli_impl
 
     def _alignment_issues(
         route_request: dict[str, Any] | None,
@@ -78,7 +78,7 @@ def list_session_contracts_impl(
 
         return issues
 
-    rows = ps_impl(owner=owner, all=all, include_contract=True)
+    rows = cli_impl.ps_impl(owner=owner, all=all, include_contract=True)
     contracts: list[dict[str, Any]] = []
 
     for row in rows:
@@ -166,7 +166,9 @@ def session_contract_audit_impl(
     """
     Return session contract audit rows with optional filtering and summary.
     """
-    rows = list_session_contracts_impl(owner=owner, all=all, strict=strict)
+    from thegent.cli.commands import impl as cli_impl
+
+    rows = cli_impl.list_session_contracts_impl(owner=owner, all=all, strict=strict)
     if missing_only:
         rows = [row for row in rows if row.get("contract_state") != "complete"]
 
@@ -212,7 +214,9 @@ def session_contract_health_gate_impl(
     threshold = float(policy["min_healthy_ratio"])
     tolerance = max(0.0, float(regression_tolerance))
 
-    audit = session_contract_audit_impl(
+    from thegent.cli.commands import impl as cli_impl
+
+    audit = cli_impl.session_contract_audit_impl(
         owner=owner,
         all=all,
         missing_only=False,

@@ -210,6 +210,155 @@ def _append_execution_notifications(
     notifications.append(_notification("turn/completed", {"session_id": session_id, "turn_id": turn_id, "status": "completed"}))
 
 
+def _route_turn_cancel_method(method: str) -> str:
+    if method != "turn/cancel":
+        raise ValueError(f"Unsupported turn cancel method: {method}")
+    return "cancel"
+
+
+def _discover_turn_cancel_route(method: str) -> str:
+    return _route_turn_cancel_method(method)
+
+
+def _bind_turn_cancel_phases(route: str) -> dict[str, Any]:
+    if route != "cancel":
+        raise ValueError(f"Unsupported turn cancel route: {route}")
+    return {
+        "parse": _resolve_turn_cancel_context,
+        "execute": _execute_turn_cancel,
+        "project": _build_turn_cancel_projection_payload,
+    }
+
+
+def _parse_turn_cancel_with_binding(
+    request_id: Any, params: dict[str, Any], binding: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    parse_fn = binding["parse"]
+    return parse_fn(request_id, params)
+
+
+def _dispatch_turn_cancel_success(
+    request_has_id: bool,
+    request_id: Any,
+    turn_id: str,
+    turn: dict[str, Any],
+    binding: dict[str, Any],
+) -> dict[str, Any] | None:
+    execute_fn = binding["execute"]
+    project_fn = binding["project"]
+    execute_fn(turn)
+    if not request_has_id:
+        return None
+    payload = project_fn(turn)
+    _validate_turn_cancel_projection_turn_id(turn_id, payload)
+    return _result_response(request_id, payload)
+
+
+def _dispatch_turn_cancel_recovery(
+    request_has_id: bool, parse_error: dict[str, Any]
+) -> dict[str, Any] | None:
+    if not request_has_id and parse_error.get("error", {}).get("code") == -32003:
+        return None
+    return parse_error
+
+
+def _resolve_turn_cancel_turn(
+    request_id: Any, params: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    turn_id, turn, turn_error = _require_turn(request_id, params)
+    if turn_error is not None:
+        return None, None, turn_error
+    return turn_id, turn, None
+
+
+def _validate_turn_cancel_turn_state(request_id: Any, turn_id: str, turn: dict[str, Any]) -> dict[str, Any] | None:
+    if turn["status"] in TERMINAL_TURN_STATES:
+        return _error_response(
+            request_id,
+            JsonRpcError(-32003, "Turn already terminal", {"turn_id": turn_id, "status": turn["status"]}),
+        )
+    return None
+
+
+def _resolve_turn_cancel_context(
+    request_id: Any, params: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    turn_id, turn, turn_error = _resolve_turn_cancel_turn(request_id, params)
+    if turn_error is not None:
+        return None, None, turn_error
+    assert turn_id is not None
+    assert turn is not None
+    terminal_error = _validate_turn_cancel_turn_state(request_id, turn_id, turn)
+    if terminal_error is not None:
+        return None, None, terminal_error
+    return turn_id, turn, None
+
+
+def _parse_turn_cancel_request(
+    method: str, request_id: Any, params: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    _route_turn_cancel_method(method)
+    return _resolve_turn_cancel_context(request_id, params)
+
+
+def _mark_turn_as_cancelled(turn: dict[str, Any]) -> None:
+    turn["status"] = "cancelled"
+
+
+def _cancel_turn_requested_approval(turn: dict[str, Any]) -> None:
+    approval_id = turn.get("approval_id")
+    if isinstance(approval_id, str) and approval_id in SERVER_STATE.approvals:
+        approval = SERVER_STATE.approvals[approval_id]
+        if approval["status"] == "requested":
+            approval["status"] = "cancelled"
+
+
+def _execute_turn_cancel(turn: dict[str, Any]) -> None:
+    _mark_turn_as_cancelled(turn)
+    _cancel_turn_requested_approval(turn)
+
+
+def _execute_turn_cancel_resolution(method: str, turn: dict[str, Any]) -> None:
+    _route_turn_cancel_method(method)
+    _execute_turn_cancel(turn)
+
+
+def _build_turn_cancel_projection_payload(turn: dict[str, Any]) -> dict[str, Any]:
+    return {"turn": _serialize_turn(turn)}
+
+
+def _validate_turn_cancel_projection_turn_id(expected_turn_id: str, payload: dict[str, Any]) -> None:
+    actual_turn_id = str(payload.get("turn", {}).get("id"))
+    if actual_turn_id != expected_turn_id:
+        raise ValueError(f"Turn id mismatch: expected={expected_turn_id} actual={actual_turn_id}")
+
+
+def _project_turn_cancel_response(method: str, turn_id: str, turn: dict[str, Any]) -> dict[str, Any]:
+    _route_turn_cancel_method(method)
+    payload = _build_turn_cancel_projection_payload(turn)
+    _validate_turn_cancel_projection_turn_id(turn_id, payload)
+    return payload
+
+
+def _handle_turn_cancel_request(
+    method: str, request_has_id: bool, request_id: Any, params: dict[str, Any]
+) -> dict[str, Any] | None:
+    route = _discover_turn_cancel_route(method)
+    binding = _bind_turn_cancel_phases(route)
+    turn_id, turn, parse_error = _parse_turn_cancel_with_binding(request_id, params, binding)
+    if parse_error is not None:
+        return _dispatch_turn_cancel_recovery(request_has_id, parse_error)
+    assert turn_id is not None
+    assert turn is not None
+    return _dispatch_turn_cancel_success(request_has_id, request_id, turn_id, turn, binding)
+
+
+def _handle_turn_cancel(
+    request_has_id: bool, request_id: Any, params: dict[str, Any]
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    return _handle_turn_cancel_request("turn/cancel", request_has_id, request_id, params), []
+
+
 def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
     envelope_error = _validate_request_envelope(request)
     if envelope_error is not None:
@@ -381,24 +530,7 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
         return maybe_response({"turn": _serialize_turn(turn)}), notifications
 
     if method == "turn/cancel":
-        turn_id, turn, turn_error = _require_turn(request_id, params)
-        if turn_error is not None:
-            return turn_error, notifications
-        assert turn_id is not None
-        assert turn is not None
-        if turn["status"] in TERMINAL_TURN_STATES:
-            return _error_response(
-                request_id,
-                JsonRpcError(-32003, "Turn already terminal", {"turn_id": turn_id, "status": turn["status"]}),
-            ), notifications
-
-        turn["status"] = "cancelled"
-        approval_id = turn.get("approval_id")
-        if isinstance(approval_id, str) and approval_id in SERVER_STATE.approvals:
-            approval = SERVER_STATE.approvals[approval_id]
-            if approval["status"] == "requested":
-                approval["status"] = "cancelled"
-        return maybe_response({"turn": _serialize_turn(turn)}), notifications
+        return _handle_turn_cancel(request_has_id, request_id, params)
 
     if method in {"approval/grant", "approval/reject"}:
         approval_id = _normalized_non_empty_string(params.get("approval_id"))

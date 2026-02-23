@@ -32,7 +32,7 @@ thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="write",le="10"} 1
 thegent_autosync_connector_operation_duration_seconds_bucket{connector="github",direction="write",le="+Inf"} 1
 thegent_autosync_connector_operation_duration_seconds_count{connector="github",direction="write"} 1
-thegent_autosync_connector_operation_duration_seconds_sum{connector="github",direction="write"} 5.1916e-05
+thegent_autosync_connector_operation_duration_seconds_sum{connector="github",direction="write"} 4.35e-05
 # HELP thegent_board_sync_cycle_duration_seconds Board sync cycle duration in seconds
 # TYPE thegent_board_sync_cycle_duration_seconds histogram
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.005"} 0
@@ -40,12 +40,12 @@ thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.01"} 0
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.025"} 0
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.05"} 0
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.1"} 0
-thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.25"} 0
-thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.5"} 0
+thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.25"} 2
+thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="0.5"} 2
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="1"} 2
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="2.5"} 2
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="5"} 2
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="10"} 2
 thegent_board_sync_cycle_duration_seconds_bucket{source="github",le="+Inf"} 2
 thegent_board_sync_cycle_duration_seconds_count{source="github"} 2
-thegent_board_sync_cycle_duration_seconds_sum{source="github"} 1.43191
+thegent_board_sync_cycle_duration_seconds_sum{source="github"} 0.441109

@@ -41,6 +41,7 @@ class EditLeaseManager:
     def __init__(self, state_dir: Path) -> None:
         self.state_file = state_dir / "edit_leases.json"
         self.leases: dict[str, EditLease] = {}
+        self._lock = threading.Lock()
         self._load()
 
     def _load(self):
@@ -80,47 +81,51 @@ class EditLeaseManager:
 
     def acquire(self, path: str, agent_id: str, duration: float = 300.0, force: bool = False) -> bool:
         """Acquire an advisory lease on a file path."""
-        now = time.time()
-        existing = self.leases.get(path)
+        with self._lock:
+            now = time.time()
+            existing = self.leases.get(path)
 
-        if existing and not existing.is_expired():
-            if existing.agent_id == agent_id:
-                # Renew lease
-                existing.expires_at = now + duration
-                self._save()
-                return True
-            if not force:
-                logger.warning(f"Path {path} is leased by agent {existing.agent_id}")
-                return False
+            if existing and not existing.is_expired():
+                if existing.agent_id == agent_id:
+                    # Renew lease
+                    existing.expires_at = now + duration
+                    self._save()
+                    return True
+                if not force:
+                    logger.warning(f"Path {path} is leased by agent {existing.agent_id}")
+                    return False
 
-        # New lease or force takeover
-        self.leases[path] = EditLease(path=path, agent_id=agent_id, expires_at=now + duration)
-        self._save()
-        return True
+            # New lease or force takeover
+            self.leases[path] = EditLease(path=path, agent_id=agent_id, expires_at=now + duration)
+            self._save()
+            return True
 
     def release(self, path: str, agent_id: str) -> bool:
         """Release a lease if held by the agent."""
-        existing = self.leases.get(path)
-        if existing:
-            if existing.agent_id == agent_id or existing.is_expired():
-                del self.leases[path]
-                self._save()
-                return True
-            return False
-        return True
+        with self._lock:
+            existing = self.leases.get(path)
+            if existing:
+                if existing.agent_id == agent_id or existing.is_expired():
+                    del self.leases[path]
+                    self._save()
+                    return True
+                return False
+            return True
 
     def check(self, path: str, agent_id: str | None = None) -> EditLease | None:
         """Check if a path is currently leased by another agent."""
-        lease = self.leases.get(path)
-        if lease and not lease.is_expired():
-            if agent_id and lease.agent_id == agent_id:
-                return None
-            return lease
-        return None
+        with self._lock:
+            lease = self.leases.get(path)
+            if lease and not lease.is_expired():
+                if agent_id and lease.agent_id == agent_id:
+                    return None
+                return lease
+            return None
 
-    def prune(self):
+    def prune(self) -> None:
         """Remove all expired leases."""
-        pre_count = len(self.leases)
-        self.leases = {p: l for p, l in self.leases.items() if not l.is_expired()}
-        if len(self.leases) < pre_count:
-            self._save()
+        with self._lock:
+            pre_count = len(self.leases)
+            self.leases = {p: l for p, l in self.leases.items() if not l.is_expired()}
+            if len(self.leases) < pre_count:
+                self._save()
