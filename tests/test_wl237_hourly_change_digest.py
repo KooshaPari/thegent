@@ -20,6 +20,12 @@ from thegent.integrations.hourly_change_digest import (
 )
 
 
+def _aware_datetime(*args, **kwargs):
+    if "tzinfo" in kwargs:
+        return datetime(*args, **kwargs)  # noqa: DTZ001 -- tzinfo is already supplied by caller branch guard
+    return datetime(*args, tzinfo=timezone.utc, **kwargs)
+
+
 @pytest.mark.requirement("WL-237")
 class TestChangeEntry:
     """Tests for the ChangeEntry dataclass."""
@@ -61,7 +67,7 @@ class TestHourlyChangeDigest:
         """Test recording a change with automatic hour derivation."""
         mock_now = datetime(2026, 2, 22, 15, 30, 45, tzinfo=timezone.utc)
         mock_datetime.now.return_value = mock_now
-        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        mock_datetime.side_effect = _aware_datetime
 
         digest = HourlyChangeDigest()
         entry = digest.record("item-1", "created")
@@ -75,7 +81,7 @@ class TestHourlyChangeDigest:
         """Test recording multiple changes in the same hour."""
         mock_now = datetime(2026, 2, 22, 14, 15, 0, tzinfo=timezone.utc)
         mock_datetime.now.return_value = mock_now
-        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        mock_datetime.side_effect = _aware_datetime
 
         digest = HourlyChangeDigest()
         digest.record("item-1", "created")
@@ -159,7 +165,7 @@ class TestHourlyChangeDigest:
         """Test a complete workflow with recording and digestion."""
         mock_now = datetime(2026, 2, 22, 16, 45, 0, tzinfo=timezone.utc)
         mock_datetime.now.return_value = mock_now
-        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        mock_datetime.side_effect = _aware_datetime
 
         digest = HourlyChangeDigest()
         digest.record("item-1", "created")
