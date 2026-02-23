@@ -35,12 +35,9 @@ def test_quality_max_workers_is_passthrough_in_quality_agent_wrapper() -> None:
 
 def test_shadow_cleanup_hours_has_default_fallback_in_wrappers_and_gate_template() -> None:
     for wrapper in (QUALITY_AGENT, QUALITY_FIX_AGENT):
-        script = _read(wrapper)
-        shadow_arg = _extract_shadow_arg(script)
-        assert shadow_arg == "${shadow_cleanup_hours}"
-        assert "QUALITY_SHADOW_CLEANUP_HOURS" in script
-        assert "QUALITY_SHADOW_MAX_AGE_HOURS" in script
-        assert ":-24}}" in script or ":-24}" in script
+        shadow_arg = _extract_shadow_arg(_read(wrapper))
+        assert "QUALITY_SHADOW_MAX_AGE_HOURS" in shadow_arg
+        assert ":-24}" in shadow_arg
 
     gate_template = _read(QUALITY_GATE_TEMPLATE)
     assert 'QUALITY_SHADOW_CLEANUP_HOURS="${QUALITY_SHADOW_CLEANUP_HOURS:-24}"' in gate_template
