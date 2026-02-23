@@ -1296,6 +1296,63 @@ tasks:
     cmds:
       - task: quality:dag:hard
 
+  quality:polyglot:go:lane:
+    desc: "Run Go quality gates when a Go workspace is present"
+    cmds:
+      - |
+        if [ ! -f go.mod ] && [ ! -f go.work ]; then
+          echo "[SKIP] quality:polyglot:go:lane (no go.mod/go.work)"
+          exit 0
+        fi
+        if ! command -v go >/dev/null 2>&1; then
+          echo "[SKIP] go toolchain missing; cannot run go lane"
+          exit 0
+        fi
+        task go:lint
+        task go:test
+
+  quality:polyglot:ts:lane:
+    desc: "Run TypeScript quality gates when a TypeScript workspace is present"
+    cmds:
+      - |
+        if [ ! -f package.json ]; then
+          echo "[SKIP] quality:polyglot:ts:lane (no package.json)"
+          exit 0
+        fi
+        if [ ! -d node_modules ] && [ ! -d .yarn ] && [ ! -f bun.lockb ] && [ ! -f package-lock.json ] && [ ! -f pnpm-lock.yaml ]; then
+          echo "[SKIP] TS dependencies missing; install with bun/npm/yarn first"
+          exit 0
+        fi
+        task typescript:lint
+        task typescript:typecheck
+        task typescript:build
+        task typescript:test
+
+  quality:polyglot:zig:lane:
+    desc: "Run Zig quality gates when Zig sources are present"
+    cmds:
+      - |
+        if ! find . -name "*.zig" | head -n 1 | grep -q .; then
+          echo "[SKIP] quality:polyglot:zig:lane (no .zig sources)"
+          exit 0
+        fi
+        if ! command -v zig >/dev/null 2>&1; then
+          echo "[SKIP] zig toolchain missing; cannot run zig lane"
+          exit 0
+        fi
+        task zig:fmt:check
+        task zig:test
+
+  quality:polyglot:mojo:lane:
+    desc: "Run Mojo quality gates when Mojo sources are present"
+    cmds:
+      - |
+        if ! find src -name "*.mojo" | head -n 1 | grep -q .; then
+          echo "[SKIP] quality:polyglot:mojo:lane (no mojo sources)"
+          exit 0
+        fi
+        task quality:runtime-contracts:mojo-kernel
+
   quality:harness-contracts:strict:
     desc: "Run strict harness contract chain with required-provider gate"
     cmds:

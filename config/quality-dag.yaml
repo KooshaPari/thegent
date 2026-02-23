@@ -24,6 +24,22 @@ steps:
     deps: [instruction-architecture]
     command: task quality:rust:ci
     display: Rust gate (fmt/check/test/clippy)
+  go-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:go:lane
+    display: Go gate
+  ts-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:ts:lane
+    display: TypeScript gate
+  zig-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:zig:lane
+    display: Zig gate
+  mojo-lang:
+    deps: [instruction-architecture]
+    command: task quality:polyglot:mojo:lane
+    display: Mojo gate
   runtime-contracts:
     deps: [instruction-architecture]
     command: task quality:runtime-contracts
@@ -35,6 +51,10 @@ steps:
       - py-type
       - py-test
       - py-security
+      - go-lang
+      - ts-lang
+      - zig-lang
+      - mojo-lang
       - rust-lang
       - runtime-contracts
     command: task quality
