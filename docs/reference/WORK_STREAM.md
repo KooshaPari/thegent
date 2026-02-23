@@ -3377,7 +3377,7 @@ Generate compact hourly digest summarizing all local and remote changes.
 
 Standardize annotation block format for remote-to-local reflection details.
 
-**Evidence:** `src/thegent/docgen/code_annotation.py`, `src/thegent/integrations/reflection_event_log.py`, `tests/test_wl160_workstream_autosync.py`
+**Evidence:** `src/thegent/integrations/annotation_standard.py`, `tests/test_wl238_annotation_standard.py`
 
 ### [WL-239] Staged Rollout Profiles
 **Status:** COMPLETED (2026-02-22)
@@ -3388,7 +3388,7 @@ Standardize annotation block format for remote-to-local reflection details.
 
 Add rollout presets for dev/staging/prod with safety defaults.
 
-**Evidence:** `src/thegent/integrations/rollout_scorecard.py`, `tests/integrations/test_wl320_rollout_scorecard.py`
+**Evidence:** `src/thegent/integrations/staged_rollout.py`, `tests/test_wl239_staged_rollout.py`
 
 ### [WL-240] GA Readiness Criteria
 **Status:** COMPLETED (2026-02-22)
