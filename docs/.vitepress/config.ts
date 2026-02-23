@@ -42,15 +42,27 @@ const config = defineConfig({
   lastUpdated: true,
 
   // Exclude problematic directories from the build
+  // IMPORTANT: Keep this aggressive to avoid build timeouts
   srcExclude: [
+    // Research/context dumps (very large)
+    'context/**',
+    'diagrams/**',
+    'dumps/**',
     'docset/**',
+    // Fragmented/in-progress content
     'fragemented/**',
     'plans/**',
     'research/**',
     'reports/**',
+    'changes/**',
+    'specs/**',
+    // Auto-generated content
     'reference/api/**',
     'reference/WORK_STREAM.md',
-    'context/**',
+    // Archives
+    'archives/**',
+    'contracts/**',
+    // Exclude individual large files
     'contracts/TEST_HEALTH_DASHBOARD.md',
   ],
 
