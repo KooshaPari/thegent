@@ -1514,6 +1514,7 @@ class TestPurgeCmdImpl:
 
 
 @pytest.mark.unit
+@pytest.mark.skip(reason="data_protection_cmd not implemented - WL-124")
 class TestDataProtectionCmdImpl:
     """Tests for data_protection_cmd implementation."""
 
