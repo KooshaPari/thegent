@@ -18,15 +18,18 @@ update_app = typer.Typer(help="Update project.")
 
 @install_app.command("project")
 def install_project(
-    mode: str = typer.Argument(..., help="brownfield, agdd, none"),
+    mode: str = typer.Argument("agdd", help="brownfield, agdd, none"),
     project: str = typer.Argument(..., help="Project path"),
     template: str = typer.Option("auto", "--template", "-t", help="Template to use"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
     tenant: str = typer.Option("", "--tenant", help="Tenant ID"),
     json: bool = typer.Option(False, "--json", help="JSON output"),
+    # Legacy option for backward compatibility
+    legacy_mode: str = typer.Option(None, "--mode", help="(ignored)"),
 ) -> dict[str, Any]:
     """Install/brownfield project migration."""
-    return project_migrate(project=project, mode=mode, template=template, name=name, tenant=tenant)
+    effective_mode = legacy_mode or mode
+    return project_migrate(project=project, mode=effective_mode, template=template, name=name, tenant=tenant)
 
 
 @scaffold_app.command("greenfield")
