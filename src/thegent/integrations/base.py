@@ -307,6 +307,94 @@ class SerializableMixin:
                 return {k: cls._deserialize_value(v, val_type) for k, v in val.items()}
         
         return val
+    
+    def __eq__(self, other: object) -> bool:
+        """Equality based on serialized dict comparison."""
+        if not isinstance(other, type(self)):
+            return False
+        return self.to_dict() == other.to_dict()
+    
+    def __serializable_hash__(self) -> int:
+        """Hash based on serialized dict."""
+        data = self.to_dict()
+        
+        def _make_hashable(val: Any) -> Any:
+            if val is None:
+                return None
+            if isinstance(val, dict):
+                return tuple(sorted((k, _make_hashable(v)) for k, v in val.items()))
+            if isinstance(val, (list, tuple)):
+                return tuple(_make_hashable(v) for v in val)
+            return val
+        
+        try:
+            return hash(_make_hashable(data))
+        except TypeError:
+            # Fall back to id-based hash if unhashable
+            return id(self)
+    
+    def __repr__(self) -> str:
+        """Readable repr showing class name and key fields."""
+        cls_name = type(self).__name__
+        data = self.to_dict()
+        
+        # Show first 3 fields in repr for readability
+        if hasattr(self, '__dataclass_fields__'):
+            field_list = list(fields(self))
+            shown_fields = []
+            for f in field_list[:3]:  # Show first 3 fields
+                if f.name in data:
+                    val = getattr(self, f.name, None)  # Get original value
+                    # Format value for display
+                    if isinstance(val, str) and len(val) > 30:
+                        val_repr = f"'{val[:27]}...'"
+                    elif isinstance(val, dict):
+                        val_repr = f"{{...{len(val)} keys}}"
+                    elif isinstance(val, (list, tuple)) and len(val) > 3:
+                        val_repr = f"[...{len(val)} items]"
+                    else:
+                        val_repr = repr(val)
+                    shown_fields.append(f"{f.name}={val_repr}")
+            
+            if len(field_list) > 3:
+                shown_fields.append("...")
+            
+            return f"{cls_name}({', '.join(shown_fields)})"
+        
+        # Non-dataclass fallback
+        items = list(data.items())[:3]
+        parts = [f"{k}={v!r}" for k, v in items]
+        if len(data) > 3:
+            parts.append("...")
+        return f"{cls_name}({', '.join(parts)})"
+
+
+def hashable_dataclass(cls: type) -> type:
+    """Decorator to make a dataclass hashable using SerializableMixin hash.
+    
+    Also restores the SerializableMixin __repr__ for cleaner output.
+    
+    Usage:
+        @hashable_dataclass
+        @dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+    
+    Or:
+        @dataclass
+        @hashable_dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+    """
+    if hasattr(cls, '__dataclass_fields__'):
+        if cls.__hash__ is None:
+            # Restore the hash method from SerializableMixin
+            cls.__hash__ = SerializableMixin.__serializable_hash__
+        # Also restore the custom __repr__ for cleaner output
+        cls.__repr__ = SerializableMixin.__repr__
+    return cls
 
 
 # ---------------------------------------------------------------------------
@@ -586,6 +674,7 @@ __all__ = [
     "SerializableMixin",
     "SingletonMixin",
     "feature",
+    "hashable_dataclass",
     "load_env_config",
     "load_file_config",
 ]
