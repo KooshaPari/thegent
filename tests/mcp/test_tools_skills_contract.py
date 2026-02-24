@@ -44,7 +44,7 @@ def _error_result(error: str, remediation: str, exit_code: int = 1, extra: dict[
     payload: dict[str, Any] = {"error": error, "remediation": remediation, "exit_code": exit_code}
     if extra:
         payload.update(extra)
-    return ToolResult(content=json.dumps(payload), structured_content=payload, meta={"execution_time_ms": 0})
+    return ToolResult(content=json.dumps(payload).decode().decode(), structured_content=payload, meta={"execution_time_ms": 0})
 
 
 def test_list_skills_returns_structured_payload() -> None:
