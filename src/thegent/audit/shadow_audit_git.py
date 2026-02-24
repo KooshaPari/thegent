@@ -191,7 +191,7 @@ class ShadowAuditGit:
         dest = Path(path)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(
-            json.dumps([e.to_dict().decode() for e in entries], indent=2),
+            json.dumps([e.to_dict() for e in entries], option=json.OPT_INDENT_2).decode(),
             encoding="utf-8",
         )
         log.info("shadow_audit_git.export_audit project=%s path=%s", project_id, dest)
