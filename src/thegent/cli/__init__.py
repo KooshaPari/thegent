@@ -16,7 +16,22 @@ from thegent.cli.commands import _cli_shared as _shared
 # Backward compatibility - expose commonly used modules for test mocking
 Columns = getattr(_cli_surface, "Columns", None)
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+# Stubs for test mocking
+=======
+<<<<<<< HEAD
 # Stub for tests
+=======
+# Stubs for test mocking
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes
+=======
+# Stub for tests
+=======
+# Stubs for test mocking
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 def _resolve_cwd(cd=None):
     """Stub for backward compatibility."""
     return None
@@ -43,7 +58,22 @@ def _check_dag_cycles(doc):
 
 def _dag_path(cd=None):
     """Stub for tests."""
+<<<<<<< HEAD
+<<<<<<< HEAD
+    return (None, None)
+=======
+<<<<<<< HEAD
     return None
+=======
+    return (None, None)
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes
+=======
+    return None
+=======
+    return (None, None)
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 
 def _ensure_dag_file(path, content):
     """Stub for tests."""
@@ -53,6 +83,41 @@ def _dag_update_task(task_id, field, value, session_dir):
     """Stub for tests."""
     return True
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/refactor/provider-manager-modularization
+def _validate_task_id(task_id):
+    """Stub for tests."""
+    return task_id
+
+def _validate_agent(agent):
+    """Stub for tests."""
+    return agent
+
+def _atomic_write(path, content):
+    """Stub for tests."""
+    pass
+
+def _session_status_for(session_dir):
+    """Stub for tests."""
+    return "running"
+
+def _default_owner_tag():
+    """Stub for tests."""
+    return "ci@host"
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
@@ -127,6 +192,39 @@ _patchable_names_list = [
     "ThegentSettings",
     "get_exit_message",
     "console",
+<<<<<<< HEAD
+=======
+    # DAG helpers for test patching
+    "_dag_path",
+    "_parse_dag_full",
+    "_parse_dag_session",
+    "_serialize_dag",
+    "_validate_dag",
+    "_check_dag_cycles",
+    "_ensure_dag_file",
+    "_dag_update_task",
+    "_atomic_write",
+    "_default_owner_tag",
+    "_ensure_contract_version_header",
+    "_parse_depends_on",
+    "_session_status_for",
+    "_validate_agent",
+    "_validate_task_id",
+    "_resolve_checkpoint_id",
+    "_resolve_prompt",
+    "dag_ready_impl",
+    "dag_recover_impl",
+    "dag_run_impl",
+    "dag_sync_impl",
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> origin/fix/cli-test-failures
+=======
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
