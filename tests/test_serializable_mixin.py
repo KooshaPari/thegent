@@ -579,6 +579,8 @@ class TestRepr:
         assert "Person" in r
         # Address should have its own repr
         assert "Address" in repr(person.address)
+<<<<<<< HEAD
+=======
 
 
 class TestDiff:
@@ -906,3 +908,4 @@ class TestReplace:
         
         assert p2.name == "Bob"
         assert p2.age == 35
+>>>>>>> origin/main

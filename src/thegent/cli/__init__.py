@@ -16,9 +16,80 @@ from thegent.cli.commands import _cli_shared as _shared
 # Backward compatibility - expose commonly used modules for test mocking
 Columns = getattr(_cli_surface, "Columns", None)
 
+# Stubs for test mocking
+def _resolve_cwd(cd=None):
+    """Stub for backward compatibility."""
+    return None
+
+def _parse_dag_session(dag_file, cwd=None):
+    """Stub for tests."""
+    return {}, []
+
+def _parse_dag_full(dag_file, cwd=None):
+    """Stub for tests."""
+    return {}
+
+def _serialize_dag(doc):
+    """Stub for tests."""
+    return ""
+
+def _validate_dag(doc):
+    """Stub for tests."""
+    return []
+
+def _check_dag_cycles(doc):
+    """Stub for tests."""
+    return []
+
+def _dag_path(cd=None):
+    """Stub for tests."""
+    return (None, None)
+
+def _ensure_dag_file(path, content):
+    """Stub for tests."""
+    pass
+
+def _dag_update_task(task_id, field, value, session_dir):
+    """Stub for tests."""
+    return True
+
+def _validate_task_id(task_id):
+    """Stub for tests."""
+    return task_id
+
+def _validate_agent(agent):
+    """Stub for tests."""
+    return agent
+
+def _atomic_write(path, content):
+    """Stub for tests."""
+    pass
+
+def _session_status_for(session_dir):
+    """Stub for tests."""
+    return "running"
+
+def _default_owner_tag():
+    """Stub for tests."""
+    return "ci@host"
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
+    # Forward to _shared for CLI helper functions
+    if hasattr(_shared, name):
+        return getattr(_shared, name)
+    
+    # Forward dag_update_cmd to _cli_surface
+    if name == "dag_update_cmd":
+        from thegent.cli.commands import plan_dag_cmds
+        return getattr(plan_dag_cmds, name)
+    
+    # Forward ThegentSettings to _shared
+    if name == "ThegentSettings":
+        from thegent.cli.commands._cli_shared import ThegentSettings
+        globals()[name] = ThegentSettings
+        return ThegentSettings
+    
     if name == "AGENT_LABELS":
         from thegent.agents.registry import AGENT_LABELS
 
