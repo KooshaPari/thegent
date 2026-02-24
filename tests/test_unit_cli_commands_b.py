@@ -798,7 +798,6 @@ class TestDagCheckpointsCmdImpl:
         mock_console.print.assert_called()
 
 
-@pytest.mark.skip(reason="needs impl")
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
@@ -816,6 +815,7 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
+    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_retry_failed(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-342
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -835,6 +835,7 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
+    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_clear_stuck(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-343
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -854,6 +855,7 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
+    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_reset_retries(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-344
         dag_file = tmp_path / ".factory" / "dag-session.md"
