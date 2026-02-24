@@ -120,6 +120,8 @@ dag_recover_impl = _lazy_import("thegent.cli.commands.dag_impl_ops", "dag_recove
 dag_run_impl = _lazy_import("thegent.cli.commands.dag_impl_ops", "dag_run_impl")
 dag_sync_impl = _lazy_import("thegent.cli.commands.dag_impl_ops", "dag_sync_impl")
 
+# escalation
+escalate_resolve_impl = _lazy_import("thegent.cli.commands.impl", "escalate_resolve_impl")
 
 # thegent.config & execution
 ThegentSettings = _lazy_import("thegent.config", "ThegentSettings")
