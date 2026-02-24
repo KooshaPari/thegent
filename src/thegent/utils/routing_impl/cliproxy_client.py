@@ -90,10 +90,10 @@ class CLIProxyRoutingClient:
     def _local_fallback(self, complexity: str) -> RoutingResponse:
         """Simple fallback based on complexity."""
         models = {
-            "FAST": ("gemini-flash", "gemini", 0.0001, 500, 0.78),
-            "NORMAL": ("claude-haiku-4.5", "claude", 0.00025, 800, 0.75),
+            "FAST": ("minimax-m2.5", "minimax", 0.00007, 300, 0.72),
+            "NORMAL": ("gemini-3-flash", "gemini", 0.0001, 800, 0.78),
             "COMPLEX": ("claude-sonnet-4.6", "claude", 0.003, 2000, 0.88),
-            "HIGH_COMPLEX": ("claude-opus-4.6", "claude", 0.015, 4000, 0.95),
+            "HIGH_COMPLEX": ("gpt-5.3-codex-xhigh", "openai", 0.015, 4000, 0.95),
         }
         model, provider, cost, latency, quality = models.get(complexity.upper(), models["NORMAL"])
         return RoutingResponse(
