@@ -334,7 +334,6 @@ class TestDoctorRunnerRunChecks:
         for check in checks:
             assert isinstance(check, DoctorCheck)
 
-    @pytest.mark.skip(reason="autosync_ga_readiness check requires docs files not present in test env")
     def test_all_ok_scenario(self, tmp_path: Path) -> None:
         """All checks pass when environment is properly configured."""
         thegent_dir = tmp_path / ".thegent"
@@ -351,6 +350,7 @@ class TestDoctorRunnerRunChecks:
             patch("shutil.which", return_value="/usr/bin/ruff"),
             patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-ant-longenoughkey"}),
             patch.object(sys, "version_info", _make_version_info(3, 11)),
+            patch.object(DoctorRunner, "_check_autosync_ga_readiness", return_value=DoctorCheck(name="autosync_ga_readiness", status="ok", message="OK", fixable=False)),
         ):
             runner = DoctorRunner()
             checks = runner.run_checks()

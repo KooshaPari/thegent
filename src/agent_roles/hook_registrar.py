@@ -34,7 +34,7 @@ class HookRegistrar:
             FileNotFoundError: If hook-config.yaml does not exist.
             yaml.YAMLError: If YAML is invalid.
         """
-        data = yaml.safe_load(self._path.read_text()) or {}
+        data = yaml_load(self._path) or {}
         hooks: list[dict] = data.get("hooks", [])
 
         # Remove existing entry for this name (idempotent)
@@ -52,4 +52,4 @@ class HookRegistrar:
         )
 
         data["hooks"] = hooks
-        self._path.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
+        self._path.write_text(yaml_dump(data))
