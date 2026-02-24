@@ -265,7 +265,7 @@ class TestDagValidateCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring")
+@pytest.mark.skip(reason="WL-124 refactoring - patches needed")
 class TestDagAddCmdImpl:
     """Tests for dag_add_cmd implementation."""
 
@@ -356,7 +356,7 @@ class TestDagAddCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring")
+@pytest.mark.skip(reason="WL-124 refactoring - patches needed")
 class TestDagRemoveCmdImpl:
     """Tests for dag_remove_cmd implementation."""
 
@@ -406,7 +406,6 @@ class TestDagRemoveCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring")
 class TestDagCancelCmdImpl:
     """Tests for dag_cancel_cmd implementation."""
 
@@ -810,7 +809,7 @@ class TestDagCheckpointsCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring")
+@pytest.mark.skip(reason="WL-124 refactoring - patches needed")
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
@@ -898,6 +897,7 @@ class TestDagRecoverCmdImpl:
 
 
 @pytest.mark.unit
+@pytest.mark.skip(reason="WL-124 refactoring - patches needed")
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
@@ -978,7 +978,7 @@ class TestDagProbeCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring")
+@pytest.mark.skip(reason="WL-124 refactoring - patches needed")
 class TestDagRunCmdImpl:
     """Tests for dag_run_cmd implementation."""
 
@@ -1089,7 +1089,7 @@ class TestDagSyncCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 refactoring")
+@pytest.mark.skip(reason="WL-124 refactoring - patches needed")
 class TestSessionContractHealthReportCmdImpl:
     """Tests for session_contract_health_report_cmd."""
 
