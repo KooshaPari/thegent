@@ -67,3 +67,39 @@ def project_migrate(**kwargs: Any) -> dict[str, Any]:
 def project_scaffold(**kwargs: Any) -> dict[str, Any]:
     """Entry point for project scaffolding (used by CLI tests)."""
     return scaffold_greenfield(kwargs.get("destination", ""), template=kwargs.get("language", "python"))
+
+
+# Install commands for test compatibility
+@install_app.command("default")
+def install_default(
+    target: str = typer.Option("user", "--target", "-t", help="Installation target: user, system, all"),
+    mode: str = typer.Option("smart", "--mode", "-m", help="Install mode: smart, full"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> dict[str, Any]:
+    """Run installation."""
+    from thegent.install import run_install
+    return run_install(target=target, mode=mode, dry_run=dry_run, verbose=verbose)
+
+
+# Alias for install (tests use 'install' without subcommand)
+@install_app.command("run")
+def install_run(
+    target: str = typer.Option("user", "--target", "-t", help="Installation target"),
+    mode: str = typer.Option("smart", "--mode", "-m", help="Install mode"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    verbose: bool = typer.Option(False, "--verbose", "-v"),
+) -> dict[str, Any]:
+    """Run installation."""
+    from thegent.install import run_install
+    return run_install(target=target, mode=mode, dry_run=dry_run, verbose=verbose)
+
+
+# Setup project commands
+@setup_project_app.command("project")
+def setup_project_cmd(
+    project: str = typer.Argument(..., help="Project path"),
+    mode: str = typer.Option("agdd", "--mode", "-m", help="Setup mode: agdd, brownfield, none"),
+) -> dict[str, Any]:
+    """Setup project."""
+    return _project_migrate(project_path=project, mode=mode)
