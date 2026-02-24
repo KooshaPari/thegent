@@ -462,7 +462,11 @@ def test_sync_autopilot_rejects_invalid_interval() -> None:
 
 
 @pytest.mark.unit
+<<<<<<< HEAD
 @pytest.mark.skip(reason="Implementation issue - autosync files not found")
+=======
+@pytest.mark.skip(reason="autosync files not found in test env")
+>>>>>>> origin/main
 def test_sync_autopilot_status_uses_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     runner = CliRunner()
 
@@ -489,7 +493,11 @@ def test_sync_autopilot_status_uses_env_override(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.unit
+<<<<<<< HEAD
 @pytest.mark.skip(reason="Implementation issue - autosync files not found")
+=======
+@pytest.mark.skip(reason="autosync files not found in test env")
+>>>>>>> origin/main
 def test_sync_autopilot_status_json_exposes_correlation_and_no_op(monkeypatch: pytest.MonkeyPatch) -> None:
     runner = CliRunner()
 
