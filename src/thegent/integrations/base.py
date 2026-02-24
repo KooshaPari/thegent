@@ -534,6 +534,226 @@ class SerializableMixin:
         """
         path = Path(path)
         return cls.from_json(path.read_text())
+    
+    # YAML serialization
+    def to_yaml(self) -> str:
+        """Serialize instance to YAML string.
+        
+        Returns:
+            YAML string representation
+            
+        Raises:
+            ImportError: If pyyaml is not installed
+            
+        Example:
+            yaml_str = person.to_yaml()
+        """
+        try:
+            import yaml
+        except ImportError:
+            raise ImportError("PyYAML required for YAML support: pip install pyyaml")
+        return yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=False)
+    
+    @classmethod
+    def from_yaml(cls, yaml_str: str) -> "SerializableMixin":
+        """Create instance from YAML string.
+        
+        Args:
+            yaml_str: YAML string to parse
+            
+        Returns:
+            New instance from parsed YAML
+            
+        Raises:
+            ImportError: If pyyaml is not installed
+            yaml.YAMLError: If YAML is invalid
+            
+        Example:
+            person = Person.from_yaml('name: Alice\\nage: 30')
+        """
+        try:
+            import yaml
+        except ImportError:
+            raise ImportError("PyYAML required for YAML support: pip install pyyaml")
+        data = yaml.safe_load(yaml_str)
+        return cls.from_dict(data)
+    
+    def to_yaml_file(self, path: str | Path) -> None:
+        """Write instance to YAML file.
+        
+        Args:
+            path: File path to write
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_yaml())
+    
+    @classmethod
+    def from_yaml_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from YAML file.
+        
+        Args:
+            path: File path to read
+            
+        Returns:
+            New instance from parsed YAML file
+        """
+        path = Path(path)
+        return cls.from_yaml(path.read_text())
+    
+    # TOML serialization
+    def to_toml(self) -> str:
+        """Serialize instance to TOML string.
+        
+        Note: None values are omitted as TOML doesn't support null.
+        Only works for flat or nested dict structures.
+        
+        Returns:
+            TOML string representation
+            
+        Raises:
+            ImportError: If tomli-w not installed
+            ValueError: If data cannot be represented in TOML
+            
+        Example:
+            toml_str = config.to_toml()
+        """
+        import sys
+        
+        try:
+            import tomli_w
+        except ImportError:
+            raise ImportError("tomli-w required for TOML support: pip install tomli-w")
+        
+        data = self.to_dict()
+        
+        # Filter out None values as TOML doesn't support null
+        def _filter_none(d: Any) -> Any:
+            if isinstance(d, dict):
+                return {k: _filter_none(v) for k, v in d.items() if v is not None}
+            if isinstance(d, list):
+                return [_filter_none(v) for v in d if v is not None]
+            return d
+        
+        filtered_data = _filter_none(data)
+        return tomli_w.dumps(filtered_data)
+    
+    @classmethod
+    def from_toml(cls, toml_str: str) -> "SerializableMixin":
+        """Create instance from TOML string.
+        
+        Args:
+            toml_str: TOML string to parse
+            
+        Returns:
+            New instance from parsed TOML
+            
+        Raises:
+            ImportError: If tomli not installed (Python < 3.11)
+            
+        Example:
+            config = Config.from_toml('name = "test"\\nage = 30')
+        """
+        import sys
+        
+        if sys.version_info >= (3, 11):
+            import tomllib
+            data = tomllib.loads(toml_str)
+        else:
+            try:
+                import tomli
+            except ImportError:
+                raise ImportError("tomli required for TOML support: pip install tomli")
+            data = tomli.loads(toml_str)
+        
+        return cls.from_dict(data)
+    
+    def to_toml_file(self, path: str | Path) -> None:
+        """Write instance to TOML file.
+        
+        Args:
+            path: File path to write
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_toml())
+    
+    @classmethod
+    def from_toml_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from TOML file.
+        
+        Args:
+            path: File path to read
+            
+        Returns:
+            New instance from parsed TOML file
+        """
+        path = Path(path)
+        return cls.from_toml(path.read_text())
+    
+    # Deep copy support
+    def deep_copy(self) -> "SerializableMixin":
+        """Create a deep copy of this instance.
+        
+        Returns:
+            New deeply copied instance
+            
+        Example:
+            p2 = p1.deep_copy()
+        """
+        import copy
+        return copy.deepcopy(self)
+    
+    def __deepcopy__(self, memo: dict) -> "SerializableMixin":
+        """Support for copy.deepcopy().
+        
+        Uses serialization for reliable deep copying.
+        """
+        # Use serialization for reliable deep copy
+        return type(self).from_dict(self.to_dict())
+    
+    # Pickle support
+    def __getstate__(self) -> dict[str, Any]:
+        """Support for pickling - return field values as dict.
+        
+        Note: Uses raw field values, not serialized, for round-trip fidelity.
+        """
+        state = {}
+        if hasattr(self, '__dataclass_fields__'):
+            for f in fields(self):
+                state[f.name] = getattr(self, f.name)
+        else:
+            state = dict(self.__dict__)
+        return state
+    
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        """Support for unpickling - restore field values.
+        
+        Note: Sets fields directly, bypassing __init__.
+        """
+        if hasattr(self, '__dataclass_fields__'):
+            for f in fields(self):
+                if f.name in state:
+                    object.__setattr__(self, f.name, state[f.name])
+        else:
+            self.__dict__.update(state)
+    
+    # Frozen/immutable support
+    def replace(self, **changes: Any) -> "SerializableMixin":
+        """Create a new instance with specified field changes.
+        
+        Alias for copy() with a more explicit name for immutable-style updates.
+        
+        Args:
+            **changes: Field values to change
+            
+        Returns:
+            New instance with changes applied
+            
+        Example:
+            p2 = p1.replace(age=31)  # Like dataclasses.replace()
+        """
+        return self.copy(**changes)
 
 
 class _Missing:

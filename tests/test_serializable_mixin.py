@@ -785,3 +785,124 @@ class TestJsonFile:
         """Test that from_json_file raises on missing file."""
         with pytest.raises(FileNotFoundError):
             Person.from_json_file(tmp_path / "nonexistent.json")
+
+
+class TestYaml:
+    """Tests for YAML serialization methods."""
+
+    def test_to_yaml_basic(self):
+        """Test basic YAML serialization."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        yaml_str = person.to_yaml()
+        
+        assert "name: Alice" in yaml_str
+        assert "age: 30" in yaml_str
+
+    def test_yaml_roundtrip(self):
+        """Test YAML roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        yaml_str = original.to_yaml()
+        restored = Person.from_yaml(yaml_str)
+        
+        assert restored == original
+
+    def test_yaml_file_roundtrip(self, tmp_path):
+        """Test YAML file roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "person.yaml"
+        original.to_yaml_file(file_path)
+        
+        assert file_path.exists()
+        
+        restored = Person.from_yaml_file(file_path)
+        assert restored == original
+
+
+class TestToml:
+    """Tests for TOML serialization methods."""
+
+    def test_to_toml_basic(self):
+        """Test basic TOML serialization."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        toml_str = person.to_toml()
+        
+        assert 'name = "Alice"' in toml_str
+        assert "age = 30" in toml_str
+
+    def test_toml_roundtrip(self):
+        """Test TOML roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        toml_str = original.to_toml()
+        restored = Person.from_toml(toml_str)
+        
+        assert restored == original
+
+    def test_toml_file_roundtrip(self, tmp_path):
+        """Test TOML file roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "person.toml"
+        original.to_toml_file(file_path)
+        
+        assert file_path.exists()
+        
+        restored = Person.from_toml_file(file_path)
+        assert restored == original
+
+
+class TestDeepCopy:
+    """Tests for deepcopy support."""
+
+    def test_deep_copy(self):
+        """Test deep_copy method."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.deep_copy()
+        
+        assert p1 == p2
+        assert p1 is not p2
+
+    def test_deepcopy_function(self):
+        """Test copy.deepcopy() works."""
+        import copy
+        
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = copy.deepcopy(p1)
+        
+        assert p1 == p2
+        assert p1 is not p2
+
+
+class TestPickle:
+    """Tests for pickle support."""
+
+    def test_pickle_roundtrip(self):
+        """Test pickle/unpickle roundtrip."""
+        import pickle
+        
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        pickled = pickle.dumps(original)
+        restored = pickle.loads(pickled)
+        
+        assert restored == original
+
+
+class TestReplace:
+    """Tests for replace method."""
+
+    def test_replace_single_field(self):
+        """Test replace with single field change."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.replace(age=35)
+        
+        assert p2.age == 35
+        assert p1.age == 30  # Original unchanged
+
+    def test_replace_multiple_fields(self):
+        """Test replace with multiple field changes."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.replace(age=35, name="Bob")
+        
+        assert p2.name == "Bob"
+        assert p2.age == 35
