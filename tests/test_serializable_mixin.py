@@ -24,7 +24,7 @@ class Priority(StrEnum):
     HIGH = "high"
 
 
-@dataclass
+@dataclass(repr=False)
 class Address(SerializableMixin):
     """Nested model for testing."""
     street: str
@@ -32,7 +32,7 @@ class Address(SerializableMixin):
     zip_code: str
 
 
-@dataclass
+@dataclass(repr=False)
 class Person(SerializableMixin):
     """Test model with various field types."""
     name: str
@@ -47,7 +47,7 @@ class Person(SerializableMixin):
 
 # Hashable version of Person for hash tests
 @hashable_dataclass
-@dataclass
+@dataclass(repr=False)
 class HashablePerson(SerializableMixin):
     """Hashable test model."""
     name: str
