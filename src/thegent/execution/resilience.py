@@ -1,7 +1,7 @@
 """Execution run metadata and registry for thegent orchestration."""
 
 import hashlib
-import orjson as json
+import json
 import logging
 import os
 import time
@@ -109,7 +109,7 @@ class InterruptionTracker:
             "severity": severity,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
 
     def get_fatigue_score(self, window_s: int = 3600) -> float:
         """Calculate fatigue score based on recent interruptions (0.0-1.0)."""
@@ -181,7 +181,7 @@ class HandoffManager:
             "confirmed": False,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
         return snapshot_id
 
     def confirm_handoff(self, snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> bool:
@@ -264,7 +264,7 @@ class HandoffManager:
             "continuity_envelope_version": "v2.0",  # WP-12005
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
         return True
 
     def get_snapshot(self, snapshot_id: str) -> dict[str, Any] | None:
@@ -335,7 +335,7 @@ class DeferralQueue:
             "status": "deferred",
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
 
     def list_deferred(self) -> list[dict[str, Any]]:
         """List all currently deferred tasks."""
@@ -491,7 +491,7 @@ class DLQManager:
             event["poison_pill_count"] = existing[0].get("poison_pill_count", 0) + 1
 
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
 
         # WP-3008: Integrate EscalationQueue with DLQ (Option C)
         try:
@@ -665,7 +665,23 @@ class CircuitBreakerRegistry:
             "error_hash": error_hash,
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
+
+    def _parse_circuit_failure(self, line: str, target: str, category: str, now: datetime) -> tuple[int, datetime | None]:
+        """Parse a circuit failure line from registry."""
+        import json
+        try:
+            if not line.strip():
+                return 0, None
+            event = json.loads(line)
+            if event.get("target") != target or event.get("category") != category:
+                return 0, None
+            ts = datetime.fromisoformat(event.get("timestamp", ""))
+            if (now - ts).total_seconds() > self.window_s:
+                return 0, None
+            return 1, ts
+        except:
+            return 0, None
 
     def is_open(self, target: str, category: str = "agent") -> bool:
         """Check if the circuit for a target in a category is open (blocked)."""
@@ -678,7 +694,7 @@ class CircuitBreakerRegistry:
 
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                f_count, ts = _parse_circuit_failure(line, target, category, now, self.window_s)
+                f_count, ts = self._parse_circuit_failure(line, target, category, now)
                 if f_count > 0:
                     failures += f_count
                     if ts is not None and (last_failure is None or ts > last_failure):
@@ -711,7 +727,7 @@ class OverrideRegistry:
             "expires_at_utc": datetime.fromtimestamp(expires_at, tz=UTC).isoformat(),
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
 
     def has_unexpired(self, owner: str) -> bool:
         """True if owner has an override that has not yet expired."""
@@ -759,7 +775,7 @@ class EscalationQueue:
             "status": "pending",
         }
         with self.queue_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode() + "\n")
+            f.write(json.dumps(event) + "\n")
 
     def list_pending(self, past_sla_only: bool = False, limit: int = 50) -> list[dict[str, Any]]:
         """List escalation items. If past_sla_only, return only items past escalate_by."""
