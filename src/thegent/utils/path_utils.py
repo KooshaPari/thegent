@@ -245,6 +245,10 @@ def ensure_dir(path: str | Path) -> Path:
 # ---------------------------------------------------------------------------
 
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
 def path_to_str(path: str | Path | None) -> str:
     """Convert a path to a string, handling ``None`` gracefully.
 
@@ -415,3 +419,33 @@ if __name__ == "__main__":
         created = ensure_dir(Path(td) / "a" / "b" / "c")
 
     sys.exit(0)
+<<<<<<< HEAD
+=======
+=======
+def format_size(size_bytes: int) -> str:
+    """Format size in human-readable form."""
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f}{unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f}PB"
+
+
+def normalize_path(path: Path | str | None) -> Path | None:
+    """Normalize a path by expanding user and resolving."""
+    if path is None:
+        return None
+    p = Path(path).expanduser()
+    try:
+        return p.resolve()
+    except (OSError, RuntimeError):
+        return p
+
+
+def path_to_str(path: Path | None) -> str | None:
+    """Convert a Path to string, handling None gracefully."""
+    if path is None:
+        return None
+    return str(path)
+>>>>>>> origin/main
+>>>>>>> origin/main

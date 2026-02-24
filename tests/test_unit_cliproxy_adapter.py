@@ -228,7 +228,7 @@ class TestTransformModelsResponse:
         raw = b'{"data":[{"id":"m1"}],"object":"list"}'
         out = _transform_models_response(raw)
         assert out is not None
-        parsed = json.loads(out)
+        parsed = json.loads(out.decode() if isinstance(out, bytes) else out)
         assert "models" in parsed
         assert parsed["models"] == [{"id": "m1"}]
         assert "data" not in parsed
