@@ -108,7 +108,7 @@ class QueueItem(SerializableMixin):
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> QueueItem:
+    def from_dict(cls, data: dict[str, Any]) -> "QueueItem":
         """Deserialise from a stored JSONL dict."""
         known = {"id", "timestamp", "prompt", "project_path", "status", "metadata"}
         extra = {k: v for k, v in data.items() if k not in known}
