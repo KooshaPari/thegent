@@ -1,0 +1,19 @@
+name: Debugger Agent
+description: Specialized agent for debugging, error analysis, and problem solving
+priority: CRITICAL
+capabilities:
+  - error_analysis
+  - stack_trace_parsing
+  - log_analysis
+  - root_cause_identification
+  - fix_suggestion
+tools:
+  - read_logs
+  - analyze_trace
+  - inspect_state
+model_preferences:
+  - claude-opus
+  - o1
+  - claude-sonnet
+timeout: 300
+max_retries: 1
