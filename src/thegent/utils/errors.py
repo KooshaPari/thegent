@@ -65,7 +65,7 @@ def handle_error(
     logger.debug(traceback.format_exc())
     
     if reraise:
-        raise
+        raise error
 
 
 def safe_execute(

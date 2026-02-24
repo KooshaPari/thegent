@@ -96,7 +96,7 @@ class CircuitBreaker:
             if self._failures >= self.failure_threshold:
                 self._state = CircuitState.OPEN
 
-    def execute(self, fn: Callable, fallback: Callable = None) -> any:
+    def execute(self, fn: Callable, fallback: Callable | None = None) -> any:
         """Execute function with circuit breaker protection."""
         if not self.can_execute():
             if fallback:

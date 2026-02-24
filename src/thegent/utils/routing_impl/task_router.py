@@ -356,14 +356,12 @@ class TaskRouter:
             violations = self.validate(task, None, None)
             if not violations:
                 # Return a default model based on category
-                if category == "FAST":
-                    return "gemini-3-flash", "gemini", 0.0001
-                elif category == "NORMAL":
-                    return "claude-sonnet-4.5", "claude", 0.003
-                elif category == "COMPLEX":
-                    return "claude-opus-4.6", "claude", 0.015
-                else:
-                    return "claude-opus-4.6-1m", "claude", 0.015
+                defaults = {
+                    "FAST": ("gemini-3-flash", "gemini", 0.0001),
+                    "NORMAL": ("claude-sonnet-4.5", "claude", 0.003),
+                    "COMPLEX": ("claude-opus-4.6", "claude", 0.015),
+                }
+                return defaults.get(category, ("claude-opus-4.6-1m", "claude", 0.015))
             raise
 
     def get_fallback_chain(self, category: TaskCategory) -> list[str]:

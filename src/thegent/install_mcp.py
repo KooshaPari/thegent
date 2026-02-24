@@ -34,7 +34,7 @@ def _get_mcp_config(url: str, client: str = "generic") -> dict[str, Any]:
     }
     
     # Client-specific configurations
-    if client == "claude" or client == "cursor" or client == "codex":
+    if client in {"claude", "cursor", "codex"}:
         base_config["mcpServers"]["thegent"]["command"] = "thegent"
         base_config["mcpServers"]["thegent"]["args"] = ["mcp", "serve"]
     
