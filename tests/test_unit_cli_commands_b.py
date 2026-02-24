@@ -316,7 +316,7 @@ class TestDagAddCmdImpl:
     @patch("thegent.cli._validate_agent", return_value=None)
     @patch("thegent.cli._validate_task_id", return_value=None)
     @patch("thegent.cli._resolve_cwd")
-    @pytest.mark.skip(reason="Test needs additional mocking")
+    @pytest.mark.skip(reason="Test needs additional mocking - complex DAG cmd flow")
     @patch("thegent.cli.console")
     def test_add_success(
         self, mock_console, mock_cwd, mock_vtid, mock_vagent, mock_ensure, mock_cycles, mock_ser, mock_write, tmp_path
@@ -368,7 +368,7 @@ class TestDagRemoveCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @pytest.mark.skip(reason="Test needs additional mocking")
+    @pytest.mark.skip(reason="Test needs additional mocking - complex DAG cmd flow")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
     def test_remove_success(self, mock_console, mock_cwd, mock_parse, mock_ser, mock_write, tmp_path) -> None:
@@ -406,7 +406,7 @@ class TestDagRemoveCmdImpl:
 class TestDagCancelCmdImpl:
     """Tests for dag_cancel_cmd implementation."""
 
-    @pytest.mark.skip(reason="Test needs additional mocking")
+    @pytest.mark.skip(reason="Test needs additional mocking - dag_update_cmd not in cli namespace")
     @patch("thegent.cli.dag_update_cmd")
     @patch("thegent.cli.console")
     def test_cancel_delegates_to_update(self, mock_console, mock_update) -> None:
@@ -1118,7 +1118,7 @@ class TestSessionContractHealthReportCmdImpl:
         mock_console.print.assert_called()
 
     @patch("thegent.cli._default_owner_tag", return_value="ci@host")
-    @pytest.mark.skip(reason="Test needs additional mocking")
+    @pytest.mark.skip(reason="Test needs additional mocking - ThegentSettings mock")
     @patch("thegent.cli.ThegentSettings")
     @patch("thegent.cli.console")
     def test_with_export_output(self, mock_console, mock_settings, mock_owner, tmp_path) -> None:

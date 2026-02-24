@@ -75,6 +75,10 @@ def _default_owner_tag():
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
+    # Forward to _shared for CLI helper functions
+    if hasattr(_shared, name):
+        return getattr(_shared, name)
+    
     if name == "AGENT_LABELS":
         from thegent.agents.registry import AGENT_LABELS
 
