@@ -1,7 +1,7 @@
 """Flash agent — ultra-short-lived agent that executes a single focused task and self-terminates.
 
 Ported from the dex flash agent pattern. A FlashAgent fires a single LLM call via CLIProxy
-with litellm fallback, enforces a strict timeout, and returns a structured result.
+(bifrost), enforces a strict timeout, and returns a structured result.
 Designed for sub-30-second focused tasks without persistent state.
 
 FR Traceability: FR-AGT-020 (flash agent lifecycle)
@@ -17,9 +17,11 @@ from dataclasses import dataclass
 from typing import Optional
 
 import httpx
-import litellm
 
 logger = logging.getLogger(__name__)
+
+# Default CLIProxy URL
+DEFAULT_CLIPROXY_URL = "http://localhost:8317"
 
 
 @dataclass
@@ -46,17 +48,16 @@ class FlashAgentResult:
 class FlashAgent:
     """Ultra-short-lived agent that executes a single focused task via a single LLM call.
 
-    Designed for sub-30-second focused tasks. Tries CLIProxy first, falls back to litellm.
+    Designed for sub-30-second focused tasks. Uses CLIProxy (bifrost) for LLM calls.
     """
 
-    def __init__(self, cliproxy_url: Optional[str] = "http://localhost:8317"):
+    def __init__(self, cliproxy_url: Optional[str] = DEFAULT_CLIPROXY_URL):
         """Initialize the flash agent.
 
         Args:
-            cliproxy_url: URL for CLIProxy server. Set to None to disable CLIProxy and use litellm only.
+            cliproxy_url: URL for CLIProxy server. Set to None to raise error if unavailable.
         """
         self.cliproxy_url = cliproxy_url
-        self._use_cliproxy = cliproxy_url is not None  # Only use CLIProxy if URL provided
 
     async def run(self, config: FlashAgentConfig) -> FlashAgentResult:
         """Execute a single LLM call and return the result.
@@ -70,21 +71,15 @@ class FlashAgent:
         agent_id = uuid.uuid4().hex[:8]
         start = time.monotonic()
 
-        # Try CLIProxy first, fall back to litellm
-        if self._use_cliproxy:
-            try:
-                return await self._run_via_cliproxy(config, agent_id, start)
-            except Exception as e:
-                logger.debug("CLIProxy unavailable, falling back to litellm: %s", e)
-                self._use_cliproxy = False
-
-        # Fallback to litellm
-        return await self._run_via_litellm(config, agent_id, start)
+        return await self._run_via_cliproxy(config, agent_id, start)
 
     async def _run_via_cliproxy(
         self, config: FlashAgentConfig, agent_id: str, start: float
     ) -> FlashAgentResult:
         """Run via CLIProxy /v1/chat/completions."""
+        if not self.cliproxy_url:
+            raise RuntimeError("CLIProxy URL not configured")
+
         async def _call() -> str:
             async with httpx.AsyncClient(timeout=config.timeout_s) as client:
                 resp = await client.post(
@@ -103,41 +98,6 @@ class FlashAgent:
                 message = choices[0].get("message", {})
                 content = message.get("content", "")
                 return str(content)
-
-        try:
-            output = await asyncio.wait_for(_call(), timeout=config.timeout_s)
-            elapsed_s = time.monotonic() - start
-            return FlashAgentResult(
-                output=output,
-                success=True,
-                elapsed_s=elapsed_s,
-                agent_id=agent_id,
-            )
-        except TimeoutError:
-            elapsed_s = time.monotonic() - start
-            return FlashAgentResult(
-                output="",
-                success=False,
-                elapsed_s=elapsed_s,
-                agent_id=agent_id,
-            )
-
-    async def _run_via_litellm(
-        self, config: FlashAgentConfig, agent_id: str, start: float
-    ) -> FlashAgentResult:
-        """Run via litellm.acompletion (fallback)."""
-        async def _call() -> str:
-            response = await litellm.acompletion(
-                model=config.model,
-                messages=[{"role": "user", "content": config.task_prompt}],
-                max_tokens=config.max_tokens,
-            )
-            choices = getattr(response, "choices", [])
-            if not choices:
-                return ""
-            message = getattr(choices[0], "message", None)
-            content = getattr(message, "content", "") or ""
-            return str(content)
 
         try:
             output = await asyncio.wait_for(_call(), timeout=config.timeout_s)
