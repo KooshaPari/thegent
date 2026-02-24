@@ -309,7 +309,7 @@ class TestDagAddCmdImpl:
         with pytest.raises(_EXIT):
             dag_add_cmd(task_id="T1", agent="claude", prompt="   ")
 
-    @pytest.mark.skip(reason="needs impl")
+    @pytest.mark.skip(reason="needs impl - missing patches")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
     def test_add_success(
