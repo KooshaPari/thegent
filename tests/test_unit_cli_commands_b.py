@@ -262,10 +262,7 @@ class TestDagValidateCmdImpl:
 
 
 @pytest.mark.unit
-<<<<<<< HEAD
-=======
 @pytest.mark.skip(reason="WL-124: code has Go syntax bugs")
->>>>>>> fix/cli-tests-skips
 class TestDagAddCmdImpl:
     """Tests for dag_add_cmd implementation."""
 
