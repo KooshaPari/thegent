@@ -62,7 +62,7 @@ def thegent_list_skills_impl(*, backend: SkillBackend) -> ToolResult:
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     payload = {"skills": skills}
     return ToolResult(
-        content=json.dumps(payload).decode(),
+        content=json.dumps(payload),
         structured_content=payload,
         meta={"execution_time_ms": elapsed_ms, "count": len(skills)},
     )
@@ -91,7 +91,7 @@ def thegent_activate_skill_impl(
         )
     payload = {"skill": skill}
     return ToolResult(
-        content=json.dumps(payload).decode(),
+        content=json.dumps(payload),
         structured_content=payload,
         meta={"execution_time_ms": elapsed_ms, "skill_name": cleaned},
     )

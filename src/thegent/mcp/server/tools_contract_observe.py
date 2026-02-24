@@ -32,7 +32,7 @@ def thegent_inspect_impl(
     # structured_content must be dict or None; inspect_impl returns list
     structured = {"sessions": result} if isinstance(result, list) else result
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=structured,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -56,7 +56,7 @@ def thegent_session_contracts_impl(
         strict=strict,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(content=json.dumps(payload).decode(), structured_content=payload, meta={"execution_time_ms": elapsed_ms})
+    return ToolResult(content=json.dumps(payload), structured_content=payload, meta={"execution_time_ms": elapsed_ms})
 
 
 def thegent_session_contract_health_trend_impl(
@@ -299,7 +299,7 @@ def thegent_dag_status_impl(
     result = dag_status_impl(cd=cd_path)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )

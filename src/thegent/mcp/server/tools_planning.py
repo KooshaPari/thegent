@@ -29,7 +29,7 @@ def thegent_plan_get_next_impl(
         return error_result_impl("No pending items.", "Run thegent plan do-next", extra={"next_items": []})
     item = items[0]
     return ToolResult(
-        content=json.dumps(item).decode(),
+        content=json.dumps(item),
         structured_content=item,
         meta={"execution_time_ms": 0},
     )
@@ -87,7 +87,7 @@ async def thegent_dag_list_impl(
     result = dag_list_impl(cd=cwd)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -104,7 +104,7 @@ def thegent_do_next_impl(
     result = do_next_impl(cd=cd_path, limit=limit)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={
             "count": result.get("count", 0),
@@ -129,7 +129,7 @@ def thegent_plan_wait_next_impl(
     if "error" in result:
         return error_result_impl(result["error"], result.get("remediation", ""), extra=result)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": 0},
     )
@@ -144,7 +144,7 @@ def thegent_history_impl(
     runs = history_impl(limit=limit)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(runs).decode(),
+        content=json.dumps(runs),
         structured_content=runs,
         meta={"execution_time_ms": elapsed_ms, "count": len(runs)},
     )
@@ -159,7 +159,7 @@ def thegent_plan_progress_impl(
     runs = history_impl(limit=limit)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(runs).decode(),
+        content=json.dumps(runs),
         structured_content=runs,
         meta={"execution_time_ms": elapsed_ms, "count": len(runs)},
     )
@@ -181,7 +181,7 @@ def thegent_plan_analyze_impl(
     if "error" in result:
         return error_result_impl(result["error"], result.get("remediation", ""), extra=result)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )

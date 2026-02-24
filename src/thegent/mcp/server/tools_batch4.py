@@ -97,7 +97,7 @@ def register_batch4_tools(
                 "output": result.output,
                 "error": result.error,
             }
-        ).decode()
+        )
 
     return (
         thegent_list_droids,
