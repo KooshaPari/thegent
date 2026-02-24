@@ -8,7 +8,6 @@ import { sidebar } from './sidebar-canonical'
 import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
-const markdownItKatex = require('markdown-it-katex')
 const markdownItEmoji = require('markdown-it-emoji').full
 const algoliaAppId = process.env.VITEPRESS_ALGOLIA_APP_ID
 const algoliaApiKey = process.env.VITEPRESS_ALGOLIA_API_KEY
@@ -167,7 +166,6 @@ const config = defineConfig({
       })
 
       // Math support (KaTeX)
-      md.use(markdownItKatex, {
         throwOnError: false,
         errorColor: '#cc0000'
       })
