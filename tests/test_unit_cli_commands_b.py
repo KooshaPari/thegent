@@ -1076,7 +1076,7 @@ class TestDagSyncCmdImpl:
 # ============================================================================
 
 
-@pytest.mark.skip(reason="needs impl")
+@pytest.mark.unit
 class TestSessionContractHealthReportCmdImpl:
     """Tests for session_contract_health_report_cmd."""
 
@@ -1110,6 +1110,7 @@ class TestSessionContractHealthReportCmdImpl:
             session_contract_health_report_cmd(format=None)
         mock_console.print.assert_called()
 
+    @pytest.mark.skip(reason="needs impl")
     @patch("thegent.cli._default_owner_tag", return_value="ci@host")
     @patch("thegent.cli.ThegentSettings")
     @patch("thegent.cli.console")
