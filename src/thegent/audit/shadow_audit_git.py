@@ -14,12 +14,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import orjson as json
 import logging
+import orjson as json
 import os
 import re
 import sqlite3
 import subprocess
+import uuid
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
@@ -29,7 +30,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from thegent.audit.constants import DEFAULT_DB_PATH as _DEFAULT_DB_PATH
+from thegent.audit.constants import DEFAULT_DB_PATH
 from thegent.audit.secret_scrubbing import SECRET_PATTERNS, scrub_secrets as _scrub_secrets
 
 log = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 # Re-export for backwards compatibility
-DEFAULT_DB_PATH = _DEFAULT_DB_PATH
+_DEFAULT_DB_PATH = _DEFAULT_DB_PATH
 
 
 # ---------------------------------------------------------------------------

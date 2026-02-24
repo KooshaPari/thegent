@@ -3,7 +3,7 @@
 Scenarios: timeout mid-run, circuit breaker, corrupt session file, input guardrails.
 """
 
-import orjson as json
+import json
 import os
 import time
 from datetime import UTC, datetime
@@ -108,7 +108,7 @@ class TestCircuitBreaker:
                 "timestamp": old_ts.isoformat(),
             }
             with registry.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(event).decode().decode() + "\n")
+                f.write(json.dumps(event) + "\n")
         assert cb.is_open("gemini") is False
 
 
