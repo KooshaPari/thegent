@@ -703,3 +703,85 @@ class TestPatch:
         assert p2.name == "Bob"
         assert p2.age == 35
         assert p1.name == "Alice"  # Original unchanged
+
+
+class TestToJson:
+    """Tests for to_json method."""
+
+    def test_to_json_basic(self):
+        """Test basic JSON serialization."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = person.to_json()
+        
+        assert "Alice" in json_str
+        assert '"age": 30' in json_str
+
+    def test_to_json_with_indent(self):
+        """Test JSON with indentation."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = person.to_json(indent=2)
+        
+        assert "\n" in json_str  # Pretty-printed has newlines
+
+    def test_to_json_compact(self):
+        """Test compact JSON (no indent)."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = person.to_json(indent=None)
+        
+        # Compact form has no indentation
+        assert "  " not in json_str or "\n" not in json_str
+
+
+class TestFromJson:
+    """Tests for from_json method."""
+
+    def test_from_json_basic(self):
+        """Test basic JSON deserialization."""
+        json_str = '{"name": "Alice", "age": 30, "status": "active", "created_at": "2024-01-01T00:00:00", "home_path": "/tmp"}'
+        person = Person.from_json(json_str)
+        
+        assert person.name == "Alice"
+        assert person.age == 30
+
+    def test_roundtrip_json(self):
+        """Test JSON roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = original.to_json()
+        restored = Person.from_json(json_str)
+        
+        assert restored == original
+
+    def test_from_json_invalid_raises(self):
+        """Test that invalid JSON raises error."""
+        with pytest.raises(Exception):  # JSONDecodeError
+            Person.from_json("not valid json")
+
+
+class TestJsonFile:
+    """Tests for to_json_file and from_json_file methods."""
+
+    def test_to_from_json_file(self, tmp_path):
+        """Test writing and reading JSON file."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "person.json"
+        original.to_json_file(file_path)
+        
+        assert file_path.exists()
+        
+        restored = Person.from_json_file(file_path)
+        assert restored == original
+
+    def test_to_json_file_creates_dirs(self, tmp_path):
+        """Test that to_json_file creates parent directories."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "nested" / "dir" / "person.json"
+        person.to_json_file(file_path)
+        
+        assert file_path.exists()
+
+    def test_from_json_file_not_found(self, tmp_path):
+        """Test that from_json_file raises on missing file."""
+        with pytest.raises(FileNotFoundError):
+            Person.from_json_file(tmp_path / "nonexistent.json")
