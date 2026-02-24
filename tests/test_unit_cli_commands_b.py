@@ -262,7 +262,7 @@ class TestDagValidateCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124: test patches need updating")
+@pytest.mark.skip(reason="WL-124: code has Go syntax bugs")
 class TestDagAddCmdImpl:
     """Tests for dag_add_cmd implementation."""
 
