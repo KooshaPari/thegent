@@ -1,3 +1,4 @@
+<DONE>
 # Shared LSP/MCP Process Optimization Plan
 
 **Date:** 2026-02-18  

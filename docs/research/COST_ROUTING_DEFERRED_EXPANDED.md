@@ -1,3 +1,4 @@
+<DONE>
 # Cost Routing Deferred — Formal Decision Record
 
 > **Status**: Complete | **Date**: 2026-02-17

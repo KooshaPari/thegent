@@ -1,3 +1,4 @@
+<DONE>
 # PAL-MCP Absorption Mapping for thegent Hexagonal Split
 
 **Quick reference**: Which PAL-MCP files/patterns map to which thegent modules.

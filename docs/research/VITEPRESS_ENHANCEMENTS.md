@@ -1,3 +1,4 @@
+<DONE>
 # VitePress Enhancements Research Report (2025-2026)
 
 **Research Date:** February 2026

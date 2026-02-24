@@ -3,7 +3,6 @@
 Extracted from cli/apps/project.py
 """
 
-from pathlib import Path
 from typing import Any
 
 

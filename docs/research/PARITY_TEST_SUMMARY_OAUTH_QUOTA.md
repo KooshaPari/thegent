@@ -1,3 +1,4 @@
+<DONE>
 # Parity Test Summary: OAuth & Quota (thegent Python vs CLIProxy Go)
 
 **Date:** 2026-02-23

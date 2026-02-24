@@ -1,3 +1,4 @@
+<DONE>
 # Research Batch 3: Shell/Terminal Performance + Codex/GLM/Z.AI Tooling
 
 Date: 2026-02-22

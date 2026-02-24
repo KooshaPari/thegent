@@ -1,3 +1,4 @@
+<DONE>
 # Exploratory Research — Local + Web (2026-02-19)
 
 > **Purpose**: Heavy exploratory research (local codebase + web) to surface non-code tasks and inform backlog. Completed as part of work stream non-code task completion.

@@ -1,3 +1,4 @@
+<DONE>
 # Agent File Search — Unified Tool Research
 
 > **Purpose**: Research a single/better tool for agents (Claude Code, Cursor, Codex) to replace ls, rg, grep as individual commands.

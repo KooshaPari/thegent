@@ -6,13 +6,14 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from thegent.config_defaults import autosync_phase1_enabled
 from thegent.integrations.capability_alerts import ConnectorSLAThresholds
+from thegent.integrations.base import SerializableMixin
 
 OPEN_STATUSES: set[str] = {"BACKLOG", "IN PROGRESS", "REVIEW", "TODO", "OPEN"}
 WL_ID_PATTERN = re.compile(r"^WL-\d+$")
@@ -54,7 +55,7 @@ class WorkstreamPartition:
 
 
 @dataclass(frozen=True)
-class SyncCheckpoint:
+class SyncCheckpoint(SerializableMixin):
     """Minimal checkpoint used for rolling resume."""
 
     connector: str
@@ -63,17 +64,6 @@ class SyncCheckpoint:
     total_partitions: int
     partition_size: int
     created_at: datetime
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize checkpoint state."""
-        return {
-            "connector": self.connector,
-            "direction": self.direction,
-            "start_index": self.start_index,
-            "total_partitions": self.total_partitions,
-            "partition_size": self.partition_size,
-            "created_at": self.created_at.isoformat(),
-        }
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "SyncCheckpoint":

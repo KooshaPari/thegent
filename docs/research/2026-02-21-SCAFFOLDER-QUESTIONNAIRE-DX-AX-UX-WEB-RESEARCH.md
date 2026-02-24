@@ -1,3 +1,4 @@
+<DONE>
 # Scaffolder Questionnaire DX/AX/UX Web Research
 
 Date: 2026-02-21

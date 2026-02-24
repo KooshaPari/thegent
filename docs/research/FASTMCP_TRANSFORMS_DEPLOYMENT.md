@@ -1,3 +1,4 @@
+<DONE>
 # FastMCP Transforms & Deployment Summary
 
 **Source:** Extracted from FastMCP package source (gofastmcp.com docs: transforms, resources-as-tools, prompts-as-tools, deployment/http)

@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, cast, get_type_hints
 
 from thegent.adapters.acp_client import ACPClient, ACPClientError, ACPResult
+from thegent.integrations.base import SerializableMixin
 
 if TYPE_CHECKING:
     from fastmcp import FastMCP
@@ -72,7 +73,7 @@ class ACPAgentCallError(BridgeError):
 
 
 @dataclass
-class ACPToolDescriptor:
+class ACPToolDescriptor(SerializableMixin):
     """ACP-compatible descriptor for a single MCP tool.
 
     Attributes:
@@ -88,15 +89,6 @@ class ACPToolDescriptor:
     description: str
     parameters: dict[str, Any] = field(default_factory=dict)
     version: str = ACP_DESCRIPTOR_VERSION
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialise to a plain dict suitable for JSON transport."""
-        return {
-            "name": self.name,
-            "description": self.description,
-            "parameters": self.parameters,
-            "version": self.version,
-        }
 
 
 # ---------------------------------------------------------------------------

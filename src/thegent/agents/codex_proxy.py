@@ -1139,7 +1139,6 @@ class CodexProxyRunner(AgentRunner):
             stop_after_attempt,
             wait_exponential,
             retry_if_exception_type,
-            RetryCallState,
         )
 
         @retry(

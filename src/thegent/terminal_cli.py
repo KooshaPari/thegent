@@ -85,7 +85,6 @@ def attach_terminal(
 ):
     """Attach to a terminal session."""
     import os
-    import subprocess
 
     from rich.prompt import Prompt
 

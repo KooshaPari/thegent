@@ -1,3 +1,4 @@
+<DONE>
 # Functional & Feature Items + QOL Enhancements Research
 
 *Last Updated: 2026-02-23*

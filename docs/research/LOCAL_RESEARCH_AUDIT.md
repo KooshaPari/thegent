@@ -1,3 +1,4 @@
+<DONE>
 # Local Research Audit: Agent Hierarchy & Multi-Agent Systems
 
 > **Date**: 2026-02-18

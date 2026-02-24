@@ -1,3 +1,4 @@
+<DONE>
 # ADR-014: Autonomous Learning and Cost Sensing
 
 ## Status

@@ -1,3 +1,4 @@
+<DONE>
 # Merged Fragmented Markdown
 
 ## Source: docs/research

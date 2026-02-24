@@ -460,7 +460,7 @@ def _parse_iso_to_float(iso: str) -> float:
       2026-02-19T22:00:00Z
       2026-02-19T22:00:00.123456Z
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     # Normalise Z suffix to +00:00 so fromisoformat handles it on Python < 3.11
     normalised = iso.rstrip()

@@ -1,3 +1,4 @@
+<DONE>
 # TUI Compositor Phase 1 Implementation
 
 **Status**: ✅ Complete

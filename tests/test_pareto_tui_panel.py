@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 from thegent.cli.tui.pareto import ParetoTuiSession
-from thegent.routing.route_executor import RouterStatus
+from thegent.utils.routing_impl.route_executor import RouterStatus
 
 
 # ---------------------------------------------------------------------------

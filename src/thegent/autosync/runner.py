@@ -6,8 +6,7 @@ Target: Under 800 LOC.
 
 import asyncio
 import logging
-from datetime import datetime, timezone, UTC
-from pathlib import Path
+from datetime import datetime, UTC
 from typing import Any
 
 from thegent.autosync.adapters import (

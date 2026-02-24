@@ -1,3 +1,4 @@
+<DONE>
 # FastMCP Sampling & Telemetry
 
 **Source:** gofastmcp.com/servers/sampling, gofastmcp.com/servers/telemetry

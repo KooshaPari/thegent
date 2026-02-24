@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 import typer
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from yaml import YAMLError
 
 from docs_engine.capture.writer import DocWriter

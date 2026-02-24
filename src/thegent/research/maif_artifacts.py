@@ -4,11 +4,14 @@ import hashlib
 import logging
 from datetime import UTC, datetime
 from typing import Any
+from thegent.integrations.base import SerializableMixin
+
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
 
-class MAIFArtifact:
+class MAIFArtifact(SerializableMixin):
     """MAIF (Model-Action Interface Format) signed artifact."""
 
     def __init__(self, action: dict[str, Any], signature: str | None = None) -> None:
@@ -53,15 +56,3 @@ class MAIFArtifact:
         content = str(self.action) + self.timestamp
         expected = hashlib.sha256(content.encode()).hexdigest()
         return self.signature == expected
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary.
-
-        Returns:
-            Dictionary representation
-        """
-        return {
-            "action": self.action,
-            "signature": self.signature,
-            "timestamp": self.timestamp,
-        }

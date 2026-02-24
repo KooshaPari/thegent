@@ -404,7 +404,7 @@ class TestDagRemoveCmdImpl:
 class TestDagCancelCmdImpl:
     """Tests for dag_cancel_cmd implementation."""
 
-    @patch("thegent.cli.dag_update_cmd")
+    @patch("thegent.cli.commands.plan_dag_cmds.dag_update_cmd")
     @patch("thegent.cli.console")
     def test_cancel_delegates_to_update(self, mock_console, mock_update) -> None:
         # @trace FR-CLI-318
@@ -549,7 +549,7 @@ class TestDagReadyCmdImpl:
             dag_ready_cmd(cd=None)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli._get_ready_task_ids", return_value=["T1"])
+    @patch("thegent.cli.commands.dag_impl_ops._get_ready_task_ids", return_value=["T1"])
     @patch("thegent.cli._parse_dag_session")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
@@ -807,7 +807,7 @@ class TestDagCheckpointsCmdImpl:
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
-    @patch("thegent.cli._dag_path", return_value=(None, None))
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path", return_value=(None, None))
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-341
@@ -819,7 +819,7 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
     def test_retry_failed(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-342
@@ -838,7 +838,7 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
     def test_clear_stuck(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-343
@@ -857,7 +857,7 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
     def test_reset_retries(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-344
@@ -874,7 +874,7 @@ class TestDagRecoverCmdImpl:
         mock_write.assert_called_once()
 
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
     def test_unknown_action(self, mock_console, mock_dag_path, mock_parse, tmp_path) -> None:
         # @trace FR-CLI-345
@@ -894,7 +894,7 @@ class TestDagRecoverCmdImpl:
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
-    @patch("thegent.cli._dag_path", return_value=(None, None))
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path", return_value=(None, None))
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-346
@@ -904,7 +904,7 @@ class TestDagProbeCmdImpl:
             dag_probe_cmd(cd=None)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
     def test_no_baseline(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-347
@@ -924,7 +924,7 @@ class TestDagProbeCmdImpl:
         assert any("No baseline" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
     def test_no_drift(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-348
@@ -945,7 +945,7 @@ class TestDagProbeCmdImpl:
         assert any("No drift" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
     def test_drift_detected(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-349
@@ -1449,7 +1449,7 @@ class TestEscalateResolveCmdImpl:
     @patch("thegent.cli.console")
     def test_resolve_success(self, mock_console) -> None:
         # @trace FR-CLI-378
-        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=True):
+        with patch("thegent.cli.services.governance.escalate_resolve_impl", return_value=True):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r1", resolution="fixed")
@@ -1458,7 +1458,7 @@ class TestEscalateResolveCmdImpl:
     @patch("thegent.cli.console")
     def test_resolve_not_found(self, mock_console) -> None:
         # @trace FR-CLI-379
-        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=False):
+        with patch("thegent.cli.services.governance.escalate_resolve_impl", return_value=False):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r-nonexist", resolution="fixed")

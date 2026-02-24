@@ -13,10 +13,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
+
 logger = logging.getLogger(__name__)
 
 
-class HITLDecision:
+class HITLDecision(SerializableMixin):
     """Result of a HITL gate evaluation (WL-019-A)."""
 
     def __init__(
@@ -32,15 +34,6 @@ class HITLDecision:
         self.policy = policy
         self.reason = reason
         self.checkpoint = checkpoint
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "required": self.required,
-            "run_id": self.run_id,
-            "policy": self.policy,
-            "reason": self.reason,
-            "checkpoint": self.checkpoint,
-        }
 
     def __repr__(self) -> str:
         return f"HITLDecision(required={self.required}, run_id={self.run_id!r}, policy={self.policy!r})"

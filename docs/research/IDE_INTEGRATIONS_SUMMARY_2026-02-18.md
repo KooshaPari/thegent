@@ -1,3 +1,4 @@
+<DONE>
 # IDE Integrations Summary
 
 **Date**: 2026-02-18

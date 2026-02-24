@@ -14,8 +14,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from cachetools import TTLCache
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class AgentRecord:
 
 
 @dataclass
-class AgentRecommendation:
+class AgentRecommendation(SerializableMixin):
     """A recommended agent with its relevance score."""
 
     name: str
@@ -49,16 +50,6 @@ class AgentRecommendation:
     capabilities: list[str]
     runner: str | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "name": self.name,
-            "path": str(self.path),
-            "score": self.score,
-            "description": self.description,
-            "capabilities": self.capabilities,
-            "runner": self.runner,
-        }
 
 
 @dataclass

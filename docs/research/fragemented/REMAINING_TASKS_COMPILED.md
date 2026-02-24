@@ -1,3 +1,4 @@
+<DONE>
 # Remaining Tasks Compiled from Chat
 
 **Date:** 2026-02-18  

@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
 from thegent.queue.locking import QueueLock
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ def _find_project_queue_path(project_path: str | None = None) -> Path:
 
 
 @dataclass
-class QueueItem:
+class QueueItem(SerializableMixin):
     """A single item in the prompt queue.
 
     # @trace FR-HAX-001
@@ -95,7 +96,7 @@ class QueueItem:
     """Any additional metadata stored in the queue entry."""
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialise to a dict for JSONL storage."""
+        """Serialise to a dict for JSONL storage - includes extra fields at top level."""
         return {
             "id": self.id,
             "timestamp": self.timestamp,
@@ -107,7 +108,7 @@ class QueueItem:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> QueueItem:
+    def from_dict(cls, data: dict[str, Any]) -> "QueueItem":
         """Deserialise from a stored JSONL dict."""
         known = {"id", "timestamp", "prompt", "project_path", "status", "metadata"}
         extra = {k: v for k, v in data.items() if k not in known}

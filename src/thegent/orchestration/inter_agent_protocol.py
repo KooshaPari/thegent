@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field

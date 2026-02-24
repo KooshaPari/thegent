@@ -1,3 +1,4 @@
+<DONE>
 # Codex Hooks, Notifications & Extension Options
 
 **Purpose:** Document the gap between Claude Code's hook system and Codex's notification/extensibility model. Inform decisions on wrapping, patching, forking, or plugin strategies to achieve parity for queue, re-prompt, Lifecycle loop, and other orchestration flows.

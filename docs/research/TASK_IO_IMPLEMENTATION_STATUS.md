@@ -1,3 +1,4 @@
+<DONE>
 # TASK I/O System Implementation Status
 
 **Status**: Phase 1 - Schema & Tooling (In Progress)

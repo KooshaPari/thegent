@@ -1,3 +1,4 @@
+<DONE>
 # Session Research Complete (Scaffold)
 
 Status: DRAFT SCAFFOLD  

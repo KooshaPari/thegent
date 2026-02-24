@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from datetime import UTC
 from enum import Enum
 from typing import ClassVar
+from thegent.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class SeedSource(Enum):
 
 
 @dataclass
-class Seed:
+class Seed(SerializableMixin):
     """Represents a detected idea seed."""
 
     id: str  # UUID or generated ID
@@ -58,21 +59,6 @@ class Seed:
         if isinstance(self.source, str):
             self.source = SeedSource(self.source)
 
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
-        # Ensure source is treated as enum (should be due to __post_init__)
-        source_value = self.source.value if isinstance(self.source, SeedSource) else self.source
-        return {
-            "id": self.id,
-            "text": self.text,
-            "source": source_value,
-            "confidence": self.confidence,
-            "timestamp": self.timestamp,
-            "tags": self.tags,
-            "status": self.status,
-            "context": self.context,
-            "detected_by": self.detected_by,
-        }
 
 
 class SeedDetector:

@@ -13,7 +13,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """Model metadata registry for all models."""
 
-from datetime import datetime, timedelta, timezone, UTC
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from thegent.utils.routing_impl.harness_model_mapping import resolve_model_for_backend
 

@@ -1,3 +1,4 @@
+<DONE>
 # MD Documentation Normalization Guide
 
 > **Status**: Complete | **Date**: 2026-02-17

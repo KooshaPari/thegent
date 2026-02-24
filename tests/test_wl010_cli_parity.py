@@ -12,14 +12,14 @@ import pytest
 from typer import Typer
 from typer.testing import CliRunner
 
-from thegent.cli.apps.project import install_project_app, setup_project_app, update_project_app
+from thegent.cli.apps.project import install_app, setup_project_app, update_app
 
 
 BROWNFIELD_VARIANTS = ("brownfield", "ag-dd", "none")
 PROJECT_SURFACES: tuple[tuple[str, Typer], ...] = (
     ("sys setup project", setup_project_app),
-    ("install project", install_project_app),
-    ("update project", update_project_app),
+    ("install project", install_app),
+    ("update project", update_app),
 )
 
 

@@ -7,9 +7,10 @@ approval workflows for policy enforcement.
 # @trace WL-124
 from __future__ import annotations
 
-import json
 import sys
+from typing import Any
 
+import orjson as json
 import typer
 
 from rich.panel import Panel
@@ -59,7 +60,7 @@ def escalate_list_cmd(
     items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode() + "\n")
         return
     if not items:
         console.print("[dim]No escalation items.[/dim]")
@@ -106,7 +107,7 @@ def sweep_cmd(
         out = {k: v for k, v in result.items() if k != "audit" or v is not None}
         if result.get("audit"):
             out["audit"] = result["audit"]
-        sys.stdout.write(json.dumps(out) + "\n")
+        sys.stdout.write(json.dumps(out).decode() + "\n")
         if not result["pass"]:
             raise typer.Exit(1)
         return
@@ -133,8 +134,7 @@ def sweep_cmd(
 def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved") -> None:
     """Mark an escalation item as resolved (WP-3008)."""
     rid = _resolve_run_id(run_id)
-    from thegent.cli.commands.impl import escalate_resolve_impl
-
+    from thegent.cli.commands._cli_shared import escalate_resolve_impl
     ok = escalate_resolve_impl(run_id=rid, resolution=resolution)
     if ok:
         console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
@@ -203,7 +203,7 @@ def govern_list_pending_cmd(format: str | None = None) -> None:
     items = govern_list_pending_impl()
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items) + "\n")
+        sys.stdout.write(json.dumps(items).decode() + "\n")
         return
     if not items:
         console.print("[dim]No pending HITL approval requests.[/dim]")

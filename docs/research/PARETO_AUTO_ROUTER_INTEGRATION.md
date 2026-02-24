@@ -1,3 +1,4 @@
+<DONE>
 # Pareto Router + Auto Router Integration
 
 **Date**: 2026-02-18
