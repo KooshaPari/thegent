@@ -20,6 +20,7 @@ from thegent.execution_event_builders import (
     build_schema_marker_event,
 )
 from thegent.execution_hash_helpers import calculate_stable_record_hash
+from thegent.execution_jsonl_parsers import parse_checkpoint_line, parse_checkpoint_by_id
 from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry
 
 _log = logging.getLogger(__name__)
@@ -586,7 +587,7 @@ class CheckpointRegistry:
         ckpts = []
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                ckpt = _parse_checkpoint_line(line)
+                ckpt = parse_checkpoint_line(line)
                 if ckpt:
                     ckpts.append(ckpt)
 
@@ -599,7 +600,7 @@ class CheckpointRegistry:
 
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                data = _parse_checkpoint_by_id(line, checkpoint_id)
+                data = parse_checkpoint_by_id(line, checkpoint_id)
                 if data:
                     return data
         return None

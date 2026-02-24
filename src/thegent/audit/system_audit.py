@@ -78,13 +78,6 @@ class AuditReport:
         """True when any non-OK result exists."""
         return any(not r.is_ok() for r in self.results)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to plain dict for JSON export."""
-        return {
-            "timestamp": self.timestamp,
-            "summary": self.summary,
-            "results": [r.to_dict() for r in self.results],
-        }
 
 
 # ---------------------------------------------------------------------------
