@@ -1,3 +1,4 @@
+<DONE>
 # Chat Session Wait Pattern
 
 **Date:** 2026-02-17

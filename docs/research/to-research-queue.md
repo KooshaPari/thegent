@@ -1,3 +1,4 @@
+<DONE>
 # To-Research Queue
 
 ## Initial Links (Extracted from Safari History Feb 18/19, 2026)

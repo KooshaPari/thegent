@@ -1,3 +1,4 @@
+<DONE>
 # ESLint → oxlint Migration Audit (Phase 4)
 
 **Date**: 2026-02-15

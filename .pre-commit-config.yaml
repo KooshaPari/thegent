@@ -126,3 +126,14 @@ repos:
         language: script
         pass_filenames: false
         files: '^docs/'
+
+  # --- Quality Gates (Gate 4) ---
+  - repo: local
+    hooks:
+      - id: file-size-check
+        name: File Size Check (max 500 LOC)
+        entry: bash -c 'for f in "$@"; do lines=$(wc -l < "$f" 2>/dev/null || echo 0); if [ "$lines" -gt 500 ]; then echo "ERROR: $f has $lines lines (max 500)"; exit 1; fi; done' --
+        language: system
+        types: [python]
+        stages: [pre-commit]
+        exclude: ^(tests/|\.venv|src/thegent/(commands|cli)/|.*_test\.py$)

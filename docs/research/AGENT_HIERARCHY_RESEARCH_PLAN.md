@@ -1,3 +1,4 @@
+<DONE>
 # Agent Hierarchy Research Plan
 
 > **Date**: 2026-02-18

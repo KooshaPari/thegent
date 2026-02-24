@@ -1,3 +1,4 @@
+<DONE>
 # Workstation QOL & Agent-as-User Master Plan
 
 **Date**: 2026-02-19

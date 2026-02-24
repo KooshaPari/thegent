@@ -1,3 +1,4 @@
+<DONE>
 # Type Checker Migration Analysis: ty/zuban/basedpyright vs Pyright/Pylance
 
 ## Current State

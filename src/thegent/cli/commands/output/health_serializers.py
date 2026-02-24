@@ -32,7 +32,7 @@ def serialize_health_report_md(result: dict[str, Any]) -> str:
     lines.append(f"schema_version: {result['schema_version']}")
     lines.append(f"schema_compat_mode: {result.get('schema_compat_mode', 'compat')}")
     lines.append(f"compat_mode: {_safe_dict(result.get('compat')).get('mode', 'compat')}")
-    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode()).get('aliases', {}), sort_keys=True)}")
+    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat')).get('aliases', {}), option=json.OPT_SORT_KEYS)}")
     lines.append(f"payload_type: {result['payload_type']}")
     if result.get("payload_signature"):
         signature = result["payload_signature"]
@@ -182,7 +182,7 @@ def serialize_health_trend_md(result: dict[str, Any]) -> str:
     lines.append(f"schema_version: {result['schema_version']}")
     lines.append(f"schema_compat_mode: {result.get('schema_compat_mode', 'compat')}")
     lines.append(f"compat_mode: {_safe_dict(result.get('compat')).get('mode', 'compat')}")
-    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode()).get('aliases', {}), sort_keys=True)}")
+    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat')).get('aliases', {}), option=json.OPT_SORT_KEYS)}")
     lines.append(f"compat_aliases_count: {compat_aliases_count}")
     lines.append(f"payload_type: {result['payload_type']}")
     lines.append(f"trend_payload_type: {result['trend_payload_type']}")
@@ -236,13 +236,13 @@ def serialize_health_trend_md(result: dict[str, Any]) -> str:
         f"scope_top_blocked: {result.get('scope_top_blocked', _safe_dict(result.get('scope_key')).get('top_blocked', ''))}"
     )
     lines.append(
-        f"scope_key_json: {result.get('scope_key_json', json.dumps(result.get('scope_key', {}).decode(), sort_keys=True))}"
+        f"scope_key_json: {result.get('scope_key_json', json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS))}"
     )
-    lines.append(f"scope_key: {json.dumps(result.get('scope_key', {}).decode())}")
+    lines.append(f"scope_key: {json.dumps(result.get('scope_key', {}))}")
     lines.append(
-        f"delta_summary_json: {result.get('delta_summary_json', json.dumps(result.get('delta_summary', {}).decode(), sort_keys=True))}"
+        f"delta_summary_json: {result.get('delta_summary_json', json.dumps(result.get('delta_summary', {}), option=json.OPT_SORT_KEYS))}"
     )
-    lines.append(f"delta_summary: {json.dumps(result.get('delta_summary', {}).decode())}")
+    lines.append(f"delta_summary: {json.dumps(result.get('delta_summary', {}))}")
     if result.get("payload_signature"):
         sig = result["payload_signature"]
         lines.append(f"payload_signature: {sig.get('algorithm', 'sha256')}:{sig.get('value', '')}")

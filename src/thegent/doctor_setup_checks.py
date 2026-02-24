@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from rich.console import Console
 
 from thegent.config import ThegentSettings

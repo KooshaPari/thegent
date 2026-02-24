@@ -1,3 +1,4 @@
+<DONE>
 # Holistic Research Synthesis -- 2026-02-20
 
 > Compiled from: Claude Code (~/.claude), Codex (~/.codex), Factory Droid (~/.factory), Cursor (~/.cursor)

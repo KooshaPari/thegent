@@ -1,3 +1,4 @@
+<DONE>
 # Smart Contract System — Overview
 
 **Purpose:** Handoff doc for the QA governance smart-contract system. Explains what it is, where it lives, and how it works.

@@ -53,6 +53,7 @@ from thegent.cliproxy_request_transform import (
 )
 from thegent.cliproxy_stream_state import ResponsesStreamState
 from thegent.utils.routing_impl.cost_calculator import calculate_cost_from_response, format_cost_header_value
+from thegent.adapters.ports import AdapterRegistry
 
 _log = logging.getLogger(__name__)
 

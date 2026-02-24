@@ -6,7 +6,7 @@ Functions:
 - list_models_with_scores
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 def discover_models(provider: Optional[str] = None) -> list[dict[str, Any]]:

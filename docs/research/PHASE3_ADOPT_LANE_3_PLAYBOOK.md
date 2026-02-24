@@ -1,3 +1,4 @@
+<DONE>
 # Phase3 Adopt Lane3 Integration Playbook
 
 Source scope: `docs/research/PHASE3_ADOPT_LANE_3.txt`  

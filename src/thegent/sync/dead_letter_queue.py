@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from thegent.integrations.base import SerializableMixin
 from typing import Any, Final
 
 DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS: Final[int] = 3
@@ -55,7 +56,7 @@ def compute_backoff_seconds(attempt: int, *, base_delay_seconds: float, multipli
 
 
 @dataclass
-class RemoteWriteDeadLetterRecord:
+class RemoteWriteDeadLetterRecord(SerializableMixin):
     """Single failed remote-write mutation entry."""
 
     entry_id: str
@@ -147,24 +148,6 @@ class RemoteWriteDeadLetterRecord:
                 default=DEFAULT_BOARD_DEAD_LETTER_BACKOFF_MULTIPLIER,
             ),
         )
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entry_id": self.entry_id,
-            "source": self.source,
-            "board_id": self.board_id,
-            "item": self.item,
-            "error": self.error,
-            "status": self.status,
-            "attempts": self.attempts,
-            "first_failed_at": self.first_failed_at,
-            "last_attempt_at": self.last_attempt_at,
-            "next_attempt_at": self.next_attempt_at,
-            "resolved_at": self.resolved_at,
-            "max_attempts": self.max_attempts,
-            "retry_interval_seconds": self.retry_interval_seconds,
-            "backoff_multiplier": self.backoff_multiplier,
-        }
 
 
 class RemoteWriteDeadLetterQueue:

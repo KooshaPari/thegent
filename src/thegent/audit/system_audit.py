@@ -20,6 +20,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
+
 
 class AuditStatus(str, Enum):
     """Status of a single audit check."""
@@ -33,7 +35,7 @@ class AuditStatus(str, Enum):
 
 
 @dataclass
-class AuditResult:
+class AuditResult(SerializableMixin):
     """Result of one audit check."""
 
     category: str
@@ -46,17 +48,6 @@ class AuditResult:
     def is_ok(self) -> bool:
         """Return True when no problem detected."""
         return self.status == AuditStatus.OK
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to plain dict for JSON export."""
-        return {
-            "category": self.category,
-            "item": self.item,
-            "status": self.status.value,
-            "expected": self.expected,
-            "actual": self.actual,
-            "fix_suggestion": self.fix_suggestion,
-        }
 
 
 @dataclass
@@ -87,13 +78,6 @@ class AuditReport:
         """True when any non-OK result exists."""
         return any(not r.is_ok() for r in self.results)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to plain dict for JSON export."""
-        return {
-            "timestamp": self.timestamp,
-            "summary": self.summary,
-            "results": [r.to_dict() for r in self.results],
-        }
 
 
 # ---------------------------------------------------------------------------

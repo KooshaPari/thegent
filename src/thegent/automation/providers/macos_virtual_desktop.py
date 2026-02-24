@@ -9,7 +9,6 @@ Uses:
 
 import asyncio
 import logging
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import time
 from typing import Any

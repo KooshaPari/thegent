@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump — WL-085: SubAgentEvent Streaming
 
 **Date:** 2026-02-20

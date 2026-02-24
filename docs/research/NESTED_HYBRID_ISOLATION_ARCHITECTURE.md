@@ -1,3 +1,4 @@
+<DONE>
 # Research: Nested & Hybrid Isolation Architecture (L1/L2)
 
 **Date**: 2026-02-19

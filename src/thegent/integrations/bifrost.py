@@ -11,8 +11,6 @@ Security:
 License: Apache-2.0 (verified at https://github.com/maximhq/bifrost)
 """
 
-import hashlib
-import hmac
 import logging
 import os
 import time

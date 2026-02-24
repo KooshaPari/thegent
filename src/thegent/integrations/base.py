@@ -4,19 +4,20 @@ Provides standard patterns for:
 - Configuration loading
 - Status tracking
 - Enable/disable toggles
+- Feature flags
 """
 
 from __future__ import annotations
 
+from thegent.utils.json_utils import json_loads, json_dumps
 import logging
 import os
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Generic, TypeVar
-
-from pydantic import BaseModel
+from types import TracebackType
+from typing import Any, TypeVar
 
 _log = logging.getLogger(__name__)
 
@@ -44,6 +45,644 @@ class IntegrationInfo:
     error: str | None = None
 
 
+# ---------------------------------------------------------------------------
+# Feature Flag System
+# ---------------------------------------------------------------------------
+
+class FeatureFlag:
+    """Simple feature flag with environment variable support.
+    
+    Usage:
+        FLAG = FeatureFlag("MY_FEATURE", default=False)
+        
+        if FLAG.enabled:
+            ...
+    """
+    
+    def __init__(self, name: str, default: bool = False, env_prefix: str = "THEGENT_"):
+        self.name = name
+        self._default = default
+        self._env_key = f"{env_prefix}ENABLE_{name}"
+    
+    @property
+    def enabled(self) -> bool:
+        """Check if feature is enabled via environment variable."""
+        val = os.environ.get(self._env_key, "")
+        if val:
+            return val.lower() in ("1", "true", "yes", "on")
+        return self._default
+    
+    def __bool__(self) -> bool:
+        return self.enabled
+
+
+class FeatureRegistry:
+    """Registry for all feature flags."""
+    
+    _flags: dict[str, FeatureFlag] = {}
+    
+    @classmethod
+    def register(cls, flag: FeatureFlag) -> None:
+        cls._flags[flag.name] = flag
+    
+    @classmethod
+    def get(cls, name: str) -> FeatureFlag | None:
+        return cls._flags.get(name)
+    
+    @classmethod
+    def all_enabled(cls) -> dict[str, bool]:
+        return {name: flag.enabled for name, flag in cls._flags.items()}
+
+
+def feature(name: str, default: bool = False) -> FeatureFlag:
+    """Create and register a feature flag."""
+    flag = FeatureFlag(name, default)
+    FeatureRegistry.register(flag)
+    return flag
+
+
+# ---------------------------------------------------------------------------
+# Serializable Mixin
+# ---------------------------------------------------------------------------
+
+class SerializableMixin:
+    """Mixin providing to_dict/from_dict for dataclasses.
+    
+    Automatically handles:
+    - Enum values → serialized as .value
+    - datetime objects → serialized as .isoformat()
+    - Path objects → serialized as str()
+    - Nested SerializableMixin objects → .to_dict()
+    - Nested dicts/lists → recursive serialization
+    
+    Usage:
+        @dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+        
+        m = MyModel(name="test", value=42)
+        d = m.to_dict()  # {"name": "test", "value": 42}
+        m2 = MyModel.from_dict(d)  # MyModel(name="test", value=42)
+    """
+    
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary with automatic type serialization."""
+        from enum import Enum
+        from datetime import datetime
+        from pathlib import Path
+        
+        def _serialize(val: Any) -> Any:
+            if val is None:
+                return None
+            if isinstance(val, Enum):
+                return val.value
+            if isinstance(val, datetime):
+                return val.isoformat()
+            if isinstance(val, Path):
+                return str(val)
+            if isinstance(val, SerializableMixin):
+                return val.to_dict()
+            if isinstance(val, dict):
+                return {k: _serialize(v) for k, v in val.items()}
+            if isinstance(val, (list, tuple)):
+                return [_serialize(v) for v in val]
+            return val
+        
+        if hasattr(self, '__dataclass_fields__'):
+            result = {}
+            for f in fields(self):
+                val = getattr(self, f.name, None)
+                result[f.name] = _serialize(val)
+            return result
+        # Fallback for non-dataclass
+        result = {}
+        for key, val in self.__dict__.items():
+            result[key] = _serialize(val)
+        return result
+    
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SerializableMixin":
+        """Create instance from dictionary with type-aware deserialization.
+        
+        Automatically converts:
+        - ISO strings → datetime (when field type is datetime)
+        - Strings → Path (when field type is Path)
+        - Values → Enum (when field type is Enum)
+        - Dicts → nested SerializableMixin (when field type is SerializableMixin subclass)
+        """
+        from datetime import datetime
+        from enum import Enum
+        from pathlib import Path
+        from typing import get_origin, get_args
+        import inspect
+        
+        if not hasattr(cls, '__dataclass_fields__'):
+            # Non-dataclass fallback
+            return cls(**data)
+        
+        # Get field types
+        converted = {}
+        field_names = {f.name for f in fields(cls)}
+        
+        for f in fields(cls):
+            field_name = f.name
+            if field_name not in data:
+                continue
+            
+            val = data[field_name]
+            field_type = f.type
+            
+            # Resolve string type annotations
+            if isinstance(field_type, str):
+                # Try to resolve from module globals
+                frame = inspect.currentframe()
+                try:
+                    # Walk up frames to find the class module
+                    for _ in range(5):
+                        if frame is None:
+                            break
+                        if frame.f_globals.get('__name__') == cls.__module__:
+                            field_type = frame.f_globals.get(field_type, field_type)
+                            break
+                        frame = frame.f_back
+                finally:
+                    del frame
+            
+            # Deserialize based on type
+            converted[field_name] = cls._deserialize_value(val, field_type)
+        
+        return cls(**converted)
+    
+    @classmethod
+    def _deserialize_value(cls, val: Any, target_type: Any) -> Any:
+        """Deserialize a value to the target type."""
+        from datetime import datetime
+        from enum import Enum
+        from pathlib import Path
+        from types import UnionType
+        from typing import get_origin, get_args, Union
+        
+        if val is None:
+            return None
+        
+        # Handle None/Optional (both typing.Union and types.UnionType)
+        origin = get_origin(target_type)
+        if origin is Union or isinstance(target_type, UnionType):
+            # Extract non-None type from Optional[X] or X | None
+            args = get_args(target_type)
+            non_none_types = [a for a in args if a is not type(None)]
+            if non_none_types:
+                # Try each type in order until one works
+                for candidate_type in non_none_types:
+                    if isinstance(candidate_type, type):
+                        # Check if it's a SerializableMixin subclass
+                        if issubclass(candidate_type, SerializableMixin):
+                            if isinstance(val, dict):
+                                try:
+                                    return candidate_type.from_dict(val)
+                                except Exception:
+                                    continue
+                        # Check if it's an Enum
+                        if issubclass(candidate_type, Enum):
+                            if isinstance(val, candidate_type):
+                                return val
+                            try:
+                                return candidate_type(val)
+                            except (ValueError, KeyError):
+                                continue
+                    # Use the first non-None type for other cases
+                    target_type = non_none_types[0]
+                    break
+        
+        # Handle Path
+        if target_type is Path or (isinstance(target_type, type) and issubclass(target_type, Path)):
+            if isinstance(val, str):
+                return Path(val)
+            return val
+        
+        # Handle datetime
+        if target_type is datetime or (isinstance(target_type, type) and issubclass(target_type, datetime)):
+            if isinstance(val, str):
+                # Handle ISO format with or without timezone
+                try:
+                    if 'T' in val:
+                        return datetime.fromisoformat(val.replace('Z', '+00:00'))
+                    return datetime.fromisoformat(val)
+                except ValueError:
+                    return val
+            return val
+        
+        # Handle Enum
+        if isinstance(target_type, type) and issubclass(target_type, Enum):
+            if isinstance(val, target_type):
+                return val
+            try:
+                return target_type(val)
+            except ValueError:
+                # Try by name
+                try:
+                    return target_type[val]
+                except KeyError:
+                    return val
+        
+        # Handle nested SerializableMixin
+        if isinstance(target_type, type) and issubclass(target_type, SerializableMixin):
+            if isinstance(val, dict):
+                return target_type.from_dict(val)
+            return val
+        
+        # Handle lists with typed elements
+        origin = get_origin(target_type)
+        if origin is list:
+            args = get_args(target_type)
+            if args and isinstance(val, list):
+                elem_type = args[0]
+                return [cls._deserialize_value(v, elem_type) for v in val]
+        
+        # Handle dicts with typed values
+        if origin is dict:
+            args = get_args(target_type)
+            if args and len(args) >= 2 and isinstance(val, dict):
+                val_type = args[1]
+                return {k: cls._deserialize_value(v, val_type) for k, v in val.items()}
+        
+        return val
+    
+    def __eq__(self, other: object) -> bool:
+        """Equality based on serialized dict comparison."""
+        if not isinstance(other, type(self)):
+            return False
+        return self.to_dict() == other.to_dict()
+    
+    def __serializable_hash__(self) -> int:
+        """Hash based on serialized dict."""
+        data = self.to_dict()
+        
+        def _make_hashable(val: Any) -> Any:
+            if val is None:
+                return None
+            if isinstance(val, dict):
+                return tuple(sorted((k, _make_hashable(v)) for k, v in val.items()))
+            if isinstance(val, (list, tuple)):
+                return tuple(_make_hashable(v) for v in val)
+            return val
+        
+        try:
+            return hash(_make_hashable(data))
+        except TypeError:
+            # Fall back to id-based hash if unhashable
+            return id(self)
+    
+    def __repr__(self) -> str:
+        """Readable repr showing class name and key fields."""
+        cls_name = type(self).__name__
+        data = self.to_dict()
+        
+        # Show first 3 fields in repr for readability
+        if hasattr(self, '__dataclass_fields__'):
+            field_list = list(fields(self))
+            shown_fields = []
+            for f in field_list[:3]:  # Show first 3 fields
+                if f.name in data:
+                    val = getattr(self, f.name, None)  # Get original value
+                    # Format value for display
+                    if isinstance(val, str) and len(val) > 30:
+                        val_repr = f"'{val[:27]}...'"
+                    elif isinstance(val, dict):
+                        val_repr = f"{{...{len(val)} keys}}"
+                    elif isinstance(val, (list, tuple)) and len(val) > 3:
+                        val_repr = f"[...{len(val)} items]"
+                    else:
+                        val_repr = repr(val)
+                    shown_fields.append(f"{f.name}={val_repr}")
+            
+            if len(field_list) > 3:
+                shown_fields.append("...")
+            
+            return f"{cls_name}({', '.join(shown_fields)})"
+        
+        # Non-dataclass fallback
+        items = list(data.items())[:3]
+        parts = [f"{k}={v!r}" for k, v in items]
+        if len(data) > 3:
+            parts.append("...")
+        return f"{cls_name}({', '.join(parts)})"
+# Validated Mixin
+# ---------------------------------------------------------------------------
+
+from typing import Callable, Protocol
+
+class ValidatorFunc(Protocol):
+    """Protocol for field validator functions."""
+    def __call__(self, value: Any, field_name: str) -> Any: ...
+
+
+def validated_dataclass(cls: type) -> type:
+    """Decorator to add field validation to a dataclass.
+    
+    Looks for validator functions defined as:
+    - validate_<field_name>(self, value) -> Any
+    
+    Validators can:
+    - Raise ValueError/TypeError for invalid values
+    - Return transformed value (coercion)
+    - Return value unchanged
+    
+    IMPORTANT: Must be applied BEFORE @dataclass decorator!
+    
+    Example:
+        @validated_dataclass  # Runs AFTER @dataclass (wraps __init__)
+        @dataclass            # Runs FIRST (creates __init__)
+        class User:
+            name: str
+            age: int
+            
+            def validate_age(self, value: int) -> int:
+                if value < 0:
+                    raise ValueError("age must be non-negative")
+                return value
+    """
+    if not hasattr(cls, '__dataclass_fields__'):
+        return cls
+    
+    # Store original __init__ from dataclass
+    original_init = cls.__init__
+    
+    # Check if class has any validators
+    has_validators = any(
+        hasattr(cls, f"validate_{f.name}") for f in fields(cls)
+    )
+    
+    if not has_validators:
+        return cls
+    
+    def __init_validated__(self, *args, **kwargs):
+        # Call original __init__ to set fields
+        original_init(self, *args, **kwargs)
+        
+        # Now run validators
+        for f in fields(cls):
+            validator_name = f"validate_{f.name}"
+            if hasattr(self, validator_name):
+                validator = getattr(self, validator_name)
+                current_value = getattr(self, f.name)
+                try:
+                    new_value = validator(current_value)
+                    object.__setattr__(self, f.name, new_value)
+                except Exception:
+                    raise
+    
+    cls.__init__ = __init_validated__
+    return cls
+
+
+# ---------------------------------------------------------------------------
+# Context Manager Mixin
+# ---------------------------------------------------------------------------
+
+class ContextManagerMixin:
+    """Mixin providing context manager protocol for resource classes.
+    
+    Subclasses should implement:
+    - _enter(): Called on context entry, returns self or resource
+    - _exit(exc_type, exc_val, exc_tb): Called on context exit
+    
+    Example:
+        class MyResource(ContextManagerMixin):
+            def _enter(self):
+                self.open()
+                return self
+            
+            def _exit(self, exc_type, exc_val, exc_tb):
+                self.close()
+    
+        with MyResource() as r:
+            r.do_sthing()
+    """
+    
+    def __enter__(self) -> "ContextManagerMixin":
+        """Context manager entry."""
+        if hasattr(self, '_enter'):
+            return self._enter()
+        return self
+    
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Context manager exit."""
+        if hasattr(self, '_exit'):
+            return self._exit(exc_type, exc_val, exc_tb)
+        return False  # Don't suppress exceptions
+
+
+class AsyncContextManagerMixin:
+    """Mixin providing async context manager protocol.
+    
+    Subclasses should implement:
+    - _aenter(): Called on async context entry
+    - _aexit(exc_type, exc_val, exc_tb): Called on async context exit
+    
+    Example:
+        class AsyncResource(AsyncContextManagerMixin):
+            async def _aenter(self):
+                await self.connect()
+                return self
+            
+            async def _aexit(self, exc_type, exc_val, exc_tb):
+                await self.disconnect()
+    
+        async with AsyncResource() as r:
+            await r.do_something()
+    """
+    
+    async def __aenter__(self) -> "AsyncContextManagerMixin":
+        """Async context manager entry."""
+        if hasattr(self, '_aenter'):
+            return await self._aenter()
+        return self
+    
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Async context manager exit."""
+        if hasattr(self, '_aexit'):
+            return await self._aexit(exc_type, exc_val, exc_tb)
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Singleton Mixin
+# ---------------------------------------------------------------------------
+
+import threading
+from typing import ClassVar
+
+
+class SingletonMixin:
+    """Thread-safe singleton mixin for classes.
+    
+    Provides a consistent singleton pattern with:
+    - Thread-safe initialization (double-checked locking)
+    - Lazy instantiation
+    - Reset capability for testing
+    
+    Usage:
+        class MyService(SingletonMixin):
+            def __init__(self, config: str = "default"):
+                self.config = config
+        
+        # Get singleton instance
+        service = MyService.get_instance()
+        
+        # Get with custom args (only used on first call)
+        service = MyService.get_instance(config="custom")
+        
+        # Reset for testing
+        MyService.reset_instance()
+    
+    Note:
+        - First call to get_instance() creates the instance
+        - Subsequent calls return the same instance
+        - Args passed after first call are ignored
+        - Use reset_instance() to clear for testing
+    """
+    
+    _instances: ClassVar[dict[type, Any]] = {}
+    _locks: ClassVar[dict[type, threading.Lock]] = {}
+    _global_lock = threading.Lock()
+    
+    @classmethod
+    def _get_lock(cls) -> threading.Lock:
+        """Get or create lock for this class."""
+        with SingletonMixin._global_lock:
+            if cls not in SingletonMixin._locks:
+                SingletonMixin._locks[cls] = threading.Lock()
+            return SingletonMixin._locks[cls]
+    
+    @classmethod
+    def get_instance(cls, *args, **kwargs) -> "SingletonMixin":
+        """Get the singleton instance, creating it if necessary.
+        
+        Args:
+            *args: Positional arguments for __init__ (only used on first call)
+            **kwargs: Keyword arguments for __init__ (only used on first call)
+            
+        Returns:
+            The singleton instance
+        """
+        if cls not in SingletonMixin._instances:
+            lock = cls._get_lock()
+            with lock:
+                # Double-checked locking
+                if cls not in SingletonMixin._instances:
+                    instance = cls(*args, **kwargs)
+                    SingletonMixin._instances[cls] = instance
+        return SingletonMixin._instances[cls]
+    
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset the singleton instance.
+        
+        Useful for testing to get a fresh instance.
+        Warning: Not thread-safe during reset.
+        """
+        lock = cls._get_lock()
+        with lock:
+            if cls in SingletonMixin._instances:
+                del SingletonMixin._instances[cls]
+    
+    @classmethod
+    def has_instance(cls) -> bool:
+        """Check if an instance exists."""
+        return cls in SingletonMixin._instances
+
+
+# ---------------------------------------------------------------------------
+# Config Loading Utilities
+# ---------------------------------------------------------------------------
+
+def load_env_config(prefix: str, defaults: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Load configuration from environment variables with prefix.
+    
+    Args:
+        prefix: Environment variable prefix (e.g., "MYAPP_")
+        defaults: Default values for config keys
+        
+    Returns:
+        Dict with config values from env (with type conversion)
+    """
+    config = dict(defaults) if defaults else {}
+    
+    for key, default_val in (defaults or {}).items():
+        env_key = f"{prefix}{key.upper()}"
+        env_val = os.environ.get(env_key)
+        
+        if env_val is not None:
+            if isinstance(default_val, bool):
+                config[key] = env_val.lower() in ("1", "true", "yes", "on")
+            elif isinstance(default_val, int):
+                config[key] = int(env_val)
+            elif isinstance(default_val, float):
+                config[key] = float(env_val)
+            elif isinstance(default_val, list):
+                config[key] = [s.strip() for s in env_val.split(",")]
+            else:
+                config[key] = env_val
+    
+    return config
+
+
+def load_file_config(path: Path | str, defaults: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Load configuration from JSON or YAML file.
+    
+    Args:
+        path: Path to config file (.json, .yaml, .yml)
+        defaults: Default values
+        
+    Returns:
+        Merged config dict
+    """
+    config = dict(defaults) if defaults else {}
+    config_path = Path(path)
+    
+    if not config_path.exists():
+        return config
+    
+    try:
+        content = config_path.read_text()
+        
+        if config_path.suffix == ".json":
+            data = json.loads(content)
+        elif config_path.suffix in (".yaml", ".yml"):
+            try:
+                import yaml
+                data = yaml.safe_load(content) or {}
+            except ImportError:
+                _log.warning("PyYAML not installed, skipping YAML config")
+                return config
+        else:
+            return config
+        
+        if isinstance(data, dict):
+            config.update(data)
+            
+    except (json.JSONDecodeError, OSError, ValueError) as e:
+        _log.warning(f"Failed to load config from {path}: {e}")
+    
+    return config
+
+
+# ---------------------------------------------------------------------------
+# Dataclass Config Base
+# ---------------------------------------------------------------------------
+
 @dataclass
 class DataclassConfig:
     """Base dataclass config with env loading support.
@@ -60,8 +699,6 @@ class DataclassConfig:
     @classmethod
     def from_env(cls, prefix: str = "") -> "DataclassConfig":
         """Load config from environment variables."""
-        from dataclasses import fields
-
         env_values: dict[str, Any] = {}
 
         for f in fields(cls):
@@ -76,85 +713,22 @@ class DataclassConfig:
                     env_values[f.name] = int(env_val)
                 elif field_type == float:
                     env_values[f.name] = float(env_val)
+                elif field_type == list:
+                    env_values[f.name] = [s.strip() for s in env_val.split(",")]
                 else:
                     env_values[f.name] = env_val
 
         return cls(**env_values)
 
 
-T = TypeVar("T", bound=BaseModel)
-
-
-class BaseIntegrationConfig(BaseModel, Generic[T]):
-    """Base configuration for integrations using Pydantic.
-
-    Usage:
-        class MyConfig(BaseIntegrationConfig):
-            base_url: str = "http://localhost"
-            api_key: str = ""
-            timeout: float = 30.0
-    """
-
-    enabled: bool = False
-
-    @classmethod
-    def from_env(cls, prefix: str = "") -> "T":
-        """Load config from environment variables.
-
-        Args:
-            prefix: Env var prefix (e.g., "MYAPP_")
-
-        Returns:
-            Config instance with values from env
-        """
-        env_values: dict[str, Any] = {}
-
-        for field_name, field_info in cls.model_fields.items():
-            env_key = f"{prefix}{field_name.upper()}"
-            env_val = os.environ.get(env_key)
-
-            if env_val is not None:
-                # Convert to appropriate type
-                field_type = field_info.annotation
-                if field_type == bool:
-                    env_values[field_name] = env_val.lower() in ("1", "true", "yes")
-                elif field_type == int:
-                    env_values[field_name] = int(env_val)
-                elif field_type == float:
-                    env_values[field_name] = float(env_val)
-                else:
-                    env_values[field_name] = env_val
-
-        return cls(**env_values)
-
-    @classmethod
-    def from_file(cls, path: Path | str) -> "T | None":
-        """Load config from JSON file.
-
-        Args:
-            path: Path to config file
-
-        Returns:
-            Config instance or None if file doesn't exist
-        """
-        config_path = Path(path)
-        if not config_path.exists():
-            return None
-
-        try:
-            import json
-
-            data = json.loads(config_path.read_text())
-            return cls(**data)
-        except (json.JSONDecodeError, OSError, ValueError) as e:
-            _log.warning(f"Failed to load config from {path}: {e}")
-            return None
-
+# ---------------------------------------------------------------------------
+# Base Integration Class
+# ---------------------------------------------------------------------------
 
 class BaseIntegration(ABC):
     """Base class for integrations with standard lifecycle."""
 
-    def __init__(self, name: str, config: BaseIntegrationConfig | None = None) -> None:
+    def __init__(self, name: str, config: DataclassConfig | None = None) -> None:
         self.name = name
         self._config = config
         self._status = IntegrationStatus.UNKNOWN
@@ -211,9 +785,23 @@ class BaseIntegration(ABC):
 
 
 __all__ = [
+    "AsyncContextManagerMixin",
     "BaseIntegration",
-    "BaseIntegrationConfig",
+    "ContextManagerMixin",
     "DataclassConfig",
+    "FeatureFlag",
+    "FeatureRegistry",
     "IntegrationInfo",
     "IntegrationStatus",
+    "SerializableMixin",
+    "SingletonMixin",
+    "feature",
+    "hashable_dataclass",
+    "load_env_config",
+    "load_file_config",
+    "validated_dataclass",
 ]
+
+
+# Alias for backward compatibility
+BaseIntegrationConfig = DataclassConfig

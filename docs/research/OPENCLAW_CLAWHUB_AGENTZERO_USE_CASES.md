@@ -1,3 +1,4 @@
+<DONE>
 # OpenClaw, ClawHub, Agent Zero — Use Cases for thegent
 
 **Purpose:** Research OpenClaw, ClawHub, and Agent Zero for potential integration with thegent's governance/orchestration slice.

@@ -1,3 +1,4 @@
+<DONE>
 # Hook Rust Migration Benchmarks — Complete Index
 
 > **Research Task**: research-hook-rust-benchmarks

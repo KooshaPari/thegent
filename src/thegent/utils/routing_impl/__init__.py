@@ -11,15 +11,18 @@ Key components:
 - Auto router: Gemini Flash classifier + Pareto routing for agent/model="auto"
 """
 
+from thegent.utils.routing_impl.cliproxy_client import CLIProxyRoutingClient, RoutingResponse
 from thegent.utils.routing_impl.models import RoutingConstraint, TaskCategory, TaskMetadata
 from thegent.utils.routing_impl.pareto_router import ParetoRouter, RouteCandidate
 from thegent.utils.routing_impl.task_router import ConstraintValidator, TaskClassifier, TaskRouter
 
 __all__ = [
+    "CLIProxyRoutingClient",
     "ConstraintValidator",
     "ParetoRouter",
     "RouteCandidate",
     "RoutingConstraint",
+    "RoutingResponse",
     "TaskCategory",
     "TaskClassifier",
     "TaskMetadata",

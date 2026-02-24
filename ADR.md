@@ -28,6 +28,24 @@ This document tracks the "Why" behind the core architectural shifts in `thegent`
 - **Status**: **ACCEPTED**
 - **Consequence**: Unified `$defer`, `$block`, and `$idea` syntax works across all 6+ supported platforms.
 
+## ADR-005: Hash-Chained Immutable Audit Trail (Superseded by ADR-015)
+- **Context**: Agent actions must be tamper-evident for governance compliance and forensic replay.
+- **Decision**: Hash-chained append-only logs with tiered storage (hot → warm → cold).
+- **Status**: **SUPERSEDED** by ADR-015 (Immutable Audit Ledger)
+- **Consequence**: See ADR-015 for current implementation.
+
+## ADR-006: Three-State Circuit Breaker per Subsystem
+- **Context**: Subsystem failures could cascade across the entire agent orchestration system.
+- **Decision**: Implement CLOSED → OPEN (on failure threshold) → HALF-OPEN (probe) → CLOSED/OPEN circuit breaker pattern, per-provider and per-subsystem (model, tool, storage).
+- **Status**: **ACCEPTED**
+- **Consequence**: Prevents cascade failures; enables graceful degradation. Each subsystem has independent circuit breaker state.
+
+## ADR-007: Multi-Agent Orchestration Modes
+- **Context**: Different tasks require different coordination patterns; single mode insufficient.
+- **Decision**: Support Sequential Delegation, Parallel Consensus, Review Loop, Arbitration Quorum, and Solo modes. Mode selection based on risk/complexity classification with conflict resolution via majority vote + confidence weighting.
+- **Status**: **ACCEPTED**
+- **Consequence**: FR-AGT-013 defines execution modes. `get_mode_capability()` and `list_modes()` provide runtime mode selection.
+
 ## ADR-015: Immutable Audit Ledger
 - **Context**: Agent actions must be tamper-evident for governance compliance and forensic replay. Plain JSONL files are mutable and undetectably alterable.
 - **Decision**: All audit records are stored in append-only JSONL files with SHA-256 hash chaining. Each entry contains `prev_hash` (hash of the previous record) and `hash` (hash of the current record), forming a cryptographically linked chain. `EvidenceLedger` is the canonical implementation; `IncidentLedger` applies the same pattern for governance/omega-safety events.

@@ -1,3 +1,4 @@
+<DONE>
 # Batch 3 Optimizations - Planning
 
 **Status**: Planning

@@ -1,3 +1,4 @@
+<DONE>
 # Proactive Doctor --fix Feature - Implementation Status
 
 > **WORK_STREAM ID:** scratch-doctor-fix

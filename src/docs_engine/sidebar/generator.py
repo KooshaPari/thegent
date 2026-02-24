@@ -8,7 +8,7 @@ from __future__ import annotations
 import orjson as json
 from pathlib import Path
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 
 class SidebarGenerator:

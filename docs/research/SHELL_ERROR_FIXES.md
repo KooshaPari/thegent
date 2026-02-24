@@ -1,3 +1,4 @@
+<DONE>
 # Shell Error Fixes — zsh Bad Substitution
 
 > **Status**: Fixed | **Date**: 2026-02-17

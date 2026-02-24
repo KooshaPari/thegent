@@ -54,7 +54,6 @@ class IsolatedExecutor:
         """
         if not self.enable_isolation:
             # Fall back to non-isolated execution
-            import subprocess
 
             result = shim_run(
                 command,

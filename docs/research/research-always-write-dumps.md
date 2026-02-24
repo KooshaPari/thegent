@@ -1,3 +1,4 @@
+<DONE>
 # Always Write Conversation Dumps - Implementation Status
 
 > **WORK_STREAM ID:** research-always-write-dumps

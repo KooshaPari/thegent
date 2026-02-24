@@ -14,9 +14,11 @@ import orjson as json
 import os
 import time
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from thegent.integrations.base import SerializableMixin
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -55,7 +57,7 @@ class ResourceCoordinationError(Exception):
 
 
 @dataclass
-class ResourceLease:
+class ResourceLease(SerializableMixin):
     """A time-bounded claim on a portion of a named resource.
 
     Attributes:
@@ -76,10 +78,6 @@ class ResourceLease:
     def is_expired(self) -> bool:
         """Return True when the lease has passed its expiry time."""
         return time.time() >= self.expires_at
-
-    def to_dict(self) -> dict:
-        """Serialise to a plain dictionary."""
-        return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict) -> ResourceLease:

@@ -4,6 +4,8 @@ import orjson as json
 import logging
 import time
 from dataclasses import asdict, dataclass, field
+
+from thegent.integrations.base import SerializableMixin
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -31,7 +33,7 @@ class EscalationPriority(StrEnum):
 
 
 @dataclass
-class EscalationItem:
+class EscalationItem(SerializableMixin):
     """An item in the escalation queue."""
 
     id: str
@@ -47,15 +49,6 @@ class EscalationItem:
     resolution: str | None = None
     snapshot_path: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "EscalationItem":
-        """Create from dictionary."""
-        return cls(**data)
 
 
 class EscalationQueue:

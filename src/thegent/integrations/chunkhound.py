@@ -15,6 +15,8 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 
+from thegent.integrations.base import DataclassConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,8 +26,7 @@ class ChunkHoundStatus(Enum):
 
 
 @dataclass
-class ChunkHoundConfig:
-    enabled: bool = False
+class ChunkHoundConfig(DataclassConfig):
     index_path: str = "./.chunkhound"
 
 
@@ -37,10 +38,9 @@ class ChunkHoundClient:
             self._status = ChunkHoundStatus.ENABLED
 
     def _load_config(self):
-        return ChunkHoundConfig(
-            enabled=os.getenv("THEGENT_ENABLE_CHUNKHOUND", "").lower() in ("1", "true", "yes"),
-            index_path=os.getenv("CHUNKHOUND_INDEX_PATH", "./.chunkhound"),
-        )
+        config = ChunkHoundConfig.from_env("CHUNKHOUND_")
+        config.enabled = os.environ.get("THEGENT_ENABLE_CHUNKHOUND", "").lower() in ("1", "true", "yes")
+        return config
 
     @property
     def is_enabled(self): return self._config.enabled

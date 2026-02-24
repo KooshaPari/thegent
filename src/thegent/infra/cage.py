@@ -47,7 +47,6 @@ class AgentCage:
         # 2. Docker/Wasm sandbox
         # 3. Environment variable scrubbing (PATH, etc)
 
-        import subprocess
 
         try:
             result = shim_run(

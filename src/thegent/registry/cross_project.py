@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml  # bundled via pyyaml (already in pyproject.toml dependencies)
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ _FRONTMATTER_FIELDS_CAPABILITIES = ("tools", "capabilities")
 
 
 @dataclass
-class PersonaRecord:
+class PersonaRecord(SerializableMixin):
     """Catalog entry for a single AI agent persona."""
 
     name: str
@@ -38,15 +39,6 @@ class PersonaRecord:
     persona_file: Path
     last_seen: datetime
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to a JSON-safe dict."""
-        return {
-            "name": self.name,
-            "project_root": str(self.project_root),
-            "capabilities": self.capabilities,
-            "persona_file": str(self.persona_file),
-            "last_seen": self.last_seen.isoformat(),
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PersonaRecord:

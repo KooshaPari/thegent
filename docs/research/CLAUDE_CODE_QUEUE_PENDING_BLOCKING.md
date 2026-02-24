@@ -1,3 +1,4 @@
+<DONE>
 # Claude Code: Queue Pending & Blocking Messages (Research & Plan)
 
 **Goal:** Replicate Codex/Cursor-agent behavior in Claude Code:

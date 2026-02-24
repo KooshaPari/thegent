@@ -1,3 +1,4 @@
+<DONE>
 # Phase 2 Wave 3 Lane 2 Deep-Read Report
 
 Scope source: `docs/research/PHASE2_WAVE3_LANE_2.txt`

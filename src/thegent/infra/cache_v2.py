@@ -3,8 +3,6 @@ Includes Singleflight, inotify cache invalidation, heat-based LRU, and multi-tie
 """
 
 import collections
-import contextlib
-import json
 import logging
 import threading
 import time

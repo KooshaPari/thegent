@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import orjson as json
 from difflib import HtmlDiff
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
 from thegent.integrations.sync_provenance import (
     SyncProvenanceStamp,
     chain_provenance_stamps,
@@ -34,28 +35,22 @@ class SyncPolicyAudit:
 
 
 @dataclass
-class RemoteOrphanReport:
+class RemoteOrphanReport(SerializableMixin):
     """Structured report of remote items not represented locally."""
 
     remote_ids: list[str]
     local_ids: list[str]
     orphan_ids: list[str]
 
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class LocalOrphanReport:
+class LocalOrphanReport(SerializableMixin):
     """Structured report of local items without remote tracker mapping."""
 
     local_ids: list[str]
     mapped_remote_ids: list[str]
     local_orphan_ids: list[str]
     orphan_count: int
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
 
 
 class SyncAuditor:

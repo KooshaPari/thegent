@@ -50,7 +50,6 @@ def auto_setup_jetbrains_integration(auto_install: bool = True) -> dict[str, Any
         Dict with setup status and details
     """
     import platform
-    import subprocess
 
     cli = JetBrainsCLI()
     if cli.ide_path:

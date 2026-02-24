@@ -8,6 +8,9 @@ mod cost_enforcer;
 mod engine;
 mod errors;
 mod evaluator;
+mod policy;
+mod slo;
+mod trust;
 #[cfg(feature = "python")]
 pub mod python;
 
@@ -16,6 +19,9 @@ pub use cost_enforcer::CostEnforcer;
 pub use engine::PolicyEngine;
 pub use errors::PolicyError;
 pub use evaluator::{ComplianceRule, EvaluationContext, EvaluationResult};
+pub use policy::{PolicyManager, LearningSession};
+pub use slo::SloRegulator;
+pub use trust::{TrustBoundaryChecker, TrustLevel, EvaluationResult as TrustEvaluationResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PolicyConfig {

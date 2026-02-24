@@ -1,3 +1,4 @@
+<DONE>
 # Session Wait Loop Setup
 
 **Date:** 2026-02-17

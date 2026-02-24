@@ -19,7 +19,7 @@ import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Literal
 

@@ -3,9 +3,8 @@
 Handles sync cycle execution - extracted to reduce runner size.
 """
 
-import asyncio
 import logging
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 

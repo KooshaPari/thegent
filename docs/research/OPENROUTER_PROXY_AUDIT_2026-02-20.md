@@ -1,3 +1,4 @@
+<DONE>
 # OpenRouter Proxy Audit — 2026-02-20
 
 Audit of `src/thegent/cliproxy_adapter.py` and supporting routing files for full OpenRouter

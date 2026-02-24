@@ -3,12 +3,8 @@
 # @trace WL-124
 from __future__ import annotations
 
-import orjson as json
 import logging
-import sys
 from pathlib import Path
-from datetime import datetime
-from typing import Any, cast
 
 import typer
 
@@ -18,12 +14,10 @@ from thegent.cli.commands.plan_output_helpers import (
     render_dag_list,
     render_dag_ready,
     render_dag_status,
-    render_plan_next_items,
     resolve_output_format,
 )
 
 from thegent.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _atomic_write,
     _check_dag_cycles,
@@ -51,8 +45,6 @@ from thegent.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent.cli.commands.run_cmds import bg_cmd
-from thegent.cli.commands.session_cmds import history_cmd
 
 
 """DAG-related CLI commands for plan/workflow management.
@@ -195,6 +187,7 @@ def dag_remove_cmd(task_id: str, cd: Path | None = None) -> None:
 
 def dag_cancel_cmd(task_id: str, cd: Path | None = None) -> None:
     """Cancel a task (set status to cancelled)."""
+    from thegent.cli.commands.plan_dag_cmds import dag_update_cmd
     dag_update_cmd(task_id=task_id, cd=cd, status="cancelled")
     console.print(f"[green]Cancelled task {task_id}[/green]")
 
@@ -348,6 +341,7 @@ def dag_run_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
+    from thegent.cli.commands._cli_shared import dag_run_impl
     res = dag_run_impl(
         cd=cd,
         dry_run=dry_run,
@@ -381,6 +375,7 @@ def dag_run_cmd(
 def dag_sync_cmd(cd: Path | None = None, auto_run_next: bool = False) -> None:
     """For tasks with session_id and status=running, if pid not running set status=done or failed from rc.
     If --auto-run-next, spawn next ready tasks after sync."""
+    from thegent.cli.commands._cli_shared import dag_sync_impl
     res = dag_sync_impl(cd=cd, auto_run_next=auto_run_next)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")
@@ -478,6 +473,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
 
 def dag_recover_cmd(cd: Path | None = None, action: str = "retry-failed") -> None:
     """Perform recovery playbook actions on the DAG."""
+    from thegent.cli.commands._cli_shared import dag_recover_impl
     res = dag_recover_impl(cd=cd, action=action)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")

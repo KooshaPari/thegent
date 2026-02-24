@@ -1,3 +1,4 @@
+<DONE>
 # Research — Cost Sensing Tests (Phase 14)
 
 **WORK_STREAM ID:** `research-phase14-cost-sensing-tests`

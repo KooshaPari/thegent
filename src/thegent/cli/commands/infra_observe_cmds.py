@@ -150,7 +150,7 @@ def sitback_dashboard_cmd(
 
     def _render(data: dict) -> None:  # noqa: ANN001
         if format == "json":
-            sys.stdout.write(json.dumps(data, sort_keys=True).decode() + "\n")
+            sys.stdout.write(json.dumps(data, option=json.OPT_SORT_KEYS).decode() + "\n")
             return
 
         if prof == "light":

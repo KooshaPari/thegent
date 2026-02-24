@@ -1,3 +1,4 @@
+<DONE>
 # Library Replacement — Phase Design Work Breakdowns (DWBs)
 
 > **Purpose**: Detailed task breakdown for each phase of [LIBRARY_REPLACEMENT_AUDIT_DEEP.md](./LIBRARY_REPLACEMENT_AUDIT_DEEP.md). Use before implementation.

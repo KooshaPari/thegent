@@ -1,3 +1,4 @@
+<DONE>
 # Research Session: LLM Proxy & Routing Landscape (2026-02-22)
 
 ## Session Metadata

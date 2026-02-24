@@ -1,3 +1,4 @@
+<DONE>
 # Agent Hierarchy and Team Structure
 
 > **Date**: 2026-02-18

@@ -1,3 +1,4 @@
+<DONE>
 # Thegent-Shims (Rust) Implementation Documentation
 
 > **WORK_STREAM ID:** scratch-thegent-shims

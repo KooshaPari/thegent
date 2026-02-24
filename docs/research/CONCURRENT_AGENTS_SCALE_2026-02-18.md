@@ -1,3 +1,4 @@
+<DONE>
 # Concurrent Agents Scale-Up - 2026-02-18
 
 ## Scale Event

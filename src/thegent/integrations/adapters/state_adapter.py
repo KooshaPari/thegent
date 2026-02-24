@@ -4,7 +4,7 @@ Handles local state persistence, checkpoints, and trends.
 """
 
 import orjson as json
-from datetime import datetime, timezone, UTC
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 

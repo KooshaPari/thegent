@@ -1,3 +1,4 @@
+<DONE>
 # Cross-Project Feature Borrowing Plan
 
 > **Status**: 📋 **IMPLEMENTATION PLAN** | **Date**: 2026-02-18

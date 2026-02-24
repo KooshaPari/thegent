@@ -245,173 +245,28 @@ def ensure_dir(path: str | Path) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def path_to_str(path: str | Path | None) -> str:
-    """Convert a path to a string, handling ``None`` gracefully.
+def format_size(size_bytes: int) -> str:
+    """Format size in human-readable form."""
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f}{unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f}PB"
 
-    Args:
-        path: Path object, string, or ``None``.
 
-    Returns:
-        String representation of *path*, or ``''`` for ``None``.
-    """
+def normalize_path(path: Path | str | None) -> Path | None:
+    """Normalize a path by expanding user and resolving."""
     if path is None:
-        return ""
-    return str(path)
-
-
-def get_common_ancestor(*paths: str | Path) -> Path:
-    """Find the common ancestor directory of multiple paths.
-
-    Args:
-        *paths: Paths to find the common ancestor for.
-
-    Returns:
-        Common ancestor as a :class:`~pathlib.Path`, or the filesystem root
-        if no common ancestor exists above the root.
-
-    Examples:
-        >>> get_common_ancestor("/home/user/a", "/home/user/b")
-        PosixPath('/home/user')
-    """
-    if not paths:
-        return Path.cwd()
-
-    normalized = [normalize_path(p) for p in paths]
-    all_parts = [p.parts for p in normalized]
-    common: list[str] = []
-
-    for i, part in enumerate(all_parts[0]):
-        if all(i < len(pp) and pp[i] == part for pp in all_parts):
-            common.append(part)
-        else:
-            break
-
-    if not common:
-        return Path(normalized[0].anchor or "/")
-
-    return Path(*common)
-
-
-def is_same_path(path1: str | Path, path2: str | Path) -> bool:
-    """Return ``True`` if two paths refer to the same filesystem object.
-
-    Uses :meth:`~pathlib.Path.samefile` when both paths exist (handles
-    symlinks correctly) and falls back to resolved-path comparison otherwise.
-
-    Args:
-        path1: First path.
-        path2: Second path.
-
-    Returns:
-        ``True`` if paths refer to the same object.
-    """
+        return None
+    p = Path(path).expanduser()
     try:
-        return normalize_path(path1).samefile(normalize_path(path2))
-    except (OSError, ValueError):
-        return normalize_path(path1) == normalize_path(path2)
+        return p.resolve()
+    except (OSError, RuntimeError):
+        return p
 
 
-def is_absolute_or_relative(path: str | Path) -> bool:
-    """Return ``True`` if *path* is absolute, ``False`` if relative.
-
-    Note: ``~`` paths are treated as relative until expanded.
-
-    Args:
-        path: Path to inspect.
-
-    Returns:
-        ``True`` if the path is absolute.
-
-    Examples:
-        >>> is_absolute_or_relative("/home/user")
-        True
-
-        >>> is_absolute_or_relative("~/projects")
-        False
-
-        >>> is_absolute_or_relative("./src")
-        False
-    """
-    p = Path(path) if isinstance(path, str) else path
-    return p.is_absolute()
-
-
-def sanitize_path(name: str) -> str:
-    """Replace characters illegal in file system paths with underscores.
-
-    Replaces the characters ``:<>"/\\|?*`` with ``_``.
-
-    Args:
-        name: Filename or path component to sanitize.
-
-    Returns:
-        Sanitized string safe for use as a path component.
-
-    Examples:
-        >>> sanitize_path('file:with*illegal?chars.txt')
-        'file_with_illegal_chars.txt'
-    """
-    return re.sub(r'[:<>"/\\|?*]', "_", name)
-
-
-def strip_common_prefix(paths: list[str | Path]) -> list[str]:
-    """Strip the common directory prefix from a list of paths for display.
-
-    Args:
-        paths: Paths to strip common prefix from.
-
-    Returns:
-        List of paths with common prefix removed, as strings.
-
-    Examples:
-        >>> strip_common_prefix(["/a/b/file1.txt", "/a/b/file2.txt"])
-        ['file1.txt', 'file2.txt']
-    """
-    if not paths:
-        return []
-
-    normalized = [normalize_path(p) for p in paths]
-    common = get_common_ancestor(*normalized)
-    result = []
-    for p in normalized:
-        if is_within(p, common):
-            result.append(str(p.relative_to(common)))
-        else:
-            result.append(str(p))
-    return result
-
-
-# ---------------------------------------------------------------------------
-# Internal helpers
-# ---------------------------------------------------------------------------
-
-
-def _resolve(path: Path) -> Path:
-    """Resolve a path, falling back gracefully when it does not exist.
-
-    On Python 3.6+, ``Path.resolve()`` resolves symlinks and ``..``
-    components but does NOT require the path to exist (``strict=False``
-    is the default since 3.6).  We make that explicit here.
-    """
-    return path.resolve()
-
-
-# ---------------------------------------------------------------------------
-# CLI self-test / demo
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    import sys
-
-    cwd = Path.cwd()
-    sandbox_base = Path(tempfile.gettempdir()) / "sandbox"
-
-    with contextlib.suppress(ValueError):
-        safe_join(sandbox_base, "../../etc/passwd")
-
-    safe = safe_join(sandbox_base, "sub/file.txt")
-
-    with tempfile.TemporaryDirectory() as td:
-        created = ensure_dir(Path(td) / "a" / "b" / "c")
-
-    sys.exit(0)
+def path_to_str(path: Path | None) -> str | None:
+    """Convert a Path to string, handling None gracefully."""
+    if path is None:
+        return None
+    return str(path)

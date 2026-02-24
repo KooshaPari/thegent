@@ -1,3 +1,4 @@
+<DONE>
 # CLIProxy++ Standalone Product Design
 
 **Date:** 2026-02-20

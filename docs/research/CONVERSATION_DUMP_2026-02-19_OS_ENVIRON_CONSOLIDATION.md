@@ -1,3 +1,4 @@
+<DONE>
 # Consolidation of os.environ Access (research-library-env-settings)
 
 **Task**: P3 priority - Consolidate all direct `os.environ` access into `ThegentSettings` dependency injection (15+ files)

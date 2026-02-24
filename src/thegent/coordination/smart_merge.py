@@ -4,12 +4,11 @@ Includes Mergiraf integration, conflict prediction, and structural merge.
 
 import orjson as json
 import logging
-import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 logger = logging.getLogger(__name__)
 

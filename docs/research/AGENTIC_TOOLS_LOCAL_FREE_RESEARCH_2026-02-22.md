@@ -1,3 +1,4 @@
+<DONE>
 # Agentic Tools Research (Local/Free/Cheap) - 2026-02-22
 
 ## Scope

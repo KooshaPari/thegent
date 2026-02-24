@@ -1,6 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any
 
+from thegent.utils.routing_impl.cliproxy_client import CLIProxyRoutingClient
 from thegent.utils.routing_impl.models import TaskCategory, TaskMetadata
 
 if TYPE_CHECKING:
@@ -318,6 +319,52 @@ class TaskRouter:
         task = self.classify(prompt)
         violations = self.validate(task, registry, model)
         return task, violations
+
+    def route_via_cliproxy(
+        self,
+        prompt: str,
+        max_cost_per_call: float = 0.01,
+        max_latency_ms: int = 5000,
+        min_quality_score: float = 0.7,
+    ) -> tuple[str, str, float]:
+        """Route using CLIProxy Pareto router endpoint.
+
+        Returns:
+            tuple: (model_id, provider, estimated_cost)
+
+        @trace FR-CLIPROXY-INTEGRATION-002
+        """
+        task = self.classify(prompt)
+        category = task.category.value.upper()
+
+        try:
+            with CLIProxyRoutingClient() as client:
+                result = client.select_model(
+                    task_complexity=category,
+                    max_cost_per_call=max_cost_per_call,
+                    max_latency_ms=max_latency_ms,
+                    min_quality_score=min_quality_score,
+                )
+                logger.debug(
+                    f"CLIProxy routing: {result.model_id} (provider={result.provider}, "
+                    f"cost=${result.estimated_cost:.4f})"
+                )
+                return result.model_id, result.provider, result.estimated_cost
+        except Exception as e:
+            logger.warning(f"CLIProxy routing failed, falling back to local: {e}")
+            # Fall back to local routing
+            violations = self.validate(task, None, None)
+            if not violations:
+                # Return a default model based on category
+                if category == "FAST":
+                    return "gemini-3-flash", "gemini", 0.0001
+                elif category == "NORMAL":
+                    return "claude-sonnet-4.5", "claude", 0.003
+                elif category == "COMPLEX":
+                    return "claude-opus-4.6", "claude", 0.015
+                else:
+                    return "claude-opus-4.6-1m", "claude", 0.015
+            raise
 
     def get_fallback_chain(self, category: TaskCategory) -> list[str]:
         """Get LiteLLM-style fallback chain for task category (WP-1001)."""

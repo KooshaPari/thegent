@@ -1,3 +1,4 @@
+<DONE>
 # Idea Seeds & Session Storage
 
 **Purpose:** Capture and persist `$idea`-flagged prompts as research seeds. Harvest from Claude Code and Codex session history before they expire. Also supports `$defer`/`$pending` for session handoff.

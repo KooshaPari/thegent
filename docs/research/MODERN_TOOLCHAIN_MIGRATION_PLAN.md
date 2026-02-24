@@ -1,3 +1,4 @@
+<DONE>
 # Modern Toolchain Migration Plan: pip/npm -> uv/bun & mise -> proto
 
 **Status**: 🛠 **IN-PROGRESS** | **Date**: 2026-02-19

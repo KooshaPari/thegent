@@ -1,3 +1,4 @@
+<DONE>
 # Claude Code Plan & Delegate Modes — Deep Research for thegent Tooling
 
 **Purpose:** In-depth research on Claude Code's Plan and Delegate modes to inform thegent tooling for structured agent work, effective looping, and CLI/MCP integration.

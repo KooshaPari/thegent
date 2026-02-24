@@ -16,14 +16,17 @@
 //! ```
 
 pub mod audit;
+pub mod ledger;
+#[cfg(test)]
+mod ledger_tests;
 pub use audit::{AuditEntry, AuditLogger};
+pub use ledger::{IncidentLedger, IntegrityReport, LedgerVerifier};
 
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Stdin};
 use std::path::Path;
 
 use anyhow::Result;
-use pyo3::prelude::*;
 use serde_json::Value;
 
 // ---------------------------------------------------------------------------
@@ -209,6 +212,7 @@ pub fn sample_stream<R: Read>(reader: R, n: usize) -> Vec<Result<Value>> {
     parse_stream(reader).take(n).collect()
 }
 
+#[cfg(feature = "python")]
 #[pymodule]
 fn thegent_jsonl(_m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
