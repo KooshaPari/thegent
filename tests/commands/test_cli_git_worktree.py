@@ -117,7 +117,7 @@ def test_git_worktree_status_supports_json_output(tmp_path: Path) -> None:
 
 def test_git_worktree_claim_aliases_acquire(tmp_path: Path) -> None:
     """`thegent git worktree claim` reuses acquire logic for terminology alignment."""
-    with patch("thegent.cli.commands.cli_git.worktree_acquire") as mock_worktree_acquire:
+    with patch("thegent.cli.commands.cli_git_log_ops.worktree_acquire") as mock_worktree_acquire:
         result = runner.invoke(app, ["worktree", "claim", "agent-x", "--root", str(tmp_path)])
 
     assert result.exit_code == 0
