@@ -249,3 +249,153 @@ class TestNonDataclass:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestEnhancedFromDict:
+    """Tests for enhanced from_dict with type-aware deserialization."""
+
+    def setup_method(self):
+        """Reset singleton before each test."""
+        pass
+
+    def test_path_deserialization(self):
+        """Test Path deserialization."""
+        data = {
+            "name": "Alice",
+            "age": 30,
+            "status": "active",
+            "created_at": datetime(2024, 1, 1),
+            "home_path": "/home/alice",
+        }
+        person = Person.from_dict(data)
+        
+        assert isinstance(person.home_path, Path)
+        assert person.home_path == Path("/home/alice")
+
+    def test_enum_deserialization(self):
+        """Test Enum deserialization."""
+        data = {
+            "name": "Bob",
+            "age": 25,
+            "status": "done",
+            "created_at": datetime(2024, 1, 1),
+            "home_path": Path("/tmp"),
+        }
+        person = Person.from_dict(data)
+        
+        assert isinstance(person.status, Status)
+        assert person.status == Status.DONE
+
+    def test_datetime_deserialization(self):
+        """Test datetime deserialization from ISO string."""
+        data = {
+            "name": "Charlie",
+            "age": 35,
+            "status": "pending",
+            "created_at": "2024-06-15T14:30:00",
+            "home_path": Path("/tmp"),
+        }
+        person = Person.from_dict(data)
+        
+        assert isinstance(person.created_at, datetime)
+        assert person.created_at.year == 2024
+        assert person.created_at.month == 6
+        assert person.created_at.day == 15
+
+    def test_datetime_with_timezone(self):
+        """Test datetime deserialization with timezone."""
+        data = {
+            "name": "Diana",
+            "age": 28,
+            "status": "active",
+            "created_at": "2024-06-15T14:30:00+00:00",
+            "home_path": Path("/tmp"),
+        }
+        person = Person.from_dict(data)
+        
+        assert isinstance(person.created_at, datetime)
+        assert person.created_at.tzinfo is not None
+
+    def test_nested_serializable_deserialization(self):
+        """Test nested SerializableMixin deserialization."""
+        data = {
+            "name": "Eve",
+            "age": 22,
+            "status": "pending",
+            "created_at": datetime(2024, 1, 1),
+            "home_path": Path("/tmp"),
+            "address": {
+                "street": "456 Oak Ave",
+                "city": "Portland",
+                "zip_code": "97201",
+            },
+        }
+        person = Person.from_dict(data)
+        
+        assert isinstance(person.address, Address)
+        assert person.address.street == "456 Oak Ave"
+        assert person.address.city == "Portland"
+
+    def test_roundtrip_preserves_types(self):
+        """Test that roundtrip preserves types."""
+        original = Person(
+            name="Frank",
+            age=40,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 6, 15, 14, 30, 0),
+            home_path=Path("/home/frank"),
+            metadata={"key": "value"},
+            tags=["tag1", "tag2"],
+            address=Address("789 Pine St", "Seattle", "98101"),
+        )
+        
+        serialized = original.to_dict()
+        restored = Person.from_dict(serialized)
+        
+        assert restored.name == original.name
+        assert restored.age == original.age
+        assert restored.status == original.status
+        assert isinstance(restored.status, Status)
+        assert restored.home_path == original.home_path
+        assert isinstance(restored.home_path, Path)
+        assert restored.address.street == original.address.street
+        assert isinstance(restored.address, Address)
+
+
+class TestListAndDictTypes:
+    """Tests for list and dict type deserialization."""
+
+    def test_list_of_enums(self):
+        """Test deserialization of list with typed elements."""
+        from dataclasses import dataclass
+        from typing import Any
+        
+        @dataclass
+        class TaskList(SerializableMixin):
+            name: str
+            statuses: list[Status] = field(default_factory=list)
+        
+        data = {
+            "name": "My Tasks",
+            "statuses": ["pending", "active", "done"],
+        }
+        task_list = TaskList.from_dict(data)
+        
+        assert len(task_list.statuses) == 3
+        assert all(isinstance(s, Status) for s in task_list.statuses)
+        assert task_list.statuses[0] == Status.PENDING
+        assert task_list.statuses[2] == Status.DONE
+
+    def test_optional_field_with_none(self):
+        """Test Optional field with None value."""
+        data = {
+            "name": "Grace",
+            "age": 50,
+            "status": "done",
+            "created_at": "2024-01-01",
+            "home_path": "/tmp",
+            "address": None,
+        }
+        person = Person.from_dict(data)
+        
+        assert person.address is None
