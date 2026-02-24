@@ -685,70 +685,842 @@ def discover_models(
 # ============ CLI INTERFACE ============
 
 
+def run_provider_form() -> None:
+    """Interactive form for provider management."""
+    console.print("\n[bold cyan]Provider Management[/bold cyan]\n")
 
-# Form functions moved to provider_forms.py
+    while True:
+        console.print("\n[bold]Choose an action:[/bold]")
+        console.print("  1. List providers")
+        console.print("  2. Add provider")
+        console.print("  3. Update provider")
+        console.print("  4. Delete provider")
+        console.print("  5. Validate provider")
+        console.print("  6. List credentials")
+        console.print("  7. Add API key")
+        console.print("  8. Remove API key")
+        console.print("  9. Discover models")
+        console.print("  0. Exit")
 
-# Scoring functions moved to provider_model_scoring.py
+        choice = Prompt.ask("[bold]Choice[/bold]", default="0")
 
-# Re-export scoring functions for backward compatibility
-from thegent.provider_model_scoring import (
-    add_custom_benchmark,
-    add_model_index,
-    add_model_modality,
-    calculate_composite_score,
-    fuzzy_search_models,
-    get_model_indices,
-    get_model_modalities,
-    list_available_modalities,
-    list_model_indices,
-    list_models_with_scores,
-    remove_model_index,
-    search_by_modalities,
-    search_models_by_capability,
-)
+        if choice == "0":
+            break
+        if choice == "1":
+            _form_list_providers()
+        elif choice == "2":
+            _form_add_provider()
+        elif choice == "3":
+            _form_update_provider()
+        elif choice == "4":
+            _form_delete_provider()
+        elif choice == "5":
+            _form_validate_provider()
+        elif choice == "6":
+            _form_list_credentials()
+        elif choice == "7":
+            _form_add_api_key()
+        elif choice == "8":
+            _form_remove_api_key()
+        elif choice == "9":
+            _form_discover_models()
 
-# Re-export form functions
-from thegent.provider_forms import run_provider_form
 
-__all__ = [
-    # Provider CRUD
-    "list_providers",
-    "get_provider",
-    "add_provider",
-    "update_provider",
-    "delete_provider",
-    "_update_provider_mapping",
-    # Model CRUD
-    "list_models",
-    "add_model_alias",
-    "remove_model_alias",
-    "add_common_alias",
-    "remove_common_alias",
-    # Credentials
-    "list_credentials",
-    "add_api_key",
-    "remove_api_key",
-    # Validation
-    "validate_provider",
-    # Discovery
-    "discover_models",
-    # Model Indices (re-exported from provider_model_scoring)
-    "get_model_indices",
-    "list_model_indices",
-    "add_model_index",
-    "remove_model_index",
-    # Scoring (re-exported from provider_model_scoring)
-    "calculate_composite_score",
-    "list_models_with_scores",
-    "add_custom_benchmark",
-    # Search (re-exported from provider_model_scoring)
-    "fuzzy_search_models",
-    "search_models_by_capability",
-    # Modalities (re-exported from provider_model_scoring)
-    "get_model_modalities",
-    "add_model_modality",
-    "list_available_modalities",
-    "search_by_modalities",
-    # Forms (re-exported from provider_forms)
-    "run_provider_form",
-]
+def _form_list_providers() -> None:
+    providers = list_providers()
+    if not providers:
+        console.print("[yellow]No providers configured[/yellow]")
+        return
+
+    table = Table(title="Providers")
+    table.add_column("Name", style="cyan")
+    table.add_column("Base URL", style="dim")
+    table.add_column("Model", style="green")
+    table.add_column("Aliases", style="magenta")
+
+    for p in providers:
+        aliases = ", ".join(p.get("extra_aliases", []))
+        table.add_row(
+            p.get("name", ""),
+            p.get("base_url", "")[:40],
+            p.get("model", ""),
+            aliases[:30],
+        )
+
+    console.print(table)
+
+
+def _form_add_provider() -> None:
+    console.print("\n[bold]Add New Provider[/bold]\n")
+
+    name = Prompt.ask("[bold]Provider name[/bold] (e.g., myprovider)")
+    base_url = Prompt.ask("[bold]Base URL[/bold] (e.g., https://api.example.com/v1)")
+    model = Prompt.ask("[bold]Default model[/bold] (e.g., gpt-4)")
+
+    add_extra = Confirm.ask("[bold]Add extra aliases?[/bold]", default=False)
+    extra_aliases = []
+    if add_extra:
+        aliases_input = Prompt.ask("[bold]Aliases[/bold] (comma-separated)", default="")
+        extra_aliases = [a.strip() for a in aliases_input.split(",") if a.strip()]
+
+    add_login = Confirm.ask("[bold]Add login instructions?[/bold]", default=False)
+    login_url = ""
+    login_instructions = []
+    if add_login:
+        login_url = Prompt.ask("[bold]Login URL[/bold]")
+        instr_input = Prompt.ask("[bold]Instructions[/bold] (one per line, empty to finish)")
+        while instr_input:
+            login_instructions.append(instr_input)
+            instr_input = Prompt.ask("[bold]Next instruction[/bold] (empty to finish)", default="")
+
+    add_creds = Confirm.ask("[bold]Add API key now?[/bold]", default=False)
+    api_key = ""
+    if add_creds:
+        api_key = Prompt.ask("[bold]API Key[/bold]", password=True)
+
+    success, msg = add_provider(
+        name=name,
+        base_url=base_url,
+        model=model,
+        login_url=login_url or None,
+        login_instructions=login_instructions or None,
+        extra_aliases=extra_aliases or None,
+        api_key=api_key or None,
+    )
+
+    if success:
+        console.print(f"[green]{msg}[/green]")
+    else:
+        console.print(f"[red]{msg}[/red]")
+
+
+def _prompt_for_provider_selection(
+    providers: list[dict[str, Any]],
+    prompt_title: str,
+    empty_message: str,
+) -> dict[str, Any] | None:
+    """Prompt user to select a provider from a numbered list."""
+    if not providers:
+        console.print(f"[yellow]{empty_message}[/yellow]")
+        return None
+
+    console.print(f"\n[bold]{prompt_title}[/bold]")
+    for i, provider in enumerate(providers):
+        console.print(f"  {i + 1}. {provider.get('name')}")
+
+    idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
+    try:
+        return providers[int(idx) - 1]
+    except (ValueError, IndexError):
+        console.print("[red]Invalid selection[/red]")
+        return None
+
+
+def _form_update_provider() -> None:
+    providers = list_providers()
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Update",
+        empty_message="No providers to update",
+    )
+    if not provider:
+        return
+
+    name = provider.get("name")
+    console.print(f"\n[bold]Updating: {name}[/bold]\n")
+
+    base_url = Prompt.ask(
+        "[bold]New base URL[/bold] (leave empty to keep current)", default=provider.get("base_url", "")
+    )
+    model = Prompt.ask("[bold]New model[/bold] (leave empty to keep current)", default=provider.get("model", ""))
+
+    success, msg = update_provider(
+        name=cast("str", name),
+        base_url=base_url or None,
+        model=model or None,
+    )
+
+    if success:
+        console.print(f"[green]{msg}[/green]")
+    else:
+        console.print(f"[red]{msg}[/red]")
+
+
+def _form_delete_provider() -> None:
+    providers = list_providers()
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Delete",
+        empty_message="No providers to delete",
+    )
+    if not provider:
+        return
+
+    if Confirm.ask(f"[bold]Delete provider '{provider.get('name')}'?[/bold]", default=False):
+        success, msg = delete_provider(cast("str", provider.get("name")))
+        if success:
+            console.print(f"[green]{msg}[/green]")
+        else:
+            console.print(f"[red]{msg}[/red]")
+
+
+def _form_validate_provider() -> None:
+    providers = list_providers()
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Validate",
+        empty_message="No providers to validate",
+    )
+    if not provider:
+        return
+
+    console.print(f"\n[dim]Validating {provider.get('name')}...[/dim]")
+    success, msg, _details = validate_provider(cast("str", provider.get("name")))
+
+    if success:
+        console.print(f"[green]✓ {msg}[/green]")
+    else:
+        console.print(f"[red]✗ {msg}[/red]")
+
+
+def _form_list_credentials() -> None:
+    creds = list_credentials()
+    if not creds:
+        console.print("[yellow]No credentials configured[/yellow]")
+        return
+
+    table = Table(title="Credentials")
+    table.add_column("Type", style="cyan")
+    table.add_column("Provider", style="green")
+    table.add_column("Details", style="dim")
+
+    for c in creds:
+        details = c.get("file") or c.get("base_url", "")[:30]
+        table.add_row(c.get("type", ""), c.get("provider", ""), details)
+
+    console.print(table)
+
+
+def _form_add_api_key() -> None:
+    providers = list_providers()
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider for API Key",
+        empty_message="No providers available",
+    )
+    if not provider:
+        return
+
+    api_key = Prompt.ask(f"[bold]API Key for {provider.get('name')}[/bold]", password=True)
+
+    success, msg = add_api_key(cast("str", provider.get("name")), api_key)
+    if success:
+        console.print(f"[green]{msg}[/green]")
+    else:
+        console.print(f"[red]{msg}[/red]")
+
+
+def _form_remove_api_key() -> None:
+    providers = list_providers()
+    provider = _prompt_for_provider_selection(
+        providers,
+        prompt_title="Select Provider to Remove API Key",
+        empty_message="No providers available",
+    )
+    if not provider:
+        return
+
+    if Confirm.ask(f"[bold]Remove API key for '{provider.get('name')}'?[/bold]", default=False):
+        success, msg = remove_api_key(cast("str", provider.get("name")))
+        if success:
+            console.print(f"[green]{msg}[/green]")
+        else:
+            console.print(f"[red]{msg}[/red]")
+
+
+def _form_discover_models() -> None:
+    console.print("\n[dim]Discovering models from CLIProxy...[/dim]")
+    discovery = cast("dict[str, Any]", discover_models(include_status=True))
+    models = cast("list[dict[str, Any]]", discovery.get("models", []))
+    status = cast("dict[str, Any]", discovery.get("discovery", {}))
+
+    if not models:
+        if status.get("status") != "ok":
+            console.print(
+                f"[yellow]Discovery degraded:[/yellow] {status.get('failure_type', 'unknown')} - {status.get('error_message', '')}"
+            )
+        console.print("[yellow]No models discovered (is CLIProxy running?)[/yellow]")
+        return
+
+    table = Table(title="Discovered Models")
+    table.add_column("Model ID", style="cyan")
+    table.add_column("Provider", style="green")
+    table.add_column("Created", style="dim")
+
+    for m in models[:50]:  # Limit to 50
+        created = str(m.get("created", ""))[:8]
+        table.add_row(m.get("id", "")[:40], m.get("provider", ""), created)
+
+    console.print(table)
+    console.print(f"\n[dim]Showing {min(50, len(models))} of {len(models)} models[/dim]")
+
+
+# ============ MODEL INDICES (context, cost, speed, benchmarks) ============
+
+
+def get_model_indices(provider: str | None = None, model: str | None = None) -> dict[str, Any]:
+    """Get model indices (context limits, cost, speed, benchmarks)."""
+    indices = _load_json(_MODEL_INDICES_PATH)
+
+    result = {}
+    providers = indices.get("providers", {})
+
+    for prov_name, prov_data in providers.items():
+        if provider and prov_name.lower() != provider.lower():
+            continue
+
+        models = prov_data.get("models", {})
+        for model_name, model_data in models.items():
+            if model and model_name.lower() != model.lower():
+                continue
+            if prov_name not in result:
+                result[prov_name] = {"display_name": prov_data.get("display_name", prov_name), "models": {}}
+            result[prov_name]["models"][model_name] = model_data
+
+    return result
+
+
+def list_model_indices(
+    provider: str | None = None,
+    sort_by: str = "cost",
+    include_all: bool = False,
+) -> list[dict[str, Any]]:
+    """List models with their indices, sorted by specified criteria."""
+    indices = _load_json(_MODEL_INDICES_PATH)
+    providers = _load_json(_PROVIDER_DEFINITIONS_PATH)
+    weights = indices.get("benchmark_weights", {})
+
+    result = []
+    seen_models = set()
+
+    prov_data = indices.get("providers", {})
+    for prov_name, prov_cfg in prov_data.items():
+        if provider and prov_name.lower() != provider.lower():
+            continue
+
+        models = prov_cfg.get("models", {})
+        for model_name, model_idx in models.items():
+            # Cost fields
+            cost_input = model_idx.get("cost_per_1m_input", 0) or 0
+            cost_output = model_idx.get("cost_per_1m_output", 0) or 0
+            total_cost = cost_input + cost_output
+
+            # Speed fields
+            tps = model_idx.get("tps")
+            latency = model_idx.get("latency_first_token")
+
+            # Benchmarks and composite score
+            benchmarks = model_idx.get("benchmarks", {})
+            composite_score = calculate_composite_score(benchmarks, weights)
+
+            result.append(
+                {
+                    "provider": prov_name,
+                    "display_name": prov_cfg.get("display_name", prov_name),
+                    "model": model_name,
+                    "context_limit": model_idx.get("context_limit"),
+                    "output_limit": model_idx.get("output_limit"),
+                    "cost_per_1m_input": cost_input,
+                    "cost_per_1m_output": cost_output,
+                    "total_cost_per_1m": total_cost,
+                    "tps": tps,
+                    "latency_first_token": latency,
+                    "composite_score": composite_score,
+                    "benchmarks": benchmarks,
+                    "modalities": model_idx.get("modalities", {}),
+                    "notes": model_idx.get("notes"),
+                }
+            )
+            seen_models.add(f"{prov_name}:{model_name}")
+
+    if include_all:
+        for prov_name, prov_cfg in providers.items():
+            if provider and prov_name.lower() != provider.lower():
+                continue
+            model_name = prov_cfg.get("model", "")
+            key = f"{prov_name}:{model_name}"
+            if key not in seen_models:
+                result.append(
+                    {
+                        "provider": prov_name,
+                        "display_name": prov_name.title(),
+                        "model": model_name,
+                        "context_limit": None,
+                        "output_limit": None,
+                        "cost_per_1m_input": None,
+                        "cost_per_1m_output": None,
+                        "total_cost_per_1m": None,
+                        "tps": None,
+                        "latency_first_token": None,
+                        "swebench": None,
+                        "termbench": None,
+                        "reasoning": None,
+                        "vision": None,
+                        "notes": "No index data available",
+                    }
+                )
+
+    sort_model_rows(result, sort_by)
+
+    return result
+
+
+def add_model_index(
+    provider: str,
+    model: str,
+    context_limit: int | None = None,
+    output_limit: int | None = None,
+    cost_per_1m_input: float | None = None,
+    cost_per_1m_output: float | None = None,
+    tps: int | None = None,
+    latency_first_token: float | None = None,
+    reasoning: bool | None = None,
+    vision: bool | None = None,
+    swebench: float | None = None,
+    termbench: float | None = None,
+    notes: str | None = None,
+) -> tuple[bool, str]:
+    """Add or update model index data."""
+    indices = _load_json(_MODEL_INDICES_PATH)
+
+    prov_name = provider.lower()
+    if "providers" not in indices:
+        indices["providers"] = {}
+    if prov_name not in indices["providers"]:
+        indices["providers"][prov_name] = {"display_name": provider.title(), "models": {}}
+    if "models" not in indices["providers"][prov_name]:
+        indices["providers"][prov_name]["models"] = {}
+
+    model_data = indices["providers"][prov_name]["models"].get(model, {})
+
+    if context_limit is not None:
+        model_data["context_limit"] = context_limit
+    if output_limit is not None:
+        model_data["output_limit"] = output_limit
+    if cost_per_1m_input is not None:
+        model_data["cost_per_1m_input"] = cost_per_1m_input
+    if cost_per_1m_output is not None:
+        model_data["cost_per_1m_output"] = cost_per_1m_output
+    if tps is not None:
+        model_data["tps"] = tps
+    if latency_first_token is not None:
+        model_data["latency_first_token"] = latency_first_token
+    if reasoning is not None:
+        model_data["reasoning"] = reasoning
+    if vision is not None:
+        model_data["vision"] = vision
+    if swebench is not None:
+        model_data["swebench"] = swebench
+    if termbench is not None:
+        model_data["termbench"] = termbench
+    if notes is not None:
+        model_data["notes"] = notes
+
+    indices["providers"][prov_name]["models"][model] = model_data
+    _save_json(_MODEL_INDICES_PATH, indices)
+
+    return True, f"Index updated for {provider}/{model}"
+
+
+def remove_model_index(provider: str, model: str) -> tuple[bool, str]:
+    """Remove model index data."""
+    indices = _load_json(_MODEL_INDICES_PATH)
+
+    prov_name = provider.lower()
+    if prov_name in indices.get("providers", {}):
+        models = indices["providers"][prov_name].get("models", {})
+        if model in models:
+            del models[model]
+            _save_json(_MODEL_INDICES_PATH, indices)
+            return True, f"Index removed for {provider}/{model}"
+
+    return False, f"No index found for {provider}/{model}"
+
+
+def search_models_by_capability(
+    capability: str,
+    min_context: int | None = None,
+    max_cost_per_1m: float | None = None,
+    min_tps: int | None = None,
+) -> list[dict[str, Any]]:
+    """Search models by capability (reasoning, vision, swebench, termbench)."""
+    all_models = list_model_indices(sort_by="cost")
+
+    result = []
+    for m in all_models:
+        # Check capability
+        if capability == "reasoning" and not m.get("reasoning"):
+            continue
+        if capability == "vision" and not m.get("vision"):
+            continue
+        # Check benchmark scores
+        if capability == "swebench":
+            if not m.get("swebench") or cast("float", m.get("swebench")) < 0.4:
+                continue
+        if capability == "termbench":
+            if not m.get("termbench") or cast("float", m.get("termbench")) < 0.45:
+                continue
+
+        # Check filters
+        if min_context and (m.get("context_limit") or 0) < min_context:
+            continue
+        if max_cost_per_1m and (m.get("total_cost_per_1m") or float("inf")) > max_cost_per_1m:
+            continue
+        if min_tps and (m.get("tps") or 0) < min_tps:
+            continue
+
+        result.append(m)
+
+    return result
+
+
+# ============ MODALITIES & CUSTOM BENCHMARKS ============
+
+
+def get_model_modalities(provider: str | None = None, model: str | None = None) -> dict[str, Any]:
+    """Get model modalities/feature flags.
+
+    Args:
+        provider: Optional provider filter
+        model: Optional model filter
+
+    Returns:
+        Dict of models with their modalities
+    """
+    indices = _load_json(_MODEL_INDICES_PATH)
+
+    result = {}
+    providers = indices.get("providers", {})
+
+    for prov_name, prov_data in providers.items():
+        if provider and prov_name.lower() != provider.lower():
+            continue
+
+        models = prov_data.get("models", {})
+        for model_name, model_data in models.items():
+            if model and model_name.lower() != model.lower():
+                continue
+
+            modalities = model_data.get("modalities", {})
+            if modalities:
+                result[f"{prov_name}/{model_name}"] = {
+                    "provider": prov_name,
+                    "model": model_name,
+                    "modalities": modalities,
+                }
+
+    return result
+
+
+def calculate_composite_score(
+    benchmarks: dict[str, float],
+    weights: dict[str, float] | None = None,
+) -> float | None:
+    """Calculate composite performance score from benchmarks.
+
+    Uses available benchmarks only - missing benchmarks don't penalize.
+    Results are normalized to 0-100 scale.
+
+    Args:
+        benchmarks: Dict of benchmark_name -> score (0-1)
+        weights: Optional custom weights for benchmarks
+
+    Returns:
+        Composite score 0-100, or None if no benchmarks available
+    """
+    if not benchmarks:
+        return None
+
+    # Default weights for standard benchmarks
+    default_weights = {
+        "swebench": 0.25,
+        "termbench": 0.25,
+        "humaneval": 0.20,
+        "mmlu": 0.15,
+        "reasoning": 0.15,
+    }
+
+    if weights is None:
+        weights = default_weights
+
+    total_weight = 0.0
+    weighted_sum = 0.0
+
+    for benchmark, score in benchmarks.items():
+        if score is None:
+            continue
+
+        weight = weights.get(benchmark, 0.1)  # Default 0.1 for custom benchmarks
+        weighted_sum += score * weight
+        total_weight += weight
+
+    if total_weight == 0:
+        return None
+
+    # Normalize to 0-100 scale
+    return (weighted_sum / total_weight) * 100
+
+
+def list_models_with_scores(
+    provider: str | None = None,
+    min_score: float | None = None,
+    modality: str | None = None,
+    sort_by: str = "composite_score",
+) -> list[dict[str, Any]]:
+    """List models with composite performance scores.
+
+    Args:
+        provider: Optional provider filter
+        min_score: Minimum composite score filter
+        modality: Only include models with this modality enabled
+        sort_by: Sort by 'composite_score', 'cost', 'context', 'tps'
+
+    Returns:
+        List of models with computed composite scores
+    """
+    indices = _load_json(_MODEL_INDICES_PATH)
+    weights = indices.get("benchmark_weights", {})
+
+    result = []
+    providers_map = indices.get("providers", {})
+
+    for prov_name, prov_data in providers_map.items():
+        if provider and prov_name.lower() != provider.lower():
+            continue
+
+        models = prov_data.get("models", {})
+        for model_name, model_data in models.items():
+            # Check modality filter
+            if modality:
+                modalities = model_data.get("modalities", {})
+                if not modalities.get(modality, False):
+                    continue
+
+            # Get benchmarks
+            benchmarks = model_data.get("benchmarks", {})
+            composite_score = calculate_composite_score(benchmarks, weights)
+
+            # Get cost efficiency (score per dollar)
+            cost_input = model_data.get("cost_per_1m_input", 0) or 0
+            cost_output = model_data.get("cost_per_1m_output", 0) or 0
+            total_cost = cost_input + cost_output
+
+            result.append(
+                {
+                    "provider": prov_name,
+                    "model": model_name,
+                    "display_name": prov_data.get("display_name", prov_name),
+                    "context_limit": model_data.get("context_limit"),
+                    "cost_per_1m": total_cost,
+                    "tps": model_data.get("tps"),
+                    "composite_score": composite_score,
+                    "benchmarks": benchmarks,
+                    "modalities": model_data.get("modalities", {}),
+                    "notes": model_data.get("notes"),
+                }
+            )
+
+    sort_model_rows(result, sort_by)
+
+    # Filter by minimum score
+    if min_score is not None:
+        result = [m for m in result if (m.get("composite_score") or 0) >= min_score]
+
+    return result
+
+
+def add_custom_benchmark(
+    provider: str,
+    model: str,
+    benchmark_name: str,
+    score: float,
+    category: str = "custom",
+    description: str = "",
+) -> tuple[bool, str]:
+    """Add a custom benchmark entry for a model.
+
+    Args:
+        provider: Provider name
+        model: Model name
+        benchmark_name: Name of the benchmark
+        score: Score (0-1)
+        category: Category (coding, reasoning, general, etc.)
+        description: Optional description
+
+    Returns:
+        (success, message)
+    """
+    indices = _load_json(_MODEL_INDICES_PATH)
+
+    prov_name = provider.lower()
+    model_name = model.lower()
+
+    # Ensure structure exists
+    if "providers" not in indices:
+        return False, "No providers in indices"
+    if prov_name not in indices["providers"]:
+        return False, f"Provider '{provider}' not found"
+
+    models = indices["providers"][prov_name].get("models", {})
+    if model_name not in models:
+        return False, f"Model '{model}' not found"
+
+    # Add custom benchmark
+    if "benchmarks" not in models[model_name]:
+        models[model_name]["benchmarks"] = {}
+
+    models[model_name]["benchmarks"][benchmark_name] = score
+
+    # Store custom benchmark metadata
+    if "custom_benchmarks" not in indices:
+        indices["custom_benchmarks"] = {}
+    indices["custom_benchmarks"][benchmark_name] = {
+        "category": category,
+        "description": description,
+        "added_by": "user",
+    }
+
+    _save_json(_MODEL_INDICES_PATH, indices)
+    return True, f"Added benchmark '{benchmark_name}'={score} for {provider}/{model}"
+
+
+def fuzzy_search_models(
+    query: str,
+    fields: list[str] | None = None,
+    provider: str | None = None,
+    limit: int = 20,
+) -> list[dict[str, Any]]:
+    """Fuzzy search models by query string.
+
+    Simple fuzzy matching - matches query as substring in any field.
+
+    Args:
+        query: Search query
+        fields: Fields to search (default: provider, model, notes)
+        provider: Optional provider filter
+        limit: Maximum results
+
+    Returns:
+        List of matching models
+    """
+    if fields is None:
+        fields = ["provider", "model", "notes"]
+
+    all_models = list_model_indices(provider=provider, include_all=True)
+    query_lower = query.lower()
+
+    result = []
+    for m in all_models:
+        score = 0
+
+        # Calculate fuzzy match score
+        for field in fields:
+            value = str(m.get(field, "")).lower()
+            if value == query_lower:
+                score += 10  # Exact match
+            elif query_lower in value:
+                score += 5  # Substring match
+            elif any(q in value for q in query_lower.split()):
+                score += 2  # Word match
+
+        if score > 0:
+            m["_fuzzy_score"] = score
+            result.append(m)
+
+    # Sort by fuzzy score
+    result.sort(key=lambda x: x.get("_fuzzy_score", 0), reverse=True)
+
+    return result[:limit]
+
+
+def add_model_modality(
+    provider: str,
+    model: str,
+    modality: str,
+    value: bool | str = True,
+) -> tuple[bool, str]:
+    """Add or update a modality/feature flag for a model.
+
+    Args:
+        provider: Provider name
+        model: Model name
+        modality: Modality/feature name
+        value: Value (true/false or custom string)
+
+    Returns:
+        (success, message)
+    """
+    indices = _load_json(_MODEL_INDICES_PATH)
+
+    prov_name = provider.lower()
+    model_name = model.lower()
+
+    if "providers" not in indices:
+        return False, "No providers in indices"
+    if prov_name not in indices["providers"]:
+        return False, f"Provider '{provider}' not found"
+
+    models = indices["providers"][prov_name].get("models", {})
+    if model_name not in models:
+        return False, f"Model '{model}' not found"
+
+    if "modalities" not in models[model_name]:
+        models[model_name]["modalities"] = {}
+
+    models[model_name]["modalities"][modality] = value
+    _save_json(_MODEL_INDICES_PATH, indices)
+
+    return True, f"Set {modality}={value} for {provider}/{model}"
+
+
+def list_available_modalities() -> dict[str, Any]:
+    """List all available modality definitions."""
+    indices = _load_json(_MODEL_INDICES_PATH)
+    return indices.get("modalities_schema", {})
+
+
+def search_by_modalities(
+    required_modalities: list[str],
+    excluded_modalities: list[str] | None = None,
+    provider: str | None = None,
+    sort_by: str = "composite_score",
+) -> list[dict[str, Any]]:
+    """Search models by modality requirements.
+
+    Args:
+        required_modalities: List of modalities that must be enabled
+        excluded_modalities: List of modalities that must NOT be enabled
+        provider: Optional provider filter
+        sort_by: Sort field
+
+    Returns:
+        Matching models
+    """
+    all_models = list_models_with_scores(provider=provider, sort_by=sort_by)
+
+    result = []
+    for m in all_models:
+        modalities = m.get("modalities", {})
+
+        # Check required
+        if not all(modalities.get(mod, False) for mod in required_modalities):
+            continue
+
+        # Check excluded
+        if excluded_modalities:
+            if any(modalities.get(mod, False) for mod in excluded_modalities):
+                continue
+
+        result.append(m)
+
+    return result

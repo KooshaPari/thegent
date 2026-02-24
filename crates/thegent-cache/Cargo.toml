@@ -18,22 +18,10 @@ parking_lot = "0.12.3"
 moka = { version = "0.12.10", optional = true, features = ["sync", "future"] }
 scc = { version = "2.3.6", optional = true }
 <<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 pyo3 = { version = "0.24", optional = true }
 =======
 pyo3 = { version = "0.24.1", optional = true }
 >>>>>>> origin/main
-=======
-pyo3 = { version = "0.24.1", optional = true }
->>>>>>> origin/fix/cli-test-failures
-=======
-pyo3 = { version = "0.24.1", optional = true }
->>>>>>> origin/fix/command-test-fixes
-=======
-pyo3 = { version = "0.24.1", optional = true }
->>>>>>> origin/refactor/provider-manager-modularization
 
 [features]
 default = []
