@@ -12,6 +12,7 @@ from typing import Any
 
 from thegent.cli.commands import cli as _cli_surface
 from thegent.cli.commands import _cli_shared as _shared
+from thegent.cli.commands import governance_data_protection_cmds
 
 # Backward compatibility - expose commonly used modules for test mocking
 Columns = getattr(_cli_surface, "Columns", None)
@@ -47,6 +48,11 @@ def __getattr__(name: str) -> Any:
     
     if hasattr(_cli_surface, name):
         return getattr(_cli_surface, name)
+    
+    # Check governance_data_protection_cmds
+    if hasattr(governance_data_protection_cmds, name):
+        return getattr(governance_data_protection_cmds, name)
+    
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
