@@ -43,7 +43,7 @@ fn main() {
 fn compute_args_key(args: &[String]) -> u64 {
     let mut hasher_state = 0u64;
     for arg in args {
-        hasher_state = xxh3_64(arg.as_bytes(), hasher_state);
+        hasher_state = xxh3_64(arg.as_bytes()).wrapping_add(hasher_state);
     }
     hasher_state
 }
@@ -54,7 +54,7 @@ fn compute_env_key(args: &[String]) -> u64 {
 
     // Hash arguments first
     for arg in args {
-        hasher_state = xxh3_64(arg.as_bytes(), hasher_state);
+        hasher_state = xxh3_64(arg.as_bytes()).wrapping_add(hasher_state);
     }
 
     // Include relevant environment variables that affect command output
@@ -79,8 +79,8 @@ fn compute_env_key(args: &[String]) -> u64 {
     env_pairs.sort_by_key(|(k, _)| *k);
 
     for (key, value) in env_pairs {
-        hasher_state = xxh3_64(key.as_bytes(), hasher_state);
-        hasher_state = xxh3_64(value.as_bytes(), hasher_state);
+        hasher_state = xxh3_64(key.as_bytes()).wrapping_add(hasher_state);
+        hasher_state = xxh3_64(value.as_bytes()).wrapping_add(hasher_state);
     }
 
     hasher_state
@@ -92,13 +92,13 @@ fn compute_content_key(args: &[String]) -> u64 {
 
     for arg in args {
         // Hash the argument string
-        hasher_state = xxh3_64(arg.as_bytes(), hasher_state);
+        hasher_state = xxh3_64(arg.as_bytes()).wrapping_add(hasher_state);
 
         // If argument is a file path, hash its contents
         let path = Path::new(arg);
         if path.exists() && path.is_file() {
             if let Ok(content) = fs::read(path) {
-                hasher_state = xxh3_64(&content, hasher_state);
+                hasher_state = xxh3_64(&content).wrapping_add(hasher_state);
             }
         }
     }

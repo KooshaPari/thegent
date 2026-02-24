@@ -11,9 +11,11 @@ across process restarts.
 
 import orjson as json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class IdempotencyRecord:
+class IdempotencyRecord(SerializableMixin):
     """Record of an applied operation."""
 
     operation_id: str
@@ -52,10 +54,6 @@ class IdempotencyRecord:
             timestamp=data["timestamp"],
             content_hash=data["content_hash"],
         )
-
-    def to_dict(self) -> dict:
-        """Serialize to a dictionary."""
-        return asdict(self)
 
 
 # ---------------------------------------------------------------------------
@@ -114,7 +112,7 @@ class IdempotencyCache:
                 "records": [record.to_dict() for record in self._records.values()],
             }
             self.cache_path.write_text(
-                json.dumps(data, indent=2, sort_keys=True).decode().decode(),
+                json.dumps(data, indent=2, sort_keys=True).decode(),
                 encoding="utf-8",
             )
         except Exception as e:

@@ -51,4 +51,4 @@ class SIEMEgress:
 
     def format_for_syslog(self, event: EgressEvent) -> str:
         """Format the event for traditional RFC 5424 syslog."""
-        return f"<{event.severity}> {event.timestamp} {event.source} {event.event_type}: {json.dumps(event.payload).decode().decode()}"
+        return f"<{event.severity}> {event.timestamp} {event.source} {event.event_type}: {json.dumps(event.payload).decode()}"

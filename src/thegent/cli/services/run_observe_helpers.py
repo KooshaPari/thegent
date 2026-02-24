@@ -19,7 +19,7 @@ def hash_observe_summary_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode())
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode("utf-8")).hexdigest()}
 
 
@@ -44,7 +44,7 @@ def build_observe_summary_trend_scope(
 
 
 def hash_observe_summary_trend_scope(scope_key: dict[str, Any]) -> str:
-    scope_key_json = json.dumps(scope_key, sort_keys=True, separators=(",", ":").decode().decode())
+    scope_key_json = json.dumps(scope_key, sort_keys=True, separators=(",", ":").decode())
     return hashlib.sha256(scope_key_json.encode("utf-8")).hexdigest()
 
 
@@ -184,7 +184,7 @@ def classify_observe_summary_trend_health(
         ),
     }
     policy_signature = hashlib.sha256(
-        json.dumps(policy, sort_keys=True, separators=(",", ":").decode().decode()).encode("utf-8")
+        json.dumps(policy, sort_keys=True, separators=(",", ":").decode()).encode("utf-8")
     ).hexdigest()
 
     if not enabled:
@@ -398,7 +398,7 @@ def append_observe_summary_snapshot(
     path = health_snapshot_log_path()
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, sort_keys=True).decode().decode())
+            fh.write(json.dumps(record, option=json.OPT_SORT_KEYS).decode())
             fh.write("\n")
     except OSError:
         return
@@ -410,7 +410,7 @@ def hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode())
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode()).hexdigest()}
 
 
@@ -515,7 +515,7 @@ def append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) -
     }
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, sort_keys=True).decode().decode())
+            fh.write(json.dumps(rec, option=json.OPT_SORT_KEYS).decode())
             fh.write("\n")
     except OSError:
         return

@@ -1,3 +1,4 @@
+<DONE>
 # ACP Adapter Parity Test Implementation (2026-02-23)
 
 ## Summary

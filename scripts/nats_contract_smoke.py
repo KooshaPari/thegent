@@ -57,6 +57,7 @@ def main() -> int:
     result = asyncio.run(_check_nats())
 
     print(json.dumps(result).decode().decode())
+    print(json.dumps(result))
 
     if not result.get("ok"):
         raise RuntimeError(f"NATS health check failed: {result.get('error')}")

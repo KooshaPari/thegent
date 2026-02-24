@@ -197,7 +197,7 @@ class ComplianceAuditTrail:
 
     def _compute_hash(self, entry: dict[str, Any]) -> str:
         """Compute cryptographic hash for an entry."""
-        content = json.dumps(entry, sort_keys=True).decode().decode().encode()
+        content = json.dumps(entry, sort_keys=True).decode().encode()
         return hashlib.sha256(content).hexdigest()
 
     def _get_last_hash(self) -> str | None:
@@ -228,7 +228,7 @@ class ComplianceAuditTrail:
     def _store_entry(self, entry: dict[str, Any]):
         """Append entry to the ledger."""
         with open(self.ledger_file, "a") as f:
-            f.write(json.dumps(entry).decode().decode() + "\n")
+            f.write(json.dumps(entry).decode() + "\n")
 
 
 class ComplianceExporter:
@@ -259,7 +259,7 @@ class ComplianceExporter:
         elif framework == "GDPR":
             evidence["pii_redaction"] = "verified"
 
-        target_path.write_text(json.dumps(evidence, indent=2).decode().decode())
+        target_path.write_text(json.dumps(evidence, indent=2))
         return evidence
 
     def _get_mapped_controls(self, framework: str) -> list[str]:
@@ -327,7 +327,7 @@ class ComplianceEvidence(_BaseModel):
     @staticmethod
     def compute_hash(entry: dict, prev_hash: str) -> str:
         """Compute SHA-256 hash over canonical JSON + prev_hash."""
-        canon = json.dumps(entry, sort_keys=True, ensure_ascii=True).decode().decode()
+        canon = json.dumps(entry, sort_keys=True, ensure_ascii=True).decode()
         payload_str = f"{canon}:{prev_hash}"
         return hashlib.sha256(payload_str.encode()).hexdigest()
 
@@ -614,7 +614,7 @@ class RetentionEnforcer:
     def _append_jsonl(self, path: Path, record: dict) -> None:
         self.base_dir.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(record).decode().decode() + "\n")
+            f.write(json.dumps(record).decode() + "\n")
 
     def _read_jsonl(self, path: Path) -> list:
         if not path.exists():
@@ -682,7 +682,7 @@ class AuditExporter:
         if output_path is not None:
             out = Path(output_path)
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(export, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+            out.write_text(json.dumps(export, indent=2, sort_keys=True).decode() + "\n", encoding="utf-8")
             _wl051_log.info("Audit export written to %s (%d records)", out, len(records))
 
         return export
@@ -706,7 +706,7 @@ class AuditExporter:
         """Export a deterministic checkpoint summary with evidence digest."""
         records = self._store.list_all()
         payload = [r.model_dump(mode="json") for r in records]
-        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).decode().decode().encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).decode().encode("utf-8")).hexdigest()
         checkpoint = {
             "checkpoint_id": checkpoint_id,
             "generated_at_utc": datetime.now(UTC).isoformat(),
@@ -714,5 +714,5 @@ class AuditExporter:
             "evidence_digest_sha256": digest,
         }
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(checkpoint, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+        output_path.write_text(json.dumps(checkpoint, indent=2, sort_keys=True).decode() + "\n", encoding="utf-8")
         return checkpoint

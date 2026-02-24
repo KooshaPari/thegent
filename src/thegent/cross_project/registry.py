@@ -109,4 +109,4 @@ class CrossProjectRegistry:
 
     def _save_registry(self) -> None:
         """Save registry to file."""
-        self.registry_path.write_text(json.dumps(self.registry, indent=2).decode().decode())
+        self.registry_path.write_text(json.dumps(self.registry, indent=2))

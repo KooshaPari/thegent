@@ -1,3 +1,4 @@
+<DONE>
 # Multi-Platform Agent Deep Dive
 
 **Purpose:** Extreme-depth reference for Claude Code, Codex, Cursor-agent, Factory droid, and Augment Code. Schemas, configs, transcript formats, hook payloads, and integration points.

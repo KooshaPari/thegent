@@ -1,3 +1,4 @@
+<DONE>
 # TUI Compositor Comparison Research
 
 **Research Date:** 2026-02-17

@@ -12,28 +12,34 @@ from __future__ import annotations
 
 # Re-export all main implementation functions
 from thegent.cli.commands.observability_main_impl import (
-    _REVIEW_ALLOWED_TOOLS as _REVIEW_ALLOWED_TOOLS,
-    _REVIEW_SCHEMA_PREAMBLE as _REVIEW_SCHEMA_PREAMBLE,
-    _append_observe_summary_snapshot,
+    observe_summary_impl,
+)
+
+# Re-export escalation and governance functions
+from thegent.cli.commands.observability_escalation_impl import (
     _extract_agent_from_line,
-    _extract_review_json_payload,
     _process_run_line,
     escalate_add_impl,
     escalate_approve_impl,
     escalate_list_impl,
     escalate_resolve_impl,
-    get_compliance_report_impl,
-    get_data_protection_status_impl,
+    update_calibration_impl,
+    sweep_impl,
+)
+
+from thegent.cli.commands.observability_governance_impl import (
+    _REVIEW_ALLOWED_TOOLS,
+    _REVIEW_SCHEMA_PREAMBLE,
+    _extract_review_json_payload,
     get_server_meta_impl,
     govern_approve_impl,
-    govern_list_pending_impl,
     govern_reject_impl,
+    govern_list_pending_impl,
     govern_vet_impl,
-    observe_summary_impl,
     review_impl,
+    get_data_protection_status_impl,
     sitback_dashboard_impl,
-    sweep_impl,
-    update_calibration_impl,
+    get_compliance_report_impl,
 )
 
 # Re-export all health-related helpers
@@ -76,7 +82,6 @@ __all__ = [
     "_REVIEW_ALLOWED_TOOLS",
     "_REVIEW_SCHEMA_PREAMBLE",
     "_append_health_snapshot",
-    "_append_observe_summary_snapshot",
     "_build_observe_summary_trend_scope",
     "_classify_observe_summary_trend_health",
     "_coerce_issue_types",

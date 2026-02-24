@@ -43,7 +43,11 @@ enum Command {
 }
 
 fn exit_code(err: &str) -> ! {
-    let code = if err.contains("not a git repository") { 2 } else { 1 };
+    let code = if err.contains("not a git repository") {
+        2
+    } else {
+        1
+    };
     eprintln!("error: {err}");
     process::exit(code);
 }

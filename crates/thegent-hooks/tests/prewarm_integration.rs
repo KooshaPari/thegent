@@ -28,7 +28,11 @@ mod prewarm_integration_tests {
         fs::write(project.join("src/utils.rs"), "pub fn util() {}").ok();
 
         // Create config files
-        fs::write(project.join("pyproject.toml"), "[tool.python]\nversion = \"3.11\"\n").ok();
+        fs::write(
+            project.join("pyproject.toml"),
+            "[tool.python]\nversion = \"3.11\"\n",
+        )
+        .ok();
         fs::write(project.join(".shellcheckrc"), "disable=SC2086\n").ok();
 
         tmp
@@ -237,7 +241,11 @@ mod prewarm_integration_tests {
 
         // Create nested structure
         fs::create_dir_all(project.join("src/deep/nested")).ok();
-        fs::write(project.join("src/deep/nested/module.py"), "def module(): pass").ok();
+        fs::write(
+            project.join("src/deep/nested/module.py"),
+            "def module(): pass",
+        )
+        .ok();
 
         assert!(project.join("src/deep/nested/module.py").exists());
     }

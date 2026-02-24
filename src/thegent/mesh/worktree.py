@@ -8,6 +8,7 @@ import orjson as json
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 
@@ -50,7 +51,7 @@ class WorktreeManager:
             self.remove_worktree(agent_id)
 
         try:
-            subprocess.run(
+            shim_run(
                 ["git", "worktree", "add", str(worktree_path), branch],
                 cwd=self.project_root,
                 check=True,
@@ -81,7 +82,7 @@ class WorktreeManager:
     def _save_registry(self, registry: dict[str, dict[str, str]]) -> None:
         """Persist the branch registry to disk."""
         self._registry_path.parent.mkdir(parents=True, exist_ok=True)
-        self._registry_path.write_text(json.dumps(registry, indent=2).decode().decode(), encoding="utf-8")
+        self._registry_path.write_text(json.dumps(registry, indent=2), encoding="utf-8")
 
     def _register_branch(self, agent_id: str, branch: str) -> None:
         """Register a branch as owned by *agent_id*."""
@@ -122,7 +123,7 @@ class WorktreeManager:
             return True
 
         try:
-            subprocess.run(
+            shim_run(
                 ["git", "worktree", "remove", "--force", str(worktree_path)],
                 cwd=self.project_root,
                 check=True,

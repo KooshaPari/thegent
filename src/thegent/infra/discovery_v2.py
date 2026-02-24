@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar
 
 import psutil
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 logger = logging.getLogger(__name__)
 

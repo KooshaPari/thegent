@@ -18,7 +18,7 @@ from typing import Any
 
 import typer
 
-from thegent.cli.commands.session_ops_list_impl import ps_impl as ps_impl
+from thegent.cli.commands.session_ops_list_impl import ps_impl
 
 _log = logging.getLogger(__name__)
 

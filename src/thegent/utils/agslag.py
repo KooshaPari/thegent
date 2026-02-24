@@ -1,6 +1,6 @@
 import logging
 import os
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,7 @@ def search_local_agslag(workspace_root: Path) -> list[dict[str, str]]:
     try:
         # Search for 'agslag' in file contents
         cmd = ["rg", "-i", "agslag", str(workspace_root), "--files-with-matches", "--max-depth", "5"]
-        process = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        process = shim_run(cmd, capture_output=True, text=True, check=False)
         if process.returncode == 0:
             for line in process.stdout.splitlines():
                 results.append(
@@ -30,7 +30,7 @@ def search_local_agslag(workspace_root: Path) -> list[dict[str, str]]:
 
         # Search for 'agslag' in filenames
         cmd = ["find", str(workspace_root), "-maxdepth", "5", "-iname", "*agslag*"]
-        process = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        process = shim_run(cmd, capture_output=True, text=True, check=False)
         if process.returncode == 0:
             for line in process.stdout.splitlines():
                 if line not in [r["url"] for r in results]:

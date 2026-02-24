@@ -305,7 +305,7 @@ def register_execution_tools(
             tid = _gtr().create(task)
             payload = {"task_id": tid, "status": "running"}
             return ToolResult(
-                content=json.dumps(payload).decode().decode(),
+                content=json.dumps(payload).decode(),
                 structured_content=payload,
                 meta={"execution_time_ms": 0},
             )
@@ -332,12 +332,12 @@ def register_execution_tools(
             if not full:
                 payload["extraction_schema_version"] = output_parser_schema_version
             return ToolResult(
-                content=json.dumps(payload).decode().decode(),
+                content=json.dumps(payload).decode(),
                 structured_content=payload,
                 meta={"execution_time_ms": elapsed_ms},
             )
         return ToolResult(
-            content=json.dumps(result).decode().decode(),
+            content=json.dumps(result).decode(),
             meta={"execution_time_ms": elapsed_ms},
         )
 
@@ -382,7 +382,7 @@ def register_execution_tools(
         result = await task
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         return ToolResult(
-            content=json.dumps(result).decode().decode(),
+            content=json.dumps(result).decode(),
             meta={"execution_time_ms": elapsed_ms},
         )
 
@@ -399,7 +399,7 @@ def register_execution_tools(
             session_root=settings.session_dir,
             session_id=session_id,
             filename="takeover.json",
-            content=json.dumps({"prompt": prompt}).decode().decode(),
+            content=json.dumps({"prompt": prompt}).decode(),
         )
         return f"Takeover input injected for session {session_id}"
 
@@ -612,11 +612,11 @@ def register_execution_tools(
                 "route_contract": route_contract,
             }
             return ToolResult(
-                content=json.dumps(payload).decode().decode(),
+                content=json.dumps(payload).decode(),
                 structured_content=payload,
                 meta={"execution_time_ms": elapsed_ms},
             )
-        return ToolResult(content=json.dumps(result).decode().decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+        return ToolResult(content=json.dumps(result).decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
 
     @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
     async def thegent_free(
@@ -648,7 +648,7 @@ def register_execution_tools(
             if "error" in res:
                 return error_result(res["error"], res.get("remediation", ""), extra=res)
             return ToolResult(
-                content=json.dumps(res).decode().decode(),
+                content=json.dumps(res).decode(),
                 structured_content=res,
                 meta={"session_id": res.get("session_id")},
             )
@@ -665,7 +665,7 @@ def register_execution_tools(
         if "error" in res:
             return error_result(res["error"], res.get("remediation", ""), extra=res)
         return ToolResult(
-            content=json.dumps(res).decode().decode(),
+            content=json.dumps(res).decode(),
             structured_content=res,
             meta={"exit_code": res.get("exit_code")},
         )
@@ -692,7 +692,7 @@ def register_execution_tools(
         }
         if not result.success:
             return ToolResult(
-                content=json.dumps({"error": "flash agent timed out", **payload}).decode().decode(),
+                content=json.dumps({"error": "flash agent timed out", **payload}).decode(),
                 structured_content={"error": "flash agent timed out", **payload},
                 meta={"execution_time_ms": elapsed_ms, "agent_id": result.agent_id},
             )

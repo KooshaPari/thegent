@@ -14,6 +14,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from thegent.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -355,7 +356,7 @@ _CATEGORY_LABELS: dict[str, str] = {
 
 
 @dataclass
-class ToolManifest:
+class ToolManifest(SerializableMixin):
     """Manifest entry for a single borrowable thegent MCP tool."""
 
     name: str
@@ -365,18 +366,6 @@ class ToolManifest:
     requires: list[str]
     category: str = "general"
     read_only: bool = True
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to plain dict for JSON output."""
-        return {
-            "name": self.name,
-            "description": self.description,
-            "module": self.module,
-            "function": self.function,
-            "requires": self.requires,
-            "category": self.category,
-            "read_only": self.read_only,
-        }
 
 
 @dataclass
@@ -514,7 +503,7 @@ class ToolBorrower:
         existing.setdefault("mcpServers", {})
         existing["mcpServers"].update(server_config)
 
-        target.write_text(json.dumps(existing, indent=2, sort_keys=True).decode().decode(), encoding="utf-8")
+        target.write_text(json.dumps(existing, indent=2, sort_keys=True).decode(), encoding="utf-8")
         _log.info("Wrote mcp.json to %s", target)
         return target
 

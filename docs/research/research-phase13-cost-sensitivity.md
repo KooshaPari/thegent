@@ -1,3 +1,4 @@
+<DONE>
 # Research — Cost Sensitivity (Phase 13)
 
 **WORK_STREAM ID:** `research-phase13-cost-sensitivity`

@@ -83,4 +83,4 @@ class ConfigManager:
 
     def _save_config(self) -> None:
         """Save config to file."""
-        self.config_path.write_text(json.dumps(self.config, indent=2).decode().decode())
+        self.config_path.write_text(json.dumps(self.config, indent=2))

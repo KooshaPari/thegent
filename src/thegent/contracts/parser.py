@@ -118,11 +118,14 @@ class IncrementalXMLParser:
 
         pattern = re.compile(r"<([A-Za-z0-9_\-]+)>(.*?)</\1>", re.DOTALL)
         tags: dict[str, str] = {}
+        # Normalize allowed_tags for case-insensitive matching
+        allowed_tags_lower = [t.lower() for t in self.allowed_tags] if self.allowed_tags else None
         for m in pattern.finditer(self._buffer):
             key = m.group(1)
             val = m.group(2).strip()
             # OPT-007: Early-exit if we detect invalid tag name (structural failure)
-            if self.allowed_tags and key not in self.allowed_tags:
+            # Case-insensitive matching for allowed_tags
+            if allowed_tags_lower and key.lower() not in allowed_tags_lower:
                 if self.strict:
                     # In strict mode, disallowed tag = structural failure, exit early
                     return {}
@@ -130,22 +133,66 @@ class IncrementalXMLParser:
                 continue
             tags[key] = val
         self._committed_tags = tags.copy()
+        # Normalize keys to uppercase if allowed_tags are uppercase
+        if self.allowed_tags:
+            tags = {k.upper(): v for k, v in tags.items()}
         return tags
 
-    def get_partial_state(self, text: str) -> dict[str, bool]:
-        """Return simple partial parse signals: whether an open tag is present or an incomplete tag."""
+    def get_partial_state(self, text: str) -> dict[str, any]:
+        """Return partial parse state with tag name, content, and truncation status."""
         buf = text or ""
-        open_tag = False
-        incomplete_tag = False
-        # If last '<' occurs after last '>' we assume an open/incomplete tag
+
+        # Find last '<' and '>'
         last_lt = buf.rfind("<")
         last_gt = buf.rfind(">")
-        if last_lt != -1 and last_lt > last_gt:
-            open_tag = True
-            # If there is no closing '>' at all, treat as incomplete
-            if ">" not in buf:
-                incomplete_tag = True
-        return {"open_tag": open_tag, "incomplete_tag": incomplete_tag}
+
+        open_tag: str | None = None
+        partial_content = ""
+        is_truncated = False
+        incomplete_tag: str | None = None
+
+        if last_lt != -1:
+            # Check if there's an unclosed tag:
+            # 1. Last < is after last >, OR
+            # 2. No > at all, OR
+            # 3. There's content after the last > (potential incomplete/streaming state)
+            has_content_after_last_gt = last_gt != -1 and last_gt < len(buf) - 1
+
+            if last_lt > last_gt or last_gt == -1 or has_content_after_last_gt:
+                is_truncated = True
+                # Extract tag name after the last <
+                tag_start = last_lt + 1
+                if tag_start < len(buf):
+                    tag_content = buf[tag_start:]
+                    # Find the end of the tag name (space or >)
+                    tag_end = tag_content.find(" ")
+                    if tag_end == -1:
+                        tag_end = tag_content.find(">")
+                    if tag_end == -1:
+                        # No > or space, this is an incomplete tag
+                        incomplete_tag = tag_content.strip()
+                        open_tag = None
+                    else:
+                        tag_name = tag_content[:tag_end].strip()
+                        # Check if it's a closing tag (starts with /)
+                        if tag_name.startswith("/"):
+                            # Closing tag
+                            open_tag = None
+                        elif tag_name.startswith("?"):
+                            # XML declaration or processing instruction
+                            open_tag = None
+                        else:
+                            open_tag = tag_name
+                            # Get content after the LAST closing >, not after the tag name
+                            if last_gt != -1 and last_gt + 1 < len(buf):
+                                partial_content = buf[last_gt + 1:]
+
+        return {
+            "open_tag": open_tag,
+            "partial_content": partial_content,
+            "is_truncated": is_truncated,
+            "incomplete_tag": incomplete_tag
+        }
 
     def _extract_committed(self) -> dict[str, str]:
         return self._committed_tags.copy()
@@ -196,7 +243,7 @@ class StreamingXMLParser(IncrementalXMLParser):
         import hashlib
         import json
 
-        state_data = json.dumps(self._committed_tags, sort_keys=True).decode().decode()
+        state_data = json.dumps(self._committed_tags, sort_keys=True).decode()
         checkpoint_id = hashlib.sha256(state_data.encode()).hexdigest()[:12]
         self._checkpoints.append(self._committed_tags.copy())
         return checkpoint_id

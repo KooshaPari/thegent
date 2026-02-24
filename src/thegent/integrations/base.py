@@ -4,19 +4,19 @@ Provides standard patterns for:
 - Configuration loading
 - Status tracking
 - Enable/disable toggles
+- Feature flags
 """
 
 from __future__ import annotations
 
+from thegent.utils.json_utils import json_loads, json_dumps
 import logging
 import os
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Generic, TypeVar
-
-from pydantic import BaseModel
+from typing import Any, TypeVar
 
 _log = logging.getLogger(__name__)
 
@@ -44,6 +44,211 @@ class IntegrationInfo:
     error: str | None = None
 
 
+# ---------------------------------------------------------------------------
+# Feature Flag System
+# ---------------------------------------------------------------------------
+
+class FeatureFlag:
+    """Simple feature flag with environment variable support.
+    
+    Usage:
+        FLAG = FeatureFlag("MY_FEATURE", default=False)
+        
+        if FLAG.enabled:
+            ...
+    """
+    
+    def __init__(self, name: str, default: bool = False, env_prefix: str = "THEGENT_"):
+        self.name = name
+        self._default = default
+        self._env_key = f"{env_prefix}ENABLE_{name}"
+    
+    @property
+    def enabled(self) -> bool:
+        """Check if feature is enabled via environment variable."""
+        val = os.environ.get(self._env_key, "")
+        if val:
+            return val.lower() in ("1", "true", "yes", "on")
+        return self._default
+    
+    def __bool__(self) -> bool:
+        return self.enabled
+
+
+class FeatureRegistry:
+    """Registry for all feature flags."""
+    
+    _flags: dict[str, FeatureFlag] = {}
+    
+    @classmethod
+    def register(cls, flag: FeatureFlag) -> None:
+        cls._flags[flag.name] = flag
+    
+    @classmethod
+    def get(cls, name: str) -> FeatureFlag | None:
+        return cls._flags.get(name)
+    
+    @classmethod
+    def all_enabled(cls) -> dict[str, bool]:
+        return {name: flag.enabled for name, flag in cls._flags.items()}
+
+
+def feature(name: str, default: bool = False) -> FeatureFlag:
+    """Create and register a feature flag."""
+    flag = FeatureFlag(name, default)
+    FeatureRegistry.register(flag)
+    return flag
+
+
+# ---------------------------------------------------------------------------
+# Serializable Mixin
+# ---------------------------------------------------------------------------
+
+class SerializableMixin:
+    """Mixin providing to_dict/from_dict for dataclasses.
+    
+    Automatically handles:
+    - Enum values → serialized as .value
+    - datetime objects → serialized as .isoformat()
+    - Path objects → serialized as str()
+    - Nested SerializableMixin objects → .to_dict()
+    - Nested dicts/lists → recursive serialization
+    
+    Usage:
+        @dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+        
+        m = MyModel(name="test", value=42)
+        d = m.to_dict()  # {"name": "test", "value": 42}
+        m2 = MyModel.from_dict(d)  # MyModel(name="test", value=42)
+    """
+    
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary with automatic type serialization."""
+        from enum import Enum
+        from datetime import datetime
+        from pathlib import Path
+        
+        def _serialize(val: Any) -> Any:
+            if val is None:
+                return None
+            if isinstance(val, Enum):
+                return val.value
+            if isinstance(val, datetime):
+                return val.isoformat()
+            if isinstance(val, Path):
+                return str(val)
+            if isinstance(val, SerializableMixin):
+                return val.to_dict()
+            if isinstance(val, dict):
+                return {k: _serialize(v) for k, v in val.items()}
+            if isinstance(val, (list, tuple)):
+                return [_serialize(v) for v in val]
+            return val
+        
+        if hasattr(self, '__dataclass_fields__'):
+            result = {}
+            for f in fields(self):
+                val = getattr(self, f.name, None)
+                result[f.name] = _serialize(val)
+            return result
+        # Fallback for non-dataclass
+        result = {}
+        for key, val in self.__dict__.items():
+            result[key] = _serialize(val)
+        return result
+    
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SerializableMixin":
+        """Create instance from dictionary."""
+        if hasattr(cls, '__dataclass_fields__'):
+            field_names = {f.name for f in fields(cls)}
+            filtered = {k: v for k, v in data.items() if k in field_names}
+            return cls(**filtered)
+        return cls(**data)
+
+
+# ---------------------------------------------------------------------------
+# Config Loading Utilities
+# ---------------------------------------------------------------------------
+
+def load_env_config(prefix: str, defaults: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Load configuration from environment variables with prefix.
+    
+    Args:
+        prefix: Environment variable prefix (e.g., "MYAPP_")
+        defaults: Default values for config keys
+        
+    Returns:
+        Dict with config values from env (with type conversion)
+    """
+    config = dict(defaults) if defaults else {}
+    
+    for key, default_val in (defaults or {}).items():
+        env_key = f"{prefix}{key.upper()}"
+        env_val = os.environ.get(env_key)
+        
+        if env_val is not None:
+            if isinstance(default_val, bool):
+                config[key] = env_val.lower() in ("1", "true", "yes", "on")
+            elif isinstance(default_val, int):
+                config[key] = int(env_val)
+            elif isinstance(default_val, float):
+                config[key] = float(env_val)
+            elif isinstance(default_val, list):
+                config[key] = [s.strip() for s in env_val.split(",")]
+            else:
+                config[key] = env_val
+    
+    return config
+
+
+def load_file_config(path: Path | str, defaults: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Load configuration from JSON or YAML file.
+    
+    Args:
+        path: Path to config file (.json, .yaml, .yml)
+        defaults: Default values
+        
+    Returns:
+        Merged config dict
+    """
+    config = dict(defaults) if defaults else {}
+    config_path = Path(path)
+    
+    if not config_path.exists():
+        return config
+    
+    try:
+        content = config_path.read_text()
+        
+        if config_path.suffix == ".json":
+            data = json.loads(content)
+        elif config_path.suffix in (".yaml", ".yml"):
+            try:
+                import yaml
+                data = yaml.safe_load(content) or {}
+            except ImportError:
+                _log.warning("PyYAML not installed, skipping YAML config")
+                return config
+        else:
+            return config
+        
+        if isinstance(data, dict):
+            config.update(data)
+            
+    except (json.JSONDecodeError, OSError, ValueError) as e:
+        _log.warning(f"Failed to load config from {path}: {e}")
+    
+    return config
+
+
+# ---------------------------------------------------------------------------
+# Dataclass Config Base
+# ---------------------------------------------------------------------------
+
 @dataclass
 class DataclassConfig:
     """Base dataclass config with env loading support.
@@ -60,8 +265,6 @@ class DataclassConfig:
     @classmethod
     def from_env(cls, prefix: str = "") -> "DataclassConfig":
         """Load config from environment variables."""
-        from dataclasses import fields
-
         env_values: dict[str, Any] = {}
 
         for f in fields(cls):
@@ -76,85 +279,22 @@ class DataclassConfig:
                     env_values[f.name] = int(env_val)
                 elif field_type == float:
                     env_values[f.name] = float(env_val)
+                elif field_type == list:
+                    env_values[f.name] = [s.strip() for s in env_val.split(",")]
                 else:
                     env_values[f.name] = env_val
 
         return cls(**env_values)
 
 
-T = TypeVar("T", bound=BaseModel)
-
-
-class BaseIntegrationConfig(BaseModel, Generic[T]):
-    """Base configuration for integrations using Pydantic.
-
-    Usage:
-        class MyConfig(BaseIntegrationConfig):
-            base_url: str = "http://localhost"
-            api_key: str = ""
-            timeout: float = 30.0
-    """
-
-    enabled: bool = False
-
-    @classmethod
-    def from_env(cls, prefix: str = "") -> "T":
-        """Load config from environment variables.
-
-        Args:
-            prefix: Env var prefix (e.g., "MYAPP_")
-
-        Returns:
-            Config instance with values from env
-        """
-        env_values: dict[str, Any] = {}
-
-        for field_name, field_info in cls.model_fields.items():
-            env_key = f"{prefix}{field_name.upper()}"
-            env_val = os.environ.get(env_key)
-
-            if env_val is not None:
-                # Convert to appropriate type
-                field_type = field_info.annotation
-                if field_type == bool:
-                    env_values[field_name] = env_val.lower() in ("1", "true", "yes")
-                elif field_type == int:
-                    env_values[field_name] = int(env_val)
-                elif field_type == float:
-                    env_values[field_name] = float(env_val)
-                else:
-                    env_values[field_name] = env_val
-
-        return cls(**env_values)
-
-    @classmethod
-    def from_file(cls, path: Path | str) -> "T | None":
-        """Load config from JSON file.
-
-        Args:
-            path: Path to config file
-
-        Returns:
-            Config instance or None if file doesn't exist
-        """
-        config_path = Path(path)
-        if not config_path.exists():
-            return None
-
-        try:
-            import json
-
-            data = json.loads(config_path.read_text())
-            return cls(**data)
-        except (json.JSONDecodeError, OSError, ValueError) as e:
-            _log.warning(f"Failed to load config from {path}: {e}")
-            return None
-
+# ---------------------------------------------------------------------------
+# Base Integration Class
+# ---------------------------------------------------------------------------
 
 class BaseIntegration(ABC):
     """Base class for integrations with standard lifecycle."""
 
-    def __init__(self, name: str, config: BaseIntegrationConfig | None = None) -> None:
+    def __init__(self, name: str, config: DataclassConfig | None = None) -> None:
         self.name = name
         self._config = config
         self._status = IntegrationStatus.UNKNOWN
@@ -212,8 +352,17 @@ class BaseIntegration(ABC):
 
 __all__ = [
     "BaseIntegration",
-    "BaseIntegrationConfig",
     "DataclassConfig",
+    "FeatureFlag",
+    "FeatureRegistry",
     "IntegrationInfo",
     "IntegrationStatus",
+    "SerializableMixin",
+    "feature",
+    "load_env_config",
+    "load_file_config",
 ]
+
+
+# Alias for backward compatibility
+BaseIntegrationConfig = DataclassConfig

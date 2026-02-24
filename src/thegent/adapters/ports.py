@@ -4,12 +4,12 @@ Adapter Port Interface - Unified Adapter Pattern
 Defines port interfaces for all adapters in thegent.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Protocol
+from abc import abstractmethod
+from typing import Any, ClassVar, Protocol
 
 class AdapterPort(Protocol):
     """Protocol all adapters must implement"""
-    
+
     def call(self, **kwargs) -> dict[str, Any]:
         ...
 
@@ -35,25 +35,25 @@ class StorageAdapter(AdapterPort):
 
 # Unified adapter registry
 class AdapterRegistry:
-    _adapters: dict[str, AdapterPort] = {}
-    
+    _adapters: ClassVar[dict[str, AdapterPort]] = {}
+
     @classmethod
-    def register(cls, name: str, adapter: AdapterPort):
+    def register(cls, name: str, adapter: AdapterPort) -> None:
         """Register an adapter by name"""
         cls._adapters[name] = adapter
-    
+
     @classmethod
     def get(cls, name: str) -> AdapterPort:
         """Get adapter by name"""
         return cls._adapters.get(name)
-    
+
     @classmethod
     def all(cls) -> dict[str, AdapterPort]:
         """Get all registered adapters"""
         return cls._adapters.copy()
-    
+
     @classmethod
-    def unregister(cls, name: str):
+    def unregister(cls, name: str) -> None:
         """Unregister an adapter"""
         cls._adapters.pop(name, None)
 

@@ -1,3 +1,4 @@
+<DONE>
 # OpenRouter API Gap Analysis — 2026-02-20
 
 **Scope:** Full gap analysis between the current thegent proxy stack and what OpenRouter

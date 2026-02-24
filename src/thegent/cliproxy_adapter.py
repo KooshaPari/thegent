@@ -1,3 +1,4 @@
+# MIGRATION NOTE: Migrate to cliproxyapi-plusplus Go SDK
 """CLIProxy adapter: exposes /v1/responses (HTTP + WebSocket) for Codex compatibility.
 
 cliproxyapi++ (kooshapari fork) may not implement /v1/responses. This adapter:
@@ -53,6 +54,7 @@ from thegent.cliproxy_request_transform import (
 )
 from thegent.cliproxy_stream_state import ResponsesStreamState
 from thegent.utils.routing_impl.cost_calculator import calculate_cost_from_response, format_cost_header_value
+from thegent.adapters.ports import AdapterRegistry
 
 _log = logging.getLogger(__name__)
 
@@ -93,7 +95,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
         if not isinstance(models, list):
             return None
         compact_models = [{"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")]
-        compact_body = json.dumps({"models": compact_models}).decode().decode().encode()
+        compact_body = json.dumps({"models": compact_models}).decode().encode()
         return _LegacyModelsTransformResult(compact_body, full_body, etag)
     except (TypeError, json.JSONDecodeError):
         return None
@@ -727,7 +729,7 @@ async def _proxy_request(
         try:
             data = json.loads(body)
             transformed = _responses_to_chat_completions(data)
-            body = json.dumps(transformed).decode().decode().encode()
+            body = json.dumps(transformed).decode().encode()
             url = f"{backend_url.rstrip('/')}/v1/chat/completions"
         except (json.JSONDecodeError, KeyError) as e:
             _log.warning("responses->chat transform failed: %s", e)
@@ -765,7 +767,7 @@ async def _proxy_request(
             err_obj = _make_error_body(resp.status_code, resp.content)
             filtered_headers["Content-Type"] = "application/json"
             return Response(
-                content=json.dumps(err_obj).decode().decode().encode(),
+                content=json.dumps(err_obj).decode().encode(),
                 status_code=resp.status_code,
                 headers=filtered_headers,
             )
@@ -846,7 +848,7 @@ async def _proxy_stream(
             data = json.loads(body)
             model = data.get("model", model)
             transformed = _responses_to_chat_completions(data)
-            body = json.dumps(transformed).decode().decode().encode()
+            body = json.dumps(transformed).decode().encode()
         except (json.JSONDecodeError, KeyError):
             pass
         url = f"{backend_url.rstrip('/')}/chat/completions"
@@ -880,7 +882,7 @@ async def _proxy_stream(
                         raise _RetryableStreamError(resp.status_code, err_body)
 
                     err_obj = _make_error_body(resp.status_code, err_body)
-                    yield f"data: {json.dumps(err_obj).decode().decode()}\n\n".encode()
+                    yield f"data: {json.dumps(err_obj).decode()}\n\n".encode()
                     return
 
                 async for chunk in resp.aiter_bytes():
@@ -921,13 +923,13 @@ async def _proxy_stream(
                             if text:
                                 if not preamble_emitted:
                                     for ev in state.preamble_events():
-                                        yield f"data: {json.dumps(ev).decode().decode()}\n\n".encode()
+                                        yield f"data: {json.dumps(ev).decode()}\n\n".encode()
                                     preamble_emitted = True
-                                yield f"data: {json.dumps(state.delta_event(text).decode().decode())}\n\n".encode()
+                                yield f"data: {json.dumps(state.delta_event(text).decode())}\n\n".encode()
                             # GW-07: forward tool call deltas
                             if tool_calls:
                                 for ev in state.tool_call_delta_events(tool_calls):
-                                    yield f"data: {json.dumps(ev).decode().decode()}\n\n".encode()
+                                    yield f"data: {json.dumps(ev).decode()}\n\n".encode()
                         else:
                             out = _process_sse_line(line, False)
                             if out:
@@ -941,12 +943,12 @@ async def _proxy_stream(
                 if state is not None:
                     if not preamble_emitted:
                         for ev in state.preamble_events():
-                            yield f"data: {json.dumps(ev).decode().decode()}\n\n".encode()
+                            yield f"data: {json.dumps(ev).decode()}\n\n".encode()
                     # GW-07: emit tool call done events before text closing
                     for ev in state.tool_call_closing_events():
-                        yield f"data: {json.dumps(ev).decode().decode()}\n\n".encode()
+                        yield f"data: {json.dumps(ev).decode()}\n\n".encode()
                     for ev in state.closing_events():
-                        yield f"data: {json.dumps(ev).decode().decode()}\n\n".encode()
+                        yield f"data: {json.dumps(ev).decode()}\n\n".encode()
                     yield b"data: [DONE]\n\n"
 
     async def _stream_with_retries(attempt: int):
@@ -959,7 +961,7 @@ async def _proxy_stream(
             # OR-13: 402 — hard-stop, no retry
             _log.error("OR-13: insufficient credits: %s", stream_error)
             err_obj = {"error": {"message": str(stream_error), "code": 402}}
-            yield f"data: {json.dumps(err_obj).decode().decode()}\n\n".encode()
+            yield f"data: {json.dumps(err_obj).decode()}\n\n".encode()
             return
         except _RetryableStreamError as stream_error:
             # OR-13: transient error — retry with exponential backoff
@@ -1021,7 +1023,7 @@ async def proxy_handler(request: Request) -> Response:
                 status_code=403,
                 headers={"Content-Type": "application/json"},
             )
-    
+
     backend = getattr(request.app.state, "backend_url", "http://127.0.0.1:8318/v1")
     path = request.url.path or "/v1/models"
 
@@ -1120,7 +1122,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
         while True:
             try:
                 data = await asyncio.wait_for(websocket.receive_json(), timeout=300.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 _log.debug("ws responses: idle timeout, closing")
                 break
             except Exception as e:
@@ -1134,9 +1136,9 @@ async def websocket_responses_handler(websocket: Any) -> None:
                 transformed = _responses_to_chat_completions(data)
                 # Always force streaming from backend for WebSocket transport
                 transformed["stream"] = True
-                body = json.dumps(transformed).decode().decode().encode()
+                body = json.dumps(transformed).decode().encode()
             else:
-                body = json.dumps(data).decode().decode().encode()
+                body = json.dumps(data).decode().encode()
             # Forward auth and other upstream headers; WS upgrade headers carry Authorization (WL-001)
             # Explicitly include Authorization in forward_headers to fix WL-001: WS auth header drop
             headers = extract_websocket_forward_headers(dict(websocket.headers))
@@ -1230,3 +1232,22 @@ def create_adapter_app(backend_url: str) -> Starlette:
     )
     app.state.backend_url = backend_url.rstrip("/")
     return app
+
+
+# Register with unified adapter registry
+class CliproxyAdapter:
+    """HTTP proxy adapter for cliproxy"""
+
+    def __init__(self, backend_url: str = "http://127.0.0.1:8318/v1"):
+        self._app = create_adapter_app(backend_url)
+
+    def call(self, request=None, **kwargs) -> dict:
+        """Proxy request through adapter"""
+        return {"status": "ready", "backend": self._app.state.backend_url}
+
+    @property
+    def app(self):
+        return self._app
+
+
+AdapterRegistry.register("cliproxy", CliproxyAdapter())

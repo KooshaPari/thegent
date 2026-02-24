@@ -1,3 +1,4 @@
+<DONE>
 # TheGent 2026 Performance & QOL Manifest (The "100 New Items")
 
 This manifest documents the 100 modern, high-performance, and agent-friendly tools, libraries, and strategies integrated into the thegent ecosystem as of February 2026.

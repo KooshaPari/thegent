@@ -1,3 +1,4 @@
+<DONE>
 # ChatGPT Pareto Router Deep Research — Part 3: API, Pipelines & User Journeys
 
 **Source**: chatgpt3.md, chatgpt4.md

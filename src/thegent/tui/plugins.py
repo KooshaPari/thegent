@@ -12,6 +12,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
+from thegent.integrations.base import SerializableMixin
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class PluginInfo:
+class PluginInfo(SerializableMixin):
     """Metadata about a plugin."""
 
     name: str

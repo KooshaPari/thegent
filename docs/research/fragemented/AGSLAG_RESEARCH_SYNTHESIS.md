@@ -1,3 +1,4 @@
+<DONE>
 # AGSLAG Research Synthesis: Blueprints for thegent
 
 This document synthesizes key architectural patterns and research findings from the AGSLAG (2025) projects, identifying foundational blueprints for `thegent` framework.

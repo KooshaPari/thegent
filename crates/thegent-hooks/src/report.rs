@@ -264,9 +264,9 @@ impl ReportManager {
             return Ok(None);
         }
 
-        let latest = reports.last().ok_or_else(|| {
-            ReportError::InvalidFormat("No reports found".to_string())
-        })?;
+        let latest = reports
+            .last()
+            .ok_or_else(|| ReportError::InvalidFormat("No reports found".to_string()))?;
 
         Ok(Some(self.read_report(
             latest.file_name().and_then(|n| n.to_str()).unwrap_or(""),

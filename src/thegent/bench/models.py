@@ -6,9 +6,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
+
 
 @dataclass(frozen=True)
-class BenchRecord:
+class BenchRecord(SerializableMixin):
     """Canonical JSONL row for benchmark runs."""
 
     suite: str
@@ -22,22 +24,6 @@ class BenchRecord:
     error_recovery_attempts: int
     run_id: str
     ts_utc: str
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize record in stable field order."""
-        return {
-            "suite": self.suite,
-            "harness": self.harness,
-            "test_id": self.test_id,
-            "latency_sec": self.latency_sec,
-            "tokens_input": self.tokens_input,
-            "tokens_output": self.tokens_output,
-            "tool_calls": self.tool_calls,
-            "success": self.success,
-            "error_recovery_attempts": self.error_recovery_attempts,
-            "run_id": self.run_id,
-            "ts_utc": self.ts_utc,
-        }
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> BenchRecord:

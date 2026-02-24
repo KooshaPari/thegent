@@ -21,7 +21,7 @@ class Serializers:
         Returns:
             JSON string
         """
-        return json.dumps(obj, indent=indent, default=str).decode().decode()
+        return json.dumps(obj, indent=indent, default=str).decode()
 
     @staticmethod
     def from_json(json_str: str) -> Any:

@@ -32,7 +32,7 @@ class HubGenerator:
 
     def _write_config(self) -> None:
         nav_items = [{"text": name, "link": f"{path}/"} for name, path in self._projects.items()]
-        nav_json = json.dumps(nav_items, indent=2).decode().decode()
+        nav_json = json.dumps(nav_items, indent=2)
         config = f"""import {{ defineConfig }} from 'vitepress'
 
 export default defineConfig({{
@@ -59,4 +59,4 @@ export default defineConfig({{
                 "vitepress": "^1.0.0",
             },
         }
-        (self._hub / "package.json").write_text(json.dumps(pkg, indent=2).decode().decode() + "\n")
+        (self._hub / "package.json").write_text(json.dumps(pkg, indent=2) + "\n")

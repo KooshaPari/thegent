@@ -1,3 +1,4 @@
+<DONE>
 # Terminal Comparison: Ghostty vs CommanderAI vs Alternatives (2026-02-18)
 
 ## Executive Summary

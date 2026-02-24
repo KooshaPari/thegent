@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
 from thegent.queue.locking import QueueLock
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ def _find_project_queue_path(project_path: str | None = None) -> Path:
 
 
 @dataclass
-class QueueItem:
+class QueueItem(SerializableMixin):
     """A single item in the prompt queue.
 
     # @trace FR-HAX-001
@@ -95,7 +96,7 @@ class QueueItem:
     """Any additional metadata stored in the queue entry."""
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialise to a dict for JSONL storage."""
+        """Serialise to a dict for JSONL storage - includes extra fields at top level."""
         return {
             "id": self.id,
             "timestamp": self.timestamp,
@@ -178,7 +179,7 @@ class PromptQueueManager:
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
         with self.queue_path.open("w", encoding="utf-8") as fh:
             for item in items:
-                fh.write(json.dumps(item.to_dict().decode().decode()) + "\n")
+                fh.write(json.dumps(item.to_dict().decode()) + "\n")
 
     # ------------------------------------------------------------------
     # Public API
@@ -213,7 +214,7 @@ class PromptQueueManager:
         )
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
         with self.queue_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(item.to_dict().decode().decode()) + "\n")
+            fh.write(json.dumps(item.to_dict().decode()) + "\n")
         logger.debug("PromptQueueManager.enqueue: id=%r prompt=%r", item.id, prompt[:80])
         return item
 

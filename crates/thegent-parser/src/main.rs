@@ -44,13 +44,16 @@ fn main() -> io::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::XmlTags { tags, case_sensitive } => {
+        Commands::XmlTags {
+            tags,
+            case_sensitive,
+        } => {
             let mut input = String::new();
             io::stdin().read_to_string(&mut input)?;
 
-            let allowed: Option<Vec<&str>> = tags.as_ref().map(|t| {
-                t.split(',').map(|s| s.trim()).collect()
-            });
+            let allowed: Option<Vec<&str>> = tags
+                .as_ref()
+                .map(|t| t.split(',').map(|s| s.trim()).collect());
 
             // Simple XML tag extraction (inline to avoid lib dependency)
             let result = extract_xml_tags_simple(&input, allowed.as_deref(), case_sensitive);
@@ -83,7 +86,11 @@ fn main() -> io::Result<()> {
 }
 
 // Simple implementations (duplicated to avoid lib dependency issues)
-fn extract_xml_tags_simple(text: &str, allowed_tags: Option<&[&str]>, case_sensitive: bool) -> serde_json::Value {
+fn extract_xml_tags_simple(
+    text: &str,
+    allowed_tags: Option<&[&str]>,
+    case_sensitive: bool,
+) -> serde_json::Value {
     use regex::Regex;
     let re = Regex::new(r"<([A-Za-z0-9_\-]+)>").unwrap();
     let mut tags = serde_json::Map::new();
@@ -128,10 +135,19 @@ fn strip_noise_simple(text: &str, profile: &str) -> String {
     use regex::Regex;
     let patterns = [
         (Regex::new(r"^\[TIME CONSTRAINT").ok(), "leading"),
-        (Regex::new(r"^You have approximately \d+ tool calls").ok(), "leading"),
+        (
+            Regex::new(r"^You have approximately \d+ tool calls").ok(),
+            "leading",
+        ),
         (Regex::new(r"^\s*OK\s*$").ok(), "leading"),
-        (Regex::new(r#"^\s*\{\s*"type"\s*:\s*"turn\.(completed|started)"#).ok(), "jsonl"),
-        (Regex::new(r#"^\s*\{\s*"type"\s*:\s*"thread\.started"#).ok(), "jsonl"),
+        (
+            Regex::new(r#"^\s*\{\s*"type"\s*:\s*"turn\.(completed|started)"#).ok(),
+            "jsonl",
+        ),
+        (
+            Regex::new(r#"^\s*\{\s*"type"\s*:\s*"thread\.started"#).ok(),
+            "jsonl",
+        ),
         (Regex::new(r"^Total usage est:").ok(), "plain"),
         (Regex::new(r"^Total duration \(API\):").ok(), "plain"),
         (Regex::new(r"^Usage by model:").ok(), "plain"),
@@ -140,7 +156,9 @@ fn strip_noise_simple(text: &str, profile: &str) -> String {
     text.lines()
         .filter(|line| {
             let trimmed = line.trim();
-            if trimmed.is_empty() { return true; }
+            if trimmed.is_empty() {
+                return true;
+            }
 
             for (re, pat_profile) in &patterns {
                 if let Some(regex) = re {

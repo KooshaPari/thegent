@@ -6,7 +6,7 @@ import orjson as json
 import os
 import platform
 import shutil
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 from typing import Any
@@ -112,7 +112,7 @@ def install_to_cursor(
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -121,7 +121,7 @@ def install_to_claude_code(url: str = DEFAULT_MCP_URL) -> bool:
     config_path = Path.home() / ".claude.json"
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -136,7 +136,7 @@ def install_to_codex(url: str = DEFAULT_MCP_URL) -> bool:
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
         config = _set_compatible_mcp_servers(config, url=url)
-        config_path.write_text(json.dumps(config, indent=2).decode().decode())
+        config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -147,7 +147,7 @@ def install_to_claude_desktop(url: str = DEFAULT_MCP_URL) -> bool:
         return False
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -158,7 +158,7 @@ def install_to_droid(url: str, workspace: Path | None = None) -> bool:
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config: dict[str, Any] = json.loads(config_path.read_text()) if config_path.exists() else {"mcpServers": {}}
     config = _set_compatible_mcp_servers(config, url=url)
-    config_path.write_text(json.dumps(config, indent=2).decode().decode())
+    config_path.write_text(json.dumps(config, indent=2))
     return True
 
 
@@ -520,7 +520,7 @@ def remove_servers_from_client(
                 touched += 1
                 total_removed += pre_count - len(mcp_servers)
                 config["mcpServers"] = mcp_servers
-                config_path.write_text(json.dumps(config, indent=2).decode().decode())
+                config_path.write_text(json.dumps(config, indent=2))
 
         if total_removed == 0:
             return True, f"No matching servers found for {normalized_client}"
@@ -554,7 +554,7 @@ def migrate_to_unimount(
                 mcp_servers = {}
             config["mcpServers"] = mcp_servers
             config = _set_compatible_mcp_servers(config, url=mcp_url)
-            config_path.write_text(json.dumps(config, indent=2).decode().decode())
+            config_path.write_text(json.dumps(config, indent=2))
         return True, f"Migrated {normalized_client} to uni-mount"
     except Exception as e:
         return False, str(e)
@@ -594,7 +594,7 @@ def prune_periodic_install() -> tuple[bool, str]:
 </plist>
 """
             _PRUNE_PLIST_PATH.write_text(plist)
-            subprocess.run(
+            shim_run(
                 ["launchctl", "load", str(_PRUNE_PLIST_PATH)],
                 check=False,
                 capture_output=True,
@@ -613,7 +613,7 @@ ExecStart=thegent mcp prune
 WantedBy=default.target
 """
             _PRUNE_SYSTEMD_PATH.write_text(unit)
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "enable", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -629,14 +629,14 @@ def prune_periodic_start() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            subprocess.run(
+            shim_run(
                 ["launchctl", "start", _PRUNE_LAUNCHD_LABEL],
                 check=False,
                 capture_output=True,
             )
             return True, "Periodic prune started"
         if system == "Linux":
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "start", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -652,14 +652,14 @@ def prune_periodic_stop() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            subprocess.run(
+            shim_run(
                 ["launchctl", "stop", _PRUNE_LAUNCHD_LABEL],
                 check=False,
                 capture_output=True,
             )
             return True, "Periodic prune stopped"
         if system == "Linux":
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "stop", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -675,7 +675,7 @@ def prune_periodic_status() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            result = subprocess.run(
+            result = shim_run(
                 ["launchctl", "list", _PRUNE_LAUNCHD_LABEL],
                 check=False,
                 capture_output=True,
@@ -685,7 +685,7 @@ def prune_periodic_status() -> tuple[bool, str]:
                 return True, f"Periodic prune loaded: {result.stdout.strip()}"
             return False, "Periodic prune not loaded"
         if system == "Linux":
-            result = subprocess.run(
+            result = shim_run(
                 ["systemctl", "--user", "is-active", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,
@@ -703,7 +703,7 @@ def prune_periodic_uninstall() -> tuple[bool, str]:
     try:
         system = platform.system()
         if system == "Darwin":
-            subprocess.run(
+            shim_run(
                 ["launchctl", "unload", str(_PRUNE_PLIST_PATH)],
                 check=False,
                 capture_output=True,
@@ -712,7 +712,7 @@ def prune_periodic_uninstall() -> tuple[bool, str]:
                 _PRUNE_PLIST_PATH.unlink()
             return True, "Periodic prune uninstalled"
         if system == "Linux":
-            subprocess.run(
+            shim_run(
                 ["systemctl", "--user", "disable", "--now", _PRUNE_SYSTEMD_UNIT],
                 check=False,
                 capture_output=True,

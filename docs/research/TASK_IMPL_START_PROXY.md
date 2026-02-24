@@ -1,3 +1,4 @@
+<DONE>
 # Task: Consolidate os.environ in start_proxy_with_adapter.py
 
 **Priority**: P3

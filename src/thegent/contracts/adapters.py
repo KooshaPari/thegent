@@ -58,17 +58,27 @@ class XMLOutputAdapter:
         return self._provider
 
     def normalize(self, raw: str | dict[str, Any], context: dict[str, Any] | None = None) -> AdapterResult:
-        from thegent.contracts.parser import extract_tags
+        from thegent.contracts.parser import extract_tags, IncrementalXMLParser
 
         text = raw if isinstance(raw, str) else str(raw.get("stdout", raw.get("content", "")))
         tags = extract_tags(text)
         normalized_tags = {str(k).upper().replace("-", "_"): v for k, v in tags.items()}
 
         parse_errors = []
+        
+        # Check for truncation using partial state detection FIRST
+        # This catches cases like <SUMMARY>running<DETAILS>work where tags extraction returns {}
+        parser = IncrementalXMLParser()
+        partial = parser.get_partial_state(text)
+        
+        # Determine parse errors - check truncation BEFORE checking empty tags
+        if partial.get("is_truncated"):
+            parse_errors.append("parse_truncated")
+        elif not normalized_tags:
+            parse_errors.append("no_xml_tags_detected")
+        
+        # Early return for empty/invalid cases
         if not normalized_tags:
-            # Simple heuristic: if looks like XML but no closed tags found => truncated
-            parse_errors = ["parse_truncated"] if "<" in text and ">" not in text else ["no_xml_tags_detected"]
-
             return AdapterResult(
                 csm=CanonicalStructuredMessage(
                     task_id=(context or {}).get("task_id", ""),

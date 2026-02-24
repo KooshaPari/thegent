@@ -11,6 +11,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from thegent.integrations.base import SerializableMixin
 from typing import Any, Final
 
 DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS: Final[int] = 3
@@ -55,7 +56,7 @@ def compute_backoff_seconds(attempt: int, *, base_delay_seconds: float, multipli
 
 
 @dataclass
-class RemoteWriteDeadLetterRecord:
+class RemoteWriteDeadLetterRecord(SerializableMixin):
     """Single failed remote-write mutation entry."""
 
     entry_id: str
@@ -148,24 +149,6 @@ class RemoteWriteDeadLetterRecord:
             ),
         )
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "entry_id": self.entry_id,
-            "source": self.source,
-            "board_id": self.board_id,
-            "item": self.item,
-            "error": self.error,
-            "status": self.status,
-            "attempts": self.attempts,
-            "first_failed_at": self.first_failed_at,
-            "last_attempt_at": self.last_attempt_at,
-            "next_attempt_at": self.next_attempt_at,
-            "resolved_at": self.resolved_at,
-            "max_attempts": self.max_attempts,
-            "retry_interval_seconds": self.retry_interval_seconds,
-            "backoff_multiplier": self.backoff_multiplier,
-        }
-
 
 class RemoteWriteDeadLetterQueue:
     """Persistent dead-letter queue for board remote writes."""
@@ -200,13 +183,13 @@ class RemoteWriteDeadLetterQueue:
 
     def write(self, entries: list[RemoteWriteDeadLetterRecord]) -> None:
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
-        serialized = "\n".join(json.dumps(entry.to_dict().decode().decode(), sort_keys=True) for entry in entries)
+        serialized = "\n".join(json.dumps(entry.to_dict().decode(), sort_keys=True) for entry in entries)
         self.queue_path.write_text(f"{serialized}\n" if serialized else "", encoding="utf-8")
 
     def append(self, record: RemoteWriteDeadLetterRecord) -> None:
         self.queue_path.parent.mkdir(parents=True, exist_ok=True)
         with self.queue_path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record.to_dict().decode().decode(), sort_keys=True))
+            handle.write(json.dumps(record.to_dict().decode(), sort_keys=True))
             handle.write("\n")
 
     def pending(self, *, source: str | None = None, board_id: str | None = None) -> list[RemoteWriteDeadLetterRecord]:
@@ -227,7 +210,7 @@ class RemoteWriteDeadLetterQueue:
         )
 
     def create_entry_id(self, source: str, board_id: str, item: dict[str, str], *, error: str) -> str:
-        key = json.dumps({"source": source, "board_id": board_id, "item": item, "error": error}, sort_keys=True).decode().decode()
+        key = json.dumps({"source": source, "board_id": board_id, "item": item, "error": error}, sort_keys=True).decode()
         digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
         return f"dlq-{digest}"
 

@@ -9,6 +9,8 @@ import sys
 from dataclasses import dataclass, field
 from typing import Any, TextIO
 
+from thegent.integrations.base import SerializableMixin
+
 
 JSONRPC_VERSION = "2.0"
 
@@ -29,12 +31,13 @@ TERMINAL_TURN_STATES = {"completed", "cancelled", "rejected"}
 
 
 @dataclass(frozen=True)
-class JsonRpcError:
+class JsonRpcError(SerializableMixin):
     code: int
     message: str
     data: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Override to conditionally include data field."""
         payload: dict[str, Any] = {"code": self.code, "message": self.message}
         if self.data is not None:
             payload["data"] = self.data
@@ -212,7 +215,6 @@ def _append_execution_notifications(
     notifications.append(_notification("turn/completed", {"session_id": session_id, "turn_id": turn_id, "status": "completed"}))
 
 
-<<<<<<< HEAD
 def _route_turn_cancel_method(method: str) -> str:
     if method != "turn/cancel":
         raise ValueError(f"Unsupported turn cancel method: {method}")
@@ -1292,8 +1294,6 @@ def _dispatch_turn_or_approval_method(
     return None
 
 
-=======
->>>>>>> codex/provider-plane-wave1
 def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
     envelope_error = _validate_request_envelope(request)
     if envelope_error is not None:
@@ -1320,232 +1320,11 @@ def _dispatch_parsed_request(request: dict[str, Any]) -> tuple[dict[str, Any] | 
     if session_handled:
         return session_response, notifications
 
-<<<<<<< HEAD
     turn_or_approval_response = _dispatch_turn_or_approval_method(
         method, request_has_id, request_id, params, notifications
     )
     if turn_or_approval_response is not None:
         return turn_or_approval_response
-=======
-    if method == "config/read":
-        return (
-            maybe_response(
-                {
-                    "server": "thegent-agent-server",
-                    "transport": "stdio",
-                    "supported_methods": sorted(SUPPORTED_METHODS),
-                }
-            ),
-            notifications,
-        )
-
-    if method == "session/start":
-        session_id = SERVER_STATE.next_session_id()
-        session = {
-            "id": session_id,
-            "status": "active",
-            "created_index": SERVER_STATE.session_counter,
-            "turn_ids": [],
-        }
-        SERVER_STATE.sessions[session_id] = session
-        return maybe_response({"session": _serialize_session(session)}), notifications
-
-    if method == "session/resume":
-        _session_id, session, session_error = _require_session(request_id, params)
-        if session_error is not None:
-            return session_error, notifications
-        assert session is not None
-        session["status"] = "active"
-        return maybe_response({"session": _serialize_session(session)}), notifications
-
-    if method == "session/list":
-        sessions = [
-            _serialize_session(session)
-            for session in sorted(SERVER_STATE.sessions.values(), key=lambda item: item["created_index"])
-        ]
-        return maybe_response({"sessions": sessions}), notifications
-
-    if method == "session/read":
-        _session_id, session, session_error = _require_session(request_id, params)
-        if session_error is not None:
-            return session_error, notifications
-        assert session is not None
-        turns = [_serialize_turn(SERVER_STATE.turns[turn_id]) for turn_id in session["turn_ids"]]
-        return maybe_response({"session": _serialize_session(session), "turns": turns}), notifications
-
-    if method == "turn/submit":
-        session_id, session, session_error = _require_session(request_id, params)
-        if session_error is not None:
-            return session_error, notifications
-        assert session_id is not None
-        assert session is not None
-
-        user_input = params.get("input", "")
-        if not isinstance(user_input, str):
-            return _error_response(request_id, _invalid_params("input_must_be_string")), notifications
-
-        if "requires_approval" in params and not isinstance(params["requires_approval"], bool):
-            return _error_response(request_id, _invalid_params("requires_approval_must_be_boolean")), notifications
-
-        requires_approval = params.get("requires_approval", False)
-        approval_diff: str | None = None
-        if requires_approval:
-            approval_diff, approval_diff_error = _extract_required_approval_diff(request_id, params)
-            if approval_diff_error is not None:
-                return approval_diff_error, notifications
-
-        turn_id = SERVER_STATE.next_turn_id()
-        turn = {
-            "id": turn_id,
-            "session_id": session_id,
-            "input": user_input,
-            "status": "in_progress",
-            "approval_id": None,
-            "tool_call_id": None,
-        }
-        SERVER_STATE.turns[turn_id] = turn
-        session["turn_ids"].append(turn_id)
-
-        notifications.append(_notification("turn/started", {"session_id": session_id, "turn_id": turn_id}))
-        notifications.append(
-            _notification(
-                "item/agentMessage/delta",
-                {
-                    "session_id": session_id,
-                    "turn_id": turn_id,
-                    "delta": f"ack:{user_input}",
-                },
-            )
-        )
-
-        if requires_approval:
-            approval_id = SERVER_STATE.next_approval_id()
-            assert approval_diff is not None
-            turn["status"] = "awaiting_approval"
-            turn["approval_id"] = approval_id
-            approval = {
-                "id": approval_id,
-                "turn_id": turn_id,
-                "session_id": session_id,
-                "status": "requested",
-                "diff": approval_diff,
-            }
-            SERVER_STATE.approvals[approval_id] = approval
-            notifications.append(
-                _notification(
-                    "approval/requested",
-                    {
-                        "approval_id": approval_id,
-                        "session_id": session_id,
-                        "turn_id": turn_id,
-                        "diff": approval_diff,
-                    },
-                )
-            )
-            return (
-                maybe_response(
-                    {
-                        "turn": _serialize_turn(turn),
-                        "approval": {
-                            "id": approval_id,
-                            "status": approval["status"],
-                            "diff": approval_diff,
-                        },
-                    }
-                ),
-                notifications,
-            )
-
-        tool_call_id = SERVER_STATE.next_tool_call_id()
-        turn["tool_call_id"] = tool_call_id
-        _append_execution_notifications(notifications, session_id, turn_id, user_input, tool_call_id)
-        turn["status"] = "completed"
-        return maybe_response({"turn": _serialize_turn(turn)}), notifications
-
-    if method == "turn/cancel":
-        turn_id, turn, turn_error = _require_turn(request_id, params)
-        if turn_error is not None:
-            return turn_error, notifications
-        assert turn_id is not None
-        assert turn is not None
-        if turn["status"] in TERMINAL_TURN_STATES:
-            return _error_response(
-                request_id,
-                JsonRpcError(-32003, "Turn already terminal", {"turn_id": turn_id, "status": turn["status"]}),
-            ), notifications
-
-        turn["status"] = "cancelled"
-        approval_id = turn.get("approval_id")
-        if isinstance(approval_id, str) and approval_id in SERVER_STATE.approvals:
-            approval = SERVER_STATE.approvals[approval_id]
-            if approval["status"] == "requested":
-                approval["status"] = "cancelled"
-        return maybe_response({"turn": _serialize_turn(turn)}), notifications
-
-    if method in {"approval/grant", "approval/reject"}:
-        approval_id = _normalized_non_empty_string(params.get("approval_id"))
-        if approval_id is None:
-            return _error_response(request_id, _invalid_params("approval_id_required")), notifications
-
-        approval = SERVER_STATE.approvals.get(approval_id)
-        if approval is None:
-            return _error_response(
-                request_id,
-                JsonRpcError(-32005, "Approval not found", {"approval_id": approval_id}),
-            ), notifications
-
-        if approval["status"] != "requested":
-            return _error_response(
-                request_id,
-                JsonRpcError(
-                    -32006,
-                    "Approval already resolved",
-                    {"approval_id": approval_id, "status": approval["status"]},
-                ),
-            ), notifications
-
-        turn_id = approval["turn_id"]
-        turn = SERVER_STATE.turns.get(turn_id)
-        if turn is None:
-            return _error_response(
-                request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})
-            ), notifications
-        if turn["status"] in TERMINAL_TURN_STATES:
-            return _error_response(
-                request_id,
-                JsonRpcError(-32003, "Turn already terminal", {"turn_id": turn_id, "status": turn["status"]}),
-            ), notifications
-
-        if method == "approval/grant":
-            approval["status"] = "granted"
-            tool_call_id = SERVER_STATE.next_tool_call_id()
-            turn["tool_call_id"] = tool_call_id
-            _append_execution_notifications(notifications, turn["session_id"], turn_id, turn["input"], tool_call_id)
-            turn["status"] = "completed"
-        else:
-            approval["status"] = "rejected"
-            turn["status"] = "rejected"
-            notifications.append(
-                _notification(
-                    "turn/completed",
-                    {
-                        "session_id": turn["session_id"],
-                        "turn_id": turn_id,
-                        "status": turn["status"],
-                    },
-                )
-            )
-
-        return (
-            maybe_response(
-                {
-                    "approval": {"id": approval_id, "status": approval["status"]},
-                    "turn": _serialize_turn(turn),
-                }
-            ),
-            notifications,
-        )
->>>>>>> codex/provider-plane-wave1
 
     return _error_response(request_id, _method_not_found(method)), notifications
 
@@ -1555,7 +1334,7 @@ def process_jsonrpc_line_full(raw_line: str) -> tuple[dict[str, Any] | None, lis
     if not raw_line.strip():
         return None, []
     try:
-        payload = json.loads(raw_line)
+        payload = json_loads(raw_line)
     except json.JSONDecodeError as exc:
         return _error_response(None, JsonRpcError(-32700, "Parse error", {"detail": str(exc)})), []
 
@@ -1583,9 +1362,9 @@ def serve_stdio(in_stream: TextIO | None = None, out_stream: TextIO | None = Non
 
         response, notifications = process_jsonrpc_line_full(raw)
         if response is not None:
-            sink.write(json.dumps(response, separators=(",", ":").decode().decode()) + "\n")
+            sink.write(json.dumps(response, separators=(",", ":").decode()) + "\n")
         for notification in notifications:
-            sink.write(json.dumps(notification, separators=(",", ":").decode().decode()) + "\n")
+            sink.write(json.dumps(notification, separators=(",", ":").decode()) + "\n")
 
         if response is not None or notifications:
             sink.flush()

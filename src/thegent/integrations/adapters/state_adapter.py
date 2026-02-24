@@ -4,7 +4,7 @@ Handles local state persistence, checkpoints, and trends.
 """
 
 import orjson as json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -18,36 +18,36 @@ class StateAdapter:
         self._trend_path = config.trend_path or Path("docs/reference/workstream_autosync_trend.jsonl")
         self._cycle_metrics_path = config.cycle_metrics_path or Path("docs/reference/workstream_autosync_cycle_metrics.jsonl")
         self._change_digest_path = config.change_digest_path or Path("artifacts/workstream_autosync_change_digest.jsonl")
-    
+
     # Path methods
     def get_status_path(self) -> Path:
         return self._status_path
-    
+
     def get_trend_path(self) -> Path:
         return self._trend_path
-    
+
     def get_cycle_metrics_path(self) -> Path:
         return self._cycle_metrics_path
-    
+
     def get_change_digest_path(self) -> Path:
         return self._change_digest_path
-    
+
     def get_autosync_metrics_path(self) -> Path:
         return self.config.autosync_prometheus_export_path or Path("docs/reference/workstream_autosync_metrics.prom")
-    
+
     def get_cycle_manifest_path(self) -> Path:
         return self._status_path.parent / "autosync_cycle_manifest.jsonl"
-    
+
     def get_failure_queue_path(self) -> Path:
         return self._status_path.parent / "autosync_failure_queue.json"
-    
+
     def get_checkpoint_path(self, checkpoint_id: str) -> Path:
         """Get path for checkpoint file."""
         return self._status_path.parent / f"autosync_checkpoint_{checkpoint_id}.json"
 
     def get_snapshot_path(self) -> Path:
         """Get path for snapshot file."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         return self._status_path.parent / f"autosync_snapshot_{timestamp}.json"
 
     def get_latest_snapshot_age_seconds(self) -> int | None:
@@ -57,7 +57,7 @@ class StateAdapter:
             return None
         try:
             latest = max(snapshot_candidates, key=lambda p: p.stat().st_mtime)
-            age = datetime.now(timezone.utc) - datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+            age = datetime.now(UTC) - datetime.fromtimestamp(latest.stat().st_mtime, tz=UTC)
             return max(0, int(age.total_seconds()))
         except OSError:
             return None
@@ -67,7 +67,7 @@ class StateAdapter:
         try:
             self._trend_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self._trend_path, "a") as f:
-                f.write(json.dumps(sample).decode().decode() + "\n")
+                f.write(json.dumps(sample).decode() + "\n")
         except Exception:
             pass
 
@@ -85,10 +85,10 @@ class StateAdapter:
         """Write status to file."""
         try:
             self._status_path.parent.mkdir(parents=True, exist_ok=True)
-            self._status_path.write_text(json.dumps(status, indent=2).decode().decode())
+            self._status_path.write_text(json.dumps(status, indent=2))
         except Exception:
             pass
-    
+
     def compact_snapshots(self, keep_count: int = 10) -> None:
         """Compact old snapshots, keeping only the most recent."""
         try:
@@ -104,3 +104,19 @@ class StateAdapter:
 
 
 __all__ = ["StateAdapter"]
+
+
+# Register with unified adapter registry
+from thegent.adapters.ports import AdapterRegistry
+
+class StateAdapterWrapper:
+    """State adapter wrapper for registry"""
+    
+    def __init__(self):
+        self._adapter = StateAdapter()
+    
+    def call(self, **kwargs) -> dict:
+        return {"status": "state_adapter_ready"}
+
+
+AdapterRegistry.register("state", StateAdapterWrapper())

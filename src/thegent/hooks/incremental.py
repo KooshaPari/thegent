@@ -80,4 +80,4 @@ class IncrementalSubcommands:
 
     def _save_manifest(self) -> None:
         """Save manifest."""
-        self.manifest_path.write_text(json.dumps(self.manifest, indent=2).decode().decode())
+        self.manifest_path.write_text(json.dumps(self.manifest, indent=2))

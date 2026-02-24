@@ -21,7 +21,7 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
     )
     latest_issue_types_json = result.get(
         "latest_issue_types_json",
-        json.dumps(latest_issue_types).decode().decode(),
+        json.dumps(latest_issue_types).decode(),
     )
     latest_issue_types_hash = result.get(
         "latest_issue_types_hash",
@@ -188,9 +188,9 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
                 "scope_top_blocked",
                 _safe_dict(result.get("scope_key")).get("top_blocked", ""),
             ),
-            result.get("scope_key_json", json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True)),
-            result.get("delta_summary_json", json.dumps(result.get("delta_summary", {}).decode().decode(), sort_keys=True)),
-            json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True),
+            result.get("scope_key_json", json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS)),
+            result.get("delta_summary_json", json.dumps(result.get('delta_summary', {}), option=json.OPT_SORT_KEYS)),
+            json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS),
             result.get(
                 "blocked_ratio_delta",
                 result.get("delta_summary", {}).get("blocked_ratio_delta", None),
@@ -209,7 +209,7 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
             "",
             "",
             _safe_dict(result.get("compat")).get("mode", "compat"),
-            json.dumps(_safe_dict(result.get("compat").decode().decode()).get("aliases", {}), sort_keys=True),
+            json.dumps(_safe_dict(result.get("compat")).get("aliases", {}), option=json.OPT_SORT_KEYS),
             compat_aliases_count,
         ]
     )
@@ -269,9 +269,9 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
                     "scope_top_blocked",
                     _safe_dict(result.get("scope_key")).get("top_blocked", ""),
                 ),
-                result.get("scope_key_json", json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True)),
-                result.get("delta_summary_json", json.dumps(result.get("delta_summary", {}).decode().decode(), sort_keys=True)),
-                json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True),
+                result.get("scope_key_json", json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS)),
+                result.get("delta_summary_json", json.dumps(result.get('delta_summary', {}), option=json.OPT_SORT_KEYS)),
+                json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS),
                 result.get(
                     "blocked_ratio_delta",
                     result.get("delta_summary", {}).get("blocked_ratio_delta", None),
@@ -290,7 +290,7 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
                 snap.get("blocked_ratio", 0.0),
                 ", ".join(_coerce_issue_types(snap.get("issue_types", []))),
                 _safe_dict(result.get("compat")).get("mode", "compat"),
-                json.dumps(_safe_dict(result.get("compat").decode().decode()).get("aliases", {}), sort_keys=True),
+                json.dumps(_safe_dict(result.get("compat")).get("aliases", {}), option=json.OPT_SORT_KEYS),
                 compat_aliases_count,
             ]
         )

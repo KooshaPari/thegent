@@ -1,3 +1,4 @@
+<DONE>
 # thegent: Consolidated Research Index
 
 > **Status**: Active | **Last Updated**: 2026-02-19

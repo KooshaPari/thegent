@@ -3,17 +3,18 @@
 import orjson as json
 import logging
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
+from thegent.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
 
 @dataclass
-class PolicyOverride:
+class PolicyOverride(SerializableMixin):
     """An active override for a governance policy."""
 
     policy_id: str
@@ -26,15 +27,6 @@ class PolicyOverride:
     def is_active(self) -> bool:
         """Check if the override is still valid."""
         return time.time() < self.expires_at
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "PolicyOverride":
-        """Create from dictionary."""
-        return cls(**data)
 
 
 class OverrideManager:
@@ -119,4 +111,4 @@ class OverrideManager:
     def _save_override(self, override: PolicyOverride) -> None:
         """Save override to disk."""
         p = self.override_dir / f"{override.policy_id}.json"
-        p.write_text(json.dumps(override.to_dict().decode().decode(), indent=2), encoding="utf-8")
+        p.write_text(json.dumps(override.to_dict().decode(), indent=2), encoding="utf-8")

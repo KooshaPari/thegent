@@ -434,8 +434,8 @@ class UnifiedSessionIndex:
                         session.ended_at.isoformat() if session.ended_at else None,
                         session.prompt_tokens,
                         session.completion_tokens,
-                        json.dumps(session.messages).decode().decode(),
-                        json.dumps(session.metadata).decode().decode(),
+                        json.dumps(session.messages).decode(),
+                        json.dumps(session.metadata).decode(),
                         session.summary,
                         datetime.now(UTC).isoformat(),
                     ),
@@ -651,6 +651,7 @@ if __name__ == "__main__":
 
 
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import shlex
 
 
@@ -835,7 +836,7 @@ class HarnessTUIMapper:
             raise HarnessActionError(f"Missing required parameter: {e}")
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 shlex.split(cmd),
                 capture_output=True,
                 text=True,

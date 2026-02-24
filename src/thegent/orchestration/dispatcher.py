@@ -197,7 +197,7 @@ class SubAgentDispatcher:
                     timeout=timeout,
                 )
                 return result
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 _log.error("Node %s timed out after %.1fs", node_id, timeout)
                 return DispatchResult(
                     node_id=node_id,

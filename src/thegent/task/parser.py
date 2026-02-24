@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 
 class TaskParseError(Exception):

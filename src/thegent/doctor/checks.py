@@ -5,31 +5,20 @@ from thegent.doctor.checks_env import check_environment as _check_environment_im
 from thegent.doctor.checks_env import check_shim_binaries as _check_shim_binaries_impl
 
 import os
-import re
 import shutil
 import subprocess
 import time
-from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
-import yaml
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 
 from thegent.config import ThegentSettings
 from thegent.doctor_dependencies import check_dependencies as _check_dependencies_impl
 from thegent.doctor_models import CheckResult
-from thegent.doctor_project_root import detect_project_root
 from thegent.doctor_setup_checks import (
     check_configuration as _check_configuration_impl,
     check_connectivity as _check_connectivity_impl,
     check_isolation as _check_isolation_impl,
-)
-from thegent.doctor_shell_nix import (
-    check_nix as _check_nix_impl,
-    check_shell as _check_shell_impl,
 )
 from thegent.infra import run_subprocess_optimized
 
@@ -57,7 +46,7 @@ def _check_connectivity(auto_start: bool = True) -> list[CheckResult]:
 
 def _check_environment() -> list[CheckResult]:
     """Check environment variables and PATH configuration.
-    
+
     Delegates to thegent.doctor.checks_env module.
     """
     return _check_environment_impl(project_root=_project_root_cache)
@@ -65,7 +54,7 @@ def _check_environment() -> list[CheckResult]:
 
 def _check_shim_binaries() -> list[CheckResult]:
     """Check thegent-hooks and thegent-shims (Rust) binary version and availability.
-    
+
     Delegates to thegent.doctor.checks_env module.
     """
     return _check_shim_binaries_impl(project_root=_project_root_cache)

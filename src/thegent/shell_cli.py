@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Final, Literal, TypeAlias
 
@@ -21,7 +22,7 @@ _ALIAS_PROBE_TIMEOUT: Final = 2
 def _run_alias_probe() -> AliasProbeResult:
     """Run a focused shell alias probe and return a typed status + reason."""
     try:
-        result = subprocess.run(
+        result = shim_run(
             ["zsh", "-c", _ALIAS_PROBE_CMD],
             capture_output=True,
             text=True,
@@ -206,7 +207,7 @@ def shell_reload() -> None:
 
     # Try to source .zshrc
     try:
-        result = subprocess.run(
+        result = shim_run(
             ["zsh", "-c", "source ~/.zshrc"],
             capture_output=True,
             text=True,
@@ -316,7 +317,7 @@ def shell_benchmark(iterations: int = typer.Option(10, "--iterations", "-n", hel
     times = []
     for i in range(iterations):
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["/usr/bin/time", "-p", "zsh", "-i", "-c", "exit"],
                 capture_output=True,
                 text=True,
@@ -585,7 +586,7 @@ def shell_platform() -> None:
 
     # Check shell
     try:
-        result = subprocess.run(["zsh", "--version"], capture_output=True, text=True, timeout=2, check=False)
+        result = shim_run(["zsh", "--version"], capture_output=True, text=True, timeout=2, check=False)
         if result.returncode == 0:
             parts = result.stdout.strip().split()
             if len(parts) > 1:

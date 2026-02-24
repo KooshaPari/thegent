@@ -1,3 +1,4 @@
+<DONE>
 ---
 title: FastMCP (Python) vs Official Rust MCP SDK - Comprehensive Comparison for thegent
 date: 2026-02-22

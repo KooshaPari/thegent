@@ -1,3 +1,4 @@
+<DONE>
 # Comprehensive Integrations Research & Plan: JetBrains, Hooks, MCP, Skills, Shell, OS
 
 **Date**: 2026-02-18

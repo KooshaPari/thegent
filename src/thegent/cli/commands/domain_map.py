@@ -6,8 +6,6 @@ Apply mode is intentionally disabled until idempotent API execution is implement
 
 from __future__ import annotations
 
-import json
-import re
 from urllib.parse import urlparse
 
 

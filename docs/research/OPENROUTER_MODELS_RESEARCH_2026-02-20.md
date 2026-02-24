@@ -1,3 +1,4 @@
+<DONE>
 # OpenRouter Models Endpoint Research & Codex Warning Fix
 
 **Date:** 2026-02-20

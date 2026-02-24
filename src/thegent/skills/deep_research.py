@@ -2,6 +2,7 @@ import orjson as json
 import logging
 import re
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ def run_curl(url: str, user_agent: str = DEFAULT_USER_AGENT) -> str:
     safe_url = url.replace(" ", "%20").replace("|", "%7C").replace("^", "%5E")
 
     try:
-        result = subprocess.run(
+        result = shim_run(
             ["curl", "-L", "-H", f"User-Agent: {user_agent}", "-s", safe_url],
             capture_output=True,
             text=True,

@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump: Batch File Operations Implementation (2026-02-19)
 
 ## Task: dx-improve-verbosity-batch-files

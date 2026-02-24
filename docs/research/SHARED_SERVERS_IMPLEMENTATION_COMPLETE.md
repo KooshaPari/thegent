@@ -1,3 +1,4 @@
+<DONE>
 # Shared LSP/MCP Servers - Implementation Complete
 
 **Date:** 2026-02-18  

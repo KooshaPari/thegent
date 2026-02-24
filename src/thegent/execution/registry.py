@@ -1,22 +1,14 @@
 """Execution run metadata and registry for thegent orchestration."""
 
-import contextlib
-import hashlib
 import orjson as json
 import logging
-import os
-import socket
-import time
 import uuid
-from datetime import UTC, datetime, timedelta
-from enum import StrEnum
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import httpx
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field
 
-from thegent.config import ThegentSettings
 from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent.execution_coercion_helpers import as_float as _as_float_impl
 from thegent.execution_coercion_helpers import as_int as _as_int_impl
@@ -28,22 +20,7 @@ from thegent.execution_event_builders import (
     build_schema_marker_event,
 )
 from thegent.execution_hash_helpers import calculate_stable_record_hash
-from thegent.execution_jsonl_parsers import parse_checkpoint_by_id as _parse_checkpoint_by_id_impl
-from thegent.execution_jsonl_parsers import parse_checkpoint_line as _parse_checkpoint_line_impl
-from thegent.execution_jsonl_parsers import parse_circuit_failure as _parse_circuit_failure_impl
-from thegent.execution_jsonl_parsers import parse_dlq_item as _parse_dlq_item_impl
-from thegent.execution_jsonl_parsers import parse_fatigue_line as _parse_fatigue_line_impl
-from thegent.execution_jsonl_parsers import parse_override_unexpired as _parse_override_unexpired_impl
-from thegent.execution_jsonl_parsers import process_dlq_line as _process_dlq_line_impl
-from thegent.execution_run_scan_helpers import check_session_id as _check_session_id_impl
-from thegent.execution_run_scan_helpers import extract_domain_tag as _extract_domain_tag_impl
-from thegent.execution_run_scan_helpers import extract_run_id as _extract_run_id_impl
-from thegent.execution_run_scan_helpers import extract_session_id as _extract_session_id_impl
-from thegent.execution_run_scan_helpers import filter_expired_record as _filter_expired_record_impl
-from thegent.execution_run_scan_helpers import process_calibration_entry as _process_calibration_entry_impl
-from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry_impl
-from thegent.execution_run_scan_helpers import process_token_match as _process_token_match_impl
-from thegent.execution_run_scan_helpers import update_run_state as _update_run_state_impl
+from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -123,6 +100,26 @@ def _as_bool(value: Any, default: bool) -> bool:
     return _as_bool_impl(value, default)
 
 
+def _process_run_entry(line: str, runs: dict[str, dict[str, Any]]) -> None:
+    """Process a single line from the registry file into a run entry."""
+    try:
+        entry = json.loads(line)
+        run_id = entry.get("run_id") or entry.get("id")
+        if run_id:
+            runs[run_id] = entry
+    except Exception:
+        pass
+
+
+def _check_session_id(line: str, session_id: str) -> bool:
+    """Check if a line contains the given session_id."""
+    try:
+        entry = json.loads(line)
+        return entry.get("session_id") == session_id
+    except Exception:
+        return False
+
+
 from .state import RunState, RunMeta, CheckpointMeta, CalibrationRegistry
 
 class RunRegistry:
@@ -168,7 +165,7 @@ class RunRegistry:
             marker = build_schema_marker_event(self.SCHEMA_VERSION)
             marker["hash"] = self._calculate_hash(marker)
             with self.registry_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(marker).decode().decode() + "\n")
+                f.write(json.dumps(marker).decode() + "\n")
 
     def _get_last_hash(self) -> str | None:
         """Return the hash of the last record in the registry."""
@@ -283,7 +280,7 @@ class RunRegistry:
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def register_feedback(self, run_id: str, score: float, note: str | None = None) -> None:
         """Record operator feedback for a run with hash chaining."""
@@ -295,7 +292,7 @@ class RunRegistry:
         )
         event["hash"] = self._calculate_hash(event)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def register_pause(
         self,
@@ -313,7 +310,7 @@ class RunRegistry:
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def register_resume(self, run_id: str) -> None:
         """Record run resume for state-aware orchestration (G-KD-03)."""
@@ -321,7 +318,7 @@ class RunRegistry:
         event["hash"] = self._calculate_hash(event)
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def get_run_state(self, run_id: str) -> RunState | None:
         """Return current run state from registry events (G-KD-03)."""
@@ -531,7 +528,7 @@ class MessageRegistry:
             "event": "update",
         }
         with self.messages_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(update).decode().decode() + "\n")
+            f.write(json.dumps(update).decode() + "\n")
 
 
 class AuditEntry(BaseModel):

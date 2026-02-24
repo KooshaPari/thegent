@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 
 @dataclass
@@ -152,7 +152,7 @@ class ConfigManager:
         if self._config_file.suffix in (".yaml", ".yml"):
             self._config_file.write_text(yaml.dump(data, default_flow_style=False))
         else:
-            self._config_file.write_text(json.dumps(data, indent=2).decode().decode())
+            self._config_file.write_text(json.dumps(data, indent=2))
 
     def get(self) -> TUIConfig:
         """Get current configuration."""

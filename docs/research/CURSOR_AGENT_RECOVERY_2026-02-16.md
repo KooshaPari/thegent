@@ -1,3 +1,4 @@
+<DONE>
 # Cursor-Agent Recovery Note — 2026-02-16
 
 **Purpose:** Placeholder for manually recovered content from Cursor chat conversations on 2026-02-16.

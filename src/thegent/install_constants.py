@@ -46,7 +46,7 @@ HARNESS_CONFIG_PATHS = {
 
 def detect_installed_harnesses() -> list[str]:
     """Auto-detect which harnesses are installed on the system.
-    
+
     Returns list of detected harness names (e.g., ["claude-code", "codex", "droid"])
     """
     import os
@@ -56,7 +56,7 @@ def detect_installed_harnesses() -> list[str]:
     home = Path.home()
 
     for harness, config_path in HARNESS_CONFIG_PATHS.items():
-        expanded = Path(os.path.expanduser(config_path))
+        expanded = Path(config_path).expanduser()
         if expanded.exists():
             detected.append(harness)
 
@@ -90,11 +90,11 @@ def get_targets_for_install(
     auto_detect: bool = True,
 ) -> list[str]:
     """Get list of targets to install based on target parameter.
-    
+
     Args:
         target: Target string ("all", "auto", specific target, or comma-separated list)
         auto_detect: If True and target="auto", detect installed harnesses
-    
+
     Returns:
         List of target names to install
     """
@@ -175,6 +175,48 @@ FACTORY_FILES = {
     ".factory/mcp.json": "mcp.json",
     ".factory/config.json": "config.json",
     ".factory/settings.json": "settings.json",
+}
+
+# Project-level scaffold files (go to project_dir/.client)
+FACTORY_PROJECT_FILES = {
+    ".factory/hooks": ".factory/hooks",
+    ".factory/skills": ".factory/skills",
+    ".factory/commands": ".factory/commands",
+    ".factory/droids": ".factory/droids",
+    ".factory/plugins": ".factory/plugins",
+    ".factory/mcp.json": ".factory/mcp.json",
+    ".factory/config.json": ".factory/config.json",
+    ".factory/settings.json": ".factory/settings.json",
+}
+
+CODEX_PROJECT_FILES = {
+    ".codex/hooks": ".codex/hooks",
+    ".codex/skills": ".codex/skills",
+    ".codex/commands": ".codex/commands",
+    ".codex/droids": ".codex/droids",
+    ".codex/plugins": ".codex/plugins",
+    ".codex/mcp.json": ".codex/mcp.json",
+    ".codex/config.json": ".codex/config.json",
+    ".codex/settings.json": ".codex/settings.json",
+}
+
+CLAUDE_PROJECT_FILES = {
+    ".claude/hooks": ".claude/hooks",
+    ".claude/skills": ".claude/skills",
+    ".claude/commands": ".claude/commands",
+    ".claude/agents": ".claude/agents",
+    ".claude/contracts": ".claude/contracts",
+    ".claude/templates": ".claude/templates",
+    ".claude/mcp_servers.json": ".claude/mcp_servers.json",
+    ".claude/qa-config.json": ".claude/qa-config.json",
+    "CLAUDE.md": "CLAUDE.md",
+}
+
+CURSOR_PROJECT_FILES = {
+    ".cursor/hooks": ".cursor/hooks",
+    ".cursor/skills-cursor": ".cursor/skills",
+    ".cursor/mcp_servers.json": ".cursor/mcp_servers.json",
+    ".cursor/qa-config.json": ".cursor/qa-config.json",
 }
 
 THEGENT_TOOLS = [

@@ -5,12 +5,17 @@ from __future__ import annotations
 import orjson as json
 import os
 import signal
+import subprocess
 import sys
 import time
 from typing import Any
 
 from thegent.cli.commands import cli as _cli_surface
 from thegent.cli.commands import _cli_shared as _shared
+from thegent.cli.commands import governance_data_protection_cmds
+
+# Backward compatibility - expose commonly used modules for test mocking
+Columns = getattr(_cli_surface, "Columns", None)
 
 
 def __getattr__(name: str) -> Any:
@@ -20,8 +25,34 @@ def __getattr__(name: str) -> Any:
 
         globals()[name] = AGENT_LABELS
         return AGENT_LABELS
+    
+    # Lazy load model list commands
+    _model_list_funcs = (
+        "_list_minimax_models", "_list_glm_models", "_list_cursor_models",
+        "_list_gemini_models", "_list_copilot_models", "_list_claude_models",
+        "_list_codex_models", "_list_antigravity_models", "_list_kiro_models",
+        "_list_copilot_models_fallback", "_list_codex_models_fallback",
+    )
+    if name in _model_list_funcs:
+        from thegent.cli.commands import model_cmds_config
+        func = getattr(model_cmds_config, name, None)
+        if func:
+            globals()[name] = func
+            return func
+        # Try model_cmds_rules
+        from thegent.cli.commands import model_cmds_rules
+        func = getattr(model_cmds_rules, name, None)
+        if func:
+            globals()[name] = func
+            return func
+    
     if hasattr(_cli_surface, name):
         return getattr(_cli_surface, name)
+    
+    # Check governance_data_protection_cmds
+    if hasattr(governance_data_protection_cmds, name):
+        return getattr(governance_data_protection_cmds, name)
+    
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

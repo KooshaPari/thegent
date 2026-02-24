@@ -7,10 +7,10 @@
 //! - RoutingDecision: Result of a routing decision
 //! - RouterMetrics: Metrics from routing decisions
 
-use pyo3::prelude::*;
+use crate::risk::{ComplexityLevel, RiskCalculator, RiskFactors};
+use crate::router::{ParetoRouter, RouterConfig, RouterMetrics, RoutingDecision, RoutingMode};
 use pyo3::exceptions::PyValueError;
-use crate::risk::{RiskCalculator, RiskFactors, ComplexityLevel};
-use crate::router::{ParetoRouter, RouterConfig, RoutingMode, RoutingDecision, RouterMetrics};
+use pyo3::prelude::*;
 
 /// Routing mode enum exposed to Python.
 #[pyclass]
@@ -144,7 +144,11 @@ impl PyRiskFactors {
     fn __repr__(&self) -> String {
         format!(
             "RiskFactors(complexity={:?}, cost={}, deps={}, security={}, max={})",
-            self.complexity, self.cost_cents, self.dependency_count, self.security_sensitive, self.max_cost_cents
+            self.complexity,
+            self.cost_cents,
+            self.dependency_count,
+            self.security_sensitive,
+            self.max_cost_cents
         )
     }
 }
@@ -239,8 +243,11 @@ impl PyRouterMetrics {
     fn __repr__(&self) -> String {
         format!(
             "RouterMetrics(total={}, lifecycle={}, thegent={}, changes={}, hysteresis={})",
-            self.total_decisions, self.lifecycle_count, self.thegent_count,
-            self.route_changes, self.hysteresis_activations
+            self.total_decisions,
+            self.lifecycle_count,
+            self.thegent_count,
+            self.route_changes,
+            self.hysteresis_activations
         )
     }
 }
@@ -281,7 +288,9 @@ impl PyParetoRouter {
             return Err(PyValueError::new_err("low_threshold must be in [0.0, 1.0]"));
         }
         if high_threshold < 0.0 || high_threshold > 1.0 {
-            return Err(PyValueError::new_err("high_threshold must be in [0.0, 1.0]"));
+            return Err(PyValueError::new_err(
+                "high_threshold must be in [0.0, 1.0]",
+            ));
         }
 
         let config = RouterConfig {
@@ -310,7 +319,9 @@ impl PyParetoRouter {
             return Err(PyValueError::new_err("low_threshold must be in [0.0, 1.0]"));
         }
         if high_threshold < 0.0 || high_threshold > 1.0 {
-            return Err(PyValueError::new_err("high_threshold must be in [0.0, 1.0]"));
+            return Err(PyValueError::new_err(
+                "high_threshold must be in [0.0, 1.0]",
+            ));
         }
 
         let config = RouterConfig {
@@ -393,7 +404,10 @@ fn thegent_router(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyRouterMetrics>()?;
     m.add_class::<PyParetoRouter>()?;
 
-    m.add("__doc__", "Pareto routing engine with hysteresis for task distribution")?;
+    m.add(
+        "__doc__",
+        "Pareto routing engine with hysteresis for task distribution",
+    )?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
 
     Ok(())

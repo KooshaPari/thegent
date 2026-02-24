@@ -10,6 +10,7 @@ import logging
 import os
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 import time
 import webbrowser
@@ -1100,7 +1101,7 @@ def run_login(
             run_kwargs["capture_output"] = True
             run_kwargs["text"] = True
         try:
-            proc = subprocess.run(
+            proc = shim_run(
                 [binary, "-config", str(config_path), flag],
                 **run_kwargs,
             )

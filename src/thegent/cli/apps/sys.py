@@ -216,7 +216,7 @@ def sys_shadow(
 
     elif action == "stats":
         stats = get_shadow_stats(repo_path)
-        console.print(json.dumps(stats, indent=2).decode().decode())
+        console.print(json.dumps(stats, indent=2))
 
     else:
         console.print(f"[red]Unknown action: {action}[/red]")

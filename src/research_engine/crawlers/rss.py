@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import feedparser
 
@@ -43,7 +43,7 @@ class RSSCrawler(BaseCrawler):
         Raises:
             feedparser exceptions on network/parse failures.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         items = []
         for feed_url in self._feeds:
             feed = feedparser.parse(feed_url)

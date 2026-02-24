@@ -8,13 +8,15 @@ Defines JSONL trace format with three core record types:
 
 import gzip
 import orjson as json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
+
 
 @dataclass
-class ToolCallRecord:
+class ToolCallRecord(SerializableMixin):
     """Record of a single tool invocation.
 
     Examples:
@@ -34,10 +36,6 @@ class ToolCallRecord:
     redacted_fields: list[str] | None = None  # Fields that were redacted
     metadata: dict[str, Any] = field(default_factory=dict)  # Extra context
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return asdict(self)
-
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "ToolCallRecord":
         """Construct from dictionary (e.g., JSON parsed)."""
@@ -47,7 +45,7 @@ class ToolCallRecord:
 
 
 @dataclass
-class DecisionRecord:
+class DecisionRecord(SerializableMixin):
     """Record of an LLM decision or routing choice.
 
     Examples:
@@ -66,10 +64,6 @@ class DecisionRecord:
     confidence: float | None = None  # Confidence score (0.0-1.0) if applicable
     metadata: dict[str, Any] = field(default_factory=dict)  # Extra context
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return asdict(self)
-
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "DecisionRecord":
         """Construct from dictionary."""
@@ -79,7 +73,7 @@ class DecisionRecord:
 
 
 @dataclass
-class SessionRecord:
+class SessionRecord(SerializableMixin):
     """Metadata about a trace session.
 
     Appears once at the start of each trace file.
@@ -92,10 +86,6 @@ class SessionRecord:
     config: dict[str, Any] = field(default_factory=dict)  # Configuration snapshot
     environment: dict[str, str] = field(default_factory=dict)  # Environment variables (redacted)
     metadata: dict[str, Any] = field(default_factory=dict)  # Extra context
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return asdict(self)
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> "SessionRecord":
@@ -155,7 +145,7 @@ class TraceFile:
         data = record.to_dict() if hasattr(record, "to_dict") else record
         data["__type__"] = record.__class__.__name__
 
-        line = json.dumps(data, default=str).decode().decode() + "\n"
+        line = json.dumps(data, default=str).decode() + "\n"
 
         if self.compression == "gzip":
             with gzip.open(self.path, "at", encoding="utf-8") as f:

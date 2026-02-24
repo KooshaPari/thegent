@@ -4,7 +4,7 @@ import logging
 import os
 import platform
 import shutil
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class VfsAdapter:
                 shutil.copytree(src, dst, dirs_exist_ok=True)
             else:
                 # Linux: try cp --reflink=auto
-                subprocess.run(
+                shim_run(
                     ["cp", "-a", "--reflink=auto", str(src) + "/.", str(dst)], check=True, capture_output=True
                 )
         except Exception as e:
@@ -102,7 +102,7 @@ class VfsAdapter:
         mount_opts = f"lowerdir={self.base_skel_dir},upperdir={upper_dir},workdir={work_dir}"
 
         # This will likely fail without sudo, but we include it for the "OS User (opt-in)" future.
-        subprocess.run(
+        shim_run(
             ["mount", "-t", "overlay", "overlay", "-o", mount_opts, str(target_dir)], check=True, capture_output=True
         )
         logger.info(f"Mounted OverlayFS for tenant {tenant_id} at {target_dir}")
@@ -115,7 +115,7 @@ class VfsAdapter:
         # Check if it's a mount point
         if self._is_mount(target_dir):
             try:
-                subprocess.run(["umount", str(target_dir)], check=True, capture_output=True)
+                shim_run(["umount", str(target_dir)], check=True, capture_output=True)
                 # Also cleanup overlay metadata
                 overlay_base = target_dir.parent / ".overlay"
                 shutil.rmtree(overlay_base / tenant_id, ignore_errors=True)

@@ -76,7 +76,7 @@ def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
         raise typer.Exit(1)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(snap, indent=2).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(snap, indent=2) + "\n")
         return
     lines = [
         f"[bold]Handoff Snapshot:[/bold] {snapshot_id}",
@@ -109,7 +109,7 @@ def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
     snapshots = hm.list_pending_snapshots(limit=limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(snapshots).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(snapshots).decode() + "\n")
         return
     if not snapshots:
         console.print("[dim]No pending handoffs.[/dim]")

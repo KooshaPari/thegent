@@ -1,3 +1,4 @@
+<DONE>
 # Writeup Generation Status
 
 **Date:** 2026-02-18  

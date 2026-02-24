@@ -4,11 +4,11 @@ Includes Mergiraf integration, conflict prediction, and structural merge.
 
 import orjson as json
 import logging
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class SmartMerger:
         """Perform AST-aware merge using Mergiraf."""
         try:
             cmd = [self.mergiraf_path, "merge", str(base), str(local), str(remote), "-o", str(output)]
-            result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+            result = shim_run(cmd, capture_output=True, text=True, check=False)
             if result.returncode == 0:
                 logger.info(f"AST merge successful for {output}")
                 return True
@@ -70,7 +70,7 @@ class SmartMerger:
                 local = json.loads(local_file.read_text())
                 remote = json.loads(remote_file.read_text())
                 merged = self._deep_merge(base, local, remote)
-                output_file.write_text(json.dumps(merged, indent=2).decode().decode())
+                output_file.write_text(json.dumps(merged, indent=2))
                 return True
             if ext in (".yaml", ".yml"):
                 base = yaml.safe_load(base_file.read_text())

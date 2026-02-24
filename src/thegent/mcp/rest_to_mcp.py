@@ -143,3 +143,19 @@ def build_openai_tool_def(tool: RestToolDef) -> dict:
             "parameters": tool.param_schema,
         },
     }
+
+
+# Register with unified adapter registry
+from thegent.adapters.ports import AdapterRegistry
+
+class McpAdapter:
+    """MCP adapter wrapper for registry"""
+
+    def __init__(self):
+        self._adapter = RestToMcpAdapter()
+
+    def call(self, **kwargs) -> dict:
+        return {"status": "mcp_adapter_ready"}
+
+
+AdapterRegistry.register("mcp", McpAdapter())

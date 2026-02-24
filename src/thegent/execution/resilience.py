@@ -1,49 +1,19 @@
 """Execution run metadata and registry for thegent orchestration."""
 
-import contextlib
 import hashlib
 import orjson as json
 import logging
 import os
-import socket
 import time
 import uuid
 from datetime import UTC, datetime, timedelta
-from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-import httpx
-from pydantic import BaseModel, Field, ValidationError
 
-from thegent.config import ThegentSettings
 from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent.execution_coercion_helpers import as_float as _as_float_impl
 from thegent.execution_coercion_helpers import as_int as _as_int_impl
-from thegent.execution_event_builders import (
-    build_feedback_event,
-    build_finish_event,
-    build_pause_event,
-    build_resume_event,
-    build_schema_marker_event,
-)
-from thegent.execution_hash_helpers import calculate_stable_record_hash
-from thegent.execution_jsonl_parsers import parse_checkpoint_by_id as _parse_checkpoint_by_id_impl
-from thegent.execution_jsonl_parsers import parse_checkpoint_line as _parse_checkpoint_line_impl
-from thegent.execution_jsonl_parsers import parse_circuit_failure as _parse_circuit_failure_impl
-from thegent.execution_jsonl_parsers import parse_dlq_item as _parse_dlq_item_impl
-from thegent.execution_jsonl_parsers import parse_fatigue_line as _parse_fatigue_line_impl
-from thegent.execution_jsonl_parsers import parse_override_unexpired as _parse_override_unexpired_impl
-from thegent.execution_jsonl_parsers import process_dlq_line as _process_dlq_line_impl
-from thegent.execution_run_scan_helpers import check_session_id as _check_session_id_impl
-from thegent.execution_run_scan_helpers import extract_domain_tag as _extract_domain_tag_impl
-from thegent.execution_run_scan_helpers import extract_run_id as _extract_run_id_impl
-from thegent.execution_run_scan_helpers import extract_session_id as _extract_session_id_impl
-from thegent.execution_run_scan_helpers import filter_expired_record as _filter_expired_record_impl
-from thegent.execution_run_scan_helpers import process_calibration_entry as _process_calibration_entry_impl
-from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry_impl
-from thegent.execution_run_scan_helpers import process_token_match as _process_token_match_impl
-from thegent.execution_run_scan_helpers import update_run_state as _update_run_state_impl
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -139,7 +109,7 @@ class InterruptionTracker:
             "severity": severity,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def get_fatigue_score(self, window_s: int = 3600) -> float:
         """Calculate fatigue score based on recent interruptions (0.0-1.0)."""
@@ -211,7 +181,7 @@ class HandoffManager:
             "confirmed": False,
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
         return snapshot_id
 
     def confirm_handoff(self, snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> bool:
@@ -227,7 +197,7 @@ class HandoffManager:
                 "reason": "snapshot_not_found",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode().decode() + "\n")
+                f.write(json.dumps(invalid_event).decode() + "\n")
             return False
 
         if confidence < 0.0 or confidence > 1.0:
@@ -241,7 +211,7 @@ class HandoffManager:
                 "reason": "confidence_out_of_range",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode().decode() + "\n")
+                f.write(json.dumps(invalid_event).decode() + "\n")
             return False
 
         snapshot = self.get_snapshot(snapshot_id)
@@ -256,7 +226,7 @@ class HandoffManager:
                 "reason": "invalid_snapshot_shape",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode().decode() + "\n")
+                f.write(json.dumps(invalid_event).decode() + "\n")
             return False
 
         confidence_state = "high"
@@ -278,7 +248,7 @@ class HandoffManager:
                 "run_count": len(snapshot.get("run_ids", [])),
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(low_confidence_event).decode().decode() + "\n")
+                f.write(json.dumps(low_confidence_event).decode() + "\n")
 
         self._confirmed_handoffs.add(snapshot_id)
         # Update registry record (simplified: append confirmation event)
@@ -294,7 +264,7 @@ class HandoffManager:
             "continuity_envelope_version": "v2.0",  # WP-12005
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
         return True
 
     def get_snapshot(self, snapshot_id: str) -> dict[str, Any] | None:
@@ -365,7 +335,7 @@ class DeferralQueue:
             "status": "deferred",
         }
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def list_deferred(self) -> list[dict[str, Any]]:
         """List all currently deferred tasks."""
@@ -398,7 +368,7 @@ class DeferralQueue:
                 if data.get("run_id") == run_id and data.get("status") == "deferred":
                     data["status"] = "resumed"
                     found = True
-                lines.append(json.dumps(data).decode().decode() + "\n")
+                lines.append(json.dumps(data).decode() + "\n")
         if found:
             with self.path.open("w", encoding="utf-8") as f:
                 f.writelines(lines)
@@ -521,7 +491,7 @@ class DLQManager:
             event["poison_pill_count"] = existing[0].get("poison_pill_count", 0) + 1
 
         with self.path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
         # WP-3008: Integrate EscalationQueue with DLQ (Option C)
         try:
@@ -695,7 +665,7 @@ class CircuitBreakerRegistry:
             "error_hash": error_hash,
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def is_open(self, target: str, category: str = "agent") -> bool:
         """Check if the circuit for a target in a category is open (blocked)."""
@@ -741,7 +711,7 @@ class OverrideRegistry:
             "expires_at_utc": datetime.fromtimestamp(expires_at, tz=UTC).isoformat(),
         }
         with self.registry_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def has_unexpired(self, owner: str) -> bool:
         """True if owner has an override that has not yet expired."""
@@ -789,7 +759,7 @@ class EscalationQueue:
             "status": "pending",
         }
         with self.queue_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def list_pending(self, past_sla_only: bool = False, limit: int = 50) -> list[dict[str, Any]]:
         """List escalation items. If past_sla_only, return only items past escalate_by."""
@@ -835,7 +805,7 @@ class EscalationQueue:
                     data["status"] = resolution
                     data["resolved_at_utc"] = datetime.now(UTC).isoformat()
                     updated = True
-                new_lines.append(json.dumps(data).decode().decode())
+                new_lines.append(json.dumps(data).decode())
             except Exception:
                 new_lines.append(line)
         if updated:

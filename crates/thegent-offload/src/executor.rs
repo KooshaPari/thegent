@@ -1,12 +1,12 @@
-use anyhow::{Result, Context};
+use crate::{ExecutionRequest, ExecutionResponse, ExecutionStatus, IsolationLevel, SyncState};
+use anyhow::{Context, Result};
+use chrono::Utc;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use tokio::process::Command;
-use tracing::{info, error};
-use crate::{ExecutionRequest, ExecutionResponse, ExecutionStatus, SyncState, IsolationLevel};
+use tracing::{error, info};
 use uuid::Uuid;
-use chrono::Utc;
-use std::collections::HashMap;
 
 pub struct Executor {
     base_dir: PathBuf,
@@ -24,9 +24,10 @@ impl Executor {
         info!("Executing task {} in {}", task_id, req.cwd);
 
         let work_dir = match req.options.isolation_level {
-            IsolationLevel::Worktree => {
-                self.setup_worktree(&req).await.context("Failed to setup worktree")?
-            }
+            IsolationLevel::Worktree => self
+                .setup_worktree(&req)
+                .await
+                .context("Failed to setup worktree")?,
             _ => {
                 // For Process isolation, just use the base_dir + req.cwd
                 self.base_dir.join(&req.cwd)
@@ -47,10 +48,10 @@ impl Executor {
 
         let mut cmd = Command::new("thegent");
         cmd.arg("run")
-           .arg(&req.prompt)
-           .current_dir(&work_dir)
-           .stdout(Stdio::piped())
-           .stderr(Stdio::piped());
+            .arg(&req.prompt)
+            .current_dir(&work_dir)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
 
         // Inject environment variables
         for (k, v) in &req.env_vars {
@@ -68,7 +69,11 @@ impl Executor {
 
         Ok(ExecutionResponse {
             request_id: task_id,
-            status: if output.status.success() { ExecutionStatus::Completed } else { ExecutionStatus::Failed("Process exited with non-zero code".to_string()) },
+            status: if output.status.success() {
+                ExecutionStatus::Completed
+            } else {
+                ExecutionStatus::Failed("Process exited with non-zero code".to_string())
+            },
             stdout: Some(String::from_utf8_lossy(&output.stdout).to_string()),
             stderr: Some(String::from_utf8_lossy(&output.stderr).to_string()),
             exit_code: output.status.code(),
@@ -81,7 +86,11 @@ impl Executor {
         let worktree_path = self.base_dir.join(format!("shadow-{}", req.id));
 
         // 1. git worktree add <path> <commit>
-        let commit = req.sync_state.as_ref().map(|s| s.base_commit.as_str()).unwrap_or("HEAD");
+        let commit = req
+            .sync_state
+            .as_ref()
+            .map(|s| s.base_commit.as_str())
+            .unwrap_or("HEAD");
 
         let output = Command::new("git")
             .arg("worktree")
@@ -102,9 +111,10 @@ impl Executor {
             if let Some(patch) = &sync_state.patch {
                 // For simplicity, we assume patch is a raw diff string
                 let mut patch_cmd = Command::new("git");
-                patch_cmd.arg("apply")
-                         .current_dir(&worktree_path)
-                         .stdin(Stdio::piped());
+                patch_cmd
+                    .arg("apply")
+                    .current_dir(&worktree_path)
+                    .stdin(Stdio::piped());
 
                 let mut child = patch_cmd.spawn()?;
                 let mut stdin = child.stdin.take().unwrap();

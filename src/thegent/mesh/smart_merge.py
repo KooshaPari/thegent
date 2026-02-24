@@ -12,6 +12,7 @@ from __future__ import annotations
 import contextlib
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -115,8 +116,8 @@ def configure_mergiraf_driver(
     cwd = None if global_config else (repo_root or Path.cwd())
 
     try:
-        subprocess.run(git_config_args_name, check=True, capture_output=True, cwd=cwd)
-        subprocess.run(git_config_args_driver, check=True, capture_output=True, cwd=cwd)
+        shim_run(git_config_args_name, check=True, capture_output=True, cwd=cwd)
+        shim_run(git_config_args_driver, check=True, capture_output=True, cwd=cwd)
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
@@ -228,7 +229,7 @@ def _merge_with_mergiraf(
         cmd += ["-p", path_hint]
 
     try:
-        result = subprocess.run(
+        result = shim_run(
             cmd,
             capture_output=True,
             text=True,
@@ -279,7 +280,7 @@ def _merge_with_git_merge_file(
         else:
             theirs_arg = str(theirs)
 
-        result = subprocess.run(
+        result = shim_run(
             [
                 "git",
                 "merge-file",
@@ -412,7 +413,7 @@ class SmartMerger:
         """
         # Determine the current branch in the worktree
         try:
-            branch_result = subprocess.run(
+            branch_result = shim_run(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 cwd=str(worktree_path),
                 capture_output=True,
@@ -434,7 +435,7 @@ class SmartMerger:
         used_mergiraf = False
         if self._binary and self._config.fallback_to_git:
             try:
-                subprocess.run(
+                shim_run(
                     [
                         "git",
                         "config",
@@ -452,7 +453,7 @@ class SmartMerger:
 
         # Perform the merge
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [
                     "git",
                     "merge",
@@ -530,7 +531,7 @@ class SmartMerger:
             cmd += ["-p", path_hint]
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,

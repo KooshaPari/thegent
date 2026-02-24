@@ -41,7 +41,7 @@
 //! }
 //! ```
 
-use anyhow::{Context, Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 
 pub use thegent_zmx_interop::ZmxError;
 
@@ -159,8 +159,7 @@ impl ZmxClient {
     /// Returns an error if the zmx binary is not available or returns a
     /// non-zero exit code.
     pub fn list_sessions(&self) -> Result<Vec<ZmxSession>> {
-        let names =
-            thegent_zmx_interop::list_sessions().context("failed to list zmx sessions")?;
+        let names = thegent_zmx_interop::list_sessions().context("failed to list zmx sessions")?;
 
         let mut sessions: Vec<ZmxSession> = names
             .into_iter()
@@ -583,9 +582,7 @@ mod tests {
     fn live_create_and_list_roundtrip() {
         let client = ZmxClient::new();
         let session_name = "rust-zmx-wrapper-test";
-        client
-            .create(session_name, "true")
-            .expect("create session");
+        client.create(session_name, "true").expect("create session");
         let sessions = client.list_sessions().expect("list sessions");
         assert!(
             sessions.iter().any(|s| s.name == session_name),

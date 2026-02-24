@@ -4,6 +4,7 @@ Includes worktree creation, branch coordination, and cleanup.
 
 import logging
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 
@@ -25,12 +26,12 @@ class WorktreeManager:
             branch_name = f"mesh/agent-{agent_id}"
 
         try:
-            subprocess.run(
+            shim_run(
                 ["git", "rev-parse", "--verify", branch_name], cwd=self.project_root, capture_output=True, check=False
             )
 
             cmd = ["git", "worktree", "add", str(wt_path), branch_name]
-            result = subprocess.run(cmd, cwd=self.project_root, capture_output=True, text=True, check=False)
+            result = shim_run(cmd, cwd=self.project_root, capture_output=True, text=True, check=False)
 
             if result.returncode == 0:
                 logger.info(f"Created worktree for agent {agent_id} at {wt_path}")
@@ -46,10 +47,10 @@ class WorktreeManager:
         wt_path = self.mesh_worktrees_dir / f"agent-{agent_id}"
         if wt_path.exists():
             try:
-                subprocess.run(
+                shim_run(
                     ["git", "worktree", "remove", "--force", str(wt_path)], cwd=self.project_root, check=True
                 )
-                subprocess.run(["git", "worktree", "prune"], cwd=self.project_root, check=True)
+                shim_run(["git", "worktree", "prune"], cwd=self.project_root, check=True)
                 logger.info(f"Cleaned up worktree for agent {agent_id}")
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to cleanup worktree: {e}")
@@ -57,7 +58,7 @@ class WorktreeManager:
     def list_active_worktrees(self) -> list[dict[str, str]]:
         """List current git worktrees."""
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["git", "worktree", "list", "--porcelain"],
                 cwd=self.project_root,
                 capture_output=True,

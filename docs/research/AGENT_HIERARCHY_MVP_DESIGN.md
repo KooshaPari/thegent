@@ -1,3 +1,4 @@
+<DONE>
 # Agent Hierarchy MVP Design
 
 > **Date**: 2026-02-19

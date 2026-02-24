@@ -17,35 +17,19 @@ from rich.table import Table
 from thegent.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
-    _coerce_issue_types,
-    _default_owner_tag,
     _find_session_meta,
     _is_pid_running,
     _normalize_output_format,
     _read_session_meta,
-    _resolve_run_id,
     _resolve_session_id,
     _resolve_session_status,
-    _safe_dict,
-    _serialize_health_gate_md,
-    _serialize_health_report_md,
-    _serialize_health_trend_md,
     _session_paths,
-    _write_health_gate_export,
-    _write_health_trend_export,
-    _write_report_export,
     console,
     EXIT_TIMEOUT,
-    EXIT_HEALTH_GATE_FAILED,
     _LOG_FOLLOW_POLL_SECONDS,
 )
 from thegent.cli.commands.session_cmds_helpers import (
     follow_log_stream,
-    parse_sources_csv,
-    print_high_session_count_tip,
-    render_ps_markdown,
-    render_ps_rich_table,
-    resolve_export_format_with_notice,
 )
 
 
@@ -85,7 +69,7 @@ def status_cmd(session_id: str | None = None, format: str | None = None, include
         out["route_request"] = m.get("route_request")
     fmt = _normalize_output_format(format, default="json")
     if fmt == "json":
-        sys.stdout.write(json.dumps(out).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(out).decode() + "\n")
     else:
         status_text = status
         console.print(f"session_id: {session_id}")
@@ -100,7 +84,7 @@ def status_cmd(session_id: str | None = None, format: str | None = None, include
             console.print("route_contract:")
             console.print_json(data=out["route_contract"])
         if include_contract and out.get("route_request") is not None:
-            console.print(f"route_request: {json.dumps(out['route_request']).decode().decode()}")
+            console.print(f"route_request: {json.dumps(out['route_request']).decode()}")
 
 
 def inspect_cmd(

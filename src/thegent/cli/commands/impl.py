@@ -227,12 +227,9 @@ __all__ = [
 
 import logging
 import subprocess
-import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from thegent.config_provider import ConfigProvider
 
 from rich.console import Console
 
@@ -505,28 +502,14 @@ def list_agent_names() -> list[str]:
     return base_list_agent_names()
 
 
-
-def list_agents_impl() -> list[dict[str, str]]:
-    """List available agents. Returns list of {name, backend}."""
-    agents = list_agent_names()
-    backends = {
-        "minimax": "cliproxy",
-        "glm": "cliproxy",
-        "roo": "cliproxy",
-        "kilo": "cliproxy",
-        "gemini": "codex",
-        "codex": "codex",
-        "copilot": "codex",
-        "claude": "codex",
-        "antigravity": "codex",
-        "cursor-agent": "Direct",
-        "cursor-api": "cursor-api",
-    }
-    from thegent.agents.registry import AGENT_LABELS
-    return [{"name": AGENT_LABELS.get(n, n), "backend": backends.get(n, "Direct")} for n in agents]
-
 def resolve_agent(agent_name: str | None) -> str | None:
     return base_resolve_agent(agent_name)
+
+
+def list_agents_impl() -> list[dict[str, Any]]:
+    """List available agents with metadata."""
+    agent_names = list_agent_names()
+    return [{"name": name} for name in agent_names]
 
 
 def _inject_time_constraint(prompt: str, timeout: int, *, summary_mode: bool = True) -> str:
@@ -890,3 +873,14 @@ harness_register_host_impl = run_post_surface_helpers.harness_register_host_impl
 
 
 # Public compatibility aliases are defined by the functions above.
+
+
+def get_data_protection_status_impl() -> dict:
+    """Get data protection status."""
+    # TODO: Implement actual data protection status checking
+    return {
+        "session_dir": "/tmp/sessions",
+        "permissions_restricted": True,
+        "masking_enabled": True,
+        "retention_policy_days": 30,
+    }

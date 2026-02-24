@@ -124,7 +124,7 @@ def _display_sync_results(results: list[SyncResult], format: str, title: str = "
     elif format == "json":
         import json
 
-        console.print(json.dumps([r.to_dict().decode().decode() for r in results], indent=2))
+        console.print(json.dumps([r.to_dict().decode() for r in results], indent=2))
 
 
 def _display_audit_results(result: AuditResult, format: str, severity_filter: str) -> None:
@@ -173,14 +173,14 @@ def _display_audit_results(result: AuditResult, format: str, severity_filter: st
     elif format == "json":
         import json
 
-        console.print(json.dumps(result.to_dict().decode().decode(), indent=2))
+        console.print(json.dumps(result.to_dict().decode(), indent=2))
 
 
 def _save_sync_report(results: list[SyncResult], path: Path) -> None:
     """Save sync results to a file."""
     import json
 
-    path.write_text(json.dumps([r.to_dict().decode().decode() for r in results], indent=2))
+    path.write_text(json.dumps([r.to_dict().decode() for r in results], indent=2))
     console.print(f"[dim]Sync report saved to {path}[/dim]")
 
 
@@ -188,5 +188,5 @@ def _save_audit_report(result: AuditResult, path: Path) -> None:
     """Save audit result to a file."""
     import json
 
-    path.write_text(json.dumps(result.to_dict().decode().decode(), indent=2))
+    path.write_text(json.dumps(result.to_dict().decode(), indent=2))
     console.print(f"[dim]Audit report saved to {path}[/dim]")

@@ -1,3 +1,4 @@
+<DONE>
 # Web Research Audit: Agent Hierarchy & Multi-Agent Frameworks
 
 > **Date**: 2026-02-18

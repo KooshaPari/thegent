@@ -1,3 +1,4 @@
+<DONE>
 # Harness Parity Matrix — 2026-02-20
 
 > **Purpose**: Comprehensive feature parity comparison of thegent against all major AI coding agent harnesses.

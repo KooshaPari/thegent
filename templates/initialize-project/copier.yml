@@ -201,3 +201,27 @@ include_hooks:
     type: bool
     default: true
     help: Include pre-commit hooks
+
+include_factory:
+    type: bool
+    default: true
+    help: Include Factory/Droid agent configs (.factory/)
+    when: "{{ include_factory }}"
+
+include_codex:
+    type: bool
+    default: true
+    help: Include Codex CLI configs (.codex/)
+    when: "{{ include_codex }}"
+
+include_claude:
+    type: bool
+    default: true
+    help: Include Claude Code configs (.claude/)
+    when: "{{ include_claude }}"
+
+include_cursor:
+    type: bool
+    default: false
+    help: Include Cursor agent configs (.cursor/)
+    when: "{{ include_cursor }}"

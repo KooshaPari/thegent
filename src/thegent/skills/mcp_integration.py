@@ -37,7 +37,7 @@ def list_skills() -> str:
             }
         )
 
-    return json.dumps(result, indent=2).decode().decode()
+    return json.dumps(result, indent=2)
 
 
 def get_skill(skill_name: str) -> str:
@@ -57,7 +57,7 @@ def get_skill(skill_name: str) -> str:
             indent=2,
         )
 
-    return json.dumps(skill, indent=2).decode().decode()
+    return json.dumps(skill, indent=2)
 
 
 def run_skill(skill_name: str, context: dict[str, Any] | None = None) -> str:
@@ -80,7 +80,7 @@ def run_skill(skill_name: str, context: dict[str, Any] | None = None) -> str:
 
     entrypoint = skill.get("entrypoint", "")
     if not entrypoint:
-        return json.dumps({"error": f"Skill {skill_name} has no entrypoint configured"}, indent=2).decode().decode()
+        return json.dumps({"error": f"Skill {skill_name} has no entrypoint configured"}, indent=2)
 
     # For now, just return the skill info - actual execution would require
     # integrating with the agent system
@@ -94,7 +94,7 @@ def run_skill(skill_name: str, context: dict[str, Any] | None = None) -> str:
         "message": f"Skill '{skill_name}' is ready to execute with entrypoint '{entrypoint}'",
     }
 
-    return json.dumps(result, indent=2).decode().decode()
+    return json.dumps(result, indent=2)
 
 
 def validate_skill_tool(skill_name: str) -> str:
@@ -119,7 +119,7 @@ def validate_skill_tool(skill_name: str) -> str:
                 break
 
     if not skill_path.exists():
-        return json.dumps({"valid": False, "errors": [f"Skill not found: {skill_name}"]}, indent=2).decode().decode()
+        return json.dumps({"valid": False, "errors": [f"Skill not found: {skill_name}"]}, indent=2)
 
     result = validate_skill(skill_path)
-    return json.dumps(result, indent=2).decode().decode()
+    return json.dumps(result, indent=2)

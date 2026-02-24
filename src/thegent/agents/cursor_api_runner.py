@@ -4,6 +4,7 @@ import hashlib
 import os
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from collections.abc import Callable
 from pathlib import Path
 
@@ -90,7 +91,7 @@ def _run_with_retry(
     env: dict[str, str],
 ) -> RunResult:
     """Run codex subprocess; raises TransientAgentError on retryable failure."""
-    proc = subprocess.run(
+    proc = shim_run(
         cmd,
         check=False,
         input=prompt,

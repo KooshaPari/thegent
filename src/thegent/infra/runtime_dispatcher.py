@@ -73,17 +73,17 @@ def _pypy_json_dumps(obj: Any, **kwargs) -> str:
     import json
 
     if HAS_UJSON:
-        return ujson.dumps(obj, **kwargs).decode().decode()
-    return json.dumps(obj, **kwargs).decode().decode()
+        return ujson.dumps(obj, **kwargs).decode()
+    return json.dumps(obj, **kwargs).decode()
 
 
 def _cpython_json_dumps(obj: Any, **kwargs) -> str:
     if HAS_ORJSON:
         # orjson.dumps returns bytes
-        return orjson.dumps(obj, **kwargs).decode().decode().decode("utf-8")
+        return orjson.dumps(obj, **kwargs).decode().decode("utf-8")
     import json
 
-    return json.dumps(obj, **kwargs).decode().decode()
+    return json.dumps(obj, **kwargs).decode()
 
 
 def _pypy_json_loads(s: str | bytes, **kwargs) -> Any:

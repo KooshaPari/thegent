@@ -14,8 +14,12 @@ pub(crate) fn print_help() {
     println!("    init                    Initialize hook environment from stdin JSON");
     println!("    dispatch                Parallel hook dispatcher (replaces stop-dispatcher.sh)");
     println!("    quality-gate            Native quality gate (replaces quality-gate.sh)");
-    println!("    security-pipeline       Native security pipeline (replaces security-pipeline.sh)");
-    println!("    complexity-ratchet      Native complexity ratchet (replaces complexity-ratchet.sh)");
+    println!(
+        "    security-pipeline       Native security pipeline (replaces security-pipeline.sh)"
+    );
+    println!(
+        "    complexity-ratchet      Native complexity ratchet (replaces complexity-ratchet.sh)"
+    );
     println!("    cache-key               Generate cache key from hook name + git state");
     println!("    cache-check             Check if cache entry exists and is fresh");
     println!("    cache-read              Read cached result (JSON)");
@@ -42,15 +46,21 @@ pub(crate) fn print_help() {
     println!("    incremental-check       Check incremental manifest");
     println!("    incremental-record      Record incremental manifest");
     println!("    file-hash               Compute file hash (blake3)");
-    println!("    stop-reconcile          Native session reconciliation (replaces stop-reconcile.sh)");
+    println!(
+        "    stop-reconcile          Native session reconciliation (replaces stop-reconcile.sh)"
+    );
     println!("    spec-verify             Native spec verification (replaces spec-verifier.sh)");
-    println!("    test-maturity           Native test maturity assessment (replaces test-maturity.sh)");
+    println!(
+        "    test-maturity           Native test maturity assessment (replaces test-maturity.sh)"
+    );
     println!("    agileplus-cycle         Native AgilePlus governance cycle (replaces agileplus-cycle.sh)");
     println!("    task-completion-verify  Native task completion verification (replaces task-completion-verifier.sh)");
     println!("    qa-artifact-gate        Native artifact quality gate (replaces qa-artifact-quality-gate.sh)");
     println!("    qa-assurance-gate       Native assurance case gate (replaces qa-assurance-case-gate.sh)");
     println!("    qa-policy-engine        Native policy engine (replaces qa-policy-engine.sh)");
-    println!("    suppression-blocker     Native suppression blocker (replaces suppression-blocker.sh)");
+    println!(
+        "    suppression-blocker     Native suppression blocker (replaces suppression-blocker.sh)"
+    );
     println!("    pre-write-validate      Native pre-write syntax validation (replaces pre-write-validator.sh)");
     println!("    post-edit-check         Native post-edit lightweight check (replaces post-edit-checker.sh)");
     println!("    schema-validate         Native JSON Schema validation helper");
@@ -72,12 +82,20 @@ pub(crate) fn print_help() {
     println!("    friction-detect         Native friction pattern detector (replaces friction-detector.sh)");
     println!("    antipattern-detect      Native agent anti-pattern detector (replaces agent-antipattern-detector.sh)");
     println!("    spec-preflight          Native session-start spec analysis (replaces spec-preflight.sh)");
-    println!("    prompt-submit-guard     Native user prompt analysis (replaces prompt-submit-guard.sh)");
+    println!(
+        "    prompt-submit-guard     Native user prompt analysis (replaces prompt-submit-guard.sh)"
+    );
     println!("    subagent-gate           Native subagent start/stop timing (replaces subagent-quality-gate.sh)");
     println!("    pre-compact             Native pre-compact snapshot (replaces pre-compact-snapshot.sh & auto-checkpoint.sh)");
-    println!("    notify                  Native event notification (replaces notify-agent-event.sh)");
-    println!("    task-completed          Native task completion hook (replaces task-completed.sh)");
-    println!("    teammate-idle           Native teammate idle detection (replaces teammate-idle.sh)");
+    println!(
+        "    notify                  Native event notification (replaces notify-agent-event.sh)"
+    );
+    println!(
+        "    task-completed          Native task completion hook (replaces task-completed.sh)"
+    );
+    println!(
+        "    teammate-idle           Native teammate idle detection (replaces teammate-idle.sh)"
+    );
     println!("    harvest                 Native session stop harvesting (replaces harvest-idea-seeds-stop.sh & harvest-pending-queue.sh)");
     println!("    governance-gates        Native governance gate dispatcher (replaces governance-gates.sh)");
     println!("    prune-orphans           Native orphan process pruning (replaces prune-orphans-stop.sh)");

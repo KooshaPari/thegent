@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import praw
 
@@ -47,7 +47,7 @@ class RedditCrawler(BaseCrawler):
             praw.exceptions.PrawException: If API request fails.
         """
         query = " OR ".join(topics[:5])
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         items: list[ResearchItem] = []
         for name in _SUBREDDITS:
             for sub in self._reddit.subreddit(name).search(query, limit=10, sort="top", time_filter="day"):

@@ -1,3 +1,4 @@
+<DONE>
 # Task: Consolidate os.environ in dex_main.py
 
 **Priority**: P3

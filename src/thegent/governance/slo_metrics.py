@@ -193,7 +193,7 @@ class SloEmitter:
         """
         self._output_path.parent.mkdir(parents=True, exist_ok=True)
         record: dict[str, Any] = asdict(metric)
-        line = json.dumps(record, sort_keys=True).decode().decode() + "\n"
+        line = json.dumps(record, sort_keys=True).decode() + "\n"
         with self._output_path.open("a", encoding="utf-8") as fh:
             fh.write(line)
 

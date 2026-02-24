@@ -221,7 +221,7 @@ class AutoLaunchSystem:
                 session_id,
                 item_id,
                 datetime.now(UTC).isoformat(),
-                json.dumps(payload).decode().decode() if payload else None,
+                json.dumps(payload).decode() if payload else None,
                 evidence_hash,
             ),
         )
@@ -334,10 +334,9 @@ class AutoLaunchSystem:
         self.sync_database()
 
         # Send notification
-        import subprocess
 
         try:
-            subprocess.run(
+            shim_run(
                 [
                     "bash",
                     "hooks/notify-agent-event.sh",
@@ -799,7 +798,6 @@ class AutoLaunchSystem:
 
     def _award_xp(self, session: dict[str, Any]) -> None:
         """Award XP for a successful session completion."""
-        import subprocess
 
         agent = session.get("agent", "unknown")
         item_id = session.get("workstream_item_id", "unknown")
@@ -811,7 +809,7 @@ class AutoLaunchSystem:
         _log.info(f"Awarding {xp_amount} XP to {agent} for {item_id}")
 
         try:
-            subprocess.run(
+            shim_run(
                 [
                     "bash",
                     "hooks/gardener-xp.sh",

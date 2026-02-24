@@ -43,7 +43,7 @@ class MeshLogger:
         """Append a structured log entry."""
         entry = {"timestamp": time.time(), "agent_id": agent_id, "event": event, "data": data or {}}
         # PIPE_BUF aware atomic append (SCLI-P13.1)
-        line = json.dumps(entry).decode().decode() + "\n"
+        line = json.dumps(entry).decode() + "\n"
         if len(line) <= 4096:  # PIPE_BUF limit for atomic write
             with open(self.log_file, "a") as f:
                 f.write(line)
@@ -74,7 +74,7 @@ class MetricsAggregator:
         metric_file = self.metrics_dir / f"{agent_id}.jsonl"
         entry = {"timestamp": time.time(), "name": name, "value": value_f}
         with open(metric_file, "a") as f:
-            f.write(json.dumps(entry).decode().decode() + "\n")
+            f.write(json.dumps(entry).decode() + "\n")
 
     def get_summary(self) -> MetricsSummary:
         """Aggregate metrics for all agents (SCLI-P13.2)."""

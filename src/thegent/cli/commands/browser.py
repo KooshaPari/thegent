@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import orjson as json
 import os
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -59,7 +59,7 @@ def _load_journeys() -> list[dict[str, Any]]:
 def _save_journeys(journeys: list[dict[str, Any]]) -> None:
     path = _journeys_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(journeys, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+    path.write_text(json.dumps(journeys, indent=2, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
 
 
 def _launcher_script_content() -> str:
@@ -257,7 +257,7 @@ def browser_launch_cmd(
         cmd.extend(["--url", url])
 
     console.print(f"[cyan]Launching:[/cyan] {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+    shim_run(cmd, check=True)
 
 
 def browser_journey_add_cmd(

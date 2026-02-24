@@ -30,10 +30,7 @@ fn get_fd_usage() -> (u32, u32) {
         {
             use std::process::Command;
             let pid = std::process::id();
-            if let Ok(out) = Command::new("lsof")
-                .args(["-p", &pid.to_string()])
-                .output()
-            {
+            if let Ok(out) = Command::new("lsof").args(["-p", &pid.to_string()]).output() {
                 if out.status.success() {
                     let s = String::from_utf8_lossy(&out.stdout);
                     let count = s.lines().filter(|l| !l.contains(" txt ")).count();
@@ -133,7 +130,8 @@ fn get_memory_mb() -> (f64, f64) {
                             }
                         } else if line.contains("Pages speculative") {
                             if let Some(rest) = line.split(':').nth(1) {
-                                speculative = rest.trim().trim_end_matches('.').parse().unwrap_or(0);
+                                speculative =
+                                    rest.trim().trim_end_matches('.').parse().unwrap_or(0);
                             }
                         } else if line.contains("Pages purgeable") {
                             if let Some(rest) = line.split(':').nth(1) {
@@ -243,11 +241,20 @@ mod tests {
 
         // FD usage should be reasonable
         assert!(snapshot.fd_limit > 0, "FD limit should be positive");
-        assert!(snapshot.fd_used <= snapshot.fd_limit, "FD used should not exceed limit");
+        assert!(
+            snapshot.fd_used <= snapshot.fd_limit,
+            "FD used should not exceed limit"
+        );
 
         // Memory values should be non-negative
-        assert!(snapshot.mem_rss_mb >= 0.0, "RSS memory should be non-negative");
-        assert!(snapshot.mem_available_mb >= 0.0, "Available memory should be non-negative");
+        assert!(
+            snapshot.mem_rss_mb >= 0.0,
+            "RSS memory should be non-negative"
+        );
+        assert!(
+            snapshot.mem_available_mb >= 0.0,
+            "Available memory should be non-negative"
+        );
 
         // CPU count should be at least 1
         assert!(snapshot.cpu_count >= 1, "CPU count should be at least 1");
@@ -285,7 +292,10 @@ mod tests {
         let snapshot = sample();
         // FD limit is typically between 256 and millions
         assert!(snapshot.fd_limit >= 256, "FD limit should be at least 256");
-        assert!(snapshot.fd_limit <= 10_000_000, "FD limit should be reasonable");
+        assert!(
+            snapshot.fd_limit <= 10_000_000,
+            "FD limit should be reasonable"
+        );
     }
 
     #[test]
@@ -296,6 +306,9 @@ mod tests {
         // Two consecutive samples should have similar values
         // (memory shouldn't change drastically in microseconds)
         let mem_diff = (snapshot1.mem_rss_mb - snapshot2.mem_rss_mb).abs();
-        assert!(mem_diff < 100.0, "Memory shouldn't change drastically between samples");
+        assert!(
+            mem_diff < 100.0,
+            "Memory shouldn't change drastically between samples"
+        );
     }
 }

@@ -19,7 +19,7 @@ from __future__ import annotations
 import orjson as json
 import logging
 import shutil
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -143,7 +143,7 @@ class LintingAccelerator:
         cmd.extend(str(p) for p in paths)
 
         _log.debug("running oxlint: %s", cmd)
-        proc = subprocess.run(
+        proc = shim_run(
             cmd,
             capture_output=True,
             text=True,
@@ -258,7 +258,7 @@ class LintingAccelerator:
         cmd.extend(str(p) for p in paths)
 
         _log.debug("running eslint: %s", cmd)
-        proc = subprocess.run(
+        proc = shim_run(
             cmd,
             capture_output=True,
             text=True,
@@ -340,7 +340,7 @@ class LintingAccelerator:
         cmd.extend(str(p) for p in paths)
 
         _log.debug("running ruff: %s", cmd)
-        proc = subprocess.run(
+        proc = shim_run(
             cmd,
             capture_output=True,
             text=True,

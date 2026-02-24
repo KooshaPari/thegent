@@ -12,6 +12,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
+
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ DEFAULT_COST_DIR = Path.home() / ".thegent" / "costs"
 
 
 @dataclass
-class CostEntry:
+class CostEntry(SerializableMixin):
     """Single cost entry for a token or API call."""
 
     timestamp: str
@@ -31,19 +33,6 @@ class CostEntry:
     cost_usd: float
     run_id: str
     task_id: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert entry to dictionary."""
-        return {
-            "timestamp": self.timestamp,
-            "provider": self.provider,
-            "model": self.model,
-            "input_tokens": self.input_tokens,
-            "output_tokens": self.output_tokens,
-            "cost_usd": self.cost_usd,
-            "run_id": self.run_id,
-            "task_id": self.task_id,
-        }
 
 
 class RunCostTracker:
@@ -143,7 +132,7 @@ class RunCostTracker:
         """Save run summary to JSON file."""
         run_file = self.cost_dir / f"{summary['run_id']}.json"
         try:
-            run_file.write_text(json.dumps(summary, indent=2).decode().decode(), encoding="utf-8")
+            run_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         except OSError as e:
             logger.error("Failed to save run summary: %s", e)
 

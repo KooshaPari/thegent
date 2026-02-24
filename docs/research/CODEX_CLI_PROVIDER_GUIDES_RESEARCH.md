@@ -1,3 +1,4 @@
+<DONE>
 # Codex CLI Provider Guides Research
 
 **Date**: 2026-02-18

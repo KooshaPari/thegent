@@ -1,3 +1,4 @@
+<DONE>
 # Terminal Comparison: Community Insights & Real-World Usage (2026-02-18)
 
 ## Executive Summary

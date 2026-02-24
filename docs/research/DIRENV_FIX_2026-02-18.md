@@ -1,3 +1,4 @@
+<DONE>
 # direnv and FUNCNEST Fix (2026-02-18)
 
 ## Problem

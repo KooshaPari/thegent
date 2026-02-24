@@ -90,7 +90,7 @@ class SyncLoop:
 
         sync_file = peer_sync_inbox / f"{source_id}_state.json"
         try:
-            sync_file.write_text(json.dumps(payload, indent=2).decode().decode())
+            sync_file.write_text(json.dumps(payload, indent=2))
         except Exception as e:
             _log.error("Failed to push state to peer %s: %s", source_id, e)
 

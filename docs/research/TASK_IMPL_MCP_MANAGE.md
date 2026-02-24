@@ -1,3 +1,4 @@
+<DONE>
 # Task: Consolidate os.environ in mcp_manage.py
 
 **Priority**: P3

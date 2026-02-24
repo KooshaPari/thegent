@@ -111,7 +111,7 @@ def ensure_claude_config_isolation(config_dir: Path) -> None:
             if global_settings.exists():
                 try:
                     data = json.loads(global_settings.read_text())
-                    target_settings.write_text(json.dumps(data, indent=2).decode().decode())
+                    target_settings.write_text(json.dumps(data, indent=2))
                     _isolation_diagnostics["settings_copy"] = {
                         "status": "copied",
                         "error_type": None,

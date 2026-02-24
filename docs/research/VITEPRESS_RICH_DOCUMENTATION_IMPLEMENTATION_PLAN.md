@@ -1,3 +1,4 @@
+<DONE>
 # VitePress Rich Documentation — Implementation Plan
 
 > **Status**: Implementation Plan | **Date**: 2026-02-17

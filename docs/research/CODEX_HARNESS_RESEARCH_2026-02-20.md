@@ -1,3 +1,4 @@
+<DONE>
 # Codex Harness Research — 2026-02-20
 
 ## Summary
