@@ -10,7 +10,6 @@ from thegent.cli.apps.main import app
 runner = CliRunner()
 
 
-@pytest.mark.skip(reason="GitParallelismManager - needs refactor")
 def test_git_lock_status_reports_clear_state() -> None:
     fake_manager = MagicMock()
     fake_manager.index_lock_status.return_value = {
@@ -22,7 +21,7 @@ def test_git_lock_status_reports_clear_state() -> None:
         "open_holder_detected": False,
     }
 
-    with patch("thegent.cli.commands.cli_git.GitParallelismManager", return_value=fake_manager):
+    with patch("thegent.cli.commands.cli_git_commit_ops.GitParallelismManager", return_value=fake_manager):
         result = runner.invoke(app, ["git", "lock-status"])
 
     assert result.exit_code == 0
@@ -30,7 +29,6 @@ def test_git_lock_status_reports_clear_state() -> None:
     fake_manager.index_lock_status.assert_called_once_with(stale_after_s=90.0)
 
 
-@pytest.mark.skip(reason="GitParallelismManager - needs refactor")
 def test_git_lock_status_outputs_json() -> None:
     fake_manager = MagicMock()
     fake_manager.index_lock_status.return_value = {
@@ -42,7 +40,7 @@ def test_git_lock_status_outputs_json() -> None:
         "open_holder_detected": False,
     }
 
-    with patch("thegent.cli.commands.cli_git.GitParallelismManager", return_value=fake_manager):
+    with patch("thegent.cli.commands.cli_git_commit_ops.GitParallelismManager", return_value=fake_manager):
         result = runner.invoke(app, ["git", "lock-status", "--json", "--stale-after", "120"])
 
     assert result.exit_code == 0
@@ -51,7 +49,6 @@ def test_git_lock_status_outputs_json() -> None:
     fake_manager.index_lock_status.assert_called_once_with(stale_after_s=120.0)
 
 
-@pytest.mark.skip(reason="GitParallelismManager - needs refactor")
 def test_git_commit_respects_lock_options() -> None:
     fake_manager = MagicMock()
     fake_manager.wait_for_index_lock.return_value = True
@@ -59,8 +56,8 @@ def test_git_commit_respects_lock_options() -> None:
     fake_manager.update_ref_cas.return_value = True
 
     with (
-        patch("thegent.cli.commands.cli_git.GitParallelismManager", return_value=fake_manager),
-        patch("thegent.cli.commands.cli_git.subprocess.check_output", return_value="old-hash\n"),
+        patch("thegent.cli.commands.cli_git_commit_ops.GitParallelismManager", return_value=fake_manager),
+        patch("thegent.cli.commands.cli_git_commit_ops.subprocess.check_output", return_value="old-hash\n"),
     ):
         result = runner.invoke(
             app,
