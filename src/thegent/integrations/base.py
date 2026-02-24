@@ -467,6 +467,72 @@ class SerializableMixin:
             New instance with updates applied
         """
         return self.copy(**updates)
+    
+    def to_json(self, *, indent: int | None = None, sort_keys: bool = False) -> str:
+        """Serialize instance to JSON string.
+        
+        Args:
+            indent: JSON indentation level (None for compact)
+            sort_keys: Whether to sort dictionary keys
+            
+        Returns:
+            JSON string representation
+            
+        Example:
+            person.to_json()  # '{"name": "Alice", "age": 30}'
+            person.to_json(indent=2)  # Pretty-printed
+        """
+        import json
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys, default=str)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> "SerializableMixin":
+        """Create instance from JSON string.
+        
+        Args:
+            json_str: JSON string to parse
+            
+        Returns:
+            New instance from parsed JSON
+            
+        Raises:
+            json.JSONDecodeError: If JSON is invalid
+            
+        Example:
+            person = Person.from_json('{"name": "Alice", "age": 30}')
+        """
+        import json
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    def to_json_file(self, path: str | Path, *, indent: int = 2) -> None:
+        """Write instance to JSON file.
+        
+        Args:
+            path: File path to write
+            indent: JSON indentation level (default: 2 for readability)
+        """
+        import json
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_json(indent=indent))
+    
+    @classmethod
+    def from_json_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from JSON file.
+        
+        Args:
+            path: File path to read
+            
+        Returns:
+            New instance from parsed JSON file
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            json.JSONDecodeError: If JSON is invalid
+        """
+        path = Path(path)
+        return cls.from_json(path.read_text())
 
 
 class _Missing:
