@@ -107,7 +107,7 @@ def sweep_cmd(
         out = {k: v for k, v in result.items() if k != "audit" or v is not None}
         if result.get("audit"):
             out["audit"] = result["audit"]
-        sys.stdout.write(json.dumps(out) + "\n")
+        sys.stdout.write(json.dumps(out).decode() + "\n")
         if not result["pass"]:
             raise typer.Exit(1)
         return

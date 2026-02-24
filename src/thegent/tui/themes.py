@@ -12,10 +12,11 @@ from typing import Any
 
 from textual.css.styles import Styles
 from textual.theme import Theme
+from thegent.integrations.base import SerializableMixin
 
 
 @dataclass
-class ThemeColors:
+class ThemeColors(SerializableMixin):
     """Color palette for a theme."""
 
     # Primary colors
@@ -45,26 +46,6 @@ class ThemeColors:
     border: str = "#444444"
     border_focus: str = "#00ff00"
 
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "primary": self.primary,
-            "secondary": self.secondary,
-            "accent": self.accent,
-            "success": self.success,
-            "warning": self.warning,
-            "error": self.error,
-            "info": self.info,
-            "foreground": self.foreground,
-            "background": self.background,
-            "surface": self.surface,
-            "panel": self.panel,
-            "highlight": self.highlight,
-            "text": self.text,
-            "text-muted": self.text_muted,
-            "text-dim": self.text_dim,
-            "border": self.border,
-            "border-focus": self.border_focus,
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, str]) -> ThemeColors:
@@ -90,7 +71,7 @@ class ThemeColors:
 
 
 @dataclass
-class ThemeDefinition:
+class ThemeDefinition(SerializableMixin):
     """Complete theme definition."""
 
     name: str
@@ -118,15 +99,6 @@ class ThemeDefinition:
             dark=self.dark,
         )
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "name": self.name,
-            "dark": self.dark,
-            "author": self.author,
-            "description": self.description,
-            "extensions": self.extensions,
-            "colors": self.colors.to_dict(),
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ThemeDefinition:
