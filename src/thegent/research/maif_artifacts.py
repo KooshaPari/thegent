@@ -4,17 +4,8 @@ import hashlib
 import logging
 from datetime import UTC, datetime
 from typing import Any
-from thegent.integrations.base import SerializableMixin
-<<<<<<< HEAD
 
 from thegent.integrations.base import SerializableMixin
-=======
-<<<<<<< HEAD
-=======
-
-from thegent.integrations.base import SerializableMixin
->>>>>>> origin/main
->>>>>>> origin/refactor/sync-modularization
 
 logger = logging.getLogger(__name__)
 

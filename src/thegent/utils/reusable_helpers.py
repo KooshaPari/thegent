@@ -200,6 +200,8 @@ class ReusableHelpers:
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(json.dumps(data, indent=2))
             return True
         except Exception as e:
@@ -209,6 +211,28 @@ class ReusableHelpers:
     @staticmethod
     def load_config(path: Path) -> dict:
         """Load config from JSON or YAML file."""
+        import json
+        try:
+            content = path.read_text()
+            if path.suffix in ('.yaml', '.yml'):
+                import yaml
+                return yaml.safe_load(content) or {}
+            return json.loads(content)
+        except FileNotFoundError:
+            return {}
+        except Exception:
+            return {}
+
+    @staticmethod
+    def load_config(path):
+        import json
+        try:
+            return json.loads(path.read_text())
+        except:
+            return {}
+
+    @staticmethod
+    def load_config(path: Path) -> dict:
         import json
         try:
             content = path.read_text()
