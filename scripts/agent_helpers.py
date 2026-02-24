@@ -630,15 +630,6 @@ def read_config(key: str, default: Any = None) -> Any:
     return default
 
 
-def format_summary(items: list[str]) -> str:
-    """Format a list of items as a summary string."""
-    if not items:
-        return "No items"
-    if len(items) == 1:
-        return f"1 item: {items[0]}"
-    return f"{len(items)} items"
-
-
 def _parse_work_stream(content: str) -> list[dict[str, Any]]:
     """Parse work stream markdown and return items."""
     items = []

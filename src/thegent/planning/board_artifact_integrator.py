@@ -7,6 +7,7 @@ WL-158: Unified Workstream Integration for CLIProxyAPI++ Board Artifacts
 """
 
 import csv
+import json as stdlib_json
 import orjson as json
 import logging
 from pathlib import Path
@@ -60,7 +61,7 @@ class BoardArtifactParser:
         """
         try:
             with open(file_path, encoding="utf-8") as f:
-                data = json.load(f)
+                data = stdlib_json.loads(f.read())
 
             # Handle both list and dict with items key
             if isinstance(data, list):
