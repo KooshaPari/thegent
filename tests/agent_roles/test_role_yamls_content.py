@@ -7,8 +7,6 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="OSError: File path too long on macOS - test writes YAML content as filename")
-
 LIBRARY_DIR = Path(__file__).parent.parent.parent / "src" / "agent_roles" / "library"
 
 

@@ -244,7 +244,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             _log.warning("thegent_elicit_confirmation called without ctx; returning unavailable")
             result_payload: dict[str, Any] = {"confirmed": None, "status": "unavailable"}
             return ToolResult(
-                content=json.dumps(result_payload).decode(),
+                content=json.dumps(result_payload),
                 structured_content=result_payload,
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -256,7 +256,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
         else:
             payload = {"confirmed": value, "status": "accepted"}
         return ToolResult(
-            content=json.dumps(payload).decode(),
+            content=json.dumps(payload),
             structured_content=payload,
             meta={"execution_time_ms": elapsed},
         )
@@ -285,7 +285,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
         if not options:
             error_payload: dict[str, Any] = {"error": "options must not be empty", "choice": None}
             return ToolResult(
-                content=json.dumps(error_payload).decode(),
+                content=json.dumps(error_payload),
                 structured_content=error_payload,
                 meta={"execution_time_ms": 0},
             )
@@ -294,7 +294,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             _log.warning("thegent_elicit_choice called without ctx; returning unavailable")
             unavail_payload: dict[str, Any] = {"choice": None, "status": "unavailable"}
             return ToolResult(
-                content=json.dumps(unavail_payload).decode(),
+                content=json.dumps(unavail_payload),
                 structured_content=unavail_payload,
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -306,7 +306,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
         else:
             payload2 = {"choice": value, "status": "accepted"}
         return ToolResult(
-            content=json.dumps(payload2).decode(),
+            content=json.dumps(payload2),
             structured_content=payload2,
             meta={"execution_time_ms": elapsed},
         )
@@ -336,7 +336,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             _log.warning("thegent_elicit_text called without ctx; returning unavailable")
             unavail_payload3: dict[str, Any] = {"text": None, "status": "unavailable"}
             return ToolResult(
-                content=json.dumps(unavail_payload3).decode(),
+                content=json.dumps(unavail_payload3),
                 structured_content=unavail_payload3,
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -348,7 +348,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
         else:
             payload3 = {"text": value, "status": "accepted"}
         return ToolResult(
-            content=json.dumps(payload3).decode(),
+            content=json.dumps(payload3),
             structured_content=payload3,
             meta={"execution_time_ms": elapsed},
         )
@@ -381,7 +381,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
         if ctx is None:
             unavail_payload4: dict[str, Any] = {"data": None, "status": "unavailable"}
             return ToolResult(
-                content=json.dumps(unavail_payload4).decode(),
+                content=json.dumps(unavail_payload4),
                 structured_content=unavail_payload4,
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -398,7 +398,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             _log.error("thegent_elicit_structured: error creating dynamic model: %s", e)
             error_payload: dict[str, Any] = {"data": None, "status": "error", "error": str(e)}
             return ToolResult(
-                content=json.dumps(error_payload).decode(),
+                content=json.dumps(error_payload),
                 structured_content=error_payload,
                 meta={"execution_time_ms": 0},
             )
@@ -410,7 +410,7 @@ def register_elicitation_tools(mcp: FastMCP) -> None:
             # value is an instance of DynamicModel, convert to dict
             payload4 = {"data": value.model_dump() if hasattr(value, "model_dump") else value, "status": "accepted"}
         return ToolResult(
-            content=json.dumps(payload4).decode(),
+            content=json.dumps(payload4),
             structured_content=payload4,
             meta={"execution_time_ms": elapsed},
         )

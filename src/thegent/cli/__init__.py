@@ -76,6 +76,10 @@ def __getattr__(name: str) -> Any:
     # Forward to _shared for CLI helper functions
     if hasattr(_shared, name):
         return getattr(_shared, name)
+    # Forward to governance modules
+    if name == "data_protection_cmd":
+        from thegent.cli.commands.governance_data_protection_cmds import data_protection_cmd
+        return data_protection_cmd
     
     # Forward dag_update_cmd to _cli_surface
     if name == "dag_update_cmd":
