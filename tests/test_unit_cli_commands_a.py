@@ -43,7 +43,6 @@ def _mock_settings(**overrides):
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 complex mocking - run_impl has multiple implementations")
 class TestRunCmdImpl:
     """Tests for the run_cmd function body."""
 
