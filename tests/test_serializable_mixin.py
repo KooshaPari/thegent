@@ -906,4 +906,3 @@ class TestReplace:
         
         assert p2.name == "Bob"
         assert p2.age == 35
->>>>>>> origin/main
