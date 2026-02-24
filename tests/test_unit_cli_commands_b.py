@@ -854,7 +854,7 @@ class TestDagRecoverCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Code bug: _parse_checkpoint_line not defined - WL-124")
+@pytest.mark.skip(reason="Test behavior mismatch - implementation returns instead of raising")
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
