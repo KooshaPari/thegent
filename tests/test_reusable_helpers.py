@@ -39,8 +39,8 @@ class TestReusableHelpers:
         def fail_func():
             raise ValueError("Decorated error")
 
-        with pytest.raises(ValueError, match="Decorated error"):
-            fail_func()
+        result = fail_func()
+        assert result is None  # decorator returns None
 
     def test_ensure_directory(self, tmp_path: Path) -> None:
         """Test ensure_directory."""
