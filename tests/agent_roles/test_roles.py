@@ -86,7 +86,6 @@ def test_full_pipeline(tmp_path, sample_spec):
     assert sample_spec.trigger in content
 
 
-@pytest.mark.skip(reason="OSError: File path too long on macOS - test writes YAML content as filename")
 def test_all_library_yamls_load():
     """All 20 library YAML files load as valid AgentRoleSpec objects."""
     from agent_roles.cli import _all_yaml_files

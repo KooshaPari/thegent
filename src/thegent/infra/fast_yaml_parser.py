@@ -82,8 +82,15 @@ class FastYAMLParser:
         """
         if isinstance(stream, Path):
             stream = stream.read_text()
-        elif isinstance(stream, str) and Path(stream).exists():
-            stream = Path(stream).read_text()
+        elif isinstance(stream, str):
+            # Check if string is a file path (not YAML content)
+            # Use try/except to avoid OSError on macOS with long strings
+            try:
+                path_exists = Path(stream).exists()
+            except OSError:
+                path_exists = False
+            if path_exists:
+                stream = Path(stream).read_text()
 
         if self._backend == "oyaml":
             return oyaml.safe_load(stream)
