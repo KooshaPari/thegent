@@ -175,11 +175,14 @@ def ensure_dir(path: str | Path) -> Path:
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 <<<<<<< HEAD
 >>>>>>> origin/main
 >>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/refactor/provider-manager-modularization
 def path_to_str(path: str | Path | None) -> str:
     """Convert a path to a string, handling ``None`` gracefully.
 
@@ -351,12 +354,16 @@ if __name__ == "__main__":
 
     sys.exit(0)
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 =======
 >>>>>>> origin/fix/command-test-fixes
 =======
 >>>>>>> origin/fix/cli-test-failures
+=======
+=======
+>>>>>>> origin/refactor/provider-manager-modularization
 def format_size(size_bytes: int) -> str:
     """Format size in human-readable form."""
     for unit in ["B", "KB", "MB", "GB", "TB"]:
@@ -381,6 +388,7 @@ def path_to_str(path: Path | None) -> str | None:
     if path is None:
         return None
     return str(path)
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 
@@ -545,3 +553,6 @@ def sanitize_path(path: str | Path) -> Path:
 =======
 >>>>>>> origin/main
 >>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization

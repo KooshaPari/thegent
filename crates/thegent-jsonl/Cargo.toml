@@ -20,6 +20,7 @@ clap = { version = "4.5", features = ["derive"], optional = true }
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 pyo3 = { version = "0.24", optional = true }
 =======
 pyo3 = { version = "0.24.1", optional = true }
@@ -30,6 +31,9 @@ pyo3 = { version = "0.24.1", optional = true }
 =======
 pyo3 = { version = "0.24.1", optional = true }
 >>>>>>> origin/fix/command-test-fixes
+=======
+pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/refactor/provider-manager-modularization
 blake3 = "1.6"
 thiserror = "2.0"
 serde = { version = "1.0", features = ["derive"] }

@@ -17,6 +17,7 @@ from thegent.cli.commands import _cli_shared as _shared
 Columns = getattr(_cli_surface, "Columns", None)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Stubs for test mocking
 =======
 <<<<<<< HEAD
@@ -25,6 +26,12 @@ Columns = getattr(_cli_surface, "Columns", None)
 # Stubs for test mocking
 >>>>>>> origin/main
 >>>>>>> origin/fix/command-test-fixes
+=======
+# Stub for tests
+=======
+# Stubs for test mocking
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 def _resolve_cwd(cd=None):
     """Stub for backward compatibility."""
     return None
@@ -52,6 +59,7 @@ def _check_dag_cycles(doc):
 def _dag_path(cd=None):
     """Stub for tests."""
 <<<<<<< HEAD
+<<<<<<< HEAD
     return (None, None)
 =======
 <<<<<<< HEAD
@@ -60,6 +68,12 @@ def _dag_path(cd=None):
     return (None, None)
 >>>>>>> origin/main
 >>>>>>> origin/fix/command-test-fixes
+=======
+    return None
+=======
+    return (None, None)
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 
 def _ensure_dag_file(path, content):
     """Stub for tests."""
@@ -72,8 +86,11 @@ def _dag_update_task(task_id, field, value, session_dir):
 <<<<<<< HEAD
 =======
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/refactor/provider-manager-modularization
 def _validate_task_id(task_id):
     """Stub for tests."""
     return task_id
@@ -94,9 +111,13 @@ def _default_owner_tag():
     """Stub for tests."""
     return "ci@host"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> origin/main
 >>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
@@ -196,10 +217,14 @@ _patchable_names_list = [
     "dag_run_impl",
     "dag_sync_impl",
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> origin/fix/cli-test-failures
 =======
 >>>>>>> origin/main
 >>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
