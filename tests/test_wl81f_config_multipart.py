@@ -30,13 +30,11 @@ class TestConfigPathValidation:
     def test_config_path_valid_yaml(self) -> None:
         """Config should be valid YAML file."""
         # Should be able to read as YAML
-        pass
 
     def test_config_expand_user(self) -> None:
         """Config path should expand user home."""
         from thegent.agents.cliproxy_manager import expand_config_path
         # Test expansion works
-        pass
 
 
 class TestMultipartContentPreservation:

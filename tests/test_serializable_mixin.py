@@ -269,7 +269,6 @@ class TestEnhancedFromDict:
 
     def setup_method(self):
         """Reset singleton before each test."""
-        pass
 
     def test_path_deserialization(self):
         """Test Path deserialization."""

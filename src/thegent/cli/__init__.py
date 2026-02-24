@@ -19,7 +19,7 @@ Columns = getattr(_cli_surface, "Columns", None)
 # Stubs for test mocking
 def _resolve_cwd(cd=None):
     """Stub for backward compatibility."""
-    return None
+    return
 
 def _parse_dag_session(dag_file, cwd=None):
     """Stub for tests."""
@@ -47,7 +47,6 @@ def _dag_path(cd=None):
 
 def _ensure_dag_file(path, content):
     """Stub for tests."""
-    pass
 
 def _dag_update_task(task_id, field, value, session_dir):
     """Stub for tests."""
@@ -63,7 +62,6 @@ def _validate_agent(agent):
 
 def _atomic_write(path, content):
     """Stub for tests."""
-    pass
 
 def _session_status_for(session_dir):
     """Stub for tests."""
