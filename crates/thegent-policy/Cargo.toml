@@ -16,7 +16,11 @@ toml = "0.8"
 thiserror = "2.0"
 dashmap = "6.1"
 regex = "1.11"
+<<<<<<< HEAD
+pyo3 = { version = "0.24", optional = true }
+=======
 pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/main
 
 [dev-dependencies]
 tempfile = "3"
