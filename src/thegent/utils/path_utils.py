@@ -99,3 +99,21 @@ def format_size(size_bytes: int) -> str:
             return f"{size_bytes:.1f}{unit}"
         size_bytes /= 1024
     return f"{size_bytes:.1f}PB"
+
+
+def normalize_path(path: Path | str | None) -> Path | None:
+    """Normalize a path by expanding user and resolving."""
+    if path is None:
+        return None
+    p = Path(path).expanduser()
+    try:
+        return p.resolve()
+    except (OSError, RuntimeError):
+        return p
+
+
+def path_to_str(path: Path | None) -> str | None:
+    """Convert a Path to string, handling None gracefully."""
+    if path is None:
+        return None
+    return str(path)
