@@ -548,20 +548,11 @@ class TestDagReadyCmdImpl:
         with pytest.raises(_EXIT):
             dag_ready_cmd(cd=None)
 
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli._get_ready_task_ids", return_value=["T1"])
-    @patch("thegent.cli._parse_dag_session")
-    @patch("thegent.cli._resolve_cwd")
+    @patch("thegent.cli.commands.plan_dag_cmds.dag_ready_impl")
     @patch("thegent.cli.console")
-    def test_ready_ids_format(self, mock_console, mock_cwd, mock_parse, mock_ready, mock_settings, tmp_path) -> None:
+    def test_ready_ids_format(self, mock_console, mock_impl) -> None:
         # @trace FR-CLI-327
-        dag_file = tmp_path / ".factory" / "dag-session.md"
-        dag_file.parent.mkdir(parents=True)
-        dag_file.touch()
-        mock_cwd.return_value = tmp_path
-        tasks = [{"id": "T1", "agent": "claude", "prompt": "test", "depends_on": "-", "status": "pending"}]
-        mock_parse.return_value = ({}, tasks)
-        mock_settings.return_value.output_format = "rich"
+        mock_impl.return_value = {"ready_task_ids": ["T1"]}
 
         from thegent.cli import dag_ready_cmd
 
