@@ -40,7 +40,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 # Re-export for backwards compatibility
-_DEFAULT_DB_PATH = DEFAULT_DB_PATH
+_DEFAULT_DB_PATH = _DEFAULT_DB_PATH
 
 
 # ---------------------------------------------------------------------------
