@@ -1,17 +1,11 @@
 """Project CLI app - project management commands."""
 
 import typer
-from typing import Any
-
-from thegent.project.migrate import project_migrate as _project_migrate
-from thegent.project.scaffold import scaffold_greenfield
 from typing import Any, Optional
 
 from thegent.project.migrate import project_migrate as _project_migrate
-from thegent.project.scaffold import (
-    scaffold_greenfield,
-    scaffold_brownfield,
-)
+from thegent.project.scaffold import scaffold_greenfield, scaffold_brownfield
+
 
 # CLI app containers
 setup_project_app = typer.Typer(help="Project management commands.")
@@ -20,50 +14,10 @@ scaffold_app = typer.Typer(help="Scaffold new project.")
 update_app = typer.Typer(help="Update project.")
 
 
-# Callback for backward compatibility with old `install` command
-@install_app.callback(invoke_without_command=True)
-def install_callback(
-    ctx: typer.Context,
-    target: Optional[str] = typer.Option(None, "--target", help="Target to install"),
-    mode: Optional[str] = typer.Option(None, "--mode", help="Installation mode"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
-    verbose: bool = typer.Option(False, "--verbose", help="Verbose output"),
-    url: Optional[str] = typer.Option(None, "--url", help="Install URL"),
-    install_service: bool = typer.Option(False, "--install-service", help="Install as service"),
-) -> None:
-    """Legacy install command - routes to thegent.install.run_install."""
-    # If no subcommand, show help or handle legacy case
-    if ctx.invoked_subcommand is None:
-        # Try to import and call legacy install
-        try:
-            from thegent.install import run_install
-            run_install(
-                target=target,
-                mode=mode,
-                dry_run=dry_run,
-                verbose=verbose,
-                url=url,
-                install_service=install_service,
-            )
-        except Exception:
-            typer.echo("Use 'thegent install project' for project installation.")
-
-
 @install_app.command("project")
-def install_project(
+def install_project_cmd(
     mode: str = typer.Argument("agdd", help="brownfield, agdd, none"),
     project: str = typer.Argument(..., help="Project path"),
-    template: str = typer.Option("auto", "--template", "-t", help="Template"),
-    name: str = typer.Option("", "--name", "-n", help="Name"),
-    tenant: str = typer.Option("", "--tenant", help="Tenant"),
-    json: bool = typer.Option(False, "--json", help="JSON output"),
-    reconcile: bool = typer.Option(True, "--reconcile/--no-reconcile"),
-    register: bool = typer.Option(True, "--register/--no-register"),
-    install_runtime: bool = typer.Option(True, "--install-runtime/--no-install-runtime"),
-    dry_run: bool = typer.Option(False, "--dry-run"),
-) -> dict[str, Any]:
-    """Install/brownfield project."""
-    return _project_migrate(project_path=project, mode=mode)
     template: str = typer.Option("auto", "--template", "-t", help="Template to use"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
     tenant: str = typer.Option("", "--tenant", help="Tenant ID"),
@@ -72,35 +26,16 @@ def install_project(
     register: bool = typer.Option(True, "--register/--no-register", help="Register project"),
     install_runtime: bool = typer.Option(True, "--install-runtime/--no-install-runtime", help="Install runtime"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
-    # Legacy option for backward compatibility
-    legacy_mode: str = typer.Option(None, "--mode", help="(ignored)"),
 ) -> dict[str, Any]:
-    """Install/brownfield project migration."""
-    effective_mode = legacy_mode or mode
-    return project_migrate(
-        project=project,
-        mode=effective_mode,
-        template=template,
-        name=name,
-        tenant=tenant,
-        reconcile=reconcile,
-        register=register,
-        install_runtime=install_runtime,
-        dry_run=dry_run,
-        json_output=json,
+    """Install/brownfield project."""
+    return _project_migrate(
+        project_path=project,
+        mode=mode,
     )
 
 
 @scaffold_app.command("greenfield")
 def scaffold_greenfield_cmd(
-    destination: str = typer.Argument(..., help="Destination"),
-    profile: str = typer.Option("default", "--profile"),
-    name: str = typer.Option("", "--name", "-n"),
-    language: str = typer.Option("python", "--language", "-l"),
-    tenant: str = typer.Option("", "--tenant"),
-) -> dict[str, Any]:
-    """Scaffold new project."""
-    return _project_migrate(project_path=destination, mode=profile)
     destination: str = typer.Argument(..., help="Destination path"),
     profile: str = typer.Option("default", "--profile", help="Profile name"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
@@ -116,37 +51,12 @@ def scaffold_greenfield_cmd(
     json: bool = typer.Option(False, "--json", help="JSON output"),
 ) -> dict[str, Any]:
     """Scaffold new greenfield project."""
-    return project_scaffold(
-        destination=destination,
-        profile=profile,
-        name=name,
-        description=description,
-        include_act=include_act,
-        include_qa_tools=include_qa_tools,
-        include_pm_tools=include_pm_tools,
-        language=language,
-        register=register,
-        install_runtime=install_runtime,
-        tenant=tenant,
-        dry_run=dry_run,
-        json_output=json,
-    )
+    return scaffold_greenfield(destination, template=language)
 
 
 @scaffold_app.command("brownfield")
 def scaffold_brownfield_cmd(
     project: str = typer.Argument(..., help="Project path"),
-    mode: str = typer.Option("agdd", "--mode"),
-    template: str = typer.Option("auto", "--template", "-t"),
-    name: str = typer.Option("", "--name", "-n"),
-    tenant: str = typer.Option("", "--tenant"),
-    json: bool = typer.Option(False, "--json"),
-) -> dict[str, Any]:
-    """Scaffold brownfield project."""
-    return _project_migrate(project_path=project, mode=mode)
-
-
-# Module-level exports for test mocking
     mode: str = typer.Option("agdd", "--mode", help="Migration mode"),
     template: str = typer.Option("auto", "--template", "-t", help="Template"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
@@ -158,21 +68,10 @@ def scaffold_brownfield_cmd(
     reconcile: bool = typer.Option(True, "--reconcile/--no-reconcile", help="Reconcile"),
 ) -> dict[str, Any]:
     """Scaffold brownfield project."""
-    return project_migrate(
-        project=project,
-        mode=mode,
-        template=template,
-        name=name,
-        tenant=tenant,
-        register=register,
-        install_runtime=install_runtime,
-        dry_run=dry_run,
-        reconcile=reconcile,
-        json_output=json,
-    )
+    return _project_migrate(project_path=project, mode=mode)
 
 
-# Module-level aliases for test mocking
+# Module-level exports for test mocking
 def project_migrate(**kwargs: Any) -> dict[str, Any]:
     """Entry point for project migration (used by CLI tests)."""
     return _project_migrate(
@@ -184,7 +83,3 @@ def project_migrate(**kwargs: Any) -> dict[str, Any]:
 def project_scaffold(**kwargs: Any) -> dict[str, Any]:
     """Entry point for project scaffolding (used by CLI tests)."""
     return scaffold_greenfield(kwargs.get("destination", ""), template=kwargs.get("language", "python"))
-    return scaffold_greenfield(
-        kwargs.get("destination", ""),
-        template=kwargs.get("language", "python"),
-    )
