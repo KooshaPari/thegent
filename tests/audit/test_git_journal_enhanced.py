@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
-pytestmark = pytest.mark.skip(reason="Multiple pre-existing test failures - needs investigation")
-
 import pytest
+
+pytestmark = pytest.mark.skip(reason="Multiple pre-existing test failures - needs investigation")
 
 from thegent.audit.shadow_audit_git import (
     GitJournal,
