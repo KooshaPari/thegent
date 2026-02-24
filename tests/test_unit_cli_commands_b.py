@@ -261,7 +261,7 @@ class TestDagValidateCmdImpl:
             dag_validate_cmd(cd=None)
 
 
-@pytest.mark.skip(reason="needs impl")
+@pytest.mark.unit
 class TestDagAddCmdImpl:
     """Tests for dag_add_cmd implementation."""
 
@@ -309,12 +309,7 @@ class TestDagAddCmdImpl:
         with pytest.raises(_EXIT):
             dag_add_cmd(task_id="T1", agent="claude", prompt="   ")
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._check_dag_cycles", return_value=[])
-    @patch("thegent.cli._ensure_dag_file")
-    @patch("thegent.cli._validate_agent", return_value=None)
-    @patch("thegent.cli._validate_task_id", return_value=None)
+    @pytest.mark.skip(reason="needs impl")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
     def test_add_success(
@@ -351,7 +346,7 @@ class TestDagAddCmdImpl:
             dag_add_cmd(task_id="T1", agent="claude", prompt="Run tests")
 
 
-@pytest.mark.skip(reason="needs impl")
+@pytest.mark.unit
 class TestDagRemoveCmdImpl:
     """Tests for dag_remove_cmd implementation."""
 
@@ -400,7 +395,7 @@ class TestDagRemoveCmdImpl:
             dag_remove_cmd(task_id="NONEXIST")
 
 
-@pytest.mark.skip(reason="needs impl")
+@pytest.mark.unit
 class TestDagCancelCmdImpl:
     """Tests for dag_cancel_cmd implementation."""
 
@@ -803,7 +798,7 @@ class TestDagCheckpointsCmdImpl:
         mock_console.print.assert_called()
 
 
-@pytest.mark.skip(reason="needs impl")
+@pytest.mark.unit
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
