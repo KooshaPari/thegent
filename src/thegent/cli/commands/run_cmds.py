@@ -202,8 +202,15 @@ def run_cmd(
 
     # Telemetry: record run outcome
     output_formatter = _normalize_output_format(res.get("format", "text"))
-    if full or output_formatter == "json":
+    if output_formatter == "json":
         console.print_json(data=res)
+    elif full:
+        # Full output mode: print stdout and stderr separately
+        output = res.get("output") or res.get("stdout", "")
+        if output:
+            console.print(output)
+        if res.get("stderr"):
+            console.print(f"[dim]{res['stderr']}[/dim]")
     elif output_formatter in ("structured", "markdown", "md"):
         if res.get("output"):
             console.print(res["output"])
@@ -211,8 +218,13 @@ def run_cmd(
             console.print("\n[dim]Transcript:[/dim]")
             console.print(res["transcript"])
     else:
-        if res.get("output"):
-            console.print(res["output"])
+        # Handle stdout/stderr keys for test compatibility
+        output = res.get("output") or res.get("stdout", "")
+        if output:
+            console.print(output)
+        # Handle timed_out warning
+        if res.get("timed_out"):
+            console.print("[yellow]Safety ceiling reached - run timed out[/yellow]")
         if res.get("usage") and full:
             usage_line = _format_context_usage_line(res["usage"])
             if usage_line:
@@ -233,6 +245,10 @@ def run_cmd(
                 console.print(f"[dim]{line}[/dim]")
 
     if res.get("exit_code") and res["exit_code"] != 0:
+        if res.get("error"):
+            console.print(f"[red]{res['error']}[/red]")
+            if res.get("agents"):
+                console.print(f"[dim]Available agents: {res['agents']}[/dim]")
         raise typer.Exit(res["exit_code"])
 
 
