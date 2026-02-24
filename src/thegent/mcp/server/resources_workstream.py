@@ -30,9 +30,9 @@ def resource_events_session_complete_impl() -> str:
             LIMIT 50
             """
         )
-        return json.dumps({"events": events, "count": len(events).decode()})
+        return json.dumps({"events": events, "count": len(events)})
     except Exception as e:
-        return json.dumps({"error": str(e).decode(), "events": []})
+        return json.dumps({"error": str(e), "events": []})
 
 
 def resource_workstream_db_impl() -> str:
@@ -76,4 +76,4 @@ def resource_workstream_db_impl() -> str:
             }
         )
     except Exception as e:
-        return json.dumps({"error": str(e).decode()})
+        return json.dumps({"error": str(e)})

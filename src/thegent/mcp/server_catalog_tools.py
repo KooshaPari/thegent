@@ -86,7 +86,7 @@ def thegent_list_agents_impl(
     result = list_agents_impl()
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content={"agents": result},
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -113,7 +113,7 @@ def thegent_suggest_mode_impl(
         result["use_case"] = entry.use_case
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -132,7 +132,7 @@ def thegent_list_droids_impl(
     result = list_droids_impl(cd=cast("Path | None", cd_path))
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content={"droids": result},
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -149,7 +149,7 @@ def thegent_list_models_impl(
     result = list_models_impl(provider=provider, include_contract=include_contract, by_model=by_model)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -211,7 +211,7 @@ def thegent_resolve_model_route_impl(
         )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(payload).decode(),
+        content=json.dumps(payload),
         structured_content=payload,
         meta={"execution_time_ms": elapsed_ms},
     )

@@ -38,7 +38,7 @@ def workstream_claim_tool_impl(
     result = claim_impl(item_id, agent_id)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -54,7 +54,7 @@ def lsp_diagnostics_tool_impl(
     try:
         payload = diagnostics_impl(file_path)
         return ToolResult(
-            content=json.dumps(payload).decode(),
+            content=json.dumps(payload),
             structured_content=payload,
             meta={"execution_time_ms": int((time.time() - started) * 1000)},
         )
@@ -75,7 +75,7 @@ def lsp_symbol_lookup_tool_impl(
     try:
         payload = symbol_lookup_impl(symbol_name, file_path)
         return ToolResult(
-            content=json.dumps(payload).decode(),
+            content=json.dumps(payload),
             structured_content=payload,
             meta={"execution_time_ms": int((time.time() - started) * 1000)},
         )
@@ -97,7 +97,7 @@ def lsp_hover_tool_impl(
     try:
         payload = hover_impl(file_path, line, character)
         return ToolResult(
-            content=json.dumps(payload).decode(),
+            content=json.dumps(payload),
             structured_content=payload,
             meta={"execution_time_ms": int((time.time() - started) * 1000)},
         )
@@ -123,7 +123,7 @@ def workstream_complete_tool_impl(
     result = complete_impl(item_id, agent_id)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )

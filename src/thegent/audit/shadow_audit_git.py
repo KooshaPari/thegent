@@ -11,6 +11,7 @@ FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 """
 
 from __future__ import annotations
+from thegent.infra.shim_subprocess import run as shim_run
 
 import asyncio
 import hashlib

@@ -19,7 +19,7 @@ def thegent_govern_approve_impl(
     result = govern_approve_impl(run_id=run_id, reason=reason)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -35,7 +35,7 @@ def thegent_govern_reject_impl(
     result = govern_reject_impl(run_id=run_id, reason=reason)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -66,7 +66,7 @@ def thegent_govern_vet_impl(
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(result).decode(),
+        content=json.dumps(result),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
