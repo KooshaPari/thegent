@@ -215,7 +215,6 @@ class TestRunCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 complex mocking - bg_impl has multiple implementations")
 class TestBgCmdImpl:
     """Tests for the bg_cmd function body."""
 
@@ -553,7 +552,6 @@ class TestDataProtectionCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 module changes")
 class TestAuditVerifyCmdImpl:
     """Tests for the audit_verify_cmd function body."""
 
@@ -823,7 +821,6 @@ class TestPolicyShowCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124 module changes")
 class TestSweepCmdImpl:
     """Tests for the sweep_cmd function body."""
 
