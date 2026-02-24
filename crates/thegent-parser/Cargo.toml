@@ -8,7 +8,11 @@ name = "thegent_parser"
 crate-type = ["cdylib"]
 
 [dependencies]
+<<<<<<< HEAD
+pyo3 = { version = "0.24", optional = true }
+=======
 pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/main
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 simd-json = { version = "0.14.3", features = ["serde"] }

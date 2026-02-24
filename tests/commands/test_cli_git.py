@@ -10,7 +10,11 @@ from thegent.cli.apps.main import app
 runner = CliRunner()
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="GitParallelismManager mock location issue")
+=======
 @pytest.mark.skip(reason="GitParallelismManager mock issue")
+>>>>>>> origin/main
 def test_git_lock_status_reports_clear_state() -> None:
     fake_manager = MagicMock()
     fake_manager.index_lock_status.return_value = {
@@ -30,7 +34,11 @@ def test_git_lock_status_reports_clear_state() -> None:
     fake_manager.index_lock_status.assert_called_once_with(stale_after_s=90.0)
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="GitParallelismManager mock location issue")
+=======
 @pytest.mark.skip(reason="GitParallelismManager mock issue")
+>>>>>>> origin/main
 def test_git_lock_status_outputs_json() -> None:
     fake_manager = MagicMock()
     fake_manager.index_lock_status.return_value = {
@@ -51,7 +59,11 @@ def test_git_lock_status_outputs_json() -> None:
     fake_manager.index_lock_status.assert_called_once_with(stale_after_s=120.0)
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="GitParallelismManager mock location issue")
+=======
 @pytest.mark.skip(reason="GitParallelismManager mock issue")
+>>>>>>> origin/main
 def test_git_commit_respects_lock_options() -> None:
     fake_manager = MagicMock()
     fake_manager.wait_for_index_lock.return_value = True
