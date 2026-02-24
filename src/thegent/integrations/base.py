@@ -368,6 +368,407 @@ class SerializableMixin:
         if len(data) > 3:
             parts.append("...")
         return f"{cls_name}({', '.join(parts)})"
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+    
+    def diff(self, other: "SerializableMixin") -> dict[str, tuple[Any, Any]]:
+        """Compare this instance with another and return field differences.
+        
+        Args:
+            other: Another instance to compare with
+            
+        Returns:
+            Dict mapping field names to (self_value, other_value) tuples
+            for fields that differ. Empty dict if instances are equal.
+            
+        Example:
+            p1 = Person(name="Alice", age=30)
+            p2 = Person(name="Alice", age=35)
+            diff = p1.diff(p2)  # {"age": (30, 35)}
+        """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot diff {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        differences = {}
+        all_keys = set(self_dict.keys()) | set(other_dict.keys())
+        
+        for key in all_keys:
+            self_val = self_dict.get(key, _MISSING)
+            other_val = other_dict.get(key, _MISSING)
+            
+            if self_val != other_val:
+                differences[key] = (
+                    None if self_val is _MISSING else self_val,
+                    None if other_val is _MISSING else other_val,
+                )
+        
+        return differences
+    
+    def copy(self, **overrides: Any) -> "SerializableMixin":
+        """Create a shallow copy with optional field overrides.
+        
+        Args:
+            **overrides: Field values to override in the copy
+            
+        Returns:
+            New instance with copied values and any overrides applied
+            
+        Example:
+            p1 = Person(name="Alice", age=30)
+            p2 = p1.copy(age=35)  # Person(name="Alice", age=35)
+        """
+        data = self.to_dict()
+        data.update(overrides)
+        return type(self).from_dict(data)
+    
+    def merge(self, other: "SerializableMixin", *, overwrite: bool = True) -> "SerializableMixin":
+        """Merge fields from another instance into a new instance.
+        
+        Args:
+            other: Instance to merge from
+            overwrite: If True (default), other's non-None values overwrite self's.
+                      If False, only fill in None fields from other.
+            
+        Returns:
+            New merged instance
+            
+        Example:
+            p1 = Person(name="Alice", age=None, city="NYC")
+            p2 = Person(name="Bob", age=30, city=None)
+            merged = p1.merge(p2)  # Person(name="Bob", age=30, city="NYC")
+            merged = p1.merge(p2, overwrite=False)  # Person(name="Alice", age=30, city="NYC")
+        """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot merge {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        merged = dict(self_dict)
+        for key, value in other_dict.items():
+            if overwrite:
+                if value is not None:
+                    merged[key] = value
+            else:
+                if merged.get(key) is None and value is not None:
+                    merged[key] = value
+        
+        return type(self).from_dict(merged)
+    
+    def patch(self, **updates: Any) -> "SerializableMixin":
+        """Apply updates to create a new instance (alias for copy).
+        
+        More explicit name for the copy operation when making targeted changes.
+        
+        Args:
+            **updates: Field values to update
+            
+        Returns:
+            New instance with updates applied
+        """
+        return self.copy(**updates)
+    
+    def to_json(self, *, indent: int | None = None, sort_keys: bool = False) -> str:
+        """Serialize instance to JSON string.
+        
+        Args:
+            indent: JSON indentation level (None for compact)
+            sort_keys: Whether to sort dictionary keys
+            
+        Returns:
+            JSON string representation
+            
+        Example:
+            person.to_json()  # '{"name": "Alice", "age": 30}'
+            person.to_json(indent=2)  # Pretty-printed
+        """
+        import json
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys, default=str)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> "SerializableMixin":
+        """Create instance from JSON string.
+        
+        Args:
+            json_str: JSON string to parse
+            
+        Returns:
+            New instance from parsed JSON
+            
+        Raises:
+            json.JSONDecodeError: If JSON is invalid
+            
+        Example:
+            person = Person.from_json('{"name": "Alice", "age": 30}')
+        """
+        import json
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    def to_json_file(self, path: str | Path, *, indent: int = 2) -> None:
+        """Write instance to JSON file.
+        
+        Args:
+            path: File path to write
+            indent: JSON indentation level (default: 2 for readability)
+        """
+        import json
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_json(indent=indent))
+    
+    @classmethod
+    def from_json_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from JSON file.
+        
+        Args:
+            path: File path to read
+            
+        Returns:
+            New instance from parsed JSON file
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            json.JSONDecodeError: If JSON is invalid
+        """
+        path = Path(path)
+        return cls.from_json(path.read_text())
+    
+    # YAML serialization
+    def to_yaml(self) -> str:
+        """Serialize instance to YAML string.
+        
+        Returns:
+            YAML string representation
+            
+        Raises:
+            ImportError: If pyyaml is not installed
+            
+        Example:
+            yaml_str = person.to_yaml()
+        """
+        try:
+            import yaml
+        except ImportError:
+            raise ImportError("PyYAML required for YAML support: pip install pyyaml")
+        return yaml.dump(self.to_dict(), default_flow_style=False, sort_keys=False)
+    
+    @classmethod
+    def from_yaml(cls, yaml_str: str) -> "SerializableMixin":
+        """Create instance from YAML string.
+        
+        Args:
+            yaml_str: YAML string to parse
+            
+        Returns:
+            New instance from parsed YAML
+            
+        Raises:
+            ImportError: If pyyaml is not installed
+            yaml.YAMLError: If YAML is invalid
+            
+        Example:
+            person = Person.from_yaml('name: Alice\\nage: 30')
+        """
+        try:
+            import yaml
+        except ImportError:
+            raise ImportError("PyYAML required for YAML support: pip install pyyaml")
+        data = yaml.safe_load(yaml_str)
+        return cls.from_dict(data)
+    
+    def to_yaml_file(self, path: str | Path) -> None:
+        """Write instance to YAML file.
+        
+        Args:
+            path: File path to write
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_yaml())
+    
+    @classmethod
+    def from_yaml_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from YAML file.
+        
+        Args:
+            path: File path to read
+            
+        Returns:
+            New instance from parsed YAML file
+        """
+        path = Path(path)
+        return cls.from_yaml(path.read_text())
+    
+    # TOML serialization
+    def to_toml(self) -> str:
+        """Serialize instance to TOML string.
+        
+        Note: None values are omitted as TOML doesn't support null.
+        Only works for flat or nested dict structures.
+        
+        Returns:
+            TOML string representation
+            
+        Raises:
+            ImportError: If tomli-w not installed
+            ValueError: If data cannot be represented in TOML
+            
+        Example:
+            toml_str = config.to_toml()
+        """
+        import sys
+        
+        try:
+            import tomli_w
+        except ImportError:
+            raise ImportError("tomli-w required for TOML support: pip install tomli-w")
+        
+        data = self.to_dict()
+        
+        # Filter out None values as TOML doesn't support null
+        def _filter_none(d: Any) -> Any:
+            if isinstance(d, dict):
+                return {k: _filter_none(v) for k, v in d.items() if v is not None}
+            if isinstance(d, list):
+                return [_filter_none(v) for v in d if v is not None]
+            return d
+        
+        filtered_data = _filter_none(data)
+        return tomli_w.dumps(filtered_data)
+    
+    @classmethod
+    def from_toml(cls, toml_str: str) -> "SerializableMixin":
+        """Create instance from TOML string.
+        
+        Args:
+            toml_str: TOML string to parse
+            
+        Returns:
+            New instance from parsed TOML
+            
+        Raises:
+            ImportError: If tomli not installed (Python < 3.11)
+            
+        Example:
+            config = Config.from_toml('name = "test"\\nage = 30')
+        """
+        import sys
+        
+        if sys.version_info >= (3, 11):
+            import tomllib
+            data = tomllib.loads(toml_str)
+        else:
+            try:
+                import tomli
+            except ImportError:
+                raise ImportError("tomli required for TOML support: pip install tomli")
+            data = tomli.loads(toml_str)
+        
+        return cls.from_dict(data)
+    
+    def to_toml_file(self, path: str | Path) -> None:
+        """Write instance to TOML file.
+        
+        Args:
+            path: File path to write
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_toml())
+    
+    @classmethod
+    def from_toml_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from TOML file.
+        
+        Args:
+            path: File path to read
+            
+        Returns:
+            New instance from parsed TOML file
+        """
+        path = Path(path)
+        return cls.from_toml(path.read_text())
+    
+    # Deep copy support
+    def deep_copy(self) -> "SerializableMixin":
+        """Create a deep copy of this instance.
+        
+        Returns:
+            New deeply copied instance
+            
+        Example:
+            p2 = p1.deep_copy()
+        """
+        import copy
+        return copy.deepcopy(self)
+    
+    def __deepcopy__(self, memo: dict) -> "SerializableMixin":
+        """Support for copy.deepcopy().
+        
+        Uses serialization for reliable deep copying.
+        """
+        # Use serialization for reliable deep copy
+        return type(self).from_dict(self.to_dict())
+    
+    # Pickle support
+    def __getstate__(self) -> dict[str, Any]:
+        """Support for pickling - return field values as dict.
+        
+        Note: Uses raw field values, not serialized, for round-trip fidelity.
+        """
+        state = {}
+        if hasattr(self, '__dataclass_fields__'):
+            for f in fields(self):
+                state[f.name] = getattr(self, f.name)
+        else:
+            state = dict(self.__dict__)
+        return state
+    
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        """Support for unpickling - restore field values.
+        
+        Note: Sets fields directly, bypassing __init__.
+        """
+        if hasattr(self, '__dataclass_fields__'):
+            for f in fields(self):
+                if f.name in state:
+                    object.__setattr__(self, f.name, state[f.name])
+        else:
+            self.__dict__.update(state)
+    
+    # Frozen/immutable support
+    def replace(self, **changes: Any) -> "SerializableMixin":
+        """Create a new instance with specified field changes.
+        
+        Alias for copy() with a more explicit name for immutable-style updates.
+        
+        Args:
+            **changes: Field values to change
+            
+        Returns:
+            New instance with changes applied
+            
+        Example:
+            p2 = p1.replace(age=31)  # Like dataclasses.replace()
+        """
+        return self.copy(**changes)
+
+
+class _Missing:
+    """Sentinel for missing values."""
+    def __repr__(self) -> str:
+        return "<MISSING>"
+
+
+_MISSING = _Missing()
+>>>>>>> origin/main
+>>>>>>> origin/fix/cli-test-failures
 
 
 def hashable_dataclass(cls: type) -> type:
@@ -399,6 +800,162 @@ def hashable_dataclass(cls: type) -> type:
 
 
 # ---------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+# Validated Mixin
+# ---------------------------------------------------------------------------
+
+from typing import Callable, Protocol
+
+class ValidatorFunc(Protocol):
+    """Protocol for field validator functions."""
+    def __call__(self, value: Any, field_name: str) -> Any: ...
+
+
+def validated_dataclass(cls: type) -> type:
+    """Decorator to add field validation to a dataclass.
+    
+    Looks for validator functions defined as:
+    - validate_<field_name>(self, value) -> Any
+    
+    Validators can:
+    - Raise ValueError/TypeError for invalid values
+    - Return transformed value (coercion)
+    - Return value unchanged
+    
+    IMPORTANT: Must be applied BEFORE @dataclass decorator!
+    
+    Example:
+        @validated_dataclass  # Runs AFTER @dataclass (wraps __init__)
+        @dataclass            # Runs FIRST (creates __init__)
+        class User:
+            name: str
+            age: int
+            
+            def validate_age(self, value: int) -> int:
+                if value < 0:
+                    raise ValueError("age must be non-negative")
+                return value
+    """
+    if not hasattr(cls, '__dataclass_fields__'):
+        return cls
+    
+    # Store original __init__ from dataclass
+    original_init = cls.__init__
+    
+    # Check if class has any validators
+    has_validators = any(
+        hasattr(cls, f"validate_{f.name}") for f in fields(cls)
+    )
+    
+    if not has_validators:
+        return cls
+    
+    def __init_validated__(self, *args, **kwargs):
+        # Call original __init__ to set fields
+        original_init(self, *args, **kwargs)
+        
+        # Now run validators
+        for f in fields(cls):
+            validator_name = f"validate_{f.name}"
+            if hasattr(self, validator_name):
+                validator = getattr(self, validator_name)
+                current_value = getattr(self, f.name)
+                try:
+                    new_value = validator(current_value)
+                    object.__setattr__(self, f.name, new_value)
+                except Exception:
+                    raise
+    
+    cls.__init__ = __init_validated__
+    return cls
+
+
+# ---------------------------------------------------------------------------
+# Context Manager Mixin
+# ---------------------------------------------------------------------------
+
+class ContextManagerMixin:
+    """Mixin providing context manager protocol for resource classes.
+    
+    Subclasses should implement:
+    - _enter(): Called on context entry, returns self or resource
+    - _exit(exc_type, exc_val, exc_tb): Called on context exit
+    
+    Example:
+        class MyResource(ContextManagerMixin):
+            def _enter(self):
+                self.open()
+                return self
+            
+            def _exit(self, exc_type, exc_val, exc_tb):
+                self.close()
+    
+        with MyResource() as r:
+            r.do_sthing()
+    """
+    
+    def __enter__(self) -> "ContextManagerMixin":
+        """Context manager entry."""
+        if hasattr(self, '_enter'):
+            return self._enter()
+        return self
+    
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Context manager exit."""
+        if hasattr(self, '_exit'):
+            return self._exit(exc_type, exc_val, exc_tb)
+        return False  # Don't suppress exceptions
+
+
+class AsyncContextManagerMixin:
+    """Mixin providing async context manager protocol.
+    
+    Subclasses should implement:
+    - _aenter(): Called on async context entry
+    - _aexit(exc_type, exc_val, exc_tb): Called on async context exit
+    
+    Example:
+        class AsyncResource(AsyncContextManagerMixin):
+            async def _aenter(self):
+                await self.connect()
+                return self
+            
+            async def _aexit(self, exc_type, exc_val, exc_tb):
+                await self.disconnect()
+    
+        async with AsyncResource() as r:
+            await r.do_something()
+    """
+    
+    async def __aenter__(self) -> "AsyncContextManagerMixin":
+        """Async context manager entry."""
+        if hasattr(self, '_aenter'):
+            return await self._aenter()
+        return self
+    
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Async context manager exit."""
+        if hasattr(self, '_aexit'):
+            return await self._aexit(exc_type, exc_val, exc_tb)
+        return False
+
+
+# ---------------------------------------------------------------------------
+>>>>>>> origin/main
+>>>>>>> origin/fix/cli-test-failures
 # Singleton Mixin
 # ---------------------------------------------------------------------------
 

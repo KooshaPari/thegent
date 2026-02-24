@@ -12,10 +12,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 <<<<<<< HEAD
+<<<<<<< HEAD
 pyo3 = { version = "0.24" }
 =======
 pyo3 = { version = "0.24.1" }
 >>>>>>> origin/main
+=======
+pyo3 = { version = "0.24.1" }
+>>>>>>> origin/fix/cli-test-failures
 thiserror = "1.0"
 which = "6.0"
 

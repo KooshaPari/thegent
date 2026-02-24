@@ -17,10 +17,14 @@ thiserror = "2.0"
 dashmap = "6.1"
 regex = "1.11"
 <<<<<<< HEAD
+<<<<<<< HEAD
 pyo3 = { version = "0.24", optional = true }
 =======
 pyo3 = { version = "0.24.1", optional = true }
 >>>>>>> origin/main
+=======
+pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/fix/cli-test-failures
 
 [dev-dependencies]
 tempfile = "3"
