@@ -1,0 +1,18 @@
+name: Executor Agent
+description: Specialized agent for command execution and system operations
+priority: NORMAL
+capabilities:
+  - command_execution
+  - shell_operations
+  - file_system_ops
+  - process_management
+tools:
+  - run_shell
+  - run_script
+  - manage_processes
+model_preferences:
+  - claude-sonnet
+  - gpt-4o
+timeout: 600
+max_retries: 3
+retry_policy: exponential_backoff
