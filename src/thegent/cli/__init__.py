@@ -16,43 +16,6 @@ from thegent.cli.commands import _cli_shared as _shared
 # Backward compatibility - expose commonly used modules for test mocking
 Columns = getattr(_cli_surface, "Columns", None)
 
-# Stub for tests
-def _resolve_cwd(cd=None):
-    """Stub for backward compatibility."""
-    return None
-
-def _parse_dag_session(dag_file, cwd=None):
-    """Stub for tests."""
-    return {}, []
-
-def _parse_dag_full(dag_file, cwd=None):
-    """Stub for tests."""
-    return {}
-
-def _serialize_dag(doc):
-    """Stub for tests."""
-    return ""
-
-def _validate_dag(doc):
-    """Stub for tests."""
-    return []
-
-def _check_dag_cycles(doc):
-    """Stub for tests."""
-    return []
-
-def _dag_path(cd=None):
-    """Stub for tests."""
-    return None
-
-def _ensure_dag_file(path, content):
-    """Stub for tests."""
-    pass
-
-def _dag_update_task(task_id, field, value, session_dir):
-    """Stub for tests."""
-    return True
-
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
@@ -91,6 +54,7 @@ _surface_names = getattr(_cli_surface, "__all__", [])
 for _name in _surface_names:
     globals()[_name] = getattr(_cli_surface, _name)
 
+# Patchable names - delegate to _cli_shared for test mocking
 _patchable_names_list = [
     "resolve_agent",
     "list_agent_names",
@@ -111,6 +75,28 @@ _patchable_names_list = [
     "ThegentSettings",
     "get_exit_message",
     "console",
+    # DAG helpers for test patching
+    "_dag_path",
+    "_parse_dag_full",
+    "_parse_dag_session",
+    "_serialize_dag",
+    "_validate_dag",
+    "_check_dag_cycles",
+    "_ensure_dag_file",
+    "_dag_update_task",
+    "_atomic_write",
+    "_default_owner_tag",
+    "_ensure_contract_version_header",
+    "_parse_depends_on",
+    "_session_status_for",
+    "_validate_agent",
+    "_validate_task_id",
+    "_resolve_checkpoint_id",
+    "_resolve_prompt",
+    "dag_ready_impl",
+    "dag_recover_impl",
+    "dag_run_impl",
+    "dag_sync_impl",
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
@@ -143,4 +129,18 @@ __all__ = [
     "signal",
     "sys",
     "time",
+    # DAG helpers
+    "_dag_path",
+    "_parse_dag_full",
+    "_parse_dag_session",
+    "_serialize_dag",
+    "_validate_dag",
+    "_check_dag_cycles",
+    "_ensure_dag_file",
+    "_dag_update_task",
+    "_atomic_write",
+    "_resolve_prompt",
+    "dag_recover_impl",
+    "dag_run_impl",
+    "dag_sync_impl",
 ]
