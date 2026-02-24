@@ -368,6 +368,35 @@ class SerializableMixin:
         if len(data) > 3:
             parts.append("...")
         return f"{cls_name}({', '.join(parts)})"
+<<<<<<< HEAD
+
+
+def hashable_dataclass(cls: type) -> type:
+    """Decorator to make a dataclass hashable using SerializableMixin hash.
+    
+    Also restores the SerializableMixin __repr__ for cleaner output.
+    
+    Usage:
+        @hashable_dataclass
+        @dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+    
+    Or:
+        @dataclass
+        @hashable_dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+    """
+    if hasattr(cls, '__dataclass_fields__'):
+        if cls.__hash__ is None:
+            # Restore the hash method from SerializableMixin
+            cls.__hash__ = SerializableMixin.__serializable_hash__
+        # Also restore the custom __repr__ for cleaner output
+        cls.__repr__ = SerializableMixin.__repr__
+=======
 # Validated Mixin
 # ---------------------------------------------------------------------------
 
@@ -434,10 +463,13 @@ def validated_dataclass(cls: type) -> type:
                     raise
     
     cls.__init__ = __init_validated__
+>>>>>>> origin/main
     return cls
 
 
 # ---------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
 # Context Manager Mixin
 # ---------------------------------------------------------------------------
 
@@ -518,6 +550,7 @@ class AsyncContextManagerMixin:
 
 
 # ---------------------------------------------------------------------------
+>>>>>>> origin/main
 # Singleton Mixin
 # ---------------------------------------------------------------------------
 

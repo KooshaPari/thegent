@@ -129,7 +129,11 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
     )
     summary["scope_key_json"] = result.get(
         "scope_key_json",
+<<<<<<< HEAD
+        json.dumps(result.get('scope_key', {})).decode(),
+=======
         json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS).decode(),
+>>>>>>> origin/main
     )
     summary["payload_signature_algorithm"] = _safe_dict(result.get("payload_signature")).get("algorithm", "sha256")
     summary["payload_signature_value"] = _safe_dict(result.get("payload_signature")).get("value", "")

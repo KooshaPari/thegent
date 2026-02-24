@@ -185,7 +185,11 @@ def test_install_with_invalid_target_fails_without_calling_install() -> None:
     mock_run_install.assert_not_called()
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="Implementation issue")
+>>>>>>> origin/main
 def test_install_project_subcommand_still_routes_to_project_installer() -> None:
     """`thegent install project` should still resolve the project-install command."""
     with (
@@ -218,7 +222,11 @@ def test_install_project_subcommand_still_routes_to_project_installer() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="project_migrate mock issue")
+>>>>>>> origin/main
 def test_project_top_level_command_is_available_and_routes_to_setup_project() -> None:
     """`thegent project` should resolve through setup project command registry."""
     result = runner.invoke(app, ["project", "list", "--json"])
@@ -228,7 +236,11 @@ def test_project_top_level_command_is_available_and_routes_to_setup_project() ->
     assert isinstance(payload, list)
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="project_migrate mock issue")
+>>>>>>> origin/main
 def test_install_project_brownfield_routes_to_setup_project_migrate() -> None:
     """`thegent install project brownfield` should delegate to migrate workflow."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -266,7 +278,11 @@ def test_install_project_brownfield_routes_to_setup_project_migrate() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="project_migrate mock issue")
+>>>>>>> origin/main
 def test_scaffold_greenfield_routes_to_sys_setup_project_scaffold() -> None:
     """`thegent scaffold greenfield` should delegate to the setup-project scaffold command."""
     with patch("thegent.cli.apps.project.project_scaffold") as mock_project_scaffold:
@@ -290,7 +306,11 @@ def test_scaffold_greenfield_routes_to_sys_setup_project_scaffold() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="project_migrate mock issue")
+>>>>>>> origin/main
 def test_scaffold_brownfield_routes_to_sys_setup_project_migrate() -> None:
     """`thegent scaffold brownfield` should delegate to the setup-project migrate command."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -311,7 +331,11 @@ def test_scaffold_brownfield_routes_to_sys_setup_project_migrate() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="project_migrate mock issue")
+>>>>>>> origin/main
 def test_scaffold_agdd_alias_routes_to_project_migrate() -> None:
     """`thegent scaffold ag-dd` should fix template to ag-dd."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -343,7 +367,11 @@ def test_scaffold_agdd_alias_routes_to_project_migrate() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="project_migrate mock issue")
+>>>>>>> origin/main
 def test_scaffold_none_alias_routes_to_project_migrate() -> None:
     """`thegent scaffold none` should fix template to none."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -375,7 +403,11 @@ def test_scaffold_none_alias_routes_to_project_migrate() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="Implementation issue")
+>>>>>>> origin/main
 def test_setup_project_agdd_alias_routes_to_brownfield() -> None:
     """`thegent project ag-dd` should fix template to AG-DD."""
     with patch("thegent.cli.apps.project.setup_project_brownfield") as mock_setup_project_brownfield:
@@ -407,7 +439,11 @@ def test_setup_project_agdd_alias_routes_to_brownfield() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="Implementation issue")
+>>>>>>> origin/main
 def test_setup_project_none_alias_routes_to_brownfield() -> None:
     """`thegent project none` should fix template to none."""
     with patch("thegent.cli.apps.project.setup_project_brownfield") as mock_setup_project_brownfield:
@@ -439,7 +475,11 @@ def test_setup_project_none_alias_routes_to_brownfield() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="Implementation issue")
+>>>>>>> origin/main
 def test_install_project_agdd_alias_routes_to_project_migrate() -> None:
     """`thegent install project ag-dd` should force AG-DD and route to migrate."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -473,7 +513,11 @@ def test_install_project_agdd_alias_routes_to_project_migrate() -> None:
     )
 
 
+<<<<<<< HEAD
+@pytest.mark.skip(reason="project_migrate mock location issue")
+=======
 @pytest.mark.skip(reason="Implementation issue")
+>>>>>>> origin/main
 def test_install_project_none_alias_routes_to_project_migrate() -> None:
     """`thegent install project none` should force no template and route to migrate."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
