@@ -56,7 +56,6 @@ def test_cli_shim_reexports_commands_from_extracted_domains() -> None:
     # Module paths have changed during refactoring - accept either path
     assert cli.dag_status_cmd.__module__ in ("thegent.cli.commands.plan_cmds", "thegent.cli.commands.plan_dag_cmds")
     assert cli.run_cmd.__module__ == "thegent.cli.commands.run_cmds"
-    # Module paths have changed during refactoring - accept either path
     assert cli.status_cmd.__module__ in ("thegent.cli.commands.session_cmds", "thegent.cli.commands.session_lifecycle_cmds")
     assert cli.list_models_cmd.__module__ in ("thegent.cli.commands.model_cmds", "thegent.cli.commands.model_cmds_list")
     # data_protection_cmd may not exist in governance_cmds

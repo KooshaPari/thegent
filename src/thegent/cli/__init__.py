@@ -76,6 +76,21 @@ def _default_owner_tag():
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
+    # Forward to _shared for CLI helper functions
+    if hasattr(_shared, name):
+        return getattr(_shared, name)
+    
+    # Forward dag_update_cmd to _cli_surface
+    if name == "dag_update_cmd":
+        from thegent.cli.commands import plan_dag_cmds
+        return getattr(plan_dag_cmds, name)
+    
+    # Forward ThegentSettings to _shared
+    if name == "ThegentSettings":
+        from thegent.cli.commands._cli_shared import ThegentSettings
+        globals()[name] = ThegentSettings
+        return ThegentSettings
+    
     if name == "AGENT_LABELS":
         from thegent.agents.registry import AGENT_LABELS
 

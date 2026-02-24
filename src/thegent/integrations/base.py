@@ -16,6 +16,7 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 from pathlib import Path
+from types import TracebackType
 from typing import Any, TypeVar
 
 _log = logging.getLogger(__name__)
@@ -367,6 +368,7 @@ class SerializableMixin:
         if len(data) > 3:
             parts.append("...")
         return f"{cls_name}({', '.join(parts)})"
+<<<<<<< HEAD
 
 
 def hashable_dataclass(cls: type) -> type:
@@ -394,10 +396,161 @@ def hashable_dataclass(cls: type) -> type:
             cls.__hash__ = SerializableMixin.__serializable_hash__
         # Also restore the custom __repr__ for cleaner output
         cls.__repr__ = SerializableMixin.__repr__
+=======
+# Validated Mixin
+# ---------------------------------------------------------------------------
+
+from typing import Callable, Protocol
+
+class ValidatorFunc(Protocol):
+    """Protocol for field validator functions."""
+    def __call__(self, value: Any, field_name: str) -> Any: ...
+
+
+def validated_dataclass(cls: type) -> type:
+    """Decorator to add field validation to a dataclass.
+    
+    Looks for validator functions defined as:
+    - validate_<field_name>(self, value) -> Any
+    
+    Validators can:
+    - Raise ValueError/TypeError for invalid values
+    - Return transformed value (coercion)
+    - Return value unchanged
+    
+    IMPORTANT: Must be applied BEFORE @dataclass decorator!
+    
+    Example:
+        @validated_dataclass  # Runs AFTER @dataclass (wraps __init__)
+        @dataclass            # Runs FIRST (creates __init__)
+        class User:
+            name: str
+            age: int
+            
+            def validate_age(self, value: int) -> int:
+                if value < 0:
+                    raise ValueError("age must be non-negative")
+                return value
+    """
+    if not hasattr(cls, '__dataclass_fields__'):
+        return cls
+    
+    # Store original __init__ from dataclass
+    original_init = cls.__init__
+    
+    # Check if class has any validators
+    has_validators = any(
+        hasattr(cls, f"validate_{f.name}") for f in fields(cls)
+    )
+    
+    if not has_validators:
+        return cls
+    
+    def __init_validated__(self, *args, **kwargs):
+        # Call original __init__ to set fields
+        original_init(self, *args, **kwargs)
+        
+        # Now run validators
+        for f in fields(cls):
+            validator_name = f"validate_{f.name}"
+            if hasattr(self, validator_name):
+                validator = getattr(self, validator_name)
+                current_value = getattr(self, f.name)
+                try:
+                    new_value = validator(current_value)
+                    object.__setattr__(self, f.name, new_value)
+                except Exception:
+                    raise
+    
+    cls.__init__ = __init_validated__
+>>>>>>> origin/main
     return cls
 
 
 # ---------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
+# Context Manager Mixin
+# ---------------------------------------------------------------------------
+
+class ContextManagerMixin:
+    """Mixin providing context manager protocol for resource classes.
+    
+    Subclasses should implement:
+    - _enter(): Called on context entry, returns self or resource
+    - _exit(exc_type, exc_val, exc_tb): Called on context exit
+    
+    Example:
+        class MyResource(ContextManagerMixin):
+            def _enter(self):
+                self.open()
+                return self
+            
+            def _exit(self, exc_type, exc_val, exc_tb):
+                self.close()
+    
+        with MyResource() as r:
+            r.do_sthing()
+    """
+    
+    def __enter__(self) -> "ContextManagerMixin":
+        """Context manager entry."""
+        if hasattr(self, '_enter'):
+            return self._enter()
+        return self
+    
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Context manager exit."""
+        if hasattr(self, '_exit'):
+            return self._exit(exc_type, exc_val, exc_tb)
+        return False  # Don't suppress exceptions
+
+
+class AsyncContextManagerMixin:
+    """Mixin providing async context manager protocol.
+    
+    Subclasses should implement:
+    - _aenter(): Called on async context entry
+    - _aexit(exc_type, exc_val, exc_tb): Called on async context exit
+    
+    Example:
+        class AsyncResource(AsyncContextManagerMixin):
+            async def _aenter(self):
+                await self.connect()
+                return self
+            
+            async def _aexit(self, exc_type, exc_val, exc_tb):
+                await self.disconnect()
+    
+        async with AsyncResource() as r:
+            await r.do_something()
+    """
+    
+    async def __aenter__(self) -> "AsyncContextManagerMixin":
+        """Async context manager entry."""
+        if hasattr(self, '_aenter'):
+            return await self._aenter()
+        return self
+    
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Async context manager exit."""
+        if hasattr(self, '_aexit'):
+            return await self._aexit(exc_type, exc_val, exc_tb)
+        return False
+
+
+# ---------------------------------------------------------------------------
+>>>>>>> origin/main
 # Singleton Mixin
 # ---------------------------------------------------------------------------
 
@@ -665,7 +818,9 @@ class BaseIntegration(ABC):
 
 
 __all__ = [
+    "AsyncContextManagerMixin",
     "BaseIntegration",
+    "ContextManagerMixin",
     "DataclassConfig",
     "FeatureFlag",
     "FeatureRegistry",
@@ -677,6 +832,7 @@ __all__ = [
     "hashable_dataclass",
     "load_env_config",
     "load_file_config",
+    "validated_dataclass",
 ]
 
 

@@ -11,7 +11,11 @@ name = "thegent_subprocess"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+<<<<<<< HEAD
 pyo3 = { version = "0.24" }
+=======
+pyo3 = { version = "0.24.1" }
+>>>>>>> origin/main
 thiserror = "1.0"
 which = "6.0"
 

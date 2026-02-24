@@ -7,6 +7,8 @@ from typing import Any
 
 from thegent.integrations.base import SerializableMixin
 
+from thegent.integrations.base import SerializableMixin
+
 logger = logging.getLogger(__name__)
 
 
