@@ -63,6 +63,9 @@ def _health_report_result(**overrides: Any) -> dict[str, Any]:
         "top_blocked": [],
         "healthy_count": 5,
         "unhealthy_count": 0,
+        "healthy_ratio": 1.0,
+        "threshold": 0.8,
+        "payload_signature": None,
     }
     base.update(overrides)
     return base
@@ -404,7 +407,7 @@ class TestDagRemoveCmdImpl:
 class TestDagCancelCmdImpl:
     """Tests for dag_cancel_cmd implementation."""
 
-    @patch("thegent.cli.dag_update_cmd")
+    @patch("thegent.cli.commands.plan_dag_cmds.dag_update_cmd")
     @patch("thegent.cli.console")
     def test_cancel_delegates_to_update(self, mock_console, mock_update) -> None:
         # @trace FR-CLI-318
@@ -1125,8 +1128,8 @@ class TestSessionContractHealthReportCmdImpl:
 
         with (
             patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result),
-            patch("thegent.cli._write_report_export", return_value="json") as mock_write,
-            patch("thegent.cli._infer_export_format", return_value="json"),
+            patch("thegent.cli.commands.session_contract_cmds.resolve_export_format_with_notice", return_value="json"),
+            patch("thegent.cli.commands.session_contract_cmds._write_report_export", return_value="json") as mock_write,
         ):
             from thegent.cli import session_contract_health_report_cmd
 
