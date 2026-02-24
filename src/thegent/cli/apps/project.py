@@ -26,7 +26,7 @@ def install_project(
     json: bool = typer.Option(False, "--json", help="JSON output"),
 ) -> dict[str, Any]:
     """Install/brownfield project migration."""
-    return _project_migrate(project_path=project, mode=mode)
+    return project_migrate(project=project, mode=mode, template=template, name=name, tenant=tenant)
 
 
 @scaffold_app.command("greenfield")
@@ -38,7 +38,7 @@ def scaffold_greenfield_cmd(
     tenant: str = typer.Option("", "--tenant", help="Tenant ID"),
 ) -> dict[str, Any]:
     """Scaffold new greenfield project."""
-    return scaffold_greenfield(destination, template=language)
+    return project_scaffold(destination=destination, profile=profile, name=name, language=language, tenant=tenant)
 
 
 @scaffold_app.command("brownfield")
@@ -51,7 +51,7 @@ def scaffold_brownfield_cmd(
     json: bool = typer.Option(False, "--json", help="JSON output"),
 ) -> dict[str, Any]:
     """Scaffold brownfield project."""
-    return scaffold_brownfield(project, mode=mode)
+    return project_scaffold(destination=project, profile=mode, name=name, language=template, tenant=tenant)
 
 
 # Module-level aliases for test mocking
