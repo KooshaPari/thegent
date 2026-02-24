@@ -40,18 +40,31 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 
 ## Project Inventory
 
-### 1. CLIPROXYAPI PlusPlus
+### 1. CLIProxyAPI (Original)
+**Root**: `cliproxyapi/`
+
+| Canonical File | Status |
+|--------------|--------|
+| CHANGELOG.md | Active |
+| README.md | Active |
+| docs/ | Active |
+
+**Purpose**: Original CLIProxyAPI - parent project with OpenAI-compatible API
+
+### 2. CLIPROXYAPI PlusPlus
 **Root**: `cliproxyapi-plusplus/`
 
-| Canonical File | Status | Lines |
+| Canonical File | Status | Notes |
 |--------------|--------|-------|
 | CHANGELOG.md | Active | - |
-| docs/planning/MASTER_PLANNING_BOARD.md | Active | - |
-| docs/planning/*BOARD*.csv | 2 boards | 2,000 items |
+| ADR.md | NEW | Created 2026-02-24 |
+| README.md | Active | Comprehensive |
+| docs/ | Active | 50+ docs |
 
-**Specs**: PRD, ADR, SPEC in `docs/features/*/`
+**Go Project**: OpenAI-compatible multi-provider gateway
+**Key Files**: cmd/cliproxy, pkg/llmproxy/, internal/
 
-### 2. THEGENT
+### 3. THEGENT
 **Root**: `thegent/`
 
 | Canonical File | Status |
@@ -63,7 +76,7 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 
 **Specs**: 13+ SPEC files in docs/
 
-### 3. TRACE
+### 4. TRACE
 **Root**: `trace/`
 
 | Canonical File | Status |
@@ -73,7 +86,7 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 | docs/adr/ | 15+ ADRs |
 | docs/reference/SPEC*.md | 82 specs |
 
-### 4. 4SGM
+### 5. 4SGM
 **Root**: `4sgm/`
 
 | Canonical File | Status |
@@ -83,7 +96,7 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 | docs/reference/PRD_TRACKER.md | Active |
 | docs/architecture/adr/ | 4 ADRs |
 
-### 5. HELIOS HARNESS
+### 6. HELIOS HARNESS
 **Root**: `heliosHarness/`
 
 | Canonical File | Status |
@@ -92,7 +105,7 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 | docs/reference/PLAN_STATUS.md | Active |
 | docs/reference/PRD_TRACKER.md | Active |
 
-### 6. PARPOUR
+### 7. PARPOUR
 **Root**: `parpour/`
 
 | Canonical File | Status |
@@ -101,7 +114,7 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 | docs/reference/WORK_STREAM.md | Active |
 | docs/adr/ | 3 ADRs |
 
-### 7. CIV
+### 8. CIV
 **Root**: `civ/`
 
 | Canonical File | Status |
@@ -110,7 +123,7 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 | docs/SPEC*.md | 2 specs |
 | docs/adr/ | 3 ADRs |
 
-### 8. PLANGENT
+### 9. PLANGENT
 **Root**: `plangent/`
 
 | Canonical File | Status |
@@ -176,7 +189,8 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 
 | Project | Root CHANGELOG | Planning | Specs | ADRs |
 |---------|-----------------|----------|-------|------|
-| CLIPROXYAPI++ | ✓ | ✓ | ✓ | ✓ |
+| CLIProxyAPI | ✓ | - | - | - |
+| CLIProxyAPI++ | ✓ | ✓ | - | ✓ (new) |
 | THEGENT | ✓ | ✓ | ✓ | ✓ |
 | TRACE | ✓ | ✓ | ✓ | ✓ |
 | 4SGM | ✓ | ✓ | - | ✓ |
@@ -187,4 +201,4 @@ See `DOCUMENTATION_TAXONOMY.md` for complete type system including:
 
 ---
 
-*Last Updated: 2026-02-23*
+*Last Updated: 2026-02-24*
