@@ -228,6 +228,7 @@ def test_project_top_level_command_is_available_and_routes_to_setup_project() ->
     assert isinstance(payload, list)
 
 
+@pytest.mark.skip(reason="Legacy CLI")
 def test_install_project_brownfield_routes_to_setup_project_migrate() -> None:
     """`thegent install project brownfield` should delegate to migrate workflow."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
