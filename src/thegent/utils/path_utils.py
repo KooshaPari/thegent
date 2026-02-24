@@ -174,6 +174,12 @@ def ensure_dir(path: str | Path) -> Path:
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes
 def path_to_str(path: str | Path | None) -> str:
     """Convert a path to a string, handling ``None`` gracefully.
 
@@ -344,6 +350,11 @@ if __name__ == "__main__":
         created = ensure_dir(Path(td) / "a" / "b" / "c")
 
     sys.exit(0)
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/command-test-fixes
 =======
 >>>>>>> origin/fix/cli-test-failures
 def format_size(size_bytes: int) -> str:
@@ -455,6 +466,7 @@ def sanitize_path(path: str) -> str:
     return re.sub(r'[\x00..\x1f]', '', path)
 =======
 >>>>>>> origin/main
+<<<<<<< HEAD
 >>>>>>> origin/fix/cli-test-failures
 =======
 def normalize_path(path: str | Path | None = None) -> Path:
@@ -530,3 +542,6 @@ def sanitize_path(path: str | Path) -> Path:
     """Sanitize a path by resolving it and removing dangerous components."""
     return Path(path).resolve()
 >>>>>>> origin/fix/cli-test-improvements
+=======
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes

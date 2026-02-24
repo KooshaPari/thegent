@@ -10,6 +10,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 pyo3 = { version = "0.24", optional = true }
 =======
 pyo3 = { version = "0.24.1", optional = true }
@@ -17,6 +18,9 @@ pyo3 = { version = "0.24.1", optional = true }
 =======
 pyo3 = { version = "0.24.1", optional = true }
 >>>>>>> origin/fix/cli-test-failures
+=======
+pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/fix/command-test-fixes
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 hmac = "0.12.1"
