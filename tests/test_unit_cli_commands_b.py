@@ -262,7 +262,6 @@ class TestDagValidateCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124: test patches need updating")
 class TestDagAddCmdImpl:
     """Tests for dag_add_cmd implementation."""
 
@@ -353,7 +352,6 @@ class TestDagAddCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124: test patches need updating")
 class TestDagRemoveCmdImpl:
     """Tests for dag_remove_cmd implementation."""
 
@@ -557,6 +555,12 @@ class TestDagReadyCmdImpl:
     @patch("thegent.cli.console")
     def test_ready_ids_format(self, mock_console, mock_cwd, mock_parse, mock_ready, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-327
+        dag_file = tmp_path / ".factory" / "dag-session.md"
+        dag_file.parent.mkdir(parents=True)
+        dag_file.touch()
+        mock_cwd.return_value = tmp_path
+        tasks = [{"id": "T1", "agent": "claude", "prompt": "test", "depends_on": "-", "status": "pending"}]
+        mock_parse.return_value = ({}, tasks)
         mock_settings.return_value.output_format = "rich"
 
         from thegent.cli import dag_ready_cmd
@@ -800,7 +804,6 @@ class TestDagCheckpointsCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124: test patches need updating")
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
@@ -888,7 +891,7 @@ class TestDagRecoverCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124: test patches need updating")
+@pytest.mark.skip(reason="Code bugs: _parse_checkpoint_line not defined - WL-124")
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
@@ -1079,7 +1082,6 @@ class TestDagSyncCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="WL-124: test patches need updating")
 class TestSessionContractHealthReportCmdImpl:
     """Tests for session_contract_health_report_cmd."""
 

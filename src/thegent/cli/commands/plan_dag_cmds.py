@@ -123,10 +123,12 @@ def dag_add_cmd(
         raise typer.Exit(1)
     assert dag_path is not None
     tid = task_id.strip()
-    if err := _validate_task_id(tid):
+    err = _validate_task_id(tid)
+    if err:
         console.print(f"[red]{err}[/red]")
         raise typer.Exit(2)
-    if err := _validate_agent((agent or "").strip()):
+    err = _validate_agent((agent or "").strip())
+    if err:
         console.print(f"[red]{err}[/red]")
         raise typer.Exit(2)
     if not (prompt or "").strip():
@@ -234,9 +236,11 @@ def dag_update_cmd(
     if status is not None and status.strip().lower() not in VALID_STATUSES:
         console.print(f"[red]Invalid status '{status}'; must be one of: {', '.join(sorted(VALID_STATUSES))}[/red]")
         raise typer.Exit(2)
-    if agent is not None and (err := _validate_agent(agent.strip())):
-        console.print(f"[red]{err}[/red]")
-        raise typer.Exit(2)
+    if agent is not None:
+        err = _validate_agent(agent.strip())
+        if err:
+            console.print(f"[red]{err}[/red]")
+            raise typer.Exit(2)
     norm_depends_on: str | None = None
     if depends_on is not None:
         existing_ids = {(t.get("id") or "").strip() for t in doc.tasks}

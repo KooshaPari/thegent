@@ -84,7 +84,7 @@ _VERIFICATION_MOCK.verdict = MagicMock(value="pass")
 def health_targets_path(tmp_path: Path) -> Path:
     """Write health-targets.json to tmp_path and return its path."""
     p = tmp_path / "health-targets.json"
-    p.write_text(json.dumps(_HEALTH_TARGETS_DATA).decode())
+    p.write_text(json.dumps(_HEALTH_TARGETS_DATA).decode().decode())
     return p
 
 
