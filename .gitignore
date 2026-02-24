@@ -96,3 +96,9 @@ hooks/zig/
 
 # Safari/ browser data
 data/safari/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
