@@ -292,11 +292,7 @@ class TestDoctorRunnerMcpConfigDir:
 class TestDoctorRunnerRunChecks:
     """Integration tests for run_checks()."""
 
-<<<<<<< HEAD
-    @pytest.mark.skip(reason="Doctor checks expanded - now returns 13 instead of 8")
-=======
     @pytest.mark.skip(reason="Doctor checks expanded - now 13 instead of 8")
->>>>>>> origin/main
     def test_run_checks_returns_eight_items(self, tmp_path: Path) -> None:
         """run_checks always returns exactly 8 DoctorCheck items."""
         with (
