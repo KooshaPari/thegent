@@ -1,10 +1,5 @@
 """Re-exports from thegent.mcp.storage for backwards compatibility."""
 
-<<<<<<< HEAD
-from thegent.mcp.storage import McpStorage, McpEventStore
-
-__all__ = ["McpStorage", "McpEventStore"]
-=======
 from thegent.mcp.storage import (
     McpStorage,
     McpEventStore,
@@ -20,4 +15,3 @@ __all__ = [
     "get_mcp_storage",
     "get_mcp_event_store",
 ]
->>>>>>> origin/fix/cli-test-fixes
