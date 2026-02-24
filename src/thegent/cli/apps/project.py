@@ -1,12 +1,10 @@
 """Project CLI app - project management commands."""
 
 import typer
-<<<<<<< HEAD
 from typing import Any
 
 from thegent.project.migrate import project_migrate as _project_migrate
 from thegent.project.scaffold import scaffold_greenfield
-=======
 from typing import Any, Optional
 
 from thegent.project.migrate import project_migrate as _project_migrate
@@ -14,7 +12,6 @@ from thegent.project.scaffold import (
     scaffold_greenfield,
     scaffold_brownfield,
 )
->>>>>>> origin/fix/additional-improvements
 
 # CLI app containers
 setup_project_app = typer.Typer(help="Project management commands.")
@@ -23,8 +20,6 @@ scaffold_app = typer.Typer(help="Scaffold new project.")
 update_app = typer.Typer(help="Update project.")
 
 
-<<<<<<< HEAD
-=======
 # Callback for backward compatibility with old `install` command
 @install_app.callback(invoke_without_command=True)
 def install_callback(
@@ -54,12 +49,10 @@ def install_callback(
             typer.echo("Use 'thegent install project' for project installation.")
 
 
->>>>>>> origin/fix/additional-improvements
 @install_app.command("project")
 def install_project(
     mode: str = typer.Argument("agdd", help="brownfield, agdd, none"),
     project: str = typer.Argument(..., help="Project path"),
-<<<<<<< HEAD
     template: str = typer.Option("auto", "--template", "-t", help="Template"),
     name: str = typer.Option("", "--name", "-n", help="Name"),
     tenant: str = typer.Option("", "--tenant", help="Tenant"),
@@ -71,7 +64,6 @@ def install_project(
 ) -> dict[str, Any]:
     """Install/brownfield project."""
     return _project_migrate(project_path=project, mode=mode)
-=======
     template: str = typer.Option("auto", "--template", "-t", help="Template to use"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
     tenant: str = typer.Option("", "--tenant", help="Tenant ID"),
@@ -97,12 +89,10 @@ def install_project(
         dry_run=dry_run,
         json_output=json,
     )
->>>>>>> origin/fix/additional-improvements
 
 
 @scaffold_app.command("greenfield")
 def scaffold_greenfield_cmd(
-<<<<<<< HEAD
     destination: str = typer.Argument(..., help="Destination"),
     profile: str = typer.Option("default", "--profile"),
     name: str = typer.Option("", "--name", "-n"),
@@ -111,7 +101,6 @@ def scaffold_greenfield_cmd(
 ) -> dict[str, Any]:
     """Scaffold new project."""
     return _project_migrate(project_path=destination, mode=profile)
-=======
     destination: str = typer.Argument(..., help="Destination path"),
     profile: str = typer.Option("default", "--profile", help="Profile name"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
@@ -142,13 +131,11 @@ def scaffold_greenfield_cmd(
         dry_run=dry_run,
         json_output=json,
     )
->>>>>>> origin/fix/additional-improvements
 
 
 @scaffold_app.command("brownfield")
 def scaffold_brownfield_cmd(
     project: str = typer.Argument(..., help="Project path"),
-<<<<<<< HEAD
     mode: str = typer.Option("agdd", "--mode"),
     template: str = typer.Option("auto", "--template", "-t"),
     name: str = typer.Option("", "--name", "-n"),
@@ -160,7 +147,6 @@ def scaffold_brownfield_cmd(
 
 
 # Module-level exports for test mocking
-=======
     mode: str = typer.Option("agdd", "--mode", help="Migration mode"),
     template: str = typer.Option("auto", "--template", "-t", help="Template"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
@@ -187,7 +173,6 @@ def scaffold_brownfield_cmd(
 
 
 # Module-level aliases for test mocking
->>>>>>> origin/fix/additional-improvements
 def project_migrate(**kwargs: Any) -> dict[str, Any]:
     """Entry point for project migration (used by CLI tests)."""
     return _project_migrate(
@@ -198,11 +183,8 @@ def project_migrate(**kwargs: Any) -> dict[str, Any]:
 
 def project_scaffold(**kwargs: Any) -> dict[str, Any]:
     """Entry point for project scaffolding (used by CLI tests)."""
-<<<<<<< HEAD
     return scaffold_greenfield(kwargs.get("destination", ""), template=kwargs.get("language", "python"))
-=======
     return scaffold_greenfield(
         kwargs.get("destination", ""),
         template=kwargs.get("language", "python"),
     )
->>>>>>> origin/fix/additional-improvements
