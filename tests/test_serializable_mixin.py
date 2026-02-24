@@ -579,3 +579,127 @@ class TestRepr:
         assert "Person" in r
         # Address should have its own repr
         assert "Address" in repr(person.address)
+
+
+class TestDiff:
+    """Tests for diff method."""
+
+    def test_no_differences(self):
+        """Test diff returns empty when instances are equal."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        diff = p1.diff(p2)
+        assert diff == {}
+
+    def test_single_field_difference(self):
+        """Test diff with one field different."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Alice", age=35, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        diff = p1.diff(p2)
+        assert diff == {"age": (30, 35)}
+
+    def test_multiple_differences(self):
+        """Test diff with multiple fields different."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Bob", age=35, status=Status.DONE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        diff = p1.diff(p2)
+        assert "name" in diff
+        assert "age" in diff
+        assert "status" in diff
+        assert diff["name"] == ("Alice", "Bob")
+
+    def test_diff_wrong_type_raises(self):
+        """Test that diff raises TypeError for different types."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        address = Address(street="123 Main", city="Springfield", zip_code="12345")
+        
+        with pytest.raises(TypeError):
+            person.diff(address)
+
+
+class TestCopy:
+    """Tests for copy method."""
+
+    def test_exact_copy(self):
+        """Test that copy creates equal instance."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.copy()
+        
+        assert p1 == p2
+        assert p1 is not p2
+
+    def test_copy_with_override(self):
+        """Test copy with field override."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.copy(age=35)
+        
+        assert p2.name == "Alice"
+        assert p2.age == 35
+        assert p1.age == 30  # Original unchanged
+
+    def test_copy_with_multiple_overrides(self):
+        """Test copy with multiple overrides."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.copy(age=35, name="Bob")
+        
+        assert p2.name == "Bob"
+        assert p2.age == 35
+
+
+class TestMerge:
+    """Tests for merge method."""
+
+    def test_merge_overwrite_true(self):
+        """Test merge with overwrite=True (default)."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Bob", age=35, status=Status.DONE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        merged = p1.merge(p2)
+        assert merged.name == "Bob"
+        assert merged.age == 35
+        assert merged.status == Status.DONE
+
+    def test_merge_overwrite_false(self):
+        """Test merge with overwrite=False."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Bob", age=35, status=Status.DONE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        merged = p1.merge(p2, overwrite=False)
+        assert merged.name == "Alice"  # Kept from p1
+        assert merged.age == 30  # Kept from p1
+        assert merged.status == Status.ACTIVE  # Kept from p1
+
+    def test_merge_fills_none(self):
+        """Test merge fills in None values."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p1.address = None
+        p2.address = Address(street="123 Main", city="Springfield", zip_code="12345")
+        
+        merged = p1.merge(p2, overwrite=False)
+        assert merged.address is not None
+        assert merged.address.street == "123 Main"
+
+    def test_merge_wrong_type_raises(self):
+        """Test that merge raises TypeError for different types."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        address = Address(street="123 Main", city="Springfield", zip_code="12345")
+        
+        with pytest.raises(TypeError):
+            person.merge(address)
+
+
+class TestPatch:
+    """Tests for patch method (alias for copy)."""
+
+    def test_patch_updates_fields(self):
+        """Test that patch updates fields."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.patch(age=35, name="Bob")
+        
+        assert p2.name == "Bob"
+        assert p2.age == 35
+        assert p1.name == "Alice"  # Original unchanged
