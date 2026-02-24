@@ -200,6 +200,7 @@ class ReusableHelpers:
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(json.dumps(data, indent=2))
             return True
         except Exception as e:
@@ -219,4 +220,12 @@ class ReusableHelpers:
         except FileNotFoundError:
             return {}
         except Exception:
+            return {}
+
+    @staticmethod
+    def load_config(path):
+        import json
+        try:
+            return json.loads(path.read_text())
+        except:
             return {}
