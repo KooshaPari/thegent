@@ -1453,7 +1453,7 @@ class TestEscalateResolveCmdImpl:
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r1", resolution="fixed")
-        assert any("Resolved" in str(c) for c in mock_console.print.call_args_list)
+        assert any("resolved" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli.console")
     def test_resolve_not_found(self, mock_console) -> None:
@@ -1462,7 +1462,7 @@ class TestEscalateResolveCmdImpl:
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r-nonexist", resolution="fixed")
-        assert any("No pending" in str(c) for c in mock_console.print.call_args_list)
+        assert any("no pending" in str(c) for c in mock_console.print.call_args_list)
 
 
 @pytest.mark.unit
