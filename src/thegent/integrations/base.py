@@ -368,6 +368,8 @@ class SerializableMixin:
         if len(data) > 3:
             parts.append("...")
         return f"{cls_name}({', '.join(parts)})"
+<<<<<<< HEAD
+=======
     
     def diff(self, other: "SerializableMixin") -> dict[str, tuple[Any, Any]]:
         """Compare this instance with another and return field differences.
@@ -763,6 +765,7 @@ class _Missing:
 
 
 _MISSING = _Missing()
+>>>>>>> origin/main
 
 
 def hashable_dataclass(cls: type) -> type:
@@ -794,6 +797,8 @@ def hashable_dataclass(cls: type) -> type:
 
 
 # ---------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
 # Validated Mixin
 # ---------------------------------------------------------------------------
 
@@ -944,6 +949,7 @@ class AsyncContextManagerMixin:
 
 
 # ---------------------------------------------------------------------------
+>>>>>>> origin/main
 # Singleton Mixin
 # ---------------------------------------------------------------------------
 
