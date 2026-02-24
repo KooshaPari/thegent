@@ -22,40 +22,6 @@ class DriftManifest(SerializableMixin):
     drifts: list[dict]
     captured_at: datetime
 
-    def to_dict(self) -> dict:
-        """Convert manifest to dictionary for JSON serialization.
-
-        Returns:
-            Dictionary representation with ISO-formatted timestamp.
-        """
-        data = asdict(self)
-        data["captured_at"] = self.captured_at.isoformat()
-        return data
-
-    @staticmethod
-    def from_dict(data: dict) -> DriftManifest:
-        """Create manifest from dictionary (e.g., from JSON).
-
-        Args:
-            data: Dictionary with manifest data.
-
-        Returns:
-            DriftManifest instance.
-        """
-        captured_at_str = data["captured_at"]
-        if isinstance(captured_at_str, str):
-            captured_at = datetime.fromisoformat(captured_at_str)
-        else:
-            captured_at = captured_at_str
-
-        return DriftManifest(
-            manifest_id=data["manifest_id"],
-            cycle_id=data["cycle_id"],
-            drifts=data["drifts"],
-            captured_at=captured_at,
-        )
-
-
 class DriftReplayEngine:
     """Engine for archiving and replaying drift manifests."""
 

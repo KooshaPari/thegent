@@ -3,7 +3,7 @@
 Comprehensive tracking of all Functional Requirements.
 
 > **Last Updated:** 2026-02-23
-> **Total FRs:** 95
+> **Total FRs:** 91
 > **Legend:** ✓ = Implemented | ~ = Partial | ○ = Pending | ⊘ = Not Applicable
 
 ---
