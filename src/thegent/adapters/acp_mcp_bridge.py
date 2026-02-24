@@ -90,15 +90,6 @@ class ACPToolDescriptor(SerializableMixin):
     parameters: dict[str, Any] = field(default_factory=dict)
     version: str = ACP_DESCRIPTOR_VERSION
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialise to a plain dict suitable for JSON transport."""
-        return {
-            "name": self.name,
-            "description": self.description,
-            "parameters": self.parameters,
-            "version": self.version,
-        }
-
 
 # ---------------------------------------------------------------------------
 # Bridge
