@@ -39,15 +39,6 @@ class PersonaRecord(SerializableMixin):
     persona_file: Path
     last_seen: datetime
 
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize to a JSON-safe dict."""
-        return {
-            "name": self.name,
-            "project_root": str(self.project_root),
-            "capabilities": self.capabilities,
-            "persona_file": str(self.persona_file),
-            "last_seen": self.last_seen.isoformat(),
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PersonaRecord:

@@ -59,21 +59,6 @@ class Seed(SerializableMixin):
         if isinstance(self.source, str):
             self.source = SeedSource(self.source)
 
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
-        # Ensure source is treated as enum (should be due to __post_init__)
-        source_value = self.source.value if isinstance(self.source, SeedSource) else self.source
-        return {
-            "id": self.id,
-            "text": self.text,
-            "source": source_value,
-            "confidence": self.confidence,
-            "timestamp": self.timestamp,
-            "tags": self.tags,
-            "status": self.status,
-            "context": self.context,
-            "detected_by": self.detected_by,
-        }
 
 
 class SeedDetector:

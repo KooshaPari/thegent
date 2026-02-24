@@ -174,6 +174,7 @@ const config = defineConfig({
       md.use(markdownItEmoji)
     },
     // Enable line numbers for code blocks
+    math: true,
     lineNumbers: true,
     // Enable code highlighting
     theme: {
