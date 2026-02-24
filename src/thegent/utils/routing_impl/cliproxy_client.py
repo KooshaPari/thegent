@@ -1,7 +1,7 @@
 """CLIProxy client for routing decisions.
 
 This client replaces LiteLLM-based routing. All routing decisions go through CLIProxy
-localhost:8317 /v1/routing/select endpoint.
+localhost:8317 /v1/routing/select endpoint with local fallback.
 
 @trace FR-CLIPROXY-INTEGRATION-001
 """
@@ -30,19 +30,14 @@ class RoutingResponse:
 
 
 class CLIProxyRoutingClient:
-    """Client for CLIProxy routing endpoint."""
+    """Client for CLIProxy routing endpoint with local fallback."""
 
     def __init__(
         self,
         base_url: str | None = None,
         timeout: float = 10.0,
     ):
-        """Initialize the CLIProxy routing client.
-
-        Args:
-            base_url: Base URL for CLIProxy. Defaults to http://localhost:8317
-            timeout: Request timeout in seconds.
-        """
+        """Initialize the CLIProxy routing client."""
         settings = get_settings()
         self.base_url = base_url or f"http://localhost:{settings.cliproxy_port}"
         self.timeout = timeout
@@ -68,44 +63,49 @@ class CLIProxyRoutingClient:
         max_latency_ms: int,
         min_quality_score: float = 0.7,
     ) -> RoutingResponse:
-        """Select optimal model via CLIProxy Pareto router.
+        """Select optimal model via CLIProxy with local fallback."""
+        try:
+            resp = self.client.post(
+                "/v1/routing/select",
+                json={
+                    "taskComplexity": task_complexity,
+                    "maxCostPerCall": max_cost_per_call,
+                    "maxLatencyMs": max_latency_ms,
+                    "minQualityScore": min_quality_score,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return RoutingResponse(
+                model_id=data["model_id"],
+                provider=data["provider"],
+                estimated_cost=data["estimated_cost"],
+                estimated_latency_ms=data["estimated_latency_ms"],
+                quality_score=data["quality_score"],
+            )
+        except httpx.HTTPError as e:
+            logger.warning(f"CLIProxy routing failed: {e}, using local fallback")
+            return self._local_fallback(task_complexity)
 
-        Args:
-            task_complexity: FAST, NORMAL, COMPLEX, or HIGH_COMPLEX
-            max_cost_per_call: Maximum cost in USD
-            max_latency_ms: Maximum latency in milliseconds
-            min_quality_score: Minimum quality threshold (0.0-1.0)
-
-        Returns:
-            RoutingResponse with model_id, provider, estimated_cost, estimated_latency_ms, quality_score
-
-        Raises:
-            httpx.HTTPError: If the request fails
-        """
-        resp = self.client.post(
-            "/v1/routing/select",
-            json={
-                "taskComplexity": task_complexity,
-                "maxCostPerCall": max_cost_per_call,
-                "maxLatencyMs": max_latency_ms,
-                "minQualityScore": min_quality_score,
-            },
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
+    def _local_fallback(self, complexity: str) -> RoutingResponse:
+        """Simple fallback based on complexity."""
+        models = {
+            "FAST": ("minimax-m2.5", "minimax", 0.00007, 300, 0.72),
+            "NORMAL": ("gemini-3-flash", "gemini", 0.0001, 800, 0.78),
+            "COMPLEX": ("claude-sonnet-4.6", "claude", 0.003, 2000, 0.88),
+            "HIGH_COMPLEX": ("gpt-5.3-codex-xhigh", "openai", 0.015, 4000, 0.95),
+        }
+        model, provider, cost, latency, quality = models.get(complexity.upper(), models["NORMAL"])
         return RoutingResponse(
-            model_id=data["model_id"],
-            provider=data["provider"],
-            estimated_cost=data["estimated_cost"],
-            estimated_latency_ms=data["estimated_latency_ms"],
-            quality_score=data["quality_score"],
+            model_id=model,
+            provider=provider,
+            estimated_cost=cost,
+            estimated_latency_ms=latency,
+            quality_score=quality,
         )
 
     def __enter__(self) -> "CLIProxyRoutingClient":
-        """Context manager entry."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Context manager exit."""
         self.close()
