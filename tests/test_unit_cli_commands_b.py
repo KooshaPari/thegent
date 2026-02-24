@@ -810,7 +810,7 @@ class TestDagCheckpointsCmdImpl:
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
-    @patch("thegent.cli._dag_path", return_value=(None, None))
+    @patch("thegent.cli.commands._cli_shared._dag_path", return_value=(None, None))
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-341
@@ -819,10 +819,10 @@ class TestDagRecoverCmdImpl:
         with pytest.raises(_EXIT):
             dag_recover_cmd(cd=None, action="retry-failed")
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands._cli_shared._atomic_write")
+    @patch("thegent.cli.commands._cli_shared._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands._cli_shared._parse_dag_full")
+    @patch("thegent.cli.commands._cli_shared._dag_path")
     @patch("thegent.cli.console")
     def test_retry_failed(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-342
@@ -838,10 +838,10 @@ class TestDagRecoverCmdImpl:
         dag_recover_cmd(cd=None, action="retry-failed")
         mock_write.assert_called_once()
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands._cli_shared._atomic_write")
+    @patch("thegent.cli.commands._cli_shared._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands._cli_shared._parse_dag_full")
+    @patch("thegent.cli.commands._cli_shared._dag_path")
     @patch("thegent.cli.console")
     def test_clear_stuck(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-343
@@ -857,10 +857,10 @@ class TestDagRecoverCmdImpl:
         dag_recover_cmd(cd=None, action="clear-stuck")
         mock_write.assert_called_once()
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands._cli_shared._atomic_write")
+    @patch("thegent.cli.commands._cli_shared._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands._cli_shared._parse_dag_full")
+    @patch("thegent.cli.commands._cli_shared._dag_path")
     @patch("thegent.cli.console")
     def test_reset_retries(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-344
@@ -876,8 +876,8 @@ class TestDagRecoverCmdImpl:
         dag_recover_cmd(cd=None, action="reset-retries")
         mock_write.assert_called_once()
 
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._dag_path")
+    @patch("thegent.cli.commands._cli_shared._parse_dag_full")
+    @patch("thegent.cli.commands._cli_shared._dag_path")
     @patch("thegent.cli.console")
     def test_unknown_action(self, mock_console, mock_dag_path, mock_parse, tmp_path) -> None:
         # @trace FR-CLI-345
