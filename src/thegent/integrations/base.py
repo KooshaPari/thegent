@@ -368,6 +368,69 @@ class SerializableMixin:
         if len(data) > 3:
             parts.append("...")
         return f"{cls_name}({', '.join(parts)})"
+    
+    def diff(self, other: "SerializableMixin") -> dict[str, tuple[Any, Any]]:
+        """Compare this instance with another and return field differences."""
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot diff {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        differences = {}
+        all_keys = set(self_dict.keys()) | set(other_dict.keys())
+        
+        for key in all_keys:
+            self_val = self_dict.get(key, _MISSING)
+            other_val = other_dict.get(key, _MISSING)
+            
+            if self_val != other_val:
+                differences[key] = (
+                    None if self_val is _MISSING else self_val,
+                    None if other_val is _MISSING else other_val,
+                )
+        
+        return differences
+    
+    def copy(self, **overrides: Any) -> "SerializableMixin":
+        """Create a shallow copy with optional field overrides."""
+        data = self.to_dict()
+        data.update(overrides)
+        return type(self).from_dict(data)
+    
+    def merge(self, other: "SerializableMixin", *, overwrite: bool = True) -> "SerializableMixin":
+        """Merge fields from another instance into a new instance."""
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot merge {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        merged = dict(self_dict)
+        for key, value in other_dict.items():
+            if overwrite:
+                if value is not None:
+                    merged[key] = value
+            else:
+                if merged.get(key) is None and value is not None:
+                    merged[key] = value
+        
+        return type(self).from_dict(merged)
+    
+    def patch(self, **updates: Any) -> "SerializableMixin":
+        """Apply updates to create a new instance (alias for copy)."""
+        return self.copy(**updates)
+
+
+class _Missing:
+    """Sentinel for missing values."""
+    def __repr__(self) -> str:
+        return "<MISSING>"
+
+
+_MISSING = _Missing()
+
+
 # Validated Mixin
 # ---------------------------------------------------------------------------
 
