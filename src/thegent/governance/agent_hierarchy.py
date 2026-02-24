@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from thegent.integrations.base import SerializableMixin
 
 
 class AgentRole(Enum):
@@ -46,7 +47,7 @@ class CoordinationMode(Enum):
 
 
 @dataclass
-class AgentNode:
+class AgentNode(SerializableMixin):
     """Represents an agent in the hierarchy."""
 
     agent_id: str
@@ -63,19 +64,6 @@ class AgentNode:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     status: str = "active"
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return {
-            "agent_id": self.agent_id,
-            "run_id": self.run_id,
-            "role": self.role.value,
-            "team_id": self.team_id,
-            "parent_id": self.parent_id,
-            "children_ids": self.children_ids,
-            "team_member_ids": self.team_member_ids,
-            "created_at": self.created_at.isoformat(),
-            "status": self.status,
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentNode":
@@ -109,19 +97,6 @@ class AgentRelationship:
     delegation_prompt: str | None = None
     handoff_context: dict[str, Any] | None = None
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return {
-            "relationship_id": self.relationship_id,
-            "parent_id": self.parent_id,
-            "child_id": self.child_id,
-            "relationship_type": self.relationship_type.value,
-            "created_at": self.created_at.isoformat(),
-            "status": self.status,
-            "task_id": self.task_id,
-            "delegation_prompt": self.delegation_prompt,
-            "handoff_context": self.handoff_context,
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentRelationship":
@@ -161,21 +136,6 @@ class AgentTeam:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     status: str = "active"
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return {
-            "team_id": self.team_id,
-            "name": self.name,
-            "description": self.description,
-            "lead_id": self.lead_id,
-            "members": self.members,
-            "team_type": self.team_type.value,
-            "coordination_mode": self.coordination_mode.value,
-            "boundaries": self.boundaries,
-            "communication_channels": self.communication_channels,
-            "created_at": self.created_at.isoformat(),
-            "status": self.status,
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentTeam":

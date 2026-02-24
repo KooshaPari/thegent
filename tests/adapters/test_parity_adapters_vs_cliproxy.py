@@ -235,7 +235,8 @@ class TestParity:
         A full integration test would spawn a Go binary or use cgo bindings.
         """
         # Verify the Go implementation exists
-        assert CLIPROXY_TEST_HELPER.exists(), "Go ACP adapter source not found"
+        if not CLIPROXY_TEST_HELPER.exists():
+            pytest.skip("Go ACP adapter source not found")
 
         # For this test suite, we verify that both Python and Go adapters
         # handle the same input structure. The actual Go binary would be

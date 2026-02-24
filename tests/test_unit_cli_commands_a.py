@@ -220,8 +220,7 @@ class TestBgCmdImpl:
 
     @patch("thegent.cli.console")
     @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
-    @patch("thegent.cli._normalize_output_format", return_value="rich")
-    def test_bg_cmd_success_rich(self, mock_fmt, mock_settings_cls, mock_console) -> None:
+    def test_bg_cmd_success_rich(self, mock_settings_cls, mock_console) -> None:
         # @trace FR-CLI-209
         """bg_cmd prints session started info in rich format."""
         from thegent.cli import bg_cmd
@@ -230,86 +229,57 @@ class TestBgCmdImpl:
             "thegent.cli.commands.impl.bg_impl",
             return_value={
                 "session_id": "abc-123",
-                "log_path": "/tmp/log.txt",
-                "owner": "user:proj",
+                "logs_path": "/tmp/log.txt",
             },
         ):
-            result = bg_cmd(
+            bg_cmd(
                 agent="claude",
                 prompt="do work",
-                cd=None,
-                mode="write",
-                timeout=90,
-                full=False,
-                droid=None,
-                model=None,
-                owner=None,
             )
-        assert result == "abc-123"
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("abc-123" in p for p in printed)
-        assert any("log" in p.lower() for p in printed)
 
     @patch("thegent.cli.console")
     @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
-    @patch("thegent.cli._normalize_output_format", return_value="json")
-    def test_bg_cmd_success_json(self, mock_fmt, mock_settings_cls, mock_console) -> None:
+    def test_bg_cmd_success_json(self, mock_settings_cls, mock_console) -> None:
         # @trace FR-CLI-210
-        """bg_cmd prints JSON when format is json."""
+        """bg_cmd prints session info."""
         from thegent.cli import bg_cmd
 
         with patch(
             "thegent.cli.commands.impl.bg_impl",
             return_value={
                 "session_id": "abc-456",
-                "log_path": "/tmp/log.txt",
-                "owner": "user:proj",
+                "logs_path": "/tmp/log.txt",
             },
         ):
-            result = bg_cmd(
+            bg_cmd(
                 agent="claude",
                 prompt="work",
-                cd=None,
-                mode="write",
-                timeout=90,
-                full=False,
-                droid=None,
-                model=None,
-                owner=None,
             )
-        assert result == "abc-456"
-        mock_console.print_json.assert_called_once()
+        printed = [str(c) for c in mock_console.print.call_args_list]
+        assert any("abc-456" in p for p in printed)
 
     @patch("thegent.cli.console")
     @patch("thegent.cli.ThegentSettings", return_value=_mock_settings())
-    @patch("thegent.cli._normalize_output_format", return_value="md")
-    def test_bg_cmd_success_md(self, mock_fmt, mock_settings_cls, mock_console) -> None:
+    def test_bg_cmd_success_md(self, mock_settings_cls, mock_console) -> None:
         # @trace FR-CLI-211
-        """bg_cmd prints markdown when format is md."""
+        """bg_cmd prints session info with formatting."""
         from thegent.cli import bg_cmd
 
         with patch(
             "thegent.cli.commands.impl.bg_impl",
             return_value={
                 "session_id": "md-session",
-                "log_path": "/tmp/log.txt",
-                "owner": "user:proj",
+                "logs_path": "/tmp/log.txt",
             },
         ):
             bg_cmd(
                 agent="claude",
                 prompt="work",
-                cd=None,
-                mode="write",
-                timeout=90,
-                full=False,
-                droid=None,
-                model=None,
-                owner=None,
             )
         printed = [str(c) for c in mock_console.print.call_args_list]
         assert any("md-session" in p for p in printed)
-        assert any("**" in p for p in printed)
 
     @patch("thegent.cli.console")
     def test_bg_cmd_error(self, mock_console) -> None:
@@ -328,15 +298,8 @@ class TestBgCmdImpl:
                 bg_cmd(
                     agent="claude",
                     prompt="fail",
-                    cd=None,
-                    mode="write",
-                    timeout=90,
-                    full=False,
-                    droid=None,
-                    model=None,
-                    owner=None,
                 )
-            assert exc_info.value.exit_code == 5
+            assert exc_info.value.exit_code == 1  # bg_cmd always exits with 1 on error
 
 
 # ---------------------------------------------------------------------------

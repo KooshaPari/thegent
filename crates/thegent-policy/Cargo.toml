@@ -16,7 +16,7 @@ toml = "0.8"
 thiserror = "2.0"
 dashmap = "6.1"
 regex = "1.11"
-pyo3 = { version = "0.24", features = ["extension-module"], optional = true }
+pyo3 = { version = "0.24", optional = true }
 
 [dev-dependencies]
 tempfile = "3"

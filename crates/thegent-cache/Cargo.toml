@@ -17,7 +17,7 @@ dashmap = "7.0.0-rc2"
 parking_lot = "0.12.3"
 moka = { version = "0.12.10", optional = true, features = ["sync", "future"] }
 scc = { version = "2.3.6", optional = true }
-pyo3 = { version = "0.24", features = ["extension-module"], optional = true }
+pyo3 = { version = "0.24", optional = true }
 
 [features]
 default = []
