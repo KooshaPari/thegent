@@ -468,7 +468,7 @@ def test_sync_autopilot_status_uses_env_override(monkeypatch: pytest.MonkeyPatch
     with runner.isolated_filesystem():
         status_path = "custom_status.json"
         with open(status_path, "w", encoding="utf-8") as handle:
-            json.dump(
+            json.dumps(
                 {
                     "last_cycle_at": "2026-02-22T11:22:33",
                     "total_cycles": 7,
@@ -494,7 +494,7 @@ def test_sync_autopilot_status_json_exposes_correlation_and_no_op(monkeypatch: p
     with runner.isolated_filesystem():
         status_path = "custom_status.json"
         with open(status_path, "w", encoding="utf-8") as handle:
-            json.dump(
+            json.dumps(
                 {
                     "last_cycle_at": "2026-02-23T09:00:00",
                     "total_cycles": 13,
