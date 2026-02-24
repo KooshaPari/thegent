@@ -17,7 +17,8 @@ def data_protection_cmd(format: str | None = None) -> None:
     if format == "json":
         import orjson as json
 
-        print(json.dumps(status))
+        from thegent.cli import console
+        console.print(json.dumps(status))
     else:
         from thegent.cli import console
         from rich.table import Table

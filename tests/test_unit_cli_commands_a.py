@@ -500,7 +500,6 @@ class TestEventsCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="data_protection_cmd not implemented - WL-124")
 class TestDataProtectionCmdImpl:
     """Tests for the data_protection_cmd function body."""
 
@@ -523,6 +522,7 @@ class TestDataProtectionCmdImpl:
             data_protection_cmd()
         mock_console.print.assert_called_once()
 
+    @pytest.mark.skip(reason="WL-124: JSON output format issue")
     @patch("thegent.cli.console")
     def test_data_protection_json(self, mock_console) -> None:
         # @trace FR-CLI-224
@@ -648,7 +648,6 @@ class TestAuditVerifyCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Flaky test - passes individually but fails in suite")
 class TestEscalateCmdImpl:
     """Tests for escalation command implementations."""
 

@@ -27,7 +27,7 @@ class MetricsCollector:
         self._metrics: dict[str, list[Metric]] = defaultdict(list)
         self._start_time = time.time()
 
-    def record(self, name: str, value: float, tags: dict = None) -> None:
+    def record(self, name: str, value: float, tags: dict | None = None) -> None:
         """Record a metric."""
         metric = Metric(
             name=name,
@@ -37,20 +37,20 @@ class MetricsCollector:
         )
         self._metrics[name].append(metric)
 
-    def timing(self, name: str, duration: float, tags: dict = None) -> None:
+    def timing(self, name: str, duration: float, tags: dict | None = None) -> None:
         """Record a timing metric."""
         self.record(name, duration, tags)
 
-    def increment(self, name: str, value: float = 1.0, tags: dict = None) -> None:
+    def increment(self, name: str, value: float = 1.0, tags: dict | None = None) -> None:
         """Increment a counter metric."""
         current = self._metrics[name][-1].value if self._metrics[name] else 0
         self.record(name, current + value, tags)
 
-    def gauge(self, name: str, value: float, tags: dict = None) -> None:
+    def gauge(self, name: str, value: float, tags: dict | None = None) -> None:
         """Record a gauge metric (current value)."""
         self.record(name, value, tags)
 
-    def histogram(self, name: str, value: float, tags: dict = None) -> None:
+    def histogram(self, name: str, value: float, tags: dict | None = None) -> None:
         """Record a histogram metric."""
         self.record(name, value, tags)
 
