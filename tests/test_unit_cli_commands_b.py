@@ -1449,7 +1449,7 @@ class TestEscalateResolveCmdImpl:
     @patch("thegent.cli.console")
     def test_resolve_success(self, mock_console) -> None:
         # @trace FR-CLI-378
-        with patch("thegent.cli.services.governance.escalate_resolve_impl", return_value=True):
+        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=True):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r1", resolution="fixed")
@@ -1458,7 +1458,7 @@ class TestEscalateResolveCmdImpl:
     @patch("thegent.cli.console")
     def test_resolve_not_found(self, mock_console) -> None:
         # @trace FR-CLI-379
-        with patch("thegent.cli.services.governance.escalate_resolve_impl", return_value=False):
+        with patch("thegent.cli.commands.impl.escalate_resolve_impl", return_value=False):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r-nonexist", resolution="fixed")

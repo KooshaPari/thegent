@@ -375,6 +375,7 @@ def dag_run_cmd(
 def dag_sync_cmd(cd: Path | None = None, auto_run_next: bool = False) -> None:
     """For tasks with session_id and status=running, if pid not running set status=done or failed from rc.
     If --auto-run-next, spawn next ready tasks after sync."""
+    from thegent.cli.commands._cli_shared import dag_sync_impl
     res = dag_sync_impl(cd=cd, auto_run_next=auto_run_next)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")
