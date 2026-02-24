@@ -18,8 +18,8 @@ update_app = typer.Typer(help="Update project.")
 
 @install_app.command("project")
 def install_project(
-    mode: str = typer.Argument(..., help="brownfield, agdd, none"),
     project: str = typer.Argument(..., help="Project path"),
+    mode: str = typer.Option("agdd", "--mode", help="brownfield, agdd, none"),
     template: str = typer.Option("auto", "--template", "-t", help="Template to use"),
     name: str = typer.Option("", "--name", "-n", help="Project name"),
     tenant: str = typer.Option("", "--tenant", help="Tenant ID"),
