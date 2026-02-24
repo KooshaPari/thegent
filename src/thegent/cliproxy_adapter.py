@@ -25,6 +25,7 @@ from starlette.types import Send
 
 from thegent.config import ThegentSettings
 from thegent.integrations.bifrost import get_bifrost, BifrostValidationError
+from thegent.adapters.ports import AdapterRegistry
 from thegent.cliproxy_error_utils import (
     _ERROR_MESSAGES,
     _RETRY_MAX_ATTEMPTS,
