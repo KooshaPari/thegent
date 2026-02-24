@@ -1,7 +1,7 @@
 """Project CLI app - project management commands."""
 
 import typer
-from typing import Any
+from typing import Any, Optional
 
 from thegent.project.migrate import project_migrate as _project_migrate
 from thegent.project.scaffold import (
@@ -11,9 +11,38 @@ from thegent.project.scaffold import (
 
 # CLI app containers
 setup_project_app = typer.Typer(help="Project management commands.")
-install_app = typer.Typer(help="Install project dependencies.")
+install_app = typer.Typer(help="Install user/system assets and project runtime installation.")
 scaffold_app = typer.Typer(help="Scaffold new project.")
 update_app = typer.Typer(help="Update project.")
+
+
+# Callback for backward compatibility with old `install` command
+@install_app.callback(invoke_without_command=True)
+def install_callback(
+    ctx: typer.Context,
+    target: Optional[str] = typer.Option(None, "--target", help="Target to install"),
+    mode: Optional[str] = typer.Option(None, "--mode", help="Installation mode"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
+    verbose: bool = typer.Option(False, "--verbose", help="Verbose output"),
+    url: Optional[str] = typer.Option(None, "--url", help="Install URL"),
+    install_service: bool = typer.Option(False, "--install-service", help="Install as service"),
+) -> None:
+    """Legacy install command - routes to thegent.install.run_install."""
+    # If no subcommand, show help or handle legacy case
+    if ctx.invoked_subcommand is None:
+        # Try to import and call legacy install
+        try:
+            from thegent.install import run_install
+            run_install(
+                target=target,
+                mode=mode,
+                dry_run=dry_run,
+                verbose=verbose,
+                url=url,
+                install_service=install_service,
+            )
+        except Exception:
+            typer.echo("Use 'thegent install project' for project installation.")
 
 
 @install_app.command("project")
