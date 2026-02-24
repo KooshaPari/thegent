@@ -605,6 +605,45 @@ class SingletonMixin:
 
 
 # ---------------------------------------------------------------------------
+# Hashable Dataclass Utilities
+# ---------------------------------------------------------------------------
+
+def hashable_dataclass(cls: type) -> type:
+    """Decorator to make a dataclass hashable by implementing __hash__.
+    
+    Uses all fields to compute hash. Works with mutable defaults by using
+    a frozen copy approach.
+    
+    IMPORTANT: Must be applied AFTER @dataclass decorator!
+    
+    Example:
+        @dataclass
+        @hashable_dataclass  # Apply AFTER dataclass
+        class Point:
+            x: int
+            y: int
+    """
+    def make_hashable(value: Any) -> Any:
+        """Convert mutable types to hashable equivalents."""
+        if isinstance(value, dict):
+            return tuple(sorted((k, make_hashable(v)) for k, v in value.items()))
+        elif isinstance(value, list):
+            return tuple(make_hashable(v) for v in value)
+        elif isinstance(value, set):
+            return frozenset(make_hashable(v) for v in value)
+        return value
+    
+    def __hash__(self):
+        return hash(tuple(
+            make_hashable(getattr(self, f.name)) 
+            for f in self.__dataclass_fields__.values()
+        ))
+    
+    cls.__hash__ = __hash__
+    return cls
+
+
+# ---------------------------------------------------------------------------
 # Config Loading Utilities
 # ---------------------------------------------------------------------------
 

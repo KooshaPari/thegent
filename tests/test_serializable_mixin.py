@@ -7,11 +7,8 @@ from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any
 
-<<<<<<< HEAD
 from thegent.integrations.base import SerializableMixin
-=======
-from thegent.integrations.base import SerializableMixin, hashable_dataclass
->>>>>>> origin/main
+from thegent.integrations.base import SerializableMixin
 
 
 class Status(str, Enum):
@@ -49,8 +46,6 @@ class Person(SerializableMixin):
     address: Address | None = None
 
 
-<<<<<<< HEAD
-=======
 # Hashable version of Person for hash tests
 @hashable_dataclass
 @dataclass
@@ -64,7 +59,6 @@ class HashablePerson(SerializableMixin):
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
->>>>>>> origin/main
 class TestToDict:
     """Tests for to_dict serialization."""
 
@@ -269,8 +263,6 @@ class TestNonDataclass:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-<<<<<<< HEAD
-=======
 
 
 class TestEnhancedFromDict:
@@ -588,8 +580,6 @@ class TestRepr:
         assert "Person" in r
         # Address should have its own repr
         assert "Address" in repr(person.address)
-<<<<<<< HEAD
-=======
 
 
 class TestDiff:
@@ -917,5 +907,3 @@ class TestReplace:
         
         assert p2.name == "Bob"
         assert p2.age == 35
->>>>>>> origin/main
->>>>>>> origin/main
