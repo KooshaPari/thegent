@@ -7,7 +7,7 @@ from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.base import SerializableMixin
+from thegent.integrations.base import SerializableMixin, hashable_dataclass
 
 
 class Status(str, Enum):
@@ -43,6 +43,19 @@ class Person(SerializableMixin):
     metadata: dict[str, Any] = field(default_factory=dict)
     tags: list[str] = field(default_factory=list)
     address: Address | None = None
+
+
+# Hashable version of Person for hash tests
+@hashable_dataclass
+@dataclass
+class HashablePerson(SerializableMixin):
+    """Hashable test model."""
+    name: str
+    age: int
+    status: Status
+    created_at: datetime
+    home_path: Path
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class TestToDict:
@@ -399,3 +412,170 @@ class TestListAndDictTypes:
         person = Person.from_dict(data)
         
         assert person.address is None
+
+
+class TestEquality:
+    """Tests for __eq__ implementation."""
+
+    def test_equal_instances(self):
+        """Test that equal instances compare equal."""
+        p1 = Person(
+            name="Alice",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 15),
+            home_path=Path("/home/alice"),
+        )
+        p2 = Person(
+            name="Alice",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 15),
+            home_path=Path("/home/alice"),
+        )
+        
+        assert p1 == p2
+
+    def test_unequal_instances(self):
+        """Test that different instances compare unequal."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Bob", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        assert p1 != p2
+
+    def test_different_types_unequal(self):
+        """Test that different types compare unequal."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        address = Address(street="123 Main St", city="Springfield", zip_code="12345")
+        
+        assert person != address
+
+    def test_nested_equality(self):
+        """Test equality with nested SerializableMixin."""
+        p1 = Person(
+            name="Alice",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 1),
+            home_path=Path("/tmp"),
+            address=Address("123 Main St", "Springfield", "12345"),
+        )
+        p2 = Person(
+            name="Alice",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 1),
+            home_path=Path("/tmp"),
+            address=Address("123 Main St", "Springfield", "12345"),
+        )
+        
+        assert p1 == p2
+
+
+class TestHash:
+    """Tests for __hash__ implementation."""
+
+    def test_hash_stability(self):
+        """Test that hash is stable."""
+        person = HashablePerson(
+            name="Alice",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 1),
+            home_path=Path("/tmp"),
+        )
+        
+        h1 = hash(person)
+        h2 = hash(person)
+        assert h1 == h2
+
+    def test_equal_instances_same_hash(self):
+        """Test that equal instances have same hash."""
+        p1 = HashablePerson(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = HashablePerson(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        assert hash(p1) == hash(p2)
+
+    def test_can_use_in_set(self):
+        """Test that instances can be used in sets."""
+        p1 = HashablePerson(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = HashablePerson(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p3 = HashablePerson(name="Bob", age=25, status=Status.PENDING, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        s = {p1, p2, p3}
+        assert len(s) == 2  # p1 and p2 are equal, p3 is different
+
+    def test_can_use_as_dict_key(self):
+        """Test that instances can be used as dict keys."""
+        p1 = HashablePerson(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = HashablePerson(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        d = {p1: "value1"}
+        d[p2] = "value2"  # Should overwrite p1's value
+        
+        assert len(d) == 1
+        assert d[p1] == "value2"
+
+
+class TestRepr:
+    """Tests for __repr__ implementation."""
+
+    def test_repr_shows_class_name(self):
+        """Test that repr shows class name."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        r = repr(person)
+        
+        assert "Person" in r
+
+    def test_repr_shows_fields(self):
+        """Test that repr shows first few fields."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        r = repr(person)
+        
+        assert "name=" in r
+        assert "Alice" in r
+
+    def test_repr_truncates_long_strings(self):
+        """Test that repr truncates long strings."""
+        person = HashablePerson(
+            name="This is a very long name that should be truncated in the repr output",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 1),
+            home_path=Path("/tmp"),
+        )
+        r = repr(person)
+        
+        assert "..." in r
+
+    def test_repr_shows_ellipsis_for_many_fields(self):
+        """Test that repr shows ellipsis when there are many fields."""
+        person = Person(
+            name="Alice",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 1),
+            home_path=Path("/tmp"),
+            metadata={"key": "value"},
+            tags=["tag1", "tag2"],
+        )
+        r = repr(person)
+        
+        # Should show first 3 fields and "..."
+        assert "Person(" in r
+
+    def test_repr_for_nested_objects(self):
+        """Test repr with nested SerializableMixin."""
+        person = Person(
+            name="Alice",
+            age=30,
+            status=Status.ACTIVE,
+            created_at=datetime(2024, 1, 1),
+            home_path=Path("/tmp"),
+            address=Address("123 Main St", "Springfield", "12345"),
+        )
+        r = repr(person)
+        
+        assert "Person" in r
+        # Address should have its own repr
+        assert "Address" in repr(person.address)
