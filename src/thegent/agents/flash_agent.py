@@ -1,8 +1,8 @@
 """Flash agent — ultra-short-lived agent that executes a single focused task and self-terminates.
 
-Ported from the dex flash agent pattern. A FlashAgent fires a single LLM call via litellm,
-enforces a strict timeout, and returns a structured result. Designed for sub-30-second
-focused tasks without persistent state.
+Ported from the dex flash agent pattern. A FlashAgent fires a single LLM call via CLIProxy
+(bifrost), enforces a strict timeout, and returns a structured result.
+Designed for sub-30-second focused tasks without persistent state.
 
 FR Traceability: FR-AGT-020 (flash agent lifecycle)
 """
@@ -10,11 +10,17 @@ FR Traceability: FR-AGT-020 (flash agent lifecycle)
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 import uuid
 from dataclasses import dataclass
 
-import litellm
+import httpx
+
+logger = logging.getLogger(__name__)
+
+# Default CLIProxy URL
+DEFAULT_CLIPROXY_URL = "http://localhost:8317"
 
 
 @dataclass
@@ -41,9 +47,16 @@ class FlashAgentResult:
 class FlashAgent:
     """Ultra-short-lived agent that executes a single focused task via a single LLM call.
 
-    Designed for sub-30-second focused tasks. Fires one litellm.acompletion call,
-    enforces timeout via asyncio.wait_for, and self-terminates.
+    Designed for sub-30-second focused tasks. Uses CLIProxy (bifrost) for LLM calls.
     """
+
+    def __init__(self, cliproxy_url: Optional[str] = DEFAULT_CLIPROXY_URL):
+        """Initialize the flash agent.
+
+        Args:
+            cliproxy_url: URL for CLIProxy server. Set to None to raise error if unavailable.
+        """
+        self.cliproxy_url = cliproxy_url
 
     async def run(self, config: FlashAgentConfig) -> FlashAgentResult:
         """Execute a single LLM call and return the result.
@@ -57,18 +70,33 @@ class FlashAgent:
         agent_id = uuid.uuid4().hex[:8]
         start = time.monotonic()
 
+        return await self._run_via_cliproxy(config, agent_id, start)
+
+    async def _run_via_cliproxy(
+        self, config: FlashAgentConfig, agent_id: str, start: float
+    ) -> FlashAgentResult:
+        """Run via CLIProxy /v1/chat/completions."""
+        if not self.cliproxy_url:
+            raise RuntimeError("CLIProxy URL not configured")
+
         async def _call() -> str:
-            response = await litellm.acompletion(
-                model=config.model,
-                messages=[{"role": "user", "content": config.task_prompt}],
-                max_tokens=config.max_tokens,
-            )
-            choices = getattr(response, "choices", [])
-            if not choices:
-                return ""
-            message = getattr(choices[0], "message", None)
-            content = getattr(message, "content", "") or ""
-            return str(content)
+            async with httpx.AsyncClient(timeout=config.timeout_s) as client:
+                resp = await client.post(
+                    f"{self.cliproxy_url}/v1/chat/completions",
+                    json={
+                        "model": config.model,
+                        "messages": [{"role": "user", "content": config.task_prompt}],
+                        "max_tokens": config.max_tokens,
+                    },
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                choices = data.get("choices", [])
+                if not choices:
+                    return ""
+                message = choices[0].get("message", {})
+                content = message.get("content", "")
+                return str(content)
 
         try:
             output = await asyncio.wait_for(_call(), timeout=config.timeout_s)
