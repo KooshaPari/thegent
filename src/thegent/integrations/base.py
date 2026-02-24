@@ -411,15 +411,112 @@ class SerializableMixin:
             if overwrite:
                 if value is not None:
                     merged[key] = value
-            else:
-                if merged.get(key) is None and value is not None:
-                    merged[key] = value
+            elif merged.get(key) is None and value is not None:
+                merged[key] = value
         
         return type(self).from_dict(merged)
     
     def patch(self, **updates: Any) -> "SerializableMixin":
         """Apply updates to create a new instance (alias for copy)."""
         return self.copy(**updates)
+    
+    def to_json(self, *, indent: int | None = None, sort_keys: bool = False) -> str:
+        """Serialize instance to JSON string."""
+        import json
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys, default=str)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> "SerializableMixin":
+        """Create instance from JSON string."""
+        import json
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    def to_json_file(self, path: str | Path, *, indent: int = 2) -> None:
+        """Write instance to JSON file."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_json(indent=indent))
+    
+    @classmethod
+    def from_json_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from JSON file."""
+        path = Path(path)
+        return cls.from_json(path.read_text())
+    
+    def to_yaml(self) -> str:
+        """Serialize instance to YAML string."""
+        try:
+            import yaml
+        except ImportError:
+            raise ImportError("PyYAML is required for YAML serialization. Install with: pip install pyyaml")
+        return yaml.dump(self.to_dict(), default_flow_style=False)
+    
+    @classmethod
+    def from_yaml(cls, yaml_str: str) -> "SerializableMixin":
+        """Create instance from YAML string."""
+        try:
+            import yaml
+        except ImportError:
+            raise ImportError("PyYAML is required for YAML deserialization. Install with: pip install pyyaml")
+        data = yaml.safe_load(yaml_str)
+        return cls.from_dict(data)
+    
+    def to_yaml_file(self, path: str | Path) -> None:
+        """Write instance to YAML file."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_yaml())
+    
+    @classmethod
+    def from_yaml_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from YAML file."""
+        path = Path(path)
+        return cls.from_yaml(path.read_text())
+    
+    def to_toml(self) -> str:
+        """Serialize instance to TOML string.
+        
+        Note: TOML doesn't support None values, so fields with None are omitted.
+        """
+        try:
+            import tomli_w
+        except ImportError:
+            raise ImportError("tomli-w is required for TOML serialization. Install with: pip install tomli-w")
+        # Filter out None values since TOML doesn't support them
+        data = {k: v for k, v in self.to_dict().items() if v is not None}
+        return tomli_w.dumps(data)
+    
+    @classmethod
+    def from_toml(cls, toml_str: str) -> "SerializableMixin":
+        """Create instance from TOML string."""
+        try:
+            import tomli
+        except ImportError:
+            raise ImportError("tomli is required for TOML deserialization. Install with: pip install tomli")
+        data = tomli.loads(toml_str)
+        return cls.from_dict(data)
+    
+    def to_toml_file(self, path: str | Path) -> None:
+        """Write instance to TOML file."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_toml())
+    
+    @classmethod
+    def from_toml_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from TOML file."""
+        path = Path(path)
+        return cls.from_toml(path.read_text())
+    
+    def deep_copy(self) -> "SerializableMixin":
+        """Create a deep copy of the instance."""
+        import copy
+        return copy.deepcopy(self)
+    
+    def replace(self, **changes: Any) -> "SerializableMixin":
+        """Create a new instance with specified fields replaced (dataclass-style)."""
+        return self.copy(**changes)
 
 
 class _Missing:

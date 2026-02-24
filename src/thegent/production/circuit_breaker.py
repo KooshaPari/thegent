@@ -132,4 +132,3 @@ class CircuitBreaker:
 
 class CircuitOpenError(Exception):
     """Raised when circuit is open."""
-    pass
