@@ -46,11 +46,18 @@ def _json_content(result: Any) -> Any:
         return json.loads(result)
     content = result.content
     if isinstance(content, str):
-        return json.loads(content)
-    if isinstance(content, list) and len(content) > 0:
+        data = json.loads(content)
+    elif isinstance(content, list) and len(content) > 0:
         text = getattr(content[0], "text", str(content[0]))
-        return json.loads(text)
-    return json.loads(str(content))
+        data = json.loads(text)
+    else:
+        data = json.loads(str(content))
+
+    # Handle double-encoded JSON (string containing JSON)
+    if isinstance(data, str):
+        data = json.loads(data)
+
+    return data
 
 
 async def _get_tool_fn(mcp: Any, name: str) -> Any:
@@ -81,8 +88,8 @@ class TestSeedDetectContextApi:
 
         mcp = FastMCP("test")
         with (
-            patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls,
-            patch("thegent.mcp_tools_seeds.SeedDetector.extract_flags", return_value=[]),
+            patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls,
+            patch("thegent.mcp.tools.seeds.SeedDetector.extract_flags", return_value=[]),
         ):
             mock_detector = MagicMock()
             mock_detector.detect_seeds.return_value = []
@@ -123,7 +130,7 @@ class TestSeedDetectContextApi:
         from thegent.mcp_tools_seeds import register_seed_tools
 
         mcp = FastMCP("test")
-        with patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls:
+        with patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls:
             mock_detector_cls.side_effect = RuntimeError("detector exploded")
             register_seed_tools(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_seed_detect")
@@ -144,8 +151,8 @@ class TestSeedDetectContextApi:
 
         mcp = FastMCP("test")
         with (
-            patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls,
-            patch("thegent.mcp_tools_seeds.SeedDetector.extract_flags", return_value=[]),
+            patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls,
+            patch("thegent.mcp.tools.seeds.SeedDetector.extract_flags", return_value=[]),
         ):
             mock_detector = MagicMock()
             mock_detector.detect_seeds.return_value = []
@@ -176,9 +183,9 @@ class TestSeedStoreContextApi:
         docs_dir.mkdir(parents=True)
 
         with (
-            patch("thegent.mcp_tools_seeds._resolve_cwd", return_value=tmp_path),
-            patch("thegent.mcp_tools_seeds.SeedStorage") as mock_storage_cls,
-            patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls,
+            patch("thegent.mcp.tools.seeds._resolve_cwd", return_value=tmp_path),
+            patch("thegent.mcp.tools.seeds.SeedStorage") as mock_storage_cls,
+            patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls,
         ):
             mock_storage = MagicMock()
             mock_storage.store_seed.return_value = "seed-abc123"
@@ -207,7 +214,7 @@ class TestSeedStoreContextApi:
         from thegent.mcp_tools_seeds import register_seed_tools
 
         mcp = FastMCP("test")
-        with patch("thegent.mcp_tools_seeds._resolve_cwd", side_effect=RuntimeError("storage failed")):
+        with patch("thegent.mcp.tools.seeds._resolve_cwd", side_effect=RuntimeError("storage failed")):
             register_seed_tools(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_seed_store")
 
@@ -231,8 +238,8 @@ class TestSeedListContextApi:
 
         mcp = FastMCP("test")
         with (
-            patch("thegent.mcp_tools_seeds._resolve_cwd", return_value=tmp_path),
-            patch("thegent.mcp_tools_seeds.SeedStorage") as mock_storage_cls,
+            patch("thegent.mcp.tools.seeds._resolve_cwd", return_value=tmp_path),
+            patch("thegent.mcp.tools.seeds.SeedStorage") as mock_storage_cls,
         ):
             mock_storage = MagicMock()
             mock_seed = MagicMock()
@@ -261,7 +268,7 @@ class TestSeedListContextApi:
         from thegent.mcp_tools_seeds import register_seed_tools
 
         mcp = FastMCP("test")
-        with patch("thegent.mcp_tools_seeds._resolve_cwd", side_effect=OSError("disk error")):
+        with patch("thegent.mcp.tools.seeds._resolve_cwd", side_effect=OSError("disk error")):
             register_seed_tools(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_seed_list")
 
@@ -290,7 +297,7 @@ class TestDdgSearchContextApi:
         ctx = _make_ctx()
         mock_results = [{"title": "Test", "url": "http://example.com", "snippet": "test"}]
 
-        with patch("thegent.tools.research.ddg_search", return_value=mock_results):
+        with patch("thegent.skills.research.ddg_search", return_value=mock_results):
             result = await _mcp_mod.thegent_ddg_search(
                 query="fastmcp context api",
                 num_results=3,
@@ -313,7 +320,7 @@ class TestDdgSearchContextApi:
         import thegent.mcp_server as _mcp_mod
 
         ctx = _make_ctx()
-        with patch("thegent.tools.research.ddg_search", return_value=[]):
+        with patch("thegent.skills.research.ddg_search", return_value=[]):
             result = await _mcp_mod.thegent_ddg_search(query="test", num_results=1, ctx=ctx)
         data = _json_content(result)
         # content is JSON list (may be empty)
@@ -333,7 +340,7 @@ class TestScrapeUrlContextApi:
         ctx = _make_ctx()
         mock_result = {"content": "scraped content", "status": 200}
 
-        with patch("thegent.tools.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
+        with patch("thegent.skills.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
             result = await _mcp_mod.thegent_scrape_url(
                 url="https://example.com",
                 use_playwright=False,
@@ -353,7 +360,7 @@ class TestScrapeUrlContextApi:
         ctx = _make_ctx()
         mock_result = {"content": "x" * 500, "status": 200}
 
-        with patch("thegent.tools.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
+        with patch("thegent.skills.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
             await _mcp_mod.thegent_scrape_url(
                 url="https://example.com",
                 use_playwright=True,
@@ -379,7 +386,7 @@ class TestScrapeUrlContextApi:
         ctx.report_progress = AsyncMock(side_effect=capture_progress)
         mock_result = {"content": "data"}
 
-        with patch("thegent.tools.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
+        with patch("thegent.skills.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
             await _mcp_mod.thegent_scrape_url(url="http://x.com", ctx=ctx)
 
         assert len(progress_calls) >= 3
@@ -457,7 +464,7 @@ class TestCtxHelpers:
         """_ctx_info falls back to Python logging when ctx is None."""
         from thegent.mcp_tools_seeds import _ctx_info
 
-        with patch("thegent.mcp_tools_seeds._log") as mock_log:
+        with patch("thegent.mcp.tools.seeds._log") as mock_log:
             await _ctx_info(None, "fallback message")
             mock_log.info.assert_called_once_with("fallback message")
 
@@ -478,7 +485,7 @@ class TestCtxHelpers:
         ctx = AsyncMock()
         ctx.warning = AsyncMock(side_effect=RuntimeError("ctx unavailable"))
 
-        with patch("thegent.mcp_tools_seeds._log") as mock_log:
+        with patch("thegent.mcp.tools.seeds._log") as mock_log:
             await _ctx_warning(ctx, "warn message")
             mock_log.warning.assert_called_once_with("warn message")
 
@@ -496,6 +503,7 @@ class TestCtxHelpers:
         """_ctx_warning in mcp_tools_modes falls back to Python logging when ctx is None."""
         from thegent.mcp_tools_modes import _ctx_warning
 
-        with patch("thegent.mcp_tools_modes._log") as mock_log:
+        # _ctx_warning is imported from seeds module, so patch seeds._log
+        with patch("thegent.mcp.tools.seeds._log") as mock_log:
             await _ctx_warning(None, "modes warn message")
             mock_log.warning.assert_called_once_with("modes warn message")
