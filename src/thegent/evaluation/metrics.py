@@ -104,7 +104,7 @@ class MetricsCollector:
 class Timer:
     """Context manager for timing operations."""
 
-    def __init__(self, collector: MetricsCollector, name: str, tags: dict = None):
+    def __init__(self, collector: MetricsCollector, name: str, tags: dict | None = None):
         self.collector = collector
         self.name = name
         self.tags = tags
