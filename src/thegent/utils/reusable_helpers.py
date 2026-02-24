@@ -204,3 +204,18 @@ class ReusableHelpers:
         except Exception as e:
             logger.error(f"Error writing JSON {file_path}: {e}")
             return False
+
+    @staticmethod
+    def load_config(path: Path) -> dict:
+        """Load config from JSON or YAML file."""
+        import json
+        try:
+            content = path.read_text()
+            if path.suffix in ('.yaml', '.yml'):
+                import yaml
+                return yaml.safe_load(content) or {}
+            return json.loads(content)
+        except FileNotFoundError:
+            return {}
+        except Exception:
+            return {}
