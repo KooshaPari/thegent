@@ -17,7 +17,7 @@ from dataclasses import asdict, dataclass, fields
 from enum import StrEnum
 from pathlib import Path
 from types import TracebackType
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 _log = logging.getLogger(__name__)
 
@@ -78,8 +78,8 @@ class FeatureFlag:
 
 class FeatureRegistry:
     """Registry for all feature flags."""
-    
-    _flags: dict[str, FeatureFlag] = {}
+
+    _flags: ClassVar[dict[str, FeatureFlag]] = {}
     
     @classmethod
     def register(cls, flag: FeatureFlag) -> None:
@@ -125,6 +125,8 @@ class SerializableMixin:
         d = m.to_dict()  # {"name": "test", "value": 42}
         m2 = MyModel.from_dict(d)  # MyModel(name="test", value=42)
     """
+    
+    __hash__ = None
     
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary with automatic type serialization."""

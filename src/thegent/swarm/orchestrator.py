@@ -134,7 +134,7 @@ class SwarmOrchestrator:
         if task_id not in self._running:
             return None
 
-        task, _ = self._running.pop(task_id)
+        _, _ = self._running.pop(task_id)
         self.balancer.complete(agent_id, payload.get("duration", 0))
 
         result = TaskResult(

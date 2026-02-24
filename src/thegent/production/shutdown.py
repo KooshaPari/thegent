@@ -4,11 +4,14 @@ Graceful Shutdown
 Handles graceful shutdown with cleanup.
 """
 
-from typing import Callable, Optional
+from typing import Callable
+import logging
 import signal
 import sys
 import time
 import threading
+
+log = logging.getLogger(__name__)
 
 
 class GracefulShutdown:
@@ -45,7 +48,7 @@ class GracefulShutdown:
                 sys.exit(1)
             self._shutting_down = True
 
-        print(f"\nReceived signal {signum}, shutting down gracefully...")
+        log.info("Received signal %s, shutting down gracefully...", signum)
 
         # Run shutdown handlers with timeout
         self._run_handlers()
@@ -67,10 +70,10 @@ class GracefulShutdown:
                 elapsed = time.time() - handler_start
                 remaining -= elapsed
             except Exception as e:
-                print(f"Shutdown handler error: {e}")
+                log.error("Shutdown handler error: %s", e)
 
         total = time.time() - start
-        print(f"Shutdown completed in {total:.2f}s")
+        log.info("Shutdown completed in %.2fs", total)
 
     def shutdown(self) -> None:
         """Trigger shutdown programmatically."""

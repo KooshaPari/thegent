@@ -56,7 +56,7 @@ class ShellExecutor:
                 return result
 
             # Don't retry on success or certain errors
-            if result.exit_code != 0 and result.exit_code != 124:  # 124 = timeout
+            if result.exit_code not in {0, 124}:  # 124 = timeout
                 # Non-timeout error, no retry
                 return result
 

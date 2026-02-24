@@ -25,7 +25,7 @@ class ShellConfig:
     capture_output: bool = True
     stream_output: bool = False
     
-    def get_timeout(self, explicit_timeout: float = None) -> float:
+    def get_timeout(self, explicit_timeout: float | None = None) -> float:
         """Get timeout value, respecting max."""
         timeout = explicit_timeout or self.default_timeout
         return min(timeout, self.max_timeout)
