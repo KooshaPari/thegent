@@ -53,12 +53,27 @@ def install_project(
     name: str = typer.Option("", "--name", "-n", help="Project name"),
     tenant: str = typer.Option("", "--tenant", help="Tenant ID"),
     json: bool = typer.Option(False, "--json", help="JSON output"),
+    reconcile: bool = typer.Option(True, "--reconcile/--no-reconcile", help="Reconcile project"),
+    register: bool = typer.Option(True, "--register/--no-register", help="Register project"),
+    install_runtime: bool = typer.Option(True, "--install-runtime/--no-install-runtime", help="Install runtime"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
     # Legacy option for backward compatibility
     legacy_mode: str = typer.Option(None, "--mode", help="(ignored)"),
 ) -> dict[str, Any]:
     """Install/brownfield project migration."""
     effective_mode = legacy_mode or mode
-    return project_migrate(project=project, mode=effective_mode, template=template, name=name, tenant=tenant)
+    return project_migrate(
+        project=project,
+        mode=effective_mode,
+        template=template,
+        name=name,
+        tenant=tenant,
+        reconcile=reconcile,
+        register=register,
+        install_runtime=install_runtime,
+        dry_run=dry_run,
+        json_output=json,
+    )
 
 
 @scaffold_app.command("greenfield")
@@ -103,20 +118,22 @@ def scaffold_brownfield_cmd(
     name: str = typer.Option("", "--name", "-n", help="Project name"),
     tenant: str = typer.Option("", "--tenant", help="Tenant ID"),
     json: bool = typer.Option(False, "--json", help="JSON output"),
-    register: bool = typer.Option(False, "--register", help="Register project"),
-    install_runtime: bool = typer.Option(False, "--install-runtime", help="Install runtime"),
+    register: bool = typer.Option(True, "--register/--no-register", help="Register project"),
+    install_runtime: bool = typer.Option(True, "--install-runtime/--no-install-runtime", help="Install runtime"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Dry run"),
+    reconcile: bool = typer.Option(True, "--reconcile/--no-reconcile", help="Reconcile"),
 ) -> dict[str, Any]:
     """Scaffold brownfield project."""
-    return project_scaffold(
-        destination=project,
-        profile=mode,
+    return project_migrate(
+        project=project,
+        mode=mode,
+        template=template,
         name=name,
-        language=template,
         tenant=tenant,
         register=register,
         install_runtime=install_runtime,
         dry_run=dry_run,
+        reconcile=reconcile,
         json_output=json,
     )
 
