@@ -1083,8 +1083,8 @@ class TestSessionContractHealthReportCmdImpl:
 
         with (
             patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result),
-            patch("thegent.cli._write_report_export", return_value="json") as mock_write,
-            patch("thegent.cli._infer_export_format", return_value="json"),
+            patch("thegent.cli.commands.session_contract_cmds._write_report_export", return_value="json") as mock_write,
+            patch("thegent.cli.commands.session_cmds_helpers.resolve_export_format_with_notice", return_value="json"),
         ):
             from thegent.cli import session_contract_health_report_cmd
 
