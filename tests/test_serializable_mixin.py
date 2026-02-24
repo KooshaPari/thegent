@@ -579,3 +579,333 @@ class TestRepr:
         assert "Person" in r
         # Address should have its own repr
         assert "Address" in repr(person.address)
+<<<<<<< HEAD
+=======
+
+
+class TestDiff:
+    """Tests for diff method."""
+
+    def test_no_differences(self):
+        """Test diff returns empty when instances are equal."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        diff = p1.diff(p2)
+        assert diff == {}
+
+    def test_single_field_difference(self):
+        """Test diff with one field different."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Alice", age=35, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        diff = p1.diff(p2)
+        assert diff == {"age": (30, 35)}
+
+    def test_multiple_differences(self):
+        """Test diff with multiple fields different."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Bob", age=35, status=Status.DONE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        diff = p1.diff(p2)
+        assert "name" in diff
+        assert "age" in diff
+        assert "status" in diff
+        assert diff["name"] == ("Alice", "Bob")
+
+    def test_diff_wrong_type_raises(self):
+        """Test that diff raises TypeError for different types."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        address = Address(street="123 Main", city="Springfield", zip_code="12345")
+        
+        with pytest.raises(TypeError):
+            person.diff(address)
+
+
+class TestCopy:
+    """Tests for copy method."""
+
+    def test_exact_copy(self):
+        """Test that copy creates equal instance."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.copy()
+        
+        assert p1 == p2
+        assert p1 is not p2
+
+    def test_copy_with_override(self):
+        """Test copy with field override."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.copy(age=35)
+        
+        assert p2.name == "Alice"
+        assert p2.age == 35
+        assert p1.age == 30  # Original unchanged
+
+    def test_copy_with_multiple_overrides(self):
+        """Test copy with multiple overrides."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.copy(age=35, name="Bob")
+        
+        assert p2.name == "Bob"
+        assert p2.age == 35
+
+
+class TestMerge:
+    """Tests for merge method."""
+
+    def test_merge_overwrite_true(self):
+        """Test merge with overwrite=True (default)."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Bob", age=35, status=Status.DONE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        merged = p1.merge(p2)
+        assert merged.name == "Bob"
+        assert merged.age == 35
+        assert merged.status == Status.DONE
+
+    def test_merge_overwrite_false(self):
+        """Test merge with overwrite=False."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Bob", age=35, status=Status.DONE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        merged = p1.merge(p2, overwrite=False)
+        assert merged.name == "Alice"  # Kept from p1
+        assert merged.age == 30  # Kept from p1
+        assert merged.status == Status.ACTIVE  # Kept from p1
+
+    def test_merge_fills_none(self):
+        """Test merge fills in None values."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p1.address = None
+        p2.address = Address(street="123 Main", city="Springfield", zip_code="12345")
+        
+        merged = p1.merge(p2, overwrite=False)
+        assert merged.address is not None
+        assert merged.address.street == "123 Main"
+
+    def test_merge_wrong_type_raises(self):
+        """Test that merge raises TypeError for different types."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        address = Address(street="123 Main", city="Springfield", zip_code="12345")
+        
+        with pytest.raises(TypeError):
+            person.merge(address)
+
+
+class TestPatch:
+    """Tests for patch method (alias for copy)."""
+
+    def test_patch_updates_fields(self):
+        """Test that patch updates fields."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.patch(age=35, name="Bob")
+        
+        assert p2.name == "Bob"
+        assert p2.age == 35
+        assert p1.name == "Alice"  # Original unchanged
+
+
+class TestToJson:
+    """Tests for to_json method."""
+
+    def test_to_json_basic(self):
+        """Test basic JSON serialization."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = person.to_json()
+        
+        assert "Alice" in json_str
+        assert '"age": 30' in json_str
+
+    def test_to_json_with_indent(self):
+        """Test JSON with indentation."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = person.to_json(indent=2)
+        
+        assert "\n" in json_str  # Pretty-printed has newlines
+
+    def test_to_json_compact(self):
+        """Test compact JSON (no indent)."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = person.to_json(indent=None)
+        
+        # Compact form has no indentation
+        assert "  " not in json_str or "\n" not in json_str
+
+
+class TestFromJson:
+    """Tests for from_json method."""
+
+    def test_from_json_basic(self):
+        """Test basic JSON deserialization."""
+        json_str = '{"name": "Alice", "age": 30, "status": "active", "created_at": "2024-01-01T00:00:00", "home_path": "/tmp"}'
+        person = Person.from_json(json_str)
+        
+        assert person.name == "Alice"
+        assert person.age == 30
+
+    def test_roundtrip_json(self):
+        """Test JSON roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        json_str = original.to_json()
+        restored = Person.from_json(json_str)
+        
+        assert restored == original
+
+    def test_from_json_invalid_raises(self):
+        """Test that invalid JSON raises error."""
+        with pytest.raises(Exception):  # JSONDecodeError
+            Person.from_json("not valid json")
+
+
+class TestJsonFile:
+    """Tests for to_json_file and from_json_file methods."""
+
+    def test_to_from_json_file(self, tmp_path):
+        """Test writing and reading JSON file."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "person.json"
+        original.to_json_file(file_path)
+        
+        assert file_path.exists()
+        
+        restored = Person.from_json_file(file_path)
+        assert restored == original
+
+    def test_to_json_file_creates_dirs(self, tmp_path):
+        """Test that to_json_file creates parent directories."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "nested" / "dir" / "person.json"
+        person.to_json_file(file_path)
+        
+        assert file_path.exists()
+
+    def test_from_json_file_not_found(self, tmp_path):
+        """Test that from_json_file raises on missing file."""
+        with pytest.raises(FileNotFoundError):
+            Person.from_json_file(tmp_path / "nonexistent.json")
+
+
+class TestYaml:
+    """Tests for YAML serialization methods."""
+
+    def test_to_yaml_basic(self):
+        """Test basic YAML serialization."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        yaml_str = person.to_yaml()
+        
+        assert "name: Alice" in yaml_str
+        assert "age: 30" in yaml_str
+
+    def test_yaml_roundtrip(self):
+        """Test YAML roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        yaml_str = original.to_yaml()
+        restored = Person.from_yaml(yaml_str)
+        
+        assert restored == original
+
+    def test_yaml_file_roundtrip(self, tmp_path):
+        """Test YAML file roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "person.yaml"
+        original.to_yaml_file(file_path)
+        
+        assert file_path.exists()
+        
+        restored = Person.from_yaml_file(file_path)
+        assert restored == original
+
+
+class TestToml:
+    """Tests for TOML serialization methods."""
+
+    def test_to_toml_basic(self):
+        """Test basic TOML serialization."""
+        person = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        toml_str = person.to_toml()
+        
+        assert 'name = "Alice"' in toml_str
+        assert "age = 30" in toml_str
+
+    def test_toml_roundtrip(self):
+        """Test TOML roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        toml_str = original.to_toml()
+        restored = Person.from_toml(toml_str)
+        
+        assert restored == original
+
+    def test_toml_file_roundtrip(self, tmp_path):
+        """Test TOML file roundtrip."""
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        file_path = tmp_path / "person.toml"
+        original.to_toml_file(file_path)
+        
+        assert file_path.exists()
+        
+        restored = Person.from_toml_file(file_path)
+        assert restored == original
+
+
+class TestDeepCopy:
+    """Tests for deepcopy support."""
+
+    def test_deep_copy(self):
+        """Test deep_copy method."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.deep_copy()
+        
+        assert p1 == p2
+        assert p1 is not p2
+
+    def test_deepcopy_function(self):
+        """Test copy.deepcopy() works."""
+        import copy
+        
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = copy.deepcopy(p1)
+        
+        assert p1 == p2
+        assert p1 is not p2
+
+
+class TestPickle:
+    """Tests for pickle support."""
+
+    def test_pickle_roundtrip(self):
+        """Test pickle/unpickle roundtrip."""
+        import pickle
+        
+        original = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        
+        pickled = pickle.dumps(original)
+        restored = pickle.loads(pickled)
+        
+        assert restored == original
+
+
+class TestReplace:
+    """Tests for replace method."""
+
+    def test_replace_single_field(self):
+        """Test replace with single field change."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.replace(age=35)
+        
+        assert p2.age == 35
+        assert p1.age == 30  # Original unchanged
+
+    def test_replace_multiple_fields(self):
+        """Test replace with multiple field changes."""
+        p1 = Person(name="Alice", age=30, status=Status.ACTIVE, created_at=datetime(2024, 1, 1), home_path=Path("/tmp"))
+        p2 = p1.replace(age=35, name="Bob")
+        
+        assert p2.name == "Bob"
+        assert p2.age == 35
+>>>>>>> origin/main
