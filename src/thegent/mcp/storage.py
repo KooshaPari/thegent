@@ -168,7 +168,7 @@ class McpEventStore:
 
     def _write_event(self, record: dict[str, Any]) -> None:
         """Append a single event record to the JSONL file (under lock)."""
-        line = json.dumps(record) + "\n"
+        line = json.dumps(record).decode() + "\n"
         with self._write_lock:
             with self._path.open("a", encoding="utf-8") as fh:
                 fh.write(line)
