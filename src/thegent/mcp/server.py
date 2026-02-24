@@ -11,6 +11,7 @@ from fastmcp.server.elicitation import AcceptedElicitation, CancelledElicitation
 from fastmcp.server.lifespan import lifespan
 from fastmcp.server.transforms import PromptsAsTools, ResourcesAsTools
 from fastmcp.tools.tool import ToolResult
+from thegent.mcp import server_optional_tools as _server_optional_tools
 from thegent.cli.commands.impl import (
     ELICIT_CWD_MSG,
     ELICIT_OWNER_MSG,
