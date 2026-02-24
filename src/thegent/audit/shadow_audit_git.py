@@ -14,12 +14,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import orjson as json
 import logging
+import orjson as json
 import os
 import re
 import sqlite3
 import subprocess
+import uuid
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
@@ -39,7 +40,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 # Re-export for backwards compatibility
-_DEFAULT_DB_PATH = DEFAULT_DB_PATH
+_DEFAULT_DB_PATH = _DEFAULT_DB_PATH
 
 
 # ---------------------------------------------------------------------------

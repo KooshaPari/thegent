@@ -18,6 +18,28 @@ email = "kooshapari@gmail.com"
 [dependency-groups]
 dev = [ "mypy>=1.19.1", "pytest-asyncio>=1.3.0", "ruff>=0.15.1", "types-pyyaml>=6.0.12.20250915",]
 
+[project.license]
+text = "MIT"
+
+[project.urls]
+Homepage = "https://github.com/kooshapari/thegent"
+Repository = "https://github.com/kooshapari/thegent"
+Documentation = "https://github.com/kooshapari/thegent#readme"
+
+[project.optional-dependencies]
+fast = [ "curl-cffi>=0.6.0",]
+dev = [ "pytest>=9.0.2", "pytest-rerunfailures>=14.0.0", "pytest-asyncio>=1.3.0", "pytest-benchmark>=4.0.0", "pytest-cov>=6.0.0", "pytest-xdist>=3.6.1", "pytest-testmon>=2.1.0,<3.0.0", "ruff>=0.15.1", "ty>=0.0.2", "basedpyright>=1.31.1", "pre-commit>=4.1.0", "tach>=0.26.0", "vulture>=2.14", "radon>=6.0", "psleak>=0.1.0", "mypy>=1.19.1", "types-pyyaml>=6.0.12.20250915",]
+
+[project.scripts]
+thegent = "thegent.cli.apps.main:app"
+clode = "thegent.rust_wrappers:clode"
+roid = "thegent.rust_wrappers:roid"
+droid = "thegent.rust_wrappers:droid"
+dex = "thegent.rust_wrappers:dex"
+anen = "thegent.rust_wrappers:anen"
+fanta = "thegent.rust_wrappers:fanta"
+antigma = "thegent.rust_wrappers:antigma"
+
 [tool.uv]
 managed = true
 override-dependencies = [ "hf-xet==0.0.0; implementation_name == 'pypy'",]
@@ -57,27 +79,9 @@ module = [ "tests.*", "scripts.*",]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
-[project.license]
-text = "MIT"
-
-[project.urls]
-Homepage = "https://github.com/kooshapari/thegent"
-Repository = "https://github.com/kooshapari/thegent"
-Documentation = "https://github.com/kooshapari/thegent#readme"
-
-[project.optional-dependencies]
-fast = [ "curl-cffi>=0.6.0",]
-dev = [ "pytest>=9.0.2", "pytest-rerunfailures>=14.0.0", "pytest-asyncio>=1.3.0", "pytest-benchmark>=4.0.0", "pytest-cov>=6.0.0", "pytest-xdist>=3.6.1", "pytest-testmon>=2.1.0,<3.0.0", "ruff>=0.15.1", "ty>=0.0.2", "basedpyright>=1.31.1", "pre-commit>=4.1.0", "tach>=0.26.0", "vulture>=2.14", "radon>=6.0", "psleak>=0.1.0", "mypy>=1.19.1", "types-pyyaml>=6.0.12.20250915",]
-
-[project.scripts]
-thegent = "thegent.cli.apps.main:app"
-clode = "thegent.rust_wrappers:clode"
-roid = "thegent.rust_wrappers:roid"
-droid = "thegent.rust_wrappers:droid"
-dex = "thegent.rust_wrappers:dex"
-anen = "thegent.rust_wrappers:anen"
-fanta = "thegent.rust_wrappers:fanta"
-antigma = "thegent.rust_wrappers:antigma"
+[tool.ruff.lint]
+select = [ "E", "W", "F", "I", "N", "UP", "S", "B", "A", "C4", "DTZ", "T20", "SIM", "TCH", "RUF", "PT", "ERA", "PL", "PERF", "FURB", "PIE", "ARG", "PTH", "ANN", "BLE", "FBT", "RET", "SLF",]
+ignore = [ "E501", "ANN101", "ANN102", "S101", "A002", "PLC0415", "PLR0913", "FBT001", "FBT002", "FBT003", "BLE001", "S603", "S607", "PLR0912", "PLR0915", "ANN001", "ANN201", "ANN202", "ANN401", "PLR2004", "S310", "ARG001", "ARG002", "PTH123", "PTH117", "S606", "RUF002", "RUF001", "S110", "S112", "PLR0911", "SIM102", "ANN003", "PERF401", "DTZ005", "B904", "PLW2901", "B008", "F811", "N818", "ERA001", "INP001", "D103", "SIM117", "E722", "E721", "F403", "W293", "PLW0127", "RUF022", "W291", "F405", "F822", "PTH113", "S604", "RET505", "FURB162", "E999", "E722", "UP017", "UP040", "UP041", "UP042", "UP043", "UP046", "UP047", "UP036", "RET504", "PLW0603", "PLW0602", "S324", "PTH105", "PTH116", "SIM103", "F841", "N806", "F401", "E402", "RUF100", "E741", "ARG005", "ANN204", "ANN002", "S108", "SIM105", "SLF001", "PTH119", "PTH110", "SIM108", "S602", "PTH101", "PLW1510", "N807", "N802", "N801", "I001", "A001", "A004", "ARG004", "DTZ006", "PLC0206", "RUF005", "RUF006", "PTH207", "PTH108", "PTH115", "PTH104", "PTH109", "PTH112", "S105", "S107", "S110", "SIM115", "B905", "B017", "UP031", "N999", "PTH106", "PTH208", "RUF003", "FURB116", "B020", "B018", "RUF034", "ARG003", "PLW1509", "UP045", "UP037", "RUF010", "FURB110", "TC003", "F821", "PLW0108", "DTZ011", "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203",]
 
 [tool.hatch.version]
 path = "src/thegent/__init__.py"
@@ -107,10 +111,6 @@ relative_files = true
 fail_under = 100
 ignore_errors = false
 exclude_lines = [ "pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedError",]
-
-[tool.ruff.lint]
-select = [ "E", "W", "F", "I", "N", "UP", "S", "B", "A", "C4", "DTZ", "T20", "SIM", "TCH", "RUF", "PT", "ERA", "PL", "PERF", "FURB", "PIE", "ARG", "PTH", "ANN", "BLE", "FBT", "RET", "SLF",]
-ignore = [ "E501", "ANN101", "ANN102", "S101", "A002", "PLC0415", "PLR0913", "FBT001", "FBT002", "FBT003", "BLE001", "S603", "S607", "PLR0912", "PLR0915", "ANN001", "ANN201", "ANN202", "ANN401", "PLR2004", "S310", "ARG001", "ARG002", "PTH123", "PTH117", "S606", "RUF002", "RUF001", "S110", "S112", "PLR0911", "SIM102", "ANN003", "PERF401", "DTZ005", "B904", "PLW2901", "B008", "F811", "N818", "ERA001", "INP001", "D103", "SIM117", "E722", "E721", "F403", "W293", "PLW0127", "RUF022", "W291", "F405", "F822", "PTH113", "S604", "RET505", "FURB162", "E999", "E722", "UP017", "UP040", "UP041", "UP042", "UP043", "UP046", "UP047", "UP036", "RET504", "PLW0603", "PLW0602", "S324", "PTH105", "PTH116", "SIM103", "F841", "N806", "F401", "E402", "RUF100", "E741", "ARG005", "ANN204", "ANN002", "S108", "SIM105", "SLF001", "PTH119", "PTH110", "SIM108", "S602", "PTH101", "PLW1510", "N807", "N802", "N801", "I001", "A001", "A004", "ARG004", "DTZ006", "PLC0206", "RUF005", "RUF006", "PTH207", "PTH108", "PTH115", "PTH104", "PTH109", "PTH112", "S105", "S107", "S110", "SIM115", "B905", "B017", "UP031", "N999", "PTH106", "PTH208", "RUF003", "FURB116", "B020", "B018", "RUF034", "ARG003", "PLW1509", "UP045", "UP037", "RUF010", "FURB110", "TC003", "F821", "PLW0108", "DTZ011", "TC001", "TC002", "UP035", "S311", "PIE810", "PERF203",]
 
 [tool.ty.src]
 include = [ "src", "tests",]
