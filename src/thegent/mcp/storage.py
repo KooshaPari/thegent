@@ -168,7 +168,7 @@ class McpEventStore:
 
     def _write_event(self, record: dict[str, Any]) -> None:
         """Append a single event record to the JSONL file (under lock)."""
-        line = json.dumps(record, option=json.OPT_SORT_KEYS).decode() + "\n"
+        line = json.dumps(record, sort_keys=True).decode() + "\n"
         with self._write_lock:
             with self._path.open("a", encoding="utf-8") as fh:
                 fh.write(line)
@@ -309,11 +309,3 @@ def get_mcp_storage() -> McpStorage:
 def get_mcp_event_store() -> McpEventStore:
     """Return the process-level McpEventStore singleton (thread-safe)."""
     return _registry.get_event_store()
-
-
-def _reset_singletons_for_testing(
-    storage: McpStorage | None = None,
-    event_store: McpEventStore | None = None,
-) -> None:
-    """Reset singletons for testing — replaces global instances."""
-    _registry.reset(storage=storage, event_store=event_store)

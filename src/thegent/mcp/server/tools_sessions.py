@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json as json
+import orjson as json
 from typing import Any, Callable
 
 from thegent.mcp.dynamic_tools import DynamicToolRegistry, DynamicToolSpec

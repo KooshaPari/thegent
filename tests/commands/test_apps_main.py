@@ -38,14 +38,6 @@ def test_top_level_do_shortcut_routes_to_run_agent() -> None:
     mock_run_agent.assert_called_once_with(prompt="hello")
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-def test_git_help_works() -> None:
-    """`thegent git --help` should work."""
-=======
-=======
-@pytest.mark.skip(reason="Implementation issue")
->>>>>>> origin/fix/cli-test-failures
 def test_install_compat_routes_to_run_install() -> None:
     """`thegent install` should remain available in the new app tree."""
     with patch("thegent.install.run_install") as mock_run_install:
@@ -66,7 +58,6 @@ def test_install_compat_routes_to_run_install() -> None:
     )
 
 
-@pytest.mark.skip(reason="Implementation issue")
 def test_install_invocation_can_run_system_install_with_setup() -> None:
     """`thegent install --system` should route to system-wide installer and optional setup."""
     with (
@@ -85,7 +76,6 @@ def test_install_invocation_can_run_system_install_with_setup() -> None:
     mock_setup_cmd.assert_called_once_with(wizard=True)
 
 
-@pytest.mark.skip(reason="Implementation issue")
 def test_install_invocation_can_run_both_scope() -> None:
     """`thegent install --scope both` should run user and system installers."""
     with (
@@ -122,7 +112,6 @@ def test_install_invocation_can_run_both_scope() -> None:
     )
 
 
-@pytest.mark.skip(reason="Implementation issue")
 def test_install_invalid_scope_fails() -> None:
     """`thegent install --scope invalid` should fail and call no installer."""
     with (
@@ -136,7 +125,6 @@ def test_install_invalid_scope_fails() -> None:
     mock_run_install_system.assert_not_called()
 
 
-@pytest.mark.skip(reason="Implementation issue")
 def test_install_scope_system_runs_system_only_with_custom_prefix() -> None:
     """`thegent install --scope system` should run only the system installer path."""
     with (
@@ -164,7 +152,6 @@ def test_install_scope_system_runs_system_only_with_custom_prefix() -> None:
     )
 
 
-@pytest.mark.skip(reason="Implementation issue")
 def test_install_alias_user_target_routes_to_all() -> None:
     """`thegent install --target user` should normalize to user install (`all`)."""
     with patch("thegent.install.run_install") as mock_run_install:
@@ -182,7 +169,6 @@ def test_install_alias_user_target_routes_to_all() -> None:
     )
 
 
-@pytest.mark.skip(reason="Implementation issue")
 def test_install_with_invalid_target_fails_without_calling_install() -> None:
     """`thegent install --target bad` should fail and skip run_install."""
     with patch("thegent.install.run_install") as mock_run_install:
@@ -192,11 +178,6 @@ def test_install_with_invalid_target_fails_without_calling_install() -> None:
     mock_run_install.assert_not_called()
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="Implementation issue")
->>>>>>> origin/main
 def test_install_project_subcommand_still_routes_to_project_installer() -> None:
     """`thegent install project` should still resolve the project-install command."""
     with (
@@ -229,11 +210,6 @@ def test_install_project_subcommand_still_routes_to_project_installer() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="project_migrate mock issue")
->>>>>>> origin/main
 def test_project_top_level_command_is_available_and_routes_to_setup_project() -> None:
     """`thegent project` should resolve through setup project command registry."""
     result = runner.invoke(app, ["project", "list", "--json"])
@@ -243,11 +219,6 @@ def test_project_top_level_command_is_available_and_routes_to_setup_project() ->
     assert isinstance(payload, list)
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="project_migrate mock issue")
->>>>>>> origin/main
 def test_install_project_brownfield_routes_to_setup_project_migrate() -> None:
     """`thegent install project brownfield` should delegate to migrate workflow."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -285,11 +256,6 @@ def test_install_project_brownfield_routes_to_setup_project_migrate() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="project_migrate mock issue")
->>>>>>> origin/main
 def test_scaffold_greenfield_routes_to_sys_setup_project_scaffold() -> None:
     """`thegent scaffold greenfield` should delegate to the setup-project scaffold command."""
     with patch("thegent.cli.apps.project.project_scaffold") as mock_project_scaffold:
@@ -313,11 +279,6 @@ def test_scaffold_greenfield_routes_to_sys_setup_project_scaffold() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="project_migrate mock issue")
->>>>>>> origin/main
 def test_scaffold_brownfield_routes_to_sys_setup_project_migrate() -> None:
     """`thegent scaffold brownfield` should delegate to the setup-project migrate command."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -338,11 +299,6 @@ def test_scaffold_brownfield_routes_to_sys_setup_project_migrate() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="project_migrate mock issue")
->>>>>>> origin/main
 def test_scaffold_agdd_alias_routes_to_project_migrate() -> None:
     """`thegent scaffold ag-dd` should fix template to ag-dd."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -374,11 +330,6 @@ def test_scaffold_agdd_alias_routes_to_project_migrate() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="project_migrate mock issue")
->>>>>>> origin/main
 def test_scaffold_none_alias_routes_to_project_migrate() -> None:
     """`thegent scaffold none` should fix template to none."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -410,11 +361,6 @@ def test_scaffold_none_alias_routes_to_project_migrate() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="Implementation issue")
->>>>>>> origin/main
 def test_setup_project_agdd_alias_routes_to_brownfield() -> None:
     """`thegent project ag-dd` should fix template to AG-DD."""
     with patch("thegent.cli.apps.project.setup_project_brownfield") as mock_setup_project_brownfield:
@@ -446,11 +392,6 @@ def test_setup_project_agdd_alias_routes_to_brownfield() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="Implementation issue")
->>>>>>> origin/main
 def test_setup_project_none_alias_routes_to_brownfield() -> None:
     """`thegent project none` should fix template to none."""
     with patch("thegent.cli.apps.project.setup_project_brownfield") as mock_setup_project_brownfield:
@@ -482,11 +423,6 @@ def test_setup_project_none_alias_routes_to_brownfield() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="Implementation issue")
->>>>>>> origin/main
 def test_install_project_agdd_alias_routes_to_project_migrate() -> None:
     """`thegent install project ag-dd` should force AG-DD and route to migrate."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -520,11 +456,6 @@ def test_install_project_agdd_alias_routes_to_project_migrate() -> None:
     )
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="project_migrate mock location issue")
-=======
-@pytest.mark.skip(reason="Implementation issue")
->>>>>>> origin/main
 def test_install_project_none_alias_routes_to_project_migrate() -> None:
     """`thegent install project none` should force no template and route to migrate."""
     with patch("thegent.cli.apps.project.project_migrate") as mock_project_migrate:
@@ -586,7 +517,7 @@ def test_global_git_command_group_is_registered() -> None:
 
 def test_global_git_help_exits_zero() -> None:
     """`thegent git --help` should execute through the registered git typer app."""
->>>>>>> origin/fix/additional-improvements
     result = runner.invoke(app, ["git", "--help"])
+
     assert result.exit_code == 0
-    assert "COMMAND" in result.output
+    assert "Usage: thegent git" in result.stdout
