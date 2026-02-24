@@ -367,6 +367,115 @@ class SerializableMixin:
         if len(data) > 3:
             parts.append("...")
         return f"{cls_name}({', '.join(parts)})"
+    
+    def diff(self, other: "SerializableMixin") -> dict[str, tuple[Any, Any]]:
+        """Compare this instance with another and return field differences.
+        
+        Args:
+            other: Another instance to compare with
+            
+        Returns:
+            Dict mapping field names to (self_value, other_value) tuples
+            for fields that differ. Empty dict if instances are equal.
+            
+        Example:
+            p1 = Person(name="Alice", age=30)
+            p2 = Person(name="Alice", age=35)
+            diff = p1.diff(p2)  # {"age": (30, 35)}
+        """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot diff {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        differences = {}
+        all_keys = set(self_dict.keys()) | set(other_dict.keys())
+        
+        for key in all_keys:
+            self_val = self_dict.get(key, _MISSING)
+            other_val = other_dict.get(key, _MISSING)
+            
+            if self_val != other_val:
+                differences[key] = (
+                    None if self_val is _MISSING else self_val,
+                    None if other_val is _MISSING else other_val,
+                )
+        
+        return differences
+    
+    def copy(self, **overrides: Any) -> "SerializableMixin":
+        """Create a shallow copy with optional field overrides.
+        
+        Args:
+            **overrides: Field values to override in the copy
+            
+        Returns:
+            New instance with copied values and any overrides applied
+            
+        Example:
+            p1 = Person(name="Alice", age=30)
+            p2 = p1.copy(age=35)  # Person(name="Alice", age=35)
+        """
+        data = self.to_dict()
+        data.update(overrides)
+        return type(self).from_dict(data)
+    
+    def merge(self, other: "SerializableMixin", *, overwrite: bool = True) -> "SerializableMixin":
+        """Merge fields from another instance into a new instance.
+        
+        Args:
+            other: Instance to merge from
+            overwrite: If True (default), other's non-None values overwrite self's.
+                      If False, only fill in None fields from other.
+            
+        Returns:
+            New merged instance
+            
+        Example:
+            p1 = Person(name="Alice", age=None, city="NYC")
+            p2 = Person(name="Bob", age=30, city=None)
+            merged = p1.merge(p2)  # Person(name="Bob", age=30, city="NYC")
+            merged = p1.merge(p2, overwrite=False)  # Person(name="Alice", age=30, city="NYC")
+        """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot merge {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        merged = dict(self_dict)
+        for key, value in other_dict.items():
+            if overwrite:
+                if value is not None:
+                    merged[key] = value
+            else:
+                if merged.get(key) is None and value is not None:
+                    merged[key] = value
+        
+        return type(self).from_dict(merged)
+    
+    def patch(self, **updates: Any) -> "SerializableMixin":
+        """Apply updates to create a new instance (alias for copy).
+        
+        More explicit name for the copy operation when making targeted changes.
+        
+        Args:
+            **updates: Field values to update
+            
+        Returns:
+            New instance with updates applied
+        """
+        return self.copy(**updates)
+
+
+class _Missing:
+    """Sentinel for missing values."""
+    def __repr__(self) -> str:
+        return "<MISSING>"
+
+
+_MISSING = _Missing()
 
 
 def hashable_dataclass(cls: type) -> type:
