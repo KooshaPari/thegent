@@ -15,6 +15,7 @@ crate-type = ["cdylib", "rlib"]
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 pyo3 = { version = "0.24" }
 =======
 pyo3 = { version = "0.24.1" }
@@ -28,6 +29,9 @@ pyo3 = { version = "0.24.1" }
 =======
 pyo3 = { version = "0.24.1" }
 >>>>>>> origin/refactor/provider-manager-modularization
+=======
+pyo3 = { version = "0.24.1" }
+>>>>>>> origin/refactor/sync-modularization
 thiserror = "1.0"
 which = "6.0"
 
