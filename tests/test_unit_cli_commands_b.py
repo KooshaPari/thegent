@@ -404,7 +404,7 @@ class TestDagRemoveCmdImpl:
 class TestDagCancelCmdImpl:
     """Tests for dag_cancel_cmd implementation."""
 
-    @patch("thegent.cli.dag_update_cmd")
+    @patch("thegent.cli.commands.plan_dag_cmds.dag_update_cmd")
     @patch("thegent.cli.console")
     def test_cancel_delegates_to_update(self, mock_console, mock_update) -> None:
         # @trace FR-CLI-318
