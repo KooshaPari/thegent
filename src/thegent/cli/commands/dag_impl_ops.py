@@ -175,7 +175,11 @@ def dag_run_impl(
     contract_version: str | None = None,
 ) -> dict[str, Any]:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
-    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent.cli.commands._cli_shared import (
+        _resolve_cwd,
+        _parse_dag_full,
+        _resolve_prompt,
+    )
     from thegent.cli.commands.impl import _default_owner_tag, bg_impl
     from thegent.cli.commands.dag_impl_helpers import _dag_update_task
 
@@ -412,13 +416,22 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
 
 def dag_recover_impl(cd: Path | None = None, action: str = "retry-failed") -> dict[str, Any]:
     """Perform recovery playbook actions on the DAG."""
-    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent.cli.commands._cli_shared import (
+        _dag_path,
+        _parse_dag_full,
+        _atomic_write,
+        _serialize_dag,
+    )
     from thegent.cli.commands.dag_impl_helpers import _dag_update_task
 
-    cwd = _resolve_cwd(cd)
-    if cwd is None:
+    # Validate action
+    valid_actions = {"retry-failed", "clear-stuck", "reset-retries", "fallback"}
+    if action not in valid_actions:
+        return {"error": f"Unknown recovery action: {action}. Valid actions: {', '.join(sorted(valid_actions))}"}
+
+    cwd, dag_path = _dag_path(cd)
+    if cwd is None or dag_path is None:
         return {"error": "Ambiguous cwd; use --cd to specify project root."}
-    dag_path = cwd / ".factory" / "dag-session.md"
     if not dag_path.exists():
         return {"error": f"DAG not found: {dag_path}", "changed": False}
 
