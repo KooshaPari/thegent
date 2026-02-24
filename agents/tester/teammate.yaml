@@ -1,0 +1,18 @@
+name: Tester Agent
+description: Specialized agent for test writing, test execution, and coverage
+priority: HIGH
+capabilities:
+  - test_writing
+  - test_execution
+  - coverage_analysis
+  - test_fixing
+  - regression_detection
+tools:
+  - write_test
+  - run_test
+  - analyze_coverage
+model_preferences:
+  - claude-sonnet
+  - gpt-4
+timeout: 300
+max_retries: 2
