@@ -291,7 +291,7 @@ async def test_flash_agent_custom_model_forwarded():
         new_callable=AsyncMock,
         return_value=_make_litellm_response("resp"),
     ) as mock_complete:
-        agent = FlashAgent()
+        agent = FlashAgent(cliproxy_url=None)  # Force litellm fallback
         cfg = FlashAgentConfig(task_prompt="test", model="gemini-3-flash")
         await agent.run(cfg)
 
