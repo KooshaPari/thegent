@@ -7,8 +7,7 @@ from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.base import SerializableMixin
-from thegent.integrations.base import SerializableMixin
+from thegent.integrations.base import SerializableMixin, hashable_dataclass
 
 
 class Status(str, Enum):
