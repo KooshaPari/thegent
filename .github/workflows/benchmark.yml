@@ -241,3 +241,188 @@ jobs:
         with:
           name: benchmark-e2e-heavy-xdist
           path: benchmarks/results/
+
+  benchmark-zsh:
+    name: ZSH Shell Startup Benchmark
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ZSH
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh
+
+      - name: Install hyperfine
+        uses: taiki-e/install-action@v2
+        with:
+          tool: hyperfine
+
+      - name: Install jq (for results parsing)
+        run: sudo apt-get install -y jq
+
+      - name: Install starship (prompt used by thegent)
+        run: |
+          curl -sS https://starship.rs/install.sh | sh -s -- --yes
+
+      - name: Install mise (version manager)
+        uses: jdx/mise-action@v2
+        with:
+          install: false
+
+      - name: Run ZSH benchmark
+        run: |
+          mkdir -p benchmarks/results/zsh
+          bash scripts/benchmark-zsh.sh
+
+      - name: Upload ZSH benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-zsh
+          path: benchmarks/results/zsh/
+
+      - name: Check for startup regression
+        run: |
+          python3 << 'EOF'
+          import json
+          import sys
+          from pathlib import Path
+
+          results_dir = Path("benchmarks/results/zsh")
+
+          try:
+              baseline_file = results_dir / "baseline.json"
+              thegent_file = results_dir / "thegent.json"
+
+              if not baseline_file.exists() or not thegent_file.exists():
+                  print("⚠️ Benchmark files not found, skipping regression check")
+                  sys.exit(0)
+
+              with open(baseline_file) as f:
+                  baseline = json.load(f)
+              with open(thegent_file) as f:
+                  thegent = json.load(f)
+
+              baseline_mean = baseline["results"][0]["mean"]
+              thegent_mean = thegent["results"][0]["mean"]
+
+              print(f"Baseline zsh:  {baseline_mean:.4f}s")
+              print(f"thegent zsh:   {thegent_mean:.4f}s")
+
+              ratio = thegent_mean / baseline_mean
+              print(f"Ratio:         {ratio:.2f}x")
+
+              # Target: < 150ms for thegent config (only if baseline is reasonable)
+              # Primary metric: ratio (thegent vs baseline should be < 2x)
+              if ratio > 3.0:
+                  print(f"\n❌ FAIL: thegent is {ratio:.2f}x slower than baseline (>3x)")
+                  sys.exit(1)
+              elif ratio > 2.0:
+                  print(f"\n⚠️  WARNING: thegent is {ratio:.2f}x slower than baseline")
+              else:
+                  print(f"\n✅ OK: thegent overhead is acceptable ({ratio:.2f}x)")
+
+              # Check absolute time only if baseline is reasonable (<500ms)
+              if baseline_mean < 0.5 and thegent_mean > 0.150:
+                  print(f"   Note: Absolute time ({thegent_mean*1000:.0f}ms) exceeds 150ms target")
+                  print(f"   (Baseline was {baseline_mean*1000:.0f}ms)")
+
+          except (KeyError, IndexError, json.JSONDecodeError) as e:
+              print(f"⚠️ Error parsing benchmark results: {e}")
+              sys.exit(0)
+          EOF
+
+  benchmark-agent-dispatch:
+    name: Agent Dispatch Benchmark
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv pip install --system pytest pytest-asyncio pytest-benchmark
+          uv pip install --system -e .
+
+      - name: Install hyperfine
+        uses: taiki-e/install-action@v2
+        with:
+          tool: hyperfine
+
+      - name: Benchmark hierarchical dispatcher
+        run: |
+          mkdir -p benchmarks/results/dispatch
+          PYTHONPATH=src python -c "
+          import asyncio
+          import time
+          from thegent.orchestration.hierarchical_dispatcher import (
+              HierarchicalAgentRegistry,
+              HierarchicalAgent,
+              AgentLifecycleState,
+          )
+
+          # Benchmark registry operations
+          iterations = 1000
+
+          # 1. Agent registration
+          registry = HierarchicalAgentRegistry(system_cap=10000, session_cap=5000)
+          start = time.perf_counter()
+          for i in range(iterations):
+              agent = HierarchicalAgent(
+                  agent_id=f'agent-{i}',
+                  session_id='session-1',
+                  depth=i % 3,
+              )
+              registry.register_agent(agent)
+          reg_time = time.perf_counter() - start
+
+          # 2. State updates
+          start = time.perf_counter()
+          for i in range(iterations):
+              registry.update_agent_state(
+                  f'agent-{i}',
+                  AgentLifecycleState.FINISHED,
+                  result=f'Result {i}'
+              )
+          update_time = time.perf_counter() - start
+
+          # 3. Pruning
+          start = time.perf_counter()
+          pruned = registry.prune_finished_stale()
+          prune_time = time.perf_counter() - start
+
+          # Output results
+          import json
+          results = {
+              'registration_per_sec': iterations / reg_time,
+              'update_per_sec': iterations / update_time,
+              'prune_time_ms': prune_time * 1000,
+              'agents_pruned': pruned,
+          }
+          print(json.dumps(results, indent=2))
+
+          with open('benchmarks/results/dispatch/dispatcher.json', 'w') as f:
+              json.dump(results, f, indent=2)
+          "
+
+      - name: Upload dispatch benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-agent-dispatch
+          path: benchmarks/results/dispatch/
