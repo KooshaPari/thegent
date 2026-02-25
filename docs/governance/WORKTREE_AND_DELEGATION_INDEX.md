@@ -6,7 +6,8 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 
 | File | Purpose |
 |------|---------|
-| `UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md` | **Start here.** Path schema, lifecycle states, BMAD/OpenSpec harmonization, legacy migration plan |
+| `METHODOLOGY_SYNTHESIS_GSD_BMAD_OPENSPEC.md` | **Read first.** Unified process principles from GSD + BMAD + OpenSpec integrated into thegent workflow |
+| `UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md` | Path schema, lifecycle states, BMAD/OpenSpec harmonization, legacy migration plan |
 | `WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md` | Commit strategy, versioning, PR topology, merge policy (still authoritative) |
 | `DELEGATION_ARCHITECTURE_LN.md` | L1→Ln role layers, universal delegation decision engine |
 | `TASK_CLASSIFIER_SCHEMA.yaml` | Canonical YAML classifier: domain, scale, risk, worktree mode |

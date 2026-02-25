@@ -147,6 +147,7 @@ class SessionAgentRegistry:
     """
 
     session_id: str
+    session_cap: int = SESSION_AGENT_CAP  # Configurable per-session cap
     agents: dict[str, HierarchicalAgent] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
 
@@ -164,7 +165,7 @@ class SessionAgentRegistry:
 
     def can_spawn(self) -> bool:
         """Check if we can spawn more agents in this session."""
-        return self.active_count() < SESSION_AGENT_CAP
+        return self.active_count() < self.session_cap
 
     def get_by_depth(self, depth: int) -> list[HierarchicalAgent]:
         """Get all agents at a specific depth."""
@@ -258,7 +259,10 @@ class HierarchicalAgentRegistry:
     def get_or_create_session(self, session_id: str) -> SessionAgentRegistry:
         """Get or create a session registry."""
         if session_id not in self._sessions:
-            self._sessions[session_id] = SessionAgentRegistry(session_id=session_id)
+            self._sessions[session_id] = SessionAgentRegistry(
+                session_id=session_id, 
+                session_cap=self._session_cap
+            )
         return self._sessions[session_id]
 
     def register_agent(self, agent: HierarchicalAgent) -> None:

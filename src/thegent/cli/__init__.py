@@ -96,6 +96,19 @@ def __getattr__(name: str) -> Any:
         globals()[name] = AGENT_LABELS
         return AGENT_LABELS
     
+    # Lazy load data_protection_cmd
+    if name == "data_protection_cmd":
+        from thegent.cli.commands.governance_data_protection_cmds import data_protection_cmd
+        globals()[name] = data_protection_cmd
+        return data_protection_cmd
+    
+    # Lazy load snapshot/dump commands
+    if name in ("snapshot_daily_totals_cmd", "dump_categories_cmd"):
+        from thegent.cli.commands import plan_cmds
+        func = getattr(plan_cmds, name)
+        globals()[name] = func
+        return func
+    
     # Lazy load model list commands
     _model_list_funcs = (
         "_list_minimax_models", "_list_glm_models", "_list_cursor_models",
@@ -168,6 +181,9 @@ _patchable_names_list = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
+    "snapshot_daily_totals_cmd",
+    "dump_categories_cmd",
+    "data_protection_cmd",
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
@@ -214,4 +230,7 @@ __all__ = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
+    "snapshot_daily_totals_cmd",
+    "dump_categories_cmd",
+    "data_protection_cmd",
 ]
