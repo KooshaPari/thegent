@@ -16,6 +16,7 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
+from thegent.cli.commands import _cli_shared
 from thegent.cli.commands._cli_shared import (
     _normalize_output_format,
     _resolve_run_id,
@@ -134,8 +135,7 @@ def sweep_cmd(
 def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved") -> None:
     """Mark an escalation item as resolved (WP-3008)."""
     rid = _resolve_run_id(run_id)
-    from thegent.cli.services.governance import escalate_resolve_impl
-    ok = escalate_resolve_impl(run_id=rid, resolution=resolution)
+    ok = _cli_shared.escalate_resolve_impl(run_id=rid, resolution=resolution)
     if ok:
         console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
     else:
