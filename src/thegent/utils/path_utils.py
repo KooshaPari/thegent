@@ -99,8 +99,6 @@ def format_size(size_bytes: int) -> str:
             return f"{size_bytes:.1f}{unit}"
         size_bytes /= 1024
     return f"{size_bytes:.1f}PB"
-<<<<<<< HEAD
-=======
 
 
 def normalize_path(path: Path | str | None) -> Path | None:
@@ -199,4 +197,3 @@ def sanitize_path(path: str) -> str:
     # Remove null bytes and path traversal attempts
     import re
     return re.sub(r'[\x00..\x1f]', '', path)
->>>>>>> fix/additional-improvements

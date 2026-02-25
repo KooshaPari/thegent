@@ -11,6 +11,7 @@ FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 """
 
 from __future__ import annotations
+from thegent.infra.shim_subprocess import run as shim_run
 
 import asyncio
 import hashlib
@@ -189,9 +190,8 @@ class ShadowAuditGit:
         entries = self.get_audit_log(project_id)
         dest = Path(path)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(
-            json.dumps([e.to_dict().decode() for e in entries], indent=2),
-            encoding="utf-8",
+        dest.write_bytes(
+            json.dumps([e.to_dict() for e in entries])
         )
         log.info("shadow_audit_git.export_audit project=%s path=%s", project_id, dest)
 
