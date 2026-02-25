@@ -99,3 +99,104 @@ def format_size(size_bytes: int) -> str:
             return f"{size_bytes:.1f}{unit}"
         size_bytes /= 1024
     return f"{size_bytes:.1f}PB"
+<<<<<<< HEAD
+=======
+
+
+def normalize_path(path: Path | str | None) -> Path | None:
+    """Normalize a path - expand user, resolve, and make absolute."""
+    if path is None:
+        return None
+    if isinstance(path, str):
+        path = Path(path)
+    return path.expanduser().resolve()
+
+
+def path_to_str(path: Path | None) -> str | None:
+    """Convert Path to string representation."""
+    if path is None:
+        return None
+    return str(path)
+
+
+def get_common_ancestor(paths: list[Path]) -> Path | None:
+    """Get the common ancestor of multiple paths."""
+    if not paths:
+        return None
+    if len(paths) == 1:
+        return paths[0].parent
+    # Find common ancestor by checking each path's parents
+    first = paths[0]
+    for parent in [first] + list(first.parents):
+        if all(p.is_relative_to(parent) or parent in p.parents for p in paths):
+            return parent
+    return Path("/")
+
+
+def is_same_path(path1: Path, path2: Path) -> bool:
+    """Check if two paths resolve to the same location."""
+    try:
+        return path1.resolve() == path2.resolve()
+    except Exception:
+        return path1 == path2
+
+
+def is_within(path: Path, parent: Path) -> bool:
+    """Check if path is within parent directory."""
+    try:
+        return path.is_relative_to(parent)
+    except Exception:
+        return parent in path.parents
+
+
+def rel_to_cwd(path: Path) -> Path:
+    """Get path relative to current working directory."""
+    try:
+        return path.relative_to(Path.cwd())
+    except ValueError:
+        return path
+
+
+def safe_exists(path: Path) -> bool:
+    """Check if path exists, handling race conditions."""
+    try:
+        return path.exists()
+    except Exception:
+        return False
+
+
+def safe_is_file(path: Path) -> bool:
+    """Check if path is a file, handling race conditions."""
+    try:
+        return path.is_file()
+    except Exception:
+        return False
+
+
+def safe_is_dir(path: Path) -> bool:
+    """Check if path is a directory, handling race conditions."""
+    try:
+        return path.is_dir()
+    except Exception:
+        return False
+
+
+def safe_join(base: Path, *parts: str) -> Path | None:
+    """Safely join path parts, ensuring result is within base."""
+    try:
+        result = base.joinpath(*parts).resolve()
+        base_resolved = base.resolve()
+        # Security: ensure result is within base
+        if not str(result).startswith(str(base_resolved)):
+            return None
+        return result
+    except Exception:
+        return None
+
+
+def sanitize_path(path: str) -> str:
+    """Remove dangerous characters from path component."""
+    # Remove null bytes and path traversal attempts
+    import re
+    return re.sub(r'[\x00..\x1f]', '', path)
+>>>>>>> fix/additional-improvements

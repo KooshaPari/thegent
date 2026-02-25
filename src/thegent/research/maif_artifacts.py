@@ -4,6 +4,10 @@ import hashlib
 import logging
 from datetime import UTC, datetime
 from typing import Any
+<<<<<<< HEAD
+=======
+from thegent.integrations.base import SerializableMixin
+>>>>>>> fix/additional-improvements
 
 from thegent.integrations.base import SerializableMixin
 
