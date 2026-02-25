@@ -873,10 +873,9 @@ class TestDagProbeCmdImpl:
         with pytest.raises(_EXIT):
             dag_probe_cmd(cd=None)
 
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
-    @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
+    @patch("thegent.cli.commands.plan_dag_cmds.ThegentSettings")
+    @patch("thegent.cli.commands.plan_dag_cmds._dag_path")
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
     def test_no_baseline(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-347
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -894,10 +893,9 @@ class TestDagProbeCmdImpl:
             dag_probe_cmd(cd=None)
         assert any("No baseline" in str(c) for c in mock_console.print.call_args_list)
 
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
-    @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
+    @patch("thegent.cli.commands.plan_dag_cmds.ThegentSettings")
+    @patch("thegent.cli.commands.plan_dag_cmds._dag_path")
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
     def test_no_drift(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-348
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -916,10 +914,9 @@ class TestDagProbeCmdImpl:
             dag_probe_cmd(cd=None)
         assert any("No drift" in str(c) for c in mock_console.print.call_args_list)
 
-    @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
-    @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
+    @patch("thegent.cli.commands.plan_dag_cmds.ThegentSettings")
+    @patch("thegent.cli.commands.plan_dag_cmds._dag_path")
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
     def test_drift_detected(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-349
         dag_file = tmp_path / ".factory" / "dag-session.md"
