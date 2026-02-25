@@ -23,7 +23,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 fastmcp = pytest.importorskip("fastmcp", reason="fastmcp required for MCP Context API tests")
-pytestmark = pytest.mark.skip(reason="Tests have broken module patch references - needs refactoring")
 
 
 # ---------------------------------------------------------------------------
@@ -67,7 +66,6 @@ async def _get_tool_fn(mcp: Any, name: str) -> Any:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Test has incorrect expectations - needs refactoring")
 class TestSeedDetectContextApi:
     """Context API tests for thegent_seed_detect. @trace FR-MCP-CTX-001"""
 
@@ -83,8 +81,8 @@ class TestSeedDetectContextApi:
 
         mcp = FastMCP("test")
         with (
-            patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls,
-            patch("thegent.mcp_tools_seeds.SeedDetector.extract_flags", return_value=[]),
+            patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls,
+            patch("thegent.mcp.tools.seeds.SeedDetector.extract_flags", return_value=[]),
         ):
             mock_detector = MagicMock()
             mock_detector.detect_seeds.return_value = []
@@ -125,7 +123,7 @@ class TestSeedDetectContextApi:
         from thegent.mcp_tools_seeds import register_seed_tools
 
         mcp = FastMCP("test")
-        with patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls:
+        with patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls:
             mock_detector_cls.side_effect = RuntimeError("detector exploded")
             register_seed_tools(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_seed_detect")
@@ -146,8 +144,8 @@ class TestSeedDetectContextApi:
 
         mcp = FastMCP("test")
         with (
-            patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls,
-            patch("thegent.mcp_tools_seeds.SeedDetector.extract_flags", return_value=[]),
+            patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls,
+            patch("thegent.mcp.tools.seeds.SeedDetector.extract_flags", return_value=[]),
         ):
             mock_detector = MagicMock()
             mock_detector.detect_seeds.return_value = []
@@ -163,7 +161,6 @@ class TestSeedDetectContextApi:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Test has incorrect expectations - needs refactoring")
 class TestSeedStoreContextApi:
     """Context API tests for thegent_seed_store. @trace FR-MCP-CTX-002"""
 
@@ -179,9 +176,9 @@ class TestSeedStoreContextApi:
         docs_dir.mkdir(parents=True)
 
         with (
-            patch("thegent.mcp_tools_seeds._resolve_cwd", return_value=tmp_path),
-            patch("thegent.mcp_tools_seeds.SeedStorage") as mock_storage_cls,
-            patch("thegent.mcp_tools_seeds.SeedDetector") as mock_detector_cls,
+            patch("thegent.mcp.tools.seeds._resolve_cwd", return_value=tmp_path),
+            patch("thegent.mcp.tools.seeds.SeedStorage") as mock_storage_cls,
+            patch("thegent.mcp.tools.seeds.SeedDetector") as mock_detector_cls,
         ):
             mock_storage = MagicMock()
             mock_storage.store_seed.return_value = "seed-abc123"
@@ -210,7 +207,7 @@ class TestSeedStoreContextApi:
         from thegent.mcp_tools_seeds import register_seed_tools
 
         mcp = FastMCP("test")
-        with patch("thegent.mcp_tools_seeds._resolve_cwd", side_effect=RuntimeError("storage failed")):
+        with patch("thegent.mcp.tools.seeds._resolve_cwd", side_effect=RuntimeError("storage failed")):
             register_seed_tools(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_seed_store")
 
@@ -222,7 +219,6 @@ class TestSeedStoreContextApi:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Test has incorrect expectations - needs refactoring")
 class TestSeedListContextApi:
     """Context API tests for thegent_seed_list. @trace FR-MCP-CTX-003"""
 
@@ -235,8 +231,8 @@ class TestSeedListContextApi:
 
         mcp = FastMCP("test")
         with (
-            patch("thegent.mcp_tools_seeds._resolve_cwd", return_value=tmp_path),
-            patch("thegent.mcp_tools_seeds.SeedStorage") as mock_storage_cls,
+            patch("thegent.mcp.tools.seeds._resolve_cwd", return_value=tmp_path),
+            patch("thegent.mcp.tools.seeds.SeedStorage") as mock_storage_cls,
         ):
             mock_storage = MagicMock()
             mock_seed = MagicMock()
@@ -265,7 +261,7 @@ class TestSeedListContextApi:
         from thegent.mcp_tools_seeds import register_seed_tools
 
         mcp = FastMCP("test")
-        with patch("thegent.mcp_tools_seeds._resolve_cwd", side_effect=OSError("disk error")):
+        with patch("thegent.mcp.tools.seeds._resolve_cwd", side_effect=OSError("disk error")):
             register_seed_tools(mcp)
             tool_fn = await _get_tool_fn(mcp, "thegent_seed_list")
 
@@ -282,7 +278,6 @@ class TestSeedListContextApi:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Test has incorrect expectations - needs refactoring")
 class TestDdgSearchContextApi:
     """Context API tests for thegent_ddg_search. @trace FR-MCP-CTX-004"""
 
@@ -295,7 +290,7 @@ class TestDdgSearchContextApi:
         ctx = _make_ctx()
         mock_results = [{"title": "Test", "url": "http://example.com", "snippet": "test"}]
 
-        with patch("thegent.tools.research.ddg_search", return_value=mock_results):
+        with patch("thegent.skills.research.ddg_search", return_value=mock_results):
             result = await _mcp_mod.thegent_ddg_search(
                 query="fastmcp context api",
                 num_results=3,
@@ -318,7 +313,7 @@ class TestDdgSearchContextApi:
         import thegent.mcp_server as _mcp_mod
 
         ctx = _make_ctx()
-        with patch("thegent.tools.research.ddg_search", return_value=[]):
+        with patch("thegent.skills.research.ddg_search", return_value=[]):
             result = await _mcp_mod.thegent_ddg_search(query="test", num_results=1, ctx=ctx)
         data = _json_content(result)
         # content is JSON list (may be empty)
@@ -326,7 +321,6 @@ class TestDdgSearchContextApi:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Test has incorrect expectations - needs refactoring")
 class TestScrapeUrlContextApi:
     """Context API tests for thegent_scrape_url. @trace FR-MCP-CTX-005"""
 
@@ -339,7 +333,7 @@ class TestScrapeUrlContextApi:
         ctx = _make_ctx()
         mock_result = {"content": "scraped content", "status": 200}
 
-        with patch("thegent.tools.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
+        with patch("thegent.skills.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
             result = await _mcp_mod.thegent_scrape_url(
                 url="https://example.com",
                 use_playwright=False,
@@ -359,7 +353,7 @@ class TestScrapeUrlContextApi:
         ctx = _make_ctx()
         mock_result = {"content": "x" * 500, "status": 200}
 
-        with patch("thegent.tools.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
+        with patch("thegent.skills.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
             await _mcp_mod.thegent_scrape_url(
                 url="https://example.com",
                 use_playwright=True,
@@ -385,7 +379,7 @@ class TestScrapeUrlContextApi:
         ctx.report_progress = AsyncMock(side_effect=capture_progress)
         mock_result = {"content": "data"}
 
-        with patch("thegent.tools.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
+        with patch("thegent.skills.research.scrape_url", new_callable=AsyncMock, return_value=mock_result):
             await _mcp_mod.thegent_scrape_url(url="http://x.com", ctx=ctx)
 
         assert len(progress_calls) >= 3
@@ -463,7 +457,7 @@ class TestCtxHelpers:
         """_ctx_info falls back to Python logging when ctx is None."""
         from thegent.mcp_tools_seeds import _ctx_info
 
-        with patch("thegent.mcp_tools_seeds._log") as mock_log:
+        with patch("thegent.mcp.tools.seeds._log") as mock_log:
             await _ctx_info(None, "fallback message")
             mock_log.info.assert_called_once_with("fallback message")
 
@@ -484,7 +478,7 @@ class TestCtxHelpers:
         ctx = AsyncMock()
         ctx.warning = AsyncMock(side_effect=RuntimeError("ctx unavailable"))
 
-        with patch("thegent.mcp_tools_seeds._log") as mock_log:
+        with patch("thegent.mcp.tools.seeds._log") as mock_log:
             await _ctx_warning(ctx, "warn message")
             mock_log.warning.assert_called_once_with("warn message")
 
@@ -502,6 +496,6 @@ class TestCtxHelpers:
         """_ctx_warning in mcp_tools_modes falls back to Python logging when ctx is None."""
         from thegent.mcp_tools_modes import _ctx_warning
 
-        with patch("thegent.mcp_tools_modes._log") as mock_log:
+        with patch("thegent.mcp.tools.seeds._log") as mock_log:
             await _ctx_warning(None, "modes warn message")
             mock_log.warning.assert_called_once_with("modes warn message")
