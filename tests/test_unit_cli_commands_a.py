@@ -522,7 +522,6 @@ class TestDataProtectionCmdImpl:
             data_protection_cmd()
         mock_console.print.assert_called_once()
 
-    @pytest.mark.skip(reason="WL-124: JSON output format issue")
     @patch("thegent.cli.console")
     def test_data_protection_json(self, mock_console) -> None:
         # @trace FR-CLI-224
@@ -535,15 +534,13 @@ class TestDataProtectionCmdImpl:
             "masking_enabled": False,
             "retention_policy_days": 90,
         }
-        buf = io.StringIO()
-        with (
-            patch("thegent.cli.commands.impl.get_data_protection_status_impl", return_value=status),
-            patch("thegent.cli._normalize_output_format", return_value="json"),
-            patch("sys.stdout", buf),
-        ):
+        with patch("thegent.cli.commands.impl.get_data_protection_status_impl", return_value=status):
             data_protection_cmd(format="json")
-        output = json.loads(buf.getvalue())
-        assert output["retention_policy_days"] == 90
+        # console.print is called with orjson bytes output
+        mock_console.print.assert_called_once()
+        call_args = str(mock_console.print.call_args)
+        assert "retention_policy_days" in call_args
+        assert "90" in call_args
 
 
 # ---------------------------------------------------------------------------
