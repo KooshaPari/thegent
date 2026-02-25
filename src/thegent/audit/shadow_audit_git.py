@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import orjson as json
 import logging
+import orjson as json
 import os
 import re
 import sqlite3
@@ -26,8 +26,12 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel, Field
+
+from thegent.audit.constants import DEFAULT_DB_PATH
+from thegent.audit.secret_scrubbing import SECRET_PATTERNS, scrub_secrets as _scrub_secrets
 
 log = logging.getLogger(__name__)
 
@@ -35,51 +39,8 @@ log = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-_DEFAULT_DB_PATH = Path.home() / ".thegent" / "registry.db"
-
-# ---------------------------------------------------------------------------
-# Secret scrubbing patterns (subset of native_secret_scan for inline use)
-# ---------------------------------------------------------------------------
-
-_SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("openai_api_key", re.compile(r"sk-[a-zA-Z0-9]{48}")),
-    ("openai_proj_key", re.compile(r"sk-proj-[a-zA-Z0-9_\-]{48,}")),
-    ("anthropic_api_key", re.compile(r"sk-ant-[a-zA-Z0-9_\-]{90,}")),
-    ("google_cloud_key", re.compile(r"AIza[0-9A-Za-z\-_]{35}")),
-    ("slack_token", re.compile(r"xox[baprs]-[0-9A-Za-z\-]{10,}")),
-    ("private_key_block", re.compile(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----")),
-    ("aws_access_key_id", re.compile(r"AKIA[0-9A-Z]{16}")),
-    ("github_pat", re.compile(r"ghp_[a-zA-Z0-9]{36}")),
-    ("github_oauth", re.compile(r"gho_[a-zA-Z0-9]{36}")),
-    ("github_app_token", re.compile(r"ghs_[a-zA-Z0-9]{36}")),
-    (
-        "generic_hex_secret",
-        re.compile(r"(?i)(password|secret|token|api[_\-]?key)\s*[=:]\s*[0-9a-f]{20,}"),
-    ),
-    (
-        "generic_base64_secret",
-        re.compile(r"(?i)(password|secret|token|api[_\-]?key)\s*[=:]\s*[A-Za-z0-9+/]{32,}={0,2}"),
-    ),
-]
-
-
-def _scrub_secrets(content: str) -> str:
-    """Replace detected secrets with redaction placeholders."""
-    if not isinstance(content, str):
-        log.warning(
-            "GitJournal._scrub_secrets received non-string content of type %s; coercing to string",
-            type(content).__name__,
-        )
-        content = str(content)
-
-    try:
-        result = content
-        for kind, pattern in _SECRET_PATTERNS:
-            result = pattern.sub(f"<REDACTED_{kind.upper()}>", result)
-        return result
-    except Exception as e:
-        log.error("GitJournal._scrub_secrets failed, returning original content: %s", e)
-        return content
+# Re-export for backwards compatibility
+_DEFAULT_DB_PATH = _DEFAULT_DB_PATH
 
 
 # ---------------------------------------------------------------------------
@@ -229,7 +190,7 @@ class ShadowAuditGit:
         dest = Path(path)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(
-            json.dumps([e.to_dict().decode().decode() for e in entries], indent=2),
+            json.dumps([e.to_dict().decode() for e in entries], indent=2),
             encoding="utf-8",
         )
         log.info("shadow_audit_git.export_audit project=%s path=%s", project_id, dest)
@@ -310,7 +271,7 @@ class GitJournal:
 
     def _run_git(self, *args: str, input_data: bytes | None = None) -> str:
         """Run a git command and return stdout."""
-        result = subprocess.run(
+        result = shim_run(
             ["git"] + list(args),
             cwd=self.repo_root,
             capture_output=True,
@@ -379,7 +340,7 @@ class GitJournal:
 
     def _hash_object(self, content: bytes) -> str:
         """Store content in git object database, return SHA."""
-        result = subprocess.run(
+        result = shim_run(
             ["git", "hash-object", "-w", "--stdin"],
             cwd=self.repo_root,
             input=content,
@@ -396,7 +357,7 @@ class GitJournal:
             lines.append(f"100644 blob {sha}\t{path}")
 
         tree_input = "\n".join(lines).encode()
-        result = subprocess.run(
+        result = shim_run(
             ["git", "mktree"],
             cwd=self.repo_root,
             input=tree_input,
@@ -423,7 +384,7 @@ class GitJournal:
         if parent:
             cmd.extend(["-p", parent])
 
-        result = subprocess.run(
+        result = shim_run(
             cmd,
             cwd=self.repo_root,
             capture_output=True,
@@ -475,7 +436,7 @@ class GitJournal:
         # Build commit message
         msg_parts = [f"[audit] {action}: {rel_path}"]
         if metadata:
-            msg_parts.append(f"metadata: {json.dumps(metadata).decode().decode()}")
+            msg_parts.append(f"metadata: {json.dumps(metadata).decode()}")
         msg_parts.append(f"session: {self.session_id}")
         msg_parts.append(f"timestamp: {datetime.now(UTC).isoformat()}")
         message = "\n".join(msg_parts)
@@ -497,7 +458,7 @@ class GitJournal:
         representing the current state, useful for periodic snapshots.
         """
         # Get all tracked files
-        result = subprocess.run(
+        result = shim_run(
             ["git", "ls-files", "-z"],
             cwd=self.repo_root,
             capture_output=True,
@@ -625,7 +586,7 @@ class GitJournal:
         repo_root = Path(repo_root).resolve()
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [
                     "git",
                     "for-each-ref",
@@ -674,7 +635,7 @@ class GitJournal:
                 last_commit = datetime.fromisoformat(session["last_commit"].replace(" ", "T"))
                 if last_commit.replace(tzinfo=UTC) < cutoff:
                     # Delete the ref
-                    subprocess.run(
+                    shim_run(
                         ["git", "update-ref", "-d", session["ref"]],
                         cwd=repo_root,
                         capture_output=True,
@@ -729,7 +690,7 @@ class GitJournal:
                 cmd.append("--aggressive")
             cmd.extend(["--prune=now"])
 
-            gc_result = subprocess.run(
+            gc_result = shim_run(
                 cmd,
                 cwd=repo_root,
                 capture_output=True,
@@ -847,7 +808,7 @@ class GitJournalEnhanced(GitJournal):
     def _check_native_scanner(self) -> bool:
         """Check if native secret scanner is available."""
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["hook-dispatcher", "scan-secrets", "--help"],
                 capture_output=True,
                 timeout=5,
@@ -862,7 +823,7 @@ class GitJournalEnhanced(GitJournal):
             return _scrub_secrets(content)
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["hook-dispatcher", "scan-secrets", "--stdin", "--format", "json"],
                 input=content.encode(),
                 capture_output=True,
@@ -890,7 +851,7 @@ class GitJournalEnhanced(GitJournal):
         """Initialize real-time file watcher."""
         try:
             # Try watchman first
-            result = subprocess.run(
+            result = shim_run(
                 ["watchman", "watch", str(self.repo_root)],
                 capture_output=True,
                 timeout=5,
@@ -904,7 +865,7 @@ class GitJournalEnhanced(GitJournal):
 
         try:
             # Try fswatch as fallback
-            result = subprocess.run(
+            result = shim_run(
                 ["fswatch", "--version"],
                 capture_output=True,
                 timeout=5,
@@ -918,7 +879,7 @@ class GitJournalEnhanced(GitJournal):
 
         # Try FSMonitor (Git 2.37+)
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["git", "fsmonitor--daemon", "start"],
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1032,7 +993,7 @@ class GitJournalEnhanced(GitJournal):
     def _start_fsmonitor(self) -> None:
         """Start Git FSMonitor daemon."""
         try:
-            subprocess.run(
+            shim_run(
                 ["git", "fsmonitor--daemon", "start"],
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1310,7 +1271,7 @@ class GitJournalEnhanced(GitJournal):
                 cmd.append("--aggressive")
             cmd.extend(["--prune=now", "--quiet"])
 
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1361,7 +1322,7 @@ class GitJournalEnhanced(GitJournal):
 
         try:
             # Step 1: Run git repack
-            repack_result = subprocess.run(
+            repack_result = shim_run(
                 ["git", "repack", "-ad", "--quiet"],
                 cwd=self.repo_root,
                 capture_output=True,
@@ -1374,7 +1335,7 @@ class GitJournalEnhanced(GitJournal):
             results["gc_success"] = gc_result.get("success", False)
 
             # Step 3: Prune unreachable objects
-            prune_result = subprocess.run(
+            prune_result = shim_run(
                 ["git", "prune", "--expire=now", "--verbose"],
                 cwd=self.repo_root,
                 capture_output=True,

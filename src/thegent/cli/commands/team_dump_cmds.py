@@ -23,7 +23,7 @@ def dump_index_cmd(project: Path | None = None, format: str | None = None) -> No
     markdown_path = dumper.export_dump_index_markdown()
     payload = {"index_path": str(index_path), "markdown_path": str(markdown_path)}
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(payload).decode() + "\n")
         return
     console.print(f"[green]Dump index[/green] json={payload['index_path']} md={payload['markdown_path']}")
 
@@ -43,7 +43,7 @@ def dump_latest_cmd(
     latest = dumper.latest_dump(category=normalized_category or None, json_only=json_only)
     payload = {"latest": str(latest) if latest else None}
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(payload).decode() + "\n")
         return
     console.print(payload["latest"] or "(none)")
 
@@ -57,7 +57,7 @@ def dump_categories_cmd(project: Path | None = None, format: str | None = None) 
     categories = dumper.list_dump_categories()
     payload = {"categories": categories, "count": len(categories)}
     if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(payload).decode() + "\n")
         return
     console.print(f"[bold cyan]Dump Categories[/bold cyan]: {payload['count']}")
     console.print(", ".join(categories) if categories else "(none)")

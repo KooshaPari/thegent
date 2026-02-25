@@ -5,6 +5,12 @@ docs/public/assets/**/*.css
 docs/public/assets/**/*.map
 docs-dist/
 
+# Excluded documentation (already excluded from VitePress build via srcExclude)
+# These contain duplicate/legacy content that's not part of the canonical docs
+docs/fragemented/
+docs/context/
+docs/docset/
+
 # Rust build artifacts (1.5GB+)
 crates/target/
 **/target/
@@ -87,3 +93,12 @@ hooks/zig/
 .factory/closure_pack_*.md
 =======
 >>>>>>> codex/provider-plane-wave1
+
+# Safari/ browser data
+data/safari/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

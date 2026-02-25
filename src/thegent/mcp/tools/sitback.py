@@ -22,7 +22,7 @@ def register_sitback(mcp: "FastMCP") -> None:
     def resource_sitback_dashboard(profile: str = "medium") -> str:
         """Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals.
         profile: light, medium (default), full (includes plugin widgets, harness)."""
-        return json.dumps(sitback_dashboard_impl(profile=profile).decode().decode(), sort_keys=True)
+        return json.dumps(sitback_dashboard_impl(profile=profile).decode(), sort_keys=True)
 
     mcp.resource(
         "thegent://sitback/dashboard{?profile}",
@@ -39,7 +39,7 @@ def register_sitback(mcp: "FastMCP") -> None:
         """
         data = sitback_dashboard_impl(profile=profile)
         return ToolResult(
-            content=json.dumps(data, sort_keys=True).decode().decode(),
+            content=json.dumps(data, sort_keys=True).decode(),
             structured_content=data,
         )
 

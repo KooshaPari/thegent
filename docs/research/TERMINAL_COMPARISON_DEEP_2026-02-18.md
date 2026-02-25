@@ -1,3 +1,4 @@
+<DONE>
 # Deep Terminal Comparison: Architecture, Performance, and Workflow Analysis (2026-02-18)
 
 ## Table of Contents

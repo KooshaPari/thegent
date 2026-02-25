@@ -125,11 +125,10 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
         port = int(port_match.group(1)) if port_match else 3847
 
         # Find process-compose PID (look for process-compose process)
-        import subprocess
 
         try:
             # Find process-compose process managing MCP
-            result = subprocess.run(
+            result = shim_run(
                 ["pgrep", "-f", "process-compose.*mcp"], capture_output=True, text=True, check=False
             )
             pid = int(result.stdout.strip().split("\n")[0]) if result.stdout.strip() else None

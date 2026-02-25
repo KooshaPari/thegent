@@ -15,6 +15,7 @@ Performance improvements:
 import asyncio
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 import time
 from pathlib import Path
@@ -134,7 +135,7 @@ class FastSubprocess:
         Performance:
             - Non-blocking execution
             - Better for concurrent subprocess execution
-            - Lower resource usage than blocking subprocess.run()
+            - Lower resource usage than blocking shim_run()
         """
         # Prepare environment
         process_env = os.environ.copy()
@@ -184,7 +185,7 @@ class FastSubprocess:
         start_time = time.time()
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             process.kill()
             await process.wait()
             raise subprocess.TimeoutExpired(cmd, timeout if timeout is not None else 0.0)
@@ -270,7 +271,7 @@ class FastSubprocess:
             kwargs.setdefault("stdout", subprocess.PIPE)
             kwargs.setdefault("stderr", subprocess.PIPE)
 
-        # Handle input parameter (for stdin) - subprocess.run handles this automatically
+        # Handle input parameter (for stdin) - shim_run handles this automatically
         # Just ensure text parameter is set correctly if input is provided
         if "input" in kwargs and "text" not in kwargs:
             # Default to text=True if input is string, text=False if bytes
@@ -291,7 +292,7 @@ class FastSubprocess:
             pass
 
         start_time = time.time()
-        result = subprocess.run(
+        result = shim_run(
             cmd, cwd=str(cwd) if cwd else None, env=process_env, timeout=timeout, check=check, **kwargs
         )
         duration = time.time() - start_time

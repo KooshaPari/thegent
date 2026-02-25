@@ -1,3 +1,4 @@
+<DONE>
 # Toolchain and Bundle Governance Strategy (2026-02-20)
 
 ## Context

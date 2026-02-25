@@ -192,8 +192,8 @@ def process_dlq_line(line: str, run_id: str, resolution: str) -> tuple[str, bool
         if data.get("run_id") == run_id and data.get("status") == "pending_review":
             data["status"] = resolution
             data["resolved_at"] = datetime.now(UTC).isoformat()
-            return json.dumps(data).decode().decode(), True
-        return json.dumps(data).decode().decode(), False
+            return json.dumps(data).decode(), True
+        return json.dumps(data).decode(), False
     except Exception:
         return line, False
 

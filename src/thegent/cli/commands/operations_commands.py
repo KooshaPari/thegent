@@ -30,7 +30,7 @@ def operations_cmd(*, format: str | None, operation: str | None, console: Any) -
         data = list_operations()
 
     if format == "json":
-        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(data).decode() + "\n")
         return
 
     table = Table(title="Universal Operations")

@@ -78,7 +78,7 @@ class ContextHistory:
                     entry.task_id,
                     entry.agent_id,
                     entry.duration_s,
-                    json.dumps(entry.tags).decode().decode(),
+                    json.dumps(entry.tags).decode(),
                 ),
             )
             return cursor.lastrowid or 0

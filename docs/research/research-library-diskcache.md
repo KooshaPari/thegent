@@ -1,3 +1,4 @@
+<DONE>
 # Library Replacement Research — DiskCache
 
 **WORK_STREAM ID:** `research-library-diskcache`

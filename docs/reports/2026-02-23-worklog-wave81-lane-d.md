@@ -1,5 +1,8 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> fix/ci-remove-macos
 # Worklog Wave 81 - Lane D (Bugs 28-36)
 
 ## 1) Covered items table
@@ -53,8 +56,11 @@
 2. Add a failing regression test for unsupported `user` parameter on OpenAI-compatible route and implement explicit route-aware handling (map or hard-fail with actionable error).
 3. Create a Gemini payload regression test set for empty content/tool-call edge cases (#1293/#1269) and document expected fail-fast errors in local troubleshooting docs.
 =======
+<<<<<<< HEAD
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> fix/ci-remove-macos
 # Wave 81 Lane D Worklog (2026-02-23)
 
 - Scope: analyze WL-327 (Connector policy initiative) and WL-328 (Connector checkpoint initiative) to surface the available evidence about connector reliability/retry-resume hardening and determine what follow-up work is needed.
@@ -77,6 +83,10 @@
 - `sed -n '60,140p' docs/AUDIT_MODERNIZATION_PLAN.md`
 - `find docs -iname 'WORKSTREAM_AUTOSYNC_NEXT_20_ITEMS_I_2026-02-22.md' -print`
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> 58ccbe31e72efd07558be54d6a129ce6d984487d
+>>>>>>> fix/ci-remove-macos

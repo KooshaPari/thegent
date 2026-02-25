@@ -1,3 +1,4 @@
+<DONE>
 # Friction Detection Automation
 
 > **Status**: ✅ Implemented

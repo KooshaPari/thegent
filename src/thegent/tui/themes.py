@@ -12,10 +12,11 @@ from typing import Any
 
 from textual.css.styles import Styles
 from textual.theme import Theme
+from thegent.integrations.base import SerializableMixin
 
 
 @dataclass
-class ThemeColors:
+class ThemeColors(SerializableMixin):
     """Color palette for a theme."""
 
     # Primary colors
@@ -45,26 +46,6 @@ class ThemeColors:
     border: str = "#444444"
     border_focus: str = "#00ff00"
 
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "primary": self.primary,
-            "secondary": self.secondary,
-            "accent": self.accent,
-            "success": self.success,
-            "warning": self.warning,
-            "error": self.error,
-            "info": self.info,
-            "foreground": self.foreground,
-            "background": self.background,
-            "surface": self.surface,
-            "panel": self.panel,
-            "highlight": self.highlight,
-            "text": self.text,
-            "text-muted": self.text_muted,
-            "text-dim": self.text_dim,
-            "border": self.border,
-            "border-focus": self.border_focus,
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, str]) -> ThemeColors:
@@ -90,7 +71,7 @@ class ThemeColors:
 
 
 @dataclass
-class ThemeDefinition:
+class ThemeDefinition(SerializableMixin):
     """Complete theme definition."""
 
     name: str
@@ -118,15 +99,6 @@ class ThemeDefinition:
             dark=self.dark,
         )
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "name": self.name,
-            "dark": self.dark,
-            "author": self.author,
-            "description": self.description,
-            "extensions": self.extensions,
-            "colors": self.colors.to_dict(),
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ThemeDefinition:
@@ -314,7 +286,7 @@ class ThemeManager:
         themes_dir.mkdir(parents=True, exist_ok=True)
 
         data = theme.to_dict()
-        (themes_dir / f"{theme.name}.json").write_text(json.dumps(data, indent=2).decode().decode())
+        (themes_dir / f"{theme.name}.json").write_text(json.dumps(data, indent=2))
 
     def add_theme(self, theme: ThemeDefinition) -> None:
         """Add a custom theme."""
@@ -390,7 +362,7 @@ class ThemeManager:
         """Export a theme to a JSON file."""
         theme = self._themes.get(name)
         if theme:
-            path.write_text(json.dumps(theme.to_dict().decode().decode(), indent=2))
+            path.write_text(json.dumps(theme.to_dict().decode(), indent=2))
             return True
         return False
 

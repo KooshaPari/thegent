@@ -1,3 +1,4 @@
+<DONE>
 # Unified Agent Registry API — Design Specification
 
 > **Status**: 🎯 **API DESIGN** | **Date**: 2026-02-18

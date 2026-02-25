@@ -6,7 +6,7 @@ across macOS, Linux, and Windows.
 
 import logging
 import platform
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -72,7 +72,7 @@ class OSUserManager:
             elif self.os_type == "windows":
                 cmd = ["powershell.exe", "-Command", f"Remove-LocalUser -Name '{username}'"]
 
-            subprocess.run(cmd, check=True, capture_output=True)
+            shim_run(cmd, check=True, capture_output=True)
             return True
         except Exception as e:
             logger.error(f"Failed to delete user {username}: {e}")
@@ -82,7 +82,7 @@ class OSUserManager:
         """Check if user exists in the system."""
         try:
             if self.os_type == "windows":
-                res = subprocess.run(
+                res = shim_run(
                     ["powershell.exe", "-Command", f"Get-LocalUser -Name '{username}'"],
                     capture_output=True,
                     check=False,
@@ -115,7 +115,7 @@ class OSUserManager:
             cmd.extend(["-d", str(Path(home_base) / username)])
         cmd.append(username)
 
-        subprocess.run(cmd, check=True, capture_output=True)
+        shim_run(cmd, check=True, capture_output=True)
 
     def _create_macos_user(self, username: str, home_base: str | None) -> None:
         """macOS-specific user creation using sysadminctl or dscl."""
@@ -123,13 +123,13 @@ class OSUserManager:
         cmd = ["sysadminctl", "-addUser", username, "-fullName", f"TheGent Agent {username}", "-type", "standard"]
         # Note: In a real system, we'd also handle password/secure-token if needed
         # but for internal agent accounts, we might want them hidden.
-        subprocess.run(cmd, check=True, capture_output=True)
+        shim_run(cmd, check=True, capture_output=True)
 
         # Hide the user from the login screen
-        subprocess.run(["dscl", ".", "create", f"/Users/{username}", "IsHidden", "1"], check=True)
+        shim_run(["dscl", ".", "create", f"/Users/{username}", "IsHidden", "1"], check=True)
 
     def _create_windows_user(self, username: str, home_base: str | None) -> None:
         """Windows-specific user creation."""
         # -NoPassword for simple local accounts (requires elevated PS)
         ps_cmd = f"New-LocalUser -Name '{username}' -Description 'TheGent Agent Identity' -NoPassword"
-        subprocess.run(["powershell.exe", "-Command", ps_cmd], check=True, capture_output=True)
+        shim_run(["powershell.exe", "-Command", ps_cmd], check=True, capture_output=True)

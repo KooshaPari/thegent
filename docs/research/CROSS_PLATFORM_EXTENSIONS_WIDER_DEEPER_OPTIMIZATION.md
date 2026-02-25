@@ -1,3 +1,4 @@
+<DONE>
 # Cross-Platform Extensions: Wider, Deeper, Polish & Optimization
 
 **Purpose:** Extend cross-platform plans with wider scope, deeper implementation detail, UX polish, and optimization. No repolish—add net-new coverage.

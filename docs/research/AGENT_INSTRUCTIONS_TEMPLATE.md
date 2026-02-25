@@ -1,3 +1,4 @@
+<DONE>
 # Agent Instructions Template
 
 > **Purpose**: Standard template for all agent instructions with embedded continuous improvement

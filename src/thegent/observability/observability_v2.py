@@ -28,7 +28,7 @@ class JSONLFormatter(logging.Formatter):
         }
         if hasattr(record, "agent_id"):
             log_obj["agent_id"] = record.__dict__["agent_id"]
-        return json.dumps(log_obj).decode().decode()
+        return json.dumps(log_obj).decode()
 
 
 class AdvancedMetrics:
@@ -49,7 +49,7 @@ class AdvancedMetrics:
             "success": success,
         }
         with open(self.metrics_file, "a") as f:
-            f.write(json.dumps(entry).decode().decode() + "\n")
+            f.write(json.dumps(entry).decode() + "\n")
 
     def aggregate(self, since_seconds: float | None = None) -> dict[str, Any]:
         """Aggregate metrics globally and by (agent, command)."""

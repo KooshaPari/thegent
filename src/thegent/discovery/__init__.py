@@ -165,7 +165,7 @@ def register_discovered_agent(
             agent_data["tmux_pane"] = p.pane_id
             break
 
-    file_path.write_text(json.dumps(agent_data, indent=2).decode().decode(), encoding="utf-8")
+    file_path.write_text(json.dumps(agent_data, indent=2), encoding="utf-8")
     return file_path
 
 

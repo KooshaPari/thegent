@@ -4,6 +4,7 @@ import contextlib
 import os
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from collections import Counter
 from pathlib import Path
@@ -225,7 +226,7 @@ def _ensure_claude_installed(suggest_dex: bool = False, require_native: bool = F
     brew = shutil.which("brew")
     if brew:
         console.print("[dim]Installing Claude Code via Homebrew...[/dim]")
-        r = subprocess.run([brew, "install", "--cask", "claude-code"], capture_output=True, text=True, check=False)
+        r = shim_run([brew, "install", "--cask", "claude-code"], capture_output=True, text=True, check=False)
         if r.returncode == 0:
             p = _find_claude(require_native=require_native)
             if p:
@@ -234,7 +235,7 @@ def _ensure_claude_installed(suggest_dex: bool = False, require_native: bool = F
     bun = shutil.which("bun")
     if bun:
         console.print("[dim]Installing Claude Code via Bun...[/dim]")
-        r = subprocess.run(
+        r = shim_run(
             [bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False
         )
         if r.returncode == 0:
@@ -284,7 +285,7 @@ def _run_claude_print(
     console.print(f"[bold green]Claude print (headless) via {provider}...[/bold green]")
     timeout_seconds = int(env.get("THGENT_CLODE_PRINT_TIMEOUT", "15"))
     try:
-        result = subprocess.run(cmd, env=env, check=False, timeout=timeout_seconds)
+        result = shim_run(cmd, env=env, check=False, timeout=timeout_seconds)
     except subprocess.TimeoutExpired:
         console.print(f"[red]Error: clode print timed out after {timeout_seconds}s.[/red]")
         raise typer.Exit(124)
@@ -314,7 +315,7 @@ def _ensure_provider_configured(provider: str) -> None:
             try:
                 resp = input("  Run setup now? [Y/n]: ").strip().lower()
                 if resp in ("", "y", "yes"):
-                    subprocess.run(
+                    shim_run(
                         [sys.executable, "-m", "thegent.main", "cliproxy", "login", provider],
                         check=False,
                     )
@@ -1243,7 +1244,7 @@ def _run_sitback_claude(
         run_args = wrap_with_caffeinate(run_args, "claude")
 
         with contextlib.suppress(KeyboardInterrupt):
-            subprocess.run(
+            shim_run(
                 run_args,
                 check=False,
                 env=env,
@@ -1335,7 +1336,7 @@ def _run_sitback_codex(
         # Wrap with caffeinate for macOS
         run_args = wrap_with_caffeinate(run_args, "codex")
         with contextlib.suppress(KeyboardInterrupt):
-            subprocess.run(run_args, check=False, env=codex_env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+            shim_run(run_args, check=False, env=codex_env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
     else:
         # Wrap with caffeinate for macOS
         cmd = wrap_with_caffeinate(cmd, "codex")
@@ -1369,7 +1370,7 @@ def _run_sitback_droid(
         # Wrap with caffeinate for macOS
         run_args = wrap_with_caffeinate(run_args, "droid")
         with contextlib.suppress(KeyboardInterrupt):
-            subprocess.run(run_args, check=False, env=env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+            shim_run(run_args, check=False, env=env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
     else:
         # Wrap with caffeinate for macOS
         cmd = wrap_with_caffeinate(cmd, "droid")
@@ -1414,7 +1415,7 @@ def _run_sitback_anen(
         run_args = ["tmux", "new-session", "-s", session_name, *cmd]
         run_args = wrap_with_caffeinate(run_args, "anen")
         with contextlib.suppress(KeyboardInterrupt):
-            subprocess.run(run_args, check=False, env=env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
+            shim_run(run_args, check=False, env=env, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
     else:
         cmd = wrap_with_caffeinate(cmd, "anen")
         os.execvpe(cmd[0], cmd, env)

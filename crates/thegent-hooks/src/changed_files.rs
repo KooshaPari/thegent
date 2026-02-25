@@ -8,11 +8,11 @@
 //!
 //! Phase 1.5: Enhances Phase 1 basic changed-file detection with complex workflows
 
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use regex::Regex;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -86,7 +86,10 @@ impl ImpactType {
         let path_str = path.to_string_lossy();
 
         // Documentation files
-        if matches!(path.extension().and_then(|s| s.to_str()), Some("md" | "rst" | "txt" | "html" | "htm")) {
+        if matches!(
+            path.extension().and_then(|s| s.to_str()),
+            Some("md" | "rst" | "txt" | "html" | "htm")
+        ) {
             return Self::DocsOnly;
         }
 
@@ -94,28 +97,51 @@ impl ImpactType {
         if matches!(
             path.file_name().and_then(|s| s.to_str()),
             Some(
-                "Cargo.toml" | "Cargo.lock" | "pyproject.toml" | "setup.py" | "setup.cfg" |
-                "package.json" | "package-lock.json" | "pnpm-lock.yaml" | "yarn.lock" |
-                "go.mod" | "go.sum" | ".env" | ".env.example" | ".gitignore" |
-                "docker-compose.yml" | "docker-compose.yaml" | "Dockerfile" |
-                "Makefile" | "CMakeLists.txt" | "meson.build"
+                "Cargo.toml"
+                    | "Cargo.lock"
+                    | "pyproject.toml"
+                    | "setup.py"
+                    | "setup.cfg"
+                    | "package.json"
+                    | "package-lock.json"
+                    | "pnpm-lock.yaml"
+                    | "yarn.lock"
+                    | "go.mod"
+                    | "go.sum"
+                    | ".env"
+                    | ".env.example"
+                    | ".gitignore"
+                    | "docker-compose.yml"
+                    | "docker-compose.yaml"
+                    | "Dockerfile"
+                    | "Makefile"
+                    | "CMakeLists.txt"
+                    | "meson.build"
             )
         ) {
             return Self::Config;
         }
 
         // Test files
-        if path_str.contains("/tests/") || path_str.contains("/_test.") ||
-           path_str.contains("/test_") || path_str.ends_with("_test.rs") ||
-           path_str.ends_with("_test.py") || path_str.ends_with(".spec.ts") ||
-           path_str.ends_with(".test.ts") || path_str.ends_with(".spec.js") {
+        if path_str.contains("/tests/")
+            || path_str.contains("/_test.")
+            || path_str.contains("/test_")
+            || path_str.ends_with("_test.rs")
+            || path_str.ends_with("_test.py")
+            || path_str.ends_with(".spec.ts")
+            || path_str.ends_with(".test.ts")
+            || path_str.ends_with(".spec.js")
+        {
             return Self::Tests;
         }
 
         // Build/CI files
-        if path_str.contains("/.github/") || path_str.contains("/gitlab-ci.yml") ||
-           path_str.contains("/.gitlab-ci.yml") || path_str.contains("/Taskfile.yml") ||
-           path_str.contains("/scripts/") {
+        if path_str.contains("/.github/")
+            || path_str.contains("/gitlab-ci.yml")
+            || path_str.contains("/.gitlab-ci.yml")
+            || path_str.contains("/Taskfile.yml")
+            || path_str.contains("/scripts/")
+        {
             return Self::Build;
         }
 
@@ -123,8 +149,23 @@ impl ImpactType {
         if matches!(
             path.extension().and_then(|s| s.to_str()),
             Some(
-                "rs" | "py" | "ts" | "js" | "go" | "java" | "cpp" | "c" | "h" | "hpp" |
-                "cs" | "php" | "rb" | "swift" | "kt" | "scala" | "clj" | "cljs"
+                "rs" | "py"
+                    | "ts"
+                    | "js"
+                    | "go"
+                    | "java"
+                    | "cpp"
+                    | "c"
+                    | "h"
+                    | "hpp"
+                    | "cs"
+                    | "php"
+                    | "rb"
+                    | "swift"
+                    | "kt"
+                    | "scala"
+                    | "clj"
+                    | "cljs"
             )
         ) {
             return Self::CodeImpacting;
@@ -157,7 +198,11 @@ impl FilterOptions {
         // Check extension filter (inclusive)
         if !self.extensions.is_empty() {
             let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
-            if !self.extensions.iter().any(|e| e.trim_start_matches('.') == ext) {
+            if !self
+                .extensions
+                .iter()
+                .any(|e| e.trim_start_matches('.') == ext)
+            {
                 return false;
             }
         }
@@ -167,7 +212,8 @@ impl FilterOptions {
             let path_str = path.to_string_lossy();
             let matches_dir = self.directories.iter().any(|d| {
                 let dir = d.trim_end_matches('/');
-                path_str.starts_with(dir) && (path_str.chars().nth(dir.len()) == Some('/') || dir == ".")
+                path_str.starts_with(dir)
+                    && (path_str.chars().nth(dir.len()) == Some('/') || dir == ".")
             });
             if !matches_dir {
                 return false;
@@ -190,7 +236,11 @@ impl FilterOptions {
         // Check exclusions (exclusive)
         if !self.exclude_extensions.is_empty() {
             let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
-            if self.exclude_extensions.iter().any(|e| e.trim_start_matches('.') == ext) {
+            if self
+                .exclude_extensions
+                .iter()
+                .any(|e| e.trim_start_matches('.') == ext)
+            {
                 return false;
             }
         }
@@ -307,7 +357,10 @@ impl ChangedFilesDetector {
     }
 
     /// Get changed files with status using git ls-files for efficiency
-    pub fn get_changed_files(&self, rev_range: Option<&str>) -> Result<Vec<ChangedFile>, ChangedFilesError> {
+    pub fn get_changed_files(
+        &self,
+        rev_range: Option<&str>,
+    ) -> Result<Vec<ChangedFile>, ChangedFilesError> {
         let mut files = Vec::new();
 
         // Get modified and added files from git diff
@@ -322,10 +375,16 @@ impl ChangedFilesDetector {
             for line in String::from_utf8_lossy(&output.stdout).lines() {
                 let parts: Vec<&str> = line.splitn(2, '\t').collect();
                 if parts.len() == 2 {
-                    if let Some(status) = ChangeStatus::from_git_letter(parts[0].chars().next().unwrap_or('?')) {
+                    if let Some(status) =
+                        ChangeStatus::from_git_letter(parts[0].chars().next().unwrap_or('?'))
+                    {
                         let path = PathBuf::from(parts[1]);
                         let impact = ImpactType::from_path(&path);
-                        files.push(ChangedFile { path, status, impact });
+                        files.push(ChangedFile {
+                            path,
+                            status,
+                            impact,
+                        });
                     }
                 }
             }
@@ -356,7 +415,11 @@ impl ChangedFilesDetector {
     }
 
     /// Get changed files with filtering
-    pub fn get_filtered(&self, filters: FilterOptions, rev_range: Option<&str>) -> Result<Vec<ChangedFile>, ChangedFilesError> {
+    pub fn get_filtered(
+        &self,
+        filters: FilterOptions,
+        rev_range: Option<&str>,
+    ) -> Result<Vec<ChangedFile>, ChangedFilesError> {
         let changed = self.get_changed_files(rev_range)?;
         let filtered: Vec<_> = changed
             .into_iter()
@@ -366,7 +429,11 @@ impl ChangedFilesDetector {
     }
 
     /// Get changed files by file extension
-    pub fn by_extension(&self, ext: &str, rev_range: Option<&str>) -> Result<Vec<ChangedFile>, ChangedFilesError> {
+    pub fn by_extension(
+        &self,
+        ext: &str,
+        rev_range: Option<&str>,
+    ) -> Result<Vec<ChangedFile>, ChangedFilesError> {
         let filters = FilterOptions {
             extensions: vec![ext.trim_start_matches('.').to_string()],
             ..Default::default()
@@ -375,7 +442,11 @@ impl ChangedFilesDetector {
     }
 
     /// Get changed files by directory
-    pub fn by_directory(&self, dir: &str, rev_range: Option<&str>) -> Result<Vec<ChangedFile>, ChangedFilesError> {
+    pub fn by_directory(
+        &self,
+        dir: &str,
+        rev_range: Option<&str>,
+    ) -> Result<Vec<ChangedFile>, ChangedFilesError> {
         let filters = FilterOptions {
             directories: vec![dir.to_string()],
             ..Default::default()
@@ -384,7 +455,11 @@ impl ChangedFilesDetector {
     }
 
     /// Get changed files by status
-    pub fn by_status(&self, status: ChangeStatus, rev_range: Option<&str>) -> Result<Vec<ChangedFile>, ChangedFilesError> {
+    pub fn by_status(
+        &self,
+        status: ChangeStatus,
+        rev_range: Option<&str>,
+    ) -> Result<Vec<ChangedFile>, ChangedFilesError> {
         let filters = FilterOptions {
             statuses: vec![status],
             ..Default::default()
@@ -393,7 +468,10 @@ impl ChangedFilesDetector {
     }
 
     /// Get code-impacting changes only (not docs)
-    pub fn code_impact_only(&self, rev_range: Option<&str>) -> Result<Vec<ChangedFile>, ChangedFilesError> {
+    pub fn code_impact_only(
+        &self,
+        rev_range: Option<&str>,
+    ) -> Result<Vec<ChangedFile>, ChangedFilesError> {
         let filters = FilterOptions {
             impact_types: vec![ImpactType::CodeImpacting],
             ..Default::default()
@@ -402,14 +480,20 @@ impl ChangedFilesDetector {
     }
 
     /// Get paths with code impact (returns just the paths)
-    pub fn code_impact_paths(&self, rev_range: Option<&str>) -> Result<Vec<PathBuf>, ChangedFilesError> {
+    pub fn code_impact_paths(
+        &self,
+        rev_range: Option<&str>,
+    ) -> Result<Vec<PathBuf>, ChangedFilesError> {
         let files = self.code_impact_only(rev_range)?;
         Ok(files.into_iter().map(|f| f.path).collect())
     }
 
     /// Build a simple dependency graph based on imports/includes
     /// This is a basic implementation that looks for common import patterns
-    pub fn build_dependency_graph(&self, files: &[PathBuf]) -> Result<DependencyGraph, ChangedFilesError> {
+    pub fn build_dependency_graph(
+        &self,
+        files: &[PathBuf],
+    ) -> Result<DependencyGraph, ChangedFilesError> {
         let mut graph = DependencyGraph::default();
 
         for file in files {
@@ -420,7 +504,8 @@ impl ChangedFilesDetector {
                     graph.dependencies.insert(file.clone(), deps.clone());
 
                     for dep in deps {
-                        graph.dependents
+                        graph
+                            .dependents
                             .entry(dep)
                             .or_insert_with(HashSet::new)
                             .insert(file.clone());
@@ -436,7 +521,7 @@ impl ChangedFilesDetector {
     /// Handles common patterns: Python imports, TypeScript imports, Rust use statements, etc.
     fn extract_imports(content: &str, source_file: &Path) -> HashSet<PathBuf> {
         let mut imports = HashSet::new();
-        let source_dir = source_file.parent().unwrap_or_else(|| Path::new("."));
+        let _source_dir = source_file.parent().unwrap_or_else(|| Path::new("."));
 
         // Python imports: from X import Y, import X
         if let Ok(re) = Regex::new(r"^(?:from|import)\s+([.\w]+)") {
@@ -446,7 +531,11 @@ impl ChangedFilesDetector {
                     let path = PathBuf::from(module_str.replace('.', "/"));
                     // Try .py extension
                     imports.insert(path.with_extension("py"));
-                    imports.insert(PathBuf::from(format!("{}/{}.py", module_str.replace('.', "/"), "__init__")));
+                    imports.insert(PathBuf::from(format!(
+                        "{}/{}.py",
+                        module_str.replace('.', "/"),
+                        "__init__"
+                    )));
                 }
             }
         }
@@ -476,7 +565,10 @@ impl ChangedFilesDetector {
                     let module_str = module.as_str();
                     let path = PathBuf::from(module_str.replace("::", "/"));
                     imports.insert(path.with_extension("rs"));
-                    imports.insert(PathBuf::from(format!("{}/mod.rs", module_str.replace("::", "/"))));
+                    imports.insert(PathBuf::from(format!(
+                        "{}/mod.rs",
+                        module_str.replace("::", "/")
+                    )));
                 }
             }
         }
@@ -491,18 +583,42 @@ mod tests {
 
     #[test]
     fn test_change_status_from_git_letter() {
-        assert_eq!(ChangeStatus::from_git_letter('M'), Some(ChangeStatus::Modified));
-        assert_eq!(ChangeStatus::from_git_letter('A'), Some(ChangeStatus::Added));
-        assert_eq!(ChangeStatus::from_git_letter('D'), Some(ChangeStatus::Deleted));
-        assert_eq!(ChangeStatus::from_git_letter('?'), Some(ChangeStatus::Untracked));
+        assert_eq!(
+            ChangeStatus::from_git_letter('M'),
+            Some(ChangeStatus::Modified)
+        );
+        assert_eq!(
+            ChangeStatus::from_git_letter('A'),
+            Some(ChangeStatus::Added)
+        );
+        assert_eq!(
+            ChangeStatus::from_git_letter('D'),
+            Some(ChangeStatus::Deleted)
+        );
+        assert_eq!(
+            ChangeStatus::from_git_letter('?'),
+            Some(ChangeStatus::Untracked)
+        );
     }
 
     #[test]
     fn test_impact_type_from_path() {
-        assert_eq!(ImpactType::from_path(Path::new("README.md")), ImpactType::DocsOnly);
-        assert_eq!(ImpactType::from_path(Path::new("src/main.py")), ImpactType::CodeImpacting);
-        assert_eq!(ImpactType::from_path(Path::new("tests/test_main.py")), ImpactType::Tests);
-        assert_eq!(ImpactType::from_path(Path::new("Cargo.toml")), ImpactType::Config);
+        assert_eq!(
+            ImpactType::from_path(Path::new("README.md")),
+            ImpactType::DocsOnly
+        );
+        assert_eq!(
+            ImpactType::from_path(Path::new("src/main.py")),
+            ImpactType::CodeImpacting
+        );
+        assert_eq!(
+            ImpactType::from_path(Path::new("tests/test_main.py")),
+            ImpactType::Tests
+        );
+        assert_eq!(
+            ImpactType::from_path(Path::new("Cargo.toml")),
+            ImpactType::Config
+        );
     }
 
     #[test]

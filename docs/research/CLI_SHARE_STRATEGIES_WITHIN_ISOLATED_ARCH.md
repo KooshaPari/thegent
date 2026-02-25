@@ -1,3 +1,4 @@
+<DONE>
 # Research: CLI-Share Strategies & Nested Isolation (L1/L2)
 
 **Date**: 2026-02-19

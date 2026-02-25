@@ -21,8 +21,12 @@ use crate::widgets::table::{TableRow, TableWidget};
 
 /// Compute a centred `Rect` of `width` × `height` inside `area`.
 pub fn centred_rect(width: u16, height: u16, area: Rect) -> Rect {
-    let x = area.x.saturating_add((area.width.saturating_sub(width)) / 2);
-    let y = area.y.saturating_add((area.height.saturating_sub(height)) / 2);
+    let x = area
+        .x
+        .saturating_add((area.width.saturating_sub(width)) / 2);
+    let y = area
+        .y
+        .saturating_add((area.height.saturating_sub(height)) / 2);
     Rect {
         x,
         y,
@@ -55,11 +59,7 @@ pub struct FloatingOverlay {
 
 impl FloatingOverlay {
     /// Create a new `FloatingOverlay`.
-    pub fn new(
-        title: impl Into<String>,
-        content: Vec<String>,
-        buttons: Vec<String>,
-    ) -> Self {
+    pub fn new(title: impl Into<String>, content: Vec<String>, buttons: Vec<String>) -> Self {
         Self {
             title: title.into(),
             content,
@@ -273,11 +273,7 @@ impl HelpDialog {
         let mut table: TableWidget<HelpBinding> = TableWidget::new(20);
         table.set_rows(bindings);
 
-        let overlay = FloatingOverlay::new(
-            "Help — Keybindings",
-            Vec::new(),
-            Vec::new(),
-        );
+        let overlay = FloatingOverlay::new("Help — Keybindings", Vec::new(), Vec::new());
 
         Self { overlay, table }
     }
@@ -337,7 +333,12 @@ mod tests {
 
     #[test]
     fn test_centred_rect_fits_inside_area() {
-        let area = Rect { x: 0, y: 0, width: 80, height: 24 };
+        let area = Rect {
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 24,
+        };
         let r = centred_rect(40, 10, area);
         assert!(r.x >= area.x);
         assert!(r.y >= area.y);
@@ -347,7 +348,12 @@ mod tests {
 
     #[test]
     fn test_centred_rect_is_centred() {
-        let area = Rect { x: 0, y: 0, width: 80, height: 24 };
+        let area = Rect {
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 24,
+        };
         let r = centred_rect(40, 10, area);
         // Horizontal centre: r.x should be ~20 (80-40)/2
         assert_eq!(r.x, 20);
@@ -357,7 +363,12 @@ mod tests {
 
     #[test]
     fn test_centred_rect_clamped_to_area() {
-        let area = Rect { x: 0, y: 0, width: 10, height: 5 };
+        let area = Rect {
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 5,
+        };
         let r = centred_rect(200, 200, area);
         assert_eq!(r.width, 10);
         assert_eq!(r.height, 5);
@@ -383,8 +394,7 @@ mod tests {
 
     #[test]
     fn test_overlay_focused_label() {
-        let mut o =
-            FloatingOverlay::new("T", vec![], vec!["Yes".into(), "No".into()]);
+        let mut o = FloatingOverlay::new("T", vec![], vec!["Yes".into(), "No".into()]);
         assert_eq!(o.focused_label(), Some("Yes"));
         o.next_button();
         assert_eq!(o.focused_label(), Some("No"));
@@ -479,9 +489,18 @@ mod tests {
 
     fn sample_bindings() -> Vec<HelpBinding> {
         vec![
-            HelpBinding { key: "q".into(), action: "Quit".into() },
-            HelpBinding { key: "Tab".into(), action: "Autocomplete".into() },
-            HelpBinding { key: "Esc".into(), action: "Clear input".into() },
+            HelpBinding {
+                key: "q".into(),
+                action: "Quit".into(),
+            },
+            HelpBinding {
+                key: "Tab".into(),
+                action: "Autocomplete".into(),
+            },
+            HelpBinding {
+                key: "Esc".into(),
+                action: "Clear input".into(),
+            },
         ]
     }
 

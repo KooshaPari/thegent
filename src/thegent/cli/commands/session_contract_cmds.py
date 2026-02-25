@@ -4,10 +4,7 @@
 from __future__ import annotations
 
 import orjson as json
-import os
-import signal
 import sys
-import time
 from pathlib import Path
 
 import typer
@@ -15,36 +12,21 @@ import typer
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _coerce_issue_types,
     _default_owner_tag,
-    _find_session_meta,
-    _is_pid_running,
     _normalize_output_format,
-    _read_session_meta,
-    _resolve_run_id,
-    _resolve_session_id,
-    _resolve_session_status,
     _safe_dict,
     _serialize_health_gate_md,
     _serialize_health_report_md,
     _serialize_health_trend_md,
-    _session_paths,
     _write_health_gate_export,
     _write_health_trend_export,
     _write_report_export,
     console,
-    EXIT_TIMEOUT,
     EXIT_HEALTH_GATE_FAILED,
-    _LOG_FOLLOW_POLL_SECONDS,
 )
 from thegent.cli.commands.session_cmds_helpers import (
-    follow_log_stream,
-    parse_sources_csv,
-    print_high_session_count_tip,
-    render_ps_markdown,
-    render_ps_rich_table,
     resolve_export_format_with_notice,
 )
 
@@ -84,11 +66,11 @@ def session_contracts_cmd(
 
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(audit).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(audit).decode() + "\n")
         return
     if fmt == "md":
         if summary_only:
-            console.print(f"summary: {json.dumps(summary).decode().decode()}")
+            console.print(f"summary: {json.dumps(summary).decode()}")
             return
         console.print("## Session Contract Audit")
         console.print(
@@ -217,7 +199,7 @@ def session_contract_health_gate_cmd(
 
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if fmt == "md":
         console.print(_serialize_health_gate_md(result))
@@ -295,7 +277,7 @@ def session_contract_health_report_cmd(
 
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if fmt == "md":
         console.print(_serialize_health_report_md(result))
@@ -321,7 +303,7 @@ def session_contract_health_report_cmd(
         console.print(f"strict_checks_enabled={result['strict_checks_enabled']}")
         if result.get("generated_at_utc"):
             console.print(f"generated_at_utc={result['generated_at_utc']}")
-            console.print(f"generated_query={json.dumps(result['generated_query']).decode().decode()}")
+            console.print(f"generated_query={json.dumps(result['generated_query']).decode()}")
         if result.get("trend_summary"):
             trend = result["trend_summary"]
             console.print(
@@ -389,7 +371,7 @@ def session_contract_health_trend_cmd(
         console.print(f"exported session-contract-health-trend to: {output} (format={written_as})")
     fmt = _normalize_output_format(format, default=settings.output_format or "rich")
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if fmt == "md":
         console.print(_serialize_health_trend_md(result))
@@ -407,7 +389,7 @@ def session_contract_health_trend_cmd(
             f"snapshot_count={result['snapshot_count']} limit={result['limit']} "
             f"retention_max_lines={result.get('snapshot_retention_max_lines', '')}"
         )
-        console.print(f"scope_key={json.dumps(result['scope_key']).decode().decode()}")
+        console.print(f"scope_key={json.dumps(result['scope_key']).decode()}")
         delta = result.get("delta_summary", {})
         console.print(
             f"delta blocked_ratio={result.get('blocked_ratio_delta', delta.get('blocked_ratio_delta', None))} "

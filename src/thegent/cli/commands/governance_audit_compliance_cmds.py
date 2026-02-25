@@ -1,17 +1,18 @@
-"""Thegent CLI governance audit, compliance, and data protection commands.
+"""Governance audit, signatures, and compliance commands (WL-124).
 
-Extracted from governance_cmds.py as part of CLI refactoring (WL-124).
+Signed artifacts, audit, SIEM, plugin verification, and guardrails.
 """
 
 from __future__ import annotations
 
 import hashlib
-import orjson as json
+from thegent.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
 from pathlib import Path
 
 import typer
+
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
@@ -22,109 +23,104 @@ from thegent.cli.commands._cli_shared import (
 )
 
 
-def data_protection_cmd(format: str | None = None) -> None:
-    """Show status of data protection and privacy controls."""
-    from thegent.cli.commands.observability_main_impl import get_data_protection_status_impl  # pyright: ignore[reportMissingImports]
+def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
+    """List signed MAIF artifacts (WP-3002)."""
+    settings = ThegentSettings()
+    artifacts_dir = settings.session_dir / "artifacts"
 
-    status = get_data_protection_status_impl()
+    artifacts = []
+    if artifacts_dir.exists():
+        for p in sorted(artifacts_dir.glob("maif.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:limit]:
+            _load_artifact(artifacts, p)
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(status).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(artifacts) + "\n")
         return
 
-    table = Table(title="Data Protection & Privacy Status (WP-3006)")
-    table.add_column("Control")
-    table.add_column("Status")
+    if not artifacts:
+        console.print("[dim]No signed artifacts found.[/dim]")
+        return
 
-    def _fmt_bool(v: bool) -> str:
-        return "[green]PASS[/green]" if v else "[red]FAIL[/red]"
+    table = Table(title="Signed Action Artifacts (MAIF v1.0)")
+    table.add_column("Artifact ID")
+    table.add_column("Root Hash (Short)")
+    table.add_column("Blocks")
+    table.add_column("Timestamp (us)")
 
-    table.add_row("Session Directory", status["session_dir"])
-    table.add_row("Permissions Restricted (0700)", _fmt_bool(status["permissions_restricted"]))
-    table.add_row("Sensitive Data Masking", _fmt_bool(status["masking_enabled"]))
-    table.add_row("Retention Policy", f"{status['retention_policy_days']} days")
-    if status.get("retention_by_domain"):
-        by_dom = ", ".join(f"{k}:{v}d" for k, v in status["retention_by_domain"].items())
-        table.add_row("Retention by Domain", by_dom or "—")
-
+    for a in artifacts:
+        header = a.get("header", {})
+        blocks = a.get("blocks", [])
+        table.add_row(
+            header.get("artifact_id", "?"),
+            (header.get("root_hash") or "")[:12] + "...",
+            str(len(blocks)),
+            str(header.get("timestamp_us", "?")),
+        )
     console.print(table)
 
 
-def compliance_report_cmd(
-    format: str | None = None,
-    output: Path | None = None,
-) -> None:
-    """Generate compliance evidence retention report (WP-3006)."""
-    from thegent.cli.commands.observability_main_impl import get_compliance_report_impl  # pyright: ignore[reportMissingImports]
-
-    report = get_compliance_report_impl()
-    fmt = _normalize_output_format(format)
-
-    if fmt == "json":
-        out = json.dumps(report, indent=2).decode().decode()
-    else:
-        ts = report["tiered_storage"]
-        rm = report["retention_matrix"]
-        dp = report["data_protection"]
-        lines = [
-            "# Compliance Evidence Retention Report (WP-3006)",
-            f"Generated: {report['generated_at_utc']}",
-            "",
-            "## Tiered Storage",
-            f"- Hot (active): {ts['hot_active_sessions']} sessions",
-            f"- Hot (archived): {ts['hot_archived']} (retention: {ts['retention_hot_days']}d)",
-            f"- Cold: {ts['cold']} (retention: {ts['retention_cold_days']}d)",
-            "",
-            "## Retention by Domain",
-            "| Domain | Retention (Days) | Runs |",
-            "|--------|------------------|------|",
-        ]
-        for row in rm:
-            lines.append(f"| {row['domain']} | {row['retention_days']} | {row['run_count']} |")
-        lines.extend([
-            "",
-            "## Data Protection",
-            f"- Session dir: {dp['session_dir']}",
-            f"- Permissions restricted: {dp['permissions_restricted']}",
-            f"- Masking enabled: {dp['masking_enabled']}",
-        ])
-        out = "\n".join(lines)
-
-    if output:
-        output.write_text(out, encoding="utf-8")
-        console.print(f"[green]Compliance report written to {output}[/green]")
-    else:
-        console.print(out)
-
-
-def audit_verify_cmd(format: str | None = None) -> None:
-    """Verify the integrity of the execution run registry."""
+def signatures_verify_cmd(run_id: str) -> None:
+    """Verify a signed MAIF artifact (WP-3002)."""
     settings = ThegentSettings()
-    from thegent.execution import Auditor
+    artifact_path = settings.session_dir / "artifacts" / f"{run_id}.maif.json"
 
-    registry_path = settings.session_dir / "run_registry.jsonl"
-    auditor = Auditor(registry_path)
+    if not artifact_path.exists():
+        console.print(f"[red]Artifact not found for run_id={run_id}[/red]")
+        raise typer.Exit(1)
 
-    res = auditor.verify_registry()
+    try:
+        artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
+        header = artifact_data.get("header", {})
+        blocks = artifact_data.get("blocks", [])
+        chain = artifact_data.get("provenance_chain", [])
 
-    if format == "json":
-        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
-        return
+        console.print(f"[bold cyan]Verifying MAIF Artifact: {header.get('artifact_id')}[/bold cyan]")
 
-    if res["status"] == "passed":
-        console.print(f"[green]Audit Passed:[/green] {res['valid_count']} records verified.")
-    elif res["status"] == "empty":
-        console.print("[dim]Registry empty. No records to verify.[/dim]")
-    else:
-        console.print(f"[red]Audit Failed:[/red] {res['corrupt_count']} issues found.")
-        for issue in res.get("issues", []):
-            console.print(f"  - {issue}")
+        # 1. Verify Blocks
+        all_blocks_valid = True
+        for block in blocks:
+            # Re-calculate hash (simplified for CLI check)
+            payload = block.get("payload")
+            body = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+            actual_hash = hashlib.sha256(body.encode()).hexdigest()
 
-    if res["status"] == "passed":
-        total = res["valid_count"]
-        if total > 0:
-            console.print(f"[dim]Note: All {total} records carry valid signatures.[/dim]")
+            if actual_hash != block.get("payload_hash"):
+                console.print(f"  [red]✗ Block {block.get('block_id')} payload hash mismatch![/red]")
+                all_blocks_valid = False
+            else:
+                console.print(f"  [green]✓ Block {block.get('block_id')} verified.[/green]")
+
+        # 2. Verify Chain
+        chain_valid = True
+        if chain:
+            prev_hash = "0" * 64
+            for i, block in enumerate(blocks):
+                link_data = f"{prev_hash}|{block.get('payload_hash')}"
+                expected_link_hash = hashlib.sha256(link_data.encode()).hexdigest()
+                if chain[i] != expected_link_hash:
+                    console.print(f"  [red]✗ Provenance chain broken at block {i}![/red]")
+                    chain_valid = False
+                    break
+                prev_hash = expected_link_hash
+
+        # 3. Verify Root Hash
+        root_valid = False
+        if chain and chain[-1] == header.get("root_hash"):
+            root_valid = True
+            console.print(f"  [green]✓ Root hash {header.get('root_hash')[:12]}... matches chain.[/green]")
+        else:
+            console.print("  [red]✗ Root hash mismatch![/red]")
+
+        if all_blocks_valid and chain_valid and root_valid:
+            console.print(f"\n[bold green]RESULT: Artifact for {run_id} is VALID.[/bold green]")
+        else:
+            console.print(f"\n[bold red]RESULT: Artifact for {run_id} is INVALID.[/bold red]")
+            raise typer.Exit(1)
+
+    except Exception as e:
+        console.print(f"[red]Failed to verify artifact: {e}[/red]")
+        raise typer.Exit(1)
 
 
 def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
@@ -180,139 +176,77 @@ def compliance_redact_cmd(text: str) -> None:
     console.print(redacted)
 
 
-def signatures_list_cmd(limit: int = 50, format: str | None = None) -> None:
-    """List signed MAIF artifacts (WP-3002)."""
+def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None = None) -> None:
+    """Show daily cost aggregation (FR-GOV-002)."""
     settings = ThegentSettings()
-    artifacts_dir = settings.session_dir / "artifacts"
+    from thegent.cost.aggregator import CostAggregator
 
-    artifacts = []
-    if artifacts_dir.exists():
-        for p in sorted(artifacts_dir.glob("maif.json"), key=lambda x: x.stat().st_mtime, reverse=True)[:limit]:
-            _load_artifact(artifacts, p)
-
-    fmt = _normalize_output_format(format)
-    if fmt == "json":
-        sys.stdout.write(json.dumps(artifacts).decode().decode() + "\n")
-        return
-
-    if not artifacts:
-        console.print("[dim]No signed artifacts found.[/dim]")
-        return
-
-    table = Table(title="Signed Action Artifacts (MAIF v1.0)")
-    table.add_column("Artifact ID")
-    table.add_column("Root Hash (Short)")
-    table.add_column("Blocks")
-    table.add_column("Timestamp (us)")
-
-    for a in artifacts:
-        header = a.get("header", {})
-        blocks = a.get("blocks", [])
-        table.add_row(
-            header.get("artifact_id", "?"),
-            (header.get("root_hash") or "")[:12] + "...",
-            str(len(blocks)),
-            str(header.get("timestamp_us", "?")),
-        )
-    console.print(table)
-
-
-def signatures_verify_cmd(run_id: str) -> None:
-    """Verify a signed MAIF artifact (WP-3002)."""
-    settings = ThegentSettings()
-    artifact_path = settings.session_dir / "artifacts" / f"{run_id}.maif.json"
-
-    if not artifact_path.exists():
-        console.print(f"[red]Artifact not found for run_id={run_id}[/red]")
-        raise typer.Exit(1)
-
-    try:
-        artifact_data = json.loads(artifact_path.read_text(encoding="utf-8"))
-        header = artifact_data.get("header", {})
-        blocks = artifact_data.get("blocks", [])
-        chain = artifact_data.get("provenance_chain", [])
-
-        console.print(f"[bold cyan]Verifying MAIF Artifact: {header.get('artifact_id')}[/bold cyan]")
-
-        all_blocks_valid = True
-        for block in blocks:
-            payload = block.get("payload")
-            body = json.dumps(payload, sort_keys=True, separators=(",", ":").decode().decode())
-            actual_hash = hashlib.sha256(body.encode()).hexdigest()
-
-            if actual_hash != block.get("payload_hash"):
-                console.print(f"  [red]✗ Block {block.get('block_id')} payload hash mismatch![/red]")
-                all_blocks_valid = False
-            else:
-                console.print(f"  [green]✓ Block {block.get('block_id')} verified.[/green]")
-
-        chain_valid = True
-        if chain:
-            prev_hash = "0" * 64
-            for i, block in enumerate(blocks):
-                link_data = f"{prev_hash}|{block.get('payload_hash')}"
-                expected_link_hash = hashlib.sha256(link_data.encode()).hexdigest()
-                if chain[i] != expected_link_hash:
-                    console.print(f"  [red]✗ Provenance chain broken at block {i}![/red]")
-                    chain_valid = False
-                    break
-                prev_hash = expected_link_hash
-
-        root_valid = False
-        if chain and chain[-1] == header.get("root_hash"):
-            root_valid = True
-            console.print(f"  [green]✓ Root hash {header.get('root_hash')[:12]}... matches chain.[/green]")
-        else:
-            console.print("  [red]✗ Root hash mismatch![/red]")
-
-        if all_blocks_valid and chain_valid and root_valid:
-            console.print(f"\n[bold green]RESULT: Artifact for {run_id} is VALID.[/bold green]")
-        else:
-            console.print(f"\n[bold red]RESULT: Artifact for {run_id} is INVALID.[/bold red]")
-            raise typer.Exit(1)
-
-    except Exception as e:
-        console.print(f"[red]Failed to verify artifact: {e}[/red]")
-        raise typer.Exit(1)
-
-
-def trust_status_cmd(format: str | None = None) -> None:
-    """Show last environment and trust boundary status (WP-3007)."""
-    settings = ThegentSettings()
-    from thegent.execution import TrustBoundaryValidator
-
-    trust_boundary = TrustBoundaryValidator(settings.session_dir)
-    last_env = trust_boundary.get_last_environment()
+    agg = CostAggregator(settings.session_dir)
+    total = agg.daily_total(owner=owner, days=days)
 
     res = {
-        "current_environment": settings.environment,
-        "last_recorded_environment": last_env,
-        "session_dir": str(settings.session_dir),
+        "owner": owner or "all",
+        "days": days,
+        "total_usd": total,
+        "currency": "USD",
     }
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(res).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(res) + "\n")
         return
 
-    console.print("[bold]Trust Boundary Status (WP-3007)[/bold]")
-    console.print(f"Current Env: [cyan]{settings.environment}[/cyan]")
-    console.print(f"Last Env:    [cyan]{last_env or 'None'}[/cyan]")
+    console.print("[bold]Daily Cost Aggregation (FR-GOV-002)[/bold]")
+    console.print(f"Owner: [cyan]{owner or 'All Owners'}[/cyan]")
+    console.print(f"Days:  [cyan]{days}[/cyan]")
+    console.print(f"Total: [green]${total:.4f} USD[/green]")
 
-    if last_env:
-        allowed, reason = trust_boundary.validate_transition(last_env, settings.environment)
-        status_color = "green" if allowed else "red"
-        console.print(f"Transition:  [{status_color}]{reason}[/{status_color}]")
+
+def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
+    """Check a prompt against active guardrails (FR-GOV-003..006)."""
+    from thegent.governance.input_guardrails import InputGuardrails
+
+    rails = InputGuardrails()
+    result = rails.check(prompt, agent=agent or "", model=model)
+
+    if result.passed:
+        console.print("[green]Prompt passed all guardrails.[/green]")
+        return
+
+    console.print("[red]Prompt FAILED guardrail checks:[/red]")
+    console.print(f"- [bold]{result.rail_id}[/bold]: {result.reason}")
+    if result.remediation:
+        console.print(f"  [dim]Remediation: {result.remediation}[/dim]")
+
+
+def guardrails_show_cmd() -> None:
+    """Show active guardrail configuration (FR-GOV-007)."""
+    from thegent.governance.input_guardrails import InputGuardrails
+
+    rails = InputGuardrails()
+
+    table = Table(title="Input Guardrails Configuration")
+    table.add_column("Parameter")
+    table.add_column("Value")
+
+    table.add_row("Max Chars", str(rails.prompt_max_chars))
+    table.add_row("Blocklist Patterns", str(len(rails.prompt_blocklist_patterns)))
+    table.add_row("Agent Allowlist", ", ".join(rails.agent_allowlist) if rails.agent_allowlist else "None")
+    table.add_row("Model Allowlist", ", ".join(rails.model_allowlist) if rails.model_allowlist else "None")
+    table.add_row(
+        "CWD Allowed Prefixes", ", ".join(rails.cwd_allowed_prefixes) if rails.cwd_allowed_prefixes else "None"
+    )
+
+    console.print(table)
 
 
 __all__ = [
-    "audit_verify_cmd",
-    "compliance_plugin_check_cmd",
-    "compliance_redact_cmd",
-    "compliance_report_cmd",
-    "compliance_siem_test_cmd",
-    "data_protection_cmd",
     "signatures_list_cmd",
     "signatures_verify_cmd",
-    "trust_status_cmd",
+    "compliance_siem_test_cmd",
+    "compliance_plugin_check_cmd",
+    "compliance_redact_cmd",
+    "govern_cost_cmd",
+    "guardrails_check_cmd",
+    "guardrails_show_cmd",
 ]

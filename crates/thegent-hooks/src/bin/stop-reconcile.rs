@@ -1,5 +1,5 @@
 //! Stop-reconcile hook binary
-//! 
+//!
 //! Reads session state from stdin, checks git status, detects conflicts.
 
 #![allow(unused)]
@@ -49,11 +49,13 @@ fn main() -> ExitCode {
         Ok(o) => {
             let status = String::from_utf8_lossy(&o.stdout);
             let is_clean = status.trim().is_empty();
-            let dirty: Vec<String> = status.lines()
+            let dirty: Vec<String> = status
+                .lines()
                 .filter(|l| l.starts_with(" M") || l.starts_with("M "))
                 .map(|l| l[3..].to_string())
                 .collect();
-            let untracked: Vec<String> = status.lines()
+            let untracked: Vec<String> = status
+                .lines()
                 .filter(|l| l.starts_with("??"))
                 .map(|l| l[3..].to_string())
                 .collect();
@@ -66,8 +68,10 @@ fn main() -> ExitCode {
     };
 
     // Simple JSON output
-    println!(r#"{{"clean":{}, "dirty_files":{:?}, "untracked_files":{:?}, "exit_code":0}}"#, 
-        clean, dirty_files, untracked_files);
+    println!(
+        r#"{{"clean":{}, "dirty_files":{:?}, "untracked_files":{:?}, "exit_code":0}}"#,
+        clean, dirty_files, untracked_files
+    );
 
     ExitCode::from(0)
 }

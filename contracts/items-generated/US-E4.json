@@ -1,1 +1,23 @@
-{"id":"US-E4","source":"/Users/kooshapari/PRD.md","open_questions":[],"decisions":[]}
+{
+  "id": "US-E4",
+  "title": "Git Caching",
+  "source": "/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/docs/plans/PRD.md",
+  "status": "pending",
+  "as_a": "performance optimizer",
+  "i_want_to": "cache git results",
+  "so_that": "70%+ of git operations are eliminated",
+  "acceptance_criteria": [
+    "Implement .claude/.git-cache/",
+    "Cache git ls-files, git status, git diff",
+    "Add 60s TTL with file system invalidation",
+    "Measure cache hit rate and latency"
+  ],
+  "progress": {
+    "cache_directory": "pending",
+    "cache_git_commands": "pending",
+    "ttl_implementation": "pending",
+    "measure_performance": "pending"
+  },
+  "open_questions": [],
+  "decisions": []
+}

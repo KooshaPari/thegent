@@ -1,6 +1,7 @@
 """Shell and context injection for the agent mesh."""
 
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 
@@ -15,7 +16,7 @@ class ShellInjection:
     def find_session(self) -> bool:
         """Detect if agent tmux session exists (SCLI-P9.1)."""
         try:
-            subprocess.run(["tmux", "has-session", "-t", self.session_name], check=True, capture_output=True)
+            shim_run(["tmux", "has-session", "-t", self.session_name], check=True, capture_output=True)
             return True
         except subprocess.CalledProcessError:
             return False
@@ -27,9 +28,9 @@ class ShellInjection:
 
         try:
             # send-keys with delay for reliability
-            subprocess.run(["tmux", "send-keys", "-t", self.session_name, "-l", command], check=True)
+            shim_run(["tmux", "send-keys", "-t", self.session_name, "-l", command], check=True)
             time.sleep(wait)
-            subprocess.run(["tmux", "send-keys", "-t", self.session_name, "Enter"], check=True)
+            shim_run(["tmux", "send-keys", "-t", self.session_name, "Enter"], check=True)
             return True
         except subprocess.CalledProcessError:
             return False

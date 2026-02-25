@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import re
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 from thegent.governance.native_secret_scan import scan_secrets
@@ -150,7 +151,7 @@ class ShadowAuditGit:
     def _git(self, *args: str) -> subprocess.CompletedProcess[str]:
         """Run a git command in the audit repo directory."""
         cmd = ["git", *args]
-        return subprocess.run(
+        return shim_run(
             cmd,
             cwd=self._audit_path,
             capture_output=True,

@@ -73,7 +73,7 @@ def summary_cmd(
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
 
     if fmt == "md":

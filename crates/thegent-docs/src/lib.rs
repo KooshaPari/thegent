@@ -99,14 +99,15 @@ pub fn has_h1(content: &str) -> bool {
 
 /// Check if markdown has "See also" section
 pub fn has_see_also(content: &str) -> bool {
-    let see_also_regex = Regex::new(r"(?i)^##\s+(See\s+also|References|Related)").ok().unwrap();
+    let see_also_regex = Regex::new(r"(?i)^##\s+(See\s+also|References|Related)")
+        .ok()
+        .unwrap();
     content.lines().any(|line| see_also_regex.is_match(line))
 }
 
 /// Load and parse markdown file
 pub fn load_markdown(path: &Path) -> Result<MarkdownDoc, DocsError> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| DocsError::ReadError(e))?;
+    let content = std::fs::read_to_string(path).map_err(|e| DocsError::ReadError(e))?;
 
     let (frontmatter, body) = parse_markdown(&content)?;
 
@@ -133,7 +134,8 @@ pub fn generate_see_also_section(related_paths: &[PathBuf]) -> String {
 
     let mut section = String::from("## See Also\n\n");
     for path in related_paths {
-        let name = path.file_stem()
+        let name = path
+            .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
             .replace("_", " ")
@@ -157,13 +159,16 @@ pub struct AuditResult {
 
 /// Audit a markdown file
 pub fn audit_markdown(path: &Path) -> Result<AuditResult, DocsError> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| DocsError::ReadError(e))?;
+    let content = std::fs::read_to_string(path).map_err(|e| DocsError::ReadError(e))?;
 
     let (frontmatter, body) = parse_markdown(&content)?;
-    let full_content = format!("{}{}",
+    let full_content = format!(
+        "{}{}",
         if let Some(ref fm) = frontmatter {
-            format!("---\n{}\n---\n", serde_yaml::to_string(fm).map_err(|e| DocsError::YamlError(e))?)
+            format!(
+                "---\n{}\n---\n",
+                serde_yaml::to_string(fm).map_err(|e| DocsError::YamlError(e))?
+            )
         } else {
             String::new()
         },
@@ -214,7 +219,10 @@ Hello world!
 
         let (fm, body) = parse_markdown(content).unwrap();
         assert!(fm.is_some());
-        assert_eq!(fm.as_ref().unwrap().title, Some("Test Document".to_string()));
+        assert_eq!(
+            fm.as_ref().unwrap().title,
+            Some("Test Document".to_string())
+        );
         assert!(body.contains("Main Content"));
     }
 

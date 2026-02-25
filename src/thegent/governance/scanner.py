@@ -12,6 +12,7 @@ import orjson as json
 import logging
 import re
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
@@ -62,7 +63,7 @@ def _run_tool(
     timeout: int = 120,
 ) -> subprocess.CompletedProcess[str]:
     """Run an external tool, returning the CompletedProcess unconditionally."""
-    return subprocess.run(  # noqa: S603 -- args constructed internally
+    return shim_run(  # noqa: S603 -- args constructed internally
         args,
         capture_output=True,
         text=True,

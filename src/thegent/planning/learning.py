@@ -55,7 +55,7 @@ class LearningRegistry:
     def _save(self) -> None:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         data = {mid: asdict(m) for mid, m in self._models.items()}
-        self.storage_path.write_text(json.dumps(data, indent=2).decode().decode())
+        self.storage_path.write_text(json.dumps(data, indent=2))
 
     def add_canary(self, model_id: str) -> None:
         """Register a new model for canary testing."""

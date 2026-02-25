@@ -1,3 +1,4 @@
+<DONE>
 # Codex CLI 0.104.0 — v2 Protocol Gap Analysis
 
 **Date:** 2026-02-20

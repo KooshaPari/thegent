@@ -1,3 +1,4 @@
+<DONE>
 # Library Replacement Research — psutil
 
 **WORK_STREAM ID:** `research-library-psutil`

@@ -79,7 +79,7 @@ class IncidentLedger(LedgerVerifier):
             "payload": payload,
             "prev_hash": prev_hash,
         }
-        content = json.dumps(entry, sort_keys=True, separators=(",", ":").decode().decode())
+        content = json.dumps(entry, sort_keys=True, separators=(",", ":").decode())
         current_hash = hashlib.sha256(content.encode()).hexdigest()
         self._last_hash = current_hash
         # Write rolling_hash last so LedgerVerifier split captures full content

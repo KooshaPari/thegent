@@ -12,7 +12,7 @@ import asyncio
 import orjson as json
 import logging
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -25,6 +25,8 @@ from playwright.async_api import (  # type: ignore
     async_playwright,  # type: ignore
 )
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from thegent.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +98,7 @@ class RecordingConfig(BaseModel):
 
 
 @dataclass
-class RecordingResult:
+class RecordingResult(SerializableMixin):
     """Result of a recording session."""
 
     success: bool
@@ -107,18 +109,9 @@ class RecordingResult:
     duration: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            **asdict(self),
-            "video_path": str(self.video_path) if self.video_path else None,
-            "screenshot_paths": [str(p) for p in self.screenshot_paths],
-            "timestamp": self.timestamp,
-        }
-
     def to_json(self, path: Path | None = None) -> str:
         """Convert to JSON string or save to file."""
-        json_data = json.dumps(self.to_dict().decode().decode(), indent=2, default=str)
+        json_data = json.dumps(self.to_dict().decode(), indent=2, default=str)
         if path:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json_data)

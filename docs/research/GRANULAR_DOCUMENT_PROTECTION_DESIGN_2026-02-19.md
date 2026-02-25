@@ -1,3 +1,4 @@
+<DONE>
 # Granular Document R/W Protection — Design
 
 > **Target**: Strict R/W protection for BACKLOG and all markdown; thegent MCP–based; 200 types; 200 params/attributes per type; 100 polishes/QOL/optimizations.

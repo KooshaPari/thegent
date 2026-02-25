@@ -1,3 +1,4 @@
+<DONE>
 # Agent Platforms: kilo, roo, OpenCode, Zen + CLIProxyAPI — Research
 
 > **Purpose**: Correct kilo/roo/OpenCode as OSS platforms with CLI tools and search; research augment, codex, amp, claude code, cursor agent; add OpenCode Zen + CLIProxyAPI integration plan.

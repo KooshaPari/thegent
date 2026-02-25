@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -140,7 +141,7 @@ class RemoteRunner:
         _log.info("Syncing %s to %s", local_path, dest)
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -198,7 +199,7 @@ class RemoteRunner:
         _log.info("Syncing from %s to %s", source, local_path)
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,

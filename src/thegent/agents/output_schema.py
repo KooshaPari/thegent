@@ -78,7 +78,7 @@ class OutputSchemaValidator:
         Returns:
             A string containing the schema injection instruction.
         """
-        schema_json = json.dumps(self.schema, indent=2).decode().decode()
+        schema_json = json.dumps(self.schema, indent=2)
         return f"\n\nYou MUST respond with valid JSON matching this schema:\n{schema_json}"
 
     def get_codex_args(self) -> list[str]:

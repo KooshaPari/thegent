@@ -23,10 +23,10 @@ class ResourceCache:
 
     def set(self, key: str, value: Any) -> str:
         """Store a value in the cache. Returns an etag (sha256 of content)."""
-        payload = json.dumps(value, sort_keys=True).decode().decode()
+        payload = json.dumps(value, sort_keys=True).decode()
         etag = hashlib.sha256(payload.encode()).hexdigest()
         entry = {"value": value, "etag": etag, "stored_at": time.time()}
-        self._key_path(key).write_text(json.dumps(entry).decode().decode(), encoding="utf-8")
+        self._key_path(key).write_text(json.dumps(entry).decode(), encoding="utf-8")
         return etag
 
     def get(self, key: str) -> Any | None:

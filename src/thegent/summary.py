@@ -4,6 +4,7 @@ import orjson as json
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -109,7 +110,7 @@ def get_git_commits(project_path: Path, start_dt: datetime, end_dt: datetime) ->
     until = end_dt.isoformat()
     cmd = ["git", "log", f"--since={since}", f"--until={until}", "--pretty=format:%h %ad %s", "--date=short"]
     try:
-        res = subprocess.run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
+        res = shim_run(cmd, cwd=str(project_path), capture_output=True, text=True, check=False)
     except subprocess.TimeoutExpired as exc:
         timeout_error: dict[str, Any] = {
             "type": type(exc).__name__,

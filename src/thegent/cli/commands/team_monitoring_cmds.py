@@ -42,7 +42,7 @@ def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
     items = dlq.list_items(status=status)
 
     if format == "json":
-        sys.stdout.write(json.dumps(items).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(items).decode() + "\n")
         return
 
     if not items:

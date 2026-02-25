@@ -52,7 +52,7 @@ def _hash_observe_summary_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
+    body = json.dumps(payload_for_hash, option=json.OPT_SORT_KEYS).decode()
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode("utf-8")).hexdigest()}
 
 
@@ -77,7 +77,7 @@ def _build_observe_summary_trend_scope(
 
 
 def _hash_observe_summary_trend_scope(scope_key: dict[str, Any]) -> str:
-    scope_key_json = json.dumps(scope_key, sort_keys=True, separators=(",", ":").decode().decode())
+    scope_key_json = json.dumps(scope_key, option=json.OPT_SORT_KEYS).decode()
     return hashlib.sha256(scope_key_json.encode("utf-8")).hexdigest()
 
 
@@ -221,7 +221,7 @@ def _classify_observe_summary_trend_health(
         ),
     }
     policy_signature = hashlib.sha256(
-        json.dumps(policy, sort_keys=True, separators=(",", ":").decode().decode()).encode("utf-8")
+        json.dumps(policy, option=json.OPT_SORT_KEYS)
     ).hexdigest()
 
     if not enabled:
@@ -370,3 +370,25 @@ def _classify_observe_summary_trend_health(
         },
         "trend_snapshot_recommendations": recommendations,
     }
+
+
+def observe_summary_impl(
+    cd: str | None = None,
+    limit: int = 500,
+    drift_window: int = 50,
+    structural_budget_pct: float = 5.0,
+    semantic_budget_pct: float = 10.0,
+    provider: str | None = None,
+    top_escalations: int = 10,
+    trend_samples: int = 0,
+    format: str | None = None,
+) -> dict[str, Any]:
+    """FR-X08: Unified observability summary (KPIs, drift, escalation)."""
+    # Stub implementation - returns empty summary
+    # The actual implementation needs to be added
+    return {
+        "summary": "observe_summary not fully implemented",
+        "limit": limit,
+        "drift_window": drift_window,
+    }
+

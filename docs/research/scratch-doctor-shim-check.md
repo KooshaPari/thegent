@@ -1,3 +1,4 @@
+<DONE>
 # Doctor Shim Check Feature - Implementation Status
 
 > **WORK_STREAM ID:** scratch-doctor-shim-check

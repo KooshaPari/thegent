@@ -1,3 +1,4 @@
+<DONE>
 # Agent Hierarchy Quick Reference
 
 > **Quick reference guide for agent hierarchy, roles, and team structure**

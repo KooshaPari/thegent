@@ -9,6 +9,7 @@ import orjson as json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from thegent.integrations.base import SerializableMixin
 
 _DEFAULT_MCP_HOST = "127.0.0.1"
 _DEFAULT_MCP_PORT = 3847
@@ -71,7 +72,7 @@ TOOL_CATALOG: list[dict[str, Any]] = [
 
 
 @dataclass
-class ToolManifest:
+class ToolManifest(SerializableMixin):
     """Describes a borrowable tool."""
 
     name: str
@@ -81,17 +82,6 @@ class ToolManifest:
     requires: list[str]
     category: str = "general"
     read_only: bool = True
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "name": self.name,
-            "description": self.description,
-            "module": self.module,
-            "function": self.function,
-            "requires": self.requires,
-            "category": self.category,
-            "read_only": self.read_only,
-        }
 
 
 @dataclass
@@ -184,7 +174,7 @@ class ToolBorrower:
             mcp_servers = {}
 
         mcp_servers["thegent"] = server_entry
-        output_path.write_text(json.dumps({"mcpServers": mcp_servers}, indent=2).decode().decode(), encoding="utf-8")
+        output_path.write_text(json.dumps({"mcpServers": mcp_servers}, indent=2), encoding="utf-8")
         return output_path.resolve()
 
     def generate_claude_md_snippet(self, tool_names: list[str]) -> str:

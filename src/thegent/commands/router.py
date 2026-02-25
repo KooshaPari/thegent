@@ -116,7 +116,7 @@ def router_config(
         },
     }
     if output_json:
-        typer.echo(json.dumps(cfg, indent=2).decode().decode())
+        typer.echo(json.dumps(cfg, indent=2))
     else:
         typer.echo("Pareto Router Configuration (Phase 3)")
         typer.echo("--------------------------------------")
@@ -173,7 +173,7 @@ def router_verify(
     for i, record in enumerate(records):
         # Recompute hash (ADR-015 pattern: sort_keys, exclude hash field).
         d = {k: v for k, v in record.items() if k != "hash"}
-        canonical = json.dumps(d, sort_keys=True, separators=(",", ":").decode().decode())
+        canonical = json.dumps(d, sort_keys=True, separators=(",", ":").decode())
         expected_hash = hashlib.sha256(canonical.encode()).hexdigest()
 
         if record.get("hash") != expected_hash:

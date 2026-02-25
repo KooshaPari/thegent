@@ -1,0 +1,13 @@
+[project]
+name = "helios-bench"
+version = "0.1.0"
+description = "Helios Benchmarks - Benchmark definitions"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "helios-core",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

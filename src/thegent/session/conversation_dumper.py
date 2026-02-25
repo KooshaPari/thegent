@@ -11,7 +11,7 @@ from __future__ import annotations
 import orjson as json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -51,7 +51,7 @@ class ConversationRecord:
         meta = f"**Timestamp:** {self.timestamp.isoformat()}\n"
         meta += f"**Model:** {self.model}\n"
         if self.metadata:
-            meta += f"**Metadata:** {json.dumps(self.metadata, indent=2).decode().decode()}\n"
+            meta += f"**Metadata:** {json.dumps(self.metadata, indent=2)}\n"
         meta += "\n## Prompt\n\n"
         prompt_block = f"{self.prompt}\n\n"
         response_block = f"## Response\n\n{self.response}\n\n"
@@ -139,7 +139,7 @@ class ConversationDumper:
         """
         self.ensure_directory()
 
-        timestamp = datetime.now(tz=timezone.utc)
+        timestamp = datetime.now(tz=UTC)
         record = ConversationRecord(
             conversation_id=conversation_id,
             timestamp=timestamp,
@@ -191,7 +191,7 @@ class ConversationDumper:
         """
         self.ensure_directory()
 
-        timestamp = datetime.now(tz=timezone.utc)
+        timestamp = datetime.now(tz=UTC)
         record = ConversationRecord(
             conversation_id=conversation_id,
             timestamp=timestamp,
@@ -208,7 +208,7 @@ class ConversationDumper:
         dump_path = self.dumps_dir / filename
 
         try:
-            content = json.dumps(record.to_json().decode().decode(), indent=2, ensure_ascii=False)
+            content = json.dumps(record.to_json(), indent=2, ensure_ascii=False)
             dump_path.write_text(content, encoding="utf-8")
             logger.info("Conversation dump (JSON) written to %s", dump_path)
             return dump_path
@@ -278,7 +278,7 @@ class ConversationDumper:
 
             # Try JSON first
             if dump_path.suffix == ".json":
-                data = json.loads(content)
+                data = json_loads(content)
                 return ConversationRecord(
                     conversation_id=data["conversation_id"],
                     timestamp=datetime.fromisoformat(data["timestamp"]),
@@ -333,7 +333,7 @@ class ConversationDumper:
 
             return ConversationRecord(
                 conversation_id=conversation_id,
-                timestamp=datetime.fromtimestamp(dump_path.stat().st_mtime, tz=timezone.utc),
+                timestamp=datetime.fromtimestamp(dump_path.stat().st_mtime, tz=UTC),
                 model=model,
                 prompt="\n".join(prompt_lines).strip(),
                 response="\n".join(response_lines).strip(),

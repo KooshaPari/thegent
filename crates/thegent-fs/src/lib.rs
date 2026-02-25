@@ -23,8 +23,7 @@
 //! let files = glob_files("src/**/*.rs").unwrap();
 //! ```
 
-use std::fs::{self, File};
-use std::io;
+use std::fs::{self};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -38,10 +37,7 @@ use walkdir::WalkDir;
 mod pyo3_bindings {
     use super::*;
     use pyo3::prelude::*;
-<<<<<<< Updated upstream
     use pyo3::types::PyList;
-=======
->>>>>>> Stashed changes
 
     #[pyfunction]
     pub fn fs_copy_file(src: &str, dst: &str, preserve_metadata: bool) -> PyResult<u64> {
@@ -76,16 +72,22 @@ mod pyo3_bindings {
 
     #[pyfunction]
     pub fn fs_glob(pattern: &str) -> PyResult<Vec<String>> {
-        let matches = glob_files(pattern)
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?;
-        Ok(matches.into_iter().map(|p| p.to_string_lossy().to_string()).collect())
+        let matches =
+            glob_files(pattern).map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?;
+        Ok(matches
+            .into_iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect())
     }
 
     #[pyfunction]
     pub fn fs_list_dir(path: &str) -> PyResult<Vec<String>> {
         let entries = list_dir(Path::new(path))
             .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?;
-        Ok(entries.into_iter().map(|p| p.to_string_lossy().to_string()).collect())
+        Ok(entries
+            .into_iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect())
     }
 
     #[pyfunction]
@@ -125,8 +127,7 @@ pub fn copy_file(src: &Path, dst: &Path, _preserve_metadata: bool) -> Result<u64
     }
 
     // Copy the file
-    fs::copy(src, dst)
-        .with_context(|| format!("failed to copy {:?} to {:?}", src, dst))
+    fs::copy(src, dst).with_context(|| format!("failed to copy {:?} to {:?}", src, dst))
 }
 
 /// Copy a directory tree from src to dst.
@@ -139,10 +140,7 @@ pub fn copy_tree(src: &Path, dst: &Path, ignore: Option<&[&str]>) -> Result<u64>
 
     let mut total_bytes = 0u64;
 
-    for entry in WalkDir::new(src)
-        .into_iter()
-        .filter_map(|e| e.ok())
-    {
+    for entry in WalkDir::new(src).into_iter().filter_map(|e| e.ok()) {
         let src_path = entry.path();
         let dst_path = dst.join(src_path.strip_prefix(src).unwrap());
 
@@ -191,8 +189,7 @@ pub fn move_path(src: &Path, dst: &Path) -> Result<()> {
             .with_context(|| format!("failed to remove source directory {:?}", src))?;
     } else {
         copy_file(src, dst, true)?;
-        fs::remove_file(src)
-            .with_context(|| format!("failed to remove source file {:?}", src))?;
+        fs::remove_file(src).with_context(|| format!("failed to remove source file {:?}", src))?;
     }
 
     Ok(())
@@ -209,29 +206,24 @@ pub fn remove_path(path: &Path, recursive: bool) -> Result<()> {
             fs::remove_dir_all(path)
                 .with_context(|| format!("failed to remove directory {:?}", path))
         } else {
-            fs::remove_dir(path)
-                .with_context(|| format!("failed to remove directory {:?}", path))
+            fs::remove_dir(path).with_context(|| format!("failed to remove directory {:?}", path))
         }
     } else {
-        fs::remove_file(path)
-            .with_context(|| format!("failed to remove file {:?}", path))
+        fs::remove_file(path).with_context(|| format!("failed to remove file {:?}", path))
     }
 }
 
 /// Get the total size of a file or directory in bytes.
 pub fn get_size(path: &Path) -> Result<u64> {
     if path.is_file() {
-        let metadata = fs::metadata(path)
-            .with_context(|| format!("failed to get metadata for {:?}", path))?;
+        let metadata =
+            fs::metadata(path).with_context(|| format!("failed to get metadata for {:?}", path))?;
         return Ok(metadata.len());
     }
 
     if path.is_dir() {
         let mut total = 0u64;
-        for entry in WalkDir::new(path)
-            .into_iter()
-            .filter_map(|e| e.ok())
-        {
+        for entry in WalkDir::new(path).into_iter().filter_map(|e| e.ok()) {
             if entry.path().is_file() {
                 if let Ok(meta) = entry.metadata() {
                     total += meta.len();
@@ -241,7 +233,10 @@ pub fn get_size(path: &Path) -> Result<u64> {
         return Ok(total);
     }
 
-    Err(anyhow::anyhow!("path is neither file nor directory: {:?}", path))
+    Err(anyhow::anyhow!(
+        "path is neither file nor directory: {:?}",
+        path
+    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -254,8 +249,8 @@ pub fn get_size(path: &Path) -> Result<u64> {
 pub fn glob_files(pattern: &str) -> Result<Vec<PathBuf>> {
     let mut matches = Vec::new();
 
-    for entry in glob::glob(pattern)
-        .with_context(|| format!("invalid glob pattern: {}", pattern))?
+    for entry in
+        glob::glob(pattern).with_context(|| format!("invalid glob pattern: {}", pattern))?
     {
         match entry {
             Ok(path) => matches.push(path),
@@ -280,13 +275,15 @@ pub fn glob_files_in(pattern: &str, dir: &Path) -> Result<Vec<PathBuf>> {
 pub fn ensure_dir(path: &Path, mode: u32) -> Result<PathBuf> {
     if path.exists() {
         if !path.is_dir() {
-            return Err(anyhow::anyhow!("path exists but is not a directory: {:?}", path));
+            return Err(anyhow::anyhow!(
+                "path exists but is not a directory: {:?}",
+                path
+            ));
         }
         return Ok(path.to_path_buf());
     }
 
-    fs::create_dir_all(path)
-        .with_context(|| format!("failed to create directory {:?}", path))?;
+    fs::create_dir_all(path).with_context(|| format!("failed to create directory {:?}", path))?;
 
     #[cfg(unix)]
     {
@@ -299,13 +296,10 @@ pub fn ensure_dir(path: &Path, mode: u32) -> Result<PathBuf> {
 
 /// List immediate children of a directory.
 pub fn list_dir(path: &Path) -> Result<Vec<PathBuf>> {
-    let entries = fs::read_dir(path)
-        .with_context(|| format!("failed to read directory {:?}", path))?;
+    let entries =
+        fs::read_dir(path).with_context(|| format!("failed to read directory {:?}", path))?;
 
-    Ok(entries
-        .filter_map(|e| e.ok())
-        .map(|e| e.path())
-        .collect())
+    Ok(entries.filter_map(|e| e.ok()).map(|e| e.path()).collect())
 }
 
 // ---------------------------------------------------------------------------
@@ -315,6 +309,7 @@ pub fn list_dir(path: &Path) -> Result<Vec<PathBuf>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
     use std::io::Write;
     use tempfile::TempDir;
 

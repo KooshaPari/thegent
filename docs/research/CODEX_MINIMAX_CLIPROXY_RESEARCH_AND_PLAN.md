@@ -1,3 +1,4 @@
+<DONE>
 # Codex + CLIProxyAPIPlus: Research and Plan
 
 **Date**: 2026-02-16

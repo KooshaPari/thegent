@@ -79,7 +79,7 @@ class FlashAgent:
                 elapsed_s=elapsed_s,
                 agent_id=agent_id,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             elapsed_s = time.monotonic() - start
             return FlashAgentResult(
                 output="",

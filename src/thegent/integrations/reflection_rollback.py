@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import ClassVar
 from uuid import uuid4
@@ -43,7 +43,7 @@ class ReflectionRollbackStore:
         """
         entry = RollbackEntry(
             entry_id=entry_id,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             snapshot=snapshot.copy(),
         )
         self._entries[entry_id] = entry
@@ -139,7 +139,7 @@ class ReflectionRollbackManager:
         content = work_stream_path.read_text(encoding="utf-8")
         snapshot = RollbackSnapshot(
             snapshot_id=self._generate_snapshot_id(),
-            timestamp=datetime.now(tz=timezone.utc).isoformat(),
+            timestamp=datetime.now(tz=UTC).isoformat(),
             work_stream_content=content,
             cycle_id=cycle_id or "",
         )
@@ -150,7 +150,7 @@ class ReflectionRollbackManager:
             work_stream_content=snapshot.work_stream_content,
             cycle_id=snapshot.cycle_id,
         )
-        snapshot_file.write_text(json.dumps(ordered).decode().decode(), encoding="utf-8")
+        snapshot_file.write_text(json.dumps(ordered).decode(), encoding="utf-8")
         return snapshot
 
     def list_snapshots(self) -> list[RollbackSnapshot]:

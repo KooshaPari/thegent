@@ -1,3 +1,4 @@
+<DONE>
 ---
 title: Research Summary - 2025-2026 Agent Governance Landscape
 date: 2026-02-22

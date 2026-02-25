@@ -1,3 +1,4 @@
+<DONE>
 # Codex CLI Harness Overhaul — Full Design V2
 
 **Date:** 2026-02-20

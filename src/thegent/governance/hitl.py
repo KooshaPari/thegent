@@ -13,10 +13,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
+
 logger = logging.getLogger(__name__)
 
 
-class HITLDecision:
+class HITLDecision(SerializableMixin):
     """Result of a HITL gate evaluation (WL-019-A)."""
 
     def __init__(
@@ -32,15 +34,6 @@ class HITLDecision:
         self.policy = policy
         self.reason = reason
         self.checkpoint = checkpoint
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "required": self.required,
-            "run_id": self.run_id,
-            "policy": self.policy,
-            "reason": self.reason,
-            "checkpoint": self.checkpoint,
-        }
 
     def __repr__(self) -> str:
         return f"HITLDecision(required={self.required}, run_id={self.run_id!r}, policy={self.policy!r})"
@@ -79,7 +72,7 @@ class GovernanceEventLog:
         """Append a governance event to the log."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.events_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def list_pending_approvals(self, run_id: str | None = None) -> list[dict[str, Any]]:
         """Return all await_approval events that are not yet resolved."""
@@ -126,7 +119,7 @@ class GovernanceEventLog:
                     if reason is not None:
                         ev["resolution_reason"] = reason
                     updated = True
-                new_lines.append(json.dumps(ev).decode().decode())
+                new_lines.append(json.dumps(ev).decode())
             except json.JSONDecodeError:
                 new_lines.append(line)
         if updated:

@@ -1,3 +1,4 @@
+<DONE>
 # Governance WP Gaps — Expanded & BACKLOG Items
 
 > **Status**: Complete | **Date**: 2026-02-17

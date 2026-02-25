@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json as _json
 import orjson as json
 import re
 import time
@@ -73,7 +74,7 @@ class ConnectorMappingCache:
         """Persist cache to file."""
         self._cache_file.parent.mkdir(parents=True, exist_ok=True)
         data = {k: asdict(v) for k, v in self._entries.items()}
-        self._cache_file.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
+        self._cache_file.write_text(_json.dumps(data, indent=2), encoding="utf-8")
 
     def _make_key(self, connector: str, field_name: str) -> str:
         """Create a cache key from connector and field name."""

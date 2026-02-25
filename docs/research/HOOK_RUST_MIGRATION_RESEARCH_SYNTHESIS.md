@@ -1,3 +1,4 @@
+<DONE>
 # Hook Runtime Rust Migration: Research Synthesis
 
 **Purpose:** Synthesize local codebase, existing plans, and web research for the hook runtime Rust migration.

@@ -125,8 +125,8 @@ class MAIFArtifactGenerator:
         """Create a deterministic side-by-side HTML diff artifact."""
         import json
 
-        local_json = json.dumps(local_snapshot, indent=2, sort_keys=True).decode().decode().splitlines()
-        remote_json = json.dumps(remote_snapshot, indent=2, sort_keys=True).decode().decode().splitlines()
+        local_json = json.dumps(local_snapshot, indent=2, sort_keys=True).decode().splitlines()
+        remote_json = json.dumps(remote_snapshot, indent=2, sort_keys=True).decode().splitlines()
         return HtmlDiff(tabsize=2, wrapcolumn=120).make_file(
             fromlines=local_json,
             tolines=remote_json,

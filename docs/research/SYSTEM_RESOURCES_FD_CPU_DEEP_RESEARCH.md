@@ -1,3 +1,4 @@
+<DONE>
 # System Resources (FD, CPU, Threads, Ports) — Full-Depth Research & Plan
 
 > **Purpose**: Full-depth research and plan for FD (file descriptors), CPU, threads, ports, and other system resources relevant to multi-agent swarms.

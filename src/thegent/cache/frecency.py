@@ -21,7 +21,7 @@ import contextlib
 import math
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ _FRECENCY_PREFIX = "frecency:"
 
 def _utcnow() -> datetime:
     """Return current UTC datetime (extracted for testability)."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass

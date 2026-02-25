@@ -31,7 +31,7 @@ class InformationPersona:
         }
 
         # 1. JSON Serialize
-        raw_json = json.dumps(payload).decode().decode()
+        raw_json = json.dumps(payload).decode()
 
         # 2. Base64 encode for transport
         encoded = base64.b64encode(raw_json.encode()).decode()

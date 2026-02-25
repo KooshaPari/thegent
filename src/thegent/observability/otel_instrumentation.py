@@ -50,7 +50,7 @@ def instrument_genai_call(
     run_id: str | None = None,
     chunk_id: str | None = None,
     system: str | None = None,
-) -> Generator[trace.Span, None, None]:
+) -> Generator[trace.Span]:
     """Wrap an agent call with OTel spans using GenAI semantic conventions."""
     span_name = f"gen_ai.{agent_name}.call"
     attributes = {
@@ -84,7 +84,7 @@ def instrument_run_bg_status(
     lane: str | None = None,
     provider: str | None = None,
     model: str | None = None,
-) -> Generator[trace.Span, None, None]:
+) -> Generator[trace.Span]:
     """Wrap a background run status update with OTel spans."""
     span_name = "thegent.run_bg_status"
     attributes: dict[str, Any] = {THEGENT_SESSION_ID: session_id}

@@ -1,3 +1,4 @@
+<DONE>
 # Friction Points Log
 
 > **Purpose**: Continuous log of friction points identified during agent workflows

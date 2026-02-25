@@ -1,3 +1,4 @@
+<DONE>
 # System Setup & Workstation QOL: Windows 11 (Native & WSL2)
 
 **Date:** 2026-02-19

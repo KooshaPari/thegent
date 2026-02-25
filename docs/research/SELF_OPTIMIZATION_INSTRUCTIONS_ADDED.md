@@ -1,3 +1,4 @@
+<DONE>
 # Self-Optimization Instructions Added to CLAUDE.md
 
 **Date:** 2026-02-17

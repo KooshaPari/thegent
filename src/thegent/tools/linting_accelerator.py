@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import orjson as json
 import shutil
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -70,7 +70,7 @@ class LintingAccelerator:
             cmd.extend(["--config", str(config)])
         cmd.extend(str(p) for p in paths)
 
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=False)
+        proc = shim_run(cmd, capture_output=True, text=True, timeout=120, check=False)
         items = _parse_json_array(proc.stdout, "oxlint")
 
         results: list[LintResult] = []
@@ -116,7 +116,7 @@ class LintingAccelerator:
             cmd.extend(["--config", str(config)])
         cmd.extend(str(p) for p in paths)
 
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=False)
+        proc = shim_run(cmd, capture_output=True, text=True, timeout=120, check=False)
         items = _parse_json_array(proc.stdout, "eslint")
 
         results: list[LintResult] = []
@@ -149,7 +149,7 @@ class LintingAccelerator:
             cmd.extend(["--config", str(config)])
         cmd.extend(str(p) for p in paths)
 
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=False)
+        proc = shim_run(cmd, capture_output=True, text=True, timeout=120, check=False)
         items = _parse_json_array(proc.stdout, "ruff")
 
         results: list[LintResult] = []

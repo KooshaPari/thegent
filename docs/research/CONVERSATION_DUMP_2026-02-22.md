@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump 2026-02-22 — Handbooks, Research Engine, Role System, Session Dump Automation
 
 ## Session Goal

@@ -2,11 +2,12 @@ import orjson as json
 import logging
 import re
 import uuid
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Literal, TypedDict
 
+from thegent.integrations.base import SerializableMixin
 from thegent.skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class SessionSnapshotFailedEvent(TypedDict, total=False):
 
 
 @dataclass
-class SessionSnapshot:
+class SessionSnapshot(SerializableMixin):
     """Structured snapshot of recently observed session context."""
 
     snapshot_id: str
@@ -71,9 +72,6 @@ class SessionSnapshot:
     decisions: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
     sources: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict:
-        return asdict(self)
 
 
 def _dedupe_keep_order(items: list[str]) -> list[str]:
@@ -109,7 +107,7 @@ class SessionScraper:
 
     @staticmethod
     def _now_iso() -> str:
-        return datetime.now(tz=timezone.utc).isoformat()
+        return datetime.now(tz=UTC).isoformat()
 
     def _extract_structured_signals(
         self, content: str
@@ -240,7 +238,7 @@ class SessionScraper:
 
     def collect_snapshot(self, trigger: str = "manual") -> SessionSnapshot:
         """Collect a rich, structured session snapshot for memory/documentation pipelines."""
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         snapshot_id = now.strftime("snapshot-%Y%m%dT%H%M%S%fZ")
         normalized_trigger = self._normalize_trigger(trigger)
 
@@ -303,10 +301,10 @@ class SessionScraper:
         """
         try:
             snapshot = self.collect_snapshot(trigger=trigger)
-            target_dir = out_dir or self.default_snapshot_dir / datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+            target_dir = out_dir or self.default_snapshot_dir / datetime.now(tz=UTC).strftime("%Y-%m-%d")
             target_dir.mkdir(parents=True, exist_ok=True)
             path = target_dir / f"{snapshot.snapshot_id}.json"
-            path.write_text(json.dumps(snapshot.to_dict().decode().decode(), indent=2), encoding="utf-8")
+            path.write_text(json.dumps(snapshot.to_dict().decode(), indent=2), encoding="utf-8")
 
             # Emit created event if event_log specified
             if event_log:
@@ -330,7 +328,7 @@ class SessionScraper:
                 }
                 event_log.parent.mkdir(parents=True, exist_ok=True)
                 with open(event_log, "a") as f:
-                    f.write(json.dumps(created_event).decode().decode() + "\n")
+                    f.write(json.dumps(created_event).decode() + "\n")
 
             return path
         except Exception as e:
@@ -347,7 +345,7 @@ class SessionScraper:
                 }
                 event_log.parent.mkdir(parents=True, exist_ok=True)
                 with open(event_log, "a") as f:
-                    f.write(json.dumps(failed_event).decode().decode() + "\n")
+                    f.write(json.dumps(failed_event).decode() + "\n")
             raise
 
     def list_snapshots(
@@ -534,7 +532,7 @@ class SessionScraper:
             "trigger_counts": dict(sorted(trigger_counts.items())),
             "tag_counts": dict(sorted(tag_counts.items(), key=lambda kv: (-kv[1], kv[0]))),
             "latest_captured_at": latest_captured_at,
-            "generated_at": datetime.now(tz=timezone.utc).isoformat(),
+            "generated_at": datetime.now(tz=UTC).isoformat(),
         }
 
     def persist_snapshot_index(
@@ -544,7 +542,7 @@ class SessionScraper:
         summary = self.summarize_snapshots(limit=limit, root_dir=root_dir)
         target = out_path or (self.default_snapshot_dir / "snapshot-index.json")
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(summary, indent=2).decode().decode(), encoding="utf-8")
+        target.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         return target
 
     @staticmethod
@@ -596,7 +594,7 @@ class SessionScraper:
         summary = self.summarize_snapshots_by_day(limit=limit, root_dir=root_dir)
         target = out_path or (self.default_snapshot_dir / "snapshot-daily-index.json")
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(summary, indent=2).decode().decode(), encoding="utf-8")
+        target.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         return target
 
     @staticmethod

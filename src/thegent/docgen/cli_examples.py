@@ -1,6 +1,6 @@
 """Auto-generate CLI examples."""
 
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from typing import Any
 
 
@@ -22,7 +22,7 @@ class CLIExamplesGenerator:
             List of command names
         """
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [self.command, "--help"],
                 capture_output=True,
                 text=True,

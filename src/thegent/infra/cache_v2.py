@@ -3,7 +3,6 @@ Includes Singleflight, inotify cache invalidation, heat-based LRU, and multi-tie
 """
 
 import collections
-import contextlib
 import logging
 import threading
 import time
@@ -15,11 +14,11 @@ from typing import Any
 from cachetools import LRUCache, TTLCache
 
 try:
-    import diskcache
+    from PersistDict import PersistDict
 
-    DISKCACHE_AVAILABLE = True
+    PERSISTDICT_AVAILABLE = True
 except ImportError:
-    DISKCACHE_AVAILABLE = False
+    PERSISTDICT_AVAILABLE = False
 
 try:
     import watchdog.events
@@ -165,7 +164,7 @@ class CrossProcessSingleflight:
         # 3. We have the lock, execute func
         try:
             result = func()
-            result_file.write_text(json.dumps({"result": result, "timestamp": time.time().decode().decode()}))
+            result_file.write_text(json.dumps({"result": result, "timestamp": time.time().decode()}))
             return result
         finally:
             if lock_file.exists():
@@ -266,7 +265,7 @@ class MultiTierCache:
     Tiers:
     1. L1: cachetools TTLCache (fastest, automatic TTL, smallest)
     2. L2: cachetools LRUCache (medium-term, configurable size)
-    3. L3: diskcache (persistent, survives restarts)
+    3. L3: PersistDict (persistent, survives restarts, safe serialization)
     """
 
     def __init__(
@@ -280,8 +279,15 @@ class MultiTierCache:
         self.l1_size = l1_size
         self.l2: LRUCache = LRUCache(maxsize=l2_size)
         self.l2_size = l2_size
-        if l3_path and DISKCACHE_AVAILABLE:
-            self.l3: "diskcache.Cache | None" = diskcache.Cache(l3_path)
+        # Use PersistDict for L3 (safe serialization via LMDB)
+        self._l3_type: str = "none"
+        if l3_path and PERSISTDICT_AVAILABLE:
+            self.l3: "PersistDict | None" = PersistDict(
+                database_path=l3_path,
+                expiration_days=int(default_ttl / 86400) if default_ttl else 7,
+                background_thread=False,
+            )
+            self._l3_type = "persistdict"
         else:
             self.l3 = None
         self.default_ttl = default_ttl
@@ -294,34 +300,65 @@ class MultiTierCache:
             self.l1[key] = value
             return value
         if self.l3:
-            value = self.l3.get(key)
+            value = self._get_l3(key)
             if value is not None:
                 self.l2[key] = value
                 self.l1[key] = value
                 return value
         return None
 
+    def _get_l3(self, key: str) -> Any | None:
+        """Get from L3 cache (PersistDict)."""
+        try:
+            return self.l3[key]
+        except KeyError:
+            return None
+        except Exception:
+            return None
+
+    def _set_l3(self, key: str, value: Any, ttl: float | None) -> None:
+        """Set L3 cache (PersistDict)."""
+        try:
+            self.l3[key] = value
+        except Exception:
+            pass
+
+    def _delete_l3(self, key: str) -> None:
+        """Delete from L3 cache (PersistDict)."""
+        try:
+            self.l3.pop(key, None)
+        except Exception:
+            pass
+
+    def _clear_l3(self) -> None:
+        """Clear L3 cache (PersistDict)."""
+        try:
+            self.l3.clear()
+        except Exception:
+            pass
+
+    def _len_l3(self) -> int:
+        """Get L3 cache size (PersistDict)."""
+        try:
+            return len(self.l3)
+        except Exception:
+            return 0
+
     def set(self, key: str, value: Any, ttl: float | None = None) -> None:
         ttl = ttl or self.default_ttl
         self.l1[key] = value
         self.l2[key] = value
-        if self.l3:
-            with contextlib.suppress(Exception):
-                self.l3.set(key, value, expire=ttl)
+        self._set_l3(key, value, ttl)
 
     def delete(self, key: str) -> None:
         self.l1.pop(key, None)
         self.l2.pop(key, None)
-        if self.l3:
-            with contextlib.suppress(Exception):
-                self.l3.delete(key)
+        self._delete_l3(key)
 
     def clear(self) -> None:
         self.l1.clear()
         self.l2.clear()
-        if self.l3:
-            with contextlib.suppress(Exception):
-                self.l3.clear()
+        self._clear_l3()
 
     def stats(self) -> dict[str, Any]:
         stats: dict[str, Any] = {
@@ -332,8 +369,8 @@ class MultiTierCache:
         }
         if self.l3:
             try:
-                stats["l3_size"] = sum(1 for _ in self.l3.iterkeys()) if hasattr(self.l3, "iterkeys") else 0
-                stats["l3_volume"] = self.l3.volume()
+                stats["l3_size"] = self._len_l3()
+                stats["l3_volume"] = "N/A"  # PersistDict doesn't have volume()
             except Exception:
                 stats["l3_size"] = 0
                 stats["l3_volume"] = 0

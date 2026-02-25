@@ -412,7 +412,7 @@ def register_tool_pattern_tools(mcp: Any) -> None:
         }
         _log.info("thegent_delete_session: session_id=%s deleted", session_id)
         return ToolResult(
-            content=json.dumps(payload).decode().decode(),
+            content=json.dumps(payload),
             structured_content=payload,
             meta={},
         )
@@ -461,7 +461,7 @@ def register_tool_pattern_tools(mcp: Any) -> None:
         }
         _log.info("thegent_bulk_operation: processed %d/%d items", len(results), len(items))
         return ToolResult(
-            content=json.dumps(payload).decode().decode(),
+            content=json.dumps(payload),
             structured_content=payload,
             meta={},
         )

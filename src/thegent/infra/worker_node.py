@@ -99,7 +99,7 @@ async def worker_loop(mesh_root: Path, runtime_name: str):
 
                 except Exception as e:
                     result_path = mesh_root / "results" / f"{task_id}.json"
-                    result_path.write_text(json.dumps({"status": "error", "error": str(e).decode().decode(), "runtime": runtime_name}))
+                    result_path.write_text(json.dumps({"status": "error", "error": str(e).decode(), "runtime": runtime_name}))
 
         # 3. Sleep with low-latency responsiveness
         await asyncio.sleep(0.1)

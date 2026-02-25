@@ -1,3 +1,4 @@
+<DONE>
 # Phase 3 Adopt Lane 2 Playbook
 
 | repo | why_adopt_now | minimum_integration_surface_for_thegent_or_cliproxy | governance_gates_required (security/license/ci/release) | 2-hour_spike_plan | acceptance_checks | rollback_trigger_and_path | owner_recommendation |

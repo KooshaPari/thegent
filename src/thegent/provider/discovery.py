@@ -6,10 +6,10 @@ Functions:
 - list_models_with_scores
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
-def discover_models(provider: Optional[str] = None) -> List[Dict[str, Any]]:
+def discover_models(provider: Optional[str] = None) -> list[dict[str, Any]]:
     """Discover available models from provider."""
     return []
 
@@ -17,14 +17,14 @@ def discover_models(provider: Optional[str] = None) -> List[Dict[str, Any]]:
 def get_model_modalities(
     provider: Optional[str] = None,
     model: Optional[str] = None,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Get model modalities."""
     return {}
 
 
 def calculate_composite_score(
     model: str,
-    criteria: Dict[str, Any],
+    criteria: dict[str, Any],
 ) -> float:
     """Calculate composite score for a model."""
     return 0.0
@@ -32,7 +32,7 @@ def calculate_composite_score(
 
 def list_models_with_scores(
     provider: Optional[str] = None,
-    criteria: Optional[Dict[str, Any]] = None,
-) -> List[Dict[str, Any]]:
+    criteria: Optional[dict[str, Any]] = None,
+) -> list[dict[str, Any]]:
     """List models with scores."""
     return []

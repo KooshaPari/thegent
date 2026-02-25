@@ -1,3 +1,4 @@
+<DONE>
 # Integration Items Found - 2026-02-17
 
 **Status**: Checking for items needing integration into thegent system

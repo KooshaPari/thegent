@@ -22,7 +22,8 @@ pub fn lock_age(repo_root: &Path) -> Result<u64, std::io::Error> {
     let lock_path = repo_root.join(".git/index.lock");
     let metadata = std::fs::metadata(&lock_path)?;
     let modified = metadata.modified()?;
-    let elapsed = SystemTime::now().duration_since(modified)
+    let elapsed = SystemTime::now()
+        .duration_since(modified)
         .unwrap_or_default();
     Ok(elapsed.as_secs())
 }
@@ -47,9 +48,7 @@ pub fn acquire_lock(repo_root: &Path) -> bool {
         }
 
         if retry_count >= MAX_RETRIES {
-            eprintln!(
-                "GIT-MUTEX: Max retries reached waiting for git lock. Failing."
-            );
+            eprintln!("GIT-MUTEX: Max retries reached waiting for git lock. Failing.");
             return false;
         }
 

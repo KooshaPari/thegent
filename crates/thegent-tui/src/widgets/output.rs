@@ -139,7 +139,12 @@ mod tests {
     }
 
     fn ev(kind: MouseEventKind, col: u16, row: u16) -> MouseEvent {
-        MouseEvent { kind, column: col, row, modifiers: KeyModifiers::NONE }
+        MouseEvent {
+            kind,
+            column: col,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }
     }
 
     #[test]
@@ -202,7 +207,12 @@ mod tests {
     fn test_handle_mouse_scroll_down_in_area() {
         let mut w = make_widget();
         w.scroll_state.set_page_size(10);
-        let area = Rect { x: 0, y: 0, width: 80, height: 24 };
+        let area = Rect {
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 24,
+        };
         let consumed = w.handle_mouse(ev(MouseEventKind::ScrollDown, 10, 10), area);
         assert!(consumed);
         assert_eq!(w.scroll_state.offset(), 1);
@@ -212,7 +222,12 @@ mod tests {
     fn test_handle_mouse_scroll_up_in_area() {
         let mut w = make_widget();
         w.scroll_state.set_page_size(10);
-        let area = Rect { x: 0, y: 0, width: 80, height: 24 };
+        let area = Rect {
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 24,
+        };
         w.scroll_by(5);
         let consumed = w.handle_mouse(ev(MouseEventKind::ScrollUp, 10, 10), area);
         assert!(consumed);
@@ -223,7 +238,12 @@ mod tests {
     fn test_handle_mouse_outside_not_consumed() {
         let mut w = make_widget();
         w.scroll_state.set_page_size(10);
-        let area = Rect { x: 0, y: 0, width: 40, height: 24 };
+        let area = Rect {
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 24,
+        };
         let consumed = w.handle_mouse(ev(MouseEventKind::ScrollDown, 79, 10), area);
         assert!(!consumed);
     }

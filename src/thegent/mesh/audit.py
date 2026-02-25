@@ -2,6 +2,7 @@
 
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 
@@ -20,13 +21,13 @@ class AuditManager:
             self.shadow_root.mkdir(parents=True, exist_ok=True)
             # Initialize as a git repo or clone current
             try:
-                subprocess.run(
+                shim_run(
                     ["git", "clone", "--shared", str(self.project_root), str(self.shadow_root)],
                     check=True,
                     capture_output=True,
                 )
             except subprocess.CalledProcessError:
-                subprocess.run(["git", "init"], cwd=self.shadow_root, check=True)
+                shim_run(["git", "init"], cwd=self.shadow_root, check=True)
         return self.shadow_root
 
     def record_action(self, agent_id: str, action: str, details: str):
@@ -47,8 +48,8 @@ class AuditManager:
             shutil.copy2(file_path, dest)
             # Commit to shadow repo for version history
             try:
-                subprocess.run(["git", "add", str(rel_path)], cwd=self.shadow_root, check=True)
-                subprocess.run(["git", "commit", "-m", f"Audit backup of {rel_path}"], cwd=self.shadow_root, check=True)
+                shim_run(["git", "add", str(rel_path)], cwd=self.shadow_root, check=True)
+                shim_run(["git", "commit", "-m", f"Audit backup of {rel_path}"], cwd=self.shadow_root, check=True)
             except subprocess.CalledProcessError:
                 pass
 

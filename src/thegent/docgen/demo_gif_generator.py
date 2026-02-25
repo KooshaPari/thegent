@@ -1,7 +1,7 @@
 """Auto-generate demo GIFs from scripts."""
 
 import logging
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class DemoGIFGenerator:
         try:
             # VHS command: vhs script.tape -o output.gif
             cmd = [self.vhs_path, str(script_path), "-o", str(output_path)]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)
+            result = shim_run(cmd, capture_output=True, text=True, timeout=60, check=False)
 
             if result.returncode == 0:
                 logger.info(f"Generated GIF: {output_path}")

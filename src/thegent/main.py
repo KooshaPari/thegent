@@ -57,12 +57,11 @@ def roid_cmd(
 ) -> None:
     """Factory Droid-backed interactive harness."""
     typer.echo("Launching roid (Factory Droid harness)...")
-    import subprocess
 
     args = ["thegent", "run", "--harness", "droid"]
     if prompt:
         args.append(prompt)
-    proc = subprocess.run(args, check=False)
+    proc = shim_run(args, check=False)
     raise typer.Exit(proc.returncode)
 
 

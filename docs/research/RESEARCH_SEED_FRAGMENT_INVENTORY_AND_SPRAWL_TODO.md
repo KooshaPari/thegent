@@ -1,3 +1,4 @@
+<DONE>
 # Research, Seed & Fragment Inventory — Sprawl Todo & Unified Work Stream
 
 **Purpose:** Find and catalog all local research/seed/fragmented docs; todo: first individually sprawl each to complete breadth/depth (optimize, robustify, practical+intuitive, holistic+harmonious, maximal/optimal); then place into unified work stream; convert all md docs with thegent flash agents as needed.

@@ -23,6 +23,7 @@ import os
 import platform
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ def _capture_via_tmux(pane_id: str, n: int) -> CaptureResult | None:
 
     cmd = ["tmux", "capture-pane", "-p", "-t", pane_id, "-S", f"-{n}"]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10, check=False)
+        result = shim_run(cmd, capture_output=True, text=True, timeout=10, check=False)
         if result.returncode != 0:
             logger.debug(
                 "tmux capture-pane exited %d for pane %r: %s",

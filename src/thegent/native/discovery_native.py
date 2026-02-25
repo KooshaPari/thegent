@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 from typing import Any
@@ -46,7 +47,7 @@ def _fallback_sessions(*, include_meta: bool = False) -> list[dict[str, Any]] | 
         "session_count": 0,
     }
     try:
-        proc = subprocess.run(
+        proc = shim_run(
             ["tmux", "list-sessions", "-F", fmt],
             capture_output=True,
             text=True,
@@ -278,7 +279,7 @@ class DiscoveryClient:
             self._last_run_diagnostics = None
             return None
         try:
-            proc = subprocess.run(
+            proc = shim_run(
                 [str(self.binary_path), *args],
                 capture_output=True,
                 text=True,

@@ -395,7 +395,7 @@ def seeds_scan(
         seeds = scanner.filter_by_type(seeds, type_list)
 
     if output_json:
-        sys.stdout.write(json.dumps([s.to_dict().decode().decode() for s in seeds], indent=2) + "\n")
+        sys.stdout.write(json.dumps([s.to_dict().decode() for s in seeds], indent=2) + "\n")
         return
 
     if not seeds:
