@@ -1111,7 +1111,6 @@ class TestSessionContractHealthReportCmdImpl:
     @patch("thegent.cli._default_owner_tag", return_value="ci@host")
     @patch("thegent.cli.ThegentSettings")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="_write_report_export not called in implementation")
     def test_with_export_output(self, mock_console, mock_settings, mock_owner, tmp_path) -> None:
         # @trace FR-CLI-358
         mock_settings.return_value.output_format = "rich"
@@ -1120,8 +1119,7 @@ class TestSessionContractHealthReportCmdImpl:
 
         with (
             patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result),
-            patch("thegent.cli._write_report_export", return_value="json") as mock_write,
-            patch("thegent.cli._infer_export_format", return_value="json"),
+            patch("thegent.cli.commands.session_contract_cmds._write_report_export", return_value="json") as mock_write,
         ):
             from thegent.cli import session_contract_health_report_cmd
 

@@ -184,6 +184,11 @@ _patchable_names_list = [
     "snapshot_daily_totals_cmd",
     "dump_categories_cmd",
     "data_protection_cmd",
+    "workstream_stats_cmd",
+    "workstream_dashboard_cmd",
+    "workstream_launch_cmd",
+    "workstream_dependencies_cmd",
+    "domain_map_cmd",
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
@@ -233,4 +238,9 @@ __all__ = [
     "snapshot_daily_totals_cmd",
     "dump_categories_cmd",
     "data_protection_cmd",
+    "workstream_stats_cmd",
+    "workstream_dashboard_cmd",
+    "workstream_launch_cmd",
+    "workstream_dependencies_cmd",
+    "domain_map_cmd",
 ]
