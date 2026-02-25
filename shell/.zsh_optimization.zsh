@@ -212,6 +212,13 @@ if [[ -n "${PS1:-}" && -z "${AGENT_ID:-}" ]]; then
   # direnv REMOVED - fully migrated to mise (direnv was 3-4s slower)
   # mise handles all environment management now
 
+  # zoxide (smart cd replacement) - lazy load with caching
+  # Save 50-100ms by caching the init output
+  if _thegent_has_tool zoxide; then
+    # Create lazy wrapper for zoxide commands
+    _thegent_lazy_load zoxide "zoxide" "z zi" "init" "zsh"
+  fi
+
   # Version managers (lazy load - expensive, often unused)
   # These are loaded on first command use, not at startup
   # NOTE: mise (formerly rtx) is now the primary version manager (see ~/.zshenv)

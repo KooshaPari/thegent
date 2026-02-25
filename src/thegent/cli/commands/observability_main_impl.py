@@ -38,28 +38,17 @@ def observe_summary_impl(
     top_escalations: int = 10,
     trend_samples: int = 0,
 ) -> dict:
-    """FR-X08: Unified observability summary."""
-    # Return stub data - actual implementation would pull from metrics
-    return {
-        "kpis": {
-            "total_events": 100,
-            "fallback_rate": 0.05,
-            "success_rate": 0.95,
-            "avg_confidence": 0.9,
-        },
-        "drift": {
-            "structural_rate_pct": 1.0,
-            "structural_budget_pct": structural_budget_pct,
-            "semantic_rate_pct": 2.0,
-            "semantic_budget_pct": semantic_budget_pct,
-            "within_budget": True,
-            "issues": [],
-        },
-        "escalation": {
-            "backlog_count": 0,
-            "past_sla_count": 0,
-        },
-    }
+    """FR-X08: Unified observability summary (lazy import from trends impl)."""
+    from thegent.cli.commands.observability_trends_impl import observe_summary_impl as _impl  # pyright: ignore[reportMissingImports]
+    return _impl(
+        limit=limit,
+        drift_window=drift_window,
+        structural_budget_pct=structural_budget_pct,
+        semantic_budget_pct=semantic_budget_pct,
+        provider=provider,
+        top_escalations=top_escalations,
+        trend_samples=trend_samples,
+    )
 
 __all__ = [
     "_extract_agent_from_line",

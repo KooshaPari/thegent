@@ -1,5 +1,6 @@
 # tests/agent_roles/test_spec_renderer.py
 # @trace FR-AR-001
+import pytest
 from pathlib import Path
 
 

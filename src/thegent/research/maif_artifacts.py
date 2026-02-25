@@ -54,15 +54,3 @@ class MAIFArtifact(SerializableMixin):
         content = str(self.action) + self.timestamp
         expected = hashlib.sha256(content.encode()).hexdigest()
         return self.signature == expected
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary.
-
-        Returns:
-            Dictionary representation
-        """
-        return {
-            "action": self.action,
-            "signature": self.signature,
-            "timestamp": self.timestamp,
-        }

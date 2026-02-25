@@ -123,10 +123,12 @@ def dag_add_cmd(
         raise typer.Exit(1)
     assert dag_path is not None
     tid = task_id.strip()
-    if err := _validate_task_id(tid):
+    err = _validate_task_id(tid)
+    if err:
         console.print(f"[red]{err}[/red]")
         raise typer.Exit(2)
-    if err := _validate_agent((agent or "").strip()):
+    err = _validate_agent((agent or "").strip())
+    if err:
         console.print(f"[red]{err}[/red]")
         raise typer.Exit(2)
     if not (prompt or "").strip():
@@ -187,6 +189,7 @@ def dag_remove_cmd(task_id: str, cd: Path | None = None) -> None:
 
 def dag_cancel_cmd(task_id: str, cd: Path | None = None) -> None:
     """Cancel a task (set status to cancelled)."""
+    from thegent.cli.commands.plan_dag_cmds import dag_update_cmd
     dag_update_cmd(task_id=task_id, cd=cd, status="cancelled")
     console.print(f"[green]Cancelled task {task_id}[/green]")
 
@@ -233,9 +236,11 @@ def dag_update_cmd(
     if status is not None and status.strip().lower() not in VALID_STATUSES:
         console.print(f"[red]Invalid status '{status}'; must be one of: {', '.join(sorted(VALID_STATUSES))}[/red]")
         raise typer.Exit(2)
-    if agent is not None and (err := _validate_agent(agent.strip())):
-        console.print(f"[red]{err}[/red]")
-        raise typer.Exit(2)
+    if agent is not None:
+        err = _validate_agent(agent.strip())
+        if err:
+            console.print(f"[red]{err}[/red]")
+            raise typer.Exit(2)
     norm_depends_on: str | None = None
     if depends_on is not None:
         existing_ids = {(t.get("id") or "").strip() for t in doc.tasks}
@@ -340,6 +345,7 @@ def dag_run_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
+    from thegent.cli.commands._cli_shared import dag_run_impl
     res = dag_run_impl(
         cd=cd,
         dry_run=dry_run,
@@ -373,6 +379,7 @@ def dag_run_cmd(
 def dag_sync_cmd(cd: Path | None = None, auto_run_next: bool = False) -> None:
     """For tasks with session_id and status=running, if pid not running set status=done or failed from rc.
     If --auto-run-next, spawn next ready tasks after sync."""
+    from thegent.cli.commands._cli_shared import dag_sync_impl
     res = dag_sync_impl(cd=cd, auto_run_next=auto_run_next)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")
@@ -470,6 +477,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
 
 def dag_recover_cmd(cd: Path | None = None, action: str = "retry-failed") -> None:
     """Perform recovery playbook actions on the DAG."""
+    from thegent.cli.commands._cli_shared import dag_recover_impl
     res = dag_recover_impl(cd=cd, action=action)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")

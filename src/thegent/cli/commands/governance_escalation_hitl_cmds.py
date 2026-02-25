@@ -16,6 +16,7 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
+from thegent.cli.commands import _cli_shared
 from thegent.cli.commands._cli_shared import (
     _normalize_output_format,
     _resolve_run_id,
@@ -107,7 +108,7 @@ def sweep_cmd(
         out = {k: v for k, v in result.items() if k != "audit" or v is not None}
         if result.get("audit"):
             out["audit"] = result["audit"]
-        sys.stdout.write(json.dumps(out) + "\n")
+        sys.stdout.write(json.dumps(out).decode() + "\n")
         if not result["pass"]:
             raise typer.Exit(1)
         return
@@ -134,13 +135,11 @@ def sweep_cmd(
 def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved") -> None:
     """Mark an escalation item as resolved (WP-3008)."""
     rid = _resolve_run_id(run_id)
-    from thegent.cli.commands.impl import escalate_resolve_impl
-
-    ok = escalate_resolve_impl(run_id=rid, resolution=resolution)
+    ok = _cli_shared.escalate_resolve_impl(run_id=rid, resolution=resolution)
     if ok:
-        console.print(f"[green]Escalation {rid} Resolved as '{resolution}'.[/green]")
+        console.print(f"[green]Escalation {rid} resolved as '{resolution}'.[/green]")
     else:
-        console.print(f"[red]No pending escalation for {rid}.[/red]")
+        console.print(f"[red]Escalation {rid} has no pending item.[/red]")
 
 
 def escalate_approve_cmd(run_id: str | None = None) -> None:

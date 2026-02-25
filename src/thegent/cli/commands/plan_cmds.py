@@ -25,6 +25,14 @@ from thegent.cli.commands.plan_dag_cmds import (
     dag_validate_cmd,
 )
 
+from thegent.cli.commands.team_snapshot_cmds import (
+    snapshot_daily_totals_cmd,
+)
+
+from thegent.cli.commands.team_dump_cmds import (
+    dump_categories_cmd,
+)
+
 from thegent.cli.commands.plan_workstream_cmds import (
     closure_pack_cmd,
     plan_analyze_cmd,
@@ -60,6 +68,8 @@ __all__ = [
     "dag_sync_cmd",
     "dag_update_cmd",
     "dag_validate_cmd",
+    "snapshot_daily_totals_cmd",
+    "dump_categories_cmd",
     "plan_analyze_cmd",
     "plan_claim_cmd",
     "plan_complete_cmd",

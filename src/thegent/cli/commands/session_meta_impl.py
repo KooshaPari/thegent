@@ -61,7 +61,7 @@ def _read_session_meta(meta_path: Path) -> dict[str, Any]:
 
 
 def _save_session_meta(meta_path: Path, payload: dict[str, Any]) -> None:
-    meta_path.write_text(json.dumps(payload, indent=2, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
+    meta_path.write_text(json.dumps(payload, option=json.OPT_INDENT_2 | json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
 
 
 def _is_non_empty_contract_string(value: Any) -> bool:
@@ -125,13 +125,13 @@ def _state_ledger_path(settings: ThegentSettings) -> Path:
 
 
 def _state_payload_hash(payload: dict[str, Any]) -> str:
-    encoded = json.dumps(payload, option=json.OPT_SORT_KEYS, separators=(",", ":").decode()).encode("utf-8")
+    encoded = json.dumps(payload, option=json.OPT_SORT_KEYS)
     return sha256(encoded).hexdigest()
 
 
 def _write_state_with_conflict_branch(path: Path, payload: dict[str, Any], *, branch_label: str) -> tuple[bool, str]:
     """Write payload and branch conflicting versions without deleting prior artifacts."""
-    payload_text = json.dumps(payload, indent=2, option=json.OPT_SORT_KEYS).decode() + "\n"
+    payload_text = json.dumps(payload, option=json.OPT_INDENT_2 | json.OPT_SORT_KEYS).decode() + "\n"
     payload_hash = _state_payload_hash(payload)
     conflict_detected = False
 
@@ -148,7 +148,7 @@ def _write_state_with_conflict_branch(path: Path, payload: dict[str, Any], *, br
                 stem = path.stem
                 prev_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.prev.json"
                 next_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.next.json"
-                prev_path.write_text(json.dumps(existing, indent=2, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
+                prev_path.write_text(json.dumps(existing, option=json.OPT_INDENT_2 | json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
                 next_path.write_text(payload_text, encoding="utf-8")
 
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -2,6 +2,14 @@
 # Comprehensive, optimal shell configuration (canonical)
 # Install target for per-user shell customization.
 
+# ============================================================================
+# INSTANT PROMPT - Must be loaded FIRST, before anything else
+# Provides p10k-like instant prompt for Starship (shows prompt immediately)
+# ============================================================================
+if [[ -f "$HOME/.zsh_instant_prompt.zsh" ]]; then
+  source "$HOME/.zsh_instant_prompt.zsh"
+fi
+
 # Early exit for non-interactive shells
 [[ -z "${PS1:-}" ]] && return
 
@@ -79,11 +87,21 @@ if [[ -n "${PS1:-}" ]]; then
         # Remove this hook after first run
         add-zsh-hook -d precmd _load_starship_deferred
 
-        # Load starship synchronously (but after prompt is shown)
+        # Load starship with eval caching (saves 50-100ms per shell)
         if command -v starship >/dev/null 2>&1; then
-            eval "$(starship init zsh 2>/dev/null)"
+            # Use eval cache if available, otherwise fall back to direct eval
+            if typeset -f _thegent_evalcache >/dev/null 2>&1; then
+                _thegent_evalcache starship init zsh 2>/dev/null
+            else
+                eval "$(starship init zsh 2>/dev/null)"
+            fi
         elif [[ -f "${HOME}/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme" ]]; then
             source "${HOME}/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme" 2>/dev/null
+        fi
+
+        # Finalize instant prompt (restore FDs, cache for next session)
+        if typeset -f _thegent_instant_prompt_finalize >/dev/null 2>&1; then
+            _thegent_instant_prompt_finalize
         fi
     }
     add-zsh-hook precmd _load_starship_deferred

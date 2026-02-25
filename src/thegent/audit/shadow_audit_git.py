@@ -11,15 +11,17 @@ FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 """
 
 from __future__ import annotations
+from thegent.infra.shim_subprocess import run as shim_run
 
 import asyncio
 import hashlib
-import orjson as json
 import logging
+import orjson as json
 import os
 import re
 import sqlite3
 import subprocess
+import uuid
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
@@ -29,7 +31,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from thegent.audit.constants import DEFAULT_DB_PATH as _DEFAULT_DB_PATH
+from thegent.audit.constants import DEFAULT_DB_PATH
 from thegent.audit.secret_scrubbing import SECRET_PATTERNS, scrub_secrets as _scrub_secrets
 
 log = logging.getLogger(__name__)
@@ -39,7 +41,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 # Re-export for backwards compatibility
-_DEFAULT_DB_PATH = DEFAULT_DB_PATH
+# Fixed - removed duplicate
 
 
 # ---------------------------------------------------------------------------
@@ -188,9 +190,8 @@ class ShadowAuditGit:
         entries = self.get_audit_log(project_id)
         dest = Path(path)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(
-            json.dumps([e.to_dict().decode() for e in entries], indent=2),
-            encoding="utf-8",
+        dest.write_bytes(
+            json.dumps([e.to_dict() for e in entries])
         )
         log.info("shadow_audit_git.export_audit project=%s path=%s", project_id, dest)
 

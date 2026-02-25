@@ -1,0 +1,3 @@
+path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-hook-native
+branch=codex/hook-native-prepush-fix
+head=0e33b22192e175099c40c05a28c56dc335f107a1

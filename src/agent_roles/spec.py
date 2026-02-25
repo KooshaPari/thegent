@@ -40,5 +40,5 @@ class AgentRoleSpec(BaseModel):
             yaml.YAMLError: If YAML is invalid
             ValueError: If required fields are missing or invalid
         """
-        data = yaml.safe_load(Path(path).read_text())
+        data = yaml_load(Path(path).read_text())
         return cls(**data)

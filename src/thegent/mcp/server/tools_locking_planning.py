@@ -65,7 +65,7 @@ def thegent_verify_context_impl(
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
 
     return ToolResult(
-        content=json.dumps(res, indent=2),
+        content=json.dumps(res).decode(),
         structured_content=res,
         meta={"execution_time_ms": elapsed_ms},
     )

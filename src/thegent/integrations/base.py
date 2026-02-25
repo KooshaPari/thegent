@@ -162,12 +162,501 @@ class SerializableMixin:
     
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SerializableMixin":
-        """Create instance from dictionary."""
-        if hasattr(cls, '__dataclass_fields__'):
-            field_names = {f.name for f in fields(cls)}
-            filtered = {k: v for k, v in data.items() if k in field_names}
-            return cls(**filtered)
-        return cls(**data)
+        """Create instance from dictionary with type-aware deserialization.
+        
+        Automatically converts:
+        - ISO strings → datetime (when field type is datetime)
+        - Strings → Path (when field type is Path)
+        - Values → Enum (when field type is Enum)
+        - Dicts → nested SerializableMixin (when field type is SerializableMixin subclass)
+        """
+        from datetime import datetime
+        from enum import Enum
+        from pathlib import Path
+        from typing import get_origin, get_args
+        import inspect
+        
+        if not hasattr(cls, '__dataclass_fields__'):
+            # Non-dataclass fallback
+            return cls(**data)
+        
+        # Get field types
+        converted = {}
+        field_names = {f.name for f in fields(cls)}
+        
+        for f in fields(cls):
+            field_name = f.name
+            if field_name not in data:
+                continue
+            
+            val = data[field_name]
+            field_type = f.type
+            
+            # Resolve string type annotations
+            if isinstance(field_type, str):
+                # Try to resolve from module globals
+                frame = inspect.currentframe()
+                try:
+                    # Walk up frames to find the class module
+                    for _ in range(5):
+                        if frame is None:
+                            break
+                        if frame.f_globals.get('__name__') == cls.__module__:
+                            field_type = frame.f_globals.get(field_type, field_type)
+                            break
+                        frame = frame.f_back
+                finally:
+                    del frame
+            
+            # Deserialize based on type
+            converted[field_name] = cls._deserialize_value(val, field_type)
+        
+        return cls(**converted)
+    
+    @classmethod
+    def _deserialize_value(cls, val: Any, target_type: Any) -> Any:
+        """Deserialize a value to the target type."""
+        from datetime import datetime
+        from enum import Enum
+        from pathlib import Path
+        from types import UnionType
+        from typing import get_origin, get_args, Union
+        
+        if val is None:
+            return None
+        
+        # Handle None/Optional (both typing.Union and types.UnionType)
+        origin = get_origin(target_type)
+        if origin is Union or isinstance(target_type, UnionType):
+            # Extract non-None type from Optional[X] or X | None
+            args = get_args(target_type)
+            non_none_types = [a for a in args if a is not type(None)]
+            if non_none_types:
+                # Try each type in order until one works
+                for candidate_type in non_none_types:
+                    if isinstance(candidate_type, type):
+                        # Check if it's a SerializableMixin subclass
+                        if issubclass(candidate_type, SerializableMixin):
+                            if isinstance(val, dict):
+                                try:
+                                    return candidate_type.from_dict(val)
+                                except Exception:
+                                    continue
+                        # Check if it's an Enum
+                        if issubclass(candidate_type, Enum):
+                            if isinstance(val, candidate_type):
+                                return val
+                            try:
+                                return candidate_type(val)
+                            except (ValueError, KeyError):
+                                continue
+                    # Use the first non-None type for other cases
+                    target_type = non_none_types[0]
+                    break
+        
+        # Handle Path
+        if target_type is Path or (isinstance(target_type, type) and issubclass(target_type, Path)):
+            if isinstance(val, str):
+                return Path(val)
+            return val
+        
+        # Handle datetime
+        if target_type is datetime or (isinstance(target_type, type) and issubclass(target_type, datetime)):
+            if isinstance(val, str):
+                # Handle ISO format with or without timezone
+                try:
+                    if 'T' in val:
+                        return datetime.fromisoformat(val.replace('Z', '+00:00'))
+                    return datetime.fromisoformat(val)
+                except ValueError:
+                    return val
+            return val
+        
+        # Handle Enum
+        if isinstance(target_type, type) and issubclass(target_type, Enum):
+            if isinstance(val, target_type):
+                return val
+            try:
+                return target_type(val)
+            except ValueError:
+                # Try by name
+                try:
+                    return target_type[val]
+                except KeyError:
+                    return val
+        
+        # Handle nested SerializableMixin
+        if isinstance(target_type, type) and issubclass(target_type, SerializableMixin):
+            if isinstance(val, dict):
+                return target_type.from_dict(val)
+            return val
+        
+        # Handle lists with typed elements
+        origin = get_origin(target_type)
+        if origin is list:
+            args = get_args(target_type)
+            if args and isinstance(val, list):
+                elem_type = args[0]
+                return [cls._deserialize_value(v, elem_type) for v in val]
+        
+        # Handle dicts with typed values
+        if origin is dict:
+            args = get_args(target_type)
+            if args and len(args) >= 2 and isinstance(val, dict):
+                val_type = args[1]
+                return {k: cls._deserialize_value(v, val_type) for k, v in val.items()}
+        
+        return val
+    
+    def __eq__(self, other: object) -> bool:
+        """Equality based on serialized dict comparison."""
+        if not isinstance(other, type(self)):
+            return False
+        return self.to_dict() == other.to_dict()
+    
+    def __serializable_hash__(self) -> int:
+        """Hash based on serialized dict."""
+        data = self.to_dict()
+        
+        def _make_hashable(val: Any) -> Any:
+            if val is None:
+                return None
+            if isinstance(val, dict):
+                return tuple(sorted((k, _make_hashable(v)) for k, v in val.items()))
+            if isinstance(val, (list, tuple)):
+                return tuple(_make_hashable(v) for v in val)
+            return val
+        
+        try:
+            return hash(_make_hashable(data))
+        except TypeError:
+            # Fall back to id-based hash if unhashable
+            return id(self)
+    
+    def __repr__(self) -> str:
+        """Readable repr showing class name and key fields."""
+        cls_name = type(self).__name__
+        data = self.to_dict()
+        
+        # Show first 3 fields in repr for readability
+        if hasattr(self, '__dataclass_fields__'):
+            field_list = list(fields(self))
+            shown_fields = []
+            for f in field_list[:3]:  # Show first 3 fields
+                if f.name in data:
+                    val = getattr(self, f.name, None)  # Get original value
+                    # Format value for display
+                    if isinstance(val, str) and len(val) > 30:
+                        val_repr = f"'{val[:27]}...'"
+                    elif isinstance(val, dict):
+                        val_repr = f"{{...{len(val)} keys}}"
+                    elif isinstance(val, (list, tuple)) and len(val) > 3:
+                        val_repr = f"[...{len(val)} items]"
+                    else:
+                        val_repr = repr(val)
+                    shown_fields.append(f"{f.name}={val_repr}")
+            
+            if len(field_list) > 3:
+                shown_fields.append("...")
+            
+            return f"{cls_name}({', '.join(shown_fields)})"
+        
+        # Non-dataclass fallback
+        items = list(data.items())[:3]
+        parts = [f"{k}={v!r}" for k, v in items]
+        if len(data) > 3:
+            parts.append("...")
+        return f"{cls_name}({', '.join(parts)})"
+    
+    def diff(self, other: "SerializableMixin") -> dict[str, tuple[Any, Any]]:
+        """Compare this instance with another and return field differences.
+        
+        Args:
+            other: Another instance to compare with
+            
+        Returns:
+            Dict mapping field names to (self_value, other_value) tuples
+            for fields that differ. Empty dict if instances are equal.
+            
+        Example:
+            p1 = Person(name="Alice", age=30)
+            p2 = Person(name="Alice", age=35)
+            diff = p1.diff(p2)  # {"age": (30, 35)}
+        """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot diff {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        differences = {}
+        all_keys = set(self_dict.keys()) | set(other_dict.keys())
+        
+        for key in all_keys:
+            self_val = self_dict.get(key, _MISSING)
+            other_val = other_dict.get(key, _MISSING)
+            
+            if self_val != other_val:
+                differences[key] = (
+                    None if self_val is _MISSING else self_val,
+                    None if other_val is _MISSING else other_val,
+                )
+        
+        return differences
+    
+    def copy(self, **overrides: Any) -> "SerializableMixin":
+        """Create a shallow copy with optional field overrides.
+        
+        Args:
+            **overrides: Field values to override in the copy
+            
+        Returns:
+            New instance with copied values and any overrides applied
+            
+        Example:
+            p1 = Person(name="Alice", age=30)
+            p2 = p1.copy(age=35)  # Person(name="Alice", age=35)
+        """
+        data = self.to_dict()
+        data.update(overrides)
+        return type(self).from_dict(data)
+    
+    def merge(self, other: "SerializableMixin", *, overwrite: bool = True) -> "SerializableMixin":
+        """Merge fields from another instance into a new instance.
+        
+        Args:
+            other: Instance to merge from
+            overwrite: If True (default), other's non-None values overwrite self's.
+                      If False, only fill in None fields from other.
+            
+        Returns:
+            New merged instance
+            
+        Example:
+            p1 = Person(name="Alice", age=None, city="NYC")
+            p2 = Person(name="Bob", age=30, city=None)
+            merged = p1.merge(p2)  # Person(name="Bob", age=30, city="NYC")
+            merged = p1.merge(p2, overwrite=False)  # Person(name="Alice", age=30, city="NYC")
+        """
+        if not isinstance(other, type(self)):
+            raise TypeError(f"Cannot merge {type(self).__name__} with {type(other).__name__}")
+        
+        self_dict = self.to_dict()
+        other_dict = other.to_dict()
+        
+        merged = dict(self_dict)
+        for key, value in other_dict.items():
+            if overwrite:
+                if value is not None:
+                    merged[key] = value
+            else:
+                if merged.get(key) is None and value is not None:
+                    merged[key] = value
+        
+        return type(self).from_dict(merged)
+    
+    def patch(self, **updates: Any) -> "SerializableMixin":
+        """Apply updates to create a new instance (alias for copy).
+        
+        More explicit name for the copy operation when making targeted changes.
+        
+        Args:
+            **updates: Field values to update
+            
+        Returns:
+            New instance with updates applied
+        """
+        return self.copy(**updates)
+    
+    def to_json(self, *, indent: int | None = None, sort_keys: bool = False) -> str:
+        """Serialize instance to JSON string.
+        
+        Args:
+            indent: JSON indentation level (None for compact)
+            sort_keys: Whether to sort dictionary keys
+            
+        Returns:
+            JSON string representation
+            
+        Example:
+            person.to_json()  # '{"name": "Alice", "age": 30}'
+            person.to_json(indent=2)  # Pretty-printed
+        """
+        import json
+        return json.dumps(self.to_dict(), indent=indent, sort_keys=sort_keys, default=str)
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> "SerializableMixin":
+        """Create instance from JSON string.
+        
+        Args:
+            json_str: JSON string to parse
+            
+        Returns:
+            New instance from parsed JSON
+            
+        Raises:
+            json.JSONDecodeError: If JSON is invalid
+            
+        Example:
+            person = Person.from_json('{"name": "Alice", "age": 30}')
+        """
+        import json
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    def to_json_file(self, path: str | Path, *, indent: int = 2) -> None:
+        """Write instance to JSON file.
+        
+        Args:
+            path: File path to write
+            indent: JSON indentation level (default: 2 for readability)
+        """
+        import json
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(self.to_json(indent=indent))
+    
+    @classmethod
+    def from_json_file(cls, path: str | Path) -> "SerializableMixin":
+        """Create instance from JSON file.
+        
+        Args:
+            path: File path to read
+            
+        Returns:
+            New instance from parsed JSON file
+            
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            json.JSONDecodeError: If JSON is invalid
+        """
+        path = Path(path)
+        return cls.from_json(path.read_text())
+
+
+class _Missing:
+    """Sentinel for missing values."""
+    def __repr__(self) -> str:
+        return "<MISSING>"
+
+
+_MISSING = _Missing()
+
+
+def hashable_dataclass(cls: type) -> type:
+    """Decorator to make a dataclass hashable using SerializableMixin hash.
+    
+    Also restores the SerializableMixin __repr__ for cleaner output.
+    
+    Usage:
+        @hashable_dataclass
+        @dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+    
+    Or:
+        @dataclass
+        @hashable_dataclass
+        class MyModel(SerializableMixin):
+            name: str
+            value: int = 0
+    """
+    if hasattr(cls, '__dataclass_fields__'):
+        if cls.__hash__ is None:
+            # Restore the hash method from SerializableMixin
+            cls.__hash__ = SerializableMixin.__serializable_hash__
+        # Also restore the custom __repr__ for cleaner output
+        cls.__repr__ = SerializableMixin.__repr__
+    return cls
+
+
+# ---------------------------------------------------------------------------
+# Singleton Mixin
+# ---------------------------------------------------------------------------
+
+import threading
+from typing import ClassVar
+
+
+class SingletonMixin:
+    """Thread-safe singleton mixin for classes.
+    
+    Provides a consistent singleton pattern with:
+    - Thread-safe initialization (double-checked locking)
+    - Lazy instantiation
+    - Reset capability for testing
+    
+    Usage:
+        class MyService(SingletonMixin):
+            def __init__(self, config: str = "default"):
+                self.config = config
+        
+        # Get singleton instance
+        service = MyService.get_instance()
+        
+        # Get with custom args (only used on first call)
+        service = MyService.get_instance(config="custom")
+        
+        # Reset for testing
+        MyService.reset_instance()
+    
+    Note:
+        - First call to get_instance() creates the instance
+        - Subsequent calls return the same instance
+        - Args passed after first call are ignored
+        - Use reset_instance() to clear for testing
+    """
+    
+    _instances: ClassVar[dict[type, Any]] = {}
+    _locks: ClassVar[dict[type, threading.Lock]] = {}
+    _global_lock = threading.Lock()
+    
+    @classmethod
+    def _get_lock(cls) -> threading.Lock:
+        """Get or create lock for this class."""
+        with SingletonMixin._global_lock:
+            if cls not in SingletonMixin._locks:
+                SingletonMixin._locks[cls] = threading.Lock()
+            return SingletonMixin._locks[cls]
+    
+    @classmethod
+    def get_instance(cls, *args, **kwargs) -> "SingletonMixin":
+        """Get the singleton instance, creating it if necessary.
+        
+        Args:
+            *args: Positional arguments for __init__ (only used on first call)
+            **kwargs: Keyword arguments for __init__ (only used on first call)
+            
+        Returns:
+            The singleton instance
+        """
+        if cls not in SingletonMixin._instances:
+            lock = cls._get_lock()
+            with lock:
+                # Double-checked locking
+                if cls not in SingletonMixin._instances:
+                    instance = cls(*args, **kwargs)
+                    SingletonMixin._instances[cls] = instance
+        return SingletonMixin._instances[cls]
+    
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset the singleton instance.
+        
+        Useful for testing to get a fresh instance.
+        Warning: Not thread-safe during reset.
+        """
+        lock = cls._get_lock()
+        with lock:
+            if cls in SingletonMixin._instances:
+                del SingletonMixin._instances[cls]
+    
+    @classmethod
+    def has_instance(cls) -> bool:
+        """Check if an instance exists."""
+        return cls in SingletonMixin._instances
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +847,9 @@ __all__ = [
     "IntegrationInfo",
     "IntegrationStatus",
     "SerializableMixin",
+    "SingletonMixin",
     "feature",
+    "hashable_dataclass",
     "load_env_config",
     "load_file_config",
 ]

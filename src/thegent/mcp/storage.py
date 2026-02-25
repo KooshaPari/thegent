@@ -99,7 +99,7 @@ class McpStorage:
         if not key:
             raise ValueError("key must be a non-empty string")
         try:
-            encoded = json.dumps(value).decode()
+            encoded = json.dumps(value)
         except (TypeError, ValueError) as exc:
             raise TypeError(f"value for key {key!r} must be JSON-serialisable: {exc}") from exc
         self._cache.set(key, encoded, expire=ttl)
@@ -168,7 +168,7 @@ class McpEventStore:
 
     def _write_event(self, record: dict[str, Any]) -> None:
         """Append a single event record to the JSONL file (under lock)."""
-        line = json.dumps(record, option=json.OPT_SORT_KEYS).decode() + "\n"
+        line = json.dumps(record).decode() + "\n"
         with self._write_lock:
             with self._path.open("a", encoding="utf-8") as fh:
                 fh.write(line)
@@ -209,7 +209,7 @@ class McpEventStore:
             raise TypeError("payload must be a dict")
         # Validate payload is JSON-serialisable before touching the file.
         try:
-            json.dumps(payload).decode()
+            json.dumps(payload)
         except (TypeError, ValueError) as exc:
             raise TypeError(f"payload must be JSON-serialisable: {exc}") from exc
         event_id = str(uuid.uuid4())
@@ -309,7 +309,6 @@ def get_mcp_storage() -> McpStorage:
 def get_mcp_event_store() -> McpEventStore:
     """Return the process-level McpEventStore singleton (thread-safe)."""
     return _registry.get_event_store()
-
 
 def _reset_singletons_for_testing(
     storage: McpStorage | None = None,

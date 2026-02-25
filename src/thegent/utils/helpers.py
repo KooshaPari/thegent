@@ -309,7 +309,7 @@ def write_json(path: str | Path, data: Any, *, indent: int = 2) -> None:
 
     p = normalize_path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(json.dumps(data, indent=indent).decode(), encoding="utf-8")
+    p.write_text(json.dumps(data, indent=indent))
 
 
 def find_project_root(start: str | Path | None = None) -> Path:

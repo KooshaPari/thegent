@@ -873,14 +873,3 @@ harness_register_host_impl = run_post_surface_helpers.harness_register_host_impl
 
 
 # Public compatibility aliases are defined by the functions above.
-
-
-def get_data_protection_status_impl() -> dict:
-    """Get data protection status."""
-    # TODO: Implement actual data protection status checking
-    return {
-        "session_dir": "/tmp/sessions",
-        "permissions_restricted": True,
-        "masking_enabled": True,
-        "retention_policy_days": 30,
-    }

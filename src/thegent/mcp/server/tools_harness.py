@@ -148,12 +148,12 @@ def harness_interact_impl(
             prompt=prompt or "",
             session_id=session_id or "",
         )
-        return json.dumps(result, indent=2)
+        return json.dumps(result)
     except HarnessActionError as e:
         return json.dumps(
             {
                 "success": False,
-                "error": str(e).decode(),
+                "error": str(e),
                 "harness": harness,
                 "action": action,
             }
@@ -171,7 +171,7 @@ def harness_list_actions_impl() -> str:
     return json.dumps(
         {
             "actions": actions,
-            "count": len(actions).decode(),
+            "count": len(actions),
         }
     )
 
@@ -197,7 +197,7 @@ def harness_get_command_impl(
             {
                 "error": f"Unknown harness: {harness}",
             }
-        ).decode()
+        )
 
     mapper = HarnessTUIMapper()
     cmd = mapper.get_command(harness_type, action)
@@ -206,14 +206,14 @@ def harness_get_command_impl(
             {
                 "error": f"No command for action={action} harness={harness}",
             }
-        ).decode()
+        )
     return json.dumps(
         {
             "harness": harness,
             "action": action,
             "command": cmd,
         }
-    ).decode()
+    )
 
 
 def harness_register_host_impl(
@@ -242,7 +242,7 @@ def harness_register_host_impl(
                 "success": False,
                 "error": f"Unknown harness: {harness}",
             }
-        ).decode()
+        )
 
     mapper = HarnessTUIMapper()
     mapper.register_host(
@@ -258,7 +258,7 @@ def harness_register_host_impl(
             "harness": harness,
             "command_prefix": command_prefix,
         }
-    ).decode()
+    )
 
 
 __all__ = [

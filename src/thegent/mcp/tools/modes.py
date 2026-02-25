@@ -562,7 +562,7 @@ def register_modes(mcp: "FastMCP") -> None:
             "teammates": teammates,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
-        config_path.write_text(json.dumps(config, indent=2), encoding="utf-8")
+        config_path.write_text(json.dumps(config).decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
             content=json.dumps({"team_id": team_id, "config": config}).decode(),
@@ -633,7 +633,7 @@ def register_modes(mcp: "FastMCP") -> None:
                         "status": req.status,
                         "parent_run_id": parent_id,
                     }
-                ),
+                ).decode(),
                 structured_content={
                     "delegation_id": req.id,
                     "teammate_id": teammate_id,
@@ -644,7 +644,7 @@ def register_modes(mcp: "FastMCP") -> None:
             )
         except Exception as e:
             return ToolResult(
-                content=json.dumps({"error": str(e).decode(), "remediation": "Run: thegent teammates list"}),
+                content=json.dumps({"error": str(e), "remediation": "Run: thegent teammates list"}),
                 structured_content={"error": str(e), "remediation": "Run: thegent teammates list"},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -677,7 +677,7 @@ def register_modes(mcp: "FastMCP") -> None:
             "questions": [],
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
-        session_path.write_text(json.dumps(session, indent=2), encoding="utf-8")
+        session_path.write_text(json.dumps(session).decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
             content=json.dumps({"session_id": session_id, "topic": topic}).decode(),
@@ -707,7 +707,7 @@ def register_modes(mcp: "FastMCP") -> None:
             )
         session = json.loads(session_path.read_text())
         session.setdefault("questions", []).append({"question": question, "answer": answer})
-        session_path.write_text(json.dumps(session, indent=2), encoding="utf-8")
+        session_path.write_text(json.dumps(session).decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
             content=json.dumps({"session_id": session_id, "question_count": len(session["questions"]).decode()}),
