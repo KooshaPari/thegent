@@ -320,3 +320,87 @@ mv ~/CodeProjects/Phenotype/repos/thegent-{merge,mcp-fix*,skips-v2,output-tests,
 
 *Generated: 2026-02-24*
 *Author: Research synthesis from multiple sources*
+
+---
+
+## 13. Implementation Summary
+
+### 13.1 Hierarchical Agent Dispatcher (WL-138)
+
+**File:** `src/thegent/orchestration/hierarchical_dispatcher.py`
+
+**Features Implemented:**
+- ✅ L^N dispatch support (max depth = 2)
+- ✅ System-wide agent cap (100)
+- ✅ Per-session agent cap (50)
+- ✅ Automatic pruning of finished/stale agents
+- ✅ Hierarchical agent tree tracking
+- ✅ 18 unit tests passing
+
+**Usage Example:**
+```python
+from thegent.orchestration.hierarchical_dispatcher import (
+    HierarchicalDispatcher,
+    HierarchicalDispatchRequest,
+    get_global_registry,
+)
+
+registry = get_global_registry()
+dispatcher = HierarchicalDispatcher(
+    capability_index=capability_index,
+    registry=registry,
+)
+
+# Dispatch root agent
+result = await dispatcher.dispatch_hierarchical(
+    HierarchicalDispatchRequest(
+        prompt="Review the code",
+        session_id="session-123",
+    )
+)
+
+# Spawn child from running agent
+if dispatcher.can_spawn_child(result.agent_id):
+    child_request = dispatcher.spawn_child_request(
+        parent_agent_id=result.agent_id,
+        child_prompt="Run tests",
+    )
+    child_result = await dispatcher.dispatch_hierarchical(child_request)
+```
+
+### 13.2 ZSH Optimizations Status
+
+**Already Implemented in thegent:**
+- ✅ Eval caching (`_thegent_evalcache`)
+- ✅ Lazy loading (`_thegent_lazy_load`)
+- ✅ Deferred compinit (daily check)
+- ✅ Deferred plugin loading
+- ✅ Deferred starship with eval caching
+- ✅ Fork guard
+- ✅ Multi-level cache
+- ✅ Tool detection caching
+- ✅ Automatic cache cleanup
+
+**Pending (Optional):**
+- ⬜ p10k instant prompt (requires theme switch from starship)
+- ⬜ Transient prompt (requires p10k)
+
+### 13.3 Archive Summary
+
+**Archived:** `thegent-v2` → `~/CodeProjects/Phenotype/archive/thegent-variants-20260224/`
+**Size:** 631M archived
+
+---
+
+## 14. Files Created/Modified
+
+| File | Action | Description |
+|------|--------|-------------|
+| `src/thegent/orchestration/hierarchical_dispatcher.py` | Created | L^N agent dispatch with caps |
+| `src/thegent/orchestration/hierarchical/__init__.py` | Created | Module exports |
+| `tests/unit/orchestration/test_hierarchical_dispatcher.py` | Created | 18 unit tests |
+| `docs/research/WORKLOG_ZSH_DEEP_DIVE.md` | Created | This research document |
+
+---
+
+*Updated: 2026-02-24*
