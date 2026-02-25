@@ -16,98 +16,14 @@ from thegent.cli.commands import _cli_shared as _shared
 # Backward compatibility - expose commonly used modules for test mocking
 Columns = getattr(_cli_surface, "Columns", None)
 
-# Stubs for test mocking
-def _resolve_cwd(cd=None):
-    """Stub for backward compatibility."""
-    return None
-
-def _parse_dag_session(dag_file, cwd=None):
-    """Stub for tests."""
-    return {}, []
-
-def _parse_dag_full(dag_file, cwd=None):
-    """Stub for tests."""
-    return {}
-
-def _serialize_dag(doc):
-    """Stub for tests."""
-    return ""
-
-def _validate_dag(doc):
-    """Stub for tests."""
-    return []
-
-def _check_dag_cycles(doc):
-    """Stub for tests."""
-    return []
-
-def _dag_path(cd=None):
-    """Stub for tests."""
-    return (None, None)
-
-def _ensure_dag_file(path, content):
-    """Stub for tests."""
-    pass
-
-def _dag_update_task(task_id, field, value, session_dir):
-    """Stub for tests."""
-    return True
-
-def _validate_task_id(task_id):
-    """Stub for tests."""
-    return task_id
-
-def _validate_agent(agent):
-    """Stub for tests."""
-    return agent
-
-def _atomic_write(path, content):
-    """Stub for tests."""
-    pass
-
-def _session_status_for(session_dir):
-    """Stub for tests."""
-    return "running"
-
-def _default_owner_tag():
-    """Stub for tests."""
-    return "ci@host"
 
 def __getattr__(name: str) -> Any:
     """Load command surface symbols lazily from the re-export module."""
-    # Forward to _shared for CLI helper functions
-    if hasattr(_shared, name):
-        return getattr(_shared, name)
-    
-    # Forward dag_update_cmd to _cli_surface
-    if name == "dag_update_cmd":
-        from thegent.cli.commands import plan_dag_cmds
-        return getattr(plan_dag_cmds, name)
-    
-    # Forward ThegentSettings to _shared
-    if name == "ThegentSettings":
-        from thegent.cli.commands._cli_shared import ThegentSettings
-        globals()[name] = ThegentSettings
-        return ThegentSettings
-    
     if name == "AGENT_LABELS":
         from thegent.agents.registry import AGENT_LABELS
 
         globals()[name] = AGENT_LABELS
         return AGENT_LABELS
-    
-    # Lazy load data_protection_cmd
-    if name == "data_protection_cmd":
-        from thegent.cli.commands.governance_data_protection_cmds import data_protection_cmd
-        globals()[name] = data_protection_cmd
-        return data_protection_cmd
-    
-    # Lazy load snapshot/dump commands
-    if name in ("snapshot_daily_totals_cmd", "dump_categories_cmd"):
-        from thegent.cli.commands import plan_cmds
-        func = getattr(plan_cmds, name)
-        globals()[name] = func
-        return func
     
     # Lazy load model list commands
     _model_list_funcs = (
@@ -125,6 +41,20 @@ def __getattr__(name: str) -> Any:
         # Try model_cmds_rules
         from thegent.cli.commands import model_cmds_rules
         func = getattr(model_cmds_rules, name, None)
+        if func:
+            globals()[name] = func
+            return func
+    
+    # Lazy load snapshot/dump commands
+    _snapshot_dump_funcs = ("snapshot_daily_totals_cmd", "dump_categories_cmd")
+    if name in _snapshot_dump_funcs:
+        from thegent.cli.commands import team_snapshot_cmds
+        func = getattr(team_snapshot_cmds, name, None)
+        if func:
+            globals()[name] = func
+            return func
+        from thegent.cli.commands import team_dump_cmds
+        func = getattr(team_dump_cmds, name, None)
         if func:
             globals()[name] = func
             return func
@@ -181,14 +111,6 @@ _patchable_names_list = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
-    "snapshot_daily_totals_cmd",
-    "dump_categories_cmd",
-    "data_protection_cmd",
-    "workstream_stats_cmd",
-    "workstream_dashboard_cmd",
-    "workstream_launch_cmd",
-    "workstream_dependencies_cmd",
-    "domain_map_cmd",
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
@@ -211,6 +133,7 @@ __all__ = [
     "_safe_list",
     "_session_paths",
     "console",
+    "dump_categories_cmd",
     "get_exit_message",
     "json",
     "list_agent_names",
@@ -219,6 +142,7 @@ __all__ = [
     "resolve_agent",
     "run_login",
     "signal",
+    "snapshot_daily_totals_cmd",
     "sys",
     "time",
     # DAG helpers
@@ -235,12 +159,4 @@ __all__ = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
-    "snapshot_daily_totals_cmd",
-    "dump_categories_cmd",
-    "data_protection_cmd",
-    "workstream_stats_cmd",
-    "workstream_dashboard_cmd",
-    "workstream_launch_cmd",
-    "workstream_dependencies_cmd",
-    "domain_map_cmd",
 ]
