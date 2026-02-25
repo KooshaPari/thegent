@@ -20,7 +20,7 @@ def queue_list_impl(
     pq = PromptQueue(session_dir)
     items = pq.list_all(include_done=include_done, include_expired=include_expired, limit=limit)
     return ToolResult(
-        content=json.dumps(items),
+        content=json.dumps(items).decode(),
         structured_content=items,
         meta={"count": len(items)},
     )
@@ -39,12 +39,12 @@ def queue_claim_impl(
     claimed = pq.claim(claimer_id=claimer_id, lease_seconds=lease_seconds, project=project)
     if claimed is None:
         return ToolResult(
-            content=json.dumps({"claimed": None}),
+            content=json.dumps({"claimed": None}).decode(),
             structured_content={"claimed": None},
             meta={"error": "No pending items"},
         )
     return ToolResult(
-        content=json.dumps(claimed),
+        content=json.dumps(claimed).decode(),
         structured_content=claimed,
         meta={"claimed": True},
     )
@@ -60,7 +60,7 @@ def queue_done_impl(
     pq = PromptQueue(session_dir)
     ok = pq.done(item_id)
     return ToolResult(
-        content=json.dumps({"success": ok, "item_id": item_id}),
+        content=json.dumps({"success": ok, "item_id": item_id}).decode(),
         structured_content={"success": ok, "item_id": item_id},
         meta={},
     )
@@ -78,7 +78,7 @@ def queue_add_impl(
     pq = PromptQueue(session_dir)
     count = pq.append(prompt=prompt, project=project, agent=agent)
     return ToolResult(
-        content=json.dumps({"success": True, "pending_count": count}),
+        content=json.dumps({"success": True, "pending_count": count}).decode(),
         structured_content={"success": True, "pending_count": count},
         meta={},
     )
@@ -95,7 +95,7 @@ def queue_edit_impl(
     pq = PromptQueue(session_dir)
     ok = pq.edit(item_id=item_id, prompt=prompt)
     return ToolResult(
-        content=json.dumps({"success": ok, "item_id": item_id}),
+        content=json.dumps({"success": ok, "item_id": item_id}).decode(),
         structured_content={"success": ok, "item_id": item_id},
         meta={},
     )
@@ -111,7 +111,7 @@ def queue_release_impl(
     pq = PromptQueue(session_dir)
     ok = pq.release(item_id)
     return ToolResult(
-        content=json.dumps({"success": ok, "item_id": item_id}),
+        content=json.dumps({"success": ok, "item_id": item_id}).decode(),
         structured_content={"success": ok, "item_id": item_id},
         meta={},
     )
@@ -128,7 +128,7 @@ def queue_extend_lease_impl(
     pq = PromptQueue(session_dir)
     ok = pq.extend_lease(item_id=item_id, lease_seconds=lease_seconds)
     return ToolResult(
-        content=json.dumps({"success": ok, "item_id": item_id}),
+        content=json.dumps({"success": ok, "item_id": item_id}).decode(),
         structured_content={"success": ok, "item_id": item_id},
         meta={},
     )

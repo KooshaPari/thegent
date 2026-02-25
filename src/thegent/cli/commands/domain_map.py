@@ -59,6 +59,13 @@ def domain_map_cmd(
             "dns_provider": dns_provider,
             "tunnel_name": tunnel_name,
             "mode": mode,
+            "registrar": registrar,
+            "steps": [
+                f"Install Cloudflare tunnel: cloudflared tunnel create {tunnel_name}",
+                "Configure DNS: Add CNAME record pointing to tunnel",
+                f"Update tunnel config to route {domain} -> {target}",
+                f"Start tunnel: cloudflared tunnel run {tunnel_name}"
+            ]
         }
         console.print(json.dumps(output))
         return

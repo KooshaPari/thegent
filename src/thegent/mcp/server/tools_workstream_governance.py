@@ -34,7 +34,7 @@ def register_workstream_governance_tools(
             results = db.execute_query(query)
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
             return ToolResult(
-                content=json.dumps(results),
+                content=json.dumps(results).decode(),
                 structured_content={"results": results, "count": len(results)},
                 meta={"execution_time_ms": elapsed_ms, "row_count": len(results)},
             )
@@ -72,7 +72,7 @@ def register_workstream_governance_tools(
 
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
             return ToolResult(
-                content=json.dumps(result),
+                content=json.dumps(result).decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed_ms},
             )
@@ -85,7 +85,7 @@ def register_workstream_governance_tools(
             )
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         return ToolResult(
-            content=json.dumps(result),
+            content=json.dumps(result).decode(),
             structured_content=result,
             meta={"execution_time_ms": elapsed_ms},
         )

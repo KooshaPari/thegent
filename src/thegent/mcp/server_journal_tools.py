@@ -356,7 +356,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         payload: dict[str, Any] = {"events": events, "count": len(events)}
         return ToolResult(
-            content=json.dumps(payload),
+            content=json.dumps(payload).decode(),
             structured_content=payload,
             meta={"execution_time_ms": elapsed_ms},
         )

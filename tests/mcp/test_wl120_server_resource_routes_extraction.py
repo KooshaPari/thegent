@@ -73,7 +73,7 @@ def _register_routes() -> tuple[Any, ...]:
     )
 
     def _stable_json(payload: Any) -> str:
-        return json.dumps(payload, sort_keys=True).decode()
+        return json.dumps(payload).decode()
 
     def _gate_helper(**kwargs: Any) -> str:
         return kwargs["stable_json"](
