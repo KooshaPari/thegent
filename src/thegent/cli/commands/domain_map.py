@@ -51,6 +51,18 @@ def domain_map_cmd(
             console.print(f"[red]Error: {error}[/red]")
         raise typer.Exit(1)
     
+    if format == "json":
+        import json
+        output = {
+            "domain": mapping["domain"],
+            "target": target,
+            "dns_provider": dns_provider,
+            "tunnel_name": tunnel_name,
+            "mode": mode,
+        }
+        console.print(json.dumps(output))
+        return
+        
     if mode == "advisor":
         console.print("[bold cyan]Domain Mapping Advisor[/bold cyan]")
         console.print(f"Domain: [green]{mapping['domain']}[/green]")
