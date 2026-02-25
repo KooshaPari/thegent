@@ -367,143 +367,153 @@ class SerializableMixin:
         if len(data) > 3:
             parts.append("...")
         return f"{cls_name}({', '.join(parts)})"
-    
-    def diff(self, other: "SerializableMixin") -> dict[str, tuple[Any, Any]]:
-        """Compare this instance with another and return field differences.
-        
-        Args:
-            other: Another instance to compare with
-            
-        Returns:
-            Dict mapping field names to (self_value, other_value) tuples
-            for fields that differ. Empty dict if instances are equal.
-            
-        Example:
-            p1 = Person(name="Alice", age=30)
-            p2 = Person(name="Alice", age=35)
-            diff = p1.diff(p2)  # {"age": (30, 35)}
-        """
-        if not isinstance(other, type(self)):
-            raise TypeError(f"Cannot diff {type(self).__name__} with {type(other).__name__}")
-        
-        self_dict = self.to_dict()
-        other_dict = other.to_dict()
-        
-        differences = {}
-        all_keys = set(self_dict.keys()) | set(other_dict.keys())
-        
-        for key in all_keys:
-            self_val = self_dict.get(key, _MISSING)
-            other_val = other_dict.get(key, _MISSING)
-            
-            if self_val != other_val:
-                differences[key] = (
-                    None if self_val is _MISSING else self_val,
-                    None if other_val is _MISSING else other_val,
-                )
-        
-        return differences
-    
-    def copy(self, **overrides: Any) -> "SerializableMixin":
-        """Create a shallow copy with optional field overrides.
-        
-        Args:
-            **overrides: Field values to override in the copy
-            
-        Returns:
-            New instance with copied values and any overrides applied
-            
-        Example:
-            p1 = Person(name="Alice", age=30)
-            p2 = p1.copy(age=35)  # Person(name="Alice", age=35)
-        """
-        data = self.to_dict()
-        data.update(overrides)
-        return type(self).from_dict(data)
-    
-    def merge(self, other: "SerializableMixin", *, overwrite: bool = True) -> "SerializableMixin":
-        """Merge fields from another instance into a new instance.
-        
-        Args:
-            other: Instance to merge from
-            overwrite: If True (default), other's non-None values overwrite self's.
-                      If False, only fill in None fields from other.
-            
-        Returns:
-            New merged instance
-            
-        Example:
-            p1 = Person(name="Alice", age=None, city="NYC")
-            p2 = Person(name="Bob", age=30, city=None)
-            merged = p1.merge(p2)  # Person(name="Bob", age=30, city="NYC")
-            merged = p1.merge(p2, overwrite=False)  # Person(name="Alice", age=30, city="NYC")
-        """
-        if not isinstance(other, type(self)):
-            raise TypeError(f"Cannot merge {type(self).__name__} with {type(other).__name__}")
-        
-        self_dict = self.to_dict()
-        other_dict = other.to_dict()
-        
-        merged = dict(self_dict)
-        for key, value in other_dict.items():
-            if overwrite:
-                if value is not None:
-                    merged[key] = value
-            else:
-                if merged.get(key) is None and value is not None:
-                    merged[key] = value
-        
-        return type(self).from_dict(merged)
-    
-    def patch(self, **updates: Any) -> "SerializableMixin":
-        """Apply updates to create a new instance (alias for copy).
-        
-        More explicit name for the copy operation when making targeted changes.
-        
-        Args:
-            **updates: Field values to update
-            
-        Returns:
-            New instance with updates applied
-        """
-        return self.copy(**updates)
+# Validated Mixin
+# ---------------------------------------------------------------------------
+
+from typing import Callable, Protocol
+
+class ValidatorFunc(Protocol):
+    """Protocol for field validator functions."""
+    def __call__(self, value: Any, field_name: str) -> Any: ...
 
 
-class _Missing:
-    """Sentinel for missing values."""
-    def __repr__(self) -> str:
-        return "<MISSING>"
-
-
-_MISSING = _Missing()
-
-
-def hashable_dataclass(cls: type) -> type:
-    """Decorator to make a dataclass hashable using SerializableMixin hash.
+def validated_dataclass(cls: type) -> type:
+    """Decorator to add field validation to a dataclass.
     
-    Also restores the SerializableMixin __repr__ for cleaner output.
+    Looks for validator functions defined as:
+    - validate_<field_name>(self, value) -> Any
     
-    Usage:
-        @hashable_dataclass
-        @dataclass
-        class MyModel(SerializableMixin):
+    Validators can:
+    - Raise ValueError/TypeError for invalid values
+    - Return transformed value (coercion)
+    - Return value unchanged
+    
+    IMPORTANT: Must be applied BEFORE @dataclass decorator!
+    
+    Example:
+        @validated_dataclass  # Runs AFTER @dataclass (wraps __init__)
+        @dataclass            # Runs FIRST (creates __init__)
+        class User:
             name: str
-            value: int = 0
-    
-    Or:
-        @dataclass
-        @hashable_dataclass
-        class MyModel(SerializableMixin):
-            name: str
-            value: int = 0
+            age: int
+            
+            def validate_age(self, value: int) -> int:
+                if value < 0:
+                    raise ValueError("age must be non-negative")
+                return value
     """
-    if hasattr(cls, '__dataclass_fields__'):
-        if cls.__hash__ is None:
-            # Restore the hash method from SerializableMixin
-            cls.__hash__ = SerializableMixin.__serializable_hash__
-        # Also restore the custom __repr__ for cleaner output
-        cls.__repr__ = SerializableMixin.__repr__
+    if not hasattr(cls, '__dataclass_fields__'):
+        return cls
+    
+    # Store original __init__ from dataclass
+    original_init = cls.__init__
+    
+    # Check if class has any validators
+    has_validators = any(
+        hasattr(cls, f"validate_{f.name}") for f in fields(cls)
+    )
+    
+    if not has_validators:
+        return cls
+    
+    def __init_validated__(self, *args, **kwargs):
+        # Call original __init__ to set fields
+        original_init(self, *args, **kwargs)
+        
+        # Now run validators
+        for f in fields(cls):
+            validator_name = f"validate_{f.name}"
+            if hasattr(self, validator_name):
+                validator = getattr(self, validator_name)
+                current_value = getattr(self, f.name)
+                try:
+                    new_value = validator(current_value)
+                    object.__setattr__(self, f.name, new_value)
+                except Exception:
+                    raise
+    
+    cls.__init__ = __init_validated__
     return cls
+
+
+# ---------------------------------------------------------------------------
+# Context Manager Mixin
+# ---------------------------------------------------------------------------
+
+class ContextManagerMixin:
+    """Mixin providing context manager protocol for resource classes.
+    
+    Subclasses should implement:
+    - _enter(): Called on context entry, returns self or resource
+    - _exit(exc_type, exc_val, exc_tb): Called on context exit
+    
+    Example:
+        class MyResource(ContextManagerMixin):
+            def _enter(self):
+                self.open()
+                return self
+            
+            def _exit(self, exc_type, exc_val, exc_tb):
+                self.close()
+    
+        with MyResource() as r:
+            r.do_sthing()
+    """
+    
+    def __enter__(self) -> "ContextManagerMixin":
+        """Context manager entry."""
+        if hasattr(self, '_enter'):
+            return self._enter()
+        return self
+    
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Context manager exit."""
+        if hasattr(self, '_exit'):
+            return self._exit(exc_type, exc_val, exc_tb)
+        return False  # Don't suppress exceptions
+
+
+class AsyncContextManagerMixin:
+    """Mixin providing async context manager protocol.
+    
+    Subclasses should implement:
+    - _aenter(): Called on async context entry
+    - _aexit(exc_type, exc_val, exc_tb): Called on async context exit
+    
+    Example:
+        class AsyncResource(AsyncContextManagerMixin):
+            async def _aenter(self):
+                await self.connect()
+                return self
+            
+            async def _aexit(self, exc_type, exc_val, exc_tb):
+                await self.disconnect()
+    
+        async with AsyncResource() as r:
+            await r.do_something()
+    """
+    
+    async def __aenter__(self) -> "AsyncContextManagerMixin":
+        """Async context manager entry."""
+        if hasattr(self, '_aenter'):
+            return await self._aenter()
+        return self
+    
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
+        """Async context manager exit."""
+        if hasattr(self, '_aexit'):
+            return await self._aexit(exc_type, exc_val, exc_tb)
+        return False
 
 
 # ---------------------------------------------------------------------------

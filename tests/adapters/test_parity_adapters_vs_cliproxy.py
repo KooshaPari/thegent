@@ -32,7 +32,7 @@ import pytest
 # ============================================================================
 
 
-CLIPROXY_REPO = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxy++")
+CLIPROXY_REPO = Path("/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxyapi-plusplus")
 CLIPROXY_ACP_TRANSLATOR_BIN = CLIPROXY_REPO / "cmd" / "acp-translator" / "main.go"
 CLIPROXY_TEST_HELPER = CLIPROXY_REPO / "pkg" / "llmproxy" / "translator" / "acp" / "acp_adapter.go"
 

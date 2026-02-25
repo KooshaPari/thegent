@@ -10,10 +10,6 @@ if importlib.util.find_spec("thegent_git") is None:
 
     pytest.skip("thegent-git native extension not installed", allow_module_level=True)
 
-# Skip all tests - WorktreePool mock location issue
-import pytest
-pytest.skip("WorktreePool mock location issue - needs test fix", allow_module_level=True)
-
 import orjson as json
 from pathlib import Path
 from unittest.mock import MagicMock, patch

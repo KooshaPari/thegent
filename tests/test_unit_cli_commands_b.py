@@ -316,7 +316,6 @@ class TestDagAddCmdImpl:
     @patch("thegent.cli._validate_agent", return_value=None)
     @patch("thegent.cli._validate_task_id", return_value=None)
     @patch("thegent.cli._resolve_cwd")
-    @pytest.mark.skip(reason="Test needs additional mocking - complex DAG cmd flow")
     @patch("thegent.cli.console")
     def test_add_success(
         self, mock_console, mock_cwd, mock_vtid, mock_vagent, mock_ensure, mock_cycles, mock_ser, mock_write, tmp_path
@@ -368,7 +367,6 @@ class TestDagRemoveCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @pytest.mark.skip(reason="Test needs additional mocking - complex DAG cmd flow")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
     def test_remove_success(self, mock_console, mock_cwd, mock_parse, mock_ser, mock_write, tmp_path) -> None:
@@ -406,12 +404,7 @@ class TestDagRemoveCmdImpl:
 class TestDagCancelCmdImpl:
     """Tests for dag_cancel_cmd implementation."""
 
-<<<<<<< HEAD
-    @pytest.mark.skip(reason="Test needs additional mocking - dag_update_cmd not in cli namespace")
-    @patch("thegent.cli.dag_update_cmd")
-=======
     @patch("thegent.cli.commands.plan_dag_cmds.dag_update_cmd")
->>>>>>> origin/main
     @patch("thegent.cli.console")
     def test_cancel_delegates_to_update(self, mock_console, mock_update) -> None:
         # @trace FR-CLI-318
@@ -576,7 +569,7 @@ class TestDagReadyCmdImpl:
         assert any("T1" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._get_ready_task_ids", return_value=[])
+    @patch("thegent.cli._get_ready_task_ids", return_value=[])
     @patch("thegent.cli._parse_dag_session")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
@@ -595,7 +588,7 @@ class TestDagReadyCmdImpl:
         assert any("No ready" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._get_ready_task_ids", return_value=["T1"])
+    @patch("thegent.cli._get_ready_task_ids", return_value=["T1"])
     @patch("thegent.cli._parse_dag_session")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
@@ -814,7 +807,7 @@ class TestDagCheckpointsCmdImpl:
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False})
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path", return_value=(None, None))
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-341
@@ -823,37 +816,74 @@ class TestDagRecoverCmdImpl:
         with pytest.raises(_EXIT):
             dag_recover_cmd(cd=None, action="retry-failed")
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": True})
+    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli._serialize_dag", return_value="serialized")
+    @patch("thegent.cli._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
-    def test_retry_failed(self, mock_console, mock_impl) -> None:
+    def test_retry_failed(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-342
+        dag_file = tmp_path / ".factory" / "dag-session.md"
+        dag_file.parent.mkdir(parents=True)
+        dag_file.touch()
+        mock_dag_path.return_value = (tmp_path, dag_file)
+        mock_parse.return_value = _make_dag_doc(
+            tasks=[{"id": "T1", "status": "failed"}, {"id": "T2", "status": "done"}],
+        )
         from thegent.cli import dag_recover_cmd
 
         dag_recover_cmd(cd=None, action="retry-failed")
-        assert any("Reset" in str(c) for c in mock_console.print.call_args_list)
+        mock_write.assert_called_once()
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": True})
+    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli._serialize_dag", return_value="serialized")
+    @patch("thegent.cli._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
-    def test_clear_stuck(self, mock_console, mock_impl) -> None:
+    def test_clear_stuck(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-343
+        dag_file = tmp_path / ".factory" / "dag-session.md"
+        dag_file.parent.mkdir(parents=True)
+        dag_file.touch()
+        mock_dag_path.return_value = (tmp_path, dag_file)
+        mock_parse.return_value = _make_dag_doc(
+            tasks=[{"id": "T1", "status": "running"}],
+        )
         from thegent.cli import dag_recover_cmd
 
         dag_recover_cmd(cd=None, action="clear-stuck")
-        assert any("Reset" in str(c) for c in mock_console.print.call_args_list)
+        mock_write.assert_called_once()
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": True})
+    @patch("thegent.cli._atomic_write")
+    @patch("thegent.cli._serialize_dag", return_value="serialized")
+    @patch("thegent.cli._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
-    def test_reset_retries(self, mock_console, mock_impl) -> None:
+    def test_reset_retries(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-344
+        dag_file = tmp_path / ".factory" / "dag-session.md"
+        dag_file.parent.mkdir(parents=True)
+        dag_file.touch()
+        mock_dag_path.return_value = (tmp_path, dag_file)
+        mock_parse.return_value = _make_dag_doc(
+            tasks=[{"id": "T1", "status": "pending", "retry_count": "3"}],
+        )
         from thegent.cli import dag_recover_cmd
 
         dag_recover_cmd(cd=None, action="reset-retries")
-        assert any("Reset" in str(c) for c in mock_console.print.call_args_list)
+        mock_write.assert_called_once()
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": False, "error": "Unknown action"})
+    @patch("thegent.cli._parse_dag_full")
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
     @patch("thegent.cli.console")
-    def test_unknown_action(self, mock_console, mock_impl) -> None:
+    def test_unknown_action(self, mock_console, mock_dag_path, mock_parse, tmp_path) -> None:
         # @trace FR-CLI-345
+        dag_file = tmp_path / ".factory" / "dag-session.md"
+        dag_file.parent.mkdir(parents=True)
+        dag_file.touch()
+        mock_dag_path.return_value = (tmp_path, dag_file)
+        mock_parse.return_value = _make_dag_doc()
+
         from thegent.cli import dag_recover_cmd
 
         with pytest.raises(_EXIT):
@@ -861,11 +891,11 @@ class TestDagRecoverCmdImpl:
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Test behavior mismatch - implementation returns instead of raising")
+@pytest.mark.skip(reason="Code bugs: _parse_checkpoint_line not defined - WL-124")
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False})
+    @patch("thegent.cli.commands.dag_impl_ops._dag_path", return_value=(None, None))
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-346
@@ -955,7 +985,7 @@ class TestDagRunCmdImpl:
             dag_run_cmd(cd=None)
 
     @patch("thegent.cli.dag_reconcile_cmd")
-    @patch("thegent.cli.commands.dag_impl_ops._get_ready_task_ids", return_value=[])
+    @patch("thegent.cli._get_ready_task_ids", return_value=[])
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
@@ -972,22 +1002,24 @@ class TestDagRunCmdImpl:
         dag_run_cmd(cd=None, dry_run=False)
         assert any("No ready" in str(c) for c in mock_console.print.call_args_list)
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/main
-    @patch("thegent.cli.commands.dag_impl_ops._get_ready_task_ids", return_value=["T1"])
+    @patch("thegent.cli._get_ready_task_ids", return_value=["T1"])
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli._resolve_cwd")
-=======
-    @patch("thegent.cli.commands._cli_shared.dag_run_impl", return_value={"dry_run": True, "would_run": [{"task_id": "T1", "agent": "claude", "prompt_preview": "Run tests"}]})
->>>>>>> origin/main
     @patch("thegent.cli.console")
-    def test_dry_run(self, mock_console, mock_impl, tmp_path) -> None:
+    def test_dry_run(self, mock_console, mock_cwd, mock_parse, mock_ready, tmp_path) -> None:
         # @trace FR-CLI-352
-        from thegent.cli import dag_run_cmd
+        dag_file = tmp_path / ".factory" / "dag-session.md"
+        dag_file.parent.mkdir(parents=True)
+        dag_file.touch()
+        mock_cwd.return_value = tmp_path
+        mock_parse.return_value = _make_dag_doc(
+            tasks=[{"id": "T1", "agent": "claude", "prompt": "Run tests", "depends_on": "-", "status": "pending"}],
+        )
 
-        dag_run_cmd(cd=None, dry_run=True)
+        with patch("thegent.cli._resolve_prompt", return_value="Run tests"):
+            from thegent.cli import dag_run_cmd
+
+            dag_run_cmd(cd=None, dry_run=True)
         assert any("Would run" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli._resolve_cwd")
@@ -1084,7 +1116,6 @@ class TestSessionContractHealthReportCmdImpl:
         mock_console.print.assert_called()
 
     @patch("thegent.cli._default_owner_tag", return_value="ci@host")
-    @pytest.mark.skip(reason="Test needs additional mocking - ThegentSettings mock")
     @patch("thegent.cli.ThegentSettings")
     @patch("thegent.cli.console")
     def test_with_export_output(self, mock_console, mock_settings, mock_owner, tmp_path) -> None:
@@ -1095,8 +1126,8 @@ class TestSessionContractHealthReportCmdImpl:
 
         with (
             patch("thegent.cli.commands.impl.session_contract_health_report_impl", return_value=result),
-            patch("thegent.cli.commands.session_contract_cmds._write_report_export", return_value="json") as mock_write,
-            patch("thegent.cli.commands.session_cmds_helpers.resolve_export_format_with_notice", return_value="json"),
+            patch("thegent.cli._write_report_export", return_value="json") as mock_write,
+            patch("thegent.cli._infer_export_format", return_value="json"),
         ):
             from thegent.cli import session_contract_health_report_cmd
 
@@ -1419,36 +1450,20 @@ class TestEscalateResolveCmdImpl:
     @patch("thegent.cli.console")
     def test_resolve_success(self, mock_console) -> None:
         # @trace FR-CLI-378
-        with patch("thegent.cli.commands._cli_shared.escalate_resolve_impl", return_value=True):
+        with patch("thegent.cli.services.governance.escalate_resolve_impl", return_value=True):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r1", resolution="fixed")
-<<<<<<< HEAD
-        assert any("resolved" in str(c).lower() for c in mock_console.print.call_args_list)
-=======
-<<<<<<< HEAD
-        assert any("resolved" in str(c).lower() for c in mock_console.print.call_args_list)
-=======
         assert any("resolved" in str(c) for c in mock_console.print.call_args_list)
->>>>>>> origin/main
->>>>>>> origin/main
 
     @patch("thegent.cli.console")
     def test_resolve_not_found(self, mock_console) -> None:
         # @trace FR-CLI-379
-        with patch("thegent.cli.commands._cli_shared.escalate_resolve_impl", return_value=False):
+        with patch("thegent.cli.services.governance.escalate_resolve_impl", return_value=False):
             from thegent.cli import escalate_resolve_cmd
 
             escalate_resolve_cmd(run_id="r-nonexist", resolution="fixed")
-<<<<<<< HEAD
-        assert any("no pending" in str(c).lower() for c in mock_console.print.call_args_list)
-=======
-<<<<<<< HEAD
-        assert any("no pending" in str(c).lower() for c in mock_console.print.call_args_list)
-=======
         assert any("no pending" in str(c) for c in mock_console.print.call_args_list)
->>>>>>> origin/main
->>>>>>> origin/main
 
 
 @pytest.mark.unit
@@ -1499,16 +1514,8 @@ class TestPurgeCmdImpl:
         assert any("Purged" in str(c) for c in mock_console.print.call_args_list)
 
 
-<<<<<<< HEAD
-@pytest.mark.skip(reason="data_protection_cmd function does not exist in codebase")
-=======
-<<<<<<< HEAD
-@pytest.mark.skip(reason="data_protection_cmd function does not exist in codebase")
-=======
 @pytest.mark.unit
 @pytest.mark.skip(reason="data_protection_cmd not implemented - WL-124")
->>>>>>> origin/main
->>>>>>> origin/main
 class TestDataProtectionCmdImpl:
     """Tests for data_protection_cmd implementation."""
 
