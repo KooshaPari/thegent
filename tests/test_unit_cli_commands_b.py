@@ -365,18 +365,17 @@ class TestDagRemoveCmdImpl:
         with pytest.raises(_EXIT):
             dag_remove_cmd(task_id="T1")
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
-    def test_remove_success(self, mock_console, mock_cwd, mock_parse, mock_ser, mock_write, tmp_path) -> None:
+    @patch("thegent.cli.commands.plan_dag_cmds._atomic_write")
+    @patch("thegent.cli.commands.plan_dag_cmds._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.plan_dag_cmds._parse_dag_full")
+    @patch("thegent.cli.commands.plan_dag_cmds._dag_path")
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
+    def test_remove_success(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-316
         dag_file = tmp_path / ".factory" / "dag-session.md"
         dag_file.parent.mkdir(parents=True)
         dag_file.touch()
-        mock_cwd.return_value = tmp_path
+        mock_dag_path.return_value = (tmp_path, dag_file)
         mock_parse.return_value = _make_dag_doc(
             tasks=[{"id": "T1", "agent": "claude", "prompt": "x", "depends_on": "-", "status": "pending"}],
         )
