@@ -16,6 +16,12 @@ _log = logging.getLogger(__name__)
 from thegent.config import ThegentSettings
 from thegent.cli.services import run_model_helpers
 from thegent.cli.services import run_post_surface_helpers
+from thegent.cli.commands.session_meta_impl import (
+    _resolve_latest_session_id,
+    _session_state_path,
+    _normalize_contract_string,
+)
+from thegent.cli.commands.session_control_impl import session_send_impl
 from thegent.execution import RunRegistry
 
 # Constants from impl.py that are referenced by the extracted functions
