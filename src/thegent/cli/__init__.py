@@ -170,6 +170,13 @@ _patchable_names_list = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
+    "snapshot_daily_totals_cmd",
+    "dump_categories_cmd",
+    "workstream_stats_cmd",
+    "workstream_dashboard_cmd",
+    "workstream_launch_cmd",
+    "workstream_dependencies_cmd",
+    "domain_map_cmd",
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
@@ -216,4 +223,11 @@ __all__ = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
+    "snapshot_daily_totals_cmd",
+    "dump_categories_cmd",
+    "workstream_stats_cmd",
+    "workstream_dashboard_cmd",
+    "workstream_launch_cmd",
+    "workstream_dependencies_cmd",
+    "domain_map_cmd",
 ]
