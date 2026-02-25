@@ -89,7 +89,7 @@ def session_send_impl(
                     "input_schema": registered.input_schema,
                 },
             },
-            indent=2,
+            
         )
 
     if msg_type == "dynamic_tool_list":
@@ -102,7 +102,7 @@ def session_send_impl(
                     for tool in tools
                 ],
             },
-            indent=2,
+            
         )
 
     if msg_type == "dynamic_tool_invoke":
@@ -169,7 +169,7 @@ def session_attach_hint_impl(
                 "raw_command": f"tmux attach-session -t {pane}",
                 "hint": "Attach via tmux",
             },
-            indent=2,
+            
         )
 
     if interactivity == "headless-holdpty":
@@ -179,7 +179,7 @@ def session_attach_hint_impl(
                 "command": f"thegent session attach {session_id}",
                 "hint": "Attach via holdpty wrapper",
             },
-            indent=2,
+            
         )
 
     return json.dumps(
@@ -187,5 +187,5 @@ def session_attach_hint_impl(
             "mode": "none",
             "hint": "Session does not support interactive attachment. Use 'thegent session logs --follow' instead.",
         },
-        indent=2,
+        
     )
