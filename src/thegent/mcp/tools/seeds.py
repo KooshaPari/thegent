@@ -89,7 +89,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
         if not text or not isinstance(text, str):
             return ToolResult(
-                content=json.dumps({"error": "Invalid input", "seeds": [], "count": 0}),
+                content=json.dumps({"error": "Invalid input", "seeds": [], "count": 0}).decode(),
                 structured_content={"error": "Invalid input", "seeds": [], "count": 0},
                 meta={"execution_time_ms": 0},
             )
@@ -122,7 +122,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             await _ctx_info(ctx, f"thegent_seed_detect found {len(seeds)} seed(s)")
             elapsed = int((time.perf_counter() - start) * 1000)
             return ToolResult(
-                content=json.dumps(result),
+                content=json.dumps(result).decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed},
             )
@@ -164,7 +164,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
         if not text or not isinstance(text, str):
             return ToolResult(
-                content=json.dumps({"error": "Invalid input", "seed": None}),
+                content=json.dumps({"error": "Invalid input", "seed": None}).decode(),
                 structured_content={"error": "Invalid input", "seed": None},
                 meta={"execution_time_ms": 0},
             )
@@ -174,7 +174,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
-                    content=json.dumps({"error": "No project root", "remediation": "Set cwd or cd"}),
+                    content=json.dumps({"error": "No project root", "remediation": "Set cwd or cd"}).decode(),
                     structured_content={
                         "error": "No project root",
                         "remediation": "Set cwd or cd",
@@ -224,7 +224,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
             elapsed = int((time.perf_counter() - start) * 1000)
             return ToolResult(
-                content=json.dumps(result),
+                content=json.dumps(result).decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed},
             )
@@ -265,7 +265,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
-                    content=json.dumps({"error": "No project root", "seeds": []}),
+                    content=json.dumps({"error": "No project root", "seeds": []}).decode(),
                     structured_content={"error": "No project root", "seeds": []},
                     meta={"execution_time_ms": 0},
                 )
@@ -292,7 +292,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
             elapsed = int((time.perf_counter() - start) * 1000)
             return ToolResult(
-                content=json.dumps(result),
+                content=json.dumps(result).decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed},
             )
@@ -333,7 +333,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
-                    content=json.dumps({"error": "No project root", "updated": False}),
+                    content=json.dumps({"error": "No project root", "updated": False}).decode(),
                     structured_content={"error": "No project root", "updated": False},
                     meta={"execution_time_ms": 0},
                 )
@@ -367,7 +367,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
             elapsed = int((time.perf_counter() - start) * 1000)
             return ToolResult(
-                content=json.dumps(result),
+                content=json.dumps(result).decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed},
             )
@@ -401,7 +401,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
-                    content=json.dumps({"error": "No project root", "markdown": None}),
+                    content=json.dumps({"error": "No project root", "markdown": None}).decode(),
                     structured_content={"error": "No project root", "markdown": None},
                     meta={"execution_time_ms": 0},
                 )
@@ -421,7 +421,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
             elapsed = int((time.perf_counter() - start) * 1000)
             return ToolResult(
-                content=json.dumps(result),
+                content=json.dumps(result).decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed},
             )
@@ -456,7 +456,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             root = _resolve_cwd(Path(cd) if cd else None)
             if not root:
                 return ToolResult(
-                    content=json.dumps({"error": "No project root", "stats": {}}),
+                    content=json.dumps({"error": "No project root", "stats": {}}).decode(),
                     structured_content={"error": "No project root", "stats": {}},
                     meta={"execution_time_ms": 0},
                 )
@@ -472,7 +472,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
 
             elapsed = int((time.perf_counter() - start) * 1000)
             return ToolResult(
-                content=json.dumps(result),
+                content=json.dumps(result).decode(),
                 structured_content=result,
                 meta={"execution_time_ms": elapsed},
             )

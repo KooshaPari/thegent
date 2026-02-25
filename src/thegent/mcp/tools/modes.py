@@ -89,7 +89,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root", "remediation": "Set cwd or cd"}),
+                content=json.dumps({"error": "No project root", "remediation": "Set cwd or cd"}).decode(),
                 structured_content={"error": "No project root", "remediation": "Set cwd or cd"},
                 meta={"execution_time_ms": 0},
             )
@@ -104,7 +104,7 @@ def register_modes(mcp: "FastMCP") -> None:
             "latest_modified": latest.stat().st_mtime if latest else None,
         }
         return ToolResult(
-            content=json.dumps(result),
+            content=json.dumps(result).decode(),
             structured_content=result,
             meta={"execution_time_ms": elapsed},
         )
@@ -118,7 +118,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -158,7 +158,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -187,7 +187,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -219,7 +219,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -273,7 +273,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root", "protocols": []}),
+                content=json.dumps({"error": "No project root", "protocols": []}).decode(),
                 structured_content={"error": "No project root", "protocols": []},
                 meta={"execution_time_ms": 0},
             )
@@ -286,7 +286,7 @@ def register_modes(mcp: "FastMCP") -> None:
                 protocols.append({"name": p.stem, "path": str(p)})
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"protocols": protocols}),
+            content=json.dumps({"protocols": protocols}).decode(),
             structured_content={"protocols": protocols},
             meta={"execution_time_ms": elapsed},
         )
@@ -304,7 +304,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -321,7 +321,7 @@ def register_modes(mcp: "FastMCP") -> None:
 
         if path is None:
             return ToolResult(
-                content=json.dumps({"error": "Protocol not found or empty", "mode": mode, "name": name}),
+                content=json.dumps({"error": "Protocol not found or empty", "mode": mode, "name": name}).decode(),
                 structured_content={"error": "Protocol not found or empty", "mode": mode, "name": name},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -348,7 +348,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -380,7 +380,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -412,7 +412,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root", "report": None}),
+                content=json.dumps({"error": "No project root", "report": None}).decode(),
                 structured_content={"error": "No project root", "report": None},
                 meta={"execution_time_ms": 0},
             )
@@ -444,12 +444,12 @@ def register_modes(mcp: "FastMCP") -> None:
         elapsed = int((time.perf_counter() - start) * 1000)
         if "error" in res:
             return ToolResult(
-                content=json.dumps(res),
+                content=json.dumps(res).decode(),
                 structured_content=res,
                 meta={"execution_time_ms": elapsed},
             )
         return ToolResult(
-            content=json.dumps(res),
+            content=json.dumps(res).decode(),
             structured_content=res,
             meta={"execution_time_ms": elapsed},
         )
@@ -490,7 +490,7 @@ def register_modes(mcp: "FastMCP") -> None:
             with contextlib.suppress(Exception):
                 await ctx.report_progress(progress=2, total=2)
         return ToolResult(
-            content=json.dumps(res),
+            content=json.dumps(res).decode(),
             structured_content=res,
             meta={"execution_time_ms": elapsed},
         )
@@ -507,7 +507,7 @@ def register_modes(mcp: "FastMCP") -> None:
         res = dag_sync_impl(cd=Path(cd) if cd else None, auto_run_next=auto_run_next)
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps(res),
+            content=json.dumps(res).decode(),
             structured_content=res,
             meta={"execution_time_ms": elapsed},
         )
@@ -524,7 +524,7 @@ def register_modes(mcp: "FastMCP") -> None:
         res = dag_recover_impl(cd=Path(cd) if cd else None, action=action)
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps(res),
+            content=json.dumps(res).decode(),
             structured_content=res,
             meta={"execution_time_ms": elapsed},
         )
@@ -546,7 +546,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -562,10 +562,10 @@ def register_modes(mcp: "FastMCP") -> None:
             "teammates": teammates,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
-        config_path.write_text(json.dumps(config), encoding="utf-8")
+        config_path.write_text(json.dumps(config).decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"team_id": team_id, "config": config}),
+            content=json.dumps({"team_id": team_id, "config": config}).decode(),
             structured_content={"team_id": team_id, "config": config},
             meta={"execution_time_ms": elapsed},
         )
@@ -602,7 +602,7 @@ def register_modes(mcp: "FastMCP") -> None:
         elapsed = int((time.perf_counter() - start) * 1000)
         result = {"teams": teams, "delegations": delegations}
         return ToolResult(
-            content=json.dumps(result),
+            content=json.dumps(result).decode(),
             structured_content=result,
             meta={"execution_time_ms": elapsed},
         )
@@ -633,7 +633,7 @@ def register_modes(mcp: "FastMCP") -> None:
                         "status": req.status,
                         "parent_run_id": parent_id,
                     }
-                ),
+                ).decode(),
                 structured_content={
                     "delegation_id": req.id,
                     "teammate_id": teammate_id,
@@ -663,7 +663,7 @@ def register_modes(mcp: "FastMCP") -> None:
         root = _get_project_root(Path(cd) if cd else None)
         if not root:
             return ToolResult(
-                content=json.dumps({"error": "No project root"}),
+                content=json.dumps({"error": "No project root"}).decode(),
                 structured_content={"error": "No project root"},
                 meta={"execution_time_ms": 0},
             )
@@ -677,10 +677,10 @@ def register_modes(mcp: "FastMCP") -> None:
             "questions": [],
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
-        session_path.write_text(json.dumps(session), encoding="utf-8")
+        session_path.write_text(json.dumps(session).decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"session_id": session_id, "topic": topic}),
+            content=json.dumps({"session_id": session_id, "topic": topic}).decode(),
             structured_content={"session_id": session_id, "topic": topic},
             meta={"execution_time_ms": elapsed},
         )
@@ -701,16 +701,16 @@ def register_modes(mcp: "FastMCP") -> None:
         session_path = sessions_dir / f"{session_id}.json"
         if not session_path.exists():
             return ToolResult(
-                content=json.dumps({"error": "Session not found", "session_id": session_id}),
+                content=json.dumps({"error": "Session not found", "session_id": session_id}).decode(),
                 structured_content={"error": "Session not found", "session_id": session_id},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
         session = json.loads(session_path.read_text())
         session.setdefault("questions", []).append({"question": question, "answer": answer})
-        session_path.write_text(json.dumps(session), encoding="utf-8")
+        session_path.write_text(json.dumps(session).decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"session_id": session_id, "question_count": len(session["questions"])}),
+            content=json.dumps({"session_id": session_id, "question_count": len(session["questions"]).decode()}),
             structured_content={"session_id": session_id, "question_count": len(session["questions"])},
             meta={"execution_time_ms": elapsed},
         )
