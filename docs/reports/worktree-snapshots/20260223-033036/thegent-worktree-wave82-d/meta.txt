@@ -1,0 +1,3 @@
+path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent-worktree-wave82-d
+branch=codex/wave82-lane-d-throttle-telemetry
+head=46520ecf19aa757ec35a69ccde19a784e7639339

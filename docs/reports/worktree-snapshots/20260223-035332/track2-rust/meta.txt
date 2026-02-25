@@ -1,0 +1,2 @@
+path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.worktrees/track2-rust
+exists=yes

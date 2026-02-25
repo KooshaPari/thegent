@@ -103,12 +103,13 @@ def _coerce_subprocess_output(value: Any) -> str:
     return "" if value is None else str(value)
 
 
-def _parse_cliproxyctl_envelope(stdout_text: str, *, expected_command: str) -> dict[str, Any]:
+def _parse_cliproxyctl_envelope(stdout_text: str, *, expected_command: str, stderr_text: str = "") -> dict[str, Any]:
     """Parse and validate cliproxyctl machine JSON envelope."""
     try:
         payload = json.loads(stdout_text)
     except json.JSONDecodeError as exc:  # pragma: no cover - explicit error branch in tests
-        raise ValueError(f"Invalid cliproxyctl JSON envelope: {exc}") from exc
+        stderr_info = f" stderr: {stderr_text.strip()}" if stderr_text.strip() else ""
+        raise ValueError(f"Invalid cliproxyctl JSON envelope: {exc}{stderr_info}") from exc
     if not isinstance(payload, dict):
         raise ValueError("Invalid cliproxyctl JSON envelope: expected top-level object")
     schema_version = payload.get("schema_version")
@@ -140,7 +141,13 @@ def _run_cliproxyctl_machine_command(command: str, *, args: list[str] | None = N
     proc = run_subprocess_optimized(argv, check=False, capture_output=True, text=True)
     stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
     stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
-    envelope = _parse_cliproxyctl_envelope(stdout_text, expected_command=command)
+    # Handle empty stdout - include stderr for debugging
+    if not stdout_text.strip():
+        raise RuntimeError(
+            f"cliproxyctl {command} returned empty response. "
+            f"stderr: {stderr_text.strip() if stderr_text.strip() else '(empty)'}"
+        )
+    envelope = _parse_cliproxyctl_envelope(stdout_text, expected_command=command, stderr_text=stderr_text)
     if proc.returncode != 0:
         error = envelope.get("error")
         error_message = ""
