@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "thegent-mcp"
 dynamic = ["version"]
 description = "Unified MCP server aggregator — ecosystem tool consolidation"
-requires-python = ">=3.10"
+requires-python = ">=3.11 and (implementation_name == 'pypy' or (implementation_name == 'cpython' and platform_machine == 'arm64' and python_version >= '3.14'))"
 dependencies = [
     "fastmcp[tasks]>=3.0.0",
     "pydantic>=2.12.5",

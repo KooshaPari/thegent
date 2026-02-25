@@ -7,7 +7,7 @@ name = "thegent-agents"
 dynamic = ["version"]
 description = "Agent orchestration and persona management for thegent"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11 and (implementation_name == 'pypy' or (implementation_name == 'cpython' and platform_machine == 'arm64' and python_version >= '3.14'))"
 license = { text = "MIT" }
 
 [project.optional-dependencies]

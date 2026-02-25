@@ -266,13 +266,45 @@ The following worktrees are non-compliant (broken gitdir pointers from `/temp-PR
 
 ## 10. Governance Checklist (New Work)
 
-Before starting any new worktree:
-
+### Pre-Creation (Phase 0 — Context Load)
+- [ ] `openspec list` — check active changes for conflicts
+- [ ] `openspec list --specs` — check existing capabilities
+- [ ] `git worktree list` — check active worktrees
+- [ ] Read `openspec/project.md` and affected `specs/<capability>/` files
 - [ ] Task classified: domain, scale, risk, coupling filled in
-- [ ] If M/L/XL: OpenSpec proposal scaffolded and validated (`openspec validate --strict`)
-- [ ] BMAD phase confirmed ≥ Phase 4 (story approved)
-- [ ] Worktree created via `./scripts/worktree_governance.sh new <domain> <scale> <change-anchor>`
+
+### Outcome Definition (Phase 1 — Goal-Backward)
+- [ ] `must_haves` defined: observable outcomes stated (what is true when done)
+- [ ] `verify_commands` defined: runnable command proving each must_have
+- [ ] If change-anchor slug needs "and": split into two changes
+
+### Proposal (Phase 2)
+- [ ] If M/L/XL: OpenSpec proposal scaffolded (`proposal.md`, `tasks.md`, `design.md`)
+- [ ] Each task in `tasks.md` has a `verify:` line with a runnable command (Nyquist)
+- [ ] If L/XL: `design.md` locks all naming, API, error patterns before implementation
+- [ ] `openspec validate <id> --strict` passes
+- [ ] Proposal approved (worktree stays in `blocked/` until this gate clears)
+
+### Execution Setup (Phase 3–4)
+- [ ] Wave decomposition done for M/L/XL: each task labeled Wave N
+- [ ] Worktree created: `./scripts/worktree_governance.sh new <domain> <scale> <change-anchor>`
+- [ ] `SESSION_STATE.md` initialized in worktree root (current task, decisions, blockers, next action)
 - [ ] Worktree path verified: `<repo>/.worktrees/<domain>/<scale>/<change-anchor>/active/`
-- [ ] `openspec/changes/<change-anchor>/tasks.md` drives commit sequence
-- [ ] State transitions done by renaming dir or via `worktree_governance.sh state`
-- [ ] On merge: `openspec archive <change-anchor> --yes` then `git worktree prune`
+
+### Execution (Phase 5)
+- [ ] Wave 1 tasks delegated to fresh subagents in parallel (thin orchestrator)
+- [ ] `SESSION_STATE.md` updated after each task
+- [ ] Atomic commits per task: `<type>(<domain>/<change-anchor>): <description>`
+- [ ] No stopping at "milestones" — halt only at 3 failures, missing config, new dependency, or gate
+
+### Verification (Phase 6)
+- [ ] All `verify:` commands from `tasks.md` pass
+- [ ] `task quality` passes
+- [ ] All `must_haves` observable from outside the system
+- [ ] `openspec validate <id> --strict` passes
+- [ ] State transitioned to `review/`: `./scripts/worktree_governance.sh state <change-anchor> review`
+
+### Integration and Archive (Phase 7)
+- [ ] On merge: `openspec archive <change-anchor> --yes`
+- [ ] `git worktree prune`
+- [ ] Worktree dir moved to `done/` or removed
