@@ -45,6 +45,20 @@ def __getattr__(name: str) -> Any:
             globals()[name] = func
             return func
     
+    # Lazy load snapshot/dump commands
+    _snapshot_dump_funcs = ("snapshot_daily_totals_cmd", "dump_categories_cmd")
+    if name in _snapshot_dump_funcs:
+        from thegent.cli.commands import team_snapshot_cmds
+        func = getattr(team_snapshot_cmds, name, None)
+        if func:
+            globals()[name] = func
+            return func
+        from thegent.cli.commands import team_dump_cmds
+        func = getattr(team_dump_cmds, name, None)
+        if func:
+            globals()[name] = func
+            return func
+    
     if hasattr(_cli_surface, name):
         return getattr(_cli_surface, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -119,6 +133,7 @@ __all__ = [
     "_safe_list",
     "_session_paths",
     "console",
+    "dump_categories_cmd",
     "get_exit_message",
     "json",
     "list_agent_names",
@@ -127,6 +142,7 @@ __all__ = [
     "resolve_agent",
     "run_login",
     "signal",
+    "snapshot_daily_totals_cmd",
     "sys",
     "time",
     # DAG helpers
