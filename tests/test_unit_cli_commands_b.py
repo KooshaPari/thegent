@@ -363,7 +363,6 @@ class TestDagRemoveCmdImpl:
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli._resolve_cwd")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_remove_success(self, mock_console, mock_cwd, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-316
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -813,9 +812,8 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
+    @patch("thegent.cli._dag_path")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_retry_failed(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-342
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -833,9 +831,8 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
+    @patch("thegent.cli._dag_path")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_clear_stuck(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-343
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -853,9 +850,8 @@ class TestDagRecoverCmdImpl:
     @patch("thegent.cli._atomic_write")
     @patch("thegent.cli._serialize_dag", return_value="serialized")
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
+    @patch("thegent.cli._dag_path")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_reset_retries(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
         # @trace FR-CLI-344
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -871,7 +867,7 @@ class TestDagRecoverCmdImpl:
         mock_write.assert_called_once()
 
     @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
+    @patch("thegent.cli._dag_path")
     @patch("thegent.cli.console")
     def test_unknown_action(self, mock_console, mock_dag_path, mock_parse, tmp_path) -> None:
         # @trace FR-CLI-345
@@ -901,9 +897,8 @@ class TestDagProbeCmdImpl:
             dag_probe_cmd(cd=None)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
+    @patch("thegent.cli._dag_path")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_no_baseline(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-347
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -922,9 +917,8 @@ class TestDagProbeCmdImpl:
         assert any("No baseline" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
+    @patch("thegent.cli._dag_path")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_no_drift(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-348
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -944,9 +938,8 @@ class TestDagProbeCmdImpl:
         assert any("No drift" in str(c) for c in mock_console.print.call_args_list)
 
     @patch("thegent.cli.ThegentSettings")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
+    @patch("thegent.cli._dag_path")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_drift_detected(self, mock_console, mock_dag_path, mock_settings, tmp_path) -> None:
         # @trace FR-CLI-349
         dag_file = tmp_path / ".factory" / "dag-session.md"
@@ -1117,7 +1110,6 @@ class TestSessionContractHealthReportCmdImpl:
     @patch("thegent.cli._default_owner_tag", return_value="ci@host")
     @patch("thegent.cli.ThegentSettings")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_with_export_output(self, mock_console, mock_settings, mock_owner, tmp_path) -> None:
         # @trace FR-CLI-358
         mock_settings.return_value.output_format = "rich"
@@ -1924,7 +1916,6 @@ class TestDriftCmdImpl:
 
     @patch("thegent.cli.ThegentSettings")
     @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
     def test_no_drift(self, mock_console, mock_settings) -> None:
         # @trace FR-CLI-306
         mock_settings.return_value.session_dir = "/tmp/sessions"
