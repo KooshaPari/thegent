@@ -19,7 +19,7 @@ Columns = getattr(_cli_surface, "Columns", None)
 # Stubs for test mocking
 def _resolve_cwd(cd=None):
     """Stub for backward compatibility."""
-    return
+    return None
 
 def _parse_dag_session(dag_file, cwd=None):
     """Stub for tests."""
@@ -47,6 +47,7 @@ def _dag_path(cd=None):
 
 def _ensure_dag_file(path, content):
     """Stub for tests."""
+    pass
 
 def _dag_update_task(task_id, field, value, session_dir):
     """Stub for tests."""
@@ -62,6 +63,7 @@ def _validate_agent(agent):
 
 def _atomic_write(path, content):
     """Stub for tests."""
+    pass
 
 def _session_status_for(session_dir):
     """Stub for tests."""
@@ -76,10 +78,6 @@ def __getattr__(name: str) -> Any:
     # Forward to _shared for CLI helper functions
     if hasattr(_shared, name):
         return getattr(_shared, name)
-    # Forward to governance modules
-    if name == "data_protection_cmd":
-        from thegent.cli.commands.governance_data_protection_cmds import data_protection_cmd
-        return data_protection_cmd
     
     # Forward dag_update_cmd to _cli_surface
     if name == "dag_update_cmd":
@@ -170,13 +168,6 @@ _patchable_names_list = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
-    "snapshot_daily_totals_cmd",
-    "dump_categories_cmd",
-    "workstream_stats_cmd",
-    "workstream_dashboard_cmd",
-    "workstream_launch_cmd",
-    "workstream_dependencies_cmd",
-    "domain_map_cmd",
 ]
 for _name in _patchable_names_list:
     if not hasattr(sys.modules[__name__], _name) and hasattr(_shared, _name):
@@ -223,11 +214,4 @@ __all__ = [
     "dag_recover_impl",
     "dag_run_impl",
     "dag_sync_impl",
-    "snapshot_daily_totals_cmd",
-    "dump_categories_cmd",
-    "workstream_stats_cmd",
-    "workstream_dashboard_cmd",
-    "workstream_launch_cmd",
-    "workstream_dependencies_cmd",
-    "domain_map_cmd",
 ]
