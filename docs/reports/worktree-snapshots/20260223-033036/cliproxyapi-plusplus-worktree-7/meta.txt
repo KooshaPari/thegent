@@ -1,0 +1,3 @@
+path=/Users/kooshapari/temp-PRODVERCEL/485/kush/cliproxyapi-plusplus-worktree-7
+branch=workstream-cpb-7
+head=1495084177b1a022a91ac0097b633a47494fb2d1
