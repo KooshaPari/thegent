@@ -27,52 +27,56 @@ ZSH_VERSION=$(zsh --version | head -1)
 echo "ZSH Version: $ZSH_VERSION"
 echo ""
 
-# Function to run benchmark using shell built-in time
+# Function to run benchmark using Python timing
 run_fallback_benchmark() {
     local name="$1"
     local cmd="$2"
     local output_file="$3"
     local runs=10
-    local times=()
 
     echo "Running $name ($runs iterations)..."
 
-    for i in $(seq 1 $runs); do
-        # Use zsh's TIMEFMT for precise measurement
-        start_ns=$(python3 -c "import time; print(time.perf_counter_ns())")
-        eval "$cmd" 2>/dev/null
-        end_ns=$(python3 -c "import time; print(time.perf_counter_ns())")
-        elapsed_ms=$(python3 -c "print(($end_ns - $start_ns) / 1_000_000)")
-        times+=("$elapsed_ms")
-    done
-
-    # Calculate stats using Python
+    # Use Python to run the benchmark
     python3 << EOF
+import subprocess
+import time
 import json
 import statistics
 
-times = ${times[@]}
+cmd = "$cmd"
+runs = $runs
+output_file = "$output_file"
+
+times = []
+for i in range(runs):
+    start = time.perf_counter()
+    subprocess.run(cmd, shell=True, capture_output=True)
+    end = time.perf_counter()
+    elapsed_ms = (end - start) * 1000
+    times.append(elapsed_ms)
+
 mean_ms = statistics.mean(times)
 stddev_ms = statistics.stdev(times) if len(times) > 1 else 0
 min_ms = min(times)
 max_ms = max(times)
+median_ms = statistics.median(times)
 
 results = {
     "results": [{
-        "command": "$cmd",
-        "mean": mean_ms / 1000,  # Convert to seconds
+        "command": cmd,
+        "mean": mean_ms / 1000,
         "stddev": stddev_ms / 1000,
         "min": min_ms / 1000,
         "max": max_ms / 1000,
-        "median": statistics.median(times) / 1000,
+        "median": median_ms / 1000,
     }]
 }
 
-with open("$output_file", "w") as f:
+with open(output_file, "w") as f:
     json.dump(results, f, indent=2)
 
 print(f"  mean: {mean_ms:.2f}ms")
-print(f"  median: {statistics.median(times):.2f}ms")
+print(f"  median: {median_ms:.2f}ms")
 print(f"  min: {min_ms:.2f}ms")
 print(f"  max: {max_ms:.2f}ms")
 EOF
@@ -99,7 +103,7 @@ if [[ $HAS_HYPERFINE -eq 1 ]]; then
         --runs 10 \
         --export-json "${RESULTS_DIR}/baseline.json" \
         'zsh -i -c exit' \
-        2>/dev/null || echo "  (baseline failed)"
+        2>/dev/null || run_fallback_benchmark "baseline" "zsh -i -c exit" "${RESULTS_DIR}/baseline.json"
 else
     run_fallback_benchmark "baseline" "zsh -i -c exit" "${RESULTS_DIR}/baseline.json"
 fi
@@ -113,7 +117,7 @@ if [[ $HAS_HYPERFINE -eq 1 ]]; then
         --runs 10 \
         --export-json "${RESULTS_DIR}/thegent.json" \
         "ZDOTDIR=${SHELL_DIR} zsh -i -c exit" \
-        2>/dev/null || echo "  (thegent config failed)"
+        2>/dev/null || run_fallback_benchmark "thegent" "ZDOTDIR=${SHELL_DIR} zsh -i -c exit" "${RESULTS_DIR}/thegent.json"
 else
     run_fallback_benchmark "thegent" "ZDOTDIR=${SHELL_DIR} zsh -i -c exit" "${RESULTS_DIR}/thegent.json"
 fi
@@ -122,9 +126,8 @@ fi
 echo ""
 echo "--- Results Summary ---"
 
-# Extract mean times
-if command -v python3 &>/dev/null; then
-    python3 << 'EOF'
+# Extract mean times using Python
+python3 << EOF
 import json
 import sys
 from pathlib import Path
@@ -155,19 +158,26 @@ try:
         print(f"Ratio:         {ratio:.2f}x")
 
         # Check regression
-        if thegent_mean > 0.150:
-            print(f"\n⚠️  REGRESSION: thegent startup ({thegent_mean*1000:.0f}ms) exceeds 150ms target")
+        # Note: Absolute target depends on environment (CI vs local, disk speed, etc.)
+        # Focus on relative regression (thegent vs baseline)
+        if ratio > 3.0:
+            print(f"\n❌ FAIL: thegent is {ratio:.2f}x slower than baseline (>3x)")
+            sys.exit(1)
         elif ratio > 2.0:
-            print(f"\n⚠️  REGRESSION: thegent is {ratio:.2f}x slower than baseline")
+            print(f"\n⚠️  WARNING: thegent is {ratio:.2f}x slower than baseline")
+            # Warning but don't fail
         else:
-            print(f"\n✅ OK: Startup time within targets")
+            print(f"\n✅ OK: thegent overhead is acceptable ({ratio:.2f}x)")
+
+        # Check absolute time (only if baseline is reasonable, i.e., <500ms)
+        if baseline_mean < 0.5 and thegent_mean > 0.150:
+            print(f"   Note: Absolute time ({thegent_mean*1000:.0f}ms) exceeds 150ms target")
+            print(f"   (Baseline was {baseline_mean*1000:.0f}ms)")
 
 except Exception as e:
     print(f"⚠️ Error parsing results: {e}")
+    sys.exit(0)
 EOF
-else
-    echo "(python3 not installed, skipping summary)"
-fi
 
 echo ""
 echo "=== Benchmark Complete ==="
