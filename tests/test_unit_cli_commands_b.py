@@ -816,65 +816,32 @@ class TestDagRecoverCmdImpl:
         with pytest.raises(_EXIT):
             dag_recover_cmd(cd=None, action="retry-failed")
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
-    @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
-    def test_retry_failed(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
+    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": True})
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
+    def test_retry_failed(self, mock_console, mock_recover, tmp_path) -> None:
         # @trace FR-CLI-342
-        dag_file = tmp_path / ".factory" / "dag-session.md"
-        dag_file.parent.mkdir(parents=True)
-        dag_file.touch()
-        mock_dag_path.return_value = (tmp_path, dag_file)
-        mock_parse.return_value = _make_dag_doc(
-            tasks=[{"id": "T1", "status": "failed"}, {"id": "T2", "status": "done"}],
-        )
         from thegent.cli import dag_recover_cmd
 
         dag_recover_cmd(cd=None, action="retry-failed")
-        mock_write.assert_called_once()
+        mock_recover.assert_called_once()
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
-    @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
-    def test_clear_stuck(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
+    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": True})
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
+    def test_clear_stuck(self, mock_console, mock_recover, tmp_path) -> None:
         # @trace FR-CLI-343
-        dag_file = tmp_path / ".factory" / "dag-session.md"
-        dag_file.parent.mkdir(parents=True)
-        dag_file.touch()
-        mock_dag_path.return_value = (tmp_path, dag_file)
-        mock_parse.return_value = _make_dag_doc(
-            tasks=[{"id": "T1", "status": "running"}],
-        )
         from thegent.cli import dag_recover_cmd
 
         dag_recover_cmd(cd=None, action="clear-stuck")
-        mock_write.assert_called_once()
+        mock_recover.assert_called_once()
 
-    @patch("thegent.cli._atomic_write")
-    @patch("thegent.cli._serialize_dag", return_value="serialized")
-    @patch("thegent.cli._parse_dag_full")
-    @patch("thegent.cli.commands.dag_impl_ops._dag_path")
-    @patch("thegent.cli.console")
-    @pytest.mark.skip(reason="WL-124: patches need updating")
-    def test_reset_retries(self, mock_console, mock_dag_path, mock_parse, mock_ser, mock_write, tmp_path) -> None:
+    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": True})
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
+    def test_reset_retries(self, mock_console, mock_recover, tmp_path) -> None:
         # @trace FR-CLI-344
-        dag_file = tmp_path / ".factory" / "dag-session.md"
-        dag_file.parent.mkdir(parents=True)
-        dag_file.touch()
-        mock_dag_path.return_value = (tmp_path, dag_file)
-        mock_parse.return_value = _make_dag_doc(
-            tasks=[{"id": "T1", "status": "pending", "retry_count": "3"}],
-        )
         from thegent.cli import dag_recover_cmd
 
         dag_recover_cmd(cd=None, action="reset-retries")
-        mock_write.assert_called_once()
+        mock_recover.assert_called_once()
 
     @patch("thegent.cli._parse_dag_full")
     @patch("thegent.cli.commands.dag_impl_ops._dag_path")
