@@ -25,7 +25,7 @@ async def thegent_ddg_search_impl(
     result_count = len(results_list)
     await ctx.info(f"thegent_ddg_search returned {result_count} result(s) in {elapsed_ms}ms")
     return ToolResult(
-        content=json.dumps(results_list),
+        content=json.dumps(results_list).decode(),
         structured_content={"results": results_list, "count": result_count},
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -44,7 +44,7 @@ def thegent_reddit_search_impl(
     results = reddit_search(query, max_results=num_results, settings=settings)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(results),
+        content=json.dumps(results).decode(),
         structured_content=results,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -69,7 +69,7 @@ async def thegent_scrape_url_impl(
     await ctx.info(f"thegent_scrape_url done content_len={content_len} elapsed={elapsed_ms}ms")
     await ctx.report_progress(progress=3, total=3)
     return ToolResult(
-        content=json.dumps(result),
+        content=json.dumps(result).decode(),
         structured_content=result,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -87,7 +87,7 @@ def thegent_deep_research_impl(
     results = perform_deep_research(query, subreddits=sub_list)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(results),
+        content=json.dumps(results).decode(),
         structured_content=results,
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -114,7 +114,7 @@ async def thegent_suggest_prompt_impl(
         suggested = raw_prompt
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps({"suggested_prompt": suggested, "sampling_used": suggested != raw_prompt}),
+        content=json.dumps({"suggested_prompt": suggested, "sampling_used": suggested != raw_prompt}).decode(),
         structured_content={"suggested_prompt": suggested, "sampling_used": suggested != raw_prompt},
         meta={"execution_time_ms": elapsed_ms},
     )

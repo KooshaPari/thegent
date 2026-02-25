@@ -19,7 +19,7 @@ def thegent_escalate_list_impl(
     items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(items),
+        content=json.dumps(items).decode(),
         structured_content=items,
         meta={"execution_time_ms": elapsed_ms, "count": len(items)},
     )
@@ -52,7 +52,7 @@ def thegent_escalate_add_impl(
         return error_result_impl(str(e), "Check run_id exists", extra={})
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps({"success": True, "run_id": run_id}),
+        content=json.dumps({"success": True, "run_id": run_id}).decode(),
         structured_content={"success": True, "run_id": run_id},
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -67,7 +67,7 @@ def thegent_escalate_approve_impl(
     ok = escalate_approve_impl(run_id=run_id)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps({"success": ok, "run_id": run_id}),
+        content=json.dumps({"success": ok, "run_id": run_id}).decode(),
         structured_content={"success": ok, "run_id": run_id},
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -83,7 +83,7 @@ def thegent_escalate_resolve_impl(
     ok = escalate_resolve_impl(run_id=run_id, resolution=resolution)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps({"success": ok, "run_id": run_id}),
+        content=json.dumps({"success": ok, "run_id": run_id}).decode(),
         structured_content={"success": ok, "run_id": run_id},
         meta={"execution_time_ms": elapsed_ms},
     )
@@ -97,7 +97,7 @@ def thegent_govern_list_pending_impl(
     items = govern_list_pending_impl()
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
     return ToolResult(
-        content=json.dumps(items),
+        content=json.dumps(items).decode(),
         structured_content=items,
         meta={"execution_time_ms": elapsed_ms, "count": len(items)},
     )

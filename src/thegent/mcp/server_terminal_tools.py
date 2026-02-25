@@ -52,7 +52,7 @@ def register_terminal_tools(
             )
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         return ToolResult(
-            content=json.dumps(result),
+            content=json.dumps(result).decode(),
             structured_content=result,
             meta={"execution_time_ms": elapsed_ms},
         )
@@ -84,7 +84,7 @@ def register_terminal_tools(
         success = send_to_tmux_pane(pane_id, text, enter=enter)
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         return ToolResult(
-            content=json.dumps({"success": success}),
+            content=json.dumps({"success": success}).decode(),
             structured_content={"success": success},
             meta={"execution_time_ms": elapsed_ms},
         )
