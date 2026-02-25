@@ -131,7 +131,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             await _ctx_warning(ctx, f"thegent_seed_detect error: {e}")
             _log.exception("Seed detection error")
             return ToolResult(
-                content=json.dumps({"error": str(e).decode(), "seeds": [], "count": 0}),
+                content=json.dumps({"error": str(e), "seeds": [], "count": 0}),
                 structured_content={"error": str(e), "seeds": [], "count": 0},
                 meta={"execution_time_ms": 0},
             )
@@ -233,7 +233,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             await _ctx_warning(ctx, f"thegent_seed_store error: {e}")
             _log.exception("Seed storage error")
             return ToolResult(
-                content=json.dumps({"error": str(e).decode(), "seed": None}),
+                content=json.dumps({"error": str(e), "seed": None}),
                 structured_content={"error": str(e), "seed": None},
                 meta={"execution_time_ms": 0},
             )
@@ -301,7 +301,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
             await _ctx_warning(ctx, f"thegent_seed_list error: {e}")
             _log.exception("Seed listing error")
             return ToolResult(
-                content=json.dumps({"error": str(e).decode(), "seeds": []}),
+                content=json.dumps({"error": str(e), "seeds": []}),
                 structured_content={"error": str(e), "seeds": []},
                 meta={"execution_time_ms": 0},
             )
@@ -375,7 +375,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
         except Exception as e:
             _log.exception("Seed update error")
             return ToolResult(
-                content=json.dumps({"error": str(e).decode(), "updated": False}),
+                content=json.dumps({"error": str(e), "updated": False}),
                 structured_content={"error": str(e), "updated": False},
                 meta={"execution_time_ms": 0},
             )
@@ -429,7 +429,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
         except Exception as e:
             _log.exception("Seed export error")
             return ToolResult(
-                content=json.dumps({"error": str(e).decode(), "markdown": None}),
+                content=json.dumps({"error": str(e), "markdown": None}),
                 structured_content={"error": str(e), "markdown": None},
                 meta={"execution_time_ms": 0},
             )
@@ -480,7 +480,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
         except Exception as e:
             _log.exception("Seed stats error")
             return ToolResult(
-                content=json.dumps({"error": str(e).decode(), "stats": {}}),
+                content=json.dumps({"error": str(e), "stats": {}}),
                 structured_content={"error": str(e), "stats": {}},
                 meta={"execution_time_ms": 0},
             )
