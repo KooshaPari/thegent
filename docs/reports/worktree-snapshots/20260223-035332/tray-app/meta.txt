@@ -1,0 +1,2 @@
+path=/Users/kooshapari/temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app
+exists=yes
