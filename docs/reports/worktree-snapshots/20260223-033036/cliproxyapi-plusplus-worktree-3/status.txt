@@ -1,0 +1,20 @@
+## workstream-cpb-3
+ M README.md
+ M Taskfile.yml
+ M pkg/llmproxy/cmd/kilo_login.go
+ M pkg/llmproxy/cmd/roo_kilo_login_test.go
+ M pkg/llmproxy/config/provider_registry_generated.go
+ M pkg/llmproxy/config/providers.json
+ M pkg/llmproxy/executor/kilo_executor.go
+ M pkg/llmproxy/runtime/executor/kilo_executor.go
+ M sdk/api/handlers/handlers.go
+ M sdk/api/handlers/handlers_request_details_test.go
+?? docs/features/architecture/fragemented/
+?? docs/features/providers/fragemented/
+?? docs/fragemented/
+?? docs/planning/reports/fragemented/
+?? docs/planning/reports/issue-wave-gh-next20-lane-3.md
+?? ops/
+?? pkg/llmproxy/config/provider_registry_generated_test.go
+?? pkg/llmproxy/executor/kilo_executor_models_test.go
+?? process-compose.yaml
