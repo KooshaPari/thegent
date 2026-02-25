@@ -55,7 +55,7 @@ def plan_cmd(
     )
 
     if json_output:
-        typer.echo(json.dumps(result, indent=2).decode().decode())
+        typer.echo(json.dumps(result, indent=2))
         return
 
     console.print(f"[bold cyan]Plan:[/bold cyan] {result['plan_id']}")
@@ -118,7 +118,7 @@ def run_cmd(
     )
 
     if json_output:
-        typer.echo(json.dumps(result, indent=2).decode().decode())
+        typer.echo(json.dumps(result, indent=2))
         raise typer.Exit(0 if result["all_passed"] else 1)
 
     console.print(f"[bold cyan]Plan:[/bold cyan] {result['plan_id']}")

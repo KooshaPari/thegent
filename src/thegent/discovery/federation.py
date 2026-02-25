@@ -71,7 +71,7 @@ class PolicyFederator:
             try:
                 peer_identity_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(peer_identity_path, "a") as f:
-                    f.write(json.dumps(identity_payload).decode().decode() + "\n")
+                    f.write(json.dumps(identity_payload).decode() + "\n")
                 _log.info("Identity federated successfully to %s", peer["id"])
             except Exception as e:
                 _log.error("Failed to federate identity to %s: %s", peer["id"], e)

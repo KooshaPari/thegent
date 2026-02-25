@@ -1,3 +1,4 @@
+<DONE>
 # Production Packaging, Polish & Optimization Audit + Plan
 ## Cross-Platform Production Readiness (Windows/macOS/Linux)
 

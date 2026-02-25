@@ -1,9 +1,0 @@
-# Fragmented Index
-
-## Source Files (2026)
-
-- CHANGELOG_TEMPLATE.md
-- RELEASES.md
-- RELEASE_PROCESS.md
-- VERSIONING.md
-- VERSION_COMPATIBILITY.md

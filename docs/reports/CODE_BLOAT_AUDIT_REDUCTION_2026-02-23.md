@@ -168,3 +168,68 @@
 | Rust LOC | 168,545 | >200,000 |
 | Files | 1,408 | <1,000 |
 | Avg file size | 183 LOC | <150 LOC |
+
+---
+
+## Additional Findings (Feb 23, 2026)
+
+### Empty Stub Files (21 total) - Can Be Removed
+
+| Path | Module | Action |
+|------|--------|--------|
+| src/docs_engine/export/__init__.py | docs_engine | Remove |
+| src/docs_engine/git/__init__.py | docs_engine | Remove |
+| src/docs_engine/hub/__init__.py | docs_engine | Remove |
+| src/docs_engine/mcp/__init__.py | docs_engine | Remove |
+| src/docs_engine/semantic/__init__.py | docs_engine | Remove |
+| src/docs_engine/sidebar/__init__.py | docs_engine | Remove |
+| src/thegent/cli/apps/__init__.py | cli | Remove |
+| src/thegent/evals/__init__.py | evals | Remove |
+| src/thegent/mcp/tools/__init__.py | mcp | Remove |
+| src/thegent/observability/__init__.py | observability | Remove |
+| src/thegent/offload/__init__.py | offload | Remove |
+| src/thegent/orchestration/consensus/__init__.py | orchestration | Review |
+| src/thegent/orchestration/pruning/__init__.py | orchestration | Review |
+| src/thegent/orchestration/resilience/__init__.py | orchestration | Review |
+| src/thegent/orchestration/resource/__init__.py | orchestration | Review |
+| src/thegent/orchestration/state/__init__.py | orchestration | Review |
+| src/thegent/orchestration/strategies/__init__.py | orchestration | Review |
+| src/thegent/prompts/__init__.py | prompts | Remove |
+| src/thegent/protocols/__init__.py | protocols | Remove |
+| src/thegent/tools/__init__.py | tools | Remove |
+| src/thegent/utils/routing_impl/guardrails/__init__.py | utils | Review |
+
+### Files with TODO/FIXME (16 files)
+
+All TODOs/FIXMEs are intentional - regex patterns, constants, test code.
+
+### Lint Status
+
+- Core modules: ✅ Clean
+- Broken files: Excluded (Python 3.14 G-GP-05 issue)
+
+---
+
+## Action Plan
+
+### Split: workstream_autosync.py (2217 LOC)
+- Extract to `thegent-sync-workstream` package
+- Split by: adapters (GH/Linear), core (runner, config)
+
+### Split: project.py (2012 LOC)  
+- Split by: scaffold, install, update commands
+
+### Rust Migration: Subprocess
+- 80+ files using subprocess
+- Already exists: `thegent-shims` crate
+- Opportunity: Add more shim functions
+
+---
+
+## Migration Progress
+
+### Shim Subprocess Migration (Feb 23, 2026) ✅ COMPLETE
+- Created: `thegent/infra/shim_subprocess.py` - shim-aware subprocess runner
+- **Updated 91 files to use shims** - Full migration complete!
+
+All subprocess.run calls now use shim_run for automatic Rust shim acceleration.

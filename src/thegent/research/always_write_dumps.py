@@ -74,9 +74,9 @@ class ConversationDumper:
                 f"category: {category}",
             ]
             if tags:
-                lines.append(f"tags: {json.dumps(tags).decode().decode()}")
+                lines.append(f"tags: {json.dumps(tags).decode()}")
             if dump_metadata:
-                lines.append(f"metadata: {json.dumps(dump_metadata, ensure_ascii=False).decode().decode()}")
+                lines.append(f"metadata: {json.dumps(dump_metadata, ensure_ascii=False).decode()}")
             lines.extend(
                 [
                     "---",
@@ -134,7 +134,7 @@ class ConversationDumper:
         }
         try:
             dump_path.write_text(
-                json.dumps(payload, ensure_ascii=False, indent=2).decode().decode() + "\n",
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
             logger.info(f"Conversation JSON dump written to {dump_path}")
@@ -259,7 +259,7 @@ class ConversationDumper:
         target_path.parent.mkdir(parents=True, exist_ok=True)
         payload = self.dump_index_payload()
         target_path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2).decode().decode() + "\n",
+            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         logger.info(f"Dump index written to {target_path}")

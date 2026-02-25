@@ -1,3 +1,4 @@
+<DONE>
 # Fragmented Index
 
 ## Source Files (2026)

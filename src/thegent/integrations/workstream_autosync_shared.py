@@ -6,13 +6,14 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from thegent.config_defaults import autosync_phase1_enabled
 from thegent.integrations.capability_alerts import ConnectorSLAThresholds
+from thegent.integrations.base import SerializableMixin
 
 OPEN_STATUSES: set[str] = {"BACKLOG", "IN PROGRESS", "REVIEW", "TODO", "OPEN"}
 WL_ID_PATTERN = re.compile(r"^WL-\d+$")
@@ -36,7 +37,7 @@ class MaintenanceWindow:
 
     def is_active(self, now: datetime) -> bool:
         """Return whether the window is active at the given timestamp."""
-        now_utc = now.astimezone(timezone.utc)
+        now_utc = now.astimezone(UTC)
         return self.start_utc <= now_utc <= self.end_utc
 
 
@@ -54,7 +55,7 @@ class WorkstreamPartition:
 
 
 @dataclass(frozen=True)
-class SyncCheckpoint:
+class SyncCheckpoint(SerializableMixin):
     """Minimal checkpoint used for rolling resume."""
 
     connector: str
@@ -63,17 +64,6 @@ class SyncCheckpoint:
     total_partitions: int
     partition_size: int
     created_at: datetime
-
-    def to_dict(self) -> dict[str, Any]:
-        """Serialize checkpoint state."""
-        return {
-            "connector": self.connector,
-            "direction": self.direction,
-            "start_index": self.start_index,
-            "total_partitions": self.total_partitions,
-            "partition_size": self.partition_size,
-            "created_at": self.created_at.isoformat(),
-        }
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "SyncCheckpoint":
@@ -388,7 +378,7 @@ class WorkstreamAutosyncConfig:
 
     def is_maintenance_active(self, connector: str, at: datetime | None = None, project: str | None = None) -> bool:
         """Return whether a connector is currently in planned maintenance."""
-        now = at or datetime.now(timezone.utc)
+        now = at or datetime.now(UTC)
         target = connector.lower()
         project_target = (project or self.project_id).strip().lower()
         for window in self.maintenance_windows:
@@ -509,7 +499,7 @@ class SyncOperation:
     items_failed: int = 0
     errors: list[str] = field(default_factory=list)
     correlation_id: str | None = None
-    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    started_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     completed_at: datetime | None = None
     duration_seconds: float | None = None
 
@@ -554,7 +544,7 @@ class SyncCycleManifest:
             "outputs": self.outputs,
             "previous_manifest_hash": self.previous_manifest_hash,
         }
-        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).decode().decode().encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).decode().encode("utf-8")).hexdigest()
         return SyncCycleManifest(
             cycle_number=self.cycle_number,
             started_at=self.started_at,
@@ -603,7 +593,7 @@ class SyncFailureQueue:
                 connector=connector,
                 item_id=item_id,
                 message=message,
-                occurred_at=datetime.now(timezone.utc),
+                occurred_at=datetime.now(UTC),
                 retry_class=retry_class.value,
                 correlation_id=correlation_id,
             )
@@ -612,7 +602,7 @@ class SyncFailureQueue:
 
     def prune_expired(self, now: datetime | None = None) -> None:
         """Drop failures older than retention window."""
-        now_utc = now or datetime.now(timezone.utc)
+        now_utc = now or datetime.now(UTC)
         cutoff = now_utc - timedelta(seconds=self.retention_seconds)
         self._entries = [entry for entry in self._entries if entry.occurred_at >= cutoff]
 

@@ -16,7 +16,7 @@ def hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode())
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode()).hexdigest()}
 
 
@@ -192,7 +192,7 @@ def append_health_snapshot(
     }
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, sort_keys=True).decode().decode())
+            fh.write(json.dumps(rec, option=json.OPT_SORT_KEYS).decode())
             fh.write("\n")
     except OSError:
         return

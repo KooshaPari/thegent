@@ -1,3 +1,4 @@
+<DONE>
 # Governance WP Gaps — Implementation Notes
 
 **Date:** 2026-02-14

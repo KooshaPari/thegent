@@ -1,3 +1,4 @@
+<DONE>
 # Phase2 Wave3 Lane4 Manual Repo Deep-Read
 
 | repo | strategy_summary | implementation_shape | utility_assessment | reproducible_build (yes/no/unknown + reason) | tests_status (pass/fail/unknown + reason) | security_policies (yes/no/unknown + reason) | release_hygiene (strong/moderate/weak + reason) | rollback_path (clear/partial/unclear + reason) | risk_flags | verdict(adopt/pilot/watch/avoid) |

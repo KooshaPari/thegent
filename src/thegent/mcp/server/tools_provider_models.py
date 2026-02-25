@@ -29,7 +29,7 @@ def register_provider_model_tools(
 
         from thegent.provider_model_manager import list_providers as _list_providers
 
-        return json.dumps(_list_providers(include_credentials=include_credentials).decode().decode(), indent=2)
+        return json.dumps(_list_providers(include_credentials=include_credentials).decode(), indent=2)
 
     @mcp.tool()
     def get_provider(name: str) -> str:
@@ -40,8 +40,8 @@ def register_provider_model_tools(
 
         result = _get_provider(name)
         if result is None:
-            return json.dumps({"error": f"Provider '{name}' not found"}).decode().decode()
-        return json.dumps(result, indent=2).decode().decode()
+            return json.dumps({"error": f"Provider '{name}' not found"}).decode()
+        return json.dumps(result, indent=2)
 
     @mcp.tool()
     def add_provider(
@@ -65,7 +65,7 @@ def register_provider_model_tools(
             extra_aliases=extra_aliases,
             login_url=login_url,
         )
-        return json.dumps({"success": success, "message": msg}).decode().decode()
+        return json.dumps({"success": success, "message": msg}).decode()
 
     @mcp.tool()
     def update_provider(
@@ -87,7 +87,7 @@ def register_provider_model_tools(
             api_key=api_key,
             extra_aliases=extra_aliases,
         )
-        return json.dumps({"success": success, "message": msg}).decode().decode()
+        return json.dumps({"success": success, "message": msg}).decode()
 
     @mcp.tool()
     def delete_provider(name: str, remove_credentials: bool = True) -> str:
@@ -97,7 +97,7 @@ def register_provider_model_tools(
         from thegent.provider_model_manager import delete_provider as _delete_provider
 
         success, msg = _delete_provider(name, remove_credentials=remove_credentials)
-        return json.dumps({"success": success, "message": msg}).decode().decode()
+        return json.dumps({"success": success, "message": msg}).decode()
 
     @mcp.tool()
     def list_credentials() -> str:
@@ -106,7 +106,7 @@ def register_provider_model_tools(
 
         from thegent.provider_model_manager import list_credentials as _list_credentials
 
-        return json.dumps(_list_credentials().decode().decode(), indent=2)
+        return json.dumps(_list_credentials().decode(), indent=2)
 
     @mcp.tool()
     def add_api_key(provider: str, api_key: str) -> str:
@@ -116,7 +116,7 @@ def register_provider_model_tools(
         from thegent.provider_model_manager import add_api_key as _add_api_key
 
         success, msg = _add_api_key(provider, api_key)
-        return json.dumps({"success": success, "message": msg}).decode().decode()
+        return json.dumps({"success": success, "message": msg}).decode()
 
     @mcp.tool()
     def remove_api_key(provider: str) -> str:
@@ -126,7 +126,7 @@ def register_provider_model_tools(
         from thegent.provider_model_manager import remove_api_key as _remove_api_key
 
         success, msg = _remove_api_key(provider)
-        return json.dumps({"success": success, "message": msg}).decode().decode()
+        return json.dumps({"success": success, "message": msg}).decode()
 
     @mcp.tool()
     def validate_provider(name: str) -> str:
@@ -151,7 +151,7 @@ def register_provider_model_tools(
 
         from thegent.provider_model_manager import discover_models as _discover_models
 
-        return json.dumps(_discover_models(provider).decode().decode(), indent=2)
+        return json.dumps(_discover_models(provider).decode(), indent=2)
 
     @mcp.tool()
     def list_models(provider: str | None = None) -> str:
@@ -160,7 +160,7 @@ def register_provider_model_tools(
 
         from thegent.provider_model_manager import list_models as _list_models
 
-        return json.dumps(_list_models(provider).decode().decode(), indent=2)
+        return json.dumps(_list_models(provider).decode(), indent=2)
 
     @mcp.tool()
     def add_model_alias(provider: str, model: str, alias: str) -> str:
@@ -170,7 +170,7 @@ def register_provider_model_tools(
         from thegent.provider_model_manager import add_model_alias as _add_model_alias
 
         success, msg = _add_model_alias(provider, model, alias)
-        return json.dumps({"success": success, "message": msg}).decode().decode()
+        return json.dumps({"success": success, "message": msg}).decode()
 
     @mcp.tool()
     def remove_model_alias(provider: str, alias: str) -> str:
@@ -180,7 +180,7 @@ def register_provider_model_tools(
         from thegent.provider_model_manager import remove_model_alias as _remove_model_alias
 
         success, msg = _remove_model_alias(provider, alias)
-        return json.dumps({"success": success, "message": msg}).decode().decode()
+        return json.dumps({"success": success, "message": msg}).decode()
 
     return (
         list_providers,

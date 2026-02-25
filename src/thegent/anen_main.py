@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 
 import typer
 from thegent.fanta_main import app
@@ -33,7 +33,7 @@ def _run_anen_with_alias(alias: str, passthrough_args: list[str]) -> None:  # py
     else:
         cmd = [anen_cmd, "--model", model, *passthrough_args]
     try:
-        proc = subprocess.run(cmd, check=False)
+        proc = shim_run(cmd, check=False)
     except FileNotFoundError:
         console.print("[red]Resolved anen binary is not executable.[/red]")
         raise typer.Exit(1) from None

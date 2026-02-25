@@ -62,7 +62,7 @@ async def run_with_provider_loop_timeout(
     limit = timeout_sec if timeout_sec is not None else PROVIDER_LOOP_TIMEOUT_SEC
     try:
         return await asyncio.wait_for(coro, timeout=limit)
-    except asyncio.TimeoutError as exc:
+    except TimeoutError as exc:
         _log.error(
             "PROVIDER_LOOP_TIMEOUT: provider loop exceeded %ds. context=%r — aborting.",
             limit,

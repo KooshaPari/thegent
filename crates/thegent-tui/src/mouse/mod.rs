@@ -33,10 +33,7 @@ pub trait MouseHandler {
 // ---------------------------------------------------------------------------
 
 fn point_in_rect(col: u16, row: u16, rect: Rect) -> bool {
-    col >= rect.x
-        && col < rect.x + rect.width
-        && row >= rect.y
-        && row < rect.y + rect.height
+    col >= rect.x && col < rect.x + rect.width && row >= rect.y && row < rect.y + rect.height
 }
 
 // ---------------------------------------------------------------------------
@@ -169,8 +166,18 @@ impl PaneSplitter {
                 let right_x = (split_col + self.separator_width).min(area.x + area.width);
                 let right_width = (area.x + area.width).saturating_sub(right_x);
                 (
-                    Rect { x: area.x, y: area.y, width: left_width, height: area.height },
-                    Rect { x: right_x, y: area.y, width: right_width, height: area.height },
+                    Rect {
+                        x: area.x,
+                        y: area.y,
+                        width: left_width,
+                        height: area.height,
+                    },
+                    Rect {
+                        x: right_x,
+                        y: area.y,
+                        width: right_width,
+                        height: area.height,
+                    },
                 )
             }
             Orientation::Vertical => {
@@ -181,8 +188,18 @@ impl PaneSplitter {
                 let bottom_y = (split_row + self.separator_width).min(area.y + area.height);
                 let bottom_height = (area.y + area.height).saturating_sub(bottom_y);
                 (
-                    Rect { x: area.x, y: area.y, width: area.width, height: top_height },
-                    Rect { x: area.x, y: bottom_y, width: area.width, height: bottom_height },
+                    Rect {
+                        x: area.x,
+                        y: area.y,
+                        width: area.width,
+                        height: top_height,
+                    },
+                    Rect {
+                        x: area.x,
+                        y: bottom_y,
+                        width: area.width,
+                        height: bottom_height,
+                    },
                 )
             }
         }
@@ -245,14 +262,8 @@ impl PaneSplitter {
     pub fn is_near_separator(&self, col: u16, row: u16, area: Rect) -> bool {
         let pos = self.separator_pos(area);
         match self.orientation {
-            Orientation::Horizontal => {
-                point_in_rect(col, row, area)
-                    && col.abs_diff(pos) <= 1
-            }
-            Orientation::Vertical => {
-                point_in_rect(col, row, area)
-                    && row.abs_diff(pos) <= 1
-            }
+            Orientation::Horizontal => point_in_rect(col, row, area) && col.abs_diff(pos) <= 1,
+            Orientation::Vertical => point_in_rect(col, row, area) && row.abs_diff(pos) <= 1,
         }
     }
 
@@ -341,7 +352,11 @@ pub struct ScrollState {
 impl ScrollState {
     /// Create a `ScrollState` with the given page size (visible rows).
     pub fn new(page_size: usize) -> Self {
-        Self { offset: 0, total: 0, page_size }
+        Self {
+            offset: 0,
+            total: 0,
+            page_size,
+        }
     }
 
     /// Current scroll offset (number of rows from the top).
@@ -441,7 +456,10 @@ pub struct ContextMenuItem {
 impl ContextMenuItem {
     /// Create a `ContextMenuItem`.
     pub fn new(label: impl Into<String>, key: char) -> Self {
-        Self { label: label.into(), key }
+        Self {
+            label: label.into(),
+            key,
+        }
     }
 }
 
@@ -602,7 +620,12 @@ impl ContextMenu {
 
             let text = format!(" {} {}", item.key, item.label);
             let line = Line::from(Span::styled(text, style));
-            let row_rect = Rect { x: inner.x, y, width: inner.width, height: 1 };
+            let row_rect = Rect {
+                x: inner.x,
+                y,
+                width: inner.width,
+                height: 1,
+            };
             Paragraph::new(line).render(row_rect, buf);
         }
     }
@@ -681,7 +704,12 @@ mod tests {
 
     // Helper: build a MouseEvent at (col, row)
     fn mouse_event(kind: MouseEventKind, col: u16, row: u16) -> MouseEvent {
-        MouseEvent { kind, column: col, row, modifiers: KeyModifiers::NONE }
+        MouseEvent {
+            kind,
+            column: col,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -723,7 +751,12 @@ mod tests {
     // -----------------------------------------------------------------------
 
     fn area(w: u16, h: u16) -> Rect {
-        Rect { x: 0, y: 0, width: w, height: h }
+        Rect {
+            x: 0,
+            y: 0,
+            width: w,
+            height: h,
+        }
     }
 
     #[test]
@@ -802,10 +835,16 @@ mod tests {
         // Start drag on separator
         let (left, _) = sp.split(a);
         let sep_col = left.x + left.width;
-        sp.handle_mouse(mouse_event(MouseEventKind::Down(MouseButton::Left), sep_col, 5), a);
+        sp.handle_mouse(
+            mouse_event(MouseEventKind::Down(MouseButton::Left), sep_col, 5),
+            a,
+        );
 
         // Drag to column 60 (ratio should increase toward ~60/79 ≈ 0.76)
-        sp.handle_mouse(mouse_event(MouseEventKind::Drag(MouseButton::Left), 60, 5), a);
+        sp.handle_mouse(
+            mouse_event(MouseEventKind::Drag(MouseButton::Left), 60, 5),
+            a,
+        );
         assert!(sp.ratio > 0.5, "ratio should increase when dragging right");
     }
 
@@ -816,10 +855,16 @@ mod tests {
 
         let (left, _) = sp.split(a);
         let sep_col = left.x + left.width;
-        sp.handle_mouse(mouse_event(MouseEventKind::Down(MouseButton::Left), sep_col, 5), a);
+        sp.handle_mouse(
+            mouse_event(MouseEventKind::Down(MouseButton::Left), sep_col, 5),
+            a,
+        );
         assert!(sp.is_dragging());
 
-        sp.handle_mouse(mouse_event(MouseEventKind::Up(MouseButton::Left), sep_col, 5), a);
+        sp.handle_mouse(
+            mouse_event(MouseEventKind::Up(MouseButton::Left), sep_col, 5),
+            a,
+        );
         assert!(!sp.is_dragging());
     }
 
@@ -939,7 +984,15 @@ mod tests {
         s.scroll_down();
         s.scroll_down();
         let ev = mouse_event(MouseEventKind::ScrollUp, 5, 5);
-        let consumed = s.handle_mouse(ev, Rect { x: 0, y: 0, width: 80, height: 24 });
+        let consumed = s.handle_mouse(
+            ev,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 80,
+                height: 24,
+            },
+        );
         assert!(consumed);
         assert_eq!(s.offset(), 1);
     }
@@ -949,7 +1002,15 @@ mod tests {
         let mut s = ScrollState::new(5);
         s.set_total(20);
         let ev = mouse_event(MouseEventKind::ScrollDown, 5, 5);
-        let consumed = s.handle_mouse(ev, Rect { x: 0, y: 0, width: 80, height: 24 });
+        let consumed = s.handle_mouse(
+            ev,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 80,
+                height: 24,
+            },
+        );
         assert!(consumed);
         assert_eq!(s.offset(), 1);
     }
@@ -959,7 +1020,15 @@ mod tests {
         let mut s = ScrollState::new(5);
         s.set_total(20);
         let ev = mouse_event(MouseEventKind::ScrollDown, 100, 100);
-        let consumed = s.handle_mouse(ev, Rect { x: 0, y: 0, width: 80, height: 24 });
+        let consumed = s.handle_mouse(
+            ev,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 80,
+                height: 24,
+            },
+        );
         assert!(!consumed);
         assert_eq!(s.offset(), 0);
     }
@@ -977,7 +1046,12 @@ mod tests {
     }
 
     fn full_area() -> Rect {
-        Rect { x: 0, y: 0, width: 80, height: 24 }
+        Rect {
+            x: 0,
+            y: 0,
+            width: 80,
+            height: 24,
+        }
     }
 
     #[test]

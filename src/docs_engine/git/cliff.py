@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 
 from docs_engine.db.indexer import DocIndexer
@@ -36,7 +36,7 @@ class CliffRunner:
     def _index(self, changelog: Path) -> None:
         indexer = DocIndexer(self._db_path)
         indexer.init_schema()
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
         indexer.upsert_doc(
             path=str(changelog),
             frontmatter={

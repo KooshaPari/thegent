@@ -1,3 +1,4 @@
+<DONE>
 # Codex CLI v2 API Protocol Research
 
 **Date:** 2026-02-20

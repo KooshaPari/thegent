@@ -1,3 +1,4 @@
+<DONE>
 ---
 title: "Conversation Dump — WL-083 ResultAggregator"
 date: 2026-02-20

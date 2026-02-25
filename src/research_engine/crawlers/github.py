@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import httpx
 
@@ -47,7 +47,7 @@ class GitHubCrawler(BaseCrawler):
             headers=self._headers,
         )
         resp.raise_for_status()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         items = []
         for repo in resp.json().get("items", []):
             title = repo["full_name"]

@@ -104,7 +104,7 @@ class DriftDetector:
         """Append drift report to log."""
         self.settings.session_dir.mkdir(parents=True, exist_ok=True)
         with self.drift_log.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(report).decode().decode() + "\n")
+            f.write(json.dumps(report).decode() + "\n")
 
     def _check_override_file(self, f: Path, report: dict[str, Any]) -> None:
         """Helper to check a single override file for drift."""

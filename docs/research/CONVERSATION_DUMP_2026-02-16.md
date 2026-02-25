@@ -1,3 +1,4 @@
+<DONE>
 # Conversation Dump — 2026-02-16
 
 **Purpose:** Persist research, plans, and decisions from agent conversations so we can pick up later without hallucination.

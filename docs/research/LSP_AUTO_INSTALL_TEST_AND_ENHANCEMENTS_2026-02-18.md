@@ -1,3 +1,4 @@
+<DONE>
 # LSP Auto-Install Test and Enhancements
 
 **Date**: 2026-02-18

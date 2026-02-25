@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 _FASTEST_SHELL: str | None = None
@@ -128,7 +129,7 @@ def run_shell_command(
         shell: Shell executable path (defaults to fastest available)
         optimize_startup: Skip heavy .zshrc loading for non-interactive
         capture_output: Capture stdout/stderr (default: True)
-        **kwargs: Additional subprocess.run arguments
+        **kwargs: Additional shim_run arguments
 
     Returns:
         CompletedProcess result
@@ -153,9 +154,9 @@ def run_shell_command(
 
     # If cmd is a string, use shell=True with explicit executable
     if isinstance(cmd, str):
-        return subprocess.run(cmd, shell=True, executable=shell, env=env, check=check, **kwargs)
+        return shim_run(cmd, shell=True, executable=shell, env=env, check=check, **kwargs)
     # If cmd is a list, prepend shell
-    return subprocess.run([shell, "-c", " ".join(cmd)], env=env, check=check, **kwargs)
+    return shim_run([shell, "-c", " ".join(cmd)], env=env, check=check, **kwargs)
 
 
 def popen_shell_command(

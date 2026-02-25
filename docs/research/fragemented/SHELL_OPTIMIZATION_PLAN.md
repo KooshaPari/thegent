@@ -1,3 +1,4 @@
+<DONE>
 # Shell Optimization Plan - Use zsh (Fastest Shell)
 
 **Date:** 2026-02-18  

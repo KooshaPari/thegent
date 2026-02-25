@@ -1,3 +1,4 @@
+<DONE>
 # Library Cache Migration Plan
 
 **ID**: research-library-cache

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 import arxiv
 
@@ -30,7 +30,7 @@ class ArxivCrawler(BaseCrawler):
             arxiv.arxiv.HTTPError: If API request fails.
         """
         query = " AND ".join(f'ti:"{t}"' for t in topics[:3])
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         search = arxiv.Search(query=query, max_results=20, sort_by=arxiv.SortCriterion.SubmittedDate)
         items = []
         for result in search.results():

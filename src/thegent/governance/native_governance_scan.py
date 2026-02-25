@@ -16,6 +16,7 @@ import logging
 import re
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
@@ -269,7 +270,7 @@ def _run_binary_scan(binary: str, content: str) -> list[GovernanceViolation]:
         json.JSONDecodeError: Binary returned non-JSON output.
         OSError: Binary could not be executed.
     """
-    proc = subprocess.run(
+    proc = shim_run(
         [binary, "governance", "scan", "--stdin"],
         input=content,
         capture_output=True,
@@ -300,7 +301,7 @@ def _run_binary_check_contract(
         json.JSONDecodeError: Binary returned non-JSON output.
         OSError: Binary could not be executed.
     """
-    proc = subprocess.run(
+    proc = shim_run(
         [binary, "governance", "check-contract", contract_id, "--stdin"],
         input=content,
         capture_output=True,

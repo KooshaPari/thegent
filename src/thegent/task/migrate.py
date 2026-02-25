@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 
 def migrate_work_stream_entry_to_task(

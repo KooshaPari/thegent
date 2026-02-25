@@ -3,7 +3,7 @@
 import os
 from typing import Any
 import shutil
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import sys
 from collections import Counter
 from pathlib import Path
@@ -366,7 +366,7 @@ def _run_codex_exec(
     cmd = wrap_with_caffeinate(cmd, "codex")
 
     console.print(f"[bold green]Codex exec (headless): model={canonical}[/bold green]")
-    result = subprocess.run(
+    result = shim_run(
         cmd,
         env=env,
         cwd=str(cd.resolve()) if cd else None,

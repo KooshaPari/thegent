@@ -13,7 +13,10 @@ fn hooks_bin() -> PathBuf {
 }
 
 fn run(args: &[&str]) -> std::process::Output {
-    Command::new(hooks_bin()).args(args).output().expect("run binary")
+    Command::new(hooks_bin())
+        .args(args)
+        .output()
+        .expect("run binary")
 }
 
 #[test]
@@ -55,7 +58,10 @@ fn debt_registry_passes_with_valid_json() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(true)
+    );
 }
 
 #[test]
@@ -104,7 +110,10 @@ fn playbook_auto_fails_when_missing() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(false));
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(false)
+    );
 }
 
 #[test]
@@ -163,7 +172,10 @@ fn methodology_eval_passes_when_attestation_is_clean() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(true)
+    );
 }
 
 #[test]
@@ -194,7 +206,10 @@ fn methodology_eval_fails_when_methodology_has_gaps() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(3));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(3)
+    );
 }
 
 #[test]
@@ -240,7 +255,10 @@ fn reliability_eval_fails_when_flake_exceeds_threshold() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(false));
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(false)
+    );
 }
 
 #[test]
@@ -269,8 +287,14 @@ fn reliability_slo_warns_in_advisory_mode() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(0));
-    assert_eq!(report_json.get("warn_count").and_then(|v| v.as_u64()), Some(2));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(0)
+    );
+    assert_eq!(
+        report_json.get("warn_count").and_then(|v| v.as_u64()),
+        Some(2)
+    );
 }
 
 #[test]
@@ -299,8 +323,14 @@ fn reliability_slo_fails_in_enforced_mode() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(2));
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(false));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(2)
+    );
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(false)
+    );
 }
 
 #[test]
@@ -335,8 +365,14 @@ fn flake_quarantine_warns_in_advisory_mode_for_expired_entries() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("warn_count").and_then(|v| v.as_u64()), Some(1));
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(0));
+    assert_eq!(
+        report_json.get("warn_count").and_then(|v| v.as_u64()),
+        Some(1)
+    );
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(0)
+    );
 }
 
 #[test]
@@ -371,7 +407,10 @@ fn flake_quarantine_fails_in_enforced_mode_for_expired_entries() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(1)
+    );
 }
 
 #[test]
@@ -402,8 +441,14 @@ fn verifier_dispute_warns_without_policy_in_advisory_mode() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("warn_count").and_then(|v| v.as_u64()), Some(1));
-    assert_eq!(report_json.get("open_disputes").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(
+        report_json.get("warn_count").and_then(|v| v.as_u64()),
+        Some(1)
+    );
+    assert_eq!(
+        report_json.get("open_disputes").and_then(|v| v.as_u64()),
+        Some(1)
+    );
 }
 
 #[test]
@@ -434,7 +479,10 @@ fn verifier_dispute_fails_without_policy_in_enforced_mode() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(1)
+    );
 }
 
 #[test]
@@ -463,7 +511,10 @@ fn claim_lifecycle_fails_for_missing_file_evidence() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(1)
+    );
 }
 
 #[test]
@@ -493,7 +544,10 @@ fn claim_lifecycle_passes_with_valid_refs() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(true)
+    );
 }
 
 #[test]
@@ -518,7 +572,10 @@ fn agent_claim_fails_when_claim_has_no_evidence() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(2));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(2)
+    );
 }
 
 #[test]
@@ -543,7 +600,10 @@ fn agent_claim_passes_when_evidence_present() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(true)
+    );
 }
 
 #[test]
@@ -587,7 +647,10 @@ fn elicitation_closure_fails_when_open_questions_exist() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("error_count").and_then(|v| v.as_u64()), Some(1));
+    assert_eq!(
+        report_json.get("error_count").and_then(|v| v.as_u64()),
+        Some(1)
+    );
 }
 
 #[test]
@@ -631,5 +694,8 @@ fn elicitation_closure_passes_when_decisions_match_adr() {
 
     let report_raw = fs::read_to_string(report).expect("read report");
     let report_json: serde_json::Value = serde_json::from_str(&report_raw).expect("parse report");
-    assert_eq!(report_json.get("pass").and_then(|v| v.as_bool()), Some(true));
+    assert_eq!(
+        report_json.get("pass").and_then(|v| v.as_bool()),
+        Some(true)
+    );
 }

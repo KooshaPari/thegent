@@ -35,7 +35,7 @@ class CircuitBreaker:
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with self.breaker_file.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(event).decode().decode() + "\n")
+            f.write(json.dumps(event).decode() + "\n")
 
     def is_tripped(self) -> bool:
         """Return True if any active breaker is tripped."""

@@ -13,35 +13,30 @@ impl ConfigLoader {
         let contents = fs::read_to_string(path)
             .map_err(|e| HookError::IoError(format!("Failed to read config file: {}", e)))?;
 
-        let extension = path
-            .extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or("json");
+        let extension = path.extension().and_then(|s| s.to_str()).unwrap_or("json");
 
         match extension {
             "yaml" | "yml" => Self::parse_yaml(&contents),
             "json" => Self::parse_json(&contents),
-            _ => Err(HookError::ParseError(
-                "Unsupported file format".to_string(),
-            )),
+            _ => Err(HookError::ParseError("Unsupported file format".to_string())),
         }
     }
 
     /// Parse YAML configuration
     fn parse_yaml(contents: &str) -> Result<HookConfig, HookError> {
-        let value: serde_yaml::Value = serde_yaml::from_str(contents)
-            .map_err(|e| HookError::YamlError(e.to_string()))?;
+        let value: serde_yaml::Value =
+            serde_yaml::from_str(contents).map_err(|e| HookError::YamlError(e.to_string()))?;
 
-        let json_value = serde_json::to_value(&value)
-            .map_err(|e| HookError::JsonError(e.to_string()))?;
+        let json_value =
+            serde_json::to_value(&value).map_err(|e| HookError::JsonError(e.to_string()))?;
 
         Self::parse_config_value(&json_value)
     }
 
     /// Parse JSON configuration
     fn parse_json(contents: &str) -> Result<HookConfig, HookError> {
-        let value: Value = serde_json::from_str(contents)
-            .map_err(|e| HookError::JsonError(e.to_string()))?;
+        let value: Value =
+            serde_json::from_str(contents).map_err(|e| HookError::JsonError(e.to_string()))?;
 
         Self::parse_config_value(&value)
     }

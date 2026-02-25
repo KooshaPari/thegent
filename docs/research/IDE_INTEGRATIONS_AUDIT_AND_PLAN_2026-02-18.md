@@ -1,3 +1,4 @@
+<DONE>
 # IDE Integrations Audit & Plan: Serena, JetBrains, Ghostty
 
 **Date**: 2026-02-18

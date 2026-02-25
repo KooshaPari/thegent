@@ -16,6 +16,7 @@ import logging
 import re
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
@@ -129,7 +130,7 @@ def _run_binary(binary: str, content: str) -> list[SecretMatch]:
         json.JSONDecodeError: Binary returned non-JSON output.
         OSError: Binary could not be executed.
     """
-    proc = subprocess.run(
+    proc = shim_run(
         [binary, "scan-secrets", "--stdin"],
         input=content,
         capture_output=True,

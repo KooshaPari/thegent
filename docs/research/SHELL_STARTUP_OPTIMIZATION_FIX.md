@@ -1,3 +1,4 @@
+<DONE>
 # Shell Startup Optimization Fix
 
 **Date:** 2026-02-17

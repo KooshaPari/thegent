@@ -102,4 +102,4 @@ def build_claude_stdin_with_images(prompt: str, paths: list[str]) -> str:
             "content": content,
         },
     }
-    return json.dumps(message, separators=(",", ":").decode().decode()) + "\n"
+    return json.dumps(message, separators=(",", ":").decode()) + "\n"

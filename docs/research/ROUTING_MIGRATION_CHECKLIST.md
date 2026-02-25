@@ -1,3 +1,4 @@
+<DONE>
 # Routing Module Migration - Implementation Checklist
 
 **Created:** 2026-02-23  

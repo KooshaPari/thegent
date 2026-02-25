@@ -6,6 +6,7 @@ import orjson as json
 import logging
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 
 from pydantic import Field
@@ -97,7 +98,7 @@ class TailscaleManager:
             return []
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [self._BINARY, "status", "--json"],
                 capture_output=True,
                 text=True,
@@ -130,7 +131,7 @@ class TailscaleManager:
             raise TailscaleError("tailscale binary not found; cannot ping node")
 
         try:
-            result = subprocess.run(
+            result = shim_run(
                 [self._BINARY, "ping", hostname],
                 capture_output=True,
                 text=True,

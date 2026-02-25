@@ -149,7 +149,7 @@ class TestACPToolDescriptor:
         import json
 
         desc = ACPToolDescriptor(name="tool", description="desc", parameters={"p": {"type": "str"}})
-        json.dumps(desc.to_dict().decode().decode())  # must not raise
+        json.dumps(desc.to_dict())  # must not raise
 
 
 # ---------------------------------------------------------------------------

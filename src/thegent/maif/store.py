@@ -46,7 +46,7 @@ class MAIFArtifactStore:
                 (
                     artifact.artifact_id,
                     artifact.action_type,
-                    json.dumps(artifact.payload).decode().decode(),
+                    json.dumps(artifact.payload).decode(),
                     artifact.signature,
                     artifact.timestamp,
                     artifact.agent_id,

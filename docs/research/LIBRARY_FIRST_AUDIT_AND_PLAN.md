@@ -1,3 +1,4 @@
+<DONE>
 # Library-First Audit and Plan
 
 > **Purpose**: Identify all areas where a library, or library + thin wrapper, is better than full custom implementation. Ensure governance stresses this from the start and throughout development.

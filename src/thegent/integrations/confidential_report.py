@@ -7,7 +7,7 @@ Provides report sensitivity levels and field redaction for confidential data.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any, ClassVar, cast
 
@@ -121,7 +121,7 @@ class ConfidentialReportFilter:
             "report_id": report_id,
             "sensitivity": sensitivity.value,
             "data": redacted_data,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
         }
 
     @classmethod

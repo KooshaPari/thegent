@@ -10,7 +10,7 @@ from fastmcp.tools.tool import ToolResult
 
 def stable_json(payload: Any) -> str:
     """Serialize dict/list payloads with stable key order for deterministic MCP transport."""
-    return json.dumps(payload, sort_keys=True).decode().decode()
+    return json.dumps(payload, sort_keys=True).decode()
 
 
 def error_result(
@@ -24,7 +24,7 @@ def error_result(
     if extra:
         payload.update(extra)
     return ToolResult(
-        content=json.dumps(payload).decode().decode(),
+        content=json.dumps(payload).decode(),
         structured_content=payload,
         meta={"execution_time_ms": 0},
     )

@@ -6,7 +6,7 @@ Includes automatic interface adaptation for foreign tool protocols.
 import orjson as json
 import logging
 import shlex
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from collections.abc import Callable
 from importlib import import_module
 from typing import Any
@@ -125,7 +125,7 @@ class ToolAdapter:
         cmd = shlex.split(tool.command)
         for key in sorted(kwargs):
             cmd.extend([f"--{key.replace('_', '-')}", str(kwargs[key])])
-        process = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        process = shim_run(cmd, capture_output=True, text=True, check=False)
         if process.returncode != 0:
             raise RuntimeError(process.stderr.strip() or f"Command failed with exit code {process.returncode}")
         return {
@@ -192,4 +192,20 @@ class ToolAdapter:
         if not tool:
             return ""
 
-        return f"Tool: {tool.tool_id}\nDescription: {tool.description}\nParams: {json.dumps(tool.parameters).decode().decode()}"
+        return f"Tool: {tool.tool_id}\nDescription: {tool.description}\nParams: {json.dumps(tool.parameters).decode()}"
+
+
+# Register with unified adapter registry
+from thegent.adapters.ports import AdapterRegistry
+
+class ToolAdapterWrapper:
+    """Tool adapter wrapper for registry"""
+
+    def __init__(self):
+        self._adapter = None
+
+    def call(self, **kwargs) -> dict:
+        return {"status": "tool_adapter_ready"}
+
+
+AdapterRegistry.register("tool", ToolAdapterWrapper())

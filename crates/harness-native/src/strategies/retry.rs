@@ -1,8 +1,8 @@
+use rand::Rng;
 use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 use std::thread;
-use rand::Rng;
 
 pub fn run(
     real_cmd: &Path,

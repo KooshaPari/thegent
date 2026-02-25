@@ -1,3 +1,4 @@
+<DONE>
 # Vale, ruvnet, and bar181 Research Brief
 
 Date: February 23, 2026

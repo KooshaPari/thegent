@@ -17,6 +17,7 @@ import os
 import platform
 import shutil
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -105,8 +106,8 @@ fn main():
 
 def build_python_dispatch_kernel_script(module: str, function: str) -> str:
     """Build a Mojo script that dispatches to a Python module/function target."""
-    module_json = json.dumps(module).decode().decode()
-    function_json = json.dumps(function).decode().decode()
+    module_json = json.dumps(module).decode()
+    function_json = json.dumps(function).decode()
     return f"""
 from python import Python
 
@@ -223,7 +224,7 @@ class MojoBridge:
         if modular_cmd:
             # Try to get mojo version through modular
             try:
-                _result = subprocess.run(
+                _result = shim_run(
                     ["modular", "auth"],
                     capture_output=True,
                     timeout=5,
@@ -279,7 +280,7 @@ class MojoBridge:
             stdout, _stderr = await asyncio.wait_for(process.communicate(), timeout=10.0)
             if process.returncode == 0:
                 return stdout.decode().strip()
-        except (asyncio.TimeoutError, FileNotFoundError, subprocess.SubprocessError):
+        except (TimeoutError, FileNotFoundError, subprocess.SubprocessError):
             pass
 
         return None
@@ -319,7 +320,7 @@ class MojoBridge:
 
             # Pass args as JSON environment variable
             env = os.environ.copy()
-            env["THEGENT_MOJO_ARGS"] = json.dumps(args).decode().decode()
+            env["THEGENT_MOJO_ARGS"] = json.dumps(args).decode()
 
             process = await asyncio.create_subprocess_exec(
                 cmd,
@@ -453,7 +454,7 @@ Visit https://docs.modular.com/mojo/manual/install/ for platform-specific instru
         # Future: use C-ABI when stable
 
         # Check cache first
-        cache_key = f"mojo_task:{task.module}:{task.function}:{json.dumps(task.args, sort_keys=True).decode().decode()}"
+        cache_key = f"mojo_task:{task.module}:{task.function}:{json.dumps(task.args, sort_keys=True).decode()}"
         cached = await self._cache.get(cache_key)
         if cached:
             return cached
@@ -524,7 +525,7 @@ Visit https://docs.modular.com/mojo/manual/install/ for platform-specific instru
                 return output_path
             return None
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
         except Exception:
             return None

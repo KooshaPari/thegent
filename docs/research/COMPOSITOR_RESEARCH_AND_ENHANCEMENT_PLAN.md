@@ -1,3 +1,4 @@
+<DONE>
 # TUI Compositor Research and Enhancement Plan
 
 > **Status**: Research Complete | **Priority**: P1 | **Date**: 2026-02-19

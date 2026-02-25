@@ -7,6 +7,7 @@ import itertools
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from dataclasses import dataclass, field
 from typing import ClassVar
@@ -144,7 +145,7 @@ class RemoteExecutor:
         logger.debug("Executing task %s on %s: %s", task.task_id, node, task.command)
         start = time.monotonic()
         try:
-            result = subprocess.run(
+            result = shim_run(
                 cmd,
                 capture_output=True,
                 text=True,
@@ -282,7 +283,7 @@ class RemoteExecutor:
             *True* if the node responds within 2 seconds, *False* otherwise.
         """
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["ping", "-c", "1", "-W", "2", node],
                 capture_output=True,
                 text=True,

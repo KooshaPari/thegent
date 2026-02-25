@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import orjson as json
 from difflib import HtmlDiff
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from thegent.integrations.base import SerializableMixin
 from thegent.integrations.sync_provenance import (
     SyncProvenanceStamp,
     chain_provenance_stamps,
@@ -34,28 +35,22 @@ class SyncPolicyAudit:
 
 
 @dataclass
-class RemoteOrphanReport:
+class RemoteOrphanReport(SerializableMixin):
     """Structured report of remote items not represented locally."""
 
     remote_ids: list[str]
     local_ids: list[str]
     orphan_ids: list[str]
 
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-
 
 @dataclass
-class LocalOrphanReport:
+class LocalOrphanReport(SerializableMixin):
     """Structured report of local items without remote tracker mapping."""
 
     local_ids: list[str]
     mapped_remote_ids: list[str]
     local_orphan_ids: list[str]
     orphan_count: int
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
 
 
 class SyncAuditor:
@@ -131,7 +126,7 @@ class SyncAuditor:
             JSON representation of audit result.
         """
         audit = self.audit()
-        return json.dumps(asdict(audit).decode().decode(), indent=2)
+        return json.dumps(asdict(audit).decode(), indent=2)
 
     def audit_as_dict(self) -> dict[str, Any]:
         """Get audit result as dictionary.
@@ -178,8 +173,8 @@ class SyncAuditor:
         local_snapshot: dict[str, Any], remote_snapshot: dict[str, Any], out_path: Path
     ) -> Path:
         """Generate deterministic side-by-side HTML diff artifact."""
-        local_lines = json.dumps(local_snapshot, indent=2, sort_keys=True).decode().decode().splitlines()
-        remote_lines = json.dumps(remote_snapshot, indent=2, sort_keys=True).decode().decode().splitlines()
+        local_lines = json.dumps(local_snapshot, indent=2, sort_keys=True).decode().splitlines()
+        remote_lines = json.dumps(remote_snapshot, indent=2, sort_keys=True).decode().splitlines()
         html = HtmlDiff(tabsize=2, wrapcolumn=120).make_file(
             fromlines=local_lines,
             tolines=remote_lines,

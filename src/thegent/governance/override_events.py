@@ -10,9 +10,11 @@ import orjson as json
 import logging
 import threading
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from thegent.integrations.base import SerializableMixin
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,7 +25,7 @@ _DEFAULT_EVENTS_PATH = Path("~/.thegent/governance_events.jsonl").expanduser()
 
 
 @dataclass
-class OverrideExpiredEvent:
+class OverrideExpiredEvent(SerializableMixin):
     """Structured event emitted when a governance override expires."""
 
     override_id: str
@@ -33,13 +35,9 @@ class OverrideExpiredEvent:
     reason: str = "ttl_elapsed"
     event_type: str = field(default="governance.override.expired", init=False)
 
-    def to_dict(self) -> dict[str, object]:
-        """Serialize to a plain dictionary."""
-        return asdict(self)
-
 
 @dataclass
-class OverrideActivatedEvent:
+class OverrideActivatedEvent(SerializableMixin):
     """Structured event emitted when a governance override is activated."""
 
     override_id: str
@@ -49,10 +47,6 @@ class OverrideActivatedEvent:
     ttl_s: float
     expires_at: float
     event_type: str = field(default="governance.override.activated", init=False)
-
-    def to_dict(self) -> dict[str, object]:
-        """Serialize to a plain dictionary."""
-        return asdict(self)
 
 
 class OverrideEventEmitter:
@@ -147,7 +141,7 @@ class OverrideEventEmitter:
     def _append(self, record: dict[str, object]) -> None:
         """Thread-safe append of a JSON record to the JSONL file."""
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        line = json.dumps(record, separators=(",", ":").decode().decode()) + "\n"
+        line = json.dumps(record, separators=(",", ":").decode()) + "\n"
         with self._lock:
             with self._path.open("a", encoding="utf-8") as fh:
                 fh.write(line)

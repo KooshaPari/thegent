@@ -1,22 +1,23 @@
-use anyhow::{Result, Context};
-use clap::{Parser, Subcommand};
-use tracing::{info, error, Level};
-use tracing_subscriber::FmtSubscriber;
-use std::path::PathBuf;
-use std::sync::Arc;
+use anyhow::{Context, Result};
 use axum::{
-    routing::{get, post},
-    Router,
-    Json,
-    extract::{State, Request},
+    extract::{Request, State},
+    http::StatusCode,
     middleware::{self, Next},
     response::{IntoResponse, Response},
-    http::StatusCode,
+    routing::{get, post},
+    Json, Router,
 };
-use thegent_offload::{ExecutionRequest, ExecutionResponse, ExecutionStatus, WorkerInfo, WorkerStatus};
-use uuid::Uuid;
 use chrono::Utc;
+use clap::{Parser, Subcommand};
 use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::Arc;
+use thegent_offload::{
+    ExecutionRequest, ExecutionResponse, ExecutionStatus, WorkerInfo, WorkerStatus,
+};
+use tracing::{error, info, Level};
+use tracing_subscriber::FmtSubscriber;
+use uuid::Uuid;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -65,16 +66,23 @@ async fn main() -> Result<()> {
     let subscriber = FmtSubscriber::builder()
         .with_max_level(Level::INFO)
         .finish();
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("setting default subscriber failed");
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Serve { host, port, token, allow_worktrees } => {
+        Commands::Serve {
+            host,
+            port,
+            token,
+            allow_worktrees,
+        } => {
             info!("Starting thegent offload server on {}:{}", host, port);
             if let Some(ref t) = token {
-                info!("Authentication enabled with token: ****{}", &t[t.len().max(4)-4..]);
+                info!(
+                    "Authentication enabled with token: ****{}",
+                    &t[t.len().max(4) - 4..]
+                );
             } else {
                 info!("Authentication disabled (NOT RECOMMENDED for public tunnels)");
             }
@@ -89,7 +97,10 @@ async fn main() -> Result<()> {
                 .route("/v1/health", get(health_handler))
                 .route("/v1/execute", post(execute_handler))
                 .route("/v1/status/:id", get(status_handler))
-                .layer(middleware::from_fn_with_state(state.clone(), auth_middleware))
+                .layer(middleware::from_fn_with_state(
+                    state.clone(),
+                    auth_middleware,
+                ))
                 .with_state(state);
 
             let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
@@ -98,7 +109,13 @@ async fn main() -> Result<()> {
 
             axum::serve(listener, app).await.context("Server error")?;
         }
-        Commands::Run { worker_url, prompt, token, cwd, timeout } => {
+        Commands::Run {
+            worker_url,
+            prompt,
+            token,
+            cwd,
+            timeout,
+        } => {
             info!("Offloading task to worker at {}", worker_url);
             run_client(worker_url, prompt, token, cwd, timeout).await?;
         }
@@ -116,7 +133,9 @@ async fn auth_middleware(
         let auth_header = req.headers().get("Authorization");
         match auth_header {
             Some(header_value) => {
-                let header_str = header_value.to_str().map_err(|_| (StatusCode::BAD_REQUEST, "Invalid Auth header"))?;
+                let header_str = header_value
+                    .to_str()
+                    .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid Auth header"))?;
                 if !header_str.starts_with("Bearer ") || &header_str[7..] != expected_token {
                     return Err((StatusCode::UNAUTHORIZED, "Unauthorized"));
                 }
@@ -175,7 +194,10 @@ async fn status_handler(
     axum::extract::Path(id): axum::extract::Path<Uuid>,
 ) -> Json<ExecutionStatus> {
     let tasks = state.active_tasks.lock().await;
-    let status = tasks.get(&id).cloned().unwrap_or(ExecutionStatus::Failed("Task not found".to_string()));
+    let status = tasks
+        .get(&id)
+        .cloned()
+        .unwrap_or(ExecutionStatus::Failed("Task not found".to_string()));
     Json(status)
 }
 
@@ -193,7 +215,10 @@ async fn run_client(
         id: request_id,
         timestamp: Utc::now(),
         prompt,
-        cwd: cwd.unwrap_or_else(|| std::env::current_dir().unwrap_or_default()).to_string_lossy().to_string(),
+        cwd: cwd
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_default())
+            .to_string_lossy()
+            .to_string(),
         env_vars: HashMap::new(),
         timeout_seconds: timeout.unwrap_or(300),
         sync_state: None,
@@ -209,7 +234,10 @@ async fn run_client(
         builder = builder.bearer_auth(t);
     }
 
-    let res = builder.send().await.context("Failed to send request to worker")?;
+    let res = builder
+        .send()
+        .await
+        .context("Failed to send request to worker")?;
 
     if !res.status().is_success() {
         let err_text = res.text().await?;
@@ -217,9 +245,15 @@ async fn run_client(
         return Err(anyhow::anyhow!("Worker error: {}", err_text));
     }
 
-    let response: ExecutionResponse = res.json().await.context("Failed to parse worker response")?;
+    let response: ExecutionResponse = res
+        .json()
+        .await
+        .context("Failed to parse worker response")?;
 
-    info!("Task {} finished with status: {:?}", request_id, response.status);
+    info!(
+        "Task {} finished with status: {:?}",
+        request_id, response.status
+    );
     if let Some(stdout) = response.stdout {
         println!("--- STDOUT ---\n{}", stdout);
     }

@@ -1,3 +1,4 @@
+<DONE>
 # Headless LSP Implementation Summary
 
 **Date**: 2026-02-18

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from pydantic import BaseModel
 
 Category = Literal["testers", "content", "infrastructure", "core"]
@@ -40,5 +40,5 @@ class AgentRoleSpec(BaseModel):
             yaml.YAMLError: If YAML is invalid
             ValueError: If required fields are missing or invalid
         """
-        data = yaml.safe_load(Path(path).read_text())
+        data = yaml_load(Path(path).read_text())
         return cls(**data)

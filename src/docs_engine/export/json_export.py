@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import orjson as json
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -30,13 +30,13 @@ class JsonExporter:
         return {
             "schema_version": self.schema_version,
             "payload_type": payload_type,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "records": ConfidentialReportFilter.redact_artifact_payload(records),
         }
 
     def _write_artifact(self, out_path: Path, payload_type: str, records: Any) -> Path:
         payload = self._wrap_payload(payload_type, records)
-        out_path.write_text(json.dumps(payload, indent=2).decode().decode(), encoding="utf-8")
+        out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         return out_path
 
     @staticmethod

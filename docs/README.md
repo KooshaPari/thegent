@@ -2,6 +2,17 @@
 
 Welcome to the complete documentation for this project. This hub provides organized access to all documentation organized by section and use case.
 
+## Canonical Documents
+
+> **For quick reference, start with these key documents:**
+
+| Document | Description |
+|----------|-------------|
+| [CHANGELOG.md](./CHANGELOG.md) | Version history and change log |
+| [WORKLOG.md](./WORKLOG.md) | Active work tracking and sprint logs |
+| [PRD.md](./PRD.md) | Product requirements and specifications |
+| [SPEC.md](./SPEC.md) | Technical architecture and design |
+
 ## Quick Navigation
 
 **New to the project?** Start here:

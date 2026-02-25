@@ -1,3 +1,4 @@
+<DONE>
 # ACP Adapters Implementation Summary
 
 **Date**: 2026-02-18

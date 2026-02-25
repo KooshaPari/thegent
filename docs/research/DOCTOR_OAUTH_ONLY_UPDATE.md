@@ -1,3 +1,4 @@
+<DONE>
 # Doctor Command: OAuth-Only Authentication Update
 
 **Date:** 2026-02-17

@@ -341,7 +341,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
                 try:
                     evt = await _asyncio.wait_for(queue.get(), timeout=timeout_ms / 1000.0)
                     events.append(evt.model_dump())
-                except _asyncio.TimeoutError:
+                except TimeoutError:
                     pass
 
             _asyncio.run(_wait_one())
@@ -356,7 +356,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
         payload: dict[str, Any] = {"events": events, "count": len(events)}
         return ToolResult(
-            content=json.dumps(payload).decode().decode(),
+            content=json.dumps(payload).decode(),
             structured_content=payload,
             meta={"execution_time_ms": elapsed_ms},
         )

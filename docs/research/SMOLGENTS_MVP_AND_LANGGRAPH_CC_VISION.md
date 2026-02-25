@@ -1,3 +1,4 @@
+<DONE>
 # SmolGents Deep Research: MVP Use Case & LangGraph-over-CC Vision
 
 > **Date**: 2026-02-18

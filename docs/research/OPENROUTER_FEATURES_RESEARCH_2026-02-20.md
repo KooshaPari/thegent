@@ -1,3 +1,4 @@
+<DONE>
 # OpenRouter Advanced Features Research
 
 **Date**: 2026-02-20

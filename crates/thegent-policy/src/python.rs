@@ -33,7 +33,12 @@ impl PyPolicyEngine {
     ///
     /// Returns:
     ///     Dict with "passed" (bool), "reason" (str), "latency_ms" (int), "rule_id" (str)
-    fn evaluate(&self, py: Python<'_>, rule_id: String, context: HashMap<String, String>) -> PyResult<Py<PyDict>> {
+    fn evaluate(
+        &self,
+        py: Python<'_>,
+        rule_id: String,
+        context: HashMap<String, String>,
+    ) -> PyResult<Py<PyDict>> {
         let ctx = EvaluationContext::from_map(context);
         let result = self
             .engine

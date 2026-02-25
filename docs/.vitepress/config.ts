@@ -8,7 +8,6 @@ import { sidebar } from './sidebar-canonical'
 import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
-const markdownItKatex = require('markdown-it-katex')
 const markdownItEmoji = require('markdown-it-emoji').full
 const algoliaAppId = process.env.VITEPRESS_ALGOLIA_APP_ID
 const algoliaApiKey = process.env.VITEPRESS_ALGOLIA_API_KEY
@@ -42,16 +41,81 @@ const config = defineConfig({
   lastUpdated: true,
 
   // Exclude problematic directories from the build
+  // IMPORTANT: Keep aggressive to avoid build timeouts (7800+ md files total)
+  // Only include: index.md, start-here.md, tutorials/, how-to/, reference/, operations/, api/
   srcExclude: [
+    // Research/context dumps (566MB+)
+    'context/**',
+    'diagrams/**',
+    'dumps/**',
     'docset/**',
+    // Fragmented/in-progress content
     'fragemented/**',
     'plans/**',
     'research/**',
     'reports/**',
+    'changes/**',
+    'specs/**',
+    // Auto-generated API docs (691 files)
     'reference/api/**',
     'reference/WORK_STREAM.md',
-    'context/**',
-    'contracts/TEST_HEALTH_DASHBOARD.md',
+    // Archives and legacy
+    'archives/**',
+    'contracts/**',
+    'migration/**',
+    'closure/**',
+    // Large generated sections
+    'governance/**',
+    'architecture/**',
+    'guides/**',
+    'checklists/**',
+    'examples/**',
+    'security/**',
+    'deployment/**',
+    'tasks/**',
+    'demos/**',
+    'concepts/**',
+    'projects/**',
+    'recordings/**',
+    'references/**',
+    'site/**',
+    // Root-level large files
+    'AGENT_*.md',
+    'AUDIT_*.md',
+    'CROSS_*.md',
+    'DISCOVERY.md',
+    'DOCUMENT_*.md',
+    'FASTMCP_*.md',
+    'GAP_*.md',
+    'GOVERNANCE_*.md',
+    'IMPLEMENTATION_*.md',
+    'INSTALL_*.md',
+    'LLM_*.md',
+    'MAINTENANCE_*.md',
+    'MISE_*.md',
+    'MONITORING_*.md',
+    'MULTI_*.md',
+    'NATS_*.md',
+    'NEO4J_*.md',
+    'NAVIGATION_*.md',
+    'NEXT_*.md',
+    'ORCHESTRATION_*.md',
+    'PATCHES_*.md',
+    'PLANNING_*.md',
+    'POST_*.md',
+    'PYTHON_*.md',
+    'QUALITY_*.md',
+    'RESUME_*.md',
+    'RUNBOOK.md',
+    'SETUP-*.md',
+    'SHELL_*.md',
+    'SPECS_*.md',
+    'STATE_*.md',
+    'ULTRA_*.md',
+    'VERIFICATION_*.md',
+    'WHAT_*.md',
+    'WORK_*.md',
+    'ZSH_*.md',
   ],
 
   // Disable dead link check (links are external or cross-project)
@@ -102,7 +166,6 @@ const config = defineConfig({
       })
 
       // Math support (KaTeX)
-      md.use(markdownItKatex, {
         throwOnError: false,
         errorColor: '#cc0000'
       })
@@ -111,6 +174,7 @@ const config = defineConfig({
       md.use(markdownItEmoji)
     },
     // Enable line numbers for code blocks
+    math: true,
     lineNumbers: true,
     // Enable code highlighting
     theme: {

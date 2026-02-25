@@ -179,7 +179,7 @@ class RoutingDonutAdapter:
         # Append to harvest file
         try:
             with self._harvest_path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(entry).decode().decode() + "\n")
+                f.write(json.dumps(entry).decode() + "\n")
             logger.debug("Wrote routing harvest to %s", self._harvest_path)
         except OSError as e:
             logger.warning("Failed to write harvest file %s: %s", self._harvest_path, e)

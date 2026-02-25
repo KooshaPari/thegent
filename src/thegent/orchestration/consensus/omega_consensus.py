@@ -48,7 +48,7 @@ class OmegaConsensus:
 
     def propose_state(self, proposer_id: str, state: Any, metadata: dict[str, Any]) -> str:
         """Propose a new final state for the project."""
-        state_json = json.dumps(state, sort_keys=True).decode().decode()
+        state_json = json.dumps(state, sort_keys=True).decode()
         state_hash = hashlib.sha256(state_json.encode()).hexdigest()
         proposal_id = f"prop_{uuid.uuid4().hex[:8]}"
 

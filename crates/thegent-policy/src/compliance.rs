@@ -42,7 +42,10 @@ impl ComplianceChecker {
         rules: &[ComplianceRule],
         context: &EvaluationContext,
     ) -> Result<Vec<EvaluationResult>, PolicyError> {
-        rules.iter().map(|rule| self.evaluate(rule, context)).collect()
+        rules
+            .iter()
+            .map(|rule| self.evaluate(rule, context))
+            .collect()
     }
 }
 

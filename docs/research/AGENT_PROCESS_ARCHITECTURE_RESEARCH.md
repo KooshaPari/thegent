@@ -1,3 +1,4 @@
+<DONE>
 # Agent Process Architecture — Research Note
 
 > **Purpose**: Research note on agent runtime process usage (zsh, agent-shell, agent process) and multi-tenant optimization. Applies to Cursor IDE, Codex (OpenAI) from terminal, and similar runtimes.

@@ -1,9 +1,9 @@
 use std::fs;
+use std::os::unix::process::ExitStatusExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::thread;
-use std::os::unix::process::ExitStatusExt;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn unique_dir(name: &str) -> PathBuf {
     let nanos = SystemTime::now()
@@ -254,7 +254,11 @@ fn test_git_agent_metadata_passthrough() {
         .output()
         .expect("git status");
     let status_str = String::from_utf8_lossy(&status.stdout);
-    assert!(status_str.contains("test.txt"), "File should be staged: {}", status_str);
+    assert!(
+        status_str.contains("test.txt"),
+        "File should be staged: {}",
+        status_str
+    );
 }
 
 #[test]
@@ -353,7 +357,10 @@ fn test_git_write_operations_invalidate_cache() {
         .expect("git status 2");
 
     let status_str = String::from_utf8_lossy(&status2.stdout);
-    assert!(status_str.contains("new-file.txt"), "New file should appear in status");
+    assert!(
+        status_str.contains("new-file.txt"),
+        "New file should appear in status"
+    );
 }
 
 #[test]
@@ -368,7 +375,10 @@ fn test_git_help_shows_new_options() {
     let all_output = format!("{}{}", stdout, stderr);
 
     // Help should mention new options
-    assert!(all_output.contains("ttl") || all_output.contains("--ttl"), "Should mention TTL option");
+    assert!(
+        all_output.contains("ttl") || all_output.contains("--ttl"),
+        "Should mention TTL option"
+    );
     assert!(
         all_output.contains("detect-lock") || all_output.contains("--detect-lock"),
         "Should mention lock detection"

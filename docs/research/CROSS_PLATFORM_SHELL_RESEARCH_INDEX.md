@@ -1,3 +1,4 @@
+<DONE>
 # Cross-Platform Shell Research — Complete Index
 
 **Task:** research-cross-platform-shell (P1)

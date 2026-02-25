@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)

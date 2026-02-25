@@ -1,3 +1,4 @@
+<DONE>
 # Swarm & Resource Optimization — Research Index
 
 > **Purpose**: Master index for all swarm, process, resource, and resilience research. Use this to navigate the full research corpus.

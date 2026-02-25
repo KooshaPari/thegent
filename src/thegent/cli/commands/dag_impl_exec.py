@@ -1,0 +1,137 @@
+"""DAG operations: list, ready, run, sync, recover (WL-120).
+
+High-level DAG session operations (impl functions).
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+from typing import Any
+
+from thegent.cli.commands.dag_impl_helpers import (
+    DagDocument,
+    _parse_dag_full,
+    _serialize_dag,
+    _atomic_write,
+    _parse_dag_session,
+    _validate_dag,
+)
+from thegent.config import ThegentSettings
+
+__all__ = [
+    "_dag_path",
+    "_ensure_dag_file",
+    "_session_status_for",
+    "_parse_depends_on",
+    "_get_ready_task_ids",
+    "_resolve_prompt",
+    "dag_list_impl",
+    "dag_raw_impl",
+    "dag_ready_impl",
+    "dag_run_impl",
+    "dag_status_impl",
+    "rules_sync_impl",
+    "dag_sync_impl",
+    "dag_recover_impl",
+]
+
+_log = logging.getLogger(__name__)
+
+
+def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
+    """List DAG tasks. Returns {frontmatter, tasks} or error."""
+    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return {"error": "Ambiguous cwd; use --cd to specify project root."}
+    dag_path = cwd / ".factory" / "dag-session.md"
+    if not dag_path.exists():
+        return {"error": f"DAG not found: {dag_path}", "frontmatter": {}, "tasks": []}
+    frontmatter, tasks = _parse_dag_session(dag_path)
+    return {"frontmatter": frontmatter, "tasks": tasks}
+
+
+def dag_raw_impl(cd: Path | None = None) -> str:
+    """Get raw DAG markdown content. Returns markdown string or error message."""
+    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        return "# Error\nAmbiguous cwd; use --cd to specify project root."
+    dag_path = cwd / ".factory" / "dag-session.md"
+    if not dag_path.exists():
+        return f"# Error\nDAG not found: {dag_path}"
+    return dag_path.read_text(encoding="utf-8")
+
+
+def dag_ready_impl(cd: Path | None = None) -> dict[str, Any]:
+    """List task ids that are ready (pending with all deps done|cancelled|skipped)."""
+    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+
+    cwd = _resolve_cwd(cd) or Path.cwd()
+    dag_path = cwd / ".factory" / "dag-session.md"
+    if not dag_path.exists():
+        return {"error": f"DAG not found: {dag_path}", "ready_task_ids": []}
+
+    doc = _parse_dag_full(dag_path)
+    ready_ids = _get_ready_task_ids(doc.tasks)
+    ready_tasks = [t for t in doc.tasks if t.get("id", "").strip() in ready_ids]
+
+    return {
+        "ready_task_ids": ready_ids,
+        "tasks": ready_tasks,
+    }
+
+
+def dag_run_impl(
+    cd: Path | None = None,
+    dry_run: bool = False,
+    task: str | None = None,
+    max_parallel: int | None = None,
+    lane: str | None = None,
+    check_drift: bool = False,  # pyright: ignore[reportUnusedVariable]
+    contract_version: str | None = None,
+) -> dict[str, Any]:
+    """Spawn thegent bg for each ready task; update status=running and session_id."""
+    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, bg_impl
+    from thegent.cli.commands.dag_impl_helpers import _dag_update_task
+
+    cwd = _resolve_cwd(cd) or Path.cwd()
+    dag_path = cwd / ".factory" / "dag-session.md"
+    if not dag_path.exists():
+        return {"error": f"DAG not found: {dag_path}"}
+
+    doc = _parse_dag_full(dag_path)
+    ready_ids = _get_ready_task_ids(doc.tasks)
+
+    if task:
+        if task not in ready_ids:
+            return {"error": f"Task {task} is not ready"}
+        ready_ids = [task]
+
+    if not ready_ids:
+        return {"message": "No ready tasks"}
+
+    if max_parallel:
+        ready_ids = ready_ids[:max_parallel]
+
+    if dry_run:
+        would_run = []
+        for tid in ready_ids:
+            t = next((t for t in doc.tasks if t.get("id", "").strip() == tid), None)
+            if t:
+                prompt = _resolve_prompt(tid, t.get("prompt", ""), cwd)
+                would_run.append(
+                    {
+                        "task_id": tid,
+
+__all__ = [
+    "dag_list_impl",
+    "dag_raw_impl",
+    "dag_ready_impl",
+    "dag_run_impl",
+    "dag_status_impl",
+    "rules_sync_impl",
+]

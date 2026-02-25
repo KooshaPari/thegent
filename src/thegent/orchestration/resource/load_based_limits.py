@@ -31,6 +31,7 @@ import os
 import platform
 import re
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import threading
 import time
 from dataclasses import dataclass, field
@@ -104,7 +105,7 @@ def _get_memory_mb_macos_vm_stat() -> float:
         # Determine actual page size via sysctl (usually 4096, but M-series can differ)
         page_size = 4096
         try:
-            ps_out = subprocess.run(
+            ps_out = shim_run(
                 ["sysctl", "-n", "hw.pagesize"],
                 capture_output=True,
                 text=True,
@@ -116,7 +117,7 @@ def _get_memory_mb_macos_vm_stat() -> float:
         except (OSError, subprocess.TimeoutExpired, ValueError):
             pass  # Keep the 4096 default
 
-        out = subprocess.run(
+        out = shim_run(
             ["vm_stat"],
             capture_output=True,
             text=True,
@@ -191,7 +192,7 @@ def _get_memory_mb() -> tuple[float, float]:
         if platform.system() == "Darwin":
             try:
                 # ps -o rss= -p PID returns RSS in KB
-                out = subprocess.run(
+                out = shim_run(
                     ["ps", "-o", "rss=", "-p", str(os.getpid())],
                     capture_output=True,
                     text=True,
@@ -248,7 +249,7 @@ def _sample_resources_native() -> ResourceSnapshot | None:
             return None
         bin_path = str(bin_path)
     try:
-        out = subprocess.run(
+        out = shim_run(
             [bin_path],
             capture_output=True,
             text=True,

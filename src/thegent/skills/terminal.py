@@ -1,6 +1,6 @@
 import logging
 import os
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -44,7 +44,7 @@ def list_tmux_panes() -> list[TmuxPane]:
         )
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result = shim_run(cmd, capture_output=True, text=True, check=True)
             panes = []
             for line in result.stdout.strip().split("\n"):
                 if not line:
@@ -85,7 +85,7 @@ def capture_tmux_pane(pane_id: str, last_lines: int = 50) -> str:
     """Capture pane content."""
     cmd = ["tmux", "capture-pane", "-p", "-t", pane_id, "-S", f"-{last_lines}"]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        result = shim_run(cmd, capture_output=True, text=True, check=True)
         return result.stdout
     except Exception as e:
         return f"Error: {e}"
@@ -97,7 +97,7 @@ def send_to_tmux_pane(pane_id: str, text: str, enter: bool = True) -> bool:
     if enter:
         cmd.append("C-m")
     try:
-        subprocess.run(cmd, check=True)
+        shim_run(cmd, check=True)
         return True
     except Exception:
         return False
@@ -108,11 +108,11 @@ def heliosShield_status() -> str:
     # Look for heliosShield in parent dir or path
     try:
         # Prefer direct execution if available
-        result = subprocess.run(["../heliosShield/bin/harness", "status"], capture_output=True, text=True, check=True)
+        result = shim_run(["../heliosShield/bin/harness", "status"], capture_output=True, text=True, check=True)
         return result.stdout
     except Exception:
         try:
-            result = subprocess.run(["harness", "status"], capture_output=True, text=True, check=True)
+            result = shim_run(["harness", "status"], capture_output=True, text=True, check=True)
             return result.stdout
         except Exception:
             return "heliosShield harness not found"

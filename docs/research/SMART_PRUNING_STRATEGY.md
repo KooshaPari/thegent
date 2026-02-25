@@ -1,3 +1,4 @@
+<DONE>
 # Smart Pruning Strategy: Intelligent Agent Resource Reclamation
 
 ## Overview

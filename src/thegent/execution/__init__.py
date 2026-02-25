@@ -62,51 +62,55 @@ from .registry import (
     MessageEntry,
     MessageRegistry,
     RunRegistry,
+    get_last_poll_session_messages_meta,
+    poll_session_messages,
 )
 
 # Combined exports
 __all__ = [
     # State
     "AgentSource",
-    "CalibrationRegistry",
-    "CheckpointMeta",
-    "ContinuityPacket",
-    "InteractivityMode",
-    "MAIFArtifact",
-    "RunMeta",
-    "RunState",
-    # Resilience
-    "CircuitBreakerRegistry",
-    "ContinuityWatchdog",
-    "DeferralQueue",
-    "DLQManager",
-    "EscalationQueue",
-    "FreshnessValidator",
-    "HandoffManager",
-    "InterruptionTracker",
-    "ReplayManager",
-    # Concurrency
-    "ConcurrencyController",
-    "IdempotencyManager",
-    "LaneController",
-    "LoadClassifier",
-    # Policy
-    "Auditor",
-    "EvidenceLinter",
-    "KPIManager",
-    "OverrideRegistry",
-    "PolicyEngine",
-    "ProviderScorer",
-    "TrustBoundaryValidator",
+    "get_last_poll_session_messages_meta",
+    "poll_session_messages",
     # Registry
     "AuditEntry",
     "AuditRegistry",
-    "CheckpointRegistry",
+    # Policy
+    "Auditor",
+    "CalibrationRegistry",
     "ChatEntry",
     "ChatHistory",
+    "CheckpointMeta",
+    "CheckpointRegistry",
+    # Resilience
+    "CircuitBreakerRegistry",
+    # Concurrency
+    "ConcurrencyController",
+    "ContinuityPacket",
+    "ContinuityWatchdog",
+    "DLQManager",
+    "DeferralQueue",
+    "EscalationQueue",
+    "EvidenceLinter",
+    "FreshnessValidator",
+    "HandoffManager",
+    "IdempotencyManager",
+    "InteractivityMode",
+    "InterruptionTracker",
+    "KPIManager",
+    "LaneController",
+    "LoadClassifier",
+    "MAIFArtifact",
     "MessageEntry",
     "MessageRegistry",
+    "OverrideRegistry",
+    "PolicyEngine",
+    "ProviderScorer",
+    "ReplayManager",
+    "RunMeta",
     "RunRegistry",
+    "RunState",
+    "TrustBoundaryValidator",
 ]
 
 # Lazy-load flat module for backward compatibility only
@@ -173,6 +177,8 @@ def __getattr__(name: str) -> Any:
         "MessageEntry": MessageEntry,
         "MessageRegistry": MessageRegistry,
         "RunRegistry": RunRegistry,
+        "get_last_poll_session_messages_meta": get_last_poll_session_messages_meta,
+        "poll_session_messages": poll_session_messages,
     }
     if name in modular_exports:
         return modular_exports[name]

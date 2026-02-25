@@ -100,12 +100,18 @@ mod report_integration_tests {
         let severities = vec!["info", "warning", "error", "critical"];
 
         // Verify severity ordering
-        assert!(severities.iter().position(|&s| s == "info").unwrap() <
-                severities.iter().position(|&s| s == "warning").unwrap());
-        assert!(severities.iter().position(|&s| s == "warning").unwrap() <
-                severities.iter().position(|&s| s == "error").unwrap());
-        assert!(severities.iter().position(|&s| s == "error").unwrap() <
-                severities.iter().position(|&s| s == "critical").unwrap());
+        assert!(
+            severities.iter().position(|&s| s == "info").unwrap()
+                < severities.iter().position(|&s| s == "warning").unwrap()
+        );
+        assert!(
+            severities.iter().position(|&s| s == "warning").unwrap()
+                < severities.iter().position(|&s| s == "error").unwrap()
+        );
+        assert!(
+            severities.iter().position(|&s| s == "error").unwrap()
+                < severities.iter().position(|&s| s == "critical").unwrap()
+        );
     }
 
     #[test]
@@ -146,7 +152,10 @@ mod report_integration_tests {
         // Verify counts
         assert_eq!(stats["files_processed"], 100);
         assert_eq!(stats["tests_failed"], 5);
-        assert_eq!(stats["tests_passed"].as_u64().unwrap() + stats["tests_failed"].as_u64().unwrap(), 500);
+        assert_eq!(
+            stats["tests_passed"].as_u64().unwrap() + stats["tests_failed"].as_u64().unwrap(),
+            500
+        );
     }
 
     #[test]
@@ -231,8 +240,8 @@ mod report_integration_tests {
         });
 
         // System is healthy if no failed hooks and no issues
-        let is_healthy = summary["failed_hooks"].as_array().unwrap().is_empty() &&
-                        summary["total_issues"] == 0;
+        let is_healthy =
+            summary["failed_hooks"].as_array().unwrap().is_empty() && summary["total_issues"] == 0;
         assert!(is_healthy);
     }
 
@@ -247,8 +256,8 @@ mod report_integration_tests {
         });
 
         // System is unhealthy with failed hooks
-        let is_healthy = summary["failed_hooks"].as_array().unwrap().is_empty() &&
-                        summary["total_issues"] == 0;
+        let is_healthy =
+            summary["failed_hooks"].as_array().unwrap().is_empty() && summary["total_issues"] == 0;
         assert!(!is_healthy);
     }
 

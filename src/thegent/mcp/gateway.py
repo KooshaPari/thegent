@@ -31,7 +31,8 @@ import orjson as json
 import logging
 import os
 import shlex
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
+import subprocess  # For test patching compatibility
 import threading
 import time
 from dataclasses import dataclass
@@ -130,7 +131,7 @@ class McpGateway:
         command = shlex.split(config.command)
         env = os.environ.copy()
         env.update(config.env)
-        payload = json.dumps(request).decode().decode()
+        payload = json.dumps(request).decode()
         try:
             if config.transport is None:
                 returncode, stdout, stderr = self._run_subprocess_transport(
@@ -241,7 +242,7 @@ class McpGateway:
         env: dict[str, str],
         timeout_sec: float,
     ) -> TransportResult:
-        completed = subprocess.run(
+        completed = shim_run(
             command,
             input=request_payload,
             capture_output=True,

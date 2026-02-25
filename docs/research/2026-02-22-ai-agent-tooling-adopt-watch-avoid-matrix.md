@@ -1,3 +1,4 @@
+<DONE>
 # AI Agent Tooling Matrix: Adopt Now / Watch / Avoid Hype
 
 Date: 2026-02-22

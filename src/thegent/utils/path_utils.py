@@ -1,171 +1,99 @@
-#!/usr/bin/env python3
-"""
-Cross-platform path handling utilities with security and consistency.
+"""Common path utilities for thegent.
 
-This module provides normalized path operations that work consistently
-across Windows, macOS, and Linux. All functions return pathlib.Path objects
-to avoid str/Path mixing and ensure type safety.
-
-Key features:
-- Automatic ~ expansion and .. resolution
-- Cross-platform separator handling
-- Directory traversal attack prevention (safe_join / is_within)
-- Safe path existence checks (no PermissionError leakage)
-- Relative path computation for logging/display
-
-Usage:
-    from scripts.path_utils import (
-        normalize_path,
-        safe_join,
-        is_within,
-        safe_exists,
-        rel_to_cwd,
-        ensure_dir,
-    )
-
-    path = normalize_path("~/projects/myfile.txt")
-    file = safe_join(base_dir, user_input)
-    if not is_within(file, allowed_dir):
-        raise ValueError("Path escapes allowed directory")
+Provides consistent path handling across the codebase.
 """
 
 from __future__ import annotations
 
-import contextlib
-import re
-import tempfile
+import os
 from pathlib import Path
+from typing import Any
 
 
-def normalize_path(path: str | Path | None, base: str | Path | None = None) -> Path:
-    """Normalize a path with ~ expansion and absolute resolution.
-
-    If *path* is relative and *base* is given, the path is resolved relative
-    to *base*.  If *base* is omitted, relative paths are resolved against the
-    current working directory.
-
-    Args:
-        path: Input path as string or Path object. ``None`` returns the CWD.
-        base: Optional base directory for resolving relative paths.
-
-    Returns:
-        Normalized absolute :class:`~pathlib.Path`.
-
-    Raises:
-        TypeError: If *path* is not ``str``, :class:`~pathlib.Path`, or ``None``.
-
-    Examples:
-        >>> normalize_path("~/projects/thegent")
-        PosixPath('/Users/username/projects/thegent')
-
-        >>> normalize_path("./config", "/home/user/app")
-        PosixPath('/home/user/app/config')
-
-        >>> normalize_path(None)
-        PosixPath('/current/working/directory')
-    """
-    if path is None:
-        return Path.cwd()
-
-    if isinstance(path, str):
-        p = Path(path)
-    elif isinstance(path, Path):
-        p = path
-    else:
-        raise TypeError(f"Expected str, Path, or None; got {type(path).__name__}")
-
-    # Expand ~ to home directory
-    p = p.expanduser()
-
-    if not p.is_absolute():
-        if base is not None:
-            base_path = _resolve(Path(base).expanduser())
-            p = (base_path / p).resolve()
-        else:
-            p = p.resolve()
-    else:
-        p = _resolve(p)
-
-    return p
+def ensure_dir(path: Path) -> Path:
+    """Ensure a directory exists, creating it if needed."""
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
-def safe_join(base: str | Path, *parts: str | Path) -> Path:
-    """Join *base* with *parts*, blocking any directory traversal escape.
-
-    Resolves the joined path and verifies it remains inside *base*.  Raises
-    :class:`ValueError` if any ``..`` component or absolute override would
-    navigate the result outside *base*.
-
-    Args:
-        base: The trusted base directory.
-        *parts: Path components to join (may be user-supplied / untrusted).
-
-    Returns:
-        Absolute :class:`~pathlib.Path` strictly inside (or equal to) *base*.
-
-    Raises:
-        ValueError: If the joined path escapes *base*.
-
-    Examples:
-        >>> safe_join("/tmp/sandbox", "subdir/file.txt")
-        PosixPath('/tmp/sandbox/subdir/file.txt')
-
-        >>> safe_join("/tmp/sandbox", "../../etc/passwd")
-        ValueError: Path escapes base '/tmp/sandbox'
-    """
-    resolved_base = _resolve(Path(base).expanduser())
-
-    candidate = resolved_base
-    for part in parts:
-        candidate = candidate / Path(part).expanduser()
-
-    resolved_candidate = _resolve(candidate)
-
-    if not is_within(resolved_candidate, resolved_base):
-        raise ValueError(f"Path escapes base '{resolved_base}': resolved to '{resolved_candidate}'")
-
-    return resolved_candidate
+def ensure_parent_dir(path: Path) -> Path:
+    """Ensure parent directory of a file exists."""
+    if path.parent != path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    return path
 
 
-def is_within(child: str | Path, parent: str | Path) -> bool:
-    """Return ``True`` if *child* is at or below *parent* in the filesystem tree.
+def expand_path(path: str | Path) -> Path:
+    """Expand user home and environment variables in path."""
+    return Path(os.path.expanduser(os.path.expandvars(path)))
 
-    Both paths are resolved (symlinks expanded, ``..`` collapsed) before the
-    containment check so they cannot fool the comparison.
 
-    Args:
-        child: Path to test.
-        parent: Directory that *child* must be contained in.
+def resolve_path(path: str | Path, base: Path | None = None) -> Path:
+    """Resolve a path relative to base, or cwd if not provided."""
+    path = expand_path(path)
+    if path.is_absolute():
+        return path.resolve()
+    if base is None:
+        base = Path.cwd()
+    return (base / path).resolve()
 
-    Returns:
-        ``True`` if *child* equals *parent* or is a descendant of *parent*.
 
-    Examples:
-        >>> is_within("/tmp/foo/bar.txt", "/tmp/foo")
-        True
-
-        >>> is_within("/tmp/other/file.txt", "/tmp/foo")
-        False
-
-        >>> is_within("/tmp/foo", "/tmp/foo")   # same path → True
-        True
-    """
+def is_subpath(path: Path, parent: Path) -> bool:
+    """Check if path is a subpath of parent."""
     try:
-        resolved_child = _resolve(Path(child).expanduser())
-        resolved_parent = _resolve(Path(parent).expanduser())
-        resolved_child.relative_to(resolved_parent)
+        path.resolve().relative_to(parent.resolve())
         return True
     except ValueError:
         return False
 
 
-def safe_exists(path: str | Path) -> bool:
-    """Check whether *path* exists without raising on permission or OS errors.
+def find_files(
+    directory: Path,
+    pattern: str = "*",
+    recursive: bool = True,
+) -> list[Path]:
+    """Find files matching pattern in directory."""
+    if recursive:
+        return list(directory.rglob(pattern))
+    return list(directory.glob(pattern))
 
-    Unlike :meth:`~pathlib.Path.exists`, this function catches
-    :class:`PermissionError` and :class:`OSError` and returns ``False``
-    instead of propagating them.
 
+def find_dirs(
+    directory: Path,
+    pattern: str = "*",
+    recursive: bool = True,
+) -> list[Path]:
+    """Find directories matching pattern in directory."""
+    if recursive:
+        return [p for p in directory.rglob(pattern) if p.is_dir()]
+    return [p for p in directory.glob(pattern) if p.is_dir()]
+
+
+def get_project_root() -> Path:
+    """Find project root by looking for common markers."""
+    markers = ["pyproject.toml", "setup.py", "setup.cfg", "package.json"]
+    current = Path.cwd()
+    while current != current.parent:
+        for marker in markers:
+            if (current / marker).exists():
+                return current
+        current = current.parent
+    return Path.cwd()
+
+
+def get_size(path: Path) -> int:
+    """Get size of file or directory in bytes."""
+    if path.is_file():
+        return path.stat().st_size
+    total = 0
+    for item in path.rglob("*"):
+        if item.is_file():
+            total += item.stat().st_size
+    return total
+
+
+<<<<<<< HEAD
+=======
     Args:
         path: Path to check (``~`` expansion is applied).
 
@@ -245,6 +173,16 @@ def ensure_dir(path: str | Path) -> Path:
 # ---------------------------------------------------------------------------
 
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/refactor/provider-manager-modularization
 def path_to_str(path: str | Path | None) -> str:
     """Convert a path to a string, handling ``None`` gracefully.
 
@@ -415,3 +353,206 @@ if __name__ == "__main__":
         created = ensure_dir(Path(td) / "a" / "b" / "c")
 
     sys.exit(0)
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/fix/cli-test-failures
+=======
+=======
+>>>>>>> origin/refactor/provider-manager-modularization
+def format_size(size_bytes: int) -> str:
+    """Format size in human-readable form."""
+    for unit in ["B", "KB", "MB", "GB", "TB"]:
+        if size_bytes < 1024:
+            return f"{size_bytes:.1f}{unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.1f}PB"
+
+
+<<<<<<< HEAD
+def normalize_path(path: Path | str | None) -> Path | None:
+    """Normalize a path - expand user, resolve, and make absolute."""
+    if path is None:
+        return None
+    if isinstance(path, str):
+        path = Path(path)
+    return path.expanduser().resolve()
+
+
+def path_to_str(path: Path | None) -> str | None:
+    """Convert Path to string representation."""
+    if path is None:
+        return None
+    return str(path)
+<<<<<<< HEAD
+<<<<<<< HEAD
+
+
+def get_common_ancestor(paths: list[Path]) -> Path | None:
+    """Get the common ancestor of multiple paths."""
+    if not paths:
+        return None
+    if len(paths) == 1:
+        return paths[0].parent
+    # Find common ancestor by checking each path's parents
+    first = paths[0]
+    for parent in [first] + list(first.parents):
+        if all(p.is_relative_to(parent) or parent in p.parents for p in paths):
+            return parent
+    return Path("/")
+
+
+def is_same_path(path1: Path, path2: Path) -> bool:
+    """Check if two paths resolve to the same location."""
+    try:
+        return path1.resolve() == path2.resolve()
+    except Exception:
+        return path1 == path2
+
+
+def is_within(path: Path, parent: Path) -> bool:
+    """Check if path is within parent directory."""
+    try:
+        return path.is_relative_to(parent)
+    except Exception:
+        return parent in path.parents
+
+
+def rel_to_cwd(path: Path) -> Path:
+    """Get path relative to current working directory."""
+    try:
+        return path.relative_to(Path.cwd())
+    except ValueError:
+        return path
+
+
+def safe_exists(path: Path) -> bool:
+    """Check if path exists, handling race conditions."""
+    try:
+        return path.exists()
+    except Exception:
+        return False
+
+
+def safe_is_file(path: Path) -> bool:
+    """Check if path is a file, handling race conditions."""
+    try:
+        return path.is_file()
+    except Exception:
+        return False
+
+
+def safe_is_dir(path: Path) -> bool:
+    """Check if path is a directory, handling race conditions."""
+    try:
+        return path.is_dir()
+    except Exception:
+        return False
+
+
+def safe_join(base: Path, *parts: str) -> Path | None:
+    """Safely join path parts, ensuring result is within base."""
+    try:
+        result = base.joinpath(*parts).resolve()
+        base_resolved = base.resolve()
+        # Security: ensure result is within base
+        if not str(result).startswith(str(base_resolved)):
+            return None
+        return result
+    except Exception:
+        return None
+
+
+def sanitize_path(path: str) -> str:
+    """Remove dangerous characters from path component."""
+    # Remove null bytes and path traversal attempts
+    import re
+    return re.sub(r'[\x00..\x1f]', '', path)
+=======
+>>>>>>> origin/main
+<<<<<<< HEAD
+>>>>>>> origin/fix/cli-test-failures
+=======
+def normalize_path(path: str | Path | None = None) -> Path:
+    """Normalize a path to an absolute Path, defaulting to cwd."""
+    if path is None:
+        return Path.cwd()
+    return resolve_path(path)
+
+
+def path_to_str(path: str | Path | None) -> str:
+    """Convert a path to a string."""
+    if path is None:
+        return ""
+    return str(Path(path))
+
+
+def get_common_ancestor(paths: list[Path]) -> Path:
+    """Get the common ancestor of a list of paths."""
+    if not paths:
+        return Path.cwd()
+    resolved = [p.resolve() for p in paths]
+    common = resolved[0]
+    for p in resolved[1:]:
+        parts_a = common.parts
+        parts_b = p.parts
+        common_parts = []
+        for a, b in zip(parts_a, parts_b):
+            if a == b:
+                common_parts.append(a)
+            else:
+                break
+        common = Path(*common_parts) if common_parts else Path("/")
+    return common
+
+
+def is_same_path(a: Path, b: Path) -> bool:
+    """Check if two paths refer to the same file/directory."""
+    return a.resolve() == b.resolve()
+
+
+def is_within(path: Path, parent: Path) -> bool:
+    """Alias for is_subpath."""
+    return is_subpath(path, parent)
+
+
+def rel_to_cwd(path: Path) -> Path:
+    """Make path relative to current working directory."""
+    try:
+        return path.resolve().relative_to(Path.cwd())
+    except ValueError:
+        return path.resolve()
+
+
+def safe_exists(path: str | Path | None) -> bool:
+    """Check if path exists, returning False for None or invalid paths."""
+    if path is None:
+        return False
+    try:
+        return Path(path).exists()
+    except (OSError, ValueError):
+        return False
+
+
+def safe_join(base: Path, *parts: str | Path) -> Path:
+    """Join path parts safely."""
+    result = base
+    for part in parts:
+        result = result / part
+    return result
+
+
+def sanitize_path(path: str | Path) -> Path:
+    """Sanitize a path by resolving it and removing dangerous components."""
+    return Path(path).resolve()
+>>>>>>> origin/fix/cli-test-improvements
+=======
+>>>>>>> origin/main
+>>>>>>> origin/fix/command-test-fixes
+=======
+>>>>>>> origin/main
+>>>>>>> origin/refactor/provider-manager-modularization

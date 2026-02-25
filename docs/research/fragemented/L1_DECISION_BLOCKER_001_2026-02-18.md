@@ -1,3 +1,4 @@
+<DONE>
 # L1 DECISION: BLOCKER-001 Resolution
 
 **Decision Maker:** Claude Code (L1)

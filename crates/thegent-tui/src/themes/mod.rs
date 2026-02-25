@@ -141,14 +141,14 @@ impl Theme {
     /// Solarized dark palette (Ethan Schoonover).
     pub fn solarized() -> Self {
         Self {
-            bg: ThemeColor::from_rgb(0, 43, 54),    // base03
-            fg: ThemeColor::from_rgb(131, 148, 150), // base0
-            accent: ThemeColor::from_rgb(38, 139, 210),  // blue
-            warning: ThemeColor::from_rgb(181, 137, 0),  // yellow
-            error: ThemeColor::from_rgb(220, 50, 47),    // red
-            success: ThemeColor::from_rgb(133, 153, 0),  // green
-            border: ThemeColor::from_rgb(7, 54, 66),     // base02
-            selected_bg: ThemeColor::from_rgb(0, 73, 89),    // base02 lighter
+            bg: ThemeColor::from_rgb(0, 43, 54),              // base03
+            fg: ThemeColor::from_rgb(131, 148, 150),          // base0
+            accent: ThemeColor::from_rgb(38, 139, 210),       // blue
+            warning: ThemeColor::from_rgb(181, 137, 0),       // yellow
+            error: ThemeColor::from_rgb(220, 50, 47),         // red
+            success: ThemeColor::from_rgb(133, 153, 0),       // green
+            border: ThemeColor::from_rgb(7, 54, 66),          // base02
+            selected_bg: ThemeColor::from_rgb(0, 73, 89),     // base02 lighter
             selected_fg: ThemeColor::from_rgb(253, 246, 227), // base3
             dim: ThemeColor::from_rgb(88, 110, 117),          // base01
         }
@@ -234,9 +234,7 @@ fn theme_file_path(name: &str) -> PathBuf {
                 .join("themes")
                 .join(format!("{}.toml", name))
         })
-        .unwrap_or_else(|| {
-            PathBuf::from(format!(".thegent/themes/{}.toml", name))
-        })
+        .unwrap_or_else(|| PathBuf::from(format!(".thegent/themes/{}.toml", name)))
 }
 
 // ---------------------------------------------------------------------------
@@ -261,8 +259,7 @@ impl RegistryInner {
     }
 }
 
-static REGISTRY: Lazy<Mutex<RegistryInner>> =
-    Lazy::new(|| Mutex::new(RegistryInner::new()));
+static REGISTRY: Lazy<Mutex<RegistryInner>> = Lazy::new(|| Mutex::new(RegistryInner::new()));
 
 /// Global theme registry.
 ///
@@ -394,12 +391,18 @@ mod tests {
         assert_eq!(ThemeColor::from_named("blue").to_ratatui(), Color::Blue);
         assert_eq!(ThemeColor::from_named("white").to_ratatui(), Color::White);
         assert_eq!(ThemeColor::from_named("black").to_ratatui(), Color::Black);
-        assert_eq!(ThemeColor::from_named("darkgray").to_ratatui(), Color::DarkGray);
+        assert_eq!(
+            ThemeColor::from_named("darkgray").to_ratatui(),
+            Color::DarkGray
+        );
     }
 
     #[test]
     fn test_theme_color_unknown_is_reset() {
-        assert_eq!(ThemeColor::from_named("purple_unicorn").to_ratatui(), Color::Reset);
+        assert_eq!(
+            ThemeColor::from_named("purple_unicorn").to_ratatui(),
+            Color::Reset
+        );
     }
 
     #[test]
@@ -454,8 +457,14 @@ mod tests {
     fn test_theme_color_gray_variants() {
         assert_eq!(ThemeColor::from_named("gray").to_ratatui(), Color::Gray);
         assert_eq!(ThemeColor::from_named("grey").to_ratatui(), Color::Gray);
-        assert_eq!(ThemeColor::from_named("dark_gray").to_ratatui(), Color::DarkGray);
-        assert_eq!(ThemeColor::from_named("dark_grey").to_ratatui(), Color::DarkGray);
+        assert_eq!(
+            ThemeColor::from_named("dark_gray").to_ratatui(),
+            Color::DarkGray
+        );
+        assert_eq!(
+            ThemeColor::from_named("dark_grey").to_ratatui(),
+            Color::DarkGray
+        );
     }
 
     #[test]

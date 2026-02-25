@@ -1,3 +1,4 @@
+<DONE>
 # Routing Module → CLIProxy Migration Status
 
 **Date:** 2026-02-23  

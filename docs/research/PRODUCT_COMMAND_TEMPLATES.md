@@ -1,3 +1,4 @@
+<DONE>
 # INTENT.md Template (Product Command)
 *Improve one-shot agentic engineering by centralizing intent.*
 

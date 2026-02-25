@@ -1,3 +1,4 @@
+<DONE>
 # Research — Governance Escalation + DLQ
 
 **WORK_STREAM ID:** `research-governance-escalation-dlq`

@@ -1,3 +1,4 @@
+<DONE>
 # Codex CLI + CLIProxy Configuration Audit and Plan
 
 **Date**: 2026-02-18

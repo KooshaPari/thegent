@@ -1,3 +1,4 @@
+<DONE>
 # Task: Consolidate os.environ in install.py
 
 **Priority**: P3

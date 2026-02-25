@@ -1,3 +1,4 @@
+<DONE>
 # Delegation Friction Audit
 
 **Date:** 2026-02-17

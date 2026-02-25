@@ -15,9 +15,6 @@ import typer
 from rich.table import Table
 
 from thegent.cli.commands.plan_output_helpers import (
-    render_dag_list,
-    render_dag_ready,
-    render_dag_status,
     render_plan_next_items,
     resolve_output_format,
 )
@@ -25,28 +22,10 @@ from thegent.cli.commands.plan_output_helpers import (
 from thegent.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
-    _atomic_write,
-    _check_dag_cycles,
-    _dag_path,
-    _dag_update_task,
     _default_owner_tag,
-    _ensure_contract_version_header,
-    _ensure_dag_file,
     _parse_dag_full,
-    _parse_dag_session,
-    _parse_depends_on,
-    _resolve_checkpoint_id,
     _resolve_cwd,
-    _serialize_dag,
-    _session_status_for,
-    _validate_agent,
-    _validate_dag,
-    _validate_task_id,
     console,
-    dag_ready_impl,
-    dag_recover_impl,
-    dag_run_impl,
-    dag_sync_impl,
 )
 
 _log = logging.getLogger(__name__)
@@ -143,7 +122,7 @@ def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None
     fmt = resolve_output_format(format, settings)
 
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
     else:
         counts = result.get("counts", {})
         console.print(
@@ -180,7 +159,7 @@ def plan_wait_next_cmd(
     settings = ThegentSettings()
     fmt = (format or settings.output_format or "rich").lower()
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if result.get("action") is None:
         console.print("[dim]Timeout: no next action found.[/dim]")
@@ -209,7 +188,7 @@ def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None 
     fmt = resolve_output_format(format, settings)
     if result.get("governance_blocked"):
         if fmt == "json":
-            sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+            sys.stdout.write(json.dumps(result).decode() + "\n")
         else:
             console.print(f"[red]{result['error']}[/red]")
             if result.get("remediation"):
@@ -219,7 +198,7 @@ def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None 
         console.print(f"[red]{result['error']}[/red]")
         raise typer.Exit(1)
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     items = result.get("next_items", [])
     if not items:
@@ -238,7 +217,7 @@ def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None
     fmt = (format or "plain").lower()
     if result.get("governance_blocked"):
         if fmt == "json":
-            sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+            sys.stdout.write(json.dumps(result).decode() + "\n")
         else:
             typer.echo(result["error"], err=True)
             if result.get("remediation"):
@@ -252,7 +231,7 @@ def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None
         raise typer.Exit(1)
     item = items[0]
     if fmt == "json":
-        sys.stdout.write(json.dumps(item).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(item).decode() + "\n")
     else:
         sys.stdout.write((item.get("prompt_suggestion") or "") + "\n")
 
@@ -322,6 +301,11 @@ def plan_analyze_cmd(
     format: str | None = None,
 ) -> None:
     """Run planning simulation overlays (XD1–XD3): PERT, resource contention, continuity risk."""
+    cwd = _resolve_cwd(cd)
+    if cwd is None:
+        console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
+        raise typer.Exit(1)
+
     from thegent.cli.commands.impl import plan_analyze_impl
 
     result = plan_analyze_impl(cd=cd, pert=pert, resources=resources, continuity=continuity)
@@ -334,7 +318,7 @@ def plan_analyze_cmd(
     settings = ThegentSettings()
     fmt = (format or settings.output_format or "rich").lower()
     if fmt == "json":
-        sys.stdout.write(json.dumps(result).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(result).decode() + "\n")
         return
     if pert and "pert" in result:
         tbl = Table(title="PERT Milestone Confidence")

@@ -94,7 +94,7 @@ class MetaGovernance:
                 "metadata": rule.metadata,
             }
             data.append(r_dict)
-        self.path.write_text(json.dumps(data, indent=2).decode().decode(), encoding="utf-8")
+        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     def validate_action(self, action_description: str, tags: set[str]) -> tuple[bool, str | None]:
         """Validate an agent's intended action against the constitution."""

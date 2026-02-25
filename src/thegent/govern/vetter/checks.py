@@ -20,6 +20,7 @@ import asyncio
 import orjson as json
 import re
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from typing import Any, Callable, Literal, cast
 
@@ -440,7 +441,7 @@ class QualityScoreVetterCheck:
 class TestPassCheck:
     """Run pytest (or configured test command); fail if exit code is non-zero.
 
-    Uses asyncio.create_subprocess_exec -- not subprocess.run.
+    Uses asyncio.create_subprocess_exec -- not shim_run.
     # @trace WL-090
     """
 
@@ -472,7 +473,7 @@ class TestPassCheck:
 
         try:
             stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=self.timeout_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()  # Non-async; asyncio.subprocess.Process.kill() is synchronous
             await proc.wait()
             return VetterCheckResult(
@@ -497,7 +498,7 @@ class TestPassCheck:
 class RuffCheck:
     """Run ruff check on Python files touched in the diff.
 
-    Uses asyncio.create_subprocess_exec -- not subprocess.run.
+    Uses asyncio.create_subprocess_exec -- not shim_run.
     Fails fast: non-zero ruff exit code = passed=False.
     # @trace WL-090
     """
@@ -737,8 +738,8 @@ class TestPassVetterCheck:
     RunResult.stdout).  If no Python files are found in the diff, runs pytest
     with no file arguments (i.e., the full suite).
 
-    Uses subprocess.run (not asyncio.create_subprocess_exec) so that tests can
-    mock subprocess.run without an asyncio harness.
+    Uses shim_run (not asyncio.create_subprocess_exec) so that tests can
+    mock shim_run without an asyncio harness.
 
     Fail fast: non-zero exit code -> passed=False, revision_hint contains the
     truncated test output.  No silent error handling.
@@ -770,7 +771,7 @@ class TestPassVetterCheck:
             cmd.extend(changed_files)
 
         try:
-            proc = subprocess.run(
+            proc = shim_run(
                 cmd,
                 capture_output=True,
                 timeout=self.timeout_seconds,
@@ -803,8 +804,8 @@ class RuffVetterCheck:
     RunResult.stdout).  If no Python files are found in the diff, returns
     passed=True (nothing to lint).
 
-    Uses subprocess.run (not asyncio.create_subprocess_exec) so that tests can
-    mock subprocess.run without an asyncio harness.
+    Uses shim_run (not asyncio.create_subprocess_exec) so that tests can
+    mock shim_run without an asyncio harness.
 
     fix_mode=True passes --fix to ruff (auto-fix enabled).
     select_rules limits which rules are evaluated via --select.
@@ -846,7 +847,7 @@ class RuffVetterCheck:
             cmd.extend(["--select", ",".join(self.select_rules)])
         cmd.extend(changed_files)
 
-        proc = subprocess.run(
+        proc = shim_run(
             cmd,
             capture_output=True,
             cwd=self.cwd or context.get("cwd"),

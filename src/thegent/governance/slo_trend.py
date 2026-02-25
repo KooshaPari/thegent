@@ -133,4 +133,4 @@ def serialize_trend(trend: SloTrend) -> str:
         "generated_at": trend.generated_at,
         "metrics": [asdict(m) for m in trend.metrics],
     }
-    return json.dumps(payload, sort_keys=True, indent=2).decode().decode()
+    return json.dumps(payload, sort_keys=True, indent=2)

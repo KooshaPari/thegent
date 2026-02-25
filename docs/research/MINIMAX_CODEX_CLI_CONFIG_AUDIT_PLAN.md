@@ -1,3 +1,4 @@
+<DONE>
 # MiniMax Codex CLI Custom Model Configuration Audit & Plan
 
 **Date**: 2026-02-18

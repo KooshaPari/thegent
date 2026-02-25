@@ -10,11 +10,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-import yaml
+from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.integrations.base import SerializableMixin
 
 
 @dataclass
-class TUIConfig:
+class TUIConfig(SerializableMixin):
     """Main TUI compositor configuration."""
 
     # General settings
@@ -52,28 +53,6 @@ class TUIConfig:
     # Custom CSS
     custom_css: str = ""
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "theme": self.theme,
-            "layout": self.layout,
-            "auto_save": self.auto_save,
-            "auto_save_interval": self.auto_save_interval,
-            "title": self.title,
-            "width": self.width,
-            "height": self.height,
-            "fullscreen": self.fullscreen,
-            "sidebar_visible": self.sidebar_visible,
-            "sidebar_width": self.sidebar_width,
-            "statusbar_visible": self.statusbar_visible,
-            "shell": self.shell,
-            "cwd": self.cwd,
-            "env": self.env,
-            "restore_session": self.restore_session,
-            "max_saved_sessions": self.max_saved_sessions,
-            "keybindings": self.keybindings,
-            "plugins": self.plugins,
-            "custom_css": self.custom_css,
-        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TUIConfig:
@@ -108,12 +87,6 @@ class KeyBinding:
     action: str
     description: str = ""
 
-    def to_dict(self) -> dict[str, str]:
-        return {
-            "key": self.key,
-            "action": self.action,
-            "description": self.description,
-        }
 
 
 class ConfigManager:
@@ -152,7 +125,7 @@ class ConfigManager:
         if self._config_file.suffix in (".yaml", ".yml"):
             self._config_file.write_text(yaml.dump(data, default_flow_style=False))
         else:
-            self._config_file.write_text(json.dumps(data, indent=2).decode().decode())
+            self._config_file.write_text(json.dumps(data, indent=2))
 
     def get(self) -> TUIConfig:
         """Get current configuration."""

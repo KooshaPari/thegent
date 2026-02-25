@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import hashlib
-import orjson as json
+from thegent.utils.json_utils import json_loads, json_dumps
+import logging
 from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
+
+_log = logging.getLogger(__name__)
 
 HEALTH_PAYLOAD_SCHEMA_VERSION = "health-schema-v1"
 HEALTH_PAYLOAD_TYPES = (
@@ -28,7 +31,7 @@ def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode().decode())
+    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":"))
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode()).hexdigest()}
 
 
@@ -178,7 +181,7 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
     }
     try:
         with path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(rec, sort_keys=True).decode().decode())
+            fh.write(json.dumps(rec, sort_keys=True))
             fh.write("\n")
     except OSError:
         return

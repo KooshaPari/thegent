@@ -11,10 +11,10 @@ from __future__ import annotations
 import orjson as json
 import os
 import sqlite3
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -82,7 +82,7 @@ def _list_claude_sessions() -> list[SessionInfo]:
             session_id = obj.get("sessionId") or f"claude-{line_num}"
             project = obj.get("project")
             ts = obj.get("timestamp")
-            ts_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts / 1000, tz=UTC).isoformat() + "Z" if ts else None
             if session_id not in sessions:
                 sessions[session_id] = SessionInfo(
                     source="claude",
@@ -124,7 +124,7 @@ def _list_codex_sessions() -> list[SessionInfo]:
                 continue
             session_id = obj.get("session_id") or f"codex-{line_num}"
             ts = obj.get("ts")
-            ts_str = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts, tz=UTC).isoformat() + "Z" if ts else None
             cwd = cwd_map.get(session_id, "")
             if session_id not in sessions:
                 sessions[session_id] = SessionInfo(
@@ -388,7 +388,7 @@ def _explore_claude_prompts(
             proj = obj.get("project")
             if project and proj and project not in str(proj):
                 continue
-            ts_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts / 1000, tz=UTC).isoformat() + "Z" if ts else None
             entries.append(
                 PromptEntry(
                     source="claude",
@@ -447,7 +447,7 @@ def _explore_codex_prompts(
             cwd = cwd_map.get(sid, "")
             if project and cwd and project not in cwd:
                 continue
-            ts_str = datetime.fromtimestamp(ts, tz=timezone.utc).isoformat() + "Z" if ts else None
+            ts_str = datetime.fromtimestamp(ts, tz=UTC).isoformat() + "Z" if ts else None
             entries.append(
                 PromptEntry(
                     source="codex",
@@ -589,7 +589,7 @@ def run_harvest(script_dir: Path | None = None) -> tuple[int, str]:
     script = base / "scripts" / "harvest-idea-seeds.sh"
     if not script.exists():
         return 1, f"Harvest script not found: {script}"
-    result = subprocess.run(
+    result = shim_run(
         [str(script)],
         capture_output=True,
         text=True,

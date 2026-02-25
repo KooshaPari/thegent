@@ -17,14 +17,32 @@ crate-type = ["cdylib", "rlib"]
 serde_json = "1.0.149"
 anyhow = "1.0.101"
 clap = { version = "4.5", features = ["derive"], optional = true }
-pyo3 = { version = "0.23.4", features = ["extension-module"] }
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+pyo3 = { version = "0.24", optional = true }
+=======
+pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/main
+=======
+pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/fix/cli-test-failures
+=======
+pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/fix/command-test-fixes
+=======
+pyo3 = { version = "0.24.1", optional = true }
+>>>>>>> origin/refactor/provider-manager-modularization
 blake3 = "1.6"
 thiserror = "2.0"
 serde = { version = "1.0", features = ["derive"] }
+sha2 = "0.10"
 
 [dev-dependencies]
 tempfile = "3"
 
 [features]
 default = []
+python = ["dep:pyo3"]
 cli = ["dep:clap"]

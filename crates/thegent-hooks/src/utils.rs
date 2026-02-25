@@ -1,7 +1,7 @@
 //! Hook utility functions migrated from hooks/lib/common.sh
 //! Provides binary resolution, PATH handling, and tool detection
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 use thiserror::Error;
 
@@ -64,10 +64,7 @@ pub fn resolve_git_binary() -> Option<PathBuf> {
     }
 
     // Try to resolve
-    match resolve_real_binary("git") {
-        Ok(path) => Some(path),
-        Err(_) => None,
-    }
+    resolve_real_binary("git").ok()
 }
 
 /// Check if a command exists in PATH

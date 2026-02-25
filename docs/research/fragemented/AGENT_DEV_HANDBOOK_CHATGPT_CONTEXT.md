@@ -1,3 +1,4 @@
+<DONE>
 # Agent-Driven Development Handbook — Research Context & Prompt Input
 
 **Date:** 2026-02-22

@@ -11,6 +11,7 @@ import asyncio
 import logging
 import os
 import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 import time
 from typing import Any
 
@@ -55,7 +56,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
     def _check_xvfb_sync(self) -> bool:
         """Check if Xvfb is available (sync version for __init__)."""
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["which", "Xvfb"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -68,7 +69,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
     def _check_xdotool_sync(self) -> bool:
         """Check if xdotool is available (sync version for __init__)."""
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["which", "xdotool"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
@@ -81,7 +82,7 @@ class LinuxVirtualDesktopProvider(VirtualDesktopProvider):
     def _check_xpra_sync(self) -> bool:
         """Check if Xpra is available (sync version for __init__)."""
         try:
-            result = subprocess.run(
+            result = shim_run(
                 ["which", "xpra"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

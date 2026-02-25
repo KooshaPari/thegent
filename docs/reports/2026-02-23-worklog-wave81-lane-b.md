@@ -2,6 +2,9 @@
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> fix/ci-remove-macos
 ## 1) Covered items table (issue id/title/status)
 
 | Issue | Title | Status |
@@ -56,8 +59,11 @@
 2. Add compatibility tests for Bash tool argument mapping (Kiro/Ampcode shape) and verify expected normalized request body.
 3. Draft a short triage addendum mapping #1521/#1514/#1508/#201 as external dependencies with explicit escalation owner and evidence needed for handoff.
 =======
+<<<<<<< HEAD
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> fix/ci-remove-macos
 ## Scope
 - Cover WL-323 and WL-324 from `docs/reference/WORK_STREAM.md:26777-26797`, both marked as small connector reliability/resume initiatives that should produce deterministic, traceable outputs for watchdog instrumentation (`WL-323`) and connector diff reporting (`WL-324`).
 - Highlight the current connector watchdog/autosync apertures and the diff-rendering tooling that already exists so the lane can scope follow-up work.
@@ -80,6 +86,10 @@
 - WL-323 still needs direct integration with the autosync cycle (e.g., log/alert connectors that open the circuit breaker, persist the failure snapshot, and expose the failure digest to downstream telemetry) even though the runner already houses a failure queue, breaker registry, and metric paths.
 - WL-324 requires wiring `DryRunDiff` + `HtmlDiffArtifact` outputs into a connector diff workflow so spinning up/resuming connectors can provide side-by-side comparisons of local vs. remote states; the current code offers renderers but no executor that feeds the renderer from autosync snapshots.
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> codex/hook-native-prepush-fix
 =======
 >>>>>>> codex/wave81-backlog-reports-321-332
+=======
+>>>>>>> 58ccbe31e72efd07558be54d6a129ce6d984487d
+>>>>>>> fix/ci-remove-macos

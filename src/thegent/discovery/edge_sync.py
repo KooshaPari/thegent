@@ -27,7 +27,7 @@ class EdgeSyncController:
         delta = {k: v for k, v in current_state.items() if self.base_state.get(k) != v}
 
         # 2. Serialize and Compress
-        serialized = json.dumps(delta).decode().decode().encode()
+        serialized = json.dumps(delta).decode().encode()
         compressed = zlib.compress(serialized)
 
         _log.debug("State delta computed. Original: %d bytes, Compressed: %d bytes", len(serialized), len(compressed))

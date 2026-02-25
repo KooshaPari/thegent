@@ -1,3 +1,4 @@
+<DONE>
 # Routing Module → CLIProxy Migration Plan
 
 **Status:** In Progress  

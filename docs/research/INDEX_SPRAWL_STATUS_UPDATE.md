@@ -1,3 +1,4 @@
+<DONE>
 # Index Sprawl Status Update — Complete
 
 > **Status**: Complete | **Date**: 2026-02-17

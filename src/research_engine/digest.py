@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any
 
 from research_engine.store import ResearchStore
@@ -31,7 +31,7 @@ class DigestGenerator:
             Markdown string with digest header and formatted items.
         """
         items = self._store.get_recent(hours=hours, limit=limit)
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
         lines = [f"## Research Digest — {now}\n"]
 
         if not items:

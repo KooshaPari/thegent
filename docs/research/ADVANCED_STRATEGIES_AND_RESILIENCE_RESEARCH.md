@@ -1,3 +1,4 @@
+<DONE>
 # Advanced Strategies & Resilience — Full-Depth Research & Plan
 
 > **Purpose**: Wider, deeper research on smart/robust strategies: retry, backoff, circuit breaker, fairness, adaptive control, and resilience patterns for multi-agent swarms.

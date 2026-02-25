@@ -292,7 +292,7 @@ class LinearBoardAdapter:
             raise RuntimeError("Linear issueUpdate returned success=false.")
 
     def _graphql(self, token: str, query: str, variables: dict[str, Any]) -> dict[str, Any]:
-        payload = json.dumps({"query": query, "variables": variables}).decode().decode().encode("utf-8")
+        payload = json.dumps({"query": query, "variables": variables}).decode().encode("utf-8")
         request = Request(
             self.endpoint,
             data=payload,

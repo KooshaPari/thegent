@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import orjson as json
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -26,7 +26,7 @@ def _parse_iso_datetime(value: str | None) -> datetime | None:
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
+        return parsed.replace(tzinfo=UTC)
     return parsed
 
 
@@ -209,7 +209,7 @@ def snapshot_daily_index_payload(
         "days_count": len(days),
         "newest_day": days[0]["day"] if days else None,
         "oldest_day": days[-1]["day"] if days else None,
-        "generated_at": datetime.now(tz=timezone.utc).isoformat(),
+        "generated_at": datetime.now(tz=UTC).isoformat(),
     }
     if trigger is not None or tag is not None or since is not None:
         daily_summary["filters"] = {
@@ -283,7 +283,7 @@ def snapshot_daily_export_payload(
 
     json_path.parent.mkdir(parents=True, exist_ok=True)
     md_path.parent.mkdir(parents=True, exist_ok=True)
-    json_path.write_text(json.dumps(payload, indent=2).decode().decode(), encoding="utf-8")
+    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     lines = [
         "# Snapshot Daily Index",

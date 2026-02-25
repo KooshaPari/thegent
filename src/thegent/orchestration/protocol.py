@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -93,7 +93,7 @@ class SubAgentRequest(BaseModel):
         description="Additional metadata",
     )
     created_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO timestamp of request creation",
     )
 
@@ -157,7 +157,7 @@ class SubAgentResult(BaseModel):
         description="Additional metadata",
     )
     created_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO timestamp of result creation",
     )
 
@@ -233,7 +233,7 @@ class SubAgentEvent(BaseModel):
         description="Sequence number for ordering events",
     )
     timestamp: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO timestamp of event emission",
     )
 

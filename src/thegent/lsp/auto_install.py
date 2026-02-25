@@ -2,7 +2,7 @@
 
 import logging
 import shutil
-import subprocess
+from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -183,7 +183,7 @@ def auto_install_lsp_server(language: str, auto_confirm: bool = True) -> bool:
             return False
 
         try:
-            rustup_result = subprocess.run(
+            rustup_result = shim_run(
                 rustup_cmd,
                 capture_output=True,
                 text=True,
@@ -222,7 +222,7 @@ def auto_install_lsp_server(language: str, auto_confirm: bool = True) -> bool:
 
     try:
         # Run installation
-        result = subprocess.run(
+        result = shim_run(
             install_cmd,
             capture_output=True,
             text=True,

@@ -27,7 +27,7 @@ def emit_index_output(
 ) -> None:
     """Emit index output as JSON or rich table."""
     if fmt == "json":
-        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(data).decode() + "\n")
         return
 
     table = Table(title=title)
@@ -83,7 +83,7 @@ def emit_metrics_output(
                 "speed_index": float(sp),
                 "quality_index": float(ql),
             }
-        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(data).decode() + "\n")
         return
 
     table = Table(title="Model-Provider Metrics (cost + speed + quality)")
@@ -113,7 +113,7 @@ def flatten_cost_values(costs: dict[str, dict[str, tuple[float, float]]]) -> dic
 def emit_cost_values_output(*, data: dict[str, dict[str, dict[str, float]]], fmt: str, console: Any) -> None:
     """Emit cost values as JSON or rich table."""
     if fmt == "json":
-        sys.stdout.write(json.dumps(data).decode().decode() + "\n")
+        sys.stdout.write(json.dumps(data).decode() + "\n")
         return
 
     table = Table(title="Model-Provider Cost Values ($/1k tokens)")

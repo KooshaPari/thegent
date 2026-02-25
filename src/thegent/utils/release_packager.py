@@ -45,7 +45,7 @@ class ReleasePackager:
                 manifest["artifacts"].append({"path": path_str, "status": "missing"})
 
         # Deterministic checksum for the entire package
-        manifest_json = json.dumps(manifest, sort_keys=True).decode().decode()
+        manifest_json = json.dumps(manifest, sort_keys=True).decode()
         manifest["package_checksum"] = hashlib.sha256(manifest_json.encode()).hexdigest()
 
         return manifest
