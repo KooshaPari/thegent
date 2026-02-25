@@ -309,16 +309,23 @@ class TestDagAddCmdImpl:
         with pytest.raises(_EXIT):
             dag_add_cmd(task_id="T1", agent="claude", prompt="   ")
 
-    @pytest.mark.skip(reason="needs impl - missing patches")
-    @patch("thegent.cli._resolve_cwd")
-    @patch("thegent.cli.console")
+    @patch("thegent.cli.commands.plan_dag_cmds._atomic_write")
+    @patch("thegent.cli.commands.plan_dag_cmds._serialize_dag", return_value="serialized")
+    @patch("thegent.cli.commands.plan_dag_cmds._check_dag_cycles", return_value=[])
+    @patch("thegent.cli.commands.plan_dag_cmds._ensure_dag_file")
+    @patch("thegent.cli.commands.plan_dag_cmds._validate_agent", return_value=None)
+    @patch("thegent.cli.commands.plan_dag_cmds._validate_task_id", return_value=None)
+    @patch("thegent.cli.commands.plan_dag_cmds._dag_path")
+    @patch("thegent.cli.commands.plan_dag_cmds.console")
     def test_add_success(
-        self, mock_console, mock_cwd, mock_vtid, mock_vagent, mock_ensure, mock_cycles, mock_ser, mock_write, tmp_path
+        self, mock_console, mock_dag_path, mock_vtid, mock_vagent, mock_ensure, mock_cycles, mock_ser, mock_write, tmp_path
     ) -> None:
         # @trace FR-CLI-313
         dag_dir = tmp_path / ".factory"
         dag_dir.mkdir(parents=True)
-        mock_cwd.return_value = tmp_path
+        dag_path = dag_dir / "dag-session.md"
+        dag_path.touch()
+        mock_dag_path.return_value = (tmp_path, dag_path)
         mock_ensure.return_value = _make_dag_doc()
 
         from thegent.cli import dag_add_cmd
