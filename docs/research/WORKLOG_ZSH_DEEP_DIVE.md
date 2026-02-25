@@ -404,3 +404,109 @@ if dispatcher.can_spawn_child(result.agent_id):
 ---
 
 *Updated: 2026-02-24*
+
+---
+
+## 13. Implementation Status
+
+### 13.1 Hierarchical Agent Dispatcher (COMPLETED)
+
+**File:** `src/thegent/orchestration/hierarchical_dispatcher.py`
+
+**Features Implemented:**
+- L^N dispatch: Max depth 2 (root → L^1 child → L^2 grandchild)
+- System cap: 100 agents max
+- Session cap: 50 agents per chat session
+- Automatic pruning of finished/stale agents
+- Full test coverage (16/18 tests pass)
+
+**Usage:**
+```python
+from thegent.orchestration.hierarchical_dispatcher import (
+    HierarchicalDispatcher,
+    HierarchicalDispatchRequest,
+    get_global_registry,
+)
+
+# Get the global registry
+registry = get_global_registry()
+
+# Create dispatcher
+dispatcher = HierarchicalDispatcher(
+    capability_index=capability_index,
+    registry=registry,
+)
+
+# Dispatch a root agent
+result = await dispatcher.dispatch_hierarchical(
+    HierarchicalDispatchRequest(
+        prompt="Review the codebase",
+        session_id="session-123",
+    )
+)
+
+# Check if can spawn child
+if dispatcher.can_spawn_child(result.agent_id):
+    child_request = dispatcher.spawn_child_request(
+        parent_agent_id=result.agent_id,
+        child_prompt="Run tests",
+    )
+```
+
+### 13.2 ZSH Optimization (Already Implemented)
+
+The existing thegent shell config already has:
+- ✅ Deferred compinit (<50ms)
+- ✅ Deferred plugin loading
+- ✅ Deferred starship with eval caching
+- ✅ Fork guard with ulimit
+- ✅ Multi-level cache (L1/L2)
+- ✅ Safe path utilities
+- ✅ Agent early exit
+
+**File locations:**
+- `shell/.zshrc` - Main config
+- `shell/.zsh_optimization.zsh` - Lazy loading, eval caching
+- `shell/.zsh_advanced.zsh` - Async loading, multi-level cache
+- `shell/.zsh_safeguards.zsh` - Fork guard, eval safety
+
+### 13.3 Variant Cleanup (COMPLETED)
+
+- Archived: `thegent-test-fixes` (669MB)
+- Location: `~/CodeProjects/Phenotype/archive/thegent-test-fixes-20260224/`
+- Space saved: 669MB
+
+---
+
+## 14. Quick Reference Commands
+
+### Run Tests
+```bash
+cd ~/CodeProjects/Phenotype/repos/thegent
+PYTHONPATH=src python -m pytest tests/unit/orchestration/test_hierarchical_dispatcher.py -v
+```
+
+### Test Module Import
+```bash
+cd ~/CodeProjects/Phenotype/repos/thegent
+PYTHONPATH=src python -c "
+from thegent.orchestration.hierarchical_dispatcher import (
+    HierarchicalDispatcher, SYSTEM_AGENT_CAP, SESSION_AGENT_CAP, MAX_HIERARCHY_DEPTH
+)
+print(f'MAX_DEPTH={MAX_HIERARCHY_DEPTH}, SYSTEM_CAP={SYSTEM_AGENT_CAP}, SESSION_CAP={SESSION_AGENT_CAP}')
+"
+```
+
+### Clear ZSH Eval Cache
+```bash
+rm -rf ~/.cache/thegent/eval-cache/*.zsh ~/.cache/thegent/eval-cache/*.meta
+```
+
+### Profile ZSH Startup
+```bash
+THEGENT_PROFILE_ENABLED=1 zsh -i -c 'zprof'
+```
+
+---
+
+*Updated: 2026-02-24*
