@@ -532,9 +532,10 @@ def search_by_modalities(
             # All modalities must be enabled
             if all(model_modalities.get(m, False) for m in modalities):
                 results.append({**data, "key": key})
-        # Any modality enabled
-        elif any(model_modalities.get(m, False) for m in modalities):
-            results.append({**data, "key": key})
+        else:
+            # Any modality enabled
+            if any(model_modalities.get(m, False) for m in modalities):
+                results.append({**data, "key": key})
 
     return results
 
