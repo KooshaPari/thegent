@@ -199,8 +199,6 @@ class ReusableHelpers:
 
         try:
             file_path.parent.mkdir(parents=True, exist_ok=True)
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(json.dumps(data, indent=2))
             return True
         except Exception as e:
