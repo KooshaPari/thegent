@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -265,33 +265,30 @@ class TestStripAnsiCursorApi:
 
 @pytest.mark.unit
 class TestIsCursorApiReachable:
-    @patch("urllib.request.urlopen")
-    def test_reachable_returns_true(self, mock_urlopen) -> None:
+    @patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(True, False, 200))
+    def test_reachable_returns_true(self, mock_check) -> None:
         # @trace FR-AGT-005
-        """Returns True when urlopen succeeds."""
+        """Returns True when reachability check succeeds."""
         from thegent.agents.cursor_api_runner import _is_cursor_api_reachable
 
-        mock_urlopen.return_value.__enter__ = MagicMock(return_value=MagicMock())
-        mock_urlopen.return_value.__exit__ = MagicMock(return_value=False)
         assert _is_cursor_api_reachable("http://127.0.0.1:3000", "token") is True
 
-    @patch("urllib.request.urlopen", side_effect=OSError("refused"))
-    def test_unreachable_returns_false(self, mock_urlopen) -> None:
+    @patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(False, False, 500))
+    def test_unreachable_returns_false(self, mock_check) -> None:
         # @trace FR-AGT-005
-        """Returns False when connection is refused."""
+        """Returns False when HTTP check is unsuccessful."""
         from thegent.agents.cursor_api_runner import _is_cursor_api_reachable
 
         assert _is_cursor_api_reachable("http://127.0.0.1:3000", "token") is False
 
-    @patch("urllib.request.urlopen", side_effect=OSError("timeout"))
-    def test_empty_token_still_sends_request(self, mock_urlopen) -> None:
+    @patch("thegent.agents.cursor_api_runner._check_cursor_api_reachable", return_value=(False, True, None))
+    def test_empty_token_still_sends_request(self, mock_check) -> None:
         # @trace FR-AGT-005
         """Empty token still attempts the request without auth header."""
         from thegent.agents.cursor_api_runner import _is_cursor_api_reachable
 
         _is_cursor_api_reachable("http://127.0.0.1:3000", "")
-        # Verify request was attempted (urlopen was called)
-        mock_urlopen.assert_called_once()
+        mock_check.assert_called_once_with("http://127.0.0.1:3000", "", 3.0)
 
 
 # ---------------------------------------------------------------------------

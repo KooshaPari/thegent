@@ -23,6 +23,13 @@ _MALLOC_STACK_NOISE = "MallocStackLogging: can't turn off malloc stack logging b
 # TTLCache for reachability result: keyed by (base_url, token_hash), TTL 30 seconds.
 # maxsize=4 covers typical multi-instance use.
 _reachability_cache: TTLCache = TTLCache(maxsize=4, ttl=30)
+_reachability_status_cache: TTLCache = TTLCache(maxsize=4, ttl=30)
+
+
+def _cursor_api_cache_key(base_url: str, token: str) -> tuple[str, str]:
+    """Build cache key for cursor-api checks without storing full token."""
+    token_hash = hashlib.sha256(token.encode()).hexdigest()[:16] if token else ""
+    return (base_url, token_hash)
 
 
 def _resolve_codex() -> str:
@@ -36,11 +43,15 @@ def _resolve_codex() -> str:
     return "codex"
 
 
-def _check_cursor_api_reachable(base_url: str, token: str, timeout: float = 3.0) -> tuple[bool, bool]:
+def _check_cursor_api_reachable(
+    base_url: str,
+    token: str,
+    timeout: float = 3.0,
+) -> tuple[bool, bool, int | None]:
     """Perform the actual HTTP reachability check for cursor-api (GET /v1/models).
 
     Returns:
-        tuple: (is_reachable: bool, is_connection_error: bool)
+        tuple: (is_reachable: bool, is_connection_error: bool, status_code: int | None)
     """
     import httpx
 
@@ -48,9 +59,9 @@ def _check_cursor_api_reachable(base_url: str, token: str, timeout: float = 3.0)
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     try:
         resp = httpx.get(url, headers=headers, timeout=timeout)
-        return (resp.status_code == 200, False)
+        return (resp.status_code == 200, False, resp.status_code)
     except Exception:
-        return (False, True)
+        return (False, True, None)
 
 
 def _is_cursor_api_reachable(base_url: str, token: str, timeout: float = 3.0) -> bool:
@@ -60,18 +71,20 @@ def _is_cursor_api_reachable(base_url: str, token: str, timeout: float = 3.0) ->
     (base_url, token_hash) pair, avoiding per-invocation latency.
     On connection failure, the cache entry is reset to allow retry.
     """
-    # Use hash of token to avoid storing sensitive data in cache key
-    token_hash = hashlib.sha256(token.encode()).hexdigest()[:16] if token else ""
-    cache_key = (base_url, token_hash)
+    cache_key = _cursor_api_cache_key(base_url, token)
     cached = _reachability_cache.get(cache_key)
     if cached is not None:
         return cached
-    result, is_connection_error = _check_cursor_api_reachable(base_url, token, timeout)
+    result, is_connection_error, status_code = _check_cursor_api_reachable(
+        base_url, token, timeout
+    )
     # Reset cache entry on connection failure to allow retry
     if is_connection_error:
         _reachability_cache.pop(cache_key, None)
+        _reachability_status_cache.pop(cache_key, None)
     else:
         _reachability_cache[cache_key] = result
+        _reachability_status_cache[cache_key] = status_code
     return result
 
 
@@ -143,15 +156,28 @@ class CursorApiRunner(AgentRunner):
         base_url = self._settings.cursor_api_url.rstrip("/")
         token = self._settings.cursor_api_token or ""
 
+        cache_key = _cursor_api_cache_key(base_url, token)
         if not _is_cursor_api_reachable(base_url, token):
-            unreachable_result = RunResult(
-                exit_code=1,
-                stdout="",
-                stderr=(
+            status_code = _reachability_status_cache.get(cache_key)
+            if status_code in (401, 403):
+                message = (
+                    "cursor-api auth failed (HTTP 401/403). Verify THGENT_CURSOR_API_TOKEN and token scope."
+                )
+            elif status_code:
+                message = (
+                    f"cursor-api returned HTTP {status_code}. Check endpoint at "
+                    f"{base_url} and THGENT_CURSOR_API_TOKEN."
+                )
+            else:
+                message = (
                     "cursor-api not reachable. Start cursor-api (wisdgod) at "
                     f"{base_url} or set THGENT_CURSOR_API_URL. "
                     "Set THGENT_CURSOR_API_TOKEN for auth."
-                ),
+                )
+            unreachable_result = RunResult(
+                exit_code=1,
+                stdout="",
+                stderr=message,
                 timed_out=False,
             )
             if run_id is not None or session_id is not None:

@@ -105,11 +105,12 @@ class DroidRunner(AgentRunner):
 
         droid_content = droid_path.read_text()
         combined = f"{droid_content.rstrip()}\n\n---\nUser request: {prompt}"
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
-            f.write(combined)
-            tmp_path = f.name
-
+        tmp_path: str | None = None
         try:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+                f.write(combined)
+                tmp_path = f.name
+
             cmd = [self._droid_cmd, "exec", "-f", tmp_path, "--model", self._model]
             if cwd:
                 cmd.extend(["--cwd", str(cwd)])
@@ -169,7 +170,8 @@ class DroidRunner(AgentRunner):
                 timed_out=True,
             )
         finally:
-            Path(tmp_path).unlink(missing_ok=True)
+            if tmp_path is not None:
+                Path(tmp_path).unlink(missing_ok=True)
 
     def _run_via_litellm_router(
         self,

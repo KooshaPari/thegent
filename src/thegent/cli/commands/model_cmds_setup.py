@@ -132,11 +132,33 @@ def setup_cmd(
             ok, msg = lock_cleanup_install()
             if ok:
                 console.print(f"[green]{msg}[/green]")
-                lock_cleanup_start()
+                ok, msg = lock_cleanup_start()
+                if ok:
+                    console.print(f"[green]{msg}[/green]")
+                else:
+                    console.print(f"[yellow]{msg}[/yellow]")
             else:
                 console.print(f"[yellow]{msg}[/yellow]")
         except Exception as e:
             console.print(f"[yellow]Lock-cleanup: {e}[/yellow]")
+
+        console.print("\n[bold cyan]Installing and starting MCP service...[/bold cyan]")
+        try:
+            from thegent.mcp.manage import service_install, service_start
+
+            ok, msg = service_install()
+            if ok:
+                console.print(f"[green]{msg}[/green]")
+            else:
+                console.print(f"[yellow]{msg}[/yellow]")
+
+            ok, msg = service_start()
+            if ok:
+                console.print(f"[green]{msg}[/green]")
+            else:
+                console.print(f"[yellow]{msg}[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]MCP service: {e}[/yellow]")
 
         console.print("\n[bold green]Full setup complete.[/bold green]")
         if not wizard:
