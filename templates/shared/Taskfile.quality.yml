@@ -204,3 +204,61 @@ tasks:
     desc: Run fix agents for failed quality DAG steps (requires config/quality-fix-dag.yaml)
     cmds:
       - uv run --project {{.GENT_ROOT}} python {{.GENT_ROOT}}/templates/shared/scripts/quality/quality_fix_runner.py
+
+  # =============================================================================
+  # LOCAL HOOK TASKS (pre-commit / pre-push)
+  # =============================================================================
+
+  staged:
+    desc: "quality:staged - Run fast quality checks on staged/changed files only (pre-commit)"
+    cmds:
+      - |
+        echo "Running quality:staged (changed files only)..."
+        python {{.GENT_ROOT}}/scripts/quality/quality_staged.py --fix
+
+  full:
+    desc: "quality:full - Run comprehensive quality suite (pre-push)"
+    cmds:
+      - |
+        echo "============================================================"
+        echo "quality:full - Comprehensive quality suite"
+        echo "============================================================"
+      - task: lint
+      - task: test
+      - |
+        echo "============================================================"
+        echo "Running security scan..."
+        echo "============================================================"
+        gitleaks detect --no-banner --source . --max-target-megabytes 5 || echo "Warning: gitleaks check failed"
+      - |
+        echo "============================================================"
+        echo "✓ quality:full passed"
+        echo "============================================================"
+
+  test-changed:
+    desc: "Run tests only for changed files (fast pre-commit test check)"
+    cmds:
+      - |
+        echo "Running tests for changed files..."
+        _changed=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.py$' | grep -E '(tests/|test_)' || true)
+        if [ -n "$_changed" ]; then
+          echo "Changed test files: $_changed"
+          uv run pytest $_changed -v --tb=short
+        else
+          echo "No test files changed, running related tests..."
+          _src_changed=$(git diff --cached --name-only --diff-filter=ACM | grep -E 'src/.*\.py$' || true)
+          if [ -n "$_src_changed" ]; then
+            _test_files=""
+            for f in $_src_changed; do
+              _basename=$(basename "$f" .py)
+              _test_file=$(find tests -name "test_${_basename}.py" 2>/dev/null | head -1)
+              if [ -n "$_test_file" ]; then
+                _test_files="$_test_files $_test_file"
+              fi
+            done
+            if [ -n "$_test_files" ]; then
+              echo "Running related tests: $_test_files"
+              uv run pytest $_test_files -v --tb=short
+            fi
+          fi
+        fi

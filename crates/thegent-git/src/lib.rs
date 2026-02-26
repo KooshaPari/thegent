@@ -47,102 +47,299 @@ pub fn is_dirty(path: Option<String>) -> PyResult<bool> {
     })
 }
 
+fn parse_status_lines(raw: &str) -> Vec<(String, String)> {
+    let mut entries = Vec::new();
+    for line in raw.lines() {
+        if line.len() < 3 {
+            continue;
+        }
+        let idx_status = line.as_bytes()[0] as char;
+        let wt_status = line.as_bytes()[1] as char;
+        let path = line[3..].trim().to_string();
+        if path.is_empty() {
+            continue;
+        }
+        if idx_status == '?' {
+            entries.push(("?".to_string(), path));
+            continue;
+        }
+        if idx_status != ' ' {
+            entries.push((idx_status.to_string(), path.clone()));
+        }
+        if wt_status != ' ' {
+            entries.push((wt_status.to_string(), path));
+        }
+    }
+    entries
+}
+
+fn collect_status(path: &str) -> PyResult<Vec<(String, String)>> {
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(path)
+        .arg("status")
+        .arg("--short")
+        .output()
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("git status failed: {}", e)))?;
+
+    if !output.status.success() {
+        return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            String::from_utf8_lossy(&output.stderr).trim().to_string(),
+        ));
+    }
+    Ok(parse_status_lines(&String::from_utf8_lossy(&output.stdout)))
+}
+
 #[pyfunction]
 #[pyo3(signature = (path=None))]
 pub fn get_status(py: Python<'_>, path: Option<String>) -> PyResult<PyObject> {
     let p = path.unwrap_or_else(|| ".".to_string());
+    let changed = collect_status(&p)?;
+
+    let mut modified = Vec::new();
+    let mut untracked = Vec::new();
+    let mut staged = Vec::new();
+    let mut unstaged = Vec::new();
+
+    for (code, file_path) in changed {
+        match code.as_str() {
+            "M" | "D" | "R" => {
+                modified.push(file_path.clone());
+                unstaged.push(file_path);
+            }
+            "A" => staged.push(file_path),
+            "?" => untracked.push(file_path),
+            _ => {}
+        }
+    }
+
     let repo = open_repo(&p).map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e))?;
-    let branch = repo.head().ok().and_then(|h| match h.kind {
-        gix::head::Kind::Symbolic(r) => Some(r.name.shorten().to_string()),
-        _ => None,
-    });
+    let branch = repo
+        .head()
+        .ok()
+        .and_then(|h| match h.kind {
+            gix::head::Kind::Symbolic(r) => Some(r.name.shorten().to_string()),
+            _ => None,
+        });
     let sha = repo.head_id().ok().map(|id| id.to_hex().to_string());
     let dict = pyo3::types::PyDict::new(py);
     dict.set_item("branch", branch)?;
     dict.set_item("sha", sha)?;
-    dict.set_item("staged", 0u64)?;
-    dict.set_item("unstaged", 0u64)?;
-    dict.set_item("untracked", 0u64)?;
+    dict.set_item("modified", modified)?;
+    dict.set_item("unstaged", unstaged)?;
+    dict.set_item("staged", staged)?;
+    dict.set_item("untracked", untracked)?;
     Ok(dict.into_any().unbind())
+}
+
+#[pyfunction]
+#[pyo3(signature = (path=None))]
+pub fn status_short(path: Option<String>) -> PyResult<String> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+    let lines = collect_status(&p)?;
+    Ok(lines
+        .into_iter()
+        .map(|(code, file_path)| format!("{code} {file_path}"))
+        .collect::<Vec<String>>()
+        .join("\n"))
+}
+
+#[pyfunction]
+#[pyo3(signature = (path=None))]
+pub fn diff_stats(path: Option<String>) -> PyResult<(u64, u64, u64)> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+    let stat = Command::new("git")
+        .arg("-C")
+        .arg(&p)
+        .arg("diff")
+        .arg("--stat")
+        .arg("HEAD")
+        .output()
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("git diff --stat failed: {}", e)))?;
+
+    if !stat.status.success() {
+        return Ok((0, 0, 0));
+    }
+
+    let output = String::from_utf8_lossy(&stat.stdout);
+    let mut files_changed = 0u64;
+    let mut insertions = 0u64;
+    let mut deletions = 0u64;
+
+    if let Some(summary) = output.lines().last() {
+        for part in summary.split(',') {
+            let piece = part.trim();
+            if piece.is_empty() {
+                continue;
+            }
+            let mut chunks = piece.split_whitespace();
+            let count = match chunks.next().and_then(|value| value.parse::<u64>().ok()) {
+                Some(v) => v,
+                None => continue,
+            };
+            let lower = piece.to_lowercase();
+            if lower.contains("file") {
+                files_changed = count;
+            } else if lower.contains("insert") {
+                insertions = count;
+            } else if lower.contains("delet") {
+                deletions = count;
+            }
+        }
+    }
+
+    Ok((files_changed, insertions, deletions))
+}
+
+#[pyfunction]
+#[pyo3(signature = (path=None))]
+pub fn head_sha(path: Option<String>) -> PyResult<Option<String>> {
+    get_head_sha(path)
+}
+
+#[pyfunction]
+#[pyo3(signature = (path=None))]
+pub fn branch_name(path: Option<String>) -> PyResult<Option<String>> {
+    get_branch_name(path)
 }
 
 // ---------------------------------------------------------------------------
 // Plumbing Operations (for mesh/git.py)
 // ---------------------------------------------------------------------------
 
-// NOTE: write_tree has API compatibility issues with gix 0.79.0
-// Commenting out to allow tests to compile - this is a known issue to be fixed
-// The gix::index::State::from_file() API has changed
-// /// Get the tree hash for the current index (git write-tree equivalent)
-// #[pyfunction]
-// #[pyo3(signature = (path=None, index_file=None))]
-// pub fn write_tree(path: Option<String>, index_file: Option<String>) -> PyResult<Option<String>> {
-//     // TODO: Fix API compatibility with gix 0.79.0
-//     Ok(Some("0000000000000000000000000000000000000000".to_string()))
-// }
+/// Get the tree hash for the current index (git write-tree equivalent)
+#[pyfunction]
+#[pyo3(signature = (path=None, index_file=None))]
+pub fn write_tree(path: Option<String>, index_file: Option<String>) -> PyResult<Option<String>> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(&p).arg("write-tree");
+    if let Some(index) = index_file {
+        cmd.env("GIT_INDEX_FILE", index);
+    }
 
-// NOTE: commit_tree has API compatibility issues with gix 0.79.0
-// The gix API has changed and this function needs to be refactored
-// Commenting out to allow tests to compile - this is a known issue to be fixed
-// /// Create a commit object (git commit-tree equivalent)
-// #[pyfunction]
-// #[pyo3(signature = (path=None, tree_hash, message, parent_hashes))]
-// pub fn commit_tree(
-//     path: Option<String>,
-//     tree_hash: String,
-//     message: String,
-//     parent_hashes: Vec<String>,
-// ) -> PyResult<Option<String>> {
-//     // TODO: Fix API compatibility with gix 0.79.0
-//     Ok(None)
-// }
+    let output = cmd.output().map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("git write-tree failed: {}", e))
+    })?;
+    if !output.status.success() {
+        return Ok(None);
+    }
+    Ok(Some(
+        String::from_utf8_lossy(&output.stdout).trim().to_string(),
+    ))
+}
 
-// NOTE: update_ref_cas has API compatibility issues with gix 0.79.0
-// The reference.target() and set_target() methods have changed or don't exist
-// Commenting out to allow tests to compile - this is a known issue to be fixed
-// /// Update a ref with CAS (compare-and-swap) - git update-ref equivalent
-// #[pyfunction]
-// #[pyo3(signature = (path=None, ref_name, new_hash, old_hash))]
-// pub fn update_ref_cas(
-//     path: Option<String>,
-//     ref_name: String,
-//     new_hash: String,
-//     old_hash: Option<String>,
-// ) -> PyResult<bool> {
-//     // TODO: Fix API compatibility with gix 0.79.0
-//     Ok(false)
-// }
+/// Create a commit object (git commit-tree equivalent)
+#[pyfunction]
+#[pyo3(signature = (path=None, tree_hash, message, parent_hashes))]
+pub fn commit_tree(
+    path: Option<String>,
+    tree_hash: String,
+    message: String,
+    parent_hashes: Vec<String>,
+) -> PyResult<Option<String>> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(&p).arg("commit-tree").arg(&tree_hash);
+    for parent in parent_hashes {
+        cmd.args(["-p", &parent]);
+    }
+    cmd.args(["-m", &message]);
 
-// NOTE: staged_files has API compatibility issues with gix 0.79.0
-// Commenting out to allow tests to compile - this is a known issue to be fixed
-// The index API has changed, entry.path() type issues, tree.entry_by_path() not available
-// /// Get list of staged files (git diff --cached --name-only)
-// #[pyfunction]
-// #[pyo3(signature = (path=None, index_file=None))]
-// pub fn staged_files(path: Option<String>, index_file: Option<String>) -> PyResult<Vec<String>> {
-//     // TODO: Fix API compatibility with gix 0.79.0
-//     Ok(Vec::new())
-// }
+    let output = cmd.output().map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("git commit-tree failed: {}", e))
+    })?;
+    if !output.status.success() {
+        return Ok(None);
+    }
+    Ok(Some(
+        String::from_utf8_lossy(&output.stdout).trim().to_string(),
+    ))
+}
 
-// NOTE: changed_files and merge_base have API compatibility issues with gix 0.79.0
-// The tree.diff() and commit.merge_base() methods have changed or don't exist
-// The ObjectId::from_hex() expects &[u8] not &String
-// Commenting out to allow tests to compile - these are known issues to be fixed
-// /// Get list of files changed between two refs (git diff --name-only)
-// #[pyfunction]
-// #[pyo3(signature = (path=None, older, newer))]
-// pub fn changed_files(path: Option<String>, older: String, newer: String) -> PyResult<Vec<String>> {
-//     // TODO: Fix API compatibility with gix 0.79.0
-//     Ok(Vec::new())
-// }
+/// Update a ref with CAS (compare-and-swap) - git update-ref equivalent
+#[pyfunction]
+#[pyo3(signature = (path=None, ref_name, new_hash, old_hash=None))]
+pub fn update_ref_cas(
+    path: Option<String>,
+    ref_name: String,
+    new_hash: String,
+    old_hash: Option<String>,
+) -> PyResult<bool> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(&p).arg("update-ref").arg(&ref_name).arg(&new_hash);
+    if let Some(old) = old_hash {
+        cmd.arg(old);
+    }
 
-// /// Find merge base between two commits (git merge-base)
-// #[pyfunction]
-// #[pyo3(signature = (path=None, commit1, commit2))]
-// pub fn merge_base(path: Option<String>, commit1: String, commit2: String) -> PyResult<Option<String>> {
-//     // TODO: Fix API compatibility with gix 0.79.0
-//     Ok(None)
-// }
+    match cmd.output() {
+        Ok(out) => Ok(out.status.success()),
+        Err(e) => Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
+            "git update-ref failed: {}",
+            e
+        ))),
+    }
+}
+
+/// Get list of staged files (git diff --cached --name-only)
+#[pyfunction]
+#[pyo3(signature = (path=None, index_file=None))]
+pub fn staged_files(path: Option<String>, index_file: Option<String>) -> PyResult<Vec<String>> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(&p).arg("diff").arg("--cached").arg("--name-only");
+    if let Some(index) = index_file {
+        cmd.env("GIT_INDEX_FILE", index);
+    }
+
+    let output = cmd.output().map_err(|e| {
+        PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("git diff --cached failed: {}", e))
+    })?;
+    if !output.status.success() {
+        return Ok(Vec::new());
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut files: Vec<String> = stdout
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(ToString::to_string)
+        .collect();
+    files.sort();
+    files.dedup();
+    Ok(files)
+}
+
+/// Get list of files changed between two refs (git diff --name-only)
+#[pyfunction]
+#[pyo3(signature = (path=None, older, newer))]
+pub fn changed_files(path: Option<String>, older: String, newer: String) -> PyResult<Vec<String>> {
+    let p = path.unwrap_or_else(|| ".".to_string());
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(&p)
+        .arg("diff")
+        .arg("--name-only")
+        .arg(&older)
+        .arg(&newer)
+        .output()
+        .map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("git diff failed: {}", e))
+        })?;
+    if !output.status.success() {
+        return Ok(Vec::new());
+    }
+    let mut files: Vec<String> = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(ToString::to_string)
+        .collect();
+    files.sort();
+    files.dedup();
+    Ok(files)
+}
 
 // ---------------------------------------------------------------------------
 // Write Operations (using Rust Command - faster than Python subprocess)
@@ -452,14 +649,23 @@ pub fn has_changes(path: Option<String>) -> PyResult<bool> {
 fn thegent_git(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Basic operations - gix-based
     m.add_function(wrap_pyfunction!(get_head_sha, m)?)?;
+    m.add_function(wrap_pyfunction!(head_sha, m)?)?;
     m.add_function(wrap_pyfunction!(get_branch_name, m)?)?;
+    m.add_function(wrap_pyfunction!(branch_name, m)?)?;
     m.add_function(wrap_pyfunction!(is_dirty, m)?)?;
     m.add_function(wrap_pyfunction!(get_status, m)?)?;
+    m.add_function(wrap_pyfunction!(status_short, m)?)?;
 
     // Write operations - Rust Command (faster than Python subprocess)
+    m.add_function(wrap_pyfunction!(write_tree, m)?)?;
+    m.add_function(wrap_pyfunction!(commit_tree, m)?)?;
+    m.add_function(wrap_pyfunction!(update_ref_cas, m)?)?;
+    m.add_function(wrap_pyfunction!(staged_files, m)?)?;
+    m.add_function(wrap_pyfunction!(changed_files, m)?)?;
     m.add_function(wrap_pyfunction!(add_files, m)?)?;
     m.add_function(wrap_pyfunction!(rev_parse, m)?)?;
     m.add_function(wrap_pyfunction!(diff_stat, m)?)?;
+    m.add_function(wrap_pyfunction!(diff_stats, m)?)?;
     m.add_function(wrap_pyfunction!(create_commit, m)?)?;
     m.add_function(wrap_pyfunction!(update_ref, m)?)?;
     m.add_function(wrap_pyfunction!(merge_base, m)?)?;

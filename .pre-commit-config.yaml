@@ -137,3 +137,33 @@ repos:
         types: [python]
         stages: [pre-commit]
         exclude: ^(tests/|\.venv|src/thegent/(commands|cli)/|.*_test\.py$)
+
+  # =============================================================================
+  # LOCAL QUALITY HOOKS (pre-commit: staged, pre-push: full)
+  # =============================================================================
+
+  - repo: local
+    hooks:
+      - id: quality-staged
+        name: Quality Staged (fast pre-commit)
+        stages: [pre-commit]
+        entry: task quality:staged
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: quality-full
+        name: Quality Full (comprehensive pre-push)
+        stages: [pre-push]
+        entry: task quality:full
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: test-changed
+        name: Test Changed Files
+        stages: [pre-commit]
+        entry: task quality:test-changed
+        language: system
+        pass_filenames: false
+        always_run: false

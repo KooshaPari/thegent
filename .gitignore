@@ -102,3 +102,10 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+.env
+
+# Phenotype Config
+.phenotype/
+config.db
+*.key

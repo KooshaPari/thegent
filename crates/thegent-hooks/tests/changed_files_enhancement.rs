@@ -54,7 +54,6 @@ fn cargo_bin() -> PathBuf {
 
 /// Test: Filter by extension
 #[test]
-#[ignore] // Ignore until thegent-hooks binary builds successfully
 fn test_changed_files_filter_by_extension() {
     let repo = unique_dir("filter-ext");
     init_git_repo(&repo);
@@ -97,7 +96,6 @@ fn test_changed_files_filter_by_extension() {
 
 /// Test: Filter by directory
 #[test]
-#[ignore] // Ignore until thegent-hooks binary builds successfully
 fn test_changed_files_filter_by_directory() {
     let repo = unique_dir("filter-dir");
     init_git_repo(&repo);
@@ -146,7 +144,6 @@ fn test_changed_files_filter_by_directory() {
 
 /// Test: Filter by impact type (code vs docs)
 #[test]
-#[ignore] // Ignore until thegent-hooks binary builds successfully
 fn test_changed_files_filter_by_impact() {
     let repo = unique_dir("filter-impact");
     init_git_repo(&repo);
@@ -191,7 +188,6 @@ fn test_changed_files_filter_by_impact() {
 
 /// Test: Dependency analysis
 #[test]
-#[ignore] // Ignore until thegent-hooks binary builds successfully
 fn test_changed_files_dependency_analysis() {
     let repo = unique_dir("deps");
     init_git_repo(&repo);
@@ -237,7 +233,6 @@ fn test_changed_files_dependency_analysis() {
 
 /// Test: Filter by status (modified vs added)
 #[test]
-#[ignore] // Ignore until thegent-hooks binary builds successfully
 fn test_changed_files_filter_by_status() {
     let repo = unique_dir("filter-status");
     init_git_repo(&repo);
@@ -275,7 +270,6 @@ fn test_changed_files_filter_by_status() {
 
 /// Test: Multiple filters combined
 #[test]
-#[ignore] // Ignore until thegent-hooks binary builds successfully
 fn test_changed_files_multiple_filters() {
     let repo = unique_dir("multi-filter");
     init_git_repo(&repo);
@@ -332,7 +326,6 @@ fn test_changed_files_multiple_filters() {
 
 /// Test: Exclusion filters
 #[test]
-#[ignore] // Ignore until thegent-hooks binary builds successfully
 fn test_changed_files_exclude_filters() {
     let repo = unique_dir("exclude");
     init_git_repo(&repo);

@@ -31,7 +31,11 @@ def run_system_git(args: list[str], *, actor_profile: str | None = None) -> None
     """Fallback: run the actual git binary."""
     env: dict[str, str] | None = None
     if args and args[0] == "commit":
-        effective_profile = actor_profile or os.getenv("THGENT_GIT_ACTOR_PROFILE")
+        effective_profile = (
+            actor_profile
+            or os.getenv("THGENT_GIT_DEFAULT_ACTOR_PROFILE")
+            or os.getenv("THGENT_GIT_ACTOR_PROFILE")
+        )
         env = resolve_author_env(
             project_root=Path.cwd(),
             actor_profile=effective_profile,
@@ -144,7 +148,10 @@ def commit(
     actor_profile: str | None = typer.Option(
         None,
         "--actor-profile",
-        help="Actor profile for git identity override (human|agent|codex|claude|...).",
+        help=(
+            "Actor profile for git identity (human|agent|codex|claude|...). "
+            "Overrides THGENT_GIT_DEFAULT_ACTOR_PROFILE."
+        ),
     ),
     ref: str = typer.Option("HEAD", "--ref", help="Reference to update"),
     project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
@@ -162,6 +169,7 @@ def commit(
 ):
     """Create a commit from private index and update ref using atomic CAS."""
     aid = agent_id or get_agent_id()
+    actor_profile = actor_profile or os.getenv("THGENT_GIT_DEFAULT_ACTOR_PROFILE")
     manager = GitParallelismManager(project_root, aid)
     author_env = resolve_author_env(project_root=project_root, actor_profile=actor_profile, agent_id=aid)
 

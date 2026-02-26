@@ -3,6 +3,12 @@
 # Guards prevent use flake in home (no flake.nix), avoid FUNCNEST recursion
 # See: docs/ZSH_HANG_DROID_FIX.md, thegent/docs/research/DIRENV_*.md
 
+# Git identity policy (optional)
+# export THGENT_GIT_DEFAULT_ACTOR_PROFILE="human"   # human|agent|codex|claude...
+# export THGENT_GIT_IDENTITY_MAP='{"codex":{"name":"Claude Bot","email":"codex-bot@users.noreply.github.com"},"agent":"The Gent Agent"}'
+# export THGENT_GIT_AUTHOR_NAME="Kooshapari"
+# export THGENT_GIT_AUTHOR_EMAIL="koosha@example.com"
+
 # Mark direnv context for fork guard / safeguards (skip heavy checks during load)
 export DIRENV_IN_ENVRC=1
 

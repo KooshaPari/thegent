@@ -172,15 +172,15 @@ class TestPertDataclasses:
 class TestSimulateResourceContention:
     """Tests for simulate_resource_contention stub."""
 
-    def test_returns_empty_list(self) -> None:
+    def test_no_contention_without_resources_or_events(self) -> None:
         # @trace FR-PLN-002
-        """Stub always returns empty list."""
+        """No resources or events emits no contention windows."""
         result = simulate_resource_contention([], [], {})
         assert result == []
 
-    def test_with_resources_still_empty(self) -> None:
+    def test_empty_task_demands_returns_no_windows(self) -> None:
         # @trace FR-PLN-002
-        """Even with inputs, stub returns empty (unimplemented)."""
+        """No task demands yields no contention windows."""
         resources = [ResourceProfile("cpu", 4.0, "cores")]
         result = simulate_resource_contention(
             [{"task_id": "t1"}],
@@ -188,6 +188,23 @@ class TestSimulateResourceContention:
             {"t1": {"start": 0, "end": 5}},
         )
         assert result == []
+
+    def test_detects_contention_window_and_affects_tasks(self) -> None:
+        # @trace FR-PLN-002
+        """Concurrent high-demand tasks on same resource produce contention."""
+        tasks = [
+            {"task_id": "t1", "resource_id": "cpu", "demand": 3.0, "start_float": 0.0, "duration_float": 4.0},
+            {"task_id": "t2", "resource_id": "cpu", "demand": 2.0, "start_float": 1.0, "duration_float": 4.0},
+        ]
+        resources = [ResourceProfile("cpu", 4.0, "cores")]
+        result = simulate_resource_contention(tasks, resources, {})
+
+        assert len(result) == 1
+        assert result[0].resource_id == "cpu"
+        assert result[0].time_window == (1.0, 4.0)
+        assert result[0].peak_demand == pytest.approx(5.0)
+        assert result[0].contention_ratio == pytest.approx(1.25)
+        assert result[0].affected_tasks == ["t1", "t2"]
 
 
 # ---------------------------------------------------------------------------

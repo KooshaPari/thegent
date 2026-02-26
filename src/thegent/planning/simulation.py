@@ -145,8 +145,122 @@ def simulate_resource_contention(
     resources: list[ResourceProfile],
     _: dict[str, Any],
 ) -> list[ContentionResult]:
-    """Identify resource contention windows (D2 stub)."""
-    return []
+    """Identify windows where task demand exceeds resource capacity."""
+    demands = normalize_resource_demands(tasks)
+    if not demands:
+        return []
+
+    resource_capacity = {resource.resource_id: resource.capacity for resource in resources}
+    if not resource_capacity:
+        return []
+
+    results: list[ContentionResult] = []
+    for resource_id, capacity in resource_capacity.items():
+        _, events = active_contention_windows(demands, resource_id)
+        if capacity <= 0:
+            continue
+        for start, end, peak, affected in events:
+            ratio = peak / capacity
+            if ratio > 1.0:
+                results.append(
+                    ContentionResult(
+                        resource_id=resource_id,
+                        time_window=(start, end),
+                        peak_demand=peak,
+                        capacity=capacity,
+                        contention_ratio=ratio,
+                        affected_tasks=sorted(affected),
+                    )
+                )
+
+    results.sort(key=lambda item: item.contention_ratio, reverse=True)
+    return results
+
+
+def active_contention_windows(
+    demands: list[TaskResourceDemand],
+    resource_id: str,
+) -> tuple[set[str], list[tuple[float, float, float, list[str]]]]:
+    """Sweep events for one resource and return active task IDs and windows."""
+    tasks_by_time: list[tuple[float, str, float]] = []
+    for d in demands:
+        if d.resource_id != resource_id:
+            continue
+        d.demand = max(0.0, d.demand)
+        if d.demand == 0:
+            continue
+        end = d.start_float + max(0.0, d.duration_float)
+        tasks_by_time.append((d.start_float, d.task_id, d.demand))
+        tasks_by_time.append((end, d.task_id, -d.demand))
+
+    if not tasks_by_time:
+        return set(), []
+
+    tasks_by_time.sort(key=lambda item: item[0])
+    demand = 0.0
+    active: set[str] = set()
+    windows: list[tuple[float, float, float, list[str]]] = []
+    t = tasks_by_time[0][0]
+    idx = 0
+
+    while idx < len(tasks_by_time):
+        current_time = tasks_by_time[idx][0]
+        if current_time > t:
+            if demand > 0 and active:
+                windows.append((t, current_time, demand, sorted(active)))
+
+            t = current_time
+
+        while idx < len(tasks_by_time) and tasks_by_time[idx][0] == current_time:
+            _, task_id, delta = tasks_by_time[idx]
+            if delta >= 0:
+                active.add(task_id)
+            elif task_id in active and demand > 0:
+                active.discard(task_id)
+            demand += delta
+            idx += 1
+
+    return active, windows
+
+
+def normalize_resource_demands(tasks: list[Any]) -> list[TaskResourceDemand]:
+    """Normalize list entries into `TaskResourceDemand` objects."""
+    demands: list[TaskResourceDemand] = []
+    for item in tasks:
+        if isinstance(item, TaskResourceDemand):
+            demands.append(item)
+            continue
+
+        if isinstance(item, dict):
+            if all(k in item for k in ("task_id", "resource_id", "demand", "start_float", "duration_float")):
+                demands.append(
+                    TaskResourceDemand(
+                        task_id=item["task_id"],
+                        resource_id=item["resource_id"],
+                        demand=float(item["demand"]),
+                        start_float=float(item["start_float"]),
+                        duration_float=float(item["duration_float"]),
+                    )
+                )
+                continue
+
+            sub = item.get("resource_demands", [])
+            if isinstance(sub, list):
+                for entry in sub:
+                    if isinstance(entry, dict):
+                        task_id = entry.get("task_id") or item.get("task_id")
+                        if not task_id:
+                            continue
+                        demands.append(
+                            TaskResourceDemand(
+                                task_id=str(task_id),
+                                resource_id=str(entry.get("resource_id", "")),
+                                demand=float(entry.get("demand", 0)),
+                                start_float=float(entry.get("start_float", 0)),
+                                duration_float=max(0.0, float(entry.get("duration_float", 0))),
+                            )
+                        )
+    return demands
 
 
 def analyze_bottlenecks(nodes: list[PERTNode], mc_stats: dict[str, dict[str, float]]) -> list[dict[str, Any]]:

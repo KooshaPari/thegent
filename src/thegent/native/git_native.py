@@ -43,6 +43,39 @@ def _run_git_command(repo_path: str, *args: str) -> str | None:
         return None
 
 
+def _normalize_diff_stat_result(result: tuple[int, int, int] | str) -> dict[str, int]:
+    if isinstance(result, tuple) and len(result) == 3:
+        files_changed, insertions, deletions = result
+        return {
+            "files_changed": int(files_changed),
+            "insertions": int(insertions),
+            "deletions": int(deletions),
+        }
+
+    if not isinstance(result, str):
+        return {"files_changed": 0, "insertions": 0, "deletions": 0}
+
+    line = result.strip()
+    if not line:
+        return {"files_changed": 0, "insertions": 0, "deletions": 0}
+
+    files_changed = 0
+    insertions = 0
+    deletions = 0
+    for part in line.split(","):
+        piece = part.strip().lower()
+        if not piece:
+            continue
+        value = int(piece.split()[0]) if piece and piece.split()[0].isdigit() else 0
+        if "file" in piece:
+            files_changed = value
+        elif "insertion" in piece:
+            insertions = value
+        elif "deletion" in piece:
+            deletions = value
+    return {"files_changed": files_changed, "insertions": insertions, "deletions": deletions}
+
+
 class GitNative:
     """Native git metadata provider using Rust with subprocess fallback.
 
@@ -104,8 +137,14 @@ class GitNative:
         Returns:
             ``{"files_changed": N, "insertions": N, "deletions": N}``
         """
-        if _native_available and hasattr(thegent_git, "diff_stat"):
-            return thegent_git.diff_stat("HEAD", self.repo_path)
+        if _native_available:
+            diff_stats_fn = getattr(thegent_git, "diff_stats", None)
+            if callable(diff_stats_fn):
+                return _normalize_diff_stat_result(diff_stats_fn(self.repo_path))
+
+            diff_stat_fn = getattr(thegent_git, "diff_stat", None)
+            if callable(diff_stat_fn):
+                return _normalize_diff_stat_result(diff_stat_fn("HEAD", self.repo_path))
 
         # Fallback to subprocess
         diff = _run_git_command(self.repo_path, "diff", "--stat")
@@ -113,28 +152,8 @@ class GitNative:
             return {"files_changed": 0, "insertions": 0, "deletions": 0}
 
         # Parse diff --stat output
-        try:
-            lines = diff.strip().split("\n")
-            if lines:
-                last_line = lines[-1]
-                # Format: "X files changed, Y insertions(+), Z deletions(-)"
-                parts = last_line.split(",")
-                files_changed = 0
-                insertions = 0
-                deletions = 0
-                for part in parts:
-                    part = part.strip()
-                    if "file" in part:
-                        files_changed = int(part.split()[0])
-                    elif "insertion" in part:
-                        insertions = int(part.split()[0])
-                    elif "deletion" in part:
-                        deletions = int(part.split()[0])
-                return {"files_changed": files_changed, "insertions": insertions, "deletions": deletions}
-        except (ValueError, IndexError):
-            pass
-
-        return {"files_changed": 0, "insertions": 0, "deletions": 0}
+        lines = diff.strip().split("\n")
+        return _normalize_diff_stat_result(lines[-1] if lines else "")
 
     # -----------------------------------------------------------------------
     # New methods using expanded Rust API

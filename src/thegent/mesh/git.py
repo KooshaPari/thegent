@@ -47,15 +47,15 @@ class GitParallelismManager:
         check: bool = False,
         env: dict[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        env = os.environ.copy()
+        base_env = os.environ.copy()
         if use_index:
-            env["GIT_INDEX_FILE"] = str(self.agent_index)
+            base_env["GIT_INDEX_FILE"] = str(self.agent_index)
         if env:
-            env.update(env)
+            base_env.update(env)
         return shim_run(
             ["git", *args],
             cwd=self.project_root,
-            env=env,
+            env=base_env,
             input=input_text,
             capture_output=True,
             text=True,

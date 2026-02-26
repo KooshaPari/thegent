@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 from thegent.mesh.git import GitParallelismManager
+from thegent.mesh import git as git_module
 
 
 def _init_git_repo(path: Path) -> None:
@@ -133,6 +134,26 @@ def test_index_lock_status_stale_and_no_open_holder(tmp_path: Path) -> None:
     assert status["is_stale"] is True
     assert status["open_holder_detected"] is False
     assert status["age_seconds"] == pytest.approx(time.time() - stale_time, rel=1e-2)
+
+
+def test_run_git_merges_custom_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Custom env should be merged with base process env before invoking shim-aware subprocess."""
+    _init_git_repo(tmp_path)
+    manager = GitParallelismManager(tmp_path, "agent-env")
+    captured: dict[str, object] = {}
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured["args"] = args
+        captured["env"] = kwargs.get("env")
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(git_module, "shim_run", fake_run)
+    result = manager._run_git(["status", "--porcelain"], use_index=True, env={"THGENT_GIT_AUTHOR_NAME": "agent-override"})
+    assert result.returncode == 0
+    env = captured["env"]
+    assert isinstance(env, dict)
+    assert env["THGENT_GIT_AUTHOR_NAME"] == "agent-override"
+    assert env["GIT_INDEX_FILE"] == str(manager.agent_index)
 
 
 def test_changed_files_between_returns_list(tmp_path: Path) -> None:

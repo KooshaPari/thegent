@@ -39,6 +39,7 @@ _GIT_MOCK: MagicMock = sys.modules["thegent_git"]  # type: ignore[assignment]
 _GIT_MOCK.get_head_sha.return_value = "a" * 40
 _GIT_MOCK.get_branch_name.return_value = "main"
 _GIT_MOCK.get_status.return_value = {"modified": [], "untracked": [], "staged": []}
+_GIT_MOCK.diff_stats.return_value = (0, 0, 0)
 
 REPO_ROOT = Path(__file__).parents[2]
 REPO_PATH = str(REPO_ROOT)
@@ -174,7 +175,7 @@ class TestGitNativeStatus:
 
 @pytest.mark.unit
 class TestGitNativeDiffStat:
-    """diff_stat is a stub (TODO in git_native.py) that returns zeros. @trace FR-GIT-001"""
+    """diff_stat consumes the new native diff_stats API with string fallback."""
 
     def test_returns_required_keys(self, mock_thegent_git_module: MagicMock) -> None:
         from thegent.native.git_native import GitNative
@@ -197,15 +198,26 @@ class TestGitNativeDiffStat:
         assert isinstance(result["deletions"], int)
         assert all(v >= 0 for v in result.values())
 
-    def test_stub_currently_returns_zeros(self, mock_thegent_git_module: MagicMock) -> None:
-        """Stub implementation returns zeros. Update this test when diff_stat
-        is implemented in the thegent-git Rust crate."""
+    def test_uses_native_diff_stats_tuple(self, mock_thegent_git_module: MagicMock) -> None:
         from thegent.native.git_native import GitNative
+
+        mock_thegent_git_module.diff_stats.return_value = (2, 4, 6)
+
+        gn = GitNative()
+        result = gn.diff_stat()
+        mock_thegent_git_module.diff_stats.assert_called_once_with(REPO_PATH)
+        assert result == {"files_changed": 2, "insertions": 4, "deletions": 6}
+
+    def test_falls_back_to_diff_stat_string(self, mock_thegent_git_module: MagicMock) -> None:
+        from thegent.native.git_native import GitNative
+
+        mock_thegent_git_module.diff_stats = None  # type: ignore[assignment]
+        mock_thegent_git_module.diff_stat.return_value = "3 files changed, 8 insertions(+), 1 deletion(-)"
 
         gn = GitNative(REPO_PATH)
         result = gn.diff_stat()
-
-        assert result == {"files_changed": 0, "insertions": 0, "deletions": 0}
+        mock_thegent_git_module.diff_stat.assert_called_once_with("HEAD", REPO_PATH)
+        assert result == {"files_changed": 3, "insertions": 8, "deletions": 1}
 
 
 # ---------------------------------------------------------------------------
