@@ -12,6 +12,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from thegent.cli.commands.cli_git_identity import resolve_author_env
 from thegent.mesh.git import GitParallelismManager
 
 console = Console()
@@ -26,8 +27,17 @@ def get_agent_id() -> str:
     return settings.agent_id
 
 
-def run_system_git(args: list[str]) -> None:
+def run_system_git(args: list[str], *, actor_profile: str | None = None) -> None:
     """Fallback: run the actual git binary."""
+    env: dict[str, str] | None = None
+    if args and args[0] == "commit":
+        effective_profile = actor_profile or os.getenv("THGENT_GIT_ACTOR_PROFILE")
+        env = resolve_author_env(
+            project_root=Path.cwd(),
+            actor_profile=effective_profile,
+            agent_id=get_agent_id(),
+        )
+
     # Find real git binary
     git_bin = Path("/usr/bin/git")
     if not git_bin.exists():
@@ -37,9 +47,11 @@ def run_system_git(args: list[str]) -> None:
         git_bin = Path(git_bin_path)
 
     try:
-        # Use os.execvp to replace current process with git
-        # This is the cleanest way to act as a transparent proxy
-        os.execvp(str(git_bin), [str(git_bin), *args])
+        # Use os.execvpe to replace current process with git and preserve/override env.
+        system_env = os.environ.copy()
+        if env:
+            system_env.update(env)
+        os.execvpe(str(git_bin), [str(git_bin), *args], system_env)
     except Exception as e:
         console.print(f"[red]Error executing system git: {e}[/red]")
         sys.exit(1)
@@ -129,6 +141,11 @@ def add(
 def commit(
     message: str = typer.Argument(..., help="Commit message"),
     agent_id: str = typer.Option(None, "--agent", "-a", help="Agent ID"),
+    actor_profile: str | None = typer.Option(
+        None,
+        "--actor-profile",
+        help="Actor profile for git identity override (human|agent|codex|claude|...).",
+    ),
     ref: str = typer.Option("HEAD", "--ref", help="Reference to update"),
     project_root: Path = typer.Option(Path.cwd(), "--root", "-r", help="Project root directory"),
     lock_timeout: float = typer.Option(8.0, "--lock-timeout", help="Seconds to wait for index lock"),
@@ -146,6 +163,7 @@ def commit(
     """Create a commit from private index and update ref using atomic CAS."""
     aid = agent_id or get_agent_id()
     manager = GitParallelismManager(project_root, aid)
+    author_env = resolve_author_env(project_root=project_root, actor_profile=actor_profile, agent_id=aid)
 
     # Multi-tenant guard: do not spin forever on shared index lock.
     if not manager.wait_for_index_lock(
@@ -183,7 +201,7 @@ def commit(
 
     # 2. Create commit object
     console.print(f"Creating commit object for agent [bold]{aid}[/bold]...")
-    new_hash = manager.create_commit_from_index(message, parent_ref=full_ref)
+    new_hash = manager.create_commit_from_index(message, parent_ref=full_ref, author_env=author_env)
 
     if not new_hash:
         console.print("[red]Failed to create commit object from private index.[/red]")
@@ -215,7 +233,12 @@ def commit(
         auto_merge_enabled = os.environ.get("THGENT_GIT_AUTO_MERGE_OVERLAP", "true").lower() in ("1", "true", "yes")
         if auto_merge_enabled:
             console.print("[cyan]Attempting auto 3-way merge strategy...[/cyan]")
-            merged_hash = manager.try_auto_merge_commit(new_hash, refreshed, message)
+            merged_hash = manager.try_auto_merge_commit(
+                new_hash,
+                refreshed,
+                message,
+                author_env=author_env,
+            )
             if merged_hash:
                 if manager.update_ref_cas(full_ref, merged_hash, refreshed):
                     console.print(f"[bold green]Auto-merged overlap and updated {full_ref}![/bold green]")
@@ -251,7 +274,11 @@ def commit(
 
     # No overlap: auto-resolve by rebuilding commit against refreshed parent, then CAS again.
     console.print("[cyan]Ref moved without overlapping files; auto-resolving commit parent...[/cyan]")
-    new_hash_resolved = manager.create_commit_from_index(message, parent_ref=full_ref)
+    new_hash_resolved = manager.create_commit_from_index(
+        message,
+        parent_ref=full_ref,
+        author_env=author_env,
+    )
     if not new_hash_resolved:
         console.print("[red]Failed to rebuild commit object for auto-resolution.[/red]")
         raise typer.Exit(1)

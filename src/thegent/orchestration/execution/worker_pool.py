@@ -61,11 +61,10 @@ class PersistentWorkerPool:
         # Pre-import heavy modules to warm up the cache
         try:
             import httpx
-            import litellm
             import pydantic
 
             # Use them to avoid unused import warnings
-            _ = (httpx.__name__, litellm.__name__, pydantic.__name__)
+            _ = (httpx.__name__, pydantic.__name__)
         except ImportError:
             pass
 

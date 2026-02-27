@@ -45,10 +45,13 @@ class GitParallelismManager:
         use_index: bool = True,
         input_text: str | None = None,
         check: bool = False,
+        env: dict[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         if use_index:
             env["GIT_INDEX_FILE"] = str(self.agent_index)
+        if env:
+            env.update(env)
         return shim_run(
             ["git", *args],
             cwd=self.project_root,
@@ -222,7 +225,13 @@ class GitParallelismManager:
         self._save_staging_map(mapping)
         return True
 
-    def create_commit_from_index(self, message: str, parent_ref: str = "HEAD") -> str | None:
+    def create_commit_from_index(
+        self,
+        message: str,
+        parent_ref: str = "HEAD",
+        *,
+        author_env: dict[str, str] | None = None,
+    ) -> str | None:
         """Build commit from private index with plumbing commands."""
         self.ensure_index()
         parent_resolve = self._run_git(["rev-parse", parent_ref], use_index=False, check=False)
@@ -245,7 +254,7 @@ class GitParallelismManager:
                 message,
             ]
         )
-        commit_res = self._run_git(commit_args)
+        commit_res = self._run_git(commit_args, env=author_env)
         if commit_res.returncode != 0:
             return None
 
@@ -327,9 +336,23 @@ class GitParallelismManager:
             fh.write(json.dumps(entry).decode() + "\n")
         return queue_path
 
-    def try_auto_merge_commit(self, ours_commit: str, theirs_commit: str, message: str) -> str | None:
+    def try_auto_merge_commit(
+        self,
+        ours_commit: str,
+        theirs_commit: str,
+        message: str,
+        *,
+        author_env: dict[str, str] | None = None,
+    ) -> str | None:
         """Attempt to create a synthetic 3-way merge commit."""
-        if not (_thegent_git_has("merge_base") and _thegent_git_has("create_commit") and _thegent_git_has("diff_stat")):
+        if (
+            not (
+                _thegent_git_has("merge_base")
+                and _thegent_git_has("create_commit")
+                and _thegent_git_has("diff_stat")
+            )
+            or author_env
+        ):
             probe = self._run_git(["merge-tree", ours_commit, theirs_commit], use_index=False)
             if probe.returncode != 0 or "CONFLICT" in probe.stdout:
                 return None
@@ -354,6 +377,7 @@ class GitParallelismManager:
                     f"merge(auto): {message}",
                 ],
                 use_index=False,
+                env=author_env,
             )
             if commit.returncode != 0:
                 logger.debug("merge-tree fallback commit-tree failed: %s", commit.stderr)

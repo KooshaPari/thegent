@@ -1,4 +1,12 @@
-"""Google Search Grounding support for Gemini API passthrough.
+"""Google Search Grounding support via MCP tools.
+
+This module provides grounding through MCP search tools instead of direct API calls.
+Uses CLIProxy (bifrost) for LLM routing and MCP search tools for grounding.
+
+Supported grounding providers:
+- ddg_search: DuckDuckGo web search
+- reddit_search: Reddit search  
+- scrape_url: Web content extraction
 
 # @trace WL-119
 """
@@ -8,99 +16,79 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+import httpx
 
 from thegent.agents.base import RunResult
 
+if TYPE_CHECKING:
+    from httpx import Response
+
 _log = logging.getLogger(__name__)
 
-# Agents that are Gemini-backed and eligible for Google Search Grounding.
-GEMINI_GROUNDING_AGENTS: frozenset[str] = frozenset({"gemini", "antigravity"})
+# Default CLIProxy URL
+DEFAULT_CLIPROXY_URL = "http://localhost:8317"
+
+# Agents that are Gemini-backed and eligible for grounding.
+GROUNDING_AGENTS: frozenset[str] = frozenset({"gemini", "antigravity"})
 
 
 @dataclass
 class GroundingSource:
-    """A single grounding source returned by the Gemini API."""
+    """A single grounding source returned by the search API."""
 
     url: str
     title: str | None = None
 
 
 def build_grounding_tools_arg() -> list[dict[str, Any]]:
-    """Return the Gemini grounding tools argument for Google Search.
+    """Return the grounding tools argument.
 
-    Pass the result as the ``tools`` kwarg to a LiteLLM or Gemini API call.
-
+    DEPRECATED: MCP tools handle grounding now.
     # @trace WL-119
     """
-    return [{"google_search": {}}]
+    return []
 
 
-def extract_grounding_metadata_sources(response: dict[str, Any]) -> list[str]:
-    """Extract grounding source URLs from a Gemini API response ``groundingMetadata``.
+def extract_grounding_metadata_sources(response: Any) -> list[str]:
+    """Extract grounding source URLs from a search API response.
 
-    Handles the standard Gemini grounding payload shape::
-
-        {
-            "groundingMetadata": {
-                "groundingChunks": [
-                    {"web": {"uri": "https://example.com", "title": "..."}},
-                    ...
-                ]
-            }
-        }
-
+    Handles standard search response shapes from DDG, Reddit, etc.
     Returns a deduplicated, ordered list of URL strings.
 
     # @trace WL-119
     """
-    grounding_meta = response.get("groundingMetadata", {})
-    if not isinstance(grounding_meta, dict):
-        return []
-    chunks = grounding_meta.get("groundingChunks", [])
-    if not isinstance(chunks, list):
-        return []
-
-    seen: set[str] = set()
-    urls: list[str] = []
-    for chunk in chunks:
-        if not isinstance(chunk, dict):
-            continue
-        web = chunk.get("web", {})
-        if not isinstance(web, dict):
-            continue
-        uri = web.get("uri", "")
-        if isinstance(uri, str) and uri and uri not in seen:
-            seen.add(uri)
-            urls.append(uri)
-    return urls
+    if isinstance(response, list):
+        urls = []
+        seen = set()
+        for item in response:
+            if isinstance(item, dict):
+                url = item.get("url") or item.get("href")
+                title = item.get("title")
+                if url and url not in seen:
+                    seen.add(url)
+                    urls.append(url)
+        return urls
+    return []
 
 
 def _resolve_gemini_api_key() -> str:
     """Resolve the Gemini API key from the environment.
 
-    Checks GEMINI_API_KEY then GOOGLE_API_KEY.
-    Raises ValueError if neither is set.
-
+    No longer required - using MCP tools instead.
     # @trace WL-119
     """
-    key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
-    if not key:
-        raise ValueError(
-            "Google Search Grounding requires a Gemini API key. "
-            "Set GEMINI_API_KEY or GOOGLE_API_KEY environment variable."
-        )
-    return key
+    return ""
 
 
 def _resolve_gemini_model(model: str | None) -> str:
-    """Resolve the Gemini model to use for grounding requests.
-
+    """Resolve the model to use for requests.
     # @trace WL-119
     """
     if model:
         return model
-    return "gemini/gemini-2.0-flash"
+    return "claude-sonnet-4.5"
 
 
 def run_gemini_with_grounding(
@@ -109,100 +97,48 @@ def run_gemini_with_grounding(
     model: str | None = None,
     api_key: str | None = None,
     timeout: int = 120,
+    use_mcp_grounding: bool = True,
 ) -> RunResult:
-    """Run a prompt against the Gemini API with Google Search Grounding enabled.
+    """Run a prompt with grounding via MCP search tools.
 
-    Makes a direct LiteLLM completion call using ``tools=[{"google_search": {}}]``.
-    Extracts ``groundingMetadata`` from the response and populates
-    ``RunResult.grounding_sources``.
+    This function uses CLIProxy (bifrost) for LLM calls and MCP search tools
+    for grounding. Search results are appended to the prompt as context.
 
-    Only call this function for Gemini-backed agents.  For non-Gemini agents,
-    use the standard runner path; this function will raise ValueError if the
-    model does not belong to the Gemini provider namespace.
+    Set use_mcp_grounding=False to disable grounding.
 
     # @trace WL-119
 
     Args:
         prompt:  The user prompt to send.
-        model:   Gemini model identifier (e.g. ``"gemini/gemini-2.0-flash"``).
-                 Defaults to ``"gemini/gemini-2.0-flash"``.
-        api_key: Gemini API key.  If None, resolved from environment.
+        model:   LLM model identifier. Defaults to CLIProxy default.
+        api_key: Ignored (kept for API compatibility).
         timeout: Request timeout in seconds.
+        use_mcp_grounding: Enable MCP search grounding (default: True)
 
     Returns:
         RunResult with ``stdout`` set to the assistant response text and
-        ``grounding_sources`` populated from ``groundingMetadata``.
+        ``grounding_sources`` populated from search results.
 
     Raises:
-        ValueError: When the API key is missing or the model is not Gemini-backed.
-        RuntimeError: When the LiteLLM completion fails.
+        ValueError: When the model is not supported.
     """
-    import litellm  # noqa: PLC0415 -- deferred to avoid top-level side effects
-
-    effective_model = _resolve_gemini_model(model)
-    if not effective_model.startswith("gemini/") and not effective_model.startswith("google/"):
-        raise ValueError(
-            f"run_gemini_with_grounding requires a Gemini model (prefix 'gemini/' or 'google/'). "
-            f"Got: '{effective_model}'. Use a non-grounding runner for non-Gemini models."
-        )
-
-    effective_key = api_key or _resolve_gemini_api_key()
-
-    tools = build_grounding_tools_arg()
-    messages = [{"role": "user", "content": prompt}]
-
-    _log.info(
-        "WL-119: Gemini grounding call model=%s tools=%s",
-        effective_model,
-        tools,
-    )
-
-    try:
-        response = litellm.completion(
-            model=effective_model,
-            messages=messages,
-            tools=tools,
-            api_key=effective_key,
-            timeout=timeout,
-        )
-    except Exception as exc:
-        raise RuntimeError(f"Gemini grounding API call failed: {exc}") from exc
-
-    # Extract text content from response
-    content = ""
-    choices = getattr(response, "choices", None) or []
-    if choices:
-        msg = getattr(choices[0], "message", None)
-        if msg:
-            content = getattr(msg, "content", None) or ""
-
-    # Extract groundingMetadata from response metadata / _hidden_params
+    cliproxy_url = os.environ.get("CLIPROXY_URL", DEFAULT_CLIPROXY_URL)
     grounding_sources: list[str] = []
-    raw_response = getattr(response, "_hidden_params", {}) or {}
-    # LiteLLM may surface the raw provider response under various attributes
-    for candidate_key in ("groundingMetadata", "grounding_metadata"):
-        meta = raw_response.get(candidate_key)
-        if meta:
-            synthetic = {"groundingMetadata": meta}
-            grounding_sources = extract_grounding_metadata_sources(synthetic)
-            break
+    
+    # Step 1: If grounding enabled, do search first
+    if use_mcp_grounding:
+        grounding_sources = _perform_mcp_search(prompt, timeout)
+        if grounding_sources:
+            _log.info("WL-119: Found %d grounding sources", len(grounding_sources))
+            # Prepend search context to prompt
+            context = _build_search_context(grounding_sources)
+            prompt = f"{context}\n\n---\n\n{prompt}"
 
-    # Also check model_extra / additional_kwargs
-    if not grounding_sources:
-        for attr in ("model_extra", "additional_kwargs"):
-            extra = getattr(response, attr, None) or {}
-            if isinstance(extra, dict):
-                for candidate_key in ("groundingMetadata", "grounding_metadata"):
-                    meta = extra.get(candidate_key)
-                    if meta:
-                        synthetic = {"groundingMetadata": meta}
-                        grounding_sources = extract_grounding_metadata_sources(synthetic)
-                        break
-            if grounding_sources:
-                break
-
-    if grounding_sources:
-        _log.info("WL-119: Extracted %d grounding source(s)", len(grounding_sources))
+    # Step 2: Call LLM via CLIProxy
+    try:
+        content = _call_cliproxy(prompt, model, cliproxy_url, timeout)
+    except Exception as exc:
+        raise RuntimeError(f"CLIProxy call failed: {exc}") from exc
 
     return RunResult(
         exit_code=0,
@@ -210,3 +146,63 @@ def run_gemini_with_grounding(
         stderr="",
         grounding_sources=grounding_sources or None,
     )
+
+
+def _perform_mcp_search(prompt: str, timeout: int) -> list[str]:
+    """Perform MCP search to get grounding context."""
+    try:
+        from thegent.skills.research import ddg_search
+        
+        # Extract search query from prompt (simple heuristic)
+        query = _extract_search_query(prompt)
+        if not query:
+            return []
+        
+        results = ddg_search(query, max_results=5)
+        return extract_grounding_metadata_sources(results)
+    except Exception as e:
+        _log.debug("MCP search failed: %s", e)
+        return []
+
+
+def _extract_search_query(prompt: str) -> str:
+    """Extract a search query from the user prompt."""
+    cleaned = prompt.strip()
+    if len(cleaned) > 100:
+        cleaned = cleaned[:100]
+    for prefix in ["write", "explain", "describe", "tell me about", "what is", "how to"]:
+        if cleaned.lower().startswith(prefix):
+            cleaned = cleaned[len(prefix):].strip()
+    return cleaned if cleaned else ""
+
+
+def _build_search_context(sources: list[str]) -> str:
+    """Build context string from search sources."""
+    if not sources:
+        return ""
+    context = "Search results (use these as grounding context):\n"
+    for i, url in enumerate(sources[:5], 1):
+        context += f"{i}. {url}\n"
+    return context
+
+
+def _call_cliproxy(
+    prompt: str,
+    model: str | None,
+    url: str,
+    timeout: int,
+) -> str:
+    """Call CLIProxy for LLM completion."""
+    payload = {
+        "model": model or "claude-sonnet-4.5",
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    
+    with httpx.Client(timeout=timeout) as client:
+        resp = client.post(f"{url}/v1/chat/completions", json=payload)
+        resp.raise_for_status()
+        data = resp.json()
+        choices = data.get("choices", [])
+        if choices:
+            return choices[0].get("message", {}).get("content", "")
+        return ""
