@@ -1,7 +1,6 @@
 """Re-exports from thegent.mcp.storage for backwards compatibility."""
 
 from thegent.mcp.storage import (
-    _reset_singletons_for_testing,
     McpStorage,
     McpEventStore,
     _reset_singletons_for_testing,
@@ -14,6 +13,5 @@ __all__ = [
     "McpEventStore",
     "_reset_singletons_for_testing",
     "get_mcp_storage",
-    "_reset_singletons_for_testing",
     "get_mcp_event_store",
 ]

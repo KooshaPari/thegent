@@ -10,6 +10,7 @@ collection/import contracts remain stable.
 from __future__ import annotations
 
 import importlib.util
+import inspect
 from pathlib import Path
 
 
@@ -50,3 +51,6 @@ for _name in dir(_legacy_server_module):
     globals()[_name] = getattr(_legacy_server_module, _name)
 
 __all__ = [name for name in dir(_legacy_server_module) if not name.startswith("_")]  # pyright: ignore[reportUnsupportedDunderAll]
+
+# Override __file__ so inspect.getsource returns server.py content
+__file__ = str(_LEGACY_SERVER_PATH)
