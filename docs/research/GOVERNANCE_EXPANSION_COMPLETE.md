@@ -367,3 +367,14 @@ All expansion, robustification, polish, and optimization tasks are complete. The
 - ✅ **Complete documentation**
 
 The system is ready for use in identifying projects needing governance, setting up governance infrastructure, running quality assessments, performing audits, and managing tasks for completing all research/ideas at mature levels.
+
+<!-- PHENOTYPE_GOVERNANCE_OVERLAY_V1 -->
+## Phenotype Governance Overlay v1
+
+- Enforce `TDD + BDD + SDD` for all feature and workflow changes.
+- Enforce `Hexagonal + Clean + SOLID` boundaries by default.
+- Favor explicit failures over silent degradation; required dependencies must fail clearly when unavailable.
+- Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
+- Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
+- Document architectural and protocol decisions before broad rollout changes.
+
