@@ -99,7 +99,7 @@ Current (Feb 22):   ████ 45 ✓ Target: 40
 | Item | Owner | Due |
 |------|-------|-----|
 | Add integration test suite | KooshaPari | Mar 1 |
-| Document OAuth flow | luispater | Mar 7 |
+| Document OAuth flow | kooshapari | Mar 7 |
 | Automate issue triage | - | Mar 14 |
 | Review process improvements | maintainers | Mar 15 |
 

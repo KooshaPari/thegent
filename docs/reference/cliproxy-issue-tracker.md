@@ -60,7 +60,7 @@ description: Issue tracking and progress for CLIProxyAPI and CLIProxyAPIPlus
 | Contributor | Issues Resolved |
 |-------------|-----------------|
 | KooshaPari | 245 |
-| luispater | 180 |
+| kooshapari | 180 |
 | matchch | 45 |
 | thebtf | 32 |
 | van14shu | 28 |

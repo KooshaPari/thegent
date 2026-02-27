@@ -222,7 +222,11 @@ def _thegent_serve_cmd(settings: ThegentSettings) -> list[str]:
     python = sys.executable
     if not python or not Path(python).exists():
         python = _python_exe(settings)
-    return [python, "-m", "thegent.main", "serve"]
+    return [
+        python,
+        "-c",
+        "from thegent.mcp.server import run; run()",
+    ]
 
 
 def service_install() -> tuple[bool, str]:
@@ -233,6 +237,8 @@ def service_install() -> tuple[bool, str]:
     plist_path = _launchd_plist_path()
     plist_path.parent.mkdir(parents=True, exist_ok=True)
     cmd = _thegent_serve_cmd(settings)
+
+    program_args = "\n".join(f"<string>{part}</string>" for part in cmd)
     plist = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -241,10 +247,7 @@ def service_install() -> tuple[bool, str]:
 <string>com.thegent.mcp</string>
 <key>ProgramArguments</key>
 <array>
-<string>{cmd[0]}</string>
-<string>{cmd[1]}</string>
-<string>{cmd[2]}</string>
-<string>{cmd[3]}</string>
+{program_args}
 </array>
 <key>RunAtLoad</key>
 <true/>
@@ -280,6 +283,7 @@ def service_start() -> tuple[bool, str]:
     plist_path = _launchd_plist_path()
     if not plist_path.exists():
         return False, "Service not installed. Run: thegent mcp service install"
+    run_subprocess_optimized(["launchctl", "unload", str(plist_path)], check=False, capture_output=True)
     run_subprocess_optimized(["launchctl", "load", str(plist_path)], capture_output=True, check=True)
     return True, "Started"
 
