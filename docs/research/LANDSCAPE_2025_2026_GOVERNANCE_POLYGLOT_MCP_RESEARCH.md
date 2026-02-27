@@ -631,3 +631,14 @@ The agent governance and polyglot systems landscape in 2025-2026 is mature and c
 3. **Medium-term (Tier 3):** Memory and observability (as requirements grow).
 
 This roadmap positions thegent as a production-grade agent governance platform while maintaining focus on core capabilities.
+
+<!-- PHENOTYPE_GOVERNANCE_OVERLAY_V1 -->
+## Phenotype Governance Overlay v1
+
+- Enforce `TDD + BDD + SDD` for all feature and workflow changes.
+- Enforce `Hexagonal + Clean + SOLID` boundaries by default.
+- Favor explicit failures over silent degradation; required dependencies must fail clearly when unavailable.
+- Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
+- Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
+- Document architectural and protocol decisions before broad rollout changes.
+

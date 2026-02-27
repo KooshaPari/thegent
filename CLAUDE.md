@@ -774,3 +774,14 @@ Search within `docs/context/INDEX.md` and linked docs; use Ctrl+F to navigate.
 
 ### Prompt Snippet
 `Implement only <target-change>. Do not add fallback logic, legacy compatibility layers, feature flags, or silent error handlers. If required dependency/contract is missing, fail explicitly with a clear error. Preserve all behavior outside stated scope.`
+
+<!-- PHENOTYPE_GOVERNANCE_OVERLAY_V1 -->
+## Phenotype Governance Overlay v1
+
+- Enforce `TDD + BDD + SDD` for all feature and workflow changes.
+- Enforce `Hexagonal + Clean + SOLID` boundaries by default.
+- Favor explicit failures over silent degradation; required dependencies must fail clearly when unavailable.
+- Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
+- Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
+- Document architectural and protocol decisions before broad rollout changes.
+
