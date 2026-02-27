@@ -137,3 +137,14 @@ Legend: ✓ Done | ⚠ Partial | □ In plan / Not done
 - `src/thegent/execution.py` — PolicyEngine, RunRegistry, Auditor, CircuitBreakerRegistry
 - `src/thegent/config.py` — trust_score_threshold
 - **Design docs:** `docs/governance/OPA_INTEGRATION_DESIGN.md`, `NEMO_GUARDRAILS_DESIGN.md`, `COST_GOVERNANCE_DESIGN.md`, `SANDBOXING_DESIGN.md`
+
+<!-- PHENOTYPE_GOVERNANCE_OVERLAY_V1 -->
+## Phenotype Governance Overlay v1
+
+- Enforce `TDD + BDD + SDD` for all feature and workflow changes.
+- Enforce `Hexagonal + Clean + SOLID` boundaries by default.
+- Favor explicit failures over silent degradation; required dependencies must fail clearly when unavailable.
+- Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
+- Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
+- Document architectural and protocol decisions before broad rollout changes.
+

@@ -87,3 +87,14 @@ governance:
 - `docs/GOVERNANCE_WP_VERIFICATION.md` — G-GP-06
 - `src/thegent/execution.py` — RunRegistry
 - `docs/research/COST_ROUTING_DEFERRED.md`
+
+<!-- PHENOTYPE_GOVERNANCE_OVERLAY_V1 -->
+## Phenotype Governance Overlay v1
+
+- Enforce `TDD + BDD + SDD` for all feature and workflow changes.
+- Enforce `Hexagonal + Clean + SOLID` boundaries by default.
+- Favor explicit failures over silent degradation; required dependencies must fail clearly when unavailable.
+- Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
+- Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
+- Document architectural and protocol decisions before broad rollout changes.
+
