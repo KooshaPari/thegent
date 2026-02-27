@@ -1,3 +1,7 @@
 # API
 
-API surface inventory and endpoint references.
+API references and SDK documentation index.
+
+- OpenAPI/Swagger artifacts
+- SDK references
+- Endpoint guides
