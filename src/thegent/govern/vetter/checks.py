@@ -4,7 +4,7 @@ Six checks:
   1. SchemaCheck      -- jsonschema validation against a JSON Schema dict
   2. DiffSizeCheck    -- reject outputs where diff exceeds max_lines
   3. SafetyCheck      -- delegates to SemanticFirewall.inspect_output()
-  4. LLMJudgeCheck    -- G-Eval-style LLM judge via LiteLLM
+  4. LLMJudgeCheck    -- G-Eval-style LLM judge via CLIProxy (bifrost)
   5. TestPassCheck    -- runs pytest via asyncio.create_subprocess_exec
   6. RuffCheck        -- runs ruff check via asyncio.create_subprocess_exec
 
@@ -17,20 +17,49 @@ No silent fallbacks, no legacy shims.
 from __future__ import annotations
 
 import asyncio
+import logging
+import os
 import orjson as json
 import re
 import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, cast
+from typing import Any, Callable, Literal
 
+import httpx
 import jsonschema
-import litellm
-from litellm.types.utils import Choices as _LiteLLMChoices
-from litellm.types.utils import ModelResponse as _LiteLLMModelResponse
 from pydantic import BaseModel, StrictInt, ValidationError
 
 from thegent.govern.vetter.models import VetterCheckResult, VetterConfigError  # noqa: TC001
+
+logger = logging.getLogger(__name__)
+
+# CLIProxy configuration
+_CLIPROXY_URL = os.environ.get("CLIPROXY_URL", "http://localhost:8317")
+
+
+async def _call_llm_via_cliproxy(
+    model: str,
+    messages: list[dict[str, str]],
+    temperature: float = 0.0,
+    timeout: float = 120.0,
+) -> str:
+    """Call LLM via CLIProxy /v1/chat/completions."""
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        resp = await client.post(
+            f"{_CLIPROXY_URL}/v1/chat/completions",
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": temperature,
+            },
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        choices = data.get("choices", [])
+        if choices:
+            return choices[0].get("message", {}).get("content", "")
+        return ""
 
 
 @dataclass
@@ -198,19 +227,17 @@ class LLMJudgeCheck:
             f"Score each criterion ({criteria_list}) from 1 (worst) to 5 (best)."
         )
 
-        response = cast(
-            "_LiteLLMModelResponse",
-            await litellm.acompletion(
-                model=self.judge_model,
-                messages=[
-                    {"role": "system", "content": _JUDGE_SYSTEM},
-                    {"role": "user", "content": user_msg},
-                ],
-                temperature=0.0,
-            ),
+        messages = [
+            {"role": "system", "content": _JUDGE_SYSTEM},
+            {"role": "user", "content": user_msg},
+        ]
+
+        raw = await _call_llm_via_cliproxy(
+            model=self.judge_model,
+            messages=messages,
+            temperature=0.0,
         )
 
-        raw = cast("_LiteLLMChoices", response.choices[0]).message.content or ""
         judge_data: dict[str, Any] = json.loads(raw)
         scores: dict[str, int] = judge_data.get("scores", {})
         pass_verdict: bool = judge_data.get("pass_verdict", False)
@@ -356,18 +383,17 @@ class QualityScoreVetterCheck:
             '{"scores":{"criterion":3},"pass_verdict":true,"critique":"..."}'
         )
 
-        response = cast(
-            "_LiteLLMModelResponse",
-            await litellm.acompletion(
-                model=resolved_model,
-                messages=[
-                    {"role": "system", "content": _JUDGE_SYSTEM},
-                    {"role": "user", "content": user_msg},
-                ],
-                temperature=0.0,
-            ),
+        messages = [
+            {"role": "system", "content": _JUDGE_SYSTEM},
+            {"role": "user", "content": user_msg},
+        ]
+
+        raw = await _call_llm_via_cliproxy(
+            model=resolved_model,
+            messages=messages,
+            temperature=0.0,
         )
-        raw = cast("_LiteLLMChoices", response.choices[0]).message.content or ""
+
         try:
             decoded = json.loads(raw)
         except json.JSONDecodeError as exc:

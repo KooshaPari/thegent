@@ -85,13 +85,10 @@ jobs:
             --report-json artifacts/quality/control-plane-readiness.json \
             --attestation-json dist/governance-control-plane-attestation.json
 
-<<<<<<< HEAD
       - name: Verify SBOM artifact was generated
         run: |
           test -s dist/sbom.spdx.json
 
-=======
->>>>>>> fix/ci-remove-macos
       - name: Stage release governance artifacts
         run: |
           cp artifacts/quality/control-plane-readiness.json dist/
