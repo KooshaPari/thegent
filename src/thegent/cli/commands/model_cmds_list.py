@@ -8,7 +8,6 @@ from thegent.utils.json_utils import json_loads, json_dumps
 import re
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any, cast
@@ -76,19 +75,159 @@ def _assert_str(value: str | None) -> str:
 
 
 _CLIPROXYCTL_SCHEMA_VERSION = "cliproxyctl.machine.v1"
+_HELIOS_CLIPROXYCTL_REPO = "github.com/kooshapari/cliproxyapi-plusplus"
+_HELIOS_CLIPROXYCTL_PACKAGE = f"{_HELIOS_CLIPROXYCTL_REPO}/v6/cmd/server@latest"
+_HELIOS_CLIPROXYCTL_LOCAL_REPO = "cliproxyapi-plusplus"
+_HELIOS_CLIPROXYCTL_LOCAL_BINARY = "cli-proxy-api-plus"
 _CLIPROXYCTL_NOT_FOUND_MSG = (
-    "cliproxyctl not found. Install cliproxyctl and ensure it is on PATH, "
-    "or set THGENT_CLIPROXYCTL_BINARY=/path/to/cliproxyctl"
+    "cliproxyctl not found. Auto-install via go is attempted when possible. "
+    "Install Go or set THGENT_CLIPROXYCTL_BINARY=/path/to/cliproxyctl if needed. "
+    f"Expected package: `go install {_HELIOS_CLIPROXYCTL_PACKAGE}`"
 )
 
 
 def _resolve_cliproxyctl_binary() -> str:
-    """Resolve cliproxyctl binary path from env or PATH."""
+    """Resolve cliproxyctl binary path from env, PATH, or Go install locations."""
     configured = os.environ.get("THGENT_CLIPROXYCTL_BINARY", "cliproxyctl").strip() or "cliproxyctl"
     if "/" in configured or "~" in configured:
         return str(Path(configured).expanduser())
     found = shutil.which(configured)
-    return found if found else configured
+    if found:
+        return found
+
+    go_paths = []
+    go_bin = _resolve_go_env("GOBIN")
+    if go_bin:
+        go_paths.append(Path(go_bin))
+    gopath = _resolve_go_env("GOPATH")
+    if gopath:
+        go_paths.append(Path(gopath) / "bin")
+    go_paths.append(Path(os.path.expanduser("~/go/bin")))
+
+    # Common Go install locations if PATH is not yet wired.
+    go_fallback_candidates = ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server")
+    for base in go_paths:
+        if not base:
+            continue
+        for name in go_fallback_candidates:
+            candidate = base / name
+            if candidate.exists():
+                return str(candidate)
+    return configured
+
+
+def _resolve_cliproxyctl_local_paths() -> list[Path]:
+    """Return likely local checkout paths for cliproxyctl."""
+    configured = os.environ.get("THGENT_CLIPROXYCTL_REPO_PATH", "").strip()
+    candidates: list[Path] = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+
+    script_dir = Path(__file__).resolve().parent
+    for ancestor in script_dir.parents:
+        if ancestor.name == "repos":
+            candidates.append(ancestor / _HELIOS_CLIPROXYCTL_LOCAL_REPO)
+            break
+    candidates.extend(
+        (
+            Path.cwd(),
+            Path.cwd().parent,
+            Path.cwd() / _HELIOS_CLIPROXYCTL_LOCAL_REPO,
+            Path.home() / "CodeProjects" / "Phenotype" / "repos" / _HELIOS_CLIPROXYCTL_LOCAL_REPO,
+        )
+    )
+    return [path.expanduser() for path in candidates if str(path).strip()]
+
+
+def _build_cliproxyctl_from_local_repo() -> str:
+    """Build cliproxyctl from a local source checkout and return output binary path."""
+    run_subprocess_optimized = _get_run_subprocess_optimized()
+    seen: set[Path] = set()
+    for repo_path in _resolve_cliproxyctl_local_paths():
+        repo_path = repo_path.expanduser()
+        cmd_dir = repo_path / "cmd" / "server"
+        if not cmd_dir.is_dir():
+            continue
+        if repo_path in seen:
+            continue
+        seen.add(repo_path)
+        binary_path = repo_path / _HELIOS_CLIPROXYCTL_LOCAL_BINARY
+        proc = run_subprocess_optimized(
+            [shutil.which("go") or "go", "build", "-o", str(binary_path), "./cmd/server"],
+            check=False,
+            capture_output=True,
+            text=True,
+            cwd=repo_path,
+        )
+        if proc.returncode != 0:
+            stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
+            stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
+            detail = stderr_text.strip() or stdout_text.strip() or "go build failed"
+            raise RuntimeError(f"Auto-install cliproxyctl failed from local checkout {repo_path}: {detail}")
+        if binary_path.exists():
+            return str(binary_path)
+    raise FileNotFoundError("Could not find local cliproxyctl source tree to build")
+
+
+def _resolve_go_env(name: str) -> str:
+    """Return `go env <name>` output if available."""
+    run_subprocess_optimized = _get_run_subprocess_optimized()
+    proc = run_subprocess_optimized(["go", "env", name], check=False, capture_output=True, text=True)
+    if proc.returncode != 0:
+        return ""
+    return _coerce_subprocess_output(getattr(proc, "stdout", "")).strip()
+
+
+def _install_cliproxyctl() -> str:
+    """Install cliproxyctl with go install and return discovered binary path."""
+    configured = os.environ.get("THGENT_CLIPROXYCTL_BINARY", "").strip()
+    if configured and ("/" in configured or "~" in configured):
+        return configured
+
+    go_bin = shutil.which("go")
+    if not go_bin:
+        raise FileNotFoundError("go not found. Install Go or set THGENT_CLIPROXYCTL_BINARY=/path/to/cliproxyctl")
+
+    try:
+        run_subprocess_optimized = _get_run_subprocess_optimized()
+        proc = run_subprocess_optimized(
+            [go_bin, "install", _HELIOS_CLIPROXYCTL_PACKAGE],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as exc:
+        raise RuntimeError(f"Auto-install cliproxyctl failed to run go install: {exc}") from exc
+
+    if proc.returncode != 0:
+        stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
+        stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
+        detail = stderr_text.strip() or stdout_text.strip() or "go install failed"
+        # Older/renamed upstream module metadata can block package installs.
+        # Keep automation active by building from a local checkout when available.
+        return _build_cliproxyctl_from_local_repo()
+
+    go_paths = []
+    for path in (os.environ.get("GOBIN", "").strip(), _resolve_go_env("GOPATH"), os.path.expanduser("~/go")):
+        if path:
+            go_paths.append(Path(path) / "bin")
+    if not go_paths:
+        go_paths.append(Path(os.path.expanduser("~/go/bin")))
+
+    for base in go_paths:
+        for name in ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server"):
+            candidate = base / name
+            if base and candidate.exists():
+                path = str(candidate)
+                os.environ["THGENT_CLIPROXYCTL_BINARY"] = path
+                return path
+    maybe = _resolve_cliproxyctl_binary()
+    if _binary_exists(maybe):
+        return maybe
+    raise RuntimeError(
+        "Auto-installed cliproxyctl but could not locate binary. "
+        "Set THGENT_CLIPROXYCTL_BINARY to the installed location."
+    )
 
 
 def _binary_exists(binary: str) -> bool:
@@ -134,6 +273,9 @@ def _parse_cliproxyctl_envelope(stdout_text: str, *, expected_command: str, stde
 def _run_cliproxyctl_machine_command(command: str, *, args: list[str] | None = None) -> dict[str, Any]:
     """Run cliproxyctl command with --json and enforce envelope validation."""
     binary = _resolve_cliproxyctl_binary()
+    if not _binary_exists(binary):
+        console.print("[yellow]cliproxyctl not found. Attempting auto-install via Go...[/yellow]")
+        binary = _install_cliproxyctl()
     if not _binary_exists(binary):
         raise FileNotFoundError(_CLIPROXYCTL_NOT_FOUND_MSG)
     argv = [binary, command, *(args or []), "--json"]
@@ -392,4 +534,3 @@ def resolve_model_route_cmd(
     resolved = build_resolved_route(route=route, speed_map=speed_map, quality_map=quality_map)
     payload["resolved_route"] = resolved
     console.print_json(data=payload)
-

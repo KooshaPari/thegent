@@ -90,6 +90,28 @@ thegent setup --full
 
 This runs: `install -t all`, `install-shims`, optional `install-shims --system` (with confirm), lock-cleanup daemon, and MCP launchd service on macOS. Use `thegent setup --full --no-wizard` to skip the provider wizard.
 
+### Provider setup dependency (important)
+
+`thegent setup` delegates provider onboarding to `cliproxyctl`.
+`cliproxyctl` is a Go binary and is **not** installed by `uv tool install` / `uv pip install`.
+
+If missing, setup now attempts to auto-install it from Go:
+
+```bash
+go install github.com/kooshapari/cliproxyapi-plusplus/cmd/server@latest
+
+# If your environment cannot install this package from remote, setup also
+# auto-builds from a local `cliproxyapi-plusplus` checkout when available:
+# (cd ../cliproxyapi-plusplus && go build -o cli-proxy-api-plus ./cmd/server && ./cli-proxy-api-plus)
+# then set THGENT_CLIPROXYCTL_BINARY to that binary path.
+```
+
+If you already have it elsewhere, point the CLI directly:
+
+```bash
+export THGENT_CLIPROXYCTL_BINARY=/path/to/cliproxyctl
+```
+
 Verify the installation:
 
 ```bash
