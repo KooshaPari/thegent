@@ -1,0 +1,37 @@
+{
+  "contract_name": "thegent-app-composition-v1",
+  "version": "1.0.0",
+  "scope": "application composition layer",
+  "allowed_orchestration_responsibilities": [
+    "compose startup lifecycle and shutdown sequencing",
+    "wire dependency injection and module registration",
+    "route requests/events to domain modules",
+    "enforce cross-cutting observability and policy hooks",
+    "aggregate module health/readiness signals"
+  ],
+  "disallowed_domain_ownership": [
+    "business rule decisions",
+    "domain state mutation rules",
+    "provider-specific adapter logic",
+    "storage/query semantics",
+    "domain entity validation rules"
+  ],
+  "external_domain_modules": {
+    "auth": "external auth module",
+    "governance": "external governance module",
+    "planning": "external planning module",
+    "research": "external research module",
+    "runtime": "external runtime module"
+  },
+  "migration_checkpoints": [
+    "checkpoint-1-boundary-audit-complete",
+    "checkpoint-2-orchestration-only-surface-defined",
+    "checkpoint-3-domain-ownership-relocated",
+    "checkpoint-4-contract-validation-in-ci"
+  ],
+  "invariants": [
+    "app composition is orchestration-only",
+    "domain ownership remains in external modules",
+    "no fallback ownership paths in app composition"
+  ]
+}
