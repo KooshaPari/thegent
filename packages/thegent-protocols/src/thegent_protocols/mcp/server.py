@@ -59,7 +59,7 @@ from thegent_cli.cli.commands.impl import (
     work_stream_complete_impl,
 )
 from thegent_core.config import ThegentSettings
-from thegent.ide.auto_init import auto_init_on_startup
+from thegent_cli.ide.auto_init import auto_init_on_startup
 from thegent_protocols.mcp import server_bootstrap as _server_bootstrap
 from thegent_protocols.mcp import server_cache_elicitation_response as _cache_elicitation_response_shared
 from thegent_protocols.mcp import server_catalog_tools as _server_tools_catalog
@@ -138,7 +138,7 @@ from thegent_protocols.mcp.server_tool_loader import (
     load_tools_workstream_governance as _load_tools_workstream_governance,
     load_tools_workstream_lsp as _load_tools_workstream_lsp,
 )
-from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
+from thegent_core.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
 
 Context = Any
 _log = logging.getLogger(__name__)

@@ -41,7 +41,7 @@ async def run_lifespan(
     logger.info("thegent MCP server starting")
 
     try:
-        from thegent.infra.runtime_init import initialize_runtime_infrastructure
+        from thegent_core.infra.runtime_init import initialize_runtime_infrastructure
 
         initialize_runtime_infrastructure()
         logger.info("Runtime infrastructure initialized")
@@ -84,7 +84,7 @@ async def run_lifespan(
                 logger.info("mounted @playwright/mcp at namespace browser")
 
             if settings.mcp_mount_serena:
-                from thegent.lsp.serena_integration import detect_serena_backend, get_serena_mcp_config
+                from thegent_cli.lsp.serena_integration import detect_serena_backend, get_serena_mcp_config
 
                 backend = detect_serena_backend()
                 _ = get_serena_mcp_config()
@@ -186,7 +186,7 @@ async def run_lifespan(
             logger.info("stopped bundled proxy")
 
         try:
-            from thegent.utils.routing_impl.litellm_responses_handler import close_http_client
+            from thegent_core.utils.routing_impl.litellm_responses_handler import close_http_client
 
             await close_http_client()
             logger.info("closed persistent HTTP client")

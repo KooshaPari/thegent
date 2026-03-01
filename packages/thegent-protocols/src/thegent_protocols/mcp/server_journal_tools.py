@@ -327,7 +327,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         """WL-085: Drain SubAgentEvents from the process-global event queue."""
         import asyncio as _asyncio
 
-        from thegent.orchestration.event_queue import get_global_event_queue
+        from thegent_execution.orchestration.event_queue import get_global_event_queue
 
         logger.debug("thegent_orchestration_events max_events=%d timeout_ms=%d", max_events, timeout_ms)
         start_time = time.perf_counter()

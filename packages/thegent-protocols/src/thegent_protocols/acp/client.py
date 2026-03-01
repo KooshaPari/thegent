@@ -1,6 +1,6 @@
 """ACP client adapter for spawning external ACP agents."""
 
-from thegent.utils.json_utils import json_dumps, json_loads
+from thegent_core.utils.json_utils import json_dumps, json_loads
 import subprocess
 from collections.abc import Callable
 from pathlib import Path

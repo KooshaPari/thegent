@@ -146,7 +146,7 @@ def build_openai_tool_def(tool: RestToolDef) -> dict:
 
 
 # Register with unified adapter registry
-from thegent.adapters.ports import AdapterRegistry
+from thegent_core.adapters.ports import AdapterRegistry
 
 class McpAdapter:
     """MCP adapter wrapper for registry"""

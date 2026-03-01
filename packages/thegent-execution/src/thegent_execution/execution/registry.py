@@ -9,19 +9,19 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
-from thegent.execution_event_builders import (
+from thegent_execution.execution_coercion_helpers import as_bool as _as_bool_impl
+from thegent_execution.execution_coercion_helpers import as_float as _as_float_impl
+from thegent_execution.execution_coercion_helpers import as_int as _as_int_impl
+from thegent_execution.execution_event_builders import (
     build_feedback_event,
     build_finish_event,
     build_pause_event,
     build_resume_event,
     build_schema_marker_event,
 )
-from thegent.execution_hash_helpers import calculate_stable_record_hash
-from thegent.execution_jsonl_parsers import parse_checkpoint_line, parse_checkpoint_by_id
-from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry
+from thegent_execution.execution_hash_helpers import calculate_stable_record_hash
+from thegent_execution.execution_jsonl_parsers import parse_checkpoint_line, parse_checkpoint_by_id
+from thegent_execution.execution_run_scan_helpers import process_run_entry as _process_run_entry
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3

@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING, Any, cast
 
 from thegent_agents.base import AgentRunner, RunResult
 from thegent_agents.resilience import TransientAgentError, is_retryable, with_retry
-from thegent.infra.fast_subprocess import run_subprocess_optimized
-from thegent.infra.power import wrap_with_caffeinate
-from thegent.utils import strip_ansi
+from thegent_core.infra.fast_subprocess import run_subprocess_optimized
+from thegent_core.infra.power import wrap_with_caffeinate
+from thegent_core.utils import strip_ansi
 
 if TYPE_CHECKING:
     from thegent_core.config import ThegentSettings
@@ -321,7 +321,7 @@ class DirectAgentRunner(AgentRunner):
     ) -> RunResult:
         """Run via LiteLLM Router for direct CLI compatibility."""
         try:
-            from thegent.utils.routing_impl.litellm_router import get_enhanced_router
+            from thegent_core.utils.routing_impl.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
             # Map provider if possible

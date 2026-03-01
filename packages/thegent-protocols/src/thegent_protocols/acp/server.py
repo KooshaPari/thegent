@@ -1,7 +1,7 @@
 """ACP server adapter for exposing thegent agents via ACP protocol."""
 
 import asyncio
-from thegent.utils.json_utils import json_dumps, json_loads
+from thegent_core.utils.json_utils import json_dumps, json_loads
 import logging
 import sys
 from pathlib import Path

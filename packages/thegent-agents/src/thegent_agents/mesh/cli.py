@@ -1,7 +1,7 @@
 """CLI commands for agent mesh coordination."""
 
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 
 import typer
@@ -333,7 +333,7 @@ def run_agent(
     script_path = Path(__file__).parent / "scripts" / "agent-run.sh"
 
     if not script_path.exists():
-        from thegent.errors import print_error
+        from thegent_core.errors import print_error
 
         print_error(f"{script_path} not found.")
         raise typer.Exit(1)

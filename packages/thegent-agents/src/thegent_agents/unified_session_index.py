@@ -18,7 +18,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, ClassVar, cast
 
-from thegent.infra.fast_file_watcher import FastFileWatcher
+from thegent_core.infra.fast_file_watcher import FastFileWatcher
 
 _log = logging.getLogger(__name__)
 

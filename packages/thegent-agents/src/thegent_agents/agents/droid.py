@@ -8,9 +8,9 @@ from pathlib import Path
 
 from thegent_agents.agents.base import AgentRunner, RunResult
 from thegent_core.config import ThegentSettings
-from thegent.infra import run_subprocess_optimized
-from thegent.infra.power import wrap_with_caffeinate
-from thegent.utils import strip_ansi
+from thegent_core.infra import run_subprocess_optimized
+from thegent_core.infra.power import wrap_with_caffeinate
+from thegent_core.utils import strip_ansi
 
 
 def _resolve_cmd(cmd: str, candidates: list[Path] | None = None) -> str:
@@ -188,7 +188,7 @@ class DroidRunner(AgentRunner):
     ) -> RunResult:
         """Run via LiteLLM Router for Droid compatibility."""
         try:
-            from thegent.utils.routing_impl.litellm_router import get_enhanced_router
+            from thegent_core.utils.routing_impl.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
 
@@ -407,7 +407,7 @@ class CodexRunner(AgentRunner):
     ) -> RunResult:
         """Run via LiteLLM Router for Codex/Droid compatibility."""
         try:
-            from thegent.utils.routing_impl.litellm_router import get_enhanced_router
+            from thegent_core.utils.routing_impl.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
 

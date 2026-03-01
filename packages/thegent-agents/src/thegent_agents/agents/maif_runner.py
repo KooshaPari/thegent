@@ -8,8 +8,8 @@ from thegent_agents.agents.base import AgentRunner, RunResult
 from thegent_execution.execution import RunMeta
 
 if TYPE_CHECKING:
-    from thegent.orchestration.execution.engine import ExecutionEngine
-    from thegent.utils.routing_impl.route_executor import RoutingDecision
+    from thegent_execution.orchestration.execution.engine import ExecutionEngine
+    from thegent_core.utils.routing_impl.route_executor import RoutingDecision
 
 _log = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class MAIFAgentRunner(AgentRunner):
     def __init__(self, runner: AgentRunner, engine: Optional["ExecutionEngine"] = None) -> None:
         self.runner = runner
         if engine is None:
-            from thegent.orchestration.execution.engine import ExecutionEngine
+            from thegent_execution.orchestration.execution.engine import ExecutionEngine
 
             engine = ExecutionEngine()
         self.engine = engine

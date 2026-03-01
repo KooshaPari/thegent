@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 from thegent_core.config import ThegentSettings
 

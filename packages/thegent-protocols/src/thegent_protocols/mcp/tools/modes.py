@@ -21,7 +21,7 @@ import contextlib
 
 from thegent_cli.cli.commands.impl import _resolve_cwd
 from thegent_core.config import ThegentSettings
-from thegent.utils import is_dev_mode
+from thegent_core.utils import is_dev_mode
 
 _log = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ def register_modes(mcp: "FastMCP") -> None:
             plans = list(path.glob("*.md"))
             latest = max(plans, key=lambda p: p.stat().st_mtime) if plans else None
             path = latest or path
-        from thegent.utils.helpers import read_file_optimized
+        from thegent_core.utils.helpers import read_file_optimized
 
         content = read_file_optimized(path)
         if content is None:
@@ -232,7 +232,7 @@ def register_modes(mcp: "FastMCP") -> None:
         brief = ""
         if brief_path:
             bp = root / brief_path if not Path(brief_path).is_absolute() else Path(brief_path)
-            from thegent.utils.helpers import safe_read_file
+            from thegent_core.utils.helpers import safe_read_file
 
             brief = safe_read_file(bp) or ""
         template = f"""# Plan: {prompt[:80]}{"..." if len(prompt) > 80 else ""}
@@ -317,7 +317,7 @@ def register_modes(mcp: "FastMCP") -> None:
         if not mode and not name:
             candidates = list(protocols_dir.glob("*.md")) + list(protocols_dir.glob("*.yaml"))
         path = candidates[0] if candidates else None
-        from thegent.utils.helpers import read_file_optimized
+        from thegent_core.utils.helpers import read_file_optimized
 
         if path is None:
             return ToolResult(
@@ -419,7 +419,7 @@ def register_modes(mcp: "FastMCP") -> None:
         validation_dir = root / "docs" / "validation"
         reports = list(validation_dir.glob("*.md")) if validation_dir.exists() else []
         latest = max(reports, key=lambda p: p.stat().st_mtime) if reports else None
-        from thegent.utils.helpers import safe_read_file
+        from thegent_core.utils.helpers import safe_read_file
 
         content = safe_read_file(latest) if latest else None
         elapsed = int((time.perf_counter() - start) * 1000)

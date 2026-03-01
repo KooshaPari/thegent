@@ -6,8 +6,8 @@ import orjson as json
 
 
 def resource_workstream_impl() -> str:
-    from thegent.utils import get_resource_path
-    from thegent.utils.helpers import read_file_optimized
+    from thegent_core.utils import get_resource_path
+    from thegent_core.utils.helpers import read_file_optimized
 
     work_stream_path = get_resource_path("docs/reference/WORK_STREAM.md")
     if not work_stream_path.exists():

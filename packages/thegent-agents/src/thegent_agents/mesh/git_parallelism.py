@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 import tempfile
 import time
 from contextlib import contextmanager, suppress

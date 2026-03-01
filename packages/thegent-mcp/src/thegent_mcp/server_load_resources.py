@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Any
 
-from thegent.mcp import server_load_module as _load_server_module_shared
-from thegent.mcp.server_tool_loader import (
+from thegent_protocols.mcp import server_load_module as _load_server_module_shared
+from thegent_protocols.mcp.server_tool_loader import (
     load_handoff_queue_tools as _load_handoff_queue_tools,
     load_queue_mutations_tools as _load_queue_mutations_tools,
     load_session_tools as _load_session_tools,
@@ -27,7 +27,7 @@ from thegent.mcp.server_tool_loader import (
     load_tools_workstream_governance as _load_tools_workstream_governance,
     load_tools_workstream_lsp as _load_tools_workstream_lsp,
 )
-from thegent.mcp.server_resources import (
+from thegent_protocols.mcp.server_resources import (
     load_resource_catalog as _load_resource_catalog,
     load_resource_contracts as _load_resource_contracts,
     load_resource_sessions as _load_resource_sessions,

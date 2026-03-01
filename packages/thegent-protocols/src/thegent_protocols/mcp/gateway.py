@@ -31,7 +31,7 @@ import orjson as json
 import logging
 import os
 import shlex
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 import subprocess
 subprocess = subprocess
 import threading

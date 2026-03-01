@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from thegent_agents.agents.flash_agent import FlashAgent, FlashAgentConfig
 
 if TYPE_CHECKING:
-    from thegent.orchestration.dispatcher import SubAgentDispatcher
+    from thegent_execution.orchestration.dispatcher import SubAgentDispatcher
 
 _log = logging.getLogger(__name__)
 
@@ -492,7 +492,7 @@ class PlangentExecutor:
         # Inline import to avoid circular imports: the orchestration package
         # imports from thegent.agents.plangent, so a top-level import of
         # thegent.orchestration.plan here would create a cycle.
-        from thegent.orchestration.plan import OrchestrationPlan  # noqa: PLC0415
+        from thegent_execution.orchestration.plan import OrchestrationPlan  # noqa: PLC0415
 
         if isinstance(plan, OrchestrationPlan):
             return await self._execute_orchestration_async(plan, dispatcher)
@@ -574,8 +574,8 @@ class PlangentExecutor:
 
         # @trace WL-084
         """
-        from thegent.orchestration.aggregator import ResultAggregator  # noqa: PLC0415
-        from thegent.orchestration.dispatcher import (  # noqa: PLC0415
+        from thegent_execution.orchestration.aggregator import ResultAggregator  # noqa: PLC0415
+        from thegent_execution.orchestration.dispatcher import (  # noqa: PLC0415
             SubAgentDispatcher as _SubAgentDispatcher,
         )
 
@@ -947,7 +947,7 @@ class LLMPlangentPlanner(PlangentPlanner):
 
         # @trace WL-087
         """
-        from thegent.orchestration.plan import OrchestrationPlan  # noqa: PLC0415
+        from thegent_execution.orchestration.plan import OrchestrationPlan  # noqa: PLC0415
 
         if not goal or not goal.strip():
             raise ValueError("goal must be a non-empty string")

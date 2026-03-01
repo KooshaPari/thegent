@@ -6,7 +6,7 @@ Includes automatic interface adaptation for foreign tool protocols.
 import orjson as json
 import logging
 import shlex
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from collections.abc import Callable
 from importlib import import_module
 from typing import Any
@@ -196,7 +196,7 @@ class ToolAdapter:
 
 
 # Register with unified adapter registry
-from thegent.adapters.ports import AdapterRegistry
+from thegent_core.adapters.ports import AdapterRegistry
 
 class ToolAdapterWrapper:
     """Tool adapter wrapper for registry"""

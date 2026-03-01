@@ -27,7 +27,7 @@ def config_resolve_impl(
     overrides: dict[str, Any] | None,
     keys: list[str] | None,
 ) -> str:
-    from thegent.config_provider import get_config_provider
+    from thegent_core.config_provider import get_config_provider
 
     provider = get_config_provider()
     config = provider.resolve(tenant_id=tenant_id, session_id=session_id, request_overrides=overrides, keys=keys)

@@ -4,11 +4,11 @@ import logging
 import os
 import resource
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.os_user_manager import OSUserManager
+from thegent_core.infra.os_user_manager import OSUserManager
 from thegent_execution.isolation.base_provider import IsolationProvider
 from thegent_execution.isolation.exceptions import (
     ExecutionContextError,
@@ -17,7 +17,7 @@ from thegent_execution.isolation.exceptions import (
 from thegent_execution.isolation.models import TenantContext
 from thegent_execution.isolation.uid_pool import UidPool
 from thegent_execution.isolation.vfs import VfsAdapter
-from thegent.orchestration.execution.cmd_share import CommandSharer
+from thegent_execution.orchestration.execution.cmd_share import CommandSharer
 
 logger = logging.getLogger(__name__)
 

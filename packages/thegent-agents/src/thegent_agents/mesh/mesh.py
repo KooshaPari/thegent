@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import psutil
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 from thegent_agents.mesh.task_queue import MaildirQueue
 

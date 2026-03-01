@@ -6,13 +6,13 @@ import orjson as json
 import os
 import platform
 import shutil
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 import time
 from pathlib import Path
 from typing import Any
 
 from thegent_core.config import ThegentSettings
-from thegent.infra import run_subprocess_optimized
+from thegent_core.infra import run_subprocess_optimized
 
 # MCP server URL (HTTP transport)
 DEFAULT_MCP_URL = "http://127.0.0.1:3847/mcp"
@@ -225,7 +225,7 @@ def _thegent_serve_cmd(settings: ThegentSettings) -> list[str]:
     return [
         python,
         "-c",
-        "from thegent.mcp.server import run; run()",
+        "from thegent_protocols.mcp.server import run; run()",
     ]
 
 
@@ -373,7 +373,7 @@ def _wait_for_services_healthy(settings: ThegentSettings, timeout_seconds: float
 
 def mcp_up(reload: bool = False) -> tuple[bool, str]:
     """Start MCP + proxy via process-compose. Returns (success, message)."""
-    from thegent.errors import ConfigError, get_install_hint
+    from thegent_core.errors import ConfigError, get_install_hint
 
     settings = ThegentSettings()
     pc = _process_compose_path()

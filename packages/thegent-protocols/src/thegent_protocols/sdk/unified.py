@@ -6,7 +6,7 @@ Provides a single entry point for all agent/SDK operations.
 
 from typing import Any
 
-from thegent.adapters.ports import AdapterRegistry, AdapterPort
+from thegent_core.adapters.ports import AdapterRegistry, AdapterPort
 
 
 class UnifiedSDK:

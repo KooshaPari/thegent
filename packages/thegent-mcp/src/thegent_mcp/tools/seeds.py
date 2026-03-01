@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 
 from datetime import UTC
 
-from thegent.cli.commands.impl import _resolve_cwd
-from thegent.memory.seed_detector import SeedDetector, SeedSource
-from thegent.memory.seed_storage import SeedStorage
+from thegent_cli.cli.commands.impl import _resolve_cwd
+from thegent_core.memory.seed_detector import SeedDetector, SeedSource
+from thegent_core.memory.seed_storage import SeedStorage
 
 _log = logging.getLogger(__name__)
 
@@ -200,7 +200,7 @@ def register_seed_tools(mcp: "FastMCP") -> None:
                 # Create manual seed
                 from datetime import datetime
 
-                from thegent.memory.seed_detector import Seed
+                from thegent_core.memory.seed_detector import Seed
 
                 seed = Seed(
                     id="",  # Will be set in detector

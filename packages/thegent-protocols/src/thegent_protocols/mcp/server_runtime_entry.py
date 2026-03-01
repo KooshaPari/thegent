@@ -67,8 +67,8 @@ def register_runtime_entry(
         """
         import time as _time
 
-        from thegent.adapters.acp_client import ACPClient, ACPServerUnreachableError
-        from thegent.adapters.acp_mcp_bridge import ACPAgentCallError, AcpMcpBridge
+        from thegent_core.adapters.acp_client import ACPClient, ACPServerUnreachableError
+        from thegent_core.adapters.acp_mcp_bridge import ACPAgentCallError, AcpMcpBridge
 
         context, payload_error = parse_acp_payload(payload)
         if payload_error:

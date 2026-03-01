@@ -18,7 +18,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, ClassVar, cast
 
-from thegent.infra.fast_file_watcher import FastFileWatcher
+from thegent_core.infra.fast_file_watcher import FastFileWatcher
 from thegent_sync.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
@@ -639,7 +639,7 @@ if __name__ == "__main__":
 
 
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 import shlex
 from thegent_sync.integrations.base import SerializableMixin
 

@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.runtime_dispatcher import router_dispatcher
+from thegent_core.infra.runtime_dispatcher import router_dispatcher
 
 from .router_logic import PurePythonRouter, RouteMetrics, RoutingStrategy
 
@@ -83,7 +83,7 @@ class RouterManager:
 
     def refresh_from_mesh(self, mesh_root: Path | None = None) -> None:
         """Sync local routing metrics with the global IPC mesh."""
-        from thegent.infra.ipc import SharedStateManager
+        from thegent_core.infra.ipc import SharedStateManager
 
         from .router_logic import RouteMetrics
 

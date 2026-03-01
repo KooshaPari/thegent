@@ -8,9 +8,9 @@ from typing import Any
 
 
 from thegent_core.config import ThegentSettings
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
+from thegent_execution.execution_coercion_helpers import as_bool as _as_bool_impl
+from thegent_execution.execution_coercion_helpers import as_float as _as_float_impl
+from thegent_execution.execution_coercion_helpers import as_int as _as_int_impl
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -145,14 +145,14 @@ class ConcurrencyController:
             self.critical_lane_slots = max(0, configured_slots if configured_slots is not None else 2)
 
         # Per-owner usage tracker (module-level singleton, shared across instances).
-        from thegent.orchestration.resource.load_based_limits import get_usage_tracker
+        from thegent_execution.orchestration.resource.load_based_limits import get_usage_tracker
 
         self._usage_tracker = get_usage_tracker()
 
         # Initialize advanced features (if available)
         if use_load_based:
             try:
-                from thegent.orchestration.resource.resource_management import (
+                from thegent_execution.orchestration.resource.resource_management import (
                     BottleneckDetector,
                     ResourcePredictionEngine,
                     create_harness_cards,
@@ -222,7 +222,7 @@ class ConcurrencyController:
         # Use resource-based limits if enabled (default)
         settings = ThegentSettings()
         if self.use_load_based and (True):  # Default to True
-            from thegent.orchestration.resource.load_based_limits import (
+            from thegent_execution.orchestration.resource.load_based_limits import (
                 LimitGateConfig,
                 compute_dynamic_limit,
                 sample_resources,
@@ -251,7 +251,7 @@ class ConcurrencyController:
 
             # Advanced features (if available)
             try:
-                from thegent.orchestration.resource.resource_management import sample_extended_resources
+                from thegent_execution.orchestration.resource.resource_management import sample_extended_resources
 
                 extended_snapshot = sample_extended_resources()
 
@@ -358,7 +358,7 @@ class ConcurrencyController:
                 _log.info("run admitted: slots=%d/%d run_id=%s owner=%s", running_count, slot_limit, run_id, owner)
                 self._usage_tracker.record_start(owner, run_id)
                 if soft_deadline_s is not None and soft_deadline_s > 0:
-                    from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
+                    from thegent_execution.orchestration.resource.load_based_limits import get_deadline_monitor
 
                     get_deadline_monitor().register(
                         run_id=run_id or owner,
@@ -395,7 +395,7 @@ class ConcurrencyController:
             _log.info("run admitted: slots=%d/%d run_id=%s owner=%s (fixed)", running_count, slot_limit, run_id, owner)
             self._usage_tracker.record_start(owner, run_id)
             if soft_deadline_s is not None and soft_deadline_s > 0:
-                from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
+                from thegent_execution.orchestration.resource.load_based_limits import get_deadline_monitor
 
                 get_deadline_monitor().register(
                     run_id=run_id or owner,
@@ -429,7 +429,7 @@ class ConcurrencyController:
         self._usage_tracker.record_end(owner, run_id, elapsed_ms)
         # Unregister any soft deadline for this run (no-op if none registered).
         try:
-            from thegent.orchestration.resource.load_based_limits import get_deadline_monitor
+            from thegent_execution.orchestration.resource.load_based_limits import get_deadline_monitor
 
             get_deadline_monitor().unregister(run_id or owner)
         except ImportError as exc:
@@ -469,7 +469,7 @@ class ConcurrencyController:
             }
 
         slow_points = self.bottleneck_detector.identify_slow_points()
-        from thegent.orchestration.resource.resource_management import sample_extended_resources
+        from thegent_execution.orchestration.resource.resource_management import sample_extended_resources
 
         snapshot = sample_extended_resources()
         harness_cards = self.harness_cards if self.harness_cards is not None else {}
@@ -516,7 +516,7 @@ class LoadClassifier:
 
         # Use resource-based limits if enabled
         if settings.concurrency_load_based:
-            from thegent.orchestration.resource.load_based_limits import (
+            from thegent_execution.orchestration.resource.load_based_limits import (
                 LimitGateConfig,
                 compute_dynamic_limit,
                 sample_resources,

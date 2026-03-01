@@ -10,7 +10,7 @@ Provides higher-order decorator patterns for tool authors:
 
 Usage example::
 
-    from thegent.mcp_tool_patterns import confirm_before_action, ToolAborted
+    from thegent_protocols.mcp_tool_patterns import confirm_before_action, ToolAborted
 
     @confirm_before_action("Delete session {session_id}?")
     async def thegent_delete_session(session_id: str, ctx=None):

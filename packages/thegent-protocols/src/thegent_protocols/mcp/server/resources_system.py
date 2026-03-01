@@ -40,7 +40,7 @@ def resource_meta_impl(
 
 
 def resource_operations_impl(operation: str | None = None) -> str:
-    from thegent.operations import Operation, get_operations_by_type, list_operations
+    from thegent_agents.operations import Operation, get_operations_by_type, list_operations
 
     if operation:
         try:
@@ -57,7 +57,7 @@ def resource_operations_impl(operation: str | None = None) -> str:
 
 
 def resource_modes_impl(mode: str | None = None) -> str:
-    from thegent.orchestration_modes import get_mode, list_modes
+    from thegent_execution.orchestration_modes import get_mode, list_modes
 
     if mode:
         entry = get_mode(mode)

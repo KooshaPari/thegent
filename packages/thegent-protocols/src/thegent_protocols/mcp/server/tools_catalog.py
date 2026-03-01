@@ -15,7 +15,7 @@ def thegent_list_operations_impl(
     stable_json_impl: Callable[[Any], str],
     error_result_impl: Callable[..., ToolResult],
 ) -> ToolResult:
-    from thegent.operations import Operation, get_operations_by_type, list_operations
+    from thegent_agents.operations import Operation, get_operations_by_type, list_operations
 
     start_time = time.perf_counter()
     if operation:
@@ -47,7 +47,7 @@ def thegent_list_modes_impl(
     stable_json_impl: Callable[[Any], str],
     error_result_impl: Callable[..., ToolResult],
 ) -> ToolResult:
-    from thegent.orchestration_modes import get_mode, list_modes
+    from thegent_execution.orchestration_modes import get_mode, list_modes
 
     start_time = time.perf_counter()
     if mode:

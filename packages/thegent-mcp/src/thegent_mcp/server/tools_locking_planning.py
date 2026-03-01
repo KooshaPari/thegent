@@ -17,7 +17,7 @@ def thegent_lock_resource_impl(
     cd: str | None,
     error_result_impl: Callable[..., ToolResult],
 ) -> ToolResult:
-    from thegent.cli.commands.impl import _default_owner_tag, lock_resource_impl
+    from thegent_cli.cli.commands.impl import _default_owner_tag, lock_resource_impl
 
     start_time = time.perf_counter()
     agent_id = _default_owner_tag(Path(cd) if cd else None)
@@ -39,7 +39,7 @@ def thegent_unlock_resource_impl(
     token: str,
     cd: str | None,
 ) -> ToolResult:
-    from thegent.cli.commands.impl import _default_owner_tag, unlock_resource_impl
+    from thegent_cli.cli.commands.impl import _default_owner_tag, unlock_resource_impl
 
     start_time = time.perf_counter()
     agent_id = _default_owner_tag(Path(cd) if cd else None)
@@ -58,7 +58,7 @@ def thegent_verify_context_impl(
     files: list[str],
     cd: str | None,
 ) -> ToolResult:
-    from thegent.cli.commands.impl import verify_context_impl
+    from thegent_cli.cli.commands.impl import verify_context_impl
 
     start_time = time.perf_counter()
     res = verify_context_impl(files, cd=Path(cd) if cd else None)

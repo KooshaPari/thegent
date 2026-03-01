@@ -15,7 +15,7 @@ def queue_list_impl(
     include_expired: bool,
     limit: int | None,
 ) -> ToolResult:
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(session_dir)
     items = pq.list_all(include_done=include_done, include_expired=include_expired, limit=limit)
@@ -33,7 +33,7 @@ def queue_claim_impl(
     project: str | None,
     lease_seconds: int,
 ) -> ToolResult:
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(session_dir)
     claimed = pq.claim(claimer_id=claimer_id, lease_seconds=lease_seconds, project=project)
@@ -55,7 +55,7 @@ def queue_done_impl(
     session_dir: Path,
     item_id: int,
 ) -> ToolResult:
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(session_dir)
     ok = pq.done(item_id)
@@ -73,7 +73,7 @@ def queue_add_impl(
     project: str,
     agent: str | None,
 ) -> ToolResult:
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(session_dir)
     count = pq.append(prompt=prompt, project=project, agent=agent)
@@ -90,7 +90,7 @@ def queue_edit_impl(
     item_id: int,
     prompt: str,
 ) -> ToolResult:
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(session_dir)
     ok = pq.edit(item_id=item_id, prompt=prompt)
@@ -106,7 +106,7 @@ def queue_release_impl(
     session_dir: Path,
     item_id: int,
 ) -> ToolResult:
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(session_dir)
     ok = pq.release(item_id)
@@ -123,7 +123,7 @@ def queue_extend_lease_impl(
     item_id: int,
     lease_seconds: int,
 ) -> ToolResult:
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(session_dir)
     ok = pq.extend_lease(item_id=item_id, lease_seconds=lease_seconds)

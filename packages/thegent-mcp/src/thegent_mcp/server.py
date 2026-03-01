@@ -13,7 +13,7 @@ from fastmcp.server.lifespan import lifespan
 from fastmcp.server.transforms import PromptsAsTools, ResourcesAsTools
 from fastmcp.tools.tool import ToolResult
 from research_engine.mcp.tools import register_tools as _register_research_tools
-from thegent.cli.commands.impl import (
+from thegent_cli.cli.commands.impl import (
     ELICIT_CWD_MSG,
     ELICIT_OWNER_MSG,
     _coerce_issue_types,
@@ -59,48 +59,48 @@ from thegent.cli.commands.impl import (
     work_stream_claim_impl,
     work_stream_complete_impl,
 )
-from thegent.config import ThegentSettings
-from thegent.ide.auto_init import auto_init_on_startup
-from thegent.mcp import server_bootstrap as _server_bootstrap
-from thegent.mcp import server_cache_elicitation_response as _cache_elicitation_response_shared
-from thegent.mcp import server_catalog_tools as _server_tools_catalog
-from thegent.mcp import server_consolidated_tools as _server_consolidated_tools
-from thegent.mcp import server_control_tools as _server_control_tools
-from thegent.mcp import server_create_elicitation_cache as _create_elicitation_cache_shared
-from thegent.mcp import server_default_cwd_from_context as _default_cwd_from_context_shared
-from thegent.mcp import server_default_owner_from_context as _default_owner_from_context_shared
-from thegent.mcp import server_elicitation_cache_key as _cache_elicitation_key_shared
-from thegent.mcp import server_error_result as _shared_error_result
-from thegent.mcp import server_execution_tools as _server_execution_tools
-from thegent.mcp import server_get_cached_elicitation as _get_cached_elicitation_shared
-from thegent.mcp import server_journal_tools as _server_journal_tools
-from thegent.mcp import server_load_module as _load_server_module_shared
-from thegent.mcp import server_ops_tools as _server_ops_tools
-from thegent.mcp import server_optional_tools as _server_optional_tools
-from thegent.mcp import server_planning_tools as _server_planning_tools
-from thegent.mcp import server_research_tools as _server_research_tools
-from thegent.mcp import server_resource_routes as _server_resource_routes
-from thegent.mcp import server_resolve_cwd_elicitation as _resolve_cwd_elicitation_shared
-from thegent.mcp import server_resolve_owner_elicitation as _resolve_owner_elicitation_shared
-from thegent.mcp import server_runtime_entry as _server_runtime_entry
-from thegent.mcp import server_stable_json as _shared_stable_json
-from thegent.mcp import server_terminal_tools as _server_terminal_tools
-from thegent.mcp.server_dispatch_helpers import (
+from thegent_core.config import ThegentSettings
+from thegent_cli.ide.auto_init import auto_init_on_startup
+from thegent_protocols.mcp import server_bootstrap as _server_bootstrap
+from thegent_protocols.mcp import server_cache_elicitation_response as _cache_elicitation_response_shared
+from thegent_protocols.mcp import server_catalog_tools as _server_tools_catalog
+from thegent_protocols.mcp import server_consolidated_tools as _server_consolidated_tools
+from thegent_protocols.mcp import server_control_tools as _server_control_tools
+from thegent_protocols.mcp import server_create_elicitation_cache as _create_elicitation_cache_shared
+from thegent_protocols.mcp import server_default_cwd_from_context as _default_cwd_from_context_shared
+from thegent_protocols.mcp import server_default_owner_from_context as _default_owner_from_context_shared
+from thegent_protocols.mcp import server_elicitation_cache_key as _cache_elicitation_key_shared
+from thegent_protocols.mcp import server_error_result as _shared_error_result
+from thegent_protocols.mcp import server_execution_tools as _server_execution_tools
+from thegent_protocols.mcp import server_get_cached_elicitation as _get_cached_elicitation_shared
+from thegent_protocols.mcp import server_journal_tools as _server_journal_tools
+from thegent_protocols.mcp import server_load_module as _load_server_module_shared
+from thegent_protocols.mcp import server_ops_tools as _server_ops_tools
+from thegent_protocols.mcp import server_optional_tools as _server_optional_tools
+from thegent_protocols.mcp import server_planning_tools as _server_planning_tools
+from thegent_protocols.mcp import server_research_tools as _server_research_tools
+from thegent_protocols.mcp import server_resource_routes as _server_resource_routes
+from thegent_protocols.mcp import server_resolve_cwd_elicitation as _resolve_cwd_elicitation_shared
+from thegent_protocols.mcp import server_resolve_owner_elicitation as _resolve_owner_elicitation_shared
+from thegent_protocols.mcp import server_runtime_entry as _server_runtime_entry
+from thegent_protocols.mcp import server_stable_json as _shared_stable_json
+from thegent_protocols.mcp import server_terminal_tools as _server_terminal_tools
+from thegent_protocols.mcp.server_dispatch_helpers import (
     build_route_request_payload,
     format_acp_response,
     normalize_bg_routing,
     parse_acp_payload,
     write_session_control_file,
 )
-from thegent.mcp.server_middleware import setup_middleware as _setup_middleware
-from thegent.mcp.server_policy_quality_helpers import (
+from thegent_protocols.mcp.server_middleware import setup_middleware as _setup_middleware
+from thegent_protocols.mcp.server_policy_quality_helpers import (
     resource_session_contract_health_gate_helper,
     resource_session_contract_health_report_helper,
     resource_session_contract_health_trend_helper,
     thegent_session_contract_health_gate_helper,
     thegent_session_contract_health_report_helper,
 )
-from thegent.mcp.server_resources import (
+from thegent_protocols.mcp.server_resources import (
     load_resource_catalog as _load_resource_catalog,
     load_resource_contracts as _load_resource_contracts,
     load_resource_sessions as _load_resource_sessions,
@@ -109,14 +109,14 @@ from thegent.mcp.server_resources import (
     load_resource_workstream as _load_resource_workstream,
     load_workflow_prompts as _load_workflow_prompts,
 )
-from thegent.mcp.server_runtime_helpers import (
+from thegent_protocols.mcp.server_runtime_helpers import (
     create_event_store,
     create_http_app,
     health_response,
     lifespan_proxy,
     run_server,
 )
-from thegent.mcp.server_tool_loader import (
+from thegent_protocols.mcp.server_tool_loader import (
     load_handoff_queue_tools as _load_handoff_queue_tools,
     load_queue_mutations_tools as _load_queue_mutations_tools,
     load_session_tools as _load_session_tools,
@@ -139,7 +139,7 @@ from thegent.mcp.server_tool_loader import (
     load_tools_workstream_governance as _load_tools_workstream_governance,
     load_tools_workstream_lsp as _load_tools_workstream_lsp,
 )
-from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
+from thegent_core.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
 
 Context = Any
 _log = logging.getLogger(__name__)
@@ -618,7 +618,7 @@ _optional_tools_exports = _server_optional_tools.register_optional_tools(
 )
 globals().update(_optional_tools_exports)
 try:
-    from thegent.mcp.task_registry import get_task_registry as _get_task_registry
+    from thegent_protocols.mcp.task_registry import get_task_registry as _get_task_registry
 
     _task_reg = _get_task_registry()
 

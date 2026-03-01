@@ -11,10 +11,10 @@ from typing import Any
 import httpx
 
 from thegent_execution.execution.resilience import OverrideRegistry
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
-from thegent.execution_hash_helpers import calculate_stable_record_hash
+from thegent_execution.execution_coercion_helpers import as_bool as _as_bool_impl
+from thegent_execution.execution_coercion_helpers import as_float as _as_float_impl
+from thegent_execution.execution_coercion_helpers import as_int as _as_int_impl
+from thegent_execution.execution_hash_helpers import calculate_stable_record_hash
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -545,7 +545,7 @@ class Auditor:
     def __init__(self, registry_path: Path) -> None:
         self.registry_path = registry_path
         # WP-3002: Rust MAIF Manager integration
-        from thegent.maif.rust_manager import RustMAIFManager
+        from thegent_core.maif.rust_manager import RustMAIFManager
 
         binary_path = Path("target-maif/release/thegent-maif")
         session_dir = registry_path.parent

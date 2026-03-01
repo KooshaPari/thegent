@@ -85,7 +85,7 @@ def register_batch4_tools(
         """
         import json as _json
 
-        from thegent.automation.macos_desktop import MacOSDesktopAutomation
+        from thegent_platform.automation.macos_desktop import MacOSDesktopAutomation
 
         automation = MacOSDesktopAutomation()
 

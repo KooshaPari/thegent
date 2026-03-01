@@ -4,7 +4,7 @@ import hashlib
 import os
 import shutil
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from collections.abc import Callable
 from pathlib import Path
 
@@ -14,8 +14,8 @@ from thegent_agents.agents.base import AgentRunner, RunResult
 from thegent_agents.agents.resilience import TransientAgentError, is_retryable, with_retry
 from thegent_core.config import ThegentSettings
 from thegent_audit.governance.post_agent_run_hook import dispatch_post_agent_run_hook
-from thegent.infra.power import wrap_with_caffeinate
-from thegent.utils import strip_ansi
+from thegent_core.infra.power import wrap_with_caffeinate
+from thegent_core.utils import strip_ansi
 
 _PROXY_MODEL = "claude-4.5-opus-high-thinking"
 _MALLOC_STACK_NOISE = "MallocStackLogging: can't turn off malloc stack logging because it was not enabled."

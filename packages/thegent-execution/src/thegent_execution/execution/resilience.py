@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any
 
 
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
+from thegent_execution.execution_coercion_helpers import as_bool as _as_bool_impl
+from thegent_execution.execution_coercion_helpers import as_float as _as_float_impl
+from thegent_execution.execution_coercion_helpers import as_int as _as_int_impl
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
