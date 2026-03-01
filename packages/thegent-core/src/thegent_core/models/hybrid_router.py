@@ -5,8 +5,8 @@ Combines symbolic risk assessment with neural model capabilities for safety-firs
 import logging
 from typing import Any
 
-from thegent.models.catalog import ModelCatalog, RoutePolicy
-from thegent.verification.symbolic import SymbolicRiskExplorer
+from thegent_core.models.catalog import ModelCatalog, RoutePolicy
+from thegent_audit.verification.symbolic import SymbolicRiskExplorer
 
 _log = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class HybridRouter:
 
         # 3. Resolve route using ModelCatalog
         # In a real system, this might use the risk_score as a parameter to resolve_route
-        from thegent.models.catalog import resolve_route
+        from thegent_core.models.catalog import resolve_route
 
         route = resolve_route(model_id="deepseek-v3.2", policy=policy, quality_floor=risk_score)
 

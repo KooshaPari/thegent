@@ -32,7 +32,7 @@ class BudgetAlertSystem:
             cost_dir: Directory where cost summaries are stored.
             config: Budget configuration.
         """
-        from thegent.cost.tracker import DEFAULT_COST_DIR
+        from thegent_routing.cost.tracker import DEFAULT_COST_DIR
 
         self.cost_dir = cost_dir or DEFAULT_COST_DIR
         self.config = config or BudgetConfig()

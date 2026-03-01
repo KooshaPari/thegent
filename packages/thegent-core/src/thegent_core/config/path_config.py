@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from thegent.config_defaults import expanded_path_factory
+from thegent_core.config_defaults import expanded_path_factory
 
 
 class PathConfig(BaseSettings):

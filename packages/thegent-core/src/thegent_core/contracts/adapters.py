@@ -7,8 +7,8 @@ CanonicalStructuredMessage for orchestration pipelines.
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
-from thegent.contracts.validation import validate_csm
+from thegent_core.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
+from thegent_core.contracts.validation import validate_csm
 
 
 @dataclass
@@ -58,7 +58,7 @@ class XMLOutputAdapter:
         return self._provider
 
     def normalize(self, raw: str | dict[str, Any], context: dict[str, Any] | None = None) -> AdapterResult:
-        from thegent.contracts.parser import extract_tags, IncrementalXMLParser
+        from thegent_core.contracts.parser import extract_tags, IncrementalXMLParser
 
         text = raw if isinstance(raw, str) else str(raw.get("stdout", raw.get("content", "")))
         tags = extract_tags(text)
@@ -163,7 +163,7 @@ class GenericOutputAdapter:
         return self._provider
 
     def normalize(self, raw: str | dict[str, Any], context: dict[str, Any] | None = None) -> AdapterResult:
-        from thegent.output_parser import extract_condensed
+        from thegent_core.output_parser import extract_condensed
 
         if isinstance(raw, str):
             summary = extract_condensed(raw)
@@ -244,12 +244,12 @@ def normalize_output(
             _log.warning("Adapter %s failed: %s", provider, e)
 
     if not allow_fallback:
-        from thegent.contracts.validation import SemanticValidationError
+        from thegent_core.contracts.validation import SemanticValidationError
 
         raise SemanticValidationError(f"Normalization failed for {provider} and fallback is disabled.")
 
     # Fallback: minimal CSM from plain text
-    from thegent.output_parser import extract_condensed
+    from thegent_core.output_parser import extract_condensed
 
     text = raw if isinstance(raw, str) else str(raw.get("stdout", raw.get("content", str(raw))))
     summary = extract_condensed(text)

@@ -12,7 +12,7 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from thegent.config_defaults import (
+from thegent_core.config_defaults import (
     DEFAULT_MAC_KEEP_AWAKE_AGENTS,
     DEFAULT_SANDBOX_ENV_ALLOWLIST,
     default_cost_budget_by_category,
@@ -21,7 +21,7 @@ from thegent.config_defaults import (
     default_sandbox_env_allowlist,
     expanded_path_factory,
 )
-from thegent.config_parsers import (
+from thegent_core.config_parsers import (
     parse_bool_or_env_flag,
     parse_csv_or_list,
     parse_first_nonempty_env,
@@ -29,9 +29,9 @@ from thegent.config_parsers import (
     parse_retention_by_domain,
     parse_shell_path,
 )
-from thegent.config.model_config import ModelConfig
-from thegent.config.path_config import PathConfig
-from thegent.config.runtime_config import RuntimeConfig
+from thegent_core.config.model_config import ModelConfig
+from thegent_core.config.path_config import PathConfig
+from thegent_core.config.runtime_config import RuntimeConfig
 
 
 class ThegentSettings(BaseSettings):

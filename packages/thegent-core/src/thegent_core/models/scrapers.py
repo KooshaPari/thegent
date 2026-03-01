@@ -13,9 +13,9 @@ from typing import Protocol
 
 import httpx
 
-from thegent.cache.multi_level import MultiLevelCache
-from thegent.config import ThegentSettings
-from thegent.infra import run_subprocess_optimized
+from thegent_core.cache.multi_level import MultiLevelCache
+from thegent_core.config import ThegentSettings
+from thegent_core.infra import run_subprocess_optimized
 
 
 class ModelScraper(Protocol):
@@ -108,7 +108,7 @@ def scrape_all(settings: ThegentSettings | None = None) -> dict[str, list[str]]:
             # If we're in a loop, use ThreadPoolExecutor fallback
             from concurrent.futures import ThreadPoolExecutor, as_completed
 
-            from thegent.models.catalog import filter_models_for_provider
+            from thegent_core.models.catalog import filter_models_for_provider
 
             settings = settings or ThegentSettings()
             by_provider: dict[str, list[str]] = {}
@@ -245,7 +245,7 @@ def scrape_proxy(settings: ThegentSettings | None = None) -> dict[str, list[str]
     settings = settings or ThegentSettings()
     base_url = f"http://127.0.0.1:{settings.cliproxy_port}/v1"
     try:
-        from thegent.agents.cliproxy_manager import ensure_proxy_running
+        from thegent_agents.agents.cliproxy_manager import ensure_proxy_running
 
         base_url = ensure_proxy_running(settings)
     except Exception:
@@ -411,7 +411,7 @@ def scrape_minimax_from_proxy() -> list[str]:
 
 def scrape_ante() -> list[str]:
     """Scrape Ante agent available models from settings.json."""
-    from thegent.models.ante_scraper import scrape_ante_models
+    from thegent_core.models.ante_scraper import scrape_ante_models
 
     return scrape_ante_models()
 
@@ -435,7 +435,7 @@ async def scrape_all_async(settings: ThegentSettings | None = None) -> dict[str,
     Filters blacklisted models; unparseable allowed. Per-provider fallback on adapter failure.
     SA2: gemini, SA3: claude, SA4: cursor/copilot, SA5: proxy (antigravity/minimax/glm).
     """
-    from thegent.models.catalog import filter_models_for_provider
+    from thegent_core.models.catalog import filter_models_for_provider
 
     settings = settings or ThegentSettings()
     by_provider: dict[str, list[str]] = {}

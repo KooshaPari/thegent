@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from thegent.cache.multi_level import MultiLevelCache
+from thegent_core.cache.multi_level import MultiLevelCache
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 # Default formula parameters (overridable via config)
 _TPS_MAX = 200.0
@@ -28,7 +28,7 @@ def _make_speed_cache() -> MultiLevelCache:
     config is not yet fully initialised (L2 is disabled in that case).
     """
     try:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         l2_dir = settings.cache_dir / "speed-index"
@@ -45,7 +45,7 @@ _CACHE: MultiLevelCache = _make_speed_cache()
 def _get_params(settings: ThegentSettings | None) -> tuple[float, float]:
     """Get tps_max and latency_max from settings or defaults."""
     try:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         s = settings or ThegentSettings()
         return (
@@ -99,7 +99,7 @@ def get_model_provider_speed_indices(
     Uses proxy metrics when reachable; falls back to Route.latency_ms.
     """
     try:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         s = settings or ThegentSettings()
     except Exception:
@@ -113,8 +113,8 @@ def get_model_provider_speed_indices(
         if cached is not None:
             return cached
 
-    from thegent.agents.cliproxy_manager import fetch_provider_metrics
-    from thegent.models.cost_values import _iter_catalog_routes
+    from thegent_agents.agents.cliproxy_manager import fetch_provider_metrics
+    from thegent_core.models.cost_values import _iter_catalog_routes
 
     metrics = fetch_provider_metrics(s) if s else None
 
@@ -152,7 +152,7 @@ def get_model_provider_speed_index(
 
     Returns 0.5 if unknown (neutral).
     """
-    from thegent.models.catalog import normalize_model_id
+    from thegent_core.models.catalog import normalize_model_id
 
     indices = get_model_provider_speed_indices(settings)
     canonical = normalize_model_id(model_id)
@@ -169,7 +169,7 @@ def get_model_best_speed_index(
 
     Used when provider is unknown (e.g. ObjectiveSelector).
     """
-    from thegent.models.catalog import normalize_model_id
+    from thegent_core.models.catalog import normalize_model_id
 
     indices = get_model_provider_speed_indices(settings)
     canonical = normalize_model_id(model_id)

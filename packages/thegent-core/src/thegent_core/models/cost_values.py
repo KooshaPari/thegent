@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 # Fallback $/1k (input, output) when proxy unreachable. From _GLM_OFFER_COST and catalog.
 _PROVIDER_FALLBACK: dict[str, tuple[float, float]] = {
@@ -49,10 +49,10 @@ def get_model_provider_costs(settings: ThegentSettings | None = None) -> dict[st
     Returns: {model_id: {provider: (input_per_1k_usd, output_per_1k_usd)}}
     Uses proxy metrics when reachable; falls back to static values.
     """
-    from thegent.agents.cliproxy_manager import fetch_provider_metrics
+    from thegent_agents.agents.cliproxy_manager import fetch_provider_metrics
 
     try:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = settings or ThegentSettings()
     except Exception:
@@ -87,8 +87,8 @@ def get_model_provider_costs(settings: ThegentSettings | None = None) -> dict[st
 
 def _iter_catalog_routes() -> list[tuple[str, list]]:
     """Yield (model_id, routes) from catalog (static + scraped)."""
-    from thegent.models.catalog import _get_catalog, _scraped_to_routes
-    from thegent.models.scrapers import get_scraped_catalog
+    from thegent_core.models.catalog import _get_catalog, _scraped_to_routes
+    from thegent_core.models.scrapers import get_scraped_catalog
 
     catalog = _get_catalog()
     out: list[tuple[str, list]] = list(catalog.items())
@@ -114,7 +114,7 @@ def get_cost_for_model_provider(
 
     Returns (0.001, 0.002) if unknown.
     """
-    from thegent.models.catalog import normalize_model_id
+    from thegent_core.models.catalog import normalize_model_id
 
     costs = get_model_provider_costs(settings)
     canonical = normalize_model_id(model_id)

@@ -17,7 +17,7 @@ def _lazy_import_adapters():
     """Lazy import adapter module (only when first accessed)."""
     global _adapters_module
     if _adapters_module is None:
-        import thegent.contracts.adapters as _adapters_module
+        import thegent_core.contracts.adapters as _adapters_module
     return _adapters_module
 
 
@@ -32,13 +32,13 @@ def __getattr__(name: str):
 
 # Import adapters lazily - only when explicitly accessed
 # This defers adapter registration until first use, reducing startup time
-from thegent.contracts.csm import (
+from thegent_core.contracts.csm import (
     CanonicalStructuredMessage,
     CSMPhase,
     CSMStatus,
 )
-from thegent.contracts.events import ChunkEvent, EvidenceEvent, PolicyEvent
-from thegent.contracts.registry import (
+from thegent_core.contracts.events import ChunkEvent, EvidenceEvent, PolicyEvent
+from thegent_core.contracts.registry import (
     CONTRACT_SCHEMA_VERSION,
     ContractRegistry,
     ContractVersion,

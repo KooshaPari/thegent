@@ -7,7 +7,7 @@ and evaluates migration window compliance.
 from datetime import UTC, datetime
 from typing import Any
 
-from thegent.contracts.registry import get_registry
+from thegent_core.contracts.registry import get_registry
 
 
 class MigrationController:

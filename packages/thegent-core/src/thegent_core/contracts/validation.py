@@ -6,7 +6,7 @@ Enforces invariants and cross-tag logic for CanonicalStructuredMessage (CSM).
 from collections.abc import Callable
 from typing import Any
 
-from thegent.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
+from thegent_core.contracts.csm import CanonicalStructuredMessage, CSMPhase, CSMStatus
 
 
 class SemanticValidationError(Exception):

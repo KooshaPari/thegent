@@ -3,7 +3,7 @@
 Re-exports the current schema version for convenience.
 """
 
-from thegent.contracts.csm.v1 import (
+from thegent_core.contracts.csm.v1 import (
     CanonicalStructuredMessage,
     CSMPhase,
     CSMStatus,

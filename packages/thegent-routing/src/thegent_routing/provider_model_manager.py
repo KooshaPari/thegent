@@ -18,18 +18,18 @@ from typing import Any
 
 import httpx
 
-from thegent.agents.cliproxy_manager import _ensure_config
-from thegent.config import ThegentSettings
-from thegent.provider_model_manager_cliproxy import get_api_key_from_compat
-from thegent.provider_model_manager_io import load_yaml
-from thegent.use_cases.manage_models import (
+from thegent_agents.agents.cliproxy_manager import _ensure_config
+from thegent_core.config import ThegentSettings
+from thegent_routing.provider_model_manager_cliproxy import get_api_key_from_compat
+from thegent_routing.provider_model_manager_io import load_yaml
+from thegent_core.use_cases.manage_models import (
     add_common_alias as _add_common_alias,
     add_model_alias as _add_model_alias,
     list_models as _list_models,
     remove_common_alias as _remove_common_alias,
     remove_model_alias as _remove_model_alias,
 )
-from thegent.use_cases.manage_providers import (
+from thegent_core.use_cases.manage_providers import (
     add_provider as _add_provider,
     delete_provider as _delete_provider,
     get_provider,
@@ -171,7 +171,7 @@ def remove_common_alias(alias: str) -> tuple[bool, str]:
 
 def list_credentials() -> list[dict[str, Any]]:
     """List all configured credentials (without showing actual keys)."""
-    from thegent.provider_model_manager_io import load_json
+    from thegent_routing.provider_model_manager_io import load_json
 
     settings = ThegentSettings()
     config_path = _ensure_config(settings)
@@ -484,7 +484,7 @@ def discover_models(
 # Scoring functions moved to provider_model_scoring.py
 
 # Re-export scoring functions for backward compatibility
-from thegent.provider_model_scoring import (
+from thegent_routing.provider_model_scoring import (
     add_custom_benchmark,
     add_model_index,
     add_model_modality,
@@ -501,7 +501,7 @@ from thegent.provider_model_scoring import (
 )
 
 # Re-export form functions
-from thegent.provider_forms import run_provider_form
+from thegent_routing.provider_forms import run_provider_form
 
 __all__ = [
     # Provider CRUD

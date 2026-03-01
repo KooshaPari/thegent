@@ -10,10 +10,10 @@ import orjson as json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from thegent.cache.multi_level import MultiLevelCache
+from thegent_core.cache.multi_level import MultiLevelCache
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 # Default weights (terminal-first)
 _WEIGHT_TB2 = 0.7
@@ -38,7 +38,7 @@ def _make_quality_cache() -> MultiLevelCache:
     config is not yet fully initialised (L2 is disabled in that case).
     """
     try:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         l2_dir = settings.cache_dir / "quality-index"
@@ -203,7 +203,7 @@ def get_model_quality_index(
 
     Uses benchmarks.json when available; falls back to Route.accuracy_score.
     """
-    from thegent.models.catalog import ModelCatalog, normalize_model_id
+    from thegent_core.models.catalog import ModelCatalog, normalize_model_id
 
     canonical = normalize_model_id(model_id)
     path = Path(benchmarks_path) if benchmarks_path else _resolve_benchmarks_path(settings)
@@ -234,7 +234,7 @@ def get_model_provider_quality_indices(
     Same model has same quality across providers; structure matches cost/speed.
     """
     try:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         s = settings or ThegentSettings()
     except Exception:
@@ -248,7 +248,7 @@ def get_model_provider_quality_indices(
         if cached is not None:
             return cached
 
-    from thegent.models.cost_values import _iter_catalog_routes
+    from thegent_core.models.cost_values import _iter_catalog_routes
 
     benchmarks = _load_benchmarks(path)
     w_tb2 = getattr(s, "quality_index_weight_tb2", _WEIGHT_TB2) if s else _WEIGHT_TB2
@@ -290,7 +290,7 @@ def get_model_provider_quality_index(
 
     Returns 0.5 if unknown.
     """
-    from thegent.models.catalog import normalize_model_id
+    from thegent_core.models.catalog import normalize_model_id
 
     indices = get_model_provider_quality_indices(settings)
     canonical = normalize_model_id(model_id)
@@ -359,7 +359,7 @@ def get_model_quality_for_role(
         return get_model_quality_index(model_id, settings, benchmarks_path)
     path = Path(benchmarks_path) if benchmarks_path else _resolve_benchmarks_path(settings)
     benchmarks = _load_benchmarks(path)
-    from thegent.models.catalog import normalize_model_id
+    from thegent_core.models.catalog import normalize_model_id
 
     canonical = normalize_model_id(model_id)
     task_type_weights = _role_weights_to_task_type_weights(role_benchmark_weights)
@@ -386,10 +386,10 @@ def get_all_model_quality_indices(
     """
     Returns: {model_id: quality_index}
     """
-    from thegent.models.cost_values import _iter_catalog_routes
+    from thegent_core.models.cost_values import _iter_catalog_routes
 
     try:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         s = settings or ThegentSettings()
     except Exception:

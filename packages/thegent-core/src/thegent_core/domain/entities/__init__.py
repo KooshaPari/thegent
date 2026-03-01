@@ -4,8 +4,8 @@ These are immutable or nearly-immutable data classes representing core domain co
 No I/O, no side effects, no external dependencies.
 """
 
-from thegent.domain.entities.task import Task, TaskMetadata, TaskOutput, TaskStep
-from thegent.domain.entities.run import RunMeta, RunState, CheckpointMeta, ContinuityPacket, MAIFArtifact
+from thegent_core.domain.entities.task import Task, TaskMetadata, TaskOutput, TaskStep
+from thegent_core.domain.entities.run import RunMeta, RunState, CheckpointMeta, ContinuityPacket, MAIFArtifact
 
 __all__ = [
     # Task entities

@@ -22,9 +22,9 @@ from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
-from thegent.agents.base import AgentRunner, RunResult
-from thegent.trace.recorder import RecorderConfig, TraceRecorder
-from thegent.trace.schema import ToolCallRecord
+from thegent_agents.agents.base import AgentRunner, RunResult
+from thegent_observability.trace.recorder import RecorderConfig, TraceRecorder
+from thegent_observability.trace.schema import ToolCallRecord
 
 
 @dataclass

@@ -6,7 +6,7 @@ import orjson as json
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 # Paths to definition files used by provider_model_manager.
 CLIPROXY_DATA_DIR = Path(__file__).parent / "agents" / "cliproxy_data"

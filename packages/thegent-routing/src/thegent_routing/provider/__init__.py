@@ -7,8 +7,8 @@ This package contains:
 - provider/discovery.py: Model discovery and scoring
 
 Import from here:
-    from thegent.provider import list_providers, list_models
-    from thegent.provider.crud import get_provider
+    from thegent_routing.provider import list_providers, list_models
+    from thegent_routing.provider.crud import get_provider
 """
 
 from .crud import (

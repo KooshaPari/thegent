@@ -5,8 +5,8 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Literal, cast, get_args
 
-from thegent.utils.provider_names import normalize_provider_name
-from thegent.infra import get_cache
+from thegent_core.utils.provider_names import normalize_provider_name
+from thegent_core.infra import get_cache
 
 # Canonical model ID -> list of routes (provider, backend, model_alias, priority)
 # Lower priority = prefer first when using prefer_direct
@@ -275,7 +275,7 @@ def _get_catalog() -> dict[str, list[Route]]:
 
         # WP-X8: Load custom model catalog from user configuration
         try:
-            from thegent.config import get_settings
+            from thegent_core.config import get_settings
 
             settings = get_settings()
             custom_path = settings.custom_models_path
@@ -347,7 +347,7 @@ class ModelCatalog:
             return static_routes
 
         try:
-            from thegent.models.scrapers import get_scraped_catalog
+            from thegent_core.models.scrapers import get_scraped_catalog
 
             scraped = get_scraped_catalog()
             if not scraped:
@@ -381,7 +381,7 @@ class ModelCatalog:
                     by_provider[r.provider].append(model_id)
         if use_scraped:
             try:
-                from thegent.models.scrapers import get_scraped_catalog
+                from thegent_core.models.scrapers import get_scraped_catalog
 
                 scraped = get_scraped_catalog()
                 if scraped:
@@ -401,7 +401,7 @@ class ModelCatalog:
         catalog = dict(_get_catalog())
         if use_scraped:
             try:
-                from thegent.models.scrapers import get_scraped_catalog
+                from thegent_core.models.scrapers import get_scraped_catalog
 
                 scraped = get_scraped_catalog(use_cache=use_cache)
                 if scraped:
@@ -531,7 +531,7 @@ def resolve_route(
     # Sort based on policy
     if policy == "pareto":
         try:
-            from thegent.utils.routing_impl.pareto_router import (
+            from thegent_core.utils.routing_impl.pareto_router import (
                 Offer,
                 _get_quality,
                 _get_shadow_multiplier,

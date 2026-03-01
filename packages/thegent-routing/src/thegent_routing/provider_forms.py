@@ -15,7 +15,7 @@ console = Console()
 
 def _get_manager_functions():
     """Lazy import to avoid circular dependency."""
-    from thegent.provider_model_manager import (
+    from thegent_routing.provider_model_manager import (
         add_api_key,
         add_provider,
         delete_provider,

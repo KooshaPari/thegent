@@ -30,7 +30,7 @@ def _setup_otel():
         provider = TracerProvider(resource=resource)
 
         # Enable console export if otel_console is set
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         if ThegentSettings().otel_console:
             processor = BatchSpanProcessor(ConsoleSpanExporter())

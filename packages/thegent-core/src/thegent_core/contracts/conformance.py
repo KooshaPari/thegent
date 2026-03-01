@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from thegent.contracts.adapters import normalize_output
-from thegent.contracts.csm import CSMStatus
+from thegent_core.contracts.adapters import normalize_output
+from thegent_core.contracts.csm import CSMStatus
 
 
 @dataclass
@@ -160,7 +160,7 @@ def run_conformance_suite(
 
     # Drift alarm (G-CA-03 C2): run ContractTelemetry.detect_drift + budget check when session_dir provided
     if session_dir is not None:
-        from thegent.contracts.telemetry import ContractTelemetry
+        from thegent_core.contracts.telemetry import ContractTelemetry
 
         ct = ContractTelemetry(session_dir)
         drift_issues = ct.detect_drift(window_size=drift_window)

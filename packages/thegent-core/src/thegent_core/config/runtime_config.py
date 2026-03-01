@@ -8,13 +8,13 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from thegent.config_defaults import (
+from thegent_core.config_defaults import (
     default_cost_budget_by_category,
     default_hitl_checkpoints,
     default_mac_keep_awake_agents,
     default_sandbox_env_allowlist,
 )
-from thegent.config_parsers import parse_retention_by_domain
+from thegent_core.config_parsers import parse_retention_by_domain
 
 
 class RuntimeConfig(BaseSettings):

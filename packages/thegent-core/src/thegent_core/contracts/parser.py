@@ -13,7 +13,7 @@ from collections.abc import Callable
 from enum import StrEnum
 from typing import Any
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _thegent_parser: Any = None
 _log = logging.getLogger(__name__)

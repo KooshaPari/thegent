@@ -18,7 +18,7 @@ except ImportError:
     fuzz = None
     process = None
 
-from thegent.provider_model_manager_io import (
+from thegent_routing.provider_model_manager_io import (
     MODEL_INDICES_PATH as _MODEL_INDICES_PATH,
     load_json as _load_json,
     save_json as _save_json,

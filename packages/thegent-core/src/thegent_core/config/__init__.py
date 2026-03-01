@@ -10,10 +10,10 @@ The main ThegentSettings class is the primary entry point and is designed to be
 backward compatible with the original monolithic configuration class.
 """
 
-from thegent.config.settings import ThegentSettings, get_settings
-from thegent.config.model_config import ModelConfig
-from thegent.config.path_config import PathConfig
-from thegent.config.runtime_config import RuntimeConfig
+from thegent_core.config.settings import ThegentSettings, get_settings
+from thegent_core.config.model_config import ModelConfig
+from thegent_core.config.path_config import PathConfig
+from thegent_core.config.runtime_config import RuntimeConfig
 
 __all__ = [
     "ThegentSettings",

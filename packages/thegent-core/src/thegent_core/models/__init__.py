@@ -1,6 +1,6 @@
 """Model catalog and distributed routing."""
 
-from thegent.models.catalog import (
+from thegent_core.models.catalog import (
     CatalogView,
     ModelCatalog,
     ResolvedRoute,
@@ -12,16 +12,16 @@ from thegent.models.catalog import (
     resolve_route_contract,
     route_contract,
 )
-from thegent.models.quality_values import invalidate_quality_index_cache
-from thegent.models.scrapers import (
+from thegent_core.models.quality_values import invalidate_quality_index_cache
+from thegent_core.models.scrapers import (
     SCRAPER_REGISTRY,
     ModelScraper,
     get_scraped_catalog,
     invalidate_models_cache,
     scrape_all,
 )
-from thegent.models.speed_values import invalidate_speed_index_cache
-from thegent.models.task_io import TaskError, TaskInput, TaskOutput, TaskSpec
+from thegent_core.models.speed_values import invalidate_speed_index_cache
+from thegent_core.models.task_io import TaskError, TaskInput, TaskOutput, TaskSpec
 
 __all__ = [
     "SCRAPER_REGISTRY",
