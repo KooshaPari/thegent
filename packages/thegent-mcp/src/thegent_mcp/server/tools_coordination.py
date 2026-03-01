@@ -10,7 +10,7 @@ from fastmcp.tools.tool import ToolResult
 
 if TYPE_CHECKING:
     from logging import Logger
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 
 def thegent_wait_impl(
@@ -180,7 +180,7 @@ def thegent_pause_impl(
     settings_factory: type[ThegentSettings],
 ) -> ToolResult:
     logger.info("thegent_pause session_id=%s", session_id)
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     start_time = time.perf_counter()
     settings = settings_factory()
@@ -202,7 +202,7 @@ def thegent_resume_impl(
     settings_factory: type[ThegentSettings],
 ) -> ToolResult:
     logger.info("thegent_resume session_id=%s", session_id)
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     start_time = time.perf_counter()
     settings = settings_factory()

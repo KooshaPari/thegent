@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any
 import structlog
 from rich.console import Console
 
-from thegent.agents import get_fallback_agents, get_runner, resolve_agent
+from thegent_agents.agents import get_fallback_agents, get_runner, resolve_agent
 from thegent_agents.resilience import is_usage_limit
 from thegent_agents.base import AgentRunner, RunResult
 from thegent_cli.commands.impl import _apply_pareto_routing, _inject_time_constraint
@@ -24,11 +24,11 @@ from thegent_cli.commands.impl import _resolve_agent_model
 from thegent_cli.commands.observability_impl import escalate_add_impl
 from thegent_cli.services import run_session_helpers as _rsh
 from thegent_cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
-from thegent.config import ThegentSettings
-from thegent.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
-from thegent.maif import MAIFRunner
+from thegent_core.config import ThegentSettings
+from thegent_execution.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
+from thegent_core.maif import MAIFRunner
 from thegent_agents.registry import list_agent_names
-from thegent.output_parser import condense_stream_to_display, extract_condensed
+from thegent_core.output_parser import condense_stream_to_display, extract_condensed
 from thegent_cli.commands.session_meta_impl import (
     _build_continuation_prompt,
     _save_session_meta,
@@ -48,7 +48,7 @@ _new_session_id = _rsh_impl.new_session_id
 _session_paths = _rsh_impl.session_paths
 
 if TYPE_CHECKING:
-    from thegent.config_provider import ConfigProvider
+    from thegent_core.config_provider import ConfigProvider
 
 
 def _bind_impl_namespace(impl_ns: Any) -> None:
@@ -111,14 +111,14 @@ def run_impl_core(
     _bind_impl_namespace(impl_ns)
 
     settings = ThegentSettings()
-    from thegent.cost.tracker import get_run_cost_tracker
+    from thegent_routing.cost.tracker import get_run_cost_tracker
 
     tracker = get_run_cost_tracker()
     rid = run_id or f"run_{uuid.uuid4().hex[:8]}"
     tracker.start_run(rid)
 
     # WP-Y4: Budget check before starting
-    from thegent.cost import BudgetAlertSystem
+    from thegent_routing.cost import BudgetAlertSystem
 
     alert_system = BudgetAlertSystem.from_settings(settings)
     hourly_spend = alert_system.get_hourly_spend()
@@ -150,7 +150,7 @@ def run_impl_core(
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
         try:
-            from thegent.utils.routing_impl.auto_router import auto_route
+            from thegent_core.utils.routing_impl.auto_router import auto_route
 
             ar = auto_route(
                 prompt=prompt,
@@ -204,8 +204,8 @@ def run_impl_core(
             model = "gemini-3-flash"
 
     if agent is None and model:
-        from thegent.models import normalize_model_id
-        from thegent.models.catalog import ModelCatalog, resolve_route
+        from thegent_core.models import normalize_model_id
+        from thegent_core.models.catalog import ModelCatalog, resolve_route
 
         model_id = normalize_model_id(model)
         route = resolve_route(model_id, provider_hint=provider)
@@ -223,8 +223,8 @@ def run_impl_core(
     agent = resolve_agent(agent or "")
 
     # WP-X1/V7: Contract Migration & Version Negotiation
-    from thegent.contracts.migration import MigrationController
-    from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
+    from thegent_core.contracts.migration import MigrationController
+    from thegent_core.contracts.registry import CONTRACT_SCHEMA_VERSION
 
     migrator = MigrationController()
     requested_version = contract_version or CONTRACT_SCHEMA_VERSION
@@ -311,7 +311,7 @@ def run_impl_core(
     settings = ThegentSettings()
     if settings.input_guardrails_enabled:
         try:
-            from thegent.governance.input_guardrails import guardrails_from_env
+            from thegent_audit.governance.input_guardrails import guardrails_from_env
 
             guardrails = guardrails_from_env()
             gr = guardrails.check(prompt=prompt, agent=agent or "", model=model, cwd=cwd)
@@ -326,7 +326,7 @@ def run_impl_core(
             _log.debug("Input guardrail check failed; continuing without guardrail result: %s", exc)
 
     # Concurrency control (WP-5001): Advanced resource-based dynamic limits
-    from thegent.execution import ConcurrencyController
+    from thegent_execution.execution import ConcurrencyController
 
     # Detect harness type from agent or environment
     harness_type = None
@@ -354,7 +354,7 @@ def run_impl_core(
         # WP-16002: Update teammate delegation status if this was a sub-task
         if task_id:
             try:
-                from thegent.governance.teammates import TeammateManager
+                from thegent_audit.governance.teammates import TeammateManager
 
                 mgr = TeammateManager(settings.cache_dir / "teammates.json")
                 mgr.update_status(
@@ -365,7 +365,7 @@ def run_impl_core(
 
         # Get current resource-based limit and bottlenecks for error message
         if settings.concurrency_load_based:
-            from thegent.orchestration.resource.load_based_limits import (
+            from thegent_execution.orchestration.resource.load_based_limits import (
                 LimitGateConfig,
                 compute_dynamic_limit,
                 sample_resources,
@@ -420,7 +420,7 @@ def run_impl_core(
                     "replayed": True,
                 }
 
-    from thegent.execution import (
+    from thegent_execution.execution import (
         Auditor,
         CircuitBreakerRegistry,
         OverrideRegistry,
@@ -451,7 +451,7 @@ def run_impl_core(
         }
 
     # WP-4004: Interruption Controls
-    from thegent.execution import InterruptionTracker
+    from thegent_execution.execution import InterruptionTracker
 
     it = InterruptionTracker(settings.session_dir)
     fatigue = it.get_fatigue_score()
@@ -465,7 +465,7 @@ def run_impl_core(
 
     # WP-4005: State Freshness Checks
     # ROB-011: Stale-state detection with freshness timestamps
-    from thegent.execution import FreshnessValidator
+    from thegent_execution.execution import FreshnessValidator
 
     fv = FreshnessValidator(settings.session_dir)
     registry_path = getattr(registry, "registry_path", None)
@@ -484,7 +484,7 @@ def run_impl_core(
             return {"error": f"ROB-011: State freshness violation in critical lane: {freshness_issues}", "exit_code": 1}
 
     # WP-5002: Burst Load Classification
-    from thegent.execution import DeferralQueue, LoadClassifier
+    from thegent_execution.execution import DeferralQueue, LoadClassifier
 
     lc = LoadClassifier(settings.session_dir)
     load_level = lc.get_load_level()
@@ -500,8 +500,8 @@ def run_impl_core(
     _task_spec: Any = None  # thegent.models.task_io.TaskSpec when available
     if task_id:
         try:
-            from thegent.models.task_io import TaskInput, TaskSpec
-            from thegent.task import parse_task_file
+            from thegent_core.models.task_io import TaskInput, TaskSpec
+            from thegent_execution.task import parse_task_file
 
             # Try to find task file
             tasks_dir = cwd / "tasks" if cwd else Path("tasks")
@@ -605,7 +605,7 @@ def run_impl_core(
 
     # G-GP-05: HITL Pause Flow
     if pol_res == "pause":
-        from thegent.execution import CheckpointRegistry
+        from thegent_execution.execution import CheckpointRegistry
 
         registry.register_start(run_meta)
         registry.register_pause(run_meta.run_id, reason=pol_reason)
@@ -648,7 +648,7 @@ def run_impl_core(
     # L3 Memory: load past context for this agent (optional; no-op when key absent)
     import asyncio as _asyncio
 
-    from thegent.memory.memory_manager import MemoryManager as _MemoryManager
+    from thegent_core.memory.memory_manager import MemoryManager as _MemoryManager
 
     _mem_mgr = _MemoryManager()
     if _mem_mgr.enabled:
@@ -665,7 +665,7 @@ def run_impl_core(
 
     agents_to_try: list[str] = [agent] if agent else []
     if model:
-        from thegent.models import ModelCatalog, normalize_model_id
+        from thegent_core.models import ModelCatalog, normalize_model_id
 
         model_id = normalize_model_id(model)
         routes = ModelCatalog.routes_for(model_id)
@@ -685,8 +685,8 @@ def run_impl_core(
 
     # WP-X6: Fallback Control Plane
     from thegent_agents.state_machine import FallbackStateMachine
-    from thegent.contracts.policy import FallbackPolicy
-    from thegent.contracts.telemetry import ContractTelemetry, rank_providers_by_parser_quality
+    from thegent_core.contracts.policy import FallbackPolicy
+    from thegent_core.contracts.telemetry import ContractTelemetry, rank_providers_by_parser_quality
 
     telemetry = ContractTelemetry(settings.session_dir)
     # G-CA-02 B2: Parser-quality routing - order providers by confidence/fallback rate
@@ -768,7 +768,7 @@ def run_impl_core(
     shadow_env = None
 
     if use_shadow:
-        from thegent.orchestration.shadow import ShadowWorkspace
+        from thegent_execution.orchestration.shadow import ShadowWorkspace
 
         shadow_ws = ShadowWorkspace(original_cwd, run_meta.run_id)
         if shadow_ws.create():
@@ -782,7 +782,7 @@ def run_impl_core(
     # MTSP-15: Resource Locking (Non-worktree coordination)
     locked_tokens = []
     if not use_shadow and lock:
-        from thegent.coordination.file_coordination import FileLeaseRegistry
+        from thegent_agents.coordination.file_coordination import FileLeaseRegistry
 
         lease_registry = FileLeaseRegistry(settings.session_dir / "leases")
         for resource in lock:
@@ -803,7 +803,7 @@ def run_impl_core(
 
     settings = ThegentSettings()
     _keepalive_interval = settings.keepalive_interval
-    from thegent.ux.keepalive import keepalive as _keepalive
+    from thegent_cli.ux.keepalive import keepalive as _keepalive
 
     try:
         with _keepalive(interval_s=_keepalive_interval):
@@ -819,7 +819,7 @@ def run_impl_core(
     finally:
         # Release non-worktree locks
         if locked_tokens:
-            from thegent.coordination.file_coordination import FileLeaseRegistry
+            from thegent_agents.coordination.file_coordination import FileLeaseRegistry
 
             lease_registry = FileLeaseRegistry(settings.session_dir / "leases")
             for path, token in locked_tokens:
@@ -860,7 +860,7 @@ def run_impl_core(
 
         # WP-2008: DLQ Enqueue on Failure
         if lane == "critical":
-            from thegent.execution import DLQManager
+            from thegent_execution.execution import DLQManager
 
             dlq = DLQManager(settings.session_dir)
             dlq.enqueue(run_meta, f"Run {status}: {result.stderr if result else 'No result'}")
@@ -895,7 +895,7 @@ def run_impl_core(
     settings = ThegentSettings()
     if settings.cost_tracking or settings.cost_tracking_enabled:
         try:
-            from thegent.cost.aggregator import CostEstimator
+            from thegent_routing.cost.aggregator import CostEstimator
 
             est = CostEstimator()
             cost_usd = est.estimate(
@@ -924,7 +924,7 @@ def run_impl_core(
     # WP-16002: Update teammate delegation status if this was a sub-task
     if run_meta.task_id:
         try:
-            from thegent.governance.teammates import TeammateManager
+            from thegent_audit.governance.teammates import TeammateManager
 
             mgr = TeammateManager(settings.cache_dir / "teammates.json")
             # Use condensed summary for result_summary
@@ -941,7 +941,7 @@ def run_impl_core(
 
         # WP-2007: Evidence Linting
         if norm_res and norm_res.csm:
-            from thegent.execution import EvidenceLinter
+            from thegent_execution.execution import EvidenceLinter
 
             linter = EvidenceLinter(settings.session_dir)
             lint_issues = linter.lint(norm_res.csm)
@@ -997,14 +997,14 @@ def run_impl_core(
         payload["route_request"] = route_request
 
     # WP-Y4: End cost tracking and save summary
-    from thegent.cost.tracker import get_run_cost_tracker
+    from thegent_routing.cost.tracker import get_run_cost_tracker
 
     tracker = get_run_cost_tracker()
     tracker.end_run()
 
     # WP-DX-024: Always write conversation dumps to docs/ (research-always-write-dumps)
     try:
-        from thegent.research.always_write_dumps import ConversationDumper
+        from thegent_planning.research.always_write_dumps import ConversationDumper
 
         # Use workspace docs/dumps if it exists, else fallback to session_dir
         docs_dir = Path("docs/dumps")
@@ -1026,7 +1026,7 @@ def run_impl_core(
             },
         )
         try:
-            from thegent.orchestration.state.session_scraper import SessionScraper
+            from thegent_execution.orchestration.state.session_scraper import SessionScraper
 
             SessionScraper(cwd).persist_snapshot(trigger="error" if is_error else "tool_use")
         except Exception as e:
@@ -1083,7 +1083,7 @@ def bg_impl_core(
     import sys
 
     settings = ThegentSettings()
-    from thegent.cost.tracker import get_run_cost_tracker
+    from thegent_routing.cost.tracker import get_run_cost_tracker
 
     tracker = get_run_cost_tracker()
     rid = run_id or f"bg_{uuid.uuid4().hex[:8]}"
@@ -1097,7 +1097,7 @@ def bg_impl_core(
     # Auto router: agent="auto" or model="auto" → classify + Pareto select
     if settings.auto_router_enabled and (agent == "auto" or model == "auto"):
         try:
-            from thegent.utils.routing_impl.auto_router import auto_route
+            from thegent_core.utils.routing_impl.auto_router import auto_route
 
             ar = auto_route(
                 prompt=prompt,
@@ -1120,8 +1120,8 @@ def bg_impl_core(
             model = "gemini-3-flash"
 
     if agent is None and model:
-        from thegent.models import normalize_model_id
-        from thegent.models.catalog import ModelCatalog, resolve_route
+        from thegent_core.models import normalize_model_id
+        from thegent_core.models.catalog import ModelCatalog, resolve_route
 
         model_id = normalize_model_id(model)
         route = resolve_route(model_id, provider_hint=provider)
@@ -1140,8 +1140,8 @@ def bg_impl_core(
     assert isinstance(agent, str), "agent must be str after resolution"
 
     # WP-X1/V7: Contract Migration & Version Negotiation
-    from thegent.contracts.migration import MigrationController
-    from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
+    from thegent_core.contracts.migration import MigrationController
+    from thegent_core.contracts.registry import CONTRACT_SCHEMA_VERSION
 
     migrator = MigrationController()
     requested_version = contract_version or CONTRACT_SCHEMA_VERSION
@@ -1158,7 +1158,7 @@ def bg_impl_core(
     # Prevent silent quality regression by blocking version downgrades in critical lanes
     if lane == "critical" and requested_version != CONTRACT_SCHEMA_VERSION:
         # Check if requested version is older than current
-        from thegent.contracts.registry import get_registry
+        from thegent_core.contracts.registry import get_registry
 
         registry = get_registry()
         current_cv = registry.get("csm", CONTRACT_SCHEMA_VERSION)
@@ -1234,7 +1234,7 @@ def bg_impl_core(
     if speculative:
         _log.info("Speculative execution active in background.")
 
-    from thegent.execution import (
+    from thegent_execution.execution import (
         Auditor,
         CircuitBreakerRegistry,
         OverrideRegistry,
@@ -1328,7 +1328,7 @@ def bg_impl_core(
         return {"error": f"Policy Violation: {pol_reason}", "exit_code": 1}
 
     if pol_res == "pause":
-        from thegent.execution import CheckpointRegistry
+        from thegent_execution.execution import CheckpointRegistry
 
         registry.register_start(run_meta)
         registry.register_pause(run_meta.run_id, reason=pol_reason)
@@ -1360,7 +1360,7 @@ def bg_impl_core(
 
     # WP-RC-01: Remote Compute Offload (Phase 4)
     if remote:
-        from thegent.research.remote_compute import RemoteComputeClient
+        from thegent_planning.research.remote_compute import RemoteComputeClient
 
         client = RemoteComputeClient(remote)
 
@@ -1451,7 +1451,7 @@ def bg_impl_core(
     stderr_handle = p["stderr"].open("wb")
 
     # macOS sandbox wrapping (THGENT_SANDBOX_LEVEL)
-    from thegent.security.macos_sandbox import MacOSSandbox, SandboxLevel
+    from thegent_audit.security.macos_sandbox import MacOSSandbox, SandboxLevel
 
     _sandbox = MacOSSandbox.from_env()  # from_env() is fine, it just returns cls()
     _sandbox_level = MacOSSandbox.level_from_settings()

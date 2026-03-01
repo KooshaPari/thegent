@@ -35,7 +35,7 @@ _DEFAULT_STORAGE_BASE = Path("~/.thegent/mcp").expanduser()
 
 def _storage_base() -> Path:
     """Return resolved base directory from settings."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     if settings.mcp_storage_dir:

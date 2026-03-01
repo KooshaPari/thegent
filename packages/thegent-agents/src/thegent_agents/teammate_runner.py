@@ -6,8 +6,8 @@ from pathlib import Path
 
 from thegent_agents.base import AgentRunner, RunResult
 from thegent_agents.codex_proxy import CodexProxyRunner
-from thegent.config import ThegentSettings
-from thegent.governance.teammates import TeammateManager
+from thegent_core.config import ThegentSettings
+from thegent_audit.governance.teammates import TeammateManager
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from thegent_agents.base import AgentRunner, RunResult
-from thegent.orchestration.state.tasks import TaskRole, get_role_prompt
+from thegent_execution.orchestration.state.tasks import TaskRole, get_role_prompt
 
 
 class RoleAgentRunner(AgentRunner):

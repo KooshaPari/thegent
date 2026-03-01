@@ -7,7 +7,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.audit.shadow_audit_git import GitJournalEnhanced
+from thegent_audit.audit.shadow_audit_git import GitJournalEnhanced
 
 console = Console()
 app = typer.Typer(help="Audit system health, security, and planning risk.")

@@ -11,7 +11,7 @@ from cachetools import TTLCache
 
 from thegent_cli.commands import session_owner_helpers
 from thegent_cli.services import run_model_helpers, session_id_helpers, session_path_helpers
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 # QW-002: _resolve_cwd() cache with TTL to reduce path resolution overhead.
 # Mission-Critical Rigor (G-FM-04): Use TTLCache for automatic expiration.

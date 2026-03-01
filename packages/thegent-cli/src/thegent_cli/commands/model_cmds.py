@@ -130,7 +130,7 @@ def speed_index_cmd(
     Uses CLIProxyAPIPlus metrics (tps_1m, latency_p50_ms, success_rate) when reachable;
     falls back to Route.latency_ms.
     """
-    from thegent.models.speed_values import (
+    from thegent_core.models.speed_values import (
         get_model_provider_speed_indices,
         invalidate_speed_index_cache,
     )
@@ -159,7 +159,7 @@ def quality_index_cmd(
     Uses benchmarks.json (Terminal Bench 2.0, SWE-Bench, AIME) when available;
     falls back to Route.accuracy_score.
     """
-    from thegent.models.quality_values import (
+    from thegent_core.models.quality_values import (
         get_model_provider_quality_indices,
         invalidate_quality_index_cache,
     )
@@ -185,12 +185,12 @@ def metrics_cmd(
     limit: int = 50,
 ) -> None:
     """Show cost, speed, and quality indices for all model-provider pairs (unified view)."""
-    from thegent.models.cost_values import get_model_provider_costs
-    from thegent.models.quality_values import (
+    from thegent_core.models.cost_values import get_model_provider_costs
+    from thegent_core.models.quality_values import (
         get_model_provider_quality_indices,
         invalidate_quality_index_cache,
     )
-    from thegent.models.speed_values import (
+    from thegent_core.models.speed_values import (
         get_model_provider_speed_indices,
         invalidate_speed_index_cache,
     )
@@ -213,7 +213,7 @@ def cost_values_cmd(format: str | None = None) -> None:
 
     Uses CLIProxyAPIPlus metrics when reachable; falls back to static values.
     """
-    from thegent.models.cost_values import get_model_provider_costs
+    from thegent_core.models.cost_values import get_model_provider_costs
 
     costs = get_model_provider_costs()
     data = flatten_cost_values(costs)
@@ -230,14 +230,14 @@ def resolve_model_route_cmd(
     lane: str | None = None,
 ) -> None:
     """Resolve a model to a preferred route and emit contract-style output."""
-    from thegent.models import (
+    from thegent_core.models import (
         ModelCatalog,
         normalize_model_id,
         normalize_route_policy,
         resolve_route_contract,
     )
-    from thegent.models.quality_values import get_model_provider_quality_indices
-    from thegent.models.speed_values import get_model_provider_speed_indices
+    from thegent_core.models.quality_values import get_model_provider_quality_indices
+    from thegent_core.models.speed_values import get_model_provider_speed_indices
 
     try:
         policy_value = normalize_route_policy(policy)
@@ -284,7 +284,7 @@ def resolve_model_route_cmd(
 
 def list_model_contract_schema_cmd() -> None:
     """Print the route contract schema metadata used by contract views."""
-    from thegent.models import route_contract
+    from thegent_core.models import route_contract
 
     console.print_json(data=route_contract())
 
@@ -328,7 +328,7 @@ def _list_cursor_models() -> None:
 
 def _list_cursor_api_models() -> None:
     """List cursor-api models via GET /v1/models (wisdgod cursor-api)."""
-    from thegent.models.scrapers import scrape_cursor_api
+    from thegent_core.models.scrapers import scrape_cursor_api
 
     settings = ThegentSettings()
     models = scrape_cursor_api(settings)
@@ -528,7 +528,7 @@ def setup_cmd(
         _inject_api_key_into_cliproxy,
         run_login,
     )
-    from thegent.infra import yaml_dump, yaml_load
+    from thegent_core.infra import yaml_dump, yaml_load
 
     settings = ThegentSettings()
     env_path = Path(".env")
@@ -537,7 +537,7 @@ def setup_cmd(
     if harness or full:
         console.print("\n[bold cyan]Setting up heliosShield Harness...[/bold cyan]")
         try:
-            from thegent.install import setup_harness
+            from thegent_cli.install import setup_harness
 
             if setup_harness(verbose=True):
                 console.print("[green]✓[/green] heliosShield Harness setup complete.")
@@ -553,7 +553,7 @@ def setup_cmd(
 
         console.print("\n[bold cyan]Full setup: installing to all targets...[/bold cyan]")
         try:
-            from thegent.install import run_install
+            from thegent_cli.install import run_install
 
             run_install(target="all", install_service=True, verbose=True)
         except Exception as e:
@@ -577,7 +577,7 @@ def setup_cmd(
 
         console.print("\n[bold cyan]Installing lock-cleanup service...[/bold cyan]")
         try:
-            from thegent.git_lock_manage import lock_cleanup_install, lock_cleanup_start
+            from thegent_cli.git_lock_manage import lock_cleanup_install, lock_cleanup_start
 
             ok, msg = lock_cleanup_install()
             if ok:
@@ -676,13 +676,13 @@ def setup_cmd(
         if not bin_dir.exists():
             bin_dir.mkdir(parents=True, exist_ok=True)
         try:
-            from thegent.clode_main import install_links as clode_install_links
+            from thegent_cli.clode_main import install_links as clode_install_links
 
             clode_install_links(bin_dir=bin_dir, force=True)
         except Exception as e:
             console.print(f"[red]Clode links: {e}[/red]")
         try:
-            from thegent.dex_main import install_links as dex_install_links
+            from thegent_cli.dex_main import install_links as dex_install_links
 
             dex_install_links(bin_dir=bin_dir, force=True)
         except Exception as e:
@@ -691,7 +691,7 @@ def setup_cmd(
     if hooks:
         console.print("\n[bold cyan]Installing git hooks...[/bold cyan]")
         try:
-            from thegent.install import setup_hooks
+            from thegent_cli.install import setup_hooks
 
             counts = setup_hooks(cwd=Path.cwd(), verbose=True)
             if counts.get("installed", 0) > 0:
@@ -704,7 +704,7 @@ def setup_cmd(
     if skills:
         console.print("\n[bold cyan]Syncing skills template...[/bold cyan]")
         try:
-            from thegent.install import setup_skills
+            from thegent_cli.install import setup_skills
 
             counts = setup_skills(cwd=Path.cwd(), verbose=True)
             if counts.get("copied", 0) > 0:
@@ -730,7 +730,7 @@ def setup_cmd(
             "\nWould you like to integrate thegent with your AI agents (Cursor, Claude Code, Codex, etc.)?",
             default=True,
         ):
-            from thegent.install import run_wizard
+            from thegent_cli.install import run_wizard
 
             run_wizard()
 
@@ -738,7 +738,7 @@ def setup_cmd(
             "\nRemove manual playwright from MCP configs (use thegent-bundled browser tools)?", default=True
         ):
             try:
-                from thegent.mcp.manage import remove_playwright_from_client
+                from thegent_protocols.mcp.manage import remove_playwright_from_client
 
                 for c in ["cursor", "claude-code", "codex", "claude-desktop"]:
                     ok, msg = remove_playwright_from_client(c)

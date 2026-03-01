@@ -25,9 +25,9 @@ from typing import Any
 
 import httpx
 
-from thegent.config import ThegentSettings
-from thegent.infra.fast_subprocess import run_subprocess_optimized
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
+from thegent_core.config import ThegentSettings
+from thegent_core.infra.fast_subprocess import run_subprocess_optimized
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dumps
 
 _LOG = logging.getLogger(__name__)
 
@@ -530,7 +530,7 @@ def _adapter_script_path() -> Path | None:
     In dev mode, looks in the project root.
     When installed, uses get_resource_path.
     """
-    from thegent.utils import get_resource_path
+    from thegent_core.utils import get_resource_path
 
     try:
         script = get_resource_path("scripts/start_proxy_with_adapter.py")
@@ -635,7 +635,7 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
 
     if use_adapter:
         # Start using the adapter script; no silent fallback to raw proxy.
-        from thegent.utils import get_resource_path
+        from thegent_core.utils import get_resource_path
 
         script_path = get_resource_path("scripts/start_proxy_with_adapter.py")
         if not script_path.exists():
@@ -649,7 +649,7 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
         env = os.environ.copy()
         # If we're installed, we might not need to set PYTHONPATH
         # but for dev mode it's crucial.
-        from thegent.utils import is_dev_mode
+        from thegent_core.utils import is_dev_mode
 
         if is_dev_mode():
             env["PYTHONPATH"] = str(script_path.parents[1] / "src")

@@ -8,7 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 
 @functools.lru_cache(maxsize=1)

@@ -1,0 +1,301 @@
+{
+  "version": 2,
+  "source": {
+    "name": "Google DeepMind Gemini 3.1 Pro model card",
+    "published": "2026-02-19",
+    "methodology": "https://deepmind.google/models/evals-methodology/gemini-3-1-pro"
+  },
+  "terminal_bench_2_0": {
+    "gemini-3.1-pro": 68.5,
+    "gpt-5.3-codex": 64.7,
+    "gpt-5.3-codex-spark": 58.4,
+    "claude-opus-4.6": 62.9,
+    "claude-sonnet-4.6": 59.1,
+    "gpt-5.2": 54.0,
+    "glm-5": 56.2,
+    "gemini-3-flash": 51.7,
+    "minimax-m2.5": 51.7,
+    "claude-sonnet-4.5": 42.8,
+    "claude-haiku-4.5": 28.3,
+    "deepseek-v3.2": 55.0,
+    "step-3.5-flash": 52.0,
+    "glm-4.7-flash": 48.0
+  },
+  "swe_bench": {
+    "gemini-3.1-pro": 80.6,
+    "gpt-5.3-codex": 56.8,
+    "claude-opus-4.6": 80.8,
+    "claude-sonnet-4.6": 79.6,
+    "gpt-5.2": 80.0,
+    "claude-sonnet-4.5": 77.2,
+    "claude-haiku-4.5": 73.3,
+    "minimax-m2.5": 80.2,
+    "gemini-3-flash": 78.0,
+    "glm-5": 65.0,
+    "deepseek-v3.2": 73.0
+  },
+  "aime": {
+    "glm-5": 92.7,
+    "claude-opus-4.6": 85.0,
+    "minimax-m2.5": 60.0,
+    "claude-sonnet-4.5": 68.0
+  },
+  "benchmark_categories": {
+    "reasoning": [
+      "humanitys_last_exam_no_tools",
+      "arc_agi_2",
+      "gpqa_diamond"
+    ],
+    "agentic_terminal_coding": [
+      "terminal_bench_2_0_terminus_2"
+    ],
+    "agentic_coding": [
+      "swe_bench_verified",
+      "swe_bench_pro_public",
+      "livecodebench_pro_elo",
+      "scicode"
+    ],
+    "agentic_tool_use": [
+      "tau2_bench_retail",
+      "tau2_bench_telecom",
+      "mcp_atlas",
+      "browsecomp",
+      "search_blocklist_code",
+      "apex_agents"
+    ],
+    "multimodal": [
+      "mmmu_pro"
+    ],
+    "multilingual": [
+      "mmmlu"
+    ],
+    "long_context": [
+      "mrcr_v2_128k"
+    ],
+    "expert_tasks": [
+      "gdpval_aa_elo"
+    ]
+  },
+  "benchmarks_by_task_type": {
+    "humanitys_last_exam_no_tools": {
+      "task_type": "reasoning",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 44.4,
+        "claude-sonnet-4.6": 33.2,
+        "claude-opus-4.6": 40.0,
+        "gpt-5.2": 34.5,
+        "gpt-5.3-codex": null
+      }
+    },
+    "search_blocklist_code": {
+      "task_type": "agentic_tool_use",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 51.4,
+        "claude-sonnet-4.6": 49.0,
+        "claude-opus-4.6": 53.1,
+        "gpt-5.2": 45.5,
+        "gpt-5.3-codex": null
+      }
+    },
+    "arc_agi_2": {
+      "task_type": "reasoning",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 77.1,
+        "claude-sonnet-4.6": 58.3,
+        "claude-opus-4.6": 68.8,
+        "gpt-5.2": 52.9,
+        "gpt-5.3-codex": null
+      }
+    },
+    "gpqa_diamond": {
+      "task_type": "reasoning",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 94.3,
+        "claude-sonnet-4.6": 89.9,
+        "claude-opus-4.6": 91.3,
+        "gpt-5.2": 92.4,
+        "gpt-5.3-codex": null
+      }
+    },
+    "terminal_bench_2_0_terminus_2": {
+      "task_type": "agentic_terminal_coding",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 68.5,
+        "claude-sonnet-4.6": 59.1,
+        "claude-opus-4.6": 65.4,
+        "gpt-5.2": 54.0,
+        "gpt-5.3-codex": 64.7
+      }
+    },
+    "terminal_bench_2_0_other_harness": {
+      "task_type": "agentic_terminal_coding",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": null,
+        "claude-sonnet-4.6": null,
+        "claude-opus-4.6": null,
+        "gpt-5.2": 62.2,
+        "gpt-5.3-codex": 77.3
+      }
+    },
+    "swe_bench_verified": {
+      "task_type": "agentic_coding",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 80.6,
+        "claude-sonnet-4.6": 79.6,
+        "claude-opus-4.6": 80.8,
+        "gpt-5.2": 80.0,
+        "gpt-5.3-codex": null
+      }
+    },
+    "swe_bench_pro_public": {
+      "task_type": "agentic_coding",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 54.2,
+        "claude-sonnet-4.6": null,
+        "claude-opus-4.6": null,
+        "gpt-5.2": 55.6,
+        "gpt-5.3-codex": 56.8
+      }
+    },
+    "livecodebench_pro_elo": {
+      "task_type": "agentic_coding",
+      "metric": "elo",
+      "scores": {
+        "gemini-3.1-pro": 2887,
+        "claude-sonnet-4.6": null,
+        "claude-opus-4.6": null,
+        "gpt-5.2": 2393,
+        "gpt-5.3-codex": null
+      }
+    },
+    "scicode": {
+      "task_type": "agentic_coding",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 59.0,
+        "claude-sonnet-4.6": 47.0,
+        "claude-opus-4.6": 52.0,
+        "gpt-5.2": 52.0,
+        "gpt-5.3-codex": null
+      }
+    },
+    "apex_agents": {
+      "task_type": "agentic_tool_use",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 33.5,
+        "claude-sonnet-4.6": null,
+        "claude-opus-4.6": 29.8,
+        "gpt-5.2": 23.0,
+        "gpt-5.3-codex": null
+      }
+    },
+    "gdpval_aa_elo": {
+      "task_type": "expert_tasks",
+      "metric": "elo",
+      "scores": {
+        "gemini-3.1-pro": 1317,
+        "claude-sonnet-4.6": 1633,
+        "claude-opus-4.6": 1606,
+        "gpt-5.2": 1462,
+        "gpt-5.3-codex": null
+      }
+    },
+    "tau2_bench_retail": {
+      "task_type": "agentic_tool_use",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 90.8,
+        "claude-sonnet-4.6": 91.7,
+        "claude-opus-4.6": 91.9,
+        "gpt-5.2": 82.0,
+        "gpt-5.3-codex": null
+      }
+    },
+    "tau2_bench_telecom": {
+      "task_type": "agentic_tool_use",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 99.3,
+        "claude-sonnet-4.6": 97.9,
+        "claude-opus-4.6": 99.3,
+        "gpt-5.2": 98.7,
+        "gpt-5.3-codex": null
+      }
+    },
+    "mcp_atlas": {
+      "task_type": "agentic_tool_use",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 69.2,
+        "claude-sonnet-4.6": 61.3,
+        "claude-opus-4.6": 59.5,
+        "gpt-5.2": 60.6,
+        "gpt-5.3-codex": null
+      }
+    },
+    "browsecomp": {
+      "task_type": "agentic_tool_use",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 85.9,
+        "claude-sonnet-4.6": 74.7,
+        "claude-opus-4.6": 84.0,
+        "gpt-5.2": 65.8,
+        "gpt-5.3-codex": null
+      }
+    },
+    "mmmu_pro": {
+      "task_type": "multimodal",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 80.5,
+        "claude-sonnet-4.6": 74.5,
+        "claude-opus-4.6": 73.9,
+        "gpt-5.2": 79.5,
+        "gpt-5.3-codex": null
+      }
+    },
+    "mmmlu": {
+      "task_type": "multilingual",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 92.6,
+        "claude-sonnet-4.6": 89.3,
+        "claude-opus-4.6": 91.1,
+        "gpt-5.2": 89.6,
+        "gpt-5.3-codex": null
+      }
+    },
+    "mrcr_v2_128k": {
+      "task_type": "long_context",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 84.9,
+        "claude-sonnet-4.6": 84.9,
+        "claude-opus-4.6": 84.0,
+        "gpt-5.2": 83.8,
+        "gpt-5.3-codex": null
+      }
+    },
+    "mrcr_v2_1m": {
+      "task_type": "long_context",
+      "metric": "percent",
+      "scores": {
+        "gemini-3.1-pro": 26.3,
+        "claude-sonnet-4.6": null,
+        "claude-opus-4.6": null,
+        "gpt-5.2": null,
+        "gpt-5.3-codex": null
+      }
+    }
+  }
+}

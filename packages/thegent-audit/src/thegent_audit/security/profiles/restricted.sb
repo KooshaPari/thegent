@@ -1,0 +1,50 @@
+;;; macOS Seatbelt profile: restricted
+;;; Allows reads everywhere, writes only within PROJECT_ROOT (substituted at runtime),
+;;; process execution, and basic system calls. Denies network.
+(version 1)
+(deny default)
+
+;;; Allow process execution
+(allow process-exec)
+(allow process-fork)
+
+;;; Allow signal delivery (e.g. SIGTERM to self)
+(allow signal (target self))
+
+;;; Allow reads everywhere (agents need to read tools, libraries, etc.)
+(allow file-read*)
+(allow file-read-metadata)
+
+;;; Allow writes only within the project root (substituted by MacOSSandbox.generate_profile)
+(allow file-write*
+    (subpath "PROJECT_ROOT_PLACEHOLDER"))
+
+;;; Allow writes to /tmp and /var/folders (Python, tools need temp space)
+(allow file-write*
+    (subpath "/tmp")
+    (subpath "/var/folders")
+    (subpath "/private/tmp")
+    (subpath "/private/var/folders"))
+
+;;; Allow /dev access for stdin/stdout/stderr
+(allow file-read-data (subpath "/dev"))
+(allow file-write-data
+    (literal "/dev/null")
+    (literal "/dev/stdout")
+    (literal "/dev/stderr"))
+
+;;; Allow sysctl reads
+(allow sysctl-read)
+
+;;; Allow mach lookups for basic system services
+(allow mach-lookup
+    (global-name "com.apple.system.logger")
+    (global-name "com.apple.system.notification_center"))
+
+;;; Allow POSIX IPC (semaphores for multiprocessing)
+(allow ipc-posix-sem)
+(allow ipc-posix-shm-read*)
+(allow ipc-posix-shm-write*)
+
+;;; Deny all network
+(deny network*)

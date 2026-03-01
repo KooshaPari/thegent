@@ -9,8 +9,8 @@ from types import SimpleNamespace
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
-from thegent.config import ThegentSettings
-from thegent.govern.vetter.checks import (
+from thegent_core.config import ThegentSettings
+from thegent_audit.govern.vetter.checks import (
     DiffSizeVetterCheck,
     QualityScoreVetterCheck,
     RuffVetterCheck,
@@ -18,8 +18,8 @@ from thegent.govern.vetter.checks import (
     SchemaVetterCheck,
     TestPassVetterCheck,
 )
-from thegent.govern.vetter.models import VetterCheckResult, VetterPolicy
-from thegent.govern.vetter.orchestrator import VetterOrchestrator
+from thegent_audit.govern.vetter.models import VetterCheckResult, VetterPolicy
+from thegent_audit.govern.vetter.orchestrator import VetterOrchestrator
 
 
 def _session_dir() -> Any:
@@ -133,7 +133,7 @@ def escalate_add_impl(
     priority: int = 0,
 ) -> None:
     """WP-3008: Add a blocked run to the escalation queue."""
-    from thegent.execution import EscalationQueue
+    from thegent_execution.execution import EscalationQueue
 
     queue = EscalationQueue(_session_dir())
     queue.add(
@@ -149,7 +149,7 @@ def escalate_add_impl(
 
 def escalate_approve_impl(run_id: str) -> bool:
     """WP-3008: Approve an escalation, marking it as approved in the queue (G-GP-05)."""
-    from thegent.execution import EscalationQueue
+    from thegent_execution.execution import EscalationQueue
 
     queue = EscalationQueue(_session_dir())
     return queue.resolve(run_id=run_id, resolution="approved")
@@ -157,7 +157,7 @@ def escalate_approve_impl(run_id: str) -> bool:
 
 def escalate_list_impl(past_sla_only: bool = False, limit: int = 50) -> list[dict[str, Any]]:
     """WP-3008: List escalation queue items (blocked runs with SLA)."""
-    from thegent.execution import EscalationQueue
+    from thegent_execution.execution import EscalationQueue
 
     queue = EscalationQueue(_session_dir())
     return queue.list_pending(past_sla_only=past_sla_only, limit=limit)
@@ -165,7 +165,7 @@ def escalate_list_impl(past_sla_only: bool = False, limit: int = 50) -> list[dic
 
 def escalate_resolve_impl(run_id: str, resolution: str = "resolved") -> bool:
     """WP-3008: Mark an escalation item as resolved."""
-    from thegent.execution import EscalationQueue
+    from thegent_execution.execution import EscalationQueue
 
     queue = EscalationQueue(_session_dir())
     return queue.resolve(run_id=run_id, resolution=resolution)
@@ -173,7 +173,7 @@ def escalate_resolve_impl(run_id: str, resolution: str = "resolved") -> bool:
 
 def govern_approve_impl(run_id: str, reason: str | None = None) -> dict[str, Any]:
     """WL-019-B: Approve a HITL-blocked run, updating governance_events.jsonl to 'approved'."""
-    from thegent.governance.hitl import HITLApprovalWorkflow
+    from thegent_audit.governance.hitl import HITLApprovalWorkflow
 
     workflow = HITLApprovalWorkflow(_session_dir())
     return workflow.approve(run_id=run_id, reason=reason)
@@ -181,7 +181,7 @@ def govern_approve_impl(run_id: str, reason: str | None = None) -> dict[str, Any
 
 def govern_reject_impl(run_id: str, reason: str | None = None) -> dict[str, Any]:
     """WL-019-B: Reject a HITL-blocked run, updating governance_events.jsonl to 'rejected'."""
-    from thegent.governance.hitl import HITLApprovalWorkflow
+    from thegent_audit.governance.hitl import HITLApprovalWorkflow
 
     workflow = HITLApprovalWorkflow(_session_dir())
     return workflow.reject(run_id=run_id, reason=reason)
@@ -189,7 +189,7 @@ def govern_reject_impl(run_id: str, reason: str | None = None) -> dict[str, Any]
 
 def govern_list_pending_impl() -> list[dict[str, Any]]:
     """WL-019-B: List all pending HITL approval events from governance_events.jsonl."""
-    from thegent.governance.hitl import HITLApprovalWorkflow
+    from thegent_audit.governance.hitl import HITLApprovalWorkflow
 
     workflow = HITLApprovalWorkflow(_session_dir())
     return workflow.list_pending()
@@ -201,7 +201,7 @@ def govern_get_pending_approval_impl(
     session: str | None = None,
 ) -> dict[str, Any]:
     """WL-100: Return a single pending approval event for a run."""
-    from thegent.governance.hitl import HITLApprovalWorkflow
+    from thegent_audit.governance.hitl import HITLApprovalWorkflow
 
     workflow = HITLApprovalWorkflow(_resolve_session_dir(session))
     pending = workflow.list_pending()

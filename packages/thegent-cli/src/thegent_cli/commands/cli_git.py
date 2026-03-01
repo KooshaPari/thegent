@@ -13,9 +13,9 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from thegent.mesh.git import GitParallelismManager
-from thegent.mesh.git_parallelism import WorktreePool
-from thegent.native.git_native import GitNative
+from thegent_agents.mesh.git import GitParallelismManager
+from thegent_agents.mesh.git_parallelism import WorktreePool
+from thegent_platform.native.git_native import GitNative
 
 app = typer.Typer(
     help="Overhauled Git: parallel, multitenant, and AST-aware (Phase 6)",
@@ -45,7 +45,7 @@ def _worktree_agents(pool: WorktreePool) -> list[tuple[str, str]]:
 
 def get_agent_id() -> str:
     """Return the current agent ID from settings or default."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.agent_id
@@ -459,7 +459,7 @@ def merge(
     output: Path = typer.Option(None, "--output", "-o", help="Output file (default: overwrites ours)"),
 ):
     """AST-aware merge using Mergiraf (Phase 7)."""
-    from thegent.governance.heliosShield_bridge import SmartMerge
+    from thegent_audit.governance.heliosShield_bridge import SmartMerge
 
     merger = SmartMerge()
     out_path = output or ours
@@ -486,7 +486,7 @@ def lock_cleanup_main(
     """Remove stale .git/index.lock files."""
     if ctx.invoked_subcommand is not None:
         return
-    from thegent.git_lock_manage import run_lock_cleanup
+    from thegent_cli.git_lock_manage import run_lock_cleanup
 
     paths = [p for p in (path or []) if p.exists()] if path else None
     removed, skipped = run_lock_cleanup(paths=paths, max_age=max_age, dry_run=dry_run)
@@ -501,7 +501,7 @@ def lock_cleanup_service(
     action: str = typer.Argument(..., help="Action: install, start, stop, status, uninstall"),
 ):
     """Install or manage lock-cleanup daemon."""
-    from thegent.git_lock_manage import (
+    from thegent_cli.git_lock_manage import (
         lock_cleanup_install,
         lock_cleanup_start,
         lock_cleanup_status,

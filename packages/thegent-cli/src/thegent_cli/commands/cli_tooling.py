@@ -25,7 +25,7 @@ from typing import Any
 
 
 def _get_settings() -> Any:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     return ThegentSettings()
 
@@ -48,7 +48,7 @@ def benchmark_cmd() -> None:
     Not part of production runtime path.
     """
     from rich.table import Table
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     console = _get_console()
     settings = _get_settings()
@@ -108,7 +108,7 @@ def deep_research_cmd(
     Tooling surface: research utility. Not part of production runtime path.
     """
     from rich.table import Table
-    from thegent.skills.deep_research import perform_deep_research
+    from thegent_skills.skills.deep_research import perform_deep_research
 
     console = _get_console()
     console.print("[bold cyan]Deep Research Protocol (DRP) starting...[/bold cyan]")
@@ -193,7 +193,7 @@ def roadmap_cmd() -> None:
     Not part of production runtime path.
     """
     from rich.markdown import Markdown
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     console = _get_console()
     settings = _get_settings()
@@ -226,7 +226,7 @@ def audit_verify_cmd(format: str | None = None) -> None:
     Tooling surface: QA/dev audit utility.
     Not part of production runtime path.
     """
-    from thegent.execution import Auditor, RunRegistry
+    from thegent_execution.execution import Auditor, RunRegistry
 
     console = _get_console()
     settings = _get_settings()

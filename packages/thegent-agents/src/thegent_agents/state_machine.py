@@ -16,15 +16,15 @@ from typing import Any, ClassVar
 
 from thegent_agents.base import RunResult
 from thegent_agents.resilience import FailureKind, TransientAgentError, classify_failure, with_retry
-from thegent.contracts.adapters import AdapterResult, normalize_output
-from thegent.contracts.policy import FallbackPolicy, evaluate_fallback
-from thegent.contracts.telemetry import (
+from thegent_core.contracts.adapters import AdapterResult, normalize_output
+from thegent_core.contracts.policy import FallbackPolicy, evaluate_fallback
+from thegent_core.contracts.telemetry import (
     EVENT_NORMALIZATION,
     EVENT_SCHEMA_DRIFT_SEMANTIC,
     EVENT_SCHEMA_DRIFT_STRUCTURAL,
     ContractTelemetry,
 )
-from thegent.contracts.validation import validate_csm
+from thegent_core.contracts.validation import validate_csm
 
 _log = logging.getLogger(__name__)
 

@@ -114,7 +114,7 @@ def crew_execute_cmd(
 
     path = Path(crew_file)
     if not path.exists():
-        from thegent.errors import print_error
+        from thegent_core.errors import print_error
 
         print_error(f"File not found: {crew_file}")
         raise typer.Exit(1)

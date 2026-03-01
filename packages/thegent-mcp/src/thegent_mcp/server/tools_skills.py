@@ -8,7 +8,7 @@ from typing import Any, Protocol
 
 from fastmcp.tools.tool import ToolResult
 
-from thegent.skills.discovery import discover_skills, load_skill
+from thegent_skills.skills.discovery import discover_skills, load_skill
 
 
 class SkillBackend(Protocol):

@@ -23,7 +23,7 @@ from typing import Any
 
 import typer
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -317,7 +317,7 @@ def _load_prior_session_output(
     include_stderr: bool = False,
 ) -> str:
     """Load tail of prior session stdout (and optionally stderr) for continuation."""
-    from thegent.utils.helpers import read_file_chunk
+    from thegent_core.utils.helpers import read_file_chunk
 
     from thegent_cli.services.session_path_helpers import session_paths as _session_paths_fn
 

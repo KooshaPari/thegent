@@ -21,7 +21,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         track_secrets: bool = True,
     ) -> dict[str, Any]:
         """Create a new git journal session for micro-commit audit trail."""
-        from thegent.audit.shadow_audit_git import GitJournal
+        from thegent_audit.audit.shadow_audit_git import GitJournal
 
         journal = GitJournal(
             Path(repo_path).resolve(),
@@ -47,7 +47,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         content: str | None = None,
     ) -> dict[str, Any]:
         """Record a file change as a micro-commit in the journal."""
-        from thegent.audit.shadow_audit_git import GitJournal
+        from thegent_audit.audit.shadow_audit_git import GitJournal
 
         journal = GitJournal(Path(repo_path).resolve(), session_id)
 
@@ -81,7 +81,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """Create a snapshot of the current working tree state."""
-        from thegent.audit.shadow_audit_git import GitJournal
+        from thegent_audit.audit.shadow_audit_git import GitJournal
 
         journal = GitJournal(Path(repo_path).resolve(), session_id)
         sha = journal.record_snapshot(message)
@@ -99,7 +99,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """Get the audit log for a journal session."""
-        from thegent.audit.shadow_audit_git import GitJournal
+        from thegent_audit.audit.shadow_audit_git import GitJournal
 
         journal = GitJournal(Path(repo_path).resolve(), session_id)
         log_entries = journal.get_audit_log()
@@ -115,7 +115,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """List all git journal sessions in a repository."""
-        from thegent.audit.shadow_audit_git import GitJournal
+        from thegent_audit.audit.shadow_audit_git import GitJournal
 
         sessions = GitJournal.list_sessions(Path(repo_path).resolve())
 
@@ -132,7 +132,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """Finalize a journal session with a summary commit."""
-        from thegent.audit.shadow_audit_git import GitJournal
+        from thegent_audit.audit.shadow_audit_git import GitJournal
 
         journal = GitJournal(Path(repo_path).resolve(), session_id)
         sha = journal.finalize_session(message)
@@ -150,7 +150,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         max_age_days: int = 30,
     ) -> dict[str, Any]:
         """Prune old journal sessions."""
-        from thegent.audit.shadow_audit_git import GitJournal
+        from thegent_audit.audit.shadow_audit_git import GitJournal
 
         pruned = GitJournal.prune_old_sessions(Path(repo_path).resolve(), max_age_days)
 
@@ -170,7 +170,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         batch_size: int = 10,
     ) -> dict[str, Any]:
         """Create an enhanced git journal session with P1 features."""
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
+        from thegent_audit.audit.shadow_audit_git import GitJournalEnhanced
 
         journal = GitJournalEnhanced(
             Path(repo_path).resolve(),
@@ -204,7 +204,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """Start real-time file watching for a journal session."""
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
+        from thegent_audit.audit.shadow_audit_git import GitJournalEnhanced
 
         journal = GitJournalEnhanced(
             Path(repo_path).resolve(),
@@ -228,7 +228,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """Get cryptographic attestations for a journal session."""
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
+        from thegent_audit.audit.shadow_audit_git import GitJournalEnhanced
 
         journal = GitJournalEnhanced(
             Path(repo_path).resolve(),
@@ -263,7 +263,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """Get performance statistics for a journal session."""
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
+        from thegent_audit.audit.shadow_audit_git import GitJournalEnhanced
 
         journal = GitJournalEnhanced(Path(repo_path).resolve(), session_id)
         stats = journal.get_performance_stats()
@@ -282,7 +282,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         content: str | None = None,
     ) -> dict[str, Any]:
         """Record a file change asynchronously in the journal."""
-        from thegent.audit.shadow_audit_git import GitJournalAsync
+        from thegent_audit.audit.shadow_audit_git import GitJournalAsync
 
         journal = GitJournalAsync.create(
             Path(repo_path).resolve(),
@@ -307,7 +307,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         repo_path: str = ".",
     ) -> dict[str, Any]:
         """Flush pending batched changes as a single commit."""
-        from thegent.audit.shadow_audit_git import GitJournalEnhanced
+        from thegent_audit.audit.shadow_audit_git import GitJournalEnhanced
 
         journal = GitJournalEnhanced(Path(repo_path).resolve(), session_id)
         sha = journal._flush_batch()
@@ -327,7 +327,7 @@ def register_journal_tools(*, mcp: FastMCP, logger: Any) -> tuple[object, ...]:
         """WL-085: Drain SubAgentEvents from the process-global event queue."""
         import asyncio as _asyncio
 
-        from thegent.orchestration.event_queue import get_global_event_queue
+        from thegent_execution.orchestration.event_queue import get_global_event_queue
 
         logger.debug("thegent_orchestration_events max_events=%d timeout_ms=%d", max_events, timeout_ms)
         start_time = time.perf_counter()

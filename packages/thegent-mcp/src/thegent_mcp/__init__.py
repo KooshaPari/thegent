@@ -9,7 +9,7 @@ __version__ = "0.1.0"
 
 # Public API: delegate to monolith MCP module
 # During full split, these will be re-implemented here
-from thegent.mcp import (
+from thegent_protocols.mcp import (
     BorrowedMCPTools,
     server_cache_elicitation_response,
     server_create_elicitation_cache,
