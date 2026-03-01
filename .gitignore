@@ -92,16 +92,6 @@ hooks/zig/
 .factory/closure_pack_*.md
 
 # Agent/tool-generated artifacts and prompt bundles
-.claude/
-.codex/
-.cursor/
-.gemini/
-.kilocode/
-.kittify/
-.claudeignore
-.llmignore
-.github/copilot-instructions.md
-.github/prompts/
 
 # Safari/ browser data
 data/safari/
@@ -111,3 +101,16 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+
+# AI tool artifacts
+.claude/
+.codex/
+.cursor/
+.gemini/
+.kittify/
+.kilocode/
+.github/prompts/
+.github/copilot-instructions.md
+.claudeignore
+.llmignore
