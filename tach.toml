@@ -19,7 +19,7 @@ exclude = [
 ]
 
 exact = true
-forbid_circular_dependencies = false
+forbid_circular_dependencies = true
 root_module = "ignore"
 
 [rules]
@@ -49,6 +49,37 @@ depends_on = ["thegent.output_parser", "thegent.config"]
 [[modules]]
 path = "thegent.observability"
 depends_on = ["thegent.config"]
+
+# ============================================================================
+# HEXAGONAL ARCHITECTURE LAYERS
+# ============================================================================
+# These layers enforce the hexagonal/clean architecture pattern:
+# - Layer 0: Domain (pure business logic, no internal dependencies)
+# - Layer 0.5: Ports (interfaces/contracts, depends only on domain)
+# - Layer 1: Use Cases (orchestration, depends on domain + ports)
+# - Layer 2: Adapters (external integrations, depends on domain + ports + use_cases)
+# - Layer 3: Everything else (utilities, config, CLI, etc., can depend on anything)
+# ============================================================================
+
+# Layer 0: Domain (no internal dependencies allowed)
+[[modules]]
+path = "thegent.domain"
+depends_on = []
+
+# Layer 0.5: Ports (interfaces/contracts for domain)
+[[modules]]
+path = "thegent.ports"
+depends_on = ["thegent.domain"]
+
+# Layer 1: Use Cases (application business rules, orchestration)
+[[modules]]
+path = "thegent.use_cases"
+depends_on = ["thegent.domain", "thegent.ports"]
+
+# Layer 2: Adapters (external implementations, infrastructure)
+[[modules]]
+path = "thegent.adapters"
+depends_on = ["thegent.domain", "thegent.ports", "thegent.use_cases"]
 
 # ============================================================================
 # LAYER 1: Models & Core Infrastructure

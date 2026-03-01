@@ -7,6 +7,7 @@ module under the 400-line limit. They are re-exported by impl.py for backward co
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
 from typing import Any, Literal
 
@@ -196,7 +197,7 @@ def run_impl(
         image_paths=image_paths,
         audio_files=audio_files,
         google_grounding=google_grounding,
-        impl_ns=sys.modules[__name__],
+        impl_ns=sys.modules.get("thegent.cli.commands.impl", sys.modules[__name__]),
     )
 
     # Save discoveries after successful run
@@ -278,7 +279,7 @@ def bg_impl(
         image_paths=image_paths,
         config_provider=config_provider,
         tenant_id=tenant_id,
-        impl_ns=sys.modules[__name__],
+        impl_ns=sys.modules.get("thegent.cli.commands.impl", sys.modules[__name__]),
     )
 
 
