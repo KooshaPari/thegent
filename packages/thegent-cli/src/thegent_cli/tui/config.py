@@ -10,8 +10,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
-from thegent.integrations.base import SerializableMixin
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent_sync.integrations.base import SerializableMixin
 
 
 @dataclass

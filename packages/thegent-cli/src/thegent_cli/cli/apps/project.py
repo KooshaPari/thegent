@@ -3,8 +3,8 @@
 import typer
 from typing import Any, Optional
 
-from thegent.project.migrate import project_migrate as _project_migrate
-from thegent.project.scaffold import (
+from thegent_cli.project.migrate import project_migrate as _project_migrate
+from thegent_cli.project.scaffold import (
     scaffold_greenfield,
     scaffold_brownfield,
 )
@@ -32,7 +32,7 @@ def install_callback(
     if ctx.invoked_subcommand is None:
         # Try to import and call legacy install
         try:
-            from thegent.install import run_install
+            from thegent_cli.install import run_install
             run_install(
                 target=target,
                 mode=mode,

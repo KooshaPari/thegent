@@ -14,7 +14,7 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _find_session_meta,
@@ -28,7 +28,7 @@ from thegent.cli.commands._cli_shared import (
     EXIT_TIMEOUT,
     _LOG_FOLLOW_POLL_SECONDS,
 )
-from thegent.cli.commands.session_cmds_helpers import (
+from thegent_cli.cli.commands.session_cmds_helpers import (
     follow_log_stream,
 )
 
@@ -96,7 +96,7 @@ def inspect_cmd(
     include_contract: bool = False,
 ) -> None:
     """Show status and logs for one or more sessions. No shell loop needed."""
-    from thegent.cli.commands.impl import logs_impl, ps_impl, status_impl
+    from thegent_cli.cli.commands.impl import logs_impl, ps_impl, status_impl
 
     if not session_ids and not owner:
         raise typer.BadParameter("Provide session_ids or --owner")

@@ -67,7 +67,7 @@ def compliance_audit_export(
         console.print(f"[red]Unsupported format: {format!r}. Only 'json' is supported.[/red]")
         raise typer.Exit(1)
 
-    from thegent.governance.compliance import AuditExporter, EvidenceStore
+    from thegent_audit.governance.compliance import AuditExporter, EvidenceStore
 
     store = EvidenceStore(evidence_path)
     exporter = AuditExporter(store)
@@ -89,7 +89,7 @@ def evidence_list(
     limit: int = typer.Option(50, "--limit", "-n", help="Max records to show"),
 ) -> None:
     """List evidence records from the store (WL-051)."""
-    from thegent.governance.compliance import EvidenceStore
+    from thegent_audit.governance.compliance import EvidenceStore
 
     store = EvidenceStore(evidence_path)
     records = store.list_all()
@@ -126,7 +126,7 @@ def evidence_purge(
         console.print("[red]--older-than-days must be >= 0[/red]")
         raise typer.Exit(1)
 
-    from thegent.governance.compliance import EvidenceStore
+    from thegent_audit.governance.compliance import EvidenceStore
 
     store = EvidenceStore(evidence_path)
     purged = store.purge_older_than(older_than_days)
@@ -145,7 +145,7 @@ def gdpr_purge(
     retention_dir: Path = typer.Option(_DEFAULT_RETENTION_DIR, "--retention-dir", help="Retention policies dir"),
 ) -> None:
     """Apply GDPR retention policies and purge expired data for a tenant (WL-051)."""
-    from thegent.governance.compliance import EvidenceStore, RetentionEnforcer
+    from thegent_audit.governance.compliance import EvidenceStore, RetentionEnforcer
 
     store = EvidenceStore(evidence_path)
     enforcer = RetentionEnforcer(retention_dir)
@@ -175,7 +175,7 @@ def org_list_cmd(
     org_registry: Path = typer.Option(_DEFAULT_ORG_REGISTRY, "--registry", help="Org registry path"),
 ) -> None:
     """List all org namespaces (WL-051)."""
-    from thegent.infra.org_tenancy import OrgRegistry
+    from thegent_core.infra.org_tenancy import OrgRegistry
 
     registry = OrgRegistry(org_registry)
     orgs = registry.list_orgs()
@@ -213,7 +213,7 @@ def org_create_cmd(
     initial_tenants: list[str] | None = typer.Option(None, "--tenant", help="Initial tenant IDs"),
 ) -> None:
     """Create a new org namespace (WL-051)."""
-    from thegent.infra.org_tenancy import OrgRegistry
+    from thegent_core.infra.org_tenancy import OrgRegistry
 
     registry = OrgRegistry(org_registry)
     try:
@@ -236,7 +236,7 @@ def org_show_cmd(
     org_registry: Path = typer.Option(_DEFAULT_ORG_REGISTRY, "--registry", help="Org registry path"),
 ) -> None:
     """Show details for an org namespace (WL-051)."""
-    from thegent.infra.org_tenancy import OrgRegistry
+    from thegent_core.infra.org_tenancy import OrgRegistry
 
     registry = OrgRegistry(org_registry)
     try:
@@ -263,7 +263,7 @@ def keys_status(
     warn_days: int = typer.Option(7, "--warn-days", help="Warn threshold in days"),
 ) -> None:
     """Show API key expiry status (WL-051)."""
-    from thegent.governance.key_rotation import KeyRegistry, KeyRotationMonitor
+    from thegent_audit.governance.key_rotation import KeyRegistry, KeyRotationMonitor
 
     registry = KeyRegistry(key_registry)
     monitor = KeyRotationMonitor(registry, warn_days=warn_days)
@@ -313,7 +313,7 @@ def keys_rotate(
     key_registry: Path = typer.Option(_DEFAULT_KEY_REGISTRY, "--registry", help="Key registry path"),
 ) -> None:
     """Rotate all API keys for a provider and notify via webhook (WL-051)."""
-    from thegent.governance.key_rotation import KeyRegistry, KeyRotationWebhook
+    from thegent_audit.governance.key_rotation import KeyRegistry, KeyRotationWebhook
 
     registry = KeyRegistry(key_registry)
     webhook = KeyRotationWebhook(webhook_url, registry)

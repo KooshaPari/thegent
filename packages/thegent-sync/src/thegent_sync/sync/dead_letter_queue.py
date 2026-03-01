@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 from typing import Any, Final
 
 DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS: Final[int] = 3

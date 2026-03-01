@@ -15,17 +15,17 @@ from typing import Any, cast
 
 import typer
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _bootstrap_metric_contracts,
     _get_run_subprocess_optimized,
     console,
 )
-from thegent.cli.commands.model_cmds_list import (
+from thegent_cli.cli.commands.model_cmds_list import (
     _assert_str,
     _run_cliproxyctl_machine_command,
 )
-from thegent.cli.commands.model_cmds_setup_helpers import (
+from thegent_cli.cli.commands.model_cmds_setup_helpers import (
     build_provider_list,
     configure_providers,
     set_env_line,
@@ -71,14 +71,14 @@ def setup_cmd(
     import platform
     from pathlib import Path
 
-    from thegent.agents.cliproxy_manager import (
+    from thegent_agents.agents.cliproxy_manager import (
         _LOGIN_FLAGS,
         PROVIDER_LOGIN_CONFIG,
         _ensure_config,
         _inject_api_key_into_cliproxy,
         run_login,
     )
-    from thegent.infra import yaml_dump, yaml_load
+    from thegent_core.infra import yaml_dump, yaml_load
 
     settings = ThegentSettings()
     env_path = Path(".env")
@@ -87,7 +87,7 @@ def setup_cmd(
     if harness or full:
         console.print("\n[bold cyan]Setting up heliosShield Harness...[/bold cyan]")
         try:
-            from thegent.install import setup_harness
+            from thegent_cli.install import setup_harness
 
             if setup_harness(verbose=True):
                 console.print("[green]✓[/green] heliosShield Harness setup complete.")
@@ -103,7 +103,7 @@ def setup_cmd(
 
         console.print("\n[bold cyan]Full setup: installing to all targets...[/bold cyan]")
         try:
-            from thegent.install import run_install
+            from thegent_cli.install import run_install
 
             run_install(target="all", install_service=True, verbose=True)
         except Exception as e:
@@ -127,7 +127,7 @@ def setup_cmd(
 
         console.print("\n[bold cyan]Installing lock-cleanup service...[/bold cyan]")
         try:
-            from thegent.git_lock_manage import lock_cleanup_install, lock_cleanup_start
+            from thegent_cli.git_lock_manage import lock_cleanup_install, lock_cleanup_start
 
             ok, msg = lock_cleanup_install()
             if ok:
@@ -144,7 +144,7 @@ def setup_cmd(
 
         console.print("\n[bold cyan]Installing and starting MCP service...[/bold cyan]")
         try:
-            from thegent.mcp.manage import service_install, service_start
+            from thegent_protocols.mcp.manage import service_install, service_start
 
             ok, msg = service_install()
             if ok:
@@ -229,7 +229,7 @@ def setup_cmd(
 
     # Ensure cliproxy config exists (cursor block, etc.)
     try:
-        from thegent.agents.cliproxy_manager import _ensure_config
+        from thegent_agents.agents.cliproxy_manager import _ensure_config
 
         _ensure_config(settings)
     except Exception as e:
@@ -244,13 +244,13 @@ def setup_cmd(
         if not bin_dir.exists():
             bin_dir.mkdir(parents=True, exist_ok=True)
         try:
-            from thegent.clode_main import install_links as clode_install_links
+            from thegent_cli.clode_main import install_links as clode_install_links
 
             clode_install_links(bin_dir=bin_dir, force=True)
         except Exception as e:
             console.print(f"[red]Clode links: {e}[/red]")
         try:
-            from thegent.dex_main import install_links as dex_install_links
+            from thegent_cli.dex_main import install_links as dex_install_links
 
             dex_install_links(bin_dir=bin_dir, force=True)
         except Exception as e:
@@ -259,7 +259,7 @@ def setup_cmd(
     if hooks:
         console.print("\n[bold cyan]Installing git hooks...[/bold cyan]")
         try:
-            from thegent.install import setup_hooks
+            from thegent_cli.install import setup_hooks
 
             counts = setup_hooks(cwd=Path.cwd(), verbose=True)
             if counts.get("installed", 0) > 0:
@@ -272,7 +272,7 @@ def setup_cmd(
     if skills:
         console.print("\n[bold cyan]Syncing skills template...[/bold cyan]")
         try:
-            from thegent.install import setup_skills
+            from thegent_cli.install import setup_skills
 
             counts = setup_skills(cwd=Path.cwd(), verbose=True)
             if counts.get("copied", 0) > 0:
@@ -298,7 +298,7 @@ def setup_cmd(
             "\nWould you like to integrate thegent with your AI agents (Cursor, Claude Code, Codex, etc.)?",
             default=True,
         ):
-            from thegent.install import run_wizard
+            from thegent_cli.install import run_wizard
 
             run_wizard()
 
@@ -306,7 +306,7 @@ def setup_cmd(
             "\nRemove manual playwright from MCP configs (use thegent-bundled browser tools)?", default=True
         ):
             try:
-                from thegent.mcp.manage import remove_playwright_from_client
+                from thegent_protocols.mcp.manage import remove_playwright_from_client
 
                 for c in ["cursor", "claude-code", "codex", "claude-desktop"]:
                     ok, msg = remove_playwright_from_client(c)
@@ -326,7 +326,7 @@ def rules_sync_cmd(
     cd: Path | None = typer.Option(None, "--cd", "-d", help="Project directory"),
 ) -> None:
     """Sync CLAUDE.md to other platform-specific rule files (AGENTS.md, Cursor, Codex)."""
-    from thegent.cli.commands.impl import rules_sync_impl
+    from thegent_cli.cli.commands.impl import rules_sync_impl
 
     result = rules_sync_impl(cd=cd, force=force, check=check)
     if not result["success"]:

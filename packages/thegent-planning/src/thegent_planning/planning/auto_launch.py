@@ -16,37 +16,37 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
-from thegent.cost.aggregator import CostAggregator, CostEstimator
-from thegent.economy.reputation import ReputationManager
-from thegent.governance.agent_hierarchy import AgentHierarchyManager
-from thegent.governance.backlog import BacklogManager
-from thegent.governance.constitution import ConstitutionManager
-from thegent.governance.evidence_ledger import EvidenceLedger
-from thegent.governance.overrides import OverrideManager
-from thegent.governance.teammates import TeammateManager
-from thegent.infra.process_registry import ProcessRegistry
-from thegent.infra.subprocess_manager import SubprocessManager
-from thegent.integration.plan_system import PlanSystemIntegration
-from thegent.integration.unified_config import UnifiedConfigManager
-from thegent.memory.manager import MemoryManager
-from thegent.observability.analytics import AnalyticsIntegration
-from thegent.observability.egress import EgressEvent, SIEMEgress
-from thegent.orchestration.execution.lanes import Lane, LaneModel
-from thegent.orchestration.execution.worker_pool import PersistentWorkerPool
-from thegent.orchestration.resilience.deferral import DeferralManager
-from thegent.orchestration.resource.load_based_limits import (
+from thegent_core.config import ThegentSettings
+from thegent_routing.cost.aggregator import CostAggregator, CostEstimator
+from thegent_audit.economy.reputation import ReputationManager
+from thegent_audit.governance.agent_hierarchy import AgentHierarchyManager
+from thegent_audit.governance.backlog import BacklogManager
+from thegent_audit.governance.constitution import ConstitutionManager
+from thegent_audit.governance.evidence_ledger import EvidenceLedger
+from thegent_audit.governance.overrides import OverrideManager
+from thegent_audit.governance.teammates import TeammateManager
+from thegent_core.infra.process_registry import ProcessRegistry
+from thegent_core.infra.subprocess_manager import SubprocessManager
+from thegent_planning.integration.plan_system import PlanSystemIntegration
+from thegent_planning.integration.unified_config import UnifiedConfigManager
+from thegent_core.memory.manager import MemoryManager
+from thegent_observability.observability.analytics import AnalyticsIntegration
+from thegent_observability.observability.egress import EgressEvent, SIEMEgress
+from thegent_execution.orchestration.execution.lanes import Lane, LaneModel
+from thegent_execution.orchestration.execution.worker_pool import PersistentWorkerPool
+from thegent_execution.orchestration.resilience.deferral import DeferralManager
+from thegent_execution.orchestration.resource.load_based_limits import (
     compute_dynamic_limit,
     sample_resources,
 )
-from thegent.orchestration.state.session_watcher import SessionEventWatcher
-from thegent.planning.work_stream import WorkStreamManager
-from thegent.planning.workstream_db import WorkstreamDB
-from thegent.utils.routing_impl.task_router import TaskRouter
-from thegent.security.rbac import Permission, RBACManager, Role
-from thegent.sync import SyncOrchestrator, SyncRegistry
-from thegent.team.coordination import TeamCoordinator
-from thegent.ux.alerts import AlertFatigueController, InterruptionKind
+from thegent_execution.orchestration.state.session_watcher import SessionEventWatcher
+from thegent_planning.planning.work_stream import WorkStreamManager
+from thegent_planning.planning.workstream_db import WorkstreamDB
+from thegent_core.utils.routing_impl.task_router import TaskRouter
+from thegent_audit.security.rbac import Permission, RBACManager, Role
+from thegent_sync.sync import SyncOrchestrator, SyncRegistry
+from thegent_agents.team.coordination import TeamCoordinator
+from thegent_cli.ux.alerts import AlertFatigueController, InterruptionKind
 
 _log = logging.getLogger(__name__)
 
@@ -368,7 +368,7 @@ class AutoLaunchSystem:
     def sync_database(self) -> None:
         """Sync workstream database with WORK_STREAM.md."""
         try:
-            from thegent.cli.commands.impl import _parse_work_stream_md
+            from thegent_cli.cli.commands.impl import _parse_work_stream_md
 
             work_stream_path = Path("docs/reference/WORK_STREAM.md")
             if work_stream_path.exists():
@@ -518,7 +518,7 @@ class AutoLaunchSystem:
             await self._launch_item(item, lane, model, estimated_cost)
 
             # Emit SIEM event
-            from thegent.observability.egress import EgressEvent
+            from thegent_observability.observability.egress import EgressEvent
 
             self.siem_egress.push_event(
                 EgressEvent(
@@ -570,7 +570,7 @@ class AutoLaunchSystem:
             return
 
         agent_id = "auto-launch"
-        from thegent.cli.commands.impl import work_stream_claim_impl
+        from thegent_cli.cli.commands.impl import work_stream_claim_impl
 
         claim_result = work_stream_claim_impl(item_id, agent_id, cd=Path.cwd())
         if not claim_result.get("success", False):
@@ -587,7 +587,7 @@ class AutoLaunchSystem:
             return
 
         # Use bg_impl directly for the specific item
-        from thegent.cli.commands.impl import bg_impl
+        from thegent_cli.cli.commands.impl import bg_impl
 
         prompt = item.get("prompt_suggestion") or item.get("prompt") or item.get("title", item_id)
 

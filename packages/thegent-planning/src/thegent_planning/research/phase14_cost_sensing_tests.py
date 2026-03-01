@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.phases.cost_sensing import CostSensingTestMatrix
+from thegent_planning.phases.cost_sensing import CostSensingTestMatrix
 
 
 class Phase14CostSensingTestsResearch:

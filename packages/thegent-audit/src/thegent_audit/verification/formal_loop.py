@@ -6,7 +6,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from thegent.verification.symbolic import SymbolicRiskExplorer
+from thegent_audit.verification.symbolic import SymbolicRiskExplorer
 
 _log = logging.getLogger(__name__)
 

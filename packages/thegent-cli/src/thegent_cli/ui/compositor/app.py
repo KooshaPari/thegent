@@ -8,11 +8,11 @@ from textual.app import App, ComposeResult
 from textual.containers import Vertical
 from textual.widgets import Footer, Header, Static
 
-from thegent.ui.compositor.pane_manager import PaneManager, PaneNode
+from thegent_cli.ui.compositor.pane_manager import PaneManager, PaneNode
 
 if TYPE_CHECKING:
-    from thegent.ui.compositor.session_state import SessionState
-    from thegent.ui.compositor.terminal_pane import PanelMounted, PanelUnmounted
+    from thegent_cli.ui.compositor.session_state import SessionState
+    from thegent_cli.ui.compositor.terminal_pane import PanelMounted, PanelUnmounted
 
 logger = logging.getLogger(__name__)
 
@@ -265,7 +265,7 @@ class CompositApp(App):
             RuntimeError: If pane initialization fails
         """
         try:
-            from thegent.ui.compositor.terminal_pane import TerminalPane
+            from thegent_cli.ui.compositor.terminal_pane import TerminalPane
 
             # Create terminal pane widget
             pane_widget = TerminalPane(
@@ -390,7 +390,7 @@ class CompositApp(App):
                 self.pane_manager.root.pane_id = f"split-{uuid.uuid4().hex[:8]}"
                 self.pane_manager.root.direction = "vertical"
                 self.pane_manager.root.is_leaf = False
-                from thegent.ui.compositor.pane_manager import PaneNode
+                from thegent_cli.ui.compositor.pane_manager import PaneNode
 
                 self.pane_manager.root.children = [
                     PaneNode(pane_id=old_id, is_leaf=True),

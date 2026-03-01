@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 # List and metrics commands
-from thegent.cli.commands.model_cmds_list import (
+from thegent_cli.cli.commands.model_cmds_list import (
     list_agents_cmd,
     list_droids_cmd,
     list_models_cmd,
@@ -16,7 +16,7 @@ from thegent.cli.commands.model_cmds_list import (
 )
 
 # Catalog and config commands
-from thegent.cli.commands.model_cmds_config import (
+from thegent_cli.cli.commands.model_cmds_config import (
     list_model_contract_schema_cmd,
     cliproxy_login_cmd,
     setup_cmd,

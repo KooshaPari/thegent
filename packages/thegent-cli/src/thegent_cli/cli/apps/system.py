@@ -39,7 +39,7 @@ def system_install(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ) -> None:
     """Install system configurations."""
-    from thegent.cli.system import cmd_install
+    from thegent_cli.cli.system import cmd_install
     import argparse
 
     args = argparse.Namespace(
@@ -66,7 +66,7 @@ def system_verify(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ) -> None:
     """Verify installed configurations."""
-    from thegent.cli.system import cmd_verify
+    from thegent_cli.cli.system import cmd_verify
     import argparse
 
     args = argparse.Namespace(
@@ -82,7 +82,7 @@ def system_verify(
 @system_app.command("status")
 def system_status() -> None:
     """Show installation status."""
-    from thegent.cli.system import cmd_status
+    from thegent_cli.cli.system import cmd_status
     import argparse
 
     args = argparse.Namespace(manifest=None)

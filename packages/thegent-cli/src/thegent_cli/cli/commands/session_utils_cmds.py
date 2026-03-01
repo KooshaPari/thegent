@@ -9,7 +9,7 @@ import sys
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _default_owner_tag,
@@ -17,7 +17,7 @@ from thegent.cli.commands._cli_shared import (
     _resolve_run_id,
     console,
 )
-from thegent.cli.commands.session_cmds_helpers import (
+from thegent_cli.cli.commands.session_cmds_helpers import (
     parse_sources_csv,
     print_high_session_count_tip,
     render_ps_markdown,
@@ -33,7 +33,7 @@ Extracted from session_cmds.py to manage module size.
 
 def history_cmd(limit: int = 50, format: str | None = None) -> None:
     """List execution run history (sync and background)."""
-    from thegent.cli.commands.impl import history_impl
+    from thegent_cli.cli.commands.impl import history_impl
 
     runs = history_impl(limit=limit)
     if not format or format == "rich":
@@ -101,7 +101,7 @@ def history_cmd(limit: int = 50, format: str | None = None) -> None:
 
 def events_cmd(run_id: str | None = None, limit: int = 100, format: str | None = None) -> None:
     """List raw telemetry events."""
-    from thegent.cli.commands.impl import events_impl
+    from thegent_cli.cli.commands.impl import events_impl
 
     events = events_impl(run_id=run_id, limit=limit)
     if not format or format == "rich":
@@ -156,7 +156,7 @@ def inbox_list_cmd(
     format: str | None = None,
 ) -> None:
     """List unified inbox events (run registry + escalation) with optional filters."""
-    from thegent.cli.commands.impl import inbox_list_impl
+    from thegent_cli.cli.commands.impl import inbox_list_impl
 
     src_tuple = parse_sources_csv(sources)
     events = inbox_list_impl(
@@ -208,7 +208,7 @@ def inbox_wait_cmd(
     format: str | None = None,
 ) -> None:
     """Wait for next inbox event matching filters. Blocks until new event or timeout."""
-    from thegent.cli.commands.impl import inbox_wait_impl
+    from thegent_cli.cli.commands.impl import inbox_wait_impl
 
     _src_tuple = parse_sources_csv(sources)
     events_result = inbox_wait_impl(
@@ -249,7 +249,7 @@ def ps_cmd(
     format: str | None = None,
     include_contract: bool = False,
 ) -> None:
-    from thegent.cli.commands.impl import ps_impl
+    from thegent_cli.cli.commands.impl import ps_impl
 
     settings = ThegentSettings()
     own = owner or _default_owner_tag()

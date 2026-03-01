@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from thegent.cli.commands import dag_impl
+from thegent_cli.cli.commands import dag_impl
 
 if TYPE_CHECKING:
-    from thegent.cli.commands.dag_impl import DagDocument
+    from thegent_cli.cli.commands.dag_impl import DagDocument
 
 
 def parse_dag_full(path: Path) -> "DagDocument":

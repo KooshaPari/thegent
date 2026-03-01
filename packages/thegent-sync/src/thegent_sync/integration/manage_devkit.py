@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from thegent.infra import yaml_load
-from thegent.platform_paths import get_bin_dir, get_config_dir
-from thegent.thg_platform import detect_platform
+from thegent_core.infra import yaml_load
+from thegent_platform.platform_paths import get_bin_dir, get_config_dir
+from thegent_platform.thg_platform import detect_platform
 
 __all__ = ["ManageDevkitIntegration"]
 

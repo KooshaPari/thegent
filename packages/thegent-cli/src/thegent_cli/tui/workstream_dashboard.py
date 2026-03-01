@@ -12,9 +12,9 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import DataTable, Footer, Header, ProgressBar, Static, TabbedContent, TabPane
 
-from thegent.config import ThegentSettings
-from thegent.orchestration.resource.load_based_limits import compute_dynamic_limit, sample_resources
-from thegent.planning.workstream_db import WorkstreamDB
+from thegent_core.config import ThegentSettings
+from thegent_execution.orchestration.resource.load_based_limits import compute_dynamic_limit, sample_resources
+from thegent_planning.planning.workstream_db import WorkstreamDB
 
 _log = logging.getLogger(__name__)
 
@@ -333,13 +333,13 @@ class WorkstreamDashboard(App):
         self.db = WorkstreamDB(settings=self.settings)
         self.refresh_interval = 2.0
         try:
-            from thegent.ux.kpis import KPIDashboard
+            from thegent_cli.ux.kpis import KPIDashboard
 
             self.kpi_dashboard = KPIDashboard(self.settings)
         except Exception:
             self.kpi_dashboard = None
 
-        from thegent.economy.reputation import ReputationManager
+        from thegent_audit.economy.reputation import ReputationManager
 
         self.reputation_manager = ReputationManager(db_path=self.db.db_path)
 
@@ -420,7 +420,7 @@ class WorkstreamDashboard(App):
         """Run gardening cycle from dashboard."""
         self.notify("Starting gardening cycle...", severity="information")
         try:
-            from thegent.planning.auto_launch import AutoLaunchSystem
+            from thegent_planning.planning.auto_launch import AutoLaunchSystem
 
             launcher = AutoLaunchSystem(self.settings)
             await launcher.run_gardening_cycle()

@@ -12,9 +12,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
-from thegent.planning.workstream_db_items import build_next_item, parse_meta_json
-from thegent.planning.workstream_db_schema import SCHEMA_INDEX_SQL, SCHEMA_TABLE_SQL
+from thegent_core.config import ThegentSettings
+from thegent_planning.planning.workstream_db_items import build_next_item, parse_meta_json
+from thegent_planning.planning.workstream_db_schema import SCHEMA_INDEX_SQL, SCHEMA_TABLE_SQL
 
 _log = logging.getLogger(__name__)
 
@@ -399,7 +399,7 @@ class WorkstreamDB:
 
     def sync_from_agileplus(self, session_dir: Path) -> int:
         """Sync AgilePlus backlog.jsonl into canonical workstream. Returns count upserted."""
-        from thegent.governance.backlog import BacklogManager
+        from thegent_audit.governance.backlog import BacklogManager
 
         bm = BacklogManager(session_dir)
         pending = bm.get_pending()
@@ -428,7 +428,7 @@ class WorkstreamDB:
 
     def _sync_prompt_queue(self, session_dir: Path) -> int:
         try:
-            from thegent.queue.storage import PromptQueue
+            from thegent_core.queue.storage import PromptQueue
 
             count = 0
             pq = PromptQueue(session_dir)
@@ -453,7 +453,7 @@ class WorkstreamDB:
 
     def _sync_escalation_queue(self, session_dir: Path) -> int:
         try:
-            from thegent.execution import EscalationQueue
+            from thegent_execution.execution import EscalationQueue
 
             count = 0
             eq = EscalationQueue(session_dir)
@@ -859,7 +859,7 @@ class WorkstreamDB:
             _log.warning(f"Work stream file not found: {work_stream_path}")
             return
 
-        from thegent.integration.work_stream import WorkStreamIntegration
+        from thegent_planning.integration.work_stream import WorkStreamIntegration
 
         integration = WorkStreamIntegration(work_stream_path)
 

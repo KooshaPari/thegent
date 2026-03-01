@@ -17,9 +17,9 @@ def govern_approve(
     run_id: str = typer.Argument(..., help="Run ID to approve"),
     reason: str | None = typer.Option(None, "--reason", "-r", help="Approval reason"),
 ) -> None:
-    from thegent.cli.commands.impl import govern_approve_impl
-    from thegent.cli.services.governance import govern_get_pending_approval_impl
-    from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
+    from thegent_cli.cli.commands.impl import govern_approve_impl
+    from thegent_cli.cli.services.governance import govern_get_pending_approval_impl
+    from thegent_audit.governance.diff_renderer import DiffPayload, DiffRenderer
 
     try:
         pending = govern_get_pending_approval_impl(run_id=run_id)
@@ -45,7 +45,7 @@ def govern_reject(
     run_id: str = typer.Argument(..., help="Run ID to reject"),
     reason: str = typer.Option("rejected", "--reason", "-r", help="Rejection reason"),
 ) -> None:
-    from thegent.cli.commands.impl import govern_reject_impl
+    from thegent_cli.cli.commands.impl import govern_reject_impl
 
     try:
         result = govern_reject_impl(run_id=run_id, reason=reason)
@@ -67,7 +67,7 @@ def govern_vet(
     policy_id: str | None = typer.Option(None, "--policy-id", help="Federated policy id override"),
     json_output: bool = typer.Option(False, "--json", help="Output JSON result"),
 ) -> None:
-    from thegent.cli.services.governance import govern_vet_impl
+    from thegent_cli.cli.services.governance import govern_vet_impl
 
     try:
         result = govern_vet_impl(
@@ -104,7 +104,7 @@ def govern_register_host(
     prefix: str = typer.Option("", "--prefix", "-p", help="Command prefix (e.g., 'ssh user@host')"),
 ) -> None:
     """Register a new host device for remote harness execution."""
-    from thegent.cli.commands.impl import harness_register_host_impl
+    from thegent_cli.cli.commands.impl import harness_register_host_impl
 
     result = harness_register_host_impl(
         host_id=host_id,
@@ -125,7 +125,7 @@ def govern_resolve_config(
     key: str | None = typer.Option(None, "--key", "-k", help="Specific config key to resolve"),
 ) -> None:
     """Resolve configuration overrides for a tenant or session."""
-    from thegent.mcp.server.tools_runtime import config_resolve_impl
+    from thegent_protocols.mcp.server.tools_runtime import config_resolve_impl
 
     result_str = config_resolve_impl(
         tenant_id=tenant_id,
@@ -143,9 +143,9 @@ def govern_negotiate(
     versions: str = typer.Option(..., "--versions", "-v", help="Comma-separated supported versions"),
 ) -> None:
     """Negotiate a contract version."""
-    from thegent.mcp.server.tools_runtime import negotiate_contract_impl
+    from thegent_protocols.mcp.server.tools_runtime import negotiate_contract_impl
 
-    from thegent.cli.commands.session_control_impl import session_contract_negotiate_impl
+    from thegent_cli.cli.commands.session_control_impl import session_contract_negotiate_impl
 
     version_list = [v.strip() for v in versions.split(",")]
     result_str = negotiate_contract_impl(
@@ -179,7 +179,7 @@ def govern_health_trend(
     """Analyze session contract health trends."""
     from pathlib import Path
 
-    from thegent.cli.commands.session_cmds import session_contract_health_trend_cmd
+    from thegent_cli.cli.commands.session_cmds import session_contract_health_trend_cmd
 
     output_path = Path(output) if output else None
     session_contract_health_trend_cmd(

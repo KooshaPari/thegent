@@ -23,7 +23,7 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from thegent.governance.analyzer import Finding
+    from thegent_audit.governance.analyzer import Finding
 else:
 
     class Finding:  # runtime shim for type checkers only
@@ -35,7 +35,7 @@ else:
         delta: float
 
 
-from thegent.planning.simulation import PERTNode, pert_forward_pass
+from thegent_planning.planning.simulation import PERTNode, pert_forward_pass
 
 _log = logging.getLogger(__name__)
 

@@ -13,7 +13,7 @@ from typer.models import OptionInfo
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _format_context_usage_line,
@@ -98,14 +98,14 @@ def run_cmd(
     if isinstance(skills, OptionInfo):
         skills = None
 
-    from thegent.cli.commands.impl import run_impl
-    from thegent.models import ModelCatalog, resolve_route
+    from thegent_cli.cli.commands.impl import run_impl
+    from thegent_core.models import ModelCatalog, resolve_route
 
     # Model-first: resolve agent via routing policy (WP-5003 cost_quality supported)
     effective_agent = agent
     if agent is None and model:
         settings = ThegentSettings()
-        from thegent.models.catalog import normalize_route_policy
+        from thegent_core.models.catalog import normalize_route_policy
 
         policy = normalize_route_policy(routing or settings.default_routing)
         routes = ModelCatalog.routes_for(model)
@@ -142,7 +142,7 @@ def run_cmd(
     settings = ThegentSettings()
     thresh = getattr(settings, "session_warn_threshold", 5)
     if isinstance(thresh, int) and thresh > 0:
-        from thegent.cli.commands.impl import ps_impl
+        from thegent_cli.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
         running = sum(1 for s in sessions if (s.get("status") or "").lower() == "running")
@@ -163,7 +163,7 @@ def run_cmd(
         raise typer.Exit(1)
 
     # WP-X2/X5/X6/X7: Unified execution via run_impl (FSM + Policy + Telemetry)
-    from thegent.config_provider import get_config_provider
+    from thegent_core.config_provider import get_config_provider
 
     effective_prompt = _inject_skill_instructions(prompt, skills)
     res = run_impl(
@@ -282,7 +282,7 @@ def bg_cmd(
     if isinstance(skills, OptionInfo):
         skills = None
 
-    from thegent.cli.commands.impl import bg_impl
+    from thegent_cli.cli.commands.impl import bg_impl
 
     effective_prompt = _inject_skill_instructions(prompt, skills)
     res = bg_impl(
@@ -320,7 +320,7 @@ def retry_cmd(
     lane: str = typer.Option("standard", "--lane", help="Retry lane"),
 ) -> None:
     """Retry a failed run with the same parameters."""
-    from thegent.cli.commands.impl import retry_impl
+    from thegent_cli.cli.commands.impl import retry_impl
 
     res = retry_impl(run_id=run_id, timeout=timeout, lane=lane)
 
@@ -333,8 +333,8 @@ def retry_cmd(
 
 
 # Re-export from submodules for backward compatibility
-from thegent.cli.commands.run_cmds_loop import *  # noqa: F401, F403
-from thegent.cli.commands.run_cmds_advanced import *  # noqa: F401, F403
+from thegent_cli.cli.commands.run_cmds_loop import *  # noqa: F401, F403
+from thegent_cli.cli.commands.run_cmds_advanced import *  # noqa: F401, F403
 
 __all__ = [
     "bg_cmd",

@@ -9,7 +9,7 @@ from typing import Any
 
 from cachetools import TTLCache
 
-from thegent.contracts.capability_registry import CapabilityRegistry
+from thegent_core.contracts.capability_registry import CapabilityRegistry
 
 
 class AdapterAdmissionPolicy:

@@ -1,6 +1,6 @@
 """thegent plugin for tray application."""
 
-from thegent.tray.plugins.thegent.api_client import (
+from thegent_platform.tray.plugins.thegent.api_client import (
     Agent,
     CostSummary,
     GamificationStats,
@@ -9,7 +9,7 @@ from thegent.tray.plugins.thegent.api_client import (
     Run,
     ThegentAPIClient,
 )
-from thegent.tray.plugins.thegent.plugin import ThegentPlugin
+from thegent_platform.tray.plugins.thegent.plugin import ThegentPlugin
 
 __all__ = [
     "Agent",

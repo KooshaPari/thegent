@@ -2,7 +2,7 @@
 
 import logging
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 

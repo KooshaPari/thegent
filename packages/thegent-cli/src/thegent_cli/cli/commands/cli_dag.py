@@ -5,13 +5,13 @@ Re-exports split modules:
 - cli_dag_run_sync_recover: update, cancel, status, ready, run, sync, recover, checkpoints
 """
 
-from thegent.cli.commands.cli_dag_validate_list_add import (
+from thegent_cli.cli.commands.cli_dag_validate_list_add import (
     dag_validate_cmd,
     dag_list_cmd,
     dag_add_cmd,
     dag_remove_cmd,
 )
-from thegent.cli.commands.cli_dag_run_sync_recover import (
+from thegent_cli.cli.commands.cli_dag_run_sync_recover import (
     TERMINAL_STATUSES,
     dag_update_cmd,
     dag_cancel_cmd,

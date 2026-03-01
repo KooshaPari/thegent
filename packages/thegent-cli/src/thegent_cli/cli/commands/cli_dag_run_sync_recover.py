@@ -13,8 +13,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.config import ThegentSettings
-from thegent.cli.commands.dag_impl import (
+from thegent_core.config import ThegentSettings
+from thegent_cli.cli.commands.dag_impl import (
     _atomic_write,
     _check_dag_cycles,
     _dag_path,
@@ -30,8 +30,8 @@ from thegent.cli.commands.dag_impl import (
     dag_run_impl,
     dag_sync_impl,
 )
-from thegent.cli.commands._cli_shared import _resolve_checkpoint_id
-from thegent.cli.services.run_session_helpers import (
+from thegent_cli.cli.commands._cli_shared import _resolve_checkpoint_id
+from thegent_cli.cli.services.run_session_helpers import (
     default_owner_tag as _default_owner_tag,
     resolve_cwd as _resolve_cwd,
 )
@@ -53,7 +53,7 @@ def dag_update_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Update a task in the DAG. XA4: contract_version in task metadata."""
-    from thegent.cli.commands.dag_impl import _validate_task_id
+    from thegent_cli.cli.commands.dag_impl import _validate_task_id
 
     VALID_STATUSES = {"pending", "running", "done", "failed", "blocked", "cancelled", "skipped"}
     cwd = _resolve_cwd(cd)
@@ -113,7 +113,7 @@ def dag_cancel_cmd(task_id: str, cd: Path | None = None) -> None:
 
 def dag_status_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """For each task with session_id show id, status, session_id, session_status (running/exited:rc)."""
-    from thegent.cli.commands.dag_impl import dag_status_impl
+    from thegent_cli.cli.commands.dag_impl import dag_status_impl
 
     res = dag_status_impl(cd=cd)
     if "error" in res:
@@ -304,7 +304,7 @@ def dag_checkpoint_cmd(cd: Path | None = None, reason: str = "Manual checkpoint"
         raise typer.Exit(1)
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -325,7 +325,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
     dag_path = cwd / ".factory" / "dag-session.md"
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -347,7 +347,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
 def dag_checkpoints_cmd(limit: int = 20) -> None:
     """List recent DAG checkpoints."""
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -399,7 +399,7 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
     assert dag_path is not None
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 

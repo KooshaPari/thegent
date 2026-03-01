@@ -8,7 +8,7 @@ import platform
 from pathlib import Path
 from typing import ClassVar
 
-from thegent.security.macos_sandbox import MacOSSandbox, SandboxLevel
+from thegent_audit.security.macos_sandbox import MacOSSandbox, SandboxLevel
 
 logger = logging.getLogger(__name__)
 

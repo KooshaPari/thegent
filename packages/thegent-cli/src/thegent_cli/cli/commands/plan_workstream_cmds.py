@@ -14,12 +14,12 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent_cli.cli.commands.plan_output_helpers import (
     render_plan_next_items,
     resolve_output_format,
 )
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _default_owner_tag,
@@ -30,8 +30,8 @@ from thegent.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent.cli.commands.run_cmds import bg_cmd
-from thegent.cli.commands.session_cmds import history_cmd
+from thegent_cli.cli.commands.run_cmds import bg_cmd
+from thegent_cli.cli.commands.session_cmds import history_cmd
 
 
 """Workstream and planning-related CLI commands.
@@ -42,7 +42,7 @@ Extracted from plan_cmds.py to manage module size.
 
 def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
     """Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md. Preserves CLAIMED and COMPLETED."""
-    from thegent.cli.commands.work_stream_impl import incorporate_impl
+    from thegent_cli.cli.commands.work_stream_impl import incorporate_impl
 
     result = incorporate_impl(cd=cd, dry_run=dry_run)
     if "error" in result:
@@ -57,8 +57,8 @@ def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
 
 def plan_claim_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
     """Claim an item in the unified work stream."""
-    from thegent.cli.commands.work_stream_impl import work_stream_claim_impl
-    from thegent.discovery import get_current_agent_id
+    from thegent_cli.cli.commands.work_stream_impl import work_stream_claim_impl
+    from thegent_agents.discovery import get_current_agent_id
 
     aid = agent_id or get_current_agent_id()
     result = work_stream_claim_impl(item_id, aid, cd=cd)
@@ -72,8 +72,8 @@ def plan_claim_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = 
 
 def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
     """Mark an item as complete in the unified work stream."""
-    from thegent.cli.commands.work_stream_impl import work_stream_complete_impl
-    from thegent.discovery import get_current_agent_id
+    from thegent_cli.cli.commands.work_stream_impl import work_stream_complete_impl
+    from thegent_agents.discovery import get_current_agent_id
 
     aid = agent_id or get_current_agent_id()
     result = work_stream_complete_impl(item_id, aid, cd=cd)
@@ -85,7 +85,7 @@ def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None
 
 def plan_lint_workstream_cmd(cd: Path | None = None) -> None:
     """Validate canonical WORK_STREAM schema structure."""
-    from thegent.utils.workstream_ops import WorkStreamOps
+    from thegent_core.utils.workstream_ops import WorkStreamOps
 
     root = cd or Path.cwd()
     ops = WorkStreamOps(base_dir=root)
@@ -99,7 +99,7 @@ def plan_lint_workstream_cmd(cd: Path | None = None) -> None:
 
 def plan_normalize_workstream_cmd(cd: Path | None = None) -> None:
     """Sort and normalize WL sections and status-line formatting."""
-    from thegent.utils.workstream_ops import WorkStreamOps
+    from thegent_core.utils.workstream_ops import WorkStreamOps
 
     root = cd or Path.cwd()
     ops = WorkStreamOps(base_dir=root)
@@ -109,7 +109,7 @@ def plan_normalize_workstream_cmd(cd: Path | None = None) -> None:
 
 def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Verify WORK_STREAM invariants for CLAIMED/COMPLETED overlap by exact ID match."""
-    from thegent.planning.work_stream import WorkStreamManager
+    from thegent_planning.planning.work_stream import WorkStreamManager
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -149,7 +149,7 @@ def plan_wait_next_cmd(
     format: str | None = None,
 ) -> None:
     """Block until next actionable work exists (DAG ready, do_next, escalation, inbox)."""
-    from thegent.cli.commands.work_stream_impl import wait_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import wait_next_impl
 
     src_tuple = tuple(s.strip() for s in (sources or "dag,do_next,escalation,inbox").split(",") if s.strip())
     result = wait_next_impl(cd=cd, poll_interval=poll, timeout=timeout, sources=src_tuple)
@@ -181,7 +181,7 @@ def plan_wait_next_cmd(
 
 def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None = None) -> None:
     """Find next actionable work items from WORK_STREAM, PLAN_STATUS, FR_TRACKER, docs/plans/, escalation queue."""
-    from thegent.cli.commands.work_stream_impl import do_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import do_next_impl
 
     result = do_next_impl(cd=cd, limit=limit)
     settings = ThegentSettings()
@@ -211,7 +211,7 @@ def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None 
 
 def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Get first work item prompt for scripting. Use: PROMPT=$(thegent plan get-next)"""
-    from thegent.cli.commands.work_stream_impl import do_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import do_next_impl
 
     result = do_next_impl(cd=cd, limit=1)
     fmt = (format or "plain").lower()
@@ -244,7 +244,7 @@ def plan_loop_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", help="Print only, do not run"),
 ) -> None:
     """Loop: get next item -> run bg -> repeat until no items or --max reached."""
-    from thegent.cli.commands.work_stream_impl import do_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import do_next_impl
 
     iteration = 0
     while True:
@@ -306,7 +306,7 @@ def plan_analyze_cmd(
         console.print("[red]Ambiguous cwd. Provide --cd /path or run from project root.[/red]")
         raise typer.Exit(1)
 
-    from thegent.cli.commands.impl import plan_analyze_impl
+    from thegent_cli.cli.commands.impl import plan_analyze_impl
 
     result = plan_analyze_impl(cd=cd, pert=pert, resources=resources, continuity=continuity)
     if "error" in result:
@@ -360,8 +360,8 @@ def closure_pack_cmd(cd: Path | None = None) -> None:
 
     doc = _parse_dag_full(dag_path)
     settings = ThegentSettings()
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.execution import Auditor
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_execution.execution import Auditor
 
     registry = RunRegistry(settings.session_dir)
     auditor = Auditor(registry.registry_path)
@@ -459,8 +459,8 @@ This session is formally closed and verified for launch readiness.
 
 def workstream_query_cmd(query: str) -> None:
     """Execute SQL query on workstream database."""
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())

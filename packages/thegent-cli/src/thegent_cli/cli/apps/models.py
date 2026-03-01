@@ -11,7 +11,7 @@ console = Console()
 def models_tui():
     """Launch rich TUI for adding and managing custom models/providers."""
     try:
-        from thegent.ui.models_tui import models_tui_main
+        from thegent_cli.ui.models_tui import models_tui_main
 
         models_tui_main()
     except Exception as e:
@@ -25,7 +25,7 @@ def models_list():
 
     from typing import cast
 
-    from thegent.models.catalog import ModelCatalog
+    from thegent_core.models.catalog import ModelCatalog
 
     catalog: dict[str, object] = ModelCatalog.to_contract_view(use_scraped=False)
     routes: dict[str, list[dict[str, object]]] = cast("dict[str, list[dict[str, object]]]", catalog.get("routes", {}))

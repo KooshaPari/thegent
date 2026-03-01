@@ -8,8 +8,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.shared_mcp_manager import check_mcp_health, get_server_scope
-from thegent.shared_server_integration import get_session_server_info
+from thegent_agents.shared_mcp_manager import check_mcp_health, get_server_scope
+from thegent_agents.shared_server_integration import get_session_server_info
 
 console = Console()
 shared_app = typer.Typer(name="shared", help="Manage shared LSP/MCP servers")

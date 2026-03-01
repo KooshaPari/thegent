@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from thegent.thg_platform import detect_platform
+from thegent_platform.thg_platform import detect_platform
 
 __all__ = ["ConsistencyChecker", "ConsistencyRule"]
 

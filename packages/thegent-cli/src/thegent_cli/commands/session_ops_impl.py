@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import typer
-from thegent.execution import RunRegistry
+from thegent_execution.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 
@@ -359,7 +359,7 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
     from rich.console import Console
 
     from thegent_cli.commands.impl import _default_owner_tag, _resolve_cwd, _session_paths
-    from thegent.execution import AuditEntry, AuditRegistry
+    from thegent_execution.execution import AuditEntry, AuditRegistry
 
     console = Console()
     settings = _settings()
@@ -388,7 +388,7 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
 
             with target.open("r", encoding="utf-8", errors="replace") as f:
                 if tail and tail > 0:
-                    from thegent.utils.helpers import read_file_tail
+                    from thegent_core.utils.helpers import read_file_tail
 
                     lines = read_file_tail(target, num_lines=tail)
                     if lines:
@@ -418,7 +418,7 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
             )
         )
 
-        from thegent.utils.helpers import read_file_tail, safe_read_file
+        from thegent_core.utils.helpers import read_file_tail, safe_read_file
 
         if tail is not None and tail > 0:
             lines = read_file_tail(target, num_lines=tail)

@@ -12,7 +12,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from thegent.cli.commands.session_health_contracts_impl import session_contract_audit_impl
+from thegent_cli.cli.commands.session_health_contracts_impl import session_contract_audit_impl
 
 _log = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ __all__ = [
 
 
 def _health_impl():  # pyright: ignore[reportMissingImports]
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     return cli_impl
 

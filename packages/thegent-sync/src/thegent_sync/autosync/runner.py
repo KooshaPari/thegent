@@ -9,12 +9,12 @@ import logging
 from datetime import datetime, UTC
 from typing import Any
 
-from thegent.autosync.adapters import (
+from thegent_sync.autosync.adapters import (
     ConnectorConfigAdapter,
     MetricsAdapter,
     StateAdapter,
 )
-from thegent.integrations.workstream_autosync_shared import (
+from thegent_sync.integrations.workstream_autosync_shared import (
     SyncCheckpoint,
     SyncFailureQueue,
     WorkstreamAutosyncConfig,
@@ -82,7 +82,7 @@ class WorkstreamAutosyncRunner:
         self.last_sync_time = datetime.now(UTC)
 
         # Delegate to cycle module
-        from thegent.autosync.cycle import run_sync_cycle
+        from thegent_sync.autosync.cycle import run_sync_cycle
         result = await run_sync_cycle(self)
 
         if result.get("error"):

@@ -7,7 +7,7 @@ from typing import Any
 
 def recover_status_cmd(*, console: Any) -> None:
     """Show current recovery status (WP-7001)."""
-    from thegent.contracts.migration import MigrationController
+    from thegent_core.contracts.migration import MigrationController
 
     ctrl = MigrationController()
     state = "dual_write" if ctrl._dual_write_enabled else ("canary" if ctrl._canary_percentage > 0 else "direct")

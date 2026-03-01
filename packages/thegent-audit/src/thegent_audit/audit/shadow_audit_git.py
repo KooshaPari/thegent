@@ -11,7 +11,7 @@ FR Traceability: FR-VER-003 (shadow audit log with secret scrubbing)
 """
 
 from __future__ import annotations
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 
 import asyncio
 import hashlib
@@ -31,8 +31,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-from thegent.audit.constants import DEFAULT_DB_PATH
-from thegent.audit.secret_scrubbing import SECRET_PATTERNS, scrub_secrets as _scrub_secrets
+from thegent_audit.audit.constants import DEFAULT_DB_PATH
+from thegent_audit.audit.secret_scrubbing import SECRET_PATTERNS, scrub_secrets as _scrub_secrets
 
 log = logging.getLogger(__name__)
 

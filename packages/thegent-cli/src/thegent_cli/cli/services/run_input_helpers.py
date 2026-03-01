@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 if TYPE_CHECKING:
-    from thegent.agents.base import RunResult
+    from thegent_agents.agents.base import RunResult
 
 _CONTEXT_RATIO_CONSISTENCY_TOLERANCE = 1e-3
 
@@ -108,7 +108,7 @@ def build_context_usage_payload(
     if used < 0 or max_tokens <= 0 or used > max_tokens:
         return None
 
-    from thegent.tui.widgets.statusbar import compute_context_usage_display
+    from thegent_cli.tui.widgets.statusbar import compute_context_usage_display
 
     computed_ratio = used / max_tokens if max_tokens > 0 else 0.0
     ratio_for_output = computed_ratio
@@ -134,7 +134,7 @@ def resolve_grounding_sources_for_output(
     result_grounding_sources: list[str] | None,
 ) -> list[str]:
     """Resolve grounding source URLs from structured data first, text fallback second."""
-    from thegent.utils.routing_impl.grounding import extract_grounding_sources, extract_grounding_sources_from_payload
+    from thegent_core.utils.routing_impl.grounding import extract_grounding_sources, extract_grounding_sources_from_payload
 
     if result_grounding_sources:
         structured_sources = extract_grounding_sources_from_payload({"sources": result_grounding_sources})
@@ -192,7 +192,7 @@ def validate_image_capability(
 
     # @trace WL-114
     """
-    from thegent.agents.run_options import IMAGE_CAPABLE_AGENTS
+    from thegent_agents.agents.run_options import IMAGE_CAPABLE_AGENTS
 
     if agent not in IMAGE_CAPABLE_AGENTS:
         raise ValueError(f"--image is not supported for agent '{agent}'.")

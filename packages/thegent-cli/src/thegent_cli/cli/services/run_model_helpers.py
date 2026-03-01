@@ -46,13 +46,13 @@ def validate_explicit_ollama_provider(*, provider: str | None, model: str | None
     if not provider or not model:
         return None
 
-    from thegent.utils.routing_impl.provider_types import normalize_provider_name
+    from thegent_core.utils.routing_impl.provider_types import normalize_provider_name
 
     if normalize_provider_name(provider) != "ollama":
         return None
 
-    from thegent.models import normalize_model_id
-    from thegent.utils.routing_impl.ollama_provider import (
+    from thegent_core.models import normalize_model_id
+    from thegent_core.utils.routing_impl.ollama_provider import (
         OllamaUnavailableError,
         assert_ollama_available,
         get_available_models,

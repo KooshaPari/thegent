@@ -11,14 +11,14 @@ from rich.columns import Columns
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _normalize_output_format,
     console,
 )
-from thegent.cli.commands.infra_observe_helpers import build_observe_lines
-from thegent.cli.commands.infra_sitback_helpers import build_dashboard_panels
+from thegent_cli.cli.commands.infra_observe_helpers import build_observe_lines
+from thegent_cli.cli.commands.infra_sitback_helpers import build_dashboard_panels
 
 
 def observe_summary_cmd(
@@ -32,7 +32,7 @@ def observe_summary_cmd(
     top_escalations: int = 10,
 ) -> None:
     """FR-X08: Unified observability summary (KPIs, drift, escalation)."""
-    from thegent.cli.commands.observability_main_impl import observe_summary_impl  # pyright: ignore[reportMissingImports]
+    from thegent_cli.cli.commands.observability_main_impl import observe_summary_impl  # pyright: ignore[reportMissingImports]
 
     result = observe_summary_impl(
         limit=limit,
@@ -57,10 +57,10 @@ def cockpit_cmd() -> None:
     """Show high-level operator cockpit summary."""
     settings = ThegentSettings()
 
-    from thegent.cli.commands.session_ops_list_impl import ps_impl  # pyright: ignore[reportMissingImports]
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.cost.aggregator import CostAggregator
-    from thegent.execution import CircuitBreakerRegistry
+    from thegent_cli.cli.commands.session_ops_list_impl import ps_impl  # pyright: ignore[reportMissingImports]
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_routing.cost.aggregator import CostAggregator
+    from thegent_execution.execution import CircuitBreakerRegistry
 
     registry = RunRegistry(settings.session_dir)
     circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
@@ -140,7 +140,7 @@ def sitback_dashboard_cmd(
     profile: str = "medium",
 ) -> None:
     """Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals."""
-    from thegent.cli.commands.observability_main_impl import sitback_dashboard_impl  # pyright: ignore[reportMissingImports]
+    from thegent_cli.cli.commands.observability_main_impl import sitback_dashboard_impl  # pyright: ignore[reportMissingImports]
 
     valid_profiles = ("light", "medium", "full")
     prof = profile.strip().lower() if profile else "medium"

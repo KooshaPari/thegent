@@ -13,7 +13,7 @@ from __future__ import annotations
 import abc
 import re
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any

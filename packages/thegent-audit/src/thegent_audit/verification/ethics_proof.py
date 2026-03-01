@@ -4,7 +4,7 @@ Provides mathematically-grounded proofs that agent actions align with constituti
 
 import logging
 
-from thegent.governance.constitution import ProofOfAlignment
+from thegent_audit.governance.constitution import ProofOfAlignment
 
 _log = logging.getLogger(__name__)
 

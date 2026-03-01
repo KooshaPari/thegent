@@ -8,7 +8,7 @@ from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
-from thegent.observability.prometheus import get_metrics_collector
+from thegent_observability.observability.prometheus import get_metrics_collector
 
 
 class MetricsAdapter:

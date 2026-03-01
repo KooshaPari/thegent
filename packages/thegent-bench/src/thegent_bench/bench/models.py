@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 
 @dataclass(frozen=True)

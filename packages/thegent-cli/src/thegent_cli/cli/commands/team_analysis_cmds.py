@@ -10,7 +10,7 @@ import typer
 from rich.table import Table
 from rich.panel import Panel
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _resolve_run_id,
     console,
@@ -21,7 +21,7 @@ _log = logging.getLogger(__name__)
 
 def explain_cmd(run_id: str | None = None) -> None:
     """Show detailed explanation for an agent run (WP-4002)."""
-    from thegent.cli.commands.impl import history_impl
+    from thegent_cli.cli.commands.impl import history_impl
 
     _rid = _resolve_run_id(run_id)
     runs = history_impl(limit=1000)
@@ -59,8 +59,8 @@ def fallbacks_cmd(run_id: str | None = None) -> None:
     """Show safe fallback options for a failed or blocked run (WP-4003)."""
     run_id = _resolve_run_id(run_id)
     settings = ThegentSettings()
-    from thegent.agents.state_machine import FallbackStateMachine
-    from thegent.execution import RunRegistry
+    from thegent_agents.agents.state_machine import FallbackStateMachine
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     runs = registry.list_runs(limit=100)

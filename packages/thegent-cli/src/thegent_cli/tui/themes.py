@@ -12,7 +12,7 @@ from typing import Any
 
 from textual.css.styles import Styles
 from textual.theme import Theme
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 
 @dataclass

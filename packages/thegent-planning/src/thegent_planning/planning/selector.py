@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
-from thegent.planning.models_meta import MODEL_METADATA, ModelMetadata
+from thegent_planning.planning.models_meta import MODEL_METADATA, ModelMetadata
 
 _log = logging.getLogger(__name__)
 
@@ -72,8 +72,8 @@ class ObjectiveSelector:
 
         if model_id:
             try:
-                from thegent.models.quality_values import get_model_quality_index
-                from thegent.models.speed_values import get_model_best_speed_index
+                from thegent_core.models.quality_values import get_model_quality_index
+                from thegent_core.models.speed_values import get_model_best_speed_index
             except ImportError as exc:
                 _log.warning(
                     "Model score enrichment unavailable for %s; using metadata defaults: %s",

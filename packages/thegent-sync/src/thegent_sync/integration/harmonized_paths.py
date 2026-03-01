@@ -3,8 +3,8 @@
 import os
 from pathlib import Path
 
-from thegent.platform_paths import get_config_dir
-from thegent.thg_platform import Platform, detect_platform
+from thegent_platform.platform_paths import get_config_dir
+from thegent_platform.thg_platform import Platform, detect_platform
 
 __all__ = ["HarmonizedPathManager"]
 

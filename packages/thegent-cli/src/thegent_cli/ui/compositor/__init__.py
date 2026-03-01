@@ -12,17 +12,17 @@ Main exports:
 - RenderProfile: Dataclass holding a single render timing record
 """
 
-from thegent.ui.compositor.app import CompositApp
-from thegent.ui.compositor.compositor import (
+from thegent_cli.ui.compositor.app import CompositApp
+from thegent_cli.ui.compositor.compositor import (
     CacheStats,
     Compositor,
     CompositorProfiler,
     Panel,
     RenderProfile,
 )
-from thegent.ui.compositor.pane_manager import PaneManager
-from thegent.ui.compositor.session_state import SessionState
-from thegent.ui.compositor.terminal_pane import TerminalPane
+from thegent_cli.ui.compositor.pane_manager import PaneManager
+from thegent_cli.ui.compositor.session_state import SessionState
+from thegent_cli.ui.compositor.terminal_pane import TerminalPane
 
 __all__ = [
     "CacheStats",

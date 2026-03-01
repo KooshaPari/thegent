@@ -6,7 +6,7 @@ import getpass
 import os
 from pathlib import Path
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 
 def scope_key(owner: str) -> str:

@@ -179,7 +179,7 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
     session_dir = Path(settings.session_dir).expanduser().resolve()
 
     try:
-        from thegent.queue.storage import PromptQueue
+        from thegent_core.queue.storage import PromptQueue
 
         pq = PromptQueue(session_dir)
         all_items = pq.list_all(include_done=False, include_expired=True, limit=limit)
@@ -205,7 +205,7 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
         _log.debug("Failed to collect prompt-queue items: %s", exc)
 
     try:
-        from thegent.execution import EscalationQueue
+        from thegent_execution.execution import EscalationQueue
 
         eq = EscalationQueue(session_dir)
         past_sla = eq.list_pending(past_sla_only=True, limit=limit)
@@ -229,7 +229,7 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
         _log.debug("Failed to collect escalation queue items: %s", exc)
 
     try:
-        from thegent.orchestration.resilience.deferral import DeferralManager
+        from thegent_execution.orchestration.resilience.deferral import DeferralManager
 
         dm = DeferralManager(settings)
         deferred = dm.list_deferred()
@@ -280,7 +280,7 @@ def collect_queued_items(settings: Any, limit: int) -> tuple[list[dict[str, Any]
         _log.debug("Failed to collect deferral queue items: %s", exc)
 
     try:
-        from thegent.governance.backlog import BacklogManager
+        from thegent_audit.governance.backlog import BacklogManager
 
         bm = BacklogManager(session_dir)
         pending = bm.get_pending()

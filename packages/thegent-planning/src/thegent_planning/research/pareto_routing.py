@@ -11,7 +11,7 @@ class ParetoRouting:
 
     def __init__(self) -> None:
         """Initialize Pareto routing."""
-        from thegent.config import get_settings
+        from thegent_core.config import get_settings
 
         settings = get_settings()
         self.routes: dict[str, Any] = {}

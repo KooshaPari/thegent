@@ -7,9 +7,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.config import ThegentSettings
-from thegent.governance.handoff import HandoffIntegrity
-from thegent.governance.teammates import TeammateManager
+from thegent_core.config import ThegentSettings
+from thegent_audit.governance.handoff import HandoffIntegrity
+from thegent_audit.governance.teammates import TeammateManager
 
 app = typer.Typer(help="Manage specialized teammate agents and delegation (WP-16001)")
 console = Console()

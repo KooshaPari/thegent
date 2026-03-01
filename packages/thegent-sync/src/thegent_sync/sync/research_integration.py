@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from thegent.utils.batch_ops import batch_read
+from thegent_core.utils.batch_ops import batch_read
 
 logger = logging.getLogger(__name__)
 

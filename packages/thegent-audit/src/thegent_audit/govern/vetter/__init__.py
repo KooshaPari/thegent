@@ -6,7 +6,7 @@ Exports all public symbols needed by VetterOrchestrator and tests.
 # @trace WL-097
 """
 
-from thegent.govern.vetter.checks import (
+from thegent_audit.govern.vetter.checks import (
     DiffSizeCheck,
     DiffSizeVetterCheck,
     LLMJudgeCheck,
@@ -20,7 +20,7 @@ from thegent.govern.vetter.checks import (
     TestPassCheck,
     TestPassVetterCheck,
 )
-from thegent.govern.vetter.models import (
+from thegent_audit.govern.vetter.models import (
     VetterCheck,
     VetterCheckResult,
     VetterConfigError,
@@ -28,7 +28,7 @@ from thegent.govern.vetter.models import (
     VetterResult,
     VetterVerdict,
 )
-from thegent.govern.vetter.orchestrator import VetterOrchestrator
+from thegent_audit.govern.vetter.orchestrator import VetterOrchestrator
 
 __all__ = [
     "DiffSizeCheck",

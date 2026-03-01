@@ -5,7 +5,7 @@ Ensures API keys are isolated by owner/tenant in the auth directory.
 import shutil
 from pathlib import Path
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 
 class KeyIsolator:

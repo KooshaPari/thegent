@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.research.cost_sensitivity import CostSensitivityFramework
+from thegent_planning.research.cost_sensitivity import CostSensitivityFramework
 
 
 class Phase13CostSensitivityResearch:

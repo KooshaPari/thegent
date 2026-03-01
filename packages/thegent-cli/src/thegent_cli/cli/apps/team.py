@@ -13,7 +13,7 @@ app.add_typer(teammates_app, name="teammates")
 
 @teammates_app.command("list", help="List available agent personas (teammates).")
 def teammates_list():
-    from thegent.cli.commands.cli_teammates import list_teammates
+    from thegent_cli.cli.commands.cli_teammates import list_teammates
 
     list_teammates()
 
@@ -24,7 +24,7 @@ def teammates_delegate(
     task: str = typer.Argument(..., help="Task description"),
     parent_run_id: str = typer.Option(None, "--parent-run", help="Parent run ID for tracking"),
 ):
-    from thegent.cli.commands.cli_teammates import delegate_task
+    from thegent_cli.cli.commands.cli_teammates import delegate_task
 
     delegate_task(teammate=teammate, task=task, parent_run_id=parent_run_id)
 
@@ -33,7 +33,7 @@ def teammates_delegate(
 def teammates_status(
     run_id: str = typer.Option(None, "--run-id", help="Filter by parent run ID"),
 ):
-    from thegent.cli.commands.cli_teammates import swarm_status
+    from thegent_cli.cli.commands.cli_teammates import swarm_status
 
     swarm_status(run_id=run_id)
 
@@ -42,7 +42,7 @@ def teammates_status(
 def teammates_show(
     req_id: str = typer.Argument(..., help="Request ID to show"),
 ):
-    from thegent.cli.commands.cli_teammates import show_delegation
+    from thegent_cli.cli.commands.cli_teammates import show_delegation
 
     show_delegation(req_id=req_id)
 
@@ -53,14 +53,14 @@ def team_create(
     name: str = typer.Argument(..., help="Team name"),
     agents: list[str] = typer.Argument(..., help="Agents to include in the swarm"),
 ):
-    from thegent.cli.commands.cli import team_create_cmd
+    from thegent_cli.cli.commands.cli import team_create_cmd
 
     team_create_cmd(name=name, teammates=",".join(agents) if agents else None)
 
 
 @app.command("list", help="List active agent swarms.")
 def team_list(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    from thegent.cli.commands.team_commands import team_list_cmd
+    from thegent_cli.cli.commands.team_commands import team_list_cmd
 
     if format not in {"rich", "json"}:
         raise typer.BadParameter("format must be one of: rich, json", param_hint="--format")
@@ -69,7 +69,7 @@ def team_list(format: str = typer.Option("rich", "--format", "-F", help="Output 
 
 @app.command("hierarchy", help="Show current agent management hierarchy.")
 def team_hierarchy(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    from thegent.cli.commands.team_commands import team_hierarchy_cmd
+    from thegent_cli.cli.commands.team_commands import team_hierarchy_cmd
 
     if format not in {"rich", "json"}:
         raise typer.BadParameter("format must be one of: rich, json", param_hint="--format")
@@ -78,7 +78,7 @@ def team_hierarchy(format: str = typer.Option("rich", "--format", "-F", help="Ou
 
 @app.command("crew", help="List hierarchical agent crews.")
 def team_crew(format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)")):
-    from thegent.cli.commands.team_commands import team_crew_cmd
+    from thegent_cli.cli.commands.team_commands import team_crew_cmd
 
     if format not in {"rich", "json"}:
         raise typer.BadParameter("format must be one of: rich, json", param_hint="--format")
@@ -91,7 +91,7 @@ def team_delegate(
     prompt: str = typer.Argument(..., help="Prompt to delegate"),
     teammate: str = typer.Option(..., "--teammate", "-t", help="Teammate name"),
 ):
-    from thegent.cli.commands.cli_teammates import delegate_task
+    from thegent_cli.cli.commands.cli_teammates import delegate_task
 
     delegate_task(teammate=teammate, task=prompt)
 
@@ -100,6 +100,6 @@ def team_delegate(
 def team_status(
     run_id: str = typer.Option(None, "--run-id", help="Filter by parent run ID"),
 ):
-    from thegent.cli.commands.cli_teammates import swarm_status
+    from thegent_cli.cli.commands.cli_teammates import swarm_status
 
     swarm_status(run_id=run_id)

@@ -13,14 +13,14 @@ app.add_typer(journey_app, name="journey")
 def browser_install(
     force: bool = typer.Option(False, "--force", help="Overwrite existing launcher."),
 ) -> None:
-    from thegent.cli.commands.browser import browser_install_cmd
+    from thegent_cli.cli.commands.browser import browser_install_cmd
 
     browser_install_cmd(force=force)
 
 
 @app.command("doctor", help="Verify Agent Browser prerequisites and expected paths.")
 def browser_doctor() -> None:
-    from thegent.cli.commands.browser import browser_doctor_cmd
+    from thegent_cli.cli.commands.browser import browser_doctor_cmd
 
     browser_doctor_cmd()
 
@@ -32,7 +32,7 @@ def browser_launch(
     cdp_port: int = typer.Option(9222, "--cdp-port", help="Chrome DevTools Protocol port."),
     url: str | None = typer.Option(None, "--url", help="Optional URL to open immediately."),
 ) -> None:
-    from thegent.cli.commands.browser import browser_launch_cmd
+    from thegent_cli.cli.commands.browser import browser_launch_cmd
 
     browser_launch_cmd(browser=browser, headless=headless, cdp_port=cdp_port, url=url)
 
@@ -44,14 +44,14 @@ def journey_add(
     kind: str = typer.Option("auth", "--kind", help="Journey type: auth|task"),
     notes: str | None = typer.Option(None, "--notes", help="Optional notes."),
 ) -> None:
-    from thegent.cli.commands.browser import browser_journey_add_cmd
+    from thegent_cli.cli.commands.browser import browser_journey_add_cmd
 
     browser_journey_add_cmd(name=name, url=url, kind=kind, notes=notes)
 
 
 @journey_app.command("list", help="List all registered journeys.")
 def journey_list() -> None:
-    from thegent.cli.commands.browser import browser_journey_list_cmd
+    from thegent_cli.cli.commands.browser import browser_journey_list_cmd
 
     browser_journey_list_cmd()
 
@@ -63,6 +63,6 @@ def journey_open(
     headless: bool = typer.Option(False, "--headless", help="Run headless."),
     cdp_port: int = typer.Option(9222, "--cdp-port", help="Chrome DevTools Protocol port."),
 ) -> None:
-    from thegent.cli.commands.browser import browser_journey_open_cmd
+    from thegent_cli.cli.commands.browser import browser_journey_open_cmd
 
     browser_journey_open_cmd(name=name, browser=browser, headless=headless, cdp_port=cdp_port)

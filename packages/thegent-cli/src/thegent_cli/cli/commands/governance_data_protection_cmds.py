@@ -5,22 +5,22 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thegent.cli.console import console
+    from thegent_cli.cli.console import console
 
 
 def data_protection_cmd(format: str | None = None) -> None:
     """Show data protection status."""
-    from thegent.cli.commands.impl import get_data_protection_status_impl
+    from thegent_cli.cli.commands.impl import get_data_protection_status_impl
 
     status = get_data_protection_status_impl()
 
     if format == "json":
         import orjson as json
 
-        from thegent.cli import console
+        from thegent_cli.cli import console
         console.print(json.dumps(status))
     else:
-        from thegent.cli import console
+        from thegent_cli.cli import console
         from rich.table import Table
 
         table = Table(title="Data Protection Status")

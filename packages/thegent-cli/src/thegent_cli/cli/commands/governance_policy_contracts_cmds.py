@@ -15,7 +15,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _normalize_output_format,
     console,
@@ -48,7 +48,7 @@ def policy_show_cmd() -> None:
 def policy_purge_cmd(dry_run: bool = True) -> None:
     """Purge expired history based on tiered retention (WP-3006)."""
     settings = ThegentSettings()
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     res = registry.purge_expired(
@@ -64,7 +64,7 @@ def policy_purge_cmd(dry_run: bool = True) -> None:
 
 def contracts_registry_cmd(format: str | None = None) -> None:
     """Show the contract registry and compatibility matrix."""
-    from thegent.contracts.registry import get_registry
+    from thegent_core.contracts.registry import get_registry
 
     registry = get_registry()
     versions = registry.list_versions()
@@ -101,7 +101,7 @@ def contracts_registry_cmd(format: str | None = None) -> None:
 
 def migration_cmd(contract_id: str, version: str, format: str | None = None) -> None:
     """Evaluate migration status for a contract version."""
-    from thegent.contracts.migration import MigrationController
+    from thegent_core.contracts.migration import MigrationController
 
     console_inst = Console()
     mc = MigrationController()
@@ -133,7 +133,7 @@ def drift_cmd(
     semantic_budget: float = 10.0,
 ) -> None:
     """Detect significant drift in contract performance and check alert budgets (G-RV-07)."""
-    from thegent.contracts.telemetry import ContractTelemetry
+    from thegent_core.contracts.telemetry import ContractTelemetry
 
     settings = ThegentSettings()
     console_inst = Console()
@@ -178,7 +178,7 @@ def contracts_conformance_cmd(
     drift_window: int = 50,
 ) -> None:
     """Run provider adapter conformance tests."""
-    from thegent.contracts.conformance import run_conformance_suite
+    from thegent_core.contracts.conformance import run_conformance_suite
 
     session_dir = ThegentSettings().session_dir if check_drift else None
     report = run_conformance_suite(session_dir=session_dir, drift_window=drift_window)
@@ -224,7 +224,7 @@ def contracts_conformance_cmd(
 def trust_status_cmd(format: str | None = None) -> None:
     """Show last environment and trust boundary status (WP-3007)."""
     settings = ThegentSettings()
-    from thegent.execution import TrustBoundaryValidator
+    from thegent_execution.execution import TrustBoundaryValidator
 
     trust_boundary = TrustBoundaryValidator(settings.session_dir)
     last_env = trust_boundary.get_last_environment()

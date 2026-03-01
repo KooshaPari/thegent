@@ -1,7 +1,7 @@
 """Research: Remote compute implementation."""
 
-from thegent.compute.offload import ComputeOffload
-from thegent.compute.remote_executor import RemoteResult
+from thegent_core.compute.offload import ComputeOffload
+from thegent_core.compute.remote_executor import RemoteResult
 
 
 class CrossPlatformRemoteResearch:

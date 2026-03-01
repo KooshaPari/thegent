@@ -18,7 +18,7 @@ app = typer.Typer(help="Replay agent sessions for debugging and regression testi
 
 
 def _get_engine(sessions_root: Path | None = None):
-    from thegent.simulation.replay import SimulationReplayEngine
+    from thegent_execution.simulation.replay import SimulationReplayEngine
 
     return SimulationReplayEngine(sessions_root=sessions_root)
 

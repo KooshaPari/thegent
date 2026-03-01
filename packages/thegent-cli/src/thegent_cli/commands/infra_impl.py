@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ _log = logging.getLogger(__name__)
 def lock_resource_impl(resource_path: str, agent_id: str, ttl: int = 60, cd: Path | None = None) -> dict[str, Any]:
     """Claim a lease on a resource (file or directory)."""
     from thegent_cli.commands.impl import _resolve_cwd
-    from thegent.coordination.file_coordination import FileLeaseRegistry
+    from thegent_agents.coordination.file_coordination import FileLeaseRegistry
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     settings = ThegentSettings()
@@ -35,7 +35,7 @@ def lock_resource_impl(resource_path: str, agent_id: str, ttl: int = 60, cd: Pat
 def unlock_resource_impl(resource_path: str, agent_id: str, token: str, cd: Path | None = None) -> dict[str, Any]:
     """Release a lease on a resource."""
     from thegent_cli.commands.impl import _resolve_cwd
-    from thegent.coordination.file_coordination import FileLeaseRegistry
+    from thegent_agents.coordination.file_coordination import FileLeaseRegistry
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     settings = ThegentSettings()
@@ -52,7 +52,7 @@ def unlock_resource_impl(resource_path: str, agent_id: str, token: str, cd: Path
 def verify_context_impl(files: list[str], cd: Path | None = None) -> dict[str, Any]:
     """Verify if any of the given files have been modified (OCC check)."""
     from thegent_cli.commands.impl import _resolve_cwd
-    from thegent.coordination.file_coordination import OCCManager
+    from thegent_agents.coordination.file_coordination import OCCManager
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     settings = ThegentSettings()
@@ -75,7 +75,7 @@ def concurrency_show_impl() -> None:
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.orchestration.resource.load_based_limits import compute_dynamic_limit, sample_resources
+    from thegent_execution.orchestration.resource.load_based_limits import compute_dynamic_limit, sample_resources
 
     settings = ThegentSettings()
     console = Console()
@@ -201,7 +201,7 @@ def isolation_check_impl(mode: str = "sub-user") -> None:
     table.add_column("Status")
     table.add_column("Details")
 
-    from thegent.infra.worker_node import HAS_SHM
+    from thegent_core.infra.worker_node import HAS_SHM
 
     shm_status = "\u2705 ACTIVE" if HAS_SHM else "\u274c INACTIVE (Rust extension missing)"
     table.add_row("SHM Bridge (Rust)", shm_status, "Low-latency IPC")
@@ -209,7 +209,7 @@ def isolation_check_impl(mode: str = "sub-user") -> None:
     proxy_status = "\u2705 READY" if os.environ.get("SSH_AUTH_SOCK") else "\u26a0\ufe0f WARNING (No SSH agent)"
     table.add_row("SSH Identity Proxy", proxy_status, "Forwarding host keys")
 
-    from thegent.isolation.vfs import VfsAdapter
+    from thegent_execution.isolation.vfs import VfsAdapter
 
     _vfs = VfsAdapter()
     vfs_status = "\u2705 READY"
@@ -273,9 +273,9 @@ def orchestrate_run_impl(
     import asyncio as _asyncio
 
     from thegent_agents.plangent import LLMPlangentPlanner, PlangentExecutor
-    from thegent.orchestration.event_queue import SubAgentEventQueue
-    from thegent.orchestration.result_aggregator import ResultAggregator
-    from thegent.orchestration.sub_agent_dispatcher import CapabilityIndex, SubAgentDispatcher
+    from thegent_execution.orchestration.event_queue import SubAgentEventQueue
+    from thegent_execution.orchestration.result_aggregator import ResultAggregator
+    from thegent_execution.orchestration.sub_agent_dispatcher import CapabilityIndex, SubAgentDispatcher
 
     if not goal or not goal.strip():
         raise ValueError("goal must be a non-empty string")
@@ -319,7 +319,7 @@ def orchestrate_run_impl(
         )
 
     aggregator = ResultAggregator()
-    from thegent.orchestration.protocol import SubAgentResult, SubAgentStatus
+    from thegent_execution.orchestration.protocol import SubAgentResult, SubAgentStatus
 
     for node in executed_plan.nodes:
         status = SubAgentStatus.COMPLETED if node.status == "done" else SubAgentStatus.FAILED

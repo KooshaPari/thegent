@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from thegent.cli.commands.dag_impl_helpers import (
+from thegent_cli.cli.commands.dag_impl_helpers import (
     DagDocument,
     _parse_dag_full,
     _serialize_dag,
@@ -17,7 +17,7 @@ from thegent.cli.commands.dag_impl_helpers import (
     _parse_dag_session,
     _validate_dag,
 )
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 __all__ = [
     "_dag_path",
@@ -41,7 +41,7 @@ _log = logging.getLogger(__name__)
 
 def _dag_path(cd: Path | None) -> tuple[Path | None, Path | None]:
     """Resolve cwd and dag-session.md path. Returns (None, None) if cwd cannot be resolved."""
-    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent_cli.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -67,7 +67,7 @@ def _session_status_for(session_id: str, settings: ThegentSettings) -> str:
     """Return session_status: running or exited:rc."""
     import typer
 
-    from thegent.cli.commands.impl import _find_session_meta, _is_pid_running, _read_session_meta, _session_paths
+    from thegent_cli.cli.commands.impl import _find_session_meta, _is_pid_running, _read_session_meta, _session_paths
 
     try:
         meta_path = _find_session_meta(settings, session_id)
@@ -119,7 +119,7 @@ def _resolve_prompt(task_id: str, prompt: str, cwd: Path) -> str:  # pyright: ig
 
 def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
     """List DAG tasks. Returns {frontmatter, tasks} or error."""
-    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent_cli.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -133,7 +133,7 @@ def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
 
 def dag_raw_impl(cd: Path | None = None) -> str:
     """Get raw DAG markdown content. Returns markdown string or error message."""
-    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent_cli.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -146,7 +146,7 @@ def dag_raw_impl(cd: Path | None = None) -> str:
 
 def dag_ready_impl(cd: Path | None = None) -> dict[str, Any]:
     """List task ids that are ready (pending with all deps done|cancelled|skipped)."""
-    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent_cli.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -175,13 +175,13 @@ def dag_run_impl(
     contract_version: str | None = None,
 ) -> dict[str, Any]:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
-    from thegent.cli.commands._cli_shared import (
+    from thegent_cli.cli.commands._cli_shared import (
         _resolve_cwd,
         _parse_dag_full,
         _resolve_prompt,
     )
-    from thegent.cli.commands.impl import _default_owner_tag, bg_impl
-    from thegent.cli.commands.dag_impl_helpers import _dag_update_task
+    from thegent_cli.cli.commands.impl import _default_owner_tag, bg_impl
+    from thegent_cli.cli.commands.dag_impl_helpers import _dag_update_task
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -272,7 +272,7 @@ def dag_run_impl(
 
 def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
     """For each task with session_id show id, status, session_id, session_status."""
-    from thegent.cli.commands._cli_shared import _resolve_cwd
+    from thegent_cli.cli.commands._cli_shared import _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -316,7 +316,7 @@ def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
 
 def rules_sync_impl(cd: Path | None = None, force: bool = False, check: bool = False) -> dict[str, Any]:  # pyright: ignore[reportUnusedVariable]
     """Sync rules implementation (WP-9002)."""
-    from thegent.rules.sync import RulesSync
+    from thegent_skills.rules.sync import RulesSync
 
     project_root = cd or Path.cwd()
     syncer = RulesSync(project_root)
@@ -336,14 +336,14 @@ def rules_sync_impl(cd: Path | None = None, force: bool = False, check: bool = F
 
 def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[str, Any]:
     """For tasks with session_id and status=running, if pid not running set status=done or failed from rc."""
-    from thegent.cli.commands._cli_shared import (
+    from thegent_cli.cli.commands._cli_shared import (
         _find_session_meta,
         _is_pid_running,
         _read_session_meta,
         _resolve_cwd,
         _session_paths,
     )
-    from thegent.cli.commands.dag_impl_helpers import _dag_update_task
+    from thegent_cli.cli.commands.dag_impl_helpers import _dag_update_task
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -416,13 +416,13 @@ def dag_sync_impl(cd: Path | None = None, auto_run_next: bool = False) -> dict[s
 
 def dag_recover_impl(cd: Path | None = None, action: str = "retry-failed") -> dict[str, Any]:
     """Perform recovery playbook actions on the DAG."""
-    from thegent.cli.commands._cli_shared import (
+    from thegent_cli.cli.commands._cli_shared import (
         _dag_path,
         _parse_dag_full,
         _atomic_write,
         _serialize_dag,
     )
-    from thegent.cli.commands.dag_impl_helpers import _dag_update_task
+    from thegent_cli.cli.commands.dag_impl_helpers import _dag_update_task
 
     # Validate action
     valid_actions = {"retry-failed", "clear-stuck", "reset-retries", "fallback"}

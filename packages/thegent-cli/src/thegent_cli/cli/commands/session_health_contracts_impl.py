@@ -36,7 +36,7 @@ def list_session_contracts_impl(
     """
     Return sessions with route-request/route-contract metadata and contract quality signal.
     """
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     def _alignment_issues(
         route_request: dict[str, Any] | None,

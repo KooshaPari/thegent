@@ -9,7 +9,7 @@ from pathlib import Path
 import typer
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _default_owner_tag,
     _find_session_meta,
@@ -23,7 +23,7 @@ from thegent.cli.commands._cli_shared import (
     console,
     _LOG_FOLLOW_POLL_SECONDS,
 )
-from thegent.cli.commands.session_cmds_helpers import (
+from thegent_cli.cli.commands.session_cmds_helpers import (
     follow_log_stream,
     print_high_session_count_tip,
     render_ps_markdown,
@@ -43,7 +43,7 @@ __all__ = [
 
 def history_cmd(limit: int = 50, format: str | None = None) -> None:
     """List execution run history (sync and background)."""
-    from thegent.cli.commands.impl import history_impl
+    from thegent_cli.cli.commands.impl import history_impl
 
     runs = history_impl(limit=limit)
     if not format or format == "rich":
@@ -111,7 +111,7 @@ def history_cmd(limit: int = 50, format: str | None = None) -> None:
 
 def events_cmd(run_id: str | None = None, limit: int = 100, format: str | None = None) -> None:
     """List raw telemetry events."""
-    from thegent.cli.commands.impl import events_impl
+    from thegent_cli.cli.commands.impl import events_impl
 
     events = events_impl(run_id=run_id, limit=limit)
     if not format or format == "rich":
@@ -162,7 +162,7 @@ def ps_cmd(
     format: str | None = None,
     include_contract: bool = False,
 ) -> None:
-    from thegent.cli.commands.session_ops_impl import ps_impl
+    from thegent_cli.cli.commands.session_ops_impl import ps_impl
 
     settings = ThegentSettings()
     own = owner or _default_owner_tag()
@@ -239,8 +239,8 @@ def inspect_cmd(
     include_contract: bool = False,
 ) -> None:
     """Show status and logs for one or more sessions. No shell loop needed."""
-    from thegent.cli.commands.impl import logs_impl, status_impl
-    from thegent.cli.commands.session_ops_impl import ps_impl
+    from thegent_cli.cli.commands.impl import logs_impl, status_impl
+    from thegent_cli.cli.commands.session_ops_impl import ps_impl
 
     if not session_ids and not owner:
         raise typer.BadParameter("Provide session_ids or --owner")
@@ -333,7 +333,7 @@ def logs_cmd(
 
 def feedback_cmd(run_id: str | None = None, score: float = 1.0, note: str | None = None) -> None:
     """Provide operator feedback for a specific run."""
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     rid = _resolve_run_id(run_id)
     settings = ThegentSettings()

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from thegent.utils.json_utils import json_loads, json_dumps
+from thegent_core.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
 from pathlib import Path
@@ -18,7 +18,7 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _bootstrap_metric_contracts,
     _get_health_targets_path,
@@ -28,7 +28,7 @@ from thegent.cli.commands._cli_shared import (
     _resolve_cwd,
     console,
 )
-from thegent.cli.commands.governance_health_helpers import (
+from thegent_cli.cli.commands.governance_health_helpers import (
     build_cycle_json_output,
     build_cycle_result_table,
     build_health_dimensions_table,
@@ -44,7 +44,7 @@ from thegent.cli.commands.governance_health_helpers import (
 def trust_status_cmd(format: str | None = None) -> None:
     """Show last environment and trust boundary status (WP-3007)."""
     settings = ThegentSettings()
-    from thegent.execution import TrustBoundaryValidator
+    from thegent_execution.execution import TrustBoundaryValidator
 
     trust_boundary = TrustBoundaryValidator(settings.session_dir)
     last_env = trust_boundary.get_last_environment()

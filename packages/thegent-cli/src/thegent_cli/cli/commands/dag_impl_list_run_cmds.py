@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from thegent.cli.commands.dag_impl_helpers import (
+from thegent_cli.cli.commands.dag_impl_helpers import (
     DagDocument,
     _parse_dag_full,
     _serialize_dag,
@@ -17,14 +17,14 @@ from thegent.cli.commands.dag_impl_helpers import (
     _parse_dag_session,
     _validate_dag,
 )
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
 
 def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
     """List DAG tasks. Returns {frontmatter, tasks} or error."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent_cli.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -38,7 +38,7 @@ def dag_list_impl(cd: Path | None = None) -> dict[str, Any]:
 
 def dag_raw_impl(cd: Path | None = None) -> str:
     """Get raw DAG markdown content. Returns markdown string or error message."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent_cli.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -51,7 +51,7 @@ def dag_raw_impl(cd: Path | None = None) -> str:
 
 def dag_ready_impl(cd: Path | None = None) -> dict[str, Any]:
     """List task ids that are ready (pending with all deps done|cancelled|skipped)."""
-    from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+    from thegent_cli.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     dag_path = cwd / ".factory" / "dag-session.md"
@@ -78,8 +78,8 @@ def dag_run_impl(
     contract_version: str | None = None,
 ) -> dict[str, Any]:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
-    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, bg_impl
-    from thegent.cli.commands.dag_impl_helpers import _dag_update_task
+    from thegent_cli.cli.commands.impl import _default_owner_tag, _resolve_cwd, bg_impl
+    from thegent_cli.cli.commands.dag_impl_helpers import _dag_update_task
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     dag_path = cwd / ".factory" / "dag-session.md"

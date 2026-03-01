@@ -9,7 +9,7 @@ import typer
 from rich.console import Console
 from rich.prompt import IntPrompt
 
-from thegent.phench import (
+from thegent_bench.phench import (
     add_repo,
     audit_shared_modules,
     get_env_profile,

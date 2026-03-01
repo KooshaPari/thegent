@@ -14,12 +14,12 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent_cli.cli.commands.plan_output_helpers import (
     render_plan_next_items,
     resolve_output_format,
 )
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _default_owner_tag,
@@ -30,8 +30,8 @@ from thegent.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent.cli.commands.run_cmds import bg_cmd
-from thegent.cli.commands.session_cmds import history_cmd
+from thegent_cli.cli.commands.run_cmds import bg_cmd
+from thegent_cli.cli.commands.session_cmds import history_cmd
 
 
 """Workstream and planning-related CLI commands.
@@ -48,7 +48,7 @@ def plan_wait_next_cmd(
     format: str | None = None,
 ) -> None:
     """Block until next actionable work exists (DAG ready, do_next, escalation, inbox)."""
-    from thegent.cli.commands.work_stream_impl import wait_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import wait_next_impl
 
     src_tuple = tuple(s.strip() for s in (sources or "dag,do_next,escalation,inbox").split(",") if s.strip())
     result = wait_next_impl(cd=cd, poll_interval=poll, timeout=timeout, sources=src_tuple)
@@ -80,7 +80,7 @@ def plan_wait_next_cmd(
 
 def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None = None) -> None:
     """Find next actionable work items from WORK_STREAM, PLAN_STATUS, FR_TRACKER, docs/plans/, escalation queue."""
-    from thegent.cli.commands.work_stream_impl import do_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import do_next_impl
 
     result = do_next_impl(cd=cd, limit=limit)
     settings = ThegentSettings()
@@ -110,7 +110,7 @@ def plan_do_next_cmd(cd: Path | None = None, limit: int = 5, format: str | None 
 
 def plan_get_next_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Get first work item prompt for scripting. Use: PROMPT=$(thegent plan get-next)"""
-    from thegent.cli.commands.work_stream_impl import do_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import do_next_impl
 
     result = do_next_impl(cd=cd, limit=1)
     fmt = (format or "plain").lower()
@@ -143,7 +143,7 @@ def plan_loop_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", help="Print only, do not run"),
 ) -> None:
     """Loop: get next item -> run bg -> repeat until no items or --max reached."""
-    from thegent.cli.commands.work_stream_impl import do_next_impl
+    from thegent_cli.cli.commands.work_stream_impl import do_next_impl
 
     iteration = 0
     while True:

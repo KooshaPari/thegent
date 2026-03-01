@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, cast
 
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     _normalize_output_format,
     console,
 )
@@ -55,8 +55,8 @@ def snapshot_list_cmd(
     format: str | None = None,
 ) -> None:
     """List persisted session snapshots with optional filters."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_list_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_list_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_list_payload(
@@ -81,8 +81,8 @@ def snapshot_index_cmd(
     format: str | None = None,
 ) -> None:
     """Show snapshot index analytics payload."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_index_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_index_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_index_payload(SessionScraper(project_path), limit=limit)
@@ -100,8 +100,8 @@ def snapshot_export_cmd(
     format: str | None = None,
 ) -> None:
     """Export one snapshot JSON to markdown."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_export_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_export_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_export_payload(
@@ -121,8 +121,8 @@ def snapshot_prune_cmd(
     format: str | None = None,
 ) -> None:
     """Prune old snapshots beyond the keep limit."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_prune_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_prune_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_prune_payload(SessionScraper(project_path), max_keep=max_keep)
@@ -138,8 +138,8 @@ def snapshot_meta_cmd(
     format: str | None = None,
 ) -> None:
     """Show available trigger and tag metadata from snapshots."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_triggers_tags_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_triggers_tags_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_triggers_tags_payload(SessionScraper(project_path), limit=limit)
@@ -159,8 +159,8 @@ def snapshot_daily_index_cmd(
     format: str | None = None,
 ) -> None:
     """Show daily snapshot aggregation payload."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_index_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_index_payload
 
     project_path = project or Path.cwd()
     scraper = SessionScraper(project_path)
@@ -194,8 +194,8 @@ def snapshot_daily_totals_cmd(
     format: str | None = None,
 ) -> None:
     """Show lightweight daily aggregate totals for snapshots."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_totals_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_totals_payload
 
     project_path = project or Path.cwd()
     scraper = SessionScraper(project_path)
@@ -233,8 +233,8 @@ def snapshot_daily_export_cmd(
     format: str | None = None,
 ) -> None:
     """Export daily snapshot index (JSON + Markdown)."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_export_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_export_payload
 
     project_path = project or Path.cwd()
     scraper = SessionScraper(project_path)

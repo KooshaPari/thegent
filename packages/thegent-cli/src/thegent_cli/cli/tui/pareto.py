@@ -16,7 +16,7 @@ import orjson as json
 from pathlib import Path
 from typing import Any
 
-from thegent.utils.routing_impl.route_executor import (
+from thegent_core.utils.routing_impl.route_executor import (
     RouterStatus,
     RoutingOrchestratorBridge,
 )
@@ -109,7 +109,7 @@ class ParetoTuiSession:
         # Map provider → routing mode for the bridge.
         mode = "TheGent" if provider == "thegent" else "Lifecycle"
 
-        from thegent.utils.routing_impl.route_executor import RoutingDecision
+        from thegent_core.utils.routing_impl.route_executor import RoutingDecision
 
         decision = RoutingDecision(
             mode=mode,

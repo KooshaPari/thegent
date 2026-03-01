@@ -203,7 +203,7 @@ class MacOSSandbox:
     @classmethod
     def level_from_settings(cls) -> SandboxLevel:
         """Read sandbox level from ThegentSettings."""
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         raw = settings.sandbox_level.strip().lower() if settings.sandbox_level else "none"

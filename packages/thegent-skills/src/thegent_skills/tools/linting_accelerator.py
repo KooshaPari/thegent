@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import orjson as json
 import shutil
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 

@@ -27,17 +27,17 @@ from typing import Any
 
 import typer
 
-from thegent.cli.commands.session_meta_impl import (
+from thegent_cli.cli.commands.session_meta_impl import (
     _find_session_meta,
     _read_session_meta,
 )
-from thegent.execution import RunRegistry
+from thegent_execution.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 
 
 def _impl_settings():
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     return cli_impl.ThegentSettings()
 
@@ -46,7 +46,7 @@ def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
     """
     Wait for a background session to complete.
     """
-    from thegent.cli.commands.impl import _is_pid_running, _session_paths, time
+    from thegent_cli.cli.commands.impl import _is_pid_running, _session_paths, time
 
     settings = _impl_settings()
     try:
@@ -73,8 +73,8 @@ def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
 
 def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
     """Send a message to a running session by queuing it in the registry (WP-9004)."""
-    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd
-    from thegent.execution import AuditEntry, AuditRegistry, MessageEntry, MessageRegistry
+    from thegent_cli.cli.commands.impl import _default_owner_tag, _resolve_cwd
+    from thegent_execution.execution import AuditEntry, AuditRegistry, MessageEntry, MessageRegistry
 
     settings = _impl_settings()
     try:
@@ -134,7 +134,7 @@ def stop_impl(session_id: str, force: bool = False) -> dict[str, Any]:
     """
     Stop a background session.
     """
-    from thegent.cli.commands.impl import _is_pid_running
+    from thegent_cli.cli.commands.impl import _is_pid_running
 
     settings = _impl_settings()
     try:
@@ -160,7 +160,7 @@ def history_impl(limit: int = 50) -> list[dict[str, Any]]:
     List execution history from the run registry.
     """
     settings = _impl_settings()
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     registry = cli_impl.RunRegistry(settings.session_dir)
     return registry.list_runs(limit=limit)
@@ -168,7 +168,7 @@ def history_impl(limit: int = 50) -> list[dict[str, Any]]:
 
 def metrics_impl() -> dict[str, Any]:
     """Gather metrics for the agent registry (WP-9005)."""
-    from thegent.cli.commands.session_ops_impl import ps_impl
+    from thegent_cli.cli.commands.session_ops_impl import ps_impl
 
     sessions = ps_impl(all=True)
     stats = {
@@ -187,7 +187,7 @@ def metrics_impl() -> dict[str, Any]:
 
 def prune_sessions_impl(days: int | None = None) -> dict[str, Any]:
     """Prune old session data (WP-3006)."""
-    from thegent.cli.commands.impl import _is_pid_running, _session_paths
+    from thegent_cli.cli.commands.impl import _is_pid_running, _session_paths
 
     settings = _impl_settings()
     retention_days = days or settings.retention_days_sessions
@@ -259,7 +259,7 @@ def session_contract_negotiate_impl(contract_id: str, supported_versions: list[s
     """
     WP-7001: Implementation of contract negotiation logic.
     """
-    from thegent.contracts.registry import ContractNegotiator
+    from thegent_core.contracts.registry import ContractNegotiator
 
     negotiator = ContractNegotiator()
     return negotiator.negotiate(contract_id, supported_versions)

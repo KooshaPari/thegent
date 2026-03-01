@@ -7,7 +7,7 @@ all callers continue to work without any code change.
 
 Usage::
 
-    from thegent.native.state_shm import CircuitBreakerShm, XpTracker
+    from thegent_platform.native.state_shm import CircuitBreakerShm, XpTracker
 
     shm_path = session_dir / "state.shm"
     cb  = CircuitBreakerShm(shm_path)
@@ -49,7 +49,7 @@ _log = logging.getLogger(__name__)
 
 def _is_native_enabled() -> bool:
     """Check if native SHM is enabled via settings."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.use_native_shm

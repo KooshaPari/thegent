@@ -1,5 +1,5 @@
 """CLI apps - modular command registrations."""
-from thegent.cli.apps import (
+from thegent_cli.cli.apps import (
     audit,
     bench,
     browser,

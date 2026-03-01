@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class RulesSyncComponent(SyncComponent):
         super().__init__("rules", "Sync CLAUDE.md to other platform-specific rule files.")
 
     async def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli.commands.impl import rules_sync_impl
+        from thegent_cli.cli.commands.impl import rules_sync_impl
 
         try:
             rules_sync_impl(force=force, check=dry_run)
@@ -68,7 +68,7 @@ class DagSyncComponent(SyncComponent):
         super().__init__("dag", "Synchronize DAG state from session meta files.")
 
     async def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli import dag_sync_cmd
+        from thegent_cli.cli import dag_sync_cmd
 
         try:
             dag_sync_cmd()
@@ -77,7 +77,7 @@ class DagSyncComponent(SyncComponent):
             return SyncResult(self.name, SyncStatus.FAILED, f"Failed: {e}", errors=[str(e)])
 
     async def update(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli import dag_sync_cmd
+        from thegent_cli.cli import dag_sync_cmd
 
         try:
             dag_sync_cmd()
@@ -91,7 +91,7 @@ class WorkStreamSyncComponent(SyncComponent):
         super().__init__("work-stream", "Incorporate new work items into WORK_STREAM.md.")
 
     async def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
-        from thegent.cli import plan_incorporate_cmd
+        from thegent_cli.cli import plan_incorporate_cmd
 
         try:
             plan_incorporate_cmd(dry_run=dry_run)
@@ -110,7 +110,7 @@ class CatalogSyncComponent(SyncComponent):
     async def sync(self, dry_run: bool = False, force: bool = False) -> SyncResult:
         if dry_run:
             return SyncResult(self.name, SyncStatus.SUCCESS, "Would scrape all providers.")
-        from thegent.models.scrapers import scrape_all
+        from thegent_core.models.scrapers import scrape_all
 
         try:
             by_provider = scrape_all()

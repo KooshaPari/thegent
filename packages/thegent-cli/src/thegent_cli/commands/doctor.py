@@ -388,7 +388,7 @@ class DoctorRunner:
 
     def _check_autosync_ga_readiness(self) -> DoctorCheck:
         """Check the baseline GA readiness criteria for autosync rollout."""
-        from thegent.sync.ga_readiness import evaluate_ga_readiness
+        from thegent_sync.sync.ga_readiness import evaluate_ga_readiness
 
         root = Path.cwd()
         checks = {

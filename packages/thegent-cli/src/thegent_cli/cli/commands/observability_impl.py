@@ -11,12 +11,12 @@ Direct imports from submodules preserve all public names for internal usage.
 from __future__ import annotations
 
 # Re-export all main implementation functions
-from thegent.cli.commands.observability_main_impl import (
+from thegent_cli.cli.commands.observability_main_impl import (
     observe_summary_impl,
 )
 
 # Re-export escalation and governance functions
-from thegent.cli.commands.observability_escalation_impl import (
+from thegent_cli.cli.commands.observability_escalation_impl import (
     _extract_agent_from_line,
     _process_run_line,
     escalate_add_impl,
@@ -27,7 +27,7 @@ from thegent.cli.commands.observability_escalation_impl import (
     sweep_impl,
 )
 
-from thegent.cli.commands.observability_governance_impl import (
+from thegent_cli.cli.commands.observability_governance_impl import (
     _REVIEW_ALLOWED_TOOLS,
     _REVIEW_SCHEMA_PREAMBLE,
     _extract_review_json_payload,
@@ -43,7 +43,7 @@ from thegent.cli.commands.observability_governance_impl import (
 )
 
 # Re-export all health-related helpers
-from thegent.cli.commands.observability_health_impl import (
+from thegent_cli.cli.commands.observability_health_impl import (
     HEALTH_PAYLOAD_SCHEMA_VERSION,
     HEALTH_PAYLOAD_TYPES,
     HEALTH_POLICY_PROFILES,
@@ -59,7 +59,7 @@ from thegent.cli.commands.observability_health_impl import (
 )
 
 # Re-export all trends-related helpers
-from thegent.cli.commands.observability_trends_impl import (
+from thegent_cli.cli.commands.observability_trends_impl import (
     OBSERVE_SUMMARY_PAYLOAD_TYPES,
     OBSERVE_SUMMARY_SCHEMA_VERSION,
     _build_observe_summary_trend_scope,

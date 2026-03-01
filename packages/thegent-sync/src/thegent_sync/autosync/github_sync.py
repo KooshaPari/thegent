@@ -8,12 +8,12 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.gh_project_sync import (
+from thegent_sync.integrations.gh_project_sync import (
     GHProjectConfig,
     sync_from_github as gh_sync_from,
     sync_to_github as gh_sync_to,
 )
-from thegent.integrations.sync_provenance import (
+from thegent_sync.integrations.sync_provenance import (
     enrich_sync_metadata,
     propagate_owner_metadata,
 )

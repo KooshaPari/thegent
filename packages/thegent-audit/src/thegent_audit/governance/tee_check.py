@@ -35,7 +35,7 @@ class TEEChecker:
     """Verifies if the agent is running in a trusted execution environment."""
 
     def __init__(self, mock_mode: bool = False) -> None:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         s = ThegentSettings()
         self.mock_mode = mock_mode or s.tee_mock
@@ -80,7 +80,7 @@ class TEEChecker:
     def enforce_tee(self) -> None:
         """Raise error if not running in TEE and environment requires it."""
         attestation = self.check()
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         if not attestation.is_attested and ThegentSettings().tee_required:
             raise RuntimeError("TEE_REQUIRED: Execution environment is not an attested TEE.")

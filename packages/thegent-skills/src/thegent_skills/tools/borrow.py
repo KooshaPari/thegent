@@ -9,7 +9,7 @@ import orjson as json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 _DEFAULT_MCP_HOST = "127.0.0.1"
 _DEFAULT_MCP_PORT = 3847

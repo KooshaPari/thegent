@@ -6,7 +6,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.skills.discovery import _get_thegent_root, discover_skills, load_skill, validate_skill
+from thegent_skills.skills.discovery import _get_thegent_root, discover_skills, load_skill, validate_skill
 
 console = Console()
 app = typer.Typer(help="Skills auto-discovery and management.")

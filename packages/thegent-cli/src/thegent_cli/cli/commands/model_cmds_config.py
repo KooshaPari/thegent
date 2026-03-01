@@ -4,7 +4,7 @@ Main entry point for model listing, setup, and configuration commands.
 Implementation split across model_cmds_rules.py and model_cmds_setup.py.
 """
 
-from thegent.cli.commands.model_cmds_rules import (
+from thegent_cli.cli.commands.model_cmds_rules import (
     _list_antigravity_models,
     _list_claude_models,
     _list_codex_models,
@@ -20,7 +20,7 @@ from thegent.cli.commands.model_cmds_rules import (
     cliproxy_login_cmd,
     list_model_contract_schema_cmd,
 )
-from thegent.cli.commands.model_cmds_setup import (
+from thegent_cli.cli.commands.model_cmds_setup import (
     rules_sync_cmd,
     setup_cmd,
 )

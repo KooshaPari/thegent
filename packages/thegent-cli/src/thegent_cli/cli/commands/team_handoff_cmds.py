@@ -11,7 +11,7 @@ import typer
 from rich.table import Table
 from rich.panel import Panel
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _normalize_output_format,
     console,
@@ -22,8 +22,8 @@ def handoff_cmd(owner: str) -> None:
     """Create a continuity snapshot for a shift handoff (WP-4006, WP-3008)."""
     settings = ThegentSettings()
 
-    from thegent.cli.commands.observability_main_impl import escalate_list_impl  # pyright: ignore[reportMissingImports]
-    from thegent.execution import HandoffManager, RunRegistry
+    from thegent_cli.cli.commands.observability_main_impl import escalate_list_impl  # pyright: ignore[reportMissingImports]
+    from thegent_execution.execution import HandoffManager, RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     runs = registry.list_runs(limit=50)
@@ -44,7 +44,7 @@ def handoff_cmd(owner: str) -> None:
 
     hm = HandoffManager(settings.session_dir)
 
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(settings.session_dir)
     queued_prompts = pq.list_pending()
@@ -67,7 +67,7 @@ def handoff_cmd(owner: str) -> None:
 def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
     """Show full handoff summary (state, evidence, next steps) for a snapshot (WP-4006)."""
     settings = ThegentSettings()
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     hm = HandoffManager(settings.session_dir)
     snap = hm.get_snapshot(snapshot_id)
@@ -103,7 +103,7 @@ def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
 def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
     """List pending handoff snapshots (WP-4006)."""
     settings = ThegentSettings()
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     hm = HandoffManager(settings.session_dir)
     snapshots = hm.list_pending_snapshots(limit=limit)
@@ -134,7 +134,7 @@ def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
 def handoff_confirm_cmd(snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> None:
     """Incoming owner confirms handoff completeness (WP-3008, WP-4006)."""
     settings = ThegentSettings()
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     hm = HandoffManager(settings.session_dir)
     ok = hm.confirm_handoff(snapshot_id=snapshot_id, incoming_owner=incoming_owner, confidence=confidence)

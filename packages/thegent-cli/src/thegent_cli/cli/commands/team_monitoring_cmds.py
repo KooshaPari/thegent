@@ -5,12 +5,12 @@ from __future__ import annotations
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import ThegentSettings, console
+from thegent_cli.cli.commands._cli_shared import ThegentSettings, console
 
 
 def watchdog_cmd(max_idle_s: int = 3600) -> None:
     """Scan for stale sessions and recommend handoffs (WP-5005)."""
-    from thegent.execution import ContinuityWatchdog
+    from thegent_execution.execution import ContinuityWatchdog
 
     settings = ThegentSettings()
     cw = ContinuityWatchdog(settings.session_dir)
@@ -35,7 +35,7 @@ def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
     import json
     import sys
 
-    from thegent.execution import DLQManager
+    from thegent_execution.execution import DLQManager
 
     settings = ThegentSettings()
     dlq = DLQManager(settings.session_dir)
@@ -70,7 +70,7 @@ def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
 
 def traffic_cmd() -> None:
     """TRAFFIC KPI Dashboard (WP-Y7)."""
-    from thegent.execution import KPIManager
+    from thegent_execution.execution import KPIManager
 
     settings = ThegentSettings()
     km = KPIManager(settings.session_dir)
@@ -103,7 +103,7 @@ def traffic_cmd() -> None:
 
 def drift_monitor_cmd(prompt: str, agents: list[str]) -> None:
     """Monitor drift across multiple providers for the same prompt (WP-3001)."""
-    from thegent.cli.commands.impl import run_impl
+    from thegent_cli.cli.commands.impl import run_impl
 
     results = {}
     for agent in agents:
@@ -130,7 +130,7 @@ def roadmap_cmd() -> None:
     """Successor roadmap generation (WP-6004)."""
     from rich.markdown import Markdown
 
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     settings = ThegentSettings()
     registry = RunRegistry(settings.session_dir)

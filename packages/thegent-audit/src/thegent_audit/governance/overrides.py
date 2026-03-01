@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
-from thegent.integrations.base import SerializableMixin
+from thegent_core.config import ThegentSettings
+from thegent_sync.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 

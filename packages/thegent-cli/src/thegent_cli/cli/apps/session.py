@@ -22,7 +22,7 @@ def session_resume(
         help="Activate skill instructions by name (repeatable) (WL-101).",
     ),
 ) -> None:
-    from thegent.cli.commands.cli import resume_cmd
+    from thegent_cli.cli.commands.cli import resume_cmd
 
     resume_cmd(session_id=session_id, prompt=prompt, skills=skill)
 
@@ -34,7 +34,7 @@ def session_list(
     format: str = typer.Option("rich", "--format", "-F", help="Output format: rich|json"),
     limit: int = typer.Option(50, "--limit", "-n", help="Maximum sessions to return"),
 ) -> None:
-    from thegent.cli.commands.impl import session_list_impl
+    from thegent_cli.cli.commands.impl import session_list_impl
 
     output_format = format.strip().lower()
     if output_format not in {"rich", "json"}:

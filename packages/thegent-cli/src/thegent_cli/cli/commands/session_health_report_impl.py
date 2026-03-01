@@ -12,13 +12,13 @@ import logging
 from datetime import UTC, datetime
 from typing import Any, cast
 
-from thegent.cli.commands.session_health_impl import session_contract_audit_impl
+from thegent_cli.cli.commands.session_health_impl import session_contract_audit_impl
 
 _log = logging.getLogger(__name__)
 
 
 def _health_report_impl():
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     return cli_impl
 

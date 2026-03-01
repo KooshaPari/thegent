@@ -5,7 +5,7 @@ Core health score computation, status monitoring, and governance cycles.
 
 from __future__ import annotations
 
-from thegent.utils.json_utils import json_loads, json_dumps
+from thegent_core.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
 from pathlib import Path
@@ -15,7 +15,7 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _bootstrap_metric_contracts,
     _get_health_targets_path,
@@ -24,7 +24,7 @@ from thegent.cli.commands._cli_shared import (
     _resolve_cwd,
     console,
 )
-from thegent.cli.commands.governance_health_helpers import (
+from thegent_cli.cli.commands.governance_health_helpers import (
     build_cycle_json_output,
     build_cycle_result_table,
     build_health_dimensions_table,
@@ -52,8 +52,8 @@ def govern_configure_cmd(cd: Path | None = None, force: bool = False) -> None:
 
 def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Show current health score (composite 0-100, band, per-dimension breakdown)."""
-    from thegent.governance.health_score import HealthScoreComputer, get_band
-    from thegent.governance.scanner import CodebaseScanner
+    from thegent_audit.governance.health_score import HealthScoreComputer, get_band
+    from thegent_audit.governance.scanner import CodebaseScanner
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -100,8 +100,8 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
 
 def govern_go_status_cmd(cd: Path | None = None) -> None:
     """Show current governance status (state, cycle_id, shutdown_requested)."""
-    from thegent.config import ThegentSettings
-    from thegent.governance.agileplus import AgilePlusLoop
+    from thegent_core.config import ThegentSettings
+    from thegent_audit.governance.agileplus import AgilePlusLoop
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -132,9 +132,9 @@ def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str
     """Run a single governance cycle."""
     from datetime import UTC, datetime
 
-    from thegent.config import ThegentSettings
-    from thegent.governance.health_score import HealthScoreComputer, get_band
-    from thegent.governance.scanner import CodebaseScanner
+    from thegent_core.config import ThegentSettings
+    from thegent_audit.governance.health_score import HealthScoreComputer, get_band
+    from thegent_audit.governance.scanner import CodebaseScanner
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -199,9 +199,9 @@ def govern_go_watch_cmd(
     import time
     from datetime import UTC, datetime
 
-    from thegent.config import ThegentSettings
-    from thegent.governance.health_score import HealthScoreComputer, get_band
-    from thegent.governance.scanner import CodebaseScanner
+    from thegent_core.config import ThegentSettings
+    from thegent_audit.governance.health_score import HealthScoreComputer, get_band
+    from thegent_audit.governance.scanner import CodebaseScanner
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()

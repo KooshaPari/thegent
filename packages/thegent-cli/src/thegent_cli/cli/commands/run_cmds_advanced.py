@@ -13,7 +13,7 @@ from typer.models import OptionInfo
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _format_context_usage_line,
@@ -29,7 +29,7 @@ from thegent.cli.commands._cli_shared import (
 def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
     """Decision replay and rationale snapshots (WP-4007)."""
     settings = ThegentSettings()
-    from thegent.execution import ReplayManager
+    from thegent_execution.execution import ReplayManager
 
     rm = ReplayManager(settings.session_dir)
     chain = rm.get_replay_chain(run_id)
@@ -54,7 +54,7 @@ def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
 
 def trace_replay_cmd(run_id: str) -> None:
     """WP-16001: Replay an execution trace in sandbox mode."""
-    from thegent.planning.simulation import SimulationEngine
+    from thegent_planning.planning.simulation import SimulationEngine
 
     settings = ThegentSettings()
     registry = RunRegistry(settings.session_dir)
@@ -77,9 +77,9 @@ def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
 
     from rich.console import Console
 
-    from thegent.config import ThegentSettings
-    from thegent.utils.routing_impl.task_router import TaskRouter
-    from thegent.skills.terminal import send_to_tmux_pane
+    from thegent_core.config import ThegentSettings
+    from thegent_core.utils.routing_impl.task_router import TaskRouter
+    from thegent_skills.skills.terminal import send_to_tmux_pane
 
     console = Console()
     settings = ThegentSettings()
@@ -107,7 +107,7 @@ def deep_research_cmd(
     output: Path = typer.Option(None, "--output", "-o", help="Output file path (JSON)"),
 ) -> None:
     """Perform deep research using the Deep Research Protocol (DRP)."""
-    from thegent.skills.deep_research import perform_deep_research
+    from thegent_skills.skills.deep_research import perform_deep_research
 
     console.print("[bold cyan]Deep Research Protocol (DRP) starting...[/bold cyan]")
     console.print(f"Query: [green]{query}[/green]")
@@ -152,8 +152,8 @@ def takeover_cmd(session_id: str) -> None:
 
     from rich.console import Console
 
-    from thegent.discovery import list_discovered_agents
-    from thegent.skills.terminal import list_tmux_panes
+    from thegent_agents.discovery import list_discovered_agents
+    from thegent_skills.skills.terminal import list_tmux_panes
 
     console = Console()
     panes = list_tmux_panes()
@@ -181,7 +181,7 @@ def takeover_cmd(session_id: str) -> None:
 
     if not target:
         # Phase P4: Check for holdpty socket
-        from thegent.cli.commands.impl import _find_session_meta
+        from thegent_cli.cli.commands.impl import _find_session_meta
 
         try:
             meta_path = _find_session_meta(ThegentSettings(), session_id)

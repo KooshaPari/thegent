@@ -17,7 +17,7 @@ can be migrated here in a follow-on sprint (WL-120 Phase 3).
 
 from __future__ import annotations
 
-from thegent.cli.commands.impl import (
+from thegent_cli.cli.commands.impl import (
     bg_impl,
     loop_impl,
     resume_impl,

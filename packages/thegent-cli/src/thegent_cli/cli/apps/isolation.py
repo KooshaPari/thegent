@@ -10,7 +10,7 @@ app = typer.Typer(help="Manage agent isolation and multi-tenancy.")
 @app.command("check")
 def isolation_check(mode: str = typer.Option("sub-user", "--mode", help="Isolation mode to check")):
     """Check the status of the isolation system."""
-    from thegent.cli.commands.impl import isolation_check_impl
+    from thegent_cli.cli.commands.impl import isolation_check_impl
 
     isolation_check_impl(mode=mode)
 
@@ -22,7 +22,7 @@ def isolation_share_run(
     role: str | None = typer.Option(None, "--role", help="L1 Role (e.g. frontend_lead)"),
 ):
     """Run a command shared across tenants using CLI-Share debouncing."""
-    from thegent.isolation.sub_user_provider import SubUserIsolationProvider
+    from thegent_execution.isolation.sub_user_provider import SubUserIsolationProvider
 
     provider = SubUserIsolationProvider(enable_l1_nesting=bool(role))
     context = provider.allocate_tenant(tenant_id, role=role)

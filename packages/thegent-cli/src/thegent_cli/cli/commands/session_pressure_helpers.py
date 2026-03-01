@@ -11,7 +11,7 @@ def warn_if_session_count_high(*, settings: Any, console: Any) -> None:
     if not isinstance(thresh, int) or thresh <= 0:
         return
 
-    from thegent.cli.commands.impl import ps_impl
+    from thegent_cli.cli.commands.impl import ps_impl
 
     sessions = ps_impl(all=True)
     running = sum(1 for s in sessions if (s.get("status") or "").lower() == "running")

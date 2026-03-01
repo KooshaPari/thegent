@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 )
 
 if TYPE_CHECKING:
-    from thegent.tray.plugins.thegent.api_client import ThegentAPIClient
+    from thegent_platform.tray.plugins.thegent.api_client import ThegentAPIClient
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget as QtQWidget

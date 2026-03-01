@@ -6,7 +6,7 @@ Re-exports split modules:
 - observability_trends_impl: summary (lazy import)
 """
 
-from thegent.cli.commands.observability_escalation_impl import (
+from thegent_cli.cli.commands.observability_escalation_impl import (
     _extract_agent_from_line,
     _process_run_line,
     escalate_add_impl,
@@ -16,7 +16,7 @@ from thegent.cli.commands.observability_escalation_impl import (
     update_calibration_impl,
     sweep_impl,
 )
-from thegent.cli.commands.observability_governance_impl import (
+from thegent_cli.cli.commands.observability_governance_impl import (
     _extract_review_json_payload,
     get_server_meta_impl,
     govern_approve_impl,
@@ -39,7 +39,7 @@ def observe_summary_impl(
     trend_samples: int = 0,
 ) -> dict:
     """FR-X08: Unified observability summary (lazy import from trends impl)."""
-    from thegent.cli.commands.observability_trends_impl import observe_summary_impl as _impl  # pyright: ignore[reportMissingImports]
+    from thegent_cli.cli.commands.observability_trends_impl import observe_summary_impl as _impl  # pyright: ignore[reportMissingImports]
     return _impl(
         limit=limit,
         drift_window=drift_window,
@@ -75,7 +75,7 @@ __all__ = [
 ]
 
 # Re-export constants
-from thegent.cli.commands.observability_governance_impl import (
+from thegent_cli.cli.commands.observability_governance_impl import (
     _REVIEW_ALLOWED_TOOLS,
     _REVIEW_SCHEMA_PREAMBLE,
 )

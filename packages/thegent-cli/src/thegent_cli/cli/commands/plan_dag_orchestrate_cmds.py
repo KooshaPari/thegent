@@ -1,12 +1,12 @@
 """Re-export facade for DAG orchestration commands."""
 from __future__ import annotations
 
-from thegent.cli.commands.plan_dag_ready_run_cmds import (
+from thegent_cli.cli.commands.plan_dag_ready_run_cmds import (
     dag_ready_cmd,
     dag_reconcile_cmd,
 )
 
-from thegent.cli.commands.plan_dag_sync_recover_cmds import (
+from thegent_cli.cli.commands.plan_dag_sync_recover_cmds import (
     dag_run_cmd,
     dag_sync_cmd,
     dag_checkpoint_cmd,

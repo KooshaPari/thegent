@@ -9,7 +9,7 @@ from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from thegent.resilience import transient_retry
+from thegent_core.resilience import transient_retry
 
 
 class BoardSyncAdapter(Protocol):
@@ -37,7 +37,7 @@ class GitHubBoardAdapter:
     source: str = "github"
 
     def sync(self, board_id: str, work_stream_items: list[dict[str, str]]) -> dict[str, Any]:
-        from thegent.integrations.gh_project_sync import GHProjectConfig, sync_to_github
+        from thegent_sync.integrations.gh_project_sync import GHProjectConfig, sync_to_github
 
         owner, number = self._parse_board_locator(board_id)
         config = GHProjectConfig(
@@ -74,7 +74,7 @@ class GitHubBoardAdapter:
         board_id: str,
         work_stream_items: list[dict[str, str]],
     ) -> dict[str, str]:
-        from thegent.integrations.gh_project_sync import GHProjectConfig, sync_from_github
+        from thegent_sync.integrations.gh_project_sync import GHProjectConfig, sync_from_github
 
         owner, number = self._parse_board_locator(board_id)
         config = GHProjectConfig(
@@ -180,7 +180,7 @@ class LinearBoardAdapter:
         board_id: str,
         work_stream_items: list[dict[str, str]],
     ) -> dict[str, str]:
-        from thegent.integrations.linear_graphql import LinearGraphQLConfig, sync_from_linear
+        from thegent_sync.integrations.linear_graphql import LinearGraphQLConfig, sync_from_linear
 
         if not board_id:
             raise RuntimeError("Linear board ID is required for remote status reconciliation.")

@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.linear_graphql import (
+from thegent_sync.integrations.linear_graphql import (
     LinearGraphQLConfig,
     sync_from_linear as linear_sync_from,
     sync_to_linear as linear_sync_to,

@@ -34,7 +34,7 @@ def bench_run(
     results_path: Path | None = typer.Option(None, "--results-path", help="Override path for benchmark JSONL output"),
     output_format: str = typer.Option("rich", "--output-format", "-o", help="Output format: rich|json"),
 ) -> None:
-    from thegent.bench import append_bench_record, run_suite
+    from thegent_bench.bench import append_bench_record, run_suite
 
     try:
         normalized_output = _normalize_output_format(output_format)
@@ -71,7 +71,7 @@ def bench_compare(
     results_path: Path | None = typer.Option(None, "--results-path", help="Override path for benchmark JSONL output"),
     output_format: str = typer.Option("rich", "--output-format", "-o", help="Output format: rich|json"),
 ) -> None:
-    from thegent.bench import load_bench_records
+    from thegent_bench.bench import load_bench_records
 
     try:
         normalized_output = _normalize_output_format(output_format)

@@ -5,7 +5,7 @@ Formally defines roles, permissions, and access checks.
 from enum import StrEnum
 from typing import Any
 
-from thegent.governance.personas import PersonaManager
+from thegent_audit.governance.personas import PersonaManager
 
 
 class Permission(StrEnum):

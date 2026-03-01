@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from thegent.research.governance_dlq import EscalationQueueDLQ
+from thegent_planning.research.governance_dlq import EscalationQueueDLQ
 
 logger = logging.getLogger(__name__)
 

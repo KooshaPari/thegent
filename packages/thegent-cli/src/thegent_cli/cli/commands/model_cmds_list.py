@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import json
-from thegent.utils.json_utils import json_loads, json_dumps
+from thegent_core.utils.json_utils import json_loads, json_dumps
 import re
 import os
 import shutil
@@ -16,7 +16,7 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _bootstrap_metric_contracts,
     _get_run_subprocess_optimized,
@@ -28,14 +28,14 @@ from thegent.cli.commands._cli_shared import (
     list_droid_names,
     resolve_agent,
 )
-from thegent.cli.commands.model_cmds_agents_helpers import render_agents_table, render_droids_table
-from thegent.cli.commands.model_cmds_catalog_helpers import (
+from thegent_cli.cli.commands.model_cmds_agents_helpers import render_agents_table, render_droids_table
+from thegent_cli.cli.commands.model_cmds_catalog_helpers import (
     emit_by_model_view,
     emit_contract_view,
     provider_sequence,
     run_provider_listings,
 )
-from thegent.cli.commands.model_cmds_metrics_helpers import (
+from thegent_cli.cli.commands.model_cmds_metrics_helpers import (
     build_index_data,
     collect_metrics_rows,
     emit_cost_values_output,
@@ -43,21 +43,21 @@ from thegent.cli.commands.model_cmds_metrics_helpers import (
     emit_metrics_output,
     flatten_cost_values,
 )
-from thegent.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
-from thegent.cli.commands.model_cmds_setup_helpers import (
+from thegent_cli.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
+from thegent_cli.cli.commands.model_cmds_setup_helpers import (
     build_provider_list,
     configure_providers,
     set_env_line,
 )
 
 
-from thegent.cli.commands.model_cmds_catalog_helpers import (
+from thegent_cli.cli.commands.model_cmds_catalog_helpers import (
     emit_by_model_view,
     emit_contract_view,
     provider_sequence,
     run_provider_listings,
 )
-from thegent.cli.commands.model_cmds_metrics_helpers import (
+from thegent_cli.cli.commands.model_cmds_metrics_helpers import (
     build_index_data,
     collect_metrics_rows,
     emit_cost_values_output,
@@ -65,7 +65,7 @@ from thegent.cli.commands.model_cmds_metrics_helpers import (
     emit_metrics_output,
     flatten_cost_values,
 )
-from thegent.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
+from thegent_cli.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
 
 
 def _assert_str(value: str | None) -> str:
@@ -384,7 +384,7 @@ def speed_index_cmd(
     Uses CLIProxyAPIPlus metrics (tps_1m, latency_p50_ms, success_rate) when reachable;
     falls back to Route.latency_ms.
     """
-    from thegent.models.speed_values import (
+    from thegent_core.models.speed_values import (
         get_model_provider_speed_indices,
         invalidate_speed_index_cache,
     )
@@ -413,7 +413,7 @@ def quality_index_cmd(
     Uses benchmarks.json (Terminal Bench 2.0, SWE-Bench, AIME) when available;
     falls back to Route.accuracy_score.
     """
-    from thegent.models.quality_values import (
+    from thegent_core.models.quality_values import (
         get_model_provider_quality_indices,
         invalidate_quality_index_cache,
     )
@@ -439,12 +439,12 @@ def metrics_cmd(
     limit: int = 50,
 ) -> None:
     """Show cost, speed, and quality indices for all model-provider pairs (unified view)."""
-    from thegent.models.cost_values import get_model_provider_costs
-    from thegent.models.quality_values import (
+    from thegent_core.models.cost_values import get_model_provider_costs
+    from thegent_core.models.quality_values import (
         get_model_provider_quality_indices,
         invalidate_quality_index_cache,
     )
-    from thegent.models.speed_values import (
+    from thegent_core.models.speed_values import (
         get_model_provider_speed_indices,
         invalidate_speed_index_cache,
     )
@@ -467,7 +467,7 @@ def cost_values_cmd(format: str | None = None) -> None:
 
     Uses CLIProxyAPIPlus metrics when reachable; falls back to static values.
     """
-    from thegent.models.cost_values import get_model_provider_costs
+    from thegent_core.models.cost_values import get_model_provider_costs
 
     costs = get_model_provider_costs()
     data = flatten_cost_values(costs)
@@ -484,14 +484,14 @@ def resolve_model_route_cmd(
     lane: str | None = None,
 ) -> None:
     """Resolve a model to a preferred route and emit contract-style output."""
-    from thegent.models import (
+    from thegent_core.models import (
         ModelCatalog,
         normalize_model_id,
         normalize_route_policy,
         resolve_route_contract,
     )
-    from thegent.models.quality_values import get_model_provider_quality_indices
-    from thegent.models.speed_values import get_model_provider_speed_indices
+    from thegent_core.models.quality_values import get_model_provider_quality_indices
+    from thegent_core.models.speed_values import get_model_provider_speed_indices
 
     try:
         policy_value = normalize_route_policy(policy)

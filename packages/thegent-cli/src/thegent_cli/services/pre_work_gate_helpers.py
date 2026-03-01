@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from thegent.infra import yaml_load
+from thegent_core.infra import yaml_load
 
 
 def pre_work_gate_defaults() -> dict[str, Any]:

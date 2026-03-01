@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -93,7 +93,7 @@ class DoctorAuditType(AuditType):
         return "Run thegent doctor health checks."
 
     async def run(self, fix: bool = False) -> list[AuditIssue]:
-        from thegent.doctor import (
+        from thegent_cli.doctor import (
             _check_configuration,
             _check_connectivity,
             _check_dependencies,
@@ -249,7 +249,7 @@ class PlanAuditType(AuditType):
         return "Audit planning simulation overlays (PERT, resources, continuity)."
 
     async def run(self, fix: bool = False) -> list[AuditIssue]:
-        from thegent.cli.commands.impl import plan_analyze_impl
+        from thegent_cli.cli.commands.impl import plan_analyze_impl
 
         issues = []
         try:
@@ -294,7 +294,7 @@ class DagAuditType(AuditType):
         return "Audit DAG for cycles, orphans, and stale state."
 
     async def run(self, fix: bool = False) -> list[AuditIssue]:
-        from thegent.cli.commands.impl import _parse_dag_full, _resolve_cwd, _validate_dag
+        from thegent_cli.cli.commands.impl import _parse_dag_full, _resolve_cwd, _validate_dag
 
         issues = []
         try:
@@ -333,7 +333,7 @@ class InitiativeAuditType(AuditType):
         return "Audit initiative progress and alignment with PLAN.md."
 
     async def run(self, fix: bool = False) -> list[AuditIssue]:
-        from thegent.cli.commands.cli_initiative import parse_plan_initiatives
+        from thegent_cli.cli.commands.cli_initiative import parse_plan_initiatives
 
         initiatives = parse_plan_initiatives(Path("PLAN.md"))
         issues = []

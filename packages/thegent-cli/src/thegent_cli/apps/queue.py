@@ -20,7 +20,7 @@ from rich.console import Console
 from rich.table import Table
 
 if TYPE_CHECKING:
-    from thegent.core.prompt_queue import PromptQueueManager
+    from thegent_core.core.prompt_queue import PromptQueueManager
 
 console = Console()
 app = typer.Typer(name="queue", help="Unified prompt queue (FR-HAX-001).")
@@ -28,7 +28,7 @@ app = typer.Typer(name="queue", help="Unified prompt queue (FR-HAX-001).")
 
 def _get_manager(project: str | None = None) -> PromptQueueManager:
     """Resolve and return a PromptQueueManager for the current context."""
-    from thegent.core.prompt_queue import PromptQueueManager
+    from thegent_core.core.prompt_queue import PromptQueueManager
 
     return PromptQueueManager(project_path=project)
 
@@ -150,8 +150,8 @@ def queue_tui(
 
     # @trace FR-HAX-001
     """
-    from thegent.config import ThegentSettings
-    from thegent.ux.queue_tui import QueueTUI
+    from thegent_core.config import ThegentSettings
+    from thegent_cli.ux.queue_tui import QueueTUI
 
     settings = ThegentSettings()
     tui = QueueTUI(settings.session_dir)

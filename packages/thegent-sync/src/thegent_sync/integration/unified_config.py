@@ -5,8 +5,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from thegent.infra import get_cache, yaml_dump, yaml_load, yaml_loads
-from thegent.platform_paths import get_config_dir
+from thegent_core.infra import get_cache, yaml_dump, yaml_load, yaml_loads
+from thegent_platform.platform_paths import get_config_dir
 
 __all__ = ["UnifiedConfigManager"]
 

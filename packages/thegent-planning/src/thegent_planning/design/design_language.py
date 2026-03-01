@@ -5,7 +5,7 @@ from typing import Any
 
 from rich.theme import Theme
 
-from thegent.thg_platform import Platform, detect_platform
+from thegent_platform.thg_platform import Platform, detect_platform
 
 __all__ = ["DesignLanguage", "DesignToken"]
 

@@ -10,7 +10,7 @@ health: callback errors increment the breaker's failure counter.
 
 Usage::
 
-    from thegent.native.watcher_daemon import WatchEvent, WatchSpec, get_watcher_daemon
+    from thegent_platform.native.watcher_daemon import WatchEvent, WatchSpec, get_watcher_daemon
 
     daemon = get_watcher_daemon()
     daemon.start()
@@ -74,7 +74,7 @@ _log = logging.getLogger(__name__)
 
 def _is_shm_enabled() -> bool:
     """Check if watcher SHM is enabled via settings."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.watcher_use_shm
@@ -90,8 +90,8 @@ def _try_get_breaker() -> Any:
     if not _SHM_ENABLED:
         return None
     try:
-        from thegent.config import ThegentSettings
-        from thegent.native.state_shm import CircuitBreakerShm
+        from thegent_core.config import ThegentSettings
+        from thegent_platform.native.state_shm import CircuitBreakerShm
 
         settings = ThegentSettings()
         shm_default = str(Path(tempfile.gettempdir()) / "thegent_watcher.shm")
@@ -409,8 +409,8 @@ class WatcherDaemon:
 
     def _storage_cleanup_loop(self) -> None:
         """Periodically prune stale quality shadow directories and logs."""
-        from thegent.config import ThegentSettings
-        from thegent.orchestration.pruning.prune import prune_stale_shadow_and_logs
+        from thegent_core.config import ThegentSettings
+        from thegent_execution.orchestration.pruning.prune import prune_stale_shadow_and_logs
 
         while not self._cleanup_stop_event.is_set():
             try:

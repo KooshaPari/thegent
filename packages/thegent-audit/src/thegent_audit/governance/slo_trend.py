@@ -17,7 +17,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from thegent.governance.slo_metrics import SloMetric
+from thegent_audit.governance.slo_metrics import SloMetric
 
 _DEFAULT_JSONL_PATH = Path(".quality") / "slo-metrics.jsonl"
 

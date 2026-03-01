@@ -19,9 +19,9 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from thegent.observability.prometheus import get_metrics_collector
-from thegent.utils.workstream_ops import _atomic_write, _locked_file_access
-from thegent.sync.dead_letter_queue import (
+from thegent_observability.observability.prometheus import get_metrics_collector
+from thegent_core.utils.workstream_ops import _atomic_write, _locked_file_access
+from thegent_sync.sync.dead_letter_queue import (
     DEFAULT_BOARD_DEAD_LETTER_BACKOFF_MULTIPLIER,
     DEFAULT_BOARD_DEAD_LETTER_MAX_ATTEMPTS,
     DEFAULT_BOARD_DEAD_LETTER_RETRY_DELAY_SECONDS,
@@ -31,7 +31,7 @@ from thegent.sync.dead_letter_queue import (
 _log = structlog.get_logger(__name__)
 
 if TYPE_CHECKING:
-    from thegent.integrations.sync_policy_contract import ConnectorPolicy, SyncPolicyContract
+    from thegent_sync.integrations.sync_policy_contract import ConnectorPolicy, SyncPolicyContract
 
 
 def render_maintenance_banner(*, maintenance_active: bool, connector: str, reason: str = "") -> str:
@@ -43,7 +43,7 @@ def render_maintenance_banner(*, maintenance_active: bool, connector: str, reaso
 
 
 # Data types moved to sync_types.py
-from thegent.commands.sync_types import OperationResult, SyncOperationStatus, SyncResult
+from thegent_cli.commands.sync_types import OperationResult, SyncOperationStatus, SyncResult
 
 # ---------------------------------------------------------------------------
 # SyncCommand
@@ -174,7 +174,7 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "rules"
 
-        from thegent.core.rules_sync import RulesSyncManager
+        from thegent_core.core.rules_sync import RulesSyncManager
 
         manager = RulesSyncManager()
         try:
@@ -227,7 +227,7 @@ class SyncCommand:
 
         try:
             # Step 1 — use incorporate_impl (same as ``thegent plan incorporate``)
-            from thegent.cli.commands.impl import incorporate_impl
+            from thegent_cli.cli.commands.impl import incorporate_impl
 
             inc_result = incorporate_impl(cd=self._root, dry_run=dry_run)
             inc_merged: int = inc_result.get("merged", 0)
@@ -286,7 +286,7 @@ class SyncCommand:
         op = "config"
 
         try:
-            from thegent.config import ThegentSettings
+            from thegent_core.config import ThegentSettings
 
             settings = ThegentSettings()
             field_names = list(type(settings).model_fields.keys())
@@ -340,7 +340,7 @@ class SyncCommand:
         op = "agents"
 
         try:
-            from thegent.agents.registry import AGENT_NAMES
+            from thegent_agents.agents.registry import AGENT_NAMES
 
             discovered = self._discover_agent_files()
             known = set(AGENT_NAMES)
@@ -520,7 +520,7 @@ class SyncCommand:
         op = "audit"
 
         try:
-            from thegent.sync.audit_framework import SystemAuditFramework
+            from thegent_sync.sync.audit_framework import SystemAuditFramework
 
             framework = SystemAuditFramework()
             result = await framework.run_audit(fix=fix)
@@ -575,7 +575,7 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "push"
 
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         effective_target = target or settings.sync_remote
@@ -681,7 +681,7 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "pull"
 
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         effective_source = source or settings.sync_remote
@@ -974,7 +974,7 @@ class SyncCommand:
 
     def _load_sync_policy_contract_if_present(self) -> SyncPolicyContract | None:
         """Load sync policy contract when configured on disk."""
-        from thegent.integrations.sync_policy_contract import (
+        from thegent_sync.integrations.sync_policy_contract import (
             load_sync_policy_contract,
             resolve_sync_policy_path,
         )
@@ -1181,7 +1181,7 @@ class SyncCommand:
         op = f"board (source={normalized_source})"
         collector = get_metrics_collector()
 
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         def _record_cycle_status(status: str) -> None:
             collector.record_board_sync_cycle(
@@ -1394,7 +1394,7 @@ class SyncCommand:
         Returns:
             dict with keys: synced (count), failed (count), updated_items (list), errors (list)
         """
-        from thegent.sync.board_adapters import resolve_board_adapter
+        from thegent_sync.sync.board_adapters import resolve_board_adapter
 
         adapter = resolve_board_adapter(source)
         _log.info(
@@ -1450,7 +1450,7 @@ class SyncCommand:
         work_stream_items: list[dict[str, str]],
     ) -> dict[str, str]:
         """Read remote status snapshots for configured work-stream items."""
-        from thegent.sync.board_adapters import resolve_board_adapter
+        from thegent_sync.sync.board_adapters import resolve_board_adapter
 
         try:
             adapter = resolve_board_adapter(source)
@@ -1570,8 +1570,8 @@ class SyncCommand:
 
     def migrate_legacy_board_ids(self, legacy_ids: list[str], dry_run: bool = False) -> OperationResult:
         """Migrate legacy board IDs to canonical WL-* IDs."""
-        from thegent.integrations.board_id_guard import migrate_legacy_board_id
-        from thegent.integrations.board_id_uniqueness import validate_unique_board_ids
+        from thegent_sync.integrations.board_id_guard import migrate_legacy_board_id
+        from thegent_sync.integrations.board_id_uniqueness import validate_unique_board_ids
 
         t0 = time.monotonic()
         operation = "board-migrate"
@@ -1598,7 +1598,7 @@ class SyncCommand:
 
     def detect_remote_orphans(self, remote_ids: list[str]) -> OperationResult:
         """Detect remote items that have no local WORK_STREAM representation."""
-        from thegent.integrations.sync_auditor import SyncAuditor
+        from thegent_sync.integrations.sync_auditor import SyncAuditor
 
         t0 = time.monotonic()
         operation = "remote-orphans"
@@ -1621,8 +1621,8 @@ class SyncCommand:
 
     def detect_local_orphans(self, mapping_cache_path: Path | None = None) -> OperationResult:
         """Detect local WORK_STREAM items missing remote tracker mappings."""
-        from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
-        from thegent.integrations.sync_auditor import SyncAuditor
+        from thegent_sync.integrations.connector_mapping_cache import ConnectorMappingCache
+        from thegent_sync.integrations.sync_auditor import SyncAuditor
 
         t0 = time.monotonic()
         operation = "local-orphans"

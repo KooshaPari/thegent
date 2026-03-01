@@ -22,7 +22,7 @@ import os
 import orjson as json
 import re
 import subprocess
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from dataclasses import dataclass, field
 from typing import Any, Callable, Literal
 
@@ -30,7 +30,7 @@ import httpx
 import jsonschema
 from pydantic import BaseModel, StrictInt, ValidationError
 
-from thegent.govern.vetter.models import VetterCheckResult, VetterConfigError  # noqa: TC001
+from thegent_audit.govern.vetter.models import VetterCheckResult, VetterConfigError  # noqa: TC001
 
 logger = logging.getLogger(__name__)
 
@@ -339,7 +339,7 @@ class QualityScoreVetterCheck:
 
     def _resolve_auto_model(self, context: dict[str, Any]) -> str:
         # Local import keeps the check module independent from agent indexing when auto is not used.
-        from thegent.agents.capability_index import CapabilityIndex
+        from thegent_agents.agents.capability_index import CapabilityIndex
 
         index = context.get("capability_index")
         if index is None:

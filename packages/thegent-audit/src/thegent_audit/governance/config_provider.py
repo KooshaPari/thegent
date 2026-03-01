@@ -2,7 +2,7 @@
 
 from typing import Any, Protocol, runtime_checkable
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 
 @runtime_checkable
@@ -61,7 +61,7 @@ def get_config_provider() -> ConfigProvider:
     cp_url = settings.control_plane_url
     if cp_url:
         # Avoid circular import if/when ControlPlaneConfigProvider is added
-        from thegent.governance.config_provider_cp import ControlPlaneConfigProvider
+        from thegent_audit.governance.config_provider_cp import ControlPlaneConfigProvider
 
         return ControlPlaneConfigProvider(cp_url)
 

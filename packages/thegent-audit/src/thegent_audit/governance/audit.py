@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from thegent.execution import Auditor, RunRegistry
+from thegent_execution.execution import Auditor, RunRegistry
 
 if TYPE_CHECKING:
     from pathlib import Path

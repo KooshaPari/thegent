@@ -11,9 +11,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from thegent.config_defaults import autosync_phase1_enabled
-from thegent.integrations.capability_alerts import ConnectorSLAThresholds
-from thegent.integrations.base import SerializableMixin
+from thegent_core.config_defaults import autosync_phase1_enabled
+from thegent_sync.integrations.capability_alerts import ConnectorSLAThresholds
+from thegent_sync.integrations.base import SerializableMixin
 
 OPEN_STATUSES: set[str] = {"BACKLOG", "IN PROGRESS", "REVIEW", "TODO", "OPEN"}
 WL_ID_PATTERN = re.compile(r"^WL-\d+$")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typer
 
-from thegent.cli.commands.cli_crew import (
+from thegent_cli.cli.commands.cli_crew import (
     crew_add_agent_cmd,
     crew_add_task_cmd,
     crew_create_cmd,

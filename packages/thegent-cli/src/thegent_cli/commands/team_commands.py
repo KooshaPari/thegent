@@ -14,8 +14,8 @@ from rich.table import Table
 
 def team_create_cmd(*, name: str, leader: str | None = None, teammates: str | None = None, console: Any) -> None:
     """WP-6008: Create a new multi-agent team."""
-    from thegent.config import ThegentSettings
-    from thegent.team.manager import TeamManager
+    from thegent_core.config import ThegentSettings
+    from thegent_agents.team.manager import TeamManager
 
     settings = ThegentSettings()
     mgr = TeamManager(settings.session_dir)
@@ -30,8 +30,8 @@ def team_create_cmd(*, name: str, leader: str | None = None, teammates: str | No
 
 def team_task_add_cmd(*, team_id: str, title: str, description: str, console: Any) -> None:
     """WP-6008: Add a task to a team's backlog."""
-    from thegent.config import ThegentSettings
-    from thegent.team.manager import TeamManager
+    from thegent_core.config import ThegentSettings
+    from thegent_agents.team.manager import TeamManager
 
     settings = ThegentSettings()
     mgr = TeamManager(settings.session_dir)
@@ -42,8 +42,8 @@ def team_task_add_cmd(*, team_id: str, title: str, description: str, console: An
 
 def team_task_list_cmd(*, team_id: str, console: Any) -> None:
     """WP-6008: List all tasks for a team."""
-    from thegent.config import ThegentSettings
-    from thegent.team.manager import TeamManager
+    from thegent_core.config import ThegentSettings
+    from thegent_agents.team.manager import TeamManager
 
     settings = ThegentSettings()
     mgr = TeamManager(settings.session_dir)
@@ -81,8 +81,8 @@ def _load_team_configs(teams_dir: Path) -> list[dict[str, Any]]:
 
 
 def _build_teammate_manager() -> Any:
-    from thegent.config import ThegentSettings
-    from thegent.governance.teammates import TeammateManager
+    from thegent_core.config import ThegentSettings
+    from thegent_audit.governance.teammates import TeammateManager
 
     settings = ThegentSettings()
     return TeammateManager(settings.cache_dir / "teammates.json")
@@ -93,7 +93,7 @@ def _render_json(console: Any, payload: dict[str, Any]) -> None:
 
 
 def team_list_cmd(*, format: str, console: Any) -> None:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     manager = _build_teammate_manager()

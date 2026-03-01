@@ -238,37 +238,37 @@ console = Console()
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
-from thegent.agents import (
+from thegent_agents.agents import (
     get_fallback_agents,
     list_agent_names as base_list_agent_names,
     list_droid_names,
     resolve_agent as base_resolve_agent,
 )
-from thegent.agents.base import AgentRunner, RunResult
-from thegent.agents.resilience import is_usage_limit
-from thegent.config import ThegentSettings
-from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-from thegent.cli.services import governance as governance_service
-from thegent.cli.services import observability as observability_service
-from thegent.cli.services import pre_work_gate_helpers
-from thegent.cli.services import process_helpers
-from thegent.cli.services import prompt_constraint_helpers
-from thegent.cli.services import run_audio_helpers
-from thegent.cli.services import run_dag_helpers
-from thegent.cli.services import run_event_helpers
-from thegent.cli.services import run_guard_helpers
-from thegent.cli.services import run_health_helpers
-from thegent.cli.services import run_input_helpers
-from thegent.cli.services import run_model_helpers
-from thegent.cli.services import run_observe_helpers
-from thegent.cli.services import run_post_surface_helpers
-from thegent.cli.services import run_session_helpers
-from thegent.cli.services import run_workstream_helpers
-from thegent.cli.services import retry_helpers
-from thegent.cli.services import spawn_retry_helpers
-from thegent.cli.services import work_stream_orchestration
-from thegent.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
-from thegent.maif import MAIFRunner
+from thegent_agents.agents.base import AgentRunner, RunResult
+from thegent_agents.agents.resilience import is_usage_limit
+from thegent_core.config import ThegentSettings
+from thegent_core.contracts.registry import CONTRACT_SCHEMA_VERSION
+from thegent_cli.cli.services import governance as governance_service
+from thegent_cli.cli.services import observability as observability_service
+from thegent_cli.cli.services import pre_work_gate_helpers
+from thegent_cli.cli.services import process_helpers
+from thegent_cli.cli.services import prompt_constraint_helpers
+from thegent_cli.cli.services import run_audio_helpers
+from thegent_cli.cli.services import run_dag_helpers
+from thegent_cli.cli.services import run_event_helpers
+from thegent_cli.cli.services import run_guard_helpers
+from thegent_cli.cli.services import run_health_helpers
+from thegent_cli.cli.services import run_input_helpers
+from thegent_cli.cli.services import run_model_helpers
+from thegent_cli.cli.services import run_observe_helpers
+from thegent_cli.cli.services import run_post_surface_helpers
+from thegent_cli.cli.services import run_session_helpers
+from thegent_cli.cli.services import run_workstream_helpers
+from thegent_cli.cli.services import retry_helpers
+from thegent_cli.cli.services import spawn_retry_helpers
+from thegent_cli.cli.services import work_stream_orchestration
+from thegent_execution.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
+from thegent_core.maif import MAIFRunner
 
 SECONDS_PER_TOOL_CALL = 2.3
 _CONTINUATION_TAIL_CHARS = 8000
@@ -530,7 +530,7 @@ def _session_paths(base: Path, session_id: str) -> dict[str, Path]:
 
 
 def _make_load_classifier(settings: "ThegentSettings") -> Any:
-    from thegent.execution import LoadClassifier
+    from thegent_execution.execution import LoadClassifier
 
     return LoadClassifier(
         session_dir=settings.session_dir.expanduser().resolve(),
@@ -558,7 +558,7 @@ _get_ready_task_ids = run_dag_helpers.get_ready_task_ids
 dag_ready_impl = run_dag_helpers.dag_ready_impl
 
 
-from thegent.cli.commands.impl_core_runners import (  # noqa: E402
+from thegent_cli.cli.commands.impl_core_runners import (  # noqa: E402
     _apply_pareto_routing,
     bg_impl,
     loop_impl,
@@ -566,7 +566,7 @@ from thegent.cli.commands.impl_core_runners import (  # noqa: E402
     run_impl,
 )
 
-from thegent.cli.commands.dag_impl import (  # noqa: E402 -- re-export block
+from thegent_cli.cli.commands.dag_impl import (  # noqa: E402 -- re-export block
     TASK_ID_RE,
     DagDocument,
     _atomic_write,
@@ -588,11 +588,11 @@ from thegent.cli.commands.dag_impl import (  # noqa: E402 -- re-export block
 )
 
 
-from thegent.output_parser import condense_stream_to_display, extract_condensed
+from thegent_core.output_parser import condense_stream_to_display, extract_condensed
 
 ELICIT_CWD_MSG = "Working directory?"
 ELICIT_OWNER_MSG = "Session owner tag?"
-from thegent.cli.commands.observability_impl import (  # noqa: E402 -- re-export block
+from thegent_cli.cli.commands.observability_impl import (  # noqa: E402 -- re-export block
     HEALTH_PAYLOAD_SCHEMA_VERSION,
     HEALTH_PAYLOAD_TYPES,
     HEALTH_POLICY_PROFILES,
@@ -620,7 +620,7 @@ from thegent.cli.commands.observability_impl import (  # noqa: E402 -- re-export
     update_calibration_impl,
 )
 
-from thegent.cli.commands.session_impl import (  # noqa: E402 -- re-export block
+from thegent_cli.cli.commands.session_impl import (  # noqa: E402 -- re-export block
     _build_continuation_prompt,
     _extract_blocked_ratio,
     _find_session_meta,
@@ -659,7 +659,7 @@ from thegent.cli.commands.session_impl import (  # noqa: E402 -- re-export block
     wait_impl,
 )
 
-from thegent.cli.commands.infra_impl import (  # noqa: E402 -- re-export block
+from thegent_cli.cli.commands.infra_impl import (  # noqa: E402 -- re-export block
     concurrency_set_impl,
     concurrency_show_impl,
     isolation_check_impl,
@@ -676,8 +676,8 @@ def _update_teammate_status(task_id: str | None, status: str, summary: str | Non
     if not task_id:
         return
     try:
-        from thegent.config import ThegentSettings
-        from thegent.governance.teammates import TeammateManager
+        from thegent_core.config import ThegentSettings
+        from thegent_audit.governance.teammates import TeammateManager
 
         settings = ThegentSettings()
         mgr = TeammateManager(settings.cache_dir / "teammates.json")

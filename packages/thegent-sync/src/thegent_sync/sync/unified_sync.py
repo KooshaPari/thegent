@@ -4,9 +4,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from thegent.sync.plan_consolidation import PlanConsolidation
-from thegent.sync.research_integration import ResearchIntegration
-from thegent.sync.work_stream_integration import WorkStreamIntegration
+from thegent_sync.sync.plan_consolidation import PlanConsolidation
+from thegent_sync.sync.research_integration import ResearchIntegration
+from thegent_sync.sync.work_stream_integration import WorkStreamIntegration
 
 logger = logging.getLogger(__name__)
 

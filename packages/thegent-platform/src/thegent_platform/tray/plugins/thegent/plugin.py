@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from thegent.tray.core.plugin_system import SidebarItem, TrayPlugin
+from thegent_platform.tray.core.plugin_system import SidebarItem, TrayPlugin
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget
 
-    from thegent.tray.plugins.thegent.api_client import ThegentAPIClient
+    from thegent_platform.tray.plugins.thegent.api_client import ThegentAPIClient
 
 
 class ThegentPlugin(TrayPlugin):
@@ -86,7 +86,7 @@ class ThegentPlugin(TrayPlugin):
 
         # Lazy load the tab widget - try to import tabs module
         try:
-            from thegent.tray.plugins.thegent.tabs import get_tab  # noqa: PLC0415
+            from thegent_platform.tray.plugins.thegent.tabs import get_tab  # noqa: PLC0415
         except ImportError:
             # Tabs module doesn't exist yet - return None
             return None

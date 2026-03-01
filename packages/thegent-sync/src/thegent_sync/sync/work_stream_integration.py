@@ -33,7 +33,7 @@ class WorkStreamIntegration:
             if not plan_file.exists():
                 continue
 
-            from thegent.utils.helpers import safe_read_file
+            from thegent_core.utils.helpers import safe_read_file
 
             content = safe_read_file(plan_file)
             if not content:

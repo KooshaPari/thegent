@@ -14,16 +14,16 @@ from typing import Any, Literal
 _log = logging.getLogger(__name__)
 
 
-from thegent.config import ThegentSettings
-from thegent.cli.services import run_model_helpers
-from thegent.cli.services import run_post_surface_helpers
-from thegent.cli.commands.session_meta_impl import (
+from thegent_core.config import ThegentSettings
+from thegent_cli.cli.services import run_model_helpers
+from thegent_cli.cli.services import run_post_surface_helpers
+from thegent_cli.cli.commands.session_meta_impl import (
     _resolve_latest_session_id,
     _session_state_path,
     _normalize_contract_string,
 )
-from thegent.cli.commands.session_control_impl import session_send_impl
-from thegent.execution import RunRegistry
+from thegent_cli.cli.commands.session_control_impl import session_send_impl
+from thegent_execution.execution import RunRegistry
 
 # Constants from impl.py that are referenced by the extracted functions
 SECONDS_PER_TOOL_CALL = 2.3
@@ -45,8 +45,8 @@ def _apply_pareto_routing(
         return agent, model, route_contract, route_request
 
     try:
-        from thegent.models.catalog import _get_catalog
-        from thegent.utils.routing_impl.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
+        from thegent_core.models.catalog import _get_catalog
+        from thegent_core.utils.routing_impl.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
 
         catalog = _get_catalog()
         candidates: list[RouteCandidate] = []
@@ -147,8 +147,8 @@ def run_impl(
     google_grounding: bool = False,
 ) -> dict[str, Any]:
     import asyncio
-    from thegent.cli.services import run_execution_core_helpers
-    from thegent.memory.memory_manager import MemoryManager
+    from thegent_cli.cli.services import run_execution_core_helpers
+    from thegent_core.memory.memory_manager import MemoryManager
 
     # Initialize memory manager (no-op if API key not set)
     _mem_mgr = MemoryManager()
@@ -244,7 +244,7 @@ def bg_impl(
     config_provider: "ConfigProvider | None" = None,
     tenant_id: str | None = None,
 ) -> dict[str, Any]:
-    from thegent.cli.services import run_execution_core_helpers
+    from thegent_cli.cli.services import run_execution_core_helpers
 
     return run_execution_core_helpers.bg_impl_core(
         agent=agent,

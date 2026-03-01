@@ -13,13 +13,13 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     console,
 )
 
 def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
     """Check a prompt against active guardrails (FR-GOV-003..006)."""
-    from thegent.governance.input_guardrails import InputGuardrails
+    from thegent_audit.governance.input_guardrails import InputGuardrails
 
     rails = InputGuardrails()
     result = rails.check(prompt, agent=agent or "", model=model)
@@ -36,7 +36,7 @@ def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | Non
 
 def guardrails_show_cmd() -> None:
     """Show active guardrail configuration (FR-GOV-007)."""
-    from thegent.governance.input_guardrails import InputGuardrails
+    from thegent_audit.governance.input_guardrails import InputGuardrails
 
     rails = InputGuardrails()
 
@@ -69,7 +69,7 @@ def discovery_register_cmd(
     """Register or update a discovered external agent (WP-4008)."""
     import json
 
-    from thegent.discovery import register_discovered_agent
+    from thegent_agents.discovery import register_discovered_agent
 
     token_usage = None
     if token_usage_json:
@@ -102,8 +102,8 @@ def discovery_parse_cmd(
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.discovery import register_discovered_agent
-    from thegent.parser import parse_cli_output
+    from thegent_agents.discovery import register_discovered_agent
+    from thegent_core.parser import parse_cli_output
 
     console = Console()
     if text is None:
@@ -159,7 +159,7 @@ def discovery_scan_cmd(
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.discovery import list_discovered_agents, scan_agent_processes
+    from thegent_agents.discovery import list_discovered_agents, scan_agent_processes
 
     console = Console()
     registered = scan_agent_processes()

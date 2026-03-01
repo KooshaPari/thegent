@@ -7,8 +7,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
-from thegent.governance.overrides import OverrideManager
+from thegent_core.config import ThegentSettings
+from thegent_audit.governance.overrides import OverrideManager
 
 _log = logging.getLogger(__name__)
 

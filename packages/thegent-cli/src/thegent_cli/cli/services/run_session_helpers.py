@@ -9,9 +9,9 @@ from typing import Any
 import typer
 from cachetools import TTLCache
 
-from thegent.cli.commands import session_owner_helpers
-from thegent.cli.services import run_model_helpers, session_id_helpers, session_path_helpers
-from thegent.config import ThegentSettings
+from thegent_cli.cli.commands import session_owner_helpers
+from thegent_cli.cli.services import run_model_helpers, session_id_helpers, session_path_helpers
+from thegent_core.config import ThegentSettings
 
 # QW-002: _resolve_cwd() cache with TTL to reduce path resolution overhead.
 # Mission-Critical Rigor (G-FM-04): Use TTLCache for automatic expiration.

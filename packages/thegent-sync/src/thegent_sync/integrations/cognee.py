@@ -15,7 +15,7 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 
-from thegent.integrations.base import DataclassConfig
+from thegent_sync.integrations.base import DataclassConfig
 
 logger = logging.getLogger(__name__)
 

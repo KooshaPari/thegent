@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.table import Table
 
-from thegent.queue.storage import PromptQueue
+from thegent_core.queue.storage import PromptQueue
 
 
 class QueueTUI:

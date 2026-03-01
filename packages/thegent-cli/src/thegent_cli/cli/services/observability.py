@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 
 def get_server_meta_impl(
@@ -19,11 +19,11 @@ def get_server_meta_impl(
     health_policy_profiles: list[str],
 ) -> dict[str, Any]:
     """Build server metadata payload for thegent://meta."""
-    from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
-    from thegent.models.catalog import ROUTE_SCHEMA_VERSION
-    from thegent.operations import Operation
-    from thegent.orchestration_modes import MultiAgentMode
-    from thegent.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
+    from thegent_core.contracts.registry import CONTRACT_SCHEMA_VERSION
+    from thegent_core.models.catalog import ROUTE_SCHEMA_VERSION
+    from thegent_agents.operations import Operation
+    from thegent_agents.orchestration_modes import MultiAgentMode
+    from thegent_core.output_parser import OUTPUT_PARSER_SCHEMA_VERSION
 
     return {
         "server": "thegent",
@@ -51,8 +51,8 @@ def sweep_impl(
     update_calibration_fn: Callable[[], dict[str, Any]],
 ) -> dict[str, Any]:
     """Policy drift sweep service."""
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.execution import Auditor, EscalationQueue, RunRegistry
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_execution.execution import Auditor, EscalationQueue, RunRegistry
 
     settings = ThegentSettings()
     session_dir = Path(settings.session_dir).expanduser().resolve()

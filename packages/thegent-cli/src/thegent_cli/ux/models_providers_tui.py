@@ -44,7 +44,7 @@ def _menu() -> str:
 
 
 def _add_provider() -> None:
-    from thegent.provider_model_manager import add_provider
+    from thegent_routing.provider_model_manager import add_provider
 
     console.print(Panel("[bold]Add New Provider[/bold]", border_style="green"))
     console.print("[dim]Provider = API source (e.g. openrouter, my-custom-api)[/dim]\n")
@@ -131,7 +131,7 @@ def _add_provider() -> None:
 
 
 def _add_model_alias() -> None:
-    from thegent.provider_model_manager import add_model_alias, list_providers
+    from thegent_routing.provider_model_manager import add_model_alias, list_providers
 
     providers = list_providers()
     if not providers:
@@ -163,7 +163,7 @@ def _add_model_alias() -> None:
 
 
 def _add_common_alias() -> None:
-    from thegent.provider_model_manager import add_common_alias
+    from thegent_routing.provider_model_manager import add_common_alias
 
     console.print(Panel("[bold]Add Common Model Alias[/bold]", border_style="green"))
     console.print("[dim]Common alias = works across providers (e.g. sonnet, opus)[/dim]\n")
@@ -181,9 +181,9 @@ def _add_common_alias() -> None:
 
 
 def _configure_harness() -> None:
-    from thegent.agents.cliproxy_manager import _ensure_config
-    from thegent.config import ThegentSettings
-    from thegent.provider_model_manager import add_api_key, list_providers
+    from thegent_agents.agents.cliproxy_manager import _ensure_config
+    from thegent_core.config import ThegentSettings
+    from thegent_routing.provider_model_manager import add_api_key, list_providers
 
     console.print(Panel("[bold]Configure Harness (CLIProxyAPIPlus)[/bold]", border_style="green"))
     console.print("[dim]Ensures cliproxy-config.yaml exists and is up to date.[/dim]\n")
@@ -226,7 +226,7 @@ def _configure_harness() -> None:
 
 
 def _list_providers_models() -> None:
-    from thegent.provider_model_manager import list_models, list_providers
+    from thegent_routing.provider_model_manager import list_models, list_providers
 
     providers = list_providers()
     if not providers:
@@ -271,7 +271,7 @@ def _list_providers_models() -> None:
 
 
 def _validate_provider() -> None:
-    from thegent.provider_model_manager import list_providers, validate_provider
+    from thegent_routing.provider_model_manager import list_providers, validate_provider
 
     providers = list_providers()
     if not providers:

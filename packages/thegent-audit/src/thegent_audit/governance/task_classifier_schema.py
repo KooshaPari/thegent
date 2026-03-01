@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 
 _FIELD_REQUIRED_KEYS = ("type", "required")

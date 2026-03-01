@@ -9,21 +9,21 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _make_load_classifier,
     _normalize_output_format,
     console,
 )
-from thegent.cli.commands.infra_env_helpers import resolve_env_file, rewrite_max_concurrency_lines
+from thegent_cli.cli.commands.infra_env_helpers import resolve_env_file, rewrite_max_concurrency_lines
 
 
 def concurrency_show_cmd(format: str | None = None) -> None:
     """Show current concurrency limit and utilization (WP-5001)."""
     from rich.table import Table
 
-    from thegent.cli.commands.session_ops_list_impl import ps_impl  # pyright: ignore[reportMissingImports]
-    from thegent.orchestration.resource.load_based_limits import (
+    from thegent_cli.cli.commands.session_ops_list_impl import ps_impl  # pyright: ignore[reportMissingImports]
+    from thegent_execution.orchestration.resource.load_based_limits import (
         LimitGateConfig,
         compute_dynamic_limit,
         sample_resources,
@@ -150,7 +150,7 @@ def cost_status_cmd(format: str | None = None) -> None:
     from rich.table import Table
 
     settings = ThegentSettings()
-    from thegent.cost.aggregator import CostAggregator
+    from thegent_routing.cost.aggregator import CostAggregator
 
     agg = CostAggregator(settings.session_dir)
     mtd = agg.get_mtd_total()
@@ -187,8 +187,8 @@ def cost_status_cmd(format: str | None = None) -> None:
 def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
     """Show plan usage: provider metrics from CLIProxyAPIPlus and cost status (WP-5003)."""
     settings = ThegentSettings()
-    from thegent.agents.cliproxy_manager import fetch_provider_metrics
-    from thegent.cli.commands.infra_usage_helpers import build_provider_usage_table
+    from thegent_agents.agents.cliproxy_manager import fetch_provider_metrics
+    from thegent_cli.cli.commands.infra_usage_helpers import build_provider_usage_table
 
     metrics = fetch_provider_metrics(settings)
     data: dict[str, Any] = {
@@ -196,7 +196,7 @@ def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
         "proxy_reachable": metrics is not None,
     }
     if include_cost:
-        from thegent.cost.aggregator import CostAggregator
+        from thegent_routing.cost.aggregator import CostAggregator
 
         agg = CostAggregator(settings.session_dir)
         data["cost"] = {

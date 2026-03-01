@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.docgen.code_annotation import CodeAnnotationGenerator
+from thegent_core.docgen.code_annotation import CodeAnnotationGenerator
 
 
 @dataclass

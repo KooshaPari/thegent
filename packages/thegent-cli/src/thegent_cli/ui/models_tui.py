@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, Input, Label, ListItem, ListView, Select
 
-from thegent.config import get_settings
+from thegent_core.config import get_settings
 
 
 class ModelRouteItem(ListItem):

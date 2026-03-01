@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from thegent.integrations.base import DataclassConfig
+from thegent_sync.integrations.base import DataclassConfig
 
 logger = logging.getLogger(__name__)
 

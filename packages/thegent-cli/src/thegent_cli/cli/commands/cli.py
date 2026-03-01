@@ -21,7 +21,7 @@ from __future__ import annotations
 
 # WL-136 B90-W2-D2: Tooling-surface commands — re-exported from canonical module.
 # Canonical definitions live in cli_tooling.py (tooling surface, not core runtime).
-from thegent.cli.commands.cli_tooling import (  # noqa: F401
+from thegent_cli.cli.commands.cli_tooling import (  # noqa: F401
     audit_verify_cmd,
     benchmark_cmd,
     deep_research_cmd,
@@ -48,16 +48,16 @@ __all__ = [
 # Exposes: console, ThegentSettings, RunRegistry, get_exit_message,
 # dag_ready_impl, dag_run_impl, dag_sync_impl, dag_recover_impl,
 # EXIT_TIMEOUT, EXIT_HEALTH_GATE_FAILED, list_agent_names, resolve_agent, etc.
-from thegent.cli.commands._cli_shared import *  # noqa: F401, F403 -- WL-120 shim re-export
+from thegent_cli.cli.commands._cli_shared import *  # noqa: F401, F403 -- WL-120 shim re-export
 
 # WL-120 Wave-X: private helper re-exports now come from _cli_shared.__all__,
 # so explicit private import lists are no longer needed in this shim.
 
 # WL-124: Domain submodule re-exports — all command names available at this namespace.
-from thegent.cli.commands.run_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent.cli.commands.session_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent.cli.commands.governance_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent.cli.commands.plan_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent.cli.commands.model_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent.cli.commands.infra_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent.cli.commands.team_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.cli.commands.run_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.cli.commands.session_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.cli.commands.governance_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.cli.commands.plan_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.cli.commands.model_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.cli.commands.infra_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent_cli.cli.commands.team_cmds import *  # noqa: F401, F403 -- WL-124 re-export

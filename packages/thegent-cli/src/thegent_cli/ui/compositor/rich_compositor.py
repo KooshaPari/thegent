@@ -16,8 +16,8 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.infra import yaml_load
-from thegent.skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
+from thegent_core.infra import yaml_load
+from thegent_skills.skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes
 
 
 class TUICompositor:

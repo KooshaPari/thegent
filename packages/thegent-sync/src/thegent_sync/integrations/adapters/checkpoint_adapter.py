@@ -7,7 +7,7 @@ import orjson as json
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.workstream_autosync_shared import SyncCheckpoint, SyncFailureQueue
+from thegent_sync.integrations.workstream_autosync_shared import SyncCheckpoint, SyncFailureQueue
 
 
 class CheckpointAdapter:

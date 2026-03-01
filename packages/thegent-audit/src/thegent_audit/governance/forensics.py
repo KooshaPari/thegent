@@ -3,7 +3,7 @@
 import orjson as json
 from typing import Any
 
-from thegent.governance.ledger import IncidentLedger
+from thegent_audit.governance.ledger import IncidentLedger
 
 
 class IncidentReplayer:

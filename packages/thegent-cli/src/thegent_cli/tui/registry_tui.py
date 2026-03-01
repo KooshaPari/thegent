@@ -18,7 +18,7 @@ from textual.widgets import (
     TabPane,
 )
 
-from thegent.cli.commands.impl import logs_impl, ps_impl, session_send_impl
+from thegent_cli.cli.commands.impl import logs_impl, ps_impl, session_send_impl
 
 _log = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from urllib.parse import urlsplit
 
-from thegent.utils.routing_impl.grounding import normalize_grounding_source_url
+from thegent_core.utils.routing_impl.grounding import normalize_grounding_source_url
 
 
 def format_context_usage_line(context_usage: object) -> str | None:
@@ -15,7 +15,7 @@ def format_context_usage_line(context_usage: object) -> str | None:
     max_val = context_usage.get("max")
 
     if isinstance(used, int) and isinstance(max_val, int):
-        from thegent.cli.services.run_input_helpers import build_context_usage_payload
+        from thegent_cli.cli.services.run_input_helpers import build_context_usage_payload
 
         shared_payload = build_context_usage_payload(
             used=used,

@@ -11,7 +11,7 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _coerce_issue_types,
     _default_owner_tag,
@@ -26,7 +26,7 @@ from thegent.cli.commands._cli_shared import (
     console,
     EXIT_HEALTH_GATE_FAILED,
 )
-from thegent.cli.commands.session_cmds_helpers import (
+from thegent_cli.cli.commands.session_cmds_helpers import (
     resolve_export_format_with_notice,
 )
 
@@ -50,7 +50,7 @@ def session_contract_health_gate_cmd(
     export_format: str | None = None,
     overwrite: bool = False,
 ) -> None:
-    from thegent.cli.commands.impl import session_contract_health_gate_impl
+    from thegent_cli.cli.commands.impl import session_contract_health_gate_impl
 
     settings = ThegentSettings()
     own = owner or _default_owner_tag()
@@ -128,7 +128,7 @@ def session_contract_health_report_cmd(
     export_format: str | None = None,
     overwrite: bool = False,
 ) -> None:
-    from thegent.cli.commands.impl import session_contract_health_report_impl
+    from thegent_cli.cli.commands.impl import session_contract_health_report_impl
 
     settings = ThegentSettings()
     own = owner or _default_owner_tag()
@@ -222,7 +222,7 @@ def session_contract_health_trend_cmd(
     export_format: str | None = None,
     overwrite: bool = False,
 ) -> None:
-    from thegent.cli.commands.impl import session_contract_health_trend_impl
+    from thegent_cli.cli.commands.impl import session_contract_health_trend_impl
 
     settings = ThegentSettings()
     own = owner or _default_owner_tag()

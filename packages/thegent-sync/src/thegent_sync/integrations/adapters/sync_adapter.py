@@ -6,7 +6,7 @@ Handles GitHub and Linear sync operations.
 import hashlib
 from typing import Any
 
-from thegent.integrations.workstream_autosync_shared import WorkstreamItem
+from thegent_sync.integrations.workstream_autosync_shared import WorkstreamItem
 
 
 class SyncAdapter:
@@ -59,7 +59,7 @@ __all__ = ["SyncAdapter"]
 
 
 # Register with unified adapter registry
-from thegent.adapters.ports import AdapterRegistry
+from thegent_core.adapters.ports import AdapterRegistry
 
 class SyncAdapterWrapper:
     """Sync adapter wrapper for registry"""

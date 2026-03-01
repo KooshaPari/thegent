@@ -46,7 +46,7 @@ def rules_sync(
       claude  -> CLAUDE.md  (managed section)
       codex   -> .codex/skills/SKILL.md
     """
-    from thegent.core.rules_sync import ALL_PLATFORMS, Platform, RulesSyncManager
+    from thegent_core.core.rules_sync import ALL_PLATFORMS, Platform, RulesSyncManager
 
     root = (project_dir or Path.cwd()).resolve()
 

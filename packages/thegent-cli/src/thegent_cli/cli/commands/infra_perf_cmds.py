@@ -11,7 +11,7 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     console,
@@ -23,7 +23,7 @@ def modes_cmd(
     mode: str | None = None,
 ) -> None:
     """List multi-agent orchestration modes (sequential_delegation, parallel_consensus, review_loop)."""
-    from thegent.orchestration_modes import get_mode, list_modes
+    from thegent_agents.orchestration_modes import get_mode, list_modes
 
     if mode:
         entry = get_mode(mode)
@@ -119,7 +119,7 @@ def benchmark_cmd() -> None:
 
     console.print(kpi_table)
 
-    from thegent.contracts.telemetry import ContractTelemetry, detect_drift
+    from thegent_core.contracts.telemetry import ContractTelemetry, detect_drift
 
     telemetry = ContractTelemetry(settings.session_dir)
     stats = telemetry.get_stats(limit=100)
@@ -143,7 +143,7 @@ def benchmark_cmd() -> None:
 
 def release_pack_cmd(version: str = "2.0") -> None:
     """Automated release documentation packaging (WP-12009)."""
-    from thegent.utils.release_packager import ReleasePackager
+    from thegent_core.utils.release_packager import ReleasePackager
 
     packager = ReleasePackager(Path.cwd())
     manifest = packager.compile_package(version)
@@ -169,23 +169,23 @@ def release_pack_cmd(version: str = "2.0") -> None:
 
 def forensics_snapshot_cmd(run_id: str | None = None, phase: str | None = None) -> None:
     """Backward-compatible wrapper for extracted recovery command group."""
-    from thegent.cli.commands._cli_shared import console
-    from thegent.cli.commands.recovery_commands import forensics_snapshot_cmd as _forensics_snapshot_cmd_impl
+    from thegent_cli.cli.commands._cli_shared import console
+    from thegent_cli.cli.commands.recovery_commands import forensics_snapshot_cmd as _forensics_snapshot_cmd_impl
 
     _forensics_snapshot_cmd_impl(run_id=run_id, phase=phase, console=console)
 
 
 def recover_status_cmd() -> None:
     """Backward-compatible wrapper for extracted recovery command group."""
-    from thegent.cli.commands._cli_shared import console
-    from thegent.cli.commands.recovery_commands import recover_status_cmd as _recover_status_cmd_impl
+    from thegent_cli.cli.commands._cli_shared import console
+    from thegent_cli.cli.commands.recovery_commands import recover_status_cmd as _recover_status_cmd_impl
 
     _recover_status_cmd_impl(console=console)
 
 
 def monitor_cmd(interval: float = 2.0) -> None:
     """Monitor sessions and plan progress in real-time (WP-8001)."""
-    from thegent.cli.commands.impl import monitor_impl
+    from thegent_cli.cli.commands.impl import monitor_impl
 
     monitor_impl(interval)
 
@@ -195,8 +195,8 @@ def operations_cmd(
     operation: str | None = None,
 ) -> None:
     """Backward-compatible wrapper for extracted operations command group."""
-    from thegent.cli.commands._cli_shared import console
-    from thegent.cli.commands.operations_commands import operations_cmd as _operations_cmd_impl
+    from thegent_cli.cli.commands._cli_shared import console
+    from thegent_cli.cli.commands.operations_commands import operations_cmd as _operations_cmd_impl
 
     _operations_cmd_impl(format=format, operation=operation, console=console)
 

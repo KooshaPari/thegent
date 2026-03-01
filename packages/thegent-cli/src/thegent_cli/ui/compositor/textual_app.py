@@ -22,13 +22,13 @@ from textual.widgets import Footer, Header, Static
 # thegent.tui.__init__ re-exports symbols from this module; importing tui
 # submodules at the top level would create a circular import chain.
 def _get_base_layout():  # noqa: ANN202 -- lazy import helper, return type depends on import
-    from thegent.tui.layouts.base import BaseLayout  # noqa: PLC0415 -- deferred to break circular import
+    from thegent_cli.tui.layouts.base import BaseLayout  # noqa: PLC0415 -- deferred to break circular import
 
     return BaseLayout
 
 
 def _get_menubar_widget():  # noqa: ANN202 -- lazy import helper, return type depends on import
-    from thegent.tui.widgets.menubar import MenubarWidget  # noqa: PLC0415 -- deferred to break circular import
+    from thegent_cli.tui.widgets.menubar import MenubarWidget  # noqa: PLC0415 -- deferred to break circular import
 
     return MenubarWidget
 

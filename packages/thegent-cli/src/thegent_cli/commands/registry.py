@@ -22,7 +22,7 @@ console = Console()
 
 def _load_registry(registry_file: Path | None = None):
     """Return a loaded CrossProjectRegistry instance."""
-    from thegent.registry.cross_project import CrossProjectRegistry
+    from thegent_core.registry.cross_project import CrossProjectRegistry
 
     reg = CrossProjectRegistry(registry_file=registry_file)
     reg.load()
@@ -42,7 +42,7 @@ def registry_register(
     project_dir = project_dir.resolve()
 
     if not project_dir.is_dir():
-        from thegent.errors import print_error
+        from thegent_core.errors import print_error
 
         print_error(f"{project_dir} is not a directory.")
         raise typer.Exit(1)

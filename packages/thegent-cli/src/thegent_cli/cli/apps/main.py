@@ -26,7 +26,7 @@ def _version_callback(value: bool) -> None:
     raise typer.Exit()
 
 # Modular Stream Registrations
-from thegent.cli.apps import (
+from thegent_cli.cli.apps import (
     audit,
     bench,
     crew,
@@ -49,13 +49,13 @@ from thegent.cli.apps import (
     sys,
     team,
 )
-from thegent.cli.apps.project import install_app, scaffold_app, update_app
-from thegent.cli.apps.project import setup_project_app
-from thegent.mesh.main import app as mesh_app
-from thegent.cli.commands import model_cmds
+from thegent_cli.cli.apps.project import install_app, scaffold_app, update_app
+from thegent_cli.cli.apps.project import setup_project_app
+from thegent_agents.mesh.main import app as mesh_app
+from thegent_cli.cli.commands import model_cmds
 
 try:
-    from thegent.cli.commands.cli_git import app as git_app
+    from thegent_cli.cli.commands.cli_git import app as git_app
 except ImportError as exc:
     if "thegent-git" not in str(exc):
         raise
@@ -165,7 +165,7 @@ def setup_app_command(
 # Top-level Shortcuts
 @app.command("do", help="Quick-run a prompt with the default agent.")
 def quick_do(prompt: str = typer.Argument(..., help="Prompt to execute")):
-    from thegent.cli.apps.run import run_agent
+    from thegent_cli.cli.apps.run import run_agent
 
     run_agent(prompt=prompt)
 
@@ -178,8 +178,8 @@ def review_cmd(
     format: str = typer.Option("rich", "--format", help="Output format: rich|json"),
 ) -> None:
     # @trace WL-107
-    from thegent.cli.commands.cli import _format_context_usage_line
-    from thegent.cli.commands.impl import review_impl
+    from thegent_cli.cli.commands.cli import _format_context_usage_line
+    from thegent_cli.cli.commands.impl import review_impl
 
     output_format = format.strip().lower()
     if output_format not in {"rich", "json"}:
@@ -231,7 +231,7 @@ def doctor_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show planned fixes without applying them"),
 ) -> None:
     """Run thegent doctor from the unified top-level command surface."""
-    from thegent.doctor import run_doctor
+    from thegent_cli.doctor import run_doctor
 
     success = run_doctor(fix=fix, dry_run=dry_run)
     raise typer.Exit(0 if success else 1)
@@ -247,7 +247,7 @@ def resume_top_level(
         help="Activate skill instructions by name (repeatable) (WL-101).",
     ),
 ) -> None:
-    from thegent.cli.commands.cli import resume_cmd
+    from thegent_cli.cli.commands.cli import resume_cmd
 
     if skill:
         resume_cmd(session_id=session_id, prompt=prompt, skills=skill)
@@ -267,7 +267,7 @@ def fork_top_level(
 ) -> None:
     if from_turn is not None and from_turn < 1:
         raise typer.BadParameter("from_turn must be 1 or greater", param_hint="--from-turn")
-    from thegent.cli.apps.run import run_fork
+    from thegent_cli.cli.apps.run import run_fork
 
     run_fork(session_id=session_id, from_turn=from_turn, new_session_id=new_session_id)
 
@@ -279,7 +279,7 @@ def rollback_top_level(
 ) -> None:
     if n_turns < 1:
         raise typer.BadParameter("n-turns must be 1 or greater", param_hint="--n-turns")
-    from thegent.cli.apps.run import run_rollback
+    from thegent_cli.cli.apps.run import run_rollback
 
     run_rollback(session_id=session_id, n_turns=n_turns)
 
@@ -291,7 +291,7 @@ def quick_ps(
     format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json|md)"),
     include_contract: bool = typer.Option(False, "--include-contract", help="Include routing contract metadata"),
 ):
-    from thegent.cli.apps.run import run_ps
+    from thegent_cli.cli.apps.run import run_ps
 
     run_ps(
         all_sessions=all_sessions,
@@ -303,7 +303,7 @@ def quick_ps(
 
 @app.command("reload", help="Quick alias for `thegent mcp reload`.")
 def reload_top_level() -> None:
-    from thegent.mcp.manage import mcp_restart
+    from thegent_protocols.mcp.manage import mcp_restart
 
     ok, msg = mcp_restart()
     console.print(f"[green]{msg}[/green]" if ok else f"[red]{msg}[/red]")
@@ -324,7 +324,7 @@ def hmr_top_level(
         help="Minimum seconds between automatic restarts.",
     ),
 ) -> None:
-    from thegent.mcp.hotreload import run_prod_hotreload
+    from thegent_protocols.mcp.hotreload import run_prod_hotreload
 
     try:
         run_prod_hotreload(project_root=project_root, debounce_s=debounce_s)
@@ -335,7 +335,7 @@ def hmr_top_level(
 
 @app.command("list-agents", help="List available agents (OBSERVE operation).")
 def list_agents_cmd_wrapper() -> None:
-    from thegent.cli.commands.model_cmds import list_agents_cmd
+    from thegent_cli.cli.commands.model_cmds import list_agents_cmd
 
     list_agents_cmd()
 
@@ -346,7 +346,7 @@ def list_droids_cmd_wrapper(
 ) -> None:
     from pathlib import Path
 
-    from thegent.cli.commands.model_cmds import list_droids_cmd
+    from thegent_cli.cli.commands.model_cmds import list_droids_cmd
 
     resolved_cd = Path(cd) if cd else None
     list_droids_cmd(cd=resolved_cd)
@@ -369,7 +369,7 @@ def session_health_gate_wrapper(
     """Evaluate session contract health gate."""
     from pathlib import Path
 
-    from thegent.cli.commands.session_cmds import session_contract_health_gate_cmd
+    from thegent_cli.cli.commands.session_cmds import session_contract_health_gate_cmd
 
     output_path = Path(output) if output else None
     session_contract_health_gate_cmd(
@@ -403,7 +403,7 @@ def session_health_report_wrapper(
     """Generate session contract health report."""
     from pathlib import Path
 
-    from thegent.cli.commands.session_cmds import session_contract_health_report_cmd
+    from thegent_cli.cli.commands.session_cmds import session_contract_health_report_cmd
 
     output_path = Path(output) if output else None
     session_contract_health_report_cmd(
@@ -442,7 +442,7 @@ def session_health_trend_wrapper(
     """Analyze session contract health trends."""
     from pathlib import Path
 
-    from thegent.cli.commands.session_cmds import session_contract_health_trend_cmd
+    from thegent_cli.cli.commands.session_cmds import session_contract_health_trend_cmd
 
     output_path = Path(output) if output else None
     session_contract_health_trend_cmd(
@@ -472,7 +472,7 @@ def domain_map_compat(
     format: str = typer.Option("rich", "--format", "-F"),
 ) -> None:
     """Compatibility shim for legacy `thegent domain-map` usage."""
-    from thegent.cli.commands.domain_map import domain_map_cmd
+    from thegent_cli.cli.commands.domain_map import domain_map_cmd
 
     domain_map_cmd(
         domain=domain_name,
@@ -499,14 +499,14 @@ def help_cmd(
         thegent help plan
         thegent help doctor
     """
-    from thegent.cli.help_examples import show_help_examples
+    from thegent_cli.cli.help_examples import show_help_examples
 
     show_help_examples(command)
 
 
 @app.command("agent-server", help="Run thegent JSON-RPC agent server over stdio.")
 def agent_server_cmd() -> None:
-    from thegent.protocols.jsonrpc_agent_server import serve_stdio
+    from thegent_protocols.protocols.jsonrpc_agent_server import serve_stdio
 
     raise typer.Exit(serve_stdio())
 

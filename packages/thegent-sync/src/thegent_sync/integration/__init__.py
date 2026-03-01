@@ -2,32 +2,32 @@
 
 # Import modules as they are implemented
 try:
-    from thegent.integration.manage_devkit import ManageDevkitIntegration
+    from thegent_planning.integration.manage_devkit import ManageDevkitIntegration
 except ImportError:
     ManageDevkitIntegration = None
 
 try:
-    from thegent.integration.work_stream import WorkStreamIntegration
+    from thegent_planning.integration.work_stream import WorkStreamIntegration
 except ImportError:
     WorkStreamIntegration = None
 
 try:
-    from thegent.integration.plan_system import PlanSystemIntegration
+    from thegent_planning.integration.plan_system import PlanSystemIntegration
 except ImportError:
     PlanSystemIntegration = None
 
 try:
-    from thegent.integration.unified_config import UnifiedConfigManager
+    from thegent_planning.integration.unified_config import UnifiedConfigManager
 except ImportError:
     UnifiedConfigManager = None
 
 try:
-    from thegent.integration.harmonized_paths import HarmonizedPathManager
+    from thegent_planning.integration.harmonized_paths import HarmonizedPathManager
 except ImportError:
     HarmonizedPathManager = None
 
 try:
-    from thegent.integration.consistency_checker import ConsistencyChecker
+    from thegent_planning.integration.consistency_checker import ConsistencyChecker
 except ImportError:
     ConsistencyChecker = None
 

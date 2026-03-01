@@ -6,7 +6,7 @@ Signed artifacts, audit, SIEM, plugin verification, and guardrails.
 from __future__ import annotations
 
 import hashlib
-from thegent.utils.json_utils import json_loads, json_dumps
+from thegent_core.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
 from pathlib import Path
@@ -15,7 +15,7 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _load_artifact,
     _normalize_output_format,
@@ -125,7 +125,7 @@ def signatures_verify_cmd(run_id: str) -> None:
 
 def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
     """Test SIEM event egress (WP-15001)."""
-    from thegent.observability.egress import EgressEvent, SIEMEgress
+    from thegent_observability.observability.egress import EgressEvent, SIEMEgress
 
     egress = SIEMEgress(endpoint_url="http://simulated-siem.internal")
     event = EgressEvent(
@@ -146,7 +146,7 @@ def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
 
 def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
     """Verify a plugin contract (WP-15003)."""
-    from thegent.contracts.marketplace import PluginContract, PluginVerifier
+    from thegent_core.contracts.marketplace import PluginContract, PluginVerifier
 
     verifier = PluginVerifier()
     contract = PluginContract(
@@ -165,7 +165,7 @@ def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
 
 def compliance_redact_cmd(text: str) -> None:
     """Test PII/Secret redaction (WP-15005)."""
-    from thegent.governance.support import SupportRedactor
+    from thegent_audit.governance.support import SupportRedactor
 
     redactor = SupportRedactor()
     redacted = redactor.redact_text(text)
@@ -179,7 +179,7 @@ def compliance_redact_cmd(text: str) -> None:
 def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None = None) -> None:
     """Show daily cost aggregation (FR-GOV-002)."""
     settings = ThegentSettings()
-    from thegent.cost.aggregator import CostAggregator
+    from thegent_routing.cost.aggregator import CostAggregator
 
     agg = CostAggregator(settings.session_dir)
     total = agg.daily_total(owner=owner, days=days)
@@ -204,7 +204,7 @@ def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None 
 
 def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
     """Check a prompt against active guardrails (FR-GOV-003..006)."""
-    from thegent.governance.input_guardrails import InputGuardrails
+    from thegent_audit.governance.input_guardrails import InputGuardrails
 
     rails = InputGuardrails()
     result = rails.check(prompt, agent=agent or "", model=model)
@@ -221,7 +221,7 @@ def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | Non
 
 def guardrails_show_cmd() -> None:
     """Show active guardrail configuration (FR-GOV-007)."""
-    from thegent.governance.input_guardrails import InputGuardrails
+    from thegent_audit.governance.input_guardrails import InputGuardrails
 
     rails = InputGuardrails()
 

@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from thegent.research.library_replacements import use_diskcache
+from thegent_planning.research.library_replacements import use_diskcache
 
 logger = logging.getLogger(__name__)
 

@@ -10,9 +10,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.cli.services import governance as governance_service
-from thegent.cli.services import observability as observability_service
-from thegent.config import ThegentSettings
+from thegent_cli.cli.services import governance as governance_service
+from thegent_cli.cli.services import observability as observability_service
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def _process_run_line(runs: dict[str, dict[str, Any]], line: str, agent: str) ->
 
 def update_calibration_impl() -> dict[str, Any]:
     """G-GP-09: Recalculate and persist calibration factors for all agents."""
-    from thegent.execution import CalibrationRegistry, RunRegistry
+    from thegent_execution.execution import CalibrationRegistry, RunRegistry
 
     settings = ThegentSettings()
     session_dir = Path(settings.session_dir).expanduser().resolve()

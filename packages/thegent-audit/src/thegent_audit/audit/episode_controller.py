@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from thegent.registry.project_registry import (
+from thegent_core.registry.project_registry import (
     EpisodeRecord,
     EpisodeStatus,
     ProjectRegistry,
@@ -22,7 +22,7 @@ from thegent.registry.project_registry import (
 if TYPE_CHECKING:
     from types import TracebackType
 
-    from thegent.audit.shadow_audit_git import ShadowAuditGit
+    from thegent_audit.audit.shadow_audit_git import ShadowAuditGit
 
 log = logging.getLogger(__name__)
 

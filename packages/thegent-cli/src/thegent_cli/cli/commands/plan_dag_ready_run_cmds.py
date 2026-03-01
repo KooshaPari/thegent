@@ -10,14 +10,14 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent_cli.cli.commands.plan_output_helpers import (
     render_dag_list,
     render_dag_ready,
     render_dag_status,
     resolve_output_format,
 )
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _atomic_write,
     _check_dag_cycles,

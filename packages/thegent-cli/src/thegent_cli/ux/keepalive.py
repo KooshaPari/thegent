@@ -5,7 +5,7 @@ is still alive. Output is suppressed when stdout is not a TTY (CI/pipe).
 
 Usage::
 
-    from thegent.ux.keepalive import keepalive, KeepaliveConfig, TerminalKeepalive
+    from thegent_cli.ux.keepalive import keepalive, KeepaliveConfig, TerminalKeepalive
 
     with keepalive(interval_s=30.0):
         long_running_operation()

@@ -13,8 +13,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.config import ThegentSettings
-from thegent.cli.commands.dag_impl import (
+from thegent_core.config import ThegentSettings
+from thegent_cli.cli.commands.dag_impl import (
     _check_dag_cycles,
     _dag_path,
     _ensure_dag_file,
@@ -28,7 +28,7 @@ from thegent.cli.commands.dag_impl import (
     _validate_task_id,
     _ensure_contract_version_header,
 )
-from thegent.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
+from thegent_cli.cli.services.run_session_helpers import resolve_cwd as _resolve_cwd
 import orjson as json
 
 console = Console()
@@ -53,7 +53,7 @@ def dag_validate_cmd(cd: Path | None = None) -> None:
 
     # WP-4005: State freshness check
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     ckpt_registry = CheckpointRegistry(settings.session_dir)
     ckpts = ckpt_registry.list_checkpoints(limit=1)

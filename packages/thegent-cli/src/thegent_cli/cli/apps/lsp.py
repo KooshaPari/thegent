@@ -10,7 +10,7 @@ app = typer.Typer(help="LSP servers and JetBrains MCP tools management.")
 @app.command("list", help="List all available LSP servers.")
 def lsp_list():
     """List all available LSP servers."""
-    from thegent.lsp.commands import list_all_lsp_servers
+    from thegent_cli.lsp.commands import list_all_lsp_servers
 
     servers = list_all_lsp_servers()
     for lang, info in servers.items():
@@ -42,7 +42,7 @@ def jetbrains_mcp_tools(
     if list_tools:
         import asyncio
 
-        from thegent.ide.jetbrains_tools import check_jetbrains_mcp_available, jetbrains_list_tools
+        from thegent_cli.ide.jetbrains_tools import check_jetbrains_mcp_available, jetbrains_list_tools
 
         available = check_jetbrains_mcp_available()
         tools = asyncio.run(jetbrains_list_tools())
@@ -53,7 +53,7 @@ def jetbrains_mcp_tools(
         console.print()
         console.print(tools)
     elif status:
-        from thegent.ide.jetbrains_tools import check_jetbrains_mcp_available
+        from thegent_cli.ide.jetbrains_tools import check_jetbrains_mcp_available
 
         available = check_jetbrains_mcp_available()
         if available:
@@ -63,7 +63,7 @@ def jetbrains_mcp_tools(
             console.print("Make sure JetBrains IDE is running with the MCP plugin enabled")
     elif test:
         console.print("[yellow]Testing JetBrains MCP connection...[/yellow]")
-        from thegent.ide.jetbrains_tools import check_jetbrains_mcp_available
+        from thegent_cli.ide.jetbrains_tools import check_jetbrains_mcp_available
 
         available = check_jetbrains_mcp_available()
         if available:

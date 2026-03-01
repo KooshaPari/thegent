@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from thegent.integrations.dead_letter_queue import DeadLetterEntry, DeadLetterQueue
+from thegent_sync.integrations.dead_letter_queue import DeadLetterEntry, DeadLetterQueue
 
 
 @dataclass

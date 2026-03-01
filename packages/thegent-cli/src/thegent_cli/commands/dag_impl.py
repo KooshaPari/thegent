@@ -18,8 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from thegent.agents import list_agent_names, resolve_agent
-from thegent.config import ThegentSettings
+from thegent_agents.agents import list_agent_names, resolve_agent
+from thegent_core.config import ThegentSettings
 
 __all__ = [
     "_dag_path",
@@ -572,7 +572,7 @@ def dag_status_impl(cd: Path | None = None) -> dict[str, Any]:
 
 def rules_sync_impl(cd: Path | None = None, force: bool = False, check: bool = False) -> dict[str, Any]:  # pyright: ignore[reportUnusedVariable]
     """Sync rules implementation (WP-9002)."""
-    from thegent.rules.sync import RulesSync
+    from thegent_skills.rules.sync import RulesSync
 
     project_root = cd or Path.cwd()
     syncer = RulesSync(project_root)

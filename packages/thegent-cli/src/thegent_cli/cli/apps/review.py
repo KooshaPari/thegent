@@ -35,8 +35,8 @@ def review_run(
 
     # @trace WL-107
     """
-    from thegent.cli.commands.cli import _format_context_usage_line
-    from thegent.cli.commands.impl import review_impl
+    from thegent_cli.cli.commands.cli import _format_context_usage_line
+    from thegent_cli.cli.commands.impl import review_impl
 
     output_format = format.strip().lower()
     if output_format not in {"rich", "json"}:

@@ -12,7 +12,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -266,7 +266,7 @@ class BuiltinPlugins:
     @staticmethod
     def create_terminal_plugin(info: PluginInfo) -> Plugin:
         """Create the terminal plugin."""
-        from thegent.tui.widgets.terminal_pane import TerminalPane
+        from thegent_cli.tui.widgets.terminal_pane import TerminalPane
 
         class TerminalPlugin(WidgetPlugin):
             def __init__(self, info: PluginInfo) -> None:
@@ -278,7 +278,7 @@ class BuiltinPlugins:
     @staticmethod
     def create_dialog_plugin(info: PluginInfo) -> Plugin:
         """Create the dialog plugin."""
-        from thegent.tui.widgets.dialog import Dialog, Overlay, Toast
+        from thegent_cli.tui.widgets.dialog import Dialog, Overlay, Toast
 
         class DialogPlugin(WidgetPlugin):
             def __init__(self, info: PluginInfo) -> None:
@@ -292,7 +292,7 @@ class BuiltinPlugins:
     @staticmethod
     def create_status_plugin(info: PluginInfo) -> Plugin:
         """Create the status bar plugin."""
-        from thegent.tui.widgets.statusbar import StatusbarWidget
+        from thegent_cli.tui.widgets.statusbar import StatusbarWidget
 
         class StatusPlugin(WidgetPlugin):
             def __init__(self, info: PluginInfo) -> None:

@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.phases.enterprise_compliance_tests import EnterpriseComplianceTestMatrix
+from thegent_planning.phases.enterprise_compliance_tests import EnterpriseComplianceTestMatrix
 
 
 class Phase15EnterpriseComplianceTestsResearch:

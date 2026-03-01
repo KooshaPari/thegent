@@ -15,14 +15,14 @@ from typing import Any, cast
 
 import typer
 
-from thegent.cli.commands.session_health_impl import _extract_blocked_ratio
-from thegent.cli.commands.observability_health_impl import HEALTH_PAYLOAD_TYPES  # pyright: ignore[reportMissingImports]
+from thegent_cli.cli.commands.session_health_impl import _extract_blocked_ratio
+from thegent_cli.cli.commands.observability_health_impl import HEALTH_PAYLOAD_TYPES  # pyright: ignore[reportMissingImports]
 
 _log = logging.getLogger(__name__)
 
 
 def _health_report_impl():
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     return cli_impl
 

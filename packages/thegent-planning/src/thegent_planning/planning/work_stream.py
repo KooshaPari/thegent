@@ -8,7 +8,7 @@ from typing import Any
 
 from filelock import FileLock
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ class WorkStreamManager:
 
     def verify_work_stream_invariants(self) -> dict[str, Any]:
         """Check WORK_STREAM invariants across CLAIMED and COMPLETED sections."""
-        from thegent.utils.helpers import safe_read_file_with_version
+        from thegent_core.utils.helpers import safe_read_file_with_version
 
         if not self.work_stream_path.exists():
             return {
@@ -187,7 +187,7 @@ class WorkStreamManager:
 
     def _update_section(self, path: Path, section_header: str, row_text: str, placeholder: str | None = None) -> bool:
         """Add a row to a section in a markdown file with OCC."""
-        from thegent.utils.helpers import safe_read_file_with_version, safe_write_file
+        from thegent_core.utils.helpers import safe_read_file_with_version, safe_write_file
 
         content, version = safe_read_file_with_version(path)
         if content is None:
@@ -243,7 +243,7 @@ class WorkStreamManager:
 
     def _remove_from_section(self, path: Path, section_header: str, item_id: str) -> bool:
         """Remove a row containing item_id from a section with OCC."""
-        from thegent.utils.helpers import safe_read_file_with_version, safe_write_file
+        from thegent_core.utils.helpers import safe_read_file_with_version, safe_write_file
 
         content, version = safe_read_file_with_version(path)
         if content is None:
@@ -277,7 +277,7 @@ class WorkStreamManager:
 
     def _update_wbs_status(self, item_id: str, new_status: str) -> bool:
         """Update status of a WP in 02-UNIFIED-WBS.md with OCC."""
-        from thegent.utils.helpers import safe_read_file_with_version, safe_write_file
+        from thegent_core.utils.helpers import safe_read_file_with_version, safe_write_file
 
         content, version = safe_read_file_with_version(self.wbs_path)
         if content is None:
@@ -301,7 +301,7 @@ class WorkStreamManager:
         return updated and write_success
 
     def _unmet_dependencies_for_item(self, item_id: str) -> list[str]:
-        from thegent.utils.helpers import safe_read_file_with_version
+        from thegent_core.utils.helpers import safe_read_file_with_version
 
         dependencies: list[str] = []
         completed_ids: set[str] = set()
@@ -375,7 +375,7 @@ class WorkStreamManager:
         return []
 
     def _extract_wbs_done_ids(self) -> set[str]:
-        from thegent.utils.helpers import safe_read_file_with_version
+        from thegent_core.utils.helpers import safe_read_file_with_version
 
         done: set[str] = set()
         if not self.wbs_path.exists():

@@ -24,7 +24,7 @@ def validate_autosync_profile_drift(
     allowlist: set[str] | None = None,
 ) -> tuple[bool, dict[str, list[str]]]:
     """Validate dev/staging/prod autosync profile parity."""
-    from thegent.phases.compliance_profile import validate_profile_drift
+    from thegent_planning.phases.compliance_profile import validate_profile_drift
 
     return validate_profile_drift(profiles=profiles, required_keys=required_keys, allowlist=allowlist)
 
@@ -76,7 +76,7 @@ def audit_cmd(
     from rich.panel import Panel
     from rich.table import Table
 
-    from thegent.audit.system_audit import AuditReport, AuditStatus, SystemAuditor
+    from thegent_audit.audit.system_audit import AuditReport, AuditStatus, SystemAuditor
 
     console = Console()
     auditor = SystemAuditor()
@@ -96,7 +96,7 @@ def audit_cmd(
             raise typer.Exit(1)
         from datetime import UTC, datetime
 
-        from thegent.audit.system_audit import AuditReport
+        from thegent_audit.audit.system_audit import AuditReport
 
         report = AuditReport(timestamp=datetime.now(UTC).isoformat())
         report.add_results(dispatch[category]())

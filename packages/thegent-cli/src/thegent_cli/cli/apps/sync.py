@@ -74,7 +74,7 @@ def sync_all(
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Simulate synchronization"),
     format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json)"),
 ):
-    from thegent.cli.commands.cli_sync import sync_cmd_impl
+    from thegent_cli.cli.commands.cli_sync import sync_cmd_impl
 
     asyncio.run(sync_cmd_impl(components=components, force=force, dry_run=dry_run, format=format))
 
@@ -94,7 +94,7 @@ def sync_work_stream_full(
 
     # @trace WL-037
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -157,7 +157,7 @@ def sync_rules(
 
     # @trace WL-037
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -192,7 +192,7 @@ def sync_research(
 
     # @trace WL-037
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -218,21 +218,21 @@ def sync_research(
 
 @app.command("dag", help="Synchronize DAG state from session meta files.")
 def sync_dag(force: bool = typer.Option(False, "--force", "-f")):
-    from thegent.cli.commands.cli_sync import sync_cmd_impl
+    from thegent_cli.cli.commands.cli_sync import sync_cmd_impl
 
     asyncio.run(sync_cmd_impl(components=["dag"], force=force))
 
 
 @app.command("work", help="Incorporate new work items into WORK_STREAM.md (legacy alias; prefer work-stream).")
 def sync_work(force: bool = typer.Option(False, "--force", "-f")):
-    from thegent.cli.commands.cli_sync import sync_cmd_impl
+    from thegent_cli.cli.commands.cli_sync import sync_cmd_impl
 
     asyncio.run(sync_cmd_impl(components=["work-stream"], force=force))
 
 
 @app.command("catalog", help="Update the model catalog by scraping providers.")
 def sync_catalog(force: bool = typer.Option(False, "--force", "-f")):
-    from thegent.cli.commands.cli_sync import sync_cmd_impl
+    from thegent_cli.cli.commands.cli_sync import sync_cmd_impl
 
     asyncio.run(sync_cmd_impl(components=["catalog"], force=force))
 
@@ -243,7 +243,7 @@ def sync_update(
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Simulate update"),
     force: bool = typer.Option(False, "--force", "-f", help="Force update"),
 ):
-    from thegent.cli.commands.cli_sync import update_cmd_impl
+    from thegent_cli.cli.commands.cli_sync import update_cmd_impl
 
     asyncio.run(update_cmd_impl(components=components, dry_run=dry_run, force=force))
 
@@ -257,7 +257,7 @@ def sync_status(
 
     # @trace FR-SYNC-039
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -288,7 +288,7 @@ def sync_push(
 
     # @trace FR-SYNC-039
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -312,7 +312,7 @@ def sync_pull(
 
     # @trace FR-SYNC-040
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -336,7 +336,7 @@ def sync_reset(
 
     # @trace FR-SYNC-040
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     if not yes:
         console.print("[yellow]Pass --yes to confirm reset.[/yellow]")
@@ -389,7 +389,7 @@ def sync_board(
 
     # @trace WL-159
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -424,7 +424,7 @@ def sync_board_migrate(
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Report migration mapping without applying."),
     project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
 ):
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -442,7 +442,7 @@ def sync_remote_orphans(
     remote_ids: list[str] = typer.Argument(..., help="Remote item IDs to compare against local WORK_STREAM."),
     project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
 ):
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -463,7 +463,7 @@ def sync_local_orphans(
     ),
     project: Path | None = typer.Option(None, "--project", "-p", help="Project root (default: cwd)."),
 ):
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -484,8 +484,8 @@ def sync_conflicts(
         help="Path to machine-readable conflict queue JSON.",
     ),
 ):
-    from thegent.sync.conflicts import render_conflict_surface
-    from thegent.sync.queue import ConflictQueueStore
+    from thegent_sync.sync.conflicts import render_conflict_surface
+    from thegent_sync.sync.queue import ConflictQueueStore
 
     queue = ConflictQueueStore(queue_file)
     lines = render_conflict_surface(queue.pending())
@@ -506,7 +506,7 @@ def sync_freeze(
         help="Path to freeze state file.",
     ),
 ):
-    from thegent.sync.controller import SyncController
+    from thegent_sync.sync.controller import SyncController
 
     controller = SyncController(state_file)
     state = controller.freeze(reason=reason, actor=actor)
@@ -522,7 +522,7 @@ def sync_unfreeze(
         help="Path to freeze state file.",
     ),
 ):
-    from thegent.sync.controller import SyncController
+    from thegent_sync.sync.controller import SyncController
 
     controller = SyncController(state_file)
     controller.unfreeze(actor=actor)
@@ -537,7 +537,7 @@ def sync_health(
         help="Connector entry as 'name,success_rate,drift_count'; repeat per connector.",
     ),
 ):
-    from thegent.sync.health import ConnectorHealth, render_health_scoreboard
+    from thegent_sync.sync.health import ConnectorHealth, render_health_scoreboard
 
     rows: list[ConnectorHealth] = []
     for raw in entry:
@@ -559,7 +559,7 @@ def sync_health(
 def sync_ga_readiness(
     format: str = typer.Option("json", "--format", "-F", help="Output format (json|rich)."),
 ):
-    from thegent.sync.ga_readiness import evaluate_ga_readiness
+    from thegent_sync.sync.ga_readiness import evaluate_ga_readiness
 
     checks = {
         "criteria_doc_exists": Path("docs/reference/AUTOSYNC_GA_READINESS_CRITERIA.md").exists(),
@@ -595,7 +595,7 @@ def sync_audit(
 
     # @trace WL-261
     """
-    from thegent.integrations.sync_auditor import SyncAuditor
+    from thegent_sync.integrations.sync_auditor import SyncAuditor
 
     auditor = SyncAuditor()
     root = (project or Path.cwd()).resolve()
@@ -660,7 +660,7 @@ def sync_dead_letter_queue(
 
     # @trace WL-331
     """
-    from thegent.commands.sync import SyncCommand
+    from thegent_cli.commands.sync import SyncCommand
 
     root = (project or Path.cwd()).resolve()
     try:
@@ -740,7 +740,7 @@ def sync_dead_letter_replay(
 
     # @trace WL-214
     """
-    from thegent.commands.sync import SyncCommand, SyncOperationStatus
+    from thegent_cli.commands.sync import SyncCommand, SyncOperationStatus
 
     root = (project or Path.cwd()).resolve()
     cmd = SyncCommand(project_root=root)
@@ -779,7 +779,7 @@ def sync_rollback(
 
     # @trace WL-185
     """
-    from thegent.integrations.reflection_rollback import ReflectionRollbackManager
+    from thegent_sync.integrations.reflection_rollback import ReflectionRollbackManager
 
     ws_path = (work_stream or Path("docs/reference/WORK_STREAM.md")).resolve()
     manager = ReflectionRollbackManager()
@@ -923,12 +923,12 @@ def sync_autopilot(
     """
     import json
 
-    from thegent.integrations.workstream_autosync import (
+    from thegent_sync.integrations.workstream_autosync import (
         RemoteMissingItemPolicy,
         WorkstreamAutosyncRunner,
         load_autosync_config_from_env,
     )
-    from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
+    from thegent_sync.integrations.connector_mapping_cache import ConnectorMappingCache
 
     if subcommand and subcommand != "doctor":
         raise typer.BadParameter(f"Unknown autopilot subcommand: {subcommand}")
@@ -1070,7 +1070,7 @@ def _run_autopilot_doctor(*, config: Any, output_format: str) -> None:
     import json
     import os
 
-    from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
+    from thegent_sync.integrations.connector_mapping_cache import ConnectorMappingCache
 
     checks: list[dict[str, Any]] = []
 

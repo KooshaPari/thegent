@@ -14,15 +14,15 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
-from thegent.agents.loop_controller import LifecycleController, LoopMode
-from thegent.config import ThegentSettings
+from thegent_agents.agents.loop_controller import LifecycleController, LoopMode
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
 
 def _resolve_agent_for_task(agent_role: str, dimension: str) -> tuple[str, str]:
     """Resolve (agent, model) via task routing. Returns (agent_name, model_alias)."""
-    from thegent.models.catalog import resolve_route
+    from thegent_core.models.catalog import resolve_route
 
     _ = agent_role or "workhorse"
     fallback = resolve_route("minimax-m2.5", policy="cheapest") or resolve_route("claude-haiku-4-5", policy="cheapest")

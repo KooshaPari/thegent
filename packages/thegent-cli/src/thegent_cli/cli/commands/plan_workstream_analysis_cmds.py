@@ -14,12 +14,12 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent_cli.cli.commands.plan_output_helpers import (
     render_plan_next_items,
     resolve_output_format,
 )
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _default_owner_tag,
@@ -30,8 +30,8 @@ from thegent.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent.cli.commands.run_cmds import bg_cmd
-from thegent.cli.commands.session_cmds import history_cmd
+from thegent_cli.cli.commands.run_cmds import bg_cmd
+from thegent_cli.cli.commands.session_cmds import history_cmd
 
 
 """Workstream and planning-related CLI commands.
@@ -48,7 +48,7 @@ def plan_analyze_cmd(
     format: str | None = None,
 ) -> None:
     """Run planning simulation overlays (XD1–XD3): PERT, resource contention, continuity risk."""
-    from thegent.cli.commands.impl import plan_analyze_impl
+    from thegent_cli.cli.commands.impl import plan_analyze_impl
 
     result = plan_analyze_impl(cd=cd, pert=pert, resources=resources, continuity=continuity)
     if "error" in result:
@@ -102,8 +102,8 @@ def closure_pack_cmd(cd: Path | None = None) -> None:
 
     doc = _parse_dag_full(dag_path)
     settings = ThegentSettings()
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.execution import Auditor
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_execution.execution import Auditor
 
     registry = RunRegistry(settings.session_dir)
     auditor = Auditor(registry.registry_path)
@@ -201,8 +201,8 @@ This session is formally closed and verified for launch readiness.
 
 def workstream_query_cmd(query: str) -> None:
     """Execute SQL query on workstream database."""
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())

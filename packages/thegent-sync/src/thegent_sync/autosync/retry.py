@@ -3,7 +3,7 @@
 Extracts retry classification logic.
 """
 
-from thegent.integrations.workstream_autosync_shared import RetryClass
+from thegent_sync.integrations.workstream_autosync_shared import RetryClass
 
 
 class RetryClassifier:

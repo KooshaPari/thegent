@@ -12,7 +12,7 @@ def inject_skill_instructions(prompt: str, skills: list[str] | None, *, console:
     if not skills:
         return prompt
 
-    from thegent.skills.discovery import load_skill
+    from thegent_skills.skills.discovery import load_skill
 
     sections: list[str] = []
     for name in skills:

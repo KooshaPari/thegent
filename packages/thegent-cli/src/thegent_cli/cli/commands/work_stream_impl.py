@@ -17,8 +17,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from thegent.cli.services import pre_work_gate_helpers
-from thegent.cli.services import work_stream_orchestration
+from thegent_cli.cli.services import pre_work_gate_helpers
+from thegent_cli.cli.services import work_stream_orchestration
 
 
 # ---------------------------------------------------------------------------

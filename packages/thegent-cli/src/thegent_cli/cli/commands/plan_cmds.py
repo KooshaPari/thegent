@@ -6,7 +6,7 @@ This is a thin facade that re-exports commands from split submodules for backwar
 # @trace WL-124
 from __future__ import annotations
 
-from thegent.cli.commands.plan_dag_cmds import (
+from thegent_cli.cli.commands.plan_dag_cmds import (
     dag_add_cmd,
     dag_cancel_cmd,
     dag_checkpoint_cmd,
@@ -25,15 +25,15 @@ from thegent.cli.commands.plan_dag_cmds import (
     dag_validate_cmd,
 )
 
-from thegent.cli.commands.team_snapshot_cmds import (
+from thegent_cli.cli.commands.team_snapshot_cmds import (
     snapshot_daily_totals_cmd,
 )
 
-from thegent.cli.commands.team_dump_cmds import (
+from thegent_cli.cli.commands.team_dump_cmds import (
     dump_categories_cmd,
 )
 
-from thegent.cli.commands.plan_workstream_cmds import (
+from thegent_cli.cli.commands.plan_workstream_cmds import (
     closure_pack_cmd,
     plan_analyze_cmd,
     plan_claim_cmd,

@@ -12,7 +12,7 @@ def context_history_cmd(
     limit: int = typer.Option(50, "--limit", "-l", help="Number of entries to show"),
 ) -> None:
     """Search and display context-aware shell history."""
-    from thegent.infra.history import ContextHistory
+    from thegent_core.infra.history import ContextHistory
 
     history = ContextHistory()
     results = history.search(query=query, task_id=task_id, cwd=cwd, limit=limit)
@@ -46,7 +46,7 @@ def scratchpad_cmd(
     content: str | None = typer.Argument(None, help="Content to add (for 'add' action)"),
 ) -> None:
     """Manage the AI command drafting scratchpad."""
-    from thegent.skills.scratchpad import AIScratchpad
+    from thegent_skills.skills.scratchpad import AIScratchpad
 
     scratch = AIScratchpad()
 
@@ -84,7 +84,7 @@ def memory_cmd(
     query: str | None = typer.Option(None, "--query", "-q", help="Search query"),
 ) -> None:
     """Manage hierarchical memory (MemoryMesh v2)."""
-    from thegent.infra.memory import MemoryMeshV2, MemoryNode
+    from thegent_core.infra.memory import MemoryMeshV2, MemoryNode
 
     mem = MemoryMeshV2()
 

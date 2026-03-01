@@ -12,7 +12,7 @@ from rich.table import Table
 
 def operations_cmd(*, format: str | None, operation: str | None, console: Any) -> None:
     """List universal operation taxonomy (orchestrate, govern, recover, observe, plan)."""
-    from thegent.operations import Operation, get_operations_by_type, list_operations
+    from thegent_agents.operations import Operation, get_operations_by_type, list_operations
 
     if operation:
         try:

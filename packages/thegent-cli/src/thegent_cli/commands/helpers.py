@@ -6,8 +6,8 @@ from typing import Any, cast
 
 import typer
 
-from thegent.config import ThegentSettings
-from thegent.execution import RunRegistry
+from thegent_core.config import ThegentSettings
+from thegent_execution.execution import RunRegistry
 
 
 __all__ = ["_resolve_run_id", "_resolve_session_id", "_safe_dict", "_safe_list"]

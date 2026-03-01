@@ -10,7 +10,7 @@ from typing import Any
 
 from cachetools import TTLCache
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 

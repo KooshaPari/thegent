@@ -1,7 +1,7 @@
 """Sync and update command implementations."""
 
-from thegent.sync.audit_framework import SystemAuditFramework
-from thegent.sync.orchestrator import (
+from thegent_sync.sync.audit_framework import SystemAuditFramework
+from thegent_sync.sync.orchestrator import (
     SyncComponent,
     SyncOrchestrator,
     SyncRegistry,
@@ -9,7 +9,7 @@ from thegent.sync.orchestrator import (
     SyncStatus,
     global_registry,
 )
-from thegent.sync.unified_sync import UnifiedSyncCommand
+from thegent_sync.sync.unified_sync import UnifiedSyncCommand
 
 __all__ = [
     "SyncComponent",
@@ -22,9 +22,9 @@ __all__ = [
     "global_registry",
 ]
 
-from thegent.sync.plan_consolidation import PlanConsolidation
-from thegent.sync.research_integration import ResearchIntegration
-from thegent.sync.work_stream_integration import WorkStreamIntegration
+from thegent_sync.sync.plan_consolidation import PlanConsolidation
+from thegent_sync.sync.research_integration import ResearchIntegration
+from thegent_sync.sync.work_stream_integration import WorkStreamIntegration
 
 __all__.extend(
     [

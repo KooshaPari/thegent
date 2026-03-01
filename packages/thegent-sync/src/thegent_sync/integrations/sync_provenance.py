@@ -14,7 +14,7 @@ from datetime import datetime, UTC
 from typing import Any
 from uuid import uuid4
 
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 

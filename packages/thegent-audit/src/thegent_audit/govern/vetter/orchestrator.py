@@ -22,7 +22,7 @@ from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
-from thegent.govern.vetter.models import (
+from thegent_audit.govern.vetter.models import (
     VetterCheckResult,
     VetterPolicy,
     VetterResult,
@@ -206,7 +206,7 @@ class VetterOrchestrator:
         if any(not run_context.get(key) for key in required_keys):
             return {}
 
-        from thegent.governance.federation import PolicyNamespace
+        from thegent_audit.governance.federation import PolicyNamespace
 
         namespace = PolicyNamespace(
             org=str(run_context["org"]),

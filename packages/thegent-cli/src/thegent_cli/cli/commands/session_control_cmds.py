@@ -11,7 +11,7 @@ import orjson as json
 import typer
 from rich.console import Console
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     EXIT_TIMEOUT,
     ThegentSettings,
     _find_session_meta,
@@ -136,7 +136,7 @@ def session_fork_cmd(
     new_session_id: str | None = None,
 ) -> None:
     """Fork a session via SessionManager API."""
-    from thegent.session import SessionManager, SessionManagerError
+    from thegent_execution.session import SessionManager, SessionManagerError
 
     session_id = session_id.strip()
     if not session_id:
@@ -172,7 +172,7 @@ def session_fork_cmd(
 
 def session_rollback_cmd(session_id: str, n_turns: int) -> None:
     """Rollback a session via SessionManager API."""
-    from thegent.session import SessionManager, SessionManagerError
+    from thegent_execution.session import SessionManager, SessionManagerError
 
     session_id = session_id.strip()
     if not session_id:
@@ -198,7 +198,7 @@ def session_cmd(
     action: str | None = typer.Option(None, "--action", "-a", help="Action to perform (stop, pause, resume, logs)"),
 ) -> None:
     """Rich TUI for session management with subagent monitoring (WP-8002)."""
-    from thegent.ux.session_tui import SessionTUI
+    from thegent_cli.ux.session_tui import SessionTUI
 
     tui = SessionTUI(session_id)
 
@@ -221,7 +221,7 @@ def session_cmd(
 
 def deferral_list_cmd() -> None:
     """List all currently deferred tasks (WP-5004)."""
-    from thegent.execution import DeferralQueue
+    from thegent_execution.execution import DeferralQueue
 
     settings = ThegentSettings()
     dq = DeferralQueue(settings.session_dir)
@@ -245,7 +245,7 @@ def deferral_list_cmd() -> None:
 
 def deferral_resume_cmd(run_id: str) -> None:
     """Manually resume a deferred task (WP-5004)."""
-    from thegent.execution import DeferralQueue
+    from thegent_execution.execution import DeferralQueue
 
     settings = ThegentSettings()
     dq = DeferralQueue(settings.session_dir)

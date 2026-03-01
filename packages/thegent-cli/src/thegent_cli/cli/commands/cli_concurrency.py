@@ -5,8 +5,8 @@ from pathlib import Path
 
 import typer
 
-from thegent.config import ThegentSettings
-from thegent.execution import ConcurrencyController
+from thegent_core.config import ThegentSettings
+from thegent_execution.execution import ConcurrencyController
 
 app = typer.Typer()
 logger = logging.getLogger(__name__)

@@ -11,7 +11,7 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     console,
 )
@@ -64,9 +64,9 @@ def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
     import json
     import sys
 
-    from thegent.cli.commands._cli_shared import _normalize_output_format
-    from thegent.cli.commands.infra_interruption_helpers import load_recent_interruptions
-    from thegent.execution import InterruptionTracker
+    from thegent_cli.cli.commands._cli_shared import _normalize_output_format
+    from thegent_cli.cli.commands.infra_interruption_helpers import load_recent_interruptions
+    from thegent_execution.execution import InterruptionTracker
 
     settings = ThegentSettings()
     it = InterruptionTracker(settings.session_dir)
@@ -100,7 +100,7 @@ def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
 
 def interruption_snooze_cmd(alert_id: str, minutes: int = 5, itype: str = "unknown") -> None:
     """Snooze an alert; expires → auto-escalation (WP-4004)."""
-    from thegent.execution import InterruptionTracker
+    from thegent_execution.execution import InterruptionTracker
 
     settings = ThegentSettings()
     it = InterruptionTracker(settings.session_dir)
@@ -110,7 +110,7 @@ def interruption_snooze_cmd(alert_id: str, minutes: int = 5, itype: str = "unkno
 
 def purge_cmd(dry_run: bool = True) -> None:
     """WP-3006: Tiered retention purge (G-GP-07)."""
-    from thegent.cli.commands.impl import purge_impl
+    from thegent_cli.cli.commands.impl import purge_impl
 
     result = purge_impl(dry_run=dry_run)
 
@@ -176,7 +176,7 @@ def context_history_cmd(
     limit: int = typer.Option(50, "--limit", "-l", help="Number of entries to show"),
 ) -> None:
     """Search and display context-aware shell history."""
-    from thegent.infra.history import ContextHistory
+    from thegent_core.infra.history import ContextHistory
 
     history = ContextHistory()
     results = history.search(query=query, task_id=task_id, cwd=cwd, limit=limit)
@@ -210,7 +210,7 @@ def scratchpad_cmd(
     content: str | None = typer.Argument(None, help="Content to add (for 'add' action)"),
 ) -> None:
     """Manage the AI command drafting scratchpad."""
-    from thegent.skills.scratchpad import AIScratchpad
+    from thegent_skills.skills.scratchpad import AIScratchpad
 
     scratch = AIScratchpad()
 
@@ -242,7 +242,7 @@ def scratchpad_cmd(
 
 def explorer_cmd() -> None:
     """Launch the terminal explorer TUI."""
-    from thegent.tui.explorer import run_explorer_tui
+    from thegent_cli.tui.explorer import run_explorer_tui
 
     run_explorer_tui()
 

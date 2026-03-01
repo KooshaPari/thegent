@@ -24,7 +24,7 @@ def registry_recommend(
     import json
     import sys
 
-    from thegent.agents.capability_index import CapabilityIndex
+    from thegent_agents.agents.capability_index import CapabilityIndex
 
     index = CapabilityIndex.get()
     recommendations = index.recommend(task, top_n=top_n)
@@ -82,7 +82,7 @@ def registry_doctor(
     import json
     import sys
 
-    from thegent.agents.capability_index import CapabilityIndex
+    from thegent_agents.agents.capability_index import CapabilityIndex
 
     index = CapabilityIndex.get()
     results = index.doctor()
@@ -144,7 +144,7 @@ def registry_list(
     import json
     import sys
 
-    from thegent.agents.capability_index import CapabilityIndex
+    from thegent_agents.agents.capability_index import CapabilityIndex
 
     index = CapabilityIndex.get()
 
@@ -195,6 +195,6 @@ def recommend_agent(task_description: str, top_n: int = 3) -> list:  # type: ign
 
     Used by thegent free auto-agent selection.
     """
-    from thegent.agents.capability_index import CapabilityIndex
+    from thegent_agents.agents.capability_index import CapabilityIndex
 
     return CapabilityIndex.get().recommend(task_description, top_n=top_n)

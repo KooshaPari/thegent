@@ -9,7 +9,7 @@ from typing import Any
 
 from rich.console import Console
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _LAST_GUARDRAIL_DIAGNOSTIC: dict[str, Any] = {"status": "not_checked"}
 
@@ -52,7 +52,7 @@ def enforce_input_guardrails(
         return None
 
     try:
-        from thegent.governance.input_guardrails import guardrails_from_env
+        from thegent_audit.governance.input_guardrails import guardrails_from_env
     except (ModuleNotFoundError, ImportError) as exc:
         _LAST_GUARDRAIL_DIAGNOSTIC = {
             "status": "error",
@@ -122,7 +122,7 @@ def enforce_concurrency_limit(
     log: logging.Logger,
 ) -> dict[str, Any] | None:
     """Acquire a concurrency slot and return a blocking payload when denied."""
-    from thegent.execution import ConcurrencyController
+    from thegent_execution.execution import ConcurrencyController
 
     max_concurrency = getattr(settings, "max_concurrency", 1000)
     if not isinstance(max_concurrency, int):
@@ -159,7 +159,7 @@ def enforce_concurrency_limit(
 
     if task_id:
         try:
-            from thegent.governance.teammates import TeammateManager
+            from thegent_audit.governance.teammates import TeammateManager
 
             manager = TeammateManager(settings.cache_dir / "teammates.json")
             manager.update_status(
@@ -171,7 +171,7 @@ def enforce_concurrency_limit(
             log.debug("Failed to update teammate delegation status: %s", exc)
 
     if use_load_based:
-        from thegent.orchestration.resource.load_based_limits import (
+        from thegent_execution.orchestration.resource.load_based_limits import (
             LimitGateConfig,
             compute_dynamic_limit,
             sample_resources,

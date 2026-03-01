@@ -15,7 +15,7 @@ from typing import Annotated, cast
 import typer
 from rich.console import Console
 from rich.table import Table
-from thegent.install_constants import VALID_TARGETS
+from thegent_core.install_constants import VALID_TARGETS
 
 console = Console()
 
@@ -103,7 +103,7 @@ def install_callback(
         return
 
     try:
-        from thegent.install import run_install, run_install_system
+        from thegent_cli.install import run_install, run_install_system
     except ImportError as exc:
         console.print(f"[red]Install subsystem unavailable: {exc}[/red]")
         raise typer.Exit(1) from exc
@@ -855,7 +855,7 @@ def project_migrate(
     if not project:
         console.print("[yellow]Usage: thegent project migrate <project>[/yellow]")
         return
-    import thegent.infra.project_tenancy as pt_module
+    import thegent_core.infra.project_tenancy as pt_module
 
     project_path = Path(project).expanduser().resolve()
     if not project_path.exists() or not project_path.is_dir():
@@ -1017,7 +1017,7 @@ def project_migrate(
         "status": "not_run",
     }
     if install_runtime and not (dry_run and existing is None):
-        from thegent.install import run_install_project
+        from thegent_cli.install import run_install_project
 
         try:
             runtime_result = run_install_project(
@@ -1118,7 +1118,7 @@ def project_init(
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
 ) -> None:
     """Register project in the tenancy registry and create tenant root directory."""
-    import thegent.infra.project_tenancy as pt_module
+    import thegent_core.infra.project_tenancy as pt_module
 
     if not name:
         console.print("[red]Error: --name is required[/red]")
@@ -1286,7 +1286,7 @@ def project_scaffold(
     effective_tenant = ""
     registry_path: Path | None = None
     if register and not dry_run:
-        import thegent.infra.project_tenancy as pt_module
+        import thegent_core.infra.project_tenancy as pt_module
 
         effective_tenant = tenant.strip() or _slug(project_name)
         record = pt_module._DEFAULT_TENANCY.init_project(
@@ -1305,7 +1305,7 @@ def project_scaffold(
         if dry_run:
             install_runtime_status = "skipped_dry_run"
         else:
-            from thegent.install import run_install_project
+            from thegent_cli.install import run_install_project
 
             try:
                 install_runtime_result = run_install_project(
@@ -1405,7 +1405,7 @@ def project_list(
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
 ) -> None:
     """Display all projects in the tenancy registry."""
-    import thegent.infra.project_tenancy as pt_module
+    import thegent_core.infra.project_tenancy as pt_module
 
     tenancy = pt_module._DEFAULT_TENANCY
     projects = tenancy.list_projects()
@@ -1460,7 +1460,7 @@ def project_show(
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
 ) -> None:
     """Show detailed view of one project including tenancy paths and registry linkage."""
-    import thegent.infra.project_tenancy as pt_module
+    import thegent_core.infra.project_tenancy as pt_module
 
     tenancy = pt_module._DEFAULT_TENANCY
 
@@ -1592,7 +1592,7 @@ def project_doctor(
     json_output: Annotated[bool, typer.Option("--json", help="Output JSON")] = False,
 ) -> None:
     """Validate project health: path exists, config valid, tenant consistent."""
-    import thegent.infra.project_tenancy as pt_module
+    import thegent_core.infra.project_tenancy as pt_module
 
     tenancy = pt_module._DEFAULT_TENANCY
 
@@ -1691,8 +1691,8 @@ def install_project_cmd(
     if ctx.invoked_subcommand is not None:
         return
 
-    import thegent.infra.project_tenancy as pt_module
-    from thegent.install import run_install_project
+    import thegent_core.infra.project_tenancy as pt_module
+    from thegent_cli.install import run_install_project
 
     if mode not in {"smart", "overwrite", "skip"}:
         console.print(f"[red]Error: invalid mode {mode!r}. Must be: smart, overwrite, skip[/red]")

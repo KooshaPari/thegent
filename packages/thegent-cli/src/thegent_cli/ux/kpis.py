@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class KPIDashboard:
 
         # WP-5003: Cost awareness
         try:
-            from thegent.cost.aggregator import CostAggregator
+            from thegent_routing.cost.aggregator import CostAggregator
 
             agg = CostAggregator(self.settings.session_dir)
             metrics["finance"] = agg.get_mtd_total()
@@ -101,7 +101,7 @@ class KPIDashboard:
 
         # WP-4004: Fatigue
         try:
-            from thegent.ux.alerts import AlertFatigueController
+            from thegent_cli.ux.alerts import AlertFatigueController
 
             afc = AlertFatigueController(self.settings)
             metrics["fatigue"] = afc.get_fatigue_level()

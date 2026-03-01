@@ -5,7 +5,7 @@ import logging
 import time
 from dataclasses import asdict, dataclass, field
 
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -57,12 +57,12 @@ class EscalationQueue:
     def __init__(self, settings: Any = None) -> None:
         if isinstance(settings, (str | Path)):
             # Legacy/buggy caller passing session_dir Path directly
-            from thegent.config import ThegentSettings
+            from thegent_core.config import ThegentSettings
 
             self.settings = ThegentSettings()
             self.settings.session_dir = Path(settings)
         else:
-            from thegent.config import ThegentSettings
+            from thegent_core.config import ThegentSettings
 
             self.settings = settings or ThegentSettings()
         self.queue_dir = self.settings.session_dir / "escalations"
@@ -175,7 +175,7 @@ class EscalationQueue:
 
                 # WP-3008: Move expired item to DLQ
                 try:
-                    from thegent.execution import DLQManager, RunMeta
+                    from thegent_execution.execution import DLQManager, RunMeta
 
                     dlq = DLQManager(self.settings.session_dir)
                     # Create a minimal RunMeta for DLQ

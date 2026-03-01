@@ -13,7 +13,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from thegent.governance.evidence_graph import EvidenceGraph
+from thegent_audit.governance.evidence_graph import EvidenceGraph
 
 _log = logging.getLogger(__name__)
 

@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
-from thegent.mesh import MeshManager
+from thegent_core.config import ThegentSettings
+from thegent_agents.mesh import MeshManager
 
 
 class heliosShieldBridge:
@@ -80,7 +80,7 @@ class heliosShieldBridge:
         return True
 
     def get_session_state(self, session_id: str) -> dict[str, Any]:
-        """WP-16003: Deep inspection of session state from thegent.mesh var/ dirs."""
+        """WP-16003: Deep inspection of session state from thegent_agents.mesh var/ dirs."""
         state: dict[str, Any] = {"claims": [], "intents": [], "tasks": []}
         if not self.is_available():
             return state

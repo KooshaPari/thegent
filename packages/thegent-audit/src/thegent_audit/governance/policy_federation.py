@@ -9,8 +9,8 @@ from typing import Any
 
 from cachetools import TTLCache
 
-from thegent.governance.escalation import EscalationQueue
-from thegent.phases.policy_federation import FederatedPolicyEngine
+from thegent_audit.governance.escalation import EscalationQueue
+from thegent_planning.phases.policy_federation import FederatedPolicyEngine
 
 _log = logging.getLogger(__name__)
 

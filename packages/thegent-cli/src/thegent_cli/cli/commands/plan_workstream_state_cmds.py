@@ -14,12 +14,12 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent_cli.cli.commands.plan_output_helpers import (
     render_plan_next_items,
     resolve_output_format,
 )
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _default_owner_tag,
@@ -30,8 +30,8 @@ from thegent.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent.cli.commands.run_cmds import bg_cmd
-from thegent.cli.commands.session_cmds import history_cmd
+from thegent_cli.cli.commands.run_cmds import bg_cmd
+from thegent_cli.cli.commands.session_cmds import history_cmd
 
 
 """Workstream and planning-related CLI commands.
@@ -42,7 +42,7 @@ Extracted from plan_cmds.py to manage module size.
 
 def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
     """Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md. Preserves CLAIMED and COMPLETED."""
-    from thegent.cli.commands.work_stream_impl import incorporate_impl
+    from thegent_cli.cli.commands.work_stream_impl import incorporate_impl
 
     result = incorporate_impl(cd=cd, dry_run=dry_run)
     if "error" in result:
@@ -57,8 +57,8 @@ def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
 
 def plan_claim_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
     """Claim an item in the unified work stream."""
-    from thegent.cli.commands.work_stream_impl import work_stream_claim_impl
-    from thegent.discovery import get_current_agent_id
+    from thegent_cli.cli.commands.work_stream_impl import work_stream_claim_impl
+    from thegent_agents.discovery import get_current_agent_id
 
     aid = agent_id or get_current_agent_id()
     result = work_stream_claim_impl(item_id, aid, cd=cd)
@@ -72,8 +72,8 @@ def plan_claim_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = 
 
 def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
     """Mark an item as complete in the unified work stream."""
-    from thegent.cli.commands.work_stream_impl import work_stream_complete_impl
-    from thegent.discovery import get_current_agent_id
+    from thegent_cli.cli.commands.work_stream_impl import work_stream_complete_impl
+    from thegent_agents.discovery import get_current_agent_id
 
     aid = agent_id or get_current_agent_id()
     result = work_stream_complete_impl(item_id, aid, cd=cd)
@@ -85,7 +85,7 @@ def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None
 
 def plan_lint_workstream_cmd(cd: Path | None = None) -> None:
     """Validate canonical WORK_STREAM schema structure."""
-    from thegent.utils.workstream_ops import WorkStreamOps
+    from thegent_core.utils.workstream_ops import WorkStreamOps
 
     root = cd or Path.cwd()
     ops = WorkStreamOps(base_dir=root)
@@ -99,7 +99,7 @@ def plan_lint_workstream_cmd(cd: Path | None = None) -> None:
 
 def plan_normalize_workstream_cmd(cd: Path | None = None) -> None:
     """Sort and normalize WL sections and status-line formatting."""
-    from thegent.utils.workstream_ops import WorkStreamOps
+    from thegent_core.utils.workstream_ops import WorkStreamOps
 
     root = cd or Path.cwd()
     ops = WorkStreamOps(base_dir=root)
@@ -109,7 +109,7 @@ def plan_normalize_workstream_cmd(cd: Path | None = None) -> None:
 
 def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Verify WORK_STREAM invariants for CLAIMED/COMPLETED overlap by exact ID match."""
-    from thegent.planning.work_stream import WorkStreamManager
+    from thegent_planning.planning.work_stream import WorkStreamManager
 
     cwd = _resolve_cwd(cd)
     if cwd is None:

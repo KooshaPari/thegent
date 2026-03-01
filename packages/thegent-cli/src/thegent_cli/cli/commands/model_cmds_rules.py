@@ -14,12 +14,12 @@ from typing import Any
 
 import typer
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _get_run_subprocess_optimized,
     console,
 )
-from thegent.cli.commands.model_cmds_list import (
+from thegent_cli.cli.commands.model_cmds_list import (
     _COPILOT_ALLOWED_MODELS,
     _assert_str,
     _run_cliproxyctl_machine_command,
@@ -28,7 +28,7 @@ from thegent.cli.commands.model_cmds_list import (
 
 def list_model_contract_schema_cmd() -> None:
     """Print the route contract schema metadata used by contract views."""
-    from thegent.models import route_contract
+    from thegent_core.models import route_contract
 
     console.print_json(data=route_contract())
 
@@ -76,7 +76,7 @@ def _list_cursor_models() -> None:
 
 def _list_cursor_api_models() -> None:
     """List cursor-api models via GET /v1/models (wisdgod cursor-api)."""
-    from thegent.models.scrapers import scrape_cursor_api
+    from thegent_core.models.scrapers import scrape_cursor_api
 
     settings = ThegentSettings()
     models = scrape_cursor_api(settings)

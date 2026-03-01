@@ -22,7 +22,7 @@ def domain_map(
     tunnel_name: str = typer.Option("thegent", "--tunnel-name", help="Cloudflare tunnel name."),
     format: str = typer.Option("rich", "--format", "-F", help="Output format: rich|json|md"),
 ) -> None:
-    from thegent.cli.commands.domain_map import domain_map_cmd
+    from thegent_cli.cli.commands.domain_map import domain_map_cmd
 
     domain_map_cmd(
         domain=domain,

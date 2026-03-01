@@ -7,8 +7,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.agents.crew import Crew, CrewAgent, CrewExecutor, ExecutionMode, Task, TaskExecutor
-from thegent.agents.crew.harness import create_agent_executor
+from thegent_agents.agents.crew import Crew, CrewAgent, CrewExecutor, ExecutionMode, Task, TaskExecutor
+from thegent_agents.agents.crew.harness import create_agent_executor
 
 console = Console()
 
@@ -114,7 +114,7 @@ def crew_execute_cmd(
 
     path = Path(crew_file)
     if not path.exists():
-        from thegent.errors import print_error
+        from thegent_core.errors import print_error
 
         print_error(f"File not found: {crew_file}")
         raise typer.Exit(1)

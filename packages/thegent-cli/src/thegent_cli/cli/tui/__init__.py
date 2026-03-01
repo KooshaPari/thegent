@@ -4,6 +4,6 @@ Exposes:
 - `ParetoTuiSession`: live data session for the Pareto Frontier TUI panel.
 """
 
-from thegent.cli.tui.pareto import ParetoTuiSession
+from thegent_cli.cli.tui.pareto import ParetoTuiSession
 
 __all__ = ["ParetoTuiSession"]

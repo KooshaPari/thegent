@@ -12,9 +12,9 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from thegent.config import ThegentSettings
-from thegent.mcp.hotreload import run_prod_hotreload
-from thegent.mcp.manage import (
+from thegent_core.config import ThegentSettings
+from thegent_protocols.mcp.hotreload import run_prod_hotreload
+from thegent_protocols.mcp.manage import (
     migrate_to_unimount,
     mcp_down,
     mcp_restart,
@@ -31,7 +31,7 @@ from thegent.mcp.manage import (
     service_status,
     service_stop,
 )
-from thegent.orchestration.pruning.prune import mcp_prune
+from thegent_execution.orchestration.pruning.prune import mcp_prune
 
 console = Console()
 app = typer.Typer(help="Top-level MCP management and migration commands.")
@@ -49,10 +49,10 @@ def mcp_install(
     url: str | None = typer.Option(None, "--url", help="MCP URL override (default: current settings URL)"),
     workspace: Path | None = typer.Option(None, "--workspace", help="Workspace for local client configs"),
 ) -> None:
-    from thegent.mcp.manage import install_to_client
+    from thegent_protocols.mcp.manage import install_to_client
 
     requested = _parse_clients(None if target == "all" else target)
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     mcp_url = url or f"http://{settings.mcp_host}:{settings.mcp_port}/mcp"
@@ -231,7 +231,7 @@ def mcp_prune_periodic(
 
 @app.command("introspect", help="Inspect shared MCP daemon health.")
 def mcp_introspect() -> None:
-    from thegent.shared_mcp_manager import check_mcp_health
+    from thegent_agents.shared_mcp_manager import check_mcp_health
 
     ok, msg = check_mcp_health()
     console.print(f"[green]{msg}[/green]" if ok else f"[red]{msg}[/red]")

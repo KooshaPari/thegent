@@ -3,7 +3,7 @@
 PERT uncertainty, resource contention, continuity risk scoring.
 """
 
-from thegent.planning.simulation import (
+from thegent_planning.planning.simulation import (
     ContentionResult,
     ContinuityRiskInput,
     ContinuityRiskResult,

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 
 @dataclass
@@ -106,7 +106,7 @@ class InputGuardrails:
 
 def guardrails_from_settings(settings: ThegentSettings | None = None) -> InputGuardrails:
     """Build InputGuardrails from ThegentSettings."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     s = settings or ThegentSettings()
     blocklist = [p.strip() for p in s.prompt_blocklist_patterns.split(",") if p.strip()]

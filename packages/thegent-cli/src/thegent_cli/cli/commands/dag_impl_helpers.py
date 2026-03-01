@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from thegent.agents import list_agent_names, resolve_agent
-from thegent.config import ThegentSettings
+from thegent_agents.agents import list_agent_names, resolve_agent
+from thegent_core.config import ThegentSettings
 
 __all__ = [
     "DagDocument",

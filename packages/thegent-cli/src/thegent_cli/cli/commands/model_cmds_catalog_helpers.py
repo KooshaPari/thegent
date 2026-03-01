@@ -20,8 +20,8 @@ _DEFAULT_PROVIDERS: tuple[str, ...] = (
 
 def emit_contract_view(*, provider: str | None, refresh: bool, console: Any) -> None:
     """Emit contract-style model catalog view."""
-    from thegent.models import ModelCatalog
-    from thegent.models.scrapers import get_scraped_catalog
+    from thegent_core.models import ModelCatalog
+    from thegent_core.models.scrapers import get_scraped_catalog
 
     if refresh:
         get_scraped_catalog(refresh=True)
@@ -35,8 +35,8 @@ def emit_contract_view(*, provider: str | None, refresh: bool, console: Any) -> 
 
 def emit_by_model_view(*, refresh: bool, console: Any) -> None:
     """Emit model-to-provider routing view."""
-    from thegent.models import ModelCatalog
-    from thegent.models.scrapers import get_scraped_catalog
+    from thegent_core.models import ModelCatalog
+    from thegent_core.models.scrapers import get_scraped_catalog
 
     get_scraped_catalog(use_cache=not refresh)
     view = ModelCatalog.to_catalog_view(use_scraped=True)

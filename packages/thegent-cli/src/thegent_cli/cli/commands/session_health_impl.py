@@ -18,7 +18,7 @@ from typing import Any
 
 
 def _health_impl():
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     return cli_impl
 
@@ -75,7 +75,7 @@ def list_session_contracts_impl(
     """
     Return sessions with route-request/route-contract metadata and contract quality signal.
     """
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     def _alignment_issues(
         route_request: dict[str, Any] | None,
@@ -189,7 +189,7 @@ def session_contract_audit_impl(
     """
     Return session contract audit rows with optional filtering and summary.
     """
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     rows = cli_impl.list_session_contracts_impl(owner=owner, all=all, strict=strict)
     if missing_only:
@@ -405,5 +405,5 @@ def session_contract_health_gate_impl(
 # Note: session_contract_health_report_impl and session_contract_health_trend_impl
 # are NOT re-exported here due to circular import dependencies. Import them directly
 # from their respective modules:
-# from thegent.cli.commands.session_health_report_impl import session_contract_health_report_impl
-# from thegent.cli.commands.session_health_trend_impl import session_contract_health_trend_impl
+# from thegent_cli.cli.commands.session_health_report_impl import session_contract_health_report_impl
+# from thegent_cli.cli.commands.session_health_trend_impl import session_contract_health_trend_impl

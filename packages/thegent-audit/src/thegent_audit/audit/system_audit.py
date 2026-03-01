@@ -20,7 +20,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 
 class AuditStatus(str, Enum):
@@ -378,7 +378,7 @@ class SystemAuditor:
         results: list[AuditResult] = []
 
         try:
-            from thegent.config import ThegentSettings
+            from thegent_core.config import ThegentSettings
 
             settings = ThegentSettings()
         except Exception as exc:

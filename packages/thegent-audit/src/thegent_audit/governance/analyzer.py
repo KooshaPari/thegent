@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from thegent.governance.scanner import DimensionScan, ScanResult
+    from thegent_audit.governance.scanner import DimensionScan, ScanResult
 
 _log = logging.getLogger(__name__)
 

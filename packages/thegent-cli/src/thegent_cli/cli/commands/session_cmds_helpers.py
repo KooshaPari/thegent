@@ -11,7 +11,7 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     EXIT_TIMEOUT,
     _export_format_from_suffix,
     _infer_export_format,

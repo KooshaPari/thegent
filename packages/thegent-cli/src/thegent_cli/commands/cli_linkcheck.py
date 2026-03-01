@@ -5,7 +5,7 @@ from pathlib import Path
 
 import typer
 
-from thegent.utils.link_checker import LinkChecker
+from thegent_core.utils.link_checker import LinkChecker
 
 app = typer.Typer()
 logger = logging.getLogger(__name__)

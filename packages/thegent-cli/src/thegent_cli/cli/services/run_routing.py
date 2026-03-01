@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def build_route_candidates(
     Returns:
         List of route candidate dicts
     """
-    from thegent.provider_model_manager import get_model_catalog
+    from thegent_routing.provider_model_manager import get_model_catalog
     
     candidates = []
     catalog = get_model_catalog()

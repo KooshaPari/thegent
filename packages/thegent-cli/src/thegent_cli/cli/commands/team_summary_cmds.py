@@ -14,7 +14,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _normalize_output_format,
     console,
@@ -32,9 +32,9 @@ def summary_cmd(
     format: str | None = typer.Option(None, "--format", "-f", help="Output format: rich, json, md"),
 ) -> None:
     """FR-X09: Unified summary and audit log across runs, chats, and commits."""
-    from thegent.orchestration.state.memory import MemoryCategory, MemorySystem
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.summary import summary_impl
+    from thegent_execution.orchestration.state.memory import MemoryCategory, MemorySystem
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_agents.summary import summary_impl
 
     try:
         project_path = project or Path.cwd()
@@ -104,7 +104,7 @@ def summary_cmd(
 
 def teammates_list_cmd() -> None:
     """WP-16001: List all discovered specialized agents available for delegation."""
-    from thegent.governance.teammates import TeammateManager
+    from thegent_audit.governance.teammates import TeammateManager
 
     settings = ThegentSettings()
     mgr = TeammateManager(settings.cache_dir / "teammates.json")
@@ -130,8 +130,8 @@ def teammates_delegate_cmd(
     parent_run_id: str = typer.Option(None, "--parent-run", help="Parent run ID for tracking"),
 ) -> None:
     """WP-16002: Delegate a sub-task to a specialized teammate."""
-    from thegent.governance.handoff import HandoffIntegrity
-    from thegent.governance.teammates import TeammateManager
+    from thegent_audit.governance.handoff import HandoffIntegrity
+    from thegent_audit.governance.teammates import TeammateManager
 
     settings = ThegentSettings()
     mgr = TeammateManager(settings.cache_dir / "teammates.json")
@@ -167,7 +167,7 @@ def teammates_status_cmd(
     run_id: str = typer.Option(None, "--run-id", help="Filter by parent run ID"),
 ) -> None:
     """WP-16002: Monitor the status of the teammate swarm."""
-    from thegent.governance.teammates import TeammateManager
+    from thegent_audit.governance.teammates import TeammateManager
 
     settings = ThegentSettings()
     mgr = TeammateManager(settings.cache_dir / "teammates.json")

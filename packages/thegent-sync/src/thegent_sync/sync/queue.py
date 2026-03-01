@@ -9,7 +9,7 @@ import orjson as json
 from dataclasses import asdict
 from pathlib import Path
 
-from thegent.sync.conflicts import SyncConflict
+from thegent_sync.sync.conflicts import SyncConflict
 
 
 class ConflictQueueStore:

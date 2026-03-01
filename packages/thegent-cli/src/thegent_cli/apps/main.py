@@ -51,7 +51,7 @@ from thegent_cli.apps import (  # noqa: E402
 )
 from thegent_cli.apps.project import install_app, scaffold_app, update_app  # noqa: E402
 from thegent_cli.apps.project import setup_project_app  # noqa: E402
-from thegent.mesh.main import app as mesh_app  # noqa: E402
+from thegent_agents.mesh.main import app as mesh_app  # noqa: E402
 from thegent_cli.commands import model_cmds  # noqa: E402
 
 try:
@@ -231,7 +231,7 @@ def doctor_cmd(
     dry_run: bool = typer.Option(False, "--dry-run", "-n", help="Show planned fixes without applying them"),
 ) -> None:
     """Run thegent doctor from the unified top-level command surface."""
-    from thegent.doctor import run_doctor
+    from thegent_cli.doctor import run_doctor
 
     success = run_doctor(fix=fix, dry_run=dry_run)
     raise typer.Exit(0 if success else 1)
@@ -303,7 +303,7 @@ def quick_ps(
 
 @app.command("reload", help="Quick alias for `thegent mcp reload`.")
 def reload_top_level() -> None:
-    from thegent.mcp.manage import mcp_restart
+    from thegent_protocols.mcp.manage import mcp_restart
 
     ok, msg = mcp_restart()
     console.print(f"[green]{msg}[/green]" if ok else f"[red]{msg}[/red]")
@@ -324,7 +324,7 @@ def hmr_top_level(
         help="Minimum seconds between automatic restarts.",
     ),
 ) -> None:
-    from thegent.mcp.hotreload import run_prod_hotreload
+    from thegent_protocols.mcp.hotreload import run_prod_hotreload
 
     try:
         run_prod_hotreload(project_root=project_root, debounce_s=debounce_s)
@@ -506,7 +506,7 @@ def help_cmd(
 
 @app.command("agent-server", help="Run thegent JSON-RPC agent server over stdio.")
 def agent_server_cmd() -> None:
-    from thegent.protocols.jsonrpc_agent_server import serve_stdio
+    from thegent_protocols.protocols.jsonrpc_agent_server import serve_stdio
 
     raise typer.Exit(serve_stdio())
 

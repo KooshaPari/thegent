@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.phases.compliance_profile import ComplianceProfile
+from thegent_planning.phases.compliance_profile import ComplianceProfile
 
 
 class Phase13ComplianceProfilesResearch:

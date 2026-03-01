@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from thegent.utils.json_utils import json_loads, json_dumps
+from thegent_core.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
 from pathlib import Path
@@ -18,7 +18,7 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _bootstrap_metric_contracts,
     _get_health_targets_path,
@@ -28,7 +28,7 @@ from thegent.cli.commands._cli_shared import (
     _resolve_cwd,
     console,
 )
-from thegent.cli.commands.governance_health_helpers import (
+from thegent_cli.cli.commands.governance_health_helpers import (
     build_cycle_json_output,
     build_cycle_result_table,
     build_health_dimensions_table,
@@ -67,7 +67,7 @@ def policy_show_cmd() -> None:
 def policy_purge_cmd(dry_run: bool = True) -> None:
     """Purge expired history based on tiered retention (WP-3006)."""
     settings = ThegentSettings()
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     res = registry.purge_expired(
@@ -86,7 +86,7 @@ def contracts_registry_cmd(format: str | None = None) -> None:
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.contracts.registry import get_registry
+    from thegent_core.contracts.registry import get_registry
 
     registry = get_registry()
     versions = registry.list_versions()
@@ -125,7 +125,7 @@ def migration_cmd(contract_id: str, version: str, format: str | None = None) -> 
     """Evaluate migration status for a contract version."""
     from rich.console import Console
 
-    from thegent.contracts.migration import MigrationController
+    from thegent_core.contracts.migration import MigrationController
 
     console = Console()
     mc = MigrationController()
@@ -159,7 +159,7 @@ def drift_cmd(
     """Detect significant drift in contract performance and check alert budgets (G-RV-07)."""
     from rich.console import Console
 
-    from thegent.contracts.telemetry import ContractTelemetry
+    from thegent_core.contracts.telemetry import ContractTelemetry
 
     settings = ThegentSettings()
     console = Console()
@@ -207,7 +207,7 @@ def contracts_conformance_cmd(
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.contracts.conformance import run_conformance_suite
+    from thegent_core.contracts.conformance import run_conformance_suite
 
     session_dir = ThegentSettings().session_dir if check_drift else None
     report = run_conformance_suite(session_dir=session_dir, drift_window=drift_window)

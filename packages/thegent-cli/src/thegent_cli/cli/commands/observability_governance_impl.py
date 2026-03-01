@@ -10,8 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.cli.services import governance as governance_service
-from thegent.config import ThegentSettings
+from thegent_cli.cli.services import governance as governance_service
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -37,18 +37,18 @@ _REVIEW_SCHEMA_PREAMBLE = (
 
 def get_server_meta_impl() -> dict[str, Any]:
     """Return server metadata dict for thegent://meta resource."""
-    from thegent.cli.commands.observability_health_impl import (  # pyright: ignore[reportMissingImports]
+    from thegent_cli.cli.commands.observability_health_impl import (  # pyright: ignore[reportMissingImports]
         HEALTH_PAYLOAD_SCHEMA_VERSION,
         HEALTH_PAYLOAD_TYPES,
     )
-    from thegent.cli.commands.observability_trends_impl import (  # pyright: ignore[reportMissingImports]
+    from thegent_cli.cli.commands.observability_trends_impl import (  # pyright: ignore[reportMissingImports]
         OBSERVE_SUMMARY_PAYLOAD_TYPES,
         OBSERVE_SUMMARY_SCHEMA_VERSION,
     )
 
-    from thegent.cli.commands.governance_policy_health_cmds import HEALTH_POLICY_PROFILES  # pyright: ignore[reportMissingImports]
+    from thegent_cli.cli.commands.governance_policy_health_cmds import HEALTH_POLICY_PROFILES  # pyright: ignore[reportMissingImports]
 
-    from thegent.cli.services import observability as observability_service
+    from thegent_cli.cli.services import observability as observability_service
 
     return observability_service.get_server_meta_impl(
         health_payload_schema_version=HEALTH_PAYLOAD_SCHEMA_VERSION,
@@ -117,8 +117,8 @@ def review_impl(
     model: str | None = None,
 ) -> dict[str, Any]:
     """WL-107: Read-only agent review turn with structured output."""
-    from thegent.agents.review_output import validate_review_output
-    from thegent.cli.commands.impl import run_impl
+    from thegent_agents.agents.review_output import validate_review_output
+    from thegent_cli.cli.commands.impl import run_impl
 
     full_prompt = f"{_REVIEW_SCHEMA_PREAMBLE}\n\n{prompt}"
     response = run_impl(
@@ -190,7 +190,7 @@ def get_data_protection_status_impl() -> dict[str, Any]:
 
 def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
     """Unified sitback dashboard: sessions, cockpit (circuits, drift, budget), terminals."""
-    from thegent.cli.commands.session_ops_list_impl import ps_impl
+    from thegent_cli.cli.commands.session_ops_list_impl import ps_impl
 
     settings = ThegentSettings()
     session_dir = settings.session_dir.expanduser().resolve()
@@ -199,9 +199,9 @@ def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
     running = [s for s in sessions if s.get("status") == "running"]
     failed = [s for s in sessions if "exited" in str(s.get("status", "")) and s.get("status") != "exited:0"]
 
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.cost.aggregator import CostAggregator
-    from thegent.execution import CircuitBreakerRegistry
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_routing.cost.aggregator import CostAggregator
+    from thegent_execution.execution import CircuitBreakerRegistry
 
     circuit_breaker = CircuitBreakerRegistry(session_dir)
     ct = ContractTelemetry(session_dir)
@@ -214,7 +214,7 @@ def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
 
     terminals: list[dict[str, Any]] = []
     try:
-        from thegent.skills.terminal import is_claude_code_pane, list_tmux_panes
+        from thegent_skills.skills.terminal import is_claude_code_pane, list_tmux_panes
 
         for p in list_tmux_panes():
             terminals.append(
@@ -252,7 +252,7 @@ def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
         "profile": profile,
     }
     if profile == "full":
-        from thegent.sitback_plugins import get_registry
+        from thegent_agents.sitback_plugins import get_registry
 
         reg = get_registry()
         payload["plugin_widgets"] = reg.get_widgets()
@@ -278,7 +278,7 @@ def get_compliance_report_impl() -> dict[str, Any]:
                 else:
                     hot_archived += 1
 
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(session_dir)
     runs = registry.list_runs(limit=1000)

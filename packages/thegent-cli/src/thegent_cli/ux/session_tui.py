@@ -13,14 +13,14 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from thegent.cli.commands.impl import (
+from thegent_cli.cli.commands.impl import (
     _find_session_meta,
     _is_pid_running,
     _read_session_meta,
     ps_impl,
     session_meta_impl,
 )
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _LOG = logging.getLogger(__name__)
 
@@ -277,7 +277,7 @@ class SessionTUI:
         if log_paths:
             stdout_path = log_paths.get("stdout", "")
             if stdout_path:
-                from thegent.utils.helpers import read_file_tail
+                from thegent_core.utils.helpers import read_file_tail
 
                 lines = read_file_tail(stdout_path, num_lines=10)
                 if lines:
@@ -427,7 +427,7 @@ class SessionTUI:
 
             if action == "pause":
                 # Mark as paused in registry
-                from thegent.execution import RunRegistry
+                from thegent_execution.execution import RunRegistry
 
                 registry = RunRegistry(self.settings.session_dir)
                 meta_path = _find_session_meta(self.settings, session_id)
@@ -439,7 +439,7 @@ class SessionTUI:
 
             if action == "resume":
                 # Mark as running in registry
-                from thegent.execution import RunRegistry
+                from thegent_execution.execution import RunRegistry
 
                 registry = RunRegistry(self.settings.session_dir)
                 meta_path = _find_session_meta(self.settings, session_id)

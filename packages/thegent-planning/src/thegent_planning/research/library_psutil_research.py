@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.research.library_replacements import use_psutil_monitoring
+from thegent_planning.research.library_replacements import use_psutil_monitoring
 
 
 class LibraryPsutilResearch:

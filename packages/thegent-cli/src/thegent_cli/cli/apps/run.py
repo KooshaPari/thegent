@@ -27,7 +27,7 @@ def _auto_select_agent(prompt: str) -> str | None:
     no match is found.
     """
     try:
-        from thegent.agents.capability_index import CapabilityIndex
+        from thegent_agents.agents.capability_index import CapabilityIndex
 
         recommendations = CapabilityIndex.get().recommend(prompt, top_n=1)
         if recommendations:
@@ -105,7 +105,7 @@ def run_agent(
     When no --agent is specified, the capability index is consulted to pick the
     best-matching agent for the prompt (WL-034). Use --no-auto-agent to skip this.
     """
-    from thegent.cli.commands.cli import bg_cmd, loop_cmd, run_cmd
+    from thegent_cli.cli.commands.cli import bg_cmd, loop_cmd, run_cmd
 
     prompt = str(_unwrap_typer_default(prompt))
     agent = _unwrap_typer_default(agent)
@@ -139,7 +139,7 @@ def run_agent(
     if effective_agent is None and not no_auto_agent:
         selected = _auto_select_agent(prompt)
         if selected is not None:
-            from thegent.agents.capability_index import CapabilityIndex
+            from thegent_agents.agents.capability_index import CapabilityIndex
 
             recs = CapabilityIndex.get().recommend(prompt, top_n=1)
             score = recs[0].score if recs else 0.0
@@ -148,7 +148,7 @@ def run_agent(
 
     # Handle remote execution
     if isinstance(remote, str) and remote:
-        from thegent.compute.remote_runner import RemoteRunner
+        from thegent_core.compute.remote_runner import RemoteRunner
 
         runner = RemoteRunner(
             node=remote if remote != "auto" else None,
@@ -238,7 +238,7 @@ def run_free(
     pick the best-matching agent (WL-034). Falls back to 'copilot' (gpt-5-mini)
     when no indexed agent matches.
     """
-    from thegent.cli.commands.cli import bg_cmd, run_cmd
+    from thegent_cli.cli.commands.cli import bg_cmd, run_cmd
 
     effective_agent: str | None = None
     effective_model: str | None = model
@@ -246,7 +246,7 @@ def run_free(
     if not no_auto_agent:
         selected = _auto_select_agent(prompt)
         if selected is not None:
-            from thegent.agents.capability_index import CapabilityIndex
+            from thegent_agents.agents.capability_index import CapabilityIndex
 
             recs = CapabilityIndex.get().recommend(prompt, top_n=1)
             score = recs[0].score if recs else 0.0
@@ -291,7 +291,7 @@ def run_history(
     limit: int = typer.Option(50, "--limit", "-l", help="Number of recent runs to show"),
     format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json|md)"),
 ) -> None:
-    from thegent.cli.commands.cli import history_cmd
+    from thegent_cli.cli.commands.cli import history_cmd
 
     history_cmd(limit=limit, format=format)
 
@@ -301,7 +301,7 @@ def run_logs(
     session_id: str | None = typer.Argument(None, help="Session ID to view logs for (defaults to latest)"),
     follow: bool = typer.Option(False, "--follow", "-f", help="Follow log output in real-time"),
 ) -> None:
-    from thegent.cli.commands.cli import logs_cmd
+    from thegent_cli.cli.commands.cli import logs_cmd
 
     logs_cmd(session_id=session_id, follow=follow)
 
@@ -313,14 +313,14 @@ def run_ps(
     format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json|md)"),
     include_contract: bool = typer.Option(False, "--include-contract", help="Include routing contract metadata"),
 ) -> None:
-    from thegent.cli.commands.cli import ps_cmd
+    from thegent_cli.cli.commands.cli import ps_cmd
 
     ps_cmd(all_sessions=all_sessions, owner=owner, format=format, include_contract=include_contract)
 
 
 @app.command("stop", help="Terminate a running session or loop.")
 def run_stop(session_id: str | None = typer.Argument(None, help="Session ID to terminate")) -> None:
-    from thegent.cli.commands.cli import loop_stop_cmd, stop_cmd
+    from thegent_cli.cli.commands.cli import loop_stop_cmd, stop_cmd
 
     try:
         loop_stop_cmd(session_id=session_id)
@@ -338,7 +338,7 @@ def run_resume(
         help="Activate skill instructions by name (repeatable) (WL-101).",
     ),
 ) -> None:
-    from thegent.cli.commands.cli import resume_cmd
+    from thegent_cli.cli.commands.cli import resume_cmd
 
     resume_cmd(session_id=session_id, prompt=prompt, skills=skill)
 
@@ -355,7 +355,7 @@ def run_fork(
 ) -> None:
     if from_turn is not None and from_turn < 1:
         raise typer.BadParameter("from_turn must be 1 or greater", param_hint="--from-turn")
-    from thegent.cli.commands.cli import session_fork_cmd
+    from thegent_cli.cli.commands.cli import session_fork_cmd
 
     session_fork_cmd(session_id=session_id, from_turn=from_turn, new_session_id=new_session_id)
 
@@ -367,7 +367,7 @@ def run_rollback(
 ) -> None:
     if n_turns < 1:
         raise typer.BadParameter("n-turns must be 1 or greater", param_hint="--n-turns")
-    from thegent.cli.commands.cli import session_rollback_cmd
+    from thegent_cli.cli.commands.cli import session_rollback_cmd
 
     session_rollback_cmd(session_id=session_id, n_turns=n_turns)
 
@@ -384,7 +384,7 @@ def run_attach(
     host_id: str | None = typer.Option(None, "--host", help="Remote host ID"),
 ) -> None:
     """Attach to a running harness terminal session."""
-    from thegent.cli.commands.impl import harness_interact_impl
+    from thegent_cli.cli.commands.impl import harness_interact_impl
 
     result = harness_interact_impl(
         harness=harness,
@@ -406,7 +406,7 @@ def run_send(
     host_id: str | None = typer.Option(None, "--host", help="Remote host ID"),
 ) -> None:
     """Send a prompt to a harness."""
-    from thegent.cli.commands.impl import harness_interact_impl
+    from thegent_cli.cli.commands.impl import harness_interact_impl
 
     result = harness_interact_impl(
         harness=harness,

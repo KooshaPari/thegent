@@ -1,6 +1,6 @@
 import logging
 import os
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -104,7 +104,7 @@ def send_to_tmux_pane(pane_id: str, text: str, enter: bool = True) -> bool:
 
 
 def heliosShield_status() -> str:
-    """Get status from thegent.mesh."""
+    """Get status from thegent_agents.mesh."""
     # Look for heliosShield in parent dir or path
     try:
         # Prefer direct execution if available

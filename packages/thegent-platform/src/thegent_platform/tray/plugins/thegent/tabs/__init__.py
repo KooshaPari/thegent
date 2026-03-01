@@ -4,46 +4,46 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from thegent.tray.plugins.thegent.tabs.agents import (
+from thegent_platform.tray.plugins.thegent.tabs.agents import (
     AgentEditDialog,
     AgentsTab,
 )
-from thegent.tray.plugins.thegent.tabs.agents import (
+from thegent_platform.tray.plugins.thegent.tabs.agents import (
     get_tab as get_tab_agents,
 )
-from thegent.tray.plugins.thegent.tabs.costs import (
+from thegent_platform.tray.plugins.thegent.tabs.costs import (
     CostAlertDialog,
     CostsTab,
 )
-from thegent.tray.plugins.thegent.tabs.costs import (
+from thegent_platform.tray.plugins.thegent.tabs.costs import (
     get_tab as get_tab_costs,
 )
-from thegent.tray.plugins.thegent.tabs.gardener import (
+from thegent_platform.tray.plugins.thegent.tabs.gardener import (
     GardenerConfigDialog,
     GardenerTab,
 )
-from thegent.tray.plugins.thegent.tabs.gardener import (
+from thegent_platform.tray.plugins.thegent.tabs.gardener import (
     get_tab as get_tab_gardener,
 )
-from thegent.tray.plugins.thegent.tabs.projects import (
+from thegent_platform.tray.plugins.thegent.tabs.projects import (
     ProjectEditDialog,
     ProjectsTab,
 )
-from thegent.tray.plugins.thegent.tabs.projects import (
+from thegent_platform.tray.plugins.thegent.tabs.projects import (
     get_tab as get_tab_projects,
 )
-from thegent.tray.plugins.thegent.tabs.gamification import (
+from thegent_platform.tray.plugins.thegent.tabs.gamification import (
     AchievementsDialog,
     GamificationTab,
 )
-from thegent.tray.plugins.thegent.tabs.gamification import (
+from thegent_platform.tray.plugins.thegent.tabs.gamification import (
     get_tab as get_tab_gamification,
 )
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QWidget
 
-    from thegent.tray.plugins.thegent.api_client import ThegentAPIClient
+    from thegent_platform.tray.plugins.thegent.api_client import ThegentAPIClient
 
 
 def get_tab(tab_id: str, api_client: ThegentAPIClient) -> QWidget | None:

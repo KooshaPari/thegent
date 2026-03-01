@@ -15,18 +15,18 @@ from typing import TYPE_CHECKING, Any, cast
 
 import typer
 
-from thegent.cli.commands.output import health_export_writers
-from thegent.cli.commands.output import health_serializers as health_output
+from thegent_cli.cli.commands.output import health_export_writers
+from thegent_cli.cli.commands.output import health_serializers as health_output
 
 
 def _get_run_subprocess_optimized():
-    from thegent.infra import run_subprocess_optimized
+    from thegent_core.infra import run_subprocess_optimized
 
     return run_subprocess_optimized
 
 
 def _get_yaml_infra():
-    from thegent.infra import yaml_dump, yaml_load
+    from thegent_core.infra import yaml_dump, yaml_load
 
     return yaml_load, yaml_dump
 
@@ -130,7 +130,7 @@ RunRegistry = _lazy_import("thegent.execution", "RunRegistry")
 
 
 def get_exit_message(*args: Any, **kwargs: Any):
-    from thegent.exit_codes import get_exit_message as impl
+    from thegent_core.exit_codes import get_exit_message as impl
 
     return impl(*args, **kwargs)
 
@@ -200,7 +200,7 @@ def _format_context_usage_line(context_usage: object) -> str | None:
     max_val = context_usage.get("max")
 
     if isinstance(used, int) and isinstance(max_val, int):
-        from thegent.cli.services.run_input_helpers import build_context_usage_payload
+        from thegent_cli.cli.services.run_input_helpers import build_context_usage_payload
 
         shared_payload = build_context_usage_payload(
             used=used,
@@ -273,7 +273,7 @@ def _inject_skill_instructions(prompt: str, skills: list[str] | None) -> str:
     if not skills:
         return prompt
 
-    from thegent.skills.discovery import load_skill
+    from thegent_skills.skills.discovery import load_skill
 
     sections: list[str] = []
     for name in skills:

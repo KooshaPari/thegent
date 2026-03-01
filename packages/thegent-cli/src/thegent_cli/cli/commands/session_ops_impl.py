@@ -18,7 +18,7 @@ from typing import Any
 
 import typer
 
-from thegent.cli.commands.session_ops_list_impl import ps_impl
+from thegent_cli.cli.commands.session_ops_list_impl import ps_impl
 
 _log = logging.getLogger(__name__)
 
@@ -26,13 +26,13 @@ _LOG_FOLLOW_POLL_SECONDS = 0.5
 
 
 def _session_meta_impl():
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     return cli_impl
 
 
 def _settings() -> Any:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     return ThegentSettings()
 
@@ -44,7 +44,7 @@ def status_impl(
     """
     Get status of a background session.
     """
-    from thegent.cli.commands.impl import _is_pid_running, _session_paths
+    from thegent_cli.cli.commands.impl import _is_pid_running, _session_paths
 
     def _resolve_exit_code(payload: dict[str, Any], rc_path: Path, is_running: bool) -> int | None:
         if is_running:
@@ -136,8 +136,8 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
     """
     from rich.console import Console
 
-    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, _session_paths
-    from thegent.execution import AuditEntry, AuditRegistry
+    from thegent_cli.cli.commands.impl import _default_owner_tag, _resolve_cwd, _session_paths
+    from thegent_execution.execution import AuditEntry, AuditRegistry
 
     console = Console()
     settings = _settings()
@@ -166,7 +166,7 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
 
             with target.open("r", encoding="utf-8", errors="replace") as f:
                 if tail and tail > 0:
-                    from thegent.utils.helpers import read_file_tail
+                    from thegent_core.utils.helpers import read_file_tail
 
                     lines = read_file_tail(target, num_lines=tail)
                     if lines:
@@ -196,7 +196,7 @@ def logs_impl(session_id: str, tail: int | None = None, stderr: bool = False, fo
             )
         )
 
-        from thegent.utils.helpers import read_file_tail, safe_read_file
+        from thegent_core.utils.helpers import read_file_tail, safe_read_file
 
         if tail is not None and tail > 0:
             lines = read_file_tail(target, num_lines=tail)

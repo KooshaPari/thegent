@@ -12,8 +12,8 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from thegent.cli.commands.cli_git_identity import resolve_author_env
-from thegent.mesh.git import GitParallelismManager
+from thegent_cli.cli.commands.cli_git_identity import resolve_author_env
+from thegent_agents.mesh.git import GitParallelismManager
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def get_agent_id() -> str:
     """Return the current agent ID from settings or default."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.agent_id
@@ -63,7 +63,7 @@ def status(
     short: bool = typer.Option(False, "--short", "-s", help="Show short-format status"),
 ):
     """Show status: combines private index (staged) and worktree (modified)."""
-    from thegent.native.git_native import GitNative
+    from thegent_platform.native.git_native import GitNative
 
     aid = agent_id or get_agent_id()
     manager = GitParallelismManager(project_root, aid)
@@ -306,7 +306,7 @@ def merge(
     output: Path = typer.Option(None, "--output", "-o", help="Output file (default: overwrites ours)"),
 ):
     """AST-aware merge using Mergiraf (Phase 7)."""
-    from thegent.governance.heliosShield_bridge import SmartMerge
+    from thegent_audit.governance.heliosShield_bridge import SmartMerge
 
     merger = SmartMerge()
     out_path = output or ours

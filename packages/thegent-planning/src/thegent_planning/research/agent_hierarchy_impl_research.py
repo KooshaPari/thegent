@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.research.agent_hierarchy import AgentHierarchyManager
+from thegent_planning.research.agent_hierarchy import AgentHierarchyManager
 
 
 class AgentHierarchyImplResearch:

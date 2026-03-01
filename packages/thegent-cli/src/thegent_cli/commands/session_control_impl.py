@@ -31,7 +31,7 @@ from thegent_cli.commands.session_meta_impl import (
     _find_session_meta,
     _read_session_meta,
 )
-from thegent.execution import RunRegistry
+from thegent_execution.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
 def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
     """Send a message to a running session by queuing it in the registry (WP-9004)."""
     from thegent_cli.commands.impl import _default_owner_tag, _resolve_cwd
-    from thegent.execution import AuditEntry, AuditRegistry, MessageEntry, MessageRegistry
+    from thegent_execution.execution import AuditEntry, AuditRegistry, MessageEntry, MessageRegistry
 
     settings = _impl_settings()
     try:
@@ -260,7 +260,7 @@ def session_contract_negotiate_impl(contract_id: str, supported_versions: list[s
     """
     WP-7001: Implementation of contract negotiation logic.
     """
-    from thegent.contracts.registry import ContractNegotiator
+    from thegent_core.contracts.registry import ContractNegotiator
 
     negotiator = ContractNegotiator()
     return negotiator.negotiate(contract_id, supported_versions)

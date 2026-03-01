@@ -98,7 +98,7 @@ class TeammateManager:
         if not agents_dir:
             return []
 
-        from thegent.infra.fast_yaml_parser import yaml_loads
+        from thegent_core.infra.fast_yaml_parser import yaml_loads
 
         # Recursive search for all .md files
         for md_file in agents_dir.rglob("*.md"):
@@ -241,9 +241,9 @@ class TeammateManager:
         # WP-16002: Trigger background execution
         try:
             # Resolve effective agent ID (canonical name)
-            from thegent.agents.registry import resolve_agent
-            from thegent.cli.commands.impl import bg_impl
-            from thegent.config_provider import get_config_provider
+            from thegent_agents.agents.registry import resolve_agent
+            from thegent_cli.cli.commands.impl import bg_impl
+            from thegent_core.config_provider import get_config_provider
 
             effective_agent = resolve_agent(teammate_id) or teammate_id
 
@@ -270,7 +270,7 @@ class TeammateManager:
 
         # WP-16003: heliosShield Integration
         try:
-            from thegent.governance.heliosShield_bridge import heliosShieldBridge
+            from thegent_audit.governance.heliosShield_bridge import heliosShieldBridge
 
             bridge = heliosShieldBridge()
             if bridge.is_available():

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thegent.agents.base import RunResult
+    from thegent_agents.agents.base import RunResult
 
 # ANSI color codes — intentionally self-contained; no external deps.
 _ANSI_RESET = "\033[0m"
@@ -61,7 +61,7 @@ class ContextBudget:
         Returns:
             A string like ``[CTX: 12k/128k]``, optionally ANSI-colored.
         """
-        from thegent.tui.widgets.statusbar import compute_context_usage_display
+        from thegent_cli.tui.widgets.statusbar import compute_context_usage_display
 
         display, _css = compute_context_usage_display(self.used, self.max)
         bar = f"[CTX: {display}]"

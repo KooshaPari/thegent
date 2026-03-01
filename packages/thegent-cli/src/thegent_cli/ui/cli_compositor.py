@@ -30,7 +30,7 @@ from rich.progress import (
 )
 from rich.table import Table
 
-from thegent.ui.compositor.compositor import Compositor, Panel
+from thegent_cli.ui.compositor.compositor import Compositor, Panel
 
 if TYPE_CHECKING:
     from collections.abc import Callable

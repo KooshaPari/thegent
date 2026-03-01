@@ -10,19 +10,19 @@ This module is a thin re-export facade for command groups extracted to focused m
 # @trace WL-124
 from __future__ import annotations
 
-from thegent.cli.commands.infra_resource_cmds import (
+from thegent_cli.cli.commands.infra_resource_cmds import (
     concurrency_set_cmd,
     concurrency_show_cmd,
     cost_status_cmd,
     load_status_cmd,
     usage_cmd,
 )
-from thegent.cli.commands.infra_observe_cmds import (
+from thegent_cli.cli.commands.infra_observe_cmds import (
     cockpit_cmd,
     observe_summary_cmd,
     sitback_dashboard_cmd,
 )
-from thegent.cli.commands.infra_utils_cmds import (
+from thegent_cli.cli.commands.infra_utils_cmds import (
     archive_cmd,
     config_check_cmd,
     context_history_cmd,
@@ -32,7 +32,7 @@ from thegent.cli.commands.infra_utils_cmds import (
     purge_cmd,
     scratchpad_cmd,
 )
-from thegent.cli.commands.infra_perf_cmds import (
+from thegent_cli.cli.commands.infra_perf_cmds import (
     benchmark_cmd,
     forensics_snapshot_cmd,
     modes_cmd,

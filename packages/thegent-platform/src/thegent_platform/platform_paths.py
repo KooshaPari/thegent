@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from thegent.thg_platform import Platform, detect_platform
+from thegent_platform.thg_platform import Platform, detect_platform
 
 __all__ = [
     "get_bin_dir",
@@ -66,7 +66,7 @@ def get_config_dir() -> Path:
         config_dir = home / ".config" / "thegent"
 
     # Allow override via ThegentSettings
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     if settings.config_dir_override is not None:

@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import orjson as json
 import os
-from thegent.infra.shim_subprocess import run as shim_run
+from thegent_core.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
-from thegent.agents.base import RunResult
+from thegent_agents.agents.base import RunResult
 
 
 def _serialize_result(result: Any) -> dict[str, Any]:

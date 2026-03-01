@@ -1,22 +1,22 @@
 """Governance modules: cost, policy, sandbox, economic routing (G-GP, WP-5003)."""
 
-from thegent.cost.aggregator import CostAggregator, CostEstimator
-from thegent.governance.input_guardrails import GuardrailResult, InputGuardrails
+from thegent_routing.cost.aggregator import CostAggregator, CostEstimator
+from thegent_audit.governance.input_guardrails import GuardrailResult, InputGuardrails
 
 # Phase 2.1: Provider Scoring System (WP-5003)
-from thegent.governance.metrics import (
+from thegent_audit.governance.metrics import (
     AggregatedMetrics,
     MetricsCollector,
     ProviderMetricsSnapshot,
     get_metrics_collector,
     initialize_metrics_collector,
 )
-from thegent.governance.providers import (
+from thegent_audit.governance.providers import (
     ProviderConfig,
     ProviderRegistry,
     ProviderType,
 )
-from thegent.governance.scoring import (
+from thegent_audit.governance.scoring import (
     DefaultProviderScorer,
     ProviderMetrics,
     ProviderScore,
@@ -45,9 +45,9 @@ __all__ = [
     "initialize_metrics_collector",
 ]
 
-from thegent.governance.compliance_reports import ComplianceReporter
-from thegent.governance.federated_policy import FederatedPolicyEngine, PolicyRule, PolicyScope
-from thegent.governance.override_events import (
+from thegent_audit.governance.compliance_reports import ComplianceReporter
+from thegent_audit.governance.federated_policy import FederatedPolicyEngine, PolicyRule, PolicyScope
+from thegent_audit.governance.override_events import (
     OverrideActivatedEvent,
     OverrideEventEmitter,
     OverrideExpiredEvent,
@@ -64,7 +64,7 @@ __all__ += [
     "OverrideExpiryMonitor",
 ]
 
-from thegent.governance.vetter import (
+from thegent_audit.governance.vetter import (
     RuffVetterCheck,
     TestPassVetterCheck,
     VetterCheck,

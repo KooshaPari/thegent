@@ -15,7 +15,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.cli.commands.impl import orchestrate_plan_impl, orchestrate_run_impl
+from thegent_cli.cli.commands.impl import orchestrate_plan_impl, orchestrate_run_impl
 
 console = Console()
 

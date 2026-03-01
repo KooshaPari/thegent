@@ -11,13 +11,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.base import SerializableMixin
-from thegent.integrations.sync_provenance import (
+from thegent_sync.integrations.base import SerializableMixin
+from thegent_sync.integrations.sync_provenance import (
     SyncProvenanceStamp,
     chain_provenance_stamps,
     verify_provenance_chain,
 )
-from thegent.integrations.sync_policy_contract import (
+from thegent_sync.integrations.sync_policy_contract import (
     SyncPolicyContract,
     load_sync_policy_contract,
 )

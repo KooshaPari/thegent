@@ -7,7 +7,7 @@ import orjson as json
 import logging
 from typing import Any
 
-from thegent.skills.discovery import (
+from thegent_skills.skills.discovery import (
     _get_thegent_root,
     discover_skills,
     load_skill,

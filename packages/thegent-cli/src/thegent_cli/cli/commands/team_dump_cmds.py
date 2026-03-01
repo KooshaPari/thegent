@@ -7,7 +7,7 @@ import orjson as json
 import sys
 from pathlib import Path
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     _normalize_output_format,
     console,
 )
@@ -15,7 +15,7 @@ from thegent.cli.commands._cli_shared import (
 
 def dump_index_cmd(project: Path | None = None, format: str | None = None) -> None:
     """Generate and display dump category index."""
-    from thegent.research.always_write_dumps import ConversationDumper
+    from thegent_planning.research.always_write_dumps import ConversationDumper
 
     project_path = project or Path.cwd()
     dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
@@ -35,7 +35,7 @@ def dump_latest_cmd(
     format: str | None = None,
 ) -> None:
     """Show latest dump path for a category or globally."""
-    from thegent.research.always_write_dumps import ConversationDumper
+    from thegent_planning.research.always_write_dumps import ConversationDumper
 
     project_path = project or Path.cwd()
     dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
@@ -50,7 +50,7 @@ def dump_latest_cmd(
 
 def dump_categories_cmd(project: Path | None = None, format: str | None = None) -> None:
     """List available dump categories."""
-    from thegent.research.always_write_dumps import ConversationDumper
+    from thegent_planning.research.always_write_dumps import ConversationDumper
 
     project_path = project or Path.cwd()
     dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")

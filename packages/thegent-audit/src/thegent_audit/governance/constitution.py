@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from thegent.infra import yaml_load
+from thegent_core.infra import yaml_load
 
 _log = logging.getLogger(__name__)
 

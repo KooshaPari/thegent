@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
-    from thegent.config_provider import ConfigProvider
+    from thegent_core.config_provider import ConfigProvider
 
-from thegent.config import ThegentSettings
-from thegent.execution import RunRegistry
+from thegent_core.config import ThegentSettings
+from thegent_execution.execution import RunRegistry
 
 __all__ = [
     "bg_impl",
@@ -61,8 +61,8 @@ def run_impl(
     google_grounding: bool = False,
 ) -> dict[str, Any]:
     import asyncio
-    from thegent.cli.services import run_execution_core_helpers
-    from thegent.memory.memory_manager import MemoryManager
+    from thegent_cli.cli.services import run_execution_core_helpers
+    from thegent_core.memory.memory_manager import MemoryManager
 
     # Initialize memory manager (no-op if API key not set)
     _mem_mgr = MemoryManager()
@@ -158,7 +158,7 @@ def bg_impl(
     config_provider: ConfigProvider | None = None,
     tenant_id: str | None = None,
 ) -> dict[str, Any]:
-    from thegent.cli.services import run_execution_core_helpers
+    from thegent_cli.cli.services import run_execution_core_helpers
 
     return run_execution_core_helpers.bg_impl_core(
         agent=agent,
@@ -202,12 +202,12 @@ def resume_impl(
     prompt: str | None = None,
     skills: list[str] | None = None,
 ) -> dict[str, Any]:
-    from thegent.cli.commands.impl import (
+    from thegent_cli.cli.commands.impl import (
         _normalize_contract_string,
         _resolve_latest_session_id,
         _session_state_path,
     )
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.services import run_post_surface_helpers
 
     def _session_send_wrapper(sid: str, message: str) -> dict[str, Any]:
         success, response = session_send_impl(sid, message, msg_type="reprompt")
@@ -236,7 +236,7 @@ def loop_impl(
     on_worker_output: Any = None,
     on_progress: Any = None,
 ) -> dict[str, Any]:
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.services import run_post_surface_helpers
 
     return run_post_surface_helpers.loop_impl(
         agent=agent,
@@ -254,5 +254,5 @@ def loop_impl(
 
 # Re-export from session_impl for resume_impl
 def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
-    from thegent.cli.commands.session_control_impl import session_send_impl as _session_send_impl
+    from thegent_cli.cli.commands.session_control_impl import session_send_impl as _session_send_impl
     return _session_send_impl(session_id, message, msg_type=msg_type)

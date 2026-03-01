@@ -18,7 +18,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thegent.ui.compositor.compositor import Compositor
+    from thegent_cli.ui.compositor.compositor import Compositor
 
 logger = logging.getLogger(__name__)
 

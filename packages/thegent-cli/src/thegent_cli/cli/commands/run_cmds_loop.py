@@ -13,7 +13,7 @@ from typer.models import OptionInfo
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
     _format_context_usage_line,
@@ -37,7 +37,7 @@ def loop_cmd(
     """Run a Lifecycle loop with Checker oversight."""
     from rich.console import Console
 
-    from thegent.cli.commands.impl import loop_impl
+    from thegent_cli.cli.commands.impl import loop_impl
 
     local_console = Console()
     local_console.print(f"[bold cyan]Starting Lifecycle loop ({loop_mode})...[/bold cyan]")
@@ -64,7 +64,7 @@ def loop_cmd(
 def loop_send_cmd(session_id: str | None = None, prompt: str = "") -> None:
     """Send a prompt to a running Lifecycle loop (human or agent takeover)."""
     sid = _resolve_session_id(session_id)
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     session_dir = settings.session_dir / sid
@@ -77,7 +77,7 @@ def loop_send_cmd(session_id: str | None = None, prompt: str = "") -> None:
 def loop_stop_cmd(session_id: str | None = None) -> None:
     """Send STOP signal to a running Lifecycle loop."""
     sid = _resolve_session_id(session_id)
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     session_dir = settings.session_dir / sid

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 # Health and governance commands
-from thegent.cli.commands.governance_health_cmds import (
+from thegent_cli.cli.commands.governance_health_cmds import (
     govern_configure_cmd,
     govern_go_health_cmd,
     govern_go_status_cmd,
@@ -16,7 +16,7 @@ from thegent.cli.commands.governance_health_cmds import (
 )
 
 # Policy and compliance commands
-from thegent.cli.commands.governance_policy_cmds import (
+from thegent_cli.cli.commands.governance_policy_cmds import (
     policy_show_cmd,
     policy_purge_cmd,
     policy_check_cmd,

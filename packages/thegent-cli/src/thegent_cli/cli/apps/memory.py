@@ -56,7 +56,7 @@ def memory_garden(
 
     # @trace WL-060
     """
-    from thegent.agents.gardener import GardenerAgent
+    from thegent_agents.agents.gardener import GardenerAgent
 
     root = Path(project_root).resolve()
     agent = GardenerAgent(dry_run=dry_run, project_root=root)
@@ -95,7 +95,7 @@ def memory_snapshot_list(
     since: str | None = typer.Option(None, "--since", help="Only snapshots captured at/after ISO time."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_list_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_list_cmd
 
     snapshot_list_cmd(project=project, limit=limit, trigger=trigger, tag=tag, since=since, format=format)
 
@@ -106,7 +106,7 @@ def memory_snapshot_index(
     limit: int = typer.Option(200, "--limit", help="Max snapshots included in index."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_index_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_index_cmd
 
     snapshot_index_cmd(project=project, limit=limit, format=format)
 
@@ -118,7 +118,7 @@ def memory_snapshot_export(
     out_path: Path | None = typer.Option(None, "--out", help="Output markdown path."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_export_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_export_cmd
 
     cmd = _dynamic_cmd(snapshot_export_cmd)
     # Keep compatibility with older team command signatures that may not accept format yet.
@@ -134,7 +134,7 @@ def memory_snapshot_prune(
     max_keep: int = typer.Option(500, "--max-keep", help="Number of newest snapshots to keep."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_prune_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_prune_cmd
 
     snapshot_prune_cmd(project=project, max_keep=max_keep, format=format)
 
@@ -145,7 +145,7 @@ def memory_snapshot_meta(
     limit: int = typer.Option(500, "--limit", help="Max snapshots to inspect."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_meta_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_meta_cmd
 
     snapshot_meta_cmd(project=project, limit=limit, format=format)
 
@@ -159,7 +159,7 @@ def memory_snapshot_daily_index(
     since: str | None = typer.Option(None, "--since", help="Only snapshots captured at/after ISO time."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_daily_index_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_daily_index_cmd
 
     cmd = _dynamic_cmd(snapshot_daily_index_cmd)
     # Keep compatibility with older team command signatures that may not accept filters yet.
@@ -200,7 +200,7 @@ def memory_snapshot_daily_export(
     since: str | None = typer.Option(None, "--since", help="Only snapshots captured at/after ISO time."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_daily_export_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_daily_export_cmd
 
     cmd = _dynamic_cmd(snapshot_daily_export_cmd)
     # Keep compatibility with older team command signatures that may not accept filters yet.
@@ -245,7 +245,7 @@ def memory_snapshot_daily_totals(
         help="Output format (rich|json).",
     ),
 ) -> None:
-    from thegent.cli.commands.team_cmds import snapshot_daily_totals_cmd
+    from thegent_cli.cli.commands.team_cmds import snapshot_daily_totals_cmd
 
     cmd = _dynamic_cmd(snapshot_daily_totals_cmd)
     # Keep compatibility with older team command signatures that may not accept filters yet.
@@ -281,7 +281,7 @@ def memory_dump_index(
     project: Path | None = typer.Option(None, "--project", help="Project root (defaults to cwd)."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import dump_index_cmd
+    from thegent_cli.cli.commands.team_cmds import dump_index_cmd
 
     dump_index_cmd(project=project, format=format)
 
@@ -293,7 +293,7 @@ def memory_dump_latest(
     json_only: bool = typer.Option(False, "--json-only", help="Only consider JSON dump files."),
     format: str | None = typer.Option(None, "--format", "-F", help="Output format (rich|json)."),
 ) -> None:
-    from thegent.cli.commands.team_cmds import dump_latest_cmd
+    from thegent_cli.cli.commands.team_cmds import dump_latest_cmd
 
     dump_latest_cmd(project=project, category=category, json_only=json_only, format=format)
 
@@ -308,6 +308,6 @@ def memory_dump_categories(
         help="Output format (rich|json).",
     ),
 ) -> None:
-    from thegent.cli.commands.team_cmds import dump_categories_cmd
+    from thegent_cli.cli.commands.team_cmds import dump_categories_cmd
 
     dump_categories_cmd(project=project, format=format)

@@ -3,7 +3,7 @@
 Provides comprehensive security guardrails, validation, and protection.
 """
 
-from thegent.security.guardrails import (
+from thegent_audit.security.guardrails import (
     Guardrails,
     SecretManager,
     TokenOptimizer,

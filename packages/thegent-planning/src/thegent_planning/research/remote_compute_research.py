@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.research.remote_compute import RemoteComputeClient
+from thegent_planning.research.remote_compute import RemoteComputeClient
 
 
 class RemoteComputeImplResearch:

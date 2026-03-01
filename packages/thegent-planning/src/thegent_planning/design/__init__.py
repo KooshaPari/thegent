@@ -2,12 +2,12 @@
 
 # Import modules as they are implemented
 try:
-    from thegent.design.design_language import DesignLanguage
+    from thegent_planning.design.design_language import DesignLanguage
 except ImportError:
     DesignLanguage = None
 
 try:
-    from thegent.design.naming import NamingConvention
+    from thegent_planning.design.naming import NamingConvention
 except ImportError:
     NamingConvention = None
 

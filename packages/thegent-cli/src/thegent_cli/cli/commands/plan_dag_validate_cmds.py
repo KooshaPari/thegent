@@ -10,14 +10,14 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent_cli.cli.commands.plan_output_helpers import (
     render_dag_list,
     render_dag_ready,
     render_dag_status,
     resolve_output_format,
 )
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _atomic_write,
     _check_dag_cycles,
@@ -72,7 +72,7 @@ def dag_validate_cmd(cd: Path | None = None) -> None:
 
     # WP-4005: State freshness check
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     ckpt_registry = CheckpointRegistry(settings.session_dir)
     ckpts = ckpt_registry.list_checkpoints(limit=1)
@@ -193,7 +193,7 @@ def dag_cancel_cmd(task_id: str, cd: Path | None = None) -> None:
 
 def dag_status_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """For each task with session_id show id, status, session_id, session_status (running/exited:rc)."""
-    from thegent.cli.commands.dag_impl import dag_status_impl
+    from thegent_cli.cli.commands.dag_impl import dag_status_impl
 
     res = dag_status_impl(cd=cd)
     if "error" in res:

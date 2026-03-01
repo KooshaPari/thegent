@@ -4,8 +4,8 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands.impl import ps_impl
-from thegent.skills.terminal import is_claude_code_pane, list_tmux_panes
+from thegent_cli.cli.commands.impl import ps_impl
+from thegent_skills.skills.terminal import is_claude_code_pane, list_tmux_panes
 
 console = Console()
 
@@ -74,7 +74,7 @@ def render_explorer() -> Layout:
     disc_table.add_column("Last Command", style="dim")
     disc_table.add_column("Tmux Pane", style="green")
 
-    from thegent.discovery import list_discovered_agents
+    from thegent_agents.discovery import list_discovered_agents
 
     discovered = list_discovered_agents()
     for d in discovered:

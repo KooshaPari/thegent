@@ -6,14 +6,14 @@ Re-exports split modules:
 - governance_audit_compliance_cmds: audit, compliance, guardrails
 """
 
-from thegent.cli.commands.governance_health_core_cmds import (
+from thegent_cli.cli.commands.governance_health_core_cmds import (
     govern_configure_cmd,
     govern_go_health_cmd,
     govern_go_status_cmd,
     govern_go_cycle_cmd,
     govern_go_watch_cmd,
 )
-from thegent.cli.commands.governance_policy_cmds import (
+from thegent_cli.cli.commands.governance_policy_cmds import (
     policy_show_cmd,
     policy_purge_cmd,
     contracts_registry_cmd,
@@ -22,7 +22,7 @@ from thegent.cli.commands.governance_policy_cmds import (
     contracts_conformance_cmd,
     trust_status_cmd,
 )
-from thegent.cli.commands.governance_audit_compliance_cmds import (
+from thegent_cli.cli.commands.governance_audit_compliance_cmds import (
     signatures_list_cmd,
     signatures_verify_cmd,
     compliance_siem_test_cmd,

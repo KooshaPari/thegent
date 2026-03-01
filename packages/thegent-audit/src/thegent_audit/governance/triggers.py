@@ -547,7 +547,7 @@ def main(
             return 1
 
     # Create the loop
-    from thegent.governance.agileplus import AgilePlusLoop
+    from thegent_audit.governance.agileplus import AgilePlusLoop
 
     loop = AgilePlusLoop(
         project_dir=project_dir,

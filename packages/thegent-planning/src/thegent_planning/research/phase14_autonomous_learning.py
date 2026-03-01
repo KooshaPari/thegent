@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.research.autonomous_learning import AutonomousLearningSurface
+from thegent_planning.research.autonomous_learning import AutonomousLearningSurface
 
 
 class Phase14AutonomousLearningResearch:

@@ -6,9 +6,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from thegent.cli.services import pre_work_gate_helpers
-from thegent.cli.services import run_workstream_helpers
-from thegent.config import ThegentSettings
+from thegent_cli.cli.services import pre_work_gate_helpers
+from thegent_cli.cli.services import run_workstream_helpers
+from thegent_core.config import ThegentSettings
 
 _log = __import__("logging").getLogger(__name__)
 
@@ -20,7 +20,7 @@ def _normalize_item_id(item_id: str) -> str:
 
 def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
     """Find next actionable work items from work-stream and queue sources."""
-    from thegent.cli.commands.impl import _resolve_cwd
+    from thegent_cli.cli.commands.impl import _resolve_cwd
 
     limit = max(1, min(100, limit))
     cwd = _resolve_cwd(cd) or Path.cwd()
@@ -39,7 +39,7 @@ def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
     session_dir = Path(settings.session_dir).expanduser().resolve()
 
     try:
-        from thegent.planning.workstream_db import WorkstreamDB
+        from thegent_planning.planning.workstream_db import WorkstreamDB
 
         db = WorkstreamDB(settings=settings)
         if work_stream_path.exists():
@@ -160,8 +160,8 @@ def spawn_next_impl(
     claim: bool = True,
 ) -> dict[str, Any]:
     """Spawn next items as background runs."""
-    from thegent.cli.commands.impl import _default_owner_tag, _resolve_cwd, bg_impl
-    from thegent.config_provider import get_config_provider
+    from thegent_cli.cli.commands.impl import _default_owner_tag, _resolve_cwd, bg_impl
+    from thegent_core.config_provider import get_config_provider
 
     limit = max(1, min(20, limit))
     cwd = _resolve_cwd(cd) or Path.cwd()
@@ -204,7 +204,7 @@ def spawn_next_impl(
 
     agent_id = "spawn-next"
     try:
-        from thegent.discovery import get_current_agent_id
+        from thegent_agents.discovery import get_current_agent_id
 
         agent_id = get_current_agent_id() or agent_id
     except Exception as exc:
@@ -266,8 +266,8 @@ def spawn_next_impl(
 
 def work_stream_claim_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]:
     """Claim a work item (move from BACKLOG to CLAIMED in WORK_STREAM.md)."""
-    from thegent.cli.commands.impl import _resolve_cwd
-    from thegent.planning.work_stream import WorkStreamManager
+    from thegent_cli.cli.commands.impl import _resolve_cwd
+    from thegent_planning.planning.work_stream import WorkStreamManager
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     gate_block = pre_work_gate_helpers.enforce_pre_work_hard_gate(cwd)
@@ -286,8 +286,8 @@ def work_stream_claim_impl(item_id: str, agent_id: str, cd: Path | None = None) 
 
 def work_stream_complete_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]:
     """Complete a work item (move from CLAIMED to COMPLETED in WORK_STREAM.md)."""
-    from thegent.cli.commands.impl import _resolve_cwd
-    from thegent.planning.work_stream import WorkStreamManager
+    from thegent_cli.cli.commands.impl import _resolve_cwd
+    from thegent_planning.planning.work_stream import WorkStreamManager
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     settings = ThegentSettings()
@@ -297,8 +297,8 @@ def work_stream_complete_impl(item_id: str, agent_id: str, cd: Path | None = Non
 
 def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
     """Merge fragments into WORK_STREAM.md and sync with task files."""
-    from thegent.cli.commands.impl import _resolve_cwd
-    from thegent.task.sync import WorkStreamSync
+    from thegent_cli.cli.commands.impl import _resolve_cwd
+    from thegent_execution.task.sync import WorkStreamSync
 
     cwd = _resolve_cwd(cd) or Path.cwd()
     work_stream_path = cwd / "docs" / "reference" / "WORK_STREAM.md"
@@ -349,7 +349,7 @@ def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str,
 
 def _validate_task_and_record_errors(tf: Path, validation_errors: list[dict[str, Any]]) -> None:
     """Validate a single task file and append validation errors."""
-    from thegent.task.validator import validate_task_file
+    from thegent_execution.task.validator import validate_task_file
 
     try:
         result = validate_task_file(tf)
@@ -366,7 +366,7 @@ def continuity_snapshot_impl(
     next_steps: list[str] | None = None,
 ) -> dict[str, Any]:
     """Create a continuity snapshot for shift handoff (WP-1009)."""
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     settings = ThegentSettings()
     hm = HandoffManager(settings.session_dir)

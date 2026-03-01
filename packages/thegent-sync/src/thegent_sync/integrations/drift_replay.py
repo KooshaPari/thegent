@@ -10,7 +10,7 @@ import orjson as json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 
 @dataclass

@@ -19,8 +19,8 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.audit.shadow_audit_git import ShadowAuditGit
-from thegent.registry.project_registry import ProjectRecord, ProjectRegistry
+from thegent_audit.audit.shadow_audit_git import ShadowAuditGit
+from thegent_core.registry.project_registry import ProjectRecord, ProjectRegistry
 
 console = Console()
 

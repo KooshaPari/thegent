@@ -38,7 +38,7 @@ class ControlPlaneConfigProvider:
             logger.error(f"CP connection error: {e}")
 
         # Fallback to local env if CP is down (Circuit Breaker logic would go here)
-        from thegent.governance.config_provider import EnvConfigProvider
+        from thegent_audit.governance.config_provider import EnvConfigProvider
 
         return EnvConfigProvider().resolve(tenant_id, session_id, request_overrides, keys)
 

@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from thegent.phases.enterprise_lifecycle import EnterpriseLifecycleManager
+from thegent_planning.phases.enterprise_lifecycle import EnterpriseLifecycleManager
 
 
 class Phase15EnterpriseLifecycleResearch:

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from thegent.planning.simulation import SimulationEngine
+from thegent_planning.planning.simulation import SimulationEngine
 
 
 @dataclass

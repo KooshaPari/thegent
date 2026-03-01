@@ -13,7 +13,7 @@ Direct imports from submodules preserve all public names for CLI registration.
 from __future__ import annotations
 
 # Re-export all audit & compliance commands
-from thegent.cli.commands.governance_audit_compliance_cmds import (
+from thegent_cli.cli.commands.governance_audit_compliance_cmds import (
     signatures_list_cmd,
     signatures_verify_cmd,
     compliance_siem_test_cmd,
@@ -25,7 +25,7 @@ from thegent.cli.commands.governance_audit_compliance_cmds import (
 )
 
 # Re-export all escalation & HITL commands
-from thegent.cli.commands.governance_escalation_hitl_cmds import (
+from thegent_cli.cli.commands.governance_escalation_hitl_cmds import (
     escalate_add_cmd,
     escalate_approve_cmd,
     escalate_list_cmd,
@@ -37,7 +37,7 @@ from thegent.cli.commands.governance_escalation_hitl_cmds import (
 )
 
 # Re-export all policy & health commands
-from thegent.cli.commands.governance_policy_health_cmds import (
+from thegent_cli.cli.commands.governance_policy_health_cmds import (
     govern_configure_cmd,
     govern_go_health_cmd,
     govern_go_status_cmd,
@@ -62,7 +62,7 @@ from thegent.cli.commands.governance_policy_health_cmds import (
 )
 
 # Re-export discovery & guardrails commands
-from thegent.cli.commands.governance_discovery_guardrails_cmds import (
+from thegent_cli.cli.commands.governance_discovery_guardrails_cmds import (
     discovery_parse_cmd,
     discovery_register_cmd,
     discovery_scan_cmd,

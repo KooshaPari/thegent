@@ -11,7 +11,7 @@ from typing import Any
 
 import httpx
 
-from thegent.integrations.connector_mapping_cache import ConnectorMappingCache
+from thegent_sync.integrations.connector_mapping_cache import ConnectorMappingCache
 
 logger = logging.getLogger(__name__)
 

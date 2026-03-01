@@ -5,7 +5,7 @@ Re-exports split modules:
 - dag_impl_ops: list, ready, run, sync, recover
 """
 
-from thegent.cli.commands.dag_impl_helpers import (
+from thegent_cli.cli.commands.dag_impl_helpers import (
     DagDocument,
     TASK_ID_RE,
     _parse_dag_full,
@@ -21,7 +21,7 @@ from thegent.cli.commands.dag_impl_helpers import (
     _ensure_contract_version_header,
     _dag_update_task,
 )
-from thegent.cli.commands.dag_impl_ops import (
+from thegent_cli.cli.commands.dag_impl_ops import (
     _dag_path,
     _ensure_dag_file,
     _session_status_for,

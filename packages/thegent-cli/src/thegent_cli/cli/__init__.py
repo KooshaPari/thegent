@@ -10,8 +10,8 @@ import sys
 import time
 from typing import Any
 
-from thegent.cli.commands import cli as _cli_surface
-from thegent.cli.commands import _cli_shared as _shared
+from thegent_cli.cli.commands import cli as _cli_surface
+from thegent_cli.cli.commands import _cli_shared as _shared
 
 # Backward compatibility - expose commonly used modules for test mocking
 Columns = getattr(_cli_surface, "Columns", None)
@@ -62,17 +62,17 @@ def __getattr__(name: str) -> Any:
     
     # Forward dag_update_cmd to _cli_surface
     if name == "dag_update_cmd":
-        from thegent.cli.commands import plan_dag_cmds
+        from thegent_cli.cli.commands import plan_dag_cmds
         return getattr(plan_dag_cmds, name)
     
     # Forward ThegentSettings to _shared
     if name == "ThegentSettings":
-        from thegent.cli.commands._cli_shared import ThegentSettings
+        from thegent_cli.cli.commands._cli_shared import ThegentSettings
         globals()[name] = ThegentSettings
         return ThegentSettings
     
     if name == "AGENT_LABELS":
-        from thegent.agents.registry import AGENT_LABELS
+        from thegent_agents.agents.registry import AGENT_LABELS
 
         globals()[name] = AGENT_LABELS
         return AGENT_LABELS
@@ -85,13 +85,13 @@ def __getattr__(name: str) -> Any:
         "_list_copilot_models_fallback", "_list_codex_models_fallback",
     )
     if name in _model_list_funcs:
-        from thegent.cli.commands import model_cmds_config
+        from thegent_cli.cli.commands import model_cmds_config
         func = getattr(model_cmds_config, name, None)
         if func:
             globals()[name] = func
             return func
         # Try model_cmds_rules
-        from thegent.cli.commands import model_cmds_rules
+        from thegent_cli.cli.commands import model_cmds_rules
         func = getattr(model_cmds_rules, name, None)
         if func:
             globals()[name] = func

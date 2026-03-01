@@ -27,15 +27,15 @@ __all__ = [
 
 
 def list_agents_impl() -> list[str]:
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.services import run_post_surface_helpers
     return run_post_surface_helpers.list_agents_impl()
 
 
 def list_droids_impl(cd: Any = None) -> list[str]:
-    from thegent.cli.commands.impl import _resolve_cwd, _resolve_droids_dir
-    from thegent.agents import list_droid_names
-    from thegent.config import ThegentSettings
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.commands.impl import _resolve_cwd, _resolve_droids_dir
+    from thegent_agents.agents import list_droid_names
+    from thegent_core.config import ThegentSettings
+    from thegent_cli.cli.services import run_post_surface_helpers
 
     return run_post_surface_helpers.list_droids_impl(
         cd=cd,
@@ -53,8 +53,8 @@ def list_models_impl(
     include_contract: bool = False,
     by_model: bool = False,
 ) -> dict[str, Any]:
-    from thegent.config import ThegentSettings
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_core.config import ThegentSettings
+    from thegent_cli.cli.services import run_post_surface_helpers
 
     return run_post_surface_helpers.list_models_impl(
         provider=provider,
@@ -67,7 +67,7 @@ def list_models_impl(
 
 
 def do_next_impl(cd: Path | None = None, limit: int = 5) -> dict[str, Any]:
-    from thegent.cli.services import work_stream_orchestration
+    from thegent_cli.cli.services import work_stream_orchestration
     return work_stream_orchestration.do_next_impl(cd=cd, limit=limit)
 
 
@@ -77,7 +77,7 @@ def wait_next_impl(
     timeout: int = 30,
     poll_interval: float = 0.5,
 ) -> dict[str, Any]:
-    from thegent.cli.services import work_stream_orchestration
+    from thegent_cli.cli.services import work_stream_orchestration
     return work_stream_orchestration.wait_next_impl(cd=cd, timeout=timeout, poll_interval=poll_interval)
 
 
@@ -91,24 +91,24 @@ def spawn_next_impl(
     override_reason: str = "manual-next-step",
     claim: bool = True,
 ) -> dict[str, Any]:
-    from thegent.cli.services import work_stream_orchestration
+    from thegent_cli.cli.services import work_stream_orchestration
     return work_stream_orchestration.spawn_next_impl(
         cd=cd, agent=agent, limit=limit, timeout=timeout, lane=lane, override_reason=override_reason, claim=claim
     )
 
 
 def work_stream_claim_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]:
-    from thegent.cli.services import work_stream_orchestration
+    from thegent_cli.cli.services import work_stream_orchestration
     return work_stream_orchestration.work_stream_claim_impl(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
 def work_stream_complete_impl(item_id: str, agent_id: str, cd: Path | None = None) -> dict[str, Any]:
-    from thegent.cli.services import work_stream_orchestration
+    from thegent_cli.cli.services import work_stream_orchestration
     return work_stream_orchestration.work_stream_complete_impl(item_id=item_id, agent_id=agent_id, cd=cd)
 
 
 def incorporate_impl(cd: Path | None = None, dry_run: bool = False) -> dict[str, Any]:
-    from thegent.cli.services import work_stream_orchestration
+    from thegent_cli.cli.services import work_stream_orchestration
     return work_stream_orchestration.incorporate_impl(cd=cd, dry_run=dry_run)
 
 
@@ -118,8 +118,8 @@ def plan_analyze_impl(
     resources: bool = False,
     continuity: bool = False,
 ) -> dict[str, Any]:
-    from thegent.cli.commands.impl import _resolve_cwd, _parse_dag_full
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.commands.impl import _resolve_cwd, _parse_dag_full
+    from thegent_cli.cli.services import run_post_surface_helpers
 
     return run_post_surface_helpers.plan_analyze_impl(
         cd=cd,
@@ -138,12 +138,12 @@ def retry_impl(
     cd: Path | None = None,
     override_reason: str | None = None,
 ) -> dict[str, Any]:
-    from thegent.cli.commands.impl import _resolve_cwd
-    from thegent.agents import get_fallback_agents
-    from thegent.config import ThegentSettings
-    from thegent.execution import RunRegistry
-    from thegent.cli.services import run_post_surface_helpers
-    from thegent.cli.commands.impl_core import bg_impl
+    from thegent_cli.cli.commands.impl import _resolve_cwd
+    from thegent_agents.agents import get_fallback_agents
+    from thegent_core.config import ThegentSettings
+    from thegent_execution.execution import RunRegistry
+    from thegent_cli.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.commands.impl_core import bg_impl
 
     return run_post_surface_helpers.retry_impl(
         run_id=run_id,
@@ -160,8 +160,8 @@ def retry_impl(
 
 
 def inbox_wait_impl(timeout: int | None = None) -> dict[str, Any]:
-    from thegent.config import ThegentSettings
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_core.config import ThegentSettings
+    from thegent_cli.cli.services import run_post_surface_helpers
     return run_post_surface_helpers.inbox_wait_impl(timeout=timeout, settings_factory=ThegentSettings)
 
 
@@ -173,9 +173,9 @@ def inbox_list_impl(
     sources: tuple[str, ...] = ("registry", "escalation"),
     limit: int = 50,
 ) -> list[dict[str, Any]]:
-    from thegent.config import ThegentSettings
-    from thegent.execution import RunRegistry
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_core.config import ThegentSettings
+    from thegent_execution.execution import RunRegistry
+    from thegent_cli.cli.services import run_post_surface_helpers
 
     return run_post_surface_helpers.inbox_list_impl(
         owner=owner,
@@ -196,7 +196,7 @@ def continuity_snapshot_impl(
     state_summary: dict[str, Any] | None = None,
     next_steps: list[str] | None = None,
 ) -> dict[str, Any]:
-    from thegent.cli.services import work_stream_orchestration
+    from thegent_cli.cli.services import work_stream_orchestration
     return work_stream_orchestration.continuity_snapshot_impl(
         owner=owner, run_ids=run_ids, state_summary=state_summary, next_steps=next_steps
     )
@@ -210,7 +210,7 @@ def harness_interact_impl(
     prompt: str | None = None,
     session_id: str | None = None,
 ) -> dict[str, Any]:
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.services import run_post_surface_helpers
     return run_post_surface_helpers.harness_interact_impl(
         harness=harness,
         action=action,
@@ -221,10 +221,10 @@ def harness_interact_impl(
 
 
 def harness_list_actions_impl() -> dict[str, Any]:
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.services import run_post_surface_helpers
     return run_post_surface_helpers.harness_list_actions_impl()
 
 
 def harness_register_host_impl() -> dict[str, Any]:
-    from thegent.cli.services import run_post_surface_helpers
+    from thegent_cli.cli.services import run_post_surface_helpers
     return run_post_surface_helpers.harness_register_host_impl()

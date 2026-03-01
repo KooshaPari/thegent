@@ -10,14 +10,14 @@ import typer
 
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent_cli.cli.commands.plan_output_helpers import (
     render_dag_list,
     render_dag_ready,
     render_dag_status,
     resolve_output_format,
 )
 
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
     _atomic_write,
     _check_dag_cycles,
@@ -123,7 +123,7 @@ def dag_checkpoint_cmd(cd: Path | None = None, reason: str = "Manual checkpoint"
         raise typer.Exit(1)
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -137,7 +137,7 @@ def dag_checkpoint_cmd(cd: Path | None = None, reason: str = "Manual checkpoint"
 def dag_checkpoints_cmd(limit: int = 20) -> None:
     """List recent DAG checkpoints."""
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -172,7 +172,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
     dag_path = cwd / ".factory" / "dag-session.md"
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -218,7 +218,7 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
     assert dag_path is not None
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 

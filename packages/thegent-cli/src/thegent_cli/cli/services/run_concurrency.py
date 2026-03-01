@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 logger = logging.getLogger(__name__)
 

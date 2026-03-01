@@ -107,7 +107,7 @@ __all__ = ["StateAdapter"]
 
 
 # Register with unified adapter registry
-from thegent.adapters.ports import AdapterRegistry
+from thegent_core.adapters.ports import AdapterRegistry
 
 class StateAdapterWrapper:
     """State adapter wrapper for registry"""

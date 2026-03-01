@@ -16,8 +16,8 @@ import typer
 from rich.panel import Panel
 from rich.table import Table
 
-from thegent.cli.commands import _cli_shared
-from thegent.cli.commands._cli_shared import (
+from thegent_cli.cli.commands import _cli_shared
+from thegent_cli.cli.commands._cli_shared import (
     _normalize_output_format,
     _resolve_run_id,
     console,
@@ -33,7 +33,7 @@ def escalate_add_cmd(
     priority: int = 0,
 ) -> None:
     """Add a blocked run to the escalation queue (WP-3008)."""
-    from thegent.cli.commands.impl import escalate_add_impl
+    from thegent_cli.cli.commands.impl import escalate_add_impl
 
     payload = {
         "run_id": run_id,
@@ -56,7 +56,7 @@ def escalate_list_cmd(
     format: str | None = None,
 ) -> None:
     """List governance escalation queue (WP-3008)."""
-    from thegent.cli.commands.impl import escalate_list_impl
+    from thegent_cli.cli.commands.impl import escalate_list_impl
 
     items = escalate_list_impl(past_sla_only=past_sla_only, limit=limit)
     fmt = _normalize_output_format(format)
@@ -96,7 +96,7 @@ def sweep_cmd(
     format: str | None = None,
 ) -> None:
     """WP-3005: Policy drift sweep - runs drift detection, budget check, past-SLA escalations."""
-    from thegent.cli.commands.impl import sweep_impl
+    from thegent_cli.cli.commands.impl import sweep_impl
 
     result = sweep_impl(
         drift_window=drift_window,
@@ -145,7 +145,7 @@ def escalate_resolve_cmd(run_id: str | None = None, resolution: str = "resolved"
 def escalate_approve_cmd(run_id: str | None = None) -> None:
     """Approve an escalation, recording an override for the owner (G-GP-05)."""
     rid = _resolve_run_id(run_id)
-    from thegent.cli.commands.impl import escalate_approve_impl
+    from thegent_cli.cli.commands.impl import escalate_approve_impl
 
     ok = escalate_approve_impl(run_id=rid)
     if ok:
@@ -160,9 +160,9 @@ def govern_approve_cmd(run_id: str, reason: str | None = None) -> None:
     Reads pending approvals from governance_events.jsonl, updates status to
     'approved', and triggers continuation of the blocked run.
     """
-    from thegent.cli.commands.impl import govern_approve_impl
-    from thegent.cli.services.governance import govern_get_pending_approval_impl
-    from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
+    from thegent_cli.cli.commands.impl import govern_approve_impl
+    from thegent_cli.cli.services.governance import govern_get_pending_approval_impl
+    from thegent_audit.governance.diff_renderer import DiffPayload, DiffRenderer
 
     pending = govern_get_pending_approval_impl(run_id=run_id)
     unified_diff = str(pending.get("unified_diff") or "")
@@ -187,7 +187,7 @@ def govern_reject_cmd(run_id: str, reason: str | None = None) -> None:
     Reads pending approvals from governance_events.jsonl, updates status to
     'rejected', and cancels the blocked run.
     """
-    from thegent.cli.commands.impl import govern_reject_impl
+    from thegent_cli.cli.commands.impl import govern_reject_impl
 
     result = govern_reject_impl(run_id=run_id, reason=reason)
     console.print(
@@ -197,8 +197,8 @@ def govern_reject_cmd(run_id: str, reason: str | None = None) -> None:
 
 def govern_list_pending_cmd(format: str | None = None) -> None:
     """WL-019-B: List all pending HITL approval requests (G-GP-05)."""
-    from thegent.cli.commands.impl import govern_list_pending_impl
-    from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
+    from thegent_cli.cli.commands.impl import govern_list_pending_impl
+    from thegent_audit.governance.diff_renderer import DiffPayload, DiffRenderer
 
     items = govern_list_pending_impl()
     fmt = _normalize_output_format(format)

@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any
 
-from thegent.research.always_dumps import ConversationDumpWriter
+from thegent_planning.research.always_dumps import ConversationDumpWriter
 
 
 class AlwaysWriteDumpsResearch:

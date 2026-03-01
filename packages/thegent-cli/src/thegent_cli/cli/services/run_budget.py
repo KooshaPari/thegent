@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def check_budget_limits(settings: "ThegentSettings") -> tuple[bool, str | None]:
     Returns:
         Tuple of (blocked, error_message)
     """
-    from thegent.cost import BudgetAlertSystem
+    from thegent_routing.cost import BudgetAlertSystem
 
     alert_system = BudgetAlertSystem.from_settings(settings)
     hourly_spend = alert_system.get_hourly_spend()
@@ -57,7 +57,7 @@ def check_budget_warning(settings: "ThegentSettings") -> tuple[bool, str | None]
     Returns:
         Tuple of (warning, warning_message)
     """
-    from thegent.cost import BudgetAlertSystem
+    from thegent_routing.cost import BudgetAlertSystem
 
     alert_system = BudgetAlertSystem.from_settings(settings)
     hourly_spend = alert_system.get_hourly_spend()

@@ -8,8 +8,8 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from thegent.sync.audit_framework import AuditResult, AuditSeverity, SystemAuditFramework
-from thegent.sync.orchestrator import SyncOrchestrator, SyncResult, SyncStatus
+from thegent_sync.sync.audit_framework import AuditResult, AuditSeverity, SystemAuditFramework
+from thegent_sync.sync.orchestrator import SyncOrchestrator, SyncResult, SyncStatus
 
 _log = logging.getLogger(__name__)
 console = Console()

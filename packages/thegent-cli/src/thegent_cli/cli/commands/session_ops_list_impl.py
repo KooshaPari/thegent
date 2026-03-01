@@ -11,19 +11,19 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from thegent.execution import RunRegistry
+from thegent_execution.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 
 
 def _session_meta_impl():
-    from thegent.cli.commands import impl as cli_impl
+    from thegent_cli.cli.commands import impl as cli_impl
 
     return cli_impl
 
 
 def _settings() -> Any:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     return ThegentSettings()
 
@@ -49,7 +49,7 @@ def ps_impl(
         scan_ide: Include IDE-managed sessions (Cursor, Claude CLI, Codex)
         include_contract: Include route contract metadata
     """
-    from thegent.cli.commands.impl import _default_owner_tag, _is_pid_running, _session_paths
+    from thegent_cli.cli.commands.impl import _default_owner_tag, _is_pid_running, _session_paths
 
     settings = _settings()
     own = owner or _default_owner_tag()
@@ -163,7 +163,7 @@ def session_list_impl(
     """
     import json as json_mod
 
-    from thegent.cli.commands.impl import _default_owner_tag
+    from thegent_cli.cli.commands.impl import _default_owner_tag
 
     settings = _settings()
     own = owner or _default_owner_tag()

@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING, Annotated
 import typer
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
-    from thegent.utils.routing_impl.route_executor import RouterStatus
+    from thegent_core.config import ThegentSettings
+    from thegent_core.utils.routing_impl.route_executor import RouterStatus
 
 app = typer.Typer(help="Pareto router management commands (Phase 3, WL-012).")
 
@@ -52,8 +52,8 @@ def router_status(
     ] = None,
 ) -> None:
     """Show current routing state: hysteresis config, recent decisions, agent quorum."""
-    from thegent.config import ThegentSettings
-    from thegent.utils.routing_impl.route_executor import read_routing_audit
+    from thegent_core.config import ThegentSettings
+    from thegent_core.utils.routing_impl.route_executor import read_routing_audit
 
     settings = ThegentSettings()
 
@@ -99,7 +99,7 @@ def router_config(
     ] = False,
 ) -> None:
     """Show current hysteresis and routing configuration (from ThegentSettings)."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     cfg = {
@@ -144,8 +144,8 @@ def router_verify(
     ] = None,
 ) -> None:
     """Verify the hash chain integrity of the routing audit log."""
-    from thegent.config import ThegentSettings
-    from thegent.utils.routing_impl.route_executor import read_routing_audit
+    from thegent_core.config import ThegentSettings
+    from thegent_core.utils.routing_impl.route_executor import read_routing_audit
 
     settings = ThegentSettings()
 
@@ -207,7 +207,7 @@ def _build_status_from_audit(
     settings: "ThegentSettings",
 ) -> "RouterStatus":
     """Build a RouterStatus from audit records."""
-    from thegent.utils.routing_impl.route_executor import AgentRoutingState, RouterStatus
+    from thegent_core.utils.routing_impl.route_executor import AgentRoutingState, RouterStatus
 
     # Aggregate by provider (audit records don't have agent IDs,
     # so we group by provider as a proxy).

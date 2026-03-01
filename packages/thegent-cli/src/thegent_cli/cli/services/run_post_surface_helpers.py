@@ -12,10 +12,10 @@ from typing import Any
 
 import typer
 
-from thegent.agents import get_fallback_agents, list_agent_names
-from thegent.agents.registry import AGENT_LABELS
-from thegent.config import ThegentSettings
-from thegent.execution import RunRegistry
+from thegent_agents.agents import get_fallback_agents, list_agent_names
+from thegent_agents.agents.registry import AGENT_LABELS
+from thegent_core.config import ThegentSettings
+from thegent_execution.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ def resume_impl(
     if normalized_prompt:
         effective_prompt = normalized_prompt
         if skills:
-            from thegent.skills.discovery import load_skill
+            from thegent_skills.skills.discovery import load_skill
 
             sections = [normalized_prompt]
             for name in skills:
@@ -236,7 +236,7 @@ def list_models_impl(
 ) -> dict[str, Any]:
     """List available models."""
     if include_contract:
-        from thegent.models import ModelCatalog
+        from thegent_core.models import ModelCatalog
 
         return ModelCatalog.to_contract_view(
             use_scraped=use_scraped,
@@ -245,8 +245,8 @@ def list_models_impl(
         )
 
     if by_model:
-        from thegent.models import ModelCatalog
-        from thegent.models.scrapers import get_scraped_catalog
+        from thegent_core.models import ModelCatalog
+        from thegent_core.models.scrapers import get_scraped_catalog
 
         if refresh:
             get_scraped_catalog(use_cache=False)
@@ -281,7 +281,7 @@ def list_models_impl(
     }
     if use_scraped:
         try:
-            from thegent.models.scrapers import get_scraped_catalog
+            from thegent_core.models.scrapers import get_scraped_catalog
 
             scraped = get_scraped_catalog(use_cache=not refresh)
             for p in providers:
@@ -300,7 +300,7 @@ def validate_task_and_record_errors(
     validation_errors: list[dict[str, Any]],
 ) -> None:
     """Validate a single task file and record errors safely."""
-    from thegent.task.validator import validate_task_file
+    from thegent_execution.task.validator import validate_task_file
 
     try:
         result = validate_task_file(tf)
@@ -320,7 +320,7 @@ def continuity_snapshot_impl(
     handoff_manager_cls: Callable[[Path], Any] | None = None,
 ) -> dict[str, Any]:
     """Create a continuity snapshot for shift handoff (WP-1009)."""
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     settings = settings_factory()
     hm_factory = handoff_manager_cls or HandoffManager
@@ -425,7 +425,7 @@ def inbox_list_impl(
             )
 
     if "escalation" in sources:
-        from thegent.execution import EscalationQueue
+        from thegent_execution.execution import EscalationQueue
 
         queue_factory = escalation_queue_cls or EscalationQueue
         queue = queue_factory(settings.session_dir)
@@ -591,7 +591,7 @@ def harness_interact_impl(
     session_id: str | None = None,
 ) -> dict[str, Any]:
     """Execute a harness action via HarnessTUIMapper."""
-    from thegent.agents.unified_session_index import HarnessActionError, HarnessTUIMapper, HarnessType
+    from thegent_agents.agents.unified_session_index import HarnessActionError, HarnessTUIMapper, HarnessType
 
     try:
         harness_type = HarnessType(harness.lower())
@@ -623,7 +623,7 @@ def harness_interact_impl(
 
 def harness_list_actions_impl() -> dict[str, Any]:
     """List all available harness actions."""
-    from thegent.agents.unified_session_index import HarnessTUIMapper
+    from thegent_agents.agents.unified_session_index import HarnessTUIMapper
 
     mapper = HarnessTUIMapper()
     actions = mapper.list_actions()
@@ -641,7 +641,7 @@ def harness_register_host_impl(
     custom_actions: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Register a new host device with custom command mappings."""
-    from thegent.agents.unified_session_index import HarnessTUIMapper, HarnessType
+    from thegent_agents.agents.unified_session_index import HarnessTUIMapper, HarnessType
 
     try:
         harness_type = HarnessType(harness.lower())

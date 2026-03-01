@@ -34,7 +34,7 @@ def render_agents_table(
     table.add_column("Name", style="cyan")
     table.add_column("Backend", style="dim")
 
-    from thegent.agents.registry import AGENT_LABELS
+    from thegent_agents.agents.registry import AGENT_LABELS
 
     for name in agents:
         display_name = AGENT_LABELS.get(name, name)
