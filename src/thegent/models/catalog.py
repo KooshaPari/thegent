@@ -5,7 +5,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Literal, cast, get_args
 
-from thegent.utils.routing_impl.provider_types import normalize_provider_name
+from thegent.utils.provider_names import normalize_provider_name
 from thegent.infra import get_cache
 
 # Canonical model ID -> list of routes (provider, backend, model_alias, priority)
