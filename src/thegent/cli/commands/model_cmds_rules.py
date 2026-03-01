@@ -7,6 +7,7 @@ Provides cliproxy login delegation and model contract schema inspection.
 # @trace WL-124
 from __future__ import annotations
 
+import sys
 import re
 import subprocess
 from typing import Any
@@ -48,13 +49,17 @@ def _list_glm_models() -> None:
 
 def _list_cursor_models() -> None:
     """List cursor models via cursor agent --list-models."""
+    cli_module = sys.modules.get("thegent.cli")
+    cli_subprocess = getattr(cli_module, "subprocess", subprocess)
+    cursor_timeout = getattr(cli_subprocess, "TimeoutExpired", subprocess.TimeoutExpired)
+
     try:
-        run_subprocess_optimized = _get_run_subprocess_optimized()
-        proc = run_subprocess_optimized(
+        proc = cli_subprocess.run(
             ["cursor", "agent", "--list-models"],
             check=False,
             capture_output=True,
             timeout=10,
+            text=True,
         )
         if proc.returncode == 0 and proc.stdout:
             stdout_text = proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
@@ -65,7 +70,7 @@ def _list_cursor_models() -> None:
                     console.print(f"  {line}")
         else:
             console.print("[dim]cursor agent --list-models failed[/dim]")
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except (FileNotFoundError, cursor_timeout):
         console.print("[dim]Cursor CLI not found or timed out[/dim]")
 
 

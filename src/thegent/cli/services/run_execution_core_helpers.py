@@ -20,21 +20,25 @@ from thegent.agents import get_fallback_agents, get_runner, resolve_agent
 from thegent.agents.resilience import is_usage_limit
 from thegent.agents.base import AgentRunner, RunResult
 
+
 # Lazy import wrapper to avoid circular dependency
 class _LazyImpl:
     _impl = None
     _spawn_with_eagain_retry = None
 
     def __getattr__(self, name):
-        if name == '_spawn_with_eagain_retry':
+        if name == "_spawn_with_eagain_retry":
             if self._spawn_with_eagain_retry is None:
                 from thegent.cli.commands.impl import _spawn_with_eagain_retry
+
                 self._spawn_with_eagain_retry = _spawn_with_eagain_retry
             return self._spawn_with_eagain_retry
         if self._impl is None:
             from thegent.cli.commands import impl
+
             self._impl = impl
         return getattr(self._impl, name)
+
 
 _impl_lazy = _LazyImpl()
 
@@ -239,6 +243,17 @@ def run_impl_core(
             }
         agent = route[0]
     agent = resolve_agent(agent or "")
+    from thegent.agents.grounding import GEMINI_GROUNDING_AGENTS
+
+    if google_grounding and agent not in GEMINI_GROUNDING_AGENTS:
+        return {
+            "error": (
+                f"Google grounding requires a Gemini-backed agent; received '{agent}'."
+                " Use a Gemini or antigravity agent."
+            ),
+            "exit_code": 1,
+            "run_id": run_id or f"run_err_{uuid.uuid4().hex[:8]}",
+        }
 
     # WP-X1/V7: Contract Migration & Version Negotiation
     from thegent.contracts.migration import MigrationController
@@ -578,6 +593,43 @@ def run_impl_core(
         contract_version=requested_version,
         arbitration=arbitration,
     )
+
+    if google_grounding:
+        from thegent.agents.grounding import (
+            GEMINI_GROUNDING_AGENTS,
+            run_gemini_with_grounding,
+        )
+
+        if agent not in GEMINI_GROUNDING_AGENTS:
+            return {
+                "error": "Google grounding requires a Gemini-compatible agent.",
+                "exit_code": 1,
+                "run_id": run_meta.run_id,
+            }
+
+        try:
+            grounded = run_gemini_with_grounding(
+                prompt=prompt,
+                model=model,
+                timeout=int(effective_timeout),
+            )
+        except (ValueError, RuntimeError) as exc:
+            return {
+                "error": str(exc),
+                "run_id": run_meta.run_id,
+                "exit_code": 1,
+            }
+
+        payload: dict[str, Any] = {
+            "stdout": grounded.stdout,
+            "stderr": grounded.stderr,
+            "exit_code": grounded.exit_code,
+            "timed_out": grounded.timed_out,
+            "run_id": run_meta.run_id,
+        }
+        if grounded.grounding_sources is not None:
+            payload["grounding_sources"] = grounded.grounding_sources
+        return payload
 
     # WP-3001: Policy Evaluation
     pol_res, pol_reason = policy_engine.evaluate(run_meta, registry)
