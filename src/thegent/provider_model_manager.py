@@ -12,6 +12,7 @@ DEPRECATED: New code should import directly from:
 """
 
 import logging
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,14 @@ from thegent.use_cases.manage_providers import (
 )
 
 _LOG = logging.getLogger(__name__)
+
+# Issue deprecation warning on import
+warnings.warn(
+    "Importing from thegent.provider_model_manager is deprecated. "
+    "Please import from thegent.use_cases.manage_providers or thegent.use_cases.manage_models instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 # ============ PROVIDER CRUD (re-exported from use_cases.manage_providers) ============
