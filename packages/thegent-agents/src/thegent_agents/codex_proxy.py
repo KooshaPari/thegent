@@ -21,12 +21,12 @@ from thegent_agents.base import AgentRunner, RunResult
 from thegent_agents.context_compactor import ContextCompactionResult, ContextCompactor
 from thegent_agents.cliproxy_manager import ensure_proxy_running
 from thegent_agents.resilience import TransientAgentError, is_retryable, with_retry
-from thegent.config import ThegentSettings
-from thegent.discovery import _is_triggered_by_agent_process
-from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
-from thegent.utils.routing_impl.models import TaskMetadata
-from thegent.utils.routing_impl.provider_types import ExecutionPath, get_execution_path
-from thegent.utils import strip_ansi
+from thegent_core.config import ThegentSettings
+from thegent_agents.discovery import _is_triggered_by_agent_process
+from thegent_audit.governance.post_agent_run_hook import dispatch_post_agent_run_hook
+from thegent_core.utils.routing_impl.models import TaskMetadata
+from thegent_core.utils.routing_impl.provider_types import ExecutionPath, get_execution_path
+from thegent_core.utils import strip_ansi
 
 logger = logging.getLogger(__name__)
 _MALLOC_STACK_NOISE = "MallocStackLogging: can't turn off malloc stack logging because it was not enabled."
@@ -817,7 +817,7 @@ class CodexProxyRunner(AgentRunner):
     ) -> RunResult:
         """Run via LiteLLM Router for Codex CLI compatibility."""
         try:
-            from thegent.utils.routing_impl.litellm_router import get_enhanced_router
+            from thegent_core.utils.routing_impl.litellm_router import get_enhanced_router
 
             router = get_enhanced_router()
 

@@ -6,8 +6,8 @@ import orjson as json
 
 
 def resource_workstream_impl() -> str:
-    from thegent.utils import get_resource_path
-    from thegent.utils.helpers import read_file_optimized
+    from thegent_core.utils import get_resource_path
+    from thegent_core.utils.helpers import read_file_optimized
 
     work_stream_path = get_resource_path("docs/reference/WORK_STREAM.md")
     if not work_stream_path.exists():
@@ -16,8 +16,8 @@ def resource_workstream_impl() -> str:
 
 
 def resource_events_session_complete_impl() -> str:
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())
@@ -36,8 +36,8 @@ def resource_events_session_complete_impl() -> str:
 
 
 def resource_workstream_db_impl() -> str:
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())

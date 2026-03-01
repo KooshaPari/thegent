@@ -102,7 +102,7 @@ class AgentRunner:
         Raises:
             KeyError: If no skill with the given name can be found in any search dir.
         """
-        from thegent.skills.discovery import SkillDiscovery
+        from thegent_skills.skills.discovery import SkillDiscovery
 
         discovery = SkillDiscovery()
         manifest = discovery.find(name)  # raises KeyError if not found
@@ -157,7 +157,7 @@ class AgentRunner:
         """
         combined = (result.stdout or "") + "\n" + (result.stderr or "")
         try:
-            from thegent.orchestration.resilience.deferral import extract_deferred_tasks
+            from thegent_execution.orchestration.resilience.deferral import extract_deferred_tasks
 
             tasks = extract_deferred_tasks(combined)
         except Exception as exc:  # noqa: BLE001
@@ -169,8 +169,8 @@ class AgentRunner:
 
         effective_project = project or (str(cwd) if cwd else "unknown")
         try:
-            from thegent.config import ThegentSettings
-            from thegent.orchestration.resilience.deferral import inject_deferred_tasks
+            from thegent_core.config import ThegentSettings
+            from thegent_execution.orchestration.resilience.deferral import inject_deferred_tasks
 
             settings = ThegentSettings()
             queue_path = settings.session_dir / "prompt_queue.jsonl"

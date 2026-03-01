@@ -79,13 +79,13 @@ def run_cmd(
 ) -> None:
     """Run an agent or droid with the given prompt. Model-first: agent=None, model set."""
     from thegent_cli.commands.impl import run_impl
-    from thegent.models import ModelCatalog, resolve_route
+    from thegent_core.models import ModelCatalog, resolve_route
 
     # Model-first: resolve agent via routing policy (WP-5003 cost_quality supported)
     effective_agent = agent
     if agent is None and model:
         settings = ThegentSettings()
-        from thegent.models.catalog import normalize_route_policy
+        from thegent_core.models.catalog import normalize_route_policy
 
         policy = normalize_route_policy(routing or settings.default_routing)
         routes = ModelCatalog.routes_for(model)
@@ -147,7 +147,7 @@ def run_cmd(
         raise typer.Exit(1)
 
     # WP-X2/X5/X6/X7: Unified execution via run_impl (FSM + Policy + Telemetry)
-    from thegent.config_provider import get_config_provider
+    from thegent_core.config_provider import get_config_provider
 
     effective_prompt = _inject_skill_instructions(prompt, skills)
     res = run_impl(
@@ -263,7 +263,7 @@ def loop_cmd(
 def loop_send_cmd(session_id: str | None = None, prompt: str = "") -> None:
     """Send a prompt to a running Lifecycle loop (human or agent takeover)."""
     sid = _resolve_session_id(session_id)
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     session_dir = settings.session_dir / sid
@@ -277,7 +277,7 @@ def loop_send_cmd(session_id: str | None = None, prompt: str = "") -> None:
 def loop_stop_cmd(session_id: str | None = None) -> None:
     """Send STOP signal to a running Lifecycle loop."""
     sid = _resolve_session_id(session_id)
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     session_dir = settings.session_dir / sid
@@ -342,7 +342,7 @@ def bg_cmd(
             )
 
     # WP-X2/X5/X6/X7: Unified background execution via bg_impl
-    from thegent.config_provider import get_config_provider
+    from thegent_core.config_provider import get_config_provider
 
     effective_prompt = _inject_skill_instructions(prompt, skills)
     res = bg_impl(
@@ -451,7 +451,7 @@ def retry_cmd(
 def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
     """Decision replay and rationale snapshots (WP-4007)."""
     settings = ThegentSettings()
-    from thegent.execution import ReplayManager
+    from thegent_execution.execution import ReplayManager
 
     rm = ReplayManager(settings.session_dir)
     chain = rm.get_replay_chain(run_id)
@@ -477,7 +477,7 @@ def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
 
 def trace_replay_cmd(run_id: str) -> None:
     """WP-16001: Replay an execution trace in sandbox mode."""
-    from thegent.planning.simulation import SimulationEngine
+    from thegent_planning.planning.simulation import SimulationEngine
 
     settings = ThegentSettings()
     registry = RunRegistry(settings.session_dir)
@@ -501,9 +501,9 @@ def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
 
     from rich.console import Console
 
-    from thegent.config import ThegentSettings
-    from thegent.utils.routing_impl.task_router import TaskRouter
-    from thegent.skills.terminal import send_to_tmux_pane
+    from thegent_core.config import ThegentSettings
+    from thegent_core.utils.routing_impl.task_router import TaskRouter
+    from thegent_skills.skills.terminal import send_to_tmux_pane
 
     console = Console()
     settings = ThegentSettings()
@@ -532,7 +532,7 @@ def deep_research_cmd(
     output: Path = typer.Option(None, "--output", "-o", help="Output file path (JSON)"),
 ) -> None:
     """Perform deep research using the Deep Research Protocol (DRP)."""
-    from thegent.skills.deep_research import perform_deep_research
+    from thegent_skills.skills.deep_research import perform_deep_research
 
     console.print("[bold cyan]Deep Research Protocol (DRP) starting...[/bold cyan]")
     console.print(f"Query: [green]{query}[/green]")
@@ -578,8 +578,8 @@ def takeover_cmd(session_id: str) -> None:
 
     from rich.console import Console
 
-    from thegent.discovery import list_discovered_agents
-    from thegent.skills.terminal import list_tmux_panes
+    from thegent_agents.discovery import list_discovered_agents
+    from thegent_skills.skills.terminal import list_tmux_panes
 
     console = Console()
     panes = list_tmux_panes()

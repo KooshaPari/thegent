@@ -148,7 +148,7 @@ def run_agent(
 
     # Handle remote execution
     if isinstance(remote, str) and remote:
-        from thegent.compute.remote_runner import RemoteRunner
+        from thegent_core.compute.remote_runner import RemoteRunner
 
         runner = RemoteRunner(
             node=remote if remote != "auto" else None,

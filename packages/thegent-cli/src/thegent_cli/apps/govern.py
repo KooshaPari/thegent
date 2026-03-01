@@ -19,7 +19,7 @@ def govern_approve(
 ) -> None:
     from thegent_cli.commands.impl import govern_approve_impl
     from thegent_cli.services.governance import govern_get_pending_approval_impl
-    from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
+    from thegent_audit.governance.diff_renderer import DiffPayload, DiffRenderer
 
     try:
         pending = govern_get_pending_approval_impl(run_id=run_id)
@@ -125,7 +125,7 @@ def govern_resolve_config(
     key: str | None = typer.Option(None, "--key", "-k", help="Specific config key to resolve"),
 ) -> None:
     """Resolve configuration overrides for a tenant or session."""
-    from thegent.mcp.server.tools_runtime import config_resolve_impl
+    from thegent_protocols.mcp.server.tools_runtime import config_resolve_impl
 
     result_str = config_resolve_impl(
         tenant_id=tenant_id,
@@ -143,7 +143,7 @@ def govern_negotiate(
     versions: str = typer.Option(..., "--versions", "-v", help="Comma-separated supported versions"),
 ) -> None:
     """Negotiate a contract version."""
-    from thegent.mcp.server.tools_runtime import negotiate_contract_impl
+    from thegent_protocols.mcp.server.tools_runtime import negotiate_contract_impl
 
     from thegent_cli.commands.session_control_impl import session_contract_negotiate_impl
 
