@@ -12,40 +12,7 @@ Modules migrated from thegent monolith src/thegent/:
 - models/      : Model catalog, routing, and scraper infrastructure
 """
 
-from thegent_core.config.settings import ThegentSettings, get_settings
-from thegent_core.config.model_config import ModelConfig
-from thegent_core.config.path_config import PathConfig
-from thegent_core.config.runtime_config import RuntimeConfig
-
-from thegent_core.contracts.csm import (
-    CanonicalStructuredMessage,
-    CSMPhase,
-    CSMStatus,
-)
-from thegent_core.contracts.events import ChunkEvent, EvidenceEvent, PolicyEvent
-from thegent_core.contracts.registry import (
-    CONTRACT_SCHEMA_VERSION,
-    ContractRegistry,
-    ContractVersion,
-    get_registry,
-)
-
-__all__ = [
-    # config
-    "ThegentSettings",
-    "get_settings",
-    "ModelConfig",
-    "PathConfig",
-    "RuntimeConfig",
-    # contracts
-    "CONTRACT_SCHEMA_VERSION",
-    "CSMPhase",
-    "CSMStatus",
-    "CanonicalStructuredMessage",
-    "ChunkEvent",
-    "ContractRegistry",
-    "ContractVersion",
-    "EvidenceEvent",
-    "PolicyEvent",
-    "get_registry",
-]
+# Re-exports will be enabled after import paths are rewritten.
+# For now, import submodules directly:
+#   from thegent_core.config.settings import ThegentSettings
+#   from thegent_core.contracts.csm import CanonicalStructuredMessage
