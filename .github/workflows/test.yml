@@ -32,9 +32,7 @@ jobs:
         version: "latest"
 
     - name: Setup Task
-      uses: arduino/setup-task@v3
-      with:
-        version: "3.39.2"
+      uses: arduino/setup-task@v2
 
     - name: Install dependencies
       run: bash ./scripts/ci_uv_sync.sh

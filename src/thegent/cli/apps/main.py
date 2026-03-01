@@ -36,7 +36,6 @@ from thegent.cli.apps import (
     isolation,
     memory,
     orchestrate,
-    phench,
     plan,
     queue,
     registry,
@@ -108,7 +107,6 @@ app.add_typer(
 )
 app.add_typer(memory.app, name="memory", help="Memory: agent memory logs, synthesis, and gardening (WL-060).")
 app.add_typer(session.app, name="session", help="Session: resume and inspect background sessions (WL-110).")
-app.add_typer(phench.app, name="phench", help="Phench: deterministic project runtime targets and execution.")
 app.add_typer(
     orchestrate.app,
     name="orchestrate",

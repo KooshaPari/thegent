@@ -2,10 +2,9 @@
 # Build all thegent Rust extensions with clean output and error handling
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THEGENT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CRATES_DIR="$THEGENT_ROOT/crates"
-PYTHON="${PYTHON:-python3}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -32,8 +31,9 @@ check_prereq() {
 }
 
 check_prereq cargo "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-check_prereq maturin "$PYTHON -m pip install --disable-pip-version-check maturin==1.8.2"
+check_prereq maturin "cargo install maturin"
 
+PYTHON="${PYTHON:-python3}"
 if ! command -v "$PYTHON" &>/dev/null; then
     echo -e "${RED}❌ Error: python3 not found${NC}"
     exit 1

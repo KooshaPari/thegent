@@ -42,53 +42,57 @@ jobs:
               return all;
             }
 
-            function updateLatestState(current, candidate) {
-              if (!candidate || !candidate.at) return current;
-              if (!current || candidate.at > current.at) return candidate;
-              return current;
-            }
+            async function getCodeRabbitState(prNumber) {
+              const checks = await github.graphql(
+                `query($owner:String!,$repo:String!,$number:Int!){
+                  repository(owner:$owner,name:$repo){
+                    pullRequest(number:$number){
+                      commits(last:1){
+                        nodes{
+                          commit{
+                            statusCheckRollup{
+                              contexts(first:50){
+                                nodes{
+                                  __typename
+                                  ... on CheckRun {
+                                    name
+                                    conclusion
+                                    status
+                                    completedAt
+                                  }
+                                  ... on StatusContext {
+                                    context
+                                    state
+                                    createdAt
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }`,
+                { owner, repo, number: prNumber },
+              );
 
-            async function getCodeRabbitState(sha) {
-              let latest = null;
-
-              const checkRuns = await github.paginate(github.rest.checks.listForRef, {
-                owner,
-                repo,
-                ref: sha,
-                per_page: 100,
-              });
-
-              for (const run of checkRuns) {
-                if (run.name !== "CodeRabbit" && run.name !== "CodeRabbit Gate") {
-                  continue;
+              const nodes = checks.repository.pullRequest.commits.nodes[0]?.commit?.statusCheckRollup?.contexts?.nodes || [];
+              for (const n of nodes) {
+                if (n.__typename === "CheckRun" && n.name === "CodeRabbit") {
+                  return {
+                    state: (n.conclusion || n.status || "UNKNOWN").toUpperCase(),
+                    at: n.completedAt ? new Date(n.completedAt).getTime() : nowMs,
+                  };
                 }
-                latest = updateLatestState(latest, {
-                  state: (run.conclusion || run.status || "UNKNOWN").toUpperCase(),
-                  at: run.completed_at ? new Date(run.completed_at).getTime() : nowMs,
-                });
-              }
-
-              const statuses = await github.paginate(github.rest.repos.listCommitStatusesForRef, {
-                owner,
-                repo,
-                ref: sha,
-                per_page: 100,
-              });
-
-              for (const status of statuses) {
-                if (status.context !== "CodeRabbit") {
-                  continue;
+                if (n.__typename === "StatusContext" && n.context === "CodeRabbit") {
+                  return {
+                    state: (n.state || "UNKNOWN").toUpperCase(),
+                    at: n.createdAt ? new Date(n.createdAt).getTime() : nowMs,
+                  };
                 }
-                latest = updateLatestState(latest, {
-                  state: (status.state || "UNKNOWN").toUpperCase(),
-                  at: status.updated_at ? new Date(status.updated_at).getTime() : nowMs,
-                });
               }
-
-              if (!latest) {
-                return { state: "MISSING", at: nowMs };
-              }
-              return latest;
+              return { state: "MISSING", at: nowMs };
             }
 
             async function hasRecentRetryComment(prNumber) {
@@ -175,7 +179,7 @@ jobs:
             }
 
             async function processPR(pr) {
-              const state = await getCodeRabbitState(pr.head.sha);
+              const state = await getCodeRabbitState(pr.number);
               const ageMin = (nowMs - state.at) / 60000;
               const stateOk = state.state === "SUCCESS" || state.state === "NEUTRAL";
               const stale = ageMin >= STALE_MINUTES;
