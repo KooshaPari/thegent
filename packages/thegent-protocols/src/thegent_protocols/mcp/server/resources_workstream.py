@@ -16,8 +16,8 @@ def resource_workstream_impl() -> str:
 
 
 def resource_events_session_complete_impl() -> str:
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())
@@ -36,8 +36,8 @@ def resource_events_session_complete_impl() -> str:
 
 
 def resource_workstream_db_impl() -> str:
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())

@@ -6,8 +6,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from thegent.agents.crew.executor import ExecutionResult
-from thegent.agents.direct_agents import DirectAgentRunner
+from thegent_agents.agents.crew.executor import ExecutionResult
+from thegent_agents.agents.direct_agents import DirectAgentRunner
 
 
 def _parse_tokens_from_output(output: str) -> tuple[int, int]:

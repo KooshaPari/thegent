@@ -386,7 +386,7 @@ class ContinuityWatchdog:
 
     def scan_stale_sessions(self, max_idle_s: int = 3600) -> list[str]:
         """Scan for sessions with no activity for max_idle_s."""
-        from thegent.cli.commands.impl import ps_impl
+        from thegent_cli.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
         stale = []
@@ -417,7 +417,7 @@ class ContinuityWatchdog:
 
         Returns list of escalated sessions.
         """
-        from thegent.cli.commands.impl import ps_impl
+        from thegent_cli.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
         escalated = []
@@ -439,7 +439,7 @@ class ContinuityWatchdog:
                     if idle_s > max_idle_s:
                         # ROB-012: Escalate stale critical task
                         try:
-                            from thegent.governance.escalation import EscalationPriority, EscalationQueue
+                            from thegent_audit.governance.escalation import EscalationPriority, EscalationQueue
 
                             run_id = s.get("run_id") or session_id
                             esc_queue = EscalationQueue(self.session_dir)
@@ -500,8 +500,8 @@ class DLQManager:
                 _log.info("Not re-escalating expired escalation for %s", run_meta.run_id)
             else:
                 # Use governance escalation queue for unified tracking
-                from thegent.governance.escalation import EscalationPriority
-                from thegent.governance.escalation import EscalationQueue as GovEscalationQueue
+                from thegent_audit.governance.escalation import EscalationPriority
+                from thegent_audit.governance.escalation import EscalationQueue as GovEscalationQueue
 
                 eq = GovEscalationQueue(self.session_dir)
                 eq.escalate(
@@ -558,7 +558,7 @@ class ReplayManager:
 
     def get_replay_chain(self, run_id: str) -> list[dict[str, Any]]:
         """Fetch the sequence of events for a run from the registry."""
-        from thegent.execution import RunRegistry
+        from thegent_execution.execution import RunRegistry
 
         registry = RunRegistry(self.session_dir)
         runs = registry.list_runs(limit=1000)
@@ -569,7 +569,7 @@ class ReplayManager:
 
     def simulate_policy_change(self, run_meta: "RunMeta", new_settings: Any) -> tuple[str, str]:
         """WP-4007: Pre-flight simulation of a different policy."""
-        from thegent.execution import PolicyEngine
+        from thegent_execution.execution import PolicyEngine
 
         engine = PolicyEngine(new_settings)
         return engine.evaluate(run_meta)

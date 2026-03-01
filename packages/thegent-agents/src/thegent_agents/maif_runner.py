@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-from thegent.agents.base import AgentRunner, RunResult
-from thegent.execution import RunMeta
+from thegent_agents.agents.base import AgentRunner, RunResult
+from thegent_execution.execution import RunMeta
 
 if TYPE_CHECKING:
     from thegent.orchestration.execution.engine import ExecutionEngine

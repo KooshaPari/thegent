@@ -19,7 +19,7 @@ def handoff_impl(
     settings_factory: Callable[[], Any],
     escalate_list_impl: Callable[..., list[dict[str, Any]]],
 ) -> ToolResult:
-    from thegent.execution import HandoffManager, RunRegistry
+    from thegent_execution.execution import HandoffManager, RunRegistry
 
     cwd = resolve_cwd(Path(cd) if cd else None)
     if cwd is None:
@@ -74,7 +74,7 @@ def handoff_list_impl(
     limit: int,
     settings_factory: Callable[[], Any],
 ) -> ToolResult:
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     settings = settings_factory()
     hm = HandoffManager(settings.session_dir)
@@ -92,7 +92,7 @@ def handoff_show_impl(
     settings_factory: Callable[[], Any],
     error_result: Callable[..., ToolResult],
 ) -> ToolResult:
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     settings = settings_factory()
     hm = HandoffManager(settings.session_dir)
@@ -113,7 +113,7 @@ def handoff_confirm_impl(
     confidence: float,
     settings_factory: Callable[[], Any],
 ) -> ToolResult:
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     settings = settings_factory()
     hm = HandoffManager(settings.session_dir)
@@ -130,9 +130,9 @@ def terminal_route_impl(
     prompt: str,
     cd: str | None,
 ) -> ToolResult:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
     from thegent.utils.routing_impl.task_router import TaskRouter
-    from thegent.skills.terminal import send_to_tmux_pane
+    from thegent_skills.skills.terminal import send_to_tmux_pane
 
     settings = ThegentSettings()
     router = TaskRouter(settings)

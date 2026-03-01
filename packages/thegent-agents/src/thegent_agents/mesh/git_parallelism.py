@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from thegent.mesh.smart_merge import SmartMerger
+    from thegent_agents.mesh.smart_merge import SmartMerger
 
 from io import TextIOWrapper
 

@@ -21,9 +21,9 @@ from thegent_agents.base import AgentRunner, RunResult
 from thegent_agents.context_compactor import ContextCompactionResult, ContextCompactor
 from thegent_agents.cliproxy_manager import ensure_proxy_running
 from thegent_agents.resilience import TransientAgentError, is_retryable, with_retry
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 from thegent.discovery import _is_triggered_by_agent_process
-from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
+from thegent_audit.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 from thegent.utils.routing_impl.models import TaskMetadata
 from thegent.utils.routing_impl.provider_types import ExecutionPath, get_execution_path
 from thegent.utils import strip_ansi

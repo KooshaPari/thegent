@@ -5,7 +5,7 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path
 
-from thegent.agents.base import AgentRunner, RunResult
+from thegent_agents.agents.base import AgentRunner, RunResult
 
 
 class ACPClientAdapter(AgentRunner):

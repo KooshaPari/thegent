@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
+from thegent_audit.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 
 _log = logging.getLogger(__name__)
 

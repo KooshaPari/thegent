@@ -4,9 +4,9 @@ from pathlib import Path
 
 import typer
 
-from thegent.mesh.mesh import MeshManager
-from thegent.mesh.agent_patterns import run_detection
-from thegent.mesh.observability import mesh_status_cmd
+from thegent_agents.mesh.mesh import MeshManager
+from thegent_agents.mesh.agent_patterns import run_detection
+from thegent_agents.mesh.observability import mesh_status_cmd
 
 app = typer.Typer(help="Mesh: Local agent mesh coordination (init, status, discover).")
 
@@ -14,7 +14,7 @@ app = typer.Typer(help="Mesh: Local agent mesh coordination (init, status, disco
 @app.command("status")
 def status(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path to mesh root")):
     """Show current mesh status."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     root = mesh_root or Path(ThegentSettings().harness_root)
     mesh_status_cmd(root)
@@ -23,7 +23,7 @@ def status(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path
 @app.command("agents")
 def agents(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path to mesh root")):
     """List registered mesh agents."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     root = mesh_root or Path(ThegentSettings().harness_root)
     mesh_status_cmd(root)
@@ -32,7 +32,7 @@ def agents(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path
 @app.command("init")
 def init(mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path to mesh root")):
     """Initialize agent mesh."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     root = mesh_root or Path(ThegentSettings().harness_root)
     MeshManager(root)
@@ -48,7 +48,7 @@ def discover(
     mesh_root: Path | None = typer.Option(None, "--mesh-root", help="Path to mesh root"),
 ):
     """Discover active agents and register them."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     root = mesh_root or Path(ThegentSettings().harness_root)
     mesh = MeshManager(root)

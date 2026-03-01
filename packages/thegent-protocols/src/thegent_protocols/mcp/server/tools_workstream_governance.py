@@ -25,8 +25,8 @@ def register_workstream_governance_tools(
         Returns query results as JSON. Use for exploring session/workstream data.
         Example: "SELECT * FROM sessions WHERE status='running' LIMIT 10"
         """
-        from thegent.config import ThegentSettings
-        from thegent.planning.workstream_db import WorkstreamDB
+        from thegent_core.config import ThegentSettings
+        from thegent_planning.planning.workstream_db import WorkstreamDB
 
         start_time = time.perf_counter()
         try:
@@ -54,8 +54,8 @@ def register_workstream_governance_tools(
         Returns statistics including running/completed counts, success rate,
         average duration, deferred tasks, and lane breakdown.
         """
-        from thegent.config import ThegentSettings
-        from thegent.planning.workstream_db import WorkstreamDB
+        from thegent_core.config import ThegentSettings
+        from thegent_planning.planning.workstream_db import WorkstreamDB
 
         start_time = time.perf_counter()
         try:
@@ -95,7 +95,7 @@ def register_workstream_governance_tools(
         """
         Get status from thegent.mesh harness.
         """
-        from thegent.skills.terminal import heliosShield_status
+        from thegent_skills.skills.terminal import heliosShield_status
 
         start_time = time.perf_counter()
         status = heliosShield_status()

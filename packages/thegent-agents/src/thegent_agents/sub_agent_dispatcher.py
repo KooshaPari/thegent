@@ -26,7 +26,7 @@ from thegent_agents.registry import get_runner
 if TYPE_CHECKING:
     from thegent_agents.capability_index import AgentRecord, CapabilityIndex
     from thegent.compute.offload import ComputePoolManager
-    from thegent.governance.hitl import HITLApprovalWorkflow
+    from thegent_audit.governance.hitl import HITLApprovalWorkflow
 
 _log = logging.getLogger(__name__)
 

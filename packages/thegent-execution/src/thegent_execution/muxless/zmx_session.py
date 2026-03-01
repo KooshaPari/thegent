@@ -51,7 +51,7 @@ class ZmxSessionConfig:
     @classmethod
     def from_settings(cls) -> ZmxSessionConfig:
         """Build a ZmxSessionConfig reading values from settings."""
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         binary_path = getattr(settings, "zmx_binary", _DEFAULT_ZMX_BINARY) or _DEFAULT_ZMX_BINARY

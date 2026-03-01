@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 
 import contextlib
 
-from thegent.cli.commands.impl import _resolve_cwd
-from thegent.config import ThegentSettings
+from thegent_cli.cli.commands.impl import _resolve_cwd
+from thegent_core.config import ThegentSettings
 from thegent.utils import is_dev_mode
 
 _log = logging.getLogger(__name__)
@@ -438,7 +438,7 @@ def register_modes(mcp: "FastMCP") -> None:
         Use before thegent_dag_run to see what can be spawned.
         """
         start = time.perf_counter()
-        from thegent.cli.commands.impl import dag_ready_impl
+        from thegent_cli.cli.commands.impl import dag_ready_impl
 
         res = dag_ready_impl(Path(cd) if cd else None)
         elapsed = int((time.perf_counter() - start) * 1000)
@@ -474,7 +474,7 @@ def register_modes(mcp: "FastMCP") -> None:
         )
         await ctx.report_progress(progress=0, total=2) if ctx is not None else None
         start = time.perf_counter()
-        from thegent.cli.commands.impl import dag_run_impl
+        from thegent_cli.cli.commands.impl import dag_run_impl
 
         res = dag_run_impl(
             cd=Path(cd) if cd else None,
@@ -502,7 +502,7 @@ def register_modes(mcp: "FastMCP") -> None:
         auto_run_next: spawn next ready tasks after sync (auto-spawn loop).
         """
         start = time.perf_counter()
-        from thegent.cli.commands.impl import dag_sync_impl
+        from thegent_cli.cli.commands.impl import dag_sync_impl
 
         res = dag_sync_impl(cd=Path(cd) if cd else None, auto_run_next=auto_run_next)
         elapsed = int((time.perf_counter() - start) * 1000)
@@ -519,7 +519,7 @@ def register_modes(mcp: "FastMCP") -> None:
         action: retry-Union[failed, clear]-Union[stuck, reset]-Union[retries, fallback].
         """
         start = time.perf_counter()
-        from thegent.cli.commands.impl import dag_recover_impl
+        from thegent_cli.cli.commands.impl import dag_recover_impl
 
         res = dag_recover_impl(cd=Path(cd) if cd else None, action=action)
         elapsed = int((time.perf_counter() - start) * 1000)
@@ -590,7 +590,7 @@ def register_modes(mcp: "FastMCP") -> None:
                             teams.append({"team_id": d.name, "error": "invalid config"})
         delegations = []
         try:
-            from thegent.governance.teammates import TeammateManager
+            from thegent_audit.governance.teammates import TeammateManager
 
             tm = TeammateManager(settings.cache_dir / "teammates.json")
             for d in tm.get_delegations():
@@ -619,7 +619,7 @@ def register_modes(mcp: "FastMCP") -> None:
         start = time.perf_counter()
         settings = ThegentSettings()
         try:
-            from thegent.governance.teammates import TeammateManager
+            from thegent_audit.governance.teammates import TeammateManager
 
             tm = TeammateManager(settings.cache_dir / "teammates.json")
             parent_id = parent_run_id or f"mcp-{uuid.uuid4().hex[:8]}"

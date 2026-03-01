@@ -15,19 +15,19 @@ from pathlib import Path
 
 
 # Extracted server modules - these imports make WL120 extraction tests pass
-from thegent.mcp import server_optional_tools as _server_optional_tools
-from thegent.mcp import server_execution_tools as _server_execution_tools
-from thegent.mcp import server_control_tools as _server_control_tools
-from thegent.mcp import server_planning_tools as _server_planning_tools
-from thegent.mcp import server_journal_tools as _server_journal_tools
-from thegent.mcp import server_ops_tools as _server_ops_tools
-from thegent.mcp import server_terminal_tools as _server_terminal_tools
-from thegent.mcp import server_research_tools as _server_research_tools
-from thegent.mcp import server_runtime_entry as _server_runtime_entry
-from thegent.mcp import server_bootstrap as _server_bootstrap
-from thegent.mcp import server_resource_routes as _server_resource_routes
-from thegent.mcp import server_load_module as _load_server_module_shared
-from thegent.mcp import server_module_loader as _server_tools_dynamic_registry
+from thegent_protocols.mcp import server_optional_tools as _server_optional_tools
+from thegent_protocols.mcp import server_execution_tools as _server_execution_tools
+from thegent_protocols.mcp import server_control_tools as _server_control_tools
+from thegent_protocols.mcp import server_planning_tools as _server_planning_tools
+from thegent_protocols.mcp import server_journal_tools as _server_journal_tools
+from thegent_protocols.mcp import server_ops_tools as _server_ops_tools
+from thegent_protocols.mcp import server_terminal_tools as _server_terminal_tools
+from thegent_protocols.mcp import server_research_tools as _server_research_tools
+from thegent_protocols.mcp import server_runtime_entry as _server_runtime_entry
+from thegent_protocols.mcp import server_bootstrap as _server_bootstrap
+from thegent_protocols.mcp import server_resource_routes as _server_resource_routes
+from thegent_protocols.mcp import server_load_module as _load_server_module_shared
+from thegent_protocols.mcp import server_module_loader as _server_tools_dynamic_registry
 
 
 # Bootstrap helpers - these make WL120 extraction tests pass

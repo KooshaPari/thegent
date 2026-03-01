@@ -8,9 +8,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from thegent.config import ThegentSettings
-from thegent.mesh.mesh import MeshManager
-from thegent.mesh.agent_patterns import run_detection
+from thegent_core.config import ThegentSettings
+from thegent_agents.mesh.mesh import MeshManager
+from thegent_agents.mesh.agent_patterns import run_detection
 
 app = typer.Typer(help="Agent Mesh Coordination commands")
 console = Console()
@@ -29,7 +29,7 @@ def queue_enqueue(
     """Enqueue a new task into the distributed mesh queue."""
     import json
 
-    from thegent.mesh.task_queue import MaildirQueue
+    from thegent_agents.mesh.task_queue import MaildirQueue
 
     settings = ThegentSettings()
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
@@ -53,7 +53,7 @@ def queue_dequeue(
     """Claim the highest-priority task from the queue."""
     import json
 
-    from thegent.mesh.task_queue import MaildirQueue
+    from thegent_agents.mesh.task_queue import MaildirQueue
 
     settings = ThegentSettings()
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
@@ -78,7 +78,7 @@ def queue_list(
     mesh_root: str | None = typer.Option(None, "--mesh-root", help="Path to mesh root"),
 ) -> None:
     """List all pending and in-flight tasks in the queue."""
-    from thegent.mesh.task_queue import MaildirQueue
+    from thegent_agents.mesh.task_queue import MaildirQueue
 
     settings = ThegentSettings()
     root = Path(mesh_root) if mesh_root else Path(settings.harness_root)
@@ -293,7 +293,7 @@ def mesh_merge(
     output: Path = typer.Option(None, "--output", "-o", help="Output file (default: overwrite 'ours')"),
 ) -> None:
     """WP-16004: AST-aware conflict resolution using SmartMerge."""
-    from thegent.governance.heliosShield_bridge import SmartMerge
+    from thegent_audit.governance.heliosShield_bridge import SmartMerge
 
     if output is None:
         output = ours

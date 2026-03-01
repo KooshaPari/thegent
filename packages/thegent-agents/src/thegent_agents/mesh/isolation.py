@@ -31,7 +31,7 @@ class ResourceIsolation:
         ensures the agent's work directory exists.
         """
         if branch:
-            from thegent.mesh.worktree import WorktreeManager
+            from thegent_agents.mesh.worktree import WorktreeManager
 
             wm = WorktreeManager(self.project_root, self.mesh_root)
             return wm.create_worktree(self.agent_id, branch)

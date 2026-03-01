@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.domain.entities.run import (
+from thegent_core.domain.entities.run import (
     AgentSource,
     CheckpointMeta,
     ContinuityPacket,

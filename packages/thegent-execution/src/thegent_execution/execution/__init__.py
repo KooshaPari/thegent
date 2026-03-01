@@ -8,8 +8,8 @@ This package contains:
 - execution/registry.py: RunRegistry, ChatHistory, etc.
 
 Import from here or directly from submodules:
-    from thegent.execution import RunState
-    from thegent.execution.state import RunState
+    from thegent_execution.execution import RunState
+    from thegent_execution.execution.state import RunState
 """
 
 from __future__ import annotations

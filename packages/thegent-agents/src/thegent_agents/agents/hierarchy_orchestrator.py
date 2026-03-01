@@ -14,7 +14,7 @@ from typing import Any
 
 import structlog
 
-from thegent.agents.plangent import Plan, PlangentExecutor, PlangentPlanner, PlanNode
+from thegent_agents.agents.plangent import Plan, PlangentExecutor, PlangentPlanner, PlanNode
 
 log = structlog.get_logger(__name__)
 

@@ -9,7 +9,7 @@ from typing import Any
 
 from fastmcp import FastMCP
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 
 def _js_executor_config(package: str) -> dict[str, Any]:
@@ -142,7 +142,7 @@ async def run_lifespan(
     proxy_proc = None
     if settings.bundle_proxy:
         try:
-            from thegent.agents.cliproxy_manager import start_proxy_managed
+            from thegent_agents.agents.cliproxy_manager import start_proxy_managed
 
             proxy_proc, base_url = start_proxy_managed(ThegentSettings())
             if proxy_proc is not None:

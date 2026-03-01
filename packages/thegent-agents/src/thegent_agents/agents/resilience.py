@@ -27,7 +27,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from thegent.agents.base import RunResult
+from thegent_agents.agents.base import RunResult
 
 T = TypeVar("T")
 

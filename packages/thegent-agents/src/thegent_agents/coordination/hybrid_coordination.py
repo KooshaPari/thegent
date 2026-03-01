@@ -33,7 +33,7 @@ _DEFAULT_HIER_THRESHOLD = 5
 
 def _hier_threshold() -> int:
     """Return swarm-size threshold from settings."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.hier_threshold

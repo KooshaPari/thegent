@@ -8,7 +8,7 @@ from typing import Any
 
 import litellm
 
-from thegent.agents.base import RunResult
+from thegent_agents.agents.base import RunResult
 
 
 # Agents that are Gemini-backed and eligible for grounding.

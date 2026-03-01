@@ -30,6 +30,6 @@ def resource_models_impl(
 
 
 def resource_models_contract_impl() -> str:
-    from thegent.models import route_contract
+    from thegent_core.models import route_contract
 
     return json.dumps(route_contract())

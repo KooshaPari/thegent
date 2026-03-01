@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.team.manager import TeamManager
+from thegent_agents.team.manager import TeamManager
 
 _log = logging.getLogger(__name__)
 

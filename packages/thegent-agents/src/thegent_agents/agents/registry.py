@@ -6,12 +6,12 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from thegent.agents.codex_proxy import CodexProxyRunner
-from thegent.agents.cursor_api_runner import CursorApiRunner
-from thegent.agents.direct_agents import DirectAgentRunner
+from thegent_agents.agents.codex_proxy import CodexProxyRunner
+from thegent_agents.agents.cursor_api_runner import CursorApiRunner
+from thegent_agents.agents.direct_agents import DirectAgentRunner
 
 if TYPE_CHECKING:
-    from thegent.agents.teammate_runner import TeammateRunner
+    from thegent_agents.agents.teammate_runner import TeammateRunner
 
 AGENT_NAMES = [
     "gemini",
@@ -99,7 +99,7 @@ def get_runner(
         return CursorApiRunner()
 
     # WP-16001: Support teammates
-    from thegent.agents.teammate_runner import TeammateRunner
+    from thegent_agents.agents.teammate_runner import TeammateRunner
 
     try:
         return TeammateRunner(agent_name)

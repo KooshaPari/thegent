@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent.execution_coercion_helpers import as_float as _as_float_impl
 from thegent.execution_coercion_helpers import as_int as _as_int_impl
@@ -213,8 +213,8 @@ class ConcurrencyController:
                 (default 0.8 → 80 %).  Only used when ``soft_deadline_s`` is set.
         """
         is_critical = priority == "critical" or (lane or "").lower() == "critical"
-        from thegent.cli.commands.impl import ps_impl
-        from thegent.config import ThegentSettings
+        from thegent_cli.cli.commands.impl import ps_impl
+        from thegent_core.config import ThegentSettings
 
         sessions = ps_impl(all=True)
         running_count = sum(1 for s in sessions if s.get("status") == "running")
@@ -496,7 +496,7 @@ class LoadClassifier:
 
     def get_running_count(self) -> int:
         """Return count of currently running sessions."""
-        from thegent.cli.commands.impl import ps_impl
+        from thegent_cli.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
         return sum(1 for s in sessions if s.get("status") == "running")
@@ -509,7 +509,7 @@ class LoadClassifier:
         - High: 70-95% of resource-based limit (15% discretionary buffer)
         - Burst: Above 95% of resource-based limit (5% minimum buffer)
         """
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         running = self.get_running_count()
         settings = ThegentSettings()

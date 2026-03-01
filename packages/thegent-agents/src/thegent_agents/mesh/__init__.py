@@ -1,19 +1,19 @@
 """heliosShield: High-performance agent mesh orchestration package."""
 
-from thegent.mesh.audit import AuditManager
-from thegent.mesh.cache import MeshCache, Singleflight
-from thegent.mesh.consensus import CausalInfluenceTracker, ConsensusProtocol, EscalationWorkflow
-from thegent.mesh.coordination import FileClaimsRegistry, HLCTimestamp, OptimisticConcurrencyControl
-from thegent.mesh.git import GitParallelismManager
-from thegent.mesh.git_parallelism import WorktreeContext, WorktreePool
-from thegent.mesh.injection import ContextInjection, ShellInjection
-from thegent.mesh.isolation import ResourceIsolation
-from thegent.mesh.merge import SmartMerge
-from thegent.mesh.mesh import MeshIPC, MeshManager
-from thegent.mesh.observability import MeshLogger, MetricsAggregator
-from thegent.mesh.resources import ResourceManager
-from thegent.mesh.sandbox import AutonomyTier, Sandboxing
-from thegent.mesh.smart_merge import (
+from thegent_agents.mesh.audit import AuditManager
+from thegent_agents.mesh.cache import MeshCache, Singleflight
+from thegent_agents.mesh.consensus import CausalInfluenceTracker, ConsensusProtocol, EscalationWorkflow
+from thegent_agents.mesh.coordination import FileClaimsRegistry, HLCTimestamp, OptimisticConcurrencyControl
+from thegent_agents.mesh.git import GitParallelismManager
+from thegent_agents.mesh.git_parallelism import WorktreeContext, WorktreePool
+from thegent_agents.mesh.injection import ContextInjection, ShellInjection
+from thegent_agents.mesh.isolation import ResourceIsolation
+from thegent_agents.mesh.merge import SmartMerge
+from thegent_agents.mesh.mesh import MeshIPC, MeshManager
+from thegent_agents.mesh.observability import MeshLogger, MetricsAggregator
+from thegent_agents.mesh.resources import ResourceManager
+from thegent_agents.mesh.sandbox import AutonomyTier, Sandboxing
+from thegent_agents.mesh.smart_merge import (
     MergeResult,
     SmartMergeConfig,
     SmartMerger,
@@ -22,8 +22,8 @@ from thegent.mesh.smart_merge import (
     make_smart_merger,
     merge_files,
 )
-from thegent.mesh.task_queue import MaildirQueue
-from thegent.mesh.worktree import BranchCollisionError, WorktreeManager
+from thegent_agents.mesh.task_queue import MaildirQueue
+from thegent_agents.mesh.worktree import BranchCollisionError, WorktreeManager
 
 __all__ = [
     "AuditManager",

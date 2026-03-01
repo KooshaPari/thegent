@@ -10,8 +10,8 @@ from typing import Protocol
 
 from pydantic import BaseModel
 
-from thegent.verification.symbolic import SymbolicRiskExplorer
-from thegent.verification.tool_safety import ToolSafetyChecker
+from thegent_audit.verification.symbolic import SymbolicRiskExplorer
+from thegent_audit.verification.tool_safety import ToolSafetyChecker
 
 _log = logging.getLogger(__name__)
 

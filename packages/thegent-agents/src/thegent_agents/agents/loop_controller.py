@@ -12,12 +12,12 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn
 # Type for verification callback: (task_id, result) -> Any
 VerificationCallback = Callable[[str, Any], Any]
 
-from thegent.agents.base import RunResult
-from thegent.agents.checker import CheckerAgent, CheckerDecision, CheckerResult
-from thegent.agents.presets import get_preset, match_preset
-from thegent.agents.resilience import TransientAgentError, with_retry
-from thegent.cli.commands.impl import run_impl
-from thegent.config import ThegentSettings
+from thegent_agents.agents.base import RunResult
+from thegent_agents.agents.checker import CheckerAgent, CheckerDecision, CheckerResult
+from thegent_agents.agents.presets import get_preset, match_preset
+from thegent_agents.agents.resilience import TransientAgentError, with_retry
+from thegent_cli.cli.commands.impl import run_impl
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ class LifecycleController:
 
                 # 2. Governance Pre-check (WP-3001)
                 try:
-                    from thegent.execution import PolicyEngine, RunMeta
+                    from thegent_execution.execution import PolicyEngine, RunMeta
 
                     pe = PolicyEngine(self.settings)
                     temp_run = RunMeta(
@@ -194,7 +194,7 @@ class LifecycleController:
                 if effect == "deny":
                     self.state.stopped = True
                     self.state.stop_reason = f"Policy denied: {reason}"
-                    from thegent.governance.escalation import EscalationQueue
+                    from thegent_audit.governance.escalation import EscalationQueue
 
                     eq = EscalationQueue(self.settings)
                     eq.add(run_id=self.state.session_id, reason=f"Policy denial: {reason}", priority=3)
@@ -255,7 +255,7 @@ class LifecycleController:
 
                 # 6. Invoke Checker Agent (WP-1201 Phase 2/3 - LLM Fallback)
                 try:
-                    from thegent.cli.commands.impl import dag_status_impl
+                    from thegent_cli.cli.commands.impl import dag_status_impl
 
                     wbs_status = dag_status_impl(self.settings.cwd)
 
@@ -289,7 +289,7 @@ class LifecycleController:
                     if any(
                         kw in (decision_result.reason or "").lower() for kw in ["security", "cost", "risk", "policy"]
                     ):
-                        from thegent.governance.escalation import EscalationPriority, EscalationQueue
+                        from thegent_audit.governance.escalation import EscalationPriority, EscalationQueue
 
                         eq = EscalationQueue(self.settings)
                         eq.escalate(

@@ -15,7 +15,7 @@ async def thegent_ddg_search_impl(
     num_results: int,
     ctx: Any,
 ) -> ToolResult:
-    from thegent.skills.research import ddg_search
+    from thegent_skills.skills.research import ddg_search
 
     await ctx.info(f"thegent_ddg_search query={query!r} num_results={num_results}")
     start_time = time.perf_counter()
@@ -36,8 +36,8 @@ def thegent_reddit_search_impl(
     query: str,
     num_results: int,
 ) -> ToolResult:
-    from thegent.config import ThegentSettings
-    from thegent.skills.research import reddit_search
+    from thegent_core.config import ThegentSettings
+    from thegent_skills.skills.research import reddit_search
 
     settings = ThegentSettings()
     start_time = time.perf_counter()
@@ -56,7 +56,7 @@ async def thegent_scrape_url_impl(
     use_playwright: bool,
     ctx: Any,
 ) -> ToolResult:
-    from thegent.skills.research import scrape_url
+    from thegent_skills.skills.research import scrape_url
 
     await ctx.info(f"thegent_scrape_url url={url!r} use_playwright={use_playwright}")
     await ctx.report_progress(progress=0, total=3)
@@ -80,7 +80,7 @@ def thegent_deep_research_impl(
     query: str,
     subreddits: str | None,
 ) -> ToolResult:
-    from thegent.skills.deep_research import perform_deep_research
+    from thegent_skills.skills.deep_research import perform_deep_research
 
     start_time = time.perf_counter()
     sub_list = [s.strip() for s in subreddits.split(",") if s.strip()] if subreddits else None

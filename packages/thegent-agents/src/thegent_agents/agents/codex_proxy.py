@@ -17,13 +17,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
-from thegent.agents.base import AgentRunner, RunResult
-from thegent.agents.context_compactor import ContextCompactionResult, ContextCompactor
-from thegent.agents.cliproxy_manager import ensure_proxy_running
-from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
-from thegent.config import ThegentSettings
+from thegent_agents.agents.base import AgentRunner, RunResult
+from thegent_agents.agents.context_compactor import ContextCompactionResult, ContextCompactor
+from thegent_agents.agents.cliproxy_manager import ensure_proxy_running
+from thegent_agents.agents.resilience import TransientAgentError, is_retryable, with_retry
+from thegent_core.config import ThegentSettings
 from thegent.discovery import _is_triggered_by_agent_process
-from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
+from thegent_audit.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 from thegent.utils.routing_impl.circuit_breaker import (
     CircuitOpenError,
     ProviderCircuitBreakerRegistry,
@@ -651,7 +651,7 @@ class CodexProxyRunner(AgentRunner):
         # WL-116: Handle audio transcript inputs
         audio_transcript: str | None = None
         if audio_paths:
-            from thegent.agents.audio_inputs import inject_transcript_into_prompt, load_transcripts
+            from thegent_agents.agents.audio_inputs import inject_transcript_into_prompt, load_transcripts
 
             audio_transcript, _audio_sources = load_transcripts(audio_paths)
             if audio_transcript:

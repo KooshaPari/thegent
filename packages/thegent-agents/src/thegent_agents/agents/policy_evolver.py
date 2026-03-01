@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.execution import PolicyEngine, RunRegistry
+from thegent_execution.execution import PolicyEngine, RunRegistry
 
 _log = logging.getLogger(__name__)
 

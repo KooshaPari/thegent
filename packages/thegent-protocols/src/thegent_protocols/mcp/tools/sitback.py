@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from fastmcp.tools.tool import ToolResult
 
-from thegent.cli.commands.impl import sitback_dashboard_impl
+from thegent_cli.cli.commands.impl import sitback_dashboard_impl
 
 if TYPE_CHECKING:
     from fastmcp import FastMCP

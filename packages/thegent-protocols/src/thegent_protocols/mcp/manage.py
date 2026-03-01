@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 from thegent.infra import run_subprocess_optimized
 
 # MCP server URL (HTTP transport)

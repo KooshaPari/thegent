@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from thegent.agents.base import AgentRunner
-from thegent.agents.registry import AGENT_NAMES, get_runner
+from thegent_agents.agents.base import AgentRunner
+from thegent_agents.agents.registry import AGENT_NAMES, get_runner
 
 logger = logging.getLogger(__name__)
 

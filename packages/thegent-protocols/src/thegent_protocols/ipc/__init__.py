@@ -1,6 +1,6 @@
 """thegent IPC: file-based inter-process communication for cross-project agents."""
 
-from thegent.ipc.cross_project import (
+from thegent_protocols.ipc.cross_project import (
     BROADCAST_ADDR,
     IPC_DIR,
     CrossProjectIpc,

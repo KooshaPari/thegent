@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 from datetime import UTC
 
-from thegent.cli.commands.impl import _resolve_cwd
+from thegent_cli.cli.commands.impl import _resolve_cwd
 from thegent.memory.seed_detector import SeedDetector, SeedSource
 from thegent.memory.seed_storage import SeedStorage
 

@@ -154,7 +154,7 @@ def register_execution_tools(
             "route_contract": None,
         }
         if model and not agent:
-            from thegent.models import resolve_route, resolve_route_contract
+            from thegent_core.models import resolve_route, resolve_route_contract
 
             settings = settings_factory()
             policy = (settings.default_routing or "prefer_direct").lower()
@@ -190,7 +190,7 @@ def register_execution_tools(
                         "schema_version": route.schema_version,
                     }
         elif model and agent:
-            from thegent.models import ModelCatalog, resolve_route, resolve_route_contract
+            from thegent_core.models import ModelCatalog, resolve_route, resolve_route_contract
 
             settings = settings_factory()
             policy = (settings.default_routing or "prefer_direct").lower()
@@ -300,7 +300,7 @@ def register_execution_tools(
             )
         )
         if async_task:
-            from thegent.mcp.task_registry import get_task_registry as _gtr
+            from thegent_protocols.mcp.task_registry import get_task_registry as _gtr
 
             tid = _gtr().create(task)
             payload = {"task_id": tid, "status": "running"}
@@ -540,8 +540,8 @@ def register_execution_tools(
 
         if include_contract and model:
             try:
-                from thegent.models import resolve_route_contract
-                from thegent.models import route_contract as catalog_route_contract
+                from thegent_core.models import resolve_route_contract
+                from thegent_core.models import route_contract as catalog_route_contract
 
                 contract = resolve_route_contract(
                     model,
@@ -679,7 +679,7 @@ def register_execution_tools(
         """
         Run an ultra-short-lived flash agent that executes a single focused task via one LLM call.
         """
-        from thegent.agents.flash_agent import flash as _flash
+        from thegent_agents.agents.flash_agent import flash as _flash
 
         start_time = time.perf_counter()
         result = await _flash(prompt=prompt, model=model, timeout_s=timeout_s)

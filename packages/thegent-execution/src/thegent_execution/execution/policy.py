@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from thegent.execution.resilience import OverrideRegistry
+from thegent_execution.execution.resilience import OverrideRegistry
 from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent.execution_coercion_helpers import as_float as _as_float_impl
 from thegent.execution_coercion_helpers import as_int as _as_int_impl
@@ -209,7 +209,7 @@ class PolicyEngine:
 
         # G-GP-02: Input Guardrails (NeMo-style)
         if _as_bool(getattr(self.settings, "input_guardrails_enabled", False), False):
-            from thegent.governance.input_guardrails import guardrails_from_env
+            from thegent_audit.governance.input_guardrails import guardrails_from_env
 
             rails = guardrails_from_env()
             res = rails.check(prompt=run.prompt, agent=run.agent, model=run.model, cwd=run.cwd)
@@ -260,7 +260,7 @@ class PolicyEngine:
 
         # Policy 2b (XC2): Block critical lane when contract drift exceeds budget
         if run.lane == "critical":
-            from thegent.contracts.telemetry import ContractTelemetry
+            from thegent_core.contracts.telemetry import ContractTelemetry
 
             ct = ContractTelemetry(self.settings.session_dir)
             budget = ct.get_drift_budget_status(structural_budget_pct=5.0, semantic_budget_pct=10.0)
@@ -294,7 +294,7 @@ class PolicyEngine:
 
         # Policy 5: Cost Budget Enforcement (G-GP-06)
         if getattr(self.settings, "cost_tracking_enabled", False):
-            from thegent.cost.aggregator import CostAggregator
+            from thegent_routing.cost.aggregator import CostAggregator
 
             agg = CostAggregator(self.settings.session_dir)
 
@@ -424,8 +424,8 @@ class KPIManager:
 
     def get_kpis(self) -> dict[str, Any]:
         """Calculate the 10 core KPIs for the dashboard."""
-        from thegent.contracts.telemetry import ContractTelemetry
-        from thegent.execution import RunRegistry
+        from thegent_core.contracts.telemetry import ContractTelemetry
+        from thegent_execution.execution import RunRegistry
 
         registry = RunRegistry(self.session_dir)
         runs = registry.list_runs(limit=1000)

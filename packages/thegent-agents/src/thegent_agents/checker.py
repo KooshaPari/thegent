@@ -8,7 +8,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from thegent_agents.registry import get_runner
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 

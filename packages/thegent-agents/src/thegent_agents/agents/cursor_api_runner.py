@@ -10,10 +10,10 @@ from pathlib import Path
 
 from cachetools import TTLCache
 
-from thegent.agents.base import AgentRunner, RunResult
-from thegent.agents.resilience import TransientAgentError, is_retryable, with_retry
-from thegent.config import ThegentSettings
-from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
+from thegent_agents.agents.base import AgentRunner, RunResult
+from thegent_agents.agents.resilience import TransientAgentError, is_retryable, with_retry
+from thegent_core.config import ThegentSettings
+from thegent_audit.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 from thegent.infra.power import wrap_with_caffeinate
 from thegent.utils import strip_ansi
 

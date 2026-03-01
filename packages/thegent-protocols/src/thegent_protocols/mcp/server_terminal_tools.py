@@ -29,7 +29,7 @@ def register_terminal_tools(
         Args:
             all: Show all panes, not just Claude Code (default: False)
         """
-        from thegent.skills.terminal import is_claude_code_pane, list_tmux_panes
+        from thegent_skills.skills.terminal import is_claude_code_pane, list_tmux_panes
 
         start_time = time.perf_counter()
         panes = list_tmux_panes()
@@ -62,7 +62,7 @@ def register_terminal_tools(
         """
         Capture the content of a terminal pane.
         """
-        from thegent.skills.terminal import capture_tmux_pane
+        from thegent_skills.skills.terminal import capture_tmux_pane
 
         start_time = time.perf_counter()
         content = capture_tmux_pane(pane_id, last_lines=last_lines)
@@ -78,7 +78,7 @@ def register_terminal_tools(
         """
         Send text/keys to a terminal pane.
         """
-        from thegent.skills.terminal import send_to_tmux_pane
+        from thegent_skills.skills.terminal import send_to_tmux_pane
 
         start_time = time.perf_counter()
         success = send_to_tmux_pane(pane_id, text, enter=enter)
@@ -94,7 +94,7 @@ def register_terminal_tools(
         """
         Get instructions to attach to a terminal session.
         """
-        from thegent.skills.terminal import list_tmux_panes
+        from thegent_skills.skills.terminal import list_tmux_panes
 
         return server_tools_terminal.thegent_terminal_attach_impl(
             pane_id=pane_id,
@@ -116,7 +116,7 @@ def register_terminal_tools(
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_lsp_diagnostics(file_path: str) -> ToolResult:
         """WL-109: return normalized LSP diagnostics for a file."""
-        from thegent.mcp.lsp_tools import lsp_diagnostics
+        from thegent_protocols.mcp.lsp_tools import lsp_diagnostics
 
         return server_tools_workstream_lsp.lsp_diagnostics_tool_impl(
             file_path=file_path,
@@ -127,7 +127,7 @@ def register_terminal_tools(
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_lsp_symbol_lookup(symbol_name: str, file_path: str | None = None) -> ToolResult:
         """WL-109: lookup a symbol through the LSP adapter."""
-        from thegent.mcp.lsp_tools import lsp_symbol_lookup
+        from thegent_protocols.mcp.lsp_tools import lsp_symbol_lookup
 
         return server_tools_workstream_lsp.lsp_symbol_lookup_tool_impl(
             symbol_name=symbol_name,
@@ -139,7 +139,7 @@ def register_terminal_tools(
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_lsp_hover(file_path: str, line: int, character: int) -> ToolResult:
         """WL-109: return hover information for a source position."""
-        from thegent.mcp.lsp_tools import lsp_hover
+        from thegent_protocols.mcp.lsp_tools import lsp_hover
 
         return server_tools_workstream_lsp.lsp_hover_tool_impl(
             file_path=file_path,

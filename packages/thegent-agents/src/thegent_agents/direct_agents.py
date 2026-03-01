@@ -16,7 +16,7 @@ from thegent.infra.power import wrap_with_caffeinate
 from thegent.utils import strip_ansi
 
 if TYPE_CHECKING:
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
 PROCESS_TIMEOUT_SECS = 3600
 
@@ -52,7 +52,7 @@ def _filter_noisy_stderr(text: str) -> str:
 def _resolve_cli(cmd: str, name: str, settings: "ThegentSettings | None" = None) -> str:
     """Resolve CLI path: settings override, env override, absolute path, which, or ~/.local/bin."""
     if settings is None:
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
 
@@ -107,7 +107,7 @@ _AGENT_CLI: dict[str, tuple[str, bool, str]] = {
 
 def _wrap_with_harness(cmd: list[str], agent_name: str | None = None) -> list[str]:
     """WP-10010: Wrap command with unified harness (thegent-hooks or heliosShield)."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     if not settings.helios_shield_enabled:
@@ -163,7 +163,7 @@ class DirectAgentRunner(AgentRunner):
         if not spec:
             raise ValueError(f"Unknown direct agent: {agent_name}")
         self._cli_name, self._uses_stdin, self._stream_arg = spec
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         self._cli_cmd = _resolve_cli(cli_cmd or self._cli_name, self._cli_name, settings)
@@ -219,7 +219,7 @@ class DirectAgentRunner(AgentRunner):
             return result
 
         # WP-Y6: OTel GenAI Instrumentation
-        from thegent.observability.otel_instrumentation import instrument_genai_call
+        from thegent_observability.observability.otel_instrumentation import instrument_genai_call
 
         system_map = {
             "claude": "anthropic",

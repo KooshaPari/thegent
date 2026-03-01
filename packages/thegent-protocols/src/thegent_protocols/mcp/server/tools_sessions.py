@@ -5,7 +5,7 @@ from __future__ import annotations
 import json as json
 from typing import Any, Callable
 
-from thegent.mcp.dynamic_tools import DynamicToolRegistry, DynamicToolSpec
+from thegent_protocols.mcp.dynamic_tools import DynamicToolRegistry, DynamicToolSpec
 
 _dynamic_registry = DynamicToolRegistry()
 

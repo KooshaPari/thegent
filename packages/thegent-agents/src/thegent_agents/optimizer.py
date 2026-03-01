@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from thegent_agents.base import RunResult
-from thegent.execution import RunRegistry
+from thegent_execution.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 

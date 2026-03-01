@@ -6,8 +6,8 @@ import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
-from thegent.agents.base import AgentRunner, RunResult
-from thegent.config import ThegentSettings
+from thegent_agents.agents.base import AgentRunner, RunResult
+from thegent_core.config import ThegentSettings
 from thegent.infra import run_subprocess_optimized
 from thegent.infra.power import wrap_with_caffeinate
 from thegent.utils import strip_ansi

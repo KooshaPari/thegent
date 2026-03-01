@@ -60,6 +60,6 @@ if __name__ == "__main__":
     import sys
 
     sys.path.append(str(Path(__file__).parent.parent))
-    from thegent.mesh.agent_patterns import run_detection
+    from thegent_agents.mesh.agent_patterns import run_detection
 
     run_detection()

@@ -116,7 +116,7 @@ def thegent_resolve_model_route_impl(
     policy: str,
     error_result_impl: Callable[..., ToolResult],
 ) -> ToolResult:
-    from thegent.models import (
+    from thegent_core.models import (
         ModelCatalog,
         normalize_model_id,
         normalize_route_policy,

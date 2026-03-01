@@ -8,8 +8,8 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from thegent.agents.base import RunResult
-from thegent.execution import RunRegistry
+from thegent_agents.agents.base import RunResult
+from thegent_execution.execution import RunRegistry
 
 _log = logging.getLogger(__name__)
 

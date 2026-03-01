@@ -5,7 +5,7 @@ from pathlib import Path
 
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 

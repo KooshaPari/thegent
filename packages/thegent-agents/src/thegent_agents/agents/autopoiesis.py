@@ -7,7 +7,7 @@ import logging
 
 from pydantic import BaseModel
 
-from thegent.agents.synthesis import ProgramSynthesizer, SynthesisResult
+from thegent_agents.agents.synthesis import ProgramSynthesizer, SynthesisResult
 
 _log = logging.getLogger(__name__)
 

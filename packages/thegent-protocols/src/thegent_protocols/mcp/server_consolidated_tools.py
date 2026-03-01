@@ -32,7 +32,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             url: URL to scrape (for scrape action)
             num_results: Max results (default: 5)
         """
-        from thegent.mcp.server.tools_research import (
+        from thegent_protocols.mcp.server.tools_research import (
             thegent_ddg_search_impl,
             thegent_scrape_url_impl,
             thegent_reddit_search_impl,
@@ -77,7 +77,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             all_items: Include done items in list (for list)
             lease_seconds: Lease duration (for claim, extend)
         """
-        from thegent.mcp.server.tools_queue import (
+        from thegent_protocols.mcp.server.tools_queue import (
             queue_add_impl,
             queue_list_impl,
             queue_done_impl,
@@ -86,7 +86,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             queue_edit_impl,
             queue_extend_lease_impl,
         )
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         session_dir = settings.session_dir
@@ -152,15 +152,15 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             tail: Number of log lines (for logs)
             msg_type: Message type for send (default: reprompt)
         """
-        from thegent.mcp.server.tools_sessions import (
+        from thegent_protocols.mcp.server.tools_sessions import (
             session_list_impl,
             session_show_impl,
             session_logs_impl,
             session_send_impl,
             session_attach_hint_impl,
         )
-        from thegent.cli.commands.session_ops_impl import ps_impl, logs_impl
-        from thegent.cli.commands.session_control_impl import session_send_impl as raw_send_impl
+        from thegent_cli.cli.commands.session_ops_impl import ps_impl, logs_impl
+        from thegent_cli.cli.commands.session_control_impl import session_send_impl as raw_send_impl
 
         if action == "list":
             result = session_list_impl(
@@ -218,7 +218,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             limit: Max items (for do-next)
             cd: Working directory
         """
-        from thegent.cli.commands.impl import (
+        from thegent_cli.cli.commands.impl import (
             do_next_impl,
             work_stream_claim_impl,
             work_stream_complete_impl,

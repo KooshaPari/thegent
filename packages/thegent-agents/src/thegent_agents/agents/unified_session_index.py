@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Callable, ClassVar, cast
 
 from thegent.infra.fast_file_watcher import FastFileWatcher
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 _log = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ class UnifiedSessionIndex:
         """Index active zmx sessions and verify live processes."""
         count = 0
         try:
-            from thegent.session.zmx_backend import ZmxBackend
+            from thegent_execution.session.zmx_backend import ZmxBackend
 
             backend = ZmxBackend()
             if backend.available:
@@ -558,7 +558,7 @@ class UnifiedSessionIndex:
 
     def attach_session(self, session_id: str) -> bool:
         """Dynamically attach to an active session (using zmx backend)."""
-        from thegent.session.zmx_backend import ZmxBackend
+        from thegent_execution.session.zmx_backend import ZmxBackend
 
         backend = ZmxBackend()
         if backend.available:
@@ -641,7 +641,7 @@ if __name__ == "__main__":
 import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import shlex
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 
 class HarnessActionError(Exception):

@@ -5,7 +5,7 @@ from __future__ import annotations
 import orjson as json
 from typing import Any
 
-from thegent.agents.unified_session_index import HarnessActionError, HarnessTUIMapper, HarnessType
+from thegent_agents.agents.unified_session_index import HarnessActionError, HarnessTUIMapper, HarnessType
 
 
 def register_harness_tools(

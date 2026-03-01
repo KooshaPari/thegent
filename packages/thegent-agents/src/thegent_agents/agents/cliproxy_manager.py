@@ -19,8 +19,8 @@ from typing import Any
 
 import httpx
 
-from thegent.config import ThegentSettings
-from thegent.domain.provider_config import OAUTH_ONLY_PROVIDERS
+from thegent_core.config import ThegentSettings
+from thegent_core.domain.provider_config import OAUTH_ONLY_PROVIDERS
 from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
 

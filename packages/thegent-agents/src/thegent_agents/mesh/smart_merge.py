@@ -505,7 +505,7 @@ class SmartMerger:
         """Determine the path to the mergiraf binary."""
         if self._config.mergiraf_binary:
             return self._config.mergiraf_binary
-        from thegent.config import ThegentSettings
+        from thegent_core.config import ThegentSettings
 
         settings = ThegentSettings()
         env_bin = settings.mergiraf_binary

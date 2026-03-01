@@ -4,7 +4,7 @@ from typing import Any, cast
 
 from fastmcp.tools.tool import ToolResult
 
-from thegent.mcp.server_policy_quality_helpers import (
+from thegent_protocols.mcp.server_policy_quality_helpers import (
     resource_session_contract_health_trend_helper,
     thegent_session_contract_health_gate_helper,
     thegent_session_contract_health_report_helper,

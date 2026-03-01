@@ -20,13 +20,13 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
-from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig
-from thegent.agents.registry import get_runner
+from thegent_agents.agents.flash_agent import FlashAgent, FlashAgentConfig
+from thegent_agents.agents.registry import get_runner
 
 if TYPE_CHECKING:
-    from thegent.agents.capability_index import AgentRecord, CapabilityIndex
+    from thegent_agents.agents.capability_index import AgentRecord, CapabilityIndex
     from thegent.compute.offload import ComputePoolManager
-    from thegent.governance.hitl import HITLApprovalWorkflow
+    from thegent_audit.governance.hitl import HITLApprovalWorkflow
 
 _log = logging.getLogger(__name__)
 

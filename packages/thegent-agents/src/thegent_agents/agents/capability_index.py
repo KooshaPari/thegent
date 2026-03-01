@@ -16,7 +16,7 @@ from typing import Any
 
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from cachetools import TTLCache
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 logger = logging.getLogger(__name__)
 

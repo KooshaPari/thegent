@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from thegent.isolation.models import TenantContext
+from thegent_execution.isolation.models import TenantContext
 
 
 class IsolationProvider(ABC):

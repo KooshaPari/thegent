@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from thegent.agents.smolgents.base import SmolAgent
+    from thegent_agents.agents.smolgents.base import SmolAgent
 
 
 class AgentTree:

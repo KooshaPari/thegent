@@ -137,7 +137,7 @@ class UnifiedSessionIndex:
         """Index active zmx sessions and verify live processes."""
         count = 0
         try:
-            from thegent.session.zmx_backend import ZmxBackend
+            from thegent_execution.session.zmx_backend import ZmxBackend
 
             backend = ZmxBackend()
             if backend.available:
@@ -570,7 +570,7 @@ class UnifiedSessionIndex:
 
     def attach_session(self, session_id: str) -> bool:
         """Dynamically attach to an active session (using zmx backend)."""
-        from thegent.session.zmx_backend import ZmxBackend
+        from thegent_execution.session.zmx_backend import ZmxBackend
 
         backend = ZmxBackend()
         if backend.available:

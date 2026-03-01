@@ -9,7 +9,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Any, TextIO
 
-from thegent.integrations.base import SerializableMixin
+from thegent_sync.integrations.base import SerializableMixin
 
 
 JSONRPC_VERSION = "2.0"

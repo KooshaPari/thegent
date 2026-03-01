@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from thegent.governance.heliosShield_bridge import heliosShieldBridge
+from thegent_audit.governance.heliosShield_bridge import heliosShieldBridge
 
 
 @dataclass

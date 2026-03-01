@@ -2,8 +2,8 @@
 
 import logging
 
-from thegent.agents.base import RunResult
-from thegent.agents.resilience import RecoveryEngine, classify_failure
+from thegent_agents.agents.base import RunResult
+from thegent_agents.agents.resilience import RecoveryEngine, classify_failure
 
 _log = logging.getLogger(__name__)
 

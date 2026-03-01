@@ -20,7 +20,7 @@ def _register_native_router() -> None:
 
     try:
         thegent_router = _NATIVE_IMPORTER("thegent_router")
-        from thegent.config import get_settings
+        from thegent_core.config import get_settings
 
         settings = get_settings()
         router = thegent_router.PyParetoRouter.with_full_config(

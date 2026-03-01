@@ -4,10 +4,10 @@ import logging
 from collections.abc import Callable
 from pathlib import Path
 
-from thegent.agents.base import AgentRunner, RunResult
-from thegent.agents.codex_proxy import CodexProxyRunner
-from thegent.config import ThegentSettings
-from thegent.governance.teammates import TeammateManager
+from thegent_agents.agents.base import AgentRunner, RunResult
+from thegent_agents.agents.codex_proxy import CodexProxyRunner
+from thegent_core.config import ThegentSettings
+from thegent_audit.governance.teammates import TeammateManager
 
 logger = logging.getLogger(__name__)
 

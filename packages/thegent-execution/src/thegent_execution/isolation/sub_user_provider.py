@@ -9,14 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from thegent.infra.os_user_manager import OSUserManager
-from thegent.isolation.base_provider import IsolationProvider
-from thegent.isolation.exceptions import (
+from thegent_execution.isolation.base_provider import IsolationProvider
+from thegent_execution.isolation.exceptions import (
     ExecutionContextError,
     TenantAllocationError,
 )
-from thegent.isolation.models import TenantContext
-from thegent.isolation.uid_pool import UidPool
-from thegent.isolation.vfs import VfsAdapter
+from thegent_execution.isolation.models import TenantContext
+from thegent_execution.isolation.uid_pool import UidPool
+from thegent_execution.isolation.vfs import VfsAdapter
 from thegent.orchestration.execution.cmd_share import CommandSharer
 
 logger = logging.getLogger(__name__)

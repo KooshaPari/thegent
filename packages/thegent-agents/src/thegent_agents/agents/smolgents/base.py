@@ -25,7 +25,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from thegent.agents.smolgents.tools import Tool
+    from thegent_agents.agents.smolgents.tools import Tool
 
 logger = logging.getLogger(__name__)
 

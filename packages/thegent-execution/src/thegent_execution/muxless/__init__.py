@@ -6,7 +6,7 @@ without requiring tmux or screen multiplexers.
 # @trace FR-SES-001
 """
 
-from thegent.muxless.zmx_session import (
+from thegent_execution.muxless.zmx_session import (
     ZmxSessionConfig,
     ZmxSessionManager,
     make_zmx_session_manager,

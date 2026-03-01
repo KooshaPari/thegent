@@ -11,8 +11,8 @@ from cachetools import TTLCache
 
 from thegent_agents.base import AgentRunner, RunResult
 from thegent_agents.resilience import TransientAgentError, is_retryable, with_retry
-from thegent.config import ThegentSettings
-from thegent.governance.post_agent_run_hook import dispatch_post_agent_run_hook
+from thegent_core.config import ThegentSettings
+from thegent_audit.governance.post_agent_run_hook import dispatch_post_agent_run_hook
 from thegent.infra.power import wrap_with_caffeinate
 from thegent.utils import strip_ansi
 

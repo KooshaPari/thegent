@@ -14,7 +14,7 @@ from typing import Any
 import psutil
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 
-from thegent.mesh.task_queue import MaildirQueue
+from thegent_agents.mesh.task_queue import MaildirQueue
 
 _log = logging.getLogger(__name__)
 

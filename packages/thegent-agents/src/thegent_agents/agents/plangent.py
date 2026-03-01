@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig
+from thegent_agents.agents.flash_agent import FlashAgent, FlashAgentConfig
 
 if TYPE_CHECKING:
     from thegent.orchestration.dispatcher import SubAgentDispatcher
@@ -580,7 +580,7 @@ class PlangentExecutor:
         )
 
         if dispatcher is None:
-            from thegent.agents.capability_index import CapabilityIndex  # noqa: PLC0415
+            from thegent_agents.agents.capability_index import CapabilityIndex  # noqa: PLC0415
 
             dispatcher = _SubAgentDispatcher(capability_index=CapabilityIndex.get())
 
