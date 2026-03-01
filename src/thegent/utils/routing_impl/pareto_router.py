@@ -19,8 +19,10 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from thegent.models.catalog import ModelCatalog, Route
+if TYPE_CHECKING:
+    from thegent.models.catalog import Route
 
 _log = logging.getLogger(__name__)
 
@@ -187,7 +189,7 @@ class Offer:
     cost_weight: float
     quality: float
     speed_score: float = 1.0  # Lower = faster; includes conciseness (output_tokens_multiplier)
-    route: Route | None = None
+    route: "Route | None" = None
     effective_cost: float | None = None  # After shadow pricing
 
 
@@ -333,6 +335,8 @@ def _offers_from_catalog(
 ) -> list[Offer]:
     """Build offers from catalog, filtered by hard constraints. Applies shadow pricing when enabled.
     Degraded mode (85% budget burn) caps max_cost_weight to exclude premium offers."""
+    from thegent.models.catalog import ModelCatalog
+
     catalog = ModelCatalog.to_contract_view(use_scraped=True)
     routes_map = catalog.get("routes", {}) or {}
     offers: list[Offer] = []

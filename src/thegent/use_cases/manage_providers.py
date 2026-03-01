@@ -5,8 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from thegent.agents.cliproxy_manager import _OAUTH_ONLY_PROVIDERS, _ensure_config
 from thegent.config import ThegentSettings
+from thegent.domain.provider_config import OAUTH_ONLY_PROVIDERS
+from thegent.agents.cliproxy_manager import _ensure_config
 from thegent.provider_model_manager_cliproxy import (
     get_api_key_from_compat,
     remove_openai_compat_entry,
@@ -88,7 +89,7 @@ def add_provider(
         Tuple of (success: bool, message: str).
     """
     name = name.lower().strip()
-    if name in _OAUTH_ONLY_PROVIDERS:
+    if name in OAUTH_ONLY_PROVIDERS:
         return False, f"Provider '{name}' uses OAuth only. Use: thegent cliproxy login {name}"
     providers = load_json(PROVIDER_DEFINITIONS_PATH)
 
@@ -172,7 +173,7 @@ def update_provider(
         Tuple of (success: bool, message: str).
     """
     name = name.lower().strip()
-    if name in _OAUTH_ONLY_PROVIDERS:
+    if name in OAUTH_ONLY_PROVIDERS:
         return False, f"Provider '{name}' uses OAuth only. Use: thegent cliproxy login {name}"
     providers = load_json(PROVIDER_DEFINITIONS_PATH)
 
