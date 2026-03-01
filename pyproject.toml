@@ -44,6 +44,9 @@ antigma = "thegent.rust_wrappers:antigma"
 managed = true
 override-dependencies = [ "hf-xet==0.0.0; implementation_name == 'pypy'",]
 
+[tool.uv.workspace]
+members = [ "packages/*",]
+
 [tool.ruff]
 line-length = 120
 target-version = "py314"
