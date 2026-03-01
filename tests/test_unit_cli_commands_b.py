@@ -857,9 +857,8 @@ class TestDagRecoverCmdImpl:
 
         with pytest.raises(_EXIT):
             dag_recover_cmd(cd=None, action="unknown-action")
-
-
 @pytest.mark.skip(reason="WL-124 refactoring - patches needed")
+>>>>>>> origin/fix/cli-tests-skips-v2
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
