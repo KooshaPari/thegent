@@ -20,6 +20,7 @@ from typing import Any
 import httpx
 
 from thegent.config import ThegentSettings
+from thegent.domain.provider_config import OAUTH_ONLY_PROVIDERS
 from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
 
@@ -180,9 +181,6 @@ _FACTORY_PROVIDER_PATTERNS: dict[str, tuple[list[str], list[str]]] = {
 
 _DUMMY_KEYS = frozenset({"dummy-not-used", "dummy", ""})
 
-# OAuth-only providers: no API key option. Claude and Codex require OAuth.
-_OAUTH_ONLY_PROVIDERS: frozenset[str] = frozenset({"claude", "codex"})
-
 
 def _get_factory_api_key(provider: str) -> tuple[str | None, str]:
     """Look up API key in ~/.factory/config.json and ~/.factory/settings.json.
@@ -293,7 +291,7 @@ def _inject_api_key_into_cliproxy(config: dict[str, Any], provider: str, api_key
     """Add or update openai-compatibility entry with the given API key.
     Uses provider_definitions.json for model aliases when available.
     Claude and Codex are OAuth-only; no-op for them."""
-    if provider.lower() in _OAUTH_ONLY_PROVIDERS:
+    if provider.lower() in OAUTH_ONLY_PROVIDERS:
         return
     compat = config.get("openai-compatibility")
     if not isinstance(compat, list):
@@ -1061,7 +1059,7 @@ def run_login(
         return run_login_unified(settings, provider_lower, prompt_func=prompt_func, skip_if_configured=not force)
 
     # Preflight factory-key fast path only for non-OAuth providers.
-    if provider_lower not in _OAUTH_ONLY_PROVIDERS and provider_lower not in _LOGIN_FLAGS:
+    if provider_lower not in OAUTH_ONLY_PROVIDERS and provider_lower not in _LOGIN_FLAGS:
         factory_key, _ = _get_factory_api_key(provider_lower)
         if factory_key and not force:
             # If a key exists in factory config, use the API-key flow (run_login_unified)

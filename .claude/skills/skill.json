@@ -1,6 +1,0 @@
-{
-  "name": "thegent-skills",
-  "description": "Unified orchestration guidance for direct thegent subcommand usage",
-  "version": "2.1.0",
-  "entrypoint": "thegent"
-}
