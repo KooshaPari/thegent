@@ -15,7 +15,7 @@ import pytest
 
 from thegent.agents.base import RunResult
 from thegent.agents.grounding import (
-    GEMINI_GROUNDING_AGENTS,
+    GROUNDING_AGENTS,
     GroundingSource,
     _resolve_gemini_api_key,
     _resolve_gemini_model,
@@ -176,14 +176,14 @@ def test_resolve_gemini_api_key_raises_when_missing(monkeypatch: pytest.MonkeyPa
 
 
 # ---------------------------------------------------------------------------
-# GEMINI_GROUNDING_AGENTS membership
+# GROUNDING_AGENTS membership
 # ---------------------------------------------------------------------------
 
 
 def test_gemini_grounding_agents_contains_gemini_and_antigravity() -> None:
     # @trace WL-119
-    assert "gemini" in GEMINI_GROUNDING_AGENTS
-    assert "antigravity" in GEMINI_GROUNDING_AGENTS
+    assert "gemini" in GROUNDING_AGENTS
+    assert "antigravity" in GROUNDING_AGENTS
 
 
 # ---------------------------------------------------------------------------
