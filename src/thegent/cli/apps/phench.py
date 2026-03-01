@@ -11,12 +11,15 @@ from rich.prompt import IntPrompt
 
 from thegent.phench import (
     add_repo,
+    audit_shared_modules,
+    get_env_profile,
     init_target,
     list_targets,
     lock_target,
     materialize_target,
     run_env_doctor_for_target,
     run_target,
+    set_env_profile,
     sync_target,
     target_status,
     target_timeline,
@@ -114,6 +117,7 @@ def run_cmd(
     command: str | None = typer.Option(None, "--command", help="Explicit command/target name for runner."),
     all_repos: bool = typer.Option(False, "--all-repos", help="Run command selection on all repos in target."),
     execution_mode: str = typer.Option("serial", "--mode", help="Execution mode for --all-repos: serial|parallel."),
+    env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
 ) -> None:
     exit_code = run_target(
         name,
@@ -122,6 +126,7 @@ def run_cmd(
         command_name=command,
         all_repos=all_repos,
         execution_mode=execution_mode,
+        env_profile=env_profile,
     )
     raise typer.Exit(exit_code)
 
@@ -132,6 +137,33 @@ def env_doctor_cmd(name: str = typer.Argument(..., help="Target name.")) -> None
     console.print_json(json.dumps(report).decode())
     if report["doctor_status"] != "pass":
         raise typer.Exit(2)
+
+
+@env_app.command("profile-set", help="Set or replace a named env profile for target run commands.")
+def env_profile_set_cmd(
+    name: str = typer.Argument(..., help="Target name."),
+    profile: str = typer.Option(..., "--profile", help="Profile name."),
+    vars: list[str] = typer.Option([], "--var", help="KEY=VALUE pairs; may be repeated."),
+) -> None:
+    values: dict[str, str] = {}
+    for pair in vars:
+        if "=" not in pair:
+            raise typer.BadParameter("Each --var must be KEY=VALUE")
+        key, value = pair.split("=", 1)
+        if not key:
+            raise typer.BadParameter("Environment variable key cannot be empty")
+        values[key] = value
+    state = set_env_profile(name, profile, values)
+    console.print_json(json.dumps(state).decode())
+
+
+@env_app.command("profile-show", help="Show active or named env profile for target run commands.")
+def env_profile_show_cmd(
+    name: str = typer.Argument(..., help="Target name."),
+    profile: str | None = typer.Option(None, "--profile", help="Optional profile name."),
+) -> None:
+    payload = {"target": name, "profile": profile or "active", "env": get_env_profile(name, profile=profile)}
+    console.print_json(json.dumps(payload).decode())
 
 
 @app.command("sync", help="Verify and repair dual .phench mirror drift.")
@@ -146,6 +178,12 @@ def sync_cmd(
 @app.command("status", help="Show lock/runtime/env status for a target.")
 def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
     state = target_status(name)
+    console.print_json(json.dumps(state).decode())
+
+
+@app.command("audit-shared", help="Audit shared Python modules across repos in a target lock.")
+def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
+    state = audit_shared_modules(name)
     console.print_json(json.dumps(state).decode())
 
 

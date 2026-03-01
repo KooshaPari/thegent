@@ -24,6 +24,7 @@ LOCK_FILE = "target.lock.json"
 RUNTIME_FILE = "runtime.json"
 ENV_FILE = "env.snapshot.json"
 RUNNER_FILE = "runner.catalog.json"
+PROFILE_FILE = "env.profile.json"
 
 
 def _parse_lock(payload: dict[str, Any]) -> TargetLock:
@@ -190,6 +191,34 @@ def target_timeline(target: str, repo_id: str | None = None, limit: int = 30) ->
     }
 
 
+def audit_shared_modules(target: str) -> dict[str, Any]:
+    lock = load_target_lock(target)
+    module_map: dict[str, list[str]] = {}
+    for repo in lock.repos:
+        src_root = Path(repo.repo_path) / "src"
+        if not src_root.exists() or not src_root.is_dir():
+            continue
+        for child in src_root.iterdir():
+            if not child.is_dir():
+                continue
+            if not (child / "__init__.py").exists():
+                continue
+            owners = module_map.setdefault(child.name, [])
+            owners.append(repo.repo_id)
+
+    shared = {
+        module: sorted(set(owners))
+        for module, owners in module_map.items()
+        if len(set(owners)) >= 2
+    }
+    return {
+        "target": target,
+        "shared_modules": shared,
+        "repo_count": len(lock.repos),
+        "module_count": len(module_map),
+    }
+
+
 def build_catalog(target: str, repo_id: str | None = None) -> RunnerCatalog:
     runtime = read_dual(target, RUNTIME_FILE)
     materializations = runtime.get("repo_materializations")
@@ -220,23 +249,68 @@ def list_targets() -> list[str]:
     return sorted(targets)
 
 
+def set_env_profile(target: str, profile: str, values: dict[str, str]) -> dict[str, Any]:
+    if not profile.strip():
+        raise ValueError("profile name cannot be empty")
+    normalized = {str(k): str(v) for k, v in values.items()}
+    try:
+        state = read_dual(target, PROFILE_FILE)
+    except FileNotFoundError:
+        state = {"active_profile": profile, "profiles": {}}
+    profiles = state.get("profiles")
+    if not isinstance(profiles, dict):
+        profiles = {}
+    profiles[profile] = normalized
+    state = {"active_profile": profile, "profiles": profiles}
+    dual_write(target, PROFILE_FILE, state)
+    return state
+
+
+def get_env_profile(target: str, profile: str | None = None) -> dict[str, str]:
+    try:
+        state = read_dual(target, PROFILE_FILE)
+    except FileNotFoundError:
+        return {}
+    profiles = state.get("profiles")
+    if not isinstance(profiles, dict):
+        return {}
+    selected = profile or str(state.get("active_profile", ""))
+    payload = profiles.get(selected)
+    if not isinstance(payload, dict):
+        return {}
+    return {str(key): str(value) for key, value in payload.items()}
+
+
 def _run_single_repo_target(
     checkout_path: Path,
     catalog: RunnerCatalog,
     runner: str | None,
     command_name: str | None,
+    env_overrides: dict[str, str] | None = None,
 ) -> int:
+    if command_name and not runner:
+        raise ValueError("--command requires --runner")
     if runner and command_name:
-        return run_command(checkout_path, runner, command_name)
+        return run_command(checkout_path, runner, command_name, env_overrides=env_overrides)
 
     if runner and not command_name:
         options = [command for command in catalog.commands if command.runner == runner]
         if not options:
             raise ValueError(f"runner has no discovered commands: {runner}")
-        return run_command(checkout_path, runner, options[0].name)
+        return run_command(checkout_path, runner, options[0].name, env_overrides=env_overrides)
 
     selected = pick_command_interactive(catalog)
-    return run_command(checkout_path, selected.runner, selected.name)
+    return run_command(checkout_path, selected.runner, selected.name, env_overrides=env_overrides)
+
+
+def _materialization_entry(item: dict[str, Any]) -> tuple[str, Path]:
+    repo_id = item.get("repo_id")
+    checkout_path = item.get("checkout_path")
+    if not isinstance(repo_id, str) or not repo_id.strip():
+        raise ValueError("invalid runtime materialization entry: missing repo_id")
+    if not isinstance(checkout_path, str) or not checkout_path.strip():
+        raise ValueError(f"invalid runtime materialization entry for {repo_id}: missing checkout_path")
+    return repo_id, Path(checkout_path).resolve()
 
 
 def run_target(
@@ -246,6 +320,7 @@ def run_target(
     command_name: str | None = None,
     all_repos: bool = False,
     execution_mode: str = "serial",
+    env_profile: str | None = None,
 ) -> int:
     report = run_env_doctor_for_target(target)
     if report["doctor_status"] != "pass":
@@ -254,6 +329,8 @@ def run_target(
 
     if execution_mode not in {"serial", "parallel"}:
         raise ValueError("execution_mode must be one of: serial, parallel")
+    if all_repos and (runner is None or command_name is None):
+        raise ValueError("--all-repos requires --runner and --command to avoid interactive contention")
 
     runtime = read_dual(target, RUNTIME_FILE)
     materializations = runtime.get("repo_materializations")
@@ -270,15 +347,22 @@ def run_target(
         selected_items = [materializations[0]]
 
     runs: list[tuple[Path, RunnerCatalog]] = []
+    env_overrides = get_env_profile(target, profile=env_profile)
     for item in selected_items:
-        item_repo_id = item.get("repo_id")
-        item_checkout = Path(str(item.get("checkout_path", ""))).resolve()
-        runs.append((item_checkout, build_catalog(target, repo_id=str(item_repo_id))))
+        item_repo_id, item_checkout = _materialization_entry(item)
+        runs.append((item_checkout, build_catalog(target, repo_id=item_repo_id)))
 
     if execution_mode == "parallel" and len(runs) > 1:
         with ThreadPoolExecutor(max_workers=len(runs)) as pool:
             futures = [
-                pool.submit(_run_single_repo_target, checkout, catalog, runner, command_name)
+                pool.submit(
+                    _run_single_repo_target,
+                    checkout,
+                    catalog,
+                    runner,
+                    command_name,
+                    env_overrides,
+                )
                 for checkout, catalog in runs
             ]
             results = [future.result() for future in futures]
@@ -286,7 +370,7 @@ def run_target(
         return nonzero[0] if nonzero else 0
 
     for checkout, catalog in runs:
-        code = _run_single_repo_target(checkout, catalog, runner, command_name)
+        code = _run_single_repo_target(checkout, catalog, runner, command_name, env_overrides)
         if code != 0:
             return code
     return 0
@@ -305,7 +389,7 @@ def run_env_doctor_for_target(target: str) -> dict[str, Any]:
 
 def sync_target(target: str, prefer: str | None = None) -> dict[str, Any]:
     results = {}
-    for filename in (LOCK_FILE, RUNTIME_FILE, ENV_FILE, RUNNER_FILE):
+    for filename in (LOCK_FILE, RUNTIME_FILE, ENV_FILE, RUNNER_FILE, PROFILE_FILE):
         try:
             results[filename] = sync_dual(target, filename, prefer=prefer)
         except FileNotFoundError:

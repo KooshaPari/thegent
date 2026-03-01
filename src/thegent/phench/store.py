@@ -80,6 +80,14 @@ def read_dual(target: str, filename: str) -> dict[str, Any]:
             if not isinstance(payload, dict):
                 errors.append(f"missing-payload:{path}")
                 continue
+            stored_hash = content.get("content_hash")
+            if not isinstance(stored_hash, str):
+                errors.append(f"missing-hash:{path}")
+                continue
+            computed_hash = _content_hash(payload)
+            if computed_hash != stored_hash:
+                errors.append(f"hash-mismatch:{path}")
+                continue
             return payload
         except json.JSONDecodeError:
             errors.append(f"json-error:{path}")
@@ -93,14 +101,19 @@ def sync_dual(target: str, filename: str, prefer: str | None = None) -> dict[str
     if not project_path.exists() and not mirror_path.exists():
         raise FileNotFoundError(f"No state file exists for sync: {filename}")
 
+    def _copy_wrapped_json(source: Path, destination: Path) -> None:
+        raw = source.read_text(encoding="utf-8")
+        wrapped = json.loads(raw)
+        if not isinstance(wrapped, dict):
+            raise ValueError(f"state file must be a JSON object: {source}")
+        _write_json(destination, wrapped)
+
     if project_path.exists() and not mirror_path.exists():
-        mirror_path.parent.mkdir(parents=True, exist_ok=True)
-        mirror_path.write_text(project_path.read_text(encoding="utf-8"), encoding="utf-8")
+        _copy_wrapped_json(project_path, mirror_path)
         return {"source": str(project_path), "synced": str(mirror_path), "status": "repaired"}
 
     if mirror_path.exists() and not project_path.exists():
-        project_path.parent.mkdir(parents=True, exist_ok=True)
-        project_path.write_text(mirror_path.read_text(encoding="utf-8"), encoding="utf-8")
+        _copy_wrapped_json(mirror_path, project_path)
         return {"source": str(mirror_path), "synced": str(project_path), "status": "repaired"}
 
     project_raw = project_path.read_text(encoding="utf-8")
@@ -122,5 +135,5 @@ def sync_dual(target: str, filename: str, prefer: str | None = None) -> dict[str
             raise ValueError("Dual state drift with equal mtime; rerun with --prefer projects|home")
         source, dest = (project_path, mirror_path) if project_mtime > mirror_mtime else (mirror_path, project_path)
 
-    dest.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    _copy_wrapped_json(source, dest)
     return {"status": "repaired", "source": str(source), "synced": str(dest)}

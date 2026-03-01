@@ -2,7 +2,9 @@
 
 from .service import (
     add_repo,
+    audit_shared_modules,
     build_catalog,
+    get_env_profile,
     init_target,
     list_targets,
     load_target_lock,
@@ -10,6 +12,7 @@ from .service import (
     materialize_target,
     run_env_doctor_for_target,
     run_target,
+    set_env_profile,
     sync_target,
     target_status,
     target_timeline,
@@ -17,7 +20,9 @@ from .service import (
 
 __all__ = [
     "add_repo",
+    "audit_shared_modules",
     "build_catalog",
+    "get_env_profile",
     "init_target",
     "list_targets",
     "load_target_lock",
@@ -25,6 +30,7 @@ __all__ = [
     "materialize_target",
     "run_env_doctor_for_target",
     "run_target",
+    "set_env_profile",
     "sync_target",
     "target_status",
     "target_timeline",
