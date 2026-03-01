@@ -1,0 +1,15 @@
+[project]
+name = "thegent-observability"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "thegent-core",
+    "structlog>=24.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.backends"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thegent_observability"]
