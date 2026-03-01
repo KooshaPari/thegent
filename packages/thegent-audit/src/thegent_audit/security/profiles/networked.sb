@@ -1,0 +1,66 @@
+;;; macOS Seatbelt profile: networked
+;;; Allows reads everywhere, writes within PROJECT_ROOT, and outbound HTTPS (port 443).
+;;; Based on restricted profile with outbound network allowed.
+(version 1)
+(deny default)
+
+;;; Allow process execution
+(allow process-exec)
+(allow process-fork)
+
+;;; Allow signal delivery
+(allow signal (target self))
+
+;;; Allow reads everywhere
+(allow file-read*)
+(allow file-read-metadata)
+
+;;; Allow writes only within the project root (substituted by MacOSSandbox.generate_profile)
+(allow file-write*
+    (subpath "PROJECT_ROOT_PLACEHOLDER"))
+
+;;; Allow writes to /tmp and /var/folders
+(allow file-write*
+    (subpath "/tmp")
+    (subpath "/var/folders")
+    (subpath "/private/tmp")
+    (subpath "/private/var/folders"))
+
+;;; Allow /dev access for stdin/stdout/stderr
+(allow file-read-data (subpath "/dev"))
+(allow file-write-data
+    (literal "/dev/null")
+    (literal "/dev/stdout")
+    (literal "/dev/stderr"))
+
+;;; Allow sysctl reads
+(allow sysctl-read)
+
+;;; Allow mach lookups for basic system services and network resolution
+(allow mach-lookup
+    (global-name "com.apple.system.logger")
+    (global-name "com.apple.system.notification_center")
+    (global-name "com.apple.SystemConfiguration.configd")
+    (global-name "com.apple.dnssd.service"))
+
+;;; Allow POSIX IPC
+(allow ipc-posix-sem)
+(allow ipc-posix-shm-read*)
+(allow ipc-posix-shm-write*)
+
+;;; Allow outbound network on HTTPS port (443) and DNS (53)
+(allow network-outbound
+    (remote tcp "*:443")
+    (remote udp "*:53")
+    (remote tcp "*:53"))
+
+;;; Allow DNS resolution
+(allow network-outbound
+    (remote unix-socket (path-literal "/var/run/mDNSResponder")))
+
+;;; Deny inbound network and other outbound ports
+(deny network-inbound)
+(deny network-outbound
+    (remote tcp "*:80")
+    (remote tcp "*:8080")
+    (remote tcp "*:3000"))
