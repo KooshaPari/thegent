@@ -12,9 +12,9 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from thegent_agents.mesh.git import GitParallelismManager
-from thegent_agents.mesh.git_parallelism import WorktreePool
-from thegent_platform.native.git_native import GitNative
+from thegent_gitops.git import GitParallelismManager
+from thegent_gitops.worktree import WorktreePool
+from thegent_gitops.native import GitNative
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ def _worktree_agents(pool: WorktreePool) -> list[tuple[str, str]]:
 
 def get_agent_id() -> str:
     """Return the current agent ID from settings or default."""
-    from thegent_core.config import ThegentSettings
+    from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.agent_id
@@ -206,7 +206,7 @@ def lock_cleanup_main(
     """Remove stale .git/index.lock files."""
     if ctx.invoked_subcommand is not None:
         return
-    from thegent_cli.git_lock_manage import run_lock_cleanup
+    from thegent_gitops.lock_cleanup import run_lock_cleanup
 
     paths = [p for p in (path or []) if p.exists()] if path else None
     removed, skipped = run_lock_cleanup(paths=paths, max_age=max_age, dry_run=dry_run)
@@ -221,7 +221,7 @@ def lock_cleanup_service(
     action: str = typer.Argument(..., help="Action: install, start, stop, status, uninstall"),
 ):
     """Install or manage lock-cleanup daemon."""
-    from thegent_cli.git_lock_manage import (
+    from thegent_gitops.lock_cleanup import (
         lock_cleanup_install,
         lock_cleanup_start,
         lock_cleanup_status,

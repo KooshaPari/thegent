@@ -54,21 +54,7 @@ from thegent_cli.apps.project import setup_project_app  # noqa: E402
 from thegent_agents.mesh.main import app as mesh_app  # noqa: E402
 from thegent_cli.commands import model_cmds  # noqa: E402
 
-try:
-    from thegent_cli.commands.cli_git import app as git_app
-except ImportError as exc:
-    if "thegent-git" not in str(exc):
-        raise
-
-    git_app = typer.Typer(help="Git Coordination (install thegent-git to enable full git workflows).")
-
-    @git_app.callback(invoke_without_command=True)
-    def _git_dependency_missing(ctx: typer.Context) -> None:  # pyright: ignore[reportUnusedFunction] -- typer callback
-        """Fail fast when git integration dependency is unavailable."""
-        if ctx.invoked_subcommand is not None:
-            return
-        console.print("[red]Git coordination unavailable: install thegent-git dependency.[/red]")
-        raise typer.Exit(1)
+from thegent_cli.commands.cli_git import app as git_app
 
 
 app.add_typer(run.app, name="run", help="Execution: Agent tasks, background runs, and history.")
