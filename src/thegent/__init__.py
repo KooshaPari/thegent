@@ -61,3 +61,34 @@ def _check_tool_versions() -> None:
 _check_tool_versions()
 
 __version__ = "0.1.0"
+
+# ---------------------------------------------------------------------------
+# Compatibility shim — re-exports from uv workspace packages
+#
+# This allows code that still does `from thegent import X` to continue
+# working while internal modules migrate to direct workspace-package imports.
+# Remove each export once all callsites have been updated.
+# ---------------------------------------------------------------------------
+
+def __getattr__(name: str):  # noqa: ANN001, ANN202
+    """Lazy re-export from workspace sub-packages (PEP 562)."""
+    _workspace_map = {
+        # thegent-core
+        "models": "thegent_core.models",
+        "config": "thegent_core.config",
+        "exceptions": "thegent_core.exceptions",
+        # thegent-execution
+        "executor": "thegent_execution.executor",
+        # thegent-agents
+        "agents": "thegent_agents",
+        # thegent-routing
+        "routing": "thegent_routing",
+        # thegent-planning
+        "planning": "thegent_planning",
+        # thegent-observability
+        "observability": "thegent_observability",
+    }
+    if name in _workspace_map:
+        import importlib
+        return importlib.import_module(_workspace_map[name])
+    raise AttributeError(f"module 'thegent' has no attribute {name!r}")
