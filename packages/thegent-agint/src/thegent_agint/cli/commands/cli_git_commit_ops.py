@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def get_agent_id() -> str:
     """Return the current agent ID from settings or default."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     return settings.agent_id
