@@ -188,6 +188,10 @@ jobs:
               const backlogHigh = openPRs.length > BACKLOG_THRESHOLD;
               const bypassEligible = backlogHigh && stale && !stateOk;
 
+              // Avoid false negatives during initial CodeRabbit launch.
+              // If no check exists yet and this is the first evaluation cycle, pass explicitly.
+              const firstWindowPass = missingState && ageMin < STALE_MINUTES && openPRs.length <= BACKLOG_THRESHOLD;
+
               await setBypassLabel(pr.number, bypassEligible);
 
               if (bypassEligible && !(await hasRecentRetryComment(pr.number))) {
@@ -211,7 +215,7 @@ jobs:
               // Allow newly opened PRs to pass gate while CodeRabbit is still starting.
               // If MISSING persists beyond the stale window, require queue-backlog bypass
               // or mark the gate as failed to surface prolonged review failures.
-              const gatePass = stateOk || bypassEligible || (missingState && !stale);
+              const gatePass = stateOk || bypassEligible || firstWindowPass;
               const summary = [
                 `CodeRabbit state: ${state.state}`,
                 `Age minutes: ${ageMin.toFixed(1)}`,
