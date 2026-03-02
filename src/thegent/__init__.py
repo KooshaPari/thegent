@@ -85,10 +85,81 @@ def __getattr__(name: str):  # noqa: ANN001, ANN202
         "routing": "thegent_routing",
         # thegent-planning
         "planning": "thegent_planning",
-        # thegent-observability
+        # thegent-observability (formerly src/thegent/observability, trace, telemetry,
+        #                         metrics, monitoring, logging_utils)
         "observability": "thegent_observability",
+        "trace": "thegent_observability.trace",
+        "telemetry": "thegent_observability.telemetry",
+        "metrics": "thegent_observability.metrics",
+        "monitoring": "thegent_observability.monitoring",
+        "logging_utils": "thegent_observability.logging_utils",
+        # thegent-bench (formerly src/thegent/bench, evals, evaluation, phench)
+        "bench": "thegent_bench.bench",
+        "evals": "thegent_bench.evals",
+        "evaluation": "thegent_bench.evaluation",
+        "phench": "thegent_bench.phench",
+        # thegent-platform (formerly src/thegent/desktop, gpu, native, tray)
+        "desktop": "thegent_platform.desktop",
+        "gpu": "thegent_platform.gpu",
+        "native": "thegent_platform.native",
+        "tray": "thegent_platform.tray",
     }
     if name in _workspace_map:
         import importlib
         return importlib.import_module(_workspace_map[name])
     raise AttributeError(f"module 'thegent' has no attribute {name!r}")
+
+
+# ---------------------------------------------------------------------------
+# sys.modules aliases — required so that `from thegent.X.Y import Z` works.
+#
+# PEP 562 __getattr__ only fires for attribute access on the module object
+# itself.  Subpackage dotted imports (e.g. `from thegent.trace.recorder import
+# TraceRecorder`) bypass __getattr__ and go straight to sys.modules, so we
+# must register aliases there at import time.
+# ---------------------------------------------------------------------------
+
+def _register_subpackage_aliases() -> None:
+    import importlib
+    import sys
+
+    # Map of  "thegent.<alias>"  →  "<real_package>.<submodule>"
+    _subpackage_aliases: dict[str, str] = {
+        # thegent-observability
+        "thegent.observability": "thegent_observability",
+        "thegent.trace": "thegent_observability.trace",
+        "thegent.telemetry": "thegent_observability.telemetry",
+        "thegent.metrics": "thegent_observability.metrics",
+        "thegent.monitoring": "thegent_observability.monitoring",
+        "thegent.logging_utils": "thegent_observability.logging_utils",
+        # thegent-bench
+        "thegent.bench": "thegent_bench.bench",
+        "thegent.evals": "thegent_bench.evals",
+        "thegent.evaluation": "thegent_bench.evaluation",
+        "thegent.phench": "thegent_bench.phench",
+        # thegent-platform
+        "thegent.desktop": "thegent_platform.desktop",
+        "thegent.gpu": "thegent_platform.gpu",
+        "thegent.native": "thegent_platform.native",
+        "thegent.tray": "thegent_platform.tray",
+    }
+
+    for alias, real in _subpackage_aliases.items():
+        if alias not in sys.modules:
+            try:
+                mod = importlib.import_module(real)
+                sys.modules[alias] = mod
+                # Also register any already-imported children so that
+                # `from thegent.trace.recorder import X` resolves the child.
+                prefix = real + "."
+                for key, child in list(sys.modules.items()):
+                    if key.startswith(prefix):
+                        suffix = key[len(prefix):]
+                        child_alias = alias + "." + suffix
+                        sys.modules.setdefault(child_alias, child)
+            except ImportError:
+                # Workspace package not installed in this environment — skip.
+                pass
+
+
+_register_subpackage_aliases()
