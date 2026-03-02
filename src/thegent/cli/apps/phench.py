@@ -2,40 +2,43 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import Any
 
-import orjson as json
 import typer
-from rich.console import Console
 
 from thegent.phench import (
     add_repo,
-    bootstrap_target,
     audit_shared_modules,
+    bootstrap_target,
     create_target_snapshot,
     discover_repos,
-    load_target_lock,
-    import_repos,
-    list_target_snapshots,
-    set_repo_ref,
     get_env_profile,
     init_target,
+    import_repos,
+    list_target_snapshots,
     list_targets,
-    show_target_snapshot,
+    load_target_lock,
     lock_target,
     materialize_target,
     run_env_doctor_for_target,
     run_target,
     set_env_profile,
+    set_repo_ref,
+    show_target_snapshot,
     sync_target,
     target_status,
     target_timeline,
 )
-from thegent.cli.apps.phench_projects import register_projects_run
+from thegent.cli.apps.phench_env import register_env_commands
 from thegent.cli.apps.phench_observability import register_observability_commands
+from thegent.cli.apps.phench_projects import register_projects_run
+from thegent.cli.apps.phench_repos import register_repos_commands
+from thegent.cli.apps.phench_run import register_run_commands
+from thegent.cli.apps.phench_snapshot import register_snapshot_commands
+from thegent.cli.apps.phench_sync import register_sync_commands
 from thegent.cli.apps.phench_target import register_target_commands
+from thegent.cli.apps.phench_timeline import register_timeline_commands
 
-console = Console()
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
 target_app = typer.Typer(help="Manage project runtime targets.")
 repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
@@ -49,197 +52,87 @@ app.add_typer(snapshot_app, name="snapshot")
 app.add_typer(projects_app, name="projects")
 
 
+def _timeline_dispatch(name: str, **kwargs: Any) -> dict[str, Any]:
+    return target_timeline(name, **kwargs)
+
+
+def _run_dispatch(name: str, **kwargs: Any) -> int:
+    return run_target(name, **kwargs)
+
+
+def _run_env_doctor_dispatch(name: str) -> dict[str, Any]:
+    return run_env_doctor_for_target(name)
+
+
+def _set_env_profile_dispatch(name: str, profile: str, vars: dict[str, str]) -> dict[str, Any]:
+    return set_env_profile(name, profile, vars)
+
+
+def _get_env_profile_dispatch(name: str, profile: str | None = None) -> dict[str, str]:
+    return get_env_profile(name, profile=profile)
+
+
+def _sync_target_dispatch(name: str, **kwargs: Any) -> dict[str, Any]:
+    return sync_target(name, **kwargs)
+
+
+def _discover_repos_dispatch(
+    root: Any = None,
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+) -> list[Any]:
+    return discover_repos(root=root, include=include, exclude=exclude)
+
+
+def _snapshot_create_dispatch(target: str, **kwargs: Any) -> dict[str, Any]:
+    return create_target_snapshot(target, **kwargs)
+
+
+def _snapshot_list_dispatch(target: str) -> list[dict[str, Any]]:
+    return list_target_snapshots(target)
+
+
+def _snapshot_show_dispatch(target: str, snapshot_id: str) -> dict[str, Any]:
+    return show_target_snapshot(target, snapshot_id)
+
+
 register_target_commands(
     target_app,
     init_target_fn=lambda name, mode="repo": init_target(name, mode=mode),
     bootstrap_target_fn=lambda **kwargs: bootstrap_target(**kwargs),
     import_repos_fn=lambda **kwargs: import_repos(**kwargs),
     add_repo_fn=lambda name, repo, ref, repo_id=None, worktree_path=None: add_repo(
-        name, repo, ref, repo_id=repo_id, worktree_path=worktree_path
+        name,
+        repo,
+        ref,
+        repo_id=repo_id,
+        worktree_path=worktree_path,
     ),
     set_repo_ref_fn=lambda name, repo_id, selected_ref: set_repo_ref(
-        name, repo_id=repo_id, selected_ref=selected_ref
+        name,
+        repo_id=repo_id,
+        selected_ref=selected_ref,
     ),
     lock_target_fn=lambda name: lock_target(name),
     materialize_target_fn=lambda name: materialize_target(name),
 )
 
-
-@app.command("timeline", help="Show git-first timeline for a target repo.")
-def timeline_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
-    limit: int = typer.Option(30, "--limit", help="Number of recent commits."),
-    branch: str | None = typer.Option(
-        None,
-        "--branch",
-        help="Optional branch name to constrain timeline.",
-    ),
-) -> None:
-    data = target_timeline(name, repo_id=repo_id, limit=limit, branch=branch)
-    console.print_json(json.dumps(data).decode())
-
-
-@app.command("run", help="Run a task command in a materialized target repo checkout.")
-def run_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target runtime."),
-    runner: str | None = typer.Option(
-        None,
-        "--runner",
-        help="Explicit runner override (task|just|make|pnpm|npm|bun).",
-    ),
-    command: str | None = typer.Option(
-        None,
-        "--command",
-        help="Explicit command/target name for runner.",
-    ),
-    ref: str | None = typer.Option(
-        None,
-        "--ref",
-        help="Ref to resolve for this execution (branch/tag/sha).",
-    ),
-    branch: str | None = typer.Option(None, "--branch", help="Alias for --ref."),
-    all_repos: bool = typer.Option(
-        False,
-        "--all-repos",
-        help="Run command selection on all repos in target.",
-    ),
-    execution_mode: str = typer.Option(
-        "serial",
-        "--mode",
-        help="Execution mode for --all-repos: serial|parallel.",
-    ),
-    env_profile: str | None = typer.Option(
-        None,
-        "--env-profile",
-        help="Optional env profile name.",
-    ),
-    no_interactive: bool = typer.Option(
-        False,
-        "--no-interactive",
-        help="Fail if command selection would be interactive.",
-    ),
-) -> None:
-    if ref is not None and branch is not None:
-        raise typer.BadParameter("--ref and --branch are mutually exclusive")
-
-    exit_code = run_target(
-        name,
-        repo_id=repo_id,
-        runner=runner,
-        command_name=command,
-        selected_ref=ref or branch,
-        all_repos=all_repos,
-        execution_mode=execution_mode,
-        env_profile=env_profile,
-        non_interactive=no_interactive,
-    )
-    raise typer.Exit(exit_code)
-
-
-@env_app.command("doctor", help="Run fail-fast environment doctor for a materialized target.")
-def env_doctor_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    report = run_env_doctor_for_target(name)
-    console.print_json(json.dumps(report).decode())
-    if report["doctor_status"] != "pass":
-        raise typer.Exit(2)
-
-
-@env_app.command("profile-set", help="Set or replace a named env profile for target run commands.")
-def env_profile_set_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    profile: str = typer.Option(..., "--profile", help="Profile name."),
-    vars: list[str] = typer.Option([], "--var", help="KEY=VALUE pairs; may be repeated."),
-) -> None:
-    values: dict[str, str] = {}
-    for pair in vars:
-        if "=" not in pair:
-            raise typer.BadParameter("Each --var must be KEY=VALUE")
-        key, value = pair.split("=", 1)
-        if not key:
-            raise typer.BadParameter("Environment variable key cannot be empty")
-        values[key] = value
-    state = set_env_profile(name, profile, values)
-    console.print_json(json.dumps(state).decode())
-
-
-@env_app.command("profile-show", help="Show active or named env profile for target run commands.")
-def env_profile_show_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    profile: str | None = typer.Option(None, "--profile", help="Optional profile name."),
-) -> None:
-    payload = {
-        "target": name,
-        "profile": profile or "active",
-        "env": get_env_profile(name, profile=profile),
-    }
-    console.print_json(json.dumps(payload).decode())
-
-
-@app.command("sync", help="Verify and repair dual .phench mirror drift.")
-def sync_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    prefer: str | None = typer.Option(
-        None,
-        "--prefer",
-        help="Drift resolution source: projects|home.",
-    ),
-) -> None:
-    result = sync_target(name, prefer=prefer)
-    console.print_json(json.dumps(result).decode())
-
-
-@snapshot_app.command("create", help="Create a snapshot for a target.")
-def snapshot_create_cmd(
-    target: str = typer.Argument(..., help="Target name."),
-    snapshot_id: str | None = typer.Option(
-        None,
-        "--snapshot-id",
-        help="Optional snapshot identifier.",
-    ),
-) -> None:
-    result = create_target_snapshot(target, snapshot_id=snapshot_id)
-    console.print_json(json.dumps(result).decode())
-
-
-@snapshot_app.command("list", help="List snapshots for a target.")
-def snapshot_list_cmd(target: str = typer.Argument(..., help="Target name.")) -> None:
-    snapshots = list_target_snapshots(target)
-    console.print_json(json.dumps(snapshots).decode())
-
-
-@snapshot_app.command("show", help="Show a target snapshot payload.")
-def snapshot_show_cmd(
-    target: str = typer.Argument(..., help="Target name."),
-    snapshot_id: str = typer.Argument(..., help="Snapshot ID."),
-) -> None:
-    payload = show_target_snapshot(target, snapshot_id)
-    console.print_json(json.dumps(payload).decode())
-
-
-@repos_app.command("discover", help="Discover git checkouts in sibling workspace roots.")
-def repos_discover_cmd(
-    repo_root: Path | None = typer.Option(
-        None,
-        "--repo-root",
-        help="Workspace root to scan. Defaults to THGENT_PHENOTYPE_REPOS_ROOT if unset.",
-    ),
-    include: list[str] = typer.Option(
-        [],
-        "--include",
-        help="Glob include pattern; repeat for multiple values.",
-    ),
-    exclude: list[str] = typer.Option(
-        [],
-        "--exclude",
-        help="Glob exclude pattern; repeat for multiple values.",
-    ),
-) -> None:
-    repos = discover_repos(root=repo_root, include=include or None, exclude=exclude or None)
-    payload = [{"repo_id": item.repo_id, "path": str(item.path)} for item in repos]
-    console.print_json(json.dumps(payload).decode())
-
+register_timeline_commands(app, target_timeline_fn=_timeline_dispatch)
+register_run_commands(app, run_target_fn=_run_dispatch)
+register_env_commands(
+    env_app,
+    run_env_doctor_for_target_fn=_run_env_doctor_dispatch,
+    set_env_profile_fn=_set_env_profile_dispatch,
+    get_env_profile_fn=_get_env_profile_dispatch,
+)
+register_sync_commands(app, sync_target_fn=_sync_target_dispatch)
+register_snapshot_commands(
+    snapshot_app,
+    create_target_snapshot_fn=_snapshot_create_dispatch,
+    list_target_snapshots_fn=_snapshot_list_dispatch,
+    show_target_snapshot_fn=_snapshot_show_dispatch,
+)
+register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
 
 register_projects_run(
     projects_app,
