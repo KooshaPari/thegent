@@ -2,6 +2,12 @@
 
 import logging
 import time
+
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 from collections.abc import Callable
 from enum import StrEnum
 from typing import Any
@@ -16,10 +22,24 @@ from thegent_agents.agents.base import RunResult
 from thegent_agents.agents.checker import CheckerAgent, CheckerDecision, CheckerResult
 from thegent_agents.agents.presets import get_preset, match_preset
 from thegent_agents.agents.resilience import TransientAgentError, with_retry
-from thegent_cli.cli.commands.impl import run_impl
 from thegent_core.config import ThegentSettings
+from thegent_core.ports.driving.runner import NullRunnerPort
 
-_log = logging.getLogger(__name__)
+# Module-level port slots — populated at startup by the CLI layer.
+_run_impl: Any = NullRunnerPort()
+_dag_status_impl: Any = NullRunnerPort()
+
+
+def set_run_impl(impl: Any) -> None:
+    """Register the concrete run_impl callable (from thegent_cli)."""
+    global _run_impl
+    _run_impl = impl
+
+
+def set_dag_status_impl(impl: Any) -> None:
+    """Register the concrete dag_status_impl callable (from thegent_cli)."""
+    global _dag_status_impl
+    _dag_status_impl = impl
 
 
 class LoopMode(StrEnum):
@@ -72,7 +92,7 @@ class LifecycleController:
     @with_retry(max_attempts=3, min_wait=2.0, max_wait=60.0)
     def _run_worker_with_retry(self, current_prompt: str) -> dict[str, Any]:
         """Run worker agent; raises TransientAgentError on retryable failure."""
-        result = run_impl(
+        result = _run_impl(
             agent=None if self.worker_model else self.worker_agent_name,
             prompt=current_prompt,
             cd=self.settings.cwd,
@@ -111,7 +131,7 @@ class LifecycleController:
         session_dir = self.settings.session_dir / self.state.session_id
         session_dir.mkdir(parents=True, exist_ok=True)
 
-        _log.info("Starting Lifecycle loop session=%s mode=%s", self.state.session_id, self.mode)
+        _log.info("loop_started", session_id=self.state.session_id, mode=str(self.mode))
 
         with Progress(
             SpinnerColumn(),
@@ -130,7 +150,7 @@ class LifecycleController:
 
             while self.state.iteration < self.max_iterations and not self.state.stopped:
                 self.state.iteration += 1
-                _log.info("Iteration %d/%d", self.state.iteration, self.max_iterations)
+                _log.info("loop_iteration", iteration=self.state.iteration, max_iterations=self.max_iterations)
                 progress.update(
                     task,
                     completed=self.state.iteration,
@@ -154,14 +174,14 @@ class LifecycleController:
                     try:
                         data = json.loads(takeover_file.read_text(encoding="utf-8"))
                         current_prompt = data["prompt"]
-                        _log.info("Human takeover detected. Injecting prompt.")
+                        _log.info("human_takeover_detected")
                         if on_progress:
                             on_progress(
                                 self.state.iteration, self.max_iterations, "Human takeover detected. Injecting prompt."
                             )
                         takeover_file.unlink()
                     except Exception as e:
-                        _log.error("Failed to read takeover file: %s", e)
+                        _log.error("takeover_file_read_failed", error=str(e))
 
                 # 2. Governance Pre-check (WP-3001)
                 try:
@@ -184,7 +204,7 @@ class LifecycleController:
                         "warnings": [reason] if effect == "warn" else [],
                     }
                 except Exception as e:
-                    _log.error("Governance pre-check failed: %s. Using default allow.", e)
+                    _log.error("governance_precheck_failed", error=str(e), fallback="allow")
                     effect, reason = "allow", str(e)
                     gov_report = {"status": "ok", "denials": [], "warnings": []}
 
@@ -213,13 +233,15 @@ class LifecycleController:
                         break
                 except TransientAgentError as e:
                     _log.warning(
-                        "Worker failed after retries: %s", e.result.stderr[:200] if e.result.stderr else str(e)
+                        "worker_failed_after_retries",
+                        stderr=e.result.stderr[:200] if e.result.stderr else None,
+                        error=str(e),
                     )
                     self.state.stopped = True
                     self.state.stop_reason = f"Worker failed after retries (code {e.result.exit_code})"
                     break
                 except Exception as e:
-                    _log.error("Worker execution failed: %s", e)
+                    _log.error("worker_execution_failed", error=str(e))
                     self.state.stopped = True
                     self.state.stop_reason = f"Worker exception: {e}"
                     break
@@ -248,16 +270,14 @@ class LifecycleController:
                 matched_preset = match_preset(combined)
                 if matched_preset:
                     current_prompt = matched_preset.prompt
-                    _log.info("Matched output to preset: %s", matched_preset.id)
+                    _log.info("preset_matched", preset_id=matched_preset.id)
                     if on_progress:
                         on_progress(self.state.iteration, self.max_iterations, f"Matched preset: {matched_preset.id}")
                     continue
 
                 # 6. Invoke Checker Agent (WP-1201 Phase 2/3 - LLM Fallback)
                 try:
-                    from thegent_cli.cli.commands.impl import dag_status_impl
-
-                    wbs_status = dag_status_impl(self.settings.cwd)
+                    wbs_status = _dag_status_impl(self.settings.cwd)
 
                     if on_progress:
                         on_progress(
@@ -273,10 +293,10 @@ class LifecycleController:
                         agent_response=combined,
                     )
                 except Exception as e:
-                    _log.error("Checker failed: %s. Using default CONTINUE.", e)
+                    _log.error("checker_failed", error=str(e), fallback="CONTINUE")
                     decision_result = CheckerResult(decision=CheckerDecision.CONTINUE, reason=str(e))
 
-                _log.info("Checker decision: %s (reason: %s)", decision_result.decision, decision_result.reason)
+                _log.info("checker_decision", decision=str(decision_result.decision), reason=decision_result.reason)
                 if on_progress:
                     on_progress(
                         self.state.iteration, self.max_iterations, f"Checker decision: {decision_result.decision}"
@@ -317,7 +337,7 @@ class LifecycleController:
             try:
                 self.verification_callback(self.task_id, self.state)
             except Exception as e:
-                _log.warning("Verification callback failed: %s", e)
+                _log.warning("verification_callback_failed", error=str(e))
 
         return self.state
 

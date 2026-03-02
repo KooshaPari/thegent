@@ -245,9 +245,9 @@ def scrape_proxy(settings: ThegentSettings | None = None) -> dict[str, list[str]
     settings = settings or ThegentSettings()
     base_url = f"http://127.0.0.1:{settings.cliproxy_port}/v1"
     try:
-        from thegent_agents.agents.cliproxy_manager import ensure_proxy_running
+        from thegent_core.models.cost_values import _get_proxy_metrics_port
 
-        base_url = ensure_proxy_running(settings)
+        base_url = _get_proxy_metrics_port().ensure_proxy_running(settings)
     except Exception:
         pass
 

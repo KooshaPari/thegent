@@ -27,6 +27,12 @@ from __future__ import annotations
 import asyncio
 import orjson as json
 import logging
+
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -38,7 +44,6 @@ from thegent_agents.flash_agent import FlashAgent, FlashAgentConfig
 if TYPE_CHECKING:
     from thegent_execution.orchestration.dispatcher import SubAgentDispatcher
 
-_log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Data types

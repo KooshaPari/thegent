@@ -38,7 +38,11 @@ from thegent_agents.agents.flash_agent import FlashAgent, FlashAgentConfig
 if TYPE_CHECKING:
     from thegent_execution.orchestration.dispatcher import SubAgentDispatcher
 
-_log = logging.getLogger(__name__)
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 
 # ---------------------------------------------------------------------------
 # Data types
@@ -194,7 +198,7 @@ class PlangentPlanner:
             plan.nodes.append(node)
             prev_id = node.id
 
-        _log.debug("Decomposed goal=%r into %d nodes", goal, len(plan.nodes))
+        _log.debug("plan_decomposed", goal=goal, node_count=len(plan.nodes))
         return plan
 
     def next_ready_tasks(self, plan: Plan) -> list[PlanNode]:
@@ -228,7 +232,7 @@ class PlangentPlanner:
             raise ValueError(f"Node '{node_id}' not found in plan '{plan.id}'")
         node.status = "done"
         node.result = result
-        _log.debug("Node %s marked done (plan %s)", node_id, plan.id)
+        _log.debug("node_done", node_id=node_id, plan_id=plan.id)
 
     def mark_failed(self, plan: Plan, node_id: str, error: str) -> None:
         """Mark a node as failed.
@@ -246,7 +250,7 @@ class PlangentPlanner:
             raise ValueError(f"Node '{node_id}' not found in plan '{plan.id}'")
         node.status = "failed"
         node.error = error
-        _log.debug("Node %s marked failed (plan %s): %s", node_id, plan.id, error)
+        _log.debug("node_failed", node_id=node_id, plan_id=plan.id, error=error)
 
     def is_complete(self, plan: Plan) -> bool:
         """Return ``True`` when every node is ``done`` or ``failed``.
@@ -417,12 +421,12 @@ class PlangentExecutor:
         Returns:
             The mutated *plan* with updated node statuses.
         """
-        _log.info("Executing plan %s (%d nodes) goal=%r", plan.id, len(plan.nodes), plan.goal)
+        _log.info("plan_executing", plan_id=plan.id, node_count=len(plan.nodes), goal=plan.goal)
 
         while not self.planner.is_complete(plan):
             ready = self.planner.next_ready_tasks(plan)
             if not ready:
-                _log.warning("No ready tasks; plan %s may be deadlocked", plan.id)
+                _log.warning("plan_possible_deadlock", plan_id=plan.id)
                 break
 
             for node in ready:
@@ -432,18 +436,13 @@ class PlangentExecutor:
                     self.planner.mark_done(plan, node.id, result)
                 except Exception as exc:
                     error_msg = str(exc)
-                    _log.error("Node %s failed: %s", node.id, error_msg)
+                    _log.error("node_failed", node_id=node.id, error=error_msg)
                     self.planner.mark_failed(plan, node.id, error_msg)
                     if self.fail_fast:
-                        _log.info("fail_fast=True; stopping plan %s after node %s failure", plan.id, node.id)
+                        _log.info("plan_stopped_fail_fast", plan_id=plan.id, failed_node_id=node.id)
                         return plan
 
-        _log.info(
-            "Plan %s complete: %d done, %d failed",
-            plan.id,
-            len(plan.done_ids),
-            len(plan.failed_ids),
-        )
+        _log.info("plan_complete", plan_id=plan.id, done=len(plan.done_ids), failed=len(plan.failed_ids))
         return plan
 
     # ------------------------------------------------------------------
@@ -512,12 +511,12 @@ class PlangentExecutor:
 
         # @trace WL-084
         """
-        _log.info("Async-executing plan %s (%d nodes)", plan.id, len(plan.nodes))
+        _log.info("plan_async_executing", plan_id=plan.id, node_count=len(plan.nodes))
 
         while not self.planner.is_complete(plan):
             ready = self.planner.next_ready_tasks(plan)
             if not ready:
-                _log.warning("No ready tasks; plan %s may be deadlocked (async)", plan.id)
+                _log.warning("plan_possible_deadlock", plan_id=plan.id, mode="async")
                 break
 
             # Mark all ready nodes as running before dispatching.
@@ -538,20 +537,15 @@ class PlangentExecutor:
 
             for node_id, outcome in outcomes:
                 if isinstance(outcome, Exception):
-                    _log.error("Node %s failed (async): %s", node_id, outcome)
+                    _log.error("node_failed", node_id=node_id, outcome=outcome, mode="async")
                     self.planner.mark_failed(plan, node_id, str(outcome))
                     if self.fail_fast:
-                        _log.info("fail_fast=True; stopping plan %s", plan.id)
+                        _log.info("plan_stopped_fail_fast", plan_id=plan.id, mode="async")
                         return plan
                 else:
                     self.planner.mark_done(plan, node_id, outcome)
 
-        _log.info(
-            "Plan %s async-complete: %d done, %d failed",
-            plan.id,
-            len(plan.done_ids),
-            len(plan.failed_ids),
-        )
+        _log.info("plan_async_complete", plan_id=plan.id, done=len(plan.done_ids), failed=len(plan.failed_ids))
         return plan
 
     # ------------------------------------------------------------------
@@ -584,11 +578,7 @@ class PlangentExecutor:
 
             dispatcher = _SubAgentDispatcher(capability_index=CapabilityIndex.get())
 
-        _log.info(
-            "Orchestration-dispatching plan %s (%d nodes) via SubAgentDispatcher",
-            plan.id,
-            len(plan.nodes),
-        )
+        _log.info("orchestration_dispatching", plan_id=plan.id, node_count=len(plan.nodes))
 
         dispatch_results = await dispatcher.dispatch_plan(plan)
 
@@ -601,7 +591,7 @@ class PlangentExecutor:
                 # no nodes or a topological deadlock left some unreachable.
                 # Fail loudly — do not silently skip.
                 error_msg = f"No DispatchResult returned for node {node.id} in plan {plan.id}"
-                _log.error(error_msg)
+                _log.error("orchestration_error", error=error_msg)
                 self.planner.mark_failed(plan, node.id, error_msg)
                 aggregator.add(
                     _make_aggregator_message(
@@ -614,7 +604,7 @@ class PlangentExecutor:
                 )
                 if self.fail_fast:
                     plan.metadata["aggregation"] = aggregator.aggregate()
-                    _log.info("fail_fast=True; stopping orchestration plan %s", plan.id)
+                    _log.info("orchestration_stopped_fail_fast", plan_id=plan.id)
                     return plan
                 continue
 
@@ -641,25 +631,21 @@ class PlangentExecutor:
                     node_id=node.id,
                 )
                 self.planner.mark_failed(plan, node.id, error_msg)
-                _log.error("Node %s failed in orchestration plan %s: %s", node.id, plan.id, error_msg)
+                _log.error("orchestration_node_failed", node_id=node.id, plan_id=plan.id, error=error_msg)
                 if self.fail_fast:
                     plan.metadata["aggregation"] = aggregator.aggregate()
-                    _log.info(
-                        "fail_fast=True; stopping orchestration plan %s after node %s",
-                        plan.id,
-                        node.id,
-                    )
+                    _log.info("orchestration_stopped_fail_fast", plan_id=plan.id, failed_node_id=node.id)
                     return plan
 
         agg_result = aggregator.aggregate()
         plan.metadata["aggregation"] = agg_result
 
         _log.info(
-            "Orchestration plan %s complete: %d done, %d failed — aggregation passed=%s",
-            plan.id,
-            len(plan.done_ids),
-            len(plan.failed_ids),
-            agg_result["passed"],
+            "orchestration_plan_complete",
+            plan_id=plan.id,
+            done=len(plan.done_ids),
+            failed=len(plan.failed_ids),
+            aggregation_passed=agg_result["passed"],
         )
         return plan
 
@@ -956,12 +942,7 @@ class LLMPlangentPlanner(PlangentPlanner):
         nodes = await self._generate_plan_nodes(goal, max_depth)
 
         if nodes is None:
-            _log.warning(
-                "LLMPlangentPlanner: FlashAgent unavailable for goal=%r; "
-                "falling back to heuristic for OrchestrationPlan (model=%s)",
-                goal,
-                self._model,
-            )
+            _log.warning("llm_unavailable_fallback_heuristic", goal=goal, model=self._model)
             # Heuristic path: call parent's _generate_sub_tasks directly to
             # avoid asyncio.run() nesting (decompose() calls asyncio.run inside
             # _generate_sub_tasks(), which would fail in an async context).
@@ -975,11 +956,7 @@ class LLMPlangentPlanner(PlangentPlanner):
             return oplan
 
         oplan = OrchestrationPlan(goal=goal, nodes=nodes)
-        _log.debug(
-            "LLMPlangentPlanner: decomposed goal=%r into %d OrchestrationPlan nodes",
-            goal,
-            len(oplan.nodes),
-        )
+        _log.debug("orchestration_plan_decomposed", goal=goal, node_count=len(oplan.nodes))
         return oplan
 
     # ------------------------------------------------------------------
@@ -1020,25 +997,14 @@ class LLMPlangentPlanner(PlangentPlanner):
 
         if not result.success:
             # Model unavailable — caller decides on fallback.
-            _log.warning(
-                "LLMPlangentPlanner: FlashAgent call unsuccessful (agent_id=%s, elapsed=%.2fs)",
-                result.agent_id,
-                result.elapsed_s,
-            )
+            _log.warning("flash_agent_call_failed", agent_id=result.agent_id, elapsed_s=result.elapsed_s)
             return None
 
-        _log.debug(
-            "LLMPlangentPlanner: FlashAgent returned %d chars (agent_id=%s)",
-            len(result.output),
-            result.agent_id,
-        )
+        _log.debug("flash_agent_returned", chars=len(result.output), agent_id=result.agent_id)
 
         # Parse + validate — ValueError propagates to caller as hard failure.
         specs = _parse_llm_response(result.output)
         nodes = _specs_to_plan_nodes(specs)
 
-        _log.debug(
-            "LLMPlangentPlanner: validated %d nodes from LLM output",
-            len(nodes),
-        )
+        _log.debug("llm_nodes_validated", node_count=len(nodes))
         return nodes

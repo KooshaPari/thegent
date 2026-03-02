@@ -16,6 +16,7 @@ Opt-in extensions:
 
 from __future__ import annotations
 
+import asyncio
 import orjson as json
 import time
 from datetime import datetime, UTC
@@ -132,7 +133,7 @@ class VetterOrchestrator:
 
         duration_ms = int((time.monotonic_ns() - start_ns) // 1_000_000)
 
-        self._emit_vetter_decision(
+        await self._emit_vetter_decision_async(
             run_id=run_id,
             verdict=verdict,
             check_results=check_results,
@@ -263,13 +264,43 @@ class VetterOrchestrator:
             },
         )
 
+    async def _emit_vetter_decision_async(
+        self,
+        run_id: str,
+        verdict: VetterVerdict,
+        check_results: list[VetterCheckResult],
+        duration_ms: int,
+        run_context: dict[str, Any],
+    ) -> None:
+        """Async-safe variant of _emit_vetter_decision for use inside coroutines."""
+        passed_checks = [cr.check_name for cr in check_results if cr.passed]
+        failed_checks = [cr.check_name for cr in check_results if not cr.passed]
+        session_id = str(run_context.get("session_id", "")).strip()
+        await self._write_event_async(
+            event={
+                "event_type": "vetter_decision",
+                "timestamp": datetime.now(tz=UTC).isoformat(),
+                "session_id": session_id,
+                "run_id": run_id,
+                "verdict": verdict.value,
+                "passed_checks": passed_checks,
+                "failed_checks": failed_checks,
+                "duration_ms": duration_ms,
+            },
+        )
+
     def _write_event(self, event: dict[str, Any]) -> None:
+        # Synchronous write used from non-async contexts (e.g. __init__, cleanup).
         events_file: Path = self.session_dir / "governance_events.jsonl"
         self.session_dir.mkdir(parents=True, exist_ok=True)
         with events_file.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(event).decode() + "\n")
         if self.event_log is not None:
             self.event_log.emit(event)
+
+    async def _write_event_async(self, event: dict[str, Any]) -> None:
+        """Async-safe variant: offloads the blocking file write to a thread pool."""
+        await asyncio.to_thread(self._write_event, event)
 
     def _emit_vetter_escalation(
         self,

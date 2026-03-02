@@ -7,6 +7,12 @@ enforcing fallback policies and semantic validation gates.
 import hashlib
 import orjson as json
 import logging
+
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -26,7 +32,6 @@ from thegent_core.contracts.telemetry import (
 )
 from thegent_core.contracts.validation import validate_csm
 
-_log = logging.getLogger(__name__)
 
 
 class PromotionGate:

@@ -8,6 +8,12 @@ import hashlib
 import orjson as json
 import logging
 import time
+
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -25,8 +31,6 @@ from thegent_core.contracts.telemetry import (
     ContractTelemetry,
 )
 from thegent_core.contracts.validation import validate_csm
-
-_log = logging.getLogger(__name__)
 
 
 class PromotionGate:
@@ -174,7 +178,7 @@ class FallbackStateMachine:
                 "agent_attempt",
                 attributes={"agent": current_agent, "attempt": self.state.attempt},
             )
-            _log.info("Attempting %s (attempt %d/%d)", current_agent, self.state.attempt, self.max_retries)
+            _log.info("agent_attempt", agent=current_agent, attempt=self.state.attempt, max_retries=self.max_retries)
             result = runner.run(prompt=prompt, **run_kwargs)
             if result.exit_code != 0:
                 failure_kind = classify_failure(result)
@@ -224,14 +228,14 @@ class FallbackStateMachine:
                 # SLO Latency Check (WP-X6)
                 elapsed_ms = (time.time() - self.state.start_time) * 1000
                 if elapsed_ms > self.policy.max_latency_ms:
-                    _log.warning("SLO: max_latency_ms exceeded (%dms > %dms)", elapsed_ms, self.policy.max_latency_ms)
+                    _log.warning("slo_latency_exceeded", elapsed_ms=elapsed_ms, max_latency_ms=self.policy.max_latency_ms)
                     self.state.errors.append(f"SLO Timeout ({current_agent})")
                     break
 
                 # 1. Resolve runner
                 runner = runner_factory(current_agent)
                 if runner is None:
-                    _log.error("No runner found for %s", current_agent)
+                    _log.error("runner_not_found", agent=current_agent)
                     self.state.errors.append(f"No runner for {current_agent}")
                     break
 
@@ -241,17 +245,17 @@ class FallbackStateMachine:
                 except TransientAgentError as e:
                     self.state.last_result = e.result
                     _log.warning(
-                        "Run failed for %s after %d retries (code %d)",
-                        current_agent,
-                        self.max_retries,
-                        e.result.exit_code,
+                        "run_failed_after_retries",
+                        agent=current_agent,
+                        max_retries=self.max_retries,
+                        exit_code=e.result.exit_code,
                     )
                     self.state.errors.append(f"Run failed ({current_agent}, code {e.result.exit_code})")
                     break
                 except Exception as e:
                     import traceback
 
-                    _log.error("Execution error for %s: %s\n%s", current_agent, e, traceback.format_exc())
+                    _log.error("execution_error", agent=current_agent, error=str(e), traceback=traceback.format_exc())
                     self.state.errors.append(f"Execution error ({current_agent}): {e}")
                     break
 
@@ -260,12 +264,12 @@ class FallbackStateMachine:
                 # 3. Failure Classification (non-retryable)
                 failure_kind = classify_failure(result)
                 if failure_kind == FailureKind.USAGE_LIMIT:
-                    _log.warning("Usage limit reached for %s. Falling back.", current_agent)
+                    _log.warning("usage_limit_reached", agent=current_agent, action="fallback")
                     self.state.errors.append(f"Usage limit ({current_agent})")
                     break
 
                 if result.exit_code != 0:
-                    _log.warning("Run failed for %s (code %d)", current_agent, result.exit_code)
+                    _log.warning("run_failed", agent=current_agent, exit_code=result.exit_code)
                     self.state.errors.append(f"Run failed ({current_agent}, code {result.exit_code})")
                     break
 
@@ -280,7 +284,7 @@ class FallbackStateMachine:
                 semantic_issues = validate_csm(norm_res.csm)
                 self.state.semantic_issues = semantic_issues
                 if semantic_issues:
-                    _log.warning("Semantic validation failed for %s: %s", current_agent, semantic_issues)
+                    _log.warning("semantic_validation_failed", agent=current_agent, issues=semantic_issues)
 
                 # 5. Fallback Policy Evaluation
                 is_fallback = norm_res.csm.source_contract == "fallback-plain"
@@ -333,7 +337,7 @@ class FallbackStateMachine:
                         gate = PromotionGate(self.telemetry.session_dir)
                         gate_issues = gate.validate_promotion(norm_res.csm, self.policy)
                         if gate_issues:
-                            _log.warning("Promotion gate failed for %s: %s", current_agent, gate_issues)
+                            _log.warning("promotion_gate_failed", agent=current_agent, issues=gate_issues)
                             self.state.errors.append(f"Promotion gate failure ({current_agent})")
                             break
 
@@ -347,13 +351,13 @@ class FallbackStateMachine:
 
                 # If we have other providers, move to next provider
                 if self.state.provider_index < len(self.providers) - 1:
-                    _log.info("Violations found and fallbacks available. Moving to next provider.")
+                    _log.info("fallback_triggered", reason="violations_found")
                     self.state.errors.append(f"Policy/Semantic violation ({current_agent})")
                     break
                 # No more providers. Accept if not a hard block.
                 hard_block = any("disabled" in v or "strict" in v for v in policy_violations)
                 if not hard_block:
-                    _log.info("No more providers. Accepting output despite violations.")
+                    _log.info("no_more_providers", action="accepting_output_with_violations")
                     self.state.status = "success"
                     return result, norm_res
                 self.state.status = "failed"

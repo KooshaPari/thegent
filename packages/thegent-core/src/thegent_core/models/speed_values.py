@@ -2,6 +2,13 @@
 
 Uses CLIProxyAPIPlus GET /v1/metrics/providers (tps_1m, latency_p50_ms, latency_p95_ms, success_rate)
 when available; falls back to Route.latency_ms from catalog.
+
+Circular-dependency note
+------------------------
+This module previously imported fetch_provider_metrics directly from
+thegent_agents.agents.cliproxy_manager, creating a Core ↔ Agents cycle.
+It now uses the ProxyMetricsPort from cost_values (same port instance), which is
+injected at startup.  See thegent_core.models.cost_values.set_proxy_metrics_port().
 """
 
 from __future__ import annotations
@@ -113,10 +120,9 @@ def get_model_provider_speed_indices(
         if cached is not None:
             return cached
 
-    from thegent_agents.agents.cliproxy_manager import fetch_provider_metrics
-    from thegent_core.models.cost_values import _iter_catalog_routes
+    from thegent_core.models.cost_values import _get_proxy_metrics_port, _iter_catalog_routes
 
-    metrics = fetch_provider_metrics(s) if s else None
+    metrics = _get_proxy_metrics_port().fetch_provider_metrics(s) if s else None
 
     result: dict[str, dict[str, float]] = {}
     for model_id, routes in _iter_catalog_routes():

@@ -12,54 +12,73 @@ from fastmcp.server.lifespan import lifespan
 from fastmcp.server.transforms import PromptsAsTools, ResourcesAsTools
 from fastmcp.tools.tool import ToolResult
 from thegent_protocols.mcp import server_optional_tools as _server_optional_tools
-from thegent_cli.cli.commands.impl import (
-    ELICIT_CWD_MSG,
-    ELICIT_OWNER_MSG,
-    _coerce_issue_types,
-    _default_owner_tag,
-    _resolve_cwd,
-    bg_impl,
-    continuity_snapshot_impl,
-    dag_list_impl,
-    dag_status_impl,
-    do_next_impl,
-    escalate_add_impl,
-    escalate_approve_impl,
-    escalate_list_impl,
-    escalate_resolve_impl,
-    get_server_meta_impl,
-    govern_approve_impl,
-    govern_list_pending_impl,
-    govern_reject_impl,
-    govern_vet_impl,
-    history_impl,
-    inbox_list_impl,
-    incorporate_impl,
-    inspect_impl,
-    list_agents_impl,
-    list_droids_impl,
-    list_models_impl,
-    logs_impl,
-    observe_summary_impl,
-    plan_analyze_impl,
-    ps_impl,
-    retry_impl,
-    run_impl,
-    session_contract_audit_impl,
-    session_contract_health_gate_impl,
-    session_contract_health_report_impl,
-    session_contract_health_trend_impl,
-    session_contract_negotiate_impl,
-    session_send_impl,
-    status_impl,
-    stop_impl,
-    wait_impl,
-    wait_next_impl,
-    work_stream_claim_impl,
-    work_stream_complete_impl,
-)
+# CLI functions are loaded lazily via cli_bridge to avoid the CLI ↔ Protocols
+# circular dependency.  The _cli proxy resolves thegent_cli on first access.
+from thegent_protocols.mcp.cli_bridge import cli as _cli
 from thegent_core.config import ThegentSettings
-from thegent_cli.ide.auto_init import auto_init_on_startup
+
+# ---------------------------------------------------------------------------
+# Lazy CLI symbol aliases
+# All names that were previously imported directly from thegent_cli.cli.commands.impl
+# are now resolved lazily through _cli.  Using property-like lambdas keeps
+# all downstream call-sites in this file unchanged.
+# ---------------------------------------------------------------------------
+
+
+def __getattr__(name: str):  # noqa: N807 — module-level __getattr__ (PEP 562)
+    """Resolve CLI impl names lazily to break the CLI ↔ Protocols import cycle."""
+    _CLI_SYMBOLS = {
+        "ELICIT_CWD_MSG",
+        "ELICIT_OWNER_MSG",
+        "_coerce_issue_types",
+        "_default_owner_tag",
+        "_resolve_cwd",
+        "bg_impl",
+        "continuity_snapshot_impl",
+        "dag_list_impl",
+        "dag_status_impl",
+        "do_next_impl",
+        "escalate_add_impl",
+        "escalate_approve_impl",
+        "escalate_list_impl",
+        "escalate_resolve_impl",
+        "get_server_meta_impl",
+        "govern_approve_impl",
+        "govern_list_pending_impl",
+        "govern_reject_impl",
+        "govern_vet_impl",
+        "history_impl",
+        "inbox_list_impl",
+        "incorporate_impl",
+        "inspect_impl",
+        "list_agents_impl",
+        "list_droids_impl",
+        "list_models_impl",
+        "logs_impl",
+        "observe_summary_impl",
+        "plan_analyze_impl",
+        "ps_impl",
+        "retry_impl",
+        "run_impl",
+        "session_contract_audit_impl",
+        "session_contract_health_gate_impl",
+        "session_contract_health_report_impl",
+        "session_contract_health_trend_impl",
+        "session_contract_negotiate_impl",
+        "session_send_impl",
+        "status_impl",
+        "stop_impl",
+        "wait_impl",
+        "wait_next_impl",
+        "work_stream_claim_impl",
+        "work_stream_complete_impl",
+        "auto_init_on_startup",
+    }
+    if name in _CLI_SYMBOLS:
+        if name == "auto_init_on_startup":
+            return _cli.auto_init_on_startup
+        return getattr(_cli, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 from thegent_protocols.mcp import server_bootstrap as _server_bootstrap
 from thegent_protocols.mcp import server_cache_elicitation_response as _cache_elicitation_response_shared
 from thegent_protocols.mcp import server_catalog_tools as _server_tools_catalog

@@ -10,9 +10,11 @@ Modules migrated from thegent monolith src/thegent/:
 - constants    : Global constants
 - contracts/   : Contract registry, CSM schema, canonical event schemas
 - models/      : Model catalog, routing, and scraper infrastructure
+- container    : DI container (Container, global_container)
 """
 
 # Re-exports will be enabled after import paths are rewritten.
 # For now, import submodules directly:
 #   from thegent_core.config.settings import ThegentSettings
 #   from thegent_core.contracts.csm import CanonicalStructuredMessage
+#   from thegent_core.container import Container, global_container

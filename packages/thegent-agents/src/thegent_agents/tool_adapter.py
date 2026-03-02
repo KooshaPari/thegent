@@ -3,6 +3,7 @@ Enables agents to discover, wrap, and use new tools dynamically at runtime.
 Includes automatic interface adaptation for foreign tool protocols.
 """
 
+import asyncio
 import orjson as json
 import logging
 import shlex
@@ -125,7 +126,15 @@ class ToolAdapter:
         cmd = shlex.split(tool.command)
         for key in sorted(kwargs):
             cmd.extend([f"--{key.replace('_', '-')}", str(kwargs[key])])
-        process = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        # Use asyncio.to_thread so the blocking subprocess.run does not stall
+        # the event loop.  subprocess.run is kept (rather than
+        # asyncio.create_subprocess_exec) because the existing call-site
+        # already relies on full shell-level argument quoting via shlex.split
+        # and check=False semantics.
+        def _run_sync() -> subprocess.CompletedProcess:
+            return subprocess.run(cmd, capture_output=True, text=True, check=False)
+
+        process = await asyncio.to_thread(_run_sync)
         if process.returncode != 0:
             raise RuntimeError(process.stderr.strip() or f"Command failed with exit code {process.returncode}")
         return {

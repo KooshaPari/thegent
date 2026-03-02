@@ -2,14 +2,54 @@
 
 Uses CLIProxyAPIPlus GET /v1/metrics/providers when available; falls back to
 static catalog cost_weight, planning/models_meta, and governance defaults.
+
+Circular-dependency note
+------------------------
+This module previously imported fetch_provider_metrics directly from
+thegent_agents.agents.cliproxy_manager, creating a Core ↔ Agents cycle.
+It now uses the ProxyMetricsPort protocol defined in
+thegent_core.ports.driven.proxy_metrics.  A module-level NullProxyMetricsPort
+is used by default; the concrete implementation is injected at startup or
+resolved lazily via _get_proxy_metrics_port().
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from thegent_core.ports.driven.proxy_metrics import NullProxyMetricsPort, ProxyMetricsPort
+
 if TYPE_CHECKING:
     from thegent_core.config import ThegentSettings
+
+# Module-level port instance — replaced at startup by the concrete implementation
+# from thegent-agents via set_proxy_metrics_port().
+_proxy_metrics_port: ProxyMetricsPort = NullProxyMetricsPort()
+
+
+def set_proxy_metrics_port(port: ProxyMetricsPort) -> None:
+    """Register the concrete ProxyMetricsPort implementation.
+
+    Call this once at application startup (e.g. from the CLI entrypoint or DI
+    container) to wire in the real cliproxy_manager implementation.
+    """
+    global _proxy_metrics_port
+    _proxy_metrics_port = port
+
+
+def _get_proxy_metrics_port() -> ProxyMetricsPort:
+    """Return the active ProxyMetricsPort, trying to auto-load if still null."""
+    global _proxy_metrics_port
+    if isinstance(_proxy_metrics_port, NullProxyMetricsPort):
+        # Lazy attempt to load the concrete implementation without a hard import
+        try:
+            from thegent_agents.agents.cliproxy_manager import (  # type: ignore[import-not-found]
+                ClipProxyMetricsPort,
+            )
+            _proxy_metrics_port = ClipProxyMetricsPort()
+        except Exception:
+            pass  # Keep using NullProxyMetricsPort
+    return _proxy_metrics_port
 
 # Fallback $/1k (input, output) when proxy unreachable. From _GLM_OFFER_COST and catalog.
 _PROVIDER_FALLBACK: dict[str, tuple[float, float]] = {
@@ -49,8 +89,6 @@ def get_model_provider_costs(settings: ThegentSettings | None = None) -> dict[st
     Returns: {model_id: {provider: (input_per_1k_usd, output_per_1k_usd)}}
     Uses proxy metrics when reachable; falls back to static values.
     """
-    from thegent_agents.agents.cliproxy_manager import fetch_provider_metrics
-
     try:
         from thegent_core.config import ThegentSettings
 
@@ -58,7 +96,7 @@ def get_model_provider_costs(settings: ThegentSettings | None = None) -> dict[st
     except Exception:
         settings = None
 
-    metrics = fetch_provider_metrics(settings) if settings else None
+    metrics = _get_proxy_metrics_port().fetch_provider_metrics(settings) if settings else None
 
     # Provider -> (in, out) from metrics or fallback
     provider_costs: dict[str, tuple[float, float]] = {}
