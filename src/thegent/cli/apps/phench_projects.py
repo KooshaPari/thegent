@@ -13,20 +13,21 @@ from thegent.phench import load_target_lock
 
 console = Console()
 
-TargetResolver = Callable[[], list[str]]
-TargetLockLoader = Callable[[str], Any]
+TargetResolver = Callable[..., list[str]]
+TargetLockLoader = Callable[..., Any]
 TargetTimelineLoader = Callable[..., dict[str, Any]]
-TargetAction = Callable[[str], Any]
+TargetAction = Callable[..., Any]
 RunAction = Callable[..., int]
 
 
 def _ensure_target_name(
     target: str | None,
     *,
+    family: str | None,
     non_interactive: bool,
     list_targets_fn: TargetResolver,
 ) -> str:
-    targets = list_targets_fn()
+    targets = list_targets_fn(family=family)
     if not targets:
         raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
 
@@ -94,6 +95,7 @@ def _ensure_selected_ref(
     no_interactive: bool,
     timeline_limit: int,
     target_timeline_fn: TargetTimelineLoader,
+    family: str | None,
 ) -> str | None:
     if ref is not None:
         return ref
@@ -103,7 +105,7 @@ def _ensure_selected_ref(
     if no_interactive:
         return None
 
-    timeline = target_timeline_fn(selected_target, repo_id=selected_repo_id, limit=timeline_limit)
+    timeline = target_timeline_fn(selected_target, repo_id=selected_repo_id, family=family, limit=timeline_limit)
     options: list[tuple[str, str]] = [("HEAD", "HEAD")]
     for branch_name in timeline.get("branches", []):
         if branch_name:
@@ -164,6 +166,7 @@ def _parse_repo_ref_specs(
 def _projects_run_impl(
     *,
     target: str | None,
+    family: str | None,
     repo_id: str | None,
     runner: str | None,
     command: str | None,
@@ -186,8 +189,13 @@ def _projects_run_impl(
     if ref is not None and branch is not None:
         raise typer.BadParameter("--ref and --branch are mutually exclusive")
 
-    selected_target = _ensure_target_name(target, non_interactive=no_interactive, list_targets_fn=list_targets_fn)
-    lock = load_target_lock_fn(selected_target)
+    selected_target = _ensure_target_name(
+        target,
+        family=family,
+        non_interactive=no_interactive,
+        list_targets_fn=list_targets_fn,
+    )
+    lock = load_target_lock_fn(selected_target, family=family)
     repo_ref_pairs = _parse_repo_ref_specs(repo_refs, lock.repos)
     if repo_ref_pairs and all_repos:
         raise typer.BadParameter("--repo-ref is not compatible with --all-repos")
@@ -214,14 +222,15 @@ def _projects_run_impl(
             no_interactive=no_interactive,
             timeline_limit=timeline_limit,
             target_timeline_fn=target_timeline_fn,
+            family=family,
         )
 
     if selected_ref is not None and repo_ref_pairs:
         raise typer.BadParameter("--repo-ref conflicts with --ref/--branch")
 
     if not no_prepare:
-        lock_target_fn(selected_target)
-        materialize_target_fn(selected_target)
+        lock_target_fn(selected_target, family=family)
+        materialize_target_fn(selected_target, family=family)
 
     if repo_ref_pairs:
         run_codes: list[int] = []
@@ -237,6 +246,7 @@ def _projects_run_impl(
                     execution_mode="serial",
                     env_profile=env_profile,
                     non_interactive=no_interactive,
+                    family=family,
                 )
             )
         exit_code = next((code for code in run_codes if code != 0), 0)
@@ -251,6 +261,7 @@ def _projects_run_impl(
             execution_mode=execution_mode,
             env_profile=env_profile,
             non_interactive=no_interactive,
+            family=family,
         )
     raise typer.Exit(exit_code)
 
@@ -261,7 +272,7 @@ def register_projects_run(
     list_targets_fn: TargetResolver,
     load_target_lock_fn: TargetLockLoader | None = None,
     target_timeline_fn: TargetTimelineLoader,
-    target_status_fn: Callable[[str], Any],
+    target_status_fn: Callable[[str, str | None], Any],
     lock_target_fn: TargetAction,
     materialize_target_fn: TargetAction,
     run_target_fn: RunAction,
@@ -272,6 +283,7 @@ def register_projects_run(
     @projects_app.command("run", help="Run through guided target/repo/ref selection.")
     def projects_run_cmd(
         target: str | None = typer.Option(None, "--target", help="Target name to run."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
         repo_refs: list[str] | None = typer.Option(
             None,
@@ -291,12 +303,13 @@ def register_projects_run(
     ) -> None:
         _projects_run_impl(
             target=target,
+            family=family,
             repo_id=repo_id,
-            repo_refs=repo_refs,
             runner=runner,
             command=command,
             ref=ref,
             branch=branch,
+            repo_refs=repo_refs,
             all_repos=all_repos,
             execution_mode=execution_mode,
             env_profile=env_profile,
@@ -314,12 +327,14 @@ def register_projects_run(
     @projects_app.command("status", help="Show lock/runtime state for a target under Phenotype/projects.")
     def projects_status_cmd(
         target: str | None = typer.Option(None, "--target", help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
     ) -> None:
         selected_target = _ensure_target_name(
             target,
+            family=family,
             non_interactive=False,
             list_targets_fn=list_targets_fn,
         )
-        state = target_status_fn(selected_target)
+        state = target_status_fn(selected_target, family=family)
         state["projects_root"] = f"projects/{selected_target}"
         console.print_json(json.dumps(state).decode())

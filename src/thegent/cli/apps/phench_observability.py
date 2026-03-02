@@ -10,18 +10,19 @@ from rich.prompt import IntPrompt
 
 console = Console()
 
-TargetResolver = Callable[[], list[str]]
+TargetResolver = Callable[..., list[str]]
 TargetTimelineLoader = Callable[..., dict[str, Any]]
-TargetStatusLoader = Callable[[str], Any]
+TargetStatusLoader = Callable[..., Any]
 RunAction = Callable[..., int]
-AuditAction = Callable[[str], dict[str, Any]]
+AuditAction = Callable[..., dict[str, Any]]
 
 
 def _ensure_timeline_target(
     *,
+    family: str | None,
     list_targets_fn: TargetResolver,
 ) -> str:
-    targets = list_targets_fn()
+    targets = list_targets_fn(family=family)
     if not targets:
         raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
     if len(targets) == 1:
@@ -85,6 +86,7 @@ def _ensure_tui_selected_ref(
     *,
     ref: str | None,
     branch: str | None,
+    family: str | None,
     no_interactive: bool,
     timeline_limit: int,
     target_timeline_fn: TargetTimelineLoader,
@@ -97,7 +99,7 @@ def _ensure_tui_selected_ref(
     if no_interactive or repo_id is None:
         return None
 
-    timeline = target_timeline_fn(target, repo_id=repo_id, limit=timeline_limit)
+    timeline = target_timeline_fn(target, repo_id=repo_id, family=family, limit=timeline_limit)
     options: list[tuple[str, str]] = [("HEAD", "HEAD")]
     for branch_name in timeline.get("branches", []):
         if branch_name:
@@ -134,6 +136,7 @@ def register_observability_commands(
     @app.command("tui", help="Interactive selector: target/repo/ref -> run.")
     def tui_cmd(
         target: str | None = typer.Option(None, "--target", help="Target name to run."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target status."),
         runner: str | None = typer.Option(
             None, "--runner", help="Explicit runner override (task|just|make|pnpm|npm|bun)."
@@ -167,8 +170,11 @@ def register_observability_commands(
     ) -> None:
         if ref is not None and branch is not None:
             raise typer.BadParameter("--ref and --branch are mutually exclusive")
-        selected_target = target if target else _ensure_timeline_target(list_targets_fn=list_targets_fn)
-        state = target_status_fn(selected_target)
+        selected_target = target if target else _ensure_timeline_target(
+            family=family,
+            list_targets_fn=list_targets_fn,
+        )
+        state = target_status_fn(selected_target, family=family)
         selected_repo = (
             None if all_repos else _ensure_tui_repo_id(state, repo_id=repo_id, no_interactive=no_interactive)
         )
@@ -180,9 +186,10 @@ def register_observability_commands(
             no_interactive=no_interactive,
             timeline_limit=timeline_limit,
             target_timeline_fn=target_timeline_fn,
+            family=family,
         )
         console.print(f"Timeline for [bold]{selected_target}[/bold]:")
-        timeline = target_timeline_fn(selected_target, repo_id=selected_repo, limit=timeline_limit)
+        timeline = target_timeline_fn(selected_target, repo_id=selected_repo, family=family, limit=timeline_limit)
         if selected_repo:
             console.print(f"Selected repo: [bold]{selected_repo}[/bold]")
         if not isinstance(timeline.get("recent"), list):
@@ -199,19 +206,26 @@ def register_observability_commands(
             execution_mode=execution_mode,
             env_profile=env_profile,
             non_interactive=no_interactive,
+            family=family,
         )
         raise typer.Exit(exit_code)
 
     @app.command("status", help="Show lock/runtime/env status for a target.")
-    def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-        state = target_status_fn(name)
+    def status_cmd(
+        name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
+    ) -> None:
+        state = target_status_fn(name, family=family)
         import orjson as json
 
         console.print_json(json.dumps(state).decode())
 
     @app.command("audit-shared", help="Audit shared Python modules across repos in a target lock.")
-    def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-        state = audit_shared_modules_fn(name)
+    def audit_shared_cmd(
+        name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
+    ) -> None:
+        state = audit_shared_modules_fn(name, family=family)
         import orjson as json
 
         console.print_json(json.dumps(state).decode())

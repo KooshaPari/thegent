@@ -24,6 +24,7 @@ from .paths import (
     projects_root,
     target_repos_root,
     target_root,
+    validate_family_name,
     phenotype_repos_root,
     target_state_root,
 )
@@ -44,6 +45,7 @@ def _snapshot_id() -> str:
 
 def import_repos(
     target: str,
+    family: str | None = None,
     source_root: Path | None = None,
     selected_ref: str = "HEAD",
     preferred_runner: str | None = None,
@@ -74,6 +76,7 @@ def import_repos(
     for item in selected:
         add_repo(
             target,
+            family=family,
             repo_path=str(item.path),
             selected_ref=selected_ref,
             repo_id=item.repo_id,
@@ -83,12 +86,16 @@ def import_repos(
         )
 
     if auto_lock:
-        return lock_target(target)
-    return load_target_lock(target)
+        return lock_target(target, family=family)
+    return load_target_lock(target, family=family)
 
 
-def create_target_snapshot(target: str, snapshot_id: str | None = None) -> dict[str, Any]:
-    lock = load_target_lock(target)
+def create_target_snapshot(
+    target: str,
+    family: str | None = None,
+    snapshot_id: str | None = None,
+) -> dict[str, Any]:
+    lock = load_target_lock(target, family=family)
     snapshot_id = snapshot_id or _snapshot_id()
     filename = f"{SNAPSHOT_DIR}/{snapshot_id}.json"
 
@@ -97,15 +104,15 @@ def create_target_snapshot(target: str, snapshot_id: str | None = None) -> dict[
     runner_payload: dict[str, Any] | None = None
 
     try:
-        runtime_payload = read_dual(target, RUNTIME_FILE)
+        runtime_payload = read_dual(target, RUNTIME_FILE, family=family)
     except FileNotFoundError:
         runtime_payload = None
     try:
-        env_payload = read_dual(target, ENV_FILE)
+        env_payload = read_dual(target, ENV_FILE, family=family)
     except FileNotFoundError:
         env_payload = None
     try:
-        runner_payload = read_dual(target, RUNNER_FILE)
+        runner_payload = read_dual(target, RUNNER_FILE, family=family)
     except FileNotFoundError:
         runner_payload = None
 
@@ -118,7 +125,7 @@ def create_target_snapshot(target: str, snapshot_id: str | None = None) -> dict[
         "env": env_payload,
         "runner_catalog": runner_payload,
     }
-    result = dual_write(target, filename, snapshot)
+    result = dual_write(target, filename, snapshot, family=family)
     return {
         "snapshot_id": snapshot_id,
         "filename": filename,
@@ -128,10 +135,10 @@ def create_target_snapshot(target: str, snapshot_id: str | None = None) -> dict[
     }
 
 
-def list_target_snapshots(target: str) -> list[dict[str, Any]]:
+def list_target_snapshots(target: str, family: str | None = None) -> list[dict[str, Any]]:
     directories = [
-        target_state_root(target) / SNAPSHOT_DIR,
-        mirror_target_state_root(target) / SNAPSHOT_DIR,
+        target_state_root(target, family=family) / SNAPSHOT_DIR,
+        mirror_target_state_root(target, family=family) / SNAPSHOT_DIR,
     ]
     snapshots: list[dict[str, Any]] = []
     files: dict[str, Path] = {}
@@ -145,7 +152,7 @@ def list_target_snapshots(target: str) -> list[dict[str, Any]]:
     for filename in sorted(files):
         rel_filename = f"{SNAPSHOT_DIR}/{filename}"
         try:
-            payload = read_dual(target, rel_filename)
+            payload = read_dual(target, rel_filename, family=family)
         except FileNotFoundError:
             continue
         if not isinstance(payload, dict):
@@ -153,7 +160,7 @@ def list_target_snapshots(target: str) -> list[dict[str, Any]]:
         snapshots.append(
             {
                 "snapshot_id": str(payload.get("snapshot_id", Path(filename).stem)),
-                "filename": filename,
+                "filename": rel_filename,
                 "created_at_utc": str(payload.get("created_at_utc", "")),
                 "target_name": str(payload.get("target_name", "")),
                 "lock_hash": str((payload.get("lock") or {}).get("lock_hash", "")),
@@ -162,9 +169,9 @@ def list_target_snapshots(target: str) -> list[dict[str, Any]]:
     return snapshots
 
 
-def show_target_snapshot(target: str, snapshot_id: str) -> dict[str, Any]:
+def show_target_snapshot(target: str, snapshot_id: str, family: str | None = None) -> dict[str, Any]:
     filename = f"{SNAPSHOT_DIR}/{snapshot_id}.json"
-    return read_dual(target, filename)
+    return read_dual(target, filename, family=family)
 
 
 def discover_repos(
@@ -179,6 +186,7 @@ def discover_repos(
 def bootstrap_target(
     target: str,
     mode: TargetMode,
+    family: str | None = None,
     source_root: Path | None = None,
     selected_ref: str = "HEAD",
     preferred_runner: str | None = None,
@@ -209,10 +217,11 @@ def bootstrap_target(
     else:
         selected = candidates
 
-    lock = init_target(target, mode=mode)
+    lock = init_target(target, mode=mode, family=family)
     for item in selected:
         add_repo(
             target,
+            family=family,
             repo_path=str(item.path),
             selected_ref=selected_ref,
             repo_id=item.repo_id,
@@ -221,13 +230,18 @@ def bootstrap_target(
             preferred_ref=preferred_ref,
         )
     if auto_lock:
-        lock = lock_target(target)
+        lock = lock_target(target, family=family)
     return lock
 
 
-def set_repo_ref(target: str, repo_id: str, selected_ref: str) -> TargetLock:
+def set_repo_ref(
+    target: str,
+    repo_id: str,
+    selected_ref: str,
+    family: str | None = None,
+) -> TargetLock:
     """Update a single repo selection ref in a target and relock the target."""
-    lock = load_target_lock(target)
+    lock = load_target_lock(target, family=family)
     updated = False
     for repo in lock.repos:
         if repo.repo_id == repo_id:
@@ -239,8 +253,8 @@ def set_repo_ref(target: str, repo_id: str, selected_ref: str) -> TargetLock:
         raise ValueError(f"repo_id not in target: {repo_id}")
     lock.created_at_utc = utc_now_iso()
     lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
-    return lock_target(target)
+    dual_write(target, LOCK_FILE, lock, family=family)
+    return lock_target(target, family=family)
 
 
 def _parse_lock(payload: dict[str, Any]) -> TargetLock:
@@ -262,8 +276,8 @@ def _lock_hash(lock: TargetLock) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def init_target(target: str, mode: TargetMode) -> TargetLock:
-    root = target_root(target)
+def init_target(target: str, mode: TargetMode, family: str | None = None) -> TargetLock:
+    root = target_root(target, family=family)
     root.mkdir(parents=True, exist_ok=True)
     (root / "repos").mkdir(parents=True, exist_ok=True)
 
@@ -276,12 +290,12 @@ def init_target(target: str, mode: TargetMode) -> TargetLock:
         created_at_utc=utc_now_iso(),
     )
     lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
+    dual_write(target, LOCK_FILE, lock, family=family)
     return lock
 
 
-def load_target_lock(target: str) -> TargetLock:
-    payload = read_dual(target, LOCK_FILE)
+def load_target_lock(target: str, family: str | None = None) -> TargetLock:
+    payload = read_dual(target, LOCK_FILE, family=family)
     return _parse_lock(payload)
 
 
@@ -289,13 +303,14 @@ def add_repo(
     target: str,
     repo_path: str,
     selected_ref: str,
+    family: str | None = None,
     repo_id: str | None = None,
     worktree_path: str | None = None,
     preferred_runner: str | None = None,
     preferred_command: str | None = None,
     preferred_ref: str | None = None,
 ) -> TargetLock:
-    lock = load_target_lock(target)
+    lock = load_target_lock(target, family=family)
     repo = Path(repo_path).expanduser().resolve()
     if not (repo / ".git").exists() and not (repo / ".git").is_file():
         raise ValueError(f"repo is not a git checkout: {repo}")
@@ -316,12 +331,12 @@ def add_repo(
     )
     lock.created_at_utc = utc_now_iso()
     lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
+    dual_write(target, LOCK_FILE, lock, family=family)
     return lock
 
 
-def lock_target(target: str) -> TargetLock:
-    lock = load_target_lock(target)
+def lock_target(target: str, family: str | None = None) -> TargetLock:
+    lock = load_target_lock(target, family=family)
     if not lock.repos:
         raise ValueError("target has no repos; add at least one repo before lock")
 
@@ -331,17 +346,17 @@ def lock_target(target: str) -> TargetLock:
 
     lock.created_at_utc = utc_now_iso()
     lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
+    dual_write(target, LOCK_FILE, lock, family=family)
     return lock
 
 
-def materialize_target(target: str) -> RuntimeState:
-    lock = load_target_lock(target)
+def materialize_target(target: str, family: str | None = None) -> RuntimeState:
+    lock = load_target_lock(target, family=family)
     if not lock.repos:
         raise ValueError("target has no repos")
 
     runtime_repos: list[RuntimeRepo] = []
-    repos_root = target_repos_root(target)
+    repos_root = target_repos_root(target, family=family)
     repos_root.mkdir(parents=True, exist_ok=True)
 
     for repo in lock.repos:
@@ -360,28 +375,28 @@ def materialize_target(target: str) -> RuntimeState:
 
     runtime = RuntimeState(
         target_name=target,
-        materialized_root=str(target_root(target)),
+        materialized_root=str(target_root(target, family=family)),
         repo_materializations=runtime_repos,
         materialized_at_utc=utc_now_iso(),
     )
-    dual_write(target, RUNTIME_FILE, runtime)
+    dual_write(target, RUNTIME_FILE, runtime, family=family)
 
     report = run_env_doctor(target, [Path(r.checkout_path) for r in runtime_repos])
-    dual_write(target, ENV_FILE, report)
+    dual_write(target, ENV_FILE, report, family=family)
 
     return runtime
 
 
-def target_status(target: str) -> dict[str, Any]:
-    lock = load_target_lock(target)
+def target_status(target: str, family: str | None = None) -> dict[str, Any]:
+    lock = load_target_lock(target, family=family)
     runtime_payload: dict[str, Any] | None = None
     env_payload: dict[str, Any] | None = None
     try:
-        runtime_payload = read_dual(target, RUNTIME_FILE)
+        runtime_payload = read_dual(target, RUNTIME_FILE, family=family)
     except FileNotFoundError:
         runtime_payload = None
     try:
-        env_payload = read_dual(target, ENV_FILE)
+        env_payload = read_dual(target, ENV_FILE, family=family)
     except FileNotFoundError:
         env_payload = None
 
@@ -398,11 +413,12 @@ def target_status(target: str) -> dict[str, Any]:
 
 def target_timeline(
     target: str,
+    family: str | None = None,
     repo_id: str | None = None,
     limit: int = 30,
     branch: str | None = None,
 ) -> dict[str, Any]:
-    lock = load_target_lock(target)
+    lock = load_target_lock(target, family=family)
     if not lock.repos:
         raise ValueError("target has no repos")
 
@@ -424,8 +440,8 @@ def target_timeline(
     }
 
 
-def audit_shared_modules(target: str) -> dict[str, Any]:
-    lock = load_target_lock(target)
+def audit_shared_modules(target: str, family: str | None = None) -> dict[str, Any]:
+    lock = load_target_lock(target, family=family)
     module_map: dict[str, list[str]] = {}
     for repo in lock.repos:
         src_root = Path(repo.repo_path) / "src"
@@ -448,8 +464,8 @@ def audit_shared_modules(target: str) -> dict[str, Any]:
     }
 
 
-def build_catalog(target: str, repo_id: str | None = None) -> RunnerCatalog:
-    runtime = read_dual(target, RUNTIME_FILE)
+def build_catalog(target: str, repo_id: str | None = None, family: str | None = None) -> RunnerCatalog:
+    runtime = read_dual(target, RUNTIME_FILE, family=family)
     materializations = runtime.get("repo_materializations")
     if not isinstance(materializations, list) or not materializations:
         raise ValueError("target has no runtime materialization; run target materialize")
@@ -461,11 +477,21 @@ def build_catalog(target: str, repo_id: str | None = None) -> RunnerCatalog:
             raise ValueError(f"repo_id not materialized: {repo_id}")
     checkout = Path(str(selected.get("checkout_path", ""))).resolve()
     catalog = build_runner_catalog(target, checkout)
-    dual_write(target, RUNNER_FILE, catalog)
+    dual_write(target, RUNNER_FILE, catalog, family=family)
     return catalog
 
 
-def list_targets() -> list[str]:
+def list_targets(family: str | None = None) -> list[str]:
+    if family is not None:
+        root = projects_root() / validate_family_name(family)
+        if not root.exists():
+            return []
+        return sorted(
+            entry.name
+            for entry in root.iterdir()
+            if entry.is_dir() and (entry / ".phench" / LOCK_FILE).exists()
+        )
+
     root = projects_root()
     if not root.exists():
         return []
@@ -475,15 +501,31 @@ def list_targets() -> list[str]:
             continue
         if (entry / ".phench" / LOCK_FILE).exists():
             targets.append(entry.name)
-    return sorted(targets)
+        else:
+            targets.extend(_list_targets_in_root(entry, family_prefix=entry.name))
+    unique: list[str] = sorted(set(targets), key=lambda value: ("/" in value, value))
+    return unique
 
 
-def set_env_profile(target: str, profile: str, values: dict[str, str]) -> dict[str, Any]:
+def _list_targets_in_root(root: Path, family_prefix: str | None) -> list[str]:
+    found: list[str] = []
+    for entry in root.iterdir():
+        if not entry.is_dir():
+            continue
+        if (entry / ".phench" / LOCK_FILE).exists():
+            if family_prefix is None:
+                found.append(entry.name)
+            else:
+                found.append(f"{family_prefix}/{entry.name}")
+    return sorted(found)
+
+
+def set_env_profile(target: str, profile: str, values: dict[str, str], family: str | None = None) -> dict[str, Any]:
     if not profile.strip():
         raise ValueError("profile name cannot be empty")
     normalized = {str(k): str(v) for k, v in values.items()}
     try:
-        state = read_dual(target, PROFILE_FILE)
+        state = read_dual(target, PROFILE_FILE, family=family)
     except FileNotFoundError:
         state = {"active_profile": profile, "profiles": {}}
     profiles = state.get("profiles")
@@ -491,13 +533,13 @@ def set_env_profile(target: str, profile: str, values: dict[str, str]) -> dict[s
         profiles = {}
     profiles[profile] = normalized
     state = {"active_profile": profile, "profiles": profiles}
-    dual_write(target, PROFILE_FILE, state)
+    dual_write(target, PROFILE_FILE, state, family=family)
     return state
 
 
-def get_env_profile(target: str, profile: str | None = None) -> dict[str, str]:
+def get_env_profile(target: str, profile: str | None = None, family: str | None = None) -> dict[str, str]:
     try:
-        state = read_dual(target, PROFILE_FILE)
+        state = read_dual(target, PROFILE_FILE, family=family)
     except FileNotFoundError:
         return {}
     profiles = state.get("profiles")
@@ -597,6 +639,7 @@ def _materialization_lookup(
 
 def run_target(
     target: str,
+    family: str | None = None,
     repo_id: str | None = None,
     runner: str | None = None,
     command_name: str | None = None,
@@ -606,7 +649,7 @@ def run_target(
     env_profile: str | None = None,
     non_interactive: bool = False,
 ) -> int:
-    report = run_env_doctor_for_target(target)
+    report = run_env_doctor_for_target(target, family=family)
     if report["doctor_status"] != "pass":
         missing = ", ".join(report["missing_requirements"])
         raise RuntimeError(f"env doctor failed, missing requirements: {missing}")
@@ -614,7 +657,7 @@ def run_target(
     if execution_mode not in {"serial", "parallel"}:
         raise ValueError("execution_mode must be one of: serial, parallel")
 
-    runtime = read_dual(target, RUNTIME_FILE)
+    runtime = read_dual(target, RUNTIME_FILE, family=family)
     materializations = runtime.get("repo_materializations")
     if not isinstance(materializations, list) or not materializations:
         raise ValueError("target has no runtime materialization; run target materialize")
@@ -624,7 +667,7 @@ def run_target(
     else:
         selected_items = _materialization_lookup(repo_id, materializations)
 
-    lock = load_target_lock(target)
+    lock = load_target_lock(target, family=family)
     lock_index = {repo.repo_id: repo for repo in lock.repos}
     enforce_no_interactive = non_interactive or all_repos
 
@@ -640,7 +683,7 @@ def run_target(
             item["resolved_sha"] = resolved
 
     runs: list[tuple[Path, RunnerCatalog, str | None, str | None]] = []
-    env_overrides = get_env_profile(target, profile=env_profile)
+    env_overrides = get_env_profile(target, profile=env_profile, family=family)
     for item in selected_items:
         item_repo_id, item_checkout = _materialization_entry(item)
         catalog = build_runner_catalog(target, item_checkout)
@@ -689,22 +732,22 @@ def run_target(
     return 0
 
 
-def run_env_doctor_for_target(target: str) -> dict[str, Any]:
-    runtime = read_dual(target, RUNTIME_FILE)
+def run_env_doctor_for_target(target: str, family: str | None = None) -> dict[str, Any]:
+    runtime = read_dual(target, RUNTIME_FILE, family=family)
     materializations = runtime.get("repo_materializations")
     if not isinstance(materializations, list) or not materializations:
         raise ValueError("target has no runtime materialization; run target materialize")
     checkouts = [Path(str(item.get("checkout_path", ""))).resolve() for item in materializations]
     report = run_env_doctor(target, checkouts)
-    dual_write(target, ENV_FILE, report)
+    dual_write(target, ENV_FILE, report, family=family)
     return asdict(report)
 
 
-def sync_target(target: str, prefer: str | None = None) -> dict[str, Any]:
+def sync_target(target: str, prefer: str | None = None, family: str | None = None) -> dict[str, Any]:
     results = {}
     for filename in (LOCK_FILE, RUNTIME_FILE, ENV_FILE, RUNNER_FILE, PROFILE_FILE):
         try:
-            results[filename] = sync_dual(target, filename, prefer=prefer)
+            results[filename] = sync_dual(target, filename, prefer=prefer, family=family)
         except FileNotFoundError:
             continue
     if not results:
