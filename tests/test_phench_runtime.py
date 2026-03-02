@@ -182,11 +182,11 @@ def test_run_target_all_repos_serial_and_parallel(tmp_path: Path, monkeypatch) -
     )
 
     monkeypatch.setattr(
-        "thegent.phench.service.build_catalog",
-        lambda target, repo_id=None: RunnerCatalog(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
             target_name=target,
             runners_detected=["task"],
-            commands=[RunnerCommand("task", "hello", "task hello", "Taskfile.yml")],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
             default_command="task hello",
         ),
     )
@@ -241,6 +241,118 @@ def test_run_target_all_repos_requires_explicit_runner_and_command(tmp_path: Pat
     with pytest.raises(ValueError):
         run_target("stacky2", all_repos=True)
 
+
+def test_run_target_ref_override_rematerializes_runtime_checkout(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+
+    _run(["git", "-C", str(repo), "checkout", "-b", "feature"], cwd=repo)
+    _run(["bash", "-lc", "printf '\\nfeature\\n' >> README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "add", "README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "commit", "-m", "feature"], cwd=repo)
+    _run(["git", "-C", str(repo), "checkout", "main"], cwd=repo)
+
+    feature_sha_proc = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "feature^{commit}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert feature_sha_proc.returncode == 0
+    feature_sha = feature_sha_proc.stdout.strip()
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("runref", mode="repo")
+    add_repo("runref", repo_path=str(repo), selected_ref="main", repo_id="repo")
+    lock_target("runref")
+    materialize_target("runref")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    resolved_refs: list[str] = []
+    materialize_calls: list[tuple[str, str, str]] = []
+
+    def _recorded_resolve_ref(repo_path: Path, ref: str) -> str:
+        resolved_refs.append(ref)
+        proc = subprocess.run(
+            ["git", "-C", str(repo_path), "rev-parse", f"{ref}^{{commit}}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc.returncode == 0
+        return proc.stdout.strip()
+
+    monkeypatch.setattr("thegent.phench.service.resolve_ref_to_sha", _recorded_resolve_ref)
+    monkeypatch.setattr(
+        "thegent.phench.service.materialize_repo_checkout",
+        lambda source_repo, checkout_path, resolved_sha: materialize_calls.append(
+            (str(source_repo), str(checkout_path), resolved_sha),
+        ),
+    )
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    calls: list[str] = []
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(f"{checkout.name}:{command_name}:{(checkout / '.git').exists()}")
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+
+    exit_code = run_target("runref", runner="task", command_name="hello", selected_ref="feature")
+    assert exit_code == 0
+    assert resolved_refs == ["feature"]
+    assert len(materialize_calls) == 1
+    assert len(calls) == 1
+    assert materialize_calls == [
+        (
+            str(repo),
+            str((phenotype_root / "projects" / "runref" / "repos" / "repo").resolve()),
+            feature_sha,
+        )
+    ]
+
+
+def test_run_target_non_interactive_requires_explicit_runner_and_command(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("runnon", mode="repo")
+    add_repo("runnon", repo_path=str(repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("runnon")
+    materialize_target("runnon")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    with pytest.raises(ValueError, match="--no-interactive"):
+        run_target("runnon", non_interactive=True)
 
 def test_run_target_rejects_runner_flag_like_command_name(tmp_path: Path, monkeypatch) -> None:
     phenotype_root = tmp_path / "Phenotype"

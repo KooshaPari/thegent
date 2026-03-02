@@ -4,13 +4,15 @@
 # - Do all feature work in dedicated worktrees.
 
 thg_new_worktree() {
-  if [[ $# -lt 1 ]]; then
-    echo "Usage: thg_new_worktree <branch> [start-point] [worktree-path]" >&2
+  if [[ $# -lt 3 ]]; then
+    echo "Usage: thg_new_worktree <domain> <scale> <change-anchor> [start-point]" >&2
     return 1
   fi
 
-  local branch="$1"
-  local start_point="${2:-main}"
+  local domain="$1"
+  local scale="$2"
+  local change_anchor="$3"
+  local start_point="${4:-main}"
   local repo_root
   repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
     echo "[FAIL] Not inside a git repository." >&2
@@ -29,36 +31,19 @@ thg_new_worktree() {
     return 1
   fi
 
-  local wt_path
-  if [[ $# -ge 3 ]]; then
-    wt_path="$3"
-  else
-    local slug="${branch//\//-}"
-    wt_path="$repo_root/../wt/$slug"
+  if [[ -z "$domain" || -z "$scale" || -z "$change_anchor" ]]; then
+    echo "Usage: thg_new_worktree <domain> <scale> <change-anchor> [start-point]" >&2
+    return 1
   fi
 
-  local existing
-  existing="$(git -C "$repo_root" worktree list --porcelain | awk -v b="$branch" '
-    /^worktree / { path=$2 }
-    /^branch refs\/heads\// {
-      ref=$2
-      sub(/^refs\/heads\//, "", ref)
-      if (ref == b) print path
-    }
-  ')"
-
-  if [[ -n "$existing" ]]; then
-    echo "[OK] Existing worktree for $branch: $existing"
-    return 0
+  local path
+  path="$(/bin/sh "$repo_root/scripts/worktree_governance.sh" new "$domain" "$scale" "$change_anchor" "$start_point")"
+  local rc=$?
+  if [[ $rc -ne 0 ]]; then
+    return $rc
   fi
 
-  if git -C "$repo_root" show-ref --verify --quiet "refs/heads/$branch"; then
-    git -C "$repo_root" worktree add "$wt_path" "$branch"
-  else
-    git -C "$repo_root" worktree add -b "$branch" "$wt_path" "$start_point"
-  fi
-
-  echo "[OK] Worktree ready: $wt_path ($branch)"
+  echo "[OK] Worktree ready: $path ($domain/$scale/$change_anchor)"
 }
 
 thg_main_guard() {
@@ -70,7 +55,7 @@ thg_main_guard() {
   [[ "${THGENT_DISABLE_MAIN_GUARD:-0}" == "1" ]] && return 0
 
   if [[ -f "$repo_root/.thegent-primary-main" ]] && [[ "$current_branch" != "main" ]]; then
-    echo "[thegent] Primary repo policy: keep this checkout on main. Use thg_new_worktree <branch>." >&2
+    echo "[thegent] Primary repo policy: keep this checkout on main. Use thg_new_worktree <domain> <scale> <change-anchor>." >&2
   fi
 }
 

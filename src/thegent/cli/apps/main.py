@@ -44,6 +44,7 @@ from thegent.cli.apps import (
     run,
     session,
     skills,
+    phench,
     mcp,
     sync,
     sys,
@@ -53,7 +54,22 @@ from thegent.cli.apps.project import install_app, scaffold_app, update_app
 from thegent.cli.apps.project import setup_project_app
 from thegent.mesh.main import app as mesh_app
 from thegent.cli.commands import model_cmds
-from thegent.cli.commands.cli_git import app as git_app
+
+try:
+    from thegent.cli.commands.cli_git import app as git_app
+except ModuleNotFoundError as exc:
+    if exc.name not in {"thegent_agint", "thegent-git"}:
+        raise
+
+    git_app = typer.Typer(help="Git Coordination (install thegent-git to enable full git workflows).")
+
+    @git_app.callback(invoke_without_command=True)
+    def _git_dependency_missing(ctx: typer.Context) -> None:  # pyright: ignore[reportUnusedFunction] -- typer callback
+        """Fail fast when git integration dependency is unavailable."""
+        if ctx.invoked_subcommand is not None:
+            return
+        console.print("[red]Git coordination unavailable: install thegent-git dependency.[/red]")
+        raise typer.Exit(1)
 
 
 app.add_typer(run.app, name="run", help="Execution: Agent tasks, background runs, and history.")
@@ -65,6 +81,7 @@ app.add_typer(audit.app, name="audit", help="Integrity: System health, security,
 app.add_typer(plan.app, name="plan", help="Roadmap: DAG tasks, work streams, and initiatives.")
 app.add_typer(queue.app, name="queue", help="Queue: Unified prompt queue for deferred tasks (FR-HAX-001).")
 app.add_typer(rules.app, name="rules", help="Rules: Cross-platform rules synchronization (FR-HAX-002).")
+app.add_typer(phench.app, name="phench", help="Phench: deterministic runtime targets and execution across repos.")
 app.add_typer(team.app, name="team", help="Swarm: Coordination, teammates, and hierarchy.")
 app.add_typer(domain.app, name="domain", help="Domain: mapping and tunnel advisor workflows (WL-124).")
 app.add_typer(govern.app, name="govern", help="Governance: approval/rejection and escalation decisions.")
