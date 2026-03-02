@@ -927,28 +927,193 @@ def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
     mock_load_target_lock.assert_called_once_with("alpha", family=None)
     mock_lock_target.assert_called_once_with("alpha", family=None)
     mock_materialize_target.assert_called_once_with("alpha", family=None)
-    assert mock_run_target.call_count == 2
-    mock_run_target.assert_any_call(
+    mock_run_target.assert_called_once_with(
         "alpha",
-        repo_id="repo-a",
+        repo_id=None,
+        repo_ids=["repo-a", "repo-b"],
+        repo_ref_overrides={"repo-a": "feature-x", "repo-b": "release-y"},
         runner="task",
         command_name="hello",
-        selected_ref="feature-x",
+        selected_ref=None,
         all_repos=False,
         execution_mode="serial",
         env_profile="ci",
         non_interactive=True,
         family=None,
     )
-    mock_run_target.assert_any_call(
+
+
+def test_phench_projects_run_module_uses_manifest_subset_and_overrides() -> None:
+    lock = SimpleNamespace(
+        target_name="alpha",
+        repos=[
+            SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef"),
+            SimpleNamespace(repo_id="repo-b", selected_ref="main", resolved_sha="deadcafe"),
+            SimpleNamespace(repo_id="repo-c", selected_ref="main", resolved_sha="deadbabe"),
+        ],
+    )
+    module_overrides = {
+        "repo_ids": ["repo-a", "repo-c"],
+        "repo_ref_overrides": {"repo-a": "staging"},
+        "repo_runner_overrides": {"repo-c": "task"},
+        "repo_command_overrides": {"repo-c": "hello"},
+        "repo_env_profile_overrides": {"repo-a": "ci"},
+    }
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+                patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
+        patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = lock
+        mock_load_module_manifest.return_value = module_overrides
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--module",
+                "thegent-app",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_load_module_manifest.assert_called_once_with(
+        "thegent-app",
+        available_repo_ids=["repo-a", "repo-b", "repo-c"],
+    )
+    mock_load_target_lock.assert_called_once_with("alpha", family=None)
+    mock_lock_target.assert_called_once_with("alpha", family=None)
+    mock_materialize_target.assert_called_once_with("alpha", family=None)
+    mock_run_target.assert_called_once_with(
         "alpha",
-        repo_id="repo-b",
+        repo_id=None,
+        repo_ids=["repo-a", "repo-c"],
+        repo_ref_overrides={"repo-a": "staging"},
         runner="task",
         command_name="hello",
-        selected_ref="release-y",
+        repo_runner_overrides={"repo-c": "task"},
+        repo_command_overrides={"repo-c": "hello"},
+        repo_env_profile_overrides={"repo-a": "ci"},
+        selected_ref=None,
         all_repos=False,
         execution_mode="serial",
-        env_profile="ci",
+        env_profile=None,
+        non_interactive=True,
+        family=None,
+    )
+
+
+def test_phench_projects_run_module_with_all_repos_fails() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+                patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
+        )
+        mock_load_module_manifest.return_value = {
+            "repo_ids": ["repo-a"],
+            "repo_ref_overrides": {},
+            "repo_runner_overrides": {},
+            "repo_command_overrides": {},
+            "repo_env_profile_overrides": {},
+        }
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--module",
+                "thegent-app",
+                "--all-repos",
+            ],
+        )
+
+    assert result.exit_code != 0
+    mock_run_target.assert_not_called()
+    output = result.stdout + result.stderr
+    assert "--module is not compatible with --all-repos" in output
+
+
+def test_phench_projects_run_module_repo_ref_merges_cli_and_manifest_overrides() -> None:
+    lock = SimpleNamespace(
+        target_name="alpha",
+        repos=[
+            SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef"),
+            SimpleNamespace(repo_id="repo-c", selected_ref="main", resolved_sha="deadcafe"),
+        ],
+    )
+    module_overrides = {
+        "repo_ids": ["repo-a", "repo-c"],
+        "repo_ref_overrides": {"repo-a": "staging", "repo-c": "release"},
+        "repo_runner_overrides": {},
+        "repo_command_overrides": {},
+        "repo_env_profile_overrides": {},
+    }
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+                patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
+        patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = lock
+        mock_load_module_manifest.return_value = module_overrides
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--module",
+                "thegent-app",
+                "--repo-ref",
+                "repo-a@feature-x",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        repo_id=None,
+        repo_ids=["repo-a", "repo-c"],
+        repo_ref_overrides={"repo-a": "feature-x", "repo-c": "release"},
+        runner="task",
+        command_name="hello",
+        selected_ref=None,
+        all_repos=False,
+        execution_mode="serial",
+        env_profile=None,
         non_interactive=True,
         family=None,
     )

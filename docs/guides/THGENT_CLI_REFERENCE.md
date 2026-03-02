@@ -751,6 +751,28 @@ thegent phench target bootstrap <target> --source-root <dir> --ref <ref> --inclu
 - `--ref` sets the initial selection for each discovered repo.
 - Use `--no-auto-lock` if you need to adjust entries before locking.
 
+## Module manifest schema
+
+Manifest path:
+- `~/CodeProjects/Phenotype/projects/modules/<module-name>/manifest.json`
+
+```json
+{
+  "repo_ids": ["thegent-api", "thegent-control-plane"],
+  "repo_patterns": ["*mcp*"],
+  "repo_ref_overrides": {"thegent-api": "main"},
+  "repo_runner_overrides": {"thegent-api": "task"},
+  "repo_command_overrides": {"thegent-api": "hello"},
+  "repo_env_profile_overrides": {"thegent-api": "ci"}
+}
+```
+
+Notes:
+- `repo_ids` and `repo_patterns` are optional; at least one must be present.
+- `repo_patterns` expands against repos in the selected target lock.
+- Only repos in the selected target are runnable. Unknown repo keys in override maps fail fast.
+- `repo_env_profile_overrides` accepts per-repo profile names and overrides `--env-profile`.
+
 ### `thegent phench projects run` - Orchestrate target runs
 
 Execute a command against selected repo(s) in a target.
@@ -764,10 +786,19 @@ thegent phench projects run --target <target> --runner <runner> --command <comma
 - `--repo-id`: Single repo target.
 - `--repo-ref <repo-id>@<ref>`: Explicit per-repo branch/tag/SHA mapping (repeatable).
 - `--ref` / `--branch`: Shared ref for selected repo or all repos.
+- `--module <module-name>`: Resolve module manifest from
+  `~/CodeProjects/Phenotype/projects/modules/<module-name>/manifest.json` and run that repo subset.
 - `--all-repos`: Execute across all repos in the target.
 - `--mode serial|parallel`: Multi-repo execution mode.
+- `--env-profile <name>`: Apply profile globally, then per-repo overrides from manifest.
 - `--timeline-limit N`: Refs shown during interactive selection.
 - `--no-prepare`: Skip automatic `lock` and `materialize` before run.
+
+**Module override precedence** (highest to lowest):
+- CLI `--repo-ref` overrides manifest `repo_ref_overrides` for matching repos.
+- CLI `--runner` / `--command` overrides both manifest runner/command overrides.
+- `repo_runner_overrides`, `repo_command_overrides`, `repo_env_profile_overrides` from manifest
+  apply to matching repos unless overridden by CLI arguments.
 
 **Examples**:
 ```bash
@@ -778,6 +809,15 @@ thegent phench projects run \
   --command hello \
   --repo-ref thegent-api@feature-gui \
   --repo-ref thegent-control-plane@feat/scheduler
+
+# Run by module manifest subset with module-level env profile override
+thegent phench projects run \
+  --target thegent-app \
+  --module thegent-mcp \
+  --runner task \
+  --command hello \
+  --env-profile default \
+  --no-interactive
 ```
 
 ### `thegent phench projects status` - Show target state
