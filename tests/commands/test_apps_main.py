@@ -811,6 +811,110 @@ def test_phench_projects_run_non_interactive_dispatches_prepare_and_run() -> Non
     )
 
 
+def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
+    lock = SimpleNamespace(
+        target_name="alpha",
+        repos=[
+            SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef"),
+            SimpleNamespace(repo_id="repo-b", selected_ref="main", resolved_sha="deadcafe"),
+        ],
+    )
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
+        patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = lock
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--repo-ref",
+                "repo-a@feature-x",
+                "--repo-ref",
+                "repo-b@release-y",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+                "--env-profile",
+                "ci",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_load_target_lock.assert_called_once_with("alpha")
+    mock_lock_target.assert_called_once_with("alpha")
+    mock_materialize_target.assert_called_once_with("alpha")
+    assert mock_run_target.call_count == 2
+    mock_run_target.assert_any_call(
+        "alpha",
+        repo_id="repo-a",
+        runner="task",
+        command_name="hello",
+        selected_ref="feature-x",
+        all_repos=False,
+        execution_mode="serial",
+        env_profile="ci",
+        non_interactive=True,
+    )
+    mock_run_target.assert_any_call(
+        "alpha",
+        repo_id="repo-b",
+        runner="task",
+        command_name="hello",
+        selected_ref="release-y",
+        all_repos=False,
+        execution_mode="serial",
+        env_profile="ci",
+        non_interactive=True,
+    )
+
+
+def test_phench_projects_run_repo_ref_rejects_all_repos() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
+        )
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--repo-ref",
+                "repo-a@feature-x",
+                "--all-repos",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+            ],
+        )
+
+    assert result.exit_code != 0
+    mock_run_target.assert_not_called()
+    output = result.stdout + result.stderr
+    assert "repo-ref is not compatible with --all-repos" in output
+
+
 def test_phench_projects_run_interactive_selection_uses_target_repo_and_ref_choices() -> None:
     lock = SimpleNamespace(
         target_name="alpha",
@@ -896,6 +1000,53 @@ def test_phench_projects_run_non_interactive_requires_target_or_all() -> None:
     mock_run_target.assert_not_called()
     output = result.stdout + result.stderr
     assert "--target is required when --no-interactive is set" in output
+
+
+def test_phench_tui_runs_selected_target_repo_and_ref() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.target_status") as mock_status,
+        patch("thegent.cli.apps.phench.target_timeline") as mock_timeline,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+        patch("thegent.cli.apps.phench_observability.IntPrompt.ask") as mock_prompt,
+    ):
+        mock_list_targets.return_value = ["alpha", "beta"]
+        mock_status.side_effect = [
+            {"repos": [{"repo_id": "repo-a"}, {"repo_id": "repo-b"}]},
+            {"repos": [{"repo_id": "repo-a"}, {"repo_id": "repo-b"}]},
+        ]
+        mock_timeline.return_value = {
+            "branches": ["main", "feature"],
+            "tags": ["v1"],
+            "recent": ["a1 commit one", "b2 commit two"],
+        }
+        mock_run_target.return_value = 0
+        mock_prompt.side_effect = [2, 1, 3]
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "tui",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+            ],
+        )
+
+    assert result.exit_code == 0
+    assert mock_timeline.call_count >= 1
+    mock_run_target.assert_called_once_with(
+        "beta",
+        repo_id="repo-a",
+        runner="task",
+        command_name="hello",
+        selected_ref="feature",
+        all_repos=False,
+        execution_mode="serial",
+        env_profile=None,
+        non_interactive=False,
+    )
 
 
 def test_phench_snapshot_create_routes_to_service() -> None:
