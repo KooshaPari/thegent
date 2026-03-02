@@ -14,11 +14,15 @@ from thegent.phench import (
     add_repo,
     bootstrap_target,
     audit_shared_modules,
+    create_target_snapshot,
     discover_repos,
+    import_repos,
+    list_target_snapshots,
     set_repo_ref,
     get_env_profile,
     init_target,
     list_targets,
+    show_target_snapshot,
     lock_target,
     materialize_target,
     run_env_doctor_for_target,
@@ -34,9 +38,11 @@ app = typer.Typer(help="Phench: deterministic project runtime targets and execut
 target_app = typer.Typer(help="Manage project runtime targets.")
 repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
 env_app = typer.Typer(help="Environment preflight commands for targets.")
+snapshot_app = typer.Typer(help="Capture and inspect target snapshots.")
 app.add_typer(target_app, name="target")
 app.add_typer(repos_app, name="repos")
 app.add_typer(env_app, name="env")
+app.add_typer(snapshot_app, name="snapshot")
 
 
 @target_app.command("init", help="Create a new target in Phenotype/projects.")
@@ -94,6 +100,52 @@ def target_bootstrap_cmd(
             {
                 "target": lock.target_name,
                 "mode": lock.mode,
+                "repos": [repo.repo_id for repo in lock.repos],
+                "lock_hash": lock.lock_hash,
+            }
+        ).decode()
+    )
+
+
+@target_app.command("import-repos", help="Import discovered repos into an existing target.")
+def target_import_repos_cmd(
+    name: str = typer.Argument(..., help="Target name."),
+    source_root: Path | None = typer.Option(
+        None,
+        "--source-root",
+        help="Workspace root containing sibling git checkouts (defaults to sibling repos root).",
+    ),
+    ref: str = typer.Option("HEAD", "--ref", help="Ref to select for discovered repos."),
+    include: list[str] = typer.Option(
+        [],
+        "--include",
+        help="Glob include pattern; repeat for multiple values.",
+    ),
+    exclude: list[str] = typer.Option(
+        [],
+        "--exclude",
+        help="Glob exclude pattern; repeat for multiple values.",
+    ),
+    repo_ids: list[str] = typer.Option(
+        [],
+        "--repo-id",
+        help="Optional explicit repo IDs to include. Repeat as needed.",
+    ),
+    auto_lock: bool = typer.Option(True, "--auto-lock/--no-auto-lock", help="Auto-lock after import."),
+) -> None:
+    lock = import_repos(
+        target=name,
+        source_root=source_root,
+        selected_ref=ref,
+        include=include or None,
+        exclude=exclude or None,
+        repo_ids=repo_ids or None,
+        auto_lock=auto_lock,
+    )
+    console.print_json(
+        json.dumps(
+            {
+                "target": lock.target_name,
                 "repos": [repo.repo_id for repo in lock.repos],
                 "lock_hash": lock.lock_hash,
             }
@@ -249,6 +301,30 @@ def sync_cmd(
 ) -> None:
     result = sync_target(name, prefer=prefer)
     console.print_json(json.dumps(result).decode())
+
+
+@snapshot_app.command("create", help="Create a snapshot for a target.")
+def snapshot_create_cmd(
+    target: str = typer.Argument(..., help="Target name."),
+    snapshot_id: str | None = typer.Option(None, "--snapshot-id", help="Optional snapshot identifier."),
+) -> None:
+    result = create_target_snapshot(target, snapshot_id=snapshot_id)
+    console.print_json(json.dumps(result).decode())
+
+
+@snapshot_app.command("list", help="List snapshots for a target.")
+def snapshot_list_cmd(target: str = typer.Argument(..., help="Target name.")) -> None:
+    snapshots = list_target_snapshots(target)
+    console.print_json(json.dumps(snapshots).decode())
+
+
+@snapshot_app.command("show", help="Show a target snapshot payload.")
+def snapshot_show_cmd(
+    target: str = typer.Argument(..., help="Target name."),
+    snapshot_id: str = typer.Argument(..., help="Snapshot ID."),
+) -> None:
+    payload = show_target_snapshot(target, snapshot_id)
+    console.print_json(json.dumps(payload).decode())
 
 
 @app.command("status", help="Show lock/runtime/env status for a target.")

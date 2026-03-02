@@ -9,13 +9,17 @@ import pytest
 from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
+    create_target_snapshot,
     bootstrap_target,
     get_env_profile,
     discover_repos,
     init_target,
+    import_repos,
     list_targets,
+    list_target_snapshots,
     lock_target,
     materialize_target,
+    show_target_snapshot,
     set_repo_ref,
     run_env_doctor_for_target,
     run_target,
@@ -358,6 +362,97 @@ def test_discover_repos_filters_by_include_and_exclude(tmp_path: Path, monkeypat
 
     candidates = discover_repos(include=["*-repo"], exclude=["*beta*"])
     assert [item.repo_id for item in candidates] == ["alpha-repo"]
+
+
+def test_import_repos_adds_discovered_repos(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repos_root = tmp_path / "repos"
+    repo_alpha = repos_root / "alpha-repo"
+    repo_beta = repos_root / "beta-repo"
+
+    _init_git_repo(repo_alpha)
+    _init_git_repo(repo_beta)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("imported", mode="stack")
+    lock = import_repos("imported", source_root=repos_root, include=["*-repo"], auto_lock=True)
+    repo_ids = [repo.repo_id for repo in lock.repos]
+    assert set(repo_ids) == {"alpha-repo", "beta-repo"}
+    assert all(repo.resolved_sha is not None for repo in lock.repos)
+
+
+def test_import_repos_with_filter_no_candidates_raises(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repos_root = tmp_path / "repos"
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("empty", mode="stack")
+
+    with pytest.raises(ValueError, match="no repos discovered"):
+        import_repos("empty", source_root=repos_root, include=["*.repo"])
+
+
+def test_import_repos_supports_repo_filter_without_lock(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repos_root = tmp_path / "repos"
+    repo_alpha = repos_root / "alpha-repo"
+    repo_beta = repos_root / "beta-repo"
+
+    _init_git_repo(repo_alpha)
+    _init_git_repo(repo_beta)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("imported2", mode="stack")
+    lock = import_repos(
+        "imported2",
+        source_root=repos_root,
+        repo_ids=["alpha-repo"],
+        include=["*-repo"],
+        auto_lock=False,
+    )
+    assert [repo.repo_id for repo in lock.repos] == ["alpha-repo"]
+    assert lock.repos[0].resolved_sha is None
+
+
+def test_create_target_snapshot_and_list_show_work_together(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "source-repo"
+
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snapshot", mode="repo")
+    add_repo("snapshot", repo_path=str(source_repo), selected_ref="HEAD")
+    lock = lock_target("snapshot")
+
+    created = create_target_snapshot("snapshot", snapshot_id="custom-id")
+    second = create_target_snapshot("snapshot", snapshot_id="custom-id-2")
+
+    assert created["snapshot_id"] == "custom-id"
+    assert created["target"] == "snapshot"
+    assert isinstance(created["written_at_utc"], str)
+
+    snapshots = list_target_snapshots("snapshot")
+    assert {entry["snapshot_id"] for entry in snapshots} == {"custom-id", "custom-id-2"}
+
+    payload = show_target_snapshot("snapshot", "custom-id")
+    assert payload["snapshot_id"] == "custom-id"
+    assert payload["target_name"] == "snapshot"
+    assert payload["lock"]["lock_hash"] == lock.lock_hash
+
+    assert second["filename"] == "snapshots/custom-id-2.json"
 
 
 def test_bootstrap_target_uses_discovered_repos(tmp_path: Path, monkeypatch) -> None:

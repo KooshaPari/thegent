@@ -559,6 +559,47 @@ def test_phench_target_bootstrap_routes_to_service() -> None:
     )
 
 
+def test_phench_target_import_repos_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.import_repos") as mock_import_repos:
+        mock_import_repos.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[SimpleNamespace(repo_id="repo", selected_ref="HEAD", resolved_sha=None)],
+            lock_hash="abc123",
+        )
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "target",
+                "import-repos",
+                "alpha",
+                "--source-root",
+                "/tmp/repos",
+                "--ref",
+                "main",
+                "--include",
+                "*-repo",
+                "--exclude",
+                "tmp*",
+                "--repo-id",
+                "repo-a",
+                "--repo-id",
+                "repo-b",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_import_repos.assert_called_once_with(
+        target="alpha",
+        source_root=Path("/tmp/repos"),
+        selected_ref="main",
+        include=["*-repo"],
+        exclude=["tmp*"],
+        repo_ids=["repo-a", "repo-b"],
+        auto_lock=True,
+    )
+
+
 def test_phench_target_set_ref_routes_to_service() -> None:
     with patch("thegent.cli.apps.phench.set_repo_ref") as mock_set_repo_ref:
         mock_set_repo_ref.return_value = SimpleNamespace(
@@ -624,6 +665,60 @@ def test_phench_timeline_branch_filter_dispatches_to_service() -> None:
 
     assert result.exit_code == 0
     mock_timeline.assert_called_once_with("alpha", repo_id=None, limit=5, branch="feature")
+
+
+def test_phench_snapshot_create_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.create_target_snapshot") as mock_create_snapshot:
+        mock_create_snapshot.return_value = {"snapshot_id": "snap-001", "target": "alpha"}
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "snapshot",
+                "create",
+                "alpha",
+                "--snapshot-id",
+                "snap-001",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_create_snapshot.assert_called_once_with("alpha", snapshot_id="snap-001")
+
+
+def test_phench_snapshot_list_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.list_target_snapshots") as mock_list_snapshots:
+        mock_list_snapshots.return_value = []
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "snapshot",
+                "list",
+                "alpha",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_list_snapshots.assert_called_once_with("alpha")
+
+
+def test_phench_snapshot_show_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.show_target_snapshot") as mock_show_snapshot:
+        mock_show_snapshot.return_value = {"snapshot_id": "snap-001", "target_name": "alpha"}
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "snapshot",
+                "show",
+                "alpha",
+                "snap-001",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_show_snapshot.assert_called_once_with("alpha", "snap-001")
 
 
 def test_global_setup_command_delegates_to_setup_cmd() -> None:
