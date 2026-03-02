@@ -11,6 +11,7 @@ from thegent.phench.service import (
     audit_shared_modules,
     create_target_snapshot,
     bootstrap_target,
+    load_module_manifest,
     get_env_profile,
     discover_repos,
     init_target,
@@ -528,6 +529,117 @@ def test_run_target_rejects_runner_flag_like_command_name(tmp_path: Path, monkey
 
     with pytest.raises(ValueError):
         run_target("delta", runner="task", command_name="--help")
+
+
+def test_load_module_manifest_parses_patterns_and_overrides(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "repo_patterns": ["thegent-*", "platform-*"],
+        "repo_ref_overrides": {"thegent-api": "main"},
+        "repo_runner_overrides": {"thegent-api": "task"},
+        "repo_command_overrides": {"thegent-api": "hello"},
+        "repo_env_profile_overrides": {"platform-core": "ci"},
+    }
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    loaded = load_module_manifest(
+        "thegent-app",
+        available_repo_ids=["thegent-api", "platform-core", "other"],
+    )
+    assert loaded["repo_ids"] == ["platform-core", "thegent-api"]
+    assert loaded["repo_ref_overrides"] == {"thegent-api": "main"}
+    assert loaded["repo_runner_overrides"] == {"thegent-api": "task"}
+    assert loaded["repo_command_overrides"] == {"thegent-api": "hello"}
+    assert loaded["repo_env_profile_overrides"] == {"platform-core": "ci"}
+
+
+def test_load_module_manifest_rejects_unknown_repo_override(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "repo_ids": ["thegent-api"],
+        "repo_ref_overrides": {"missing-repo": "main"},
+    }
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="unknown repo_ref_overrides key"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_run_target_respects_per_repo_env_profile_override(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = tmp_path / "repo-a"
+    repo_b = tmp_path / "repo-b"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("envprofile", mode="stack")
+    add_repo(
+        "envprofile",
+        repo_path=str(repo_a),
+        repo_id="repo-a",
+        selected_ref="HEAD",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    add_repo(
+        "envprofile",
+        repo_path=str(repo_b),
+        repo_id="repo-b",
+        selected_ref="HEAD",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    lock_target("envprofile")
+    materialize_target("envprofile")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    set_env_profile("envprofile", "ci-a", {"ENV": "A"})
+    set_env_profile("envprofile", "ci-b", {"ENV": "B"})
+
+    observed: dict[str, dict[str, str]] = {}
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        observed[checkout.name] = dict(env_overrides or {})
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    exit_code = run_target(
+        "envprofile",
+        repo_ids=["repo-a", "repo-b"],
+        command_name="hello",
+        repo_env_profile_overrides={"repo-a": "ci-a", "repo-b": "ci-b"},
+    )
+    assert exit_code == 0
+    assert observed["repo-a"]["ENV"] == "A"
+    assert observed["repo-b"]["ENV"] == "B"
 
 
 def test_read_dual_rejects_hash_mismatch(tmp_path: Path, monkeypatch) -> None:

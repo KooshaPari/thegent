@@ -9,7 +9,7 @@ import typer
 from rich.console import Console
 from rich.prompt import IntPrompt
 
-from thegent.phench import load_target_lock
+from thegent.phench import load_module_manifest, load_target_lock
 
 console = Console()
 
@@ -132,12 +132,11 @@ def _ensure_selected_ref(
 
 def _parse_repo_ref_specs(
     repo_ref_specs: list[str] | None,
-    lock_repos: list,
+    lock_repo_ids: set[str],
 ) -> list[tuple[str, str]]:
     if not repo_ref_specs:
         return []
 
-    repo_ids = {repo.repo_id for repo in lock_repos}
     parsed: list[tuple[str, str]] = []
     seen: set[str] = set()
 
@@ -154,13 +153,21 @@ def _parse_repo_ref_specs(
             raise typer.BadParameter("repo-ref entry is missing a repo-id before '@'")
         if not ref:
             raise typer.BadParameter(f"repo-ref entry is missing a ref after '@': {spec}")
-        if repo_id not in repo_ids:
+        if repo_id not in lock_repo_ids:
             raise typer.BadParameter(f"repo-ref repo-id not in target lock: {repo_id}")
         if repo_id in seen:
             raise typer.BadParameter(f"repo-ref specified multiple times for repo: {repo_id}")
         seen.add(repo_id)
         parsed.append((repo_id, ref))
     return parsed
+
+
+def _merge_override_maps(
+    base: dict[str, str] | None,
+    extra: list[tuple[str, str]],
+) -> dict[str, str]:
+    base_map = dict(base or {})
+    return {**base_map, **dict(extra)}
 
 
 def _projects_run_impl(
@@ -172,6 +179,7 @@ def _projects_run_impl(
     command: str | None,
     ref: str | None,
     branch: str | None,
+    module: str | None,
     repo_refs: list[str] | None,
     all_repos: bool,
     execution_mode: str,
@@ -196,7 +204,29 @@ def _projects_run_impl(
         list_targets_fn=list_targets_fn,
     )
     lock = load_target_lock_fn(selected_target, family=family)
-    repo_ref_pairs = _parse_repo_ref_specs(repo_refs, lock.repos)
+    lock_repo_ids = {repo.repo_id for repo in lock.repos}
+    module_repo_ids: list[str] = []
+    module_repo_ref_overrides: dict[str, str] = {}
+    module_runner_overrides: dict[str, str] = {}
+    module_command_overrides: dict[str, str] = {}
+    module_env_profile_overrides: dict[str, str] = {}
+
+    if module is not None:
+        if all_repos:
+            raise typer.BadParameter("--module is not compatible with --all-repos")
+        if repo_id is not None:
+            raise typer.BadParameter("--module already defines repos; do not pass --repo-id")
+        module_manifest = load_module_manifest(module, available_repo_ids=sorted(lock_repo_ids))
+        module_repo_ids = module_manifest["repo_ids"]
+        module_repo_ref_overrides = module_manifest["repo_ref_overrides"]
+        module_runner_overrides = module_manifest["repo_runner_overrides"]
+        module_command_overrides = module_manifest["repo_command_overrides"]
+        module_env_profile_overrides = module_manifest["repo_env_profile_overrides"]
+        lock_repo_ids = set(module_repo_ids)
+        if not module_repo_ids:
+            raise typer.BadParameter(f"module has no repos: {module}")
+
+    repo_ref_pairs = _parse_repo_ref_specs(repo_refs, lock_repo_ids)
     if repo_ref_pairs and all_repos:
         raise typer.BadParameter("--repo-ref is not compatible with --all-repos")
     if repo_ref_pairs and repo_id:
@@ -204,13 +234,16 @@ def _projects_run_impl(
 
     selected_repo_id = None
     if not repo_ref_pairs:
-        selected_repo_id = _ensure_repo_id(
-            selected_target,
-            lock.repos,
-            repo_id=repo_id,
-            all_repos=all_repos,
-            non_interactive=no_interactive,
-        )
+        if module:
+            selected_repo_ids = list(module_repo_ids)
+        else:
+            selected_repo_id = _ensure_repo_id(
+                selected_target,
+                lock.repos,
+                repo_id=repo_id,
+                all_repos=all_repos,
+                non_interactive=no_interactive,
+            )
 
     selected_ref: str | None = ref or branch
     if selected_repo_id is not None and selected_ref is None:
@@ -232,37 +265,45 @@ def _projects_run_impl(
         lock_target_fn(selected_target, family=family)
         materialize_target_fn(selected_target, family=family)
 
+    base_run_kwargs = {
+        "runner": runner,
+        "command_name": command,
+        "selected_ref": selected_ref,
+        "all_repos": all_repos,
+        "execution_mode": execution_mode,
+        "env_profile": env_profile,
+        "non_interactive": no_interactive,
+        "family": family,
+    }
+
+    if module:
+        base_run_kwargs["repo_ids"] = list(module_repo_ids)
+        if module_repo_ref_overrides:
+            base_run_kwargs["repo_ref_overrides"] = module_repo_ref_overrides
+        if module_runner_overrides:
+            base_run_kwargs["repo_runner_overrides"] = module_runner_overrides
+        if module_command_overrides:
+            base_run_kwargs["repo_command_overrides"] = module_command_overrides
+        if module_env_profile_overrides:
+            base_run_kwargs["repo_env_profile_overrides"] = module_env_profile_overrides
+
     if repo_ref_pairs:
-        run_codes: list[int] = []
-        for repo_ref_repo, repo_ref_ref in repo_ref_pairs:
-            run_codes.append(
-                run_target_fn(
-                    selected_target,
-                    repo_id=repo_ref_repo,
-                    runner=runner,
-                    command_name=command,
-                    selected_ref=repo_ref_ref,
-                    all_repos=False,
-                    execution_mode="serial",
-                    env_profile=env_profile,
-                    non_interactive=no_interactive,
-                    family=family,
-                )
+        base_run_kwargs["repo_id"] = None
+        base_run_kwargs["repo_ids"] = list(module_repo_ids) if module else [repo_id for repo_id, _ in repo_ref_pairs]
+        if module:
+            base_run_kwargs["repo_ref_overrides"] = _merge_override_maps(
+                module_repo_ref_overrides,
+                repo_ref_pairs,
             )
-        exit_code = next((code for code in run_codes if code != 0), 0)
+        else:
+            base_run_kwargs["repo_ref_overrides"] = dict(repo_ref_pairs)
+        base_run_kwargs["selected_ref"] = None
+        base_run_kwargs["all_repos"] = False
+        base_run_kwargs["execution_mode"] = "serial"
     else:
-        exit_code = run_target_fn(
-            selected_target,
-            repo_id=selected_repo_id,
-            runner=runner,
-            command_name=command,
-            selected_ref=selected_ref,
-            all_repos=all_repos,
-            execution_mode=execution_mode,
-            env_profile=env_profile,
-            non_interactive=no_interactive,
-            family=family,
-        )
+        base_run_kwargs["repo_id"] = selected_repo_id
+
+    exit_code = run_target_fn(selected_target, **base_run_kwargs)
     raise typer.Exit(exit_code)
 
 
@@ -285,6 +326,11 @@ def register_projects_run(
         target: str | None = typer.Option(None, "--target", help="Target name to run."),
         family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
+        module: str | None = typer.Option(
+            None,
+            "--module",
+            help="Execute the module-defined repo subset (thegent/projects/modules/<module>).",
+        ),
         repo_refs: list[str] | None = typer.Option(
             None,
             "--repo-ref",
@@ -305,6 +351,7 @@ def register_projects_run(
             target=target,
             family=family,
             repo_id=repo_id,
+            module=module,
             runner=runner,
             command=command,
             ref=ref,
