@@ -1,20 +1,29 @@
 # Sibling Tooling & Workflow Reuse Audit
 
-- Repos scanned: 32
+- Repos scanned: 57
 - Excluded repos: 4sgm, civ, parpour, trace
 
 ## Top duplicate content groups (same hash, >=2 repos)
 
 | Hash | Basename | Repo count | Example paths |
 |---|---|---:|---|
-| acee3a23c7... | alert-sync-issues.yml | 17 | AgilePlus:.github/workflows/alert-sync-issues.yml<br/>agentapi-plusplus:.github/workflows/alert-sync-issues.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/alert-sync-issues.yml |
-| c1dc967589... | coderabbit-rate-limit-retry.yml | 8 | agentapi-plusplus:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-governance:.github/workflows/coderabbit-rate-limit-retry.yml |
-| 17ed53756b... | policy-gate.yml | 6 | agentapi-plusplus:.github/workflows/policy-gate.yml<br/>agentapi-plusplus-governance:.github/workflows/policy-gate.yml<br/>bifrost-extensions:.github/workflows/policy-gate.yml |
+| bf2bcb0094... | security-guard-hook-audit.yml | 46 | AgilePlus:.github/workflows/security-guard-hook-audit.yml<br/>agent-devops-setups:.github/workflows/security-guard-hook-audit.yml<br/>agentapi-plusplus:.github/workflows/security-guard-hook-audit.yml |
+| 557907df33... | security-guard.yml | 37 | AgilePlus:.github/workflows/security-guard.yml<br/>agentapi-plusplus:.github/workflows/security-guard.yml<br/>bifrost-extensions:.github/workflows/security-guard.yml |
+| f76986372a... | security-guard.sh | 31 | AgilePlus:.github/scripts/security-guard.sh<br/>agentapi-plusplus:.github/scripts/security-guard.sh<br/>bifrost-extensions:.github/scripts/security-guard.sh |
+| acee3a23c7... | alert-sync-issues.yml | 18 | AgilePlus:.github/workflows/alert-sync-issues.yml<br/>agentapi-plusplus:.github/workflows/alert-sync-issues.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/alert-sync-issues.yml |
+| eb63a684d5... | Taskfile.yml | 16 | template-domain-service-api:Taskfile.yml<br/>template-domain-service-api:taskfile.yml<br/>template-domain-webapp:Taskfile.yml |
+| fb16590ac4... | branch-protection-audit.yml | 13 | template-commons:.github/workflows/branch-protection-audit.yml<br/>template-domain-service-api:.github/workflows/branch-protection-audit.yml<br/>template-domain-webapp:.github/workflows/branch-protection-audit.yml |
+| c482f77b66... | policy-gate.yml | 12 | template-domain-service-api:.github/workflows/policy-gate.yml<br/>template-domain-webapp:.github/workflows/policy-gate.yml<br/>template-lang-elixir-hex:.github/workflows/policy-gate.yml |
+| 060212a71c... | security-guard.sh | 8 | agentapi-plusplus-composite-actions:.github/scripts/security-guard.sh<br/>agentapi-plusplus-governance:.github/scripts/security-guard.sh<br/>cliproxyapi++-composite-actions:.github/scripts/security-guard.sh |
+| 790700acab... | security-guard.yml | 8 | agentapi-plusplus-composite-actions:.github/workflows/security-guard.yml<br/>agentapi-plusplus-governance:.github/workflows/security-guard.yml<br/>cliproxyapi++-composite-actions:.github/workflows/security-guard.yml |
+| 8eec5ff4a5... | Taskfile.yml | 8 | template-commons:Taskfile.yml<br/>template-commons:taskfile.yml<br/>template-lang-go:Taskfile.yml |
+| 095186e882... | ci.yml | 8 | template-domain-service-api:.github/workflows/ci.yml<br/>template-domain-webapp:.github/workflows/ci.yml<br/>template-lang-elixir-hex:.github/workflows/ci.yml |
+| c1dc967589... | coderabbit-rate-limit-retry.yml | 7 | agentapi-plusplus:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-governance:.github/workflows/coderabbit-rate-limit-retry.yml |
+| 7565ddd135... | policy-gate.yml | 7 | agentapi-plusplus:.github/workflows/policy-gate.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/policy-gate.yml<br/>bifrost-extensions:.github/workflows/policy-gate.yml |
 | b86d3dd4ac... | Taskfile.yml | 6 | agentapi-plusplus:Taskfile.yml<br/>agentapi-plusplus:taskfile.yml<br/>agentapi-plusplus-composite-actions:Taskfile.yml |
 | 191c6cc604... | required-check-names-guard.yml | 6 | cliproxyapi++:.github/workflows/required-check-names-guard.yml<br/>cliproxyapi++-composite-actions:.github/workflows/required-check-names-guard.yml<br/>cliproxyapi-plusplus:.github/workflows/required-check-names-guard.yml |
 | 01b49cdd91... | Taskfile.yml | 6 | heliosApp:Taskfile.yml<br/>heliosApp:taskfile.yml<br/>heliosApp-composite-actions:Taskfile.yml |
 | 29281537ac... | Taskfile.yml | 6 | portage:Taskfile.yml<br/>portage:taskfile.yml<br/>portage-composite-actions:Taskfile.yml |
-| 7565ddd135... | policy-gate.yml | 5 | agentapi-plusplus-composite-actions:.github/workflows/policy-gate.yml<br/>bifrost-extensions-composite-actions:.github/workflows/policy-gate.yml<br/>heliosCLI:.github/workflows/policy-gate.yml |
 | a62c7ffc16... | Taskfile.yml | 4 | cliproxyapi++:Taskfile.yml<br/>cliproxyapi++:taskfile.yml<br/>cliproxyapi++-composite-actions:Taskfile.yml |
 | fd0180e972... | install-musl-build-tools.sh | 4 | helios-cli:.github/scripts/install-musl-build-tools.sh<br/>heliosCLI:.github/scripts/install-musl-build-tools.sh<br/>heliosCLI-composite-actions:.github/scripts/install-musl-build-tools.sh |
 | 05eeaf79fe... | Dockerfile.bazel | 4 | helios-cli:.github/workflows/Dockerfile.bazel<br/>heliosCLI:.github/workflows/Dockerfile.bazel<br/>heliosCLI-composite-actions:.github/workflows/Dockerfile.bazel |
@@ -33,6 +42,8 @@
 | 9a3f3949e1... | check-module-bazel-lock.sh | 4 | helios-cli:scripts/check-module-bazel-lock.sh<br/>heliosCLI:scripts/check-module-bazel-lock.sh<br/>heliosCLI-composite-actions:scripts/check-module-bazel-lock.sh |
 | c28540e272... | mock_responses_websocket_server.py | 4 | helios-cli:scripts/mock_responses_websocket_server.py<br/>heliosCLI:scripts/mock_responses_websocket_server.py<br/>heliosCLI-composite-actions:scripts/mock_responses_websocket_server.py |
 | 5c866752be... | readme_toc.py | 4 | helios-cli:scripts/readme_toc.py<br/>heliosCLI:scripts/readme_toc.py<br/>heliosCLI-composite-actions:scripts/readme_toc.py |
+| 0dd91dfd1f... | ci.yml | 4 | template-commons:.github/workflows/ci.yml<br/>template-lang-go:.github/workflows/ci.yml<br/>template-lang-python:.github/workflows/ci.yml |
+| ac232fb6a4... | scaffold-smoke.sh | 4 | template-commons:scripts/scaffold-smoke.sh<br/>template-lang-go:scripts/scaffold-smoke.sh<br/>template-lang-python:scripts/scaffold-smoke.sh |
 | cd47023536... | Taskfile.yml | 4 | thegent:Taskfile.yml<br/>thegent:taskfile.yml<br/>thegent-composite-actions:Taskfile.yml |
 | 7f42427b6a... | docs-site.yml | 3 | agentapi-plusplus:.github/workflows/docs-site.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/docs-site.yml<br/>agentapi-plusplus-governance:.github/workflows/docs-site.yml |
 | 7c1ff76b6e... | generate-sdks.yaml | 3 | agentapi-plusplus:.github/workflows/generate-sdks.yaml<br/>agentapi-plusplus-composite-actions:.github/workflows/generate-sdks.yaml<br/>agentapi-plusplus-governance:.github/workflows/generate-sdks.yaml |
@@ -42,6 +53,7 @@
 | 039b3101f2... | pr-preview-release.yml | 3 | agentapi-plusplus:.github/workflows/pr-preview-release.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/pr-preview-release.yml<br/>agentapi-plusplus-governance:.github/workflows/pr-preview-release.yml |
 | 4cf981d379... | release.yml | 3 | agentapi-plusplus:.github/workflows/release.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/release.yml<br/>agentapi-plusplus-governance:.github/workflows/release.yml |
 | 8a314e5dce... | validate_openapi_agent_client_module.sh | 3 | agentapi-plusplus:scripts/validate_openapi_agent_client_module.sh<br/>agentapi-plusplus-composite-actions:scripts/validate_openapi_agent_client_module.sh<br/>agentapi-plusplus-governance:scripts/validate_openapi_agent_client_module.sh |
+| 17ed53756b... | policy-gate.yml | 3 | agentapi-plusplus-governance:.github/workflows/policy-gate.yml<br/>bifrost-extensions-governance:.github/workflows/policy-gate.yml<br/>portage-governance:.github/workflows/policy-gate.yml |
 | 501cdd430f... | check-approved-external-endpoints.sh | 3 | cliproxyapi++:.github/scripts/check-approved-external-endpoints.sh<br/>cliproxyapi++-composite-actions:.github/scripts/check-approved-external-endpoints.sh<br/>cliproxyapi-plusplus:.github/scripts/check-approved-external-endpoints.sh |
 | fb87723b1c... | check-distributed-critical-paths.sh | 3 | cliproxyapi++:.github/scripts/check-distributed-critical-paths.sh<br/>cliproxyapi++-composite-actions:.github/scripts/check-distributed-critical-paths.sh<br/>cliproxyapi-plusplus:.github/scripts/check-distributed-critical-paths.sh |
 | bcf56f7177... | check-docs-secret-samples.sh | 3 | cliproxyapi++:.github/scripts/check-docs-secret-samples.sh<br/>cliproxyapi++-composite-actions:.github/scripts/check-docs-secret-samples.sh<br/>cliproxyapi-plusplus:.github/scripts/check-docs-secret-samples.sh |
@@ -68,14 +80,12 @@
 | feed310434... | provider-smoke-matrix.sh | 3 | cliproxyapi++:scripts/provider-smoke-matrix.sh<br/>cliproxyapi++-composite-actions:scripts/provider-smoke-matrix.sh<br/>cliproxyapi-plusplus:scripts/provider-smoke-matrix.sh |
 | 22b7685bbc... | release_batch.sh | 3 | cliproxyapi++:scripts/release_batch.sh<br/>cliproxyapi++-composite-actions:scripts/release_batch.sh<br/>cliproxyapi-plusplus:scripts/release_batch.sh |
 | 9f05b3039f... | service | 3 | cliproxyapi++:scripts/service<br/>cliproxyapi++-composite-actions:scripts/service<br/>cliproxyapi-plusplus:scripts/service |
-| e0183135bc... | issue-deduplicator.yml | 3 | helios-cli:.github/workflows/issue-deduplicator.yml<br/>heliosCLI:.github/workflows/issue-deduplicator.yml<br/>heliosCLI-upstream:.github/workflows/issue-deduplicator.yml |
-| 5af4ee1c39... | issue-labeler.yml | 3 | helios-cli:.github/workflows/issue-labeler.yml<br/>heliosCLI:.github/workflows/issue-labeler.yml<br/>heliosCLI-upstream:.github/workflows/issue-labeler.yml |
 | f6dba74c63... | policy-gate.yml | 3 | helios-cli:.github/workflows/policy-gate.yml<br/>tokenledger:.github/workflows/policy-gate.yml<br/>trash-cli:.github/workflows/policy-gate.yml |
-| 6a6199942e... | rust-release.yml | 3 | helios-cli:.github/workflows/rust-release.yml<br/>heliosCLI:.github/workflows/rust-release.yml<br/>heliosCLI-composite-actions:.github/workflows/rust-release.yml |
-| 6dde9d775c... | stage_npm_packages.py | 3 | helios-cli:scripts/stage_npm_packages.py<br/>heliosCLI:scripts/stage_npm_packages.py<br/>heliosCLI-upstream:scripts/stage_npm_packages.py |
 | d85a09c5f4... | ci.yml | 3 | heliosApp:.github/workflows/ci.yml<br/>heliosApp-composite-actions:.github/workflows/ci.yml<br/>heliosApp-governance:.github/workflows/ci.yml |
 | a5a1c47636... | stage-gates.yml | 3 | heliosApp:.github/workflows/stage-gates.yml<br/>heliosApp-composite-actions:.github/workflows/stage-gates.yml<br/>heliosApp-governance:.github/workflows/stage-gates.yml |
 | 95b93ad7de... | vitepress-pages.yml | 3 | heliosApp:.github/workflows/vitepress-pages.yml<br/>heliosApp-composite-actions:.github/workflows/vitepress-pages.yml<br/>heliosApp-governance:.github/workflows/vitepress-pages.yml |
+| 6fb6a31783... | preflight.mjs | 3 | heliosCLI:scripts/dev/preflight.mjs<br/>heliosCLI-composite-actions:scripts/dev/preflight.mjs<br/>heliosCLI-upstream:scripts/dev/preflight.mjs |
+| 4838a4641e... | install.sh | 3 | heliosCLI:scripts/install/install.sh<br/>heliosCLI-composite-actions:scripts/install/install.sh<br/>heliosCLI-upstream:scripts/install/install.sh |
 | 1f4501d603... | claude-code-review.yml | 3 | portage:.github/workflows/claude-code-review.yml<br/>portage-composite-actions:.github/workflows/claude-code-review.yml<br/>portage-governance:.github/workflows/claude-code-review.yml |
 | 47eb1decf3... | claude.yml | 3 | portage:.github/workflows/claude.yml<br/>portage-composite-actions:.github/workflows/claude.yml<br/>portage-governance:.github/workflows/claude.yml |
 | 2e8047fdd7... | pytest.yml | 3 | portage:.github/workflows/pytest.yml<br/>portage-composite-actions:.github/workflows/pytest.yml<br/>portage-governance:.github/workflows/pytest.yml |
@@ -98,6 +108,7 @@
 | dfb04f7075... | test_tinker_llm.py | 3 | portage:scripts/test_tinker_llm.py<br/>portage-composite-actions:scripts/test_tinker_llm.py<br/>portage-governance:scripts/test_tinker_llm.py |
 | f7c3398115... | validate_queue_orchestrator_module.sh | 3 | portage:scripts/validate_queue_orchestrator_module.sh<br/>portage-composite-actions:scripts/validate_queue_orchestrator_module.sh<br/>portage-governance:scripts/validate_queue_orchestrator_module.sh |
 | ab1ef9ee4a... | windows_runner.py | 3 | portage:scripts/windows_runner.py<br/>portage-composite-actions:scripts/windows_runner.py<br/>portage-governance:scripts/windows_runner.py |
+| b3c0884056... | lint-test.yml | 2 | agentapi-plusplus:.github/workflows/lint-test.yml<br/>bifrost-extensions:.github/workflows/lint-test.yml |
 | fd3b29dceb... | codeql.yml | 2 | cliproxyapi++:.github/workflows/codeql.yml<br/>cliproxyapi++-composite-actions:.github/workflows/codeql.yml |
 | b6f6d7d28b... | docker-image.yml | 2 | cliproxyapi++:.github/workflows/docker-image.yml<br/>cliproxyapi++-composite-actions:.github/workflows/docker-image.yml |
 | cda6d25302... | docs.yml | 2 | cliproxyapi++:.github/workflows/docs.yml<br/>cliproxyapi++-composite-actions:.github/workflows/docs.yml |
@@ -110,15 +121,29 @@
 | 2db92fc1aa... | Taskfile.yml | 2 | colab:Taskfile.yml<br/>colab:taskfile.yml |
 | e237669359... | bazel.yml | 2 | helios-cli:.github/workflows/bazel.yml<br/>heliosCLI-upstream:.github/workflows/bazel.yml |
 | f19d0070ba... | ci.yml | 2 | helios-cli:.github/workflows/ci.yml<br/>heliosCLI-upstream:.github/workflows/ci.yml |
+| e0183135bc... | issue-deduplicator.yml | 2 | helios-cli:.github/workflows/issue-deduplicator.yml<br/>heliosCLI-upstream:.github/workflows/issue-deduplicator.yml |
+| 5af4ee1c39... | issue-labeler.yml | 2 | helios-cli:.github/workflows/issue-labeler.yml<br/>heliosCLI-upstream:.github/workflows/issue-labeler.yml |
 | c4349aece6... | rust-ci.yml | 2 | helios-cli:.github/workflows/rust-ci.yml<br/>heliosCLI-upstream:.github/workflows/rust-ci.yml |
+| 6a6199942e... | rust-release.yml | 2 | helios-cli:.github/workflows/rust-release.yml<br/>heliosCLI-composite-actions:.github/workflows/rust-release.yml |
 | 8a0af2b27b... | debug-codex.sh | 2 | helios-cli:scripts/debug-codex.sh<br/>heliosCLI-upstream:scripts/debug-codex.sh |
+| 6dde9d775c... | stage_npm_packages.py | 2 | helios-cli:scripts/stage_npm_packages.py<br/>heliosCLI-upstream:scripts/stage_npm_packages.py |
 | cd9cc67289... | agent-dir-guard.yml | 2 | heliosApp-composite-actions:.github/workflows/agent-dir-guard.yml<br/>heliosApp-governance:.github/workflows/agent-dir-guard.yml |
-| 8a8ec8afc2... | bazel.yml | 2 | heliosCLI:.github/workflows/bazel.yml<br/>heliosCLI-composite-actions:.github/workflows/bazel.yml |
 | 0a50f7577e... | ci.yml | 2 | heliosCLI:.github/workflows/ci.yml<br/>heliosCLI-composite-actions:.github/workflows/ci.yml |
+| 8305587573... | issue-deduplicator.yml | 2 | heliosCLI:.github/workflows/issue-deduplicator.yml<br/>heliosCLI-composite-actions:.github/workflows/issue-deduplicator.yml |
+| 2048886473... | issue-labeler.yml | 2 | heliosCLI:.github/workflows/issue-labeler.yml<br/>heliosCLI-composite-actions:.github/workflows/issue-labeler.yml |
 | 0bd6178fd2... | pr-babysit-watch.yml | 2 | heliosCLI:.github/workflows/pr-babysit-watch.yml<br/>heliosCLI-composite-actions:.github/workflows/pr-babysit-watch.yml |
+| ed255e8682... | review-wave-orchestrator.yml | 2 | heliosCLI:.github/workflows/review-wave-orchestrator.yml<br/>heliosCLI-composite-actions:.github/workflows/review-wave-orchestrator.yml |
+| 08e97a1c68... | rust-release.yml | 2 | heliosCLI:.github/workflows/rust-release.yml<br/>heliosCLI-upstream:.github/workflows/rust-release.yml |
+| 061ef4864f... | babysit-open-prs.sh | 2 | heliosCLI:scripts/babysit-open-prs.sh<br/>heliosCLI-composite-actions:scripts/babysit-open-prs.sh |
+| 27d9f23651... | bootstrap-dev.sh | 2 | heliosCLI:scripts/bootstrap-dev.sh<br/>heliosCLI-composite-actions:scripts/bootstrap-dev.sh |
 | 1d00f14cd5... | debug-codex.sh | 2 | heliosCLI:scripts/debug-codex.sh<br/>heliosCLI-composite-actions:scripts/debug-codex.sh |
-| 6fb6a31783... | preflight.mjs | 2 | heliosCLI-composite-actions:scripts/dev/preflight.mjs<br/>heliosCLI-upstream:scripts/dev/preflight.mjs |
-| 4838a4641e... | install.sh | 2 | heliosCLI-composite-actions:scripts/install/install.sh<br/>heliosCLI-upstream:scripts/install/install.sh |
+| 6a9ff62bb5... | prepush.mjs | 2 | heliosCLI:scripts/dev/prepush.mjs<br/>heliosCLI-composite-actions:scripts/dev/prepush.mjs |
+| 3d1002b7e8... | install-helios-dev.sh | 2 | heliosCLI:scripts/install-helios-dev.sh<br/>heliosCLI-composite-actions:scripts/install-helios-dev.sh |
+| 498a2bd076... | stage-npm-packages.sh | 2 | heliosCLI:scripts/stage-npm-packages.sh<br/>heliosCLI-composite-actions:scripts/stage-npm-packages.sh |
+| c41a974434... | stage_npm_packages.py | 2 | heliosCLI:scripts/stage_npm_packages.py<br/>heliosCLI-composite-actions:scripts/stage_npm_packages.py |
+| 96e753eef1... | task_surface.sh | 2 | heliosCLI:scripts/task_surface.sh<br/>heliosCLI-composite-actions:scripts/task_surface.sh |
+| 0d29ad7e4a... | tooling-dispatch.sh | 2 | heliosCLI:scripts/tooling-dispatch.sh<br/>heliosCLI-composite-actions:scripts/tooling-dispatch.sh |
+| 51aa62afe9... | Taskfile.yml | 2 | template-program-ops:Taskfile.yml<br/>template-program-ops:taskfile.yml |
 | d9971c3d5b... | benchmark.yml | 2 | thegent:.github/workflows/benchmark.yml<br/>thegent-composite-actions:.github/workflows/benchmark.yml |
 | c08244c0fd... | build.yml | 2 | thegent:.github/workflows/build.yml<br/>thegent-composite-actions:.github/workflows/build.yml |
 | f587ef053c... | ci-minimal.yml | 2 | thegent:.github/workflows/ci-minimal.yml<br/>thegent-composite-actions:.github/workflows/ci-minimal.yml |
@@ -182,41 +207,21 @@
 | 89b0091c06... | check_zig_abi_artifact.py | 2 | thegent:scripts/check_zig_abi_artifact.py<br/>thegent-composite-actions:scripts/check_zig_abi_artifact.py |
 | a68d778854... | ci_local_gha.sh | 2 | thegent:scripts/ci_local_gha.sh<br/>thegent-composite-actions:scripts/ci_local_gha.sh |
 | b511b556ca... | ci_uv_sync.sh | 2 | thegent:scripts/ci_uv_sync.sh<br/>thegent-composite-actions:scripts/ci_uv_sync.sh |
-| 6be44a2099... | civilization_agent_memory.py | 2 | thegent:scripts/civilization_agent_memory.py<br/>thegent-composite-actions:scripts/civilization_agent_memory.py |
-| 9334c8a444... | civilization_conflict_resolver.py | 2 | thegent:scripts/civilization_conflict_resolver.py<br/>thegent-composite-actions:scripts/civilization_conflict_resolver.py |
-| 401eba7e14... | civilization_dashboard_service.py | 2 | thegent:scripts/civilization_dashboard_service.py<br/>thegent-composite-actions:scripts/civilization_dashboard_service.py |
-| ab3948d770... | civilization_mcp_server.py | 2 | thegent:scripts/civilization_mcp_server.py<br/>thegent-composite-actions:scripts/civilization_mcp_server.py |
-| e3bd4c4ac2... | civilization_memory_analytics.py | 2 | thegent:scripts/civilization_memory_analytics.py<br/>thegent-composite-actions:scripts/civilization_memory_analytics.py |
-| 26aa34090a... | civilization_memory_sharing.py | 2 | thegent:scripts/civilization_memory_sharing.py<br/>thegent-composite-actions:scripts/civilization_memory_sharing.py |
-| c18277db2d... | civilization_memory_storage.py | 2 | thegent:scripts/civilization_memory_storage.py<br/>thegent-composite-actions:scripts/civilization_memory_storage.py |
-| 274b925813... | cliproxy_provider_smoke.py | 2 | thegent:scripts/cliproxy_provider_smoke.py<br/>thegent-composite-actions:scripts/cliproxy_provider_smoke.py |
-| b424e0a534... | collect_loc_metrics.py | 2 | thegent:scripts/collect_loc_metrics.py<br/>thegent-composite-actions:scripts/collect_loc_metrics.py |
-| 5a8bd8e7f7... | collect_wl_monolith_baselines.py | 2 | thegent:scripts/collect_wl_monolith_baselines.py<br/>thegent-composite-actions:scripts/collect_wl_monolith_baselines.py |
-| 4370c8b2cb... | thegent.bash | 2 | thegent:scripts/completion/thegent.bash<br/>thegent-composite-actions:scripts/completion/thegent.bash |
-| 01acf13fb6... | thegent.zsh | 2 | thegent:scripts/completion/thegent.zsh<br/>thegent-composite-actions:scripts/completion/thegent.zsh |
-| 6aba5c6851... | context7_contract_smoke.py | 2 | thegent:scripts/context7_contract_smoke.py<br/>thegent-composite-actions:scripts/context7_contract_smoke.py |
-| 69bf694314... | debug_import.py | 2 | thegent:scripts/debug_import.py<br/>thegent-composite-actions:scripts/debug_import.py |
-| da82b1c9c0... | debug_typer.py | 2 | thegent:scripts/debug_typer.py<br/>thegent-composite-actions:scripts/debug_typer.py |
-| 6ca291855b... | decode_ddg_links.py | 2 | thegent:scripts/decode_ddg_links.py<br/>thegent-composite-actions:scripts/decode_ddg_links.py |
-| 9f4fee07a6... | decode_ddg_links_v2.py | 2 | thegent:scripts/decode_ddg_links_v2.py<br/>thegent-composite-actions:scripts/decode_ddg_links_v2.py |
-| 620f31debb... | decomposition_progress.py | 2 | thegent:scripts/decomposition_progress.py<br/>thegent-composite-actions:scripts/decomposition_progress.py |
-| 1754db51ef... | delegate_5_items.sh | 2 | thegent:scripts/delegate_5_items.sh<br/>thegent-composite-actions:scripts/delegate_5_items.sh |
-| d6ac7330b9... | detect_inefficient_reads.py | 2 | thegent:scripts/detect_inefficient_reads.py<br/>thegent-composite-actions:scripts/detect_inefficient_reads.py |
-| 6a77753f6f... | dev_start_with_preflight.py | 2 | thegent:scripts/dev_start_with_preflight.py<br/>thegent-composite-actions:scripts/dev_start_with_preflight.py |
-| adb73606f1... | diagnose-rg-error.sh | 2 | thegent:scripts/diagnose-rg-error.sh<br/>thegent-composite-actions:scripts/diagnose-rg-error.sh |
-| 76ec8d8d20... | disk-hygiene.sh | 2 | thegent:scripts/disk-hygiene.sh<br/>thegent-composite-actions:scripts/disk-hygiene.sh |
-| 78881fbabb... | doc_update_helper.py | 2 | thegent:scripts/doc_update_helper.py<br/>thegent-composite-actions:scripts/doc_update_helper.py |
-| f28523642f... | docs-add-see-also.sh | 2 | thegent:scripts/docs-add-see-also.sh<br/>thegent-composite-actions:scripts/docs-add-see-also.sh |
 
 ## Highest-confidence reusable file paths (same path exists in >=3 repos)
 
 | Path | Repo count |
 |---|---:|
-| .github/workflows/policy-gate.yml | 21 |
-| .github/workflows/alert-sync-issues.yml | 17 |
-| Taskfile.yml | 16 |
-| taskfile.yml | 16 |
-| .github/workflows/ci.yml | 10 |
+| .github/workflows/security-guard-hook-audit.yml | 46 |
+| .github/workflows/security-guard.yml | 46 |
+| .github/scripts/security-guard.sh | 41 |
+| .github/workflows/policy-gate.yml | 35 |
+| Taskfile.yml | 29 |
+| taskfile.yml | 29 |
+| .github/workflows/ci.yml | 24 |
+| .github/workflows/alert-sync-issues.yml | 18 |
+| .github/workflows/branch-protection-audit.yml | 13 |
+| scripts/scaffold-smoke.sh | 13 |
 | .github/workflows/coderabbit-rate-limit-retry.yml | 8 |
 | .github/workflows/stage-gates.yml | 8 |
 | .github/workflows/generate-sdks.yaml | 6 |
@@ -285,6 +290,9 @@
 | scripts/release_batch.sh | 3 |
 | scripts/service | 3 |
 | .github/workflows/agent-dir-guard.yml | 3 |
+| .github/workflows/review-wave-orchestrator.yml | 3 |
+| scripts/dev/preflight.mjs | 3 |
+| scripts/install/install.sh | 3 |
 | .github/workflows/claude-code-review.yml | 3 |
 | .github/workflows/claude.yml | 3 |
 | .github/workflows/pytest.yml | 3 |
@@ -311,8 +319,8 @@
 
 | Name | Repo count |
 |---|---:|
-| Taskfile.yml | 16 |
-| taskfile.yml | 16 |
+| Taskfile.yml | 29 |
+| taskfile.yml | 29 |
 
 ## Suggested initial standardization split
 
@@ -324,8 +332,9 @@
 
 | Path | Repo count | Hash variants | Why |
 |---|---:|---:|---|
-| .github/workflows/alert-sync-issues.yml | 17 | 1 | identical file body in all observed repos |
-| .github/workflows/coderabbit-rate-limit-retry.yml | 8 | 1 | identical file body in all observed repos |
+| .github/workflows/security-guard-hook-audit.yml | 46 | 1 | identical file body in all observed repos |
+| .github/workflows/alert-sync-issues.yml | 18 | 1 | identical file body in all observed repos |
+| .github/workflows/branch-protection-audit.yml | 13 | 1 | identical file body in all observed repos |
 | .github/workflows/required-check-names-guard.yml | 6 | 1 | identical file body in all observed repos |
 | scripts/readme_toc.py | 4 | 1 | identical file body in all observed repos |
 | scripts/mock_responses_websocket_server.py | 4 | 1 | identical file body in all observed repos |
@@ -343,12 +352,13 @@
 | .github/workflows/ci.bazelrc | 4 | 1 | identical file body in all observed repos |
 | .github/workflows/cargo-deny.yml | 4 | 1 | identical file body in all observed repos |
 | .github/workflows/Dockerfile.bazel | 4 | 1 | identical file body in all observed repos |
-| .github/scripts/install-musl-build-tools.sh | 4 | 1 | identical file body in all observed repos |
 
 ## Near-term expansion (phase 2)
 
 | Path | Repo count | Hash variants | Why |
 |---|---:|---:|---|
+| .github/workflows/security-guard.yml | 46 | 3 | high reuse with minor forks; standardize next |
+| .github/workflows/coderabbit-rate-limit-retry.yml | 8 | 2 | high reuse with minor forks; standardize next |
 | .github/workflows/generate-sdks.yaml | 6 | 2 | high reuse with minor forks; standardize next |
 | scripts/provider-smoke-matrix-cheapest.sh | 5 | 2 | high reuse with minor forks; standardize next |
 | .github/workflows/release.yml | 5 | 2 | high reuse with minor forks; standardize next |
