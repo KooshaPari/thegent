@@ -27,14 +27,41 @@ def resolve_ref_to_sha(repo_path: Path, ref: str) -> str:
     return run_git(repo_path, ["rev-parse", f"{ref}^{{commit}}"])
 
 
-def list_timeline(repo_path: Path, limit: int = 30) -> dict[str, list[str]]:
+def list_timeline(
+    repo_path: Path,
+    limit: int = 30,
+    branch: str | None = None,
+) -> dict[str, list[str] | bool | str]:
     branches = run_git(repo_path, ["for-each-ref", "--format=%(refname:short)", "refs/heads"]).splitlines()
     tags = run_git(repo_path, ["for-each-ref", "--format=%(refname:short)", "refs/tags"]).splitlines()
+    selected_ref = "HEAD"
+    head_sha = run_git(repo_path, ["rev-parse", "HEAD^{commit}"])
+    branch_exists = False
+    log_ref = "HEAD"
+    if branch:
+        branch = branch.strip()
+        if not branch:
+            raise ValueError("branch must not be empty")
+        try:
+            head_sha = run_git(repo_path, ["rev-parse", f"{branch}^{{commit}}"])
+        except RuntimeError as exc:
+            raise ValueError(f"unknown branch: {branch}") from exc
+        selected_ref = branch
+        branch_exists = True
+        log_ref = branch
     recent = run_git(
         repo_path,
-        ["log", "--oneline", f"--max-count={limit}", "--decorate"],
+        ["log", log_ref, "--oneline", f"--max-count={limit}", "--decorate"],
     ).splitlines()
-    return {"branches": [b for b in branches if b], "tags": [t for t in tags if t], "recent": recent}
+    return {
+        "branches": [b for b in branches if b],
+        "tags": [t for t in tags if t],
+        "recent": recent,
+        "selected_ref": selected_ref,
+        "branch": branch,
+        "branch_exists": branch_exists,
+        "head_sha": head_sha,
+    }
 
 
 def _safe_remove_path(path: Path) -> None:

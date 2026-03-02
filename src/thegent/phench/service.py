@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .env_doctor import run_env_doctor
+from .discovery import RepoCandidate, discover_local_git_repos
 from .git_ops import (
     detect_head_branch,
     list_timeline,
@@ -16,7 +17,7 @@ from .git_ops import (
     sanitize_repo_id,
 )
 from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
-from .paths import projects_root, target_repos_root, target_root
+from .paths import projects_root, target_repos_root, target_root, phenotype_repos_root
 from .runner import build_runner_catalog, pick_command_interactive, run_command
 from .store import dual_write, read_dual, sync_dual, utc_now_iso
 
@@ -25,6 +26,71 @@ RUNTIME_FILE = "runtime.json"
 ENV_FILE = "env.snapshot.json"
 RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
+
+
+def discover_repos(
+    root: Path | None = None,
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+) -> list[RepoCandidate]:
+    """Discover available local repositories for bootstrap workflows."""
+    return discover_local_git_repos(root=root, include=include, exclude=exclude)
+
+
+def bootstrap_target(
+    target: str,
+    mode: TargetMode,
+    source_root: Path | None = None,
+    selected_ref: str = "HEAD",
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+    repo_ids: list[str] | None = None,
+    auto_lock: bool = True,
+) -> TargetLock:
+    """Create a target and add discovered repositories from a workspace."""
+    if mode not in {"repo", "stack"}:
+        raise ValueError("mode must be one of: repo, stack")
+
+    repo_root = source_root or phenotype_repos_root()
+    candidates = discover_local_git_repos(root=repo_root, include=include, exclude=exclude)
+    if not candidates:
+        raise ValueError(f"no repos discovered under: {repo_root}")
+
+    by_id = {item.repo_id: item.path for item in candidates}
+    if repo_ids:
+        selected = []
+        for repo_id in repo_ids:
+            path = by_id.get(repo_id)
+            if not path:
+                raise ValueError(f"repo_id not discovered: {repo_id}")
+            selected.append(RepoCandidate(repo_id=repo_id, path=path))
+    else:
+        selected = candidates
+
+    lock = init_target(target, mode=mode)
+    for item in selected:
+        add_repo(target, repo_path=str(item.path), selected_ref=selected_ref, repo_id=item.repo_id)
+    if auto_lock:
+        lock = lock_target(target)
+    return lock
+
+
+def set_repo_ref(target: str, repo_id: str, selected_ref: str) -> TargetLock:
+    """Update a single repo selection ref in a target and relock the target."""
+    lock = load_target_lock(target)
+    updated = False
+    for repo in lock.repos:
+        if repo.repo_id == repo_id:
+            repo.selected_ref = selected_ref
+            repo.resolved_sha = None
+            updated = True
+            break
+    if not updated:
+        raise ValueError(f"repo_id not in target: {repo_id}")
+    lock.created_at_utc = utc_now_iso()
+    lock.lock_hash = _lock_hash(lock)
+    dual_write(target, LOCK_FILE, lock)
+    return lock_target(target)
 
 
 def _parse_lock(payload: dict[str, Any]) -> TargetLock:
@@ -168,7 +234,12 @@ def target_status(target: str) -> dict[str, Any]:
     }
 
 
-def target_timeline(target: str, repo_id: str | None = None, limit: int = 30) -> dict[str, Any]:
+def target_timeline(
+    target: str,
+    repo_id: str | None = None,
+    limit: int = 30,
+    branch: str | None = None,
+) -> dict[str, Any]:
     lock = load_target_lock(target)
     if not lock.repos:
         raise ValueError("target has no repos")
@@ -180,12 +251,12 @@ def target_timeline(target: str, repo_id: str | None = None, limit: int = 30) ->
     else:
         chosen = lock.repos[0]
 
-    timeline = list_timeline(Path(chosen.repo_path), limit=limit)
+    timeline = list_timeline(Path(chosen.repo_path), limit=limit, branch=branch)
     return {
         "target": target,
         "repo_id": chosen.repo_id,
         "repo_path": chosen.repo_path,
-        "selected_ref": chosen.selected_ref,
+        "selected_ref": timeline["selected_ref"],
         "resolved_sha": chosen.resolved_sha,
         **timeline,
     }

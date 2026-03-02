@@ -2,8 +2,9 @@
 
 import orjson as json
 import pytest
-from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import ANY, patch
+from pathlib import Path
 
 from typer.testing import CliRunner
 
@@ -505,6 +506,124 @@ def test_install_project_none_alias_routes_to_project_migrate() -> None:
         dry_run=False,
         json_output=True,
     )
+
+def test_top_level_phench_target_init_routes_to_service(tmp_path: Path, monkeypatch) -> None:
+    """`thegent phench target init` should dispatch through the phench app entrypoint."""
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    with patch("thegent.cli.apps.phench.init_target") as mock_init_target:
+        mock_init_target.return_value = SimpleNamespace(target_name="alpha", mode="repo", lock_hash="abc123")
+        result = runner.invoke(app, ["phench", "target", "init", "alpha"])
+
+    assert result.exit_code == 0
+    mock_init_target.assert_called_once_with("alpha", mode="repo")
+
+
+def test_phench_target_bootstrap_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.bootstrap_target") as mock_bootstrap_target:
+        mock_bootstrap_target.return_value = SimpleNamespace(
+            target_name="alpha",
+            mode="stack",
+            repos=[],
+            lock_hash="abc123",
+        )
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "target",
+                "bootstrap",
+                "alpha",
+                "--mode",
+                "stack",
+                "--source-root",
+                "/tmp/repos",
+                "--ref",
+                "main",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_bootstrap_target.assert_called_once_with(
+        target="alpha",
+        mode="stack",
+        source_root=Path("/tmp/repos"),
+        selected_ref="main",
+        include=None,
+        exclude=None,
+        repo_ids=None,
+        auto_lock=True,
+    )
+
+
+def test_phench_target_set_ref_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.set_repo_ref") as mock_set_repo_ref:
+        mock_set_repo_ref.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[SimpleNamespace(repo_id="repo", selected_ref="main", resolved_sha="abc")],
+            lock_hash="abc123",
+        )
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "target",
+                "set-ref",
+                "alpha",
+                "--repo-id",
+                "repo",
+                "--ref",
+                "main",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_set_repo_ref.assert_called_once_with("alpha", repo_id="repo", selected_ref="main")
+
+
+def test_phench_repos_discover_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.discover_repos") as mock_discover_repos:
+        mock_discover_repos.return_value = []
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "repos",
+                "discover",
+                "--repo-root",
+                "/tmp/repos",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_discover_repos.assert_called_once_with(
+        root=Path("/tmp/repos"),
+        include=None,
+        exclude=None,
+    )
+
+
+def test_phench_timeline_branch_filter_dispatches_to_service() -> None:
+    with patch("thegent.cli.apps.phench.target_timeline") as mock_timeline:
+        mock_timeline.return_value = {"selected_ref": "main"}
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "timeline",
+                "alpha",
+                "--branch",
+                "feature",
+                "--limit",
+                "5",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_timeline.assert_called_once_with("alpha", repo_id=None, limit=5, branch="feature")
 
 
 def test_global_setup_command_delegates_to_setup_cmd() -> None:

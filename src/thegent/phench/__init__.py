@@ -1,13 +1,16 @@
 """Phench project state runtime control-plane helpers."""
 
 from .service import (
+    bootstrap_target,
     add_repo,
     audit_shared_modules,
     build_catalog,
+    discover_repos,
     get_env_profile,
     init_target,
     list_targets,
     load_target_lock,
+    set_repo_ref,
     lock_target,
     materialize_target,
     run_env_doctor_for_target,
@@ -17,16 +20,22 @@ from .service import (
     target_status,
     target_timeline,
 )
+from .discovery import discover_local_git_repos, RepoCandidate
 
 __all__ = [
     "add_repo",
     "audit_shared_modules",
+    "bootstrap_target",
     "build_catalog",
+    "discover_local_git_repos",
+    "discover_repos",
     "get_env_profile",
     "init_target",
     "list_targets",
     "load_target_lock",
+    "set_repo_ref",
     "lock_target",
+    "RepoCandidate",
     "materialize_target",
     "run_env_doctor_for_target",
     "run_target",
