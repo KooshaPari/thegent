@@ -17,6 +17,7 @@ from thegent.phench import (
     init_target,
     import_repos,
     list_target_snapshots,
+    list_modules,
     list_targets,
     load_target_lock,
     lock_target,
@@ -156,6 +157,7 @@ register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
 register_projects_run(
     projects_app,
     list_targets_fn=lambda family=None: list_targets(family=family),
+    list_modules_fn=list_modules,
     load_target_lock_fn=lambda target_name, family=None: load_target_lock(
         target_name,
         family=family,

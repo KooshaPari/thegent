@@ -12,6 +12,7 @@ from thegent.phench.service import (
     create_target_snapshot,
     bootstrap_target,
     load_module_manifest,
+    list_modules,
     get_env_profile,
     discover_repos,
     init_target,
@@ -168,6 +169,27 @@ def test_list_targets_supports_family_filtering(tmp_path: Path, monkeypatch) -> 
 
     assert list_targets() == ["one", "acme/two"]
     assert list_targets(family="acme") == ["two"]
+
+
+def test_list_modules_lists_directory_basenames_with_manifests(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_root = phenotype_root / "projects" / "modules"
+    (modules_root / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (modules_root / "platform-core").mkdir(parents=True, exist_ok=True)
+    (modules_root / "legacy").mkdir(parents=True, exist_ok=True)
+    (modules_root / "legacy" / "manifest.json").write_text("{}", encoding="utf-8")
+    (modules_root / "thegent-app" / "manifest.json").write_text("{}", encoding="utf-8")
+    (modules_root / "platform-core" / "manifest.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+
+    assert list_modules() == ["legacy", "platform-core", "thegent-app"]
+
+
+def test_list_modules_missing_root_returns_empty(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    assert list_modules() == []
 
 
 def test_invalid_target_name_rejected(tmp_path: Path, monkeypatch) -> None:
