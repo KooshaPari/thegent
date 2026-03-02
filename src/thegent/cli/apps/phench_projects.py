@@ -174,6 +174,7 @@ def _projects_run_impl(
     *,
     target: str | None,
     family: str | None,
+    snapshot_id: str | None,
     repo_id: str | None,
     runner: str | None,
     command: str | None,
@@ -232,6 +233,7 @@ def _projects_run_impl(
     if repo_ref_pairs and repo_id:
         raise typer.BadParameter("--repo-ref already defines repo-id; do not pass --repo-id")
 
+    snapshot_mode = snapshot_id is not None
     selected_repo_id = None
     if not repo_ref_pairs:
         if module:
@@ -246,7 +248,9 @@ def _projects_run_impl(
             )
 
     selected_ref: str | None = ref or branch
-    if selected_repo_id is not None and selected_ref is None:
+    if snapshot_mode and (ref is not None or branch is not None):
+        raise typer.BadParameter("--ref/--branch are not compatible with --snapshot-id")
+    if selected_repo_id is not None and selected_ref is None and not snapshot_mode:
         selected_ref = _ensure_selected_ref(
             selected_target,
             selected_repo_id,
@@ -261,11 +265,12 @@ def _projects_run_impl(
     if selected_ref is not None and repo_ref_pairs:
         raise typer.BadParameter("--repo-ref conflicts with --ref/--branch")
 
-    if not no_prepare:
+    if not no_prepare and snapshot_id is None:
         lock_target_fn(selected_target, family=family)
         materialize_target_fn(selected_target, family=family)
 
     base_run_kwargs = {
+        "snapshot_id": snapshot_id,
         "runner": runner,
         "command_name": command,
         "selected_ref": selected_ref,
@@ -345,11 +350,17 @@ def register_projects_run(
         env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
         no_interactive: bool = typer.Option(False, "--no-interactive", help="Fail if command selection would be interactive."),
         no_prepare: bool = typer.Option(False, "--no-prepare", help="Skip lock+materialize before run."),
+        snapshot_id: str | None = typer.Option(
+            None,
+            "--snapshot-id",
+            help="Run from a target snapshot instead of current materialized state.",
+        ),
         timeline_limit: int = typer.Option(20, "--timeline-limit", help="Number of refs to show for interactive timeline selection."),
     ) -> None:
         _projects_run_impl(
             target=target,
             family=family,
+            snapshot_id=snapshot_id,
             repo_id=repo_id,
             module=module,
             runner=runner,

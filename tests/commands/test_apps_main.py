@@ -765,6 +765,7 @@ def test_phench_run_dispatches_ref_and_mode_to_service() -> None:
     assert result.exit_code == 0
     mock_run_target.assert_called_once_with(
         "alpha",
+        snapshot_id=None,
         repo_id="repo-a",
         runner="task",
         command_name="hello",
@@ -799,6 +800,7 @@ def test_phench_run_dispatches_branch_alias_and_no_interactive() -> None:
     assert result.exit_code == 0
     mock_run_target.assert_called_once_with(
         "alpha",
+        snapshot_id=None,
         repo_id=None,
         runner="task",
         command_name="hello",
@@ -827,6 +829,36 @@ def test_phench_run_ref_and_branch_conflict_is_rejected() -> None:
 
     assert result.exit_code != 0
     assert "--ref and --branch are mutually exclusive" in (result.stdout + result.stderr)
+
+
+def test_phench_run_dispatches_snapshot_id_to_service() -> None:
+    with patch("thegent.cli.apps.phench.run_target") as mock_run_target:
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "run",
+                "alpha",
+                "--snapshot-id",
+                "snapshot-001",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        snapshot_id="snapshot-001",
+        repo_id=None,
+        runner=None,
+        command_name=None,
+        selected_ref=None,
+        all_repos=False,
+        execution_mode="serial",
+        env_profile=None,
+        non_interactive=False,
+        family=None,
+    )
 
 
 def test_phench_projects_run_non_interactive_dispatches_prepare_and_run() -> None:
@@ -871,6 +903,7 @@ def test_phench_projects_run_non_interactive_dispatches_prepare_and_run() -> Non
     mock_materialize_target.assert_called_once_with("alpha", family=None)
     mock_run_target.assert_called_once_with(
         "alpha",
+        snapshot_id=None,
         repo_id=None,
         runner="task",
         command_name="hello",
@@ -879,6 +912,57 @@ def test_phench_projects_run_non_interactive_dispatches_prepare_and_run() -> Non
         execution_mode="parallel",
         env_profile=None,
         non_interactive=True,
+        family=None,
+    )
+
+
+def test_phench_projects_run_dispatches_snapshot_to_service_without_prepare() -> None:
+    lock = SimpleNamespace(
+        target_name="alpha",
+        repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
+    )
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
+        patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = lock
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--snapshot-id",
+                "snapshot-001",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_load_target_lock.assert_called_once_with("alpha", family=None)
+    mock_lock_target.assert_not_called()
+    mock_materialize_target.assert_not_called()
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        snapshot_id="snapshot-001",
+        repo_id="repo-a",
+        runner="task",
+        command_name="hello",
+        selected_ref=None,
+        all_repos=False,
+        execution_mode="serial",
+        env_profile=None,
+        non_interactive=False,
         family=None,
     )
 
@@ -929,6 +1013,7 @@ def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
     mock_materialize_target.assert_called_once_with("alpha", family=None)
     mock_run_target.assert_called_once_with(
         "alpha",
+        snapshot_id=None,
         repo_id=None,
         repo_ids=["repo-a", "repo-b"],
         repo_ref_overrides={"repo-a": "feature-x", "repo-b": "release-y"},
@@ -999,6 +1084,7 @@ def test_phench_projects_run_module_uses_manifest_subset_and_overrides() -> None
     mock_materialize_target.assert_called_once_with("alpha", family=None)
     mock_run_target.assert_called_once_with(
         "alpha",
+        snapshot_id=None,
         repo_id=None,
         repo_ids=["repo-a", "repo-c"],
         repo_ref_overrides={"repo-a": "staging"},
@@ -1105,6 +1191,7 @@ def test_phench_projects_run_module_repo_ref_merges_cli_and_manifest_overrides()
     assert result.exit_code == 0
     mock_run_target.assert_called_once_with(
         "alpha",
+        snapshot_id=None,
         repo_id=None,
         repo_ids=["repo-a", "repo-c"],
         repo_ref_overrides={"repo-a": "feature-x", "repo-c": "release"},
@@ -1203,6 +1290,7 @@ def test_phench_projects_run_interactive_selection_uses_target_repo_and_ref_choi
     mock_materialize_target.assert_called_once_with("beta", family=None)
     mock_run_target.assert_called_once_with(
         "beta",
+        snapshot_id=None,
         repo_id="repo-a",
         runner="task",
         command_name="hello",
@@ -1295,6 +1383,7 @@ def test_phench_tui_runs_selected_target_repo_and_ref() -> None:
     assert mock_timeline.call_count >= 1
     mock_run_target.assert_called_once_with(
         "beta",
+        snapshot_id=None,
         repo_id="repo-a",
         runner="task",
         command_name="hello",
