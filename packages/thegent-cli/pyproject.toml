@@ -27,6 +27,9 @@ dev = [
     "pytest>=9.0.2",
 ]
 
+[tool.uv.sources]
+thegent-agents = { workspace = true }
+
 [tool.hatch.version]
 source = "vcs"
 fallback-version = "0.1.0"

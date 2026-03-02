@@ -7,9 +7,13 @@ dependencies = [
     "thegent-agents",
 ]
 
+[tool.uv.sources]
+thegent-core = { workspace = true }
+thegent-agents = { workspace = true }
+
 [build-system]
 requires = ["hatchling"]
-build-backend = "hatchling.backends"
+build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/thegent_planning"]
