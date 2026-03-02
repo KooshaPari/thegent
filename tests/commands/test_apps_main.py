@@ -1002,6 +1002,23 @@ def test_phench_projects_run_non_interactive_requires_target_or_all() -> None:
     assert "--target is required when --no-interactive is set" in output
 
 
+def test_phench_projects_status_routes_to_target_status() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.target_status") as mock_status,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_status.return_value = {
+            "target": "alpha",
+            "repos": [{"repo_id": "repo-a"}],
+        }
+        result = runner.invoke(app, ["phench", "projects", "status", "--target", "alpha"])
+
+    assert result.exit_code == 0
+    mock_status.assert_called_once_with("alpha")
+    assert "\"target\": \"alpha\"" in result.stdout
+
+
 def test_phench_tui_runs_selected_target_repo_and_ref() -> None:
     with (
         patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,

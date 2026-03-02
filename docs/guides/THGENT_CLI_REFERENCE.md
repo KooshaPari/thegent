@@ -17,9 +17,10 @@
 5. [DAG Commands](#dag-commands)
 6. [Planning Commands](#planning-commands)
 7. [Configuration & Setup](#configuration--setup)
-8. [Provider Authentication](#provider-authentication)
-9. [MCP Integration](#mcp-integration)
-10. [Command Examples](#command-examples)
+8. [Phench Runtime Control Plane](#phench-runtime-control-plane)
+9. [Provider Authentication](#provider-authentication)
+10. [MCP Integration](#mcp-integration)
+11. [Command Examples](#command-examples)
 
 ---
 
@@ -728,6 +729,76 @@ thegent doctor [OPTIONS]
 
 **Options**:
 - `--fix`: Try to fix common issues automatically
+
+---
+
+## Phench Runtime Control Plane
+
+`phench` manages deterministic execution across local repositories using
+`~/CodeProjects/Phenotype/projects/<target>/repos` (or `THGENT_PHENOTYPE_ROOT` override).
+
+### `thegent phench target bootstrap` - Seed a target from sibling repos
+
+Create a target lock and optionally lock it in one step.
+
+**Syntax**:
+```bash
+thegent phench target bootstrap <target> --source-root <dir> --ref <ref> --include <glob> --exclude <glob>
+```
+
+**Notes**:
+- Omit `--source-root` to default to the sibling `repos/` root.
+- `--ref` sets the initial selection for each discovered repo.
+- Use `--no-auto-lock` if you need to adjust entries before locking.
+
+### `thegent phench projects run` - Orchestrate target runs
+
+Execute a command against selected repo(s) in a target.
+
+**Syntax**:
+```bash
+thegent phench projects run --target <target> --runner <runner> --command <command>
+```
+
+**Options**:
+- `--repo-id`: Single repo target.
+- `--repo-ref <repo-id>@<ref>`: Explicit per-repo branch/tag/SHA mapping (repeatable).
+- `--ref` / `--branch`: Shared ref for selected repo or all repos.
+- `--all-repos`: Execute across all repos in the target.
+- `--mode serial|parallel`: Multi-repo execution mode.
+- `--timeline-limit N`: Refs shown during interactive selection.
+- `--no-prepare`: Skip automatic `lock` and `materialize` before run.
+
+**Examples**:
+```bash
+# Run per-repo refs from feature branches in one command
+thegent phench projects run \
+  --target thegent-app \
+  --runner task \
+  --command hello \
+  --repo-ref thegent-api@feature-gui \
+  --repo-ref thegent-control-plane@feat/scheduler
+```
+
+### `thegent phench projects status` - Show target state
+
+Show lock/runtime/env snapshot for a target.
+
+**Syntax**:
+```bash
+thegent phench projects status --target <target>
+```
+
+### `thegent phench tui` - Interactive selector then run
+
+Open interactive target/repo/ref selection and run immediately.
+
+**Syntax**:
+```bash
+thegent phench tui --runner <runner> --command <command> [--target <target>]
+```
+
+If you omit `--target` and multiple targets exist, the CLI prompts for target.
 
 ---
 

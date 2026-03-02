@@ -139,6 +139,7 @@ register_projects_run(
     list_targets_fn=lambda: list_targets(),
     load_target_lock_fn=lambda target_name: load_target_lock(target_name),
     target_timeline_fn=lambda name, **kwargs: target_timeline(name, **kwargs),
+    target_status_fn=lambda name: target_status(name),
     lock_target_fn=lambda target_name: lock_target(target_name),
     materialize_target_fn=lambda target_name: materialize_target(target_name),
     run_target_fn=lambda name, **kwargs: run_target(name, **kwargs),
