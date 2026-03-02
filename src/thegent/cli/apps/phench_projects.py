@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import orjson as json
 from typing import Any, Callable
 
 import typer
@@ -260,6 +261,7 @@ def register_projects_run(
     list_targets_fn: TargetResolver,
     load_target_lock_fn: TargetLockLoader | None = None,
     target_timeline_fn: TargetTimelineLoader,
+    target_status_fn: Callable[[str], Any],
     lock_target_fn: TargetAction,
     materialize_target_fn: TargetAction,
     run_target_fn: RunAction,
@@ -308,3 +310,16 @@ def register_projects_run(
             materialize_target_fn=materialize_target_fn,
             run_target_fn=run_target_fn,
         )
+
+    @projects_app.command("status", help="Show lock/runtime state for a target under Phenotype/projects.")
+    def projects_status_cmd(
+        target: str | None = typer.Option(None, "--target", help="Target name."),
+    ) -> None:
+        selected_target = _ensure_target_name(
+            target,
+            non_interactive=False,
+            list_targets_fn=list_targets_fn,
+        )
+        state = target_status_fn(selected_target)
+        state["projects_root"] = f"projects/{selected_target}"
+        console.print_json(json.dumps(state).decode())
