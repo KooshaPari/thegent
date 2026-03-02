@@ -53,10 +53,10 @@ def _atomic_write(path: Path, content: str) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(content)
         os.replace(tmp, path)  # POSIX atomic rename
-    except Exception:
+    except Exception as e:
         with suppress(OSError):
             os.unlink(tmp)
-        raise
+        raise RuntimeError(f"Atomic write failed for {path}") from e
 
 
 def _run(cmd: list[str], cwd: Path, env: dict | None = None, check: bool = True) -> subprocess.CompletedProcess:

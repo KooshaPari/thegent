@@ -65,7 +65,9 @@ class TeamManager:
             for line in f:
                 try:
                     tasks.append(json.loads(line))
-                except Exception:  # noqa: PERF203 - intentional per-item error handling
+                except Exception as e:  # noqa: PERF203 - intentional per-item error handling
+                    # Malformed task line — skip to keep remaining tasks accessible.
+                    _ = e
                     continue
         return tasks
 

@@ -360,7 +360,14 @@ class UnifiedSessionIndex:
             # Parse ISO timestamp
             try:
                 started_at = datetime.fromisoformat(started_time.replace("Z", "+00:00"))
-            except Exception:
+            except Exception as e:
+                # Malformed timestamp — fall back to current time and log context.
+                _log.warning(
+                    "session_timestamp_parse_failed",
+                    started_time=started_time,
+                    error_type=type(e).__name__,
+                    error=str(e),
+                )
                 started_at = datetime.now(UTC)
 
             # Ante doesn't store explicit end time; we infer from start + duration

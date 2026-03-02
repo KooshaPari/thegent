@@ -120,8 +120,8 @@ class CalibrationRegistry:
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
             return data.get(agent, {}).get("factor", 1.0)
-        except Exception:
-            return 1.0
+        except Exception as e:
+            raise RuntimeError(f"Failed to read calibration factor for agent={agent!r} from {self.path}") from e
 
     def update_agent(self, agent: str, factor: float, sample_size: int) -> None:
         """Persist a new calibration factor for an agent."""

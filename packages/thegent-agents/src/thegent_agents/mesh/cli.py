@@ -175,11 +175,18 @@ def _live_status(manager: MeshManager, root: Path) -> None:
                     p = psutil.Process(int(pid))
                     if not p.is_running():
                         status = "[red]zombie[/red]"
-                except Exception:
+                except Exception as e:
+                    # psutil failure means process is gone or inaccessible.
+                    _ = e
                     status = "[red]offline[/red]"
 
                 return (str(pid), agent_type, status, hb)
-        except Exception:
+        except Exception as e:
+            # Agent info file unreadable or malformed — skip this entry in the dashboard.
+            import logging
+            logging.getLogger(__name__).debug(
+                "agent_info_read_failed pid=%s error_type=%s error=%s", pid, type(e).__name__, e
+            )
             return None
 
     def generate_table() -> Table:
