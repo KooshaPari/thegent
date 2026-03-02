@@ -181,7 +181,9 @@ jobs:
             async function processPR(pr) {
               const state = await getCodeRabbitState(pr.number);
               const ageMin = (nowMs - state.at) / 60000;
-              const stateOk = state.state === "SUCCESS" || state.state === "NEUTRAL";
+              const waitingStates = new Set(["PENDING", "IN_PROGRESS", "QUEUED", "WAITING"]);
+              const stateOk = state.state === "SUCCESS" || state.state === "NEUTRAL" || waitingStates.has(state.state);
+              const missingState = state.state === "MISSING";
               const stale = ageMin >= STALE_MINUTES;
               const backlogHigh = openPRs.length > BACKLOG_THRESHOLD;
               const bypassEligible = backlogHigh && stale && !stateOk;
@@ -206,7 +208,10 @@ jobs:
                 core.notice(`PR #${pr.number}: posted CodeRabbit retrigger comment.`);
               }
 
-              const gatePass = stateOk || bypassEligible;
+              // Allow newly opened PRs to pass gate while CodeRabbit is still starting.
+              // If MISSING persists beyond the stale window, require queue-backlog bypass
+              // or mark the gate as failed to surface prolonged review failures.
+              const gatePass = stateOk || bypassEligible || (missingState && !stale);
               const summary = [
                 `CodeRabbit state: ${state.state}`,
                 `Age minutes: ${ageMin.toFixed(1)}`,
