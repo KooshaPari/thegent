@@ -1,10 +1,26 @@
-"""Plugin system for tray application."""
+"""Plugin system for tray application.
+
+Phase 2C DI migration
+---------------------
+The PluginRegistry class was previously instantiated ad-hoc wherever needed.
+A module-level ``_registry`` singleton is now provided for backward
+compatibility; new code should create and inject PluginRegistry instances
+directly so they can be replaced in tests without module-level state.
+"""
+
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from PySide6.QtWidgets import QWidget
+if TYPE_CHECKING:
+    pass
+
+try:
+    from PySide6.QtWidgets import QWidget
+except ImportError:  # non-GUI environments (CI, headless tests)
+    QWidget = Any  # type: ignore[assignment,misc]
 
 
 @dataclass
@@ -45,19 +61,58 @@ class TrayPlugin(ABC):
 
 
 class PluginRegistry:
-    """Registry for managing tray plugins."""
+    """Registry for managing tray plugins.
+
+    Encapsulates formerly global plugin state so it can be created,
+    injected, and replaced independently in tests.
+
+    Attributes:
+        _plugins: Internal name → plugin mapping.
+    """
 
     def __init__(self) -> None:
         self._plugins: dict[str, TrayPlugin] = {}
 
     def register(self, name: str, plugin: TrayPlugin) -> None:
-        """Register a plugin."""
+        """Register a plugin under *name*.
+
+        Args:
+            name: Unique plugin identifier.
+            plugin: A TrayPlugin implementation to register.
+        """
         self._plugins[name] = plugin
 
     def get_plugin(self, name: str) -> TrayPlugin | None:
-        """Get a plugin by name."""
+        """Return the plugin registered under *name*, or None if absent."""
         return self._plugins.get(name)
 
+    def unregister(self, name: str) -> None:
+        """Remove the plugin registered under *name*.  No-op if absent."""
+        self._plugins.pop(name, None)
+
     def list_plugins(self) -> list[str]:
-        """List all registered plugin names."""
+        """Return the names of all registered plugins."""
         return list(self._plugins.keys())
+
+    def __contains__(self, name: str) -> bool:
+        """Support ``'name' in registry`` syntax."""
+        return name in self._plugins
+
+
+# ---------------------------------------------------------------------------
+# Module-level singleton — backward-compat shim
+# ---------------------------------------------------------------------------
+
+#: Module-level PluginRegistry instance.
+#: New code should create and inject PluginRegistry instances directly.
+#: This singleton exists so existing callers that import ``_registry``
+#: continue to work without modification.
+_registry: PluginRegistry = PluginRegistry()
+
+
+__all__ = [
+    "PluginRegistry",
+    "SidebarItem",
+    "TrayPlugin",
+    "_registry",
+]

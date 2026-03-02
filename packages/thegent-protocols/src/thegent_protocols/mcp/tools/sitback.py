@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING
 
 from fastmcp.tools.tool import ToolResult
 
-from thegent_cli.cli.commands.impl import sitback_dashboard_impl
+from thegent_protocols.mcp.cli_bridge import cli as _cli
+
+
+def sitback_dashboard_impl(*args, **kwargs):  # type: ignore[override]
+    """Lazy shim — delegates to _cli.sitback_dashboard_impl on first call."""
+    return _cli.sitback_dashboard_impl(*args, **kwargs)
 
 if TYPE_CHECKING:
     from fastmcp import FastMCP

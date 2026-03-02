@@ -9,6 +9,12 @@ Harnesses: Cursor, Codex, Claude, Ante, Droid
 
 import orjson as json
 import logging
+
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 import sqlite3
 import threading
 import time
@@ -21,7 +27,6 @@ from typing import Any, Callable, ClassVar, cast
 from thegent_core.infra.fast_file_watcher import FastFileWatcher
 from thegent_sync.integrations.base import SerializableMixin
 
-_log = logging.getLogger(__name__)
 
 
 class HarnessType(Enum):
