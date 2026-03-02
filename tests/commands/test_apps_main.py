@@ -507,6 +507,7 @@ def test_install_project_none_alias_routes_to_project_migrate() -> None:
         json_output=True,
     )
 
+
 def test_top_level_phench_target_init_routes_to_service(tmp_path: Path, monkeypatch) -> None:
     """`thegent phench target init` should dispatch through the phench app entrypoint."""
     phenotype_root = tmp_path / "Phenotype"
@@ -552,6 +553,9 @@ def test_phench_target_bootstrap_routes_to_service() -> None:
         mode="stack",
         source_root=Path("/tmp/repos"),
         selected_ref="main",
+        preferred_runner=None,
+        preferred_command=None,
+        preferred_ref=None,
         include=None,
         exclude=None,
         repo_ids=None,
@@ -593,6 +597,9 @@ def test_phench_target_import_repos_routes_to_service() -> None:
         target="alpha",
         source_root=Path("/tmp/repos"),
         selected_ref="main",
+        preferred_runner=None,
+        preferred_command=None,
+        preferred_ref=None,
         include=["*-repo"],
         exclude=["tmp*"],
         repo_ids=["repo-a", "repo-b"],
@@ -623,6 +630,59 @@ def test_phench_target_set_ref_routes_to_service() -> None:
 
     assert result.exit_code == 0
     mock_set_repo_ref.assert_called_once_with("alpha", repo_id="repo", selected_ref="main")
+
+
+def test_phench_target_add_repo_routes_policy_fields_to_service() -> None:
+    with patch("thegent.cli.apps.phench.add_repo") as mock_add_repo:
+        mock_add_repo.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[
+                SimpleNamespace(
+                    repo_id="repo",
+                    selected_ref="main",
+                    preferred_runner="task",
+                    preferred_command="hello",
+                    preferred_ref="feature",
+                    resolved_sha="deadbeef",
+                )
+            ],
+            lock_hash="abc123",
+        )
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "target",
+                "add-repo",
+                "alpha",
+                "--repo",
+                "/tmp/repo",
+                "--ref",
+                "main",
+                "--preferred-ref",
+                "feature",
+                "--preferred-runner",
+                "task",
+                "--preferred-command",
+                "hello",
+                "--repo-id",
+                "repo",
+                "--worktree",
+                "/tmp/worktree",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_add_repo.assert_called_once_with(
+        "alpha",
+        "/tmp/repo",
+        "main",
+        repo_id="repo",
+        worktree_path="/tmp/worktree",
+        preferred_runner="task",
+        preferred_command="hello",
+        preferred_ref="feature",
+    )
 
 
 def test_phench_repos_discover_routes_to_service() -> None:
@@ -1016,7 +1076,7 @@ def test_phench_projects_status_routes_to_target_status() -> None:
 
     assert result.exit_code == 0
     mock_status.assert_called_once_with("alpha")
-    assert "\"target\": \"alpha\"" in result.stdout
+    assert '"target": "alpha"' in result.stdout
 
 
 def test_phench_tui_runs_selected_target_repo_and_ref() -> None:
@@ -1063,6 +1123,45 @@ def test_phench_tui_runs_selected_target_repo_and_ref() -> None:
         execution_mode="serial",
         env_profile=None,
         non_interactive=False,
+    )
+
+
+def test_phench_tui_all_repos_no_interactive_allows_policy_defaults() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.target_status") as mock_status,
+        patch("thegent.cli.apps.phench.target_timeline") as mock_timeline,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_status.return_value = {"repos": [{"repo_id": "repo-a"}, {"repo_id": "repo-b"}]}
+        mock_timeline.return_value = {
+            "branches": [],
+            "tags": [],
+            "recent": ["a1b2c3 commit one", "d4e5f6 commit two"],
+        }
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "tui",
+                "--no-interactive",
+                "--all-repos",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        repo_id=None,
+        runner=None,
+        command_name=None,
+        selected_ref=None,
+        all_repos=True,
+        execution_mode="serial",
+        env_profile=None,
+        non_interactive=True,
     )
 
 

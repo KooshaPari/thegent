@@ -23,9 +23,7 @@ def _ensure_timeline_target(
 ) -> str:
     targets = list_targets_fn()
     if not targets:
-        raise typer.BadParameter(
-            "No targets found under Phenotype/projects. Initialize one with `phench target init`."
-        )
+        raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
     if len(targets) == 1:
         return targets[0]
     console.print("Select target:")
@@ -137,7 +135,9 @@ def register_observability_commands(
     def tui_cmd(
         target: str | None = typer.Option(None, "--target", help="Target name to run."),
         repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target status."),
-        runner: str | None = typer.Option(None, "--runner", help="Explicit runner override (task|just|make|pnpm|npm|bun)."),
+        runner: str | None = typer.Option(
+            None, "--runner", help="Explicit runner override (task|just|make|pnpm|npm|bun)."
+        ),
         command: str | None = typer.Option(
             None,
             "--command",
@@ -161,23 +161,16 @@ def register_observability_commands(
             "--no-interactive",
             help="Fail if command selection would be interactive.",
         ),
-        timeline_limit: int = typer.Option(20, "--timeline-limit", help="Number of refs to show for interactive timeline selection."),
+        timeline_limit: int = typer.Option(
+            20, "--timeline-limit", help="Number of refs to show for interactive timeline selection."
+        ),
     ) -> None:
         if ref is not None and branch is not None:
             raise typer.BadParameter("--ref and --branch are mutually exclusive")
-        if all_repos and (runner is None or command is None):
-            raise typer.BadParameter("--all-repos requires --runner and --command")
-        if no_interactive and (runner is None or command is None):
-            raise typer.BadParameter("--no-interactive requires --runner and --command")
-
-        selected_target = (
-            target if target else _ensure_timeline_target(list_targets_fn=list_targets_fn)
-        )
+        selected_target = target if target else _ensure_timeline_target(list_targets_fn=list_targets_fn)
         state = target_status_fn(selected_target)
         selected_repo = (
-            None
-            if all_repos
-            else _ensure_tui_repo_id(state, repo_id=repo_id, no_interactive=no_interactive)
+            None if all_repos else _ensure_tui_repo_id(state, repo_id=repo_id, no_interactive=no_interactive)
         )
         selected_ref = _ensure_tui_selected_ref(
             selected_target,

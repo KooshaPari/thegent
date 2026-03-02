@@ -41,9 +41,7 @@ def register_target_commands(
             raise typer.BadParameter("mode must be one of: repo, stack")
         lock = init_target_fn(name, mode=mode)
         console.print_json(
-            json.dumps(
-                {"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}
-            ).decode()
+            json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode()
         )
 
     @target_app.command("bootstrap", help="Create target and bulk add discovered repos.")
@@ -53,10 +51,24 @@ def register_target_commands(
         source_root: Path | None = typer.Option(
             None,
             "--source-root",
-            help="Workspace root containing sibling git checkouts "
-            "(defaults to sibling repos root).",
+            help="Workspace root containing sibling git checkouts (defaults to sibling repos root).",
         ),
         ref: str = typer.Option("HEAD", "--ref", help="Ref to select for discovered repos."),
+        preferred_runner: str | None = typer.Option(
+            None,
+            "--preferred-runner",
+            help="Preferred runner policy to use for these repos.",
+        ),
+        preferred_command: str | None = typer.Option(
+            None,
+            "--preferred-command",
+            help="Preferred command policy to use for these repos.",
+        ),
+        preferred_ref: str | None = typer.Option(
+            None,
+            "--preferred-ref",
+            help="Preferred runtime ref policy for these repos.",
+        ),
         include: list[str] = typer.Option(
             [],
             "--include",
@@ -85,6 +97,9 @@ def register_target_commands(
             mode=mode,
             source_root=source_root,
             selected_ref=ref,
+            preferred_runner=preferred_runner,
+            preferred_command=preferred_command,
+            preferred_ref=preferred_ref,
             include=include or None,
             exclude=exclude or None,
             repo_ids=repo_ids or None,
@@ -107,10 +122,24 @@ def register_target_commands(
         source_root: Path | None = typer.Option(
             None,
             "--source-root",
-            help="Workspace root containing sibling git checkouts "
-            "(defaults to sibling repos root).",
+            help="Workspace root containing sibling git checkouts (defaults to sibling repos root).",
         ),
         ref: str = typer.Option("HEAD", "--ref", help="Ref to select for discovered repos."),
+        preferred_runner: str | None = typer.Option(
+            None,
+            "--preferred-runner",
+            help="Preferred runner policy to use for these repos.",
+        ),
+        preferred_command: str | None = typer.Option(
+            None,
+            "--preferred-command",
+            help="Preferred command policy to use for these repos.",
+        ),
+        preferred_ref: str | None = typer.Option(
+            None,
+            "--preferred-ref",
+            help="Preferred runtime ref policy for these repos.",
+        ),
         include: list[str] = typer.Option(
             [],
             "--include",
@@ -136,6 +165,9 @@ def register_target_commands(
             target=name,
             source_root=source_root,
             selected_ref=ref,
+            preferred_runner=preferred_runner,
+            preferred_command=preferred_command,
+            preferred_ref=preferred_ref,
             include=include or None,
             exclude=exclude or None,
             repo_ids=repo_ids or None,
@@ -156,6 +188,21 @@ def register_target_commands(
         name: str = typer.Argument(..., help="Target name."),
         repo: str = typer.Option(..., "--repo", help="Absolute path to repo checkout."),
         ref: str = typer.Option(..., "--ref", help="Selected git ref (branch/tag/sha)."),
+        preferred_ref: str | None = typer.Option(
+            None,
+            "--preferred-ref",
+            help="Preferred runtime ref for this repo in target policy.",
+        ),
+        preferred_runner: str | None = typer.Option(
+            None,
+            "--preferred-runner",
+            help="Preferred runner for this repo in target policy.",
+        ),
+        preferred_command: str | None = typer.Option(
+            None,
+            "--preferred-command",
+            help="Preferred command for this repo in target policy.",
+        ),
         repo_id: str | None = typer.Option(
             None,
             "--repo-id",
@@ -167,7 +214,16 @@ def register_target_commands(
             help="Optional source worktree path hint.",
         ),
     ) -> None:
-        lock = add_repo_fn(name, repo, ref, repo_id=repo_id, worktree_path=worktree)
+        lock = add_repo_fn(
+            name,
+            repo,
+            ref,
+            repo_id=repo_id,
+            worktree_path=worktree,
+            preferred_runner=preferred_runner,
+            preferred_command=preferred_command,
+            preferred_ref=preferred_ref,
+        )
         console.print_json(
             json.dumps(
                 {
