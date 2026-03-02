@@ -6,13 +6,18 @@ import os
 from pathlib import Path
 from typing import Any
 
+try:
+    import structlog
+    _log = structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)
+
 
 from thegent_core.config import ThegentSettings
 from thegent_execution.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent_execution.execution_coercion_helpers import as_float as _as_float_impl
 from thegent_execution.execution_coercion_helpers import as_int as _as_int_impl
 
-_log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
 _execution_warning_count = 0
 _admission_import_warning_once: set[str] = set()
@@ -244,9 +249,12 @@ class ConcurrencyController:
             }
             limiting_gate = min(gate_values, key=lambda k: gate_values[k])
             _log.info(
-                f"concurrency admission: effective_limit={effective_limit} "
-                f"limiting_gate={limiting_gate} details={gate_values} "
-                f"running={running_count} run_id={run_id}"
+                "concurrency_admission",
+                effective_limit=effective_limit,
+                limiting_gate=limiting_gate,
+                gate_details=gate_values,
+                running=running_count,
+                run_id=run_id,
             )
 
             # Advanced features (if available)
@@ -261,9 +269,9 @@ class ConcurrencyController:
 
                     # WP-5001: Predictive Throttling for Speculative Runs
                     if speculative and self.prediction_engine.should_throttle_speculative():
-                        _log.info(f"gate blocked: gate=speculative_throttle value=1.0 limit=0.0 run_id={run_id}")
+                        _log.info("gate_blocked", gate="speculative_throttle", value=1.0, limit=0.0, run_id=run_id)
                         return False
-                    _log.info(f"gate passed: gate=speculative_throttle run_id={run_id}")
+                    _log.info("gate_passed", gate="speculative_throttle", run_id=run_id)
 
                 # Apply harness card modeling if harness type specified
                 if harness_type and self.harness_cards:
@@ -279,11 +287,20 @@ class ConcurrencyController:
                         effective_limit = min(effective_limit, max(1, harness_limit))
                         if effective_limit < old_limit:
                             _log.info(
-                                f"gate passed: gate=harness_card type={harness_type} limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
+                                "gate_passed",
+                                gate="harness_card",
+                                harness_type=harness_type,
+                                limit=effective_limit,
+                                reduced_from=old_limit,
+                                run_id=run_id,
                             )
                         else:
                             _log.info(
-                                f"gate passed: gate=harness_card type={harness_type} limit={effective_limit} run_id={run_id}"
+                                "gate_passed",
+                                gate="harness_card",
+                                harness_type=harness_type,
+                                limit=effective_limit,
+                                run_id=run_id,
                             )
 
                 # Apply prediction adjustments
@@ -297,7 +314,12 @@ class ConcurrencyController:
                             old_limit = effective_limit
                             effective_limit = int(effective_limit * 0.95)
                             _log.info(
-                                f"gate passed: gate=prediction trend=up limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
+                                "gate_passed",
+                                gate="prediction",
+                                trend="up",
+                                limit=effective_limit,
+                                reduced_from=old_limit,
+                                run_id=run_id,
                             )
 
                 # Check for bottlenecks
@@ -312,7 +334,12 @@ class ConcurrencyController:
                             old_limit = effective_limit
                             effective_limit = int(effective_limit * 0.9)
                             _log.info(
-                                f"gate passed: gate=bottleneck severity=high limit={effective_limit} (reduced from {old_limit}) run_id={run_id}"
+                                "gate_passed",
+                                gate="bottleneck",
+                                severity="high",
+                                limit=effective_limit,
+                                reduced_from=old_limit,
+                                run_id=run_id,
                             )
             except ImportError as exc:
                 # Advanced features not available, use basic resource-based limits.
@@ -337,25 +364,33 @@ class ConcurrencyController:
             slot_limit = effective_limit if is_critical else max(1, effective_limit - self.critical_lane_slots)
             if not is_critical and self.critical_lane_slots > 0:
                 _log.info(
-                    f"gate passed: gate=critical_lane_reservation slots={self.critical_lane_slots} "
-                    f"limit={slot_limit} (reduced from {old_limit}) run_id={run_id}"
+                    "gate_passed",
+                    gate="critical_lane_reservation",
+                    reserved_slots=self.critical_lane_slots,
+                    limit=slot_limit,
+                    reduced_from=old_limit,
+                    run_id=run_id,
                 )
             else:
                 _log.debug(
-                    f"gate passed: gate=critical_lane_reservation is_critical={is_critical} limit={slot_limit} run_id={run_id}"
+                    "gate_passed",
+                    gate="critical_lane_reservation",
+                    is_critical=is_critical,
+                    limit=slot_limit,
+                    run_id=run_id,
                 )
 
             admitted = running_count < slot_limit
             _log.info(
-                "gate %s: gate=slots value=%d limit=%d run_id=%s lane=%s",
-                "passed" if admitted else "blocked",
-                running_count,
-                slot_limit,
-                run_id,
-                lane,
+                "gate_passed" if admitted else "gate_blocked",
+                gate="slots",
+                running=running_count,
+                limit=slot_limit,
+                run_id=run_id,
+                lane=lane,
             )
             if admitted:
-                _log.info("run admitted: slots=%d/%d run_id=%s owner=%s", running_count, slot_limit, run_id, owner)
+                _log.info("run_admitted", slots_used=running_count, slots_limit=slot_limit, run_id=run_id, owner=owner)
                 self._usage_tracker.record_start(owner, run_id)
                 if soft_deadline_s is not None and soft_deadline_s > 0:
                     from thegent_execution.orchestration.resource.load_based_limits import get_deadline_monitor
@@ -367,11 +402,12 @@ class ConcurrencyController:
                     )
             else:
                 _log.warning(
-                    "run blocked: reason=slots count=%d limit=%d run_id=%s owner=%s",
-                    running_count,
-                    slot_limit,
-                    run_id,
-                    owner,
+                    "run_blocked",
+                    reason="slots_exhausted",
+                    running=running_count,
+                    limit=slot_limit,
+                    run_id=run_id,
+                    owner=owner,
                 )
             return admitted
 
@@ -381,18 +417,22 @@ class ConcurrencyController:
         slot_limit = self.max_concurrency if is_critical else max(1, self.max_concurrency - self.critical_lane_slots)
         if not is_critical and self.critical_lane_slots > 0:
             _log.debug(
-                f"gate passed: gate=critical_lane_reservation slots={self.critical_lane_slots} limit={slot_limit} (reduced from {old_limit})"
+                "gate_passed",
+                gate="critical_lane_reservation",
+                reserved_slots=self.critical_lane_slots,
+                limit=slot_limit,
+                reduced_from=old_limit,
             )
 
         admitted = running_count < slot_limit
         _log.debug(
-            "gate %s: gate=slots value=%.2f limit=%.2f",
-            "passed" if admitted else "blocked",
-            float(running_count),
-            float(slot_limit),
+            "gate_passed" if admitted else "gate_blocked",
+            gate="slots",
+            running=float(running_count),
+            limit=float(slot_limit),
         )
         if admitted:
-            _log.info("run admitted: slots=%d/%d run_id=%s owner=%s (fixed)", running_count, slot_limit, run_id, owner)
+            _log.info("run_admitted", slots_used=running_count, slots_limit=slot_limit, run_id=run_id, owner=owner, mode="fixed")
             self._usage_tracker.record_start(owner, run_id)
             if soft_deadline_s is not None and soft_deadline_s > 0:
                 from thegent_execution.orchestration.resource.load_based_limits import get_deadline_monitor
@@ -404,11 +444,13 @@ class ConcurrencyController:
                 )
         else:
             _log.warning(
-                "run blocked: reason=slots count=%d limit=%d run_id=%s owner=%s (fixed)",
-                running_count,
-                slot_limit,
-                run_id,
-                owner,
+                "run_blocked",
+                reason="slots_exhausted",
+                running=running_count,
+                limit=slot_limit,
+                run_id=run_id,
+                owner=owner,
+                mode="fixed",
             )
         return admitted
 
