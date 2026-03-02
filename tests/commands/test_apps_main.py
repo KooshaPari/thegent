@@ -1383,7 +1383,6 @@ def test_phench_tui_runs_selected_target_repo_and_ref() -> None:
     assert mock_timeline.call_count >= 1
     mock_run_target.assert_called_once_with(
         "beta",
-        snapshot_id=None,
         repo_id="repo-a",
         runner="task",
         command_name="hello",
