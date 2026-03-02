@@ -9,13 +9,17 @@ import pytest
 from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
+    bootstrap_target,
     get_env_profile,
+    discover_repos,
     init_target,
     list_targets,
     lock_target,
     materialize_target,
+    set_repo_ref,
     run_env_doctor_for_target,
     run_target,
+    target_timeline,
     set_env_profile,
     sync_target,
 )
@@ -335,3 +339,109 @@ def test_audit_shared_modules(tmp_path: Path, monkeypatch) -> None:
 
     result = audit_shared_modules("audity")
     assert result["shared_modules"]["sharedpkg"] == ["a", "b"]
+
+
+def test_discover_repos_filters_by_include_and_exclude(tmp_path: Path, monkeypatch) -> None:
+    repos_root = tmp_path / "repos"
+    repo_alpha = repos_root / "alpha-repo"
+    repo_beta = repos_root / "beta-repo"
+    hidden_repo = repos_root / ".hidden-repo"
+    non_git = repos_root / "norepo"
+
+    _init_git_repo(repo_alpha)
+    _init_git_repo(repo_beta)
+    non_git.mkdir(parents=True, exist_ok=True)
+    hidden_repo.mkdir(parents=True, exist_ok=True)
+    (hidden_repo / ".git").mkdir()
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_REPOS_ROOT", str(repos_root))
+
+    candidates = discover_repos(include=["*-repo"], exclude=["*beta*"])
+    assert [item.repo_id for item in candidates] == ["alpha-repo"]
+
+
+def test_bootstrap_target_uses_discovered_repos(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repos_root = tmp_path / "repos"
+    repo_alpha = repos_root / "alpha-repo"
+    repo_beta = repos_root / "beta-repo"
+    _init_git_repo(repo_alpha)
+    _init_git_repo(repo_beta)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    lock = bootstrap_target(
+        "bootstrap",
+        mode="stack",
+        source_root=repos_root,
+        include=["*-repo"],
+        auto_lock=True,
+    )
+    assert [repo.repo_id for repo in lock.repos] == ["alpha-repo", "beta-repo"]
+
+
+def test_set_repo_ref_updates_target_selection_and_relocks(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("setref", mode="repo")
+    lock = add_repo("setref", repo_path=str(repo), selected_ref="HEAD")
+    lock = lock_target("setref")
+    original = lock.repos[0].resolved_sha
+    repo_id = lock.repos[0].repo_id
+
+    _run(["bash", "-lc", f"printf '\\nchange' >> {repo / 'README.md'}"], cwd=repo)
+    _run(["git", "-C", str(repo), "add", "README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "commit", "-m", "change"], cwd=repo)
+
+    previous = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD~1"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert previous.returncode == 0
+    previous_sha = previous.stdout.strip()
+
+    updated = set_repo_ref("setref", repo_id=repo_id, selected_ref="HEAD~1")
+    assert updated.repos[0].selected_ref == "HEAD~1"
+    assert updated.repos[0].resolved_sha == previous_sha
+    assert updated.repos[0].resolved_sha == original
+
+
+def test_target_timeline_supports_branch_filter(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo"
+
+    _init_git_repo(repo)
+    _run(["git", "-C", str(repo), "checkout", "-b", "feature"], cwd=repo)
+    _run(["bash", "-lc", f"printf '\\nfeature' >> {repo / 'README.md'}"], cwd=repo)
+    _run(["git", "-C", str(repo), "add", "README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "commit", "-m", "feature"], cwd=repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+    init_target("timeline", mode="repo")
+    add_repo("timeline", repo_path=str(repo), selected_ref="HEAD")
+    lock_target("timeline")
+
+    default_timeline = target_timeline("timeline", limit=5)
+    assert default_timeline["target"] == "timeline"
+    assert default_timeline["selected_ref"] == "HEAD"
+    assert default_timeline["branch_exists"] is False
+    assert default_timeline["branch"] is None
+
+    feature_timeline = target_timeline("timeline", branch="feature", limit=5)
+    assert feature_timeline["selected_ref"] == "feature"
+    assert feature_timeline["branch"] == "feature"
+    assert feature_timeline["branch_exists"] is True
+
+    with pytest.raises(ValueError, match="unknown branch"):
+        target_timeline("timeline", branch="missing")
