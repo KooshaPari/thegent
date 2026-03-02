@@ -17,8 +17,8 @@ TargetBootstrap = Callable[..., Any]
 TargetImportRepos = Callable[..., Any]
 TargetAddRepo = Callable[..., Any]
 TargetSetRepoRef = Callable[..., Any]
-TargetLock = Callable[[str], Any]
-TargetMaterialize = Callable[[str], Any]
+TargetLock = Callable[..., Any]
+TargetMaterialize = Callable[[str, str | None], Any]
 
 
 def register_target_commands(
@@ -35,11 +35,12 @@ def register_target_commands(
     @target_app.command("init", help="Create a new target in Phenotype/projects.")
     def target_init_cmd(
         name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         mode: str = typer.Option("repo", "--mode", help="Target mode: repo|stack."),
     ) -> None:
         if mode not in {"repo", "stack"}:
             raise typer.BadParameter("mode must be one of: repo, stack")
-        lock = init_target_fn(name, mode=mode)
+        lock = init_target_fn(name, mode=mode, family=family)
         console.print_json(
             json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode()
         )
@@ -47,6 +48,7 @@ def register_target_commands(
     @target_app.command("bootstrap", help="Create target and bulk add discovered repos.")
     def target_bootstrap_cmd(
         name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         mode: str = typer.Option("repo", "--mode", help="Target mode: repo|stack."),
         source_root: Path | None = typer.Option(
             None,
@@ -94,6 +96,7 @@ def register_target_commands(
             raise typer.BadParameter("mode must be one of: repo, stack")
         lock = bootstrap_target_fn(
             target=name,
+            family=family,
             mode=mode,
             source_root=source_root,
             selected_ref=ref,
@@ -119,6 +122,7 @@ def register_target_commands(
     @target_app.command("import-repos", help="Import discovered repos into an existing target.")
     def target_import_repos_cmd(
         name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         source_root: Path | None = typer.Option(
             None,
             "--source-root",
@@ -163,6 +167,7 @@ def register_target_commands(
     ) -> None:
         lock = import_repos_fn(
             target=name,
+            family=family,
             source_root=source_root,
             selected_ref=ref,
             preferred_runner=preferred_runner,
@@ -186,6 +191,7 @@ def register_target_commands(
     @target_app.command("add-repo", help="Add repo+ref selection to a target.")
     def target_add_repo_cmd(
         name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         repo: str = typer.Option(..., "--repo", help="Absolute path to repo checkout."),
         ref: str = typer.Option(..., "--ref", help="Selected git ref (branch/tag/sha)."),
         preferred_ref: str | None = typer.Option(
@@ -218,6 +224,7 @@ def register_target_commands(
             name,
             repo,
             ref,
+            family=family,
             repo_id=repo_id,
             worktree_path=worktree,
             preferred_runner=preferred_runner,
@@ -237,10 +244,11 @@ def register_target_commands(
     @target_app.command("set-ref", help="Set selected ref for one repo and relock target.")
     def target_set_ref_cmd(
         name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         repo_id: str = typer.Option(..., "--repo-id", help="Repo ID in target lock."),
         ref: str = typer.Option(..., "--ref", help="Git ref (branch/tag/sha)."),
     ) -> None:
-        lock = set_repo_ref_fn(name, repo_id=repo_id, selected_ref=ref)
+        lock = set_repo_ref_fn(name, repo_id=repo_id, selected_ref=ref, family=family)
         console.print_json(
             json.dumps(
                 {
@@ -252,8 +260,11 @@ def register_target_commands(
         )
 
     @target_app.command("lock", help="Resolve selected refs to immutable SHAs.")
-    def target_lock_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-        lock = lock_target_fn(name)
+    def target_lock_cmd(
+        name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
+    ) -> None:
+        lock = lock_target_fn(name, family=family)
         console.print_json(
             json.dumps(
                 {
@@ -275,8 +286,11 @@ def register_target_commands(
         "materialize",
         help="Materialize deterministic checkouts under Phenotype/projects/<target>/repos.",
     )
-    def target_materialize_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-        runtime = materialize_target_fn(name)
+    def target_materialize_cmd(
+        name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
+    ) -> None:
+        runtime = materialize_target_fn(name, family=family)
         console.print_json(
             json.dumps(
                 {
