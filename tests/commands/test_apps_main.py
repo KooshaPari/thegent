@@ -1101,6 +1101,95 @@ def test_phench_projects_matrix_non_interactive_requires_target() -> None:
     assert "--target is required when --no-interactive is set" in (result.stdout + result.stderr)
 
 
+def test_phench_projects_modules_lists_manifest_names(tmp_path: Path) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_root = phenotype_root / "projects" / "modules"
+    (modules_root / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (modules_root / "platform-core").mkdir(parents=True, exist_ok=True)
+    (modules_root / "legacy").mkdir(parents=True, exist_ok=True)
+    (modules_root / "legacy" / "manifest.json").write_text("{}", encoding="utf-8")
+    (modules_root / "thegent-app" / "manifest.json").write_text("{}", encoding="utf-8")
+    (modules_root / "platform-core" / "manifest.json").write_text("{}", encoding="utf-8")
+
+    env = {"THGENT_PHENOTYPE_ROOT": str(phenotype_root)}
+    result = runner.invoke(app, ["phench", "projects", "modules"], env=env)
+
+    assert result.exit_code == 0
+    assert json.loads(result.stdout) == ["legacy", "platform-core", "thegent-app"]
+
+
+def test_phench_projects_modules_loads_manifest() -> None:
+    with patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest:
+        mock_load_module_manifest.return_value = {
+            "repo_ids": ["repo-a", "repo-b"],
+            "repo_ref_overrides": {},
+            "repo_runner_overrides": {},
+            "repo_command_overrides": {},
+            "repo_env_profile_overrides": {},
+        }
+        result = runner.invoke(
+            app,
+            ["phench", "projects", "modules", "--module", "thegent-app"],
+        )
+
+    assert result.exit_code == 0
+    mock_load_module_manifest.assert_called_once_with(
+        "thegent-app",
+        available_repo_ids=None,
+    )
+    assert json.loads(result.stdout) == {
+        "repo_ids": ["repo-a", "repo-b"],
+        "repo_ref_overrides": {},
+        "repo_runner_overrides": {},
+        "repo_command_overrides": {},
+        "repo_env_profile_overrides": {},
+        "module": "thegent-app",
+    }
+
+
+def test_phench_projects_modules_loads_manifest_with_target_filter() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            repos=[
+                SimpleNamespace(repo_id="repo-a"),
+                SimpleNamespace(repo_id="repo-b"),
+                SimpleNamespace(repo_id="repo-c"),
+            ],
+        )
+        mock_load_module_manifest.return_value = {
+            "repo_ids": ["repo-a", "repo-c"],
+            "repo_ref_overrides": {"repo-a": "main"},
+            "repo_runner_overrides": {},
+            "repo_command_overrides": {},
+            "repo_env_profile_overrides": {},
+        }
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "modules",
+                "--module",
+                "thegent-app",
+                "--target",
+                "alpha",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_load_module_manifest.assert_called_once_with(
+        "thegent-app",
+        available_repo_ids=["repo-a", "repo-b", "repo-c"],
+    )
+    assert json.loads(result.stdout)["module"] == "thegent-app"
+    assert json.loads(result.stdout)["target"] == "alpha"
+
+
 def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
     lock = SimpleNamespace(
         target_name="alpha",

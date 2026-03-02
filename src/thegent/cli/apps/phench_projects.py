@@ -17,6 +17,7 @@ TargetResolver = Callable[..., list[str]]
 TargetLockLoader = Callable[..., Any]
 TargetTimelineLoader = Callable[..., dict[str, Any]]
 TargetAction = Callable[..., Any]
+ModuleLister = Callable[[], list[str]]
 ProjectMatrixAction = Callable[..., dict[str, Any]]
 RunAction = Callable[..., int]
 
@@ -365,6 +366,7 @@ def register_projects_run(
     projects_app: typer.Typer,
     *,
     list_targets_fn: TargetResolver,
+    list_modules_fn: ModuleLister,
     load_target_lock_fn: TargetLockLoader | None = None,
     target_timeline_fn: TargetTimelineLoader,
     target_status_fn: Callable[[str, str | None], Any],
@@ -508,3 +510,34 @@ def register_projects_run(
         state = target_status_fn(selected_target, family=family)
         state["projects_root"] = f"projects/{selected_target}"
         console.print_json(json.dumps(state).decode())
+
+
+    @projects_app.command("modules", help="List or inspect module manifests under Phenotype/projects/modules.")
+    def projects_modules_cmd(
+        module: str | None = typer.Option(None, "--module", help="Inspect a specific module manifest."),
+        target: str | None = typer.Option(None, "--target", help="Optional target to validate module repos against lock."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
+    ) -> None:
+        if module is None:
+            modules = list_modules_fn()
+            console.print_json(data=modules)
+            return
+
+        available_repo_ids: list[str] | None = None
+        if target is not None:
+            selected_target = _ensure_target_name(
+                target,
+                family=family,
+                non_interactive=False,
+                list_targets_fn=list_targets_fn,
+            )
+            lock = load_target_lock_fn(selected_target, family=family)
+            available_repo_ids = [repo.repo_id for repo in lock.repos]
+            available_repo_ids.sort()
+
+        manifest = load_module_manifest(module, available_repo_ids=available_repo_ids)
+        manifest = dict(manifest)
+        manifest["module"] = module
+        if target is not None:
+            manifest["target"] = target
+        console.print_json(data=manifest)
