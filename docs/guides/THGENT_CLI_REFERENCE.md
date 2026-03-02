@@ -791,6 +791,7 @@ thegent phench projects run --target <target> --runner <runner> --command <comma
 - `--all-repos`: Execute across all repos in the target.
 - `--mode serial|parallel`: Multi-repo execution mode.
 - `--env-profile <name>`: Apply profile globally, then per-repo overrides from manifest.
+- `--snapshot-id <id>`: Run using a previously captured snapshot state from `phench snapshot create`.
 - `--timeline-limit N`: Refs shown during interactive selection.
 - `--no-prepare`: Skip automatic `lock` and `materialize` before run.
 
@@ -818,6 +819,13 @@ thegent phench projects run \
   --command hello \
   --env-profile default \
   --no-interactive
+
+# Run from a snapshot (stable point-in-time materialization)
+thegent phench projects run \
+  --target thegent-app \
+  --snapshot-id snap-20260302T120000Z \
+  --runner task \
+  --command hello
 ```
 
 ### `thegent phench projects status` - Show target state

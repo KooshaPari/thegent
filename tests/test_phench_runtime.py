@@ -258,6 +258,111 @@ def test_run_target_all_repos_requires_explicit_runner_and_command(tmp_path: Pat
         run_target("stacky2", all_repos=True)
 
 
+def test_run_target_with_snapshot_id_runs_from_snapshot_state(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "repo"
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snaprun", mode="repo")
+    add_repo("snaprun", repo_path=str(source_repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("snaprun")
+    materialize_target("snaprun")
+    snapshot = create_target_snapshot("snaprun")
+
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: (_ for _ in ()).throw(RuntimeError("unexpected live env doctor call")),
+    )
+    monkeypatch.setattr(
+        "thegent.phench.service._run_env_doctor_for_materializations",
+        lambda target, materializations, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+    calls: list[str] = []
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(str(checkout))
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+
+    exit_code = run_target(
+        "snaprun",
+        snapshot_id=str(snapshot["snapshot_id"]),
+        runner="task",
+        command_name="hello",
+    )
+    assert exit_code == 0
+    expected_checkout = str((phenotype_root / "projects" / "snaprun" / "repos" / "repo").resolve())
+    assert calls == [expected_checkout]
+
+
+def test_run_target_with_invalid_snapshot_runtime_fails(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "repo"
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snapbroken", mode="repo")
+    add_repo("snapbroken", repo_path=str(source_repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("snapbroken")
+    materialize_target("snapbroken")
+    snapshot = create_target_snapshot("snapbroken")
+    monkeypatch.setattr(
+        "thegent.phench.service.show_target_snapshot",
+        lambda target, snapshot_id, family=None: {"runtime": "bad-runtime", "lock": snapshot.get("lock", {})},
+    )
+
+    with pytest.raises(ValueError, match=r"snapshot '.*' has no runtime payload"):
+        run_target("snapbroken", snapshot_id=str(snapshot["snapshot_id"]))
+
+
+def test_run_target_with_invalid_snapshot_lock_fails(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "repo"
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snaplocked", mode="repo")
+    add_repo("snaplocked", repo_path=str(source_repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("snaplocked")
+    materialize_target("snaplocked")
+    snapshot = create_target_snapshot("snaplocked")
+    monkeypatch.setattr(
+        "thegent.phench.service.show_target_snapshot",
+        lambda target, snapshot_id, family=None: {
+            "runtime": {"repo_materializations": [{"repo_id": "repo", "checkout_path": "repo"}]},
+            "lock": "invalid-lock",
+        },
+    )
+
+    with pytest.raises(ValueError, match=r"snapshot '.*' has invalid lock payload"):
+        run_target("snaplocked", snapshot_id=str(snapshot["snapshot_id"]))
+
+
 def test_run_target_ref_override_rematerializes_runtime_checkout(tmp_path: Path, monkeypatch) -> None:
     phenotype_root = tmp_path / "Phenotype"
     mirror_root = tmp_path / "home-phench"

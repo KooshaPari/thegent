@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
+from fnmatch import fnmatch
 from pathlib import Path
 from datetime import UTC, datetime
 import hashlib
@@ -22,6 +23,7 @@ from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, Tar
 from .paths import (
     mirror_target_state_root,
     projects_root,
+    module_manifest_path,
     target_repos_root,
     target_root,
     validate_family_name,
@@ -581,10 +583,12 @@ def _resolve_repo_runner_and_command(
     catalog: RunnerCatalog,
     cli_runner: str | None,
     cli_command: str | None,
-    enforce_no_interactive: bool,
+    repo_runner_override: str | None = None,
+    repo_command_override: str | None = None,
+    enforce_no_interactive: bool = False,
 ) -> tuple[str | None, str | None]:
-    runner = cli_runner or repo.preferred_runner
-    command_name = cli_command or repo.preferred_command
+    runner = repo_runner_override or cli_runner or repo.preferred_runner
+    command_name = repo_command_override or cli_command or repo.preferred_command
 
     if command_name and not runner:
         raise ValueError(f"repo '{repo_id}' requires a runner for command '{command_name}'")
@@ -621,12 +625,33 @@ def _materialization_entry(item: dict[str, Any]) -> tuple[str, Path]:
     return repo_id, Path(checkout_path).resolve()
 
 
+def _materialization_checkouts(
+    materializations: list[dict[str, Any]],
+) -> list[Path]:
+    return [checkout for _, checkout in (_materialization_entry(item) for item in materializations)]
+
+
+def _run_env_doctor_for_materializations(
+    target: str,
+    materializations: list[dict[str, Any]],
+    family: str | None = None,
+) -> dict[str, Any]:
+    report = run_env_doctor(target, _materialization_checkouts(materializations))
+    dual_write(target, ENV_FILE, report, family=family)
+    return asdict(report)
+
+
 def _materialization_lookup(
     repo_id: str | None,
+    repo_ids: list[str] | None,
+    all_repos: bool,
     materializations: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     if not materializations:
         raise ValueError("target has no runtime materialization; run target materialize")
+
+    if all_repos:
+        return [dict(item) for item in materializations]
 
     if repo_id is not None:
         selected = next((item for item in materializations if item.get("repo_id") == repo_id), None)
@@ -634,13 +659,212 @@ def _materialization_lookup(
             raise ValueError(f"repo_id not materialized: {repo_id}")
         return [dict(selected)]
 
+    if repo_ids is not None:
+        index = {repo_id: item for item in materializations for repo_id in [item.get("repo_id")] if isinstance(repo_id, str)}
+        if not index:
+            raise ValueError("target has no runtime materialization; run target materialize")
+        requested: list[str] = []
+        seen: set[str] = set()
+        for requested_repo_id in repo_ids:
+            if requested_repo_id in seen:
+                continue
+            seen.add(requested_repo_id)
+            if requested_repo_id not in index:
+                raise ValueError(f"repo_id not materialized: {requested_repo_id}")
+            requested.append(requested_repo_id)
+        return [dict(index[rid]) for rid in requested]
+
     return [dict(item) for item in materializations[:1]]
+
+
+def _validate_module_repos_payload_field(
+    payload: dict[str, Any],
+    *,
+    field: str,
+) -> list[str]:
+    raw = payload.get(field)
+    if raw is None:
+        return []
+
+    if not isinstance(raw, list):
+        raise ValueError(f"module manifest field '{field}' must be a list")
+
+    values: list[str] = []
+    for value in raw:
+        if not isinstance(value, str):
+            raise ValueError(f"module manifest field '{field}' contains non-string entry")
+        repo_id = value.strip()
+        if not repo_id:
+            continue
+        values.append(repo_id)
+    return values
+
+
+def _validate_module_repos_payload_map(
+    payload: dict[str, Any],
+    *,
+    field: str,
+) -> dict[str, str]:
+    raw = payload.get(field)
+    if raw is None:
+        return {}
+
+    if not isinstance(raw, dict):
+        raise ValueError(f"module manifest field '{field}' must be an object")
+
+    items: dict[str, str] = {}
+    for key, value in raw.items():
+        if not isinstance(key, str):
+            raise ValueError(f"module manifest field '{field}' contains non-string key")
+
+        repo_id = key.strip()
+        if not repo_id:
+            raise ValueError(f"module manifest field '{field}' contains empty repo id")
+
+        if not isinstance(value, str):
+            raise ValueError(f"module manifest field '{field}' requires string values")
+        item = value.strip()
+        if not item:
+            raise ValueError(
+                f"module manifest field '{field}' for repo '{repo_id}' must not be empty"
+            )
+
+        items[repo_id] = item
+
+    return items
+
+
+def _normalize_repo_id_list(values: list[str] | None) -> list[str]:
+    if values is None:
+        return []
+
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        repo_id = value.strip()
+        if not repo_id:
+            continue
+        if repo_id in seen:
+            continue
+        seen.add(repo_id)
+        normalized.append(repo_id)
+    return normalized
+
+
+def _normalize_repo_map(values: dict[str, str] | None, *, label: str) -> dict[str, str]:
+    if values is None:
+        return {}
+    normalized: dict[str, str] = {}
+    for repo_id, value in values.items():
+        if not isinstance(repo_id, str):
+            raise ValueError(f"{label} keys must be strings")
+        normalized_key = repo_id.strip()
+        if not normalized_key:
+            raise ValueError(f"{label} contains empty key")
+
+        if not isinstance(value, str):
+            raise ValueError(f"{label} values must be strings")
+        normalized_value = value.strip()
+        if not normalized_value:
+            raise ValueError(f"{label} value for repo '{normalized_key}' cannot be empty")
+        normalized[normalized_key] = normalized_value
+    return normalized
+
+
+def load_module_manifest(
+    module: str,
+    *,
+    available_repo_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    normalized_module = validate_family_name(module)
+    manifest_path = module_manifest_path(normalized_module)
+    if not manifest_path.exists():
+        raise ValueError(f"module manifest not found: {module}")
+
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"invalid module manifest for {module}: malformed json") from error
+
+    if not isinstance(payload, dict):
+        raise ValueError(f"invalid module manifest for {module}: payload must be an object")
+
+    explicit_repos = (
+        _validate_module_repos_payload_field(payload, field="repo_ids")
+        or _validate_module_repos_payload_field(payload, field="repos")
+    )
+    explicit_repos = _normalize_repo_id_list(explicit_repos)
+    raw_patterns = _validate_module_repos_payload_field(payload, field="repo_patterns")
+    available = _normalize_repo_id_list(available_repo_ids or [])
+    expanded: list[str] = []
+    for pattern in raw_patterns:
+        matched = sorted([repo_id for repo_id in available if fnmatch(repo_id, pattern)])
+        expanded.extend(matched)
+
+    if not explicit_repos and not raw_patterns and not available:
+        raise ValueError(
+            f"module manifest '{module}' must define 'repo_ids', 'repos', or 'repo_patterns'"
+        )
+
+    combined = _normalize_repo_id_list(explicit_repos + expanded)
+    combined = sorted(set(combined))
+    if available:
+        unavailable = [repo_id for repo_id in combined if repo_id not in available]
+        if unavailable:
+            raise ValueError(
+                f"module manifest '{module}' references unknown repos: {', '.join(unavailable)}"
+            )
+
+    module_overrides: dict[str, Any] = {
+        "repo_ref_overrides": _validate_module_repos_payload_map(
+            payload,
+            field="repo_ref_overrides",
+        ),
+        "repo_runner_overrides": _validate_module_repos_payload_map(
+            payload,
+            field="repo_runner_overrides",
+        ),
+        "repo_command_overrides": _validate_module_repos_payload_map(
+            payload,
+            field="repo_command_overrides",
+        ),
+        "repo_env_profile_overrides": _validate_module_repos_payload_map(
+            payload,
+            field="repo_env_profile_overrides",
+        ),
+    }
+
+    if available:
+        for key, value in module_overrides.items():
+            unknown = [repo_id for repo_id in value if repo_id not in available]
+            if unknown:
+                raise ValueError(f"module manifest '{module}' has unknown {key} key(s): {', '.join(unknown)}")
+
+    if not combined:
+        raise ValueError(f"module manifest '{module}' matched no repos")
+
+    module_overrides["repo_ids"] = combined
+    return module_overrides
+
+
+def load_module_repos(
+    module: str,
+    *,
+    available_repo_ids: list[str] | None = None,
+) -> list[str]:
+    return load_module_manifest(module, available_repo_ids=available_repo_ids)["repo_ids"]
 
 
 def run_target(
     target: str,
     family: str | None = None,
+    snapshot_id: str | None = None,
     repo_id: str | None = None,
+    repo_ids: list[str] | None = None,
+    repo_ref_overrides: dict[str, str] | None = None,
+    repo_runner_overrides: dict[str, str] | None = None,
+    repo_command_overrides: dict[str, str] | None = None,
+    repo_env_profile_overrides: dict[str, str] | None = None,
     runner: str | None = None,
     command_name: str | None = None,
     selected_ref: str | None = None,
@@ -649,7 +873,31 @@ def run_target(
     env_profile: str | None = None,
     non_interactive: bool = False,
 ) -> int:
-    report = run_env_doctor_for_target(target, family=family)
+    if snapshot_id is not None:
+        snapshot = show_target_snapshot(target, snapshot_id, family=family)
+        runtime = snapshot.get("runtime")
+        if not isinstance(runtime, dict):
+            raise ValueError(f"snapshot '{snapshot_id}' has no runtime payload")
+        materializations = runtime.get("repo_materializations")
+        if not isinstance(materializations, list) or not materializations:
+            raise ValueError(
+                f"snapshot '{snapshot_id}' has no runtime materialization; create snapshot after materialize"
+            )
+        snapshot_lock = snapshot.get("lock")
+        if not isinstance(snapshot_lock, dict):
+            raise ValueError(f"snapshot '{snapshot_id}' has invalid lock payload")
+        lock = _parse_lock(snapshot_lock)
+        report = _run_env_doctor_for_materializations(
+            target,
+            materializations,
+            family=family,
+        )
+    else:
+        report = run_env_doctor_for_target(target, family=family)
+        runtime = read_dual(target, RUNTIME_FILE, family=family)
+        materializations = runtime.get("repo_materializations")
+        lock = load_target_lock(target, family=family)
+
     if report["doctor_status"] != "pass":
         missing = ", ".join(report["missing_requirements"])
         raise RuntimeError(f"env doctor failed, missing requirements: {missing}")
@@ -657,17 +905,68 @@ def run_target(
     if execution_mode not in {"serial", "parallel"}:
         raise ValueError("execution_mode must be one of: serial, parallel")
 
-    runtime = read_dual(target, RUNTIME_FILE, family=family)
-    materializations = runtime.get("repo_materializations")
     if not isinstance(materializations, list) or not materializations:
         raise ValueError("target has no runtime materialization; run target materialize")
+
+    if repo_id is not None and repo_ids is not None:
+        raise ValueError("repo_id and repo_ids are mutually exclusive")
+    if repo_ids is not None:
+        repo_ids = [repo_id for repo_id in repo_ids if repo_id]
+        if not repo_ids:
+            raise ValueError("repo_ids cannot be empty")
+
+    if repo_ref_overrides is None:
+        repo_ref_overrides_normalized = {}
+    else:
+        repo_ref_overrides_normalized = _normalize_repo_map(repo_ref_overrides, label="repo_ref_overrides")
+
+    repo_runner_overrides_normalized = _normalize_repo_map(
+        repo_runner_overrides,
+        label="repo_runner_overrides",
+    )
+    repo_command_overrides_normalized = _normalize_repo_map(
+        repo_command_overrides,
+        label="repo_command_overrides",
+    )
+    repo_env_profile_overrides_normalized = _normalize_repo_map(
+        repo_env_profile_overrides,
+        label="repo_env_profile_overrides",
+    )
+
+    if all_repos and repo_ids is not None:
+        raise ValueError("repo_ids is not compatible with --all-repos")
+
+    if repo_id is not None and not repo_id.strip():
+        raise ValueError("repo_id cannot be empty")
+
+    if repo_ids is not None:
+        repo_index = {repo_id.strip(): repo_id.strip() for repo_id in repo_ids}
+        repo_ids = list(repo_index.values())
+        unknown_override = [repo_id for repo_id in repo_ref_overrides_normalized if repo_id not in repo_index]
+        if unknown_override:
+            raise ValueError(f"repo_id not materialized: {unknown_override[0]}")
+        unknown_runner_override = [repo_id for repo_id in repo_runner_overrides_normalized if repo_id not in repo_index]
+        if unknown_runner_override:
+            raise ValueError(f"repo_id not materialized: {unknown_runner_override[0]}")
+        unknown_command_override = [repo_id for repo_id in repo_command_overrides_normalized if repo_id not in repo_index]
+        if unknown_command_override:
+            raise ValueError(f"repo_id not materialized: {unknown_command_override[0]}")
+        unknown_env_profile_override = [repo_id for repo_id in repo_env_profile_overrides_normalized if repo_id not in repo_index]
+        if unknown_env_profile_override:
+            raise ValueError(f"repo_id not materialized: {unknown_env_profile_override[0]}")
 
     if all_repos:
         selected_items = [dict(item) for item in materializations]
     else:
-        selected_items = _materialization_lookup(repo_id, materializations)
+        selected_items = _materialization_lookup(
+            repo_id,
+            repo_ids=repo_ids,
+            all_repos=False,
+            materializations=materializations,
+        )
 
-    lock = load_target_lock(target, family=family)
+    if repo_id is not None:
+        repo_ids = [repo_id]
     lock_index = {repo.repo_id: repo for repo in lock.repos}
     enforce_no_interactive = non_interactive or all_repos
 
@@ -676,29 +975,42 @@ def run_target(
         lock_repo = lock_index.get(item_repo_id)
         if lock_repo is None:
             raise ValueError(f"repo_id not in target lock: {item_repo_id}")
-        repo_ref = selected_ref if selected_ref is not None else (lock_repo.preferred_ref or lock_repo.selected_ref)
+        repo_ref = (
+            repo_ref_overrides_normalized.get(item_repo_id)
+            if repo_ref_overrides_normalized
+            else None
+        )
+        if repo_ref is None:
+            repo_ref = selected_ref if selected_ref is not None else (lock_repo.preferred_ref or lock_repo.selected_ref)
         if repo_ref is not None:
             resolved = resolve_ref_to_sha(Path(lock_repo.repo_path), repo_ref)
             materialize_repo_checkout(Path(lock_repo.repo_path), item_checkout, resolved)
             item["resolved_sha"] = resolved
 
-    runs: list[tuple[Path, RunnerCatalog, str | None, str | None]] = []
-    env_overrides = get_env_profile(target, profile=env_profile, family=family)
+    runs: list[
+        tuple[Path, RunnerCatalog, str | None, str | None, dict[str, str] | None]
+    ] = []
     for item in selected_items:
         item_repo_id, item_checkout = _materialization_entry(item)
         catalog = build_runner_catalog(target, item_checkout)
         lock_repo = lock_index.get(item_repo_id)
         if lock_repo is None:
             raise ValueError(f"repo_id not in target lock: {item_repo_id}")
+        repo_runner_override = repo_runner_overrides_normalized.get(item_repo_id)
+        repo_command_override = repo_command_overrides_normalized.get(item_repo_id)
+        repo_env_profile = repo_env_profile_overrides_normalized.get(item_repo_id, env_profile)
+        env_overrides = get_env_profile(target, profile=repo_env_profile, family=family)
         repo_runner, repo_command = _resolve_repo_runner_and_command(
             item_repo_id,
             lock_repo,
             catalog,
             cli_runner=runner,
             cli_command=command_name,
+            repo_runner_override=repo_runner_override,
+            repo_command_override=repo_command_override,
             enforce_no_interactive=enforce_no_interactive,
         )
-        runs.append((item_checkout, catalog, repo_runner, repo_command))
+        runs.append((item_checkout, catalog, repo_runner, repo_command, env_overrides))
 
     if execution_mode == "parallel" and len(runs) > 1:
         with ThreadPoolExecutor(max_workers=len(runs)) as pool:
@@ -712,13 +1024,13 @@ def run_target(
                     non_interactive,
                     env_overrides,
                 )
-                for checkout, catalog, repo_runner, repo_command in runs
+                for checkout, catalog, repo_runner, repo_command, env_overrides in runs
             ]
             results = [future.result() for future in futures]
         nonzero = [code for code in results if code != 0]
         return nonzero[0] if nonzero else 0
 
-    for checkout, catalog, repo_runner, repo_command in runs:
+    for checkout, catalog, repo_runner, repo_command, env_overrides in runs:
         code = _run_single_repo_target(
             checkout,
             catalog,
