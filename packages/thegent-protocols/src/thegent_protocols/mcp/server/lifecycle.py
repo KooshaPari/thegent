@@ -84,7 +84,10 @@ async def run_lifespan(
                 logger.info("mounted @playwright/mcp at namespace browser")
 
             if settings.mcp_mount_serena:
-                from thegent_cli.lsp.serena_integration import detect_serena_backend, get_serena_mcp_config
+                import importlib as _importlib
+                _serena_mod = _importlib.import_module("thegent_cli.lsp.serena_integration")
+                detect_serena_backend = _serena_mod.detect_serena_backend
+                get_serena_mcp_config = _serena_mod.get_serena_mcp_config
 
                 backend = detect_serena_backend()
                 _ = get_serena_mcp_config()

@@ -1,12 +1,20 @@
 """WP-20002: Neural-Symbolic Hybrid Router.
 Combines symbolic risk assessment with neural model capabilities for safety-first routing.
+
+Circular-dependency note
+------------------------
+This module previously imported SymbolicRiskExplorer directly from
+thegent_audit.verification.symbolic, creating a Core ↔ Audit cycle.
+It now accepts any object satisfying the SymbolicRiskPort protocol defined in
+thegent_core.ports.driven.symbolic_risk.  The concrete SymbolicRiskExplorer
+(from thegent-audit) is injected by callers that have access to that package.
 """
 
 import logging
 from typing import Any
 
 from thegent_core.models.catalog import ModelCatalog, RoutePolicy
-from thegent_audit.verification.symbolic import SymbolicRiskExplorer
+from thegent_core.ports.driven.symbolic_risk import NullSymbolicRiskPort, SymbolicRiskPort
 
 _log = logging.getLogger(__name__)
 
@@ -14,8 +22,16 @@ _log = logging.getLogger(__name__)
 class HybridRouter:
     """Combines LLM (Neural) and Symbolic (Formal) methods for model routing."""
 
-    def __init__(self, dag: Any) -> None:
-        self.symbolic_explorer = SymbolicRiskExplorer(dag)
+    def __init__(self, dag: Any, symbolic_explorer: SymbolicRiskPort | None = None) -> None:
+        # Accept an injected explorer; fall back to the null-object so the
+        # module can be imported even when thegent-audit is absent.
+        if symbolic_explorer is None:
+            symbolic_explorer = NullSymbolicRiskPort(dag)
+            _log.debug(
+                "HybridRouter: no SymbolicRiskPort injected; using NullSymbolicRiskPort. "
+                "Pass a concrete SymbolicRiskExplorer from thegent-audit for live risk assessment."
+            )
+        self.symbolic_explorer: SymbolicRiskPort = symbolic_explorer
         self.catalog = ModelCatalog()
 
     def route_safely(self, task_type: str, prompt: str, start_node: str) -> tuple[str, str]:
