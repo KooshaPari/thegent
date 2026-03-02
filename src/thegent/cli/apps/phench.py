@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from pathlib import Path
 
 import orjson as json
 import typer
 from rich.console import Console
-from rich.prompt import IntPrompt
 
 from thegent.phench import (
     add_repo,
@@ -33,6 +31,9 @@ from thegent.phench import (
     target_status,
     target_timeline,
 )
+from thegent.cli.apps.phench_projects import register_projects_run
+from thegent.cli.apps.phench_observability import register_observability_commands
+from thegent.cli.apps.phench_target import register_target_commands
 
 console = Console()
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
@@ -48,185 +49,20 @@ app.add_typer(snapshot_app, name="snapshot")
 app.add_typer(projects_app, name="projects")
 
 
-@target_app.command("init", help="Create a new target in Phenotype/projects.")
-def target_init_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    mode: str = typer.Option("repo", "--mode", help="Target mode: repo|stack."),
-) -> None:
-    if mode not in {"repo", "stack"}:
-        raise typer.BadParameter("mode must be one of: repo, stack")
-    lock = init_target(name, mode=mode)  # type: ignore[arg-type]
-    console.print_json(json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode())
-
-
-@target_app.command("bootstrap", help="Create target and bulk add discovered repos.")
-def target_bootstrap_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    mode: str = typer.Option("repo", "--mode", help="Target mode: repo|stack."),
-    source_root: Path | None = typer.Option(
-        None,
-        "--source-root",
-        help="Workspace root containing sibling git checkouts (defaults to sibling repos root).",
+register_target_commands(
+    target_app,
+    init_target_fn=lambda name, mode="repo": init_target(name, mode=mode),
+    bootstrap_target_fn=lambda **kwargs: bootstrap_target(**kwargs),
+    import_repos_fn=lambda **kwargs: import_repos(**kwargs),
+    add_repo_fn=lambda name, repo, ref, repo_id=None, worktree_path=None: add_repo(
+        name, repo, ref, repo_id=repo_id, worktree_path=worktree_path
     ),
-    ref: str = typer.Option("HEAD", "--ref", help="Ref to select for discovered repos."),
-    include: list[str] = typer.Option(
-        [],
-        "--include",
-        help="Glob include pattern; repeat for multiple values.",
+    set_repo_ref_fn=lambda name, repo_id, selected_ref: set_repo_ref(
+        name, repo_id=repo_id, selected_ref=selected_ref
     ),
-    exclude: list[str] = typer.Option(
-        [],
-        "--exclude",
-        help="Glob exclude pattern; repeat for multiple values.",
-    ),
-    repo_ids: list[str] = typer.Option(
-        [],
-        "--repo-id",
-        help="Optional explicit repo IDs to include. Repeat as needed.",
-    ),
-    auto_lock: bool = typer.Option(True, "--auto-lock/--no-auto-lock", help="Auto-lock after bootstrap."),
-) -> None:
-    if mode not in {"repo", "stack"}:
-        raise typer.BadParameter("mode must be one of: repo, stack")
-    lock = bootstrap_target(
-        target=name,
-        mode=mode,  # type: ignore[arg-type]
-        source_root=source_root,
-        selected_ref=ref,
-        include=include or None,
-        exclude=exclude or None,
-        repo_ids=repo_ids or None,
-        auto_lock=auto_lock,
-    )
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "mode": lock.mode,
-                "repos": [repo.repo_id for repo in lock.repos],
-                "lock_hash": lock.lock_hash,
-            }
-        ).decode()
-    )
-
-
-@target_app.command("import-repos", help="Import discovered repos into an existing target.")
-def target_import_repos_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    source_root: Path | None = typer.Option(
-        None,
-        "--source-root",
-        help="Workspace root containing sibling git checkouts (defaults to sibling repos root).",
-    ),
-    ref: str = typer.Option("HEAD", "--ref", help="Ref to select for discovered repos."),
-    include: list[str] = typer.Option(
-        [],
-        "--include",
-        help="Glob include pattern; repeat for multiple values.",
-    ),
-    exclude: list[str] = typer.Option(
-        [],
-        "--exclude",
-        help="Glob exclude pattern; repeat for multiple values.",
-    ),
-    repo_ids: list[str] = typer.Option(
-        [],
-        "--repo-id",
-        help="Optional explicit repo IDs to include. Repeat as needed.",
-    ),
-    auto_lock: bool = typer.Option(True, "--auto-lock/--no-auto-lock", help="Auto-lock after import."),
-) -> None:
-    lock = import_repos(
-        target=name,
-        source_root=source_root,
-        selected_ref=ref,
-        include=include or None,
-        exclude=exclude or None,
-        repo_ids=repo_ids or None,
-        auto_lock=auto_lock,
-    )
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "repos": [repo.repo_id for repo in lock.repos],
-                "lock_hash": lock.lock_hash,
-            }
-        ).decode()
-    )
-
-
-@target_app.command("add-repo", help="Add repo+ref selection to a target.")
-def target_add_repo_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    repo: str = typer.Option(..., "--repo", help="Absolute path to repo checkout."),
-    ref: str = typer.Option(..., "--ref", help="Selected git ref (branch/tag/sha)."),
-    repo_id: str | None = typer.Option(None, "--repo-id", help="Optional stable repo identifier."),
-    worktree: str | None = typer.Option(None, "--worktree", help="Optional source worktree path hint."),
-) -> None:
-    lock = add_repo(name, repo, ref, repo_id=repo_id, worktree_path=worktree)
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "repos": [repo.repo_id for repo in lock.repos],
-                "lock_hash": lock.lock_hash,
-            }
-        ).decode()
-    )
-
-
-@target_app.command("set-ref", help="Set selected ref for one repo and relock target.")
-def target_set_ref_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    repo_id: str = typer.Option(..., "--repo-id", help="Repo ID in target lock."),
-    ref: str = typer.Option(..., "--ref", help="Git ref (branch/tag/sha)."),
-) -> None:
-    lock = set_repo_ref(name, repo_id=repo_id, selected_ref=ref)
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "repos": [repo.repo_id for repo in lock.repos],
-                "lock_hash": lock.lock_hash,
-            }
-        ).decode()
-    )
-
-
-@target_app.command("lock", help="Resolve selected refs to immutable SHAs.")
-def target_lock_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    lock = lock_target(name)
-    console.print_json(
-        json.dumps(
-            {
-                "target": lock.target_name,
-                "lock_hash": lock.lock_hash,
-                "repos": [
-                    {
-                        "repo_id": repo.repo_id,
-                        "selected_ref": repo.selected_ref,
-                        "resolved_sha": repo.resolved_sha,
-                    }
-                    for repo in lock.repos
-                ],
-            }
-        ).decode()
-    )
-
-
-@target_app.command("materialize", help="Materialize deterministic checkouts under Phenotype/projects/<target>/repos.")
-def target_materialize_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    runtime = materialize_target(name)
-    console.print_json(
-        json.dumps(
-            {
-                "target": runtime.target_name,
-                "materialized_root": runtime.materialized_root,
-                "repos": [asdict(repo) for repo in runtime.repo_materializations],
-            }
-        ).decode()
-    )
+    lock_target_fn=lambda name: lock_target(name),
+    materialize_target_fn=lambda name: materialize_target(name),
+)
 
 
 @app.command("timeline", help="Show git-first timeline for a target repo.")
@@ -234,7 +70,11 @@ def timeline_cmd(
     name: str = typer.Argument(..., help="Target name."),
     repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
     limit: int = typer.Option(30, "--limit", help="Number of recent commits."),
-    branch: str | None = typer.Option(None, "--branch", help="Optional branch name to constrain timeline."),
+    branch: str | None = typer.Option(
+        None,
+        "--branch",
+        help="Optional branch name to constrain timeline.",
+    ),
 ) -> None:
     data = target_timeline(name, repo_id=repo_id, limit=limit, branch=branch)
     console.print_json(json.dumps(data).decode())
@@ -244,14 +84,42 @@ def timeline_cmd(
 def run_cmd(
     name: str = typer.Argument(..., help="Target name."),
     repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target runtime."),
-    runner: str | None = typer.Option(None, "--runner", help="Explicit runner override (task|just|make|pnpm|npm|bun)."),
-    command: str | None = typer.Option(None, "--command", help="Explicit command/target name for runner."),
-    ref: str | None = typer.Option(None, "--ref", help="Ref to resolve for this execution (branch/tag/sha)."),
+    runner: str | None = typer.Option(
+        None,
+        "--runner",
+        help="Explicit runner override (task|just|make|pnpm|npm|bun).",
+    ),
+    command: str | None = typer.Option(
+        None,
+        "--command",
+        help="Explicit command/target name for runner.",
+    ),
+    ref: str | None = typer.Option(
+        None,
+        "--ref",
+        help="Ref to resolve for this execution (branch/tag/sha).",
+    ),
     branch: str | None = typer.Option(None, "--branch", help="Alias for --ref."),
-    all_repos: bool = typer.Option(False, "--all-repos", help="Run command selection on all repos in target."),
-    execution_mode: str = typer.Option("serial", "--mode", help="Execution mode for --all-repos: serial|parallel."),
-    env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
-    no_interactive: bool = typer.Option(False, "--no-interactive", help="Fail if command selection would be interactive."),
+    all_repos: bool = typer.Option(
+        False,
+        "--all-repos",
+        help="Run command selection on all repos in target.",
+    ),
+    execution_mode: str = typer.Option(
+        "serial",
+        "--mode",
+        help="Execution mode for --all-repos: serial|parallel.",
+    ),
+    env_profile: str | None = typer.Option(
+        None,
+        "--env-profile",
+        help="Optional env profile name.",
+    ),
+    no_interactive: bool = typer.Option(
+        False,
+        "--no-interactive",
+        help="Fail if command selection would be interactive.",
+    ),
 ) -> None:
     if ref is not None and branch is not None:
         raise typer.BadParameter("--ref and --branch are mutually exclusive")
@@ -301,14 +169,22 @@ def env_profile_show_cmd(
     name: str = typer.Argument(..., help="Target name."),
     profile: str | None = typer.Option(None, "--profile", help="Optional profile name."),
 ) -> None:
-    payload = {"target": name, "profile": profile or "active", "env": get_env_profile(name, profile=profile)}
+    payload = {
+        "target": name,
+        "profile": profile or "active",
+        "env": get_env_profile(name, profile=profile),
+    }
     console.print_json(json.dumps(payload).decode())
 
 
 @app.command("sync", help="Verify and repair dual .phench mirror drift.")
 def sync_cmd(
     name: str = typer.Argument(..., help="Target name."),
-    prefer: str | None = typer.Option(None, "--prefer", help="Drift resolution source: projects|home."),
+    prefer: str | None = typer.Option(
+        None,
+        "--prefer",
+        help="Drift resolution source: projects|home.",
+    ),
 ) -> None:
     result = sync_target(name, prefer=prefer)
     console.print_json(json.dumps(result).decode())
@@ -317,7 +193,11 @@ def sync_cmd(
 @snapshot_app.command("create", help="Create a snapshot for a target.")
 def snapshot_create_cmd(
     target: str = typer.Argument(..., help="Target name."),
-    snapshot_id: str | None = typer.Option(None, "--snapshot-id", help="Optional snapshot identifier."),
+    snapshot_id: str | None = typer.Option(
+        None,
+        "--snapshot-id",
+        help="Optional snapshot identifier.",
+    ),
 ) -> None:
     result = create_target_snapshot(target, snapshot_id=snapshot_id)
     console.print_json(json.dumps(result).decode())
@@ -336,18 +216,6 @@ def snapshot_show_cmd(
 ) -> None:
     payload = show_target_snapshot(target, snapshot_id)
     console.print_json(json.dumps(payload).decode())
-
-
-@app.command("status", help="Show lock/runtime/env status for a target.")
-def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = target_status(name)
-    console.print_json(json.dumps(state).decode())
-
-
-@app.command("audit-shared", help="Audit shared Python modules across repos in a target lock.")
-def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = audit_shared_modules(name)
-    console.print_json(json.dumps(state).decode())
 
 
 @repos_app.command("discover", help="Discover git checkouts in sibling workspace roots.")
@@ -373,183 +241,21 @@ def repos_discover_cmd(
     console.print_json(json.dumps(payload).decode())
 
 
-def _ensure_target_name(target: str | None, *, non_interactive: bool) -> str:
-    targets = list_targets()
-    if not targets:
-        raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
+register_projects_run(
+    projects_app,
+    list_targets_fn=lambda: list_targets(),
+    load_target_lock_fn=lambda target_name: load_target_lock(target_name),
+    target_timeline_fn=lambda name, **kwargs: target_timeline(name, **kwargs),
+    lock_target_fn=lambda target_name: lock_target(target_name),
+    materialize_target_fn=lambda target_name: materialize_target(target_name),
+    run_target_fn=lambda name, **kwargs: run_target(name, **kwargs),
+)
 
-    if target is not None:
-        if target not in targets:
-            raise typer.BadParameter(f"Unknown target: {target}")
-        return target
-
-    if non_interactive:
-        raise typer.BadParameter("--target is required when --no-interactive is set")
-
-    if len(targets) == 1:
-        return targets[0]
-
-    console.print("Select target:")
-    for idx, value in enumerate(targets, start=1):
-        console.print(f"{idx}. {value}")
-    target_index = IntPrompt.ask("Target number", default=1)
-    if target_index < 1 or target_index > len(targets):
-        raise typer.BadParameter("Target selection out of range.")
-    return targets[target_index - 1]
-
-
-def _ensure_repo_id(
-    selected_target: str,
-    lock_repos: list,
-    *,
-    repo_id: str | None,
-    all_repos: bool,
-    non_interactive: bool,
-) -> str | None:
-    if all_repos:
-        return None
-
-    repo_ids = [repo.repo_id for repo in lock_repos]
-    if not repo_ids:
-        raise typer.BadParameter(f"target {selected_target} has no repos")
-
-    if repo_id is not None:
-        if repo_id not in repo_ids:
-            raise typer.BadParameter(f"repo-id not found in target lock: {repo_id}")
-        return repo_id
-
-    if len(repo_ids) == 1:
-        return repo_ids[0]
-
-    if non_interactive:
-        raise typer.BadParameter("--repo-id is required when --all-repos is false in non-interactive mode")
-
-    console.print("Select repo:")
-    for idx, value in enumerate(repo_ids, start=1):
-        console.print(f"{idx}. {value}")
-    repo_index = IntPrompt.ask("Repository number", default=1)
-    if repo_index < 1 or repo_index > len(repo_ids):
-        raise typer.BadParameter("Repository selection out of range.")
-    return repo_ids[repo_index - 1]
-
-
-def _ensure_selected_ref(
-    selected_target: str,
-    selected_repo_id: str,
-    *,
-    ref: str | None,
-    branch: str | None,
-    no_interactive: bool,
-    timeline_limit: int = 20,
-) -> str | None:
-    if ref is not None:
-        return ref
-    if branch is not None:
-        return branch
-
-    if no_interactive:
-        return None
-
-    timeline = target_timeline(selected_target, repo_id=selected_repo_id, limit=timeline_limit)
-    options: list[tuple[str, str]] = [("HEAD", "HEAD")]
-    for branch_name in timeline.get("branches", []):
-        if branch_name:
-            options.append((branch_name, f"branch: {branch_name}"))
-    for tag_name in timeline.get("tags", []):
-        if tag_name:
-            options.append((tag_name, f"tag: {tag_name}"))
-    for line in timeline.get("recent", []):
-        if len(options) >= 18:
-            break
-        head = line.split(maxsplit=1)[0] if isinstance(line, str) else ""
-        if not head or head.startswith("("):
-            continue
-        options.append((head, f"recent commit: {line}"))
-
-    console.print("Select ref:")
-    for idx, (_, label) in enumerate(options, start=1):
-        console.print(f"{idx}. {label}")
-    selected_ref_index = IntPrompt.ask("Ref number", default=1)
-    if selected_ref_index < 1 or selected_ref_index > len(options):
-        raise typer.BadParameter("Ref selection out of range.")
-    return options[selected_ref_index - 1][0]
-
-
-@app.command("tui", help="Interactive selector: target -> timeline -> run.")
-def tui_cmd() -> None:
-    targets = list_targets()
-    if not targets:
-        raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
-
-    console.print("Select target:")
-    for idx, target in enumerate(targets, start=1):
-        console.print(f"{idx}. {target}")
-    target_index = IntPrompt.ask("Target number", default=1)
-    if target_index < 1 or target_index > len(targets):
-        raise typer.BadParameter("Target selection out of range.")
-    selected_target = targets[target_index - 1]
-
-    timeline = target_timeline(selected_target, limit=20)
-    console.print(f"Timeline for [bold]{selected_target}[/bold] ({timeline['repo_id']}):")
-    for line in timeline.get("recent", []):
-        console.print(f"  {line}")
-
-    code = run_target(selected_target)
-    raise typer.Exit(code)
-
-
-@projects_app.command("run", help="Run through guided target/repo/ref selection.")
-def projects_run_cmd(
-    target: str | None = typer.Option(None, "--target", help="Target name to run."),
-    repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
-    runner: str | None = typer.Option(None, "--runner", help="Explicit runner override (task|just|make|pnpm|npm|bun)."),
-    command: str | None = typer.Option(None, "--command", help="Explicit command/target name for runner."),
-    ref: str | None = typer.Option(None, "--ref", help="Ref to resolve for this execution (branch/tag/sha)."),
-    branch: str | None = typer.Option(None, "--branch", help="Alias for --ref."),
-    all_repos: bool = typer.Option(False, "--all-repos", help="Run command selection on all repos in target."),
-    execution_mode: str = typer.Option("serial", "--mode", help="Execution mode for --all-repos: serial|parallel."),
-    env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
-    no_interactive: bool = typer.Option(False, "--no-interactive", help="Fail if command selection would be interactive."),
-    no_prepare: bool = typer.Option(False, "--no-prepare", help="Skip lock+materialize before run."),
-    timeline_limit: int = typer.Option(20, "--timeline-limit", help="Number of refs to show for interactive timeline selection."),
-) -> None:
-    if ref is not None and branch is not None:
-        raise typer.BadParameter("--ref and --branch are mutually exclusive")
-
-    selected_target = _ensure_target_name(target, non_interactive=no_interactive)
-    lock = load_target_lock(selected_target)
-    selected_repo_id = _ensure_repo_id(
-        selected_target,
-        lock.repos,
-        repo_id=repo_id,
-        all_repos=all_repos,
-        non_interactive=no_interactive,
-    )
-
-    selected_ref = None
-    if selected_repo_id is not None:
-        selected_ref = _ensure_selected_ref(
-            selected_target,
-            selected_repo_id,
-            ref=ref,
-            branch=branch,
-            no_interactive=no_interactive,
-            timeline_limit=timeline_limit,
-        )
-
-    if not no_prepare:
-        lock_target(selected_target)
-        materialize_target(selected_target)
-
-    exit_code = run_target(
-        selected_target,
-        repo_id=selected_repo_id,
-        runner=runner,
-        command_name=command,
-        selected_ref=selected_ref,
-        all_repos=all_repos,
-        execution_mode=execution_mode,
-        env_profile=env_profile,
-        non_interactive=no_interactive,
-    )
-    raise typer.Exit(exit_code)
+register_observability_commands(
+    app,
+    list_targets_fn=lambda: list_targets(),
+    target_timeline_fn=lambda name, **kwargs: target_timeline(name, **kwargs),
+    target_status_fn=lambda name: target_status(name),
+    run_target_fn=lambda name, **kwargs: run_target(name, **kwargs),
+    audit_shared_modules_fn=lambda name: audit_shared_modules(name),
+)
