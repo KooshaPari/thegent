@@ -23,6 +23,7 @@ from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, Tar
 from .paths import (
     mirror_target_state_root,
     projects_root,
+    projects_modules_root,
     module_manifest_path,
     target_repos_root,
     target_root,
@@ -507,6 +508,18 @@ def list_targets(family: str | None = None) -> list[str]:
             targets.extend(_list_targets_in_root(entry, family_prefix=entry.name))
     unique: list[str] = sorted(set(targets), key=lambda value: ("/" in value, value))
     return unique
+
+
+def list_modules() -> list[str]:
+    root = projects_modules_root()
+    if not root.exists():
+        return []
+
+    return sorted(
+        entry.name
+        for entry in root.iterdir()
+        if entry.is_dir() and (entry / "manifest.json").is_file()
+    )
 
 
 def _list_targets_in_root(root: Path, family_prefix: str | None) -> list[str]:
