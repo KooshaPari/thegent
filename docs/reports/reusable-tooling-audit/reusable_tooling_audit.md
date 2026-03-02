@@ -7,24 +7,23 @@
 
 | Hash | Basename | Repo count | Example paths |
 |---|---|---:|---|
-| bf2bcb0094... | security-guard-hook-audit.yml | 46 | AgilePlus:.github/workflows/security-guard-hook-audit.yml<br/>agent-devops-setups:.github/workflows/security-guard-hook-audit.yml<br/>agentapi-plusplus:.github/workflows/security-guard-hook-audit.yml |
-| 557907df33... | security-guard.yml | 37 | AgilePlus:.github/workflows/security-guard.yml<br/>agentapi-plusplus:.github/workflows/security-guard.yml<br/>bifrost-extensions:.github/workflows/security-guard.yml |
+| bf2bcb0094... | security-guard-hook-audit.yml | 45 | AgilePlus:.github/workflows/security-guard-hook-audit.yml<br/>agent-devops-setups:.github/workflows/security-guard-hook-audit.yml<br/>agentapi-plusplus:.github/workflows/security-guard-hook-audit.yml |
+| 557907df33... | security-guard.yml | 36 | AgilePlus:.github/workflows/security-guard.yml<br/>agentapi-plusplus:.github/workflows/security-guard.yml<br/>bifrost-extensions:.github/workflows/security-guard.yml |
 | f76986372a... | security-guard.sh | 31 | AgilePlus:.github/scripts/security-guard.sh<br/>agentapi-plusplus:.github/scripts/security-guard.sh<br/>bifrost-extensions:.github/scripts/security-guard.sh |
 | acee3a23c7... | alert-sync-issues.yml | 18 | AgilePlus:.github/workflows/alert-sync-issues.yml<br/>agentapi-plusplus:.github/workflows/alert-sync-issues.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/alert-sync-issues.yml |
 | eb63a684d5... | Taskfile.yml | 16 | template-domain-service-api:Taskfile.yml<br/>template-domain-service-api:taskfile.yml<br/>template-domain-webapp:Taskfile.yml |
 | fb16590ac4... | branch-protection-audit.yml | 13 | template-commons:.github/workflows/branch-protection-audit.yml<br/>template-domain-service-api:.github/workflows/branch-protection-audit.yml<br/>template-domain-webapp:.github/workflows/branch-protection-audit.yml |
 | c482f77b66... | policy-gate.yml | 12 | template-domain-service-api:.github/workflows/policy-gate.yml<br/>template-domain-webapp:.github/workflows/policy-gate.yml<br/>template-lang-elixir-hex:.github/workflows/policy-gate.yml |
+| c1dc967589... | coderabbit-rate-limit-retry.yml | 8 | agentapi-plusplus:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-governance:.github/workflows/coderabbit-rate-limit-retry.yml |
 | 060212a71c... | security-guard.sh | 8 | agentapi-plusplus-composite-actions:.github/scripts/security-guard.sh<br/>agentapi-plusplus-governance:.github/scripts/security-guard.sh<br/>cliproxyapi++-composite-actions:.github/scripts/security-guard.sh |
 | 790700acab... | security-guard.yml | 8 | agentapi-plusplus-composite-actions:.github/workflows/security-guard.yml<br/>agentapi-plusplus-governance:.github/workflows/security-guard.yml<br/>cliproxyapi++-composite-actions:.github/workflows/security-guard.yml |
 | 8eec5ff4a5... | Taskfile.yml | 8 | template-commons:Taskfile.yml<br/>template-commons:taskfile.yml<br/>template-lang-go:Taskfile.yml |
 | 095186e882... | ci.yml | 8 | template-domain-service-api:.github/workflows/ci.yml<br/>template-domain-webapp:.github/workflows/ci.yml<br/>template-lang-elixir-hex:.github/workflows/ci.yml |
-| c1dc967589... | coderabbit-rate-limit-retry.yml | 7 | agentapi-plusplus:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/coderabbit-rate-limit-retry.yml<br/>agentapi-plusplus-governance:.github/workflows/coderabbit-rate-limit-retry.yml |
 | 7565ddd135... | policy-gate.yml | 7 | agentapi-plusplus:.github/workflows/policy-gate.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/policy-gate.yml<br/>bifrost-extensions:.github/workflows/policy-gate.yml |
 | b86d3dd4ac... | Taskfile.yml | 6 | agentapi-plusplus:Taskfile.yml<br/>agentapi-plusplus:taskfile.yml<br/>agentapi-plusplus-composite-actions:Taskfile.yml |
 | 191c6cc604... | required-check-names-guard.yml | 6 | cliproxyapi++:.github/workflows/required-check-names-guard.yml<br/>cliproxyapi++-composite-actions:.github/workflows/required-check-names-guard.yml<br/>cliproxyapi-plusplus:.github/workflows/required-check-names-guard.yml |
-| 01b49cdd91... | Taskfile.yml | 6 | heliosApp:Taskfile.yml<br/>heliosApp:taskfile.yml<br/>heliosApp-composite-actions:Taskfile.yml |
-| 29281537ac... | Taskfile.yml | 6 | portage:Taskfile.yml<br/>portage:taskfile.yml<br/>portage-composite-actions:Taskfile.yml |
-| a62c7ffc16... | Taskfile.yml | 4 | cliproxyapi++:Taskfile.yml<br/>cliproxyapi++:taskfile.yml<br/>cliproxyapi++-composite-actions:Taskfile.yml |
+| 27dfd14d1b... | devops-checker.sh | 6 | cliproxyapi++:scripts/devops-checker.sh<br/>cliproxyapi-plusplus:scripts/devops-checker.sh<br/>heliosApp:scripts/devops-checker.sh |
+| 85e7287a4e... | push-cliproxyapi-plusplus-with-fallback.sh | 6 | cliproxyapi++:scripts/push-cliproxyapi-plusplus-with-fallback.sh<br/>cliproxyapi-plusplus:scripts/push-cliproxyapi-plusplus-with-fallback.sh<br/>heliosApp:scripts/push-heliosapp-with-fallback.sh |
 | fd0180e972... | install-musl-build-tools.sh | 4 | helios-cli:.github/scripts/install-musl-build-tools.sh<br/>heliosCLI:.github/scripts/install-musl-build-tools.sh<br/>heliosCLI-composite-actions:.github/scripts/install-musl-build-tools.sh |
 | 05eeaf79fe... | Dockerfile.bazel | 4 | helios-cli:.github/workflows/Dockerfile.bazel<br/>heliosCLI:.github/workflows/Dockerfile.bazel<br/>heliosCLI-composite-actions:.github/workflows/Dockerfile.bazel |
 | 59ffb3d609... | cargo-deny.yml | 4 | helios-cli:.github/workflows/cargo-deny.yml<br/>heliosCLI:.github/workflows/cargo-deny.yml<br/>heliosCLI-composite-actions:.github/workflows/cargo-deny.yml |
@@ -42,9 +41,10 @@
 | 9a3f3949e1... | check-module-bazel-lock.sh | 4 | helios-cli:scripts/check-module-bazel-lock.sh<br/>heliosCLI:scripts/check-module-bazel-lock.sh<br/>heliosCLI-composite-actions:scripts/check-module-bazel-lock.sh |
 | c28540e272... | mock_responses_websocket_server.py | 4 | helios-cli:scripts/mock_responses_websocket_server.py<br/>heliosCLI:scripts/mock_responses_websocket_server.py<br/>heliosCLI-composite-actions:scripts/mock_responses_websocket_server.py |
 | 5c866752be... | readme_toc.py | 4 | helios-cli:scripts/readme_toc.py<br/>heliosCLI:scripts/readme_toc.py<br/>heliosCLI-composite-actions:scripts/readme_toc.py |
+| 01b49cdd91... | Taskfile.yml | 4 | heliosApp-composite-actions:Taskfile.yml<br/>heliosApp-composite-actions:taskfile.yml<br/>heliosApp-governance:Taskfile.yml |
+| 29281537ac... | Taskfile.yml | 4 | portage-composite-actions:Taskfile.yml<br/>portage-composite-actions:taskfile.yml<br/>portage-governance:Taskfile.yml |
 | 0dd91dfd1f... | ci.yml | 4 | template-commons:.github/workflows/ci.yml<br/>template-lang-go:.github/workflows/ci.yml<br/>template-lang-python:.github/workflows/ci.yml |
 | ac232fb6a4... | scaffold-smoke.sh | 4 | template-commons:scripts/scaffold-smoke.sh<br/>template-lang-go:scripts/scaffold-smoke.sh<br/>template-lang-python:scripts/scaffold-smoke.sh |
-| cd47023536... | Taskfile.yml | 4 | thegent:Taskfile.yml<br/>thegent:taskfile.yml<br/>thegent-composite-actions:Taskfile.yml |
 | 7f42427b6a... | docs-site.yml | 3 | agentapi-plusplus:.github/workflows/docs-site.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/docs-site.yml<br/>agentapi-plusplus-governance:.github/workflows/docs-site.yml |
 | 7c1ff76b6e... | generate-sdks.yaml | 3 | agentapi-plusplus:.github/workflows/generate-sdks.yaml<br/>agentapi-plusplus-composite-actions:.github/workflows/generate-sdks.yaml<br/>agentapi-plusplus-governance:.github/workflows/generate-sdks.yaml |
 | 68a9a0147d... | go-test.yml | 3 | agentapi-plusplus:.github/workflows/go-test.yml<br/>agentapi-plusplus-composite-actions:.github/workflows/go-test.yml<br/>agentapi-plusplus-governance:.github/workflows/go-test.yml |
@@ -115,8 +115,10 @@
 | 401a179b18... | pr-path-guard.yml | 2 | cliproxyapi++:.github/workflows/pr-path-guard.yml<br/>cliproxyapi++-composite-actions:.github/workflows/pr-path-guard.yml |
 | 629c9d1e51... | pr-test-build.yml | 2 | cliproxyapi++:.github/workflows/pr-test-build.yml<br/>cliproxyapi++-composite-actions:.github/workflows/pr-test-build.yml |
 | 5ced9f76a5... | release.yaml | 2 | cliproxyapi++:.github/workflows/release.yaml<br/>cliproxyapi++-composite-actions:.github/workflows/release.yaml |
+| f9a8a71bae... | Taskfile.yml | 2 | cliproxyapi++:Taskfile.yml<br/>cliproxyapi++:taskfile.yml |
 | 7a91dc9028... | validate_proxy_auth_access_module.sh | 2 | cliproxyapi++:scripts/validate_proxy_auth_access_module.sh<br/>cliproxyapi++-composite-actions:scripts/validate_proxy_auth_access_module.sh |
-| 2d8beb95dc... | Taskfile.yml | 2 | cliproxyapi-plusplus:Taskfile.yml<br/>cliproxyapi-plusplus:taskfile.yml |
+| a62c7ffc16... | Taskfile.yml | 2 | cliproxyapi++-composite-actions:Taskfile.yml<br/>cliproxyapi++-composite-actions:taskfile.yml |
+| 5984f51ca0... | Taskfile.yml | 2 | cliproxyapi-plusplus:Taskfile.yml<br/>cliproxyapi-plusplus:taskfile.yml |
 | 7cbc7479ce... | versions.env | 2 | colab:.github/workflows/versions.env<br/>heliosApp-colab:.github/workflows/versions.env |
 | 2db92fc1aa... | Taskfile.yml | 2 | colab:Taskfile.yml<br/>colab:taskfile.yml |
 | e237669359... | bazel.yml | 2 | helios-cli:.github/workflows/bazel.yml<br/>heliosCLI-upstream:.github/workflows/bazel.yml |
@@ -127,6 +129,7 @@
 | 6a6199942e... | rust-release.yml | 2 | helios-cli:.github/workflows/rust-release.yml<br/>heliosCLI-composite-actions:.github/workflows/rust-release.yml |
 | 8a0af2b27b... | debug-codex.sh | 2 | helios-cli:scripts/debug-codex.sh<br/>heliosCLI-upstream:scripts/debug-codex.sh |
 | 6dde9d775c... | stage_npm_packages.py | 2 | helios-cli:scripts/stage_npm_packages.py<br/>heliosCLI-upstream:scripts/stage_npm_packages.py |
+| 7d4f70b7d4... | Taskfile.yml | 2 | heliosApp:Taskfile.yml<br/>heliosApp:taskfile.yml |
 | cd9cc67289... | agent-dir-guard.yml | 2 | heliosApp-composite-actions:.github/workflows/agent-dir-guard.yml<br/>heliosApp-governance:.github/workflows/agent-dir-guard.yml |
 | 0a50f7577e... | ci.yml | 2 | heliosCLI:.github/workflows/ci.yml<br/>heliosCLI-composite-actions:.github/workflows/ci.yml |
 | 8305587573... | issue-deduplicator.yml | 2 | heliosCLI:.github/workflows/issue-deduplicator.yml<br/>heliosCLI-composite-actions:.github/workflows/issue-deduplicator.yml |
@@ -143,6 +146,7 @@
 | c41a974434... | stage_npm_packages.py | 2 | heliosCLI:scripts/stage_npm_packages.py<br/>heliosCLI-composite-actions:scripts/stage_npm_packages.py |
 | 96e753eef1... | task_surface.sh | 2 | heliosCLI:scripts/task_surface.sh<br/>heliosCLI-composite-actions:scripts/task_surface.sh |
 | 0d29ad7e4a... | tooling-dispatch.sh | 2 | heliosCLI:scripts/tooling-dispatch.sh<br/>heliosCLI-composite-actions:scripts/tooling-dispatch.sh |
+| c1de24fd1f... | Taskfile.yml | 2 | portage:Taskfile.yml<br/>portage:taskfile.yml |
 | 51aa62afe9... | Taskfile.yml | 2 | template-program-ops:Taskfile.yml<br/>template-program-ops:taskfile.yml |
 | d9971c3d5b... | benchmark.yml | 2 | thegent:.github/workflows/benchmark.yml<br/>thegent-composite-actions:.github/workflows/benchmark.yml |
 | c08244c0fd... | build.yml | 2 | thegent:.github/workflows/build.yml<br/>thegent-composite-actions:.github/workflows/build.yml |
@@ -153,6 +157,7 @@
 | 330e4cc816... | release.yml | 2 | thegent:.github/workflows/release.yml<br/>thegent-composite-actions:.github/workflows/release.yml |
 | 16d3891513... | subpackages.yml | 2 | thegent:.github/workflows/subpackages.yml<br/>thegent-composite-actions:.github/workflows/subpackages.yml |
 | bf623be98f... | test.yml | 2 | thegent:.github/workflows/test.yml<br/>thegent-composite-actions:.github/workflows/test.yml |
+| c16e07d65f... | Taskfile.yml | 2 | thegent:Taskfile.yml<br/>thegent:taskfile.yml |
 | 84e3846ba1... | agent-generate-demos.py | 2 | thegent:scripts/agent-generate-demos.py<br/>thegent-composite-actions:scripts/agent-generate-demos.py |
 | c1d9da5423... | agent-process-introspect.py | 2 | thegent:scripts/agent-process-introspect.py<br/>thegent-composite-actions:scripts/agent-process-introspect.py |
 | 7fb5a06729... | agent_helpers.py | 2 | thegent:scripts/agent_helpers.py<br/>thegent-composite-actions:scripts/agent_helpers.py |
@@ -202,18 +207,13 @@
 | f0f20816f2... | check_rust_links_conflicts.py | 2 | thegent:scripts/check_rust_links_conflicts.py<br/>thegent-composite-actions:scripts/check_rust_links_conflicts.py |
 | 442fd24891... | check_rust_pyo3_version_drift.py | 2 | thegent:scripts/check_rust_pyo3_version_drift.py<br/>thegent-composite-actions:scripts/check_rust_pyo3_version_drift.py |
 | 04e3f2be13... | check_slo_gate.py | 2 | thegent:scripts/check_slo_gate.py<br/>thegent-composite-actions:scripts/check_slo_gate.py |
-| f5dd579eb8... | check_thegent_core_boundary.py | 2 | thegent:scripts/check_thegent_core_boundary.py<br/>thegent-composite-actions:scripts/check_thegent_core_boundary.py |
-| 8359dea71e... | check_wl122_max_lines_canonical_path.py | 2 | thegent:scripts/check_wl122_max_lines_canonical_path.py<br/>thegent-composite-actions:scripts/check_wl122_max_lines_canonical_path.py |
-| 89b0091c06... | check_zig_abi_artifact.py | 2 | thegent:scripts/check_zig_abi_artifact.py<br/>thegent-composite-actions:scripts/check_zig_abi_artifact.py |
-| a68d778854... | ci_local_gha.sh | 2 | thegent:scripts/ci_local_gha.sh<br/>thegent-composite-actions:scripts/ci_local_gha.sh |
-| b511b556ca... | ci_uv_sync.sh | 2 | thegent:scripts/ci_uv_sync.sh<br/>thegent-composite-actions:scripts/ci_uv_sync.sh |
 
 ## Highest-confidence reusable file paths (same path exists in >=3 repos)
 
 | Path | Repo count |
 |---|---:|
-| .github/workflows/security-guard-hook-audit.yml | 46 |
-| .github/workflows/security-guard.yml | 46 |
+| .github/workflows/security-guard-hook-audit.yml | 45 |
+| .github/workflows/security-guard.yml | 45 |
 | .github/scripts/security-guard.sh | 41 |
 | .github/workflows/policy-gate.yml | 35 |
 | Taskfile.yml | 29 |
@@ -227,6 +227,7 @@
 | .github/workflows/generate-sdks.yaml | 6 |
 | .github/workflows/docs.yml | 6 |
 | .github/workflows/required-check-names-guard.yml | 6 |
+| scripts/devops-checker.sh | 6 |
 | .github/workflows/release.yml | 5 |
 | .github/workflows/codeql.yml | 5 |
 | scripts/provider-smoke-matrix-cheapest.sh | 5 |
@@ -249,6 +250,9 @@
 | .github/workflows/shell-tool-mcp-ci.yml | 4 |
 | .github/workflows/shell-tool-mcp.yml | 4 |
 | .github/workflows/zstd | 4 |
+| scripts/__pycache__/asciicheck.cpython-312.pyc | 4 |
+| scripts/__pycache__/mock_responses_websocket_server.cpython-312.pyc | 4 |
+| scripts/__pycache__/readme_toc.cpython-312.pyc | 4 |
 | scripts/asciicheck.py | 4 |
 | scripts/check-module-bazel-lock.sh | 4 |
 | scripts/debug-codex.sh | 4 |
@@ -332,9 +336,11 @@
 
 | Path | Repo count | Hash variants | Why |
 |---|---:|---:|---|
-| .github/workflows/security-guard-hook-audit.yml | 46 | 1 | identical file body in all observed repos |
+| .github/workflows/security-guard-hook-audit.yml | 45 | 1 | identical file body in all observed repos |
 | .github/workflows/alert-sync-issues.yml | 18 | 1 | identical file body in all observed repos |
 | .github/workflows/branch-protection-audit.yml | 13 | 1 | identical file body in all observed repos |
+| .github/workflows/coderabbit-rate-limit-retry.yml | 8 | 1 | identical file body in all observed repos |
+| scripts/devops-checker.sh | 6 | 1 | identical file body in all observed repos |
 | .github/workflows/required-check-names-guard.yml | 6 | 1 | identical file body in all observed repos |
 | scripts/readme_toc.py | 4 | 1 | identical file body in all observed repos |
 | scripts/mock_responses_websocket_server.py | 4 | 1 | identical file body in all observed repos |
@@ -350,15 +356,12 @@
 | .github/workflows/close-stale-contributor-prs.yml | 4 | 1 | identical file body in all observed repos |
 | .github/workflows/cla.yml | 4 | 1 | identical file body in all observed repos |
 | .github/workflows/ci.bazelrc | 4 | 1 | identical file body in all observed repos |
-| .github/workflows/cargo-deny.yml | 4 | 1 | identical file body in all observed repos |
-| .github/workflows/Dockerfile.bazel | 4 | 1 | identical file body in all observed repos |
 
 ## Near-term expansion (phase 2)
 
 | Path | Repo count | Hash variants | Why |
 |---|---:|---:|---|
-| .github/workflows/security-guard.yml | 46 | 3 | high reuse with minor forks; standardize next |
-| .github/workflows/coderabbit-rate-limit-retry.yml | 8 | 2 | high reuse with minor forks; standardize next |
+| .github/workflows/security-guard.yml | 45 | 3 | high reuse with minor forks; standardize next |
 | .github/workflows/generate-sdks.yaml | 6 | 2 | high reuse with minor forks; standardize next |
 | scripts/provider-smoke-matrix-cheapest.sh | 5 | 2 | high reuse with minor forks; standardize next |
 | .github/workflows/release.yml | 5 | 2 | high reuse with minor forks; standardize next |
