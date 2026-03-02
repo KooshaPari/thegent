@@ -155,6 +155,19 @@ def test_list_targets_discovers_initialized_targets(tmp_path: Path, monkeypatch)
     assert list_targets() == ["one", "two"]
 
 
+def test_list_targets_supports_family_filtering(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("one", mode="repo")
+    init_target("two", mode="repo", family="acme")
+
+    assert list_targets() == ["one", "acme/two"]
+    assert list_targets(family="acme") == ["two"]
+
+
 def test_invalid_target_name_rejected(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(tmp_path / "Phenotype"))
     monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(tmp_path / "home-phench"))
@@ -180,7 +193,7 @@ def test_run_target_all_repos_serial_and_parallel(tmp_path: Path, monkeypatch) -
     materialize_target("stacky")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     monkeypatch.setattr(
@@ -237,7 +250,7 @@ def test_run_target_all_repos_requires_explicit_runner_and_command(tmp_path: Pat
     materialize_target("stacky2")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     with pytest.raises(ValueError):
@@ -274,7 +287,7 @@ def test_run_target_ref_override_rematerializes_runtime_checkout(tmp_path: Path,
     materialize_target("runref")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     resolved_refs: list[str] = []
@@ -350,7 +363,7 @@ def test_run_target_non_interactive_requires_explicit_runner_and_command(tmp_pat
     materialize_target("runnon")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     with pytest.raises(ValueError, match="requires runner policy"):
@@ -388,7 +401,7 @@ def test_run_target_uses_repo_policy_runner_command_and_ref(tmp_path: Path, monk
 
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     observed_ref: list[str] = []
@@ -467,7 +480,7 @@ def test_run_target_all_repos_uses_policy_runner_when_allows_single_command_mode
 
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
     monkeypatch.setattr(
         "thegent.phench.service.build_runner_catalog",
@@ -510,7 +523,7 @@ def test_run_target_rejects_runner_flag_like_command_name(tmp_path: Path, monkey
     materialize_target("delta")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     with pytest.raises(ValueError):
@@ -557,7 +570,7 @@ def test_env_profile_applies_to_run(tmp_path: Path, monkeypatch) -> None:
     materialize_target("zeta")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     set_env_profile("zeta", "ci", {"FOO": "BAR"})
@@ -706,6 +719,38 @@ def test_create_target_snapshot_and_list_show_work_together(tmp_path: Path, monk
     assert payload["lock"]["lock_hash"] == lock.lock_hash
 
     assert second["filename"] == "snapshots/custom-id-2.json"
+
+
+def test_create_and_list_snapshots_are_family_scoped(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "source-repo"
+
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snapshot2", mode="repo", family="acme")
+    add_repo("snapshot2", family="acme", repo_path=str(source_repo), selected_ref="HEAD")
+    lock = lock_target("snapshot2", family="acme")
+
+    created = create_target_snapshot("snapshot2", family="acme", snapshot_id="family-id")
+    assert created["snapshot_id"] == "family-id"
+    assert created["target"] == "snapshot2"
+
+    snapshots = list_target_snapshots("snapshot2", family="acme")
+    assert len(snapshots) == 1
+    snapshot = snapshots[0]
+    assert snapshot["snapshot_id"] == "family-id"
+    assert snapshot["filename"] == "snapshots/family-id.json"
+    assert snapshot["target_name"] == "snapshot2"
+    assert snapshot["lock_hash"] == lock.lock_hash
+    assert list_target_snapshots("snapshot2") == []
+
+    payload = show_target_snapshot("snapshot2", "family-id", family="acme")
+    assert payload["snapshot_id"] == "family-id"
+    assert payload["lock"]["lock_hash"] == lock.lock_hash
 
 
 def test_bootstrap_target_uses_discovered_repos(tmp_path: Path, monkeypatch) -> None:

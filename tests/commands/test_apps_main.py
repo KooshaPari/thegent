@@ -517,10 +517,10 @@ def test_top_level_phench_target_init_routes_to_service(tmp_path: Path, monkeypa
 
     with patch("thegent.cli.apps.phench.init_target") as mock_init_target:
         mock_init_target.return_value = SimpleNamespace(target_name="alpha", mode="repo", lock_hash="abc123")
-        result = runner.invoke(app, ["phench", "target", "init", "alpha"])
+        result = runner.invoke(app, ["phench", "target", "init", "alpha", "--family", "acme"])
 
     assert result.exit_code == 0
-    mock_init_target.assert_called_once_with("alpha", mode="repo")
+    mock_init_target.assert_called_once_with("alpha", mode="repo", family="acme")
 
 
 def test_phench_target_bootstrap_routes_to_service() -> None:
@@ -560,6 +560,7 @@ def test_phench_target_bootstrap_routes_to_service() -> None:
         exclude=None,
         repo_ids=None,
         auto_lock=True,
+        family=None,
     )
 
 
@@ -604,6 +605,7 @@ def test_phench_target_import_repos_routes_to_service() -> None:
         exclude=["tmp*"],
         repo_ids=["repo-a", "repo-b"],
         auto_lock=True,
+        family=None,
     )
 
 
@@ -629,7 +631,7 @@ def test_phench_target_set_ref_routes_to_service() -> None:
         )
 
     assert result.exit_code == 0
-    mock_set_repo_ref.assert_called_once_with("alpha", repo_id="repo", selected_ref="main")
+    mock_set_repo_ref.assert_called_once_with("alpha", repo_id="repo", selected_ref="main", family=None)
 
 
 def test_phench_target_add_repo_routes_policy_fields_to_service() -> None:
@@ -675,13 +677,14 @@ def test_phench_target_add_repo_routes_policy_fields_to_service() -> None:
     assert result.exit_code == 0
     mock_add_repo.assert_called_once_with(
         "alpha",
-        "/tmp/repo",
-        "main",
+        repo_path="/tmp/repo",
+        selected_ref="main",
         repo_id="repo",
         worktree_path="/tmp/worktree",
         preferred_runner="task",
         preferred_command="hello",
         preferred_ref="feature",
+        family=None,
     )
 
 
@@ -724,7 +727,13 @@ def test_phench_timeline_branch_filter_dispatches_to_service() -> None:
         )
 
     assert result.exit_code == 0
-    mock_timeline.assert_called_once_with("alpha", repo_id=None, limit=5, branch="feature")
+    mock_timeline.assert_called_once_with(
+        "alpha",
+        repo_id=None,
+        limit=5,
+        branch="feature",
+        family=None,
+    )
 
 
 def test_phench_run_dispatches_ref_and_mode_to_service() -> None:
@@ -764,6 +773,7 @@ def test_phench_run_dispatches_ref_and_mode_to_service() -> None:
         execution_mode="parallel",
         env_profile="ci",
         non_interactive=True,
+        family=None,
     )
 
 
@@ -797,6 +807,7 @@ def test_phench_run_dispatches_branch_alias_and_no_interactive() -> None:
         execution_mode="serial",
         env_profile=None,
         non_interactive=True,
+        family=None,
     )
 
 
@@ -855,9 +866,9 @@ def test_phench_projects_run_non_interactive_dispatches_prepare_and_run() -> Non
         )
 
     assert result.exit_code == 0
-    mock_load_target_lock.assert_called_once_with("alpha")
-    mock_lock_target.assert_called_once_with("alpha")
-    mock_materialize_target.assert_called_once_with("alpha")
+    mock_load_target_lock.assert_called_once_with("alpha", family=None)
+    mock_lock_target.assert_called_once_with("alpha", family=None)
+    mock_materialize_target.assert_called_once_with("alpha", family=None)
     mock_run_target.assert_called_once_with(
         "alpha",
         repo_id=None,
@@ -868,6 +879,7 @@ def test_phench_projects_run_non_interactive_dispatches_prepare_and_run() -> Non
         execution_mode="parallel",
         env_profile=None,
         non_interactive=True,
+        family=None,
     )
 
 
@@ -912,9 +924,9 @@ def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
         )
 
     assert result.exit_code == 0
-    mock_load_target_lock.assert_called_once_with("alpha")
-    mock_lock_target.assert_called_once_with("alpha")
-    mock_materialize_target.assert_called_once_with("alpha")
+    mock_load_target_lock.assert_called_once_with("alpha", family=None)
+    mock_lock_target.assert_called_once_with("alpha", family=None)
+    mock_materialize_target.assert_called_once_with("alpha", family=None)
     assert mock_run_target.call_count == 2
     mock_run_target.assert_any_call(
         "alpha",
@@ -926,6 +938,7 @@ def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
         execution_mode="serial",
         env_profile="ci",
         non_interactive=True,
+        family=None,
     )
     mock_run_target.assert_any_call(
         "alpha",
@@ -937,6 +950,7 @@ def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
         execution_mode="serial",
         env_profile="ci",
         non_interactive=True,
+        family=None,
     )
 
 
@@ -1018,10 +1032,10 @@ def test_phench_projects_run_interactive_selection_uses_target_repo_and_ref_choi
 
     assert result.exit_code == 0
     mock_prompt.assert_called()
-    mock_load_target_lock.assert_called_once_with("beta")
-    mock_timeline.assert_called_once_with("beta", repo_id="repo-a", limit=5)
-    mock_lock_target.assert_called_once_with("beta")
-    mock_materialize_target.assert_called_once_with("beta")
+    mock_load_target_lock.assert_called_once_with("beta", family=None)
+    mock_timeline.assert_called_once_with("beta", repo_id="repo-a", limit=5, family=None)
+    mock_lock_target.assert_called_once_with("beta", family=None)
+    mock_materialize_target.assert_called_once_with("beta", family=None)
     mock_run_target.assert_called_once_with(
         "beta",
         repo_id="repo-a",
@@ -1032,6 +1046,7 @@ def test_phench_projects_run_interactive_selection_uses_target_repo_and_ref_choi
         execution_mode="serial",
         env_profile=None,
         non_interactive=False,
+        family=None,
     )
 
 
@@ -1075,7 +1090,7 @@ def test_phench_projects_status_routes_to_target_status() -> None:
         result = runner.invoke(app, ["phench", "projects", "status", "--target", "alpha"])
 
     assert result.exit_code == 0
-    mock_status.assert_called_once_with("alpha")
+    mock_status.assert_called_once_with("alpha", family=None)
     assert '"target": "alpha"' in result.stdout
 
 
@@ -1123,6 +1138,7 @@ def test_phench_tui_runs_selected_target_repo_and_ref() -> None:
         execution_mode="serial",
         env_profile=None,
         non_interactive=False,
+        family=None,
     )
 
 
@@ -1162,6 +1178,7 @@ def test_phench_tui_all_repos_no_interactive_allows_policy_defaults() -> None:
         execution_mode="serial",
         env_profile=None,
         non_interactive=True,
+        family=None,
     )
 
 
@@ -1181,7 +1198,7 @@ def test_phench_snapshot_create_routes_to_service() -> None:
         )
 
     assert result.exit_code == 0
-    mock_create_snapshot.assert_called_once_with("alpha", snapshot_id="snap-001")
+    mock_create_snapshot.assert_called_once_with("alpha", snapshot_id="snap-001", family=None)
 
 
 def test_phench_snapshot_list_routes_to_service() -> None:
@@ -1198,7 +1215,7 @@ def test_phench_snapshot_list_routes_to_service() -> None:
         )
 
     assert result.exit_code == 0
-    mock_list_snapshots.assert_called_once_with("alpha")
+    mock_list_snapshots.assert_called_once_with("alpha", family=None)
 
 
 def test_phench_snapshot_show_routes_to_service() -> None:
@@ -1216,7 +1233,7 @@ def test_phench_snapshot_show_routes_to_service() -> None:
         )
 
     assert result.exit_code == 0
-    mock_show_snapshot.assert_called_once_with("alpha", "snap-001")
+    mock_show_snapshot.assert_called_once_with("alpha", "snap-001", family=None)
 
 
 def test_global_setup_command_delegates_to_setup_cmd() -> None:
