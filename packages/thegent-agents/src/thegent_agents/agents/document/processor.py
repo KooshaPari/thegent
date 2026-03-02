@@ -156,8 +156,8 @@ def count_lines(filepath: Path) -> dict[str, Any]:
         with open(filepath, encoding="utf-8") as f:
             line_count = sum(1 for _ in f)
         return {"line_count": line_count}
-    except Exception:
-        return {"line_count": 0}
+    except Exception as e:
+        raise RuntimeError(f"Failed to count lines in {filepath}") from e
 
 
 def extract_frontmatter(filepath: Path) -> dict[str, Any]:
@@ -204,8 +204,8 @@ def extract_headings(filepath: Path) -> dict[str, Any]:
             "heading_count": len(headings),
             "max_heading_level": max(heading_levels) if heading_levels else 0,
         }
-    except Exception:
-        return {"headings": [], "heading_count": 0, "max_heading_level": 0}
+    except Exception as e:
+        raise RuntimeError(f"Failed to extract headings from {filepath}") from e
 
 
 def extract_links(filepath: Path) -> dict[str, Any]:
@@ -223,8 +223,8 @@ def extract_links(filepath: Path) -> dict[str, Any]:
             "urls": len(urls),
             "total_links": len(md_links) + len(urls),
         }
-    except Exception:
-        return {"markdown_links": 0, "urls": 0, "total_links": 0}
+    except Exception as e:
+        raise RuntimeError(f"Failed to extract links from {filepath}") from e
 
 
 def extract_code_blocks(filepath: Path) -> dict[str, Any]:
@@ -241,8 +241,8 @@ def extract_code_blocks(filepath: Path) -> dict[str, Any]:
             "languages": list(set(languages)),
             "language_count": len(set(languages)),
         }
-    except Exception:
-        return {"code_block_count": 0, "languages": [], "language_count": 0}
+    except Exception as e:
+        raise RuntimeError(f"Failed to extract code blocks from {filepath}") from e
 
 
 def calculate_readability(filepath: Path) -> dict[str, Any]:
@@ -263,11 +263,5 @@ def calculate_readability(filepath: Path) -> dict[str, Any]:
             "avg_words_per_sentence": round(avg_words_per_sentence, 2),
             "avg_sentences_per_paragraph": round(avg_sentences_per_paragraph, 2),
         }
-    except Exception:
-        return {
-            "word_count": 0,
-            "sentence_count": 0,
-            "paragraph_count": 0,
-            "avg_words_per_sentence": 0.0,
-            "avg_sentences_per_paragraph": 0.0,
-        }
+    except Exception as e:
+        raise RuntimeError(f"Failed to calculate readability for {filepath}") from e
