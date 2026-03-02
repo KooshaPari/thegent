@@ -19,7 +19,14 @@ from .git_ops import (
     sanitize_repo_id,
 )
 from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
-from .paths import mirror_target_state_root, projects_root, target_repos_root, target_root, phenotype_repos_root, target_state_root
+from .paths import (
+    mirror_target_state_root,
+    projects_root,
+    target_repos_root,
+    target_root,
+    phenotype_repos_root,
+    target_state_root,
+)
 from .runner import build_runner_catalog, pick_command_interactive, run_command
 from .store import dual_write, read_dual, sync_dual, utc_now_iso
 
@@ -39,6 +46,9 @@ def import_repos(
     target: str,
     source_root: Path | None = None,
     selected_ref: str = "HEAD",
+    preferred_runner: str | None = None,
+    preferred_command: str | None = None,
+    preferred_ref: str | None = None,
     include: list[str] | None = None,
     exclude: list[str] | None = None,
     repo_ids: list[str] | None = None,
@@ -62,7 +72,15 @@ def import_repos(
         selected = candidates
 
     for item in selected:
-        add_repo(target, repo_path=str(item.path), selected_ref=selected_ref, repo_id=item.repo_id)
+        add_repo(
+            target,
+            repo_path=str(item.path),
+            selected_ref=selected_ref,
+            repo_id=item.repo_id,
+            preferred_runner=preferred_runner,
+            preferred_command=preferred_command,
+            preferred_ref=preferred_ref,
+        )
 
     if auto_lock:
         return lock_target(target)
@@ -163,6 +181,9 @@ def bootstrap_target(
     mode: TargetMode,
     source_root: Path | None = None,
     selected_ref: str = "HEAD",
+    preferred_runner: str | None = None,
+    preferred_command: str | None = None,
+    preferred_ref: str | None = None,
     include: list[str] | None = None,
     exclude: list[str] | None = None,
     repo_ids: list[str] | None = None,
@@ -190,7 +211,15 @@ def bootstrap_target(
 
     lock = init_target(target, mode=mode)
     for item in selected:
-        add_repo(target, repo_path=str(item.path), selected_ref=selected_ref, repo_id=item.repo_id)
+        add_repo(
+            target,
+            repo_path=str(item.path),
+            selected_ref=selected_ref,
+            repo_id=item.repo_id,
+            preferred_runner=preferred_runner,
+            preferred_command=preferred_command,
+            preferred_ref=preferred_ref,
+        )
     if auto_lock:
         lock = lock_target(target)
     return lock
@@ -256,7 +285,16 @@ def load_target_lock(target: str) -> TargetLock:
     return _parse_lock(payload)
 
 
-def add_repo(target: str, repo_path: str, selected_ref: str, repo_id: str | None = None, worktree_path: str | None = None) -> TargetLock:
+def add_repo(
+    target: str,
+    repo_path: str,
+    selected_ref: str,
+    repo_id: str | None = None,
+    worktree_path: str | None = None,
+    preferred_runner: str | None = None,
+    preferred_command: str | None = None,
+    preferred_ref: str | None = None,
+) -> TargetLock:
     lock = load_target_lock(target)
     repo = Path(repo_path).expanduser().resolve()
     if not (repo / ".git").exists() and not (repo / ".git").is_file():
@@ -271,6 +309,9 @@ def add_repo(target: str, repo_path: str, selected_ref: str, repo_id: str | None
             selected_ref=selected_ref,
             source_worktree_path=worktree_path,
             resolved_sha=None,
+            preferred_runner=preferred_runner,
+            preferred_command=preferred_command,
+            preferred_ref=preferred_ref,
         )
     )
     lock.created_at_utc = utc_now_iso()
@@ -398,11 +439,7 @@ def audit_shared_modules(target: str) -> dict[str, Any]:
             owners = module_map.setdefault(child.name, [])
             owners.append(repo.repo_id)
 
-    shared = {
-        module: sorted(set(owners))
-        for module, owners in module_map.items()
-        if len(set(owners)) >= 2
-    }
+    shared = {module: sorted(set(owners)) for module, owners in module_map.items() if len(set(owners)) >= 2}
     return {
         "target": target,
         "shared_modules": shared,
@@ -483,8 +520,6 @@ def _run_single_repo_target(
 ) -> int:
     if command_name and not runner:
         raise ValueError("--command requires --runner")
-    if non_interactive and (runner is None or command_name is None):
-        raise ValueError("--no-interactive requires --runner and --command")
     if runner and command_name:
         return run_command(checkout_path, runner, command_name, env_overrides=env_overrides)
 
@@ -496,6 +531,42 @@ def _run_single_repo_target(
 
     selected = pick_command_interactive(catalog)
     return run_command(checkout_path, selected.runner, selected.name, env_overrides=env_overrides)
+
+
+def _resolve_repo_runner_and_command(
+    repo_id: str,
+    repo: RepoSelection,
+    catalog: RunnerCatalog,
+    cli_runner: str | None,
+    cli_command: str | None,
+    enforce_no_interactive: bool,
+) -> tuple[str | None, str | None]:
+    runner = cli_runner or repo.preferred_runner
+    command_name = cli_command or repo.preferred_command
+
+    if command_name and not runner:
+        raise ValueError(f"repo '{repo_id}' requires a runner for command '{command_name}'")
+
+    if not runner:
+        if enforce_no_interactive:
+            raise ValueError(
+                f"repo '{repo_id}' requires runner policy (--runner or preferred_runner) "
+                "for non-interactive/all-repos execution."
+            )
+        return None, command_name
+
+    if command_name:
+        return runner, command_name
+
+    available = [command for command in catalog.commands if command.runner == runner]
+    if not available:
+        raise ValueError(f"runner '{runner}' has no discovered commands in repo '{repo_id}'")
+    if enforce_no_interactive and len(available) > 1:
+        raise ValueError(
+            f"repo '{repo_id}' with runner '{runner}' requires explicit command "
+            "for non-interactive/all-repos execution."
+        )
+    return runner, available[0].name
 
 
 def _materialization_entry(item: dict[str, Any]) -> tuple[str, Path]:
@@ -542,10 +613,6 @@ def run_target(
 
     if execution_mode not in {"serial", "parallel"}:
         raise ValueError("execution_mode must be one of: serial, parallel")
-    if all_repos and (runner is None or command_name is None):
-        raise ValueError("--all-repos requires --runner and --command to avoid interactive contention")
-    if non_interactive and (runner is None or command_name is None):
-        raise ValueError("--no-interactive requires --runner and --command")
 
     runtime = read_dual(target, RUNTIME_FILE)
     materializations = runtime.get("repo_materializations")
@@ -557,24 +624,38 @@ def run_target(
     else:
         selected_items = _materialization_lookup(repo_id, materializations)
 
-    if selected_ref is not None:
-        lock = load_target_lock(target)
-        lock_index = {repo.repo_id: repo for repo in lock.repos}
-        for item in selected_items:
-            item_repo_id, item_checkout = _materialization_entry(item)
-            lock_repo = lock_index.get(item_repo_id)
-            if lock_repo is None:
-                raise ValueError(f"repo_id not in target lock: {item_repo_id}")
-            resolved = resolve_ref_to_sha(Path(lock_repo.repo_path), selected_ref)
+    lock = load_target_lock(target)
+    lock_index = {repo.repo_id: repo for repo in lock.repos}
+    enforce_no_interactive = non_interactive or all_repos
+
+    for item in selected_items:
+        item_repo_id, item_checkout = _materialization_entry(item)
+        lock_repo = lock_index.get(item_repo_id)
+        if lock_repo is None:
+            raise ValueError(f"repo_id not in target lock: {item_repo_id}")
+        repo_ref = selected_ref if selected_ref is not None else (lock_repo.preferred_ref or lock_repo.selected_ref)
+        if repo_ref is not None:
+            resolved = resolve_ref_to_sha(Path(lock_repo.repo_path), repo_ref)
             materialize_repo_checkout(Path(lock_repo.repo_path), item_checkout, resolved)
             item["resolved_sha"] = resolved
 
-    runs: list[tuple[Path, RunnerCatalog]] = []
+    runs: list[tuple[Path, RunnerCatalog, str | None, str | None]] = []
     env_overrides = get_env_profile(target, profile=env_profile)
     for item in selected_items:
         item_repo_id, item_checkout = _materialization_entry(item)
         catalog = build_runner_catalog(target, item_checkout)
-        runs.append((item_checkout, catalog))
+        lock_repo = lock_index.get(item_repo_id)
+        if lock_repo is None:
+            raise ValueError(f"repo_id not in target lock: {item_repo_id}")
+        repo_runner, repo_command = _resolve_repo_runner_and_command(
+            item_repo_id,
+            lock_repo,
+            catalog,
+            cli_runner=runner,
+            cli_command=command_name,
+            enforce_no_interactive=enforce_no_interactive,
+        )
+        runs.append((item_checkout, catalog, repo_runner, repo_command))
 
     if execution_mode == "parallel" and len(runs) > 1:
         with ThreadPoolExecutor(max_workers=len(runs)) as pool:
@@ -583,23 +664,23 @@ def run_target(
                     _run_single_repo_target,
                     checkout,
                     catalog,
-                    runner,
-                    command_name,
+                    repo_runner,
+                    repo_command,
                     non_interactive,
                     env_overrides,
                 )
-                for checkout, catalog in runs
+                for checkout, catalog, repo_runner, repo_command in runs
             ]
             results = [future.result() for future in futures]
         nonzero = [code for code in results if code != 0]
         return nonzero[0] if nonzero else 0
 
-    for checkout, catalog in runs:
+    for checkout, catalog, repo_runner, repo_command in runs:
         code = _run_single_repo_target(
             checkout,
             catalog,
-            runner,
-            command_name,
+            repo_runner,
+            repo_command,
             non_interactive,
             env_overrides,
         )

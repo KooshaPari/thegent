@@ -42,7 +42,9 @@ def _init_git_repo(path: Path) -> str:
     _run(["git", "init"], cwd=path)
     _run(["git", "config", "user.email", "test@example.com"], cwd=path)
     _run(["git", "config", "user.name", "Test User"], cwd=path)
-    (path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  hello:\n    cmds:\n      - echo hello\n", encoding="utf-8")
+    (path / "Taskfile.yml").write_text(
+        "version: '3'\ntasks:\n  hello:\n    cmds:\n      - echo hello\n", encoding="utf-8"
+    )
     (path / "README.md").write_text("hello\n", encoding="utf-8")
     _run(["git", "add", "."], cwd=path)
     _run(["git", "commit", "-m", "init"], cwd=path)
@@ -351,8 +353,147 @@ def test_run_target_non_interactive_requires_explicit_runner_and_command(tmp_pat
         lambda target: {"doctor_status": "pass", "missing_requirements": []},
     )
 
-    with pytest.raises(ValueError, match="--no-interactive"):
+    with pytest.raises(ValueError, match="requires runner policy"):
         run_target("runnon", non_interactive=True)
+
+
+def test_run_target_uses_repo_policy_runner_command_and_ref(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo-policy"
+    _init_git_repo(repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("policy", mode="repo")
+    add_repo(
+        "policy",
+        repo_path=str(repo),
+        selected_ref="HEAD",
+        repo_id="repo",
+        preferred_runner="task",
+        preferred_command="hello",
+        preferred_ref="feature",
+    )
+
+    _run(["git", "-C", str(repo), "checkout", "-b", "feature"], cwd=repo)
+    _run(["bash", "-lc", "printf '\\nfeature\\n' >> README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "add", "README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "commit", "-m", "feature"], cwd=repo)
+    _run(["git", "-C", str(repo), "checkout", "main"], cwd=repo)
+
+    lock_target("policy")
+    materialize_target("policy")
+
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    observed_ref: list[str] = []
+
+    def _fake_resolve_ref(repo_path: Path, ref: str) -> str:
+        observed_ref.append(ref)
+        proc = subprocess.run(
+            ["git", "-C", str(repo_path), "rev-parse", f"{ref}^{{commit}}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc.returncode == 0
+        return proc.stdout.strip()
+
+    monkeypatch.setattr("thegent.phench.service.resolve_ref_to_sha", _fake_resolve_ref)
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    calls: list[str] = []
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(f"{runner}:{command_name}")
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+
+    exit_code = run_target("policy")
+    assert exit_code == 0
+    assert observed_ref == ["feature"]
+    assert calls == ["task:hello"]
+
+
+def test_run_target_all_repos_uses_policy_runner_when_allows_single_command_mode(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = tmp_path / "repo-a"
+    repo_b = tmp_path / "repo-b"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("policy-stack", mode="stack")
+    add_repo(
+        "policy-stack",
+        repo_path=str(repo_a),
+        selected_ref="HEAD",
+        repo_id="a",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    add_repo(
+        "policy-stack",
+        repo_path=str(repo_b),
+        selected_ref="HEAD",
+        repo_id="b",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    lock_target("policy-stack")
+    materialize_target("policy-stack")
+
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+    )
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+    calls: list[str] = []
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(f"{checkout.name}:{runner}:{command_name}")
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+    exit_code = run_target("policy-stack", all_repos=True, execution_mode="serial")
+    assert exit_code == 0
+    assert sorted(calls) == ["a:task:hello", "b:task:hello"]
+
 
 def test_run_target_rejects_runner_flag_like_command_name(tmp_path: Path, monkeypatch) -> None:
     phenotype_root = tmp_path / "Phenotype"

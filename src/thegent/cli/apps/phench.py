@@ -101,13 +101,7 @@ register_target_commands(
     init_target_fn=lambda name, mode="repo": init_target(name, mode=mode),
     bootstrap_target_fn=lambda **kwargs: bootstrap_target(**kwargs),
     import_repos_fn=lambda **kwargs: import_repos(**kwargs),
-    add_repo_fn=lambda name, repo, ref, repo_id=None, worktree_path=None: add_repo(
-        name,
-        repo,
-        ref,
-        repo_id=repo_id,
-        worktree_path=worktree_path,
-    ),
+    add_repo_fn=lambda name, repo, ref, **kwargs: add_repo(name, repo, ref, **kwargs),
     set_repo_ref_fn=lambda name, repo_id, selected_ref: set_repo_ref(
         name,
         repo_id=repo_id,

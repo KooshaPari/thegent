@@ -14,6 +14,9 @@ class RepoSelection:
     selected_ref: str
     source_worktree_path: str | None = None
     resolved_sha: str | None = None
+    preferred_runner: str | None = None
+    preferred_command: str | None = None
+    preferred_ref: str | None = None
 
 
 @dataclass(slots=True)
