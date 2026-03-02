@@ -3,6 +3,7 @@ Enables agents to discover, wrap, and use new tools dynamically at runtime.
 Includes automatic interface adaptation for foreign tool protocols.
 """
 
+import asyncio
 import orjson as json
 import logging
 import shlex
@@ -125,7 +126,9 @@ class ToolAdapter:
         cmd = shlex.split(tool.command)
         for key in sorted(kwargs):
             cmd.extend([f"--{key.replace('_', '-')}", str(kwargs[key])])
-        process = shim_run(cmd, capture_output=True, text=True, check=False)
+        # Offload blocking subprocess call to a thread so the async event loop
+        # is not stalled while waiting for the CLI tool to complete.
+        process = await asyncio.to_thread(shim_run, cmd, capture_output=True, text=True, check=False)
         if process.returncode != 0:
             raise RuntimeError(process.stderr.strip() or f"Command failed with exit code {process.returncode}")
         return {
