@@ -1,10 +1,21 @@
-"""Agent registry."""
+"""Agent registry.
+
+Phase 2C DI migration
+---------------------
+The module-level functions (get_runner, get_fallback_agents, etc.) are
+retained for backward compatibility but are now also available as methods
+on the injectable ``AgentRegistry`` class.
+
+A module-level ``_registry`` singleton is provided via ``get_agent_registry()``
+so new code can depend on an injected AgentRegistry while old call sites
+continue to work without modification.
+"""
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from thegent_agents.codex_proxy import CodexProxyRunner
 from thegent_agents.cursor_api_runner import CursorApiRunner
@@ -139,6 +150,98 @@ def list_droid_names(droids_dir: Path) -> list[str]:
     if not d.exists():
         return []
     return [f.stem for f in d.glob("*.md")]
+
+
+class AgentRegistry:
+    """Injectable registry for agent runner resolution.
+
+    Encapsulates the formerly module-level ``get_runner`` / ``get_fallback_agents``
+    functions so callers can depend on an AgentRegistry instance that can be
+    swapped out in tests without touching global state.
+
+    Attributes:
+        direct_agents: Frozenset of agent names that use DirectAgentRunner.
+        proxy_agents: Frozenset of agent names that use CodexProxyRunner.
+        cursor_api_agents: Frozenset of agents that use CursorApiRunner.
+        aliases: Alias → canonical name mapping.
+        fallback_chain: Provider fallback chains.
+    """
+
+    def __init__(
+        self,
+        *,
+        direct_agents: frozenset[str] = _DIRECT_AGENTS,
+        proxy_agents: frozenset[str] = _PROXY_AGENTS,
+        cursor_api_agents: frozenset[str] = _CURSOR_API_AGENTS,
+        aliases: dict[str, str] | None = None,
+        fallback_chain: list[list[str]] | None = None,
+    ) -> None:
+        self.direct_agents = direct_agents
+        self.proxy_agents = proxy_agents
+        self.cursor_api_agents = cursor_api_agents
+        self.aliases: dict[str, str] = aliases if aliases is not None else dict(_AGENT_ALIASES)
+        self.fallback_chain: list[list[str]] = (
+            fallback_chain if fallback_chain is not None else list(_PROVIDER_FALLBACK_CHAIN)
+        )
+
+    def resolve_name(self, agent_name: str) -> str:
+        """Resolve alias to canonical CLI name."""
+        return self.aliases.get(agent_name, agent_name)
+
+    def get_runner(
+        self,
+        agent_name: str,
+    ) -> DirectAgentRunner | CodexProxyRunner | CursorApiRunner | Any | None:
+        """Get runner for agent.  Returns None for unknown agents."""
+        canonical = self.resolve_name(agent_name)
+        if canonical in self.direct_agents:
+            return DirectAgentRunner(canonical, default_model="")
+        if canonical in self.proxy_agents or canonical == "summarizer":
+            return CodexProxyRunner(canonical)
+        if canonical in self.cursor_api_agents:
+            return CursorApiRunner()
+
+        # Support teammates (lazy import to avoid circular deps)
+        from thegent_agents.teammate_runner import TeammateRunner  # type: ignore[import]
+
+        try:
+            return TeammateRunner(agent_name)
+        except ValueError as exc:
+            _logger.debug("No teammate found for '%s': %s", agent_name, exc)
+            return None
+        except Exception as exc:
+            raise RuntimeError(f"Failed to create teammate runner for '{agent_name}'") from exc
+
+    def get_fallback_agents(self, agent_name: str) -> list[str]:
+        """Return fallback agents when *agent_name*'s provider hits a usage limit."""
+        canonical = self.resolve_name(agent_name)
+        for chain in self.fallback_chain:
+            if chain and chain[0] == canonical:
+                return [a for a in chain[1:] if a != canonical]
+        return []
+
+    def list_agent_names(self) -> list[str]:
+        """Return all known agent names."""
+        return list(AGENT_NAMES)
+
+
+# ---------------------------------------------------------------------------
+# Module-level singleton — backward-compat shim
+# ---------------------------------------------------------------------------
+
+#: Module-level AgentRegistry instance.
+_registry: AgentRegistry = AgentRegistry()
+
+
+def get_agent_registry() -> AgentRegistry:
+    """Return the module-level AgentRegistry singleton."""
+    return _registry
+
+
+def set_agent_registry(registry: AgentRegistry) -> None:
+    """Replace the module-level AgentRegistry singleton (for testing)."""
+    global _registry
+    _registry = registry
 
 
 class LearningCandidate:
