@@ -478,10 +478,13 @@ def _run_single_repo_target(
     catalog: RunnerCatalog,
     runner: str | None,
     command_name: str | None,
+    non_interactive: bool = False,
     env_overrides: dict[str, str] | None = None,
 ) -> int:
     if command_name and not runner:
         raise ValueError("--command requires --runner")
+    if non_interactive and (runner is None or command_name is None):
+        raise ValueError("--no-interactive requires --runner and --command")
     if runner and command_name:
         return run_command(checkout_path, runner, command_name, env_overrides=env_overrides)
 
@@ -505,14 +508,32 @@ def _materialization_entry(item: dict[str, Any]) -> tuple[str, Path]:
     return repo_id, Path(checkout_path).resolve()
 
 
+def _materialization_lookup(
+    repo_id: str | None,
+    materializations: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    if not materializations:
+        raise ValueError("target has no runtime materialization; run target materialize")
+
+    if repo_id is not None:
+        selected = next((item for item in materializations if item.get("repo_id") == repo_id), None)
+        if selected is None:
+            raise ValueError(f"repo_id not materialized: {repo_id}")
+        return [dict(selected)]
+
+    return [dict(item) for item in materializations[:1]]
+
+
 def run_target(
     target: str,
     repo_id: str | None = None,
     runner: str | None = None,
     command_name: str | None = None,
+    selected_ref: str | None = None,
     all_repos: bool = False,
     execution_mode: str = "serial",
     env_profile: str | None = None,
+    non_interactive: bool = False,
 ) -> int:
     report = run_env_doctor_for_target(target)
     if report["doctor_status"] != "pass":
@@ -523,26 +544,37 @@ def run_target(
         raise ValueError("execution_mode must be one of: serial, parallel")
     if all_repos and (runner is None or command_name is None):
         raise ValueError("--all-repos requires --runner and --command to avoid interactive contention")
+    if non_interactive and (runner is None or command_name is None):
+        raise ValueError("--no-interactive requires --runner and --command")
 
     runtime = read_dual(target, RUNTIME_FILE)
     materializations = runtime.get("repo_materializations")
     if not isinstance(materializations, list) or not materializations:
         raise ValueError("target has no runtime materialization; run target materialize")
 
-    selected_items = materializations
-    if repo_id is not None:
-        selected = next((item for item in materializations if item.get("repo_id") == repo_id), None)
-        if selected is None:
-            raise ValueError(f"repo_id not materialized: {repo_id}")
-        selected_items = [selected]
-    elif not all_repos:
-        selected_items = [materializations[0]]
+    if all_repos:
+        selected_items = [dict(item) for item in materializations]
+    else:
+        selected_items = _materialization_lookup(repo_id, materializations)
+
+    if selected_ref is not None:
+        lock = load_target_lock(target)
+        lock_index = {repo.repo_id: repo for repo in lock.repos}
+        for item in selected_items:
+            item_repo_id, item_checkout = _materialization_entry(item)
+            lock_repo = lock_index.get(item_repo_id)
+            if lock_repo is None:
+                raise ValueError(f"repo_id not in target lock: {item_repo_id}")
+            resolved = resolve_ref_to_sha(Path(lock_repo.repo_path), selected_ref)
+            materialize_repo_checkout(Path(lock_repo.repo_path), item_checkout, resolved)
+            item["resolved_sha"] = resolved
 
     runs: list[tuple[Path, RunnerCatalog]] = []
     env_overrides = get_env_profile(target, profile=env_profile)
     for item in selected_items:
         item_repo_id, item_checkout = _materialization_entry(item)
-        runs.append((item_checkout, build_catalog(target, repo_id=item_repo_id)))
+        catalog = build_runner_catalog(target, item_checkout)
+        runs.append((item_checkout, catalog))
 
     if execution_mode == "parallel" and len(runs) > 1:
         with ThreadPoolExecutor(max_workers=len(runs)) as pool:
@@ -553,6 +585,7 @@ def run_target(
                     catalog,
                     runner,
                     command_name,
+                    non_interactive,
                     env_overrides,
                 )
                 for checkout, catalog in runs
@@ -562,7 +595,14 @@ def run_target(
         return nonzero[0] if nonzero else 0
 
     for checkout, catalog in runs:
-        code = _run_single_repo_target(checkout, catalog, runner, command_name, env_overrides)
+        code = _run_single_repo_target(
+            checkout,
+            catalog,
+            runner,
+            command_name,
+            non_interactive,
+            env_overrides,
+        )
         if code != 0:
             return code
     return 0

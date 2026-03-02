@@ -667,6 +667,97 @@ def test_phench_timeline_branch_filter_dispatches_to_service() -> None:
     mock_timeline.assert_called_once_with("alpha", repo_id=None, limit=5, branch="feature")
 
 
+def test_phench_run_dispatches_ref_and_mode_to_service() -> None:
+    with patch("thegent.cli.apps.phench.run_target") as mock_run_target:
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "run",
+                "alpha",
+                "--repo-id",
+                "repo-a",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+                "--ref",
+                "feature-x",
+                "--mode",
+                "parallel",
+                "--all-repos",
+                "--env-profile",
+                "ci",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        repo_id="repo-a",
+        runner="task",
+        command_name="hello",
+        selected_ref="feature-x",
+        all_repos=True,
+        execution_mode="parallel",
+        env_profile="ci",
+        non_interactive=True,
+    )
+
+
+def test_phench_run_dispatches_branch_alias_and_no_interactive() -> None:
+    with patch("thegent.cli.apps.phench.run_target") as mock_run_target:
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "run",
+                "alpha",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+                "--branch",
+                "feature-branch",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        repo_id=None,
+        runner="task",
+        command_name="hello",
+        selected_ref="feature-branch",
+        all_repos=False,
+        execution_mode="serial",
+        env_profile=None,
+        non_interactive=True,
+    )
+
+
+def test_phench_run_ref_and_branch_conflict_is_rejected() -> None:
+    result = runner.invoke(
+        app,
+        [
+            "phench",
+            "run",
+            "alpha",
+            "--ref",
+            "main",
+            "--branch",
+            "feature",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--ref and --branch are mutually exclusive" in (result.stdout + result.stderr)
+
+
 def test_phench_snapshot_create_routes_to_service() -> None:
     with patch("thegent.cli.apps.phench.create_target_snapshot") as mock_create_snapshot:
         mock_create_snapshot.return_value = {"snapshot_id": "snap-001", "target": "alpha"}
