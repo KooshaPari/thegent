@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import hashlib
-import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from pathlib import Path
+from datetime import UTC, datetime
+import hashlib
+import json
+import secrets
 from typing import Any
 
 from .env_doctor import run_env_doctor
@@ -17,7 +19,7 @@ from .git_ops import (
     sanitize_repo_id,
 )
 from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
-from .paths import projects_root, target_repos_root, target_root, phenotype_repos_root
+from .paths import mirror_target_state_root, projects_root, target_repos_root, target_root, phenotype_repos_root, target_state_root
 from .runner import build_runner_catalog, pick_command_interactive, run_command
 from .store import dual_write, read_dual, sync_dual, utc_now_iso
 
@@ -26,6 +28,125 @@ RUNTIME_FILE = "runtime.json"
 ENV_FILE = "env.snapshot.json"
 RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
+SNAPSHOT_DIR = "snapshots"
+
+
+def _snapshot_id() -> str:
+    return f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{secrets.token_hex(4)}"
+
+
+def import_repos(
+    target: str,
+    source_root: Path | None = None,
+    selected_ref: str = "HEAD",
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
+    repo_ids: list[str] | None = None,
+    auto_lock: bool = True,
+) -> TargetLock:
+    """Import discovered repositories into an existing target."""
+    repo_root = source_root or phenotype_repos_root()
+    candidates = discover_local_git_repos(root=repo_root, include=include, exclude=exclude)
+    if not candidates:
+        raise ValueError(f"no repos discovered under: {repo_root}")
+
+    by_id = {item.repo_id: item.path for item in candidates}
+    if repo_ids:
+        selected = []
+        for repo_id in repo_ids:
+            path = by_id.get(repo_id)
+            if not path:
+                raise ValueError(f"repo_id not discovered: {repo_id}")
+            selected.append(RepoCandidate(repo_id=repo_id, path=path))
+    else:
+        selected = candidates
+
+    for item in selected:
+        add_repo(target, repo_path=str(item.path), selected_ref=selected_ref, repo_id=item.repo_id)
+
+    if auto_lock:
+        return lock_target(target)
+    return load_target_lock(target)
+
+
+def create_target_snapshot(target: str, snapshot_id: str | None = None) -> dict[str, Any]:
+    lock = load_target_lock(target)
+    snapshot_id = snapshot_id or _snapshot_id()
+    filename = f"{SNAPSHOT_DIR}/{snapshot_id}.json"
+
+    runtime_payload: dict[str, Any] | None = None
+    env_payload: dict[str, Any] | None = None
+    runner_payload: dict[str, Any] | None = None
+
+    try:
+        runtime_payload = read_dual(target, RUNTIME_FILE)
+    except FileNotFoundError:
+        runtime_payload = None
+    try:
+        env_payload = read_dual(target, ENV_FILE)
+    except FileNotFoundError:
+        env_payload = None
+    try:
+        runner_payload = read_dual(target, RUNNER_FILE)
+    except FileNotFoundError:
+        runner_payload = None
+
+    snapshot = {
+        "snapshot_id": snapshot_id,
+        "created_at_utc": utc_now_iso(),
+        "target_name": target,
+        "lock": asdict(lock),
+        "runtime": runtime_payload,
+        "env": env_payload,
+        "runner_catalog": runner_payload,
+    }
+    result = dual_write(target, filename, snapshot)
+    return {
+        "snapshot_id": snapshot_id,
+        "filename": filename,
+        "target": target,
+        "written_at_utc": snapshot["created_at_utc"],
+        **result,
+    }
+
+
+def list_target_snapshots(target: str) -> list[dict[str, Any]]:
+    directories = [
+        target_state_root(target) / SNAPSHOT_DIR,
+        mirror_target_state_root(target) / SNAPSHOT_DIR,
+    ]
+    snapshots: list[dict[str, Any]] = []
+    files: dict[str, Path] = {}
+    for directory in directories:
+        if not directory.exists():
+            continue
+        for path in directory.glob("*.json"):
+            filename = path.name
+            files.setdefault(filename, path)
+
+    for filename in sorted(files):
+        rel_filename = f"{SNAPSHOT_DIR}/{filename}"
+        try:
+            payload = read_dual(target, rel_filename)
+        except FileNotFoundError:
+            continue
+        if not isinstance(payload, dict):
+            continue
+        snapshots.append(
+            {
+                "snapshot_id": str(payload.get("snapshot_id", Path(filename).stem)),
+                "filename": filename,
+                "created_at_utc": str(payload.get("created_at_utc", "")),
+                "target_name": str(payload.get("target_name", "")),
+                "lock_hash": str((payload.get("lock") or {}).get("lock_hash", "")),
+            }
+        )
+    return snapshots
+
+
+def show_target_snapshot(target: str, snapshot_id: str) -> dict[str, Any]:
+    filename = f"{SNAPSHOT_DIR}/{snapshot_id}.json"
+    return read_dual(target, filename)
 
 
 def discover_repos(
