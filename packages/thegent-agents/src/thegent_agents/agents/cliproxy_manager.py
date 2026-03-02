@@ -398,7 +398,13 @@ def _ensure_config(settings: ThegentSettings) -> Path:
         try:
             raw = yaml_load(config_path)
             config: dict[str, Any] = dict(raw) if isinstance(raw, dict) else {}
-        except Exception:
+        except Exception as e:
+            _LOG.warning(
+                "cliproxy_config_read_failed path=%s error_type=%s error=%s; using defaults",
+                config_path,
+                type(e).__name__,
+                e,
+            )
             config = {}
     else:
         config = {}
@@ -512,7 +518,8 @@ def _is_adapter_running(base_url: str) -> bool:
             return False
         # Adapter returns "models"; raw CLIProxy returns "data"
         return "models" in data
-    except Exception:
+    except Exception as e:
+        _LOG.debug("adapter_check_failed url=%s error_type=%s error=%s", base_url, type(e).__name__, e)
         return False
 
 
@@ -527,7 +534,8 @@ def _adapter_script_path() -> Path | None:
     try:
         script = get_resource_path("scripts/start_proxy_with_adapter.py")
         return script if script.exists() else None
-    except Exception:
+    except Exception as e:
+        _LOG.debug("adapter_script_path_lookup_failed error_type=%s error=%s", type(e).__name__, e)
         return None
 
 

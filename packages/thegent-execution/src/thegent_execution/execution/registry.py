@@ -3,6 +3,12 @@
 import orjson as json
 import logging
 import uuid
+
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -23,7 +29,6 @@ from thegent_execution.execution_hash_helpers import calculate_stable_record_has
 from thegent_execution.execution_jsonl_parsers import parse_checkpoint_line, parse_checkpoint_by_id
 from thegent_execution.execution_run_scan_helpers import process_run_entry as _process_run_entry
 
-_log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
 _execution_warning_count = 0
 _admission_import_warning_once: set[str] = set()
@@ -108,8 +113,13 @@ def _process_run_entry(line: str, runs: dict[str, dict[str, Any]]) -> None:
         run_id = entry.get("run_id") or entry.get("id")
         if run_id:
             runs[run_id] = entry
-    except Exception:
-        pass
+    except Exception as e:
+        # Malformed JSONL line — skip silently; diagnostics captured in _execution_diagnostics
+        _execution_diagnostics["message_parse"]["invalid_rows"] = (
+            int(_execution_diagnostics["message_parse"]["invalid_rows"]) + 1
+        )
+        _execution_diagnostics["message_parse"]["last_error_type"] = type(e).__name__
+        _execution_diagnostics["message_parse"]["last_error_message"] = str(e)
 
 
 def _check_session_id(line: str, session_id: str) -> bool:
@@ -117,7 +127,9 @@ def _check_session_id(line: str, session_id: str) -> bool:
     try:
         entry = json.loads(line)
         return entry.get("session_id") == session_id
-    except Exception:
+    except Exception as e:
+        # Malformed JSONL line — cannot determine session membership; treat as non-matching.
+        _log.debug("registry_line_parse_error", session_id=session_id, error_type=type(e).__name__, error=str(e))
         return False
 
 

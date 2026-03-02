@@ -10,12 +10,17 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+try:
+    import structlog as _structlog
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
+
 
 from thegent_execution.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent_execution.execution_coercion_helpers import as_float as _as_float_impl
 from thegent_execution.execution_coercion_helpers import as_int as _as_int_impl
 
-_log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
 _execution_warning_count = 0
 _admission_import_warning_once: set[str] = set()
@@ -800,7 +805,14 @@ class EscalationQueue:
                         continue
                     data["past_sla"] = now > exp_dt
                     items.append(data)
-                except Exception:
+                except Exception as e:
+                    # Malformed queue line — log context and skip to keep the queue readable.
+                    _log.warning(
+                        "escalation_queue_parse_error",
+                        queue_path=str(self.queue_path),
+                        error_type=type(e).__name__,
+                        error=str(e),
+                    )
                     continue
         items.sort(key=lambda x: (x.get("priority", 0), x.get("blocked_at_utc", "")))
         return items[-limit:][::-1]
@@ -822,7 +834,14 @@ class EscalationQueue:
                     data["resolved_at_utc"] = datetime.now(UTC).isoformat()
                     updated = True
                 new_lines.append(json.dumps(data).decode())
-            except Exception:
+            except Exception as e:
+                # Keep unparse-able lines verbatim so we don't lose queue entries.
+                _log.warning(
+                    "escalation_queue_resolve_parse_error",
+                    run_id=run_id,
+                    error_type=type(e).__name__,
+                    error=str(e),
+                )
                 new_lines.append(line)
         if updated:
             self.queue_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")

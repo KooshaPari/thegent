@@ -60,7 +60,12 @@ def _check_cursor_api_reachable(
     try:
         resp = httpx.get(url, headers=headers, timeout=timeout)
         return (resp.status_code == 200, False, resp.status_code)
-    except Exception:
+    except Exception as e:
+        # Network/connection errors are expected during probing; treat as unreachable.
+        import logging
+        logging.getLogger(__name__).debug(
+            "cursor_api_probe_failed url=%s error_type=%s error=%s", url, type(e).__name__, e
+        )
         return (False, True, None)
 
 

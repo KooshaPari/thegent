@@ -79,19 +79,8 @@ class DocumentAnalyzer:
         """Analyze a markdown file."""
         try:
             content = filepath.read_text(encoding="utf-8")
-        except Exception:
-            # Return minimal analysis for unreadable files
-            return DocumentAnalysis(
-                filepath=str(filepath),
-                category=DocumentCategory.UNKNOWN,
-                keywords=set(),
-                estimated_reading_time=0.0,
-                has_code_blocks=False,
-                has_images=False,
-                has_links=False,
-                section_count=0,
-                word_count=0,
-            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to read document for analysis: {filepath}") from e
 
         # Extract features
         category = self._categorize(filepath, content)
