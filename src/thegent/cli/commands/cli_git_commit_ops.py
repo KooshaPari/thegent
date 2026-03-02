@@ -12,8 +12,8 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from thegent.cli.commands.cli_git_identity import resolve_author_env
-from thegent.mesh.git import GitParallelismManager
+from thegent_gitops.identity import resolve_author_env
+from thegent_gitops.git import GitParallelismManager
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ def status(
     short: bool = typer.Option(False, "--short", "-s", help="Show short-format status"),
 ):
     """Show status: combines private index (staged) and worktree (modified)."""
-    from thegent.native.git_native import GitNative
+    from thegent_gitops.native import GitNative
 
     aid = agent_id or get_agent_id()
     manager = GitParallelismManager(project_root, aid)

@@ -394,7 +394,7 @@ class SmartMerger:
     ) -> MergeResult:
         """Merge all uncommitted changes in *worktree_path* into *target_branch*.
 
-        This method integrates with :class:`~thegent.mesh.git_parallelism.WorktreePool`:
+        This method integrates with :class:`~thegent_gitops.worktree.WorktreePool`:
         it performs a ``git merge --no-ff`` of the worktree's branch into
         *target_branch*, using mergiraf as the merge driver when available.
 
