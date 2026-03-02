@@ -333,6 +333,21 @@ class ThegentSettings(BaseSettings):
         description="Agents to keep awake on macOS",
     )
 
+    # Native/runtime health integration
+    use_native_shm: bool = Field(
+        default=True,
+        description="Enable native shared-memory state/circuit-breaker when available; "
+        "set THGENT_USE_NATIVE_SHM=0 to force fallback",
+    )
+    watcher_use_shm: bool = Field(
+        default=True,
+        description="Enable watcher CircuitBreakerShm integration; set THGENT_WATCHER_USE_SHM=0 to disable",
+    )
+    watcher_shm_path: Path | None = Field(
+        default=None,
+        description="Optional watcher SHM file path override (THGENT_WATCHER_SHM_PATH)",
+    )
+
     # Additional settings
     normalization_policy_allow_fallback: bool = Field(
         default=True,

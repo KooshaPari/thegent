@@ -19,6 +19,7 @@ def register_run_commands(
     @app.command("run", help="Run a task command in a materialized target repo checkout.")
     def run_cmd(
         name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target runtime."),
         runner: str | None = typer.Option(
             None,
@@ -62,6 +63,7 @@ def register_run_commands(
 
         exit_code = run_target_fn(
             name,
+            family=family,
             repo_id=repo_id,
             runner=runner,
             command_name=command,

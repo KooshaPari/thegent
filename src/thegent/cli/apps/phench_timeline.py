@@ -19,6 +19,7 @@ def register_timeline_commands(
     @app.command("timeline", help="Show git-first timeline for a target repo.")
     def timeline_cmd(
         name: str = typer.Argument(..., help="Target name."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
         repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
         limit: int = typer.Option(30, "--limit", help="Number of recent commits."),
         branch: str | None = typer.Option(
@@ -27,5 +28,5 @@ def register_timeline_commands(
             help="Optional branch name to constrain timeline.",
         ),
     ) -> None:
-        data = target_timeline_fn(name, repo_id=repo_id, limit=limit, branch=branch)
+        data = target_timeline_fn(name, family=family, repo_id=repo_id, limit=limit, branch=branch)
         console.print_json(json.dumps(data).decode())

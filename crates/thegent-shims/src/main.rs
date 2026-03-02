@@ -269,6 +269,80 @@ fn run_find(args: &[String]) -> ExitCode {
     }
 }
 
+/// Guarded git checkout command:
+/// - Block when not in a git worktree: delegate directly
+/// - Block when working tree is dirty
+/// - Delegate to git checkout when clean
+fn run_git_checkout(args: &[String]) -> ExitCode {
+    let git_path = match resolve_binary("git") {
+        Some(path) => path,
+        None => {
+            eprintln!("thegent-git-checkout: git not found in PATH");
+            return ExitCode::from(127);
+        }
+    };
+
+    // If this is not a git checkout, pass through to raw git checkout semantics.
+    let is_git_worktree = match StdCommand::new(&git_path)
+        .arg("rev-parse")
+        .arg("--is-inside-work-tree")
+        .output()
+    {
+        Ok(output) => output.status.success()
+            && String::from_utf8_lossy(&output.stdout).trim() == "true",
+        Err(e) => {
+            eprintln!("thegent-git-checkout: failed to check git worktree: {}", e);
+            return ExitCode::from(1);
+        }
+    };
+
+    if is_git_worktree {
+        let status = match StdCommand::new(&git_path)
+            .arg("status")
+            .arg("--porcelain")
+            .output()
+        {
+            Ok(output) => output,
+            Err(e) => {
+                eprintln!("thegent-git-checkout: failed to read git status; refusing checkout.");
+                eprintln!("thegent-git-checkout: error: {}", e);
+                return ExitCode::from(1);
+            }
+        };
+
+        if !status.status.success() {
+            return ExitCode::from(status.status.code().unwrap_or(1) as u8);
+        }
+
+        if !status.stdout.is_empty() {
+            let status_text = String::from_utf8_lossy(&status.stdout);
+            let mut has_uncommitted = false;
+            for line in status_text.lines() {
+                if !line.trim().is_empty() {
+                    has_uncommitted = true;
+                    break;
+                }
+            }
+
+            if has_uncommitted {
+                eprintln!("thegent-git-checkout: blocked checkout on dirty working tree.");
+                eprintln!(
+                    "Please commit/stage/reset/discard changes before retrying."
+                );
+                eprintln!("Uncommitted changes:");
+                eprintln!("{}", status_text.trim_end());
+                return ExitCode::from(1);
+            }
+        }
+    }
+
+    let mut git_args = Vec::with_capacity(args.len() + 1);
+    git_args.push("checkout".to_string());
+    git_args.extend_from_slice(args);
+
+    thegent_shims::GitShim::new().exec(&git_args)
+}
+
 /// Resolve agent binary - handles fallback logic (dex -> codex, etc.)
 fn is_self_or_shim_wrapper(path: &Path) -> bool {
     if let (Ok(candidate), Ok(current)) = (path.canonicalize(), env::current_exe()) {
@@ -897,6 +971,8 @@ fn main() -> ExitCode {
         return run_agent(program_name, &args[1..].to_vec());
     } else if program_name == "thegent-git" {
         return run_git(&args[1..].to_vec());
+    } else if program_name == "thegent-git-checkout" {
+        return run_git_checkout(&args[1..].to_vec());
     } else if program_name == "thegent-grep" {
         return run_grep(&args[1..].to_vec());
     } else if program_name == "thegent-find" {
