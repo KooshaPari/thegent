@@ -10,7 +10,7 @@
 ### Phase 1: Stabilize Phenotype/projects state model
 - [done] Add module manifest path wiring and loader/lister flow in phench service/runtime.
 - [done] Add `phench projects modules` command for list/inspect workflows.
-- [todo] Add a durable manifest schema version and compatibility checks for module manifests.
+- [done] Add a durable manifest schema version and compatibility checks for module manifests.
 - [todo] Add migration helper for existing module consumers (legacy path formats).
 
 ### Phase 2: Multi-repo topology and governance
@@ -45,7 +45,6 @@
 ## Parallel Tracks
 
 - Workstreams can execute in parallel after P1.ManifestSchema:
-  - [status] `P2.CrossRepoSweep` depends on read-only repo inventory tooling.
-  - [status] `P4.BRanchSelectionUX` depends on stable module/selection CLI APIs.
-  - [status] `P3.WorktreeLanePlan` depends on team/governance policy documents.
-
+- [done] `P2.CrossRepoSweep` depends on read-only repo inventory tooling.
+- [done] `P4.BranchSelectionUX` depends on stable module/selection CLI APIs.
+- [done] `P3.WorktreeLanePlan` depends on team/governance policy documents.

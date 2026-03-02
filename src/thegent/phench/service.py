@@ -40,6 +40,7 @@ ENV_FILE = "env.snapshot.json"
 RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
 SNAPSHOT_DIR = "snapshots"
+SUPPORTED_MODULE_MANIFEST_SCHEMA_VERSIONS = {1}
 
 
 def _snapshot_id() -> str:
@@ -939,6 +940,27 @@ def _validate_module_repos_payload_map(
     return items
 
 
+def _validate_module_manifest_schema_version(
+    module: str,
+    payload: dict[str, Any],
+) -> int:
+    if "schema_version" not in payload:
+        raise ValueError(f"module manifest '{module}' must define 'schema_version'")
+
+    schema_version = payload.get("schema_version")
+    if not isinstance(schema_version, int) or isinstance(schema_version, bool):
+        raise ValueError(
+            f"module manifest '{module}' schema_version must be an integer"
+        )
+
+    if schema_version not in SUPPORTED_MODULE_MANIFEST_SCHEMA_VERSIONS:
+        raise ValueError(
+            f"module manifest '{module}' has unsupported schema_version: {schema_version}"
+        )
+
+    return schema_version
+
+
 def _normalize_repo_id_list(values: list[str] | None) -> list[str]:
     if values is None:
         return []
@@ -994,6 +1016,7 @@ def load_module_manifest(
     if not isinstance(payload, dict):
         raise ValueError(f"invalid module manifest for {module}: payload must be an object")
 
+    schema_version = _validate_module_manifest_schema_version(module=module, payload=payload)
     explicit_repos = (
         _validate_module_repos_payload_field(payload, field="repo_ids")
         or _validate_module_repos_payload_field(payload, field="repos")
@@ -1021,6 +1044,7 @@ def load_module_manifest(
             )
 
     module_overrides: dict[str, Any] = {
+        "schema_version": schema_version,
         "repo_ref_overrides": _validate_module_repos_payload_map(
             payload,
             field="repo_ref_overrides",
@@ -1040,7 +1064,13 @@ def load_module_manifest(
     }
 
     if available:
-        for key, value in module_overrides.items():
+        for key in (
+            "repo_ref_overrides",
+            "repo_runner_overrides",
+            "repo_command_overrides",
+            "repo_env_profile_overrides",
+        ):
+            value = module_overrides[key]
             unknown = [repo_id for repo_id in value if repo_id not in available]
             if unknown:
                 raise ValueError(f"module manifest '{module}' has unknown {key} key(s): {', '.join(unknown)}")

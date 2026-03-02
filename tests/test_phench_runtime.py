@@ -664,6 +664,7 @@ def test_load_module_manifest_parses_patterns_and_overrides(tmp_path: Path, monk
     modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
     modules_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
+        "schema_version": 1,
         "repo_patterns": ["thegent-*", "platform-*"],
         "repo_ref_overrides": {"thegent-api": "main"},
         "repo_runner_overrides": {"thegent-api": "task"},
@@ -689,6 +690,7 @@ def test_load_module_manifest_rejects_unknown_repo_override(tmp_path: Path, monk
     modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
     modules_dir.mkdir(parents=True, exist_ok=True)
     manifest = {
+        "schema_version": 1,
         "repo_ids": ["thegent-api"],
         "repo_ref_overrides": {"missing-repo": "main"},
     }
@@ -696,6 +698,36 @@ def test_load_module_manifest_rejects_unknown_repo_override(tmp_path: Path, monk
 
     monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
     with pytest.raises(ValueError, match="unknown repo_ref_overrides key"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_load_module_manifest_rejects_unsupported_schema_version(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"schema_version": 99, "repo_ids": ["thegent-api"]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="unsupported schema_version"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_load_module_manifest_requires_schema_version(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="must define 'schema_version'"):
         load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
 
 
