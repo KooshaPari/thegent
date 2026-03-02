@@ -573,6 +573,11 @@ def _run_single_repo_target(
             raise ValueError(f"runner has no discovered commands: {runner}")
         return run_command(checkout_path, runner, options[0].name, env_overrides=env_overrides)
 
+    if non_interactive:
+        raise ValueError(
+            "runner policy is required for non-interactive execution; pass --runner or configure preferred_runner"
+        )
+
     selected = pick_command_interactive(catalog)
     return run_command(checkout_path, selected.runner, selected.name, env_overrides=env_overrides)
 
@@ -675,6 +680,193 @@ def _materialization_lookup(
         return [dict(index[rid]) for rid in requested]
 
     return [dict(item) for item in materializations[:1]]
+
+
+def build_project_execution_matrix(
+    target: str,
+    family: str | None = None,
+    snapshot_id: str | None = None,
+    repo_id: str | None = None,
+    repo_ids: list[str] | None = None,
+    repo_ref_overrides: dict[str, str] | None = None,
+    repo_runner_overrides: dict[str, str] | None = None,
+    repo_command_overrides: dict[str, str] | None = None,
+    repo_env_profile_overrides: dict[str, str] | None = None,
+    runner: str | None = None,
+    command_name: str | None = None,
+    selected_ref: str | None = None,
+    all_repos: bool = False,
+    env_profile: str | None = None,
+    non_interactive: bool = False,
+    validate_commands: bool = False,
+    sort_repos: bool = False,
+) -> dict[str, Any]:
+    if snapshot_id is not None:
+        snapshot = show_target_snapshot(target, snapshot_id, family=family)
+        runtime = snapshot.get("runtime")
+        if not isinstance(runtime, dict):
+            raise ValueError(f"snapshot '{snapshot_id}' has no runtime payload")
+        materializations = runtime.get("repo_materializations")
+        if not isinstance(materializations, list) or not materializations:
+            raise ValueError(
+                f"snapshot '{snapshot_id}' has no runtime materialization; create snapshot after materialize"
+            )
+        snapshot_lock = snapshot.get("lock")
+        if not isinstance(snapshot_lock, dict):
+            raise ValueError(f"snapshot '{snapshot_id}' has invalid lock payload")
+        lock = _parse_lock(snapshot_lock)
+        report = _run_env_doctor_for_materializations(target, materializations, family=family)
+    else:
+        report = run_env_doctor_for_target(target, family=family)
+        runtime = read_dual(target, RUNTIME_FILE, family=family)
+        materializations = runtime.get("repo_materializations")
+        lock = load_target_lock(target, family=family)
+
+    if report["doctor_status"] != "pass":
+        missing = ", ".join(report["missing_requirements"])
+        raise RuntimeError(f"env doctor failed, missing requirements: {missing}")
+
+    if repo_id is not None and repo_ids is not None:
+        raise ValueError("repo_id and repo_ids are mutually exclusive")
+    if repo_ids is not None:
+        repo_ids = [repo for repo in repo_ids if repo]
+        if not repo_ids:
+            raise ValueError("repo_ids cannot be empty")
+
+    if repo_ref_overrides is None:
+        repo_ref_overrides_normalized = {}
+    else:
+        repo_ref_overrides_normalized = _normalize_repo_map(repo_ref_overrides, label="repo_ref_overrides")
+
+    repo_runner_overrides_normalized = _normalize_repo_map(
+        repo_runner_overrides,
+        label="repo_runner_overrides",
+    )
+    repo_command_overrides_normalized = _normalize_repo_map(
+        repo_command_overrides,
+        label="repo_command_overrides",
+    )
+    repo_env_profile_overrides_normalized = _normalize_repo_map(
+        repo_env_profile_overrides,
+        label="repo_env_profile_overrides",
+    )
+
+    if all_repos and repo_ids is not None:
+        raise ValueError("repo_ids is not compatible with --all-repos")
+
+    if repo_id is not None and not repo_id.strip():
+        raise ValueError("repo_id cannot be empty")
+
+    if repo_ids is not None:
+        repo_index = {item.strip(): item.strip() for item in repo_ids}
+        repo_ids = list(repo_index.values())
+        unknown_override = [item for item in repo_ref_overrides_normalized if item not in repo_index]
+        if unknown_override:
+            raise ValueError(f"repo_id not materialized: {unknown_override[0]}")
+        unknown_runner_override = [item for item in repo_runner_overrides_normalized if item not in repo_index]
+        if unknown_runner_override:
+            raise ValueError(f"repo_id not materialized: {unknown_runner_override[0]}")
+        unknown_command_override = [item for item in repo_command_overrides_normalized if item not in repo_index]
+        if unknown_command_override:
+            raise ValueError(f"repo_id not materialized: {unknown_command_override[0]}")
+        unknown_env_profile_override = [
+            item
+            for item in repo_env_profile_overrides_normalized
+            if item not in repo_index
+        ]
+        if unknown_env_profile_override:
+            raise ValueError(f"repo_id not materialized: {unknown_env_profile_override[0]}")
+
+    if not isinstance(materializations, list) or not materializations:
+        raise ValueError("target has no runtime materialization; run target materialize")
+
+    if all_repos:
+        selected_items = [dict(item) for item in materializations]
+    else:
+        selected_items = _materialization_lookup(
+            repo_id,
+            repo_ids=repo_ids,
+            all_repos=False,
+            materializations=materializations,
+        )
+
+    if repo_id is not None:
+        repo_ids = [repo_id]
+
+    lock_index = {entry.repo_id: entry for entry in lock.repos}
+    enforce_no_interactive = non_interactive or all_repos
+
+    plans: list[dict[str, Any]] = []
+    for item in selected_items:
+        item_repo_id, item_checkout = _materialization_entry(item)
+        lock_repo = lock_index.get(item_repo_id)
+        if lock_repo is None:
+            raise ValueError(f"repo_id not in target lock: {item_repo_id}")
+
+        repo_ref = repo_ref_overrides_normalized.get(item_repo_id)
+        if repo_ref is None:
+            repo_ref = selected_ref if selected_ref is not None else (lock_repo.preferred_ref or lock_repo.selected_ref)
+
+        if repo_ref is not None:
+            resolved = resolve_ref_to_sha(Path(lock_repo.repo_path), repo_ref)
+            materialize_repo_checkout(Path(lock_repo.repo_path), item_checkout, resolved)
+            item["resolved_sha"] = resolved
+        else:
+            resolved = item.get("resolved_sha")
+
+        repo_runner_override = repo_runner_overrides_normalized.get(item_repo_id)
+        repo_command_override = repo_command_overrides_normalized.get(item_repo_id)
+        repo_env_profile = repo_env_profile_overrides_normalized.get(item_repo_id, env_profile)
+        env_overrides = get_env_profile(target, profile=repo_env_profile, family=family)
+
+        if validate_commands:
+            catalog = build_runner_catalog(target, item_checkout)
+            repo_runner, repo_command = _resolve_repo_runner_and_command(
+                item_repo_id,
+                lock_repo,
+                catalog,
+                cli_runner=runner,
+                cli_command=command_name,
+                repo_runner_override=repo_runner_override,
+                repo_command_override=repo_command_override,
+                enforce_no_interactive=enforce_no_interactive,
+            )
+        else:
+            repo_runner = repo_runner_override or runner or lock_repo.preferred_runner
+            repo_command = repo_command_override or command_name or lock_repo.preferred_command
+            if repo_command and not repo_runner:
+                raise ValueError(f"repo '{item_repo_id}' requires a runner for command '{repo_command}'")
+
+        plans.append(
+            {
+                "repo_id": item_repo_id,
+                "repo_path": lock_repo.repo_path,
+                "checkout_path": item["checkout_path"],
+                "lock_selected_ref": lock_repo.selected_ref,
+                "lock_preferred_ref": lock_repo.preferred_ref,
+                "effective_ref": repo_ref,
+                "resolved_sha": resolved,
+                "effective_runner": repo_runner,
+                "effective_command": repo_command,
+                "effective_env_profile": repo_env_profile,
+                "env_overrides": env_overrides,
+                "preferred_runner": lock_repo.preferred_runner,
+                "preferred_command": lock_repo.preferred_command,
+            }
+        )
+
+    if sort_repos:
+        plans.sort(key=lambda item: str(item["repo_id"]))
+
+    return {
+        "target": target,
+        "family": family,
+        "snapshot_id": snapshot_id,
+        "all_repos": all_repos,
+        "non_interactive": non_interactive,
+        "repo_count": len(plans),
+        "repos": plans,
+    }
 
 
 def _validate_module_repos_payload_field(
@@ -873,169 +1065,67 @@ def run_target(
     env_profile: str | None = None,
     non_interactive: bool = False,
 ) -> int:
-    if snapshot_id is not None:
-        snapshot = show_target_snapshot(target, snapshot_id, family=family)
-        runtime = snapshot.get("runtime")
-        if not isinstance(runtime, dict):
-            raise ValueError(f"snapshot '{snapshot_id}' has no runtime payload")
-        materializations = runtime.get("repo_materializations")
-        if not isinstance(materializations, list) or not materializations:
-            raise ValueError(
-                f"snapshot '{snapshot_id}' has no runtime materialization; create snapshot after materialize"
-            )
-        snapshot_lock = snapshot.get("lock")
-        if not isinstance(snapshot_lock, dict):
-            raise ValueError(f"snapshot '{snapshot_id}' has invalid lock payload")
-        lock = _parse_lock(snapshot_lock)
-        report = _run_env_doctor_for_materializations(
-            target,
-            materializations,
-            family=family,
-        )
-    else:
-        report = run_env_doctor_for_target(target, family=family)
-        runtime = read_dual(target, RUNTIME_FILE, family=family)
-        materializations = runtime.get("repo_materializations")
-        lock = load_target_lock(target, family=family)
-
-    if report["doctor_status"] != "pass":
-        missing = ", ".join(report["missing_requirements"])
-        raise RuntimeError(f"env doctor failed, missing requirements: {missing}")
+    matrix = build_project_execution_matrix(
+        target=target,
+        family=family,
+        snapshot_id=snapshot_id,
+        repo_id=repo_id,
+        repo_ids=repo_ids,
+        repo_ref_overrides=repo_ref_overrides,
+        repo_runner_overrides=repo_runner_overrides,
+        repo_command_overrides=repo_command_overrides,
+        repo_env_profile_overrides=repo_env_profile_overrides,
+        runner=runner,
+        command_name=command_name,
+        selected_ref=selected_ref,
+        all_repos=all_repos,
+        env_profile=env_profile,
+        non_interactive=non_interactive,
+        validate_commands=True,
+        sort_repos=False,
+    )
 
     if execution_mode not in {"serial", "parallel"}:
         raise ValueError("execution_mode must be one of: serial, parallel")
 
-    if not isinstance(materializations, list) or not materializations:
-        raise ValueError("target has no runtime materialization; run target materialize")
-
-    if repo_id is not None and repo_ids is not None:
-        raise ValueError("repo_id and repo_ids are mutually exclusive")
-    if repo_ids is not None:
-        repo_ids = [repo_id for repo_id in repo_ids if repo_id]
-        if not repo_ids:
-            raise ValueError("repo_ids cannot be empty")
-
-    if repo_ref_overrides is None:
-        repo_ref_overrides_normalized = {}
-    else:
-        repo_ref_overrides_normalized = _normalize_repo_map(repo_ref_overrides, label="repo_ref_overrides")
-
-    repo_runner_overrides_normalized = _normalize_repo_map(
-        repo_runner_overrides,
-        label="repo_runner_overrides",
-    )
-    repo_command_overrides_normalized = _normalize_repo_map(
-        repo_command_overrides,
-        label="repo_command_overrides",
-    )
-    repo_env_profile_overrides_normalized = _normalize_repo_map(
-        repo_env_profile_overrides,
-        label="repo_env_profile_overrides",
-    )
-
-    if all_repos and repo_ids is not None:
-        raise ValueError("repo_ids is not compatible with --all-repos")
-
-    if repo_id is not None and not repo_id.strip():
-        raise ValueError("repo_id cannot be empty")
-
-    if repo_ids is not None:
-        repo_index = {repo_id.strip(): repo_id.strip() for repo_id in repo_ids}
-        repo_ids = list(repo_index.values())
-        unknown_override = [repo_id for repo_id in repo_ref_overrides_normalized if repo_id not in repo_index]
-        if unknown_override:
-            raise ValueError(f"repo_id not materialized: {unknown_override[0]}")
-        unknown_runner_override = [repo_id for repo_id in repo_runner_overrides_normalized if repo_id not in repo_index]
-        if unknown_runner_override:
-            raise ValueError(f"repo_id not materialized: {unknown_runner_override[0]}")
-        unknown_command_override = [repo_id for repo_id in repo_command_overrides_normalized if repo_id not in repo_index]
-        if unknown_command_override:
-            raise ValueError(f"repo_id not materialized: {unknown_command_override[0]}")
-        unknown_env_profile_override = [repo_id for repo_id in repo_env_profile_overrides_normalized if repo_id not in repo_index]
-        if unknown_env_profile_override:
-            raise ValueError(f"repo_id not materialized: {unknown_env_profile_override[0]}")
-
-    if all_repos:
-        selected_items = [dict(item) for item in materializations]
-    else:
-        selected_items = _materialization_lookup(
-            repo_id,
-            repo_ids=repo_ids,
-            all_repos=False,
-            materializations=materializations,
+    runs: list[tuple[Path, RunnerCatalog, str | None, str | None, dict[str, str] | None]] = []
+    for item in matrix["repos"]:
+        checkout_path = Path(item["checkout_path"])
+        catalog = build_runner_catalog(target, checkout_path)
+        runs.append(
+            (
+                checkout_path,
+                catalog,
+                item["effective_runner"],
+                item["effective_command"],
+                item.get("env_overrides"),
+            )
         )
-
-    if repo_id is not None:
-        repo_ids = [repo_id]
-    lock_index = {repo.repo_id: repo for repo in lock.repos}
-    enforce_no_interactive = non_interactive or all_repos
-
-    for item in selected_items:
-        item_repo_id, item_checkout = _materialization_entry(item)
-        lock_repo = lock_index.get(item_repo_id)
-        if lock_repo is None:
-            raise ValueError(f"repo_id not in target lock: {item_repo_id}")
-        repo_ref = (
-            repo_ref_overrides_normalized.get(item_repo_id)
-            if repo_ref_overrides_normalized
-            else None
-        )
-        if repo_ref is None:
-            repo_ref = selected_ref if selected_ref is not None else (lock_repo.preferred_ref or lock_repo.selected_ref)
-        if repo_ref is not None:
-            resolved = resolve_ref_to_sha(Path(lock_repo.repo_path), repo_ref)
-            materialize_repo_checkout(Path(lock_repo.repo_path), item_checkout, resolved)
-            item["resolved_sha"] = resolved
-
-    runs: list[
-        tuple[Path, RunnerCatalog, str | None, str | None, dict[str, str] | None]
-    ] = []
-    for item in selected_items:
-        item_repo_id, item_checkout = _materialization_entry(item)
-        catalog = build_runner_catalog(target, item_checkout)
-        lock_repo = lock_index.get(item_repo_id)
-        if lock_repo is None:
-            raise ValueError(f"repo_id not in target lock: {item_repo_id}")
-        repo_runner_override = repo_runner_overrides_normalized.get(item_repo_id)
-        repo_command_override = repo_command_overrides_normalized.get(item_repo_id)
-        repo_env_profile = repo_env_profile_overrides_normalized.get(item_repo_id, env_profile)
-        env_overrides = get_env_profile(target, profile=repo_env_profile, family=family)
-        repo_runner, repo_command = _resolve_repo_runner_and_command(
-            item_repo_id,
-            lock_repo,
-            catalog,
-            cli_runner=runner,
-            cli_command=command_name,
-            repo_runner_override=repo_runner_override,
-            repo_command_override=repo_command_override,
-            enforce_no_interactive=enforce_no_interactive,
-        )
-        runs.append((item_checkout, catalog, repo_runner, repo_command, env_overrides))
 
     if execution_mode == "parallel" and len(runs) > 1:
         with ThreadPoolExecutor(max_workers=len(runs)) as pool:
             futures = [
                 pool.submit(
                     _run_single_repo_target,
-                    checkout,
-                    catalog,
-                    repo_runner,
-                    repo_command,
+                    checkout_path,
+                    effective_catalog,
+                    effective_runner,
+                    effective_command,
                     non_interactive,
                     env_overrides,
                 )
-                for checkout, catalog, repo_runner, repo_command, env_overrides in runs
+                for checkout_path, effective_catalog, effective_runner, effective_command, env_overrides in runs
             ]
             results = [future.result() for future in futures]
         nonzero = [code for code in results if code != 0]
         return nonzero[0] if nonzero else 0
 
-    for checkout, catalog, repo_runner, repo_command, env_overrides in runs:
+    for checkout, effective_catalog, effective_runner, effective_command, env_overrides in runs:
         code = _run_single_repo_target(
             checkout,
-            catalog,
-            repo_runner,
-            repo_command,
+            effective_catalog,
+            effective_runner,
+            effective_command,
             non_interactive,
             env_overrides,
         )

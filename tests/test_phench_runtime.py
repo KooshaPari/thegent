@@ -21,6 +21,7 @@ from thegent.phench.service import (
     lock_target,
     materialize_target,
     show_target_snapshot,
+    build_project_execution_matrix,
     set_repo_ref,
     run_env_doctor_for_target,
     run_target,
@@ -808,6 +809,128 @@ def test_env_profile_applies_to_run(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
     run_target("zeta", runner="task", command_name="hello", env_profile="ci")
     assert observed == {"FOO": "BAR"}
+
+
+def test_build_project_execution_matrix_returns_effective_plan(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = tmp_path / "repo-a"
+    repo_b = tmp_path / "repo-b"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("matrix", mode="stack")
+    add_repo(
+        "matrix",
+        repo_path=str(repo_a),
+        selected_ref="HEAD",
+        preferred_runner="task",
+        preferred_command="hello",
+        repo_id="repo-a",
+    )
+    add_repo(
+        "matrix",
+        repo_path=str(repo_b),
+        selected_ref="HEAD",
+        preferred_runner="task",
+        preferred_command="hello",
+        repo_id="repo-b",
+    )
+    lock_target("matrix")
+    materialize_target("matrix")
+    set_env_profile("matrix", "ci", {"ENV": "one"})
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    matrix = build_project_execution_matrix(
+        "matrix",
+        repo_id="repo-a",
+        runner="task",
+        command_name="hello",
+        env_profile="ci",
+    )
+
+    assert matrix["target"] == "matrix"
+    assert matrix["repo_count"] == 1
+    plan = matrix["repos"][0]
+    assert plan["repo_id"] == "repo-a"
+    assert plan["effective_runner"] == "task"
+    assert plan["effective_command"] == "hello"
+    assert plan["effective_env_profile"] == "ci"
+    assert plan["env_overrides"] == {"ENV": "one"}
+    assert plan["resolved_sha"] is not None
+
+
+def test_build_project_execution_matrix_applies_repo_overrides_and_sorting(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = tmp_path / "repo-a"
+    repo_b = tmp_path / "repo-b"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("matrix2", mode="stack")
+    add_repo("matrix2", repo_path=str(repo_a), selected_ref="HEAD", repo_id="repo-a")
+    add_repo("matrix2", repo_path=str(repo_b), selected_ref="HEAD", repo_id="repo-b")
+    lock_target("matrix2")
+    materialize_target("matrix2")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+    matrix = build_project_execution_matrix(
+        "matrix2",
+        all_repos=True,
+        runner="task",
+        repo_runner_overrides={"repo-b": "task"},
+        repo_command_overrides={"repo-a": "hello"},
+        repo_ref_overrides={"repo-a": "HEAD"},
+        sort_repos=True,
+    )
+
+    assert matrix["all_repos"] is True
+    assert matrix["repo_count"] == 2
+    assert [item["repo_id"] for item in matrix["repos"]] == ["repo-a", "repo-b"]
+    assert matrix["repos"][0]["effective_runner"] == "task"
+    assert matrix["repos"][0]["effective_command"] == "hello"
+    assert matrix["repos"][1]["effective_runner"] == "task"
+    assert matrix["repos"][1]["effective_command"] is None
+    assert matrix["repos"][0]["resolved_sha"] is not None
+    assert matrix["repos"][1]["resolved_sha"] is not None
+
+
+def test_build_project_execution_matrix_rejects_missing_override_repo(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("matrix3", mode="repo")
+    add_repo("matrix3", repo_path=str(repo), selected_ref="main", repo_id="repo")
+    lock_target("matrix3")
+    materialize_target("matrix3")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    with pytest.raises(ValueError, match="repo_id not materialized"):
+        build_project_execution_matrix(
+            "matrix3",
+            repo_ids=["repo"],
+            repo_ref_overrides={"missing": "main"},
+        )
 
 
 def test_audit_shared_modules(tmp_path: Path, monkeypatch) -> None:

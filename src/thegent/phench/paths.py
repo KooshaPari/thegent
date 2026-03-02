@@ -99,3 +99,16 @@ def mirror_target_state_root(target: str, family: str | None = None) -> Path:
     if family is None:
         return home_mirror_root() / target / ".phench"
     return home_mirror_root() / validate_family_name(family) / target / ".phench"
+
+
+def projects_modules_root() -> Path:
+    return projects_root() / "modules"
+
+
+def module_manifest_root(module: str) -> Path:
+    normalized = validate_target_name(module)
+    return projects_modules_root() / normalized
+
+
+def module_manifest_path(module: str) -> Path:
+    return module_manifest_root(module) / "manifest.json"

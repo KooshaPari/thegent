@@ -967,6 +967,140 @@ def test_phench_projects_run_dispatches_snapshot_to_service_without_prepare() ->
     )
 
 
+def test_phench_projects_matrix_dispatches_resolved_kwargs_and_prints_payload() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench.build_project_execution_matrix") as mock_build_matrix,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
+        )
+        matrix_payload = {
+            "target": "alpha",
+            "family": None,
+            "snapshot_id": None,
+            "all_repos": True,
+            "repo_count": 1,
+            "repos": [
+                {
+                    "repo_id": "repo-a",
+                    "repo_path": "/tmp/repo-a",
+                    "checkout_path": "/tmp/repo-a",
+                    "effective_runner": "task",
+                    "effective_command": "hello",
+                    "effective_env_profile": None,
+                }
+            ],
+        }
+        mock_build_matrix.return_value = matrix_payload
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "matrix",
+                "--target",
+                "alpha",
+                "--all-repos",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    assert json.loads(result.stdout) == matrix_payload
+    mock_build_matrix.assert_called_once()
+    call_kwargs = mock_build_matrix.call_args.kwargs
+    assert call_kwargs["runner"] == "task"
+    assert call_kwargs["command_name"] == "hello"
+    assert call_kwargs["all_repos"] is True
+    assert call_kwargs["selected_ref"] is None
+    assert call_kwargs["non_interactive"] is True
+    assert call_kwargs["sort_repos"] is True
+
+
+def test_phench_projects_matrix_module_merges_overrides_and_respects_non_interactive() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench.build_project_execution_matrix") as mock_build_matrix,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[
+                SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef"),
+                SimpleNamespace(repo_id="repo-b", selected_ref="main", resolved_sha="deadcafe"),
+            ],
+        )
+        mock_load_module_manifest.return_value = {
+            "repo_ids": ["repo-a"],
+            "repo_ref_overrides": {"repo-a": "release"},
+            "repo_runner_overrides": {},
+            "repo_command_overrides": {},
+            "repo_env_profile_overrides": {},
+        }
+        mock_build_matrix.return_value = {"target": "alpha", "repos": []}
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "matrix",
+                "--target",
+                "alpha",
+                "--module",
+                "thegent-app",
+                "--repo-ref",
+                "repo-a@staging",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_load_module_manifest.assert_called_once_with(
+        "thegent-app",
+        available_repo_ids=["repo-a", "repo-b"],
+    )
+    call_kwargs = mock_build_matrix.call_args.kwargs
+    assert call_kwargs["repo_ids"] == ["repo-a"]
+    assert call_kwargs["repo_ref_overrides"] == {"repo-a": "staging"}
+    assert call_kwargs["non_interactive"] is True
+
+
+def test_phench_projects_matrix_non_interactive_requires_target() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.build_project_execution_matrix") as mock_build_matrix,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "matrix",
+                "--all-repos",
+                "--no-interactive",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+            ],
+        )
+
+    assert result.exit_code != 0
+    mock_build_matrix.assert_not_called()
+    assert "--target is required when --no-interactive is set" in (result.stdout + result.stderr)
+
+
 def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
     lock = SimpleNamespace(
         target_name="alpha",
