@@ -4,8 +4,7 @@ from thegent.mesh.audit import AuditManager
 from thegent.mesh.cache import MeshCache, Singleflight
 from thegent.mesh.consensus import CausalInfluenceTracker, ConsensusProtocol, EscalationWorkflow
 from thegent.mesh.coordination import FileClaimsRegistry, HLCTimestamp, OptimisticConcurrencyControl
-from thegent.mesh.git import GitParallelismManager
-from thegent.mesh.git_parallelism import WorktreeContext, WorktreePool
+from thegent_gitops import GitParallelismManager, WorktreeContext, WorktreePool
 from thegent.mesh.injection import ContextInjection, ShellInjection
 from thegent.mesh.isolation import ResourceIsolation
 from thegent.mesh.merge import SmartMerge
