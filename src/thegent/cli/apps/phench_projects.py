@@ -161,7 +161,7 @@ def _projects_run_impl(
         non_interactive=no_interactive,
     )
 
-    selected_ref: str | None = None
+    selected_ref: str | None = ref or branch
     if selected_repo_id is not None:
         selected_ref = _ensure_selected_ref(
             selected_target,

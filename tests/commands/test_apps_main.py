@@ -764,11 +764,13 @@ def test_phench_projects_run_non_interactive_dispatches_prepare_and_run() -> Non
         repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
     )
     with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
         patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
         patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
         patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
         patch("thegent.cli.apps.phench.run_target") as mock_run_target,
     ):
+        mock_list_targets.return_value = ["alpha"]
         mock_load_target_lock.return_value = lock
         mock_run_target.return_value = 0
         result = runner.invoke(
@@ -824,7 +826,7 @@ def test_phench_projects_run_interactive_selection_uses_target_repo_and_ref_choi
         patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
         patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
         patch("thegent.cli.apps.phench.run_target") as mock_run_target,
-        patch("thegent.cli.apps.phench.IntPrompt.ask") as mock_prompt,
+        patch("thegent.cli.apps.phench_projects.IntPrompt.ask") as mock_prompt,
     ):
         mock_list_targets.return_value = ["alpha", "beta"]
         mock_load_target_lock.return_value = lock
