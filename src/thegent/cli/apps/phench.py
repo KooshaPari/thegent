@@ -11,6 +11,7 @@ from thegent.phench import (
     audit_shared_modules,
     bootstrap_target,
     create_target_snapshot,
+    build_project_execution_matrix,
     discover_repos,
     get_env_profile,
     init_target,
@@ -62,6 +63,13 @@ def _run_dispatch(name: str, **kwargs: Any) -> int:
 
 def _run_env_doctor_dispatch(name: str, family: str | None = None) -> dict[str, Any]:
     return run_env_doctor_for_target(name, family=family)
+
+
+def _build_matrix_dispatch(
+    name: str,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    return build_project_execution_matrix(name, **kwargs)
 
 
 def _set_env_profile_dispatch(name: str, profile: str, vars: dict[str, str], family: str | None = None) -> dict[str, Any]:
@@ -157,6 +165,7 @@ register_projects_run(
     lock_target_fn=lambda target_name, family=None: lock_target(target_name, family=family),
     materialize_target_fn=lambda target_name, family=None: materialize_target(target_name, family=family),
     run_target_fn=lambda name, **kwargs: run_target(name, **kwargs),
+    build_matrix_fn=_build_matrix_dispatch,
 )
 
 register_observability_commands(

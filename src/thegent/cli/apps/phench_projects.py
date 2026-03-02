@@ -17,6 +17,7 @@ TargetResolver = Callable[..., list[str]]
 TargetLockLoader = Callable[..., Any]
 TargetTimelineLoader = Callable[..., dict[str, Any]]
 TargetAction = Callable[..., Any]
+ProjectMatrixAction = Callable[..., dict[str, Any]]
 RunAction = Callable[..., int]
 
 
@@ -170,7 +171,7 @@ def _merge_override_maps(
     return {**base_map, **dict(extra)}
 
 
-def _projects_run_impl(
+def _build_projects_plan_kwargs(
     *,
     target: str | None,
     family: str | None,
@@ -186,15 +187,11 @@ def _projects_run_impl(
     execution_mode: str,
     env_profile: str | None,
     no_interactive: bool,
-    no_prepare: bool,
     timeline_limit: int,
     list_targets_fn: TargetResolver,
     load_target_lock_fn: TargetLockLoader,
     target_timeline_fn: TargetTimelineLoader,
-    lock_target_fn: TargetAction,
-    materialize_target_fn: TargetAction,
-    run_target_fn: RunAction,
-) -> None:
+    ) -> tuple[str, dict[str, Any]]:
     if ref is not None and branch is not None:
         raise typer.BadParameter("--ref and --branch are mutually exclusive")
 
@@ -265,10 +262,7 @@ def _projects_run_impl(
     if selected_ref is not None and repo_ref_pairs:
         raise typer.BadParameter("--repo-ref conflicts with --ref/--branch")
 
-    if not no_prepare and snapshot_id is None:
-        lock_target_fn(selected_target, family=family)
-        materialize_target_fn(selected_target, family=family)
-
+    # Caller may prepare target state separately before execution.
     base_run_kwargs = {
         "snapshot_id": snapshot_id,
         "runner": runner,
@@ -307,6 +301,61 @@ def _projects_run_impl(
         base_run_kwargs["execution_mode"] = "serial"
     else:
         base_run_kwargs["repo_id"] = selected_repo_id
+    return selected_target, base_run_kwargs
+
+
+def _projects_run_impl(
+    *,
+    target: str | None,
+    family: str | None,
+    snapshot_id: str | None,
+    repo_id: str | None,
+    runner: str | None,
+    command: str | None,
+    ref: str | None,
+    branch: str | None,
+    module: str | None,
+    repo_refs: list[str] | None,
+    all_repos: bool,
+    execution_mode: str,
+    env_profile: str | None,
+    no_interactive: bool,
+    no_prepare: bool,
+    timeline_limit: int,
+    list_targets_fn: TargetResolver,
+    load_target_lock_fn: TargetLockLoader,
+    target_timeline_fn: TargetTimelineLoader,
+    lock_target_fn: TargetAction,
+    materialize_target_fn: TargetAction,
+    run_target_fn: RunAction,
+) -> None:
+    selected_target, base_run_kwargs = _build_projects_plan_kwargs(
+        target=target,
+        family=family,
+        snapshot_id=snapshot_id,
+        repo_id=repo_id,
+        runner=runner,
+        command=command,
+        ref=ref,
+        branch=branch,
+        module=module,
+        repo_refs=repo_refs,
+        all_repos=all_repos,
+        execution_mode=execution_mode,
+        env_profile=env_profile,
+        no_interactive=no_interactive,
+        timeline_limit=timeline_limit,
+        list_targets_fn=list_targets_fn,
+        load_target_lock_fn=load_target_lock_fn,
+        target_timeline_fn=target_timeline_fn,
+    )
+
+    if not no_prepare and snapshot_id is None:
+        lock_target_fn(selected_target, family=family)
+        materialize_target_fn(selected_target, family=family)
+
+    if snapshot_id is not None:
+        base_run_kwargs["snapshot_id"] = snapshot_id
 
     exit_code = run_target_fn(selected_target, **base_run_kwargs)
     raise typer.Exit(exit_code)
@@ -322,6 +371,7 @@ def register_projects_run(
     lock_target_fn: TargetAction,
     materialize_target_fn: TargetAction,
     run_target_fn: RunAction,
+    build_matrix_fn: ProjectMatrixAction,
 ) -> None:
     if load_target_lock_fn is None:
         load_target_lock_fn = load_target_lock
@@ -356,7 +406,7 @@ def register_projects_run(
             help="Run from a target snapshot instead of current materialized state.",
         ),
         timeline_limit: int = typer.Option(20, "--timeline-limit", help="Number of refs to show for interactive timeline selection."),
-    ) -> None:
+        ) -> None:
         _projects_run_impl(
             target=target,
             family=family,
@@ -381,6 +431,68 @@ def register_projects_run(
             materialize_target_fn=materialize_target_fn,
             run_target_fn=run_target_fn,
         )
+
+    @projects_app.command("matrix", help="Show resolved execution matrix for target/repo execution.")
+    def projects_matrix_cmd(
+        target: str | None = typer.Option(None, "--target", help="Target name to inspect."),
+        family: str | None = typer.Option(None, "--family", help="Optional target family namespace."),
+        repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
+        module: str | None = typer.Option(
+            None,
+            "--module",
+            help="Show module-defined repo subset (thegent/projects/modules/<module>).",
+        ),
+        repo_refs: list[str] | None = typer.Option(
+            None,
+            "--repo-ref",
+            help="Repo/ref override in <repo-id>@<ref> format (repeatable).",
+        ),
+        runner: str | None = typer.Option(None, "--runner", help="Explicit runner override (task|just|make|pnpm|npm|bun)."),
+        command: str | None = typer.Option(None, "--command", help="Explicit command/target name for runner."),
+        ref: str | None = typer.Option(None, "--ref", help="Ref to resolve for this execution (branch/tag/sha)."),
+        branch: str | None = typer.Option(None, "--branch", help="Alias for --ref."),
+        all_repos: bool = typer.Option(False, "--all-repos", help="Include all repos in target lock."),
+        env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
+        no_interactive: bool = typer.Option(False, "--no-interactive", help="Fail if selection would be interactive."),
+        snapshot_id: str | None = typer.Option(
+            None,
+            "--snapshot-id",
+            help="Build matrix from a target snapshot instead of current materialized state.",
+        ),
+        sort_repos: bool = typer.Option(
+            True,
+            "--sort-repos/--no-sort-repos",
+            help="Sort repos in matrix output for deterministic order.",
+        ),
+        timeline_limit: int = typer.Option(20, "--timeline-limit", help="Number of refs to show for interactive timeline selection."),
+    ) -> None:
+        selected_target, base_run_kwargs = _build_projects_plan_kwargs(
+            target=target,
+            family=family,
+            snapshot_id=snapshot_id,
+            repo_id=repo_id,
+            runner=runner,
+            command=command,
+            ref=ref,
+            branch=branch,
+            module=module,
+            repo_refs=repo_refs,
+            all_repos=all_repos,
+            execution_mode="serial",
+            env_profile=env_profile,
+            no_interactive=no_interactive,
+            timeline_limit=timeline_limit,
+            list_targets_fn=list_targets_fn,
+            load_target_lock_fn=load_target_lock_fn,
+            target_timeline_fn=target_timeline_fn,
+        )
+
+        matrix_kwargs = dict(base_run_kwargs)
+        matrix_kwargs.pop("execution_mode", None)
+        matrix_kwargs["non_interactive"] = no_interactive
+        matrix_kwargs["sort_repos"] = sort_repos
+        matrix = build_matrix_fn(selected_target, **matrix_kwargs)
+        console.print_json(data=matrix)
 
     @projects_app.command("status", help="Show lock/runtime state for a target under Phenotype/projects.")
     def projects_status_cmd(
