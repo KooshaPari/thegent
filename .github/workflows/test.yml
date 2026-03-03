@@ -51,7 +51,7 @@ jobs:
         task ci:preflight
       shell: bash
       env:
-        PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src:${{ github.workspace }}/packages/thegent-observability/src:${{ github.workspace }}/packages/thegent-platform/src:${{ github.workspace }}/packages/thegent-bench/src:${{ github.workspace }}/packages/thegent-core/src:${{ github.workspace }}/packages/thegent-routing/src:${{ github.workspace }}/packages/thegent-planning/src:${{ github.workspace }}/packages/thegent-agents/src:${{ github.workspace }}/packages/thegent-execution/src
+        PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src:${{ github.workspace }}/packages/thegent-observability/src:${{ github.workspace }}/packages/thegent-platform/src:${{ github.workspace }}/packages/thegent-bench/src:${{ github.workspace }}/packages/thegent-core/src:${{ github.workspace }}/packages/thegent-routing/src:${{ github.workspace }}/packages/thegent-planning/src:${{ github.workspace }}/packages/thegent-agents/src:${{ github.workspace }}/packages/thegent-execution/src:${{ github.workspace }}/packages/thegent-sync/src:${{ github.workspace }}/packages/thegent-protocols/src
         PYTEST_PR_CHANGED_FILE_LIST: artifacts/pytest/requirements/changed-files.txt
         PR_BASE_REF: ${{ github.base_ref }}
 
@@ -65,7 +65,7 @@ jobs:
         fi
       shell: bash
       env:
-        PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src:${{ github.workspace }}/packages/thegent-observability/src:${{ github.workspace }}/packages/thegent-platform/src:${{ github.workspace }}/packages/thegent-bench/src:${{ github.workspace }}/packages/thegent-core/src:${{ github.workspace }}/packages/thegent-routing/src:${{ github.workspace }}/packages/thegent-planning/src:${{ github.workspace }}/packages/thegent-agents/src:${{ github.workspace }}/packages/thegent-execution/src
+        PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src:${{ github.workspace }}/packages/thegent-observability/src:${{ github.workspace }}/packages/thegent-platform/src:${{ github.workspace }}/packages/thegent-bench/src:${{ github.workspace }}/packages/thegent-core/src:${{ github.workspace }}/packages/thegent-routing/src:${{ github.workspace }}/packages/thegent-planning/src:${{ github.workspace }}/packages/thegent-agents/src:${{ github.workspace }}/packages/thegent-execution/src:${{ github.workspace }}/packages/thegent-sync/src:${{ github.workspace }}/packages/thegent-protocols/src
         PYTEST_PR_CHANGED_FILE_LIST: artifacts/pytest/requirements/changed-files.txt
         PR_BASE_REF: ${{ github.base_ref }}
 
