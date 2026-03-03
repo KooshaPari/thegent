@@ -4,6 +4,7 @@
 - [done] feat(thegent): add projects modules command and manifest listing (`018c148c3`)
 - [done] feat(phench): expose runtime module discovery helper (`8a0cf4bbe`)
 - [done] chore(phench): sync audit metadata and module source roots (`e692ba7e5`)
+- [done] chore(phench): make missing module manifest schema defaults migration-compatible
 
 ## Phases
 
@@ -15,7 +16,7 @@
 
 ### Phase 2: Multi-repo topology and governance
 - [done] Generate reusable-module and audit snapshots and extend `tach.toml` source roots.
-- [todo] Build cross-repo sweep task (excluding `4sgm`, `trace`, `parpour`, `civ`) to identify additional split candidates.
+- [done] Build cross-repo sweep task (excluding `4sgm`, `trace`, `parpour`, `civ`) to identify additional split candidates.
 - [todo] Create shared module registry with explicit ownership and refresh cadence.
 
 ### Phase 3: Worktree-first implementation model
