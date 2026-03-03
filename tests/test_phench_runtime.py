@@ -9,6 +9,7 @@ import pytest
 from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
+    audit_shared_modules_across_repos,
     create_target_snapshot,
     bootstrap_target,
     load_module_manifest,
@@ -30,6 +31,7 @@ from thegent.phench.service import (
     target_status,
     set_env_profile,
     sync_target,
+    sync_project_modules_from_repos,
 )
 from thegent.phench.models import RunnerCatalog, RunnerCommand
 from thegent.phench.store import read_dual
@@ -68,6 +70,11 @@ def _init_git_repo_with_pkg(path: Path, pkg_name: str) -> None:
     (path / "README.md").write_text("hello\n", encoding="utf-8")
     _run(["git", "add", "."], cwd=path)
     _run(["git", "commit", "-m", "init"], cwd=path)
+
+
+def _init_fake_repo(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    (path / ".git").mkdir()
 
 
 def test_lock_and_materialize_with_dual_write(tmp_path: Path, monkeypatch) -> None:
@@ -191,6 +198,180 @@ def test_list_modules_missing_root_returns_empty(tmp_path: Path, monkeypatch) ->
     phenotype_root = tmp_path / "Phenotype"
     monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
     assert list_modules() == []
+
+
+def test_audit_shared_modules_across_repos_excludes_default_repos_and_reports_shared_candidates(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    excluded = repos_root / "4sgm"
+    legacy = repos_root / "repo-legacy"
+    for candidate in [alpha, beta, excluded, legacy]:
+        _init_fake_repo(candidate)
+
+    (alpha / "src" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "src" / "thegent-app" / "__init__.py").write_text("", encoding="utf-8")
+    (alpha / "src" / "thegent-mcp").mkdir(parents=True, exist_ok=True)
+    (alpha / "src" / "thegent-mcp" / "__init__.py").write_text("", encoding="utf-8")
+    (alpha / "modules" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "platform-core" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1}),
+        encoding="utf-8",
+    )
+
+    (beta / "src" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "src" / "thegent-app" / "__init__.py").write_text("", encoding="utf-8")
+    (beta / "modules" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "platform-core" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1}),
+        encoding="utf-8",
+    )
+
+    (excluded / "src" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (excluded / "src" / "platform-core" / "__init__.py").write_text("", encoding="utf-8")
+    (excluded / "modules" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (excluded / "modules" / "platform-core" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1}),
+        encoding="utf-8",
+    )
+
+    (legacy / "src" / "thegent-mcp").mkdir(parents=True, exist_ok=True)
+    (legacy / "src" / "thegent-mcp" / "__init__.py").write_text("", encoding="utf-8")
+
+    result = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_repo_modules_root=True,
+    )
+    assert result["shared_module_count"] == 1
+    assert result["module_count"] == 3
+    assert result["shared_modules"] == {"platform-core": ["repo-alpha", "repo-beta"]}
+    assert "4sgm" in result["excluded_repos"]
+
+
+def test_audit_shared_modules_across_repos_respects_filters_and_min_repo_count(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    gamma = repos_root / "repo-gamma"
+    for candidate in [alpha, beta, gamma]:
+        _init_fake_repo(candidate)
+
+    for repo in [alpha, beta]:
+        (repo / "src" / "module-a").mkdir(parents=True, exist_ok=True)
+        (repo / "src" / "module-a" / "__init__.py").write_text("", encoding="utf-8")
+
+    (gamma / "src" / "module-a").mkdir(parents=True, exist_ok=True)
+    (gamma / "src" / "module-a" / "__init__.py").write_text("", encoding="utf-8")
+    (gamma / "src" / "module-b").mkdir(parents=True, exist_ok=True)
+    (gamma / "src" / "module-b" / "__init__.py").write_text("", encoding="utf-8")
+
+    shared_two = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_modules=["module-a"],
+        min_repo_count=2,
+        include_repo_modules_root=False,
+    )
+    assert shared_two["shared_modules"] == {"module-a": ["repo-alpha", "repo-beta", "repo-gamma"]}
+    assert shared_two["moduleization_candidates"] == []
+
+    filtered = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_modules=["module-a"],
+        exclude_modules=["module-a"],
+        min_repo_count=2,
+        include_repo_modules_root=False,
+    )
+    assert filtered["shared_modules"] == {}
+
+
+def test_sync_project_modules_from_repos_dry_run_respects_default_excludes_and_module_filter(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    excluded = repos_root / "trace"
+    for candidate in [alpha, beta, excluded]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (alpha / "modules" / "thegent-core").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-core" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-beta"]}),
+        encoding="utf-8",
+    )
+    (excluded / "modules" / "trace-module").mkdir(parents=True, exist_ok=True)
+    (excluded / "modules" / "trace-module" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["trace"]}),
+        encoding="utf-8",
+    )
+
+    result = sync_project_modules_from_repos(
+        source_root=repos_root,
+        include_modules=["thegent-app", "thegent-core"],
+        dry_run=True,
+    )
+    assert result["dry_run"] is True
+    assert result["created"] == ["thegent-app", "thegent-core"]
+    assert result["updated"] == []
+    assert result["skipped"] == []
+    assert "trace-module" not in result["discovered_modules"]
+
+
+def test_sync_project_modules_from_repos_conflict_and_overwrite_controls_updates(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    destination_root = tmp_path / "Phenotype" / "projects" / "modules"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    for candidate in [alpha, beta]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-beta"]}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="conflicting manifests for module 'thegent-app'"):
+        sync_project_modules_from_repos(
+            source_root=repos_root,
+            destination_root=destination_root,
+            include_modules=["thegent-app"],
+        )
+
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha", "repo-beta"]}),
+        encoding="utf-8",
+    )
+    sync_result = sync_project_modules_from_repos(
+        source_root=repos_root,
+        destination_root=destination_root,
+        include_modules=["thegent-app"],
+    )
+    assert sync_result["created"] == ["thegent-app"]
+    assert sync_result["updated"] == []
+    assert sync_result["skipped"] == []
+
+    overwrite_result = sync_project_modules_from_repos(
+        source_root=repos_root,
+        destination_root=destination_root,
+        include_modules=["thegent-app"],
+        overwrite=True,
+    )
+    assert overwrite_result["updated"] == ["thegent-app"]
+    assert overwrite_result["created"] == []
 
 
 def test_invalid_target_name_rejected(tmp_path: Path, monkeypatch) -> None:

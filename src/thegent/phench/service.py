@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import UTC, datetime
 import hashlib
 import json
+import os
 import secrets
 import re
 from typing import Any
@@ -47,6 +48,62 @@ DEFAULT_MODULE_REFRESH_CADENCE = "never"
 _REFRESH_CADENCE_RE = re.compile(
     r"^(never|manual|daily|weekly|monthly|yearly|hourly|every-\d+[smhdwy])$"
 )
+DEFAULT_SHARED_MODULE_REPO_EXCLUDE = {"4sgm", "trace", "parpour", "civ"}
+
+
+def _manifest_payload_repo_ids(payload: Any) -> list[str] | None:
+    if not isinstance(payload, dict):
+        return None
+
+    raw_ids = payload.get("repo_ids")
+    if not isinstance(raw_ids, list):
+        return None
+
+    repo_ids: list[str] = []
+    for value in raw_ids:
+        if not isinstance(value, str):
+            return None
+        repo_ids.append(value)
+    return repo_ids
+
+
+def _compatible_module_manifest(existing_payload: Any, next_payload: Any) -> bool:
+    if existing_payload == next_payload:
+        return True
+
+    existing_ids = _manifest_payload_repo_ids(existing_payload)
+    next_ids = _manifest_payload_repo_ids(next_payload)
+    if existing_ids is None or next_ids is None:
+        return False
+
+    existing_core = dict(existing_payload)
+    next_core = dict(next_payload)
+    existing_core.pop("repo_ids", None)
+    next_core.pop("repo_ids", None)
+    if existing_core != next_core:
+        return False
+
+    return set(existing_ids).issubset(next_ids) or set(next_ids).issubset(existing_ids)
+
+
+def _normalize_name_list(values: list[str] | None) -> list[str]:
+    if values is None:
+        return []
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        name = value.strip()
+        if not name:
+            continue
+        if name in seen:
+            continue
+        seen.add(name)
+        normalized.append(name)
+    return normalized
+
+
+def _normalize_name_set(values: list[str] | None) -> set[str]:
+    return set(_normalize_name_list(values))
 
 
 def _resolve_module_manifest_path(module: str) -> Path:
@@ -547,6 +604,228 @@ def audit_shared_modules(target: str, family: str | None = None) -> dict[str, An
         "shared_modules": shared,
         "repo_count": len(lock.repos),
         "module_count": len(module_map),
+    }
+
+
+def audit_shared_modules_across_repos(
+    *,
+    source_root: Path | None = None,
+    include_repos: list[str] | None = None,
+    exclude_repos: list[str] | None = None,
+    min_repo_count: int = 2,
+    exclude_modules: list[str] | None = None,
+    include_modules: list[str] | None = None,
+    include_repo_modules_root: bool = True,
+    skip_repos: list[str] | None = None,
+) -> dict[str, Any]:
+    source = source_root or phenotype_repos_root()
+    include_specs = _normalize_name_list(include_repos)
+    exclude_specs = _normalize_name_set(exclude_repos)
+    additional_excludes = _normalize_name_set(skip_repos)
+    effective_excludes = sorted(exclude_specs | DEFAULT_SHARED_MODULE_REPO_EXCLUDE | additional_excludes)
+    excluded_modules = _normalize_name_set(exclude_modules)
+    included_modules = _normalize_name_set(include_modules)
+
+    candidates = discover_local_git_repos(
+        root=source,
+        include=include_specs or None,
+        exclude=effective_excludes or None,
+    )
+
+    repo_paths: list[tuple[str, Path]] = []
+    for candidate in candidates:
+        if candidate.repo_id in additional_excludes:
+            continue
+        repo_paths.append((candidate.repo_id, candidate.path))
+
+    discovered_module_map: dict[str, set[str]] = {}
+    shared_candidate_module_map: dict[str, set[str]] = {}
+    for repo_id, repo_path in repo_paths:
+        src_root = repo_path / "src"
+        if src_root.exists() and src_root.is_dir():
+            for child in src_root.iterdir():
+                if not child.is_dir():
+                    continue
+                if not (child / "__init__.py").exists():
+                    continue
+                module = child.name
+                if included_modules and module not in included_modules:
+                    continue
+                if module in excluded_modules:
+                    continue
+                discovered_module_map.setdefault(module, set()).add(repo_id)
+
+        if include_repo_modules_root:
+            modules_root = repo_path / "modules"
+            if not (modules_root.exists() and modules_root.is_dir()):
+                continue
+            for child in modules_root.iterdir():
+                if not child.is_dir() or not (child / "manifest.json").is_file():
+                    continue
+                module = child.name
+                if included_modules and module not in included_modules:
+                    continue
+                if module in excluded_modules:
+                    continue
+                shared_candidate_module_map.setdefault(module, set()).add(repo_id)
+
+    shared_modules = {
+        module: sorted(repos)
+        for module, repos in (
+            shared_candidate_module_map if include_repo_modules_root else discovered_module_map
+        ).items()
+        if len(repos) >= max(min_repo_count, 2)
+    }
+
+    discovered_modules = {module: set(repos) for module, repos in discovered_module_map.items()}
+    if include_repo_modules_root:
+        for module, repos in shared_candidate_module_map.items():
+            discovered_modules.setdefault(module, set()).update(repos)
+        discovered_modules = {module: sorted(repos) for module, repos in discovered_modules.items()}
+    existing = set(list_modules())
+    candidate_modules = sorted(
+        module for module, repos in shared_modules.items() if include_repo_modules_root and module not in existing
+    )
+
+    return {
+        "source_root": str(source),
+        "repo_count": len(repo_paths),
+        "module_count": len(discovered_modules),
+        "shared_modules": shared_modules,
+        "shared_module_count": len(shared_modules),
+        "moduleization_candidates": candidate_modules,
+        "excluded_repos": effective_excludes,
+        "excluded_modules": sorted(excluded_modules),
+        "module_repo_map": discovered_modules,
+        "include_repo_modules_root": bool(include_repo_modules_root),
+    }
+
+
+def sync_project_modules_from_repos(
+    *,
+    source_root: Path | None = None,
+    destination_root: Path | None = None,
+    include_repos: list[str] | None = None,
+    exclude_repos: list[str] | None = None,
+    include_modules: list[str] | None = None,
+    exclude_modules: list[str] | None = None,
+    overwrite: bool = False,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    source = source_root or phenotype_repos_root()
+    destination = destination_root or projects_modules_root()
+    destination = destination_root
+    if destination is None:
+        candidate = source.parent / "projects" / "modules" if source_root is not None else None
+        if (
+            os.environ.get("THGENT_PHENOTYPE_ROOT") is None
+            and candidate is not None
+            and candidate.as_posix()
+            != projects_modules_root().as_posix()
+        ):
+            destination = candidate
+        else:
+            destination = projects_modules_root()
+    include_specs = _normalize_name_list(include_repos)
+    exclude_specs = _normalize_name_set(exclude_repos)
+    effective_excludes = sorted(exclude_specs | DEFAULT_SHARED_MODULE_REPO_EXCLUDE)
+    included_modules = _normalize_name_set(include_modules)
+    excluded_modules = _normalize_name_set(exclude_modules)
+
+    discovered_repos = discover_local_git_repos(
+        root=source,
+        include=include_specs or None,
+        exclude=effective_excludes or None,
+    )
+
+    discovered: dict[str, Path] = {}
+    discovered_from: dict[str, str] = {}
+    for repo_candidate in discovered_repos:
+        modules_root = repo_candidate.path / "modules"
+        if not modules_root.exists() or not modules_root.is_dir():
+            continue
+        for entry in modules_root.iterdir():
+            if not entry.is_dir():
+                continue
+            module_name = entry.name
+            if included_modules and module_name not in included_modules:
+                continue
+            if module_name in excluded_modules:
+                continue
+            manifest = entry / "manifest.json"
+            if not manifest.is_file():
+                continue
+            payload = manifest.read_text(encoding="utf-8")
+            try:
+                parsed = json.loads(payload)
+            except Exception as exc:  # noqa: BLE001
+                raise ValueError(f"invalid module manifest in {repo_candidate.repo_id}: {entry.name}") from exc
+
+            if not isinstance(parsed, dict):
+                raise ValueError(
+                    f"invalid module manifest in {repo_candidate.repo_id}: {entry.name} payload must be an object"
+                )
+
+            existing_repo = discovered.get(module_name)
+            if existing_repo is not None:
+                with open(existing_repo, encoding="utf-8") as existing_stream:
+                    existing_payload = json.load(existing_stream)
+                if _compatible_module_manifest(existing_payload, parsed):
+                    if set(_manifest_payload_repo_ids(existing_payload) or []) < set(
+                        _manifest_payload_repo_ids(parsed) or []
+                    ):
+                        discovered[module_name] = manifest
+                        discovered_from[module_name] = repo_candidate.repo_id
+                    continue
+                if not dry_run:
+                    raise ValueError(
+                        f"conflicting manifests for module '{module_name}': "
+                        f"{discovered_from[module_name]} and {repo_candidate.repo_id}"
+                    )
+                continue
+
+            discovered[module_name] = manifest
+            discovered_from[module_name] = repo_candidate.repo_id
+
+    created: list[str] = []
+    updated: list[str] = []
+    skipped: list[str] = []
+
+    for module_name, manifest in sorted(discovered.items()):
+        destination_dir = destination / module_name
+        destination_manifest = destination_dir / "manifest.json"
+        payload_text = manifest.read_text(encoding="utf-8")
+        if destination_manifest.exists() and not overwrite:
+            skipped.append(module_name)
+            continue
+        if dry_run:
+            if destination_manifest.exists():
+                updated.append(module_name)
+            else:
+                created.append(module_name)
+            continue
+
+        destination_dir.mkdir(parents=True, exist_ok=True)
+        parsed = json.loads(payload_text)
+        is_new = not destination_manifest.exists()
+        destination_manifest.write_text(
+            json.dumps(parsed, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        if is_new:
+            created.append(module_name)
+        else:
+            updated.append(module_name)
+
+    return {
+        "source_root": str(source),
+        "destination_root": str(destination),
+        "discovered_modules": sorted(discovered),
+        "created": sorted(created),
+        "updated": sorted(updated),
+        "skipped": sorted(skipped),
+        "dry_run": dry_run,
+        "overwrite": overwrite,
     }
 
 

@@ -564,6 +564,105 @@ def test_phench_target_bootstrap_routes_to_service() -> None:
     )
 
 
+def test_phench_modules_audit_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.audit_shared_modules_across_repos") as mock_audit:
+        mock_audit.return_value = {
+            "source_root": "/tmp/repos",
+            "repo_count": 1,
+            "module_count": 1,
+            "shared_modules": {},
+            "shared_module_count": 0,
+            "moduleization_candidates": [],
+            "module_repo_map": {},
+            "excluded_repos": ["tmp"],
+            "excluded_modules": [],
+            "include_repo_modules_root": True,
+        }
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "modules",
+                "audit",
+                "--source-root",
+                "/tmp/repos",
+                "--include-repo",
+                "repo-a",
+                "--exclude-repo",
+                "repo-b",
+                "--skip-repo",
+                "repo-skip",
+                "--min-repo-count",
+                "3",
+                "--include-module",
+                "thegent-app",
+                "--exclude-module",
+                "legacy",
+                "--no-include-repo-modules-root",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_audit.assert_called_once_with(
+        source_root=Path("/tmp/repos"),
+        include_repos=["repo-a"],
+        exclude_repos=["repo-b"],
+        min_repo_count=3,
+        include_modules=["thegent-app"],
+        exclude_modules=["legacy"],
+        include_repo_modules_root=False,
+        skip_repos=["repo-skip"],
+    )
+
+
+def test_phench_modules_sync_routes_to_service() -> None:
+    with patch("thegent.cli.apps.phench.sync_project_modules_from_repos") as mock_sync:
+        mock_sync.return_value = {
+            "created": ["thegent-app"],
+            "updated": [],
+            "skipped": [],
+            "discovered_modules": ["thegent-app"],
+            "source_root": "/tmp/repos",
+            "destination_root": "/tmp/dest",
+            "dry_run": True,
+            "overwrite": False,
+        }
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "modules",
+                "sync",
+                "--source-root",
+                "/tmp/repos",
+                "--destination-root",
+                "/tmp/dest",
+                "--include-repo",
+                "repo-a",
+                "--exclude-repo",
+                "repo-b",
+                "--include-module",
+                "thegent-app",
+                "--exclude-module",
+                "legacy",
+                "--overwrite",
+                "--dry-run",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_sync.assert_called_once_with(
+        source_root=Path("/tmp/repos"),
+        destination_root=Path("/tmp/dest"),
+        include_repos=["repo-a"],
+        exclude_repos=["repo-b"],
+        include_modules=["thegent-app"],
+        exclude_modules=["legacy"],
+        overwrite=True,
+        dry_run=True,
+    )
+
+
 def test_phench_target_import_repos_routes_to_service() -> None:
     with patch("thegent.cli.apps.phench.import_repos") as mock_import_repos:
         mock_import_repos.return_value = SimpleNamespace(
