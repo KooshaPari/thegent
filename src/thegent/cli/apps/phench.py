@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from pathlib import Path
 
 import orjson as json
 import typer
@@ -11,9 +12,13 @@ from rich.prompt import IntPrompt
 
 from thegent.phench import (
     add_repo,
+    add_module_to_target,
     audit_shared_modules,
+    build_scan_candidates,
+    scan_shared_modules_across_repos,
     get_env_profile,
     init_target,
+    materialize_module_candidate_manifest,
     list_targets,
     lock_target,
     materialize_target,
@@ -58,6 +63,31 @@ def target_add_repo_cmd(
             {
                 "target": lock.target_name,
                 "repos": [repo.repo_id for repo in lock.repos],
+                "lock_hash": lock.lock_hash,
+        }
+    ).decode()
+)
+
+
+@target_app.command("add-module", help="Add module-selected repos to a target.")
+def target_add_module_cmd(
+    name: str = typer.Argument(..., help="Target name."),
+    module: str = typer.Option(..., "--module", "--mod", help="Module name under Phenotype/projects/modules."),
+    selected_ref: str | None = typer.Option(None, "--ref", help="Override selected ref for all module repos."),
+    exclude: list[str] = typer.Option([], "--exclude", help="Exact repo IDs to exclude (no glob patterns)."),
+) -> None:
+    lock = add_module_to_target(
+        name,
+        module_name=module,
+        selected_ref=selected_ref,
+        exclude_repos={value.strip() for value in exclude if value.strip()},
+    )
+    console.print_json(
+        json.dumps(
+            {
+                "target": lock.target_name,
+                "module": module,
+                "repos": [entry.repo_id for entry in lock.repos if entry.module_name == module],
                 "lock_hash": lock.lock_hash,
             }
         ).decode()
@@ -185,6 +215,120 @@ def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
 def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
     state = audit_shared_modules(name)
     console.print_json(json.dumps(state).decode())
+
+
+@app.command("scan-shared-repos", help="Audit shared modules across repos in a phenotype workspace.")
+def scan_shared_repos_cmd(
+    repos_root: str | None = typer.Option(
+        None,
+        "--repos-root",
+        help="Path to the repos workspace. Defaults to $THGENT_PHENOTYPE_ROOT/repos.",
+    ),
+    repos_root_mode: str = typer.Option(
+        "repos",
+        "--repos-root-mode",
+        help="Select repository selection mode: repos (default) or worktrees.",
+    ),
+    exclude: list[str] = typer.Option(
+        [],
+        "--exclude",
+        help="Exact repo IDs to exclude from scan (can be repeated).",
+    ),
+    min_repo_count: int = typer.Option(
+        2,
+        "--min-repos",
+        help="Report modules seen in at least this many repos.",
+    ),
+    candidate_name_regex: str | None = typer.Option(
+        None,
+        "--candidate-name-regex",
+        help="Optional regex filter for module candidates (applies when candidates are included).",
+    ),
+    omit_candidates: bool = typer.Option(
+        False,
+        "--omit-candidates",
+        help="Omit module_candidates for faster scans when only recommendations are needed.",
+    ),
+) -> None:
+    if min_repo_count < 2:
+        raise typer.BadParameter("min-repos must be >= 2")
+    if repos_root_mode not in {"repos", "worktrees"}:
+        raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
+
+    try:
+        state = scan_shared_modules_across_repos(
+            repos_root=None if repos_root is None else Path(repos_root),
+            exclude_repos={value.strip() for value in exclude},
+            min_repo_count=min_repo_count,
+            repos_root_mode=repos_root_mode,
+            candidate_name_regex=candidate_name_regex,
+            omit_candidates=omit_candidates,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc))
+    console.print_json(json.dumps(state).decode())
+
+
+@app.command("materialize-module-manifest", help="Materialize a shared-module manifest candidate from scan output.")
+def materialize_module_manifest_cmd(
+    module: str = typer.Option(..., "--module", help="Shared module name from scan results."),
+    repos_root: str | None = typer.Option(
+        None,
+        "--repos-root",
+        help="Path to the repos workspace. Defaults to $THGENT_PHENOTYPE_ROOT/repos.",
+    ),
+    repos_root_mode: str = typer.Option(
+        "repos",
+        "--repos-root-mode",
+        help="Select repository selection mode: repos (default) or worktrees.",
+    ),
+    repos: list[str] = typer.Option(
+        [],
+        "--repo",
+        help="Optional explicit repo IDs to pin candidate generation.",
+    ),
+    min_count: int = typer.Option(
+        2,
+        "--min-count",
+        help="Minimum overlap threshold for shared-module candidates.",
+    ),
+    output_dir: str | None = typer.Option(
+        None,
+        "--output-dir",
+        help="Directory to persist generated manifest. Defaults to $THGENT_PHENOTYPE_ROOT/projects/modules.",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print candidate manifest without writing files."),
+    print_snippets: bool = typer.Option(
+        False,
+        "--print-snippets",
+        "--print-target-snippets",
+        help="Include shell snippets for creating a module target.",
+    ),
+) -> None:
+    if min_count < 2:
+        raise typer.BadParameter("min-count must be >= 2")
+    if repos_root_mode not in {"repos", "worktrees"}:
+        raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
+
+    try:
+        payload = materialize_module_candidate_manifest(
+            module,
+            repos_root=None if repos_root is None else Path(repos_root),
+            repos_root_mode=repos_root_mode,
+            repos=[value.strip() for value in repos if value.strip()],
+            min_repo_count=min_count,
+            output_dir=None if output_dir is None else Path(output_dir),
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc))
+
+    if print_snippets:
+        payload["shell_snippets"] = [
+            f"thegent phench target init {payload['module_name']} --mode stack",
+            f"thegent phench target add-module {payload['module_name']} --module {payload['module_name']}",
+        ]
+    console.print_json(json.dumps(payload).decode())
 
 
 @app.command("tui", help="Interactive selector: target -> timeline -> run.")
