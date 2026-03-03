@@ -18,6 +18,21 @@ def projects_root() -> Path:
     return phenotype_root() / "projects"
 
 
+def module_manifests_root() -> Path:
+    return projects_root() / "modules"
+
+
+def module_manifest_path(module_name: str) -> Path:
+    return module_manifests_root() / module_name / "manifest.json"
+
+
+def repository_root_candidates() -> list[Path]:
+    base = phenotype_root() / "repos"
+    if not base.exists():
+        return []
+    return sorted([path for path in base.iterdir() if path.is_dir() and not path.name.startswith(".")])
+
+
 def home_mirror_root() -> Path:
     configured = os.environ.get("THGENT_PHENCH_HOME_ROOT")
     if configured:
