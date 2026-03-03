@@ -81,25 +81,25 @@
 
 | Phase | Lane | Task ID | [status] | Description | Depends On |
 |---|---|---|---|---|---|
-| Discovery | S7 | P49 | [todo] | Add recommendation ranking by dependency risk (`depends-on` count) in `scan-shared-repos` payload metadata. | P48 |
-| Discovery | S7 | P50 | [todo] | Add optional output field `root_mode_hint` showing repos-root-mode normalization details. | P49 |
-| Discovery | S7 | P51 | [todo] | Add repository-path provenance for each repo in scan payload (`repo_path` optional, redacted when needed). | P50 |
-| Discovery | S7 | P52 | [todo] | Add explicit warning in docs when scan is run outside `THGENT_PHENOTYPE_ROOT/repos`. | P51 |
+| Discovery | S7 | P49 | [done] | Add recommendation ranking by dependency risk (`depends-on` count) in `scan-shared-repos` payload metadata. | P48 |
+| Discovery | S7 | P50 | [done] | Add optional output field `root_mode_hint` showing repos-root-mode normalization details. | P49 |
+| Discovery | S7 | P51 | [done] | Add repository-path provenance for each repo in scan payload (`repo_path` optional, redacted when needed). | P50 |
+| Discovery | S7 | P52 | [done] | Add explicit warning in docs when scan is run outside `THGENT_PHENOTYPE_ROOT/repos`. | P51 |
 | Design | S8 | P53 | [todo] | Publish adoption policy matrix mapping module candidates to ADR decision classes (stable/experimental/blocked). | P32 |
 | Design | S8 | P54 | [todo] | Define repository safety allow-list for sensitive modules before auto-manifest generation. | P53 |
 | Design | S8 | P55 | [todo] | Define explicit module naming conflict resolution policy when candidate names collide under prefixes. | P54 |
 | Design | S8 | P56 | [todo] | Publish manual override policy for excluding repos from generated manifests post-creation. | P55 |
 | Build | S9 | P57 | [todo] | Add manifest-generation dry-run diff view with previous/indexed manifest snapshot comparison. | P56 |
-| Build | S9 | P58 | [todo] | Add `materialize-module-manifest` flag to print recommended follow-up `target` commands only (`--print-target-snippets`). | P57 |
-| Build | S9 | P59 | [todo] | Add `scan-shared-repos` output option to omit candidate list for performance when only counts are needed. | P58 |
-| Build | S9 | P60 | [todo] | Add support for filtering candidates by exact module name regex in `--candidates` mode. | P59 |
-| Build | S10 | P61 | [todo] | Add audit logging for materialized manifest creation and update-index writes. | P60 |
-| Build | S10 | P62 | [todo] | Add conflict-safe manifest path rewrite when module-name truncation causes collisions. | P61 |
-| Build | S10 | P63 | [todo] | Add test fixture for collision handling and truncation suffix behavior. | P62 |
-| Build | S10 | P64 | [todo] | Expose collection of generated manifest paths in a machine-readable index summary file. | P63 |
-| Validate | S11 | P65 | [todo] | Add CLI tests for `materialize-module-manifest --print-snippets` in both CLI surfaces. | P64 |
+| Build | S9 | P58 | [done] | Add `materialize-module-manifest` flag to print recommended follow-up `target` commands only (`--print-target-snippets`). | P57 |
+| Build | S9 | P59 | [done] | Add `scan-shared-repos` output option to omit candidate list for performance when only counts are needed. | P58 |
+| Build | S9 | P60 | [done] | Add support for filtering candidates by exact module name regex in `--candidates` mode. | P59 |
+| Build | S10 | P61 | [done] | Add audit logging for materialized manifest creation and update-index writes. | P60 |
+| Build | S10 | P62 | [done] | Add conflict-safe manifest path rewrite when module-name truncation causes collisions. | P61 |
+| Build | S10 | P63 | [done] | Add test fixture for collision handling and truncation suffix behavior. | P62 |
+| Build | S10 | P64 | [done] | Expose collection of generated manifest paths in a machine-readable index summary file. | P63 |
+| Validate | S11 | P65 | [done] | Add CLI tests for `materialize-module-manifest --print-snippets` in both CLI surfaces. | P64 |
 | Validate | S11 | P66 | [todo] | Add lint/traceability tests for ADR-018 and scan-shared payload contract references. | P65 |
-| Validate | S11 | P67 | [todo] | Add CLI regression test for `repos-root-mode worktrees` with nested `src` layout. | P66 |
+| Validate | S11 | P67 | [done] | Add CLI regression test for `repos-root-mode worktrees` with nested `src` layout. | P66 |
 | Validate | S11 | P68 | [todo] | Add snapshot tests for `Phenotype/projects/README.md` command examples against canonical output formats. | P67 |
 | Deploy | S12 | P69 | [todo] | Update runbooks to include shared-module adoption sequence per domain (`thegent-*`, `thegent-app`, `thegent-execution`). | P68 |
 | Deploy | S12 | P70 | [todo] | Add governance gate for module adoption using tracker flags before wide rollout. | P69 |

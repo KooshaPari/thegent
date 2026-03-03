@@ -14,6 +14,7 @@
 ## Safety and Dry-Run Guidance
 
 - `scan-shared-repos` uses default excludes (`4sgm`, `parpour`, `civ`, `trace`) unless explicitly overridden.
+- When `--repos-root` points outside `$THGENT_PHENOTYPE_ROOT`, scan path provenance is still reported but includes an explicit warning in `warnings`.
 - Use `materialize-module-manifest --dry-run` to validate generated manifest paths and payloads before writing files.
 - Keep `--min-repos`/`--min-count` explicitly at or above `2`.
 - Use `--print-snippets` to print reproducible commands for creating a stack target.
