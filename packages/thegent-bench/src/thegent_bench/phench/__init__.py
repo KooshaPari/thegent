@@ -2,6 +2,7 @@
 
 from .service import (
     add_repo,
+    add_module_to_target,
     audit_shared_modules,
     build_catalog,
     get_env_profile,
@@ -20,6 +21,7 @@ from .service import (
 
 __all__ = [
     "add_repo",
+    "add_module_to_target",
     "audit_shared_modules",
     "build_catalog",
     "get_env_profile",

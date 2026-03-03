@@ -4,6 +4,7 @@ import hashlib
 import json
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
@@ -15,8 +16,14 @@ from .git_ops import (
     resolve_ref_to_sha,
     sanitize_repo_id,
 )
-from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
-from .paths import projects_root, target_repos_root, target_root
+from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
+from .paths import (
+    module_manifest_path,
+    projects_root,
+    repository_root_candidates,
+    target_repos_root,
+    target_root,
+)
 from .runner import build_runner_catalog, pick_command_interactive, run_command
 from .store import dual_write, read_dual, sync_dual, utc_now_iso
 
@@ -25,6 +32,7 @@ RUNTIME_FILE = "runtime.json"
 ENV_FILE = "env.snapshot.json"
 RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
+DEFAULT_EXCLUDED_REPOS = frozenset({"4sgm", "parpour", "civ", "trace"})
 
 
 def _parse_lock(payload: dict[str, Any]) -> TargetLock:
@@ -44,6 +52,102 @@ def _lock_hash(lock: TargetLock) -> str:
     payload["lock_hash"] = ""
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _load_json_file(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        raise ValueError(f"manifest not found: {path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"invalid JSON in manifest: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"manifest payload must be a JSON object: {path}")
+    return payload
+
+
+def _load_module_manifest(module_name: str) -> ModuleManifest:
+    payload = _load_json_file(module_manifest_path(module_name))
+    schema_version = int(payload.get("schema_version", 1))
+    raw_patterns = payload.get("repo_patterns")
+    if raw_patterns is None:
+        repo_patterns = ["*"]
+    elif isinstance(raw_patterns, list) and all(isinstance(item, str) for item in raw_patterns):
+        repo_patterns = raw_patterns
+    else:
+        raise ValueError(f"invalid repo_patterns in manifest: {module_name}")
+
+    def _load_str_dict(key: str) -> dict[str, str]:
+        raw_value = payload.get(key)
+        if raw_value is None:
+            return {}
+        if not isinstance(raw_value, dict):
+            raise ValueError(f"invalid {key} in manifest: {module_name}")
+        converted: dict[str, str] = {}
+        for item_key, value in raw_value.items():
+            if not isinstance(item_key, str) or not isinstance(value, str):
+                raise ValueError(f"invalid {key} entry in manifest: {module_name}")
+            converted[item_key] = value
+        return converted
+
+    return ModuleManifest(
+        schema_version=schema_version,
+        repo_patterns=repo_patterns,
+        default_ref=str(payload.get("default_ref", "HEAD")),
+        repo_ref_overrides=_load_str_dict("repo_ref_overrides"),
+        repo_runner_overrides=_load_str_dict("repo_runner_overrides"),
+        repo_command_overrides=_load_str_dict("repo_command_overrides"),
+        repo_env_profile_overrides=_load_str_dict("repo_env_profile_overrides"),
+    )
+
+
+def _repo_id_from_path(repo_path: Path) -> str:
+    return sanitize_repo_id(repo_path.name)
+
+
+def _select_module_repos(
+    manifest: ModuleManifest,
+    exclude_repos: set[str] | None = None,
+) -> list[Path]:
+    excluded = {sanitize_repo_id(repo_name) for repo_name in (exclude_repos or set())}
+    selected: list[Path] = []
+    for repo_path in repository_root_candidates():
+        repo_id = _repo_id_from_path(repo_path)
+        if repo_id in DEFAULT_EXCLUDED_REPOS or repo_id in excluded:
+            continue
+        if not any(fnmatch(repo_id, pattern) for pattern in manifest.repo_patterns):
+            continue
+        selected.append(repo_path)
+    return selected
+
+
+def _append_repo_selection(
+    lock: TargetLock,
+    repo_path: Path,
+    selected_ref: str,
+    *,
+    module_name: str | None = None,
+    selected_runner: str | None = None,
+    selected_command: str | None = None,
+    selected_env_profile: str | None = None,
+    repo_id: str | None = None,
+    worktree_path: str | None = None,
+) -> None:
+    rid = repo_id or _repo_id_from_path(repo_path)
+    lock.repos = [entry for entry in lock.repos if entry.repo_id != rid]
+    lock.repos.append(
+        RepoSelection(
+            repo_id=rid,
+            repo_path=str(repo_path.resolve()),
+            selected_ref=selected_ref,
+            module_name=module_name,
+            selected_runner=selected_runner,
+            selected_command=selected_command,
+            selected_env_profile=selected_env_profile,
+            source_worktree_path=worktree_path,
+            resolved_sha=None,
+        )
+    )
 
 
 def init_target(target: str, mode: TargetMode) -> TargetLock:
@@ -69,23 +173,70 @@ def load_target_lock(target: str) -> TargetLock:
     return _parse_lock(payload)
 
 
-def add_repo(target: str, repo_path: str, selected_ref: str, repo_id: str | None = None, worktree_path: str | None = None) -> TargetLock:
+def add_repo(
+    target: str,
+    repo_path: str,
+    selected_ref: str,
+    repo_id: str | None = None,
+    worktree_path: str | None = None,
+    module_name: str | None = None,
+    selected_runner: str | None = None,
+    selected_command: str | None = None,
+    selected_env_profile: str | None = None,
+) -> TargetLock:
     lock = load_target_lock(target)
     repo = Path(repo_path).expanduser().resolve()
     if not (repo / ".git").exists() and not (repo / ".git").is_file():
         raise ValueError(f"repo is not a git checkout: {repo}")
 
-    rid = repo_id or sanitize_repo_id(repo.name)
-    lock.repos = [entry for entry in lock.repos if entry.repo_id != rid]
-    lock.repos.append(
-        RepoSelection(
-            repo_id=rid,
-            repo_path=str(repo),
-            selected_ref=selected_ref,
-            source_worktree_path=worktree_path,
-            resolved_sha=None,
-        )
+    _append_repo_selection(
+        lock,
+        repo,
+        selected_ref=selected_ref,
+        module_name=module_name,
+        selected_runner=selected_runner,
+        selected_command=selected_command,
+        selected_env_profile=selected_env_profile,
+        repo_id=repo_id,
+        worktree_path=worktree_path,
     )
+    lock.created_at_utc = utc_now_iso()
+    lock.lock_hash = _lock_hash(lock)
+    dual_write(target, LOCK_FILE, lock)
+    return lock
+
+
+def add_module_to_target(
+    target: str,
+    module_name: str,
+    selected_ref: str | None = None,
+    exclude_repos: set[str] | None = None,
+) -> TargetLock:
+    if not module_name.strip():
+        raise ValueError("module name cannot be empty")
+    if "/" in module_name or "\\" in module_name or ".." in module_name:
+        raise ValueError(f"invalid module name: {module_name}")
+
+    manifest = _load_module_manifest(module_name)
+    lock = load_target_lock(target)
+
+    candidates = _select_module_repos(manifest, exclude_repos=exclude_repos)
+    if not candidates:
+        raise ValueError(f"module {module_name} selected no matching repos")
+
+    fallback_ref = selected_ref or manifest.default_ref
+    for candidate in candidates:
+        repo_id = _repo_id_from_path(candidate)
+        _append_repo_selection(
+            lock,
+            candidate,
+            selected_ref=manifest.repo_ref_overrides.get(repo_id, fallback_ref),
+            module_name=module_name,
+            selected_runner=manifest.repo_runner_overrides.get(repo_id),
+            selected_command=manifest.repo_command_overrides.get(repo_id),
+            selected_env_profile=manifest.repo_env_profile_overrides.get(repo_id),
+        )
+
     lock.created_at_utc = utc_now_iso()
     lock.lock_hash = _lock_hash(lock)
     dual_write(target, LOCK_FILE, lock)
@@ -313,6 +464,37 @@ def _materialization_entry(item: dict[str, Any]) -> tuple[str, Path]:
     return repo_id, Path(checkout_path).resolve()
 
 
+def _repo_run_overrides(
+    runtime_item: dict[str, Any],
+    lock: TargetLock,
+    command_name: str | None,
+    runner: str | None,
+    env_profile: str | None,
+) -> tuple[str | None, str | None, str | None]:
+    repo_id = runtime_item.get("repo_id")
+    if not isinstance(repo_id, str) or not repo_id.strip():
+        raise ValueError("invalid runtime materialization entry: missing repo_id")
+
+    selected = next((entry for entry in lock.repos if entry.repo_id == repo_id), None)
+    if not selected:
+        raise ValueError(f"repo_id not in target lock: {repo_id}")
+
+    selected_runner = runner if runner is not None else selected.selected_runner
+    selected_command = command_name if command_name is not None else selected.selected_command
+    selected_profile = env_profile if env_profile is not None else selected.selected_env_profile
+    if selected_profile is None:
+        if env_profile is None:
+            profile_env = get_env_profile(target=lock.target_name)
+        else:
+            profile_env = None
+    elif not selected_profile.strip():
+        profile_env = None
+    else:
+        profile_env = get_env_profile(target=lock.target_name, profile=selected_profile)
+
+    return selected_runner, selected_command, profile_env
+
+
 def run_target(
     target: str,
     repo_id: str | None = None,
@@ -329,8 +511,6 @@ def run_target(
 
     if execution_mode not in {"serial", "parallel"}:
         raise ValueError("execution_mode must be one of: serial, parallel")
-    if all_repos and (runner is None or command_name is None):
-        raise ValueError("--all-repos requires --runner and --command to avoid interactive contention")
 
     runtime = read_dual(target, RUNTIME_FILE)
     materializations = runtime.get("repo_materializations")
@@ -346,11 +526,30 @@ def run_target(
     elif not all_repos:
         selected_items = [materializations[0]]
 
-    runs: list[tuple[Path, RunnerCatalog]] = []
-    env_overrides = get_env_profile(target, profile=env_profile)
+    lock = load_target_lock(target)
+    runs: list[tuple[Path, RunnerCatalog, str | None, str | None, dict[str, str] | None]] = []
     for item in selected_items:
         item_repo_id, item_checkout = _materialization_entry(item)
-        runs.append((item_checkout, build_catalog(target, repo_id=item_repo_id)))
+        selected_runner, selected_command, selected_env = _repo_run_overrides(
+            item,
+            lock=lock,
+            command_name=command_name,
+            runner=runner,
+            env_profile=env_profile,
+        )
+        if all_repos and (selected_runner is None or selected_command is None):
+            raise ValueError(
+                "--all-repos requires --runner and --command or module-level overrides for each repo"
+            )
+        runs.append(
+            (
+                item_checkout,
+                build_catalog(target, repo_id=item_repo_id),
+                selected_runner,
+                selected_command,
+                selected_env,
+            )
+        )
 
     if execution_mode == "parallel" and len(runs) > 1:
         with ThreadPoolExecutor(max_workers=len(runs)) as pool:
@@ -359,18 +558,24 @@ def run_target(
                     _run_single_repo_target,
                     checkout,
                     catalog,
-                    runner,
-                    command_name,
-                    env_overrides,
+                    selected_runner,
+                    selected_command,
+                    repo_env,
                 )
-                for checkout, catalog in runs
+                for checkout, catalog, selected_runner, selected_command, repo_env in runs
             ]
             results = [future.result() for future in futures]
         nonzero = [code for code in results if code != 0]
         return nonzero[0] if nonzero else 0
 
-    for checkout, catalog in runs:
-        code = _run_single_repo_target(checkout, catalog, runner, command_name, env_overrides)
+    for checkout, catalog, selected_runner, selected_command, repo_env in runs:
+        code = _run_single_repo_target(
+            checkout,
+            catalog,
+            selected_runner,
+            selected_command,
+            repo_env,
+        )
         if code != 0:
             return code
     return 0

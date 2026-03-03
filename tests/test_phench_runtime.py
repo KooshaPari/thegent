@@ -9,6 +9,7 @@ import pytest
 from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
+    add_module_to_target,
     get_env_profile,
     init_target,
     list_targets,
@@ -19,7 +20,7 @@ from thegent.phench.service import (
     set_env_profile,
     sync_target,
 )
-from thegent.phench.models import RunnerCatalog, RunnerCommand
+from thegent.phench.models import RepoSelection, RunnerCatalog, RunnerCommand, TargetLock
 from thegent.phench.store import read_dual
 
 
@@ -319,6 +320,240 @@ def test_env_profile_applies_to_run(tmp_path: Path, monkeypatch) -> None:
     assert observed == {"FOO": "BAR"}
 
 
+def test_add_module_to_target_appends_matching_repos(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = phenotype_root / "repos" / "repo-a"
+    repo_b = phenotype_root / "repos" / "repo-b"
+    repo_x = phenotype_root / "repos" / "other-repo"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+    _init_git_repo(repo_x)
+
+    module_root = phenotype_root / "projects" / "modules" / "thegent-test-module"
+    module_root.mkdir(parents=True, exist_ok=True)
+    (module_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "repo_patterns": ["repo-*"],
+                "default_ref": "HEAD",
+                "repo_ref_overrides": {"repo-a": "HEAD"},
+                "repo_runner_overrides": {"repo-a": "task"},
+                "repo_command_overrides": {"repo-a": "hello"},
+                "repo_env_profile_overrides": {"repo-b": "ci"},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("module-target", mode="stack")
+    lock = add_module_to_target("module-target", "thegent-test-module")
+    repos = {repo.repo_id: repo for repo in lock.repos}
+    assert set(repos.keys()) == {"repo-a", "repo-b"}
+    assert repos["repo-a"].selected_ref == "HEAD"
+    assert repos["repo-a"].selected_runner == "task"
+    assert repos["repo-a"].selected_command == "hello"
+    assert repos["repo-b"].selected_env_profile == "ci"
+
+
+def test_add_module_to_target_fails_when_manifest_missing(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("module-missing", mode="stack")
+    with pytest.raises(ValueError, match="manifest not found"):
+        add_module_to_target("module-missing", "no-such-module")
+
+
+def test_add_module_to_target_fails_when_no_repos_match_patterns(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = phenotype_root / "repos" / "repo-a"
+    _init_git_repo(repo_a)
+
+    module_root = phenotype_root / "projects" / "modules" / "thegent-empty-module"
+    module_root.mkdir(parents=True, exist_ok=True)
+    (module_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "repo_patterns": ["does-not-match-*"],
+                "default_ref": "HEAD",
+                "repo_ref_overrides": {},
+                "repo_runner_overrides": {},
+                "repo_command_overrides": {},
+                "repo_env_profile_overrides": {},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("module-empty", mode="stack")
+    with pytest.raises(ValueError, match="selected no matching repos"):
+        add_module_to_target("module-empty", "thegent-empty-module")
+
+
+def test_add_module_to_target_uses_default_excludes(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = phenotype_root / "repos" / "repo-a"
+    excluded = [
+        phenotype_root / "repos" / "4sgm",
+        phenotype_root / "repos" / "parpour",
+        phenotype_root / "repos" / "civ",
+        phenotype_root / "repos" / "trace",
+    ]
+    _init_git_repo(repo_a)
+    for repo in excluded:
+        _init_git_repo(repo)
+
+    module_root = phenotype_root / "projects" / "modules" / "thegent-default-excludes"
+    module_root.mkdir(parents=True, exist_ok=True)
+    (module_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "repo_patterns": ["*"],
+                "default_ref": "HEAD",
+                "repo_ref_overrides": {},
+                "repo_runner_overrides": {},
+                "repo_command_overrides": {},
+                "repo_env_profile_overrides": {},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("module-excludes", mode="stack")
+    lock = add_module_to_target("module-excludes", "thegent-default-excludes")
+    assert [entry.repo_id for entry in lock.repos] == ["repo-a"]
+
+
+def test_add_module_respects_repo_and_global_excludes(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = phenotype_root / "repos" / "repo-a"
+    repo_b = phenotype_root / "repos" / "repo-b"
+    excluded = phenotype_root / "repos" / "repo-ex"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+    _init_git_repo(excluded)
+
+    module_root = phenotype_root / "projects" / "modules" / "thegent-test-module-ex"
+    module_root.mkdir(parents=True, exist_ok=True)
+    (module_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "repo_patterns": ["repo-*"],
+                "default_ref": "HEAD",
+                "repo_ref_overrides": {},
+                "repo_runner_overrides": {},
+                "repo_command_overrides": {},
+                "repo_env_profile_overrides": {},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("module-target-2", mode="stack")
+    lock = add_module_to_target("module-target-2", "thegent-test-module-ex", exclude_repos={"repo-b"})
+    assert {entry.repo_id for entry in lock.repos} == {"repo-a", "repo-ex"}
+
+
+def test_run_target_uses_module_overrides(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = phenotype_root / "repos" / "repo-run"
+    _init_git_repo(repo)
+
+    module_root = phenotype_root / "projects" / "modules" / "thegent-run-module"
+    module_root.mkdir(parents=True, exist_ok=True)
+    (module_root / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "repo_patterns": ["repo-*"],
+                "default_ref": "HEAD",
+                "repo_ref_overrides": {},
+                "repo_runner_overrides": {"repo-run": "task"},
+                "repo_command_overrides": {"repo-run": "hello"},
+                "repo_env_profile_overrides": {"repo-run": "ci"},
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("module-run", mode="repo")
+    add_module_to_target("module-run", "thegent-run-module")
+    lock_target("module-run")
+    materialize_target("module-run")
+    set_env_profile("module-run", "ci", {"FROM_PROFILE": "1"})
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+    )
+    monkeypatch.setattr(
+        "thegent.phench.service.build_catalog",
+        lambda target, repo_id=None: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", "Taskfile.yml")],
+            default_command="task hello",
+        ),
+    )
+
+    observed: dict[str, str] = {}
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        observed["runner"] = runner
+        observed["command_name"] = command_name
+        if env_overrides:
+            observed.update(env_overrides)
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+    exit_code = run_target("module-run")
+    assert exit_code == 0
+    assert observed["runner"] == "task"
+    assert observed["command_name"] == "hello"
+    assert observed["FROM_PROFILE"] == "1"
+
+
 def test_audit_shared_modules(tmp_path: Path, monkeypatch) -> None:
     phenotype_root = tmp_path / "Phenotype"
     mirror_root = tmp_path / "home-phench"
@@ -335,3 +570,55 @@ def test_audit_shared_modules(tmp_path: Path, monkeypatch) -> None:
 
     result = audit_shared_modules("audity")
     assert result["shared_modules"]["sharedpkg"] == ["a", "b"]
+
+
+def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:
+    import importlib.util
+
+    from typer.testing import CliRunner
+
+    cli_module_path = Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+    spec = importlib.util.spec_from_file_location("phench_cli_target_module", cli_module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("failed to load phench cli module")
+    phench_cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(phench_cli)
+
+    observed: dict[str, str | set[str] | None] = {"name": None, "module": None, "ref": None, "exclude": set()}
+
+    def _fake_add_module_to_target(
+        name: str,
+        module_name: str,
+        selected_ref: str | None = None,
+        exclude_repos: set[str] | None = None,
+    ) -> TargetLock:
+        observed["name"] = name
+        observed["module"] = module_name
+        observed["ref"] = selected_ref
+        observed["exclude"] = exclude_repos or set()
+        return TargetLock(
+            schema_version=1,
+            target_name=name,
+            mode="stack",
+            repos=[
+                RepoSelection(
+                    repo_id="repo-a",
+                    repo_path="/tmp/repo-a",
+                    selected_ref="HEAD",
+                    module_name=module_name,
+                )
+            ],
+            lock_hash="abc",
+        )
+
+    monkeypatch.setattr(phench_cli, "add_module_to_target", _fake_add_module_to_target)
+    result = CliRunner().invoke(phench_cli.app, ["target", "add-module", "smoke", "--module", "thegent-app", "--ref", "dev", "--exclude", "skip-me"])
+    assert result.exit_code == 0
+    assert observed["name"] == "smoke"
+    assert observed["module"] == "thegent-app"
+    assert observed["ref"] == "dev"
+    assert observed["exclude"] == {"skip-me"}
+    payload = json.loads(result.output)
+    assert payload["target"] == "smoke"
+    assert payload["module"] == "thegent-app"
+    assert payload["repos"] == ["repo-a"]
