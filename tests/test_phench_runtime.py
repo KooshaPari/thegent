@@ -27,6 +27,7 @@ from thegent.phench.service import (
     run_env_doctor_for_target,
     run_target,
     target_timeline,
+    target_status,
     set_env_profile,
     sync_target,
 )
@@ -928,7 +929,7 @@ def test_build_project_execution_matrix_returns_effective_plan(tmp_path: Path, m
         preferred_command="hello",
         repo_id="repo-b",
     )
-    lock_target("matrix")
+    lock = lock_target("matrix")
     materialize_target("matrix")
     set_env_profile("matrix", "ci", {"ENV": "one"})
     monkeypatch.setattr(
@@ -945,6 +946,9 @@ def test_build_project_execution_matrix_returns_effective_plan(tmp_path: Path, m
     )
 
     assert matrix["target"] == "matrix"
+    assert matrix["lock_hash"] == lock.lock_hash
+    assert matrix["snapshot_hash"] is None
+    assert matrix["runtime_hash"] is None
     assert matrix["repo_count"] == 1
     plan = matrix["repos"][0]
     assert plan["repo_id"] == "repo-a"
@@ -952,7 +956,75 @@ def test_build_project_execution_matrix_returns_effective_plan(tmp_path: Path, m
     assert plan["effective_command"] == "hello"
     assert plan["effective_env_profile"] == "ci"
     assert plan["env_overrides"] == {"ENV": "one"}
+    assert plan["effective_ref_source"] == "selected_ref"
     assert plan["resolved_sha"] is not None
+
+
+def test_build_project_execution_matrix_prefers_repo_override_then_cli_then_preferred_ref(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = tmp_path / "repo-a"
+    _init_git_repo(repo_a)
+    _run(["bash", "-lc", "printf '\nchange' >> README.md"], cwd=repo_a)
+    _run(["git", "-C", str(repo_a), "add", "README.md"], cwd=repo_a)
+    _run(["git", "-C", str(repo_a), "commit", "-m", "change"], cwd=repo_a)
+
+    sha_before_proc = subprocess.run(
+        ["git", "-C", str(repo_a), "rev-parse", "HEAD~1"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert sha_before_proc.returncode == 0
+    sha_before = sha_before_proc.stdout.strip()
+    sha_current_proc = subprocess.run(
+        ["git", "-C", str(repo_a), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert sha_current_proc.returncode == 0
+    sha_current = sha_current_proc.stdout.strip()
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("matrix_ref", mode="stack")
+    add_repo(
+        "matrix_ref",
+        repo_path=str(repo_a),
+        selected_ref=sha_current,
+        preferred_ref=sha_before,
+        repo_id="repo-a",
+    )
+    lock_target("matrix_ref")
+    materialize_target("matrix_ref")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    override_matrix = build_project_execution_matrix(
+        "matrix_ref",
+        repo_id="repo-a",
+        repo_ref_overrides={"repo-a": "HEAD"},
+    )
+    assert override_matrix["repos"][0]["effective_ref_source"] == "repo_override"
+    assert override_matrix["repos"][0]["effective_ref"] == "HEAD"
+
+    cli_matrix = build_project_execution_matrix(
+        "matrix_ref",
+        repo_id="repo-a",
+        selected_ref=sha_before,
+    )
+    assert cli_matrix["repos"][0]["effective_ref_source"] == "cli_ref"
+    assert cli_matrix["repos"][0]["effective_ref"] == sha_before
+
+    preferred_matrix = build_project_execution_matrix(
+        "matrix_ref",
+        repo_id="repo-a",
+    )
+    assert preferred_matrix["repos"][0]["effective_ref_source"] == "preferred_ref"
+    assert preferred_matrix["repos"][0]["effective_ref"] == sha_before
 
 
 def test_build_project_execution_matrix_applies_repo_overrides_and_sorting(tmp_path: Path, monkeypatch) -> None:
@@ -1131,6 +1203,7 @@ def test_create_target_snapshot_and_list_show_work_together(tmp_path: Path, monk
     init_target("snapshot", mode="repo")
     add_repo("snapshot", repo_path=str(source_repo), selected_ref="HEAD")
     lock = lock_target("snapshot")
+    materialize_target("snapshot")
 
     created = create_target_snapshot("snapshot", snapshot_id="custom-id")
     second = create_target_snapshot("snapshot", snapshot_id="custom-id-2")
@@ -1146,6 +1219,8 @@ def test_create_target_snapshot_and_list_show_work_together(tmp_path: Path, monk
     assert payload["snapshot_id"] == "custom-id"
     assert payload["target_name"] == "snapshot"
     assert payload["lock"]["lock_hash"] == lock.lock_hash
+    assert payload["runtime_hash"] != ""
+    assert payload["snapshot_hash"] != ""
 
     assert second["filename"] == "snapshots/custom-id-2.json"
 
@@ -1163,6 +1238,7 @@ def test_create_and_list_snapshots_are_family_scoped(tmp_path: Path, monkeypatch
     init_target("snapshot2", mode="repo", family="acme")
     add_repo("snapshot2", family="acme", repo_path=str(source_repo), selected_ref="HEAD")
     lock = lock_target("snapshot2", family="acme")
+    materialize_target("snapshot2", family="acme")
 
     created = create_target_snapshot("snapshot2", family="acme", snapshot_id="family-id")
     assert created["snapshot_id"] == "family-id"
@@ -1175,11 +1251,38 @@ def test_create_and_list_snapshots_are_family_scoped(tmp_path: Path, monkeypatch
     assert snapshot["filename"] == "snapshots/family-id.json"
     assert snapshot["target_name"] == "snapshot2"
     assert snapshot["lock_hash"] == lock.lock_hash
+    assert snapshot["runtime_hash"] != ""
+    assert snapshot["snapshot_hash"] != ""
     assert list_target_snapshots("snapshot2") == []
 
     payload = show_target_snapshot("snapshot2", "family-id", family="acme")
     assert payload["snapshot_id"] == "family-id"
     assert payload["lock"]["lock_hash"] == lock.lock_hash
+
+
+def test_target_status_includes_snapshot_provenance_summary(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "source-repo"
+
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snapshot-status", mode="repo")
+    add_repo("snapshot-status", repo_path=str(source_repo), selected_ref="HEAD")
+    lock = lock_target("snapshot-status")
+    materialize_target("snapshot-status")
+    create_target_snapshot("snapshot-status", snapshot_id="custom-id")
+    snapshot_payload = show_target_snapshot("snapshot-status", "custom-id")
+
+    status = target_status("snapshot-status")
+    assert status["latest_snapshot"] is not None
+    assert status["latest_snapshot"]["snapshot_id"] == "custom-id"
+    assert status["latest_snapshot"]["lock_hash"] == lock.lock_hash
+    assert status["latest_snapshot"]["runtime_hash"] == snapshot_payload["runtime_hash"]
+    assert status["latest_snapshot"]["snapshot_hash"] == snapshot_payload["snapshot_hash"]
 
 
 def test_bootstrap_target_uses_discovered_repos(tmp_path: Path, monkeypatch) -> None:

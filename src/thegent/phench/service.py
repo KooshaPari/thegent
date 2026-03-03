@@ -94,6 +94,11 @@ def _snapshot_id() -> str:
     return f"{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{secrets.token_hex(4)}"
 
 
+def _stable_payload_hash(payload: Any) -> str:
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 def import_repos(
     target: str,
     family: str | None = None,
@@ -172,10 +177,17 @@ def create_target_snapshot(
         "created_at_utc": utc_now_iso(),
         "target_name": target,
         "lock": asdict(lock),
+        "lock_hash": lock.lock_hash,
         "runtime": runtime_payload,
         "env": env_payload,
         "runner_catalog": runner_payload,
     }
+    snapshot["runtime_hash"] = _stable_payload_hash(runtime_payload) if isinstance(runtime_payload, dict) else ""
+    snapshot["env_hash"] = _stable_payload_hash(env_payload) if isinstance(env_payload, dict) else ""
+    snapshot["runner_catalog_hash"] = (
+        _stable_payload_hash(runner_payload) if isinstance(runner_payload, dict) else ""
+    )
+    snapshot["snapshot_hash"] = _stable_payload_hash({k: snapshot[k] for k in snapshot if k != "snapshot_hash"})
     result = dual_write(target, filename, snapshot, family=family)
     return {
         "snapshot_id": snapshot_id,
@@ -215,6 +227,8 @@ def list_target_snapshots(target: str, family: str | None = None) -> list[dict[s
                 "created_at_utc": str(payload.get("created_at_utc", "")),
                 "target_name": str(payload.get("target_name", "")),
                 "lock_hash": str((payload.get("lock") or {}).get("lock_hash", "")),
+                "runtime_hash": str(payload.get("runtime_hash", "")),
+                "snapshot_hash": str(payload.get("snapshot_hash", "")),
             }
         )
     return snapshots
@@ -451,6 +465,20 @@ def target_status(target: str, family: str | None = None) -> dict[str, Any]:
     except FileNotFoundError:
         env_payload = None
 
+    snapshots = list_target_snapshots(target, family=family)
+    latest_snapshot = snapshots[0] if snapshots else None
+
+    if latest_snapshot is not None:
+        latest_snapshot = dict(latest_snapshot)
+        latest_snapshot = {
+            "snapshot_id": latest_snapshot.get("snapshot_id"),
+            "filename": latest_snapshot.get("filename"),
+            "created_at_utc": latest_snapshot.get("created_at_utc"),
+            "lock_hash": latest_snapshot.get("lock_hash"),
+            "runtime_hash": latest_snapshot.get("runtime_hash"),
+            "snapshot_hash": latest_snapshot.get("snapshot_hash"),
+        }
+
     return {
         "target": target,
         "mode": lock.mode,
@@ -459,6 +487,8 @@ def target_status(target: str, family: str | None = None) -> dict[str, Any]:
         "created_at_utc": lock.created_at_utc,
         "runtime": runtime_payload,
         "env": env_payload,
+        "latest_snapshot": latest_snapshot,
+        "snapshot": latest_snapshot,
     }
 
 
@@ -762,6 +792,10 @@ def build_project_execution_matrix(
     validate_commands: bool = False,
     sort_repos: bool = False,
 ) -> dict[str, Any]:
+    lock_hash = None
+    snapshot_hash = None
+    runtime_hash = None
+
     if snapshot_id is not None:
         snapshot = show_target_snapshot(target, snapshot_id, family=family)
         runtime = snapshot.get("runtime")
@@ -777,11 +811,17 @@ def build_project_execution_matrix(
             raise ValueError(f"snapshot '{snapshot_id}' has invalid lock payload")
         lock = _parse_lock(snapshot_lock)
         report = _run_env_doctor_for_materializations(target, materializations, family=family)
+        lock_hash = str((snapshot_lock or {}).get("lock_hash", ""))
+        snapshot_hash = str(snapshot.get("snapshot_hash", ""))
+        runtime_hash = str(snapshot.get("runtime_hash", ""))
+        if not runtime_hash:
+            runtime_hash = _stable_payload_hash(runtime)
     else:
         report = run_env_doctor_for_target(target, family=family)
         runtime = read_dual(target, RUNTIME_FILE, family=family)
         materializations = runtime.get("repo_materializations")
         lock = load_target_lock(target, family=family)
+        lock_hash = lock.lock_hash
 
     if report["doctor_status"] != "pass":
         missing = ", ".join(report["missing_requirements"])
@@ -864,9 +904,20 @@ def build_project_execution_matrix(
         if lock_repo is None:
             raise ValueError(f"repo_id not in target lock: {item_repo_id}")
 
-        repo_ref = repo_ref_overrides_normalized.get(item_repo_id)
-        if repo_ref is None:
-            repo_ref = selected_ref if selected_ref is not None else (lock_repo.preferred_ref or lock_repo.selected_ref)
+        if (repo_ref := repo_ref_overrides_normalized.get(item_repo_id)) is not None:
+            ref_source = "repo_override"
+        elif selected_ref is not None:
+            repo_ref = selected_ref
+            ref_source = "cli_ref"
+        elif lock_repo.preferred_ref is not None:
+            repo_ref = lock_repo.preferred_ref
+            ref_source = "preferred_ref"
+        elif lock_repo.selected_ref is not None:
+            repo_ref = lock_repo.selected_ref
+            ref_source = "selected_ref"
+        else:
+            repo_ref = None
+            ref_source = "materialized_ref"
 
         if repo_ref is not None:
             resolved = resolve_ref_to_sha(Path(lock_repo.repo_path), repo_ref)
@@ -906,6 +957,7 @@ def build_project_execution_matrix(
                 "lock_selected_ref": lock_repo.selected_ref,
                 "lock_preferred_ref": lock_repo.preferred_ref,
                 "effective_ref": repo_ref,
+                "effective_ref_source": ref_source,
                 "resolved_sha": resolved,
                 "effective_runner": repo_runner,
                 "effective_command": repo_command,
@@ -922,6 +974,9 @@ def build_project_execution_matrix(
     return {
         "target": target,
         "family": family,
+        "lock_hash": lock_hash,
+        "snapshot_hash": snapshot_hash,
+        "runtime_hash": runtime_hash,
         "snapshot_id": snapshot_id,
         "all_repos": all_repos,
         "non_interactive": non_interactive,
