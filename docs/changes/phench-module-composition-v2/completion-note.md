@@ -21,7 +21,9 @@
 
 ## Open and Notable Blocker
 
-- `P17` remains blocked in this environment because `python cli.py` cannot currently execute through the repository bootstrap (`cli.py` absent and import path differences). The feature and docs work remains complete and mergeable from the source-path CI/tooling lane.
+- `P19` remains blocked in this environment until merge/finish governance workflow is completed.
+- Command execution evidence is now collected from package-path test entrypoints:
+  - `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src:packages/thegent-bench/src:packages/thegent-cli/src python -m pytest tests/test_phench_runtime.py -q`
 
 ## Completion Criteria Status
 

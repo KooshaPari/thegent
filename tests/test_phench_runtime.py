@@ -10,6 +10,7 @@ from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
     add_module_to_target,
+    scan_shared_modules_across_repos,
     get_env_profile,
     init_target,
     list_targets,
@@ -570,6 +571,84 @@ def test_audit_shared_modules(tmp_path: Path, monkeypatch) -> None:
 
     result = audit_shared_modules("audity")
     assert result["shared_modules"]["sharedpkg"] == ["a", "b"]
+
+
+def test_scan_shared_modules_across_repos_respects_excludes_and_minimum_repo_count(tmp_path: Path) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    repo_c = repos_root / "repo-c"
+    repo_d = phenotype_root / "repos" / "4sgm"
+
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+    _init_git_repo_with_pkg(repo_a, "exclusive-a")
+    _init_git_repo_with_pkg(repo_b, "sharedpkg")
+    _init_git_repo_with_pkg(repo_b, "bothrepos")
+    _init_git_repo_with_pkg(repo_c, "sharedpkg")
+    _init_git_repo_with_pkg(repo_c, "bothrepos")
+    _init_git_repo_with_pkg(repo_d, "sharedpkg")
+
+    result = scan_shared_modules_across_repos(
+        repos_root=repos_root,
+        exclude_repos={"repo-a"},
+        min_repo_count=2,
+    )
+    assert result["shared_modules"] == {"bothrepos": ["repo-b", "repo-c"], "sharedpkg": ["repo-b", "repo-c"]}
+
+    min3 = scan_shared_modules_across_repos(repos_root=repos_root, min_repo_count=3)
+    assert min3["shared_modules"] == {"sharedpkg": ["repo-a", "repo-b", "repo-c"]}
+
+    result_with_default = scan_shared_modules_across_repos(repos_root=repos_root, exclude_repos=set())
+    assert "sharedpkg" in result_with_default["shared_modules"]
+    assert "4sgm" not in result_with_default["examined_repos"]
+
+
+def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
+    import importlib.util
+
+    from typer.testing import CliRunner
+
+    cli_module_path = Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+    spec = importlib.util.spec_from_file_location("phench_cli_scan_module", cli_module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("failed to load phench cli module")
+    phench_cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(phench_cli)
+
+    monkeypatch.setattr(
+        phench_cli,
+        "scan_shared_modules_across_repos",
+        lambda **kwargs: {
+            "repos_root": str(kwargs.get("repos_root", "/tmp/repos")),
+            "shared_modules": {"sharedpkg": ["repo-a", "repo-b"]},
+            "shared_count": 1,
+            "module_count": 2,
+            "repo_count": 2,
+            "excluded_repos": ["4sgm", "parpour"],
+            "examined_repos": ["repo-a", "repo-b"],
+            "min_repo_count": 2,
+        },
+    )
+
+    result = CliRunner().invoke(
+        phench_cli.app,
+        [
+            "scan-shared-repos",
+            "--repos-root",
+            str(tmp_path / "Phenotype" / "repos"),
+            "--exclude",
+            "repo-b",
+            "--min-repos",
+            "2",
+            "--candidates",
+        ],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["repos_root"] == str(tmp_path / "Phenotype" / "repos")
+    assert payload["shared_modules"] == {"sharedpkg": ["repo-a", "repo-b"]}
+    assert payload["module_candidates"][0]["module"] == "sharedpkg"
 
 
 def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:

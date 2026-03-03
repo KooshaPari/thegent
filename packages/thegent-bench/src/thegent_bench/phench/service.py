@@ -20,6 +20,7 @@ from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, Ru
 from .paths import (
     module_manifest_path,
     projects_root,
+    phenotype_root,
     repository_root_candidates,
     target_repos_root,
     target_root,
@@ -121,6 +122,33 @@ def _select_module_repos(
     return selected
 
 
+def _find_repo_modules(repo_path: Path) -> set[str]:
+    src_root = repo_path / "src"
+    if not src_root.exists() or not src_root.is_dir():
+        return set()
+
+    modules: set[str] = set()
+    for child in src_root.iterdir():
+        if not child.is_dir():
+            continue
+        if not (child / "__init__.py").exists():
+            continue
+        modules.add(child.name)
+    return modules
+
+
+def _collect_shared_modules(
+    repo_modules: dict[str, set[str]],
+    *,
+    min_repo_count: int = 2,
+) -> dict[str, list[str]]:
+    return {
+        module_name: sorted(repos)
+        for module_name, repos in repo_modules.items()
+        if len(repos) >= min_repo_count
+    }
+
+
 def _append_repo_selection(
     lock: TargetLock,
     repo_path: Path,
@@ -148,6 +176,61 @@ def _append_repo_selection(
             resolved_sha=None,
         )
     )
+
+
+def scan_shared_modules_across_repos(
+    repos_root: Path | None = None,
+    *,
+    exclude_repos: set[str] | None = None,
+    min_repo_count: int = 2,
+) -> dict[str, Any]:
+    if min_repo_count < 2:
+        raise ValueError("min_repo_count must be at least 2")
+
+    if repos_root is None:
+        candidate_paths = repository_root_candidates()
+        root = phenotype_root() / "repos"
+    else:
+        root = Path(repos_root).expanduser().resolve()
+        if not root.exists():
+            return {
+                "repos_root": str(root),
+                "shared_modules": {},
+                "shared_count": 0,
+                "module_count": 0,
+                "repo_count": 0,
+                "excluded_repos": [],
+                "examined_repos": [],
+                "min_repo_count": min_repo_count,
+            }
+        candidate_paths = sorted([entry for entry in root.iterdir() if entry.is_dir() and not entry.name.startswith(".")])
+
+    excluded = {sanitize_repo_id(repo_name) for repo_name in (exclude_repos or set())}
+    effective_excludes = sorted(DEFAULT_EXCLUDED_REPOS | excluded)
+    repo_modules: dict[str, set[str]] = {}
+
+    examined_repos: list[str] = []
+    for repo_path in candidate_paths:
+        repo_id = _repo_id_from_path(repo_path)
+        if repo_id in effective_excludes:
+            continue
+        examined_repos.append(repo_id)
+        modules = _find_repo_modules(repo_path)
+        for module_name in modules:
+            repo_modules.setdefault(module_name, set()).add(repo_id)
+
+    shared_modules = _collect_shared_modules(repo_modules, min_repo_count=min_repo_count)
+
+    return {
+        "repos_root": str(root),
+        "shared_modules": shared_modules,
+        "shared_count": len(shared_modules),
+        "module_count": len(repo_modules),
+        "repo_count": len(examined_repos),
+        "excluded_repos": effective_excludes,
+        "examined_repos": examined_repos,
+        "min_repo_count": min_repo_count,
+    }
 
 
 def init_target(target: str, mode: TargetMode) -> TargetLock:
@@ -344,29 +427,19 @@ def target_timeline(target: str, repo_id: str | None = None, limit: int = 30) ->
 
 def audit_shared_modules(target: str) -> dict[str, Any]:
     lock = load_target_lock(target)
-    module_map: dict[str, list[str]] = {}
+    repo_modules: dict[str, set[str]] = {}
     for repo in lock.repos:
-        src_root = Path(repo.repo_path) / "src"
-        if not src_root.exists() or not src_root.is_dir():
-            continue
-        for child in src_root.iterdir():
-            if not child.is_dir():
-                continue
-            if not (child / "__init__.py").exists():
-                continue
-            owners = module_map.setdefault(child.name, [])
-            owners.append(repo.repo_id)
+        modules = _find_repo_modules(Path(repo.repo_path))
+        for module_name in modules:
+            repo_modules.setdefault(module_name, set()).add(repo.repo_id)
 
-    shared = {
-        module: sorted(set(owners))
-        for module, owners in module_map.items()
-        if len(set(owners)) >= 2
-    }
+    shared = _collect_shared_modules(repo_modules)
     return {
         "target": target,
         "shared_modules": shared,
         "repo_count": len(lock.repos),
-        "module_count": len(module_map),
+        "module_count": len(repo_modules),
+        "min_repo_count": 2,
     }
 
 

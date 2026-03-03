@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from pathlib import Path
 
 import orjson as json
 import typer
@@ -13,6 +14,7 @@ from thegent_bench.phench import (
     add_repo,
     add_module_to_target,
     audit_shared_modules,
+    scan_shared_modules_across_repos,
     get_env_profile,
     init_target,
     list_targets,
@@ -210,6 +212,59 @@ def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
 @app.command("audit-shared", help="Audit shared Python modules across repos in a target lock.")
 def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
     state = audit_shared_modules(name)
+    console.print_json(json.dumps(state).decode())
+
+
+@app.command("scan-shared-repos", help="Audit shared modules across repos in a phenotype workspace.")
+def scan_shared_repos_cmd(
+    repos_root: str | None = typer.Option(
+        None,
+        "--repos-root",
+        help="Path to the repos workspace. Defaults to $THGENT_PHENOTYPE_ROOT/repos.",
+    ),
+    exclude: list[str] = typer.Option(
+        [],
+        "--exclude",
+        help="Exact repo IDs to exclude from scan (can be repeated).",
+    ),
+    min_repo_count: int = typer.Option(
+        2,
+        "--min-repos",
+        help="Report modules seen in at least this many repos.",
+    ),
+    candidates: bool = typer.Option(
+        False,
+        "--candidates",
+        help="Include manifest-shaped candidate module groups for repo overlap.",
+    ),
+) -> None:
+    if min_repo_count < 2:
+        raise typer.BadParameter("min-repos must be >= 2")
+
+    state = scan_shared_modules_across_repos(
+        repos_root=None if repos_root is None else Path(repos_root),
+        exclude_repos={value.strip() for value in exclude if value.strip()},
+        min_repo_count=min_repo_count,
+    )
+    if candidates:
+        state["module_candidates"] = [
+            {
+                "module": module,
+                "repo_ids": repos,
+                "repo_count": len(repos),
+                "manifest_template": {
+                    "schema_version": 1,
+                    "repo_patterns": ["*"],
+                    "default_ref": "HEAD",
+                    "repo_ref_overrides": {},
+                    "repo_runner_overrides": {},
+                    "repo_command_overrides": {},
+                    "repo_env_profile_overrides": {},
+                    "matched_repos": repos,
+                },
+            }
+            for module, repos in sorted(state["shared_modules"].items())
+        ]
     console.print_json(json.dumps(state).decode())
 
 
