@@ -478,7 +478,7 @@ jobs:
 
       - name: Verify psleak installation
         run: |
-          uv run python -c "import psleak; print('psleak available')" || echo "psleak check completed"
+          uv run python -c "import psleak; print('psleak available')"
 
       - name: Run psleak-based leak detection tests
         run: |
@@ -489,14 +489,14 @@ jobs:
 
       - name: Run tracemalloc-based memory leak tests
         run: |
-          uv run pytest tests/test_resource_leaks.py::TestMemoryLeaksTracemalloc -v --tb=short || echo "tracemalloc tests completed"
+          uv run pytest tests/test_resource_leaks.py::TestMemoryLeaksTracemalloc -v --tb=short
         env:
           PYTHONPATH: ${{ github.workspace }}
           CHECK_LEAKS: "1"
 
       - name: Run CPython-style reference leak tests
         run: |
-          uv run pytest tests/test_resource_leaks.py::TestReferenceLeaks -v --tb=short || echo "reference leak tests completed"
+          uv run pytest tests/test_resource_leaks.py::TestReferenceLeaks -v --tb=short
         env:
           PYTHONPATH: ${{ github.workspace }}
           CHECK_LEAKS: "1"
@@ -510,9 +510,9 @@ jobs:
             .pytest_cache/
           retention-days: 30
 
-  # WL-132 B90-W2-D4: Zig ABI readiness gate (non-blocking until P0 promotion)
-  # Verifies thegent-zmx-interop (Rust<->Zig interop crate) builds and tests pass.
-  # continue-on-error: true because Zig is P2/experimental; CI must not block on it.
+  # WL-132 B90-W2-D4: Zig ABI readiness gate remains non-blocking by policy.
+  # Rationale: thegent-zmx-interop is experimental and not in required-check set.
+  # Exit criterion: remove continue-on-error once Zig lane is promoted to required checks.
   zig-readiness:
     name: Zig ABI Readiness Gate (WL-132)
     runs-on: self-hosted
@@ -578,6 +578,10 @@ jobs:
 
       - name: Run integration tests
         run: |
-          uv run pytest tests/ -v -m "integration" || echo "No integration tests found"
+          if uv run pytest tests/ --collect-only -q -m "integration" | grep -q "collected 0 items"; then
+            echo "No integration tests found for marker 'integration'"
+            exit 0
+          fi
+          uv run pytest tests/ -v -m "integration"
         env:
           PYTHONPATH: ${{ github.workspace }}
