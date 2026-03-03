@@ -1,0 +1,54 @@
+# Moduleization Acceptance Matrix
+
+## Goal
+
+Close out P6.30 with verifiable lane-ready residual criteria and explicit owner sign-off.
+
+## Module Residual Checklist
+
+- **thegent-app**
+  - [x] API boundary doc exists
+  - [x] Split lane smoke task exists and passes in branch
+  - [ ] Lane worktree executes implementation scope without cross-module leakage
+  - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+
+- **thegent-mcp**
+  - [x] API boundary doc exists
+  - [x] Split lane smoke task exists and passes in branch
+  - [ ] MCP transport ownership remains isolated from app/control-plane scope
+  - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+
+- **thegent-control-plane**
+  - [x] API boundary doc exists
+  - [x] Split lane smoke task exists and passes in branch
+  - [ ] Sequencing and policy ownership are migrated as intended
+  - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+
+- **thegent-execution**
+  - [x] API boundary doc exists
+  - [x] Split lane smoke task exists and passes in branch
+  - [ ] Execution routing remains stable under filtered module-repo inputs
+  - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+
+- **thegent-governance**
+  - [x] API boundary doc exists
+  - [x] Split lane smoke task exists and passes in branch
+  - [ ] Governance checks continue to execute with split worktree ownership
+  - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+
+## Definition of done for acceptance matrix
+
+- All module residuals have at least one lane PR in review or merged state. **[blocked - pending PR mechanics]**
+- Merge order follows declared dependency order. **[blocked - pending PR mechanics]**
+- Runtime matrix artifacts attached to lane handoff packet. **[done]**
+- Session WBS P6.26..P6.30 all moved to `[done]`. **[todo - requires merge and evidence closeout]**
+- Per-module no-leakage checks completed for first wave PRs. **[todo]**
+
+## Artifacts required
+
+- Handoff report: `handoff-report.md`
+- Runtime matrix: `runtime-smoke-matrix.md`
+- Evidence archive: `phase-evidence-archive.md`
+- Smoke artifacts under `artifacts/*.log`
+- Branch/PR links in WBS blocker update section
+- `task lane:split:all-smoke` baseline verification (latest: 2026-03-03T02:12:24Z)

@@ -80,11 +80,11 @@ Current milestone state:
 49. [done] P6.23 - Add smoke tests for repo filtering under `thegent-control-plane` split workflow.
 50. [done] P6.24 - Add smoke tests for repo filtering under `thegent-execution` split workflow.
 51. [done] P6.25 - Add smoke tests for repo filtering under `thegent-governance` split workflow.
-52. [todo] P6.26 - Publish lane handoff report with blockers, owners, and sequencing.
-53. [todo] P6.27 - Archive phase evidence for handoff review.
+52. [done] P6.26 - Publish lane handoff report with blockers, owners, and sequencing.
+53. [done] P6.27 - Archive phase evidence for handoff review.
 54. [todo] P6.28 - Open phased PRs from lane worktrees and verify merge queue order.
-55. [todo] P6.29 - Capture runtime smoke matrix for each split lane.
-56. [todo] P6.30 - Finalize moduleization acceptance matrix and close lane residuals.
+55. [done] P6.29 - Capture runtime smoke matrix for each split lane.
+56. [in_progress] P6.30 - Finalize moduleization acceptance matrix and close lane residuals.
 
 ## Dependencies (DAG)
 
@@ -116,8 +116,10 @@ Current milestone state:
 
 ## Blocker / Risk Register
 
-- P6.26, P6.27, and P6.28 remain active and require dedicated branch capacity for worktree PR sequencing, lane reporting, and evidence archival.
-- No matrix-level test was added for `projects matrix` include/exclude output ordering; this is intentionally deferred to first lane implementation.
+- P6.28, P6.30, P6.31, and P6.39 remain active and require dedicated branch capacity for PR mechanics and merge-order validation.
+- P6.32, P6.33, P6.39–P6.46 are blocked on lane branch creation/PR workflow execution.
+- P6.27 is now complete at the handoff-doc level; evidence set is documented in `phase-evidence-archive.md`.
+- No matrix-level regression test was added for `projects matrix` include/exclude output ordering; this remains deferred to first implementation PR.
 
 ## Critical Path (Current)
 
