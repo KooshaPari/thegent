@@ -33,19 +33,19 @@ Current milestone state:
 14. [done] Phase3.02 - Add unit tests for `sync_project_modules_from_repos` dry-run mode.
 15. [done] Phase3.03 - Add unit tests for `sync_project_modules_from_repos` conflict detection and overwrite behavior.
 16. [done] Phase3.04 - Verify default repo exclusions are honored across both helpers.
-17. [in_progress] Phase3.05 - Confirm error paths for invalid manifests and missing JSON content.
+17. [done] Phase3.05 - Confirm error paths for invalid manifests and missing JSON content.
 
 ## Phase 4: Runtime and Governance Integration [orchestration]
 
 18. [done] Phase4.01 - Add `Phenotype/projects` destination manifest generation integration checks.
 19. [done] Phase4.02 - Confirm merged module manifests are sorted and deterministic.
 20. [done] Phase4.03 - Validate sync behavior under mixed include/exclude module filters.
-21. [in_progress] Phase4.04 - Validate audit output `moduleization_candidates` against existing `projects/modules`.
+21. [done] Phase4.04 - Validate audit output `moduleization_candidates` against existing `projects/modules`.
 22. [todo] Phase4.05 - Add targeted smoke command tests in local workflow to ensure `--include/--exclude` combos.
 
 ## Phase 5: Documentation and Delivery [handoff]
 
-23. [in_progress] Phase5.01 - Update WBS to reflect all remaining moduleization and worktree follow-up tasks.
+23. [done] Phase5.01 - Update WBS to reflect all remaining moduleization and worktree follow-up tasks.
 24. [todo] Phase5.02 - Track residual work for worktree split lanes (`thegent-app`, `thegent-mcp`, `thegent-control-plane`, `thegent-execution`, `thegent-governance`).
 25. [todo] Phase5.03 - Capture remaining blockers, risks, and next-step execution plan for handoff.
 26. [todo] Phase5.04 - Run quality verification and report residual findings.

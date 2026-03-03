@@ -284,6 +284,83 @@ def test_audit_shared_modules_across_repos_respects_filters_and_min_repo_count(t
     assert filtered["shared_modules"] == {}
 
 
+def test_audit_shared_modules_across_repos_moduleization_candidates_skip_existing_modules(
+    tmp_path: Path,
+) -> None:
+    repos_root = tmp_path / "repos"
+    phenotype_root = tmp_path / "Phenotype"
+    existing_modules = phenotype_root / "projects" / "modules"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    for candidate in [alpha, beta]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (alpha / "modules" / "thegent-governance").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-governance" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["repo-beta"]}),
+        encoding="utf-8",
+    )
+
+    (existing_modules / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (existing_modules / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["existing"]}),
+        encoding="utf-8",
+    )
+
+    result = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_repo_modules_root=True,
+        min_repo_count=2,
+    )
+
+    assert "thegent-app" in result["shared_modules"]
+    assert "thegent-governance" not in result["shared_modules"]
+    assert result["moduleization_candidates"] == []
+
+
+def test_sync_project_modules_from_repos_invalid_manifest_raises_for_non_object_payload(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    destination_root = tmp_path / "Phenotype" / "projects" / "modules"
+    alpha = repos_root / "repo-alpha"
+    for candidate in [alpha]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text("[]", encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid module manifest in repo-alpha"):
+        sync_project_modules_from_repos(
+            source_root=repos_root,
+            destination_root=destination_root,
+            include_modules=["thegent-app"],
+        )
+
+
+def test_sync_project_modules_from_repos_invalid_manifest_raises_for_invalid_json(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    destination_root = tmp_path / "Phenotype" / "projects" / "modules"
+    beta = repos_root / "repo-beta"
+    _init_fake_repo(beta)
+
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text("", encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid module manifest in repo-beta"):
+        sync_project_modules_from_repos(
+            source_root=repos_root,
+            destination_root=destination_root,
+            include_modules=["thegent-app"],
+        )
+
+
 def test_sync_project_modules_from_repos_dry_run_respects_default_excludes_and_module_filter(tmp_path: Path) -> None:
     repos_root = tmp_path / "repos"
     alpha = repos_root / "repo-alpha"
