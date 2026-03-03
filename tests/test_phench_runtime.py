@@ -685,6 +685,41 @@ def test_load_module_manifest_parses_patterns_and_overrides(tmp_path: Path, monk
     assert loaded["repo_env_profile_overrides"] == {"platform-core": "ci"}
 
 
+@pytest.mark.parametrize(
+    "module_input",
+    [
+        "{module_dir}",
+        "{module_dir}/manifest.json",
+        "{legacy_module_dir}",
+        "{relative_legacy_module_dir}",
+    ],
+)
+def test_load_module_manifest_accepts_legacy_module_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    module_input: str,
+) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    legacy_modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir = phenotype_root / "projects" / "modules" / "legacy-layout"
+    relative_modules_dir = Path("projects") / "modules" / "legacy-layout"
+
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    legacy_modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"schema_version": 1, "repo_ids": ["thegent-api"]}
+    (legacy_modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+
+    candidate = module_input.format(
+        module_dir=modules_dir,
+        legacy_module_dir=legacy_modules_dir,
+        relative_legacy_module_dir=relative_modules_dir,
+    )
+    loaded = load_module_manifest(candidate, available_repo_ids=["thegent-api"])
+    assert loaded["repo_ids"] == ["thegent-api"]
+
+
 def test_load_module_manifest_rejects_unknown_repo_override(tmp_path: Path, monkeypatch) -> None:
     phenotype_root = tmp_path / "Phenotype"
     modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
