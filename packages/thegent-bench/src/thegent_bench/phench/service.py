@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict
 from fnmatch import fnmatch
@@ -34,6 +35,38 @@ ENV_FILE = "env.snapshot.json"
 RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
 DEFAULT_EXCLUDED_REPOS = frozenset({"4sgm", "parpour", "civ", "trace"})
+SCAN_SHARED_REPOS_SCHEMA_VERSION = 1
+SCAN_SHARED_REPOS_ROOT_MODE_REPOS = "repos"
+SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES = "worktrees"
+
+SCAN_SHARED_REPOS_OUTPUT_SCHEMA = {
+    "scan_schema_version": SCAN_SHARED_REPOS_SCHEMA_VERSION,
+    "repos_root": "string",
+    "repos_root_mode": "repos|worktrees",
+    "shared_modules": {"type": "object", "values": "array"},
+    "shared_count": "integer",
+    "module_count": "integer",
+    "repo_count": "integer",
+    "excluded_repos": "array",
+    "examined_repos": "array",
+    "min_repo_count": "integer",
+}
+
+SCAN_SHARED_REPOS_MODULE_CANDIDATE_TEMPLATE = {
+    "module": "string",
+    "repo_ids": "array",
+    "repo_count": "integer",
+    "manifest_template": {
+        "schema_version": SCAN_SHARED_REPOS_SCHEMA_VERSION,
+        "repo_patterns": "array",
+        "default_ref": "HEAD",
+        "repo_ref_overrides": "object",
+        "repo_runner_overrides": "object",
+        "repo_command_overrides": "object",
+        "repo_env_profile_overrides": "object",
+        "matched_repos": "array",
+    },
+}
 
 
 def _parse_lock(payload: dict[str, Any]) -> TargetLock:
@@ -104,6 +137,72 @@ def _load_module_manifest(module_name: str) -> ModuleManifest:
 
 def _repo_id_from_path(repo_path: Path) -> str:
     return sanitize_repo_id(repo_path.name)
+
+
+def _validate_excluded_repo_ids(exclude_repos: Iterable[str]) -> set[str]:
+    normalized: set[str] = set()
+    for repo_name in exclude_repos:
+        candidate = repo_name.strip()
+        if not candidate:
+            raise ValueError("exclude repo id cannot be blank")
+        sanitized = sanitize_repo_id(candidate)
+        if sanitized != candidate:
+            raise ValueError(f"invalid repo id: {candidate}")
+        normalized.add(sanitized)
+    return normalized
+
+
+def _collect_candidate_repos(root: Path) -> list[Path]:
+    if not root.exists():
+        return []
+    if not root.is_dir():
+        return []
+    return sorted([entry for entry in root.iterdir() if entry.is_dir() and not entry.name.startswith(".")])
+
+
+def _resolve_worktree_roots() -> list[Path]:
+    base_root = phenotype_root()
+    return sorted(
+        [entry for entry in base_root.iterdir() if entry.is_dir() and entry.name.endswith("-wtrees")]
+    )
+
+
+def _collect_worktree_repos(root: Path) -> list[Path]:
+    if root.name.endswith("-wtrees"):
+        return _collect_candidate_repos(root)
+    if (root / "src").exists():
+        return [root]
+    return _collect_candidate_repos(root)
+
+
+def _repos_root_metadata(
+    repos_root: Path | None,
+    root_mode: str,
+) -> tuple[Path, list[Path]]:
+    if root_mode not in {SCAN_SHARED_REPOS_ROOT_MODE_REPOS, SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES}:
+        raise ValueError(
+            f"repos_root_mode must be one of: {SCAN_SHARED_REPOS_ROOT_MODE_REPOS}, {SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES}"
+        )
+
+    base_root = repos_root if repos_root is not None else None
+    if base_root is None:
+        if root_mode == SCAN_SHARED_REPOS_ROOT_MODE_REPOS:
+            base_root = phenotype_root() / "repos"
+            return base_root, _collect_candidate_repos(base_root)
+
+        worktree_roots = _resolve_worktree_roots()
+        candidate_paths: list[Path] = []
+        for worktree_root in worktree_roots:
+            candidate_paths.extend(_collect_worktree_repos(worktree_root))
+        return phenotype_root(), sorted(candidate_paths)
+
+    explicit_root = base_root.expanduser().resolve()
+    if not explicit_root.exists():
+        return explicit_root, []
+    if root_mode == SCAN_SHARED_REPOS_ROOT_MODE_REPOS:
+        return explicit_root, _collect_candidate_repos(explicit_root)
+
+    return explicit_root, _collect_worktree_repos(explicit_root)
 
 
 def _select_module_repos(
@@ -183,29 +282,28 @@ def scan_shared_modules_across_repos(
     *,
     exclude_repos: set[str] | None = None,
     min_repo_count: int = 2,
+    repos_root_mode: str | None = None,
 ) -> dict[str, Any]:
     if min_repo_count < 2:
         raise ValueError("min_repo_count must be at least 2")
 
-    if repos_root is None:
-        candidate_paths = repository_root_candidates()
-        root = phenotype_root() / "repos"
-    else:
-        root = Path(repos_root).expanduser().resolve()
-        if not root.exists():
-            return {
-                "repos_root": str(root),
-                "shared_modules": {},
-                "shared_count": 0,
-                "module_count": 0,
-                "repo_count": 0,
-                "excluded_repos": [],
-                "examined_repos": [],
-                "min_repo_count": min_repo_count,
-            }
-        candidate_paths = sorted([entry for entry in root.iterdir() if entry.is_dir() and not entry.name.startswith(".")])
+    root_mode = repos_root_mode or SCAN_SHARED_REPOS_ROOT_MODE_REPOS
+    root, candidate_paths = _repos_root_metadata(repos_root, root_mode)
+    if not candidate_paths:
+        return {
+            "scan_schema_version": SCAN_SHARED_REPOS_SCHEMA_VERSION,
+            "repos_root": str(root),
+            "repos_root_mode": root_mode,
+            "shared_modules": {},
+            "shared_count": 0,
+            "module_count": 0,
+            "repo_count": 0,
+            "excluded_repos": sorted(DEFAULT_EXCLUDED_REPOS),
+            "examined_repos": [],
+            "min_repo_count": min_repo_count,
+        }
 
-    excluded = {sanitize_repo_id(repo_name) for repo_name in (exclude_repos or set())}
+    excluded = _validate_excluded_repo_ids(exclude_repos or set())
     effective_excludes = sorted(DEFAULT_EXCLUDED_REPOS | excluded)
     repo_modules: dict[str, set[str]] = {}
 
@@ -222,7 +320,9 @@ def scan_shared_modules_across_repos(
     shared_modules = _collect_shared_modules(repo_modules, min_repo_count=min_repo_count)
 
     return {
+        "scan_schema_version": SCAN_SHARED_REPOS_SCHEMA_VERSION,
         "repos_root": str(root),
+        "repos_root_mode": root_mode,
         "shared_modules": shared_modules,
         "shared_count": len(shared_modules),
         "module_count": len(repo_modules),

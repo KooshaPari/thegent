@@ -40,10 +40,10 @@
 
 | Phase | Lane | Task ID | [status] | Description | Depends On |
 |---|---|---|---|---|---|
-| Discovery | S1 | P25 | [todo] | Add repo root selector CLI flag for `scan-shared-repos` to target sibling worktrees. | P20 |
-| Discovery | S1 | P26 | [todo] | Add exclusion validation for malformed repo IDs and whitespace-only values. | P25 |
-| Discovery | S1 | P27 | [todo] | Add `scan-shared-repos` output schema contract in JSON and docs/guide. | P26 |
-| Discovery | S1 | P28 | [todo] | Document candidate manifest output and `--candidates` field semantics. | P27 |
+| Discovery | S1 | P25 | [done] | Add repo root selector CLI flag for `scan-shared-repos` to target sibling worktrees. | P20 |
+| Discovery | S1 | P26 | [done] | Add exclusion validation for malformed repo IDs and whitespace-only values. | P25 |
+| Discovery | S1 | P27 | [done] | Add `scan-shared-repos` output schema contract in JSON and docs/guide. | P26 |
+| Discovery | S1 | P28 | [done] | Document candidate manifest output and `--candidates` field semantics. | P27 |
 | Design | S2 | P29 | [todo] | Add helper to generate module manifest files from `scan-shared-repos` output. | P25 |
 | Design | S2 | P30 | [todo] | Define manifest naming convention for detected shared modules (prefix and bounded scope). | P29 |
 | Design | S2 | P31 | [todo] | Add conflict strategy for overlapping candidate modules across domains. | P30 |

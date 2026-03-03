@@ -222,6 +222,11 @@ def scan_shared_repos_cmd(
         "--repos-root",
         help="Path to the repos workspace. Defaults to $THGENT_PHENOTYPE_ROOT/repos.",
     ),
+    repos_root_mode: str = typer.Option(
+        "repos",
+        "--repos-root-mode",
+        help="Select repository selection mode: repos (default) or worktrees.",
+    ),
     exclude: list[str] = typer.Option(
         [],
         "--exclude",
@@ -240,12 +245,18 @@ def scan_shared_repos_cmd(
 ) -> None:
     if min_repo_count < 2:
         raise typer.BadParameter("min-repos must be >= 2")
+    if repos_root_mode not in {"repos", "worktrees"}:
+        raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
 
-    state = scan_shared_modules_across_repos(
-        repos_root=None if repos_root is None else Path(repos_root),
-        exclude_repos={value.strip() for value in exclude if value.strip()},
-        min_repo_count=min_repo_count,
-    )
+    try:
+        state = scan_shared_modules_across_repos(
+            repos_root=None if repos_root is None else Path(repos_root),
+            exclude_repos={value.strip() for value in exclude},
+            min_repo_count=min_repo_count,
+            repos_root_mode=repos_root_mode,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc))
     if candidates:
         state["module_candidates"] = [
             {

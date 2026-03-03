@@ -7,12 +7,13 @@
 - Extended runtime selection semantics so module-level runner/command/profile values are applied when `run` is invoked without explicit overrides.
 - Added test coverage for manifest loading, exclusions, CLI invocation, and module-driven override behavior.
 - Updated project control-plane docs to include module examples, precedence rules, `--all-repos` safety notes, and default exclusion policy.
+- Added `scan-shared-repos` schema/candidate contract, sibling worktree scanning mode, and strict exclude validation.
 
 ## Evidence
 
 - Tests
   - `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src:packages/thegent-bench/src:packages/thegent-cli/src python -m pytest tests/test_phench_runtime.py -q`
-  - Result: `18 passed`
+  - Result: `22 passed`
 - Lint (targeted)
   - `python -m ruff check` on touched phench and CLI files
   - Result: no regressions in modified set.

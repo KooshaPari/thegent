@@ -602,6 +602,44 @@ def test_scan_shared_modules_across_repos_respects_excludes_and_minimum_repo_cou
     result_with_default = scan_shared_modules_across_repos(repos_root=repos_root, exclude_repos=set())
     assert "sharedpkg" in result_with_default["shared_modules"]
     assert "4sgm" not in result_with_default["examined_repos"]
+    assert result_with_default["scan_schema_version"] == 1
+
+
+def test_scan_shared_modules_across_repos_validates_exclude_ids(tmp_path: Path) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+
+    with pytest.raises(ValueError, match="exclude repo id cannot be blank"):
+        scan_shared_modules_across_repos(
+            repos_root=repos_root,
+            exclude_repos={"   "},
+        )
+
+    with pytest.raises(ValueError, match="invalid repo id: repo/a"):
+        scan_shared_modules_across_repos(
+            repos_root=repos_root,
+            exclude_repos={"repo/a"},
+        )
+
+
+def test_scan_shared_modules_across_repos_supports_worktree_root_mode(tmp_path: Path) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    worktrees_root = phenotype_root / "thegent-wtrees"
+    repo_a = worktrees_root / "worktree-a"
+    repo_b = worktrees_root / "worktree-b"
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+    _init_git_repo_with_pkg(repo_b, "sharedpkg")
+
+    result = scan_shared_modules_across_repos(
+        repos_root=worktrees_root,
+        min_repo_count=2,
+        repos_root_mode="worktrees",
+    )
+    assert result["repos_root_mode"] == "worktrees"
+    assert result["shared_modules"] == {"sharedpkg": ["worktree-a", "worktree-b"]}
 
 
 def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
@@ -637,6 +675,8 @@ def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
             "scan-shared-repos",
             "--repos-root",
             str(tmp_path / "Phenotype" / "repos"),
+            "--repos-root-mode",
+            "repos",
             "--exclude",
             "repo-b",
             "--min-repos",

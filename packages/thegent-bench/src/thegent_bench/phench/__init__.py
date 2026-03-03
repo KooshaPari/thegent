@@ -1,6 +1,11 @@
 """Phench project state runtime control-plane helpers."""
 
 from .service import (
+    SCAN_SHARED_REPOS_MODULE_CANDIDATE_TEMPLATE,
+    SCAN_SHARED_REPOS_OUTPUT_SCHEMA,
+    SCAN_SHARED_REPOS_SCHEMA_VERSION,
+    SCAN_SHARED_REPOS_ROOT_MODE_REPOS,
+    SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES,
     add_repo,
     add_module_to_target,
     audit_shared_modules,
@@ -21,6 +26,11 @@ from .service import (
 )
 
 __all__ = [
+    "SCAN_SHARED_REPOS_MODULE_CANDIDATE_TEMPLATE",
+    "SCAN_SHARED_REPOS_OUTPUT_SCHEMA",
+    "SCAN_SHARED_REPOS_SCHEMA_VERSION",
+    "SCAN_SHARED_REPOS_ROOT_MODE_REPOS",
+    "SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES",
     "add_repo",
     "add_module_to_target",
     "audit_shared_modules",
