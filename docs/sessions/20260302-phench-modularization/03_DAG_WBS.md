@@ -119,6 +119,7 @@ Current milestone state:
 - P6.28, P6.30, P6.31, and P6.39 remain active and require dedicated branch capacity for PR mechanics and merge-order validation.
 - P6.32, P6.33, P6.39–P6.46 are blocked on lane branch creation/PR workflow execution.
 - P6.27 is now complete at the handoff-doc level; evidence set is documented in `phase-evidence-archive.md`.
+- P6.32 now includes PR anchor map and merge sequencing checklists; these now live in `docs/changes/shared-modules/thegent-module-lane-bootstraps-v1/{lane-pr-anchor-map.md, merge-sequencing-checklist.md}`.
 - No matrix-level regression test was added for `projects matrix` include/exclude output ordering; this remains deferred to first implementation PR.
 
 ## Critical Path (Current)
