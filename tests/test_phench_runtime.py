@@ -667,6 +667,8 @@ def test_load_module_manifest_parses_patterns_and_overrides(tmp_path: Path, monk
     manifest = {
         "schema_version": 1,
         "repo_patterns": ["thegent-*", "platform-*"],
+        "owners": ["OwnerA", "ownerB", "OWNERA"],
+        "refresh_cadence": "daily",
         "repo_ref_overrides": {"thegent-api": "main"},
         "repo_runner_overrides": {"thegent-api": "task"},
         "repo_command_overrides": {"thegent-api": "hello"},
@@ -680,6 +682,8 @@ def test_load_module_manifest_parses_patterns_and_overrides(tmp_path: Path, monk
         available_repo_ids=["thegent-api", "platform-core", "other"],
     )
     assert loaded["repo_ids"] == ["platform-core", "thegent-api"]
+    assert loaded["owners"] == ["ownera", "ownerb"]
+    assert loaded["refresh_cadence"] == "daily"
     assert loaded["repo_ref_overrides"] == {"thegent-api": "main"}
     assert loaded["repo_runner_overrides"] == {"thegent-api": "task"}
     assert loaded["repo_command_overrides"] == {"thegent-api": "hello"}
@@ -737,6 +741,19 @@ def test_load_module_manifest_rejects_unknown_repo_override(tmp_path: Path, monk
         load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
 
 
+def test_load_module_manifest_defaults_owners_and_refresh_cadence(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    loaded = load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+    assert loaded["owners"] == []
+    assert loaded["refresh_cadence"] == "never"
+
+
 def test_load_module_manifest_rejects_unsupported_schema_version(
     tmp_path: Path,
     monkeypatch,
@@ -765,6 +782,42 @@ def test_load_module_manifest_defaults_schema_version_when_missing(
     monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
     loaded = load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
     assert loaded["schema_version"] == 1
+
+
+def test_load_module_manifest_rejects_invalid_refresh_cadence(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"], "refresh_cadence": "biweekly"}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="must be one of"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_load_module_manifest_rejects_invalid_owners_payload(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"], "owners": [""]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    loaded = load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+    assert loaded["owners"] == []
+
+
+def test_load_module_manifest_rejects_non_list_owners(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"], "owners": "thegent"}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="must be a list"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
 
 
 def test_run_target_respects_per_repo_env_profile_override(tmp_path: Path, monkeypatch) -> None:

@@ -1122,6 +1122,8 @@ def test_phench_projects_modules_loads_manifest() -> None:
     with patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest:
         mock_load_module_manifest.return_value = {
             "repo_ids": ["repo-a", "repo-b"],
+            "owners": ["owner-a", "owner-b"],
+            "refresh_cadence": "weekly",
             "repo_ref_overrides": {},
             "repo_runner_overrides": {},
             "repo_command_overrides": {},
@@ -1139,6 +1141,8 @@ def test_phench_projects_modules_loads_manifest() -> None:
     )
     assert json.loads(result.stdout) == {
         "repo_ids": ["repo-a", "repo-b"],
+        "owners": ["owner-a", "owner-b"],
+        "refresh_cadence": "weekly",
         "repo_ref_overrides": {},
         "repo_runner_overrides": {},
         "repo_command_overrides": {},

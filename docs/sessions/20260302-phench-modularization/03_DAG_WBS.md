@@ -17,7 +17,7 @@
 ### Phase 2: Multi-repo topology and governance
 - [done] Generate reusable-module and audit snapshots and extend `tach.toml` source roots.
 - [done] Build cross-repo sweep task (excluding `4sgm`, `trace`, `parpour`, `civ`) to identify additional split candidates.
-- [todo] Create shared module registry with explicit ownership and refresh cadence.
+- [done] Create shared module registry with explicit ownership and refresh cadence.
 
 ### Phase 3: Worktree-first implementation model
 - [done] Confirm governance commit pattern and maintain isolated branch/worktree workflow in this session.
@@ -30,7 +30,7 @@
 - [done] Add persistent execution provenance snapshot (target/repo/ref/sha, manifest hash) to status output and runtime state.
 
 ### Phase 5: Repo split and moduleization
-- [todo] Scaffold module directories in this repo as repo-like boundaries (`modules/thegent-app`, `modules/thegent-mcp`, `modules/thegent-control-plane`, `modules/thegent-execution`, `modules/thegent-governance`) while preserving shared contract surfaces.
+- [done] Scaffold module directories in this repo as repo-like boundaries (`modules/thegent-app`, `modules/thegent-mcp`, `modules/thegent-control-plane`, `modules/thegent-execution`, `modules/thegent-governance`) while preserving shared contract surfaces.
 - [todo] Introduce explicit import boundaries and package-level adapters for module-to-module calls.
 - [todo] Run full decomposition validation (`task quality`, targeted e2e) before merge.
 
