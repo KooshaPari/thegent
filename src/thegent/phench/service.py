@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 import hashlib
 import json
 import secrets
+import re
 from typing import Any
 
 from .env_doctor import run_env_doctor
@@ -42,6 +43,10 @@ RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
 SNAPSHOT_DIR = "snapshots"
 SUPPORTED_MODULE_MANIFEST_SCHEMA_VERSIONS = {1}
+DEFAULT_MODULE_REFRESH_CADENCE = "never"
+_REFRESH_CADENCE_RE = re.compile(
+    r"^(never|manual|daily|weekly|monthly|yearly|hourly|every-\d+[smhdwy])$"
+)
 
 
 def _resolve_module_manifest_path(module: str) -> Path:
@@ -1079,6 +1084,45 @@ def _normalize_repo_id_list(values: list[str] | None) -> list[str]:
     return normalized
 
 
+def _validate_module_owners(payload: dict[str, Any], *, field: str) -> list[str]:
+    raw = payload.get(field)
+    if raw is None:
+        return []
+
+    if not isinstance(raw, list):
+        raise ValueError(f"module manifest field '{field}' must be a list")
+
+    owners: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        if not isinstance(item, str):
+            raise ValueError(f"module manifest field '{field}' contains non-string entry")
+        owner = item.strip()
+        if not owner:
+            continue
+        normalized_owner = owner.lower()
+        if normalized_owner in seen:
+            continue
+        seen.add(normalized_owner)
+        owners.append(normalized_owner)
+    return owners
+
+
+def _validate_module_refresh_cadence(payload: dict[str, Any], *, field: str) -> str:
+    raw = payload.get(field, DEFAULT_MODULE_REFRESH_CADENCE)
+    if not isinstance(raw, str):
+        raise ValueError(f"module manifest field '{field}' must be a string")
+    cadence = raw.strip().lower()
+    if not cadence:
+        raise ValueError(f"module manifest field '{field}' cannot be empty")
+    if not _REFRESH_CADENCE_RE.match(cadence):
+        raise ValueError(
+            f"module manifest field '{field}' must be one of "
+            f"never, manual, daily, weekly, monthly, yearly, hourly, every-<duration>"
+        )
+    return cadence
+
+
 def _normalize_repo_map(values: dict[str, str] | None, *, label: str) -> dict[str, str]:
     if values is None:
         return {}
@@ -1143,6 +1187,8 @@ def load_module_manifest(
 
     module_overrides: dict[str, Any] = {
         "schema_version": schema_version,
+        "owners": _validate_module_owners(payload, field="owners"),
+        "refresh_cadence": _validate_module_refresh_cadence(payload, field="refresh_cadence"),
         "repo_ref_overrides": _validate_module_repos_payload_map(
             payload,
             field="repo_ref_overrides",

@@ -15,6 +15,9 @@ INSTALL_DIR="${HOME}/.local/bin"
 BINARY_NAME="thegent-shims"
 GIT_BINARY_NAME="thegent-git"
 CHECKOUT_BINARY_NAME="thegent-git-checkout"
+GREP_BINARY_NAME="thegent-grep"
+FIND_BINARY_NAME="thegent-find"
+AGENT_BINARY_NAME="thegent-agent"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -184,11 +187,15 @@ create_symlinks() {
 
     # Dedicated bin wrappers for high-risk commands (no shell dispatch)
     echo -e "${GREEN}Creating dedicated binary shims for git family${NC}"
-    local dedicated_git
+    local dedicated_gent
     local dedicated_checkout
-    dedicated_git="$(resolve_binary_path "${GIT_BINARY_NAME}")"
-    if [[ -n "$dedicated_git" ]]; then
-        ln -sf "$dedicated_git" "${INSTALL_DIR}/${GIT_BINARY_NAME}"
+    local dedicated_grep
+    local dedicated_find
+    local dedicated_agent
+
+    dedicated_gent="$(resolve_binary_path "${GIT_BINARY_NAME}")"
+    if [[ -n "$dedicated_gent" ]]; then
+        ln -sf "$dedicated_gent" "${INSTALL_DIR}/${GIT_BINARY_NAME}"
     else
         ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${GIT_BINARY_NAME}"
     fi
@@ -198,6 +205,27 @@ create_symlinks() {
         ln -sf "$dedicated_checkout" "${INSTALL_DIR}/${CHECKOUT_BINARY_NAME}"
     else
         ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${CHECKOUT_BINARY_NAME}"
+    fi
+
+    dedicated_grep="$(resolve_binary_path "${GREP_BINARY_NAME}")"
+    if [[ -n "$dedicated_grep" ]]; then
+        ln -sf "$dedicated_grep" "${INSTALL_DIR}/${GREP_BINARY_NAME}"
+    else
+        ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${GREP_BINARY_NAME}"
+    fi
+
+    dedicated_find="$(resolve_binary_path "${FIND_BINARY_NAME}")"
+    if [[ -n "$dedicated_find" ]]; then
+        ln -sf "$dedicated_find" "${INSTALL_DIR}/${FIND_BINARY_NAME}"
+    else
+        ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${FIND_BINARY_NAME}"
+    fi
+
+    dedicated_agent="$(resolve_binary_path "${AGENT_BINARY_NAME}")"
+    if [[ -n "$dedicated_agent" ]]; then
+        ln -sf "$dedicated_agent" "${INSTALL_DIR}/${AGENT_BINARY_NAME}"
+    else
+        ln -sf "${INSTALL_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${AGENT_BINARY_NAME}"
     fi
 }
 
@@ -256,6 +284,9 @@ main() {
     echo "  - opencode -> thegent-shims"
     echo "  - thegent-git -> thegent-git"
     echo "  - thegent-git-checkout -> thegent-git-checkout"
+    echo "  - thegent-grep -> thegent-grep"
+    echo "  - thegent-find -> thegent-find"
+    echo "  - thegent-agent -> thegent-agent"
     echo ""
     echo "Usage:"
     echo "  dex --help"
