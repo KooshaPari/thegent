@@ -775,6 +775,59 @@ Notes:
 - Only repos in the selected target are runnable. Unknown repo keys in override maps fail fast.
 - `repo_env_profile_overrides` accepts per-repo profile names and overrides `--env-profile`.
 
+### `thegent phench modules audit` - Find shared modules across sibling repos
+
+Scan repository checkouts and surface modules that appear across multiple repos.
+
+**Syntax**:
+```bash
+thegent phench modules audit [OPTIONS]
+```
+
+**Options**:
+- `--source-root <dir>`: Root containing repo checkouts (defaults to `THGENT_PHENOTYPE_REPOS_ROOT`).
+- `--include-repo <glob>`: Limit to repositories matching a glob pattern (repeatable).
+- `--exclude-repo <glob>`: Exclude repositories matching a glob pattern (repeatable).
+- `--skip-repo <repo-id>`: Explicit repository IDs to skip (repeatable).
+- `--min-repo-count <n>`: Minimum repo ownership count for shared module reporting (default `2`).
+- `--include-module <name>`: Restrict scan to specific module names (repeatable).
+- `--exclude-module <name>`: Exclude module names from scan (repeatable).
+- `--include-repo-modules-root/--no-include-repo-modules-root`: Include or ignore `<repo>/modules/<module>/manifest.json` as ownership signal.
+
+**Notes**:
+- Modules are discovered from:
+  - `src/<module>/__init__.py` package markers.
+  - `<repo>/modules/<module>/manifest.json` when enabled.
+- Default exclusions include: `4sgm`, `trace`, `parpour`, `civ`.
+
+```bash
+thegent phench modules audit --source-root ../repos --min-repo-count 2
+thegent phench modules audit --include-module thegent-app --exclude-module legacy
+```
+
+### `thegent phench modules sync` - Sync module manifests into `projects/modules`
+
+Collect repo-local module manifests and mirror them into
+`~/CodeProjects/Phenotype/projects/modules/<module>/manifest.json`.
+
+**Syntax**:
+```bash
+thegent phench modules sync [OPTIONS]
+```
+
+**Options**:
+- `--source-root <dir>`: Root containing repos to scan.
+- `--destination-root <dir>`: Destination module root for sync output.
+- `--include-repo <glob>` / `--exclude-repo <glob>`: Repository include/exclude filter.
+- `--include-module <name>` / `--exclude-module <name>`: Restrict which modules are copied.
+- `--overwrite`: Replace existing manifests.
+- `--dry-run` / `-n`: Preview copy plan only.
+
+```bash
+thegent phench modules sync --dry-run --source-root ../repos --include-module thegent-app
+thegent phench modules sync --source-root ../repos --destination-root ../projects/modules --overwrite
+```
+
 ### `thegent phench projects run` - Orchestrate target runs
 
 Execute a command against selected repo(s) in a target.

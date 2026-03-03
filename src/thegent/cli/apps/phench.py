@@ -9,6 +9,7 @@ import typer
 from thegent.phench import (
     add_repo,
     audit_shared_modules,
+    audit_shared_modules_across_repos,
     bootstrap_target,
     create_target_snapshot,
     build_project_execution_matrix,
@@ -26,6 +27,7 @@ from thegent.phench import (
     run_target,
     set_env_profile,
     set_repo_ref,
+    sync_project_modules_from_repos,
     show_target_snapshot,
     sync_target,
     target_status,
@@ -34,6 +36,7 @@ from thegent.phench import (
 from thegent.cli.apps.phench_env import register_env_commands
 from thegent.cli.apps.phench_observability import register_observability_commands
 from thegent.cli.apps.phench_projects import register_projects_run
+from thegent.cli.apps.phench_modules import register_modules_commands
 from thegent.cli.apps.phench_repos import register_repos_commands
 from thegent.cli.apps.phench_run import register_run_commands
 from thegent.cli.apps.phench_snapshot import register_snapshot_commands
@@ -46,11 +49,13 @@ target_app = typer.Typer(help="Manage project runtime targets.")
 repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
 env_app = typer.Typer(help="Environment preflight commands for targets.")
 snapshot_app = typer.Typer(help="Capture and inspect target snapshots.")
+modules_app = typer.Typer(help="Manage cross-repo module manifests and shared-module discovery.")
 projects_app = typer.Typer(help="Guided target selection and execution workflows.")
 app.add_typer(target_app, name="target")
 app.add_typer(repos_app, name="repos")
 app.add_typer(env_app, name="env")
 app.add_typer(snapshot_app, name="snapshot")
+app.add_typer(modules_app, name="modules")
 app.add_typer(projects_app, name="projects")
 
 
@@ -87,6 +92,50 @@ def _get_env_profile_dispatch(
 
 def _sync_target_dispatch(name: str, **kwargs: Any) -> dict[str, Any]:
     return sync_target(name, **kwargs)
+
+
+def _audit_shared_modules_across_repos_dispatch(
+    source_root: Any = None,
+    include_repos: list[str] | None = None,
+    exclude_repos: list[str] | None = None,
+    min_repo_count: int = 2,
+    exclude_modules: list[str] | None = None,
+    include_modules: list[str] | None = None,
+    include_repo_modules_root: bool = True,
+    skip_repos: list[str] | None = None,
+) -> dict[str, Any]:
+    return audit_shared_modules_across_repos(
+        source_root=source_root,
+        include_repos=include_repos,
+        exclude_repos=exclude_repos,
+        min_repo_count=min_repo_count,
+        exclude_modules=exclude_modules,
+        include_modules=include_modules,
+        include_repo_modules_root=include_repo_modules_root,
+        skip_repos=skip_repos,
+    )
+
+
+def _sync_project_modules_from_repos_dispatch(
+    source_root: Any = None,
+    destination_root: Any = None,
+    include_repos: list[str] | None = None,
+    exclude_repos: list[str] | None = None,
+    include_modules: list[str] | None = None,
+    exclude_modules: list[str] | None = None,
+    overwrite: bool = False,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    return sync_project_modules_from_repos(
+        source_root=source_root,
+        destination_root=destination_root,
+        include_repos=include_repos,
+        exclude_repos=exclude_repos,
+        include_modules=include_modules,
+        exclude_modules=exclude_modules,
+        overwrite=overwrite,
+        dry_run=dry_run,
+    )
 
 
 def _discover_repos_dispatch(
@@ -153,6 +202,11 @@ register_snapshot_commands(
     show_target_snapshot_fn=_snapshot_show_dispatch,
 )
 register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
+register_modules_commands(
+    modules_app,
+    sync_project_modules_from_repos_fn=_sync_project_modules_from_repos_dispatch,
+    audit_shared_modules_across_repos_fn=_audit_shared_modules_across_repos_dispatch,
+)
 
 register_projects_run(
     projects_app,
