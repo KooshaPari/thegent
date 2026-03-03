@@ -14,9 +14,11 @@ from thegent.phench import (
     add_repo,
     add_module_to_target,
     audit_shared_modules,
+    build_scan_candidates,
     scan_shared_modules_across_repos,
     get_env_profile,
     init_target,
+    materialize_module_candidate_manifest,
     list_targets,
     lock_target,
     materialize_target,
@@ -237,6 +239,16 @@ def scan_shared_repos_cmd(
         "--min-repos",
         help="Report modules seen in at least this many repos.",
     ),
+    candidate_name_regex: str | None = typer.Option(
+        None,
+        "--candidate-name-regex",
+        help="Optional regex filter for module candidates (applies when candidates are included).",
+    ),
+    omit_candidates: bool = typer.Option(
+        False,
+        "--omit-candidates",
+        help="Omit module_candidates for faster scans when only recommendations are needed.",
+    ),
     candidates: bool = typer.Option(
         False,
         "--candidates",
@@ -254,29 +266,76 @@ def scan_shared_repos_cmd(
             exclude_repos={value.strip() for value in exclude},
             min_repo_count=min_repo_count,
             repos_root_mode=repos_root_mode,
+            candidate_name_regex=candidate_name_regex,
+            omit_candidates=omit_candidates,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc))
-    if candidates:
-        state["module_candidates"] = [
-            {
-                "module": module,
-                "repo_ids": repos,
-                "repo_count": len(repos),
-                "manifest_template": {
-                    "schema_version": 1,
-                    "repo_patterns": ["*"],
-                    "default_ref": "HEAD",
-                    "repo_ref_overrides": {},
-                    "repo_runner_overrides": {},
-                    "repo_command_overrides": {},
-                    "repo_env_profile_overrides": {},
-                    "matched_repos": repos,
-                },
-            }
-            for module, repos in sorted(state["shared_modules"].items())
-        ]
+    if candidates and "module_candidates" not in state:
+        state["module_candidates"] = build_scan_candidates(shared_modules=state["shared_modules"])
     console.print_json(json.dumps(state).decode())
+
+
+@app.command("materialize-module-manifest", help="Materialize a shared-module manifest candidate from scan output.")
+def materialize_module_manifest_cmd(
+    module: str = typer.Option(..., "--module", help="Shared module name from scan results."),
+    repos_root: str | None = typer.Option(
+        None,
+        "--repos-root",
+        help="Path to the repos workspace. Defaults to $THGENT_PHENOTYPE_ROOT/repos.",
+    ),
+    repos_root_mode: str = typer.Option(
+        "repos",
+        "--repos-root-mode",
+        help="Select repository selection mode: repos (default) or worktrees.",
+    ),
+    repos: list[str] = typer.Option(
+        [],
+        "--repo",
+        help="Optional explicit repo IDs to pin candidate generation.",
+    ),
+    min_count: int = typer.Option(
+        2,
+        "--min-count",
+        help="Minimum overlap threshold for shared-module candidates.",
+    ),
+    output_dir: str | None = typer.Option(
+        None,
+        "--output-dir",
+        help="Directory to persist generated manifest. Defaults to $THGENT_PHENOTYPE_ROOT/projects/modules.",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Print candidate manifest without writing files."),
+    print_snippets: bool = typer.Option(
+        False,
+        "--print-snippets",
+        "--print-target-snippets",
+        help="Include shell snippets for creating a module target.",
+    ),
+) -> None:
+    if min_count < 2:
+        raise typer.BadParameter("min-count must be >= 2")
+    if repos_root_mode not in {"repos", "worktrees"}:
+        raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
+
+    try:
+        payload = materialize_module_candidate_manifest(
+            module,
+            repos_root=None if repos_root is None else Path(repos_root),
+            repos_root_mode=repos_root_mode,
+            repos=[value.strip() for value in repos if value.strip()],
+            min_repo_count=min_count,
+            output_dir=None if output_dir is None else Path(output_dir),
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc))
+
+    if print_snippets:
+        payload["shell_snippets"] = [
+            f"thegent phench target init {payload['module_name']} --mode stack",
+            f"thegent phench target add-module {payload['module_name']} --module {payload['module_name']}",
+        ]
+    console.print_json(json.dumps(payload).decode())
 
 
 @app.command("tui", help="Interactive selector: target -> timeline -> run.")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import json
 import subprocess
 from pathlib import Path
@@ -10,7 +11,10 @@ from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
     add_module_to_target,
+    build_module_manifest_payload,
+    build_scan_candidates,
     scan_shared_modules_across_repos,
+    materialize_module_candidate_manifest,
     get_env_profile,
     init_target,
     list_targets,
@@ -642,17 +646,321 @@ def test_scan_shared_modules_across_repos_supports_worktree_root_mode(tmp_path: 
     assert result["shared_modules"] == {"sharedpkg": ["worktree-a", "worktree-b"]}
 
 
-def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
-    import importlib.util
+def test_build_scan_candidates_generates_sorted_overlapping_candidates() -> None:
+    candidates = build_scan_candidates(
+        {
+            "alpha": ["repo-c", "repo-a", "repo-b"],
+            "zeta": ["repo-a", "repo-b"],
+            "beta": ["repo-b", "repo-a", "repo-c"],
+        },
+        module_prefix="scanmod",
+    )
+    assert [item["module_name"] for item in candidates] == [
+        "scanmod-alpha-3",
+        "scanmod-beta-3",
+        "scanmod-zeta-2",
+    ]
+    assert candidates[0]["manifest_template"]["repo_patterns"] == ["repo-a", "repo-b", "repo-c"]
+    assert candidates[0]["repo_count"] == 3
+    assert len(candidates[0]["module_name"]) <= 60
 
-    from typer.testing import CliRunner
 
-    cli_module_path = Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
-    spec = importlib.util.spec_from_file_location("phench_cli_scan_module", cli_module_path)
+def test_build_module_manifest_payload_has_sorted_repo_patterns() -> None:
+    payload = build_module_manifest_payload("alpha", ["z", "a", "m"])
+    assert payload["repo_patterns"] == ["a", "m", "z"]
+    assert payload["matched_repos"] == ["a", "m", "z"]
+
+
+def test_materialize_module_candidate_manifest_honors_repo_pinning_and_dry_run(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    repo_c = repos_root / "repo-c"
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+    _init_git_repo_with_pkg(repo_b, "sharedpkg")
+    _init_git_repo_with_pkg(repo_c, "sharedpkg")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    result = materialize_module_candidate_manifest(
+        "sharedpkg",
+        repos_root=repos_root,
+        repos=["repo-a", "repo-c"],
+        min_repo_count=2,
+        output_dir=tmp_path / "modules-out",
+        dry_run=True,
+    )
+    assert result["dry_run"] is True
+    assert result["repos"] == ["repo-a", "repo-c"]
+    assert result["manifest_payload"]["repo_patterns"] == ["repo-a", "repo-c"]
+    assert result["manifest_path"].endswith("shared-module-sharedpkg-2/manifest.json")
+
+
+def test_materialize_module_candidate_manifest_respects_existing_manifest_idempotent(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+    _init_git_repo_with_pkg(repo_b, "sharedpkg")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    output_dir = tmp_path / "modules-out"
+    first = materialize_module_candidate_manifest(
+        "sharedpkg",
+        repos_root=repos_root,
+        output_dir=output_dir,
+        min_repo_count=2,
+    )
+    second = materialize_module_candidate_manifest(
+        "sharedpkg",
+        repos_root=repos_root,
+        output_dir=output_dir,
+        min_repo_count=2,
+    )
+    assert first["manifest_path"] == second["manifest_path"]
+    assert second["manifest_path"] == str(output_dir / "shared-module-sharedpkg-2" / "manifest.json")
+    assert not second["dry_run"]
+
+
+def test_materialize_module_candidate_manifest_filters_explicit_pins_for_default_excludes(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    repo_excluded = repos_root / "4sgm"
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+    _init_git_repo_with_pkg(repo_b, "sharedpkg")
+    _init_git_repo_with_pkg(repo_excluded, "sharedpkg")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="has insufficient pinned repos after filtering"):
+        materialize_module_candidate_manifest(
+            "sharedpkg",
+            repos_root=repos_root,
+            repos=["4sgm", "repo-a"],
+            min_repo_count=2,
+            output_dir=tmp_path / "modules-out",
+        )
+
+
+def test_scan_shared_modules_across_repos_keeps_recommendations_when_omit_candidates_and_applies_regex(tmp_path: Path) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    _init_git_repo_with_pkg(repo_a, "alpha")
+    _init_git_repo_with_pkg(repo_a, "beta")
+    (repo_a / "src" / "alpha" / "__init__.py").write_text("import beta\n", encoding="utf-8")
+    _init_git_repo_with_pkg(repo_b, "alpha")
+    _init_git_repo_with_pkg(repo_b, "beta")
+    (repo_b / "src" / "alpha" / "__init__.py").write_text("import beta\n", encoding="utf-8")
+
+    full = scan_shared_modules_across_repos(
+        repos_root=repos_root,
+        min_repo_count=2,
+        candidate_name_regex="^alp.*",
+        omit_candidates=True,
+    )
+    assert [item["module"] for item in full["recommended_modules"]] == ["alpha", "beta"]
+    assert full["recommended_modules"][0]["depends_on_count"] == 1
+    assert full["recommended_modules"][0]["depends_on"] == ["beta"]
+    assert full["module_candidates"] == []
+    assert any("candidate-name-regex ignored when candidates are omitted" in warning for warning in full["warnings"])
+
+    filtered = scan_shared_modules_across_repos(
+        repos_root=repos_root,
+        min_repo_count=2,
+        candidate_name_regex="^alp.*",
+        omit_candidates=False,
+    )
+    assert [item["module"] for item in filtered["module_candidates"]] == ["alpha"]
+
+
+def test_scan_shared_modules_across_repos_reports_root_mode_hint_and_repo_paths(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+    _init_git_repo_with_pkg(repo_b, "sharedpkg")
+    result = scan_shared_modules_across_repos(
+        repos_root=None,
+        min_repo_count=2,
+    )
+    assert "defaulted repos_root" in result["root_mode_hint"]
+    assert result["repo_paths"] == {
+        "repo-a": str(repo_a),
+        "repo-b": str(repo_b),
+    }
+    assert result["warnings"] == []
+
+
+def test_scan_shared_modules_handles_nested_src_worktree_root(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    worktree_root = phenotype_root / "thegent-wtrees" / "repo-a"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    _init_git_repo_with_pkg(worktree_root, "sharedpkg")
+
+    nested_src = worktree_root / "src"
+    result = scan_shared_modules_across_repos(
+        repos_root=nested_src,
+        repos_root_mode="worktrees",
+        min_repo_count=2,
+    )
+    assert result["shared_modules"] == {}
+
+
+def test_build_scan_candidates_collision_safe_manifest_names() -> None:
+    candidates = build_scan_candidates(
+        {
+            "x" * 80: ["repo-a", "repo-b"],
+            "x" * 80 + "y": ["repo-a", "repo-c"],
+        },
+        module_prefix="shared-module",
+    )
+    assert len(candidates) == 2
+    names = [candidate["module_name"] for candidate in candidates]
+    assert len(set(names)) == len(names)
+    assert len(names[0]) <= 60
+    assert names[1] != names[0]
+    assert len(names[1]) <= 60
+    assert names[1].count("-") >= 2
+
+
+def test_materialize_module_candidate_manifest_includes_index_and_audit_payload(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    _init_git_repo_with_pkg(repo_a, "sharedpkg")
+    _init_git_repo_with_pkg(repo_b, "sharedpkg")
+    output_dir = tmp_path / "modules-out"
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    dry_run = materialize_module_candidate_manifest(
+        "sharedpkg",
+        repos_root=repos_root,
+        min_repo_count=2,
+        output_dir=output_dir,
+        dry_run=True,
+    )
+    assert dry_run["dry_run"] is True
+    assert dry_run["manifest_after"] == dry_run["manifest_payload"]
+    assert dry_run["index_before"] == []
+    assert dry_run["index_after"] == [
+        {
+            "module_name": "shared-module-sharedpkg-2",
+            "manifest_path": str(output_dir / "shared-module-sharedpkg-2" / "manifest.json"),
+            "repo_count": 2,
+            "generated_at": dry_run["index_after"][0]["generated_at"],
+        }
+    ]
+
+    committed = materialize_module_candidate_manifest(
+        "sharedpkg",
+        repos_root=repos_root,
+        min_repo_count=2,
+        output_dir=output_dir,
+        dry_run=False,
+    )
+    assert committed["index_summary"]["manifest_count"] == 1
+    assert (output_dir / "index-summary.json").exists()
+    audit = output_dir / "manifest-audit.jsonl"
+    assert audit.exists()
+    logs = [json.loads(line) for line in audit.read_text(encoding="utf-8").splitlines() if line]
+    assert logs and logs[-1]["module"] == "sharedpkg"
+
+
+def _load_phench_cli_app(path: Path):
+    spec = importlib.util.spec_from_file_location(
+        f"phench_cli_module_{str(path).replace('/', '_').replace('.', '_')}",
+        path,
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError("failed to load phench cli module")
-    phench_cli = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(phench_cli)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_scan_shared_modules_across_repos_recommends_sorted_by_overlap(tmp_path: Path) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    repos_root = phenotype_root / "repos"
+    repo_a = repos_root / "repo-a"
+    repo_b = repos_root / "repo-b"
+    repo_c = repos_root / "repo-c"
+    _init_git_repo_with_pkg(repo_a, "alpha")
+    _init_git_repo_with_pkg(repo_a, "beta")
+    _init_git_repo_with_pkg(repo_b, "alpha")
+    _init_git_repo_with_pkg(repo_b, "beta")
+    _init_git_repo_with_pkg(repo_b, "gamma")
+    _init_git_repo_with_pkg(repo_b, "shared")
+    _init_git_repo_with_pkg(repo_c, "gamma")
+    _init_git_repo_with_pkg(repo_c, "alpha")
+    _init_git_repo_with_pkg(repo_c, "shared")
+
+    result = scan_shared_modules_across_repos(
+        repos_root=repos_root,
+        min_repo_count=2,
+    )
+    assert [item["module"] for item in result["recommended_modules"]] == ["alpha", "beta", "gamma", "shared"]
+    assert result["recommended_modules"][0]["repo_count"] == 3
+
+
+def test_scan_shared_repos_cli_candidates_now_sorted_by_overlap_and_schema(tmp_path: Path, monkeypatch) -> None:
+    from typer.testing import CliRunner
+
+    phench_cli = _load_phench_cli_app(
+        Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+    )
+
+    payload = {
+        "repos_root": str(tmp_path / "Phenotype" / "repos"),
+        "shared_modules": {
+            "alpha": ["repo-c", "repo-a"],
+            "beta": ["repo-a", "repo-b", "repo-c"],
+            "zeta": ["repo-c", "repo-d"],
+        },
+        "shared_count": 3,
+        "module_count": 3,
+        "repo_count": 4,
+        "excluded_repos": ["4sgm", "parpour"],
+        "examined_repos": ["repo-a", "repo-b", "repo-c", "repo-d"],
+        "min_repo_count": 2,
+    }
+    monkeypatch.setattr(
+        phench_cli,
+        "scan_shared_modules_across_repos",
+        lambda **kwargs: payload,
+    )
+    monkeypatch.setattr(
+        phench_cli,
+        "build_scan_candidates",
+        lambda shared_modules, module_prefix="shared-module": [
+            {"module": "beta", "module_name": "shared-module-beta-3", "repo_ids": ["repo-a", "repo-b", "repo-c"], "repo_count": 3, "manifest_template": {}},
+            {"module": "alpha", "module_name": "shared-module-alpha-2", "repo_ids": ["repo-a", "repo-c"], "repo_count": 2, "manifest_template": {}},
+            {"module": "zeta", "module_name": "shared-module-zeta-2", "repo_ids": ["repo-c", "repo-d"], "repo_count": 2, "manifest_template": {}},
+        ],
+    )
+    result = CliRunner().invoke(
+        phench_cli.app,
+        ["scan-shared-repos", "--repos-root", str(tmp_path / "Phenotype" / "repos"), "--candidates"],
+    )
+    assert result.exit_code == 0
+    output = json.loads(result.output)
+    assert output["module_candidates"][0]["module"] == "beta"
+    assert output["module_candidates"][1]["repo_count"] == 2
+
+
+def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
+    from typer.testing import CliRunner
+
+    phench_cli = _load_phench_cli_app(
+        Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+    )
 
     monkeypatch.setattr(
         phench_cli,
@@ -689,6 +997,157 @@ def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
     assert payload["repos_root"] == str(tmp_path / "Phenotype" / "repos")
     assert payload["shared_modules"] == {"sharedpkg": ["repo-a", "repo-b"]}
     assert payload["module_candidates"][0]["module"] == "sharedpkg"
+
+
+def test_materialize_module_manifest_cli_command(tmp_path: Path, monkeypatch) -> None:
+    from typer.testing import CliRunner
+
+    phench_cli = _load_phench_cli_app(
+        Path(__file__).resolve().parents[1] / "packages/thegent-cli/src/thegent_cli/cli/apps/phench.py"
+    )
+
+    def _fake_materialize_module_candidate_manifest(
+        module: str,
+        repos_root: Path | None = None,
+        repos_root_mode: str | None = None,
+        repos: list[str] | None = None,
+        min_repo_count: int = 2,
+        output_dir: Path | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, object]:
+        return {
+            "module": module,
+            "module_name": "shared-module-sharedpkg-2",
+            "repos": ["repo-a", "repo-b"],
+            "manifest_path": "/tmp/modules/shared-module-sharedpkg-2/manifest.json",
+            "manifest_payload": {},
+            "dry_run": False,
+        }
+
+    monkeypatch.setattr(
+        phench_cli,
+        "materialize_module_candidate_manifest",
+        _fake_materialize_module_candidate_manifest,
+    )
+    result = CliRunner().invoke(
+        phench_cli.app,
+        [
+            "materialize-module-manifest",
+            "--module",
+            "sharedpkg",
+            "--repos-root-mode",
+            "repos",
+            "--repo",
+            "repo-a",
+            "--print-snippets",
+        ],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["module"] == "sharedpkg"
+    assert payload["module_name"] == "shared-module-sharedpkg-2"
+    assert payload["shell_snippets"][0] == "thegent phench target init shared-module-sharedpkg-2 --mode stack"
+
+
+@pytest.mark.parametrize(
+    "cli_path",
+    [
+        ("packages/thegent-cli/src/thegent_cli/cli/apps/phench.py", "package"),
+        ("src/thegent/cli/apps/phench.py", "source"),
+    ],
+)
+def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(tmp_path: Path, monkeypatch, cli_path: tuple[str, str]) -> None:
+    from typer.testing import CliRunner
+
+    path, _label = cli_path
+    cli_module_path = Path(__file__).resolve().parents[1] / path
+    phench_cli = _load_phench_cli_app(cli_module_path)
+
+    captured: dict[str, object] = {}
+
+    def _fake_scan_shared_modules_across_repos(**kwargs) -> dict[str, object]:
+        captured.update(kwargs)
+        return {
+            "scan_schema_version": 1,
+            "repos_root": str(kwargs.get("repos_root")),
+            "repos_root_mode": kwargs.get("repos_root_mode", "repos"),
+            "root_mode_hint": "captured",
+            "warnings": [],
+            "repo_paths": {},
+            "shared_modules": {"alpha": ["repo-a", "repo-b"]},
+            "shared_count": 1,
+            "module_count": 2,
+            "repo_count": 2,
+            "excluded_repos": [],
+            "examined_repos": ["repo-a", "repo-b"],
+            "min_repo_count": kwargs.get("min_repo_count", 2),
+            "module_candidates": [],
+            "recommended_modules": [],
+        }
+
+    monkeypatch.setattr(phench_cli, "scan_shared_modules_across_repos", _fake_scan_shared_modules_across_repos)
+    result = CliRunner().invoke(
+        phench_cli.app,
+        [
+            "scan-shared-repos",
+            "--repos-root",
+            str(tmp_path / "Phenotype" / "repos"),
+            "--omit-candidates",
+            "--candidate-name-regex",
+            "^alpha$",
+            "--candidates",
+        ],
+    )
+    assert result.exit_code == 0
+    output = json.loads(result.output)
+    assert output["module_candidates"] == []
+    assert captured["omit_candidates"] is True
+    assert captured["candidate_name_regex"] == "^alpha$"
+
+
+@pytest.mark.parametrize(
+    ("cli_path", "snippet_flag"),
+    [
+        ("packages/thegent-cli/src/thegent_cli/cli/apps/phench.py", "--print-target-snippets"),
+        ("src/thegent/cli/apps/phench.py", "--print-target-snippets"),
+    ],
+)
+def test_materialize_module_manifest_cli_print_target_snippet_alias(tmp_path: Path, monkeypatch, cli_path: str, snippet_flag: str) -> None:
+    from typer.testing import CliRunner
+
+    phench_cli = _load_phench_cli_app(Path(__file__).resolve().parents[1] / cli_path)
+
+    def _fake_materialize_module_candidate_manifest(
+        module: str,
+        repos_root: Path | None = None,
+        repos_root_mode: str | None = None,
+        repos: list[str] | None = None,
+        min_repo_count: int = 2,
+        output_dir: Path | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, object]:
+        return {
+            "module": module,
+            "module_name": "shared-module-sharedpkg-2",
+            "repos": ["repo-a", "repo-b"],
+            "manifest_path": "/tmp/modules/shared-module-sharedpkg-2/manifest.json",
+            "manifest_payload": {},
+            "dry_run": False,
+        }
+
+    monkeypatch.setattr(phench_cli, "materialize_module_candidate_manifest", _fake_materialize_module_candidate_manifest)
+    result = CliRunner().invoke(
+        phench_cli.app,
+        [
+            "materialize-module-manifest",
+            "--module",
+            "sharedpkg",
+            snippet_flag,
+        ],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["shell_snippets"][0].startswith("thegent phench target init shared-module-sharedpkg-2")
 
 
 def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:

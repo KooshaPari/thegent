@@ -44,26 +44,26 @@
 | Discovery | S1 | P26 | [done] | Add exclusion validation for malformed repo IDs and whitespace-only values. | P25 |
 | Discovery | S1 | P27 | [done] | Add `scan-shared-repos` output schema contract in JSON and docs/guide. | P26 |
 | Discovery | S1 | P28 | [done] | Document candidate manifest output and `--candidates` field semantics. | P27 |
-| Design | S2 | P29 | [todo] | Add helper to generate module manifest files from `scan-shared-repos` output. | P25 |
-| Design | S2 | P30 | [todo] | Define manifest naming convention for detected shared modules (prefix and bounded scope). | P29 |
-| Design | S2 | P31 | [todo] | Add conflict strategy for overlapping candidate modules across domains. | P30 |
-| Design | S2 | P32 | [todo] | Publish moduleization rollout ADR for shared module adoption criteria. | P31 |
-| Build | S3 | P33 | [todo] | Add idempotent manifest writer utility for generated module candidates. | P30 |
-| Build | S3 | P34 | [todo] | Add CLI command to materialize a candidate manifest for a single module. | P33 |
-| Build | S3 | P35 | [todo] | Add dry-run flag for candidate manifest generation to avoid workspace writes. | P34 |
-| Build | S3 | P36 | [todo] | Add per-module repo pinning for candidate manifests (`--repos`) and min-repo count override (`--min-count`). | P35 |
-| Build | S4 | P37 | [todo] | Add optional `--output-dir` for persisted manifests and index updates. | P33 |
-| Build | S4 | P38 | [todo] | Add command to print shell snippets for launching module composition targets. | P37 |
-| Build | S4 | P39 | [todo] | Add module recommendation output in `scan-shared-repos` sorted by repo overlap. | P36 |
-| Build | S4 | P40 | [todo] | Add explicit `--all-repos` safety dry-run warnings in module composition docs. | P39 |
-| Validate | S5 | P41 | [todo] | Add unit test: excluded repos are omitted even when explicit flags match manifest patterns. | P33 |
-| Validate | S5 | P42 | [todo] | Add unit test: `min_repo_count` filters module report deterministically. | P41 |
-| Validate | S5 | P43 | [todo] | Add unit test: candidate generation writes valid module JSON with sorted `repo_patterns`. | P40 |
-| Validate | S5 | P44 | [todo] | Add CLI test for `scan-shared-repos --candidates` schema and sort order. | P43 |
-| Deploy | S6 | P45 | [todo] | Update `Phenotype/projects/README.md` with `scan-shared-repos` usage examples. | P44 |
-| Deploy | S6 | P46 | [todo] | Add quick-runbook for generating module set for `thegent-execution` and `thegent-control-plane`. | P45 |
-| Deploy | S6 | P47 | [todo] | Extend tracker docs for moduleization candidates and ADR alignment. | P46 |
-| Deploy | S6 | P48 | [todo] | Run full test sweep + lint gates and package evidence bundle for module discovery wave. | P47 |
+| Design | S2 | P29 | [done] | Add helper to generate module manifest files from `scan-shared-repos` output. | P25 |
+| Design | S2 | P30 | [done] | Define manifest naming convention for detected shared modules (prefix and bounded scope). | P29 |
+| Design | S2 | P31 | [done] | Add conflict strategy for overlapping candidate modules across domains. | P30 |
+| Design | S2 | P32 | [done] | Publish moduleization rollout ADR for shared module adoption criteria. | P31 |
+| Build | S3 | P33 | [done] | Add idempotent manifest writer utility for generated module candidates. | P30 |
+| Build | S3 | P34 | [done] | Add CLI command to materialize a candidate manifest for a single module. | P33 |
+| Build | S3 | P35 | [done] | Add dry-run flag for candidate manifest generation to avoid workspace writes. | P34 |
+| Build | S3 | P36 | [done] | Add per-module repo pinning for candidate manifests (`--repos`) and min-repo count override (`--min-count`). | P35 |
+| Build | S4 | P37 | [done] | Add optional `--output-dir` for persisted manifests and index updates. | P33 |
+| Build | S4 | P38 | [done] | Add command to print shell snippets for launching module composition targets. | P37 |
+| Build | S4 | P39 | [done] | Add module recommendation output in `scan-shared-repos` sorted by repo overlap. | P36 |
+| Build | S4 | P40 | [done] | Add explicit `--all-repos` safety dry-run warnings in module composition docs. | P39 |
+| Validate | S5 | P41 | [done] | Add unit test: excluded repos are omitted even when explicit flags match manifest patterns. | P33 |
+| Validate | S5 | P42 | [done] | Add unit test: `min_repo_count` filters module report deterministically. | P41 |
+| Validate | S5 | P43 | [done] | Add unit test: candidate generation writes valid module JSON with sorted `repo_patterns`. | P40 |
+| Validate | S5 | P44 | [done] | Add CLI test for `scan-shared-repos --candidates` schema and sort order. | P43 |
+| Deploy | S6 | P45 | [done] | Update `Phenotype/projects/README.md` with `scan-shared-repos` usage examples. | P44 |
+| Deploy | S6 | P46 | [done] | Add quick-runbook for generating module set for `thegent-execution` and `thegent-control-plane`. | P45 |
+| Deploy | S6 | P47 | [done] | Extend tracker docs for moduleization candidates and ADR alignment. | P46 |
+| Deploy | S6 | P48 | [done] | Run full test sweep + lint gates and package evidence bundle for module discovery wave. | P47 |
 
 ## DAG Notes
 
@@ -75,3 +75,33 @@
 
 - P19: merge into mainline remains blocked by branch governance policy and should be executed through the prescribed integration branch flow when orchestration lane opens.
 - P20-P24: completed in this wave with repository-local docs and operational guidance updates in this same changeset.
+
+
+## Next 24-Task Wave: Shared-Module Rollout to Production Lanes
+
+| Phase | Lane | Task ID | [status] | Description | Depends On |
+|---|---|---|---|---|---|
+| Discovery | S7 | P49 | [todo] | Add recommendation ranking by dependency risk (`depends-on` count) in `scan-shared-repos` payload metadata. | P48 |
+| Discovery | S7 | P50 | [todo] | Add optional output field `root_mode_hint` showing repos-root-mode normalization details. | P49 |
+| Discovery | S7 | P51 | [todo] | Add repository-path provenance for each repo in scan payload (`repo_path` optional, redacted when needed). | P50 |
+| Discovery | S7 | P52 | [todo] | Add explicit warning in docs when scan is run outside `THGENT_PHENOTYPE_ROOT/repos`. | P51 |
+| Design | S8 | P53 | [todo] | Publish adoption policy matrix mapping module candidates to ADR decision classes (stable/experimental/blocked). | P32 |
+| Design | S8 | P54 | [todo] | Define repository safety allow-list for sensitive modules before auto-manifest generation. | P53 |
+| Design | S8 | P55 | [todo] | Define explicit module naming conflict resolution policy when candidate names collide under prefixes. | P54 |
+| Design | S8 | P56 | [todo] | Publish manual override policy for excluding repos from generated manifests post-creation. | P55 |
+| Build | S9 | P57 | [todo] | Add manifest-generation dry-run diff view with previous/indexed manifest snapshot comparison. | P56 |
+| Build | S9 | P58 | [todo] | Add `materialize-module-manifest` flag to print recommended follow-up `target` commands only (`--print-target-snippets`). | P57 |
+| Build | S9 | P59 | [todo] | Add `scan-shared-repos` output option to omit candidate list for performance when only counts are needed. | P58 |
+| Build | S9 | P60 | [todo] | Add support for filtering candidates by exact module name regex in `--candidates` mode. | P59 |
+| Build | S10 | P61 | [todo] | Add audit logging for materialized manifest creation and update-index writes. | P60 |
+| Build | S10 | P62 | [todo] | Add conflict-safe manifest path rewrite when module-name truncation causes collisions. | P61 |
+| Build | S10 | P63 | [todo] | Add test fixture for collision handling and truncation suffix behavior. | P62 |
+| Build | S10 | P64 | [todo] | Expose collection of generated manifest paths in a machine-readable index summary file. | P63 |
+| Validate | S11 | P65 | [todo] | Add CLI tests for `materialize-module-manifest --print-snippets` in both CLI surfaces. | P64 |
+| Validate | S11 | P66 | [todo] | Add lint/traceability tests for ADR-018 and scan-shared payload contract references. | P65 |
+| Validate | S11 | P67 | [todo] | Add CLI regression test for `repos-root-mode worktrees` with nested `src` layout. | P66 |
+| Validate | S11 | P68 | [todo] | Add snapshot tests for `Phenotype/projects/README.md` command examples against canonical output formats. | P67 |
+| Deploy | S12 | P69 | [todo] | Update runbooks to include shared-module adoption sequence per domain (`thegent-*`, `thegent-app`, `thegent-execution`). | P68 |
+| Deploy | S12 | P70 | [todo] | Add governance gate for module adoption using tracker flags before wide rollout. | P69 |
+| Deploy | S12 | P71 | [todo] | Publish module-manifest review checklist for ADR traceability and rollout approvals. | P70 |
+| Deploy | S12 | P72 | [todo] | Publish evidence packet and close this wave as ready for handoff. | P71 |
