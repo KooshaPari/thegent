@@ -1,8 +1,20 @@
 """Phench project state runtime control-plane helpers."""
 
 from .service import (
+    SCAN_SHARED_REPOS_MODULE_CANDIDATE_TEMPLATE,
+    SCAN_SHARED_REPOS_RECOMMENDED_MODULE_COUNT_LIMIT,
+    SCAN_SHARED_REPOS_OUTPUT_SCHEMA,
+    SCAN_SHARED_REPOS_SCHEMA_VERSION,
+    SCAN_SHARED_REPOS_ROOT_MODE_REPOS,
+    SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES,
+    build_module_manifest_payload,
+    build_scan_candidates,
     add_repo,
+    add_module_to_target,
     audit_shared_modules,
+    scan_shared_modules_across_repos,
+    materialize_module_candidate_manifest,
+    materialize_scan_candidate_manifest,
     build_catalog,
     get_env_profile,
     init_target,
@@ -19,8 +31,20 @@ from .service import (
 )
 
 __all__ = [
+    "SCAN_SHARED_REPOS_MODULE_CANDIDATE_TEMPLATE",
+    "SCAN_SHARED_REPOS_RECOMMENDED_MODULE_COUNT_LIMIT",
+    "SCAN_SHARED_REPOS_OUTPUT_SCHEMA",
+    "SCAN_SHARED_REPOS_SCHEMA_VERSION",
+    "SCAN_SHARED_REPOS_ROOT_MODE_REPOS",
+    "SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES",
+    "build_module_manifest_payload",
+    "build_scan_candidates",
     "add_repo",
+    "add_module_to_target",
     "audit_shared_modules",
+    "scan_shared_modules_across_repos",
+    "materialize_module_candidate_manifest",
+    "materialize_scan_candidate_manifest",
     "build_catalog",
     "get_env_profile",
     "init_target",
