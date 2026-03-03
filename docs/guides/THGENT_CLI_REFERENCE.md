@@ -758,6 +758,7 @@ Manifest path:
 
 ```json
 {
+  "schema_version": 1,
   "repo_ids": ["thegent-api", "thegent-control-plane"],
   "repo_patterns": ["*mcp*"],
   "repo_ref_overrides": {"thegent-api": "main"},
@@ -768,6 +769,7 @@ Manifest path:
 ```
 
 Notes:
+- `schema_version` defaults to `1` when omitted in existing manifests.
 - `repo_ids` and `repo_patterns` are optional; at least one must be present.
 - `repo_patterns` expands against repos in the selected target lock.
 - Only repos in the selected target are runnable. Unknown repo keys in override maps fail fast.

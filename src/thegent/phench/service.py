@@ -1046,10 +1046,9 @@ def _validate_module_manifest_schema_version(
     module: str,
     payload: dict[str, Any],
 ) -> int:
-    if "schema_version" not in payload:
-        raise ValueError(f"module manifest '{module}' must define 'schema_version'")
-
     schema_version = payload.get("schema_version")
+    if schema_version is None:
+        return 1
     if not isinstance(schema_version, int) or isinstance(schema_version, bool):
         raise ValueError(
             f"module manifest '{module}' schema_version must be an integer"

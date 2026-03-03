@@ -752,7 +752,7 @@ def test_load_module_manifest_rejects_unsupported_schema_version(
         load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
 
 
-def test_load_module_manifest_requires_schema_version(
+def test_load_module_manifest_defaults_schema_version_when_missing(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -763,8 +763,8 @@ def test_load_module_manifest_requires_schema_version(
     (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
     monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
-    with pytest.raises(ValueError, match="must define 'schema_version'"):
-        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+    loaded = load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+    assert loaded["schema_version"] == 1
 
 
 def test_run_target_respects_per_repo_env_profile_override(tmp_path: Path, monkeypatch) -> None:
