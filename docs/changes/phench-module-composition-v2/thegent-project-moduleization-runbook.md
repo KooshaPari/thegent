@@ -12,7 +12,7 @@ Drive a controlled moduleization candidate flow from repository discovery throug
 thegent phench scan-shared-repos --repos-root /path/to/Phenotype/repos --repos-root-mode repos --min-repos 2 --candidates
 ```
 
-2. **Pick a shared module** from `recommended_modules` or filtered `module_candidates`.
+2. **Pick a shared module** from `recommended_modules`, or pass `--candidates` to get filtered `module_candidates`.
 
 3. **Preview manifest write** for the target module:
 

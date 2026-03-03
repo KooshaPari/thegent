@@ -14,7 +14,6 @@ from thegent_bench.phench import (
     add_repo,
     add_module_to_target,
     audit_shared_modules,
-    build_scan_candidates,
     scan_shared_modules_across_repos,
     get_env_profile,
     init_target,
@@ -46,7 +45,9 @@ def target_init_cmd(
     if mode not in {"repo", "stack"}:
         raise typer.BadParameter("mode must be one of: repo, stack")
     lock = init_target(name, mode=mode)  # type: ignore[arg-type]
-    console.print_json(json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode())
+    console.print_json(
+        json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode()
+    )
 
 
 @target_app.command("add-repo", help="Add repo+ref selection to a target.")
@@ -64,9 +65,9 @@ def target_add_repo_cmd(
                 "target": lock.target_name,
                 "repos": [repo.repo_id for repo in lock.repos],
                 "lock_hash": lock.lock_hash,
-        }
-    ).decode()
-)
+            }
+        ).decode()
+    )
 
 
 @target_app.command("add-module", help="Add module-selected repos to a target.")
@@ -244,6 +245,11 @@ def scan_shared_repos_cmd(
         "--candidate-name-regex",
         help="Optional regex filter for module candidates (applies when candidates are included).",
     ),
+    candidates: bool = typer.Option(
+        False,
+        "--candidates",
+        help="Include module_candidates in output (alias to enable explicit candidate materialization suggestions).",
+    ),
     omit_candidates: bool = typer.Option(
         False,
         "--omit-candidates",
@@ -254,6 +260,8 @@ def scan_shared_repos_cmd(
         raise typer.BadParameter("min-repos must be >= 2")
     if repos_root_mode not in {"repos", "worktrees"}:
         raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
+    if candidates and omit_candidates:
+        raise typer.BadParameter("cannot set both --candidates and --omit-candidates")
 
     try:
         state = scan_shared_modules_across_repos(
@@ -262,6 +270,7 @@ def scan_shared_repos_cmd(
             min_repo_count=min_repo_count,
             repos_root_mode=repos_root_mode,
             candidate_name_regex=candidate_name_regex,
+            candidates=candidates,
             omit_candidates=omit_candidates,
         )
     except ValueError as exc:

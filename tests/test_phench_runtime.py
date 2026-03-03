@@ -40,7 +40,9 @@ def _init_git_repo(path: Path) -> str:
     _run(["git", "init"], cwd=path)
     _run(["git", "config", "user.email", "test@example.com"], cwd=path)
     _run(["git", "config", "user.name", "Test User"], cwd=path)
-    (path / "Taskfile.yml").write_text("version: '3'\ntasks:\n  hello:\n    cmds:\n      - echo hello\n", encoding="utf-8")
+    (path / "Taskfile.yml").write_text(
+        "version: '3'\ntasks:\n  hello:\n    cmds:\n      - echo hello\n", encoding="utf-8"
+    )
     (path / "README.md").write_text("hello\n", encoding="utf-8")
     _run(["git", "add", "."], cwd=path)
     _run(["git", "commit", "-m", "init"], cwd=path)
@@ -696,7 +698,9 @@ def test_materialize_module_candidate_manifest_honors_repo_pinning_and_dry_run(t
     assert result["manifest_path"].endswith("shared-module-sharedpkg-2/manifest.json")
 
 
-def test_materialize_module_candidate_manifest_respects_existing_manifest_idempotent(tmp_path: Path, monkeypatch) -> None:
+def test_materialize_module_candidate_manifest_respects_existing_manifest_idempotent(
+    tmp_path: Path, monkeypatch
+) -> None:
     phenotype_root = tmp_path / "Phenotype"
     repos_root = phenotype_root / "repos"
     repo_a = repos_root / "repo-a"
@@ -723,7 +727,9 @@ def test_materialize_module_candidate_manifest_respects_existing_manifest_idempo
     assert not second["dry_run"]
 
 
-def test_materialize_module_candidate_manifest_filters_explicit_pins_for_default_excludes(tmp_path: Path, monkeypatch) -> None:
+def test_materialize_module_candidate_manifest_filters_explicit_pins_for_default_excludes(
+    tmp_path: Path, monkeypatch
+) -> None:
     phenotype_root = tmp_path / "Phenotype"
     repos_root = phenotype_root / "repos"
     repo_a = repos_root / "repo-a"
@@ -744,7 +750,9 @@ def test_materialize_module_candidate_manifest_filters_explicit_pins_for_default
         )
 
 
-def test_scan_shared_modules_across_repos_keeps_recommendations_when_omit_candidates_and_applies_regex(tmp_path: Path) -> None:
+def test_scan_shared_modules_across_repos_keeps_recommendations_when_omit_candidates_and_applies_regex(
+    tmp_path: Path,
+) -> None:
     phenotype_root = tmp_path / "Phenotype"
     repos_root = phenotype_root / "repos"
     repo_a = repos_root / "repo-a"
@@ -772,6 +780,7 @@ def test_scan_shared_modules_across_repos_keeps_recommendations_when_omit_candid
         repos_root=repos_root,
         min_repo_count=2,
         candidate_name_regex="^alp.*",
+        candidates=True,
         omit_candidates=False,
     )
     assert [item["module"] for item in filtered["module_candidates"]] == ["alpha"]
@@ -930,20 +939,34 @@ def test_scan_shared_repos_cli_candidates_now_sorted_by_overlap_and_schema(tmp_p
         "excluded_repos": ["4sgm", "parpour"],
         "examined_repos": ["repo-a", "repo-b", "repo-c", "repo-d"],
         "min_repo_count": 2,
+        "module_candidates": [
+            {
+                "module": "beta",
+                "module_name": "shared-module-beta-3",
+                "repo_ids": ["repo-a", "repo-b", "repo-c"],
+                "repo_count": 3,
+                "manifest_template": {},
+            },
+            {
+                "module": "alpha",
+                "module_name": "shared-module-alpha-2",
+                "repo_ids": ["repo-a", "repo-c"],
+                "repo_count": 2,
+                "manifest_template": {},
+            },
+            {
+                "module": "zeta",
+                "module_name": "shared-module-zeta-2",
+                "repo_ids": ["repo-c", "repo-d"],
+                "repo_count": 2,
+                "manifest_template": {},
+            },
+        ],
     }
     monkeypatch.setattr(
         phench_cli,
         "scan_shared_modules_across_repos",
         lambda **kwargs: payload,
-    )
-    monkeypatch.setattr(
-        phench_cli,
-        "build_scan_candidates",
-        lambda shared_modules, module_prefix="shared-module": [
-            {"module": "beta", "module_name": "shared-module-beta-3", "repo_ids": ["repo-a", "repo-b", "repo-c"], "repo_count": 3, "manifest_template": {}},
-            {"module": "alpha", "module_name": "shared-module-alpha-2", "repo_ids": ["repo-a", "repo-c"], "repo_count": 2, "manifest_template": {}},
-            {"module": "zeta", "module_name": "shared-module-zeta-2", "repo_ids": ["repo-c", "repo-d"], "repo_count": 2, "manifest_template": {}},
-        ],
     )
     result = CliRunner().invoke(
         phench_cli.app,
@@ -974,6 +997,15 @@ def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
             "excluded_repos": ["4sgm", "parpour"],
             "examined_repos": ["repo-a", "repo-b"],
             "min_repo_count": 2,
+            "module_candidates": [
+                {
+                    "module": "sharedpkg",
+                    "module_name": "shared-module-sharedpkg-2",
+                    "repo_ids": ["repo-a", "repo-b"],
+                    "repo_count": 2,
+                    "manifest_template": {},
+                },
+            ],
         },
     )
 
@@ -1056,7 +1088,9 @@ def test_materialize_module_manifest_cli_command(tmp_path: Path, monkeypatch) ->
         ("src/thegent/cli/apps/phench.py", "source"),
     ],
 )
-def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(tmp_path: Path, monkeypatch, cli_path: tuple[str, str]) -> None:
+def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(
+    tmp_path: Path, monkeypatch, cli_path: tuple[str, str]
+) -> None:
     from typer.testing import CliRunner
 
     path, _label = cli_path
@@ -1095,13 +1129,13 @@ def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(tmp_path
             "--omit-candidates",
             "--candidate-name-regex",
             "^alpha$",
-            "--candidates",
         ],
     )
     assert result.exit_code == 0
     output = json.loads(result.output)
     assert output["module_candidates"] == []
     assert captured["omit_candidates"] is True
+    assert captured["candidates"] is False
     assert captured["candidate_name_regex"] == "^alpha$"
 
 
@@ -1112,7 +1146,9 @@ def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(tmp_path
         ("src/thegent/cli/apps/phench.py", "--print-target-snippets"),
     ],
 )
-def test_materialize_module_manifest_cli_print_target_snippet_alias(tmp_path: Path, monkeypatch, cli_path: str, snippet_flag: str) -> None:
+def test_materialize_module_manifest_cli_print_target_snippet_alias(
+    tmp_path: Path, monkeypatch, cli_path: str, snippet_flag: str
+) -> None:
     from typer.testing import CliRunner
 
     phench_cli = _load_phench_cli_app(Path(__file__).resolve().parents[1] / cli_path)
@@ -1135,7 +1171,9 @@ def test_materialize_module_manifest_cli_print_target_snippet_alias(tmp_path: Pa
             "dry_run": False,
         }
 
-    monkeypatch.setattr(phench_cli, "materialize_module_candidate_manifest", _fake_materialize_module_candidate_manifest)
+    monkeypatch.setattr(
+        phench_cli, "materialize_module_candidate_manifest", _fake_materialize_module_candidate_manifest
+    )
     result = CliRunner().invoke(
         phench_cli.app,
         [
@@ -1190,7 +1228,10 @@ def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:
         )
 
     monkeypatch.setattr(phench_cli, "add_module_to_target", _fake_add_module_to_target)
-    result = CliRunner().invoke(phench_cli.app, ["target", "add-module", "smoke", "--module", "thegent-app", "--ref", "dev", "--exclude", "skip-me"])
+    result = CliRunner().invoke(
+        phench_cli.app,
+        ["target", "add-module", "smoke", "--module", "thegent-app", "--ref", "dev", "--exclude", "skip-me"],
+    )
     assert result.exit_code == 0
     assert observed["name"] == "smoke"
     assert observed["module"] == "thegent-app"
