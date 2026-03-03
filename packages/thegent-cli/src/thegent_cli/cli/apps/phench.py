@@ -249,11 +249,6 @@ def scan_shared_repos_cmd(
         "--omit-candidates",
         help="Omit module_candidates for faster scans when only recommendations are needed.",
     ),
-    candidates: bool = typer.Option(
-        False,
-        "--candidates",
-        help="Include manifest-shaped candidate module groups for repo overlap.",
-    ),
 ) -> None:
     if min_repo_count < 2:
         raise typer.BadParameter("min-repos must be >= 2")
@@ -271,8 +266,6 @@ def scan_shared_repos_cmd(
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc))
-    if candidates and "module_candidates" not in state:
-        state["module_candidates"] = build_scan_candidates(shared_modules=state["shared_modules"])
     console.print_json(json.dumps(state).decode())
 
 

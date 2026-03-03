@@ -290,12 +290,11 @@ def _extract_imports_from_python(code: str) -> tuple[set[str], set[str]]:
                 if alias.name:
                     imports.add(alias.name)
         elif isinstance(node, ast.ImportFrom):
+            # Skip relative imports (indicated by node.level > 0)
+            if node.level > 0:
+                continue
             if node.module:
                 imports.add(node.module)
-            else:
-                for alias in node.names:
-                    if alias.name:
-                        relative_imports.add(alias.name)
     return imports, relative_imports
 
 
@@ -338,9 +337,6 @@ def _find_repo_module_dependencies(
             )
             continue
 
-        del relative_imports
-        rel = None
-        del rel
         module_name = py_file.relative_to(repo_path).parts
         if len(module_name) < 2 or module_name[0] != "src":
             continue
@@ -624,6 +620,9 @@ def _select_module_repos(
         if repo_id in DEFAULT_EXCLUDED_REPOS or repo_id in excluded:
             continue
         if not any(fnmatch(repo_id, pattern) for pattern in manifest.repo_patterns):
+            continue
+        # Verify directory is a git checkout
+        if not (repo_path / ".git").exists():
             continue
         selected.append(repo_path)
     return selected
@@ -1135,7 +1134,7 @@ def _repo_run_overrides(
     command_name: str | None,
     runner: str | None,
     env_profile: str | None,
-) -> tuple[str | None, str | None, str | None]:
+) -> tuple[str | None, str | None, dict[str, str]]:
     repo_id = runtime_item.get("repo_id")
     if not isinstance(repo_id, str) or not repo_id.strip():
         raise ValueError("invalid runtime materialization entry: missing repo_id")
@@ -1148,12 +1147,9 @@ def _repo_run_overrides(
     selected_command = command_name if command_name is not None else selected.selected_command
     selected_profile = env_profile if env_profile is not None else selected.selected_env_profile
     if selected_profile is None:
-        if env_profile is None:
-            profile_env = get_env_profile(target=lock.target_name)
-        else:
-            profile_env = None
+        profile_env = get_env_profile(target=lock.target_name)
     elif not selected_profile.strip():
-        profile_env = None
+        profile_env = {}
     else:
         profile_env = get_env_profile(target=lock.target_name, profile=selected_profile)
 

@@ -8,12 +8,11 @@
 - `--repos-root-mode`: `repos` (default) or `worktrees`
 - `--exclude`: repeated exclusions
 - `--min-repos`: minimum repo overlap threshold
-- `--candidates`: include candidate manifest templates in output
-- `--recommended`: always returns sorted overlap recommendations in `recommended_modules`
+- `--omit-candidates`: omit candidate manifest templates for faster scans
 
 ## Safety and Dry-Run Guidance
 
-- `scan-shared-repos` uses default excludes (`4sgm`, `parpour`, `civ`, `trace`) unless explicitly overridden.
+- `scan-shared-repos` uses default excludes (`4sgm`, `parpour`, `civ`, `trace`) that are unioned with any explicit `--exclude` flags.
 - When `--repos-root` points outside `$THGENT_PHENOTYPE_ROOT`, scan path provenance is still reported but includes an explicit warning in `warnings`.
 - Use `materialize-module-manifest --dry-run` to validate generated manifest paths and payloads before writing files.
 - Keep `--min-repos`/`--min-count` explicitly at or above `2`.
