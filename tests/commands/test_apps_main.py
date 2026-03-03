@@ -1174,6 +1174,87 @@ def test_phench_projects_matrix_module_merges_overrides_and_respects_non_interac
     assert call_kwargs["non_interactive"] is True
 
 
+def test_phench_projects_matrix_include_and_exclude_repo_filters_module_scope() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench.build_project_execution_matrix") as mock_build_matrix,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[
+                SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef"),
+                SimpleNamespace(repo_id="repo-b", selected_ref="main", resolved_sha="deadcafe"),
+                SimpleNamespace(repo_id="repo-c", selected_ref="main", resolved_sha="deadbabe"),
+            ],
+        )
+        mock_load_module_manifest.return_value = {
+            "repo_ids": ["repo-a", "repo-c"],
+            "repo_ref_overrides": {},
+            "repo_runner_overrides": {},
+            "repo_command_overrides": {},
+            "repo_env_profile_overrides": {},
+        }
+        mock_build_matrix.return_value = {"target": "alpha", "repos": []}
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "matrix",
+                "--target",
+                "alpha",
+                "--module",
+                "thegent-app",
+                "--include-repo",
+                "repo-*",
+                "--exclude-repo",
+                "repo-c",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    call_kwargs = mock_build_matrix.call_args.kwargs
+    assert call_kwargs["repo_ids"] == ["repo-a"]
+
+
+def test_phench_projects_matrix_excluded_repo_ref_is_rejected() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench.build_project_execution_matrix") as mock_build_matrix,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[
+                SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef"),
+                SimpleNamespace(repo_id="repo-b", selected_ref="main", resolved_sha="deadcafe"),
+            ],
+        )
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "matrix",
+                "--target",
+                "alpha",
+                "--repo-ref",
+                "repo-b@release",
+                "--exclude-repo",
+                "repo-b",
+            ],
+        )
+
+    assert result.exit_code != 0
+    assert "repo-ref repo-id not in target lock: repo-b" in (result.stdout + result.stderr)
+    mock_build_matrix.assert_not_called()
+
+
 def test_phench_projects_matrix_non_interactive_requires_target() -> None:
     with (
         patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
@@ -1354,6 +1435,95 @@ def test_phench_projects_run_repo_ref_map_dispatches_per_repo_state() -> None:
     )
 
 
+def test_phench_projects_run_include_repo_filter_reduces_repo_id_scope() -> None:
+    lock = SimpleNamespace(
+        target_name="alpha",
+        repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
+    )
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = lock
+        mock_run_target.return_value = 0
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--repo-id",
+                "repo-a",
+                "--include-repo",
+                "repo-a",
+                "--snapshot-id",
+                "snapshot-001",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+                "--no-interactive",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        snapshot_id="snapshot-001",
+        repo_id="repo-a",
+        runner="task",
+        command_name="hello",
+        selected_ref=None,
+        all_repos=False,
+        execution_mode="serial",
+        env_profile=None,
+        non_interactive=True,
+        family=None,
+    )
+
+
+def test_phench_projects_run_excluded_repo_id_is_rejected() -> None:
+    lock = SimpleNamespace(
+        target_name="alpha",
+        repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
+    )
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = lock
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--repo-id",
+                "repo-a",
+                "--exclude-repo",
+                "repo-a",
+                "--snapshot-id",
+                "snapshot-001",
+                "--runner",
+                "task",
+                "--command",
+                "hello",
+            ],
+        )
+
+    assert result.exit_code != 0
+    assert "repo filters resolved to no repositories" in (result.stdout + result.stderr)
+    mock_run_target.assert_not_called()
+
+
 def test_phench_projects_run_module_uses_manifest_subset_and_overrides() -> None:
     lock = SimpleNamespace(
         target_name="alpha",
@@ -1373,7 +1543,7 @@ def test_phench_projects_run_module_uses_manifest_subset_and_overrides() -> None
     with (
         patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
         patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
-                patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
         patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
         patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
         patch("thegent.cli.apps.phench.run_target") as mock_run_target,
@@ -1432,7 +1602,7 @@ def test_phench_projects_run_module_with_all_repos_fails() -> None:
     with (
         patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
         patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
-                patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
         patch("thegent.cli.apps.phench.run_target") as mock_run_target,
     ):
         mock_list_targets.return_value = ["alpha"]
@@ -1485,7 +1655,7 @@ def test_phench_projects_run_module_repo_ref_merges_cli_and_manifest_overrides()
     with (
         patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
         patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
-                patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
         patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
         patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
         patch("thegent.cli.apps.phench.run_target") as mock_run_target,
@@ -1565,6 +1735,144 @@ def test_phench_projects_run_repo_ref_rejects_all_repos() -> None:
     mock_run_target.assert_not_called()
     output = result.stdout + result.stderr
     assert "repo-ref is not compatible with --all-repos" in output
+
+
+def _run_phench_projects_split_lane_smoke(
+    module: str,
+    manifest_repo_ids: list[str],
+    expected_available_repo_ids: list[str],
+    expected_repo_ids: list[str],
+    include_repos: list[str] | None,
+    exclude_repos: list[str] | None,
+) -> None:
+    lock = SimpleNamespace(
+        target_name="alpha",
+        repos=[
+            SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef"),
+            SimpleNamespace(repo_id="repo-b", selected_ref="main", resolved_sha="deadcafe"),
+            SimpleNamespace(repo_id="repo-c", selected_ref="main", resolved_sha="deadbabe"),
+            SimpleNamespace(repo_id="repo-d", selected_ref="main", resolved_sha="cafe000"),
+            SimpleNamespace(repo_id="repo-e", selected_ref="main", resolved_sha="facefeed"),
+            SimpleNamespace(repo_id="repo-f", selected_ref="main", resolved_sha="f00df00d"),
+        ],
+    )
+
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+        patch("thegent.cli.apps.phench_projects.load_module_manifest") as mock_load_module_manifest,
+        patch("thegent.cli.apps.phench.lock_target") as mock_lock_target,
+        patch("thegent.cli.apps.phench.materialize_target") as mock_materialize_target,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = lock
+        mock_load_module_manifest.return_value = {
+            "repo_ids": manifest_repo_ids,
+            "repo_ref_overrides": {},
+            "repo_runner_overrides": {},
+            "repo_command_overrides": {},
+            "repo_env_profile_overrides": {},
+        }
+        mock_run_target.return_value = 0
+
+        cmd = [
+            "phench",
+            "projects",
+            "run",
+            "--target",
+            "alpha",
+            "--module",
+            module,
+            "--runner",
+            "task",
+            "--command",
+            "hello",
+            "--no-interactive",
+        ]
+        for include_repo in include_repos or []:
+            cmd.extend(["--include-repo", include_repo])
+        for exclude_repo in exclude_repos or []:
+            cmd.extend(["--exclude-repo", exclude_repo])
+
+        result = runner.invoke(app, cmd)
+
+    assert result.exit_code == 0
+    mock_load_module_manifest.assert_called_once_with(
+        module,
+        available_repo_ids=expected_available_repo_ids,
+    )
+    mock_lock_target.assert_called_once_with("alpha", family=None)
+    mock_materialize_target.assert_called_once_with("alpha", family=None)
+    mock_run_target.assert_called_once_with(
+        "alpha",
+        snapshot_id=None,
+        repo_id=None,
+        repo_ids=expected_repo_ids,
+        runner="task",
+        command_name="hello",
+        selected_ref=None,
+        all_repos=False,
+        execution_mode="serial",
+        env_profile=None,
+        non_interactive=True,
+        family=None,
+    )
+
+
+def test_phench_projects_run_split_lane_smoke_app_filters_repos() -> None:
+    _run_phench_projects_split_lane_smoke(
+        module="thegent-app",
+        manifest_repo_ids=["repo-a", "repo-b", "repo-c"],
+        expected_available_repo_ids=["repo-a", "repo-c"],
+        expected_repo_ids=["repo-a", "repo-c"],
+        include_repos=["repo-[a-c]"],
+        exclude_repos=["repo-b"],
+    )
+
+
+def test_phench_projects_run_split_lane_smoke_mcp_filters_repos() -> None:
+    _run_phench_projects_split_lane_smoke(
+        module="thegent-mcp",
+        manifest_repo_ids=["repo-b", "repo-c", "repo-d"],
+        expected_available_repo_ids=["repo-b", "repo-d"],
+        expected_repo_ids=["repo-b", "repo-d"],
+        include_repos=["repo-[b-d]"],
+        exclude_repos=["repo-c"],
+    )
+
+
+def test_phench_projects_run_split_lane_smoke_control_plane_filters_repos() -> None:
+    _run_phench_projects_split_lane_smoke(
+        module="thegent-control-plane",
+        manifest_repo_ids=["repo-c", "repo-d"],
+        expected_available_repo_ids=["repo-d"],
+        expected_repo_ids=["repo-d"],
+        include_repos=["repo-[c-d]"],
+        exclude_repos=["repo-c"],
+    )
+
+
+def test_phench_projects_run_split_lane_smoke_execution_filters_repos() -> None:
+    _run_phench_projects_split_lane_smoke(
+        module="thegent-execution",
+        manifest_repo_ids=["repo-a", "repo-e", "repo-f"],
+        expected_available_repo_ids=["repo-a", "repo-b", "repo-c", "repo-d", "repo-e"],
+        expected_repo_ids=["repo-a", "repo-e"],
+        include_repos=["repo-[a-z]"],
+        exclude_repos=["repo-f"],
+    )
+
+
+def test_phench_projects_run_split_lane_smoke_governance_filters_repos() -> None:
+    _run_phench_projects_split_lane_smoke(
+        module="thegent-governance",
+        manifest_repo_ids=["repo-e", "repo-f"],
+        expected_available_repo_ids=["repo-e"],
+        expected_repo_ids=["repo-e"],
+        include_repos=["repo-[e-f]"],
+        exclude_repos=["repo-f"],
+    )
 
 
 def test_phench_projects_run_interactive_selection_uses_target_repo_and_ref_choices() -> None:
