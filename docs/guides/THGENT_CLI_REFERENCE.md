@@ -841,6 +841,7 @@ thegent phench projects run --target <target> --runner <runner> --command <comma
 - `--repo-id`: Single repo target.
 - `--repo-ref <repo-id>@<ref>`: Explicit per-repo branch/tag/SHA mapping (repeatable).
 - `--ref` / `--branch`: Shared ref for selected repo or all repos.
+- `--include-repo <glob>` / `--exclude-repo <glob>`: Limit repo scope by glob before selection.
 - `--module <module-name>`: Resolve module manifest from
   `~/CodeProjects/Phenotype/projects/modules/<module-name>/manifest.json` and run that repo subset.
 - `--all-repos`: Execute across all repos in the target.

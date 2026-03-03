@@ -8,6 +8,9 @@ Current milestone state:
 - [done] feat(phench): add cross-repo shared module scan + sync helper functions in service
 - [done] feat(phench): add `phench_modules` command module and base command wiring
 - [done] feat(thegent): export service helpers used by CLI (`audit_shared_modules_across_repos`, `sync_project_modules_from_repos`)
+- [done] feat(thegent): add `--include-repo` / `--exclude-repo` to `phench projects run|matrix`.
+- [done] test(thegent): add targeted smoke tests for include/exclude combinations on run/matrix command paths.
+- [done] docs(thegent): document `--include-repo` / `--exclude-repo` options for `phench projects run`.
 
 ## Phase 1: Foundation and Discovery [discovery]
 
@@ -41,14 +44,47 @@ Current milestone state:
 19. [done] Phase4.02 - Confirm merged module manifests are sorted and deterministic.
 20. [done] Phase4.03 - Validate sync behavior under mixed include/exclude module filters.
 21. [done] Phase4.04 - Validate audit output `moduleization_candidates` against existing `projects/modules`.
-22. [todo] Phase4.05 - Add targeted smoke command tests in local workflow to ensure `--include/--exclude` combos.
+22. [done] Phase4.05 - Add targeted smoke command tests in local workflow to ensure `--include-repo/--exclude-repo` combos.
 
 ## Phase 5: Documentation and Delivery [handoff]
 
 23. [done] Phase5.01 - Update WBS to reflect all remaining moduleization and worktree follow-up tasks.
-24. [todo] Phase5.02 - Track residual work for worktree split lanes (`thegent-app`, `thegent-mcp`, `thegent-control-plane`, `thegent-execution`, `thegent-governance`).
-25. [todo] Phase5.03 - Capture remaining blockers, risks, and next-step execution plan for handoff.
-26. [todo] Phase5.04 - Run quality verification and report residual findings.
+24. [done] Phase5.02 - Track residual work for worktree split lanes (`thegent-app`, `thegent-mcp`, `thegent-control-plane`, `thegent-execution`, `thegent-governance`).
+25. [done] Phase5.03 - Capture remaining blockers, risks, and next-step execution plan for handoff.
+26. [done] Phase5.04 - Run quality verification and report residual findings.
+
+## Phase 6: Worktree Split and Lane Handoff [decomposition]
+
+27. [done] P6.01 - Record residual split manifest for `thegent-app`.
+28. [done] P6.02 - Record residual split manifest for `thegent-mcp`.
+29. [done] P6.03 - Record residual split manifest for `thegent-control-plane`.
+30. [done] P6.04 - Record residual split manifest for `thegent-execution`.
+31. [done] P6.05 - Record residual split manifest for `thegent-governance`.
+32. [done] P6.06 - Stage `thegent-app` worktree bootstrap and lane ownership.
+33. [done] P6.07 - Stage `thegent-mcp` worktree bootstrap and lane ownership.
+34. [done] P6.08 - Stage `thegent-control-plane` worktree bootstrap and lane ownership.
+35. [done] P6.09 - Stage `thegent-execution` worktree bootstrap and lane ownership.
+36. [done] P6.10 - Stage `thegent-governance` worktree bootstrap and lane ownership.
+37. [done] P6.11 - Define minimal API boundaries for `thegent-app`.
+38. [done] P6.12 - Define minimal API boundaries for `thegent-mcp`.
+39. [done] P6.13 - Define minimal API boundaries for `thegent-control-plane`.
+40. [done] P6.14 - Define minimal API boundaries for `thegent-execution`.
+41. [done] P6.15 - Define minimal API boundaries for `thegent-governance`.
+42. [done] P6.16 - Add lane-specific `Taskfile` targets for `thegent-app`.
+43. [done] P6.17 - Add lane-specific `Taskfile` targets for `thegent-mcp`.
+44. [done] P6.18 - Add lane-specific `Taskfile` targets for `thegent-control-plane`.
+45. [done] P6.19 - Add lane-specific `Taskfile` targets for `thegent-execution`.
+46. [done] P6.20 - Add lane-specific `Taskfile` targets for `thegent-governance`.
+47. [done] P6.21 - Add smoke tests for repo filtering under `thegent-app` split workflow.
+48. [done] P6.22 - Add smoke tests for repo filtering under `thegent-mcp` split workflow.
+49. [done] P6.23 - Add smoke tests for repo filtering under `thegent-control-plane` split workflow.
+50. [done] P6.24 - Add smoke tests for repo filtering under `thegent-execution` split workflow.
+51. [done] P6.25 - Add smoke tests for repo filtering under `thegent-governance` split workflow.
+52. [todo] P6.26 - Publish lane handoff report with blockers, owners, and sequencing.
+53. [todo] P6.27 - Archive phase evidence for handoff review.
+54. [todo] P6.28 - Open phased PRs from lane worktrees and verify merge queue order.
+55. [todo] P6.29 - Capture runtime smoke matrix for each split lane.
+56. [todo] P6.30 - Finalize moduleization acceptance matrix and close lane residuals.
 
 ## Dependencies (DAG)
 
@@ -64,6 +100,12 @@ Current milestone state:
 - P1.04 -> P3.04
 - P4.05 -> P5.01
 - P5.04 -> P5.03
+- P6.01 -> P6.02 -> P6.03 -> P6.04 -> P6.05
+- P6.01 -> P6.06 -> P6.11 -> P6.16 -> P6.21 -> P6.26
+- P6.02 -> P6.07 -> P6.12 -> P6.17 -> P6.22 -> P6.26
+- P6.03 -> P6.08 -> P6.13 -> P6.18 -> P6.23 -> P6.26
+- P6.04 -> P6.09 -> P6.14 -> P6.19 -> P6.24 -> P6.26
+- P6.05 -> P6.10 -> P6.15 -> P6.20 -> P6.25 -> P6.26
 
 ## Status Legend
 
@@ -72,6 +114,11 @@ Current milestone state:
 - [in_progress] - Actively being implemented.
 - [blocked] - Waiting on external gate or dependency.
 
+## Blocker / Risk Register
+
+- P6.26, P6.27, and P6.28 remain active and require dedicated branch capacity for worktree PR sequencing, lane reporting, and evidence archival.
+- No matrix-level test was added for `projects matrix` include/exclude output ordering; this is intentionally deferred to first lane implementation.
+
 ## Critical Path (Current)
 
-1. P1.01 -> P1.02 -> P1.03 -> P2.01 -> P2.02 -> P2.03 -> P3.01 -> P3.03 -> P4.01 -> P5.01 -> P5.02 -> P5.03
+1. P1.01 -> P1.02 -> P1.03 -> P2.01 -> P2.02 -> P2.03 -> P3.01 -> P3.03 -> P4.01 -> P4.05 -> P5.01 -> P6.01 -> P6.11 -> P6.16 -> P6.26
