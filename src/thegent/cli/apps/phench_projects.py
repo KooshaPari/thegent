@@ -105,7 +105,9 @@ def _ensure_selected_ref(
         return branch
 
     if no_interactive:
-        return None
+        raise typer.BadParameter(
+            "--ref/--branch is required when --no-interactive is set for single repo selection"
+        )
 
     timeline = target_timeline_fn(selected_target, repo_id=selected_repo_id, family=family, limit=timeline_limit)
     options: list[tuple[str, str]] = [("HEAD", "HEAD")]

@@ -25,8 +25,8 @@
 
 ### Phase 4: Runtime selection and environment handling
 - [done] Add guided target/repo/ref/module selection in `phench projects run`.
-- [todo] Implement project selector UX for branch timelines when `--no-interactive` is enabled (fail-fast with actionable hints).
-- [todo] Add persistent execution provenance snapshot (target/repo/ref/sha, manifest hash) to status output and runtime state.
+- [done] Implement project selector UX for branch timelines when `--no-interactive` is enabled (fail-fast with actionable hints).
+- [done] Add persistent execution provenance snapshot (target/repo/ref/sha, manifest hash) to status output and runtime state.
 
 ### Phase 5: Repo split and moduleization
 - [todo] Scaffold module directories in this repo as repo-like boundaries (`modules/thegent-app`, `modules/thegent-mcp`, `modules/thegent-control-plane`, `modules/thegent-execution`, `modules/thegent-governance`) while preserving shared contract surfaces.

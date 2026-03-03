@@ -1553,6 +1553,37 @@ def test_phench_projects_run_non_interactive_requires_target_or_all() -> None:
     assert "--target is required when --no-interactive is set" in output
 
 
+def test_phench_projects_run_non_interactive_single_repo_requires_ref_or_branch() -> None:
+    with (
+        patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
+        patch("thegent.cli.apps.phench.run_target") as mock_run_target,
+        patch("thegent.cli.apps.phench.load_target_lock") as mock_load_target_lock,
+    ):
+        mock_list_targets.return_value = ["alpha"]
+        mock_load_target_lock.return_value = SimpleNamespace(
+            target_name="alpha",
+            repos=[SimpleNamespace(repo_id="repo-a", selected_ref="main", resolved_sha="deadbeef")],
+        )
+        result = runner.invoke(
+            app,
+            [
+                "phench",
+                "projects",
+                "run",
+                "--target",
+                "alpha",
+                "--no-interactive",
+                "--repo-id",
+                "repo-a",
+            ],
+        )
+
+    assert result.exit_code != 0
+    mock_run_target.assert_not_called()
+    output = result.stdout + result.stderr
+    assert "Invalid value: --ref/--branch is required when --no-interactive is set for" in output
+
+
 def test_phench_projects_status_routes_to_target_status() -> None:
     with (
         patch("thegent.cli.apps.phench.list_targets") as mock_list_targets,
