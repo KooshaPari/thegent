@@ -369,6 +369,34 @@ def test_verify_work_stream_invariants_detects_claimed_completed_overlap(tmp_pat
     assert any("wp-1" in error for error in result["errors"])
 
 
+def test_occ_hash_consistency_read_text_vs_read_bytes(tmp_path: Path) -> None:
+    """OCC version hash must be consistent between read and write-time check.
+
+    PI-008 root cause: safe_read_file_with_version hashed via
+    read_text().encode() but safe_write_file hashed via read_bytes().
+    On files where read_text() normalizes line endings (e.g. CRLF -> LF),
+    the hashes diverge and OCC falsely rejects the write.
+
+    # @trace TGNT-OCC-4
+    """
+    import hashlib
+
+    from thegent.utils.helpers import safe_read_file_with_version, safe_write_file
+
+    test_file = tmp_path / "occ_test.md"
+    test_file.write_bytes(b"line1\r\nline2\r\n")
+
+    content, version = safe_read_file_with_version(test_file)
+    assert content is not None
+    assert version is not None
+
+    success = safe_write_file(test_file, content + "line3\n", expected_version=version)
+    assert success is True, (
+        "OCC write must succeed when file is unmodified since read; "
+        "hash method mismatch between read_text().encode() and read_bytes() causes false OCC violation"
+    )
+
+
 def test_verify_work_stream_invariants_uses_exact_id_cell_match(tmp_path: Path) -> None:
     _write_coordination_files(tmp_path)
     work_stream_path = tmp_path / "docs" / "reference" / "WORK_STREAM.md"
