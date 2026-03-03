@@ -11,7 +11,7 @@
 - [done] Add module manifest path wiring and loader/lister flow in phench service/runtime.
 - [done] Add `phench projects modules` command for list/inspect workflows.
 - [done] Add a durable manifest schema version and compatibility checks for module manifests.
-- [todo] Add migration helper for existing module consumers (legacy path formats).
+- [done] Add migration helper for existing module consumers (legacy path formats).
 
 ### Phase 2: Multi-repo topology and governance
 - [done] Generate reusable-module and audit snapshots and extend `tach.toml` source roots.

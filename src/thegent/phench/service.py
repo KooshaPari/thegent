@@ -24,6 +24,7 @@ from .paths import (
     mirror_target_state_root,
     projects_root,
     projects_modules_root,
+    phenotype_root,
     module_manifest_path,
     target_repos_root,
     target_root,
@@ -41,6 +42,52 @@ RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
 SNAPSHOT_DIR = "snapshots"
 SUPPORTED_MODULE_MANIFEST_SCHEMA_VERSIONS = {1}
+
+
+def _resolve_module_manifest_path(module: str) -> Path:
+    normalized_module = module.strip()
+    if not normalized_module:
+        raise ValueError("module manifest not found: <empty>")
+
+    is_path_like = ("/" in normalized_module) or ("\\" in normalized_module)
+    candidates: list[Path] = []
+
+    def _add(path: Path) -> None:
+        manifest_path = path if path.name == "manifest.json" else path / "manifest.json"
+        if manifest_path not in candidates:
+            candidates.append(manifest_path)
+
+    if is_path_like:
+        explicit_path = Path(normalized_module).expanduser()
+        _add(explicit_path)
+        if not explicit_path.is_absolute():
+            _add(phenotype_root() / explicit_path)
+
+        if explicit_path.is_absolute() and explicit_path.exists():
+            if explicit_path.is_file() and explicit_path.name == "manifest.json":
+                return explicit_path
+            if explicit_path.is_dir() and (explicit_path / "manifest.json").exists():
+                return explicit_path / "manifest.json"
+
+        normalized_parts = [part.lower() for part in explicit_path.as_posix().split("/")]
+        if "modules" in normalized_parts:
+            modules_index = normalized_parts.index("modules")
+            if modules_index + 1 < len(normalized_parts):
+                _add(projects_modules_root() / normalized_parts[modules_index + 1])
+        else:
+            _add(projects_modules_root() / explicit_path.name)
+
+        for candidate in candidates:
+            if candidate.exists():
+                return candidate
+    else:
+        module_name = validate_family_name(normalized_module)
+        module_path = module_manifest_path(module_name)
+        _add(module_path)
+        if module_path.exists():
+            return module_path
+
+    raise ValueError(f"module manifest not found: {module}")
 
 
 def _snapshot_id() -> str:
@@ -1003,10 +1050,7 @@ def load_module_manifest(
     *,
     available_repo_ids: list[str] | None = None,
 ) -> dict[str, Any]:
-    normalized_module = validate_family_name(module)
-    manifest_path = module_manifest_path(normalized_module)
-    if not manifest_path.exists():
-        raise ValueError(f"module manifest not found: {module}")
+    manifest_path = _resolve_module_manifest_path(module)
 
     try:
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
