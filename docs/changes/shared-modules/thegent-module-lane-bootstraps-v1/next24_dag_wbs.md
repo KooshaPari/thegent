@@ -4,7 +4,7 @@
 
 - [done] P6.31 - Publish `handoff-report.md` with module owners, blockers, and merge order.
 - [in_progress] P6.32 - Add PR anchor mapping (5x `lane/<module>-split-bootstrap`) to handoff.
-- [in_progress] P6.33 - Align lane owner responsibilities with worktree governance schema and state transitions.
+- [done] P6.33 - Align lane owner responsibilities with worktree governance schema and state transitions.
 - [in_progress] P6.34 - Add dependency notes for open PR merge order and verification owner.
 
 ## Phase B: Evidence capture [evidence]
@@ -35,6 +35,11 @@
 - [todo] P6.49 - Finalize handoff archive by moving evidence to archive state and updating WBS.
 - [todo] P6.50 - Mark P6.26, P6.27, P6.28, P6.29, P6.30 as done in `03_DAG_WBS.md`.
 
+## Operational artifacts
+
+- `lane-pr-anchor-map.md`
+- `merge-sequencing-checklist.md`
+
 ## Dependencies (DAG)
 
 - P6.31 -> P6.35, P6.39
@@ -44,6 +49,7 @@
 - P6.43 -> P6.44 -> P6.45
 - P6.45 -> P6.46 -> P6.50
 - P6.47 -> P6.48 -> P6.50
+- P6.33 -> P6.34 -> P6.39
 
 ## Active blockers
 

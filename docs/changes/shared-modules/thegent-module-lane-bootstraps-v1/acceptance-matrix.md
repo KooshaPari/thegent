@@ -11,30 +11,40 @@ Close out P6.30 with verifiable lane-ready residual criteria and explicit owner 
   - [x] Split lane smoke task exists and passes in branch
   - [ ] Lane worktree executes implementation scope without cross-module leakage
   - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+  - [ ] PR anchor captured in lane PR map
 
 - **thegent-mcp**
   - [x] API boundary doc exists
   - [x] Split lane smoke task exists and passes in branch
   - [ ] MCP transport ownership remains isolated from app/control-plane scope
   - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+  - [ ] PR anchor captured in lane PR map
 
 - **thegent-control-plane**
   - [x] API boundary doc exists
   - [x] Split lane smoke task exists and passes in branch
   - [ ] Sequencing and policy ownership are migrated as intended
   - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+  - [ ] PR anchor captured in lane PR map
 
 - **thegent-execution**
   - [x] API boundary doc exists
   - [x] Split lane smoke task exists and passes in branch
   - [ ] Execution routing remains stable under filtered module-repo inputs
   - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+  - [ ] PR anchor captured in lane PR map
 
 - **thegent-governance**
   - [x] API boundary doc exists
   - [x] Split lane smoke task exists and passes in branch
   - [ ] Governance checks continue to execute with split worktree ownership
   - [ ] No cross-module file leakage in first lane PR review (deferred to implementation branch)
+  - [ ] PR anchor captured in lane PR map
+
+## Current PR readiness
+
+- `lane-pr-anchor-map.md` contains provisional anchors and merge order.
+- `merge-sequencing-checklist.md` contains merge-preconditions and rerun policy.
 
 ## Definition of done for acceptance matrix
 

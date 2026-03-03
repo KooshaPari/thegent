@@ -46,3 +46,17 @@
   - `docs/governance/WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md`
   - `docs/governance/UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md`
 - Runtime validation for each lane uses `task lane:split:all-smoke` as baseline pass before PR close.
+
+## 6) PR anchor map (provisional)
+
+- thegent-app: `lane/split-thegent-app-bootstrap` *(TBD: PR number)*
+- thegent-mcp: `lane/split-thegent-mcp-bootstrap` *(TBD: PR number)*
+- thegent-control-plane: `lane/split-thegent-control-plane-bootstrap` *(TBD: PR number)*
+- thegent-execution: `lane/split-thegent-execution-bootstrap` *(TBD: PR number)*
+- thegent-governance: `lane/split-thegent-governance-bootstrap` *(TBD: PR number)*
+
+## 7) Merge order and blocker notes
+
+- Planned merge order: app -> mcp -> control-plane -> execution -> governance.
+- Verification owner: thegent-platform.
+- Blocked until lane PR branches exist and are review-ready.
