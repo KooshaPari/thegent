@@ -5,7 +5,7 @@ FR traceability: TGNT-P7.2 (conflict prediction from intents)
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import time
 from typing import TYPE_CHECKING
 from unittest import mock

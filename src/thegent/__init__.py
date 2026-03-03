@@ -87,7 +87,7 @@ def __getattr__(name: str):  # noqa: ANN001, ANN202
         "planning": "thegent_planning",
         # thegent-observability (formerly src/thegent/observability, trace, telemetry,
         #                         metrics, monitoring, logging_utils)
-        "observability": "thegent_observability",
+        "observability": "thegent_observability.observability",
         "trace": "thegent_observability.trace",
         "telemetry": "thegent_observability.telemetry",
         "metrics": "thegent_observability.metrics",

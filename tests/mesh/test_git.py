@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import os
 import subprocess
 import time
 from pathlib import Path
+from unittest import mock
 
 import pytest
 from thegent.mesh.git import GitParallelismManager
@@ -199,3 +200,22 @@ def test_try_auto_merge_commit_returns_none_on_conflict(tmp_path: Path) -> None:
 
     merged = manager.try_auto_merge_commit(a_hash, b_hash, "auto")
     assert merged is None
+
+
+def test_run_git_merges_custom_env_without_overwriting_base_env(tmp_path: Path) -> None:
+    """Custom env overrides are applied to a copied base environment."""
+    manager = GitParallelismManager(tmp_path, "agent-env")
+
+    fake_result = subprocess.CompletedProcess(args=["git", "status"], returncode=0, stdout="", stderr="")
+
+    with mock.patch("thegent.mesh.git.shim_run", return_value=fake_result) as mock_run:
+        manager._run_git(
+            ["status"],
+            env={"CUSTOM": "1"},
+            use_index=True,
+        )
+
+    run_kwargs = mock_run.call_args.kwargs
+    run_env = run_kwargs["env"]
+    assert run_env["CUSTOM"] == "1"
+    assert run_env["GIT_INDEX_FILE"] == str(manager.agent_index)

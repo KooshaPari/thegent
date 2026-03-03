@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 import re
 import threading

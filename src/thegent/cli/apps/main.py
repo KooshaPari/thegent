@@ -57,7 +57,7 @@ from thegent.cli.commands import model_cmds
 try:
     from thegent.cli.commands.cli_git import app as git_app
 except ImportError as exc:
-    if "thegent-git" not in str(exc):
+    if "thegent_git" not in str(exc):
         raise
 
     git_app = typer.Typer(help="Git Coordination (install thegent-git to enable full git workflows).")

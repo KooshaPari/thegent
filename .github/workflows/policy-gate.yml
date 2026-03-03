@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: KooshaPari/phenotypeActions/actions/policy-gate@main
+      - uses: KooshaPari/phenotypeActions/actions/policy-gate@82a674fdba4c69d12e5c2bc677d2a6b8ead4c9ad
         with:
           base_branch: main
           block_merge_commits: true
