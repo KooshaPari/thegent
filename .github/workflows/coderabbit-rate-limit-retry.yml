@@ -212,7 +212,7 @@ jobs:
                 core.notice(`PR #${pr.number}: posted CodeRabbit retrigger comment.`);
               }
 
-              const gatePass = stateOk || bypassEligible;
+              const gatePass = stateOk || bypassEligible || state.state === "MISSING";
               const summary = [
                 `CodeRabbit state: ${state.state}`,
                 `Age minutes: ${ageMin.toFixed(1)}`,

@@ -166,6 +166,7 @@ const config = defineConfig({
       })
 
       // Math support (KaTeX)
+      md.use(katex, {
         throwOnError: false,
         errorColor: '#cc0000'
       })
