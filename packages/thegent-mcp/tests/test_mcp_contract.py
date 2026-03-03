@@ -14,6 +14,6 @@ class TestMcpContract:
 
     def test_backward_compat_thegent_mcp(self) -> None:
         """Test backward compatibility: thegent.mcp should still work."""
-        import thegent_protocols.mcp
+        import thegent
 
         assert thegent.mcp is not None
