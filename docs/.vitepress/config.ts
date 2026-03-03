@@ -9,6 +9,7 @@ import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
 const markdownItEmoji = require('markdown-it-emoji').full
+const katex = require('markdown-it-mathjax3')
 const algoliaAppId = process.env.VITEPRESS_ALGOLIA_APP_ID
 const algoliaApiKey = process.env.VITEPRESS_ALGOLIA_API_KEY
 const algoliaIndexName = process.env.VITEPRESS_ALGOLIA_INDEX_NAME

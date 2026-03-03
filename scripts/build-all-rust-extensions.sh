@@ -31,7 +31,11 @@ check_prereq() {
 }
 
 check_prereq cargo "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-check_prereq maturin "uv tool install maturin || python3 -m pip install --user maturin || cargo install maturin"
+if command -v uv &>/dev/null; then
+    check_prereq maturin "uv tool install maturin || python3 -m pip install --user maturin || cargo install maturin"
+else
+    check_prereq maturin "python3 -m pip install --user maturin || cargo install maturin"
+fi
 
 PYTHON="${PYTHON:-python3}"
 if ! command -v "$PYTHON" &>/dev/null; then
