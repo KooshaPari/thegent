@@ -13,8 +13,8 @@ import typer
 from rich.console import Console
 
 from thegent_core.config import ThegentSettings
-from thegent_protocols.mcp.hotreload import run_prod_hotreload
-from thegent_protocols.mcp.manage import (
+from thegent_mcp.mcp.hotreload import run_prod_hotreload
+from thegent_mcp.mcp.manage import (
     migrate_to_unimount,
     mcp_down,
     mcp_restart,
@@ -49,7 +49,7 @@ def mcp_install(
     url: str | None = typer.Option(None, "--url", help="MCP URL override (default: current settings URL)"),
     workspace: Path | None = typer.Option(None, "--workspace", help="Workspace for local client configs"),
 ) -> None:
-    from thegent_protocols.mcp.manage import install_to_client
+    from thegent_mcp.mcp.manage import install_to_client
 
     requested = _parse_clients(None if target == "all" else target)
     from thegent_core.config import ThegentSettings

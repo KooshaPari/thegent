@@ -32,7 +32,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             url: URL to scrape (for scrape action)
             num_results: Max results (default: 5)
         """
-        from thegent_protocols.mcp.server.tools_research import (
+        from thegent_mcp.mcp.server.tools_research import (
             thegent_ddg_search_impl,
             thegent_scrape_url_impl,
             thegent_reddit_search_impl,
@@ -77,7 +77,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             all_items: Include done items in list (for list)
             lease_seconds: Lease duration (for claim, extend)
         """
-        from thegent_protocols.mcp.server.tools_queue import (
+        from thegent_mcp.mcp.server.tools_queue import (
             queue_add_impl,
             queue_list_impl,
             queue_done_impl,
@@ -152,7 +152,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             tail: Number of log lines (for logs)
             msg_type: Message type for send (default: reprompt)
         """
-        from thegent_protocols.mcp.server.tools_sessions import (
+        from thegent_mcp.mcp.server.tools_sessions import (
             session_list_impl,
             session_show_impl,
             session_logs_impl,

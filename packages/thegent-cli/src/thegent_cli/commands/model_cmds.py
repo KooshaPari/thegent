@@ -738,7 +738,7 @@ def setup_cmd(
             "\nRemove manual playwright from MCP configs (use thegent-bundled browser tools)?", default=True
         ):
             try:
-                from thegent_protocols.mcp.manage import remove_playwright_from_client
+                from thegent_mcp.mcp.manage import remove_playwright_from_client
 
                 for c in ["cursor", "claude-code", "codex", "claude-desktop"]:
                     ok, msg = remove_playwright_from_client(c)

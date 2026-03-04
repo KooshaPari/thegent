@@ -60,7 +60,7 @@ def register_dynamic_registry_tools(
 
         Returns: JSON with registered tool details.
         """
-        from thegent_protocols.mcp.dynamic_tools import DynamicToolSpec
+        from thegent_mcp.mcp.dynamic_tools import DynamicToolSpec
 
         spec = DynamicToolSpec(name=name, description=description, input_schema=input_schema)
         registered = server_tools_sessions._dynamic_registry.register_dynamic_tool(session_id, spec)

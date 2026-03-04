@@ -46,7 +46,7 @@ def sys_mcp(
     shadow_age_hours: int = typer.Option(24, "--shadow-age-hours", help="Prune .shadow-* older than N hours"),
     log_age_days: int = typer.Option(7, "--log-age-days", help="Prune .quality/logs older than N days"),
 ):
-    from thegent_protocols.mcp.manage import (
+    from thegent_mcp.mcp.manage import (
         _get_mcp_url,
         install_to_client,
         migrate_to_unimount,

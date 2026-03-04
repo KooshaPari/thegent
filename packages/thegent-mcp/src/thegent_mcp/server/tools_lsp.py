@@ -13,7 +13,7 @@ from __future__ import annotations
 
 # Re-export typed contracts and async impls from the proper importable package.
 # server.py loads this module via importlib and can call these symbols directly.
-from thegent_protocols.mcp.lsp_tools import (
+from thegent_mcp.mcp.lsp_tools import (
     Diagnostic,
     HoverInfo,
     LspToolAdapter,

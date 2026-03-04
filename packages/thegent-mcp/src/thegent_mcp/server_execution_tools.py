@@ -287,7 +287,7 @@ def register_execution_tools(
             )
         )
         if async_task:
-            from thegent_protocols.mcp.task_registry import get_task_registry as _gtr
+            from thegent_mcp.mcp.task_registry import get_task_registry as _gtr
 
             tid = _gtr().create(task)
             payload = {"task_id": tid, "status": "running"}

@@ -116,7 +116,7 @@ def register_terminal_tools(
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_lsp_diagnostics(file_path: str) -> ToolResult:
         """WL-109: return normalized LSP diagnostics for a file."""
-        from thegent_protocols.mcp.lsp_tools import lsp_diagnostics
+        from thegent_mcp.mcp.lsp_tools import lsp_diagnostics
 
         return server_tools_workstream_lsp.lsp_diagnostics_tool_impl(
             file_path=file_path,
@@ -127,7 +127,7 @@ def register_terminal_tools(
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_lsp_symbol_lookup(symbol_name: str, file_path: str | None = None) -> ToolResult:
         """WL-109: lookup a symbol through the LSP adapter."""
-        from thegent_protocols.mcp.lsp_tools import lsp_symbol_lookup
+        from thegent_mcp.mcp.lsp_tools import lsp_symbol_lookup
 
         return server_tools_workstream_lsp.lsp_symbol_lookup_tool_impl(
             symbol_name=symbol_name,
@@ -139,7 +139,7 @@ def register_terminal_tools(
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     def thegent_lsp_hover(file_path: str, line: int, character: int) -> ToolResult:
         """WL-109: return hover information for a source position."""
-        from thegent_protocols.mcp.lsp_tools import lsp_hover
+        from thegent_mcp.mcp.lsp_tools import lsp_hover
 
         return server_tools_workstream_lsp.lsp_hover_tool_impl(
             file_path=file_path,

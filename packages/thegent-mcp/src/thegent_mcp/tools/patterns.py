@@ -10,7 +10,7 @@ Provides higher-order decorator patterns for tool authors:
 
 Usage example::
 
-    from thegent_protocols.mcp_tool_patterns import confirm_before_action, ToolAborted
+    from thegent_mcp.mcp_tool_patterns import confirm_before_action, ToolAborted
 
     @confirm_before_action("Delete session {session_id}?")
     async def thegent_delete_session(session_id: str, ctx=None):
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 from fastmcp.tools.tool import ToolResult
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-from thegent_protocols.mcp.tools.elicitation import elicit_choice, elicit_confirmation
+from thegent_mcp.mcp.tools.elicitation import elicit_choice, elicit_confirmation
 
 _log = logging.getLogger(__name__)
 

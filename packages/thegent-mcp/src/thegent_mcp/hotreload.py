@@ -11,7 +11,7 @@ from pathlib import Path
 
 from rich.console import Console
 
-from thegent_protocols.mcp.manage import mcp_restart
+from thegent_mcp.mcp.manage import mcp_restart
 
 console = Console()
 

@@ -303,7 +303,7 @@ def quick_ps(
 
 @app.command("reload", help="Quick alias for `thegent mcp reload`.")
 def reload_top_level() -> None:
-    from thegent_protocols.mcp.manage import mcp_restart
+    from thegent_mcp.mcp.manage import mcp_restart
 
     ok, msg = mcp_restart()
     console.print(f"[green]{msg}[/green]" if ok else f"[red]{msg}[/red]")
@@ -324,7 +324,7 @@ def hmr_top_level(
         help="Minimum seconds between automatic restarts.",
     ),
 ) -> None:
-    from thegent_protocols.mcp.hotreload import run_prod_hotreload
+    from thegent_mcp.mcp.hotreload import run_prod_hotreload
 
     try:
         run_prod_hotreload(project_root=project_root, debounce_s=debounce_s)
@@ -506,7 +506,7 @@ def help_cmd(
 
 @app.command("agent-server", help="Run thegent JSON-RPC agent server over stdio.")
 def agent_server_cmd() -> None:
-    from thegent_protocols.protocols.jsonrpc_agent_server import serve_stdio
+    from thegent_mcp.protocols.jsonrpc_agent_server import serve_stdio
 
     raise typer.Exit(serve_stdio())
 
