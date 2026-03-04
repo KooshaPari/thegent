@@ -1,19 +1,13 @@
 """Hexagonal configuration layer for thegent.
 
-This module provides configuration management split into logical domains:
-- ModelConfig: Model selection and routing configuration
-- PathConfig: Filesystem paths and directories
-- RuntimeConfig: Sandbox, budgets, retention, and execution behavior
-- ThegentSettings: Composite settings class combining all domains
-
-The main ThegentSettings class is the primary entry point and is designed to be
-backward compatible with the original monolithic configuration class.
+This module delegates to the thegent-config package. All configuration logic
+has been extracted to packages/thegent-config for modular reuse.
 """
 
-from thegent.config.settings import ThegentSettings, get_settings
-from thegent.config.model_config import ModelConfig
-from thegent.config.path_config import PathConfig
-from thegent.config.runtime_config import RuntimeConfig
+from thegent_config import ThegentSettings, get_settings
+from thegent_config.model_config import ModelConfig
+from thegent_config.path_config import PathConfig
+from thegent_config.runtime_config import RuntimeConfig
 
 __all__ = [
     "ThegentSettings",
