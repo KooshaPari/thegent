@@ -1,14 +1,18 @@
 """Infrastructure modules for thegent.
 
-This module delegates to the thegent-infra package. All infrastructure
-utilities have been extracted to packages/thegent-infra for modular reuse.
+This package contains infrastructure utilities including:
+- Runtime dispatcher for multi-runtime support
+- Performance optimizations
+- Error handling
+- Progress indicators
+- Configuration management
+- Multi-runtime diagnostics
 """
 
 from thegent_infra.enhanced_errors import (
     ConfigurationError,
     DependencyError,
     EnhancedError,
-    InfraRuntimeError,
     NetworkError,
     create_config_error,
     create_dependency_error,
@@ -17,6 +21,9 @@ from thegent_infra.enhanced_errors import (
     error_report,
     format_error,
     format_error_with_context,
+)
+from thegent_infra.enhanced_errors import (
+    InfraRuntimeError,
 )
 from thegent_infra.cache_v2 import MultiTierCache, get_cache
 from thegent_infra.fast_file_ops import (
@@ -44,14 +51,18 @@ from thegent_infra.progress import (
 __all__ = [
     "ConfigurationError",
     "DependencyError",
+    # Enhanced errors
     "EnhancedError",
     "InfraRuntimeError",
+    # Mojo bridge
     "MojoBridge",
     "MojoNotAvailableError",
     "MojoTask",
+    # Cache
     "MultiTierCache",
     "NetworkError",
     "check_mojo_status",
+    # File operations
     "copy_file",
     "copy_tree",
     "create_config_error",
@@ -67,9 +78,12 @@ __all__ = [
     "print_section",
     "print_status",
     "print_step",
+    # Progress indicators
     "progress_context",
+    # Subprocess
     "run_subprocess_optimized",
     "spinner_context",
+    # YAML
     "yaml_dump",
     "yaml_load",
     "yaml_loads",
