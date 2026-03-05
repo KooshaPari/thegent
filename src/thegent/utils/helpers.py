@@ -280,7 +280,12 @@ def safe_write_file(
         path = normalize_path(path)
 
         if expected_version:
-            current_version = "none" if not path.exists() else hashlib.sha256(path.read_bytes()).hexdigest()
+            if not path.exists():
+                current_version = "none"
+            else:
+                # Hash the decoded text bytes so OCC is stable across LF/CRLF differences.
+                current_text = path.read_text(encoding=encoding)
+                current_version = hashlib.sha256(current_text.encode(encoding)).hexdigest()
 
             if current_version != expected_version:
                 logger.error(f"OCC violation for {path}: expected {expected_version}, got {current_version}")
