@@ -19,7 +19,7 @@ Columns = getattr(_cli_surface, "Columns", None)
 # Stub for tests
 def _resolve_cwd(cd=None):
     """Stub for backward compatibility."""
-    return None
+    return
 
 def _parse_dag_session(dag_file, cwd=None):
     """Stub for tests."""
@@ -43,11 +43,11 @@ def _check_dag_cycles(doc):
 
 def _dag_path(cd=None):
     """Stub for tests."""
-    return None
+    return
 
 def _ensure_dag_file(path, content):
     """Stub for tests."""
-    pass
+    return
 
 def _dag_update_task(task_id, field, value, session_dir):
     """Stub for tests."""

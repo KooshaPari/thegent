@@ -510,17 +510,23 @@ jobs:
             .pytest_cache/
           retention-days: 30
 
-  # WL-132 B90-W2-D4: Zig ABI readiness gate (non-blocking until P0 promotion)
-  # Verifies thegent-zmx-interop (Rust<->Zig interop crate) builds and tests pass.
-  # continue-on-error: true because Zig is P2/experimental; CI must not block on it.
+  # WL-132 B90-W2-D4: Zig ABI required gate (promoted to blocking)
+  # Explicit required checks:
+  # 1) crate manifest exists and contains required package name
+  # 2) cargo build (locked) passes for thegent-zmx-interop
+  # 3) cargo test (locked) passes for thegent-zmx-interop
   zig-readiness:
-    name: Zig ABI Readiness Gate (WL-132)
+    name: Zig ABI Required Gate (WL-132)
     runs-on: self-hosted
-    continue-on-error: true
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Verify Zig gate criteria inputs
+        run: |
+          test -f crates/thegent-zmx-interop/Cargo.toml
+          grep -q 'name = "thegent-zmx-interop"' crates/thegent-zmx-interop/Cargo.toml
 
       - name: Install Rust stable toolchain
         uses: dtolnay/rust-toolchain@v1
@@ -538,12 +544,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-zmx-
 
-      - name: Build thegent-zmx-interop (default features, no zmx-native)
-        run: cargo build -p thegent-zmx-interop
+      - name: Build thegent-zmx-interop (required gate build)
+        run: cargo build --locked -p thegent-zmx-interop
         working-directory: crates
 
-      - name: Run thegent-zmx-interop tests (subprocess fallback lane)
-        run: cargo test -p thegent-zmx-interop
+      - name: Run thegent-zmx-interop tests (required gate tests)
+        run: cargo test --locked -p thegent-zmx-interop
         working-directory: crates
 
   integration:

@@ -31,7 +31,11 @@ check_prereq() {
 }
 
 check_prereq cargo "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
-check_prereq maturin "cargo install maturin"
+if command -v uv &>/dev/null; then
+    check_prereq maturin "uv tool install maturin || python3 -m pip install --user maturin || cargo install maturin"
+else
+    check_prereq maturin "python3 -m pip install --user maturin || cargo install maturin"
+fi
 
 PYTHON="${PYTHON:-python3}"
 if ! command -v "$PYTHON" &>/dev/null; then
@@ -67,7 +71,7 @@ for ext in "${EXTENSIONS[@]}"; do
     # Check if it has Python bindings
     if [[ -f "pyproject.toml" ]] || grep -q "pyo3" Cargo.toml 2>/dev/null; then
         echo -e "   ${BLUE}Building Python extension...${NC}"
-        if maturin develop --release --features python 2>&1 | tee "/tmp/maturin-$ext.log" | grep -E "(Compiling|Finished|error|warning)" | tail -20; then
+        if PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 maturin develop --manifest-path "$EXT_DIR/Cargo.toml" --release --features python 2>&1 | tee "/tmp/maturin-$ext.log" | grep -E "(Compiling|Finished|error|warning)" | tail -20; then
             echo -e "   ${GREEN}✅ $ext built successfully${NC}"
 
             # Verify import
