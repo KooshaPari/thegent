@@ -58,7 +58,11 @@ try:
     from thegent.cli.commands.cli_git import app as git_app
 except ImportError as exc:
     missing_name = getattr(exc, "name", "")
-    if missing_name not in {"thegent_git", "thegent.cli.commands.cli_git"} and "thegent-git" not in str(exc):
+    if (
+        missing_name not in {"thegent_git", "thegent.cli.commands.cli_git"}
+        and not missing_name.startswith("thegent.native")
+        and "thegent-git" not in str(exc)
+    ):
         raise
 
     git_app = typer.Typer(help="Git Coordination (install thegent-git to enable full git workflows).")
