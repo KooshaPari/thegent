@@ -1,8 +1,8 @@
 """High-performance parallel git operations for the agent mesh."""
 
-import logging
 import hashlib
-import orjson as json
+import json
+import logging
 import os
 import random
 import shutil
@@ -47,15 +47,15 @@ class GitParallelismManager:
         check: bool = False,
         env: dict[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        env = os.environ.copy()
+        env_vars = os.environ.copy()
         if use_index:
-            env["GIT_INDEX_FILE"] = str(self.agent_index)
-        if env:
-            env.update(env)
+            env_vars["GIT_INDEX_FILE"] = str(self.agent_index)
+        if env is not None:
+            env_vars.update(env)
         return shim_run(
             ["git", *args],
             cwd=self.project_root,
-            env=env,
+            env=env_vars,
             input=input_text,
             capture_output=True,
             text=True,

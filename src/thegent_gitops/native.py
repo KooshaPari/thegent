@@ -224,7 +224,7 @@ class GitNative:
             args.append("--prune")
 
         result = _run_git_command(self.repo_path, *args)
-        return result is not None or True  # fetch often has no output
+        return result is not None
 
     def has_changes(self) -> bool:
         """Check if there are uncommitted changes.
