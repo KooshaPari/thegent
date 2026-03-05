@@ -1175,8 +1175,3 @@ Use this block as an always-on policy for agentic code edits.
   - After two consecutive rate-limit responses for the same bot/PR, stop auto-retries and post queued status with next attempt time.
 - Tracking marker required in PR comments for each trigger:
   - `bot-review-trigger: <bot> <iso8601-time> <reason>`
-
-## Child-Agent and Delegation Policy
-- Use child agents liberally for scoped discovery, audits, multi-repo scans, and implementation planning before direct parent-agent edits.
-- Prefer delegating high-context or high-churn tasks to subagents, and keep parent-agent changes focused on integration and finalization.
-- Reserve parent-agent direct writes for the narrowest, final decision layer.
