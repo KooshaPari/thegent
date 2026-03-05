@@ -394,7 +394,7 @@ class SmartMerger:
     ) -> MergeResult:
         """Merge all uncommitted changes in *worktree_path* into *target_branch*.
 
-        This method integrates with :class:`~thegent.mesh.git_parallelism.WorktreePool`:
+        This method integrates with :class:`~thegent_gitops.worktree.WorktreePool`:
         it performs a ``git merge --no-ff`` of the worktree's branch into
         *target_branch*, using mergiraf as the merge driver when available.
 
@@ -425,10 +425,6 @@ class SmartMerger:
         except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
             return MergeResult(success=False, output=str(exc))
 
-        # Determine the project root (parent of the worktree).
-        # WorktreePool places worktrees under ~/.thegent/worktrees/<hash>/<agent_id>/
-        # The project root is tracked separately, so we use the worktree_path as cwd
-        # for git operations within the worktree and the parent as a proxy.
         project_root = worktree_path
 
         # Set the mergiraf driver in git config if available
@@ -453,6 +449,21 @@ class SmartMerger:
 
         # Perform the merge
         try:
+            checkout_result = shim_run(
+                ["git", "checkout", target_branch],
+                cwd=str(project_root),
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=self._config.timeout_s,
+            )
+            if checkout_result.returncode != 0:
+                return MergeResult(
+                    success=False,
+                    output=f"failed to checkout target branch {target_branch}: {checkout_result.stderr or checkout_result.stdout}",
+                    used_mergiraf=used_mergiraf,
+                )
+
             result = shim_run(
                 [
                     "git",

@@ -127,7 +127,7 @@ def setup_cmd(
 
         console.print("\n[bold cyan]Installing lock-cleanup service...[/bold cyan]")
         try:
-            from thegent.git_lock_manage import lock_cleanup_install, lock_cleanup_start
+            from thegent_gitops import lock_cleanup_install, lock_cleanup_start
 
             ok, msg = lock_cleanup_install()
             if ok:
