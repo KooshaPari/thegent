@@ -6,6 +6,11 @@ source_roots = [
   "packages/thegent-sdk/src",
   "packages/thegent-mcp/src",
   "packages/thegent-agents/src",
+  "modules/thegent-app/src",
+  "modules/thegent-mcp/src",
+  "modules/thegent-control-plane/src",
+  "modules/thegent-execution/src",
+  "modules/thegent-governance/src",
 ]
 
 exclude = [
