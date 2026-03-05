@@ -62,6 +62,15 @@ includes:
       GENT_ROOT: .
 
 tasks:
+  modules:check:
+    desc: "Verify required module split roots exist"
+    cmds:
+      - test -f modules/thegent-app/pyproject.toml
+      - test -f modules/thegent-mcp/pyproject.toml
+      - test -f modules/thegent-control-plane/pyproject.toml
+      - test -f modules/thegent-execution/pyproject.toml
+      - test -f modules/thegent-governance/pyproject.toml
+
   # -- Safety checks --
 
   shims:guard:

@@ -45,7 +45,7 @@ managed = true
 override-dependencies = [ "hf-xet==0.0.0; implementation_name == 'pypy'",]
 
 [tool.uv.workspace]
-members = [ "packages/*",]
+members = [ "packages/*", "modules/*",]
 
 [tool.ruff]
 line-length = 120
