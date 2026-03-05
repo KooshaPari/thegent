@@ -22,7 +22,7 @@ Comprehensive tracking of all Functional Requirements.
 | FR-AGT-008 | Provider Fallback Chain | P1 | ✓ | | get_fallback_agents() |
 | FR-AGT-009 | Retry with Exponential Backoff | P1 | ✓ | | tenacity, max 4 attempts |
 | FR-AGT-010 | Failure Classification | P1 | ✓ | | RATE_LIMIT, TRANSIENT, USAGE_LIMIT |
-| FR-AGT-011 | Fallback State Machine Orchestration | P1 | ✓ | `agents/resilience.py` | |
+| FR-AGT-011 | Fallback State Machine Orchestration | P1 | ✓ | `agents/state_machine.py` | |
 | FR-AGT-012 | Droid Runner for Factory Droids | P2 | ○ | | droid exec subprocess |
 | FR-AGT-013 | Multi-Agent Execution Modes | P2 | ✓ | | SEQUENTIAL_DELEGATION, PARALLEL_CONSENSUS, etc. |
 
@@ -52,7 +52,7 @@ Comprehensive tracking of all Functional Requirements.
 
 | ID | Title | Priority | Status | Implementation | Notes |
 |----|-------|----------|--------|----------------|-------|
-| FR-GOV-001 | Cost Estimation per Run | P1 | ✓ | `governance/cost.py` | |
+| FR-GOV-001 | Cost Estimation per Run | P1 | ✓ | `governance/costs.py` | |
 | FR-GOV-002 | Daily Cost Aggregation by Owner | P1 | ○ | | |
 | FR-GOV-003 | Input Guardrail - Prompt Length | P1 | ✓ | `governance/input_guardrails.py` | |
 | FR-GOV-004 | Input Guardrail - Blocklist Patterns | P1 | ✓ | | |
@@ -73,7 +73,7 @@ Comprehensive tracking of all Functional Requirements.
 | FR-EXE-005 | Idempotency Token Lookup | P1 | ○ | | |
 | FR-EXE-006 | Trust Score Calibration | P1 | ○ | | |
 | FR-EXE-007 | Checkpoint Registry for DAG State | P1 | ○ | | |
-| FR-EXE-008 | PolicyEngine with OPA Integration | P1 | ✓ | `governance/policy_engine.py` | |
+| FR-EXE-008 | PolicyEngine with OPA Integration | P1 | ✓ | `governance/policy.py` | |
 | FR-EXE-009 | Critical Lane and Production Trust Gates | P1 | ○ | | |
 | FR-EXE-010 | Trust Boundary Validation | P1 | ○ | | Environment transitions |
 
@@ -188,7 +188,7 @@ Comprehensive tracking of all Functional Requirements.
 
 | ID | Title | Priority | Status | Implementation | Notes |
 |----|-------|----------|--------|----------------|-------|
-| FR-EXIT-001 | Standardized Exit Codes | P1 | ✓ | `cli_impl.py` | Human-readable messages |
+| FR-EXIT-001 | Standardized Exit Codes | P1 | ✓ | `cli/` | Human-readable messages |
 
 ---
 
@@ -208,10 +208,10 @@ Comprehensive tracking of all Functional Requirements.
 
 | Status | Count | Percentage |
 |--------|-------|------------|
-| ✓ Implemented | ~50 | ~53% |
-| ○ Pending | ~42 | ~44% |
-| ~ Partial | ~3 | ~3% |
-| **Total** | **95** | **100%** |
+| ✓ Implemented | 58 | 64% |
+| ○ Pending | 33 | 36% |
+| ~ Partial | 0 | 0% |
+| **Total** | **91** | **100%** |
 
 ---
 
