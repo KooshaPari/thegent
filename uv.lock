@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 members = [
     "thegent",
     "thegent-agents",
+    "thegent-agint",
     "thegent-audit",
     "thegent-bench",
     "thegent-cli",
@@ -3909,6 +3910,26 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [[package]]
+name = "thegent-agint"
+source = { editable = "packages/thegent-agint" }
+dependencies = [
+    { name = "rich" },
+    { name = "thegent-agents" },
+    { name = "thegent-core" },
+    { name = "thegent-platform" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "rich", specifier = ">=13.9.4" },
+    { name = "thegent-agents", editable = "packages/thegent-agents" },
+    { name = "thegent-core", editable = "packages/thegent-core" },
+    { name = "thegent-platform", editable = "packages/thegent-platform" },
+    { name = "typer", specifier = ">=0.16.0" },
+]
+
+[[package]]
 name = "thegent-audit"
 version = "0.1.0"
 source = { editable = "packages/thegent-audit" }
@@ -3941,6 +3962,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "rich" },
     { name = "thegent-agents" },
+    { name = "thegent-agint" },
     { name = "typer" },
 ]
 
@@ -3955,6 +3977,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
     { name = "rich", specifier = ">=13.9.4" },
     { name = "thegent-agents", editable = "packages/thegent-agents" },
+    { name = "thegent-agint", editable = "packages/thegent-agint" },
     { name = "typer", specifier = ">=0.16.0" },
 ]
 provides-extras = ["dev"]

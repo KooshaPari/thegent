@@ -15,6 +15,13 @@ Evaluate `thegent` for stabilization-by-decomposition and define an execution-re
 - The autosync / board-integration surface still contains placeholder and stub implementations while tests already expect a real domain model.
 - Rust crates and Python command surfaces are mixed into one operational repo, but they have separable runtime responsibilities.
 
+## Executed In This Session
+- Started Seam A by collapsing `src/thegent/acp/{client,server}` to legacy import shims backed by `packages/thegent-protocols`.
+- Added compatibility coverage for the legacy `thegent.acp` import surface so authority stays in `thegent_protocols`.
+- Fixed an extracted workspace packaging defect by adding the missing `packages/thegent-agint/README.md`, which allowed `uv` to resolve the package and refresh `uv.lock`.
+- Restored missing `thegent_core.infra` compatibility exports for `fast_subprocess` and `fast_yaml_parser`, which were already consumed by extracted packages.
+- Fixed an unrelated broken protocol assertion in `tests/protocols/test_a2a.py` uncovered during seam validation.
+
 ## Recommended End State
 - Keep a thin `thegent-core` control plane in-process.
 - Move protocol, audit, sync, planning, and agent runtimes into explicit repos/packages with strict ports/adapters.

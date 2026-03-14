@@ -53,6 +53,10 @@
 - Source of truth: `packages/thegent-protocols`
 - Delete/replace mirrors under `src/thegent/protocols`, `src/thegent/acp`, and duplicate MCP transport helpers.
 - Why first: highest reuse, lowest product ambiguity.
+- Status update:
+  - `src/thegent/acp/client.py` and `src/thegent/acp/server.py` are now reduced to explicit legacy shims importing from `thegent_protocols.acp`.
+  - This keeps the public `thegent.acp` path stable while removing duplicate ACP implementation ownership from `src/thegent/acp`.
+  - `src/thegent/protocols/*` remains deferred because those modules still cross into additional extracted package boundaries and need a wider cut.
 
 ### Seam B: Sync
 - Source of truth: `packages/thegent-sync`
@@ -74,3 +78,10 @@
 - `thegent-sync` adapters can become shared board/project sync libraries for other Phenotype repos.
 - `thegent-protocols` can serve as the common MCP/JSON-RPC bridge layer across `cliproxyapi-plusplus`, `heliosCLI`, and future agent runtimes.
 - `thegent-audit` collectors can become reusable governance enforcement tooling across Phenotype repos.
+
+## Validation Notes
+- Narrow ACP compatibility and protocol checks passed after adding explicit package paths:
+  - `PYTHONPATH=src:packages/thegent-protocols/src:packages/thegent-agint/src:packages/thegent-agents/src:packages/thegent-core/src uv run pytest tests/protocols/test_acp_compatibility.py tests/protocols/test_a2a.py -q`
+- ACP adapter suites passed directly through the default workspace runner:
+  - `uv run pytest tests/adapters/test_acp_server.py tests/adapters/test_acp_session_endpoints.py -q`
+- The initial `uv run pytest` attempt failed before these fixes because `packages/thegent-agint` declared `readme = "README.md"` without shipping that file.
