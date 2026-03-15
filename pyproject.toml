@@ -90,7 +90,25 @@ ignore = [ "E501", "ANN101", "ANN102", "S101", "A002", "PLC0415", "PLR0913", "FB
 path = "src/thegent/__init__.py"
 
 [tool.pytest.ini_options]
-pythonpath = [ "src",]
+pythonpath = [
+    "src",
+    "packages/thegent-agents/src",
+    "packages/thegent-agint/src",
+    "packages/thegent-audit/src",
+    "packages/thegent-bench/src",
+    "packages/thegent-cli/src",
+    "packages/thegent-core/src",
+    "packages/thegent-execution/src",
+    "packages/thegent-mcp/src",
+    "packages/thegent-observability/src",
+    "packages/thegent-planning/src",
+    "packages/thegent-platform/src",
+    "packages/thegent-protocols/src",
+    "packages/thegent-routing/src",
+    "packages/thegent-sdk/src",
+    "packages/thegent-skills/src",
+    "packages/thegent-sync/src",
+]
 testpaths = [ "tests",]
 norecursedirs = [ "templates", ".venv", "venv", "contracts", "archive", "docs", "benchmarks", "crates", "build", "dist", "coverage", "node_modules", ".ruff_cache", ".pytest_cache", ".mypy_cache", ".cache",]
 python_files = [ "test_*.py", "*_benchmark.py",]

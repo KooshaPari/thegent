@@ -4,11 +4,13 @@
 
 from __future__ import annotations
 
+from json import JSONDecodeError as StdJSONDecodeError
 import orjson as json
 import sys
 from dataclasses import dataclass, field
 from typing import Any, TextIO
 
+from thegent_core.utils.json_utils import json_loads
 from thegent_sync.integrations.base import SerializableMixin
 
 
@@ -1335,7 +1337,7 @@ def process_jsonrpc_line_full(raw_line: str) -> tuple[dict[str, Any] | None, lis
         return None, []
     try:
         payload = json_loads(raw_line)
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, StdJSONDecodeError) as exc:
         return _error_response(None, JsonRpcError(-32700, "Parse error", {"detail": str(exc)})), []
 
     if not isinstance(payload, dict):
@@ -1362,9 +1364,9 @@ def serve_stdio(in_stream: TextIO | None = None, out_stream: TextIO | None = Non
 
         response, notifications = process_jsonrpc_line_full(raw)
         if response is not None:
-            sink.write(json.dumps(response, separators=(",", ":").decode()) + "\n")
+            sink.write(json.dumps(response).decode() + "\n")
         for notification in notifications:
-            sink.write(json.dumps(notification, separators=(",", ":").decode()) + "\n")
+            sink.write(json.dumps(notification).decode() + "\n")
 
         if response is not None or notifications:
             sink.flush()

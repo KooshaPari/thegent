@@ -56,7 +56,9 @@
 - Status update:
   - `src/thegent/acp/client.py` and `src/thegent/acp/server.py` are now reduced to explicit legacy shims importing from `thegent_protocols.acp`.
   - This keeps the public `thegent.acp` path stable while removing duplicate ACP implementation ownership from `src/thegent/acp`.
-  - `src/thegent/protocols/*` remains deferred because those modules still cross into additional extracted package boundaries and need a wider cut.
+  - `src/thegent/protocols/a2a.py`, `src/thegent/protocols/jsonrpc_agent_server.py`, and `src/thegent/protocols/turn_submit_boundaries.py` are now legacy facades over `thegent_protocols.protocols.*`.
+  - The JSON-RPC and turn-boundary facades intentionally re-export the full authority module surface because lane tests still depend on helper/private symbols from the legacy path.
+  - Authority bugs found during the cut were fixed in `packages/thegent-protocols/src/thegent_protocols/protocols/jsonrpc_agent_server.py` rather than papered over in `src/thegent/protocols`.
 
 ### Seam B: Sync
 - Source of truth: `packages/thegent-sync`
@@ -80,8 +82,10 @@
 - `thegent-audit` collectors can become reusable governance enforcement tooling across Phenotype repos.
 
 ## Validation Notes
-- Narrow ACP compatibility and protocol checks passed after adding explicit package paths:
-  - `PYTHONPATH=src:packages/thegent-protocols/src:packages/thegent-agint/src:packages/thegent-agents/src:packages/thegent-core/src uv run pytest tests/protocols/test_acp_compatibility.py tests/protocols/test_a2a.py -q`
-- ACP adapter suites passed directly through the default workspace runner:
-  - `uv run pytest tests/adapters/test_acp_server.py tests/adapters/test_acp_session_endpoints.py -q`
+- The default repo runner is now workspace-aware via root pytest `pythonpath` entries for all extracted package `src/` trees.
+- `src/thegent/__init__.py` now registers legacy subpackage aliases lazily instead of eagerly importing observability/platform packages at import time.
+- Protocol and compatibility checks passed with default repo execution:
+  - `TMPDIR=$PWD/.tmp uv run pytest tests/protocols/test_jsonrpc_agent_server_contract.py tests/protocols/test_a2a.py tests/protocols/test_acp_compatibility.py tests/protocols/test_wl9690_wl9699_lane_k.py tests/protocols/test_wl10570_wl10579_lane_a.py -q`
+- ACP adapter and CLI wiring suites passed directly through the default workspace runner:
+  - `TMPDIR=$PWD/.tmp uv run pytest tests/adapters/test_acp_server.py tests/adapters/test_acp_session_endpoints.py tests/test_wl104_agent_server_cli_wiring.py -q`
 - The initial `uv run pytest` attempt failed before these fixes because `packages/thegent-agint` declared `readme = "README.md"` without shipping that file.

@@ -121,7 +121,9 @@ def __getattr__(name: str):  # noqa: ANN001, ANN202
 
 def _register_subpackage_aliases() -> None:
     import importlib
+    import importlib.util
     import sys
+    import types
 
     # Map of  "thegent.<alias>"  →  "<real_package>.<submodule>"
     _subpackage_aliases: dict[str, str] = {
@@ -144,22 +146,35 @@ def _register_subpackage_aliases() -> None:
         "thegent.tray": "thegent_platform.tray",
     }
 
+    def _make_lazy_alias(alias: str, real: str) -> types.ModuleType | None:
+        spec = importlib.util.find_spec(real)
+        if spec is None:
+            return None
+
+        proxy = types.ModuleType(alias)
+        proxy.__doc__ = f"Lazy compatibility alias for {real}."
+        proxy.__package__ = alias
+        proxy.__file__ = getattr(spec, "origin", None)
+        locations = spec.submodule_search_locations
+        if locations is not None:
+            proxy.__path__ = list(locations)
+
+        def _load_real() -> types.ModuleType:
+            mod = importlib.import_module(real)
+            sys.modules[alias] = mod
+            return mod
+
+        def __getattr__(name: str):  # noqa: ANN001, ANN202
+            return getattr(_load_real(), name)
+
+        proxy.__getattr__ = __getattr__
+        return proxy
+
     for alias, real in _subpackage_aliases.items():
         if alias not in sys.modules:
-            try:
-                mod = importlib.import_module(real)
-                sys.modules[alias] = mod
-                # Also register any already-imported children so that
-                # `from thegent.trace.recorder import X` resolves the child.
-                prefix = real + "."
-                for key, child in list(sys.modules.items()):
-                    if key.startswith(prefix):
-                        suffix = key[len(prefix):]
-                        child_alias = alias + "." + suffix
-                        sys.modules.setdefault(child_alias, child)
-            except ImportError:
-                # Workspace package not installed in this environment — skip.
-                pass
+            proxy = _make_lazy_alias(alias, real)
+            if proxy is not None:
+                sys.modules[alias] = proxy
 
 
 _register_subpackage_aliases()
