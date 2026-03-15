@@ -1,10 +1,3 @@
-"""Stub module for thegent.integrations.gh_pull_audit."""
+"""Legacy facade for package-backed GitHub pull audit helpers."""
 
-__all__ = ['PullReflectionAuditEntry', 'PullReflectionAuditLog']
-
-class PullReflectionAuditEntry:
-    """Stub class."""
-
-class PullReflectionAuditLog:
-    """Stub class."""
-
+from thegent_sync.integrations.gh_pull_audit import *  # noqa: F403

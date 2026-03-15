@@ -1,10 +1,3 @@
-"""Stub module for thegent.integrations.linear_sync_integration."""
+"""Legacy facade for package-backed linear sync integration helpers."""
 
-__all__ = ['LinearSyncIntegrationSuite', 'LinearSyncTestResult']
-
-class LinearSyncIntegrationSuite:
-    """Stub class."""
-
-class LinearSyncTestResult:
-    """Stub class."""
-
+from thegent_sync.integrations.linear_sync_integration import *  # noqa: F403

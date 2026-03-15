@@ -1,16 +1,3 @@
-"""Stub module for thegent.integrations.linear_priority."""
+"""Legacy facade for package-backed linear priority mapping."""
 
-__all__ = ['LinearPriority', 'LocalPriority', 'linear_to_local', 'local_to_linear']
-
-class LinearPriority:
-    """Stub class."""
-
-class LocalPriority:
-    """Stub class."""
-
-def linear_to_local() -> None:
-    """Stub function."""
-
-def local_to_linear() -> None:
-    """Stub function."""
-
+from thegent_sync.integrations.linear_priority import *  # noqa: F403

@@ -1,10 +1,3 @@
-"""Stub module for thegent.integrations.github_field_parity."""
+"""Legacy facade for package-backed GitHub field parity helpers."""
 
-__all__ = ['FieldParityReport', 'GitHubFieldParityChecker']
-
-class FieldParityReport:
-    """Stub class."""
-
-class GitHubFieldParityChecker:
-    """Stub class."""
-
+from thegent_sync.integrations.github_field_parity import *  # noqa: F403
