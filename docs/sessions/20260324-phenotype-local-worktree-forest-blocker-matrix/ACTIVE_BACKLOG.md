@@ -86,13 +86,10 @@ Each item now has an explicit **Ship** line (PR **→** `main` / `release/*`, **
 | 5 | portage / governance | backup runbook; tmp cleanup schedule; `.worktrees` policy; script lint — **merge** |
 | 6 | trace / trash / ralph / org | tests; naming doc; ralph decision; reuse issue — **ship** per item |
 
-**Immediate upstream target:** fix **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** CI failures, then merge to `main` with **CHANGELOG [Unreleased]** / release notes per `docs/guides/CHANGELOG_PROCESS.md`.
+**Immediate upstream target:** Merge **session docs** (`docs/session-docs-recovery` — superseded **#551/#553/#554** stacks); then work **#552** (colab / helMo roots). Keep **`main`** CI green per `CHANGELOG_PROCESS` when Actions run.
 
 ## Related
 
 - `04_QUEUE_CADENCE.md` — carry-forward rules, verification commands, **full-turn** definition.
 - `FULL_TURN_DELIVERY.md` — `gh` routine, merge gates, snapshot.
 - `00_SESSION_OVERVIEW.md` — session goal and document map.
-2026-03-24 | Wave E (11) - Execution/Verification (Latency OK, Redaction FAIL) | Wave D merges failed due to conflicts. Cleanup in progress.
-2026-03-24 | Wave F (12) - Execution/Verification | Roadmap re-ranked; DOD audit complete. Next 24 identified.
-2026-03-24 | Finalization | Wave G (13) pending. Session partial close. Merges failed due to conflicts. Cleanup in progress.
