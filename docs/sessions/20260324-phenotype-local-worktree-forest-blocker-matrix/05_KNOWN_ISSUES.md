@@ -9,7 +9,8 @@
 
 ## GitHub / CI (release merges)
 
-- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** (`feat/migrate-cache` → `main`): **mergeable** in GitHub sense but **required CI red** (Lint & Test, Policy Gate, Build wheels, etc.) — **do not merge** until fix-forward; tracked in `FULL_TURN_DELIVERY.md`.
+- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** (`feat/migrate-cache` → `main`): **mergeable** in GitHub sense but **required CI red** (Lint & Test, Policy Gate, Build wheels, etc.) — **do not merge** until fix-forward **unless** failures are only because **Actions billing** prevented jobs from running; then follow **`FULL_TURN_DELIVERY.md`** (Billing / Actions quota) and log the exception here with date + local verification.
+- **Actions billing / quota:** When checks cannot complete because **jobs do not start** (not because tests fail), use the **Billing / Actions quota** procedure in `FULL_TURN_DELIVERY.md` — **`gh pr merge --admin`** only after confirming infrastructure cause and local verification.
 
 ## Blocked Forest Registry
 
