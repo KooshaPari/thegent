@@ -57,6 +57,8 @@ Legend: **R** = research/gap identified, **B** = blocked on human/process/CI, **
 
 **Parity fix (post-batch):** `heliosApp/.github/workflows/vitepress-pages.yml` `bun-version` aligned to **`1.2.20`** (was `latest`) to match `ci.yml` and `package.json`.
 
+**PR staging:** per-repo `git add` lists and commit message examples — **`17_PR_STAGING_CHECKLIST.md`**. Versioned hub index — **`docs/reference/phenotype_repos_hub.md`**.
+
 ## Agent IDs (for resume)
 
 - Agent 1: `594a7500-2968-4564-9bbd-42ff77567d3e`  

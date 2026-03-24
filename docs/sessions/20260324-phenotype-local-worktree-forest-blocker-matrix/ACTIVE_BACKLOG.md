@@ -40,6 +40,7 @@ Each automation session should:
 | 2026-03-24 | **Full-turn policy** + Wave C **Ship gates** | `FULL_TURN_DELIVERY.md` added; `04_QUEUE_CADENCE.md` + `09_NEXT_WAVE_C.md` updated. **`thegent` PR #549** mergeable but **CI red** — no merge until green. |
 | 2026-03-24 | **5-agent parallel audit** (C + D + E×2) | **Tier 1** parallel read-only; consolidated in **`16_PARALLEL_AGENT_AUDIT.md`** (DAG + Tier 2 order). |
 | 2026-03-24 | **Tier 2 — 5-agent implementation** | heliosApp CI/CHANGELOG/troubleshooting; colab/helMo/helios-cli contributing+ignore; **`repos/README.md`** hub. See **`16_PARALLEL_AGENT_AUDIT.md`** Tier 2 executed. |
+| 2026-03-24 | **PR staging checklist** | **`17_PR_STAGING_CHECKLIST.md`** (per-repo `git add` + `gh` notes); **`docs/reference/phenotype_repos_hub.md`** (versioned hub index; sync to `repos/README.md`). |
 
 ## Wave B status (2026-03-24) — `08_NEXT_WAVE_B.md`
 
