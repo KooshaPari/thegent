@@ -45,7 +45,7 @@ def ask_human(prompt: str, options: list[str] | None = None) -> str:
     request_file = session_dir / "human_requests.jsonl"
 
     with request_file.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(request).decode() + "\n")
+        f.write(json.dumps(request) + "\n")
 
     if options:
         pass

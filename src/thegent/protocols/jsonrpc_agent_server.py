@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import sys
 from dataclasses import dataclass, field
 from typing import Any, TextIO
@@ -1334,7 +1334,7 @@ def process_jsonrpc_line_full(raw_line: str) -> tuple[dict[str, Any] | None, lis
     if not raw_line.strip():
         return None, []
     try:
-        payload = json_loads(raw_line)
+        payload = json.loads(raw_line)
     except json.JSONDecodeError as exc:
         return _error_response(None, JsonRpcError(-32700, "Parse error", {"detail": str(exc)})), []
 
@@ -1362,9 +1362,9 @@ def serve_stdio(in_stream: TextIO | None = None, out_stream: TextIO | None = Non
 
         response, notifications = process_jsonrpc_line_full(raw)
         if response is not None:
-            sink.write(json.dumps(response, separators=(",", ":").decode()) + "\n")
+            sink.write(json.dumps(response, separators=(",", ":")) + "\n")
         for notification in notifications:
-            sink.write(json.dumps(notification, separators=(",", ":").decode()) + "\n")
+            sink.write(json.dumps(notification, separators=(",", ":")) + "\n")
 
         if response is not None or notifications:
             sink.flush()

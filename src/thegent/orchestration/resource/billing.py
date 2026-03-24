@@ -13,6 +13,10 @@ from thegent.team.manager import TeamManager
 _log = logging.getLogger(__name__)
 
 
+def _dump_json(payload: Any) -> str:
+    return json.dumps(payload, option=json.OPT_INDENT_2).decode("utf-8")
+
+
 class TeamBillingManager:
     """Manages resource quotas and billing for multi-tenant teams."""
 
@@ -77,7 +81,7 @@ class TeamBillingManager:
             elif resource == "usd":
                 quotas[team_id]["used_usd"] += amount
 
-            self.quotas_path.write_text(json.dumps(quotas, indent=2), encoding="utf-8")
+            self.quotas_path.write_text(_dump_json(quotas), encoding="utf-8")
         _log.info("Recorded %s usage for team %s: %s", resource, team_id, amount)
 
     def get_billing_report(self, team_id: str) -> dict[str, Any]:

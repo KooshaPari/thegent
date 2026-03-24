@@ -85,7 +85,7 @@ class StateAdapter:
         """Write status to file."""
         try:
             self._status_path.parent.mkdir(parents=True, exist_ok=True)
-            self._status_path.write_text(json.dumps(status, indent=2))
+            self._status_path.write_text(json.dumps(status, option=json.OPT_INDENT_2).decode())
         except Exception:
             pass
 
@@ -109,13 +109,14 @@ __all__ = ["StateAdapter"]
 # Register with unified adapter registry
 from thegent.adapters.ports import AdapterRegistry
 
+
 class StateAdapterWrapper:
-    """State adapter wrapper for registry"""
-    
-    def __init__(self):
-        self._adapter = StateAdapter()
-    
-    def call(self, **kwargs) -> dict:
+    """State adapter wrapper for registry."""
+
+    def __init__(self, config: Any | None = None):
+        self._adapter = StateAdapter(config) if config is not None else None
+
+    def call(self, **kwargs) -> dict[str, str]:
         return {"status": "state_adapter_ready"}
 
 

@@ -21,9 +21,6 @@ from thegent.domain.entities.run import (
     RunMeta,
     RunState,
 )
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -46,13 +43,6 @@ _execution_diagnostics: dict[str, Any] = {
         "last_error_message": None,
     },
 }
-
-
-def _warn_bounded(message: str, *args: object) -> None:
-    global _execution_warning_count
-    _execution_warning_count += 1
-    if _execution_warning_count <= _EXECUTION_WARNING_LIMIT:
-        _log.warning(message, *args)
 
 
 def get_execution_diagnostics() -> dict[str, Any]:
@@ -88,20 +78,6 @@ def reset_execution_diagnostics() -> None:
     }
 
 
-def _as_float(value: Any, default: float) -> float:
-    """Coerce arbitrary values to float with a safe default."""
-    return _as_float_impl(value, default)
-
-
-def _as_int(value: Any, default: int) -> int:
-    """Coerce arbitrary values to int with a safe default."""
-    return _as_int_impl(value, default)
-
-
-def _as_bool(value: Any, default: bool) -> bool:
-    """Coerce arbitrary values to bool with a safe default."""
-    return _as_bool_impl(value, default)
-
 # Domain entity classes are now imported from thegent.domain.entities.run
 # They are re-exported here for backward compatibility
 
@@ -135,7 +111,7 @@ class CalibrationRegistry:
             "updated_at_utc": datetime.now(UTC).isoformat(),
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self.path.write_text(json.dumps(data, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
 
 
 # Export public API for backward compatibility

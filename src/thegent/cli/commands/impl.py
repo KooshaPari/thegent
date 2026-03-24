@@ -228,7 +228,7 @@ __all__ = [
 import logging
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 
 from rich.console import Console
@@ -534,13 +534,13 @@ def _make_load_classifier(settings: "ThegentSettings") -> Any:
 
     return LoadClassifier(
         session_dir=settings.session_dir.expanduser().resolve(),
-        spike_threshold=settings.concurrency_min_slots,
-        surge_threshold=settings.max_concurrency,
+        spike_threshold=int(getattr(settings, "concurrency_min_slots", 1)),
+        surge_threshold=int(getattr(settings, "max_concurrency", 1)),
     )
 
 
 def _new_session_id(agent: str, owner: str | None = None) -> str:
-    return run_session_helpers.new_session_id(agent=agent, owner=owner)
+    return run_session_helpers.new_session_id(agent=agent, owner=owner or _default_owner_tag())
 _is_pid_running = process_helpers.is_pid_running
 _parse_dag_full = run_dag_helpers.parse_dag_full
 _serialize_dag = run_dag_helpers.serialize_dag
@@ -560,6 +560,7 @@ dag_ready_impl = run_dag_helpers.dag_ready_impl
 
 from thegent.cli.commands.impl_core_runners import (  # noqa: E402
     _apply_pareto_routing,
+    _validate_explicit_ollama_provider,
     bg_impl,
     loop_impl,
     resume_impl,

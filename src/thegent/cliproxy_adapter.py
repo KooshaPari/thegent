@@ -14,8 +14,9 @@ import orjson as json
 import logging
 import time
 import uuid
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -54,7 +55,6 @@ from thegent.cliproxy_request_transform import (
 )
 from thegent.cliproxy_stream_state import ResponsesStreamState
 from thegent.utils.routing_impl.cost_calculator import calculate_cost_from_response, format_cost_header_value
-from thegent.adapters.ports import AdapterRegistry
 
 _log = logging.getLogger(__name__)
 
@@ -782,7 +782,7 @@ async def _proxy_request(
         return Response(
             content=json.dumps(
                 {"error": {"message": f"Backend proxy ({backend_url}) unreachable. Restart with: thegent mcp restart"}}
-            ).encode(),
+            ),
             status_code=503,
             headers={"Content-Type": "application/json"},
         )
@@ -814,7 +814,8 @@ async def _proxy_stream(
 
         async def stream_response(self, send: Send) -> None:  # noqa: PLR0912 -- stream startup state machine
             try:
-                first_chunk = await self.body_iterator.__anext__()
+                iterator = cast(AsyncIterator[bytes | memoryview | str], self.body_iterator)
+                first_chunk = await iterator.__anext__()
             except StopAsyncIteration:
                 await send(
                     {
@@ -925,7 +926,7 @@ async def _proxy_stream(
                                     for ev in state.preamble_events():
                                         yield f"data: {json.dumps(ev).decode()}\n\n".encode()
                                     preamble_emitted = True
-                                yield f"data: {json.dumps(state.delta_event(text).decode())}\n\n".encode()
+                                yield f"data: {json.dumps(state.delta_event(text)).decode()}\n\n".encode()
                             # GW-07: forward tool call deltas
                             if tool_calls:
                                 for ev in state.tool_call_delta_events(tool_calls):
@@ -1019,7 +1020,7 @@ async def proxy_handler(request: Request) -> Response:
             bifrost.validate_claims(claims)
         except BifrostValidationError as e:
             return Response(
-                content=json.dumps({"error": {"message": str(e)}}).encode(),
+                content=json.dumps({"error": {"message": str(e)}}),
                 status_code=403,
                 headers={"Content-Type": "application/json"},
             )

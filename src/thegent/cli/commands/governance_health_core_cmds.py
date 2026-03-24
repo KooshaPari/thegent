@@ -5,14 +5,13 @@ Core health score computation, status monitoring, and governance cycles.
 
 from __future__ import annotations
 
-from thegent.utils.json_utils import json_loads, json_dumps
+import json
 import sys
 import uuid
 from pathlib import Path
 
 import typer
 
-from rich.panel import Panel
 from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (

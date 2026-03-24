@@ -6,7 +6,7 @@ targets defined in contracts/health-targets.json and combined into a single
 score that drives autonomous agent scheduling decisions.
 """
 
-import orjson as json
+import json
 import logging
 from datetime import UTC, datetime
 from enum import StrEnum

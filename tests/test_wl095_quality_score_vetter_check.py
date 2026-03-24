@@ -30,7 +30,7 @@ from thegent.govern.vetter.models import VetterCheck, VetterCheckResult, VetterC
 
 def _make_litellm_response(scores: dict[str, int], pass_verdict: bool, critique: str = "") -> MagicMock:
     """Build a minimal litellm ModelResponse mock with the given judge payload."""
-    payload = json.dumps({"scores": scores, "pass_verdict": pass_verdict, "critique": critique}).decode().decode()
+    payload = json.dumps({"scores": scores, "pass_verdict": pass_verdict, "critique": critique}).decode()
     msg = MagicMock()
     msg.content = payload
     choice = MagicMock()

@@ -3,12 +3,10 @@
 # @trace WL-124
 from __future__ import annotations
 
-import orjson as json
+import json
 from pathlib import Path
-from typing import Annotated, Literal, cast
 
 import typer
-from typer.models import OptionInfo
 
 from rich.panel import Panel
 from rich.table import Table
@@ -16,13 +14,7 @@ from rich.table import Table
 from thegent.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
-    _format_context_usage_line,
-    _format_grounding_sources_lines,
-    _format_transcript_summary_line,
     _get_run_subprocess_optimized,
-    _inject_skill_instructions,
-    _normalize_output_format,
-    _resolve_session_id,
     console,
 )
 
@@ -74,7 +66,7 @@ def trace_replay_cmd(run_id: str) -> None:
 
 def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
     """Automatically route a prompt to an active terminal session if matching."""
-
+    from thegent.cli.commands.run_cmds import run_cmd
     from rich.console import Console
 
     from thegent.config import ThegentSettings
@@ -126,7 +118,7 @@ def deep_research_cmd(
     console.print(f"Found [blue]{len(results['github_results'])}[/blue] GitHub results")
 
     if output:
-        with open(output, "w") as f:
+        with output.open("w", encoding="utf-8") as f:
             json.dump(results, f, indent=2)
         console.print(f"\nResults saved to: [bold]{output}[/bold]")
     else:

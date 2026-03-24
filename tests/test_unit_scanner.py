@@ -589,9 +589,9 @@ def test_scan_agent_failure_all_closed(scanner: CodebaseScanner) -> None:
     """
     cb_file = scanner.session_dir / "circuit_breakers.jsonl"
     cb_file.write_text(
-        json.dumps({"name": "agent1", "status": "CLOSED"}).decode().decode()
+        json.dumps({"name": "agent1", "status": "CLOSED"}).decode()
         + "\n"
-        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode().decode()
+        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode()
         + "\n"
     )
 
@@ -606,11 +606,11 @@ def test_scan_agent_failure_open_breakers(scanner: CodebaseScanner) -> None:
     """
     cb_file = scanner.session_dir / "circuit_breakers.jsonl"
     cb_file.write_text(
-        json.dumps({"name": "agent1", "status": "OPEN"}).decode().decode()
+        json.dumps({"name": "agent1", "status": "OPEN"}).decode()
         + "\n"
-        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode().decode()
+        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode()
         + "\n"
-        + json.dumps({"status": "OPEN"}).decode().decode()
+        + json.dumps({"status": "OPEN"}).decode()
         + "\n"
     )
 
@@ -627,10 +627,10 @@ def test_scan_agent_failure_malformed_json(scanner: CodebaseScanner) -> None:
     """
     cb_file = scanner.session_dir / "circuit_breakers.jsonl"
     cb_file.write_text(
-        json.dumps({"name": "agent1", "status": "OPEN"}).decode().decode()
+        json.dumps({"name": "agent1", "status": "OPEN"}).decode()
         + "\n"
         + "not valid json\n"
-        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode().decode()
+        + json.dumps({"name": "agent2", "status": "CLOSED"}).decode()
         + "\n"
     )
 

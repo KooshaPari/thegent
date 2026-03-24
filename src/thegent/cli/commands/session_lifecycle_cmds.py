@@ -28,6 +28,24 @@ from thegent.cli.commands._cli_shared import (
     EXIT_TIMEOUT,
     _LOG_FOLLOW_POLL_SECONDS,
 )
+from thegent.cli.commands.session_contract_core_cmds import (
+    session_contracts_cmd,
+)
+from thegent.cli.commands.session_contract_health_cmds import (
+    session_contract_health_gate_cmd,
+    session_contract_health_report_cmd,
+    session_contract_health_trend_cmd,
+)
+from thegent.cli.commands.session_query_cmds import (
+    events_cmd,
+    feedback_cmd,
+    history_cmd,
+    ps_cmd,
+)
+from thegent.cli.commands.session_utils_cmds import (
+    inbox_list_cmd,
+    inbox_wait_cmd,
+)
 from thegent.cli.commands.session_cmds_helpers import (
     follow_log_stream,
 )
@@ -437,8 +455,6 @@ __all__ = [
     "session_contract_health_gate_cmd",
     "session_contract_health_report_cmd",
     "session_contract_health_trend_cmd",
-    "session_contract_negotiate_cmd",
-    "session_contract_trend_analysis_cmd",
     "session_contracts_cmd",
     "session_fork_cmd",
     "session_rollback_cmd",

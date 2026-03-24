@@ -12,6 +12,18 @@ app = typer.Typer()
 logger = logging.getLogger(__name__)
 
 
+def _settings_max_concurrency(settings: ThegentSettings) -> int:
+    """Return a safe max concurrency value from settings."""
+    value = getattr(settings, "max_concurrency", 4)
+    return value if isinstance(value, int) else 4
+
+
+def _settings_load_based(settings: ThegentSettings) -> bool:
+    """Return a safe load-based concurrency flag from settings."""
+    value = getattr(settings, "concurrency_load_based", False)
+    return value if isinstance(value, bool) else False
+
+
 @app.command("show")
 def show_concurrency(
     session_dir: str | None = typer.Option(None, "--session-dir", "-d", help="Session directory"),
@@ -22,22 +34,24 @@ def show_concurrency(
 
     console = Console()
     settings = ThegentSettings()
+    max_concurrency_value = _settings_max_concurrency(settings)
+    load_based_value = _settings_load_based(settings)
 
     session_path = Path(session_dir) if session_dir else Path.cwd()
     if not session_path.exists():
         session_path = Path.cwd()
 
     console.print("[bold]Concurrency Settings[/bold]")
-    console.print(f"Max Concurrency: {settings.max_concurrency}")
-    console.print(f"Load-Based: {settings.concurrency_load_based}")
+    console.print(f"Max Concurrency: {max_concurrency_value}")
+    console.print(f"Load-Based: {load_based_value}")
     console.print(f"Session Dir: {session_path}")
 
     # Get current status
     try:
         _cc = ConcurrencyController(
             session_dir=session_path,
-            max_concurrency=settings.max_concurrency,
-            use_load_based=settings.concurrency_load_based,
+            max_concurrency=max_concurrency_value,
+            use_load_based=load_based_value,
         )
 
         # Get current usage
@@ -45,8 +59,8 @@ def show_concurrency(
         table.add_column("Setting", style="cyan")
         table.add_column("Value", style="green")
 
-        table.add_row("Max Concurrency", str(settings.max_concurrency))
-        table.add_row("Load-Based", "Enabled" if settings.concurrency_load_based else "Disabled")
+        table.add_row("Max Concurrency", str(max_concurrency_value))
+        table.add_row("Load-Based", "Enabled" if load_based_value else "Disabled")
         table.add_row("Session Directory", str(session_path))
 
         console.print()

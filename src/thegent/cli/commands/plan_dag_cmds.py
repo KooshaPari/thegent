@@ -7,7 +7,6 @@ import logging
 from pathlib import Path
 
 import typer
-
 from rich.table import Table
 
 from thegent.cli.commands.plan_output_helpers import (
@@ -38,9 +37,6 @@ from thegent.cli.commands._cli_shared import (
     _validate_task_id,
     console,
     dag_ready_impl,
-    dag_recover_impl,
-    dag_run_impl,
-    dag_sync_impl,
 )
 
 _log = logging.getLogger(__name__)
@@ -536,5 +532,3 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
             tofile="current",
         )
         console.print("".join(diff))
-
-

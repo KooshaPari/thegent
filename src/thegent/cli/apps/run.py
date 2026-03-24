@@ -37,6 +37,63 @@ def _auto_select_agent(prompt: str) -> str | None:
         return None
 
 
+def _bg_run_cmd(
+    *,
+    agent: str | None,
+    prompt: str,
+    cd: Path | None,
+    timeout: int,
+    full: bool,
+    model: str | None,
+    run_id: str | None,
+    task_id: str | None,
+    lane: str,
+    routing: str | None = None,
+    failover: bool = False,
+    contract_version: str | None = None,
+    domain: str | None = None,
+    speculative: bool = False,
+    idempotency_token: str | None = None,
+    image: list[str] | None = None,
+    skill: list[str] | None = None,
+) -> None:
+    from thegent.cli.commands._cli_shared import _inject_skill_instructions
+    from thegent.cli.commands.impl_core import bg_impl
+
+    res = bg_impl(
+        agent=agent,
+        prompt=_inject_skill_instructions(prompt, skill),
+        cd=cd,
+        mode="write",
+        timeout=timeout,
+        full=full,
+        model=model,
+        run_id=run_id,
+        task_id=task_id,
+        lane=lane,
+        routing=routing,
+        failover=failover,
+        contract_version=contract_version,
+        domain=domain,
+        speculative=speculative,
+        idempotency_token=idempotency_token,
+        owner=None,
+        image_paths=image,
+    )
+    error = res.get("error")
+    if isinstance(error, str) and error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(1)
+
+    session_id = res.get("session_id")
+    console.print(f"[bold green]Session:[/bold green] [cyan]{session_id}[/cyan]")
+    if res.get("ready"):
+        console.print("[dim]Status: awaiting input (ready for loop_send_cmd)[/dim]")
+    logs_path = res.get("logs_path")
+    if isinstance(logs_path, str) and logs_path:
+        console.print(f"[dim]Logs: {logs_path}[/dim]")
+
+
 @app.command("agent", help="Run an agent task (Immediate, Background, or Loop).")
 def run_agent(
     prompt: str = typer.Argument(..., help="Prompt for the agent"),
@@ -105,7 +162,8 @@ def run_agent(
     When no --agent is specified, the capability index is consulted to pick the
     best-matching agent for the prompt (WL-034). Use --no-auto-agent to skip this.
     """
-    from thegent.cli.commands.cli import bg_cmd, loop_cmd, run_cmd
+    from thegent.cli.commands.run_cmds import run_cmd
+    from thegent.cli.commands.run_cmds_loop import loop_cmd
 
     prompt = str(_unwrap_typer_default(prompt))
     agent = _unwrap_typer_default(agent)
@@ -170,26 +228,19 @@ def run_agent(
     if loop:
         loop_cmd(prompt=prompt, todo_spec="Complete the task", agent=effective_agent, cd=cd)
     elif bg:
-        bg_cmd(
+        _bg_run_cmd(
             agent=effective_agent,
             prompt=prompt,
             cd=cd,
-            mode="write",
             timeout=timeout,
             full=full,
             model=model,
             run_id=run_id,
             task_id=task_id,
             lane=lane,
-            routing=routing,
-            failover=failover,
-            contract_version=contract_version,
             domain=domain,
-            speculative=speculative,
-            idempotency_token=idempotency_token,
-            owner=None,
             image=image,
-            skills=skill,
+            skill=skill,
         )
     else:
         run_cmd(
@@ -238,7 +289,7 @@ def run_free(
     pick the best-matching agent (WL-034). Falls back to 'copilot' (gpt-5-mini)
     when no indexed agent matches.
     """
-    from thegent.cli.commands.cli import bg_cmd, run_cmd
+    from thegent.cli.commands.run_cmds import run_cmd
 
     effective_agent: str | None = None
     effective_model: str | None = model
@@ -261,17 +312,16 @@ def run_free(
         effective_model = effective_model or "gpt-5-mini"
 
     if bg:
-        bg_cmd(
+        _bg_run_cmd(
             agent=effective_agent,
             prompt=prompt,
             cd=cd,
-            mode="write",
             timeout=timeout,
             full=full,
             model=effective_model,
             run_id=run_id,
             task_id=task_id,
-            owner=None,
+            lane="standard",
         )
     else:
         run_cmd(

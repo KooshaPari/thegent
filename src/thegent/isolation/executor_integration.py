@@ -4,6 +4,7 @@ This module demonstrates how to integrate SubUserIsolationProvider
 into the main agent executor for Phase 1.
 """
 
+from thegent.infra.shim_subprocess import run as shim_run
 from thegent.isolation.sub_user_provider import SubUserIsolationProvider
 
 
@@ -33,7 +34,7 @@ class IsolatedExecutor:
         self,
         tenant_id: str,
         agent_id: str,
-        command: list,
+        command: list[str],
         timeout_sec: int = 300,
     ) -> dict:
         """

@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 
-def list_agents_impl() -> list[str]:
+def list_agents_impl() -> list[dict[str, str]]:
     from thegent.cli.services import run_post_surface_helpers
     return run_post_surface_helpers.list_agents_impl()
 
@@ -225,6 +225,17 @@ def harness_list_actions_impl() -> dict[str, Any]:
     return run_post_surface_helpers.harness_list_actions_impl()
 
 
-def harness_register_host_impl() -> dict[str, Any]:
+def harness_register_host_impl(
+    *,
+    host_id: str,
+    harness: str,
+    command_prefix: str = "",
+    custom_actions: dict[str, str] | None = None,
+) -> dict[str, Any]:
     from thegent.cli.services import run_post_surface_helpers
-    return run_post_surface_helpers.harness_register_host_impl()
+    return run_post_surface_helpers.harness_register_host_impl(
+        host_id=host_id,
+        harness=harness,
+        command_prefix=command_prefix,
+        custom_actions=custom_actions,
+    )

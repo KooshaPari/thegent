@@ -10,11 +10,11 @@ This module checks:
 from __future__ import annotations
 
 import importlib.metadata
-import orjson as json
+import json
 import os
 import re
 import sys
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
@@ -615,4 +615,4 @@ class SystemAuditor:
         dest = Path(path)
         dest.parent.mkdir(parents=True, exist_ok=True)
         with dest.open("w", encoding="utf-8") as fh:
-            json.dump(report.to_dict(), fh, indent=2, default=str)
+            json.dump(asdict(report), fh, indent=2, default=str)

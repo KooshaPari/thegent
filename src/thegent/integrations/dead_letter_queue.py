@@ -7,10 +7,11 @@ Queues failed remote writes to JSONL for deterministic replay after fixes.
 
 from __future__ import annotations
 
-import orjson as json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+
+import orjson
 
 
 @dataclass
@@ -61,7 +62,7 @@ class DeadLetterQueue:
         Args:
             entry: The DeadLetterEntry to persist.
         """
-        line = json.dumps(
+        line = orjson.dumps(
             {
                 "entry_id": entry.entry_id,
                 "wl_id": entry.wl_id,
@@ -69,10 +70,10 @@ class DeadLetterQueue:
                 "operation": entry.operation,
                 "payload": entry.payload,
                 "error": entry.error,
-                "created_at": entry.created_at.isoformat().decode(),
+                "created_at": entry.created_at.isoformat(),
                 "retry_count": entry.retry_count,
             }
-        )
+        ).decode("utf-8")
         with open(self.store_path, "a") as f:
             f.write(line + "\n")
 
@@ -91,7 +92,7 @@ class DeadLetterQueue:
                 line = line.strip()
                 if not line:
                     continue
-                data = json.loads(line)
+                data = orjson.loads(line)
                 entry = DeadLetterEntry(
                     entry_id=data["entry_id"],
                     wl_id=data["wl_id"],
@@ -137,7 +138,7 @@ class DeadLetterQueue:
         # Rewrite entire file
         with open(self.store_path, "w") as f:
             for entry in all_entries:
-                line = json.dumps(
+                line = orjson.dumps(
                     {
                         "entry_id": entry.entry_id,
                         "wl_id": entry.wl_id,
@@ -145,10 +146,10 @@ class DeadLetterQueue:
                         "operation": entry.operation,
                         "payload": entry.payload,
                         "error": entry.error,
-                        "created_at": entry.created_at.isoformat().decode(),
+                        "created_at": entry.created_at.isoformat(),
                         "retry_count": entry.retry_count,
                     }
-                )
+                ).decode("utf-8")
                 f.write(line + "\n")
 
     def purge_resolved(self) -> int:
@@ -164,7 +165,7 @@ class DeadLetterQueue:
         # Rewrite file with only pending entries
         with open(self.store_path, "w") as f:
             for entry in pending_entries:
-                line = json.dumps(
+                line = orjson.dumps(
                     {
                         "entry_id": entry.entry_id,
                         "wl_id": entry.wl_id,
@@ -172,10 +173,10 @@ class DeadLetterQueue:
                         "operation": entry.operation,
                         "payload": entry.payload,
                         "error": entry.error,
-                        "created_at": entry.created_at.isoformat().decode(),
+                        "created_at": entry.created_at.isoformat(),
                         "retry_count": entry.retry_count,
                     }
-                )
+                ).decode("utf-8")
                 f.write(line + "\n")
 
         return removed_count

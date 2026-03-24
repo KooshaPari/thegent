@@ -55,9 +55,9 @@ class DocIndexer:
                     frontmatter.get("author", "agent"),
                     frontmatter.get("session_id", ""),
                     frontmatter.get("git_commit", ""),
-                    orjson.dumps(frontmatter.get("tags", []).decode()).decode(),
-                    orjson.dumps(frontmatter.get("relates_to", []).decode()).decode(),
-                    orjson.dumps(frontmatter.get("traces_to", []).decode()).decode(),
+                    orjson.dumps(frontmatter.get("tags", [])).decode(),
+                    orjson.dumps(frontmatter.get("relates_to", [])).decode(),
+                    orjson.dumps(frontmatter.get("traces_to", [])).decode(),
                     now,
                 ),
             )

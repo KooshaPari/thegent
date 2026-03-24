@@ -5,7 +5,7 @@ Scans directories for markdown files, organizing them by modification date
 and location. Supports configurable scan parameters and exclusion patterns.
 """
 
-import orjson as json
+import json
 import os
 from collections import defaultdict
 from dataclasses import dataclass, field

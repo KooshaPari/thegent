@@ -17,8 +17,7 @@ import json
 import logging
 import shutil
 import subprocess
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Optional
 
 _log = logging.getLogger(__name__)

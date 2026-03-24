@@ -6,11 +6,8 @@ Extracted from dex_main.py for maintainability.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import typer
 from rich.console import Console
-from rich.table import Table
 
 
 console = Console()
@@ -73,13 +70,20 @@ def register_dex_utility_commands(app: typer.Typer) -> None:
         force: bool = typer.Option(False, "-f", "--force", help="Force stop"),
     ) -> None:
         """Stop a running dex session."""
-        from thegent.dex_main import _run_codex_exec
+        from thegent.dex_main import _resolve_native_codex
+        from thegent.infra.shim_subprocess import run as shim_run
         
         args = ["stop", session_id]
         if force:
             args.append("--force")
-        
-        _run_codex_exec(args, {}, None)
+
+        codex_path = _resolve_native_codex()
+        if not codex_path:
+            console.print("[red]Codex CLI not found[/red]")
+            raise typer.Exit(1)
+
+        result = shim_run([codex_path, *args], check=False)
+        raise typer.Exit(result.returncode)
     
     @app.command("wait")
     def dex_wait(
@@ -142,6 +146,20 @@ def register_dex_utility_commands(app: typer.Typer) -> None:
         else:
             console.print("[cyan]Dex configuration[/cyan]")
             # TODO: Show all config
+
+    _ = (
+        dex_ps,
+        dex_logs,
+        dex_status,
+        dex_resume,
+        dex_fork,
+        dex_stop,
+        dex_wait,
+        dex_inspect,
+        dex_history,
+        dex_doctor,
+        dex_config,
+    )
 
 
 __all__ = [

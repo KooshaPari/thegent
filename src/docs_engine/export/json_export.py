@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any

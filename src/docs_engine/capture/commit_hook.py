@@ -8,7 +8,7 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_dump
 
 from docs_engine.db.indexer import DocIndexer
 from docs_engine.schema.base import DocFrontmatter, DocStatus, DocType
@@ -36,7 +36,7 @@ def write_worklog_entry(
         git_commit=commit_sha,
     )
     fm_dict = {k: v for k, v in fm.model_dump(mode="json").items() if v not in ("", [], None)}
-    fm_str = yaml.dump(fm_dict, default_flow_style=False, allow_unicode=True)
+    fm_str = yaml_dump(fm_dict, default_flow_style=False, allow_unicode=True)
 
     files_section = "\n".join(f"- `{f}`" for f in files_changed) if files_changed else "- (none)"
     body = (

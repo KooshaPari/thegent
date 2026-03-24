@@ -5,7 +5,7 @@ Integrates document queue management into thegent's typer-based CLI.
 Uses centralized path utilities for cross-platform consistency.
 """
 
-import orjson as json
+import json
 from pathlib import Path
 
 import typer

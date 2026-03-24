@@ -22,18 +22,39 @@ from __future__ import annotations
 
 import contextlib
 import functools
+from importlib import import_module
 import logging
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from cachetools import TTLCache
 
-try:
-    import diskcache
+class _DiskCacheProtocol:
+    """Minimal cache interface used by MultiLevelCache."""
 
+    def __init__(self, directory: str) -> None: ...
+    def get(self, key: Any, default: Any = None) -> Any: ...
+    def set(self, key: Any, value: Any, expire: float | None = None) -> bool: ...
+    def delete(self, key: Any) -> bool: ...
+    def clear(self) -> int: ...
+    def close(self) -> None: ...
+    def volume(self) -> int: ...
+    def __len__(self) -> int: ...
+    @property
+    def directory(self) -> str: ...
+
+
+class _DiskCacheModuleProtocol:
+    """Runtime import surface for the diskcache module."""
+
+    Cache: type[_DiskCacheProtocol]
+
+try:
+    _DISKCACHE_MODULE = cast("_DiskCacheModuleProtocol", import_module("diskcache"))
     _DISKCACHE_AVAILABLE = True
 except ImportError:
+    _DISKCACHE_MODULE = None
     _DISKCACHE_AVAILABLE = False
 
 _LOG = logging.getLogger(__name__)
@@ -65,7 +86,7 @@ class MultiLevelCache:
         }
 
         # L2: diskcache is optional; silently degrade to L1-only if unavailable or disabled
-        self._l2: diskcache.Cache | None = None
+        self._l2: _DiskCacheProtocol | None = None
         if l2_dir is None:
             self._l2_init_status = {"enabled": False, "reason": "not_configured"}
         elif not _DISKCACHE_AVAILABLE:
@@ -85,7 +106,7 @@ class MultiLevelCache:
                 _LOG.warning("multilevel_cache_l2_disabled %s", self._l2_init_status)
             else:
                 try:
-                    self._l2 = diskcache.Cache(str(l2_path))
+                    self._l2 = _DISKCACHE_MODULE.Cache(str(l2_path))
                     self._l2_init_status = {
                         "enabled": True,
                         "reason": "ok",

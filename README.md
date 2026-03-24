@@ -34,7 +34,7 @@
 - 🌍 **Multi-Provider Routing**: Routing across Claude, Gemini, OpenAI, and custom local proxies.
 - 🛠️ **Unified Work Stream**: Single source of truth for task management across multiple agents and projects.
 - 📦 **MCP Native**: Full support for Model Context Protocol (MCP) servers and resources.
-- 🔄 **Continuous Autonomy**: Background execution and session management via `thegent plan loop`.
+- 🔄 **Continuous Autonomy**: Background execution and session management via `thegent run agent "Task" --loop`.
 - 🔍 **Deep Research Protocol**: Multi-source investigation workflows (Reddit, Google, GitHub).
 
 ---
@@ -70,7 +70,7 @@ thegent scaffold none ./existing-project
 
 ### 3. Run Your First Agent
 ```bash
-thegent run "Analyze the current directory structure" free
+thegent run free "Analyze the current directory structure"
 ```
 
 ---
@@ -107,10 +107,22 @@ When bootstrap runs inside a git repository, it can write a marker file:
 Interactive shells get a helper function through managed zsh config:
 
 ```bash
-thg_new_worktree <branch> [start-point] [worktree-path]
+thg_new_worktree <domain> <scale> <change-anchor> [start-point]
 ```
 
 This helper refuses to branch from a dirty/non-main primary checkout.
+
+CLI alternative:
+
+```bash
+thegent worktree new <domain> <scale> <change-anchor> [start-point]
+thegent worktree state <change-anchor> <new-state>
+thegent worktree list
+thegent worktree prune [--dry-run]
+thegent worktree check
+thegent help worktree
+thegent help git
+```
 
 ### Toolchain Setup
 
@@ -135,15 +147,26 @@ echo 'eval "$(mise activate zsh)"' >> ~/.zshenv
 
 | Command | Description |
 |---------|-------------|
-| `thegent run <prompt>` | Execute a task in the foreground with a specific agent/model. |
-| `thegent run <prompt> --skill <name>` | Execute with selected skill instructions (repeat `--skill` to stack). |
-| `thegent bg <prompt>` | Start a background agent session. |
+| `thegent run free <prompt>` | Execute a task in the foreground with the free agent. |
+| `thegent run free <prompt> --skill <name>` | Execute with selected skill instructions (repeat `--skill` to stack). |
+| `thegent run agent <prompt> --bg` | Start a background agent session. |
 | `thegent ps` | List active and historical agent sessions. |
 | `thegent skill list` | List discovered skills available for `--skill` selection. |
 | `thegent skill select <name>` | Validate a skill and print exact `--skill` usage for run flows. |
-| `thegent plan loop` | Continuously process work items from the unified work stream. |
-| `thegent plan do-next` | Find the next actionable items from project plans and specs. |
+| `thegent plan next` | Find the next actionable item from project plans and specs. |
+| `thegent run agent <prompt> --loop` | Continuously process work items from the unified work stream. |
 | `thegent doctor` | Verify environment health and fix performance bottlenecks. |
+| `thegent registry list` | List registered personas. |
+| `thegent registry recommend <intent>` | Recommend a persona for a task or role. |
+| `thegent registry doctor` | Validate registry health and routing metadata. |
+| `thegent govern approve <run-id>` | Approve a HITL gate. |
+| `thegent govern reject <run-id>` | Reject a HITL gate. |
+| `thegent govern vet <run-id>` | Vet a run before promotion. |
+| `thegent worktree new <domain> <scale> <change-anchor> [start-point]` | Create a structured worktree. |
+| `thegent worktree state <change-anchor> <new-state>` | Update structured worktree state. |
+| `thegent worktree list` | List structured worktrees. |
+| `thegent worktree prune [--dry-run]` | Prune structured worktrees. |
+| `thegent worktree check` | Validate structured worktree governance. |
 | `thegent sync autopilot` | Automatic bi-directional sync: `WORK_STREAM.md` <-> GitHub Projects <-> Linear. |
 
 Harness wrappers (`dex`, `clode`, `roid`, `droid`) route through `thegent-shims`.
@@ -245,20 +268,13 @@ task sync:autopilot:once
 - **[Quick Start Guide](./docs/guides/QUICK_START.md)** — Get up and running in 5 minutes.
 - **[Complete User Guide](./docs/guides/COMPLETE_USER_GUIDE.md)** — Deep dive into features.
 - **[Installation Guide](./docs/guides/INSTALLATION.md)** — Advanced setup options.
-<<<<<<< HEAD
-- **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, and troubleshooting.
+- **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, troubleshooting, and provider integrations.
 - **[Changelog](./CHANGELOG.md)** — Keep-a-Changelog release history with active `Unreleased` section.
 - **[Changelog Process](./docs/guides/CHANGELOG_PROCESS.md)** — How to add, classify, and release changelog entries.
 - **[Changelog Entry Template](./docs/reference/CHANGELOG_ENTRY_TEMPLATE.md)** — Copy/paste template and writing guidance for entries.
 - **[Project Setup Style](./docs/guides/PROJECT_SETUP_STYLE.md)** — Standardized command/process baseline inspired by vercel/ai.
-<<<<<<< HEAD
-=======
-- **[Provider Setup Guide](./docs/guides/PROVIDER_SETUP_GUIDE.md)** — cliproxy login, provider/model routing, adapter vs native behavior, GLM + MiniMax flows, and OpenCode/Zen integration notes.
-- **[Domain Mapping Guide](./docs/guides/DOMAIN_MAPPING_GUIDE.md)** — `thegent domain map` advisor mode for Porkbun + Cloudflare Tunnel domain exposure.
+- **[Domain Mapping Guide](./docs/guides/DOMAIN_MAPPING_GUIDE.md)** — `thegent domain map` advisor mode for domain exposure.
 - **[Release Supply Chain Controls](./docs/governance/RELEASE_SUPPLY_CHAIN_CONTROLS.md)** — SBOM, vulnerability scans, governance attestation, and release provenance artifacts.
->>>>>>> codex/governance-wireup
-=======
->>>>>>> codex/provider-plane-wave1
 - **[Architecture Overview](./docs/reference/ARCHITECTURE_LAYERS.md)** — Design layers and internals.
 - **[Research Index](./docs/research/RESEARCH_CONSOLIDATED.md)** — Findings and experiments.
 

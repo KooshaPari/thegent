@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 _log = logging.getLogger(__name__)
 
@@ -24,6 +24,9 @@ from thegent.cli.commands.session_meta_impl import (
 )
 from thegent.cli.commands.session_control_impl import session_send_impl
 from thegent.execution import RunRegistry
+
+if TYPE_CHECKING:
+    from thegent.config_provider import ConfigProvider
 
 # Constants from impl.py that are referenced by the extracted functions
 SECONDS_PER_TOOL_CALL = 2.3

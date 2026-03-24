@@ -4,10 +4,15 @@ Handles checkpoint persistence and failure queue management.
 """
 
 import orjson as json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from thegent.integrations.workstream_autosync_shared import SyncCheckpoint, SyncFailureQueue
+from thegent.integrations.workstream_autosync_shared import (
+    FailureRecord,
+    SyncCheckpoint,
+    SyncFailureQueue,
+)
 
 
 class CheckpointAdapter:
@@ -52,7 +57,19 @@ class CheckpointAdapter:
         if path.exists():
             try:
                 data = json.loads(path.read_text())
-                self._failure_queue.from_dict(data)
+                records = [
+                    FailureRecord(
+                        operation_id=entry["operation_id"],
+                        connector=entry["connector"],
+                        item_id=entry["item_id"],
+                        message=entry["message"],
+                        occurred_at=datetime.fromisoformat(entry["occurred_at"]),
+                        retry_class=entry.get("retry_class", "permanent"),
+                        correlation_id=entry.get("correlation_id"),
+                    )
+                    for entry in data
+                ]
+                self._failure_queue.replace_records(records)
             except Exception:
                 pass
 
@@ -60,7 +77,7 @@ class CheckpointAdapter:
         """Save failure queue to disk."""
         path = self.get_failure_queue_path()
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(self._failure_queue.to_dict()).decode())
+        path.write_text(json.dumps(self._failure_queue.to_dict_list()).decode())
 
 
 __all__ = ["CheckpointAdapter"]

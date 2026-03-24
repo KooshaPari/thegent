@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import orjson as json
 import sys
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +15,11 @@ from thegent.cli.commands._cli_shared import (
     console,
 )
 from thegent.cli.commands.infra_env_helpers import resolve_env_file, rewrite_max_concurrency_lines
+
+
+def _settings_int(settings: Any, name: str, default: int) -> int:
+    value = getattr(settings, name, default)
+    return value if isinstance(value, int) and not isinstance(value, bool) else default
 
 
 def concurrency_show_cmd(format: str | None = None) -> None:
@@ -37,7 +41,7 @@ def concurrency_show_cmd(format: str | None = None) -> None:
     config = LimitGateConfig.from_dict(settings.model_dump())
     dynamic_limit, gate_details = compute_dynamic_limit(snapshot, config)
 
-    limit = settings.max_concurrency
+    limit = _settings_int(settings, "max_concurrency", 1)
     utilization_pct = (running_count / limit * 100) if limit > 0 else 0
 
     data = {
@@ -51,7 +55,7 @@ def concurrency_show_cmd(format: str | None = None) -> None:
 
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(data, indent=2) + "\n")
+        sys.stdout.write(json.dumps(data, option=json.OPT_INDENT_2).decode() + "\n")
         return
 
     table = Table(title="Concurrency Status (WP-5001)")
@@ -127,8 +131,8 @@ def load_status_cmd(format: str | None = None) -> None:
         "load_level": level,
         "safe_mode_active": safe_mode,
         "traffic_shape": shape,
-        "spike_threshold": settings.load_spike_threshold,
-        "surge_threshold": settings.load_surge_threshold,
+        "spike_threshold": _settings_int(settings, "load_spike_threshold", 0),
+        "surge_threshold": _settings_int(settings, "load_surge_threshold", 0),
     }
     fmt = _normalize_output_format(format)
     if fmt == "json":
@@ -141,7 +145,11 @@ def load_status_cmd(format: str | None = None) -> None:
     table.add_row("Load level", level)
     table.add_row("Safe-mode active", "[red]Yes[/red]" if safe_mode else "[green]No[/green]")
     table.add_row("Traffic shaping", shape)
-    table.add_row("Thresholds", f"spike>={settings.load_spike_threshold}, surge>={settings.load_surge_threshold}")
+    table.add_row(
+        "Thresholds",
+        f"spike>={_settings_int(settings, 'load_spike_threshold', 0)}, "
+        f"surge>={_settings_int(settings, 'load_surge_threshold', 0)}",
+    )
     console.print(table)
 
 

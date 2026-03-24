@@ -1,10 +1,3 @@
-import DefaultTheme from 'vitepress/theme'
-import './custom.css'
-import Callout from './components/Callout.vue'
+import PhenoDocsTheme from '@phenodocs-theme'
 
-export default {
-  extends: DefaultTheme,
-  enhanceApp({ app }) {
-    app.component('Callout', Callout)
-  }
-}
+export default PhenoDocsTheme

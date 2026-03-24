@@ -11,7 +11,30 @@ from __future__ import annotations
 from rich.console import Console
 from rich.panel import Panel
 
-console = Console()
+console = Console(width=120)
+
+ROOT_HELP_SHORTCUTS: list[str] = [
+    "  [green]thegent help worktree[/green] Show structured worktree commands",
+    "  [green]thegent help git[/green]      Show structured git worktree commands",
+]
+
+ROOT_HELP_SHORTCUT_BLOCK = "\n".join(ROOT_HELP_SHORTCUTS)
+
+
+def _refresh_examples(command_prefix: str) -> list[str]:
+    """Build refresh examples for the requested command prefix."""
+    return [
+        f"{command_prefix} refresh <change-anchor> --ref origin/canary",
+        f"{command_prefix} refresh <change-anchor> --remote origin --strategy merge",
+    ]
+
+
+def _migration_examples(command_prefix: str) -> list[str]:
+    """Build legacy migration examples for the requested command prefix."""
+    return [
+        f"{command_prefix} migrate-legacy /tmp/legacy-cache infra m migrate-cache",
+        f"{command_prefix} migrate-legacy /tmp/legacy-cache infra m migrate-cache blocked",
+    ]
 
 # ---------------------------------------------------------------------------
 # Example registry
@@ -19,31 +42,30 @@ console = Console()
 
 COMMAND_EXAMPLES: dict[str, list[str]] = {
     "free": [
-        "thegent free 'Summarise the TODO list in README.md'",
-        "thegent free 'Fix the failing tests' --bg",
-        "thegent free --do-next",
-        "thegent free --do-next --repeat 5",
+        "thegent run free 'Summarise the TODO list in README.md'",
+        "thegent run free 'Fix the failing tests' --bg",
+        "thegent plan next",
+        "thegent run agent 'Continuously process work items' --loop",
     ],
     "run": [
-        "thegent run 'Write unit tests for auth.py'",
-        "thegent run 'Refactor the router' -M claude-sonnet-4-5 --bg",
-        "thegent run 'Review PR #42' --harness claude",
+        "thegent run free 'Write unit tests for auth.py'",
+        "thegent run agent 'Refactor the router' --model claude-sonnet-4-5 --bg",
+        "thegent run agent 'Review PR #42' --model claude-sonnet-4-5",
         "thegent run ps  # list active sessions",
     ],
     "plan": [
-        "thegent plan list                     # show all work-stream tasks",
         "thegent plan claim <task-id>           # claim a task before starting",
         "thegent plan complete <task-id>        # mark task done",
-        "thegent plan do-next                   # run the next unclaimed item",
-        "thegent plan wait-next --timeout 120   # block until new work arrives",
-        "thegent plan loop --max 50             # continuous autonomous loop",
-        "thegent plan incorporate docs/PLAN.md  # merge fragments into work-stream",
+        "thegent plan next                     # run the next unclaimed item",
+        "thegent plan work                     # show work-stream items",
+        "thegent run agent 'Continuously process work items' --loop",
+        "thegent plan incorporate --dry-run   # merge fragments into work-stream",
     ],
     "registry": [
-        "thegent registry list                  # list all registered personas",
+        "thegent registry list                  # list registered personas",
+        "thegent registry recommend code-review # recommend a persona for a task",
+        "thegent registry doctor                # validate registry health",
         "thegent registry list --format json    # machine-readable output",
-        "thegent registry register ./my-project # register project personas",
-        "thegent registry search 'code-review'  # find personas by capability",
     ],
     "status": [
         "thegent status <session-id>            # JSON status of a session",
@@ -57,16 +79,32 @@ COMMAND_EXAMPLES: dict[str, list[str]] = {
         "thegent doctor --runtime               # multi-runtime diagnostics",
     ],
     "govern": [
-        "thegent govern list-pending            # show pending HITL approvals",
-        "thegent govern list-pending --format json",
         "thegent govern approve <run-id>        # approve a HITL gate",
         "thegent govern reject <run-id>         # reject a HITL gate",
+        "thegent govern vet <run-id>            # vet a run before promotion",
     ],
     "mcp": [
         "thegent sys mcp list                   # list registered MCP servers",
-        "thegent sys mcp add <url>              # add an MCP server",
+        "thegent sys mcp add --server codex --command 'thegent mcp'  # add an MCP server",
         "thegent mcp prune                      # remove orphaned LSP/MCP processes",
         "thegent mcp prune --dry-run            # preview what would be pruned",
+    ],
+    "git": [
+        "thegent git worktree governance new <domain> <scale> <change-anchor> [start-point]",
+        "thegent git worktree governance state <change-anchor> <new-state>",
+        *_migration_examples("thegent git worktree governance"),
+        "thegent git worktree governance list",
+        *_refresh_examples("thegent git worktree governance"),
+        "thegent git worktree governance check",
+    ],
+    "worktree": [
+        "thegent worktree new <domain> <scale> <change-anchor> [start-point]",
+        "thegent worktree state <change-anchor> <new-state>",
+        *_migration_examples("thegent worktree"),
+        "thegent worktree list",
+        "thegent worktree prune [--dry-run]",
+        *_refresh_examples("thegent worktree"),
+        "thegent worktree check",
     ],
     "ps": [
         "thegent ps                             # list sessions for current owner",

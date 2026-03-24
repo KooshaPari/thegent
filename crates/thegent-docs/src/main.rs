@@ -2,7 +2,7 @@
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use thegent_docs::*;
 
 #[derive(Parser)]
@@ -70,7 +70,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn audit_command(dir: &PathBuf) -> Result<()> {
+fn audit_command(dir: &Path) -> Result<()> {
     println!("📚 Auditing markdown files in: {}", dir.display());
     println!();
 
@@ -127,7 +127,7 @@ fn audit_command(dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn normalize_command(dir: &PathBuf) -> Result<()> {
+fn normalize_command(dir: &Path) -> Result<()> {
     println!("📚 Normalizing markdown files in: {}", dir.display());
     println!();
 
@@ -156,7 +156,7 @@ fn normalize_command(dir: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn extract_command(file: &PathBuf) -> Result<()> {
+fn extract_command(file: &Path) -> Result<()> {
     let doc = load_markdown(file).with_context(|| format!("Failed to load {}", file.display()))?;
 
     if let Some(ref fm) = doc.frontmatter {

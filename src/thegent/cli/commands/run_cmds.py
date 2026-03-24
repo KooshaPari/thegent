@@ -3,26 +3,20 @@
 # @trace WL-124
 from __future__ import annotations
 
-import orjson as json
 from pathlib import Path
-from typing import Annotated, Literal, cast
+from typing import Literal, cast
 
 import typer
 from typer.models import OptionInfo
 
-from rich.panel import Panel
-from rich.table import Table
-
+from thegent.models.catalog import Route
 from thegent.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _format_context_usage_line,
     _format_grounding_sources_lines,
     _format_transcript_summary_line,
-    _get_run_subprocess_optimized,
     _inject_skill_instructions,
     _normalize_output_format,
-    _resolve_session_id,
     console,
 )
 
@@ -163,11 +157,16 @@ def run_cmd(
         raise typer.Exit(1)
 
     # WP-X2/X5/X6/X7: Unified execution via run_impl (FSM + Policy + Telemetry)
-    from thegent.config_provider import get_config_provider
-
     effective_prompt = _inject_skill_instructions(prompt, skills)
+    effective_agent_name: str | None
+    if isinstance(effective_agent, Route):
+        effective_agent_name = effective_agent.provider
+    elif isinstance(effective_agent, str):
+        effective_agent_name = effective_agent
+    else:
+        effective_agent_name = None
     res = run_impl(
-        agent=effective_agent or agent,
+        agent=effective_agent_name or agent,
         prompt=effective_prompt,
         cd=cd,
         mode=mode,
@@ -289,7 +288,6 @@ def bg_cmd(
         agent=agent,
         prompt=effective_prompt,
         cd=cd,
-        name=name,
         model=model,
         provider=provider,
         timeout=timeout,
@@ -298,7 +296,6 @@ def bg_cmd(
         domain=domain,
         task_id=task_id,
         image_paths=image,
-        audio_files=audio,
     )
 
     if res.get("error"):
@@ -316,13 +313,11 @@ def bg_cmd(
 
 def retry_cmd(
     run_id: str,
-    timeout: int = typer.Option(90, "--timeout", "-t", help="Timeout in seconds"),
-    lane: str = typer.Option("standard", "--lane", help="Retry lane"),
 ) -> None:
     """Retry a failed run with the same parameters."""
     from thegent.cli.commands.impl import retry_impl
 
-    res = retry_impl(run_id=run_id, timeout=timeout, lane=lane)
+    res = retry_impl(run_id=run_id)
 
     if res.get("error"):
         console.print(f"[red]{res['error']}[/red]")

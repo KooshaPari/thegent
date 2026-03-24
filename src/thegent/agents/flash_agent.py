@@ -15,8 +15,10 @@ import os
 import time
 import uuid
 from dataclasses import dataclass
+from typing import Optional
 
 import httpx
+import litellm
 
 logger = logging.getLogger(__name__)
 
@@ -138,21 +140,8 @@ class FlashAgent:
         """Fallback: run via litellm if available.
 
         Raises:
-            RuntimeError: if CLIProxy URL not configured and litellm not installed.
+            RuntimeError: if CLIProxy URL not configured and litellm is unavailable.
         """
-        try:
-            import litellm
-        except ImportError:
-            elapsed_s = time.monotonic() - start
-            error_msg = (
-                "CLIProxy URL not configured (CLIPROXY_URL env var or default unavailable) "
-                "and litellm not installed. Either:\n"
-                "  1. Install litellm: pip install litellm\n"
-                "  2. Configure CLIProxy: export CLIPROXY_URL=http://your-cliproxy-url:port\n"
-                "  3. Run CLIProxy locally on http://localhost:8317"
-            )
-            logger.error(error_msg)
-            raise RuntimeError(error_msg) from None
 
         async def _call() -> str:
             response = await litellm.acompletion(

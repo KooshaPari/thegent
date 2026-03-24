@@ -190,7 +190,7 @@ def _get_claude_env(provider: str, model_override: str | None = None) -> dict[st
     env["ANTHROPIC_SMALL_FAST_MODEL"] = model
     env["CLAUDE_MODEL"] = model
     env["API_TIMEOUT_MS"] = "300000"
-    if provider in ("glm", "auto") or settings.sitback:
+    if provider in ("glm", "auto") or settings.sitback_harness:
         env["THGENT_ROUTING"] = "round_robin"
     env["PATH"] = os.environ.get("PATH", "")
     return env

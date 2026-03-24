@@ -1,6 +1,8 @@
 """Doctor module for comprehensive health and preflight checks of thegent environment."""
 
 # Backward compatibility - import from new submodule
+from __future__ import annotations
+
 from thegent.doctor.checks_env import check_environment as _check_environment_impl
 from thegent.doctor.checks_env import check_shim_binaries as _check_shim_binaries_impl
 
@@ -11,8 +13,11 @@ import time
 from pathlib import Path
 
 import httpx
+from rich.console import Console
 
 from thegent.config import ThegentSettings
+from thegent.doctor.helpers import _extract_process_info, _find_stuck_processes
+from thegent.doctor.models import ProcessInfo
 from thegent.doctor_dependencies import check_dependencies as _check_dependencies_impl
 from thegent.doctor_models import CheckResult
 from thegent.doctor_setup_checks import (
@@ -23,6 +28,20 @@ from thegent.doctor_setup_checks import (
 from thegent.infra import run_subprocess_optimized
 
 import psutil
+
+console = Console()
+_project_root_cache: Path | None = None
+
+
+def _get_configured_providers_from_cliproxy() -> set[str]:
+    """Best-effort provider discovery from local provider definitions."""
+    try:
+        from thegent.agents.cliproxy_manager import _get_provider_definitions
+
+        defs_ = _get_provider_definitions()
+        return {str(name) for name, value in defs_.items() if isinstance(name, str) and isinstance(value, dict)}
+    except Exception:
+        return set()
 
 
 def _check_dependencies(deps: bool = False) -> list[CheckResult]:
@@ -43,6 +62,7 @@ def _check_isolation() -> list[CheckResult]:
 
 def _check_connectivity(auto_start: bool = True) -> list[CheckResult]:
     return _check_connectivity_impl(check_result_cls=CheckResult, console=console, auto_start=auto_start)
+
 
 def _check_environment() -> list[CheckResult]:
     """Check environment variables and PATH configuration.
@@ -1048,3 +1068,21 @@ def _check_performance() -> list[CheckResult]:
     return res_list
 
 
+_CHECK_EXPORTS = (
+    _check_dependencies,
+    _check_configuration,
+    _check_isolation,
+    _check_connectivity,
+    _check_environment,
+    _check_shim_binaries,
+    _check_providers,
+    _check_ollama,
+    _check_headless,
+    _check_process_health_v2,
+    _check_process_leaks,
+    _check_runtime_infrastructure,
+    _check_mcp_tools,
+    _check_sessions,
+    _check_project_hints,
+    _check_performance,
+)

@@ -3,32 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from importlib import import_module
 from pathlib import Path
+from typing import Any
 
 import orjson as json
 import typer
 from rich.console import Console
 from rich.prompt import IntPrompt
-
-from thegent.phench import (
-    add_repo,
-    add_module_to_target,
-    audit_shared_modules,
-    build_scan_candidates,
-    scan_shared_modules_across_repos,
-    get_env_profile,
-    init_target,
-    materialize_module_candidate_manifest,
-    list_targets,
-    lock_target,
-    materialize_target,
-    run_env_doctor_for_target,
-    run_target,
-    set_env_profile,
-    sync_target,
-    target_status,
-    target_timeline,
-)
 
 console = Console()
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
@@ -38,6 +20,10 @@ app.add_typer(target_app, name="target")
 app.add_typer(env_app, name="env")
 
 
+def _phench_attr(name: str) -> Any:
+    return getattr(import_module("thegent.phench"), name)
+
+
 @target_app.command("init", help="Create a new target in Phenotype/projects.")
 def target_init_cmd(
     name: str = typer.Argument(..., help="Target name."),
@@ -45,7 +31,7 @@ def target_init_cmd(
 ) -> None:
     if mode not in {"repo", "stack"}:
         raise typer.BadParameter("mode must be one of: repo, stack")
-    lock = init_target(name, mode=mode)  # type: ignore[arg-type]
+    lock = _phench_attr("init_target")(name, mode=mode)
     console.print_json(json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode())
 
 
@@ -57,7 +43,7 @@ def target_add_repo_cmd(
     repo_id: str | None = typer.Option(None, "--repo-id", help="Optional stable repo identifier."),
     worktree: str | None = typer.Option(None, "--worktree", help="Optional source worktree path hint."),
 ) -> None:
-    lock = add_repo(name, repo, ref, repo_id=repo_id, worktree_path=worktree)
+    lock = _phench_attr("add_repo")(name, repo, ref, repo_id=repo_id, worktree_path=worktree)
     console.print_json(
         json.dumps(
             {
@@ -76,7 +62,7 @@ def target_add_module_cmd(
     selected_ref: str | None = typer.Option(None, "--ref", help="Override selected ref for all module repos."),
     exclude: list[str] = typer.Option([], "--exclude", help="Exact repo IDs to exclude (no glob patterns)."),
 ) -> None:
-    lock = add_module_to_target(
+    lock = _phench_attr("add_module_to_target")(
         name,
         module_name=module,
         selected_ref=selected_ref,
@@ -96,7 +82,7 @@ def target_add_module_cmd(
 
 @target_app.command("lock", help="Resolve selected refs to immutable SHAs.")
 def target_lock_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    lock = lock_target(name)
+    lock = _phench_attr("lock_target")(name)
     console.print_json(
         json.dumps(
             {
@@ -117,7 +103,7 @@ def target_lock_cmd(name: str = typer.Argument(..., help="Target name.")) -> Non
 
 @target_app.command("materialize", help="Materialize deterministic checkouts under Phenotype/projects/<target>/repos.")
 def target_materialize_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    runtime = materialize_target(name)
+    runtime = _phench_attr("materialize_target")(name)
     console.print_json(
         json.dumps(
             {
@@ -135,7 +121,7 @@ def timeline_cmd(
     repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
     limit: int = typer.Option(30, "--limit", help="Number of recent commits."),
 ) -> None:
-    data = target_timeline(name, repo_id=repo_id, limit=limit)
+    data = _phench_attr("target_timeline")(name, repo_id=repo_id, limit=limit)
     console.print_json(json.dumps(data).decode())
 
 
@@ -149,7 +135,7 @@ def run_cmd(
     execution_mode: str = typer.Option("serial", "--mode", help="Execution mode for --all-repos: serial|parallel."),
     env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
 ) -> None:
-    exit_code = run_target(
+    exit_code = _phench_attr("run_target")(
         name,
         repo_id=repo_id,
         runner=runner,
@@ -163,7 +149,7 @@ def run_cmd(
 
 @env_app.command("doctor", help="Run fail-fast environment doctor for a materialized target.")
 def env_doctor_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    report = run_env_doctor_for_target(name)
+    report = _phench_attr("run_env_doctor_for_target")(name)
     console.print_json(json.dumps(report).decode())
     if report["doctor_status"] != "pass":
         raise typer.Exit(2)
@@ -183,7 +169,7 @@ def env_profile_set_cmd(
         if not key:
             raise typer.BadParameter("Environment variable key cannot be empty")
         values[key] = value
-    state = set_env_profile(name, profile, values)
+    state = _phench_attr("set_env_profile")(name, profile, values)
     console.print_json(json.dumps(state).decode())
 
 
@@ -192,7 +178,11 @@ def env_profile_show_cmd(
     name: str = typer.Argument(..., help="Target name."),
     profile: str | None = typer.Option(None, "--profile", help="Optional profile name."),
 ) -> None:
-    payload = {"target": name, "profile": profile or "active", "env": get_env_profile(name, profile=profile)}
+    payload = {
+        "target": name,
+        "profile": profile or "active",
+        "env": _phench_attr("get_env_profile")(name, profile=profile),
+    }
     console.print_json(json.dumps(payload).decode())
 
 
@@ -201,19 +191,19 @@ def sync_cmd(
     name: str = typer.Argument(..., help="Target name."),
     prefer: str | None = typer.Option(None, "--prefer", help="Drift resolution source: projects|home."),
 ) -> None:
-    result = sync_target(name, prefer=prefer)
+    result = _phench_attr("sync_target")(name, prefer=prefer)
     console.print_json(json.dumps(result).decode())
 
 
 @app.command("status", help="Show lock/runtime/env status for a target.")
 def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = target_status(name)
+    state = _phench_attr("target_status")(name)
     console.print_json(json.dumps(state).decode())
 
 
 @app.command("audit-shared", help="Audit shared Python modules across repos in a target lock.")
 def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = audit_shared_modules(name)
+    state = _phench_attr("audit_shared_modules")(name)
     console.print_json(json.dumps(state).decode())
 
 
@@ -256,7 +246,7 @@ def scan_shared_repos_cmd(
         raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
 
     try:
-        state = scan_shared_modules_across_repos(
+        state = _phench_attr("scan_shared_modules_across_repos")(
             repos_root=None if repos_root is None else Path(repos_root),
             exclude_repos={value.strip() for value in exclude},
             min_repo_count=min_repo_count,
@@ -311,7 +301,7 @@ def materialize_module_manifest_cmd(
         raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
 
     try:
-        payload = materialize_module_candidate_manifest(
+        payload = _phench_attr("materialize_module_candidate_manifest")(
             module,
             repos_root=None if repos_root is None else Path(repos_root),
             repos_root_mode=repos_root_mode,
@@ -333,7 +323,7 @@ def materialize_module_manifest_cmd(
 
 @app.command("tui", help="Interactive selector: target -> timeline -> run.")
 def tui_cmd() -> None:
-    targets = list_targets()
+    targets = _phench_attr("list_targets")()
     if not targets:
         raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
 
@@ -345,10 +335,10 @@ def tui_cmd() -> None:
         raise typer.BadParameter("Target selection out of range.")
     selected_target = targets[target_index - 1]
 
-    timeline = target_timeline(selected_target, limit=20)
+    timeline = _phench_attr("target_timeline")(selected_target, limit=20)
     console.print(f"Timeline for [bold]{selected_target}[/bold] ({timeline['repo_id']}):")
     for line in timeline.get("recent", []):
         console.print(f"  {line}")
 
-    code = run_target(selected_target)
+    code = _phench_attr("run_target")(selected_target)
     raise typer.Exit(code)

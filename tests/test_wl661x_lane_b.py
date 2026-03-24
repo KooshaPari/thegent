@@ -159,7 +159,7 @@ class TestWL6612KpisFromTelemetry:
             {"event": "start", "ts": now.isoformat(), "run_id": "r2"},
             {"event": "end", "ts": now.isoformat(), "run_id": "r2", "status": "failed"},
         ]
-        (tmp_path / "run_registry.jsonl").write_text("\n".join(json.dumps(r).decode().decode() for r in rows), encoding="utf-8")
+        (tmp_path / "run_registry.jsonl").write_text("\n".join(json.dumps(r).decode() for r in rows), encoding="utf-8")
 
         settings = ThegentSettings(session_dir=tmp_path)
         metrics = KPIDashboard(settings).get_metrics()

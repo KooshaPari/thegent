@@ -4,7 +4,6 @@
 //! Output: JSON to stdout.
 
 use clap::{Parser, Subcommand};
-use serde_json::json;
 use std::io::{self, Read};
 
 #[derive(Parser)]

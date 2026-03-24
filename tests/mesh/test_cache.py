@@ -255,7 +255,7 @@ class TestInvalidateByFile:
 
         # Create a cache file whose name contains the hash
         cache_file = mesh_cache.cache_dir / f"prefix_{file_hash}_suffix.json"
-        cache_file.write_text(json.dumps({"cached": True}).decode().decode())
+        cache_file.write_text(json.dumps({"cached": True}).decode())
 
         count = mesh_cache.invalidate_by_file(file_path)
         assert count == 1
@@ -276,7 +276,7 @@ class TestInvalidateByFile:
 
         for i in range(3):
             f = mesh_cache.cache_dir / f"entry{i}_{file_hash}.json"
-            f.write_text(json.dumps({"i": i}).decode().decode())
+            f.write_text(json.dumps({"i": i}).decode())
 
         count = mesh_cache.invalidate_by_file(file_path)
         assert count == 3
@@ -289,7 +289,7 @@ class TestInvalidateByFile:
         file_path = "/other/path.py"
         file_hash = hashlib.md5(file_path.encode()).hexdigest()
         target = mesh_cache.cache_dir / f"{file_hash}.json"
-        target.write_text(json.dumps({"remove": True}).decode().decode())
+        target.write_text(json.dumps({"remove": True}).decode())
 
         mesh_cache.invalidate_by_file(file_path)
         assert mesh_cache.get("keep_me") == "important"

@@ -5,11 +5,9 @@ Extracted from install.py for maintainability.
 
 from __future__ import annotations
 
-import os
 import stat
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 
 
@@ -331,4 +329,5 @@ __all__ = [
     "setup_harness",
     "setup_skills",
     "_get_thegent_root",
+    "_sync_cursor_rules",
 ]

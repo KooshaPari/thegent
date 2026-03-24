@@ -6,10 +6,12 @@ Replays drift scenarios from archived manifests for deterministic debugging.
 
 from __future__ import annotations
 
-import orjson as json
-from dataclasses import asdict, dataclass
+import orjson
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import cast
+
 from thegent.integrations.base import SerializableMixin
 
 
@@ -43,8 +45,7 @@ class DriftReplayEngine:
             raise ValueError(f"Archive directory does not exist: {archive_dir}")
 
         output_path = archive_dir / f"{manifest.manifest_id}.json"
-        with open(output_path, "w") as f:
-            json.dump(manifest.to_dict(), f, indent=2)
+        output_path.write_bytes(orjson.dumps(manifest.to_dict(), option=orjson.OPT_INDENT_2))
 
         return output_path
 
@@ -66,10 +67,9 @@ class DriftReplayEngine:
         if not manifest_path.exists():
             raise FileNotFoundError(f"Manifest not found: {manifest_path}")
 
-        with open(manifest_path) as f:
-            data = json.load(f)
+        data = orjson.loads(manifest_path.read_bytes())
 
-        return DriftManifest.from_dict(data)
+        return cast(DriftManifest, DriftManifest.from_dict(data))
 
     @staticmethod
     def list_manifests(archive_dir: Path) -> list[str]:

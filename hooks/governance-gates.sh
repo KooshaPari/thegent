@@ -82,6 +82,12 @@ fi
 _GG_GATE_PROFILE="auto"
 _GG_GATE_CACHE_HIT="false"
 _GG_GATE_METRICS_PATH="$VERIFY_DIR/quality-metrics.json"
+_GG_FAST_GATE_SLO_P95_BUDGET_MS="${QA_FAST_GATE_P95_MS_BUDGET:-5000}"
+_GG_FAST_GATE_SLO_SINGLE_BUDGET_MS="${QA_FAST_GATE_SINGLE_MS_BUDGET:-2000}"
+_GG_FAST_GATE_P95_REGRESSION_BUDGET_MS="${QA_FAST_GATE_P95_REGRESSION_BUDGET_MS:-250}"
+_GG_FAST_GATE_SINGLE_REGRESSION_BUDGET_MS="${QA_FAST_GATE_SINGLE_REGRESSION_BUDGET_MS:-100}"
+_GG_FAST_GATE_HISTORY_PATH="$VERIFY_DIR/governance-fast-slo-history.jsonl"
+_GG_FAST_GATE_SLO_ALERT_PATH="$VERIFY_DIR/governance-fast-slo-alert.json"
 
 # --- Cache check ---
 _gg_cache_scope="$HOOK_NAME"
@@ -90,7 +96,6 @@ if [[ "$_GG_SELECTED_MODE" == "true" ]]; then
 fi
 _cache_key=$(hook_cache_key "$_gg_cache_scope")
 _gg_ttl="${HOOK_CACHE_TTL:-600}"
-echo "DEBUG: _gg_cache_scope=$_gg_cache_scope, _cache_key=$_cache_key" >&2
 if hook_cache_check "$_cache_key" "$_gg_ttl"; then
     _GG_GATE_CACHE_HIT="true"
     hook_cache_read "$_cache_key"
@@ -176,6 +181,189 @@ _emit_spiral_alert() {
   printf '{"contract_version":"%s","generated_at":"%s","severity":"%s","reason":"%s","session_id":"%s","project_dir":"%s","policy_band":"%s","band_retry_count":%d,"cooldown_until":%s,"escalation_stage":"%s","remediation_directive":"%s"}\n' \
     "$SPIRAL_CONTRACT_VERSION" "$now" "$severity" "$reason" "${SESSION_ID:-unknown}" "$PROJECT_DIR" "$policy_band" "$band_retry_count" "$cooldown_json" "$escalation_stage" "$remediation_directive" > "$state_file"
   echo "GOVERNANCE-GATES ALERT [$severity]: $reason policy_band=$policy_band escalation_stage=$escalation_stage remediation_directive=$remediation_directive" >&2
+}
+
+_gg_is_fast_profile() {
+  [[ "$_GG_GATE_PROFILE" == "fast" || "$_GG_GATE_PROFILE" == "ultrafast" ]]
+}
+
+_gg_append_fast_slo_history() {
+  local p95_ms="$1"
+  local single_ms="$2"
+  local profile="$3"
+  local p95_budget="$4"
+  local single_budget="$5"
+  local budget_breached="$6"
+  local regression_detected="$7"
+  local regression_p95_ms="${8:-null}"
+  local regression_single_ms="${9:-null}"
+
+  mkdir -p "$VERIFY_DIR" 2>/dev/null || true
+  printf '{"contract_version":"v1","generated_at":"%s","session_id":"%s","profile":"%s","fast_gate_p95_ms":%d,"fast_gate_single_ms":%d,"fast_gate_p95_budget_ms":%d,"fast_gate_single_budget_ms":%d,"fast_gate_p95_regressed_ms":%s,"fast_gate_single_regressed_ms":%s,"budget_breached":%s,"regression_detected":%s}\n' \
+    "$now" "${SESSION_ID:-unknown}" "$profile" "$p95_ms" "$single_ms" "$p95_budget" "$single_budget" \
+    "$regression_p95_ms" "$regression_single_ms" "$budget_breached" "$regression_detected" \
+    >> "$_GG_FAST_GATE_HISTORY_PATH"
+}
+
+_gg_emit_fast_slo_alert() {
+  local slo_status="$1"
+  local reason="$2"
+  local p95_ms="$3"
+  local single_ms="$4"
+  local profile="$5"
+  local regression_detected="$6"
+  local p95_delta_ms="${7:-null}"
+  local single_delta_ms="${8:-null}"
+
+  local reason_json
+  reason_json="$(_json_str "$reason")"
+  local p95_delta_json="null"
+  local single_delta_json="null"
+  local regression_json="false"
+
+  if [[ "$p95_delta_ms" =~ ^[0-9]+$ ]]; then
+    p95_delta_json="$p95_delta_ms"
+  fi
+  if [[ "$single_delta_ms" =~ ^[0-9]+$ ]]; then
+    single_delta_json="$single_delta_ms"
+  fi
+  [[ "$regression_detected" == "true" ]] && regression_json="true"
+
+  if [[ "$slo_status" == "pass" ]]; then
+    rm -f "$_GG_FAST_GATE_SLO_ALERT_PATH" || true
+    return 0
+  fi
+
+  printf '{"contract_version":"v1","generated_at":"%s","status":"%s","reason":%s,"session_id":"%s","profile":"%s","fast_gate_p95_ms":%d,"fast_gate_single_ms":%d,"regression_detected":%s,"p95_regression_delta_ms":%s,"single_regression_delta_ms":%s}\n' \
+    "$now" "$slo_status" "$reason_json" "${SESSION_ID:-unknown}" "$profile" "$p95_ms" "$single_ms" "$regression_json" "$p95_delta_json" "$single_delta_json" > "$_GG_FAST_GATE_SLO_ALERT_PATH"
+  if [[ "$slo_status" == "warn" ]]; then
+    echo "GOVERNANCE-GATES FAST SLO WARNING: $reason" >&2
+  else
+    echo "GOVERNANCE-GATES FAST SLO FAIL: $reason" >&2
+  fi
+}
+
+_gg_enforce_fast_profile_slo() {
+  if ! _gg_is_fast_profile; then
+    return 0
+  fi
+
+  local stats_tsv
+  local count
+  local max_ms
+  local p95_ms
+  local previous_p95_ms
+  local previous_single_ms
+  local delta_p95_ms="null"
+  local delta_single_ms="null"
+  local regression_p95_ms="null"
+  local regression_single_ms="null"
+  local regress_detected=false
+  local budget_breached=false
+  local fail_reasons=()
+  local warnings=()
+
+  if [[ ! -f "$_GG_GATE_METRICS_PATH" ]]; then
+    return 0
+  fi
+
+  stats_tsv="$($JQ_CMD -r '
+    [
+      .governance_gate_execution[]?
+      | select((.profile | tostring) == "fast" or (.profile | tostring) == "ultrafast")
+      | select((.duration_ms // -1) | type == "number")
+      | .duration_ms
+    ] as $durations
+    | if ($durations | length) == 0 then
+        [0,0,0]
+      else
+        ($durations | sort) as $sorted
+        | [
+            ($sorted | length),
+            ($sorted[-1]),
+            ($sorted[(((($sorted | length) - 1) * 95 / 100) | floor)])
+          ]
+      end
+    | @tsv
+  ' "$_GG_GATE_METRICS_PATH" 2>/dev/null || echo "0 0 0")"
+  read -r count max_ms p95_ms <<< "$stats_tsv"
+
+  if [[ ! "$count" =~ ^[0-9]+$ ]] || (( count == 0 )); then
+    return 0
+  fi
+
+  if ! [[ "$max_ms" =~ ^[0-9]+$ ]] || ! [[ "$p95_ms" =~ ^[0-9]+$ ]] || ! [[ "$count" =~ ^[0-9]+$ ]]; then
+    echo "GOVERNANCE-GATES FAIL: fast profile SLO metrics are invalid" >&2
+    return 2
+  fi
+
+  if (( max_ms > _GG_FAST_GATE_SLO_SINGLE_BUDGET_MS )); then
+    fail_reasons+=("fast single-gate max ${max_ms}ms > ${_GG_FAST_GATE_SLO_SINGLE_BUDGET_MS}ms")
+    budget_breached=true
+  fi
+  if (( p95_ms > _GG_FAST_GATE_SLO_P95_BUDGET_MS )); then
+    fail_reasons+=("fast p95 ${p95_ms}ms > ${_GG_FAST_GATE_SLO_P95_BUDGET_MS}ms")
+    budget_breached=true
+  fi
+
+  if [[ -f "$_GG_FAST_GATE_HISTORY_PATH" ]]; then
+    local last_line
+    last_line="$(tail -n 1 "$_GG_FAST_GATE_HISTORY_PATH" 2>/dev/null || true)"
+    if [[ -n "$last_line" ]]; then
+      previous_p95_ms="$($JQ_CMD -r '.fast_gate_p95_ms // empty' <<< "$last_line" 2>/dev/null || true)"
+      previous_single_ms="$($JQ_CMD -r '.fast_gate_single_ms // empty' <<< "$last_line" 2>/dev/null || true)"
+      if [[ "$previous_p95_ms" =~ ^[0-9]+$ ]] && (( p95_ms > previous_p95_ms + _GG_FAST_GATE_P95_REGRESSION_BUDGET_MS )); then
+        delta_p95_ms=$((p95_ms - previous_p95_ms))
+        regression_p95_ms="$delta_p95_ms"
+        regress_detected=true
+      fi
+      if [[ "$previous_single_ms" =~ ^[0-9]+$ ]] && (( max_ms > previous_single_ms + _GG_FAST_GATE_SINGLE_REGRESSION_BUDGET_MS )); then
+        delta_single_ms=$((max_ms - previous_single_ms))
+        regression_single_ms="$delta_single_ms"
+        regress_detected=true
+      fi
+    fi
+  fi
+
+  if [[ "$regress_detected" == "true" ]]; then
+    if [[ "$regression_p95_ms" =~ ^[0-9]+$ ]]; then
+      warnings+=("fast p95 regression ${regression_p95_ms}ms over prior sample")
+    fi
+    if [[ "$regression_single_ms" =~ ^[0-9]+$ ]]; then
+      warnings+=("fast single-gate regression ${regression_single_ms}ms over prior sample")
+    fi
+  fi
+
+  if [[ "$budget_breached" == "true" ]]; then
+    _gg_emit_fast_slo_alert \
+      "fail" \
+      "SLO budgets breached: ${fail_reasons[*]}" \
+      "$p95_ms" "$max_ms" "$_GG_GATE_PROFILE" "$regress_detected" \
+      "$regression_p95_ms" "$regression_single_ms"
+    _gg_append_fast_slo_history \
+      "$p95_ms" "$max_ms" "$_GG_GATE_PROFILE" "$_GG_FAST_GATE_SLO_P95_BUDGET_MS" \
+      "$_GG_FAST_GATE_SLO_SINGLE_BUDGET_MS" "true" "$regress_detected" "$regression_p95_ms" "$regression_single_ms"
+    _gate_fail "governance-fast-slo" "fast SLO budgets breached: ${fail_reasons[*]}" "true"
+    return 2
+  fi
+
+  if [[ ${#warnings[@]} -gt 0 ]]; then
+    _gg_emit_fast_slo_alert \
+      "warn" \
+      "fast governance-gate regressions: ${warnings[*]}" \
+      "$p95_ms" "$max_ms" "$_GG_GATE_PROFILE" "true" \
+      "$regression_p95_ms" "$regression_single_ms"
+    _gg_append_fast_slo_history \
+      "$p95_ms" "$max_ms" "$_GG_GATE_PROFILE" "$_GG_FAST_GATE_SLO_P95_BUDGET_MS" \
+      "$_GG_FAST_GATE_SLO_SINGLE_BUDGET_MS" "false" "true" "$regression_p95_ms" "$regression_single_ms"
+    return 0
+  fi
+
+  _gg_emit_fast_slo_alert "pass" "fast governance-gate SLOs met" "$p95_ms" "$max_ms" "$_GG_GATE_PROFILE" "false"
+  _gg_append_fast_slo_history \
+    "$p95_ms" "$max_ms" "$_GG_GATE_PROFILE" "$_GG_FAST_GATE_SLO_P95_BUDGET_MS" \
+    "$_GG_FAST_GATE_SLO_SINGLE_BUDGET_MS" "false" "false" "null" "null"
+  return 0
 }
 
 _clear_spiral_alert() {
@@ -414,6 +602,15 @@ if [[ -f "$PROJECT_DIR/contracts/metric-contracts.json" ]]; then
     fi
   fi
   unset _cfg_metrics_path
+fi
+
+case "${THGENT_STOP_PROFILE:-}" in
+  ultrafast|fast|standard|full)
+    _GG_GATE_PROFILE="${THGENT_STOP_PROFILE}"
+    ;;
+esac
+if [[ "$_GG_GATE_PROFILE" == "auto" ]]; then
+  _GG_GATE_PROFILE="${QCFG_DELIVERY_MODEL:-auto}"
 fi
 
 # ==========================================================================
@@ -2596,6 +2793,8 @@ main() {
   _collect_gate_results
   _clear_gate_results
   fi
+
+  _gg_enforce_fast_profile_slo || true
 
   # Summary
   echo "=== GOVERNANCE GATES SUMMARY ==="

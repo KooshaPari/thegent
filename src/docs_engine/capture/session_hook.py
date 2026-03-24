@@ -8,7 +8,7 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_dump
 
 from docs_engine.db.indexer import DocIndexer
 from docs_engine.schema.base import DocFrontmatter, DocStatus, DocType
@@ -34,7 +34,7 @@ def write_conversation_dump(
         session_id=session_id,
     )
     fm_dict = {k: v for k, v in fm.model_dump(mode="json").items() if v not in ("", [], None)}
-    fm_str = yaml.dump(fm_dict, default_flow_style=False, allow_unicode=True)
+    fm_str = yaml_dump(fm_dict, default_flow_style=False, allow_unicode=True)
 
     if path.exists():
         path.write_text(path.read_text() + f"\n\n---\n\n{content}")

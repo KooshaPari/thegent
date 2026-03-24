@@ -39,7 +39,7 @@ Date: February 23, 2026
 13. selected `bar181` code repos (`fastapi-agents`, `openai-agents`)
 
 ### Tier 3: Reference / Research Inputs
-1. `Fission-AI/OpenSpec`
+1. `Fission-AI/AgilePlus`
 2. `danielmiessler/Fabric`
 3. `microsoft/BitNet`
 4. `exo-explore/exo`

@@ -106,21 +106,20 @@ fn strip_noise(text: &str, profile: &str) -> String {
             }
         }
 
-        if profile == "jsonl" || profile == "plain" {
-            if re_turn.is_match(trimmed) || re_thread.is_match(trimmed) {
-                continue;
-            }
+        if (profile == "jsonl" || profile == "plain")
+            && (re_turn.is_match(trimmed) || re_thread.is_match(trimmed))
+        {
+            continue;
         }
 
-        if profile == "plain" {
-            if re_total.is_match(trimmed)
+        if profile == "plain"
+            && (re_total.is_match(trimmed)
                 || re_duration.is_match(trimmed)
                 || re_usage.is_match(trimmed)
                 || re_ok_prefix.is_match(trimmed)
-                || re_exit.is_match(trimmed)
-            {
-                continue;
-            }
+                || re_exit.is_match(trimmed))
+        {
+            continue;
         }
 
         out.push(line);

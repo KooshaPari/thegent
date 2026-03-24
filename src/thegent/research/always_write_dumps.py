@@ -1,6 +1,6 @@
 """CLAUDE.md: always write conversation dumps to docs/."""
 
-import orjson as json
+import json
 import logging
 import re
 from datetime import datetime
@@ -74,9 +74,9 @@ class ConversationDumper:
                 f"category: {category}",
             ]
             if tags:
-                lines.append(f"tags: {json.dumps(tags).decode()}")
+                lines.append(f"tags: {json.dumps(tags)}")
             if dump_metadata:
-                lines.append(f"metadata: {json.dumps(dump_metadata, ensure_ascii=False).decode()}")
+                lines.append(f"metadata: {json.dumps(dump_metadata, ensure_ascii=False)}")
             lines.extend(
                 [
                     "---",

@@ -304,7 +304,7 @@ class SessionScraper:
             target_dir = out_dir or self.default_snapshot_dir / datetime.now(tz=UTC).strftime("%Y-%m-%d")
             target_dir.mkdir(parents=True, exist_ok=True)
             path = target_dir / f"{snapshot.snapshot_id}.json"
-            path.write_text(json.dumps(snapshot.to_dict().decode(), indent=2), encoding="utf-8")
+            path.write_text(json.dumps(snapshot.to_dict(), option=json.OPT_INDENT_2).decode(), encoding="utf-8")
 
             # Emit created event if event_log specified
             if event_log:
@@ -542,7 +542,7 @@ class SessionScraper:
         summary = self.summarize_snapshots(limit=limit, root_dir=root_dir)
         target = out_path or (self.default_snapshot_dir / "snapshot-index.json")
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        target.write_text(json.dumps(summary, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
         return target
 
     @staticmethod
@@ -594,7 +594,7 @@ class SessionScraper:
         summary = self.summarize_snapshots_by_day(limit=limit, root_dir=root_dir)
         target = out_path or (self.default_snapshot_dir / "snapshot-daily-index.json")
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        target.write_text(json.dumps(summary, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
         return target
 
     @staticmethod

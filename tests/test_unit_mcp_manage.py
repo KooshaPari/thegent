@@ -129,7 +129,7 @@ class TestInstallToCursor:
         cursor_dir = tmp_path / ".cursor"
         cursor_dir.mkdir()
         existing = {"mcpServers": {"other-server": {"url": "http://other"}}}
-        (cursor_dir / "mcp.json").write_text(json.dumps(existing).decode().decode())
+        (cursor_dir / "mcp.json").write_text(json.dumps(existing).decode())
 
         install_to_cursor(url=DEFAULT_MCP_URL, workspace=tmp_path)
 
@@ -198,7 +198,7 @@ class TestInstallToClaudeCode:
         # @trace FR-MCP-003
         """Merges into existing .claude.json config."""
         existing = {"mcpServers": {"existing": {"url": "http://x"}}, "other_key": 42}
-        (tmp_path / ".claude.json").write_text(json.dumps(existing).decode().decode())
+        (tmp_path / ".claude.json").write_text(json.dumps(existing).decode())
         with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             install_to_claude_code()
         data = json.loads((tmp_path / ".claude.json").read_text())
@@ -224,7 +224,7 @@ class TestMigrateToUnimount:
         }
         codex_dir = tmp_path / ".codex"
         codex_dir.mkdir(parents=True, exist_ok=True)
-        (codex_dir / "mcp.json").write_text(json.dumps(existing).decode().decode())
+        (codex_dir / "mcp.json").write_text(json.dumps(existing).decode())
 
         with patch("thegent.mcp.manage.Path.home", return_value=tmp_path):
             ok, msg = migrate_to_unimount(client="codex", mcp_url="http://127.0.0.1:3847/mcp")

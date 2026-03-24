@@ -8,10 +8,9 @@ hooks, skills, harness, and services.
 from __future__ import annotations
 
 import os
-import shutil
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import typer
 
@@ -21,15 +20,38 @@ from thegent.cli.commands._cli_shared import (
     _get_run_subprocess_optimized,
     console,
 )
-from thegent.cli.commands.model_cmds_list import (
-    _assert_str,
-    _run_cliproxyctl_machine_command,
-)
 from thegent.cli.commands.model_cmds_setup_helpers import (
     build_provider_list,
     configure_providers,
     set_env_line,
 )
+
+
+def _assert_str(value: str | None) -> str:
+    """Require a string result from a serializer that may return None."""
+    if value is None:
+        raise ValueError("Expected serializer to return a string")
+    return value
+
+
+def _run_cliproxyctl_machine_command(command: str, args: list[str] | None = None) -> dict[str, object]:
+    """Run cliproxyctl's machine-readable surface and return a JSON object."""
+    import orjson
+
+    run_subprocess_optimized = _get_run_subprocess_optimized()
+    cmd = ["cliproxyctl", command, "--json", *(args or [])]
+    proc = run_subprocess_optimized(cmd, check=False, capture_output=True, timeout=30, text=True)
+    stdout_text = proc.stdout if isinstance(proc.stdout, str) else ""
+    stderr_text = proc.stderr if isinstance(proc.stderr, str) else ""
+    if proc.returncode != 0:
+        detail = stderr_text.strip() or stdout_text.strip() or f"cliproxyctl {command} failed"
+        raise RuntimeError(detail)
+    if not stdout_text.strip():
+        return {}
+    payload = orjson.loads(stdout_text)
+    if not isinstance(payload, dict):
+        raise ValueError("cliproxyctl returned a non-object JSON payload")
+    return payload
 
 def setup_cmd(
     api_key: str = typer.Option(None, "--api-key", "-k", help="NVIDIA NIM API key"),
@@ -262,9 +284,9 @@ def setup_cmd(
             from thegent.install import setup_hooks
 
             counts = setup_hooks(cwd=Path.cwd(), verbose=True)
-            if counts.get("installed", 0) > 0:
+            if isinstance(counts, dict) and int(counts.get("installed", 0)) > 0:
                 console.print(f"[green]✓[/green] Installed {counts['installed']} hook(s) into .git/hooks")
-            elif counts.get("skipped", 0) > 0:
+            elif isinstance(counts, dict) and int(counts.get("skipped", 0)) > 0:
                 console.print("[dim]Not a git repo; skipped hooks.[/dim]")
         except Exception as e:
             console.print(f"[yellow]Hooks: {e}[/yellow]")
@@ -275,7 +297,7 @@ def setup_cmd(
             from thegent.install import setup_skills
 
             counts = setup_skills(cwd=Path.cwd(), verbose=True)
-            if counts.get("copied", 0) > 0:
+            if isinstance(counts, dict) and int(counts.get("copied", 0)) > 0:
                 console.print(f"[green]✓[/green] Synced {counts['copied']} file(s) to ~/.claude, ~/.cursor")
         except Exception as e:
             console.print(f"[yellow]Skills: {e}[/yellow]")
@@ -298,7 +320,7 @@ def setup_cmd(
             "\nWould you like to integrate thegent with your AI agents (Cursor, Claude Code, Codex, etc.)?",
             default=True,
         ):
-            from thegent.install import run_wizard
+            from thegent.install_wizard import run_wizard
 
             run_wizard()
 

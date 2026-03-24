@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ def _get_mcp_config(url: str, client: str = "generic") -> dict[str, Any]:
     Returns:
         MCP configuration dict
     """
-    base_config = {
+    base_config: dict[str, Any] = {
         "mcpServers": {
             "thegent": {
                 "url": url,
