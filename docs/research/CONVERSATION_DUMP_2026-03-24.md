@@ -1,0 +1,28 @@
+---
+title: Conversation dump — full-turn policy surfacing
+date: 2026-03-24
+---
+
+## Issues addressed
+
+- User expectation: each **full turn** includes **PR merge(s)** to **`main` or `release/*`** (possibly **multiple**), **clear `gh` updates**, and **changelog / version / docs** updates; plus **research + plan next 24**.
+
+## Findings
+
+- Long-form policy already exists: `docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/FULL_TURN_DELIVERY.md` and `04_QUEUE_CADENCE.md` (multiple merges encouraged).
+- **Next 24** with **Ship** gates: `09_NEXT_WAVE_C.md`; follow-on **50**: `19_NEXT_50_WORK_ITEMS.md`.
+
+## Fixes applied
+
+- Added **`docs/reference/FULL_TURN_DELIVERY.md`** — stable pointer + minimum bar + links to session spec and next-24 artifacts.
+- Linked from **`docs/reference/INDEX.md`**.
+- **`AGENTS.md`** — **Full-turn delivery (shipping)** subsection under Worktree Governance.
+- Session **`FULL_TURN_DELIVERY.md`** — link to reference stub for discoverability.
+
+## Open questions
+
+- None for policy text; execution still requires **human/agent** `gh pr merge` with auth and clean branch.
+
+## Next steps
+
+- Land changes via **worktree PR** to `main`; paste **PR URL** in session notes; keep **`CHANGELOG.md`** [Unreleased] in sync.
