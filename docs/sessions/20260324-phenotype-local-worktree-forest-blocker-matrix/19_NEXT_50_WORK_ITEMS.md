@@ -4,6 +4,8 @@
 
 **Tracked issues (carry-forward):** thegent **[#559](https://github.com/KooshaPari/thegent/issues/559)** (cliproxy / umbrella), **[#560](https://github.com/KooshaPari/thegent/issues/560)** (PTY/secrets reuse research).
 
+**Execution status:** **`20_NEXT_50_EXECUTION.md`** — item-by-item **Done / Deferred / Blocked** notes.
+
 ---
 
 ## Preamble (2)
@@ -83,6 +85,7 @@
 
 ## Related
 
+- `20_NEXT_50_EXECUTION.md` — burn-down status for items **1–50**.
 - `10_NEXT_WAVE_D.md` — full prose for Wave D.
 - `11_NEXT_WAVE_E.md` — full prose for Wave E.
 - `ACTIVE_BACKLOG.md` — wave file index and session log.
