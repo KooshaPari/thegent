@@ -41,6 +41,7 @@ Each automation session should:
 | 2026-03-24 | **5-agent parallel audit** (C + D + E×2) | **Tier 1** parallel read-only; consolidated in **`16_PARALLEL_AGENT_AUDIT.md`** (DAG + Tier 2 order). |
 | 2026-03-24 | **Tier 2 — 5-agent implementation** | heliosApp CI/CHANGELOG/troubleshooting; colab/helMo/helios-cli contributing+ignore; **`repos/README.md`** hub. See **`16_PARALLEL_AGENT_AUDIT.md`** Tier 2 executed. |
 | 2026-03-24 | **PR staging checklist** | **`17_PR_STAGING_CHECKLIST.md`** (per-repo `git add` + `gh` notes); **`docs/reference/phenotype_repos_hub.md`** (versioned hub index; sync to `repos/README.md`). |
+| 2026-03-24 | **Wave C next slice** | **`docs/reference/composite-actions.md`**; **`repos/README.md`** + hub doc link; **thegent#552** (dirty colab/helMo roots; colab issues off). |
 
 ## Wave B status (2026-03-24) — `08_NEXT_WAVE_B.md`
 
