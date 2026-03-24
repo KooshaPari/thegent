@@ -1,3 +1,7 @@
+![Build Status](https://github.com/Phenotype-Enterprise/thegent/actions/workflows/quality-gate.yml/badge.svg)
+![Security Audit](https://github.com/Phenotype-Enterprise/thegent/actions/workflows/security-guard.yml/badge.svg)
+![Policy Compliance](https://github.com/Phenotype-Enterprise/thegent/actions/workflows/policy-gate.yml/badge.svg)
+
 # thegent
 
 [![PyPI version](https://badge.fury.io/py/thegent.svg)](https://badge.fury.io/py/thegent)
