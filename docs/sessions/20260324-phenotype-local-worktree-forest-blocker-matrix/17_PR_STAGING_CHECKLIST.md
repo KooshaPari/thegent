@@ -107,16 +107,20 @@ After merging thegent, **sync** the markdown body to `repos/README.md` (same con
 | `docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/17_PR_STAGING_CHECKLIST.md` | This checklist |
 | `docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/ACTIVE_BACKLOG.md` | Session log |
 | `docs/reference/phenotype_repos_hub.md` | Versioned hub index |
+| `docs/reference/composite-actions.md` | Composite action owners / consumers |
 
 ```bash
 git add \
   docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/16_PARALLEL_AGENT_AUDIT.md \
   docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/17_PR_STAGING_CHECKLIST.md \
   docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/ACTIVE_BACKLOG.md \
-  docs/reference/phenotype_repos_hub.md
+  docs/reference/phenotype_repos_hub.md \
+  docs/reference/composite-actions.md
 ```
 
 **Commit message (example):** `docs(session): PR staging checklist and versioned Phenotype repos hub reference`
+
+**Tracking issue (dirty roots):** [thegent#552](https://github.com/KooshaPari/thegent/issues/552) — **colab** has GitHub Issues disabled; use umbrella there until colab enables issues.
 
 ---
 
