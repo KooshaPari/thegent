@@ -46,6 +46,7 @@ Each automation session should:
 | 2026-03-24 | **Session docs recovery PR** | Single branch **`docs/session-docs-recovery`** (rebase onto `main` post-#549) supersedes conflicted **#551/#553/#554** stacks — merge one PR, close duplicates. |
 | 2026-03-24 | **Hub colab / helMo** | **#552** closed — [colab#13](https://github.com/KooshaPari/colab/pull/13) merged; [helMo](https://github.com/KooshaPari/helMo) repo created + `main` pushed; on-disk `repos/README.md` hub lines updated. |
 | 2026-03-24 | **Wave C slices 4–6** | **`18_WAVE_C_SLICES_4_6.md`** — runbooks + `bash -n` on **`worktree_governance.sh`**; issues **[#559](https://github.com/KooshaPari/thegent/issues/559)** (cliproxy lanes), **[#560](https://github.com/KooshaPari/thegent/issues/560)** (PTY/secrets reuse). |
+| 2026-03-24 | **Next 50** (preamble + D + E) | **`19_NEXT_50_WORK_ITEMS.md`** — items **1–50**; **`09_NEXT_WAVE_C.md`** ↔ **`18`/`19`** cross-links; execute **Wave D** then **E** per ordered table. |
 
 ## Wave B status (2026-03-24) — `08_NEXT_WAVE_B.md`
 
@@ -88,10 +89,11 @@ Each item now has an explicit **Ship** line (PR **→** `main` / `release/*`, **
 | 5 | portage / governance | backup runbook; tmp cleanup schedule; `.worktrees` policy; script lint — **merge** |
 | 6 | trace / trash / ralph / org | tests; naming doc; ralph decision; reuse issue — **ship** per item |
 
-**Immediate upstream target:** Wave **D** (`10_NEXT_WAVE_D.md`) — quality gates, security, PR hygiene; work **#559** / **#560** until resolved. **`main`** CI per `CHANGELOG_PROCESS` when Actions run.
+**Immediate upstream target:** **`19_NEXT_50_WORK_ITEMS.md`** items **1–50** = preamble (**`09`**↔**`18`**, index) + **Wave D** (`10_NEXT_WAVE_D.md`, items 3–26) + **Wave E** (`11_NEXT_WAVE_E.md`, items 27–50). Continue **#559** / **#560** until resolved. **`main`** CI per `CHANGELOG_PROCESS` when Actions run.
 
 ## Related
 
+- `19_NEXT_50_WORK_ITEMS.md` — **ordered 50** (D + E + preamble).
 - `04_QUEUE_CADENCE.md` — carry-forward rules, verification commands, **full-turn** definition.
 - `FULL_TURN_DELIVERY.md` — `gh` routine, merge gates, snapshot.
 - `00_SESSION_OVERVIEW.md` — session goal and document map.
