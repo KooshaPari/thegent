@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Session documentation pack for Phenotype local worktree forest governance: blocker matrix, waves A–G (24-item queues), **full-turn delivery** policy (PR/merge to `main`/`release/*`, changelog, `gh` evidence), and PR #549 CI snapshot (`docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/`).
+
 ### Changed
 
 ### Deprecated
