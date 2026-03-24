@@ -25,6 +25,7 @@ Consolidate the local worktree-forest scan into a blocker matrix that orders cle
 | `11_NEXT_WAVE_E.md` | Wave E — next 24 (ops, compliance, perf, testing depth, handoff, closure) |
 | `12_NEXT_WAVE_F.md` | Wave F — next 24 (roadmap, knowledge, DR, DoD, observability, queue meta) |
 | `13_NEXT_WAVE_G.md` | Wave G — next 24 (GitHub policy, reproducibility, SBOM, flags, people, halt/pivot) |
+| `18_WAVE_C_SLICES_4_6.md` | Wave C slices **4–6** — cliproxy umbrella **#559**, reuse **#560**, portage/trace notes, `bash -n` gate |
 
 ## Related session packs
 - `../20260324-phenotype-local-worktree-forest-inventory/` — forest counts and high-risk family list
