@@ -28,6 +28,7 @@
 ### Structural: Mixed-Layout Blockers
 - **`AgilePlus`, `phenotype-shared`, `phenotypeActions`**: Mixed canonical + legacy layouts prevent stable forest governance.
 - **`phenotypeActions` (2026-03-24):** `git status` fails with **`expected submodule path 'PROJECT-wtrees/add-lint-test-action' not to be a symbolic link`** — repair submodule/symlink layout before any merge or worktree ops.
+- **`heliosApp` (2026-03-24):** Extensive type errors (200+) in `apps/desktop` and `apps/runtime` (missing modules/types, `InMemoryLocalBus` vs `LocalBus` mismatches, Bun API `spawnSync/file/Glob` missing).
 
 ### Missing / non-repo paths
 - **`ralph-codex-loop`:** Decided **archive** (2026-03-24); already in `.archive/ralph-codex-loop`.
