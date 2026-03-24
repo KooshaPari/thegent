@@ -44,6 +44,7 @@ Each automation session should:
 | 2026-03-24 | **Wave C next slice** | **`docs/reference/composite-actions.md`**; **`repos/README.md`** + hub doc link; **thegent#552** (dirty colab/helMo roots; colab issues off). |
 | 2026-03-24 | **Billing-bound CI** | **`FULL_TURN_DELIVERY.md`**: *Billing / Actions quota*; **`gh pr merge --admin`** path; **`05_KNOWN_ISSUES.md`**. |
 | 2026-03-24 | **Session docs recovery PR** | Single branch **`docs/session-docs-recovery`** (rebase onto `main` post-#549) supersedes conflicted **#551/#553/#554** stacks — merge one PR, close duplicates. |
+| 2026-03-24 | **Hub colab / helMo** | **#552** closed — [colab#13](https://github.com/KooshaPari/colab/pull/13) merged; [helMo](https://github.com/KooshaPari/helMo) repo created + `main` pushed; on-disk `repos/README.md` hub lines updated. |
 
 ## Wave B status (2026-03-24) — `08_NEXT_WAVE_B.md`
 
@@ -86,7 +87,7 @@ Each item now has an explicit **Ship** line (PR **→** `main` / `release/*`, **
 | 5 | portage / governance | backup runbook; tmp cleanup schedule; `.worktrees` policy; script lint — **merge** |
 | 6 | trace / trash / ralph / org | tests; naming doc; ralph decision; reuse issue — **ship** per item |
 
-**Immediate upstream target:** Merge **session docs** (`docs/session-docs-recovery` — superseded **#551/#553/#554** stacks); then work **#552** (colab / helMo roots). Keep **`main`** CI green per `CHANGELOG_PROCESS` when Actions run.
+**Immediate upstream target:** Wave C slice **4** — cliproxy OpenAPI / lane tickets; **`docs/reference/composite-actions.md`** already on `main` (see **#555**). Next: **slice 5** portage backup + tmp cleanup runbook; **slice 6** trace/trash/ralph per **05_KNOWN_ISSUES**. Keep **`main`** CI green per `CHANGELOG_PROCESS` when Actions run.
 
 ## Related
 

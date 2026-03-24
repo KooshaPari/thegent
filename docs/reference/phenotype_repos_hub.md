@@ -13,3 +13,5 @@ This directory is the **Phenotype multi-repository worktree hub**: many project 
 **Naming note (cliproxy):** you may see **`cliproxy-wtrees`** (intended worktrees path) and a typo symlink or path like **`cliproxy-wtress`**. Prefer the structured layout under `repos/worktrees/<project>/...` as described in [AGENTS.md](../../../AGENTS.md). Do not perform mass moves or bulk renames here without an explicit, reviewed plan—compatibility symlinks and incremental migration are preferred.
 
 **Composite actions:** see [composite-actions.md](composite-actions.md) for which repos define `.github/actions` composites and which workflows consume them.
+
+**Hub examples (GitHub):** [colab](https://github.com/KooshaPari/colab), [helMo](https://github.com/KooshaPari/helMo) — keep local checkouts aligned with each repo’s `main` policy.
