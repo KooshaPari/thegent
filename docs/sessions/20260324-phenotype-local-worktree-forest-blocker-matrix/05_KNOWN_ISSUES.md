@@ -9,7 +9,9 @@
 
 ## GitHub / CI (release merges)
 
-- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** (`feat/migrate-cache` → `main`): **mergeable** in GitHub sense but **required CI red** (Lint & Test, Policy Gate, Build wheels, etc.) — **do not merge** until fix-forward; tracked in `FULL_TURN_DELIVERY.md`.
+- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** — **merged** (`feat/migrate-cache` → `main`). Track post-merge CI on **`main`**; if billing blocked checks during merge, note date + **`FULL_TURN_DELIVERY.md`** billing section.
+- **Actions billing / quota:** When checks cannot complete because **jobs do not start** (not because tests fail), use the **Billing / Actions quota** procedure in `FULL_TURN_DELIVERY.md` — **`gh pr merge --admin`** only after confirming infrastructure cause and local verification.
+- **Hub tracking:** [thegent#552](https://github.com/KooshaPari/thegent/issues/552) — dirty **colab** / **helMo** canonical roots.
 
 ## Blocked Forest Registry
 
@@ -28,6 +30,7 @@
 ### Structural: Mixed-Layout Blockers
 - **`AgilePlus`, `phenotype-shared`, `phenotypeActions`**: Mixed canonical + legacy layouts prevent stable forest governance.
 - **`phenotypeActions` (2026-03-24):** `git status` fails with **`expected submodule path 'PROJECT-wtrees/add-lint-test-action' not to be a symbolic link`** — repair submodule/symlink layout before any merge or worktree ops.
+- **`heliosApp` (2026-03-24):** Extensive type errors (200+) in `apps/desktop` and `apps/runtime` (missing modules/types, `InMemoryLocalBus` vs `LocalBus` mismatches, Bun API `spawnSync/file/Glob` missing).
 
 ### Missing / non-repo paths
 - **`ralph-codex-loop`:** Decided **archive** (2026-03-24); already in `.archive/ralph-codex-loop`.

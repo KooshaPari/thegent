@@ -13,8 +13,9 @@
 | E | `11_NEXT_WAVE_E.md` | Post-merge ops, compliance, perf, testing depth, handoff, closure |
 | F | `12_NEXT_WAVE_F.md` | Roadmap, knowledge, resilience, excellence, observability, meta |
 | G | `13_NEXT_WAVE_G.md` | GitHub policy, reproducibility, SBOM, flags, people, halt/pivot |
+| H | `14_NEXT_WAVE_H.md` | Protections, locks, SBOM, kill-switch, stabilization (Next 50) |
 
-**Total queued (if all items remain open):** 7 × 24 = **168** items. Treat as a **pool**, not a single sprint.
+**Total queued (if all items remain open):** 8 × 24 = **192** items. Treat as a **pool**, not a single sprint.
 
 ## Recommended execution order
 
@@ -36,7 +37,13 @@ Each automation session should:
 |------|-------------------------------------|-------|
 | 2026-03-24 | Wave A (07) — **partial close** | See **Wave A status** below. |
 | 2026-03-24 | Wave B (08) — **verification** | See **Wave B status** below; `01_RESEARCH.md` / `05_KNOWN_ISSUES.md` updated. |
-| 2026-03-24 | **Full-turn policy** + Wave C **Ship gates** | `FULL_TURN_DELIVERY.md` added; `04_QUEUE_CADENCE.md` + `09_NEXT_WAVE_C.md` updated. **`thegent` PR #549** mergeable but **CI red** — no merge until green. |
+| 2026-03-24 | **Full-turn policy** + Wave C **Ship gates** | `FULL_TURN_DELIVERY.md` added; `04_QUEUE_CADENCE.md` + `09_NEXT_WAVE_C.md` updated. **`thegent` PR #549** — **merged** (`main`). |
+| 2026-03-24 | **5-agent parallel audit** (C + D + E×2) | **Tier 1** parallel read-only; consolidated in **`16_PARALLEL_AGENT_AUDIT.md`** (DAG + Tier 2 order). |
+| 2026-03-24 | **Tier 2 — 5-agent implementation** | heliosApp CI/CHANGELOG/troubleshooting; colab/helMo/helios-cli contributing+ignore; **`repos/README.md`** hub. See **`16_PARALLEL_AGENT_AUDIT.md`** Tier 2 executed. |
+| 2026-03-24 | **PR staging checklist** | **`17_PR_STAGING_CHECKLIST.md`** (per-repo `git add` + `gh` notes); **`docs/reference/phenotype_repos_hub.md`** (versioned hub index; sync to `repos/README.md`). |
+| 2026-03-24 | **Wave C next slice** | **`docs/reference/composite-actions.md`**; **`repos/README.md`** + hub doc link; **thegent#552** (dirty colab/helMo roots; colab issues off). |
+| 2026-03-24 | **Billing-bound CI** | **`FULL_TURN_DELIVERY.md`**: *Billing / Actions quota*; **`gh pr merge --admin`** path; **`05_KNOWN_ISSUES.md`**. |
+| 2026-03-24 | **Session docs recovery PR** | Single branch **`docs/session-docs-recovery`** (rebase onto `main` post-#549) supersedes conflicted **#551/#553/#554** stacks — merge one PR, close duplicates. |
 
 ## Wave B status (2026-03-24) — `08_NEXT_WAVE_B.md`
 
@@ -79,7 +86,7 @@ Each item now has an explicit **Ship** line (PR **→** `main` / `release/*`, **
 | 5 | portage / governance | backup runbook; tmp cleanup schedule; `.worktrees` policy; script lint — **merge** |
 | 6 | trace / trash / ralph / org | tests; naming doc; ralph decision; reuse issue — **ship** per item |
 
-**Immediate upstream target:** fix **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** CI failures, then merge to `main` with **CHANGELOG [Unreleased]** / release notes per `docs/guides/CHANGELOG_PROCESS.md`.
+**Immediate upstream target:** Merge **session docs** (`docs/session-docs-recovery` — superseded **#551/#553/#554** stacks); then work **#552** (colab / helMo roots). Keep **`main`** CI green per `CHANGELOG_PROCESS` when Actions run.
 
 ## Related
 
