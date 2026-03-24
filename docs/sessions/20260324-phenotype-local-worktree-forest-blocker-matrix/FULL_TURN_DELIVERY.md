@@ -40,6 +40,8 @@ gh pr list --repo <owner>/<repo> --state merged --limit 5
 
 **Repo signal:** Recent **`main`** workflow runs also show **`failure`** (e.g. `coderabbit-rate-limit-retry`, `Alert Sync To Issues`), so **PRs may stay red until `main` CI is stabilized** or failing jobs are made non-required / fixed.
 
+**Root cause (2026-03-24 — verified via `gh run view`):** GitHub Actions **did not start** jobs such as `lint-test` because **billing failed or the spending limit must be increased** (annotation on the workflow run). Until Actions can run, **no PR can satisfy “green CI”** for merge — fix **GitHub → Settings → Billing & plans** (or increase Actions minutes / payment method), then **re-run failed workflows** on PR **#550** / **#549**.
+
 **Commands (refresh):**
 
 ```bash

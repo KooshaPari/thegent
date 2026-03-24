@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `FULL_TURN_DELIVERY.md`: snapshot expanded with PR #550, `mergeStateStatus`, and `main` branch CI signal.
+- `FULL_TURN_DELIVERY.md`: snapshot expanded with PR #550, `mergeStateStatus`, `main` branch CI signal, and **GitHub Actions billing** note (jobs not started until billing/spend limit fixed).
 
 ### Deprecated
 
