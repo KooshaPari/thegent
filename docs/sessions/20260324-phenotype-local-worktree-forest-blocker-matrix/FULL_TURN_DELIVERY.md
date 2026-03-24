@@ -31,11 +31,22 @@ gh pr list --repo <owner>/<repo> --state merged --limit 5
 
 ## Snapshot — `KooshaPari/thegent` (2026-03-24)
 
-| PR | Title | Base | Mergeable | CI |
-|----|--------|------|------------|-----|
-| [#549](https://github.com/KooshaPari/thegent/pull/549) | Migrate thegent-cache to phenotype-infrakit cache-adapter | `main` | MERGEABLE | **Red** — multiple failing workflows (Build wheels, Lint & Test, Policy Gate, etc.) |
+| PR | Title | Base | Mergeable | `mergeStateStatus` | CI |
+|----|--------|------|------------|---------------------|-----|
+| [#549](https://github.com/KooshaPari/thegent/pull/549) | Migrate thegent-cache to phenotype-infrakit cache-adapter | `main` | MERGEABLE | UNSTABLE | **Red** — multiple failing workflows |
+| [#550](https://github.com/KooshaPari/thegent/pull/550) | docs: worktree forest session pack + full-turn delivery policy | `main` | MERGEABLE | **UNSTABLE** | **Red** — lint-test, policy-gate, guard, tests, Build Docs, etc. |
 
-**Action:** **Do not merge** until CI is green and review threads resolved (org **CI completeness** policy). Next turn should **fix-forward** on `feat/migrate-cache` or rebase and re-run checks.
+**Action:** **Do not merge** until required checks are green (org **CI completeness** policy).
+
+**Repo signal:** Recent **`main`** workflow runs also show **`failure`** (e.g. `coderabbit-rate-limit-retry`, `Alert Sync To Issues`), so **PRs may stay red until `main` CI is stabilized** or failing jobs are made non-required / fixed.
+
+**Commands (refresh):**
+
+```bash
+gh pr view 549 550 --repo KooshaPari/thegent --json url,mergeStateStatus,mergeable
+gh pr checks 550 --repo KooshaPari/thegent
+gh run list --repo KooshaPari/thegent --branch main --limit 10
+```
 
 ## Blockers — local canonical trees
 

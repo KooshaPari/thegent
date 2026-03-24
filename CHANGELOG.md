@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `FULL_TURN_DELIVERY.md`: snapshot expanded with PR #550, `mergeStateStatus`, and `main` branch CI signal.
+
 ### Deprecated
 
 ### Removed
