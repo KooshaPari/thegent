@@ -1437,8 +1437,8 @@ fn cmd_agileplus_cycle() {
                     .unwrap_or(0);
 
                 if last_velocity > 0 && avg_velocity > 0 {
-                    let change_pct = ((last_velocity as i64 - avg_velocity as i64) * 100)
-                        / avg_velocity as i64;
+                    let change_pct =
+                        ((last_velocity as i64 - avg_velocity as i64) * 100) / avg_velocity as i64;
                     println!(
                         "  Velocity: {} (avg: {}, change: {}%)",
                         last_velocity, avg_velocity, change_pct
@@ -2329,9 +2329,10 @@ fn cmd_antipattern_detect() {
             && !content.contains("typer")
             && !content.contains("click")
             && !content.contains("rich")
-            && print_re.find_iter(&content).count() >= 2 {
-                warnings.push("ANTIPATTERN: Multiple print() calls in non-CLI code. Use structured logging (structlog/rich) instead.");
-            }
+            && print_re.find_iter(&content).count() >= 2
+        {
+            warnings.push("ANTIPATTERN: Multiple print() calls in non-CLI code. Use structured logging (structlog/rich) instead.");
+        }
     }
 
     let requests_re = Regex::new(
@@ -4596,16 +4597,14 @@ fn cmd_playbook_contract_eval() {
     let mut errors: u64 = 0;
     let mut missing: Vec<String> = Vec::new();
 
-    if (model == "brownfield" || model == "hybrid")
-        && !brownfield.is_file() {
-            errors += 1;
-            missing.push("brownfield.playbook.json".to_string());
-        }
-    if (model == "greenfield" || model == "hybrid")
-        && !greenfield.is_file() {
-            errors += 1;
-            missing.push("greenfield.playbook.json".to_string());
-        }
+    if (model == "brownfield" || model == "hybrid") && !brownfield.is_file() {
+        errors += 1;
+        missing.push("brownfield.playbook.json".to_string());
+    }
+    if (model == "greenfield" || model == "hybrid") && !greenfield.is_file() {
+        errors += 1;
+        missing.push("greenfield.playbook.json".to_string());
+    }
     if model == "auto" && !brownfield.is_file() && !greenfield.is_file() {
         errors += 1;
         missing.push("playbook".to_string());
@@ -5284,16 +5283,14 @@ fn cmd_tool(name: &str) {
             }
         }
         "fd" => {
-            if !is_agent_session
-                && !actual_args.iter().any(|a| a == "--color") {
-                    cmd.arg("--color=always");
-                }
+            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
+                cmd.arg("--color=always");
+            }
         }
         "bat" => {
-            if !is_agent_session
-                && !actual_args.iter().any(|a| a == "--color") {
-                    cmd.arg("--color=always");
-                }
+            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
+                cmd.arg("--color=always");
+            }
         }
         _ => {}
     }
