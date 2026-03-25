@@ -60,3 +60,4 @@ Consolidate the local worktree-forest scan into a blocker matrix that orders cle
 - `11_NEXT_WAVE_E.md` — wave E **next 24** (after wave D)
 - `12_NEXT_WAVE_F.md` — wave F **next 24** (after wave E)
 - `13_NEXT_WAVE_G.md` — wave G **next 24** (after wave F)
+- `19_NEXT_50_WORK_ITEMS.md` — **Next 50** queue (preamble + waves D + E)

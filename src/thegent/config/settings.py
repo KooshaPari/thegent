@@ -13,14 +13,25 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from thegent.config_defaults import (
+    DEFAULT_MAC_KEEP_AWAKE_AGENTS,
+    DEFAULT_SANDBOX_ENV_ALLOWLIST,
     default_cost_budget_by_category,
+    default_hitl_checkpoints,
     default_mac_keep_awake_agents,
     default_sandbox_env_allowlist,
     expanded_path_factory,
 )
 from thegent.config_parsers import (
+    parse_bool_or_env_flag,
+    parse_csv_or_list,
+    parse_first_nonempty_env,
+    parse_optional_path,
     parse_retention_by_domain,
+    parse_shell_path,
 )
+from thegent.config.model_config import ModelConfig
+from thegent.config.path_config import PathConfig
+from thegent.config.runtime_config import RuntimeConfig
 
 
 class ThegentSettings(BaseSettings):
@@ -163,283 +174,6 @@ class ThegentSettings(BaseSettings):
         le=10.0,
         description="Maximum cost weight for Pareto selection",
     )
-    max_parallel: int | None = Field(
-        default=None,
-        ge=1,
-        description="Optional cap for concurrent DAG task execution",
-    )
-    max_concurrency: int = Field(
-        default=4,
-        ge=1,
-        description="Maximum concurrent sessions allowed by orchestration surfaces",
-    )
-    concurrency_min_slots: int = Field(
-        default=1,
-        ge=1,
-        description="Minimum concurrency slots reserved under load-based limiting",
-    )
-    concurrency_load_based: bool = Field(
-        default=True,
-        description="Enable dynamic concurrency limits based on host load",
-    )
-    concurrency_fd_utilization_max: float = Field(
-        default=0.95,
-        ge=0.0,
-        le=1.0,
-        description="Maximum file descriptor utilization before concurrency is reduced",
-    )
-    concurrency_load_per_cpu_max: float = Field(
-        default=1.5,
-        ge=0.0,
-        description="Maximum per-CPU load average before concurrency is reduced",
-    )
-    agileplus_health_threshold: float = Field(
-        default=0.8,
-        ge=0.0,
-        le=1.0,
-        description="Health threshold below which AgilePlus governance actions trigger",
-    )
-    agileplus_max_tasks_per_cycle: int = Field(
-        default=10,
-        ge=1,
-        description="Maximum AgilePlus tasks to execute per governance cycle",
-    )
-    agileplus_max_rerolls: int = Field(
-        default=3,
-        ge=0,
-        description="Maximum AgilePlus rerolls permitted per governance cycle",
-    )
-    dev: bool = Field(
-        default=False,
-        description="Enable development-mode behavior for local source checkouts",
-    )
-    prompt_max_chars: int = Field(
-        default=65536,
-        ge=1,
-        description="Maximum prompt length allowed by governance input guardrails",
-    )
-    prompt_blocklist_patterns: str = Field(
-        default="",
-        description="Comma-separated regex blocklist for governance input guardrails",
-    )
-    agent_allowlist: str = Field(
-        default="",
-        description="Comma-separated governance agent allowlist; empty allows all",
-    )
-    cwd_allowed_prefixes: str = Field(
-        default="",
-        description="Comma-separated allowed cwd prefixes for governance input guardrails",
-    )
-    use_native_crypto: bool = Field(
-        default=False,
-        description="Enable native crypto extension for governance signatures",
-    )
-    tee_mock: bool = Field(
-        default=False,
-        description="Enable mock TEE attestation mode",
-    )
-    tee_required: bool = Field(
-        default=False,
-        description="Require attested TEE execution for governance-sensitive flows",
-    )
-    ide_integration_enabled: bool = Field(
-        default=True,
-        description="Enable automatic IDE integration initialization",
-    )
-    ghostty_enabled: bool = Field(
-        default=False,
-        description="Enable Ghostty shell integration setup hooks",
-    )
-    otel_console: bool = Field(
-        default=False,
-        description="Enable console OpenTelemetry span export for local observability imports",
-    )
-    watcher_use_shm: bool = Field(
-        default=False,
-        description="Enable shared-memory health tracking for the native watcher daemon",
-    )
-    watcher_shm_path: str = Field(
-        default="",
-        description="Optional shared-memory path override for the native watcher daemon",
-    )
-    mac_keep_awake: bool = Field(
-        default=False,
-        description="Wrap long-running macOS commands with caffeinate",
-    )
-    agent_id: str = Field(
-        default="default-agent",
-        description="Logical local agent identifier for TUI and orchestration surfaces",
-    )
-    sitback_harness: bool = Field(
-        default=True,
-        description="Enable sitback harness status probing",
-    )
-    supermemory_api_key: str | None = Field(
-        default=None,
-        description="API key for Supermemory-backed memory storage",
-    )
-    supermemory_base_url: str | None = Field(
-        default=None,
-        description="Optional base URL override for the Supermemory API",
-    )
-    redis_host: str = Field(
-        default="127.0.0.1",
-        description="Redis host for orchestration coordination primitives",
-    )
-    redis_port: int = Field(
-        default=6379,
-        ge=1,
-        le=65535,
-        description="Redis port for orchestration coordination primitives",
-    )
-    redis_db: int = Field(
-        default=0,
-        ge=0,
-        description="Redis database index for orchestration coordination primitives",
-    )
-    redis_password: str | None = Field(
-        default=None,
-        description="Optional Redis password for orchestration coordination primitives",
-    )
-    redis_key_prefix: str = Field(
-        default="thegent:",
-        description="Key prefix for Redis-backed orchestration data",
-    )
-    redis_concurrency_limit: int = Field(
-        default=32,
-        ge=1,
-        description="Default distributed concurrency limit for Redis-backed orchestration",
-    )
-    redlock_nodes: str = Field(
-        default="redis://127.0.0.1:6379/0",
-        description="Comma-separated Redis node URLs used for Redlock coordination",
-    )
-    prune_orphan_by_ppid: bool = Field(
-        default=True,
-        description="Enable PPID-based orphan pruning heuristics",
-    )
-    use_native_discovery: bool = Field(
-        default=False,
-        description="Enable native discovery implementation paths",
-    )
-    use_native_parser: bool = Field(
-        default=False,
-        description="Enable native output parser implementation paths",
-    )
-    config_dir_override: str | None = Field(
-        default=None,
-        description="Optional override for the resolved configuration directory",
-    )
-    analytics_site_id: str = Field(
-        default="",
-        description="Analytics site or domain identifier for operational telemetry",
-    )
-    siem_endpoint_url: str = Field(
-        default="",
-        description="HTTP endpoint for SIEM event egress",
-    )
-    routing_hysteresis_threshold: float = Field(
-        default=0.1,
-        ge=0.0,
-        le=1.0,
-        description="Minimum route cost delta required before hysteresis allows switching",
-    )
-    router_hysteresis_band: float = Field(
-        default=0.1,
-        ge=0.0,
-        le=1.0,
-        description="Hysteresis band for native router transitions",
-    )
-    router_hysteresis_dwell: int = Field(
-        default=30,
-        ge=0,
-        description="Minimum dwell time in seconds before route switching",
-    )
-    router_hysteresis_max_dwell: int = Field(
-        default=300,
-        ge=0,
-        description="Maximum dwell time in seconds before forced route reevaluation",
-    )
-    router_hysteresis_override: bool = Field(
-        default=False,
-        description="Allow router override of hysteresis constraints",
-    )
-    router_band_width: float = Field(
-        default=0.2,
-        ge=0.0,
-        le=1.0,
-        description="Band width for heuristic routing hysteresis",
-    )
-    use_litellm_router: bool = Field(
-        default=False,
-        description="Enable LiteLLM router-backed execution paths",
-    )
-    litellm_routing_policy: str = Field(
-        default="cheapest",
-        description="LiteLLM routing policy",
-    )
-    litellm_timeout: int = Field(
-        default=300,
-        ge=1,
-        description="LiteLLM request timeout in seconds",
-    )
-    litellm_num_retries: int = Field(
-        default=2,
-        ge=0,
-        description="LiteLLM retry count",
-    )
-    litellm_retry_after: int = Field(
-        default=5,
-        ge=0,
-        description="LiteLLM retry-after in seconds",
-    )
-    litellm_enable_cache: bool = Field(
-        default=True,
-        description="Enable LiteLLM response caching",
-    )
-    litellm_cache_type: str = Field(
-        default="in-memory",
-        description="LiteLLM cache backend type",
-    )
-    litellm_redis_url: str | None = Field(
-        default=None,
-        description="Redis URL for LiteLLM cache backend",
-    )
-    litellm_cooldown_time: int = Field(
-        default=60,
-        ge=0,
-        description="Provider cooldown after failures in seconds",
-    )
-    litellm_enable_streaming: bool = Field(
-        default=True,
-        description="Enable LiteLLM streaming responses",
-    )
-    litellm_enable_cost_tracking: bool = Field(
-        default=True,
-        description="Enable LiteLLM cost tracking",
-    )
-    litellm_cost_budget: float | None = Field(
-        default=None,
-        ge=0.0,
-        description="Optional LiteLLM budget limit in USD",
-    )
-    litellm_alert_webhook: str | None = Field(
-        default=None,
-        description="Webhook URL for LiteLLM alert delivery",
-    )
-    litellm_latency_threshold_ms: float = Field(
-        default=500.0,
-        ge=0.0,
-        description="Alert threshold for LiteLLM latency",
-    )
-    litellm_context_window_validation: bool = Field(
-        default=True,
-        description="Validate context window before LiteLLM dispatch",
-    )
-    litellm_fallback_enabled: bool = Field(
-        default=True,
-        description="Allow LiteLLM fallback chains when routing fails",
-    )
 
     # Path-related settings (from PathConfig)
     factory_skills_dir: Path = Field(
@@ -490,53 +224,15 @@ class ThegentSettings(BaseSettings):
         default=None,
         description="Path override for connector mapping cache",
     )
-    harness_root: Path = Field(
-        default_factory=expanded_path_factory("~/.agent-harness"),
-        description="Shared harness root directory",
-    )
-    virtual_env: Path | None = Field(
-        default=None,
-        description="Optional Python virtual environment path",
-    )
-    cliproxy_config_path: Path = Field(
-        default_factory=expanded_path_factory("~/.config/cli-proxy-api/config.json"),
-        description="CLIProxy config path",
-    )
-    cliproxy_auth_dir: Path = Field(
-        default_factory=expanded_path_factory("~/.config/cli-proxy-api/auth"),
-        description="CLIProxy auth directory",
-    )
-    custom_models_path: Path = Field(
-        default_factory=expanded_path_factory("~/.config/thegent/custom_models.yaml"),
-        description="Path to custom model catalog YAML",
-    )
 
     # Runtime settings (from RuntimeConfig)
     session_backend: Literal["auto", "zmx", "tmux", "none"] = Field(
         default="auto",
         description="Session persistence backend for agent sessions",
     )
-    environment: str = Field(
-        default="development",
-        description="Execution environment name",
-    )
     zmx_bin: str = Field(
         default="zmx",
         description="Path or command name for the zmx binary",
-    )
-    zmx_binary: str = Field(
-        default="zmx",
-        description="Path or command name for the zmx binary",
-    )
-    zmx_max_sessions: int = Field(
-        default=50,
-        ge=1,
-        description="Maximum concurrent zmx sessions",
-    )
-    zmx_session_ttl: int = Field(
-        default=3600,
-        ge=1,
-        description="Default zmx session TTL in seconds",
     )
     use_fifo: bool = Field(
         default=False,
@@ -545,10 +241,6 @@ class ThegentSettings(BaseSettings):
     use_holdpty: bool = Field(
         default=False,
         description="Wrap background sessions with holdpty",
-    )
-    use_native_shm: bool = Field(
-        default=False,
-        description="Enable native shared-memory acceleration when available",
     )
     retention_days_sessions: int = Field(
         default=30,
@@ -670,14 +362,6 @@ class ThegentSettings(BaseSettings):
         default="cursor",
         description="Cursor API command",
     )
-    cursor_api_url: str = Field(
-        default="http://127.0.0.1:3000",
-        description="Cursor API base URL",
-    )
-    cursor_api_token: str = Field(
-        default="",
-        description="Cursor API bearer token",
-    )
     models_cache_ttl_sec: int = Field(
         default=300,
         ge=60,
@@ -698,26 +382,6 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Enable input guardrails",
     )
-    trust_score_threshold: float = Field(
-        default=0.8,
-        ge=0.0,
-        le=1.0,
-        description="Trust score threshold for production execution",
-    )
-    override_ttl_seconds: int = Field(
-        default=86400,
-        ge=0,
-        description="Override approval TTL in seconds",
-    )
-    escalation_sla_minutes: int = Field(
-        default=30,
-        ge=0,
-        description="Escalation SLA in minutes",
-    )
-    opa_url: str = Field(
-        default="",
-        description="OPA base URL for policy delegation",
-    )
     owner_tag: str | None = Field(
         default=None,
         description="Explicit owner tag override",
@@ -726,8 +390,8 @@ class ThegentSettings(BaseSettings):
         default="",
         description="Owner scope template",
     )
-    output_format: str = Field(
-        default="rich",
+    output_format: str | None = Field(
+        default=None,
         description="Output format override",
     )
     debug: bool = Field(
@@ -747,125 +411,6 @@ class ThegentSettings(BaseSettings):
         ge=1,
         le=65535,
         description="MCP server port",
-    )
-    cliproxy_binary: str = Field(
-        default="cliproxy",
-        description="Path to cliproxy binary",
-    )
-    cliproxy_port: int = Field(
-        default=8317,
-        ge=1,
-        le=65535,
-        description="Cliproxy server port",
-    )
-    cliproxy_backend_url: str | None = Field(
-        default=None,
-        description="Optional CLIProxy backend URL override",
-    )
-    helios_shield_enabled: bool = Field(
-        default=False,
-        description="Enable heliosShield/thegent-hooks harness wrapping",
-    )
-    agent_shell: str = Field(
-        default="",
-        description="Preferred shell for agent execution",
-    )
-    hook_shell: str = Field(
-        default="",
-        description="Preferred shell for hook execution",
-    )
-    file_index_ttl: int = Field(
-        default=30,
-        ge=1,
-        description="TTL for file index caches in seconds",
-    )
-    maif_enabled: bool = Field(
-        default=False,
-        description="Enable MAIF artifact recording",
-    )
-    maif_db_path: Path | None = Field(
-        default=None,
-        description="Path to the MAIF SQLite database",
-    )
-    mergiraf_binary: str | None = Field(
-        default=None,
-        description="Path to the mergiraf binary",
-    )
-    lsp_auto_install: bool = Field(
-        default=True,
-        description="Automatically install missing LSP servers when possible",
-    )
-    serena_backend: Literal["auto", "lsp", "jetbrains"] = Field(
-        default="auto",
-        description="Preferred Serena backend selection strategy",
-    )
-    serena_jetbrains_port: int = Field(
-        default=8765,
-        ge=1,
-        le=65535,
-        description="Serena JetBrains bridge port",
-    )
-    bundle_proxy: bool = Field(
-        default=False,
-        description="Mount bundled MCP proxy services",
-    )
-    shutdown_wait_s: int = Field(
-        default=5,
-        ge=0,
-        description="Shutdown wait for MCP server lifecycle in seconds",
-    )
-    shutdown_wait_active_s: int = Field(
-        default=15,
-        ge=0,
-        description="Shutdown wait when active streams exist in seconds",
-    )
-    mcp_mount_flyto: bool = Field(
-        default=False,
-        description="Mount Flyto MCP namespace",
-    )
-    mcp_mount_playwright: bool = Field(
-        default=False,
-        description="Mount Playwright MCP namespace",
-    )
-    mcp_mount_serena: bool = Field(
-        default=False,
-        description="Mount Serena MCP namespace",
-    )
-    mcp_mount_octocode: bool = Field(
-        default=False,
-        description="Mount Octocode MCP namespace",
-    )
-    mcp_mount_sequential_thinking: bool = Field(
-        default=False,
-        description="Mount sequential-thinking MCP namespace",
-    )
-    mcp_mount_next_devtools: bool = Field(
-        default=False,
-        description="Mount next-devtools MCP namespace",
-    )
-    flyto_url: str = Field(
-        default="http://127.0.0.1:8931/mcp",
-        description="Flyto MCP endpoint URL",
-    )
-    mcp_auth_mode: str = Field(
-        default="none",
-        description="MCP authentication mode",
-    )
-    mcp_bearer_tokens: str = Field(
-        default="",
-        description="Comma-separated MCP bearer tokens",
-    )
-    reddit_client_id: str = Field(
-        default="",
-        description="Reddit API client ID",
-    )
-    reddit_client_secret: str = Field(
-        default="",
-        description="Reddit API client secret",
-    )
-    reddit_user_agent: str = Field(
-        default="thegent/1.0",
-        description="Reddit API user agent",
     )
     control_plane_url: str = Field(
         default="http://127.0.0.1:3848",

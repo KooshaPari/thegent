@@ -1,0 +1,53 @@
+# Runtime Smoke Matrix: Split-Lane Smoke Coverage
+
+## Capture time
+
+- `2026-03-03T02:12:24Z` (local branch after P6 prep)
+- `2026-03-03` re-verified with `task lane:split:all-smoke`
+
+## Command map
+
+- `task lane:split:app:smoke`
+- `task lane:split:mcp:smoke`
+- `task lane:split:control-plane:smoke`
+- `task lane:split:execution:smoke`
+- `task lane:split:governance:smoke`
+- `task lane:split:all-smoke`
+
+## Log artifacts
+
+- `artifacts/smoke-app.log`
+- `artifacts/smoke-mcp.log`
+- `artifacts/smoke-control-plane.log`
+- `artifacts/smoke-execution.log`
+- `artifacts/smoke-governance.log`
+- `artifacts/smoke-all.log`
+
+## Expected pass criteria
+
+- 1 smoke test passes per lane task and 5 tests pass in aggregate for `lane:split:all-smoke`.
+- No regression in filtered `phench projects` argument handling in run/matrix paths.
+- No unhandled `repo filters resolved to no repositories` unless intentionally testing rejection path.
+
+## Baseline outcomes (this branch)
+
+- app smoke: **pass**
+- mcp smoke: **pass**
+- control-plane smoke: **pass**
+- execution smoke: **pass**
+- governance smoke: **pass**
+- all-smoke: **pass**
+
+## Latest verification command
+
+- `task lane:split:all-smoke`
+- command result: **5 selected tests passed, 62 deselected**
+
+## Next-matrix work
+
+- Each lane worktree should rerun the same command set after module code migration.
+- Capture matrix order outputs at lane boundaries if and when matrix include/exclude ordering behavior is finalized.
+
+## PR readiness signal
+
+- Evidence is sufficient for P6.29 now that all 5 lane smoke commands and the aggregate smoke command have deterministic pass logs attached to this package.
