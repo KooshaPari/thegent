@@ -61,7 +61,7 @@ class MeshManager:
                     "cmdline": cmdline,
                     "discovered_at": time.time(),
                 }
-        except psutil.NoSuchProcess, psutil.AccessDenied:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
         return None
 

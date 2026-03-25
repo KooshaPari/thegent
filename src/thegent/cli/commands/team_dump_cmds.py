@@ -1,67 +1,12 @@
-"""Thegent CLI conversation dump commands (extracted from team_cmds.py)."""
+"""Thegent CLI team dump commands — backwards-compat wrapper for extracted team subpackage.
 
-# @trace WL-124
-from __future__ import annotations
+This file provides backwards compatibility for code that imports from the old
+location. All implementations have been moved to the team/ subpackage.
 
-import orjson as json
-import sys
-from pathlib import Path
+@trace WL-125: CLI god package decomposition - TEAM domain
+"""
 
-from thegent.cli.commands._cli_shared import (
-    _normalize_output_format,
-    console,
-)
-
-
-def dump_index_cmd(project: Path | None = None, format: str | None = None) -> None:
-    """Generate and display dump category index."""
-    from thegent.research.always_write_dumps import ConversationDumper
-
-    project_path = project or Path.cwd()
-    dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
-    index_path = dumper.persist_dump_index()
-    markdown_path = dumper.export_dump_index_markdown()
-    payload = {"index_path": str(index_path), "markdown_path": str(markdown_path)}
-    if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload).decode() + "\n")
-        return
-    console.print(f"[green]Dump index[/green] json={payload['index_path']} md={payload['markdown_path']}")
-
-
-def dump_latest_cmd(
-    project: Path | None = None,
-    category: str | None = None,
-    json_only: bool = False,
-    format: str | None = None,
-) -> None:
-    """Show latest dump path for a category or globally."""
-    from thegent.research.always_write_dumps import ConversationDumper
-
-    project_path = project or Path.cwd()
-    dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
-    normalized_category = category.strip() if category is not None else None
-    latest = dumper.latest_dump(category=normalized_category or None, json_only=json_only)
-    payload = {"latest": str(latest) if latest else None}
-    if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload).decode() + "\n")
-        return
-    console.print(payload["latest"] or "(none)")
-
-
-def dump_categories_cmd(project: Path | None = None, format: str | None = None) -> None:
-    """List available dump categories."""
-    from thegent.research.always_write_dumps import ConversationDumper
-
-    project_path = project or Path.cwd()
-    dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
-    categories = dumper.list_dump_categories()
-    payload = {"categories": categories, "count": len(categories)}
-    if _normalize_output_format(format) == "json":
-        sys.stdout.write(json.dumps(payload).decode() + "\n")
-        return
-    console.print(f"[bold cyan]Dump Categories[/bold cyan]: {payload['count']}")
-    console.print(", ".join(categories) if categories else "(none)")
-
+from thegent.cli.commands.team.team_dump_cmds import *  # noqa: F401, F403 -- WL-125 re-export
 
 __all__ = [
     "dump_categories_cmd",

@@ -448,7 +448,7 @@ def _try_parse_json(text: str) -> dict | None:
         if isinstance(parsed, dict):
             return parsed
         return {"value": parsed}
-    except json.JSONDecodeError, ValueError:
+    except (json.JSONDecodeError, ValueError):
         return None
 
 

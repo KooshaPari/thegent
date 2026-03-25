@@ -9,7 +9,11 @@
 
 ## GitHub / CI (release merges)
 
-- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** (`feat/migrate-cache` → `main`): **mergeable** in GitHub sense but **required CI red** (Lint & Test, Policy Gate, Build wheels, etc.) — **do not merge** until fix-forward; tracked in `FULL_TURN_DELIVERY.md`.
+- **`thegent` Rust CI lane (2026-03-24 → 2026-03-25):** Prior failure at **`quality:rust:ci`** was due to duplicate **`Cache::is_empty`** in **`thegent-cache-rs`** (E0592) plus flaky parallel **`ThemeRegistry`** tests. **Fix:** remove duplicate method; add **`serial_test`** + **`#[serial]`** on registry tests; commit **`crates/Cargo.lock`** when **`serial_test`** is added. Re-verify: `cargo clippy --workspace --manifest-path crates/Cargo.toml --all-targets --all-features -- -D warnings` and `cargo test --workspace --manifest-path crates/Cargo.toml --all-targets --all-features`. Merge via focused PR to **`main`** (worktree branch per **`AGENTS.md`**), then strike this bullet once **`task quality:rust:ci`** is green on **`main`**.
+
+- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** — **merged** (`feat/migrate-cache` → `main`). Track post-merge CI on **`main`**; if billing blocked checks during merge, note date + **`FULL_TURN_DELIVERY.md`** billing section.
+- **Actions billing / quota:** When checks cannot complete because **jobs do not start** (not because tests fail), use the **Billing / Actions quota** procedure in `FULL_TURN_DELIVERY.md` — **`gh pr merge --admin`** only after confirming infrastructure cause and local verification.
+- **Hub tracking (resolved 2026-03-24):** [colab#13](https://github.com/KooshaPari/colab/pull/13) merged; [helMo](https://github.com/KooshaPari/helMo) published — [thegent#552](https://github.com/KooshaPari/thegent/issues/552) **closed**.
 
 ## Blocked Forest Registry
 

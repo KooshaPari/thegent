@@ -23,7 +23,7 @@ from thegent.cli.commands._cli_shared import (
     _resolve_cwd,
     console,
 )
-from thegent.cli.commands.governance_health_helpers import (
+from thegent.cli.governance.governance_health_helpers import (
     build_cycle_json_output,
     build_cycle_result_table,
     build_health_dimensions_table,

@@ -160,7 +160,7 @@ def govern_approve_cmd(run_id: str, reason: str | None = None) -> None:
     'approved', and triggers continuation of the blocked run.
     """
     from thegent.cli.commands.impl import govern_approve_impl
-    from thegent.cli.services.governance import govern_get_pending_approval_impl
+    from thegent.cli.governance.governance import govern_get_pending_approval_impl
     from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
 
     pending = govern_get_pending_approval_impl(run_id=run_id)
