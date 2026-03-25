@@ -70,7 +70,7 @@ class ConsensusManager:
         proposal_map: dict[str, dict[str, Any]] = {}
 
         for p in proposals:
-            val_str = json.dumps(p.get("value").decode(), sort_keys=True)
+            val_str = json.dumps(p.get("value"), option=json.OPT_SORT_KEYS).decode()
             counts[val_str] = counts.get(val_str, 0) + 1
             proposal_map[val_str] = p
 

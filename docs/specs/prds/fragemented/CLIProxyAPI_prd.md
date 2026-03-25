@@ -366,7 +366,7 @@ Real-world examples for automation and development
 
 ### FR-65: Project Context
 
-`openspec/project.md`
+`agileplus/project.md`
 
 
 ### FR-66: Cursor Agent Research
@@ -546,7 +546,7 @@ Real-world examples for automation and development
 
 ### FR-101: Project Onboarding
 
-Reference `openspec/project.md` for new contributors
+Reference `agileplus/project.md` for new contributors
 
 
 ### FR-102: Feature Proposals
@@ -944,7 +944,7 @@ https://docs.augmentcode.com/
 Assess alignment with project roadmap
 
 
-### FR-181: Create OpenSpec proposal
+### FR-181: Create AgilePlus proposal
 
 Formalize MCP server feature
 
@@ -1031,7 +1031,7 @@ Share findings with team
 
 ### FR-198: Short term
 
-(1-2 weeks): Create OpenSpec proposal
+(1-2 weeks): Create AgilePlus proposal
 
 
 ### FR-199: Medium term
@@ -1261,7 +1261,7 @@ Assess alignment with project goals
 
 ### FR-244: Create change proposal
 
-Use OpenSpec to formalize MCP server feature
+Use AgilePlus to formalize MCP server feature
 
 
 ### FR-245: Design MCP interface
@@ -6512,7 +6512,7 @@ Real-world examples for automation and development
 
 ### 🟡 Project Context
 
-`openspec/project.md`
+`agileplus/project.md`
 
 
 ### 🟡 Cursor Agent Research
@@ -6692,7 +6692,7 @@ Real-world examples for automation and development
 
 ### 🟡 Project Onboarding
 
-Reference `openspec/project.md` for new contributors
+Reference `agileplus/project.md` for new contributors
 
 
 ### 🟡 Feature Proposals
@@ -7090,7 +7090,7 @@ https://docs.augmentcode.com/
 Assess alignment with project roadmap
 
 
-### 🟡 Create OpenSpec proposal
+### 🟡 Create AgilePlus proposal
 
 Formalize MCP server feature
 
@@ -7177,7 +7177,7 @@ Share findings with team
 
 ### 🟡 Short term
 
-(1-2 weeks): Create OpenSpec proposal
+(1-2 weeks): Create AgilePlus proposal
 
 
 ### 🟡 Medium term
@@ -7407,7 +7407,7 @@ Assess alignment with project goals
 
 ### 🟡 Create change proposal
 
-Use OpenSpec to formalize MCP server feature
+Use AgilePlus to formalize MCP server feature
 
 
 ### 🟡 Design MCP interface

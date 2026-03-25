@@ -33,7 +33,7 @@ from thegent_protocols.mcp import server_module_loader as _server_tools_dynamic_
 # Bootstrap helpers - these make WL120 extraction tests pass
 # Note: We import these but don't call them to avoid initialization issues
 thegent_lifespan = None  # Set at runtime via server.py
-_get_default_cwd = None  # Set at runtime via server.py  
+_get_default_cwd = None  # Set at runtime via server.py
 _get_default_owner = None  # Set at runtime via server.py
 
 

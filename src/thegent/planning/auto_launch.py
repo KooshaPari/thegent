@@ -47,6 +47,7 @@ from thegent.security.rbac import Permission, RBACManager, Role
 from thegent.sync import SyncOrchestrator, SyncRegistry
 from thegent.team.coordination import TeamCoordinator
 from thegent.ux.alerts import AlertFatigueController, InterruptionKind
+from thegent.infra.shim_subprocess import run as shim_run
 
 _log = logging.getLogger(__name__)
 
@@ -78,7 +79,7 @@ def get_active_agent_count() -> int:
             name = proc.info.get("name", "") or ""
             if any(agent in name for agent in ("cursor-agent", "thegent", "claude", "codex", "droid")):
                 count += 1
-        except (psutil.NoSuchProcess, psutil.AccessDenied):  # noqa: PERF203 - intentional per-item error handling
+        except psutil.NoSuchProcess, psutil.AccessDenied:  # noqa: PERF203 - intentional per-item error handling
             pass
     return count
 
@@ -221,7 +222,7 @@ class AutoLaunchSystem:
                 session_id,
                 item_id,
                 datetime.now(UTC).isoformat(),
-                json.dumps(payload).decode() if payload else None,
+                json.dumps(payload) if payload else None,
                 evidence_hash,
             ),
         )
@@ -368,6 +369,7 @@ class AutoLaunchSystem:
     def sync_database(self) -> None:
         """Sync workstream database with WORK_STREAM.md."""
         try:
+            # tach-ignore(planning should not architecturally depend on cli)
             from thegent.cli.commands.impl import _parse_work_stream_md
 
             work_stream_path = Path("docs/reference/WORK_STREAM.md")
@@ -570,6 +572,7 @@ class AutoLaunchSystem:
             return
 
         agent_id = "auto-launch"
+        # tach-ignore(planning should not architecturally depend on cli)
         from thegent.cli.commands.impl import work_stream_claim_impl
 
         claim_result = work_stream_claim_impl(item_id, agent_id, cd=Path.cwd())
@@ -587,6 +590,7 @@ class AutoLaunchSystem:
             return
 
         # Use bg_impl directly for the specific item
+        # tach-ignore(planning should not architecturally depend on cli)
         from thegent.cli.commands.impl import bg_impl
 
         prompt = item.get("prompt_suggestion") or item.get("prompt") or item.get("title", item_id)

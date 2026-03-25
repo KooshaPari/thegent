@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 
 logger = logging.getLogger(__name__)
 

@@ -8,9 +8,8 @@
 use std::sync::Arc;
 use tempfile::tempdir;
 use thegent_router::{
-    ArbitrationPolicy, AuditLogger, AuditRecord, ComplexityLevel, DispatchTarget, Dispatcher,
-    ExecutionOutcome, ParetoRouter, RiskFactors, RouteExecutor, RouterConfig, RoutingMode,
-    RoutingOrchestrator,
+    ArbitrationPolicy, AuditLogger, AuditRecord, ComplexityLevel, ParetoRouter, RiskFactors,
+    RouteExecutor, RouterConfig, RoutingMode, RoutingOrchestrator,
 };
 
 // ---------------------------------------------------------------------------

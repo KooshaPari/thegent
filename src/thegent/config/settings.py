@@ -242,10 +242,6 @@ class ThegentSettings(BaseSettings):
         default=False,
         description="Wrap background sessions with holdpty",
     )
-    use_native_shm: bool = Field(
-        default=False,
-        description="Enable native shared-memory acceleration when available",
-    )
     retention_days_sessions: int = Field(
         default=30,
         ge=7,

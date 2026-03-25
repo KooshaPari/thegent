@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -85,7 +85,14 @@ def test_wl10984_execute_turn_submit_without_approval_fires_no_approval_path() -
     # @trace WL-10984
     _reset_state()
     notifications: list[dict[str, object]] = []
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "b6", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "b6",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     server._execute_turn_submit_without_approval("session-1", "turn-1", "b6", turn, notifications)
     assert turn["status"] == "completed"
     assert turn["tool_call_id"] == "toolcall-0001"
@@ -98,7 +105,14 @@ def test_wl10985_apply_turn_submit_side_effects_without_approval_returns_none_an
     # @trace WL-10985
     _reset_state()
     notifications: list[dict[str, object]] = []
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     approval_payload = server._apply_turn_submit_side_effects(
         "session-1", "turn-1", turn, "x", False, None, notifications
     )
@@ -116,7 +130,14 @@ def test_wl10986_apply_turn_submit_side_effects_with_approval_keeps_approval_pay
     # @trace WL-10986
     _reset_state()
     notifications: list[dict[str, object]] = []
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     approval_payload = server._apply_turn_submit_side_effects(
         "session-1", "turn-1", turn, "x", True, "diff", notifications
     )

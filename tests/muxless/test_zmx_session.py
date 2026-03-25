@@ -386,14 +386,14 @@ class TestListSessions:
         assert result == []
 
     def test_returns_names_from_json_output(self, manager_available: ZmxSessionManager) -> None:
-        json_out = json.dumps([{"name": "sess-a"}, {"name": "sess-b"}]).decode().decode()
+        json_out = json.dumps([{"name": "sess-a"}, {"name": "sess-b"}]).decode()
         with patch("subprocess.run", return_value=_ok_run(json_out)):
             result = manager_available.list_sessions()
         assert "sess-a" in result
         assert "sess-b" in result
 
     def test_returns_sorted_names(self, manager_available: ZmxSessionManager) -> None:
-        json_out = json.dumps([{"name": "zzz"}, {"name": "aaa"}, {"name": "mmm"}]).decode().decode()
+        json_out = json.dumps([{"name": "zzz"}, {"name": "aaa"}, {"name": "mmm"}]).decode()
         with patch("subprocess.run", return_value=_ok_run(json_out)):
             result = manager_available.list_sessions()
         assert result == ["aaa", "mmm", "zzz"]
@@ -419,7 +419,7 @@ class TestListSessions:
         assert result == []
 
     def test_handles_string_entries_in_json(self, manager_available: ZmxSessionManager) -> None:
-        json_out = json.dumps(["alpha", "beta"]).decode().decode()
+        json_out = json.dumps(["alpha", "beta"]).decode()
         with patch("subprocess.run", return_value=_ok_run(json_out)):
             result = manager_available.list_sessions()
         assert "alpha" in result
@@ -587,7 +587,7 @@ class TestSessionLifecycle:
     """Integration-style tests for the full session lifecycle.  # @trace FR-SES-001"""
 
     def test_full_lifecycle_with_mocked_subprocess(self, manager_available: ZmxSessionManager) -> None:
-        json_with_session = json.dumps([{"name": "lifecycle-sess"}]).decode().decode()
+        json_with_session = json.dumps([{"name": "lifecycle-sess"}]).decode()
         run_returns = [
             _ok_run(),  # create: zmx new
             _ok_run(json_with_session),  # list: zmx list --format json

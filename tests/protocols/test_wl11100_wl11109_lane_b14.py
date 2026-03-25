@@ -24,9 +24,7 @@ def test_wl11100_build_turn_submit_phase_plan_rejects_non_string_input() -> None
         "req-11100",
         {"session_id": session["id"], "input": 7},
     )
-    assert plan == {
-        "parse_error": server._error_response("req-11100", server._invalid_params("input_must_be_string"))
-    }
+    assert plan == {"parse_error": server._error_response("req-11100", server._invalid_params("input_must_be_string"))}
 
 
 def test_wl11101_build_turn_submit_phase_plan_rejects_non_bool_requires_approval() -> None:

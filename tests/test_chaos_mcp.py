@@ -109,7 +109,7 @@ class TestCircuitBreaker:
                 "timestamp": old_ts.isoformat(),
             }
             with registry.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(event).decode().decode() + "\n")
+                f.write(json.dumps(event).decode() + "\n")
         assert cb.is_open("gemini") is False
 
 

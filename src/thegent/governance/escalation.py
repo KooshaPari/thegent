@@ -1,14 +1,14 @@
 """WP-3008: Escalation SLA and governance queue (FR-028)."""
 
-import orjson as json
+import json
 import logging
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 from thegent.integrations.base import SerializableMixin
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 _log = logging.getLogger(__name__)
 
@@ -139,7 +139,7 @@ class EscalationQueue:
             return None
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
-            return EscalationItem.from_dict(data)
+            return cast("EscalationItem", EscalationItem.from_dict(data))
         except Exception as e:
             _log.error("Failed to load escalation item %s: %s", esc_id, e)
             return None
@@ -160,13 +160,13 @@ class EscalationQueue:
     def _save_item(self, item: EscalationItem) -> None:
         """Save item to disk."""
         p = self.queue_dir / f"{item.id}.json"
-        p.write_text(json.dumps(item.to_dict().decode(), indent=2), encoding="utf-8")
+        p.write_text(json.dumps(item.to_dict(), indent=2), encoding="utf-8")
 
     def _load_and_process_item(self, p: Path) -> EscalationItem | None:
         """Helper to load and process a single escalation item."""
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
-            item = EscalationItem.from_dict(data)
+            item = cast("EscalationItem", EscalationItem.from_dict(data))
 
             # Auto-expire if deadline passed
             if item.status == EscalationStatus.PENDING and item.deadline and time.time() > item.deadline:

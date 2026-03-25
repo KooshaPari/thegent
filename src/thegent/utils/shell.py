@@ -152,10 +152,9 @@ def run_shell_command(
         kwargs["text"] = True
     check = kwargs.pop("check", False)
 
-    # If cmd is a string, use shell=True with explicit executable
+    # Always invoke via explicit shell argv to satisfy shim_run's typed list[str] contract.
     if isinstance(cmd, str):
-        return shim_run(cmd, shell=True, executable=shell, env=env, check=check, **kwargs)
-    # If cmd is a list, prepend shell
+        return shim_run([shell, "-c", cmd], env=env, check=check, **kwargs)
     return shim_run([shell, "-c", " ".join(cmd)], env=env, check=check, **kwargs)
 
 

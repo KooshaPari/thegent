@@ -58,7 +58,7 @@ class Size:
         """String representation."""
         if self.unit == SizeUnit.AUTO:
             return "auto"
-        return f"{self.value}{self.unit.value}"
+        return f"{_format_size_value(self.value)}{self.unit.value}"
 
     def to_textual_css(self) -> str:
         """Convert to Textual CSS size specification.
@@ -67,12 +67,19 @@ class Size:
             CSS size string (e.g., "1fr", "70%", "30w")
         """
         if self.unit == SizeUnit.PERCENT:
-            return f"{self.value}%"
+            return f"{_format_size_value(self.value)}%"
         if self.unit == SizeUnit.FRACTION:
-            return f"{self.value}fr"
+            return f"{_format_size_value(self.value)}fr"
         if self.unit == SizeUnit.CELLS:
             return f"{int(self.value)}w"
         return "auto"
+
+
+def _format_size_value(value: float) -> str:
+    """Render integral floats without a trailing decimal point."""
+    if float(value).is_integer():
+        return str(int(value))
+    return str(value)
 
 
 @dataclass
@@ -193,7 +200,7 @@ class LayoutNode:
         if child.constraints.height and self.direction == Direction.VERTICAL:
             return child.constraints.height.to_textual_css()
 
-        return f"{child.constraints.flex_grow}fr"
+        return f"{_format_size_value(child.constraints.flex_grow)}fr"
 
     def generate_css(self, indent: int = 0) -> str:
         """Generate CSS for this layout node.

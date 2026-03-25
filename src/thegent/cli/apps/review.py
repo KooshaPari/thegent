@@ -9,7 +9,7 @@ enforced inside review_impl(); this module is the presentation layer only.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 
 import typer
 from rich.console import Console

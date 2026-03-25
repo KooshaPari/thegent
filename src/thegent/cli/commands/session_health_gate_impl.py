@@ -39,7 +39,7 @@ def _coerce_issue_types(value: Any) -> list[str]:
     return _health_impl()._coerce_issue_types(value)
 
 
-def _hash_health_payload(payload: dict[str, Any]) -> str:
+def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     return _health_impl()._hash_health_payload(payload)
 
 

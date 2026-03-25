@@ -4,6 +4,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from thegent.infra.shim_subprocess import run as shim_run
 from .skills.terminal import capture_tmux_pane, is_claude_code_pane, list_tmux_panes, send_to_tmux_pane
 
 console = Console()

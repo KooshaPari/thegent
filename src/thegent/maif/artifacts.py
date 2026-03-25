@@ -5,12 +5,13 @@ Provides signed, immutable records of agent actions (WP-3002).
 
 from __future__ import annotations
 
-import base64
-import hashlib
-import orjson as json
 import logging
 import sqlite3
 import uuid
+import base64
+import hashlib
+import json
+import orjson
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
@@ -169,7 +170,7 @@ def save_private_key(private_key: rsa.RSAPrivateKey, path: Path, password: bytes
 def _sign_artifact_dict(payload: dict[str, Any], timestamp: str, agent_id: str, private_key: rsa.RSAPrivateKey) -> str:
     """Sign raw artifact dict fields with RSA private key (MAIF internal)."""
     # Create canonical payload
-    canonical = json.dumps({"payload": payload, "timestamp": timestamp, "agent_id": agent_id}, sort_keys=True).decode()
+    canonical = json.dumps({"payload": payload, "timestamp": timestamp, "agent_id": agent_id}, sort_keys=True)
 
     # Calculate SHA-256 hash
     message_hash = hashlib.sha256(canonical.encode()).digest()
@@ -222,7 +223,7 @@ class MAIFArtifactStore:
                 (
                     artifact["artifact_id"],
                     artifact["action_type"],
-                    json.dumps(artifact["payload"]).decode(),
+                    json.dumps(artifact["payload"]),
                     artifact["signature"],
                     artifact["timestamp"],
                     artifact["agent_id"],
@@ -242,7 +243,7 @@ class MAIFArtifactStore:
 
             if row:
                 d = dict(row)
-                d["payload"] = json.loads(d["payload"])
+                d["payload"] = orjson.loads(d["payload"])
                 return d
         return None
 

@@ -73,8 +73,8 @@ def register_dynamic_registry_tools(
                     "input_schema": registered.input_schema,
                 },
             },
-            indent=2,
-        )
+            option=json.OPT_INDENT_2,
+        ).decode("utf-8")
 
     @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
     async def thegent_complete_tool_call(
@@ -103,7 +103,7 @@ def register_dynamic_registry_tools(
             success=success,
         )
         event = server_tools_sessions._dynamic_registry.tool_call_completed_event(result)
-        return json.dumps({"success": True, "event": event})
+        return json.dumps({"success": True, "event": event}).decode("utf-8")
 
     @mcp.tool(annotations={"readOnlyHint": True, "idempotentHint": True})
     async def thegent_list_dynamic_tools(
@@ -124,7 +124,7 @@ def register_dynamic_registry_tools(
                     {"name": t.name, "description": t.description, "input_schema": t.input_schema} for t in tools
                 ],
             },
-            indent=2,
-        )
+            option=json.OPT_INDENT_2,
+        ).decode("utf-8")
 
     return thegent_register_tool, thegent_complete_tool_call, thegent_list_dynamic_tools

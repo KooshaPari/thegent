@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-from thegent_core.utils.json_utils import json_loads, json_dumps
 import logging
 from pathlib import Path
 from typing import Any

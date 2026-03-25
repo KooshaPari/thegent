@@ -15,7 +15,7 @@ class TestUnknownSchemaFields:
     @patch("thegent.cliproxy_adapter._transform_request")
     def test_unknown_field_rejected(self, mock_transform) -> None:
         """Unknown fields like 'deprecated' should be rejected or stripped.
-        
+
         Issue: CLIProxyAPI#1531 - Unknown name `deprecated`
         """
         payload = {
@@ -23,10 +23,10 @@ class TestUnknownSchemaFields:
             "messages": [{"role": "user", "content": "Hello"}],
             "deprecated": True,  # Unknown field
         }
-        
+
         # Should either reject or strip the unknown field
         result = mock_transform(payload)
-        
+
         # deprecated field should not be in output
         assert "deprecated" not in result or result.get("deprecated") is None
 
@@ -39,9 +39,9 @@ class TestUnknownSchemaFields:
             "temperature": 0.7,
             "unknown_field": "should_be_removed",
         }
-        
+
         result = mock_transform(payload)
-        
+
         # Known fields preserved
         assert result.get("temperature") == 0.7
         # Unknown fields stripped
@@ -55,8 +55,8 @@ class TestUnknownSchemaFields:
             "messages": [{"role": "user", "content": "Test"}],
             "deprecated": False,
         }
-        
+
         result = mock_transform(payload)
-        
+
         # deprecated should not cause Invalid JSON error
         assert "deprecated" not in result or result.get("deprecated") is None

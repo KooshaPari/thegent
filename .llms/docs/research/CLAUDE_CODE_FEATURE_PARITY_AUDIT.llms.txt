@@ -224,7 +224,7 @@ harvest-idea-seeds.sh already pulls from `~/.cursor/projects/*/agent-transcripts
 |-------|------------------|
 | worker | thegent run codex/claude |
 | orchestrator-core | Lead in agent team |
-| openspec-orchestrator | Specialized workflow |
+| agileplus-orchestrator | Specialized workflow |
 
 ---
 

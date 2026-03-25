@@ -70,9 +70,7 @@ def simple_message_request() -> dict[str, Any]:
     """Simple single-turn chat completion request."""
     return {
         "model": "claude-3.5-sonnet",
-        "messages": [
-            {"role": "user", "content": "Hello, how are you?"}
-        ],
+        "messages": [{"role": "user", "content": "Hello, how are you?"}],
     }
 
 
@@ -129,9 +127,7 @@ def minimal_request() -> dict[str, Any]:
     """Minimal valid request (only required fields)."""
     return {
         "model": "claude-3-haiku",
-        "messages": [
-            {"role": "user", "content": "Hi"}
-        ],
+        "messages": [{"role": "user", "content": "Hi"}],
     }
 
 
@@ -477,8 +473,8 @@ class TestIntegration:
         # Create a 100-message conversation
         messages = []
         for i in range(50):
-            messages.append({"role": "user", "content": f"Message {i*2}"})
-            messages.append({"role": "assistant", "content": f"Response {i*2}"})
+            messages.append({"role": "user", "content": f"Message {i * 2}"})
+            messages.append({"role": "assistant", "content": f"Response {i * 2}"})
 
         request = {
             "model": "claude-3.5-sonnet",

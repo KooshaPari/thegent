@@ -17,22 +17,14 @@ from thegent_core.config import ThegentSettings
 from thegent_cli.cli.commands.dag_impl import (
     _atomic_write,
     _check_dag_cycles,
-    _dag_path,
     _dag_update_task,
-    _ensure_dag_file,
     _parse_dag_full,
     _parse_depends_on,
     _serialize_dag,
-    _session_status_for,
     _validate_agent,
     dag_ready_impl,
-    dag_recover_impl,
-    dag_run_impl,
-    dag_sync_impl,
 )
-from thegent_cli.cli.commands._cli_shared import _resolve_checkpoint_id
 from thegent_cli.cli.services.run_session_helpers import (
-    default_owner_tag as _default_owner_tag,
     resolve_cwd as _resolve_cwd,
 )
 import orjson as json
@@ -53,7 +45,6 @@ def dag_update_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Update a task in the DAG. XA4: contract_version in task metadata."""
-    from thegent_cli.cli.commands.dag_impl import _validate_task_id
 
     VALID_STATUSES = {"pending", "running", "done", "failed", "blocked", "cancelled", "skipped"}
     cwd = _resolve_cwd(cd)
@@ -183,7 +174,6 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
             preview = (prompt[:60] + "...") if len(prompt) > 60 else (prompt or "—")
             tbl.add_row(tid, t.get("agent", "—"), preview)
         console.print(tbl)
-
 
 
 __all__ = [

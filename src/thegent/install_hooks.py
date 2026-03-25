@@ -5,12 +5,9 @@ Extracted from install.py for maintainability.
 
 from __future__ import annotations
 
-import os
 import stat
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
-
 
 
 def _get_thegent_root() -> Path:
@@ -29,12 +26,12 @@ def setup_hooks(
     verbose: bool = False,
 ) -> dict[str, int]:
     """Install thegent hooks into .git/hooks.
-    
+
     Args:
         cwd: Working directory (defaults to cwd)
         dry_run: If True, don't make changes
         verbose: If True, print details
-        
+
     Returns:
         Dict with counts: installed, skipped, errors
     """
@@ -78,7 +75,7 @@ def _setup_git_hook(
     verbose: bool,
 ) -> None:
     """Setup a single git hook safely.
-    
+
     Args:
         git_hooks: Path to .git/hooks directory
         hooks_src: Path to thegent hooks source
@@ -90,7 +87,7 @@ def _setup_git_hook(
     """
     dst = git_hooks / hook_name
     hook_script = hooks_src / default_script
-    
+
     if not hook_script.exists():
         # Try fallback scripts
         fallback_map = {
@@ -98,7 +95,7 @@ def _setup_git_hook(
             "pre-push": ("quality-gate.sh",),
         }
         candidates = fallback_map.get(hook_name, ("quality-gate.sh",))
-        
+
         for candidate in candidates:
             candidate_path = hooks_src / candidate
             if candidate_path.exists():
@@ -126,11 +123,11 @@ def _setup_git_hook(
         # Read source and write to destination
         content = hook_script.read_text()
         dst.write_text(content)
-        
+
         # Make executable
         current_mode = dst.stat().st_mode
         dst.chmod(current_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-        
+
         if verbose:
             sys.stdout.write(f"  Installed {hook_name}\n")
         counts["installed"] += 1
@@ -142,31 +139,33 @@ def _setup_git_hook(
 
 def setup_rust_dispatcher(verbose: bool = False) -> bool:
     """Setup the Rust dispatcher binary.
-    
+
     Args:
         verbose: If True, print details
-        
+
     Returns:
         True if setup succeeded
     """
     root = _get_thegent_root()
     rust_dir = root / "crates" / "thegent-hooks"
-    
+
     if not rust_dir.exists():
         if verbose:
             sys.stdout.write("  Rust dispatcher crate not found\n")
         return False
-    
+
     # Check if cargo is available
     import shutil
+
     cargo = shutil.which("cargo")
     if not cargo:
         if verbose:
             sys.stdout.write("  Cargo not found, skipping Rust dispatcher\n")
         return False
-    
+
     # Build the dispatcher
     import subprocess
+
     try:
         result = subprocess.run(
             ["cargo", "build", "--release"],
@@ -178,7 +177,7 @@ def setup_rust_dispatcher(verbose: bool = False) -> bool:
             if verbose:
                 sys.stdout.write(f"  Cargo build failed: {result.stderr}\n")
             return False
-        
+
         if verbose:
             sys.stdout.write("  Rust dispatcher built successfully\n")
         return True
@@ -190,21 +189,21 @@ def setup_rust_dispatcher(verbose: bool = False) -> bool:
 
 def setup_harness(verbose: bool = False) -> bool:
     """Setup the test harness.
-    
+
     Args:
         verbose: If True, print details
-        
+
     Returns:
         True if setup succeeded
     """
     root = _get_thegent_root()
     harness_dir = root / "tests" / "harness"
-    
+
     if not harness_dir.exists():
         if verbose:
             sys.stdout.write("  Harness directory not found\n")
         return True  # Not an error, just not present
-    
+
     # Setup any harness dependencies
     if verbose:
         sys.stdout.write("  Harness setup complete\n")
@@ -217,31 +216,31 @@ def setup_skills(
     verbose: bool = False,
 ) -> dict[str, int]:
     """Setup skills from factory directory.
-    
+
     Args:
         skills_dir: Target directory for skills
         dry_run: If True, don't make changes
         verbose: If True, print details
-        
+
     Returns:
         Dict with counts: installed, skipped, errors
     """
     root = _get_thegent_root()
     factory_skills = root / "factory-seed" / "skills"
-    
+
     if not factory_skills.exists():
         if verbose:
             sys.stdout.write("  Factory skills directory not found\n")
         return {"installed": 0, "skipped": 0, "errors": 1}
-    
+
     counts: dict[str, int] = {"installed": 0, "skipped": 0, "errors": 0}
-    
+
     # Sync skills to target directory
     if skills_dir is None:
         skills_dir = root / "skills"
-    
+
     _sync_base_dir_skills(factory_skills, skills_dir, dry_run, counts, verbose)
-    
+
     return counts
 
 
@@ -253,7 +252,7 @@ def _sync_base_dir_skills(
     verbose: bool,
 ) -> None:
     """Sync skills from source to destination.
-    
+
     Args:
         src: Source directory
         dst: Destination directory
@@ -262,22 +261,22 @@ def _sync_base_dir_skills(
         verbose: If True, print details
     """
     import shutil
-    
+
     if not src.exists():
         return
-    
+
     if dry_run:
         if verbose:
             sys.stdout.write(f"  Would sync skills from {src} to {dst}\n")
         counts["installed"] += 1
         return
-    
+
     try:
         if dst.exists():
             shutil.rmtree(dst)
-        
+
         shutil.copytree(src, dst)
-        
+
         if verbose:
             sys.stdout.write(f"  Synced skills to {dst}\n")
         counts["installed"] += 1
@@ -295,7 +294,7 @@ def _sync_cursor_rules(
     verbose: bool,
 ) -> None:
     """Sync cursor rules from source to destination.
-    
+
     Args:
         src: Source file
         dst: Destination file
@@ -305,17 +304,17 @@ def _sync_cursor_rules(
     """
     if not src.exists():
         return
-    
+
     if dry_run:
         if verbose:
             sys.stdout.write(f"  Would sync cursor rules from {src} to {dst}\n")
         counts["installed"] += 1
         return
-    
+
     try:
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.write_text(src.read_text())
-        
+
         if verbose:
             sys.stdout.write(f"  Synced cursor rules to {dst}\n")
         counts["installed"] += 1
@@ -331,4 +330,5 @@ __all__ = [
     "setup_harness",
     "setup_skills",
     "_get_thegent_root",
+    "_sync_cursor_rules",
 ]

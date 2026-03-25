@@ -113,8 +113,7 @@ class LegacyParetoRouter:
         """Select (provider, model) using Pareto frontier + lexicographic ordering."""
         # Filter by hard constraints
         feasible = [
-            c for c in self._models
-            if c.cost_per_1k <= max_cost_per_call and c.quality_score >= min_quality_score
+            c for c in self._models if c.cost_per_1k <= max_cost_per_call and c.quality_score >= min_quality_score
         ]
         if not feasible:
             return None
@@ -141,7 +140,8 @@ class LegacyParetoRouter:
         frontier = []
         for c in candidates:
             dominated = any(
-                other.cost_per_1k <= c.cost_per_1k and other.quality_score >= c.quality_score
+                other.cost_per_1k <= c.cost_per_1k
+                and other.quality_score >= c.quality_score
                 and (other.cost_per_1k < c.cost_per_1k or other.quality_score > c.quality_score)
                 for other in candidates
                 if other is not c
@@ -181,10 +181,7 @@ class LegacyQuotaTracker:
 
     def check_quota(self, tokens: float, cost: float) -> bool:
         """Check if usage would exceed quota."""
-        return (
-            self.used_tokens + tokens <= self.max_tokens
-            and self.used_cost + cost <= self.max_cost
-        )
+        return self.used_tokens + tokens <= self.max_tokens and self.used_cost + cost <= self.max_cost
 
     def record_usage(self, tokens: float, cost: float) -> None:
         """Record token/cost usage."""
@@ -267,9 +264,9 @@ class TestRoutingParity:
                 )
                 if cliproxy_resp.status_code == 404:
                     pytest.skip("CLIProxy /v1/routing/select not yet implemented")
-                assert (
-                    cliproxy_resp.status_code == 200
-                ), f"CLIProxy returned {cliproxy_resp.status_code}: {cliproxy_resp.text}"
+                assert cliproxy_resp.status_code == 200, (
+                    f"CLIProxy returned {cliproxy_resp.status_code}: {cliproxy_resp.text}"
+                )
                 cliproxy_result = cliproxy_resp.json()
             except httpx.HTTPError as e:
                 pytest.skip(f"CLIProxy /v1/routing/select unavailable: {e}")
@@ -284,17 +281,11 @@ class TestRoutingParity:
                 cliproxy_provider = cliproxy_result.get("provider")
 
                 # Assert same model selected
-                assert (
-                    legacy_model == cliproxy_model_id
-                ), (
-                    f"Model mismatch for {case.name}: legacy={legacy_model}, "
-                    f"cliproxy={cliproxy_model_id}"
+                assert legacy_model == cliproxy_model_id, (
+                    f"Model mismatch for {case.name}: legacy={legacy_model}, cliproxy={cliproxy_model_id}"
                 )
-                assert (
-                    legacy_provider == cliproxy_provider
-                ), (
-                    f"Provider mismatch for {case.name}: legacy={legacy_provider}, "
-                    f"cliproxy={cliproxy_provider}"
+                assert legacy_provider == cliproxy_provider, (
+                    f"Provider mismatch for {case.name}: legacy={legacy_provider}, cliproxy={cliproxy_provider}"
                 )
 
                 # Verify constraints are satisfied
@@ -303,12 +294,10 @@ class TestRoutingParity:
                 cliproxy_quality = cliproxy_result.get("quality_score", 0.0)
 
                 assert cliproxy_cost <= case.max_cost_per_call + 0.001, (
-                    f"CLIProxy cost {cliproxy_cost} exceeds max "
-                    f"{case.max_cost_per_call} for {case.name}"
+                    f"CLIProxy cost {cliproxy_cost} exceeds max {case.max_cost_per_call} for {case.name}"
                 )
                 assert cliproxy_quality >= case.min_quality_score - 0.01, (
-                    f"CLIProxy quality {cliproxy_quality} below min "
-                    f"{case.min_quality_score} for {case.name}"
+                    f"CLIProxy quality {cliproxy_quality} below min {case.min_quality_score} for {case.name}"
                 )
 
                 _log.info(
@@ -337,9 +326,7 @@ class TestAdapterParity:
         # Sample OpenAI chat completions request
         openai_request = {
             "model": "claude-opus-4.6",
-            "messages": [
-                {"role": "user", "content": "Explain Python async/await"}
-            ],
+            "messages": [{"role": "user", "content": "Explain Python async/await"}],
             "max_tokens": 500,
             "temperature": 0.7,
         }
@@ -364,9 +351,7 @@ class TestAdapterParity:
                 # Verify basic structure
                 assert cliproxy_acp_req.get("model") == openai_request["model"]
                 assert len(cliproxy_acp_req.get("messages", [])) > 0
-                _log.info(
-                    "✓ Adapter parity: OpenAI -> ACP transformation valid"
-                )
+                _log.info("✓ Adapter parity: OpenAI -> ACP transformation valid")
         except httpx.HTTPError as e:
             pytest.skip(f"CLIProxy /v1/translate/acp unavailable: {e}")
 
@@ -561,14 +546,14 @@ class TestCutoverReadiness:
             "-" * 80,
         ]
         for s in subsystems:
-            table_lines.append(
-                f"{s['name']:<30} {s['python_locs']:<15} {s['go_locs']:<15} {s['status']:<20}"
-            )
-        table_lines.extend([
-            "-" * 80,
-            f"{'TOTAL':<30} {total_python:<15} {total_go:<15} ({reduction_pct:.1f}% reduction)",
-            "=" * 80,
-        ])
+            table_lines.append(f"{s['name']:<30} {s['python_locs']:<15} {s['go_locs']:<15} {s['status']:<20}")
+        table_lines.extend(
+            [
+                "-" * 80,
+                f"{'TOTAL':<30} {total_python:<15} {total_go:<15} ({reduction_pct:.1f}% reduction)",
+                "=" * 80,
+            ]
+        )
 
         # Print to stdout for visibility
         for line in table_lines:

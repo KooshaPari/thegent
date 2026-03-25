@@ -72,7 +72,9 @@ def status_tool_impl(
     start_time = time.perf_counter()
     result = status_impl(session_id=session_id, include_contract=include_contract)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(content=json.dumps(result).decode().decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+    return ToolResult(
+        content=json.dumps(result).decode().decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms}
+    )
 
 
 def logs_tool_impl(

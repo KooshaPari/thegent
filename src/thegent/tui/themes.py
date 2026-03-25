@@ -5,7 +5,7 @@ Provides theme management with built-in themes and custom theme support.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -45,7 +45,6 @@ class ThemeColors(SerializableMixin):
     # Border colors
     border: str = "#444444"
     border_focus: str = "#00ff00"
-
 
     @classmethod
     def from_dict(cls, data: dict[str, str]) -> ThemeColors:
@@ -98,7 +97,6 @@ class ThemeDefinition(SerializableMixin):
             panel=c.panel,
             dark=self.dark,
         )
-
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ThemeDefinition:
@@ -362,7 +360,7 @@ class ThemeManager:
         """Export a theme to a JSON file."""
         theme = self._themes.get(name)
         if theme:
-            path.write_text(json.dumps(theme.to_dict().decode(), indent=2))
+            path.write_text(json.dumps(theme.to_dict(), indent=2))
             return True
         return False
 

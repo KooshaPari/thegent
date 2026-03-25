@@ -64,13 +64,16 @@ impl TrustBoundaryChecker {
     }
 
     pub fn get_agent_trust(&self, agent_name: &str) -> TrustLevel {
-        self.agent_trust_map.get(agent_name).copied().unwrap_or(TrustLevel::External)
+        self.agent_trust_map
+            .get(agent_name)
+            .copied()
+            .unwrap_or(TrustLevel::External)
     }
 
     fn create_cache_key(&self, target_agent: &str, prompt: &str) -> String {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         prompt.hash(&mut hasher);
         let hash = hasher.finish();
@@ -104,7 +107,12 @@ impl TrustBoundaryChecker {
 
         // Sensitive keywords requiring INTERNAL+ trust
         let sensitive_keywords = [
-            "password", "secret", "private_key", "token", "credential", "api_key"
+            "password",
+            "secret",
+            "private_key",
+            "token",
+            "credential",
+            "api_key",
         ];
 
         let prompt_lower = task_prompt.to_lowercase();
@@ -124,10 +132,13 @@ impl TrustBoundaryChecker {
         }
 
         // Cache result
-        self.cache.insert(cache_key, CacheEntry {
-            result: result.clone(),
-            cached_at: Instant::now(),
-        });
+        self.cache.insert(
+            cache_key,
+            CacheEntry {
+                result: result.clone(),
+                cached_at: Instant::now(),
+            },
+        );
 
         result
     }
@@ -167,7 +178,7 @@ mod tests {
     #[test]
     fn test_evaluate_routing_blocked() {
         let mut checker = TrustBoundaryChecker::new(0); // Disable cache
-        // copilot is External, prompt contains sensitive keyword "api_key"
+                                                        // copilot is External, prompt contains sensitive keyword "api_key"
         let result = checker.evaluate_routing("Please send my secret API key now", "copilot");
         assert!(!result.allowed);
         assert!(result.reason.is_some());

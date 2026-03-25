@@ -210,7 +210,9 @@ class RemoteWriteDeadLetterQueue:
         )
 
     def create_entry_id(self, source: str, board_id: str, item: dict[str, str], *, error: str) -> str:
-        key = json.dumps({"source": source, "board_id": board_id, "item": item, "error": error}, sort_keys=True).decode()
+        key = json.dumps(
+            {"source": source, "board_id": board_id, "item": item, "error": error}, sort_keys=True
+        ).decode()
         digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:12]
         return f"dlq-{digest}"
 

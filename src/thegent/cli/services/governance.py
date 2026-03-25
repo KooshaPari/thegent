@@ -69,16 +69,7 @@ class _SchemaOutputModel(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-def _load_vetter_components() -> tuple[
-    Any,
-    Any,
-    Any,
-    Any,
-    Any,
-    Any,
-    "VetterPolicy",
-    Any,
-]:
+def _load_vetter_components() -> tuple[Any, Any, Any, Any, Any, Any, Any, Any]:
     from thegent.govern.vetter.checks import (
         DiffSizeVetterCheck,
         QualityScoreVetterCheck,

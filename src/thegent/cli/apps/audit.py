@@ -13,6 +13,27 @@ console = Console()
 app = typer.Typer(help="Audit system health, security, and planning risk.")
 
 
+def _compliance_report_cmd(*, format: str = "rich") -> None:
+    from thegent.cli.commands.observability_governance_impl import get_compliance_report_impl
+
+    report = get_compliance_report_impl()
+    if format == "json":
+        console.print_json(data=report)
+        return
+
+    table = Table(title="Compliance Report")
+    table.add_column("Section", style="cyan")
+    table.add_column("Value", style="green")
+    for key, value in report.items():
+        rendered: str
+        if isinstance(value, (dict, list)):
+            rendered = str(value)
+        else:
+            rendered = str(value)
+        table.add_row(key, rendered)
+    console.print(table)
+
+
 @app.command("all", help="Run comprehensive system health, security, and planning audit.")
 def audit_all(
     types: list[str] | None = typer.Option(None, "--type", "-t", help="Specific audit types to run"),
@@ -44,10 +65,10 @@ def audit_plan():
 
 @app.command("security", help="Audit data protection, privacy, and compliance.")
 def audit_security(format: str = typer.Option("rich", "--format", "-F")):
-    from thegent.cli.commands.cli import compliance_report_cmd, data_protection_cmd
+    from thegent.cli.commands.governance_data_protection_cmds import data_protection_cmd
 
     data_protection_cmd(format=format)
-    compliance_report_cmd(format=format)
+    _compliance_report_cmd(format=format)
 
 
 @app.command("sweep", help="Run policy drift sweep (WP-3005).")

@@ -167,10 +167,8 @@ class GitNative:
         Returns:
             Dict mapping remote name to URL
         """
-        if _native_available:
-            import thegent_git
-            if hasattr(thegent_git, "list_remotes"):
-                return thegent_git.list_remotes(self.repo_path)
+        if _native_available and hasattr(thegent_git, "list_remotes"):
+            return thegent_git.list_remotes(self.repo_path)
 
         # Fallback to subprocess
         result: dict[str, str] = {}

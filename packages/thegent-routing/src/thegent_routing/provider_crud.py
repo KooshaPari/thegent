@@ -26,6 +26,7 @@ def _load_json(path: Path) -> dict[str, Any]:
         return {}
     try:
         import orjson as json
+
         return json.loads(path.read_text())
     except Exception:
         return {}
@@ -35,15 +36,16 @@ def _save_json(path: Path, data: dict[str, Any]) -> None:
     """Save JSON file safely."""
     path.parent.mkdir(parents=True, exist_ok=True)
     import orjson as json
+
     path.write_text(json.dumps(data, indent=2))
 
 
 def list_providers(include_credentials: bool = False) -> list[dict[str, Any]]:
     """List all configured providers.
-    
+
     Args:
         include_credentials: If True, include API keys
-        
+
     Returns:
         List of provider dicts
     """
@@ -54,20 +56,17 @@ def list_providers(include_credentials: bool = False) -> list[dict[str, Any]]:
         if not include_credentials:
             entry.pop("api_key", None)
             if "login" in entry:
-                entry["login"] = {
-                    k: v for k, v in entry["login"].items() 
-                    if k != "credentials"
-                }
+                entry["login"] = {k: v for k, v in entry["login"].items() if k != "credentials"}
         result.append(entry)
     return result
 
 
 def get_provider(name: str) -> dict[str, Any] | None:
     """Get a specific provider.
-    
+
     Args:
         name: Provider name
-        
+
     Returns:
         Provider config or None if not found
     """
@@ -87,7 +86,7 @@ def add_provider(
     base_url_env: str | None = None,
 ) -> tuple[bool, str]:
     """Add a new provider.
-    
+
     Args:
         name: Provider name
         base_url: API base URL
@@ -98,15 +97,15 @@ def add_provider(
         extra_aliases: Optional extra model aliases
         api_key: Optional API key
         base_url_env: Optional env var for base URL
-        
+
     Returns:
         Tuple of (success, message)
     """
     name = name.lower().strip()
-    
+
     if name in _OAUTH_ONLY_PROVIDERS:
         return False, f"Provider '{name}' uses OAuth only. Use: thegent cliproxy login {name}"
-    
+
     providers = _load_json(_PROVIDER_DEFINITIONS_PATH)
 
     if name in providers:
@@ -135,7 +134,7 @@ def add_provider(
 
     providers[name] = provider_cfg
     _save_json(_PROVIDER_DEFINITIONS_PATH, providers)
-    
+
     logger.info(f"Added provider: {name}")
     return True, f"Provider '{name}' added successfully"
 
@@ -184,7 +183,7 @@ def update_provider(
 
     providers[name] = cfg
     _save_json(_PROVIDER_DEFINITIONS_PATH, providers)
-    
+
     logger.info(f"Updated provider: {name}")
     return True, f"Provider '{name}' updated successfully"
 
@@ -211,7 +210,7 @@ def list_credentials() -> list[dict[str, Any]]:
     """List all credentials."""
     config = _load_json(_CLIPROXY_CONFIG_PATH)
     result = []
-    
+
     providers = config.get("providers", {})
     for name, cfg in providers.items():
         has_key = bool(cfg.get("api_key"))
@@ -219,13 +218,15 @@ def list_credentials() -> list[dict[str, Any]]:
         if has_key:
             key = cfg.get("api_key", "")
             key_preview = f"{key[:4]}...{key[-4:]}" if len(key) > 8 else "***"
-        
-        result.append({
-            "provider": name,
-            "has_api_key": has_key,
-            "key_preview": key_preview,
-        })
-    
+
+        result.append(
+            {
+                "provider": name,
+                "has_api_key": has_key,
+                "key_preview": key_preview,
+            }
+        )
+
     return result
 
 
@@ -246,25 +247,25 @@ def remove_api_key(provider: str) -> tuple[bool, str]:
 def validate_provider(name: str) -> tuple[bool, str, dict[str, Any]]:
     """Validate a provider configuration."""
     provider = get_provider(name)
-    
+
     if not provider:
         return False, f"Provider '{name}' not found", {}
-    
+
     details = {
         "has_base_url": bool(provider.get("base_url")),
         "has_model": bool(provider.get("model")),
         "has_api_key": bool(_get_api_key(name)),
     }
-    
+
     issues = []
     if not details["has_base_url"]:
         issues.append("Missing base URL")
     if not details["has_model"]:
         issues.append("Missing default model")
-    
+
     if issues:
         return False, f"Issues: {', '.join(issues)}", details
-    
+
     return True, "Provider configuration valid", details
 
 

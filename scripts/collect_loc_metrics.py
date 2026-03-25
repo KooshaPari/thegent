@@ -94,7 +94,7 @@ def _try_tokei(src: Path) -> dict | None:
             "blanks": python_data.get("blanks", 0),
             "comments": python_data.get("comments", 0),
         }
-    except (json.JSONDecodeError, KeyError):
+    except json.JSONDecodeError, KeyError:
         return None
 
 

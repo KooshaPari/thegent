@@ -33,10 +33,7 @@ class TestTaskWorkerPoolRaceConditions:
 
     def test_concurrent_task_submission(self, pool: TaskWorkerPool) -> None:
         """Multiple tasks submitted concurrently should all be persisted."""
-        tasks = [
-            TaskRequest(id=f"task_{i}", command=["echo", str(i)])
-            for i in range(20)
-        ]
+        tasks = [TaskRequest(id=f"task_{i}", command=["echo", str(i)]) for i in range(20)]
         for t in tasks:
             pool.submit_task(t)
 
@@ -95,10 +92,12 @@ class TestTaskWorkerPoolRaceConditions:
 
         # Submit 10 tasks
         for i in range(10):
-            pool.submit_task(TaskRequest(
-                id=f"task_{i}",
-                command=["echo", f"task_{i}"],
-            ))
+            pool.submit_task(
+                TaskRequest(
+                    id=f"task_{i}",
+                    command=["echo", f"task_{i}"],
+                )
+            )
 
         # Track which tasks get claimed (via file rename)
         original_worker_loop = pool._worker_loop
@@ -127,9 +126,7 @@ class TestTaskWorkerPoolRaceConditions:
         await asyncio.gather(*workers)
 
         # No duplicate claims
-        assert len(claimed) == len(set(claimed)), (
-            f"Duplicate task claims detected: {claimed}"
-        )
+        assert len(claimed) == len(set(claimed)), f"Duplicate task claims detected: {claimed}"
 
 
 class TestTaskWorkerPoolSubmitResult:

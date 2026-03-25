@@ -157,7 +157,7 @@ def test_loop_controller_handles_takeover(mock_run, controller):
     session_dir.mkdir(parents=True, exist_ok=True)
     import json
 
-    (session_dir / "takeover.json").write_text(json.dumps({"prompt": "Takeover Prompt"}).decode().decode())
+    (session_dir / "takeover.json").write_text(json.dumps({"prompt": "Takeover Prompt"}).decode())
 
     with patch.object(controller.checker, "decide") as mock_decide:
         mock_decide.return_value = CheckerResult(decision=CheckerDecision.KILL, reason="Done")

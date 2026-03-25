@@ -89,7 +89,7 @@ class TestLocCollectorOutput:
         """collect_metrics() output must be JSON-serializable."""
         mod = _import_collect_module()
         result = mod.collect_metrics()
-        serialized = json.dumps(result).decode().decode()
+        serialized = json.dumps(result).decode()
         reparsed = json.loads(serialized)
         assert reparsed["total_loc"] == result["total_loc"]
 

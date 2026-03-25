@@ -178,7 +178,7 @@ class TestLoadPreviousHealthSnapshotAllBranches:
             "",  # empty line -> continue (line 1252) [after match in file = before match in reversed]
             "   ",  # whitespace -> empty after strip -> continue
             "not-json",  # bad JSON -> continue (line 1255-1256)
-            json.dumps({"record_type": "other_type", "scope_key": scope}).decode().decode(),  # wrong type (line 1258)
+            json.dumps({"record_type": "other_type", "scope_key": scope}).decode(),  # wrong type (line 1258)
         ]
         log_path = tmp_path / "health-snapshots.jsonl"
         log_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -1322,7 +1322,7 @@ class TestHealthTrendMaxItemsBreak:
                 "blocked_ratio": 0.1,
                 "blocked_count": 1,
             }
-            records.append(json.dumps(rec, sort_keys=True).decode().decode())
+            records.append(json.dumps(rec, sort_keys=True).decode())
 
         log_path = tmp_path / "health-snapshots.jsonl"
         log_path.write_text("\n".join(records) + "\n", encoding="utf-8")
@@ -1370,7 +1370,7 @@ class TestHealthTrendTsParseError:
                 "blocked_ratio": 0.0,
                 "blocked_count": 0,
             }
-            records.append(json.dumps(rec, sort_keys=True).decode().decode())
+            records.append(json.dumps(rec, sort_keys=True).decode())
 
         log_path = tmp_path / "health-snapshots.jsonl"
         log_path.write_text("\n".join(records) + "\n", encoding="utf-8")
@@ -1421,7 +1421,7 @@ class TestHealthTrendDensity:
                 "blocked_ratio": 0.0,
                 "blocked_count": 0,
             }
-            records.append(json.dumps(rec, sort_keys=True).decode().decode())
+            records.append(json.dumps(rec, sort_keys=True).decode())
 
         log_path = tmp_path / "health-snapshots.jsonl"
         log_path.write_text("\n".join(records) + "\n", encoding="utf-8")
@@ -1451,7 +1451,7 @@ class TestResolveExitCodeStringValueError:
 
         meta = {"pid": 123, "status": "exited", "exit_code": "not-a-number"}
         meta_path = tmp_path / "sess_str.json"
-        meta_path.write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta).decode(), encoding="utf-8")
 
         with (
             patch("thegent.cli.commands.impl._find_session_meta", return_value=meta_path),
@@ -1486,9 +1486,9 @@ class TestEventsImplBadJsonContinue:
 
         registry = tmp_path / "run_registry.jsonl"
         lines = [
-            json.dumps({"run_id": "r1", "event": "start"}).decode().decode(),
+            json.dumps({"run_id": "r1", "event": "start"}).decode(),
             "not-valid-json",
-            json.dumps({"run_id": "r2", "event": "end"}).decode().decode(),
+            json.dumps({"run_id": "r2", "event": "end"}).decode(),
         ]
         registry.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

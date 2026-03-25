@@ -253,7 +253,7 @@ class TestWriteMcpConfig:
         cfg = JetBrainsConfig(ide_type="webstorm", config_dir=tmp_path / "WebStorm2024.1")
         cfg.config_dir.mkdir(parents=True)
         existing = {"mcpServers": {"other-tool": {"url": "http://other.example/mcp"}}}
-        cfg.mcp_config_path.write_text(json.dumps(existing).decode().decode())
+        cfg.mcp_config_path.write_text(json.dumps(existing).decode())
 
         integration.write_mcp_config(cfg)
         data = json.loads(cfg.mcp_config_path.read_text())
@@ -265,7 +265,7 @@ class TestWriteMcpConfig:
         cfg = JetBrainsConfig(ide_type="clion", config_dir=tmp_path / "CLion2024.1")
         cfg.config_dir.mkdir()
         old = {"mcpServers": {"thegent": {"url": "http://old-url/mcp"}}}
-        cfg.mcp_config_path.write_text(json.dumps(old).decode().decode())
+        cfg.mcp_config_path.write_text(json.dumps(old).decode())
 
         new_url = "http://localhost:3847/mcp"
         integration2 = JetBrainsIntegration(mcp_server_url=new_url)
@@ -322,7 +322,7 @@ class TestReadExistingConfig:
         cfg = JetBrainsConfig(ide_type="intellij", config_dir=tmp_path / "IntelliJ")
         cfg.config_dir.mkdir()
         payload = {"mcpServers": {"thegent": {"url": "http://localhost:3847/mcp"}}}
-        cfg.mcp_config_path.write_text(json.dumps(payload).decode().decode())
+        cfg.mcp_config_path.write_text(json.dumps(payload).decode())
 
         result = integration.read_existing_config(cfg)
         assert result == payload
@@ -339,7 +339,7 @@ class TestReadExistingConfig:
         """Returns None when mcp.json root is not a JSON object. @trace FR-IDE-001"""
         cfg = JetBrainsConfig(ide_type="webstorm", config_dir=tmp_path / "WebStorm")
         cfg.config_dir.mkdir()
-        cfg.mcp_config_path.write_text(json.dumps([1, 2, 3]).decode().decode())
+        cfg.mcp_config_path.write_text(json.dumps([1, 2, 3]).decode())
 
         assert integration.read_existing_config(cfg) is None
 
@@ -351,7 +351,7 @@ class TestReadExistingConfig:
             "mcpServers": {"thegent": {"url": "http://localhost:3847/mcp"}},
             "extra": "value",
         }
-        cfg.mcp_config_path.write_text(json.dumps(payload).decode().decode())
+        cfg.mcp_config_path.write_text(json.dumps(payload).decode())
 
         result = integration.read_existing_config(cfg)
         assert result is not None
@@ -376,7 +376,7 @@ class TestIsMcpPluginInstalled:
         cfg = JetBrainsConfig(ide_type="intellij", config_dir=tmp_path / "IntelliJ")
         cfg.config_dir.mkdir()
         payload = {"mcpServers": {"thegent": {"url": "http://localhost:3847/mcp"}}}
-        cfg.mcp_config_path.write_text(json.dumps(payload).decode().decode())
+        cfg.mcp_config_path.write_text(json.dumps(payload).decode())
 
         assert integration.is_mcp_plugin_installed(cfg) is True
 
@@ -385,7 +385,7 @@ class TestIsMcpPluginInstalled:
         cfg = JetBrainsConfig(ide_type="goland", config_dir=tmp_path / "GoLand")
         cfg.config_dir.mkdir()
         payload = {"mcpServers": {"other-server": {"url": "http://other/mcp"}}}
-        cfg.mcp_config_path.write_text(json.dumps(payload).decode().decode())
+        cfg.mcp_config_path.write_text(json.dumps(payload).decode())
 
         assert integration.is_mcp_plugin_installed(cfg) is False
 

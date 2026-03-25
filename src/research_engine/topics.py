@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 
 
 class TopicExtractor:
@@ -44,5 +44,5 @@ class TopicExtractor:
         """Extract topics from manual research-topics.yaml config."""
         if not self._config.exists():
             return []
-        data = yaml.safe_load(self._config.read_text())
+        data = yaml_load(self._config.read_text())
         return [str(t) for t in (data or {}).get("topics", [])]

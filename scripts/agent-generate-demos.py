@@ -70,7 +70,7 @@ def generate_gif_from_tape(tape_path: Path, output_dir: Path) -> bool:
     # Check if VHS is installed
     try:
         subprocess.run(["vhs", "--version"], capture_output=True, check=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         print(f"Warning: VHS not installed. Skipping {tape_path.name}", file=sys.stderr)
         return False
 

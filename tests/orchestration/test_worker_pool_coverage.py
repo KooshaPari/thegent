@@ -278,7 +278,7 @@ class TestTaskWorkerPoolGetResult:
             "ended_at": "2025-01-01T00:00:00Z",
         }
         result_file = pool.results / "task-001.json"
-        result_file.write_text(json.dumps(result_data).decode().decode())
+        result_file.write_text(json.dumps(result_data).decode())
 
         result = pool.get_result("task-001", timeout=1)
 
@@ -298,7 +298,7 @@ class TestTaskWorkerPoolGetResult:
             "duration_s": 1.0,
         }
         result_file = pool.results / "task-002.json"
-        result_file.write_text(json.dumps(result_data).decode().decode())
+        result_file.write_text(json.dumps(result_data).decode())
 
         pool.get_result("task-002", timeout=1)
 

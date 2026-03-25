@@ -8,7 +8,7 @@ with timestamp, model, prompt, and response to configurable locations.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, UTC
@@ -278,7 +278,7 @@ class ConversationDumper:
 
             # Try JSON first
             if dump_path.suffix == ".json":
-                data = json_loads(content)
+                data = json.loads(content)
                 return ConversationRecord(
                     conversation_id=data["conversation_id"],
                     timestamp=datetime.fromisoformat(data["timestamp"]),

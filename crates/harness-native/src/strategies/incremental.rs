@@ -3,10 +3,7 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn run(
-    _harness_home: &Path,
     real_cmd: &Path,
-    _cache_key: &str,
-    _ttl: u64,
     args: &[&str],
 ) -> Result<i32, String> {
     // TODO: Incremental execution

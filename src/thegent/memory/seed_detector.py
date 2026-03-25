@@ -60,7 +60,6 @@ class Seed(SerializableMixin):
             self.source = SeedSource(self.source)
 
 
-
 class SeedDetector:
     """Detects idea seeds using pattern matching and optional LLM classification."""
 

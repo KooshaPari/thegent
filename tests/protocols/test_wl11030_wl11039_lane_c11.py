@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -84,12 +84,17 @@ def test_wl11034_resolve_turn_submit_response_target_rejects_missing_turn() -> N
 def test_wl11035_resolve_turn_submit_response_target_rejects_bad_request_id_when_required() -> None:
     # @trace WL-11035
     with pytest.raises(ValueError, match="Turn submit response target unresolved"):
-        server._resolve_turn_submit_response_target(server._build_turn_submit_response_phase(True, {"id": 1}, _turn_payload(), None))  # type: ignore[arg-type]
+        server._resolve_turn_submit_response_target(
+            server._build_turn_submit_response_phase(True, {"id": 1}, _turn_payload(), None)
+        )  # type: ignore[arg-type]
 
 
 def test_wl11036_extract_turn_submit_approval_payload_diff_accepts_none() -> None:
     # @trace WL-11036
-    assert server._extract_turn_submit_approval_payload_diff({"id": "approval-1", "status": "requested", "diff": None}) is None
+    assert (
+        server._extract_turn_submit_approval_payload_diff({"id": "approval-1", "status": "requested", "diff": None})
+        is None
+    )
 
 
 def test_wl11037_extract_turn_submit_approval_payload_diff_rejects_non_string() -> None:

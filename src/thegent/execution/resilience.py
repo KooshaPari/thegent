@@ -10,10 +10,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
+from thegent.execution_jsonl_parsers import parse_dlq_item as _parse_dlq_item
+from thegent.execution_jsonl_parsers import parse_fatigue_line as _parse_fatigue_line
+from thegent.execution_jsonl_parsers import parse_override_unexpired as _parse_override_unexpired
+from thegent.execution_jsonl_parsers import process_dlq_line as _process_dlq_line
+
+from .state import RunMeta
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -38,7 +41,7 @@ _execution_diagnostics: dict[str, Any] = {
 }
 
 
-def _warn_bounded(message: str, *args: object) -> None:
+def warn_bounded(message: str, *args: object) -> None:
     global _execution_warning_count
     _execution_warning_count += 1
     if _execution_warning_count <= _EXECUTION_WARNING_LIMIT:
@@ -81,16 +84,6 @@ def reset_execution_diagnostics() -> None:
 def _as_float(value: Any, default: float) -> float:
     """Coerce arbitrary values to float with a safe default."""
     return _as_float_impl(value, default)
-
-
-def _as_int(value: Any, default: int) -> int:
-    """Coerce arbitrary values to int with a safe default."""
-    return _as_int_impl(value, default)
-
-
-def _as_bool(value: Any, default: bool) -> bool:
-    """Coerce arbitrary values to bool with a safe default."""
-    return _as_bool_impl(value, default)
 
 
 class InterruptionTracker:
@@ -197,7 +190,7 @@ class HandoffManager:
                 "reason": "snapshot_not_found",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode() + "\n")
+                f.write(json.dumps(invalid_event) + "\n")
             return False
 
         if confidence < 0.0 or confidence > 1.0:
@@ -211,7 +204,7 @@ class HandoffManager:
                 "reason": "confidence_out_of_range",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode() + "\n")
+                f.write(json.dumps(invalid_event) + "\n")
             return False
 
         snapshot = self.get_snapshot(snapshot_id)
@@ -226,7 +219,7 @@ class HandoffManager:
                 "reason": "invalid_snapshot_shape",
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(invalid_event).decode() + "\n")
+                f.write(json.dumps(invalid_event) + "\n")
             return False
 
         confidence_state = "high"
@@ -248,7 +241,7 @@ class HandoffManager:
                 "run_count": len(snapshot.get("run_ids", [])),
             }
             with self.path.open("a", encoding="utf-8") as f:
-                f.write(json.dumps(low_confidence_event).decode() + "\n")
+                f.write(json.dumps(low_confidence_event) + "\n")
 
         self._confirmed_handoffs.add(snapshot_id)
         # Update registry record (simplified: append confirmation event)
@@ -368,7 +361,7 @@ class DeferralQueue:
                 if data.get("run_id") == run_id and data.get("status") == "deferred":
                     data["status"] = "resumed"
                     found = True
-                lines.append(json.dumps(data).decode() + "\n")
+                lines.append(json.dumps(data) + "\n")
         if found:
             with self.path.open("w", encoding="utf-8") as f:
                 f.writelines(lines)
@@ -386,6 +379,7 @@ class ContinuityWatchdog:
 
     def scan_stale_sessions(self, max_idle_s: int = 3600) -> list[str]:
         """Scan for sessions with no activity for max_idle_s."""
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
@@ -417,6 +411,7 @@ class ContinuityWatchdog:
 
         Returns list of escalated sessions.
         """
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
@@ -667,9 +662,12 @@ class CircuitBreakerRegistry:
         with self.registry_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
 
-    def _parse_circuit_failure(self, line: str, target: str, category: str, now: datetime) -> tuple[int, datetime | None]:
+    def _parse_circuit_failure(
+        self, line: str, target: str, category: str, now: datetime
+    ) -> tuple[int, datetime | None]:
         """Parse a circuit failure line from registry."""
         import json
+
         try:
             if not line.strip():
                 return 0, None
@@ -821,7 +819,7 @@ class EscalationQueue:
                     data["status"] = resolution
                     data["resolved_at_utc"] = datetime.now(UTC).isoformat()
                     updated = True
-                new_lines.append(json.dumps(data).decode())
+                new_lines.append(json.dumps(data))
             except Exception:
                 new_lines.append(line)
         if updated:

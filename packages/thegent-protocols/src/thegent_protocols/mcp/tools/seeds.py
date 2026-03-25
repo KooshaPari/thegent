@@ -23,9 +23,12 @@ from datetime import UTC
 from thegent_protocols.mcp.cli_bridge import cli as _cli
 from thegent_core.memory.seed_detector import SeedDetector, SeedSource
 
+
 # Lazy alias — resolved on first use to avoid CLI ↔ Protocols cycle.
 def _resolve_cwd(*args, **kwargs):  # type: ignore[override]
     return _cli._resolve_cwd(*args, **kwargs)
+
+
 from thegent_core.memory.seed_storage import SeedStorage
 
 _log = logging.getLogger(__name__)

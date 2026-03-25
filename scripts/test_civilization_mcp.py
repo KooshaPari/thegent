@@ -17,19 +17,14 @@ import json
 try:
     try:
         from agent_identity_system import GlobalAgentRegistry, AgentIdentityFactory, AgentRole, AgentLevel
-        from civilization_mcp_server import (
-            CivilizationMCPServer,
-            AgentMessageBroker,
-            AgentMessage,
-            create_mcp_server
-        )
+        from civilization_mcp_server import CivilizationMCPServer, AgentMessageBroker, AgentMessage, create_mcp_server
     except ImportError:
         from scripts.agent_identity_system import GlobalAgentRegistry, AgentIdentityFactory, AgentRole, AgentLevel
         from scripts.civilization_mcp_server import (
             CivilizationMCPServer,
             AgentMessageBroker,
             AgentMessage,
-            create_mcp_server
+            create_mcp_server,
         )
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -50,9 +45,7 @@ class TestPhase4AResources(unittest.TestCase):
 
         # Create test agents
         self.l1_agent = self.factory.create_l1_agent("test_project")
-        self.l2_agent = self.factory.create_l2_agent(
-            "test_project", AgentRole.BUILDER, self.l1_agent.agent_id
-        )
+        self.l2_agent = self.factory.create_l2_agent("test_project", AgentRole.BUILDER, self.l1_agent.agent_id)
         self.l3_agent = self.factory.create_l3_agent("test_project", self.l2_agent.agent_id)
 
     def test_resource_agent_read(self):
@@ -60,56 +53,56 @@ class TestPhase4AResources(unittest.TestCase):
         uri = f"civilization://agents/{self.l1_agent.agent_id}"
         result = self.server.read_resource(uri)
 
-        self.assertIn("agent_id", result)
-        self.assertEqual(result["agent_id"], self.l1_agent.agent_id)
+        assert "agent_id" in result
+        assert result["agent_id"] == self.l1_agent.agent_id
 
     def test_resource_project_read(self):
         """Test reading project resource."""
         uri = "civilization://projects/test_project"
         result = self.server.read_resource(uri)
 
-        self.assertIn("agents", result)
-        self.assertEqual(result["count"], 3)  # L1 + L2 + L3
+        assert "agents" in result
+        assert result["count"] == 3  # L1 + L2 + L3
 
     def test_resource_statistics_read(self):
         """Test reading statistics resource."""
         uri = "civilization://statistics"
         result = self.server.read_resource(uri)
 
-        self.assertIn("total_agents", result)
-        self.assertIn("by_level", result)
-        self.assertEqual(result["total_agents"], 3)
+        assert "total_agents" in result
+        assert "by_level" in result
+        assert result["total_agents"] == 3
 
     def test_resource_hierarchy_read(self):
         """Test reading hierarchy resource."""
         uri = f"civilization://hierarchy/{self.l1_agent.agent_id}"
         result = self.server.read_resource(uri)
 
-        self.assertIn("parent_id", result)
-        self.assertEqual(result["parent_id"], self.l1_agent.agent_id)
+        assert "parent_id" in result
+        assert result["parent_id"] == self.l1_agent.agent_id
 
     def test_resource_active_read(self):
         """Test reading active agents resource."""
         uri = "civilization://active"
         result = self.server.read_resource(uri)
 
-        self.assertIn("active_agents", result)
-        self.assertGreaterEqual(result["count"], 3)
+        assert "active_agents" in result
+        assert result["count"] >= 3
 
     def test_resource_stale_read(self):
         """Test reading stale agents resource."""
         uri = "civilization://stale"
         result = self.server.read_resource(uri)
 
-        self.assertIn("stale_agents", result)
-        self.assertEqual(result["count"], 0)  # No stale agents yet
+        assert "stale_agents" in result
+        assert result["count"] == 0  # No stale agents yet
 
     def test_resource_unknown(self):
         """Test reading unknown resource."""
         uri = "civilization://unknown"
         result = self.server.read_resource(uri)
 
-        self.assertIn("error", result)
+        assert "error" in result
 
 
 class TestPhase4ATools(unittest.TestCase):
@@ -126,60 +119,50 @@ class TestPhase4ATools(unittest.TestCase):
 
     def test_tool_update_heartbeat(self):
         """Test update_heartbeat tool."""
-        result = self.server.call_tool("update_heartbeat", {
-            "agent_id": self.l1_agent.agent_id
-        })
+        result = self.server.call_tool("update_heartbeat", {"agent_id": self.l1_agent.agent_id})
 
-        self.assertTrue(result.get("success"))
-        self.assertIn("timestamp", result)
+        assert result.get("success")
+        assert "timestamp" in result
 
     def test_tool_unregister_agent(self):
         """Test unregister_agent tool."""
-        result = self.server.call_tool("unregister_agent", {
-            "agent_id": self.l1_agent.agent_id
-        })
+        result = self.server.call_tool("unregister_agent", {"agent_id": self.l1_agent.agent_id})
 
-        self.assertTrue(result.get("success"))
+        assert result.get("success")
 
     def test_tool_get_civilization_status(self):
         """Test get_civilization_status tool."""
         result = self.server.call_tool("get_civilization_status", {})
 
-        self.assertIn("total_agents", result)
-        self.assertIn("by_level", result)
+        assert "total_agents" in result
+        assert "by_level" in result
 
     def test_tool_query_agents_no_filter(self):
         """Test query_agents with no filters."""
-        result = self.server.call_tool("query_agents", {
-            "filters": {}
-        })
+        result = self.server.call_tool("query_agents", {"filters": {}})
 
-        self.assertIn("agents", result)
-        self.assertIn("count", result)
+        assert "agents" in result
+        assert "count" in result
 
     def test_tool_query_agents_by_project(self):
         """Test query_agents filtered by project."""
-        result = self.server.call_tool("query_agents", {
-            "filters": {"project": "test_project"}
-        })
+        result = self.server.call_tool("query_agents", {"filters": {"project": "test_project"}})
 
-        self.assertIn("agents", result)
-        self.assertEqual(result["count"], 1)  # Just L1
+        assert "agents" in result
+        assert result["count"] == 1  # Just L1
 
     def test_tool_query_agents_by_status_active(self):
         """Test query_agents filtered by status (active)."""
-        result = self.server.call_tool("query_agents", {
-            "filters": {"status": "active"}
-        })
+        result = self.server.call_tool("query_agents", {"filters": {"status": "active"}})
 
-        self.assertIn("agents", result)
-        self.assertGreaterEqual(result["count"], 1)
+        assert "agents" in result
+        assert result["count"] >= 1
 
     def test_tool_unknown(self):
         """Test calling unknown tool."""
         result = self.server.call_tool("unknown_tool", {})
 
-        self.assertIn("error", result)
+        assert "error" in result
 
 
 class TestPhase4BHeartbeatStreaming(unittest.TestCase):
@@ -203,6 +186,7 @@ class TestPhase4BHeartbeatStreaming(unittest.TestCase):
 
     def test_heartbeat_stream_starts(self):
         """Test heartbeat stream can start."""
+
         async def run_test():
             task = asyncio.create_task(self.server.stream_heartbeats())
             await asyncio.sleep(0.1)
@@ -210,37 +194,37 @@ class TestPhase4BHeartbeatStreaming(unittest.TestCase):
             await task
 
         self.loop.run_until_complete(run_test())
-        self.assertFalse(self.server.heartbeat_stream_running)
+        assert not self.server.heartbeat_stream_running
 
     def test_subscribe_heartbeats(self):
         """Test subscribing to heartbeats."""
+
         async def run_test():
             await self.server.subscribe_heartbeats("test_subscriber")
-            self.assertIn("test_subscriber", self.server.heartbeat_subscribers)
+            assert "test_subscriber" in self.server.heartbeat_subscribers
 
         self.loop.run_until_complete(run_test())
 
     def test_unsubscribe_heartbeats(self):
         """Test unsubscribing from heartbeats."""
+
         async def run_test():
             await self.server.subscribe_heartbeats("test_subscriber")
             await self.server.unsubscribe_heartbeats("test_subscriber")
-            self.assertNotIn("test_subscriber", self.server.heartbeat_subscribers)
+            assert "test_subscriber" not in self.server.heartbeat_subscribers
 
         self.loop.run_until_complete(run_test())
 
     def test_broadcast_message(self):
         """Test broadcasting message."""
+
         async def run_test():
-            await self.server._broadcast_message({
-                "type": "test",
-                "data": "test_data"
-            })
+            await self.server._broadcast_message({"type": "test", "data": "test_data"})
             # Should complete without error
             return True
 
         result = self.loop.run_until_complete(run_test())
-        self.assertTrue(result)
+        assert result
 
 
 class TestPhase4CMessageBroker(unittest.TestCase):
@@ -255,9 +239,7 @@ class TestPhase4CMessageBroker(unittest.TestCase):
         self.broker = self.server.message_broker
 
         self.l1_agent = self.factory.create_l1_agent("test_project")
-        self.l2_agent = self.factory.create_l2_agent(
-            "test_project", AgentRole.BUILDER, self.l1_agent.agent_id
-        )
+        self.l2_agent = self.factory.create_l2_agent("test_project", AgentRole.BUILDER, self.l1_agent.agent_id)
 
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -274,12 +256,12 @@ class TestPhase4CMessageBroker(unittest.TestCase):
             to_agent=self.l2_agent.agent_id,
             type="heartbeat_request",
             payload={"status": "ok"},
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
-        self.assertEqual(msg.id, "test123")
-        self.assertEqual(msg.type, "heartbeat_request")
-        self.assertFalse(msg.ack)
+        assert msg.id == "test123"
+        assert msg.type == "heartbeat_request"
+        assert not msg.ack
 
     def test_message_to_dict(self):
         """Test converting message to dict."""
@@ -289,52 +271,51 @@ class TestPhase4CMessageBroker(unittest.TestCase):
             to_agent=self.l2_agent.agent_id,
             type="heartbeat_request",
             payload={"status": "ok"},
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         msg_dict = msg.to_dict()
-        self.assertIn("id", msg_dict)
-        self.assertIn("type", msg_dict)
-        self.assertIn("payload", msg_dict)
+        assert "id" in msg_dict
+        assert "type" in msg_dict
+        assert "payload" in msg_dict
 
     def test_send_direct_message(self):
         """Test sending direct message."""
+
         async def run_test():
             # Can't complete without MCP client, so just test it queues
-            asyncio.create_task(self.broker.send_message(
-                self.l1_agent.agent_id,
-                self.l2_agent.agent_id,
-                "test_type",
-                {"test": "data"}
-            ))
+            asyncio.create_task(
+                self.broker.send_message(self.l1_agent.agent_id, self.l2_agent.agent_id, "test_type", {"test": "data"})
+            )
             await asyncio.sleep(0.1)
             return True
 
         result = self.loop.run_until_complete(run_test())
-        self.assertTrue(result)
+        assert result
 
     def test_broker_message_history(self):
         """Test broker maintains message history."""
         # History starts empty
         stats = self.broker.get_message_stats()
-        self.assertEqual(stats["total_messages"], 0)
+        assert stats["total_messages"] == 0
 
     def test_register_handler(self):
         """Test registering message handler."""
+
         async def test_handler(msg: AgentMessage):
             pass
 
         self.broker.register_handler("test_type", test_handler)
-        self.assertIn("test_type", self.broker.routes)
+        assert "test_type" in self.broker.routes
 
     def test_message_stats(self):
         """Test getting message statistics."""
         stats = self.broker.get_message_stats()
 
-        self.assertIn("total_messages", stats)
-        self.assertIn("queue_size", stats)
-        self.assertIn("pending_acks", stats)
-        self.assertIn("recent_messages", stats)
+        assert "total_messages" in stats
+        assert "queue_size" in stats
+        assert "pending_acks" in stats
+        assert "recent_messages" in stats
 
 
 class TestPhase4Integration(unittest.TestCase):
@@ -357,62 +338,58 @@ class TestPhase4Integration(unittest.TestCase):
         """Test civilization status with complete hierarchy."""
         status = self.server.get_civilization_status()
 
-        self.assertEqual(status["total_agents"], 4)
-        self.assertEqual(status["by_level"]["L1"], 1)
-        self.assertEqual(status["by_level"]["L2"], 2)
-        self.assertEqual(status["by_level"]["L3"], 1)
+        assert status["total_agents"] == 4
+        assert status["by_level"]["L1"] == 1
+        assert status["by_level"]["L2"] == 2
+        assert status["by_level"]["L3"] == 1
 
     def test_query_all_agents(self):
         """Test querying all agents."""
         result = self.server.call_tool("query_agents", {"filters": {}})
 
-        self.assertEqual(result["count"], 4)
+        assert result["count"] == 4
 
     def test_query_by_level(self):
         """Test querying agents by level."""
-        result = self.server.call_tool("query_agents", {
-            "filters": {"level": "L2"}
-        })
+        result = self.server.call_tool("query_agents", {"filters": {"level": "L2"}})
 
-        self.assertEqual(result["count"], 2)
+        assert result["count"] == 2
 
     def test_query_by_role(self):
         """Test querying agents by role."""
-        result = self.server.call_tool("query_agents", {
-            "filters": {"role": "BUILDER"}
-        })
+        result = self.server.call_tool("query_agents", {"filters": {"role": "BUILDER"}})
 
-        self.assertGreaterEqual(result["count"], 1)
+        assert result["count"] >= 1
 
     def test_resources_available(self):
         """Test all resources are available."""
         resources = self.server.get_all_resources()
 
-        self.assertEqual(len(resources), 6)
+        assert len(resources) == 6
         resource_uris = [r["uri"] for r in resources]
-        self.assertIn("civilization://agents/{agent_id}", resource_uris)
-        self.assertIn("civilization://projects/{project}", resource_uris)
-        self.assertIn("civilization://statistics", resource_uris)
+        assert "civilization://agents/{agent_id}" in resource_uris
+        assert "civilization://projects/{project}" in resource_uris
+        assert "civilization://statistics" in resource_uris
 
     def test_tools_available(self):
         """Test all tools are available."""
         tools = self.server.get_all_tools()
 
-        self.assertEqual(len(tools), 8)
+        assert len(tools) == 8
         tool_names = [t["name"] for t in tools]
-        self.assertIn("update_heartbeat", tool_names)
-        self.assertIn("get_civilization_status", tool_names)
-        self.assertIn("query_agents", tool_names)
-        self.assertIn("memory_search", tool_names)
-        self.assertIn("memory_analytics_summary", tool_names)
+        assert "update_heartbeat" in tool_names
+        assert "get_civilization_status" in tool_names
+        assert "query_agents" in tool_names
+        assert "memory_search" in tool_names
+        assert "memory_analytics_summary" in tool_names
 
     def test_mcp_server_enabled(self):
         """Test MCP server is enabled when registry available."""
-        self.assertTrue(self.server.enabled)
+        assert self.server.enabled
 
     def test_message_broker_enabled(self):
         """Test message broker is enabled."""
-        self.assertTrue(self.server.message_broker.enabled)
+        assert self.server.message_broker.enabled
 
 
 class TestPhase4BackwardCompatibility(unittest.TestCase):
@@ -433,11 +410,11 @@ class TestPhase4BackwardCompatibility(unittest.TestCase):
         """Test Phase 1 registry operations still work."""
         # Get agent
         agent = self.registry.get_agent(self.l1.agent_id)
-        self.assertIsNotNone(agent)
+        assert agent is not None
 
         # Get by project
         agents = self.registry.get_agents_by_project("compat_project")
-        self.assertEqual(len(agents), 2)
+        assert len(agents) == 2
 
     def test_phase1_heartbeat_still_works(self):
         """Test Phase 1 heartbeat updates still work."""
@@ -446,13 +423,13 @@ class TestPhase4BackwardCompatibility(unittest.TestCase):
         self.registry.update_heartbeat(self.l1.agent_id)
         after = self.l1.last_heartbeat
 
-        self.assertGreater(after, before)
+        assert after > before
 
     def test_phase3_stale_detection_still_works(self):
         """Test Phase 3 stale detection still works."""
         stale = self.registry.get_stale_agents()
         # None should be stale immediately
-        self.assertEqual(len(stale), 0)
+        assert len(stale) == 0
 
     def test_mcp_server_graceful_disable(self):
         """Test MCP server gracefully handles disable."""
@@ -460,7 +437,7 @@ class TestPhase4BackwardCompatibility(unittest.TestCase):
         server = CivilizationMCPServer(None)
         result = server.read_resource("civilization://statistics")
 
-        self.assertIn("error", result)
+        assert "error" in result
 
 
 if __name__ == "__main__":

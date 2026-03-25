@@ -1,6 +1,6 @@
 """WP-7002: LiteLLM cost/latency data harvesting implementation."""
 
-import orjson as json
+import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path

@@ -230,7 +230,7 @@ class TestOR17HeadersForwardedToRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -273,7 +273,7 @@ class TestOR17HeadersForwardedToRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -313,7 +313,7 @@ class TestOR17HeadersForwardedToRouter:
         mock_router = MagicMock()
         mock_router.acompletion = capturing_acompletion
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -354,7 +354,7 @@ class TestOR17HeadersForwardedToRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -447,14 +447,16 @@ class TestOR18NativeResponsesForwarding:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock()
 
-        fake_response_content = json.dumps({"id": "r-native", "object": "response", "status": "completed"}).decode().decode().encode()
+        fake_response_content = (
+            json.dumps({"id": "r-native", "object": "response", "status": "completed"}).decode().encode()
+        )
 
         mock_httpx_resp = MagicMock()
         mock_httpx_resp.content = fake_response_content
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {"Content-Type": "application/json"}
 
-        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o").decode()).encode()
 
         with (
             patch(
@@ -498,7 +500,7 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {}
 
-        body = json.dumps(_make_responses_body(model="openrouter/claude-opus-4-6").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="openrouter/claude-opus-4-6").decode()).encode()
 
         with (
             patch(
@@ -538,7 +540,7 @@ class TestOR18NativeResponsesForwarding:
         mock_httpx_resp.status_code = 200
         mock_httpx_resp.headers = {}
 
-        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="openrouter/gpt-4o").decode()).encode()
 
         with (
             patch(
@@ -585,7 +587,7 @@ class TestOR18NativeResponsesForwarding:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with (
             patch(
@@ -694,7 +696,7 @@ class TestOR19GenerationIdCaptureFromStream:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenFromChunks(chunks)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with (
             patch("thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router", return_value=mock_router),
@@ -730,7 +732,7 @@ class TestOR19GenerationIdCaptureFromStream:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenFromChunks(chunks)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with (
             patch("thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router", return_value=mock_router),
@@ -760,7 +762,7 @@ class TestOR19GenerationIdCaptureFromStream:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenFromChunks(chunks)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with (
             patch("thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router", return_value=mock_router),

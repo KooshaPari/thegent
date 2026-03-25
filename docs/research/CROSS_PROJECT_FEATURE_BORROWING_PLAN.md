@@ -154,7 +154,7 @@ Recommended row format:
 
 ### 3.2 Borrow: Cost Tracking & Metrics (smolgents)
 
-**Source**: `smolgents/openspec/project.md`
+**Source**: `smolgents/agileplus/project.md`
 
 **Target Projects**: thegent, plangent, kimaki, usage
 
@@ -253,7 +253,7 @@ Recommended row format:
 
 ### 5.2 Borrow: Unified MCP Composition (dphi)
 
-**Source**: `dphi/openspec/changes/add-unified-mcp-composition-server/tasks.md`
+**Source**: `dphi/agileplus/changes/add-unified-mcp-composition-server/tasks.md`
 
 **Target Projects**: thegent, atoms-mcp-prod, zen-mcp-server
 
@@ -272,7 +272,7 @@ Recommended row format:
 
 ### 5.3 Borrow: Cross-Service Orchestration (dphi)
 
-**Source**: `dphi/openspec/changes/add-unified-mcp-composition-server/tasks.md`
+**Source**: `dphi/agileplus/changes/add-unified-mcp-composition-server/tasks.md`
 
 **Target Projects**: thegent, plangent
 

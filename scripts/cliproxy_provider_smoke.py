@@ -40,7 +40,8 @@ def _reachable(base_url: str, api_key: str) -> bool:
             headers={"authorization": f"Bearer {api_key}"},
             timeout=3,
         )
-        return bool(r.status_code == 200)
+        # Treat auth errors as "reachable" transport: server is up, credentials may be wrong.
+        return bool(r.status_code in (200, 401, 403))
     except Exception:
         return False
 
@@ -65,7 +66,22 @@ def _start_proxy(binary: str, config_path: str, startup_timeout: int) -> subproc
 def _run_matrix(base_url: str, api_key: str, input_text: str) -> dict[str, Any]:
     headers = {"authorization": f"Bearer {api_key}"}
     models_resp = httpx.get(f"{base_url.rstrip('/')}/models", headers=headers, timeout=15)
-    models_resp.raise_for_status()
+    if models_resp.status_code != 200:
+        detail = models_resp.text.replace("\n", " ")[:180]
+        return {
+            "provider_count": 0,
+            "passed": 0,
+            "failed": 1,
+            "rows": [
+                {
+                    "provider": "_models",
+                    "model": "",
+                    "status_code": models_resp.status_code,
+                    "ok": False,
+                    "detail": detail,
+                }
+            ],
+        }
     data = models_resp.json().get("data", [])
 
     by_provider: dict[str, list[str]] = defaultdict(list)

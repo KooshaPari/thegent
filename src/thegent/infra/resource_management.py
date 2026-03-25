@@ -85,7 +85,7 @@ class ResourceManager:
                 "child_count": len(children),
                 "status": proc.status(),
             }
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             return {"error": "Process not accessible"}
 
 

@@ -1,5 +1,11 @@
 """CLIProxyAPIPlus lifecycle: config generation and proxy process management.
 
+DEPRECATED: This module is now a thin shim for backward compatibility.
+New code should use the decomposed modules:
+- thegent.use_cases.manage_cliproxy — Business logic (provider config, credentials)
+- thegent.ports.driven.cliproxy — Port interfaces
+- thegent.adapters.driven.cliproxy_http — HTTP client adapter
+
 Unified login flow: open URL + prompt for API key for all providers. Preflight check for
 existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
@@ -23,6 +29,13 @@ from thegent.config import ThegentSettings
 from thegent.domain.provider_config import OAUTH_ONLY_PROVIDERS
 from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
+
+# Import decomposed modules
+from thegent.use_cases.manage_cliproxy import (
+    ProviderConfigManager,
+    CredentialsResolver,
+    ProxyHealthChecker,
+)
 
 _LOG = logging.getLogger(__name__)
 
@@ -210,7 +223,7 @@ def _get_factory_api_key(provider: str) -> tuple[str | None, str]:
             continue
         try:
             data = json.loads(path.read_text())
-        except (json.JSONDecodeError, OSError):
+        except json.JSONDecodeError, OSError:
             continue
         models_key = "custom_models" if name == "config.json" else "customModels"
         entries = data.get(models_key) if isinstance(data, dict) else []
@@ -824,7 +837,7 @@ def kill_proxy(settings: ThegentSettings) -> bool:
         for pid in pids:
             run_subprocess_optimized(["kill", "-9", pid], capture_output=True, timeout=2, check=False)
         return bool(pids)
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+    except subprocess.TimeoutExpired, FileNotFoundError, OSError:
         return False
 
 
@@ -1076,7 +1089,9 @@ def run_login(
             raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
         config_path = _ensure_config(settings)
         flag = _LOGIN_FLAGS[provider_lower]
-        timeout_seconds = login_timeout if login_timeout is not None else int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        timeout_seconds = (
+            login_timeout if login_timeout is not None else int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        )
         requires_interactive_stdio = provider_lower == "minimax"
         if requires_interactive_stdio and not sys.stdin.isatty():
             _LOG.error(

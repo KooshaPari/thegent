@@ -9,11 +9,12 @@ The cache persists to docs/reference/idempotency_cache.json for durability
 across process restarts.
 """
 
-import orjson as json
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+import orjson
 
 from thegent.integrations.base import SerializableMixin
 
@@ -93,7 +94,7 @@ class IdempotencyCache:
             return
 
         try:
-            data = json.loads(self.cache_path.read_text(encoding="utf-8"))
+            data = orjson.loads(self.cache_path.read_text(encoding="utf-8"))
             for record_dict in data.get("records", []):
                 record = IdempotencyRecord.from_dict(record_dict)
                 self._records[record.operation_id] = record
@@ -112,7 +113,7 @@ class IdempotencyCache:
                 "records": [record.to_dict() for record in self._records.values()],
             }
             self.cache_path.write_text(
-                json.dumps(data, indent=2, sort_keys=True).decode(),
+                orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS).decode("utf-8"),
                 encoding="utf-8",
             )
         except Exception as e:

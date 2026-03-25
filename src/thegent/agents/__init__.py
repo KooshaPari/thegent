@@ -3,8 +3,21 @@
 # Lazy import pattern to avoid circular dependencies
 # The thegent-agents package is the source of truth
 
-import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from thegent.agents.base import AgentRunner, RunResult
+    from thegent.agents.direct_agents import DirectAgentRunner
+    from thegent.agents.flash_agent import FlashAgent, FlashAgentConfig, FlashAgentResult, flash
+    from thegent.agents.maif_runner import MAIFAgentRunner
+    from thegent.agents.registry import (
+        AGENT_LABELS,
+        get_fallback_agents,
+        get_runner,
+        list_agent_names,
+        list_droid_names,
+        resolve_agent,
+    )
 
 # Lazy load from thegent_agents if available, otherwise fall back to local imports
 _agents_module = None
@@ -17,6 +30,7 @@ def __getattr__(name: str) -> Any:
     if _agents_module is None:
         try:
             import thegent_agents as agents
+
             _agents_module = agents
         except ImportError:
             # Fall back to direct import if package not installed

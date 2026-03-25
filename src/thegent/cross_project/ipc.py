@@ -1,6 +1,6 @@
 """File-based IPC protocol for cross-project agents."""
 
-import orjson as json
+import json
 import logging
 import time
 from pathlib import Path
@@ -32,7 +32,7 @@ class CrossProjectIPC:
             Path to message file
         """
         message_file = self.ipc_dir / f"{target_project}_{int(time.time())}.json"
-        message_file.write_text(json.dumps(message, indent=2))
+        message_file.write_text(json.dumps(message, indent=2), encoding="utf-8")
         logger.info(f"Sent message to {target_project}")
         return message_file
 

@@ -256,7 +256,7 @@ fn checkpoint_result(
     let mut gate_results = Vec::with_capacity(item.execution_gates.len());
     let mut passed = 0usize;
 
-    for gate in item.execution_gates.iter().cloned().collect::<Vec<_>>() {
+    for gate in item.execution_gates.iter().cloned() {
         let command = normalize_command(gate.clone(), python_bin);
         let result = if skip_execution_gates {
             ExecutionGateResult {

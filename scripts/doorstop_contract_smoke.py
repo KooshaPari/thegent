@@ -20,13 +20,9 @@ def main() -> int:
 
     # Check if doorstop is installed
     import subprocess
+
     try:
-        result = subprocess.run(
-            ["doorstop", "--version"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        result = subprocess.run(["doorstop", "--version"], capture_output=True, text=True, timeout=10)
 
         if result.returncode != 0:
             raise RuntimeError(f"doorstop --version failed: {result.stderr}")
@@ -38,12 +34,7 @@ def main() -> int:
     except subprocess.TimeoutExpired:
         raise RuntimeError("doorstop --version timed out")
 
-    print(json.dumps({
-        "ok": True,
-        "target": "doorstop",
-        "version": version,
-        "status": "available"
-    })).decode()
+    print(json.dumps({"ok": True, "target": "doorstop", "version": version, "status": "available"})).decode()
     return 0
 
 
