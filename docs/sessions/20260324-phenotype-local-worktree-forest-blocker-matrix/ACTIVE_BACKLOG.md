@@ -87,6 +87,7 @@ Each item now has an explicit **Ship** line (PR **→** `main` / `release/*`, **
 
 ## Related
 
+- `19_NEXT_50_WORK_ITEMS.md` — **ordered 50** (D + E + preamble).
 - `04_QUEUE_CADENCE.md` — carry-forward rules, verification commands, **full-turn** definition.
 - `FULL_TURN_DELIVERY.md` — `gh` routine, merge gates, snapshot.
 - `00_SESSION_OVERVIEW.md` — session goal and document map.

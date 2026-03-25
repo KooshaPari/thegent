@@ -16,14 +16,23 @@ from thegent.phench.service import (
     scan_shared_modules_across_repos,
     materialize_module_candidate_manifest,
     get_env_profile,
+    discover_repos,
     init_target,
+    import_repos,
     list_targets,
+    list_target_snapshots,
     lock_target,
     materialize_target,
+    show_target_snapshot,
+    build_project_execution_matrix,
+    set_repo_ref,
     run_env_doctor_for_target,
     run_target,
+    target_timeline,
+    target_status,
     set_env_profile,
     sync_target,
+    sync_project_modules_from_repos,
 )
 from thegent.phench.models import RepoSelection, RunnerCatalog, RunnerCommand, TargetLock
 from thegent.phench.store import read_dual
@@ -62,6 +71,11 @@ def _init_git_repo_with_pkg(path: Path, pkg_name: str) -> None:
     (path / "README.md").write_text("hello\n", encoding="utf-8")
     _run(["git", "add", "."], cwd=path)
     _run(["git", "commit", "-m", "init"], cwd=path)
+
+
+def _init_fake_repo(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    (path / ".git").mkdir()
 
 
 def test_lock_and_materialize_with_dual_write(tmp_path: Path, monkeypatch) -> None:
@@ -153,6 +167,291 @@ def test_list_targets_discovers_initialized_targets(tmp_path: Path, monkeypatch)
     assert list_targets() == ["one", "two"]
 
 
+def test_list_targets_supports_family_filtering(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("one", mode="repo")
+    init_target("two", mode="repo", family="acme")
+
+    assert list_targets() == ["one", "acme/two"]
+    assert list_targets(family="acme") == ["two"]
+
+
+def test_list_modules_lists_directory_basenames_with_manifests(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_root = phenotype_root / "projects" / "modules"
+    (modules_root / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (modules_root / "platform-core").mkdir(parents=True, exist_ok=True)
+    (modules_root / "legacy").mkdir(parents=True, exist_ok=True)
+    (modules_root / "legacy" / "manifest.json").write_text("{}", encoding="utf-8")
+    (modules_root / "thegent-app" / "manifest.json").write_text("{}", encoding="utf-8")
+    (modules_root / "platform-core" / "manifest.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+
+    assert list_modules() == ["legacy", "platform-core", "thegent-app"]
+
+
+def test_list_modules_missing_root_returns_empty(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    assert list_modules() == []
+
+
+def test_audit_shared_modules_across_repos_excludes_default_repos_and_reports_shared_candidates(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    excluded = repos_root / "4sgm"
+    legacy = repos_root / "repo-legacy"
+    for candidate in [alpha, beta, excluded, legacy]:
+        _init_fake_repo(candidate)
+
+    (alpha / "src" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "src" / "thegent-app" / "__init__.py").write_text("", encoding="utf-8")
+    (alpha / "src" / "thegent-mcp").mkdir(parents=True, exist_ok=True)
+    (alpha / "src" / "thegent-mcp" / "__init__.py").write_text("", encoding="utf-8")
+    (alpha / "modules" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "platform-core" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1}),
+        encoding="utf-8",
+    )
+
+    (beta / "src" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "src" / "thegent-app" / "__init__.py").write_text("", encoding="utf-8")
+    (beta / "modules" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "platform-core" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1}),
+        encoding="utf-8",
+    )
+
+    (excluded / "src" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (excluded / "src" / "platform-core" / "__init__.py").write_text("", encoding="utf-8")
+    (excluded / "modules" / "platform-core").mkdir(parents=True, exist_ok=True)
+    (excluded / "modules" / "platform-core" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1}),
+        encoding="utf-8",
+    )
+
+    (legacy / "src" / "thegent-mcp").mkdir(parents=True, exist_ok=True)
+    (legacy / "src" / "thegent-mcp" / "__init__.py").write_text("", encoding="utf-8")
+
+    result = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_repo_modules_root=True,
+    )
+    assert result["shared_module_count"] == 1
+    assert result["module_count"] == 3
+    assert result["shared_modules"] == {"platform-core": ["repo-alpha", "repo-beta"]}
+    assert "4sgm" in result["excluded_repos"]
+
+
+def test_audit_shared_modules_across_repos_respects_filters_and_min_repo_count(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    gamma = repos_root / "repo-gamma"
+    for candidate in [alpha, beta, gamma]:
+        _init_fake_repo(candidate)
+
+    for repo in [alpha, beta]:
+        (repo / "src" / "module-a").mkdir(parents=True, exist_ok=True)
+        (repo / "src" / "module-a" / "__init__.py").write_text("", encoding="utf-8")
+
+    (gamma / "src" / "module-a").mkdir(parents=True, exist_ok=True)
+    (gamma / "src" / "module-a" / "__init__.py").write_text("", encoding="utf-8")
+    (gamma / "src" / "module-b").mkdir(parents=True, exist_ok=True)
+    (gamma / "src" / "module-b" / "__init__.py").write_text("", encoding="utf-8")
+
+    shared_two = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_modules=["module-a"],
+        min_repo_count=2,
+        include_repo_modules_root=False,
+    )
+    assert shared_two["shared_modules"] == {"module-a": ["repo-alpha", "repo-beta", "repo-gamma"]}
+    assert shared_two["moduleization_candidates"] == []
+
+    filtered = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_modules=["module-a"],
+        exclude_modules=["module-a"],
+        min_repo_count=2,
+        include_repo_modules_root=False,
+    )
+    assert filtered["shared_modules"] == {}
+
+
+def test_audit_shared_modules_across_repos_moduleization_candidates_skip_existing_modules(
+    tmp_path: Path,
+) -> None:
+    repos_root = tmp_path / "repos"
+    phenotype_root = tmp_path / "Phenotype"
+    existing_modules = phenotype_root / "projects" / "modules"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    for candidate in [alpha, beta]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (alpha / "modules" / "thegent-governance").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-governance" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["repo-beta"]}),
+        encoding="utf-8",
+    )
+
+    (existing_modules / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (existing_modules / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "repo_ids": ["existing"]}),
+        encoding="utf-8",
+    )
+
+    result = audit_shared_modules_across_repos(
+        source_root=repos_root,
+        include_repo_modules_root=True,
+        min_repo_count=2,
+    )
+
+    assert "thegent-app" in result["shared_modules"]
+    assert "thegent-governance" not in result["shared_modules"]
+    assert result["moduleization_candidates"] == []
+
+
+def test_sync_project_modules_from_repos_invalid_manifest_raises_for_non_object_payload(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    destination_root = tmp_path / "Phenotype" / "projects" / "modules"
+    alpha = repos_root / "repo-alpha"
+    for candidate in [alpha]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text("[]", encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid module manifest in repo-alpha"):
+        sync_project_modules_from_repos(
+            source_root=repos_root,
+            destination_root=destination_root,
+            include_modules=["thegent-app"],
+        )
+
+
+def test_sync_project_modules_from_repos_invalid_manifest_raises_for_invalid_json(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    destination_root = tmp_path / "Phenotype" / "projects" / "modules"
+    beta = repos_root / "repo-beta"
+    _init_fake_repo(beta)
+
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text("", encoding="utf-8")
+    with pytest.raises(ValueError, match="invalid module manifest in repo-beta"):
+        sync_project_modules_from_repos(
+            source_root=repos_root,
+            destination_root=destination_root,
+            include_modules=["thegent-app"],
+        )
+
+
+def test_sync_project_modules_from_repos_dry_run_respects_default_excludes_and_module_filter(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    excluded = repos_root / "trace"
+    for candidate in [alpha, beta, excluded]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (alpha / "modules" / "thegent-core").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-core" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-beta"]}),
+        encoding="utf-8",
+    )
+    (excluded / "modules" / "trace-module").mkdir(parents=True, exist_ok=True)
+    (excluded / "modules" / "trace-module" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["trace"]}),
+        encoding="utf-8",
+    )
+
+    result = sync_project_modules_from_repos(
+        source_root=repos_root,
+        include_modules=["thegent-app", "thegent-core"],
+        dry_run=True,
+    )
+    assert result["dry_run"] is True
+    assert result["created"] == ["thegent-app", "thegent-core"]
+    assert result["updated"] == []
+    assert result["skipped"] == []
+    assert "trace-module" not in result["discovered_modules"]
+
+
+def test_sync_project_modules_from_repos_conflict_and_overwrite_controls_updates(tmp_path: Path) -> None:
+    repos_root = tmp_path / "repos"
+    destination_root = tmp_path / "Phenotype" / "projects" / "modules"
+    alpha = repos_root / "repo-alpha"
+    beta = repos_root / "repo-beta"
+    for candidate in [alpha, beta]:
+        _init_fake_repo(candidate)
+
+    (alpha / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (alpha / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha"]}),
+        encoding="utf-8",
+    )
+    (beta / "modules" / "thegent-app").mkdir(parents=True, exist_ok=True)
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-beta"]}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="conflicting manifests for module 'thegent-app'"):
+        sync_project_modules_from_repos(
+            source_root=repos_root,
+            destination_root=destination_root,
+            include_modules=["thegent-app"],
+        )
+
+    (beta / "modules" / "thegent-app" / "manifest.json").write_text(
+        json.dumps({"repo_ids": ["repo-alpha", "repo-beta"]}),
+        encoding="utf-8",
+    )
+    sync_result = sync_project_modules_from_repos(
+        source_root=repos_root,
+        destination_root=destination_root,
+        include_modules=["thegent-app"],
+    )
+    assert sync_result["created"] == ["thegent-app"]
+    assert sync_result["updated"] == []
+    assert sync_result["skipped"] == []
+
+    overwrite_result = sync_project_modules_from_repos(
+        source_root=repos_root,
+        destination_root=destination_root,
+        include_modules=["thegent-app"],
+        overwrite=True,
+    )
+    assert overwrite_result["updated"] == ["thegent-app"]
+    assert overwrite_result["created"] == []
+
+
 def test_invalid_target_name_rejected(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(tmp_path / "Phenotype"))
     monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(tmp_path / "home-phench"))
@@ -178,15 +477,15 @@ def test_run_target_all_repos_serial_and_parallel(tmp_path: Path, monkeypatch) -
     materialize_target("stacky")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     monkeypatch.setattr(
-        "thegent.phench.service.build_catalog",
-        lambda target, repo_id=None: RunnerCatalog(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
             target_name=target,
             runners_detected=["task"],
-            commands=[RunnerCommand("task", "hello", "task hello", "Taskfile.yml")],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
             default_command="task hello",
         ),
     )
@@ -235,11 +534,367 @@ def test_run_target_all_repos_requires_explicit_runner_and_command(tmp_path: Pat
     materialize_target("stacky2")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     with pytest.raises(ValueError):
         run_target("stacky2", all_repos=True)
+
+
+def test_run_target_with_snapshot_id_runs_from_snapshot_state(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "repo"
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snaprun", mode="repo")
+    add_repo("snaprun", repo_path=str(source_repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("snaprun")
+    materialize_target("snaprun")
+    snapshot = create_target_snapshot("snaprun")
+
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: (_ for _ in ()).throw(RuntimeError("unexpected live env doctor call")),
+    )
+    monkeypatch.setattr(
+        "thegent.phench.service._run_env_doctor_for_materializations",
+        lambda target, materializations, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+    calls: list[str] = []
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(str(checkout))
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+
+    exit_code = run_target(
+        "snaprun",
+        snapshot_id=str(snapshot["snapshot_id"]),
+        runner="task",
+        command_name="hello",
+    )
+    assert exit_code == 0
+    expected_checkout = str((phenotype_root / "projects" / "snaprun" / "repos" / "repo").resolve())
+    assert calls == [expected_checkout]
+
+
+def test_run_target_with_invalid_snapshot_runtime_fails(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "repo"
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snapbroken", mode="repo")
+    add_repo("snapbroken", repo_path=str(source_repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("snapbroken")
+    materialize_target("snapbroken")
+    snapshot = create_target_snapshot("snapbroken")
+    monkeypatch.setattr(
+        "thegent.phench.service.show_target_snapshot",
+        lambda target, snapshot_id, family=None: {"runtime": "bad-runtime", "lock": snapshot.get("lock", {})},
+    )
+
+    with pytest.raises(ValueError, match=r"snapshot '.*' has no runtime payload"):
+        run_target("snapbroken", snapshot_id=str(snapshot["snapshot_id"]))
+
+
+def test_run_target_with_invalid_snapshot_lock_fails(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    source_repo = tmp_path / "repo"
+    _init_git_repo(source_repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("snaplocked", mode="repo")
+    add_repo("snaplocked", repo_path=str(source_repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("snaplocked")
+    materialize_target("snaplocked")
+    snapshot = create_target_snapshot("snaplocked")
+    monkeypatch.setattr(
+        "thegent.phench.service.show_target_snapshot",
+        lambda target, snapshot_id, family=None: {
+            "runtime": {"repo_materializations": [{"repo_id": "repo", "checkout_path": "repo"}]},
+            "lock": "invalid-lock",
+        },
+    )
+
+    with pytest.raises(ValueError, match=r"snapshot '.*' has invalid lock payload"):
+        run_target("snaplocked", snapshot_id=str(snapshot["snapshot_id"]))
+
+
+def test_run_target_ref_override_rematerializes_runtime_checkout(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+
+    _run(["git", "-C", str(repo), "checkout", "-b", "feature"], cwd=repo)
+    _run(["bash", "-lc", "printf '\\nfeature\\n' >> README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "add", "README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "commit", "-m", "feature"], cwd=repo)
+    _run(["git", "-C", str(repo), "checkout", "main"], cwd=repo)
+
+    feature_sha_proc = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "feature^{commit}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert feature_sha_proc.returncode == 0
+    feature_sha = feature_sha_proc.stdout.strip()
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("runref", mode="repo")
+    add_repo("runref", repo_path=str(repo), selected_ref="main", repo_id="repo")
+    lock_target("runref")
+    materialize_target("runref")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    resolved_refs: list[str] = []
+    materialize_calls: list[tuple[str, str, str]] = []
+
+    def _recorded_resolve_ref(repo_path: Path, ref: str) -> str:
+        resolved_refs.append(ref)
+        proc = subprocess.run(
+            ["git", "-C", str(repo_path), "rev-parse", f"{ref}^{{commit}}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc.returncode == 0
+        return proc.stdout.strip()
+
+    monkeypatch.setattr("thegent.phench.service.resolve_ref_to_sha", _recorded_resolve_ref)
+    monkeypatch.setattr(
+        "thegent.phench.service.materialize_repo_checkout",
+        lambda source_repo, checkout_path, resolved_sha: materialize_calls.append(
+            (str(source_repo), str(checkout_path), resolved_sha),
+        ),
+    )
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    calls: list[str] = []
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(f"{checkout.name}:{command_name}:{(checkout / '.git').exists()}")
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+
+    exit_code = run_target("runref", runner="task", command_name="hello", selected_ref="feature")
+    assert exit_code == 0
+    assert resolved_refs == ["feature"]
+    assert len(materialize_calls) == 1
+    assert len(calls) == 1
+    assert materialize_calls == [
+        (
+            str(repo),
+            str((phenotype_root / "projects" / "runref" / "repos" / "repo").resolve()),
+            feature_sha,
+        )
+    ]
+
+
+def test_run_target_non_interactive_requires_explicit_runner_and_command(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("runnon", mode="repo")
+    add_repo("runnon", repo_path=str(repo), selected_ref="HEAD", repo_id="repo")
+    lock_target("runnon")
+    materialize_target("runnon")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    with pytest.raises(ValueError, match="requires runner policy"):
+        run_target("runnon", non_interactive=True)
+
+
+def test_run_target_uses_repo_policy_runner_command_and_ref(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo = tmp_path / "repo-policy"
+    _init_git_repo(repo)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("policy", mode="repo")
+    add_repo(
+        "policy",
+        repo_path=str(repo),
+        selected_ref="HEAD",
+        repo_id="repo",
+        preferred_runner="task",
+        preferred_command="hello",
+        preferred_ref="feature",
+    )
+
+    _run(["git", "-C", str(repo), "checkout", "-b", "feature"], cwd=repo)
+    _run(["bash", "-lc", "printf '\\nfeature\\n' >> README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "add", "README.md"], cwd=repo)
+    _run(["git", "-C", str(repo), "commit", "-m", "feature"], cwd=repo)
+    _run(["git", "-C", str(repo), "checkout", "main"], cwd=repo)
+
+    lock_target("policy")
+    materialize_target("policy")
+
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    observed_ref: list[str] = []
+
+    def _fake_resolve_ref(repo_path: Path, ref: str) -> str:
+        observed_ref.append(ref)
+        proc = subprocess.run(
+            ["git", "-C", str(repo_path), "rev-parse", f"{ref}^{{commit}}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc.returncode == 0
+        return proc.stdout.strip()
+
+    monkeypatch.setattr("thegent.phench.service.resolve_ref_to_sha", _fake_resolve_ref)
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    calls: list[str] = []
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(f"{runner}:{command_name}")
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+
+    exit_code = run_target("policy")
+    assert exit_code == 0
+    assert observed_ref == ["feature"]
+    assert calls == ["task:hello"]
+
+
+def test_run_target_all_repos_uses_policy_runner_when_allows_single_command_mode(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = tmp_path / "repo-a"
+    repo_b = tmp_path / "repo-b"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("policy-stack", mode="stack")
+    add_repo(
+        "policy-stack",
+        repo_path=str(repo_a),
+        selected_ref="HEAD",
+        repo_id="a",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    add_repo(
+        "policy-stack",
+        repo_path=str(repo_b),
+        selected_ref="HEAD",
+        repo_id="b",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    lock_target("policy-stack")
+    materialize_target("policy-stack")
+
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+    calls: list[str] = []
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        calls.append(f"{checkout.name}:{runner}:{command_name}")
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+    exit_code = run_target("policy-stack", all_repos=True, execution_mode="serial")
+    assert exit_code == 0
+    assert sorted(calls) == ["a:task:hello", "b:task:hello"]
 
 
 def test_run_target_rejects_runner_flag_like_command_name(tmp_path: Path, monkeypatch) -> None:
@@ -257,11 +912,242 @@ def test_run_target_rejects_runner_flag_like_command_name(tmp_path: Path, monkey
     materialize_target("delta")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     with pytest.raises(ValueError):
         run_target("delta", runner="task", command_name="--help")
+
+
+def test_load_module_manifest_parses_patterns_and_overrides(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "schema_version": 1,
+        "repo_patterns": ["thegent-*", "platform-*"],
+        "owners": ["OwnerA", "ownerB", "OWNERA"],
+        "refresh_cadence": "daily",
+        "repo_ref_overrides": {"thegent-api": "main"},
+        "repo_runner_overrides": {"thegent-api": "task"},
+        "repo_command_overrides": {"thegent-api": "hello"},
+        "repo_env_profile_overrides": {"platform-core": "ci"},
+    }
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    loaded = load_module_manifest(
+        "thegent-app",
+        available_repo_ids=["thegent-api", "platform-core", "other"],
+    )
+    assert loaded["repo_ids"] == ["platform-core", "thegent-api"]
+    assert loaded["owners"] == ["ownera", "ownerb"]
+    assert loaded["refresh_cadence"] == "daily"
+    assert loaded["repo_ref_overrides"] == {"thegent-api": "main"}
+    assert loaded["repo_runner_overrides"] == {"thegent-api": "task"}
+    assert loaded["repo_command_overrides"] == {"thegent-api": "hello"}
+    assert loaded["repo_env_profile_overrides"] == {"platform-core": "ci"}
+
+
+@pytest.mark.parametrize(
+    "module_input",
+    [
+        "{module_dir}",
+        "{module_dir}/manifest.json",
+        "{legacy_module_dir}",
+        "{relative_legacy_module_dir}",
+    ],
+)
+def test_load_module_manifest_accepts_legacy_module_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    module_input: str,
+) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    legacy_modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir = phenotype_root / "projects" / "modules" / "legacy-layout"
+    relative_modules_dir = Path("projects") / "modules" / "legacy-layout"
+
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    legacy_modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"schema_version": 1, "repo_ids": ["thegent-api"]}
+    (legacy_modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+
+    candidate = module_input.format(
+        module_dir=modules_dir,
+        legacy_module_dir=legacy_modules_dir,
+        relative_legacy_module_dir=relative_modules_dir,
+    )
+    loaded = load_module_manifest(candidate, available_repo_ids=["thegent-api"])
+    assert loaded["repo_ids"] == ["thegent-api"]
+
+
+def test_load_module_manifest_rejects_unknown_repo_override(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "schema_version": 1,
+        "repo_ids": ["thegent-api"],
+        "repo_ref_overrides": {"missing-repo": "main"},
+    }
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="unknown repo_ref_overrides key"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_load_module_manifest_defaults_owners_and_refresh_cadence(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    loaded = load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+    assert loaded["owners"] == []
+    assert loaded["refresh_cadence"] == "never"
+
+
+def test_load_module_manifest_rejects_unsupported_schema_version(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"schema_version": 99, "repo_ids": ["thegent-api"]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="unsupported schema_version"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_load_module_manifest_defaults_schema_version_when_missing(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    loaded = load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+    assert loaded["schema_version"] == 1
+
+
+def test_load_module_manifest_rejects_invalid_refresh_cadence(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"], "refresh_cadence": "biweekly"}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="must be one of"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_load_module_manifest_rejects_invalid_owners_payload(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"], "owners": [""]}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    loaded = load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+    assert loaded["owners"] == []
+
+
+def test_load_module_manifest_rejects_non_list_owners(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    modules_dir = phenotype_root / "projects" / "modules" / "thegent-app"
+    modules_dir.mkdir(parents=True, exist_ok=True)
+    manifest = {"repo_ids": ["thegent-api"], "owners": "thegent"}
+    (modules_dir / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    with pytest.raises(ValueError, match="must be a list"):
+        load_module_manifest("thegent-app", available_repo_ids=["thegent-api"])
+
+
+def test_run_target_respects_per_repo_env_profile_override(tmp_path: Path, monkeypatch) -> None:
+    phenotype_root = tmp_path / "Phenotype"
+    mirror_root = tmp_path / "home-phench"
+    repo_a = tmp_path / "repo-a"
+    repo_b = tmp_path / "repo-b"
+    _init_git_repo(repo_a)
+    _init_git_repo(repo_b)
+
+    monkeypatch.setenv("THGENT_PHENOTYPE_ROOT", str(phenotype_root))
+    monkeypatch.setenv("THGENT_PHENCH_HOME_ROOT", str(mirror_root))
+
+    init_target("envprofile", mode="stack")
+    add_repo(
+        "envprofile",
+        repo_path=str(repo_a),
+        repo_id="repo-a",
+        selected_ref="HEAD",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    add_repo(
+        "envprofile",
+        repo_path=str(repo_b),
+        repo_id="repo-b",
+        selected_ref="HEAD",
+        preferred_runner="task",
+        preferred_command="hello",
+    )
+    lock_target("envprofile")
+    materialize_target("envprofile")
+    monkeypatch.setattr(
+        "thegent.phench.service.run_env_doctor_for_target",
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
+    )
+
+    set_env_profile("envprofile", "ci-a", {"ENV": "A"})
+    set_env_profile("envprofile", "ci-b", {"ENV": "B"})
+
+    observed: dict[str, dict[str, str]] = {}
+
+    def _fake_run_command(
+        checkout: Path,
+        runner: str,
+        command_name: str,
+        env_overrides: dict[str, str] | None = None,
+    ) -> int:
+        observed[checkout.name] = dict(env_overrides or {})
+        return 0
+
+    monkeypatch.setattr("thegent.phench.service.run_command", _fake_run_command)
+    monkeypatch.setattr(
+        "thegent.phench.service.build_runner_catalog",
+        lambda target, repo_checkout: RunnerCatalog(
+            target_name=target,
+            runners_detected=["task"],
+            commands=[RunnerCommand("task", "hello", "task hello", str(repo_checkout / "Taskfile.yml"))],
+            default_command="task hello",
+        ),
+    )
+
+    exit_code = run_target(
+        "envprofile",
+        repo_ids=["repo-a", "repo-b"],
+        command_name="hello",
+        repo_env_profile_overrides={"repo-a": "ci-a", "repo-b": "ci-b"},
+    )
+    assert exit_code == 0
+    assert observed["repo-a"]["ENV"] == "A"
+    assert observed["repo-b"]["ENV"] == "B"
 
 
 def test_read_dual_rejects_hash_mismatch(tmp_path: Path, monkeypatch) -> None:
@@ -304,7 +1190,7 @@ def test_env_profile_applies_to_run(tmp_path: Path, monkeypatch) -> None:
     materialize_target("zeta")
     monkeypatch.setattr(
         "thegent.phench.service.run_env_doctor_for_target",
-        lambda target: {"doctor_status": "pass", "missing_requirements": []},
+        lambda target, family=None: {"doctor_status": "pass", "missing_requirements": []},
     )
 
     set_env_profile("zeta", "ci", {"FOO": "BAR"})

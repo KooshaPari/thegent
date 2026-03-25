@@ -6,6 +6,10 @@
 
 **Evidence bundle per slice:** `gh pr view` URL(s), `CHANGELOG` diff (or “N/A — internal-only”), version file bump if applicable.
 
+**Runbook (slices 4–6):** **`18_WAVE_C_SLICES_4_6.md`** — cliproxy, portage/governance, trace/trash/ralph/org; umbrella **[#559](https://github.com/KooshaPari/thegent/issues/559)**, reuse research **[#560](https://github.com/KooshaPari/thegent/issues/560)**.
+
+**Next 50 (Wave D + E):** **`19_NEXT_50_WORK_ITEMS.md`** — ordered queue **1–50** after this wave’s Ship work.
+
 ---
 
 ## Slice 1 — heliosApp / product integration (4)
