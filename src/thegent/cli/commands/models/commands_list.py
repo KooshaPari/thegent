@@ -18,14 +18,14 @@ from thegent.cli.commands._cli_shared import (
     list_droid_names,
     resolve_agent,
 )
-from thegent.cli.commands.model_cmds_agents_helpers import render_agents_table, render_droids_table
-from thegent.cli.commands.model_cmds_catalog_helpers import (
+from thegent.cli.commands.models.helpers_agents import render_agents_table, render_droids_table
+from thegent.cli.commands.models.helpers_catalog import (
     emit_by_model_view,
     emit_contract_view,
     provider_sequence,
     run_provider_listings,
 )
-from thegent.cli.commands.model_cmds_metrics_helpers import (
+from thegent.cli.commands.models.helpers_metrics import (
     build_index_data,
     collect_metrics_rows,
     emit_cost_values_output,
@@ -33,7 +33,7 @@ from thegent.cli.commands.model_cmds_metrics_helpers import (
     emit_metrics_output,
     flatten_cost_values,
 )
-from thegent.cli.commands.model_cmds_rules import (
+from thegent.cli.commands.models.commands_rules import (
     _list_antigravity_models,
     _list_claude_models,
     _list_codex_models,
@@ -44,7 +44,7 @@ from thegent.cli.commands.model_cmds_rules import (
     _list_kiro_models,
     _list_minimax_models,
 )
-from thegent.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
+from thegent.cli.commands.models.helpers_routes import build_available_routes, build_resolved_route
 
 
 def list_agents_cmd() -> None:
