@@ -25,7 +25,7 @@ from thegent_agents.document.processor import (
     count_lines,
     extract_metadata,
 )
-from thegent.utils.path_utils import normalize_path, safe_join
+from thegent_core.utils.path_utils import normalize_path, safe_join
 
 console = Console()
 
@@ -107,7 +107,7 @@ def list_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            from thegent.errors import print_error
+            from thegent_core.errors import print_error
 
             print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
@@ -139,7 +139,7 @@ def next_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            from thegent.errors import print_error
+            from thegent_core.errors import print_error
 
             print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
@@ -176,7 +176,7 @@ def files_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            from thegent.errors import print_error
+            from thegent_core.errors import print_error
 
             print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
@@ -203,7 +203,7 @@ def summary_cmd(
     else:
         queue_file_path = DEFAULT_QUEUE_FILE
         if not queue_file_path.exists():
-            from thegent.errors import print_error
+            from thegent_core.errors import print_error
 
             print_error(f"Queue file not found: {queue_file_path}")
             raise typer.Exit(1)
@@ -239,7 +239,7 @@ def process_cmd(
     """Process a single file."""
     path = filepath.expanduser()
     if not path.exists():
-        from thegent.errors import print_error
+        from thegent_core.errors import print_error
 
         print_error(f"File not found: {filepath}")
         raise typer.Exit(1)
@@ -286,7 +286,7 @@ def analyze_cmd(
     """Analyze a document."""
     path = filepath.expanduser()
     if not path.exists():
-        from thegent.errors import print_error
+        from thegent_core.errors import print_error
 
         print_error(f"File not found: {filepath}")
         raise typer.Exit(1)

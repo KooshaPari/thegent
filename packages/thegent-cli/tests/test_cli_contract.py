@@ -1,7 +1,6 @@
 """Contract tests for thegent-cli package."""
 
 
-
 class TestCliContract:
     """Test thegent-cli package contract."""
 
@@ -24,8 +23,8 @@ class TestCliContract:
 
     def test_backward_compat_thegent_cli(self) -> None:
         """Test backward compatibility: thegent.cli should still work."""
-        from thegent.cli import ThegentSettings
-        from thegent.cli import console
+        from thegent_cli.cli import ThegentSettings
+        from thegent_cli.cli import console
 
         assert ThegentSettings is not None
         assert console is not None

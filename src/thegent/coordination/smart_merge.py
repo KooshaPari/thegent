@@ -2,13 +2,13 @@
 Includes Mergiraf integration, conflict prediction, and structural merge.
 """
 
-import orjson as json
+import json
 import logging
-from thegent.infra.shim_subprocess import run as shim_run
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_dump, yaml_load
+from thegent.infra.shim_subprocess import run as shim_run
 
 logger = logging.getLogger(__name__)
 
@@ -73,11 +73,12 @@ class SmartMerger:
                 output_file.write_text(json.dumps(merged, indent=2))
                 return True
             if ext in (".yaml", ".yml"):
-                base = yaml.safe_load(base_file.read_text())
-                local = yaml.safe_load(local_file.read_text())
-                remote = yaml.safe_load(remote_file.read_text())
+                base = yaml_load(base_file.read_text())
+                local = yaml_load(local_file.read_text())
+                remote = yaml_load(remote_file.read_text())
                 merged = self._deep_merge(base, local, remote)
-                output_file.write_text(yaml.dump(merged, sort_keys=False))
+                yaml_text = yaml_dump(merged, sort_keys=False)
+                output_file.write_text(yaml_text if yaml_text is not None else "")
                 return True
         except Exception as e:
             logger.error(f"Structural merge failed for {output_file}: {e}")

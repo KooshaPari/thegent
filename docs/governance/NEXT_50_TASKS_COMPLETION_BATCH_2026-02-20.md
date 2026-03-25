@@ -98,8 +98,8 @@
 
 ## Next Execution Batch (Implementation)
 
-1. Wire shared max-lines gate into `thegent` pre-commit, Taskfile lint path, and CI quality job.
-2. Add explicit Rust lane in CI (`fmt`, `clippy`, `test`, dependency security checks).
-3. Add shell/docs/config lane in CI and pre-commit.
-4. Add per-gate telemetry fields (`duration_ms`, `cache_hit`, `scope`, `profile`) in governance output schema.
-5. Promote `fast` profile budgets to hard SLO checks with regression alerting.
+- [x] 1. Wire shared max-lines gate into `thegent` pre-commit, Taskfile lint path, and CI quality job.
+- [x] 2. Add explicit Rust lane in CI (`fmt`, `clippy`, `test`, dependency security checks).
+- [x] 3. Add shell/docs/config lane in CI and pre-commit.
+- [x] 4. Add per-gate telemetry fields (`duration_ms`, `cache_hit`, `scope`, `profile`) in governance output schema.
+- [x] 5. Promote `fast` profile budgets to hard SLO checks with regression alerting.

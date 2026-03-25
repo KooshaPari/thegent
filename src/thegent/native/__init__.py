@@ -1,12 +1,12 @@
-"""Native binary wrappers for thegent (BKM-08 et al.)."""
+"""Compatibility facade for native platform helpers."""
 
-from thegent.native.jsonl_parser import JsonlParser
-from thegent.native.watcher_daemon import WatcherDaemon, WatchEvent, WatchSpec, get_watcher_daemon
+from __future__ import annotations
 
-__all__ = [
-    "JsonlParser",
-    "WatchEvent",
-    "WatchSpec",
-    "WatcherDaemon",
-    "get_watcher_daemon",
-]
+from importlib import import_module
+from typing import Any
+
+_MODULE = import_module("thegent_platform.native")
+
+
+def __getattr__(name: str) -> Any:
+    return getattr(_MODULE, name)

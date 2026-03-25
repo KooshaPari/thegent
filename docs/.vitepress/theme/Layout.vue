@@ -1,14 +1,7 @@
 <script setup lang="ts">
-import DefaultTheme from 'vitepress/theme'
-import { useData } from 'vitepress'
-import StickyHeader from './components/StickyHeader.vue'
-import StickySidebar from './components/StickySidebar.vue'
-import ToastContainer from './components/ToastContainer.vue'
-import BackToTop from './components/BackToTop.vue'
-import './custom.css'
+import PhenoDocsTheme from '@phenodocs-theme'
 
-const { Layout } = DefaultTheme
-const { frontmatter, page } = useData()
+const { Layout } = PhenoDocsTheme
 </script>
 
 <template>

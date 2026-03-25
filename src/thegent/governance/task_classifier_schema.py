@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 
 
 _FIELD_REQUIRED_KEYS = ("type", "required")
@@ -112,7 +112,7 @@ def _validate_escalation_rules(rules: Any, path: str = "escalation_rules") -> No
 def load_task_classifier_schema(schema_path: Path | None = None) -> dict[str, Any]:
     """Load and validate the governance task classifier schema."""
     path = schema_path or Path("docs/governance/TASK_CLASSIFIER_SCHEMA.yaml")
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    raw = yaml_load(path) or {}
     if not isinstance(raw, dict):
         msg = f"Invalid classifier schema payload type at {path}"
         raise ValueError(msg)

@@ -1,6 +1,6 @@
 """Serialization utilities."""
 
-import orjson as json
+import json
 import logging
 from typing import Any
 
@@ -21,7 +21,7 @@ class Serializers:
         Returns:
             JSON string
         """
-        return json.dumps(obj, indent=indent, default=str).decode()
+        return json.dumps(obj, indent=indent, default=str)
 
     @staticmethod
     def from_json(json_str: str) -> Any:

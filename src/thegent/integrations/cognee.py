@@ -14,6 +14,7 @@ import logging
 import os
 from dataclasses import dataclass
 from enum import Enum
+from typing import cast
 
 from thegent.integrations.base import DataclassConfig
 
@@ -31,19 +32,20 @@ class CogneeConfig(DataclassConfig):
 
 
 class CogneeClient:
-    def __init__(self, config: CogneeConfig = None):
+    def __init__(self, config: CogneeConfig | None = None):
         self._config = config or self._load_config()
         self._status = CogneeStatus.DISABLED
         if self._config.enabled:
             self._status = CogneeStatus.ENABLED
 
-    def _load_config(self):
-        config = CogneeConfig.from_env("COGNEE_")
+    def _load_config(self) -> CogneeConfig:
+        config = cast("CogneeConfig", CogneeConfig.from_env("COGNEE_"))
         config.enabled = os.environ.get("THEGENT_ENABLE_COGNEE", "").lower() in ("1", "true", "yes")
         return config
 
     @property
-    def is_enabled(self): return self._config.enabled
+    def is_enabled(self):
+        return self._config.enabled
 
     async def add_memory(self, text: str, metadata: dict | None = None):
         if not self.is_enabled:
@@ -57,6 +59,8 @@ class CogneeClient:
 
 
 _cognee = None
+
+
 def get_cognee():
     global _cognee
     if _cognee is None:

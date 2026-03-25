@@ -27,10 +27,7 @@ def main() -> int:
 
         async def check():
             async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{base_url}/api/health",
-                    timeout=5
-                )
+                response = await client.get(f"{base_url}/api/health", timeout=5)
                 return response.status_code
 
         status = asyncio.run(check())
@@ -40,6 +37,7 @@ def main() -> int:
 
     except ImportError:
         import urllib.request
+
         url = f"{base_url}/api/health"
         with urllib.request.urlopen(url, timeout=5) as response:
             status = response.getcode()

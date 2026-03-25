@@ -70,7 +70,7 @@ def get_config_dir() -> Path:
 
     settings = ThegentSettings()
     if settings.config_dir_override is not None:
-        config_dir = settings.config_dir_override.expanduser()
+        config_dir = Path(settings.config_dir_override).expanduser()
 
     # Create directory if it doesn't exist
     config_dir.mkdir(parents=True, exist_ok=True)

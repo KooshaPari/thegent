@@ -74,7 +74,7 @@ def dag_validate_cmd(cd: Path | None = None) -> None:
 
     # WP-4005: State freshness check
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     ckpt_registry = CheckpointRegistry(settings.session_dir)
     ckpts = ckpt_registry.list_checkpoints(limit=1)
@@ -350,7 +350,7 @@ def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
 def plan_claim_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
     """Claim an item in the unified work stream."""
     from thegent_cli.commands.work_stream_impl import work_stream_claim_impl
-    from thegent.discovery import get_current_agent_id
+    from thegent_agents.discovery import get_current_agent_id
 
     aid = agent_id or get_current_agent_id()
     result = work_stream_claim_impl(item_id, aid, cd=cd)
@@ -365,7 +365,7 @@ def plan_claim_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = 
 def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None = None) -> None:
     """Mark an item as complete in the unified work stream."""
     from thegent_cli.commands.work_stream_impl import work_stream_complete_impl
-    from thegent.discovery import get_current_agent_id
+    from thegent_agents.discovery import get_current_agent_id
 
     aid = agent_id or get_current_agent_id()
     result = work_stream_complete_impl(item_id, aid, cd=cd)
@@ -377,7 +377,7 @@ def plan_complete_cmd(item_id: str, agent_id: str | None = None, cd: Path | None
 
 def plan_lint_workstream_cmd(cd: Path | None = None) -> None:
     """Validate canonical WORK_STREAM schema structure."""
-    from thegent.utils.workstream_ops import WorkStreamOps
+    from thegent_core.utils.workstream_ops import WorkStreamOps
 
     root = cd or Path.cwd()
     ops = WorkStreamOps(base_dir=root)
@@ -391,7 +391,7 @@ def plan_lint_workstream_cmd(cd: Path | None = None) -> None:
 
 def plan_normalize_workstream_cmd(cd: Path | None = None) -> None:
     """Sort and normalize WL sections and status-line formatting."""
-    from thegent.utils.workstream_ops import WorkStreamOps
+    from thegent_core.utils.workstream_ops import WorkStreamOps
 
     root = cd or Path.cwd()
     ops = WorkStreamOps(base_dir=root)
@@ -401,7 +401,7 @@ def plan_normalize_workstream_cmd(cd: Path | None = None) -> None:
 
 def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Verify WORK_STREAM invariants for CLAIMED/COMPLETED overlap by exact ID match."""
-    from thegent.planning.work_stream import WorkStreamManager
+    from thegent_planning.planning.work_stream import WorkStreamManager
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -647,8 +647,8 @@ def closure_pack_cmd(cd: Path | None = None) -> None:
 
     doc = _parse_dag_full(dag_path)
     settings = ThegentSettings()
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.execution import Auditor
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_execution.execution import Auditor
 
     registry = RunRegistry(settings.session_dir)
     auditor = Auditor(registry.registry_path)
@@ -814,7 +814,7 @@ def dag_checkpoint_cmd(cd: Path | None = None, reason: str = "Manual checkpoint"
         raise typer.Exit(1)
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -835,7 +835,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
     dag_path = cwd / ".factory" / "dag-session.md"
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -857,7 +857,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
 def dag_checkpoints_cmd(limit: int = 20) -> None:
     """List recent DAG checkpoints."""
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -909,7 +909,7 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
     assert dag_path is not None
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -946,8 +946,8 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
 
 def workstream_query_cmd(query: str) -> None:
     """Execute SQL query on workstream database."""
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())
@@ -976,8 +976,8 @@ def workstream_query_cmd(query: str) -> None:
 
 def workstream_stats_cmd() -> None:
     """Get workstream statistics."""
-    from thegent.config import ThegentSettings
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_core.config import ThegentSettings
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     try:
         db = WorkstreamDB(settings=ThegentSettings())
@@ -1027,7 +1027,7 @@ def workstream_stats_cmd() -> None:
 
 def workstream_dashboard_cmd() -> None:
     """Launch workstream dashboard TUI."""
-    from thegent.tui.workstream_dashboard import run_dashboard
+    from thegent_cli.tui.workstream_dashboard import run_dashboard
 
     run_dashboard()
 
@@ -1036,7 +1036,7 @@ def workstream_launch_cmd() -> None:
     """Launch the auto-launch system in the background."""
     import time
 
-    from thegent.planning.auto_launch import AutoLaunchSystem
+    from thegent_planning.planning.auto_launch import AutoLaunchSystem
 
     console.print("[bold]Auto-Launch System Starting...[/bold]")
     system = AutoLaunchSystem()
@@ -1056,7 +1056,7 @@ def workstream_dependencies_cmd() -> None:
     """Show the workstream dependency graph."""
     from rich.table import Table
 
-    from thegent.planning.workstream_db import WorkstreamDB
+    from thegent_planning.planning.workstream_db import WorkstreamDB
 
     db = WorkstreamDB()
     graph = db.get_dependency_graph()

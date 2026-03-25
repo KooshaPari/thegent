@@ -20,7 +20,7 @@ def normalize_bg_routing(
     failover: bool,
 ) -> tuple[str, str, str | None, bool]:
     """Normalize requested policy and derive lookup/child routing semantics."""
-    from thegent.models import normalize_route_policy
+    from thegent_core.models import normalize_route_policy
 
     requested_policy = routing or default_routing or "prefer_direct"
     try:

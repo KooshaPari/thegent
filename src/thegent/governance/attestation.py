@@ -1,6 +1,6 @@
 """WP-5008: Compliance attestation generator."""
 
-import orjson as json
+import json
 import logging
 from datetime import UTC, datetime
 from typing import Any

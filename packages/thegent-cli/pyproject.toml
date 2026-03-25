@@ -10,13 +10,14 @@ authors = [
     { name = "Koosha Paridehpour", email = "kooshapari@gmail.com" },
 ]
 readme = "README.md"
-requires-python = ">=3.11 and (implementation_name == 'pypy' or (implementation_name == 'cpython' and platform_machine == 'arm64' and python_version >= '3.14'))"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [
     "typer>=0.16.0",
     "rich>=13.9.4",
     "pydantic>=2.12.5",
     "thegent-agents",
+    "thegent-agint",
 ]
 
 [project.scripts]
@@ -26,6 +27,10 @@ thegent = "thegent_cli.apps.main:app"
 dev = [
     "pytest>=9.0.2",
 ]
+
+[tool.uv.sources]
+thegent-agents = { workspace = true }
+thegent-agint = { workspace = true }
 
 [tool.hatch.version]
 source = "vcs"

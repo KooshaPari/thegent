@@ -7,7 +7,7 @@ Aggregates sessions from multiple agent harnesses with dual-redundancy:
 Harnesses: Cursor, Codex, Claude, Ante, Droid
 """
 
-import orjson as json
+import json
 import logging
 import sqlite3
 import threading
@@ -47,7 +47,6 @@ class AgentSession(SerializableMixin):
     messages: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     summary: str | None = None
-
 
 
 class UnifiedSessionIndex:
@@ -422,8 +421,8 @@ class UnifiedSessionIndex:
                         session.ended_at.isoformat() if session.ended_at else None,
                         session.prompt_tokens,
                         session.completion_tokens,
-                        json.dumps(session.messages).decode(),
-                        json.dumps(session.metadata).decode(),
+                        json.dumps(session.messages),
+                        json.dumps(session.metadata),
                         session.summary,
                         datetime.now(UTC).isoformat(),
                     ),
@@ -641,7 +640,6 @@ if __name__ == "__main__":
 import subprocess
 from thegent.infra.shim_subprocess import run as shim_run
 import shlex
-from thegent.integrations.base import SerializableMixin
 
 
 class HarnessActionError(Exception):

@@ -13,7 +13,7 @@ from typing import Any
 
 from thegent_cli.services import governance as governance_service
 from thegent_cli.services import observability as observability_service
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -647,7 +647,7 @@ def escalate_approve_impl(run_id: str) -> bool:
 
 def update_calibration_impl() -> dict[str, Any]:
     """G-GP-09: Recalculate and persist calibration factors for all agents."""
-    from thegent.execution import CalibrationRegistry, RunRegistry
+    from thegent_execution.execution import CalibrationRegistry, RunRegistry
 
     settings = ThegentSettings()
     session_dir = Path(settings.session_dir).expanduser().resolve()
@@ -743,8 +743,8 @@ def observe_summary_impl(
     trend_samples: int | Any = 0,
 ) -> dict[str, Any]:
     """FR-X08: Unified observability summary aggregating KPIs, drift, escalation."""
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.execution import EscalationQueue
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_execution.execution import EscalationQueue
 
     settings = ThegentSettings()
     session_dir = Path(settings.session_dir).expanduser().resolve()
@@ -1048,9 +1048,9 @@ def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
     failed = [s for s in sessions if "exited" in str(s.get("status", "")) and s.get("status") != "exited:0"]
 
     # Cockpit: circuits, drift, budget
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.cost.aggregator import CostAggregator
-    from thegent.execution import CircuitBreakerRegistry
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_routing.cost.aggregator import CostAggregator
+    from thegent_execution.execution import CircuitBreakerRegistry
 
     circuit_breaker = CircuitBreakerRegistry(session_dir)
     ct = ContractTelemetry(session_dir)
@@ -1064,7 +1064,7 @@ def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
     # Terminals (tmux panes)
     terminals: list[dict[str, Any]] = []
     try:
-        from thegent.skills.terminal import is_claude_code_pane, list_tmux_panes
+        from thegent_skills.skills.terminal import is_claude_code_pane, list_tmux_panes
 
         for p in list_tmux_panes():
             terminals.append(
@@ -1102,7 +1102,7 @@ def sitback_dashboard_impl(profile: str = "medium") -> dict[str, Any]:
         "profile": profile,
     }
     if profile == "full":
-        from thegent.sitback_plugins import get_registry
+        from thegent_agents.sitback_plugins import get_registry
 
         reg = get_registry()
         payload["plugin_widgets"] = reg.get_widgets()
@@ -1132,7 +1132,7 @@ def get_compliance_report_impl() -> dict[str, Any]:
                     hot_archived += 1
 
     # Build retention matrix from run registry
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(session_dir)
     runs = registry.list_runs(limit=1000)

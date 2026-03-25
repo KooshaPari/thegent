@@ -528,16 +528,16 @@ def test_requirements_promotion_criteria_contract_includes_optional_lane_readine
     )
     requirements_gate = tmp_path / "requirements-gate.json"
     requirements_gate.write_text(
-        json.dumps({"blocked_count": 0}, indent=2).decode().decode(),
+        json.dumps({"blocked_count": 0}, indent=2).decode(),
         encoding="utf-8",
     )
     health = tmp_path / "health.json"
-    health.write_text(json.dumps({"overall_health_score": 93}, indent=2).decode().decode(), encoding="utf-8")
+    health.write_text(json.dumps({"overall_health_score": 93}, indent=2).decode(), encoding="utf-8")
 
     run_1 = tmp_path / "run-1.json"
-    run_1.write_text(json.dumps({"status": "passed"}, indent=2).decode().decode(), encoding="utf-8")
+    run_1.write_text(json.dumps({"status": "passed"}, indent=2).decode(), encoding="utf-8")
     run_2 = tmp_path / "run-2.json"
-    run_2.write_text(json.dumps({"status": "passed"}, indent=2).decode().decode(), encoding="utf-8")
+    run_2.write_text(json.dumps({"status": "passed"}, indent=2).decode(), encoding="utf-8")
 
     criteria_output = tmp_path / "requirements-promotion-criteria.json"
     result = subprocess.run(

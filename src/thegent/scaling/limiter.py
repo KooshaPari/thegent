@@ -13,6 +13,7 @@ import time
 @dataclass
 class HysteresisConfig:
     """Hysteresis controller configuration."""
+
     upper_threshold: float = 0.8
     lower_threshold: float = 0.5
     dwell_time: float = 5.0  # seconds to wait before scaling
@@ -28,7 +29,7 @@ class DynamicLimiter:
         min_limit: int = 1,
         max_limit: int = 100,
         initial_limit: Optional[int] = None,
-        config: Optional[HysteresisConfig] = None
+        config: Optional[HysteresisConfig] = None,
     ):
         self.min_limit = min_limit
         self.max_limit = max_limit
@@ -92,5 +93,5 @@ class DynamicLimiter:
             "min_limit": self.min_limit,
             "max_limit": self.max_limit,
             "pressure": latest.pressure_score if latest else 0,
-            "scale_direction": self._scale_direction
+            "scale_direction": self._scale_direction,
         }

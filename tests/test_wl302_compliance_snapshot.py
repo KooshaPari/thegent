@@ -246,4 +246,6 @@ class TestListSnapshots:
 
         assert len(snapshots) > 0
         assert all(isinstance(p, Path) for p in snapshots)
+
+
 # noqa: PT018

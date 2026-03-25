@@ -40,7 +40,12 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
     tmp_path.replace(path)
 
 
-def dual_write(target: str, filename: str, payload_obj: Any) -> dict[str, str]:
+def dual_write(
+    target: str,
+    filename: str,
+    payload_obj: Any,
+    family: str | None = None,
+) -> dict[str, str]:
     payload = _normalize(payload_obj)
     sync_id = utc_now_iso()
     payload_hash = _content_hash(payload)
@@ -49,8 +54,8 @@ def dual_write(target: str, filename: str, payload_obj: Any) -> dict[str, str]:
         "content_hash": payload_hash,
         "payload": payload,
     }
-    project_path = target_state_root(target) / filename
-    mirror_path = mirror_target_state_root(target) / filename
+    project_path = target_state_root(target, family=family) / filename
+    mirror_path = mirror_target_state_root(target, family=family) / filename
     _write_json(project_path, wrapped)
     _write_json(mirror_path, wrapped)
     return {
@@ -61,10 +66,10 @@ def dual_write(target: str, filename: str, payload_obj: Any) -> dict[str, str]:
     }
 
 
-def read_dual(target: str, filename: str) -> dict[str, Any]:
+def read_dual(target: str, filename: str, family: str | None = None) -> dict[str, Any]:
     candidates = [
-        target_state_root(target) / filename,
-        mirror_target_state_root(target) / filename,
+        target_state_root(target, family=family) / filename,
+        mirror_target_state_root(target, family=family) / filename,
     ]
     errors: list[str] = []
     for path in candidates:
@@ -94,9 +99,14 @@ def read_dual(target: str, filename: str) -> dict[str, Any]:
     raise FileNotFoundError(f"Unable to load {filename} for {target}; {', '.join(errors)}")
 
 
-def sync_dual(target: str, filename: str, prefer: str | None = None) -> dict[str, Any]:
-    project_path = target_state_root(target) / filename
-    mirror_path = mirror_target_state_root(target) / filename
+def sync_dual(
+    target: str,
+    filename: str,
+    prefer: str | None = None,
+    family: str | None = None,
+) -> dict[str, Any]:
+    project_path = target_state_root(target, family=family) / filename
+    mirror_path = mirror_target_state_root(target, family=family) / filename
 
     if not project_path.exists() and not mirror_path.exists():
         raise FileNotFoundError(f"No state file exists for sync: {filename}")

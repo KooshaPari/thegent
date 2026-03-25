@@ -33,7 +33,7 @@ from thegent_cli.commands.infra_usage_helpers import build_provider_usage_table
 def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
     """List recent interruptions (WP-4004)."""
     settings = ThegentSettings()
-    from thegent.execution import InterruptionTracker
+    from thegent_execution.execution import InterruptionTracker
 
     it = InterruptionTracker(settings.session_dir)
     if not it.path.exists():
@@ -106,7 +106,7 @@ def config_check_cmd(format: str | None = None) -> None:
 def concurrency_show_cmd(format: str | None = None) -> None:
     """Show current concurrency limit and utilization (WP-5001)."""
     from thegent_cli.commands.impl import ps_impl
-    from thegent.orchestration.resource.load_based_limits import (
+    from thegent_execution.orchestration.resource.load_based_limits import (
         LimitGateConfig,
         compute_dynamic_limit,
         sample_resources,
@@ -231,7 +231,7 @@ def load_status_cmd(format: str | None = None) -> None:
 def cost_status_cmd(format: str | None = None) -> None:
     """Show cost budget utilization and cost-aware routing status (WP-5003)."""
     settings = ThegentSettings()
-    from thegent.cost.aggregator import CostAggregator
+    from thegent_routing.cost.aggregator import CostAggregator
 
     agg = CostAggregator(settings.session_dir)
     mtd = agg.get_mtd_total()
@@ -280,7 +280,7 @@ def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
         "proxy_reachable": metrics is not None,
     }
     if include_cost:
-        from thegent.cost.aggregator import CostAggregator
+        from thegent_routing.cost.aggregator import CostAggregator
 
         agg = CostAggregator(settings.session_dir)
         data["cost"] = {
@@ -303,7 +303,7 @@ def usage_cmd(format: str | None = None, include_cost: bool = True) -> None:
 def interruption_snooze_cmd(alert_id: str, minutes: int = 5, itype: str = "unknown") -> None:
     """Snooze an alert; expires → auto-escalation (WP-4004)."""
     settings = ThegentSettings()
-    from thegent.execution import InterruptionTracker
+    from thegent_execution.execution import InterruptionTracker
 
     it = InterruptionTracker(settings.session_dir)
     it.record_interruption(run_id=alert_id, severity=itype)
@@ -364,9 +364,9 @@ def cockpit_cmd() -> None:
     from rich.table import Table
 
     from thegent_cli.commands.impl import ps_impl
-    from thegent.contracts.telemetry import ContractTelemetry
-    from thegent.cost.aggregator import CostAggregator
-    from thegent.execution import CircuitBreakerRegistry
+    from thegent_core.contracts.telemetry import ContractTelemetry
+    from thegent_routing.cost.aggregator import CostAggregator
+    from thegent_execution.execution import CircuitBreakerRegistry
 
     registry = RunRegistry(settings.session_dir)
     circuit_breaker = CircuitBreakerRegistry(settings.session_dir)
@@ -559,7 +559,7 @@ def modes_cmd(
     mode: str | None = None,
 ) -> None:
     """List multi-agent orchestration modes (sequential_delegation, parallel_consensus, review_loop)."""
-    from thegent.orchestration_modes import get_mode, list_modes
+    from thegent_agents.orchestration_modes import get_mode, list_modes
 
     if mode:
         entry = get_mode(mode)
@@ -659,7 +659,7 @@ def benchmark_cmd() -> None:
     console.print(kpi_table)
 
     # WP-X7: Contract Drift Summary
-    from thegent.contracts.telemetry import ContractTelemetry, detect_drift
+    from thegent_core.contracts.telemetry import ContractTelemetry, detect_drift
 
     telemetry = ContractTelemetry(settings.session_dir)
     stats = telemetry.get_stats(limit=100)
@@ -683,7 +683,7 @@ def benchmark_cmd() -> None:
 
 def release_pack_cmd(version: str = "2.0") -> None:
     """Automated release documentation packaging (WP-12009)."""
-    from thegent.utils.release_packager import ReleasePackager
+    from thegent_core.utils.release_packager import ReleasePackager
 
     packager = ReleasePackager(Path.cwd())
     manifest = packager.compile_package(version)
@@ -736,7 +736,7 @@ def context_history_cmd(
     limit: int = typer.Option(50, "--limit", "-l", help="Number of entries to show"),
 ) -> None:
     """Search and display context-aware shell history."""
-    from thegent.infra.history import ContextHistory
+    from thegent_core.infra.history import ContextHistory
 
     history = ContextHistory()
     results = history.search(query=query, task_id=task_id, cwd=cwd, limit=limit)
@@ -772,7 +772,7 @@ def scratchpad_cmd(
     content: str | None = typer.Argument(None, help="Content to add (for 'add' action)"),
 ) -> None:
     """Manage the AI command drafting scratchpad."""
-    from thegent.skills.scratchpad import AIScratchpad
+    from thegent_skills.skills.scratchpad import AIScratchpad
 
     scratch = AIScratchpad()
 
@@ -804,7 +804,7 @@ def scratchpad_cmd(
 
 def explorer_cmd() -> None:
     """Launch the terminal explorer TUI."""
-    from thegent.tui.explorer import run_explorer_tui
+    from thegent_cli.tui.explorer import run_explorer_tui
 
     run_explorer_tui()
 

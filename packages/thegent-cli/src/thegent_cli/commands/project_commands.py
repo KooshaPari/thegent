@@ -13,7 +13,7 @@ from rich.table import Table
 
 def project_register_cmd(*, path: Path, name: str | None = None, console: Any) -> None:
     """Register a new project (WP-4008)."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     settings = ThegentSettings()
     projects_file = settings.session_dir / "projects.jsonl"
@@ -25,7 +25,7 @@ def project_register_cmd(*, path: Path, name: str | None = None, console: Any) -
 
 def project_list_cmd(*, format: str | None = None, console: Any) -> None:
     """List all registered projects (WP-4008)."""
-    from thegent.config import ThegentSettings
+    from thegent_core.config import ThegentSettings
 
     _fmt = (format or "rich").lower().strip()
     settings = ThegentSettings()

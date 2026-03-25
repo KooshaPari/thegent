@@ -1,7 +1,6 @@
 """Contract tests for thegent-agents package."""
 
 
-
 class TestAgentsContract:
     """Test thegent-agents package contract."""
 
@@ -26,8 +25,8 @@ class TestAgentsContract:
 
     def test_backward_compat_thegent_agents(self) -> None:
         """Test backward compatibility: thegent.agents should still work."""
-        from thegent.agents import AGENT_LABELS
-        from thegent.agents import list_agent_names
+        from thegent_agents.agents import AGENT_LABELS
+        from thegent_agents.agents import list_agent_names
 
         assert AGENT_LABELS is not None
         assert callable(list_agent_names)

@@ -49,13 +49,13 @@ class LearningRegistry:
                 for mid, mdata in data.items():
                     mdata["metrics"] = CanaryMetrics(**mdata["metrics"])
                     self._models[mid] = LearningModel(**mdata)
-            except (json.JSONDecodeError, KeyError):
+            except json.JSONDecodeError, KeyError:
                 pass
 
     def _save(self) -> None:
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
         data = {mid: asdict(m) for mid, m in self._models.items()}
-        self.storage_path.write_text(json.dumps(data, indent=2))
+        self.storage_path.write_text(json.dumps(data, option=json.OPT_INDENT_2).decode())
 
     def add_canary(self, model_id: str) -> None:
         """Register a new model for canary testing."""

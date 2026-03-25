@@ -24,7 +24,7 @@ def test_run_suite_emits_expected_shape() -> None:
 def test_run_suite_can_be_serialized(tmp_path: Path) -> None:
     payload = run_suite(iterations=500, mode="warm")
     out = tmp_path / "bench.json"
-    out.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
+    out.write_text(json.dumps(payload).decode(), encoding="utf-8")
     loaded = json.loads(out.read_text(encoding="utf-8"))
     assert loaded["suite"] == "python-benchmark-suite-v1"
     assert loaded["mode"] == "warm"

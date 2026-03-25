@@ -1,7 +1,7 @@
 """Consensus and escalation protocols for the agent mesh."""
 
 import enum
-import orjson as json
+import json
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -85,7 +85,7 @@ class ConsensusProtocol:
         try:
             with open(path) as f:
                 return json.load(f)
-        except (OSError, json.JSONDecodeError):
+        except OSError, json.JSONDecodeError:
             return None
 
     def _load_proposal(self, proposal_id: str) -> dict[str, Any] | None:
@@ -243,7 +243,7 @@ class CausalInfluenceTracker:
             "timestamp": time.time(),
         }
         with open(self.influence_log, "a") as f:
-            f.write(json.dumps(entry).decode() + "\n")
+            f.write(json.dumps(entry) + "\n")
 
     def compute_shapley_values(self, action_id: str) -> dict[str, float]:
         """Compute per-agent causal influence using Shapley-style normalized attribution."""
@@ -293,7 +293,7 @@ class EscalationWorkflow:
         try:
             with open(path) as f:
                 return json.load(f)
-        except (OSError, json.JSONDecodeError):
+        except OSError, json.JSONDecodeError:
             return None
 
     def _next_tier(self, current_tier: int) -> int:

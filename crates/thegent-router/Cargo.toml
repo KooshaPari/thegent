@@ -13,9 +13,10 @@ thegent-shm = { path = "../thegent-shm" }
 uuid = { version = "1.11", features = ["v4"] }
 sha2 = "0.10"
 hex = "0.4"
+pyo3 = { version = "0.24.1", optional = true, features = ["abi3-py312", "extension-module"] }
 
 [features]
-python = []
+python = ["dep:pyo3"]
 
 [dev-dependencies]
 tempfile = "3.10"

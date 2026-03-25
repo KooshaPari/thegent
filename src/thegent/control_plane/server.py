@@ -7,7 +7,7 @@ import platform
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 from opentelemetry import trace
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -61,8 +61,7 @@ class TenantManager:
         if not p.exists():
             return {}
         try:
-            with open(p) as f:
-                return yaml.safe_load(f) or {}
+            return yaml_load(p) or {}
         except Exception:
             return {}
 

@@ -5,7 +5,7 @@ and enforces tiered throttling as utilization increases. Budget tiers and limits
 are loaded from contracts/health-targets.json.
 """
 
-import orjson as json
+import json
 import logging
 from datetime import UTC, datetime
 from enum import StrEnum

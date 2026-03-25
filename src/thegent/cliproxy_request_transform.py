@@ -393,5 +393,5 @@ def _process_sse_line(line: bytes, transform: bool) -> bytes | None:
         if transformed is None:
             return None  # Skip empty deltas; don't emit Chat Completions format to Responses client
         return f"data: {json.dumps(transformed).decode()}\n\n".encode()
-    except (json.JSONDecodeError, KeyError, UnicodeDecodeError):
+    except json.JSONDecodeError, KeyError, UnicodeDecodeError:
         return line + b"\n"

@@ -23,7 +23,7 @@ from typing import Any
 
 import typer
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 _log = logging.getLogger(__name__)
 
@@ -148,7 +148,9 @@ def _write_state_with_conflict_branch(path: Path, payload: dict[str, Any], *, br
                 stem = path.stem
                 prev_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.prev.json"
                 next_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.next.json"
-                prev_path.write_text(json.dumps(existing, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+                prev_path.write_text(
+                    json.dumps(existing, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8"
+                )
                 next_path.write_text(payload_text, encoding="utf-8")
 
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -317,7 +319,7 @@ def _load_prior_session_output(
     include_stderr: bool = False,
 ) -> str:
     """Load tail of prior session stdout (and optionally stderr) for continuation."""
-    from thegent.utils.helpers import read_file_chunk
+    from thegent_core.utils.helpers import read_file_chunk
 
     from thegent_cli.services.session_path_helpers import session_paths as _session_paths_fn
 

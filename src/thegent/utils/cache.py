@@ -1,6 +1,6 @@
 import contextlib
 import hashlib
-import orjson as json
+import json
 import logging
 import time
 from pathlib import Path
@@ -59,11 +59,11 @@ class ResourceCache:
         data = {
             "timestamp": time.time(),
             "payload": payload,
-            "etag": hashlib.sha256(json.dumps(payload, sort_keys=True).decode().encode()).hexdigest(),
+            "etag": hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest(),
         }
         # Write to file (persistent storage)
         path = self._get_path(key)
-        path.write_text(json.dumps(data).decode(), encoding="utf-8")
+        path.write_text(json.dumps(data), encoding="utf-8")
         # Update in-memory cache (cachetools handles eviction and TTL)
         self.memory_cache[key] = payload
         return data["etag"]

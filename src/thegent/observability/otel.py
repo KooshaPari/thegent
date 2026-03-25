@@ -109,21 +109,24 @@ _NOOP_SPAN = _NoOpSpan()
 def configure_otel(config: OtelConfig) -> None:
     """Configure the global TracerProvider with OTLP exporter.
 
-    If opentelemetry is not installed or config.enabled is False, this is a
-    no-op (no error is raised — the module simply stays in no-op mode).
+    OTEL bootstrap is fail-loud by default: if enabled and OTEL packages are
+    unavailable, this raises RuntimeError. Explicit opt-out remains available
+    via config.enabled=False.
     """
     global _config, _tracer, _provider
 
     with _config_lock:
         _config = config
 
-    if not _OTEL_AVAILABLE:
-        _log.debug("opentelemetry OTLP exporter not available; otel.py operating in no-op mode")
-        return
-
     if not config.enabled:
         _log.debug("OTel disabled via config; otel.py operating in no-op mode")
         return
+
+    if not _OTEL_AVAILABLE:
+        raise RuntimeError(
+            "OTel bootstrap failed: opentelemetry OTLP exporter packages are unavailable. "
+            "Install OTEL dependencies or set enabled=False to opt out explicitly."
+        )
 
     resource = Resource.create({"service.name": config.service_name})
     exporter = OTLPSpanExporter(

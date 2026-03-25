@@ -192,6 +192,11 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+
       - name: Install Task runner
         uses: arduino/setup-task@v2
 
@@ -206,6 +211,10 @@ jobs:
       - name: Sanity check Python runtime
         run: |
           uv run python -V
+
+      - name: Assert canary refresh governance policy
+        run: |
+          task quality:governance:canary-refresh
 
       - name: Assert canonical max-lines CI path (WL-122)
         run: |
@@ -222,6 +231,9 @@ jobs:
       - name: Enforce worktree governance policy
         run: |
           ./scripts/governance_policy_check.sh
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
 
       - name: Run rust quality CI lane (fmt/clippy/test)
         run: |
@@ -478,7 +490,7 @@ jobs:
 
       - name: Verify psleak installation
         run: |
-          uv run python -c "import psleak; print('psleak available')" || echo "psleak check completed"
+          uv run python -c "import psleak; print('psleak available')"
 
       - name: Run psleak-based leak detection tests
         run: |
@@ -489,14 +501,14 @@ jobs:
 
       - name: Run tracemalloc-based memory leak tests
         run: |
-          uv run pytest tests/test_resource_leaks.py::TestMemoryLeaksTracemalloc -v --tb=short || echo "tracemalloc tests completed"
+          uv run pytest tests/test_resource_leaks.py::TestMemoryLeaksTracemalloc -v --tb=short
         env:
           PYTHONPATH: ${{ github.workspace }}
           CHECK_LEAKS: "1"
 
       - name: Run CPython-style reference leak tests
         run: |
-          uv run pytest tests/test_resource_leaks.py::TestReferenceLeaks -v --tb=short || echo "reference leak tests completed"
+          uv run pytest tests/test_resource_leaks.py::TestReferenceLeaks -v --tb=short
         env:
           PYTHONPATH: ${{ github.workspace }}
           CHECK_LEAKS: "1"
@@ -510,17 +522,23 @@ jobs:
             .pytest_cache/
           retention-days: 30
 
-  # WL-132 B90-W2-D4: Zig ABI readiness gate (non-blocking until P0 promotion)
-  # Verifies thegent-zmx-interop (Rust<->Zig interop crate) builds and tests pass.
-  # continue-on-error: true because Zig is P2/experimental; CI must not block on it.
+  # WL-132 B90-W2-D4: Zig ABI required gate (promoted to blocking)
+  # Explicit required checks:
+  # 1) crate manifest exists and contains required package name
+  # 2) cargo build (locked) passes for thegent-zmx-interop
+  # 3) cargo test (locked) passes for thegent-zmx-interop
   zig-readiness:
-    name: Zig ABI Readiness Gate (WL-132)
+    name: Zig ABI Required Gate (WL-132)
     runs-on: self-hosted
-    continue-on-error: true
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Verify Zig gate criteria inputs
+        run: |
+          test -f crates/thegent-zmx-interop/Cargo.toml
+          grep -q 'name = "thegent-zmx-interop"' crates/thegent-zmx-interop/Cargo.toml
 
       - name: Install Rust stable toolchain
         uses: dtolnay/rust-toolchain@v1
@@ -538,12 +556,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-zmx-
 
-      - name: Build thegent-zmx-interop (default features, no zmx-native)
-        run: cargo build -p thegent-zmx-interop
+      - name: Build thegent-zmx-interop (required gate build)
+        run: cargo build --locked -p thegent-zmx-interop
         working-directory: crates
 
-      - name: Run thegent-zmx-interop tests (subprocess fallback lane)
-        run: cargo test -p thegent-zmx-interop
+      - name: Run thegent-zmx-interop tests (required gate tests)
+        run: cargo test --locked -p thegent-zmx-interop
         working-directory: crates
 
   integration:
@@ -578,6 +596,10 @@ jobs:
 
       - name: Run integration tests
         run: |
-          uv run pytest tests/ -v -m "integration" || echo "No integration tests found"
+          if uv run pytest tests/ --collect-only -q -m "integration" | grep -q "collected 0 items"; then
+            echo "No integration tests found for marker 'integration'"
+            exit 0
+          fi
+          uv run pytest tests/ -v -m "integration"
         env:
           PYTHONPATH: ${{ github.workspace }}

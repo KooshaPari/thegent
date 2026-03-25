@@ -31,4 +31,3 @@ def test_recover_file_restores_shadow_copy(tmp_path: Path) -> None:
 
     assert manager.recover_file("recover.txt", "123") is True
     assert (project / "recover.txt").read_text() == "restored"
-

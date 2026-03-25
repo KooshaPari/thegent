@@ -3,7 +3,7 @@
 Builds a closed-loop graph of all evidence artifacts and provides deterministic export bundling.
 """
 
-import orjson as json
+import json
 from pathlib import Path
 from typing import Any
 

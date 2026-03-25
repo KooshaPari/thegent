@@ -14,7 +14,7 @@ app = typer.Typer(help="LiteLLM, Pareto, and model-first routing control.")
 def routing_status(
     format: str = typer.Option("rich", "--format", "-F", help="Output format (rich|json|md)"),
 ):
-    from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
+    from thegent_core.utils.routing_impl.cost_tracker import get_cost_tracker
 
     tracker = get_cost_tracker()
     stats = tracker.get_stats()
@@ -44,7 +44,7 @@ def routing_harvest(
     session_id: str = typer.Option(..., "--session-id", help="Session ID to harvest for"),
     output: Path | None = typer.Option(None, "--output", "-o", help="Output path for JSON metrics"),
 ):
-    from thegent.utils.routing_impl.harvest import harvest_routing_metrics
+    from thegent_core.utils.routing_impl.harvest import harvest_routing_metrics
 
     metrics = harvest_routing_metrics(session_id=session_id, output_path=output)
     if not output:
@@ -53,7 +53,7 @@ def routing_harvest(
 
 @app.command("reset", help="Reset cost and latency tracking.")
 def routing_reset():
-    from thegent.utils.routing_impl.cost_tracker import get_cost_tracker
+    from thegent_core.utils.routing_impl.cost_tracker import get_cost_tracker
 
     tracker = get_cost_tracker()
     tracker.clear()
@@ -64,7 +64,7 @@ def routing_reset():
 # Pareto router (WL-012 Phase 3) subcommands — mounted as `thegent routing pareto-*`
 # ---------------------------------------------------------------------------
 
-from thegent.commands.router import app as _pareto_router_app  # noqa: E402
+from thegent_cli.commands.router import app as _pareto_router_app  # noqa: E402
 
 app.add_typer(_pareto_router_app, name="pareto", help="Pareto router Phase 3: status, config, and audit verification.")
 

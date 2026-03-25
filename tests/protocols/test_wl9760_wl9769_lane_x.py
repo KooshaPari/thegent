@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -42,7 +42,8 @@ def _submit_turn(session_id: str) -> tuple[str, str]:
                     "unified_diff": "--- a/x\n+++ b/x\n@@\n-old\n+new\n",
                 },
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     return response["result"]["turn"]["id"], response["result"]["approval"]["id"]
 
@@ -77,7 +78,9 @@ def test_wl9762_parse_phase_resolves_requested_approval_context() -> None:
 def test_wl9763_parse_phase_preserves_missing_approval_boundary() -> None:
     # @trace WL-9763
     _reset_state()
-    approval_id, approval, turn, error = server._resolve_approval_resolution_context("req", {"approval_id": "approval-404"})
+    approval_id, approval, turn, error = server._resolve_approval_resolution_context(
+        "req", {"approval_id": "approval-404"}
+    )
     assert approval_id == "approval-404"
     assert approval is None
     assert turn is None
@@ -166,7 +169,7 @@ def test_wl9769_notification_approval_grant_has_side_effect_without_response() -
     session_id = _start_session()
     turn_id, approval_id = _submit_turn(session_id)
     grant_response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "approval/grant", "params": {"approval_id": approval_id}}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "method": "approval/grant", "params": {"approval_id": approval_id}}).decode()
     )
     assert grant_response is None
     assert len(notifications) >= 3

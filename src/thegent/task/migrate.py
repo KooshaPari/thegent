@@ -4,7 +4,15 @@ import re
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_dump
+
+
+def _render_yaml(data: dict[str, Any]) -> str:
+    """Render task metadata to YAML text."""
+    rendered = yaml_dump(data, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    if rendered is None:
+        raise RuntimeError("yaml_dump returned None while rendering task metadata")
+    return rendered
 
 
 def migrate_work_stream_entry_to_task(
@@ -169,7 +177,7 @@ def migrate_legacy_task_to_yaml_frontmatter(content: str) -> str:
         task["depends"] = []
 
     # Build YAML frontmatter
-    frontmatter = yaml.dump(task, default_flow_style=False, sort_keys=False, allow_unicode=True)
+    frontmatter = _render_yaml(task)
 
     # Build markdown body
     body_parts = []
@@ -260,7 +268,7 @@ def migrate_work_stream_to_tasks(
 
                     # Convert to YAML frontmatter format
                     task_file_content = f"""---
-{yaml.dump(task, default_flow_style=False, sort_keys=False, allow_unicode=True)}---
+{_render_yaml(task)}---
 ## Description
 
 {title}

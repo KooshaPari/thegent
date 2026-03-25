@@ -1,4 +1,5 @@
 """Thegent implementation layer: functions that return dict/str instead of printing."""
+
 import orjson as json
 import logging
 import subprocess
@@ -7,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
-    from thegent.config_provider import ConfigProvider
+    from thegent_core.config_provider import ConfigProvider
 
 from rich.console import Console
 
@@ -237,7 +238,7 @@ __all__ = [
     "work_stream_orchestration",
 ]
 
-from thegent.agents import (
+from thegent_agents.agents import (
     get_fallback_agents,
     list_agent_names as base_list_agent_names,
     list_droid_names,
@@ -245,8 +246,8 @@ from thegent.agents import (
 )
 from thegent_agents.base import AgentRunner, RunResult
 from thegent_agents.resilience import is_usage_limit
-from thegent.config import ThegentSettings
-from thegent.contracts.registry import CONTRACT_SCHEMA_VERSION
+from thegent_core.config import ThegentSettings
+from thegent_core.contracts.registry import CONTRACT_SCHEMA_VERSION
 from thegent_cli.services import governance as governance_service
 from thegent_cli.services import observability as observability_service
 from thegent_cli.services import pre_work_gate_helpers
@@ -266,8 +267,8 @@ from thegent_cli.services import run_workstream_helpers
 from thegent_cli.services import retry_helpers
 from thegent_cli.services import spawn_retry_helpers
 from thegent_cli.services import work_stream_orchestration
-from thegent.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
-from thegent.maif import MAIFRunner
+from thegent_execution.execution import AgentSource, InteractivityMode, RunMeta, RunRegistry
+from thegent_core.maif import MAIFRunner
 
 console = Console()
 
@@ -392,6 +393,8 @@ _parse_observe_summary_timestamp = run_observe_helpers.parse_observe_summary_tim
 _parse_observe_summary_env_float = run_observe_helpers.parse_observe_summary_env_float
 _parse_observe_summary_env_int = run_observe_helpers.parse_observe_summary_env_int
 _observe_summary_freshness_bucket = run_observe_helpers.observe_summary_freshness_bucket
+
+
 def _load_observe_summary_snapshots(
     scope_signature: str,
     scope_key_json: str,
@@ -426,6 +429,8 @@ def _load_observe_summary_snapshots(
         if requested_limit and len(snapshots) >= requested_limit:
             break
     return snapshots
+
+
 _classify_observe_summary_trend_health = run_observe_helpers.classify_observe_summary_trend_health
 _append_observe_summary_snapshot = run_observe_helpers.append_observe_summary_snapshot
 
@@ -504,7 +509,7 @@ def _session_paths(base: Path, session_id: str) -> dict[str, Path]:
 
 
 def _make_load_classifier(settings: "ThegentSettings") -> Any:
-    from thegent.execution import LoadClassifier
+    from thegent_execution.execution import LoadClassifier
 
     return LoadClassifier(
         session_dir=settings.session_dir.expanduser().resolve(),
@@ -515,6 +520,8 @@ def _make_load_classifier(settings: "ThegentSettings") -> Any:
 
 def _new_session_id(agent: str, owner: str | None = None) -> str:
     return run_session_helpers.new_session_id(agent=agent, owner=owner)
+
+
 _is_pid_running = process_helpers.is_pid_running
 _parse_dag_full = run_dag_helpers.parse_dag_full
 _serialize_dag = run_dag_helpers.serialize_dag
@@ -554,7 +561,7 @@ from thegent_cli.commands.dag_impl import (  # noqa: E402 -- re-export block
 )
 
 
-from thegent.output_parser import condense_stream_to_display, extract_condensed  # noqa: E402 -- re-export block
+from thegent_core.output_parser import condense_stream_to_display, extract_condensed  # noqa: E402 -- re-export block
 
 ELICIT_CWD_MSG = "Working directory?"
 ELICIT_OWNER_MSG = "Session owner tag?"
@@ -642,8 +649,8 @@ def _update_teammate_status(task_id: str | None, status: str, summary: str | Non
     if not task_id:
         return
     try:
-        from thegent.config import ThegentSettings
-        from thegent.governance.teammates import TeammateManager
+        from thegent_core.config import ThegentSettings
+        from thegent_audit.governance.teammates import TeammateManager
 
         settings = ThegentSettings()
         mgr = TeammateManager(settings.cache_dir / "teammates.json")
@@ -665,8 +672,8 @@ def _apply_pareto_routing(
         return agent, model, route_contract, route_request
 
     try:
-        from thegent.models.catalog import _get_catalog
-        from thegent.utils.routing_impl.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
+        from thegent_core.models.catalog import _get_catalog
+        from thegent_core.utils.routing_impl.pareto_router import QUALITY_PROXY, ParetoRouter, RouteCandidate
 
         catalog = _get_catalog()
         candidates: list[RouteCandidate] = []
@@ -768,7 +775,7 @@ def run_impl(
 ) -> dict[str, Any]:
     import asyncio
     from thegent_cli.services import run_execution_core_helpers
-    from thegent.memory.memory_manager import MemoryManager
+    from thegent_core.memory.memory_manager import MemoryManager
 
     # Initialize memory manager (no-op if API key not set)
     _mem_mgr = MemoryManager()

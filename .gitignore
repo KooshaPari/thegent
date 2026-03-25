@@ -83,7 +83,6 @@ logs/
 # Local GH Actions emulation artifacts
 .github/act-events/
 .worktrees/
-<<<<<<< HEAD
 
 # Workspace noise and generated diagnostics
 wt/
@@ -91,8 +90,8 @@ docs/dumps/
 hooks/zig/
 .serena/memories/
 .factory/closure_pack_*.md
-=======
->>>>>>> codex/provider-plane-wave1
+
+# Agent/tool-generated artifacts and prompt bundles
 
 # Safari/ browser data
 data/safari/
@@ -102,3 +101,16 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+
+# AI tool artifacts
+.claude/
+.codex/
+.cursor/
+.gemini/
+.kittify/
+.kilocode/
+.github/prompts/
+.github/copilot-instructions.md
+.claudeignore
+.llmignore

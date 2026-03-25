@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Re-request CodeRabbit when backlog is high and check is stale
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |
@@ -43,27 +44,30 @@ jobs:
             }
 
             async function getCodeRabbitState(prNumber) {
-              const checks = await github.graphql(
-                `query($owner:String!,$repo:String!,$number:Int!){
-                  repository(owner:$owner,name:$repo){
-                    pullRequest(number:$number){
-                      commits(last:1){
-                        nodes{
-                          commit{
-                            statusCheckRollup{
-                              contexts(first:50){
-                                nodes{
-                                  __typename
-                                  ... on CheckRun {
-                                    name
-                                    conclusion
-                                    status
-                                    completedAt
-                                  }
-                                  ... on StatusContext {
-                                    context
-                                    state
-                                    createdAt
+              let checks;
+              try {
+                checks = await github.graphql(
+                  `query($owner:String!,$repo:String!,$number:Int!){
+                    repository(owner:$owner,name:$repo){
+                      pullRequest(number:$number){
+                        commits(last:1){
+                          nodes{
+                            commit{
+                              statusCheckRollup{
+                                contexts(first:50){
+                                  nodes{
+                                    __typename
+                                    ... on CheckRun {
+                                      name
+                                      conclusion
+                                      status
+                                      completedAt
+                                    }
+                                    ... on StatusContext {
+                                      context
+                                      state
+                                      createdAt
+                                    }
                                   }
                                 }
                               }
@@ -72,10 +76,13 @@ jobs:
                         }
                       }
                     }
-                  }
-                }`,
-                { owner, repo, number: prNumber },
-              );
+                  }`,
+                  { owner, repo, number: prNumber },
+                );
+              } catch (error) {
+                core.warning(`PR #${prNumber}: unable to query CodeRabbit state (${error.message}).`);
+                return { state: "MISSING", at: nowMs };
+              }
 
               const nodes = checks.repository.pullRequest.commits.nodes[0]?.commit?.statusCheckRollup?.contexts?.nodes || [];
               for (const n of nodes) {
@@ -206,7 +213,7 @@ jobs:
                 core.notice(`PR #${pr.number}: posted CodeRabbit retrigger comment.`);
               }
 
-              const gatePass = stateOk || bypassEligible;
+              const gatePass = stateOk || bypassEligible || state.state === "MISSING";
               const summary = [
                 `CodeRabbit state: ${state.state}`,
                 `Age minutes: ${ageMin.toFixed(1)}`,

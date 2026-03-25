@@ -20,8 +20,9 @@ import orjson as json
 import logging
 import time
 import uuid
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -109,7 +110,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
         compact_models = [{"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")]
         compact_body = json.dumps({"models": compact_models}).decode().encode()
         return _LegacyModelsTransformResult(compact_body, full_body, etag)
-    except (TypeError, json.JSONDecodeError):
+    except TypeError, json.JSONDecodeError:
         return None
 
 
@@ -794,7 +795,7 @@ async def _proxy_request(
         return Response(
             content=json.dumps(
                 {"error": {"message": f"Backend proxy ({backend_url}) unreachable. Restart with: thegent mcp restart"}}
-            ).encode(),
+            ),
             status_code=503,
             headers={"Content-Type": "application/json"},
         )
@@ -826,7 +827,8 @@ async def _proxy_stream(
 
         async def stream_response(self, send: Send) -> None:  # noqa: PLR0912 -- stream startup state machine
             try:
-                first_chunk = await self.body_iterator.__anext__()
+                iterator = cast("AsyncIterator[bytes | memoryview | str]", self.body_iterator)
+                first_chunk = await iterator.__anext__()
             except StopAsyncIteration:
                 await send(
                     {
@@ -861,7 +863,7 @@ async def _proxy_stream(
             model = data.get("model", model)
             transformed = _responses_to_chat_completions(data)
             body = json.dumps(transformed).decode().encode()
-        except (json.JSONDecodeError, KeyError):
+        except json.JSONDecodeError, KeyError:
             pass
         url = f"{backend_url.rstrip('/')}/chat/completions"
     else:
@@ -920,7 +922,7 @@ async def _proxy_stream(
                                 break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
-                            except (json.JSONDecodeError, UnicodeDecodeError):
+                            except json.JSONDecodeError, UnicodeDecodeError:
                                 continue
                             # GW-09 / OR-12: capture actual routed model from SSE chunk
                             chunk_model = obj.get("model")
@@ -937,7 +939,7 @@ async def _proxy_stream(
                                     for ev in state.preamble_events():
                                         yield f"data: {json.dumps(ev).decode()}\n\n".encode()
                                     preamble_emitted = True
-                                yield f"data: {json.dumps(state.delta_event(text).decode())}\n\n".encode()
+                                yield f"data: {json.dumps(state.delta_event(text)).decode()}\n\n".encode()
                             # GW-07: forward tool call deltas
                             if tool_calls:
                                 for ev in state.tool_call_delta_events(tool_calls):
@@ -1031,7 +1033,7 @@ async def proxy_handler(request: Request) -> Response:
             bifrost.validate_claims(claims)
         except BifrostValidationError as e:
             return Response(
-                content=json.dumps({"error": {"message": str(e)}}).encode(),
+                content=json.dumps({"error": {"message": str(e)}}),
                 status_code=403,
                 headers={"Content-Type": "application/json"},
             )
@@ -1189,7 +1191,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
                                 break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
-                            except (json.JSONDecodeError, UnicodeDecodeError):
+                            except json.JSONDecodeError, UnicodeDecodeError:
                                 continue
                             # GW-09: capture actual routed model from SSE chunk
                             chunk_model = obj.get("model")

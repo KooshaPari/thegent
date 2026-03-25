@@ -203,7 +203,7 @@ The **kush** ecosystem is a sophisticated multi-project codebase containing **40
   - Health verification
   - Vector graph database integration
 - **Status**: ✅ Active
-- **Documentation**: Research docs, OpenSpec proposals
+- **Documentation**: Research docs, AgilePlus proposals
 
 ---
 

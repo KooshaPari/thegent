@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -59,8 +59,8 @@ def test_wl9813_execution_target_resolution_returns_typed_tuple() -> None:
     _reset_state()
     session_id = _start_session()
     plan = server._build_turn_submit_phase_plan("req", {"session_id": session_id, "input": "ac"})
-    parsed_session_id, session, user_input, requires_approval, approval_diff = server._resolve_turn_submit_execution_target(
-        plan
+    parsed_session_id, session, user_input, requires_approval, approval_diff = (
+        server._resolve_turn_submit_execution_target(plan)
     )
     assert parsed_session_id == session_id
     assert isinstance(session, dict)
@@ -82,7 +82,9 @@ def test_wl9815_notification_submit_applies_side_effects_without_response() -> N
     _reset_state()
     session_id = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ac"}}).decode().decode()
+        json.dumps(
+            {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ac"}}
+        ).decode()
     )
     assert response is None
     assert len(notifications) >= 4
@@ -94,7 +96,9 @@ def test_wl9816_plan_rejects_non_boolean_requires_approval() -> None:
     # @trace WL-9816
     _reset_state()
     session_id = _start_session()
-    plan = server._build_turn_submit_phase_plan("req", {"session_id": session_id, "input": "ac", "requires_approval": "yes"})
+    plan = server._build_turn_submit_phase_plan(
+        "req", {"session_id": session_id, "input": "ac", "requires_approval": "yes"}
+    )
     parse_error = server._resolve_turn_submit_parse_error(plan)
     assert parse_error is not None
     assert parse_error["error"]["data"]["reason"] == "requires_approval_must_be_boolean"
@@ -105,7 +109,14 @@ def test_wl9817_started_notifications_are_emitted_before_completion() -> None:
     _reset_state()
     session_id = _start_session()
     _response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": "ac"}}).decode().decode()
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": "submit",
+                "method": "turn/submit",
+                "params": {"session_id": session_id, "input": "ac"},
+            }
+        ).decode()
     )
     assert notifications[0]["method"] == "turn/started"
     assert notifications[1]["method"] == "item/agentMessage/delta"
@@ -117,7 +128,14 @@ def test_wl9818_non_approval_execution_moves_turn_to_completed() -> None:
     _reset_state()
     session_id = _start_session()
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": "ac"}}).decode().decode()
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": "submit",
+                "method": "turn/submit",
+                "params": {"session_id": session_id, "input": "ac"},
+            }
+        ).decode()
     )
     assert response is not None
     turn = response["result"]["turn"]
@@ -131,10 +149,16 @@ def test_wl9819_parse_failure_does_not_mutate_turn_state() -> None:
     session_id = _start_session()
     turn_count_before = len(SERVER_STATE.turns)
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": 42}}).decode().decode()
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": "submit",
+                "method": "turn/submit",
+                "params": {"session_id": session_id, "input": 42},
+            }
+        ).decode()
     )
     assert response is not None
     assert response["error"]["data"]["reason"] == "input_must_be_string"
     assert notifications == []
     assert len(SERVER_STATE.turns) == turn_count_before
-

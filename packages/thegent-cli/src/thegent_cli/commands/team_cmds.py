@@ -66,9 +66,9 @@ def summary_cmd(
     from rich.markdown import Markdown
     from rich.panel import Panel
 
-    from thegent.orchestration.state.memory import MemoryCategory, MemorySystem
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.summary import summary_impl
+    from thegent_execution.orchestration.state.memory import MemoryCategory, MemorySystem
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_agents.summary import summary_impl
 
     # Auto-scrape recent sessions into memory logs (WP-MEMORY)
     try:
@@ -147,8 +147,8 @@ def snapshot_list_cmd(
     format: str | None = None,
 ) -> None:
     """List persisted session snapshots with optional filters."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_list_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_list_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_list_payload(
@@ -173,8 +173,8 @@ def snapshot_index_cmd(
     format: str | None = None,
 ) -> None:
     """Show snapshot index analytics payload."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_index_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_index_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_index_payload(SessionScraper(project_path), limit=limit)
@@ -192,8 +192,8 @@ def snapshot_export_cmd(
     format: str | None = None,
 ) -> None:
     """Export one snapshot JSON to markdown."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_export_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_export_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_export_payload(
@@ -213,8 +213,8 @@ def snapshot_prune_cmd(
     format: str | None = None,
 ) -> None:
     """Prune old snapshots beyond the keep limit."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_prune_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_prune_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_prune_payload(SessionScraper(project_path), max_keep=max_keep)
@@ -230,8 +230,8 @@ def snapshot_meta_cmd(
     format: str | None = None,
 ) -> None:
     """Show available trigger and tag metadata from snapshots."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_triggers_tags_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_triggers_tags_payload
 
     project_path = project or Path.cwd()
     payload = snapshot_triggers_tags_payload(SessionScraper(project_path), limit=limit)
@@ -251,8 +251,8 @@ def snapshot_daily_index_cmd(
     format: str | None = None,
 ) -> None:
     """Show daily snapshot aggregation payload."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_index_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_index_payload
 
     project_path = project or Path.cwd()
     scraper = SessionScraper(project_path)
@@ -286,8 +286,8 @@ def snapshot_daily_totals_cmd(
     format: str | None = None,
 ) -> None:
     """Show lightweight daily aggregate totals for snapshots."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_totals_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_totals_payload
 
     project_path = project or Path.cwd()
     scraper = SessionScraper(project_path)
@@ -325,8 +325,8 @@ def snapshot_daily_export_cmd(
     format: str | None = None,
 ) -> None:
     """Export daily snapshot index (JSON + Markdown)."""
-    from thegent.orchestration.state.session_scraper import SessionScraper
-    from thegent.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_export_payload
+    from thegent_execution.orchestration.state.session_scraper import SessionScraper
+    from thegent_execution.orchestration.state.session_snapshot_cli_helpers import snapshot_daily_export_payload
 
     project_path = project or Path.cwd()
     scraper = SessionScraper(project_path)
@@ -349,7 +349,7 @@ def snapshot_daily_export_cmd(
 
 def dump_index_cmd(project: Path | None = None, format: str | None = None) -> None:
     """Generate and display dump category index."""
-    from thegent.research.always_write_dumps import ConversationDumper
+    from thegent_planning.research.always_write_dumps import ConversationDumper
 
     project_path = project or Path.cwd()
     dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
@@ -369,7 +369,7 @@ def dump_latest_cmd(
     format: str | None = None,
 ) -> None:
     """Show latest dump path for a category or globally."""
-    from thegent.research.always_write_dumps import ConversationDumper
+    from thegent_planning.research.always_write_dumps import ConversationDumper
 
     project_path = project or Path.cwd()
     dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
@@ -384,7 +384,7 @@ def dump_latest_cmd(
 
 def dump_categories_cmd(project: Path | None = None, format: str | None = None) -> None:
     """List available dump categories."""
-    from thegent.research.always_write_dumps import ConversationDumper
+    from thegent_planning.research.always_write_dumps import ConversationDumper
 
     project_path = project or Path.cwd()
     dumper = ConversationDumper(docs_dir=project_path / "docs" / "dumps")
@@ -440,7 +440,7 @@ def fallbacks_cmd(run_id: str | None = None) -> None:
     run_id = _resolve_run_id(run_id)
     settings = ThegentSettings()
     from thegent_agents.state_machine import FallbackStateMachine
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     runs = registry.list_runs(limit=100)
@@ -479,7 +479,7 @@ def handoff_cmd(owner: str) -> None:
     from rich.panel import Panel
 
     from thegent_cli.commands.impl import escalate_list_impl
-    from thegent.execution import HandoffManager, RunRegistry
+    from thegent_execution.execution import HandoffManager, RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     runs = registry.list_runs(limit=50)
@@ -503,7 +503,7 @@ def handoff_cmd(owner: str) -> None:
     hm = HandoffManager(settings.session_dir)
 
     # WP-7001/7004: Include queued prompts in handoff snapshot
-    from thegent.queue.storage import PromptQueue
+    from thegent_core.queue.storage import PromptQueue
 
     pq = PromptQueue(settings.session_dir)
     queued_prompts = pq.list_pending()
@@ -526,7 +526,7 @@ def handoff_cmd(owner: str) -> None:
 def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
     """Show full handoff summary (state, evidence, next steps) for a snapshot (WP-4006)."""
     settings = ThegentSettings()
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     hm = HandoffManager(settings.session_dir)
     snap = hm.get_snapshot(snapshot_id)
@@ -562,7 +562,7 @@ def handoff_show_cmd(snapshot_id: str, format: str | None = None) -> None:
 def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
     """List pending handoff snapshots (WP-4006)."""
     settings = ThegentSettings()
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     hm = HandoffManager(settings.session_dir)
     snapshots = hm.list_pending_snapshots(limit=limit)
@@ -593,7 +593,7 @@ def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
 def handoff_confirm_cmd(snapshot_id: str, incoming_owner: str, confidence: float = 1.0) -> None:
     """Incoming owner confirms handoff completeness (WP-3008, WP-4006)."""
     settings = ThegentSettings()
-    from thegent.execution import HandoffManager
+    from thegent_execution.execution import HandoffManager
 
     hm = HandoffManager(settings.session_dir)
     ok = hm.confirm_handoff(snapshot_id=snapshot_id, incoming_owner=incoming_owner, confidence=confidence)
@@ -607,7 +607,7 @@ def handoff_confirm_cmd(snapshot_id: str, incoming_owner: str, confidence: float
 def watchdog_cmd(max_idle_s: int = 3600) -> None:
     """Scan for stale sessions and recommend handoffs (WP-5005)."""
     settings = ThegentSettings()
-    from thegent.execution import ContinuityWatchdog
+    from thegent_execution.execution import ContinuityWatchdog
 
     cw = ContinuityWatchdog(settings.session_dir)
     stale_sessions = cw.scan_stale_sessions(max_idle_s=max_idle_s)
@@ -629,7 +629,7 @@ def watchdog_cmd(max_idle_s: int = 3600) -> None:
 def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
     """List items in the Dead-Letter Queue (WP-Y2/WP-2008)."""
     settings = ThegentSettings()
-    from thegent.execution import DLQManager
+    from thegent_execution.execution import DLQManager
 
     dlq = DLQManager(settings.session_dir)
     items = dlq.list_items(status=status)
@@ -666,7 +666,7 @@ def dlq_list_cmd(status: str | None = None, format: str | None = None) -> None:
 def traffic_cmd() -> None:
     """TRAFFIC KPI Dashboard (WP-Y7)."""
     settings = ThegentSettings()
-    from thegent.execution import KPIManager
+    from thegent_execution.execution import KPIManager
 
     km = KPIManager(settings.session_dir)
     kpis = km.get_kpis()
@@ -728,7 +728,7 @@ def roadmap_cmd() -> None:
     settings = ThegentSettings()
     from rich.markdown import Markdown
 
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     runs = registry.list_runs(limit=100)
@@ -792,7 +792,7 @@ def self_heal_tests_cmd(test_output: str | None = None) -> None:
 
 def teammates_list_cmd() -> None:
     """WP-16001: List all discovered specialized agents available for delegation."""
-    from thegent.governance.teammates import TeammateManager
+    from thegent_audit.governance.teammates import TeammateManager
 
     settings = ThegentSettings()
     mgr = TeammateManager(settings.cache_dir / "teammates.json")
@@ -818,8 +818,8 @@ def teammates_delegate_cmd(
     parent_run_id: str = typer.Option(None, "--parent-run", help="Parent run ID for tracking"),
 ) -> None:
     """WP-16002: Delegate a sub-task to a specialized teammate."""
-    from thegent.governance.handoff import HandoffIntegrity
-    from thegent.governance.teammates import TeammateManager
+    from thegent_audit.governance.handoff import HandoffIntegrity
+    from thegent_audit.governance.teammates import TeammateManager
 
     settings = ThegentSettings()
     mgr = TeammateManager(settings.cache_dir / "teammates.json")
@@ -858,7 +858,7 @@ def teammates_status_cmd(
     run_id: str = typer.Option(None, "--run-id", help="Filter by parent run ID"),
 ) -> None:
     """WP-16002: Monitor the status of the teammate swarm."""
-    from thegent.governance.teammates import TeammateManager
+    from thegent_audit.governance.teammates import TeammateManager
 
     settings = ThegentSettings()
     mgr = TeammateManager(settings.cache_dir / "teammates.json")

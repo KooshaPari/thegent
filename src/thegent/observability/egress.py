@@ -1,54 +1,50 @@
-"""WP-15001: External SOC/SIEM event egress for enterprise observability."""
+"""Structured SIEM egress helpers."""
 
-import orjson as json
-from dataclasses import asdict, dataclass
+from __future__ import annotations
+
+import logging
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
 import httpx
-import tenacity
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
 class EgressEvent:
+    """Structured event payload for external egress sinks."""
+
     id: str
-    severity: str  # "low", "medium", "high", "critical"
+    severity: str
     event_type: str
     source: str
-    payload: dict[str, Any]
-    timestamp: str = datetime.now(UTC).isoformat()
+    payload: dict[str, Any] = field(default_factory=dict)
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class SIEMEgress:
-    """Pushes normalized events to external enterprise security systems (WP-15001)."""
+    """Push governance events to an HTTP SIEM endpoint."""
 
-    def __init__(self, endpoint_url: str | None = None) -> None:
-        self.endpoint_url = endpoint_url
-        self._sent_count = 0
+    def __init__(self, endpoint_url: str) -> None:
+        self.endpoint_url = endpoint_url.strip()
 
-    @tenacity.retry(
-        stop=tenacity.stop_after_attempt(3),
-        wait=tenacity.wait_random_exponential(multiplier=1, min=2, max=10),
-        retry=tenacity.retry_if_exception_type((httpx.HTTPError, httpx.TimeoutException)),
-    )
     def push_event(self, event: EgressEvent) -> bool:
-        """Push an event to the external SIEM endpoint via HTTP POST."""
+        """Send an event to the configured SIEM endpoint."""
         if not self.endpoint_url:
-            # If no endpoint, just log or skip (enterprise feature not configured)
+            return False
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.post(self.endpoint_url, json=asdict(event))
+            return response.is_success
+        except Exception as exc:
+            _log.warning("SIEM egress failed: %s", exc)
             return False
 
-        payload = asdict(event)
-        with httpx.Client(timeout=10.0) as client:
-            resp = client.post(
-                self.endpoint_url,
-                json=payload,
-                headers={"Content-Type": "application/json"},
-            )
-            resp.raise_for_status()
-
-        self._sent_count += 1
-        return True
-
     def format_for_syslog(self, event: EgressEvent) -> str:
-        """Format the event for traditional RFC 5424 syslog."""
-        return f"<{event.severity}> {event.timestamp} {event.source} {event.event_type}: {json.dumps(event.payload).decode()}"
+        """Render a compact syslog-style line for an event."""
+        return (
+            f"{event.timestamp} thegent[{event.source}] "
+            f"{event.severity.upper()} {event.event_type} id={event.id} payload={event.payload}"
+        )

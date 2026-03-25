@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from pathlib import Path
 from typing import Any
 
@@ -20,14 +20,14 @@ def load_json(path: Path) -> dict[str, Any]:
     """Load JSON file."""
     if not path.exists():
         return {}
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 def save_json(path: Path, data: dict[str, Any]) -> None:
     """Save JSON file."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
 
@@ -35,15 +35,15 @@ def load_yaml(path: Path) -> dict[str, Any]:
     """Load YAML file."""
     if not path.exists():
         return {}
-    with open(path) as f:
-        return yaml.safe_load(f) or {}
+    data = yaml_load(path.read_text(encoding="utf-8"))
+    return data if isinstance(data, dict) else {}
 
 
 def save_yaml(path: Path, data: dict[str, Any]) -> None:
     """Save YAML file."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
-        yaml.dump(data, f, default_flow_style=False)
+    rendered = yaml_dump(data)
+    path.write_text(rendered if rendered is not None else "", encoding="utf-8")
 
 
 def update_provider_mapping(

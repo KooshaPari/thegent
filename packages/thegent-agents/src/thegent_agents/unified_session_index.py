@@ -9,6 +9,13 @@ Harnesses: Cursor, Codex, Claude, Ante, Droid
 
 import orjson as json
 import logging
+
+try:
+    import structlog as _structlog
+
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 import sqlite3
 import threading
 import time
@@ -18,9 +25,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, ClassVar, cast
 
-from thegent.infra.fast_file_watcher import FastFileWatcher
-
-_log = logging.getLogger(__name__)
+from thegent_core.infra.fast_file_watcher import FastFileWatcher
 
 
 class HarnessType(Enum):
@@ -137,7 +142,7 @@ class UnifiedSessionIndex:
         """Index active zmx sessions and verify live processes."""
         count = 0
         try:
-            from thegent.session.zmx_backend import ZmxBackend
+            from thegent_execution.session.zmx_backend import ZmxBackend
 
             backend = ZmxBackend()
             if backend.available:
@@ -367,7 +372,14 @@ class UnifiedSessionIndex:
             # Parse ISO timestamp
             try:
                 started_at = datetime.fromisoformat(started_time.replace("Z", "+00:00"))
-            except Exception:
+            except Exception as e:
+                # Malformed timestamp — fall back to current time and log context.
+                _log.warning(
+                    "session_timestamp_parse_failed",
+                    started_time=started_time,
+                    error_type=type(e).__name__,
+                    error=str(e),
+                )
                 started_at = datetime.now(UTC)
 
             # Ante doesn't store explicit end time; we infer from start + duration
@@ -570,7 +582,7 @@ class UnifiedSessionIndex:
 
     def attach_session(self, session_id: str) -> bool:
         """Dynamically attach to an active session (using zmx backend)."""
-        from thegent.session.zmx_backend import ZmxBackend
+        from thegent_execution.session.zmx_backend import ZmxBackend
 
         backend = ZmxBackend()
         if backend.available:

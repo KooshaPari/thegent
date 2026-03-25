@@ -1,10 +1,9 @@
 use clap::{Parser, Subcommand};
 use pkcs8::{EncodePrivateKey, EncodePublicKey, LineEnding};
-use serde_json::json;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
-use thegent_maif::{generate_key_pair, load_private_key, load_public_key, MAIFArtifact, MAIFError};
+use thegent_maif::{generate_key_pair, load_private_key, load_public_key, MAIFArtifact};
 
 #[derive(Parser)]
 #[command(name = "thegent-maif")]

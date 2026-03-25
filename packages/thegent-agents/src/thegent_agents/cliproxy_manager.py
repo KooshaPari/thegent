@@ -25,9 +25,9 @@ from typing import Any
 
 import httpx
 
-from thegent.config import ThegentSettings
-from thegent.infra.fast_subprocess import run_subprocess_optimized
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
+from thegent_core.config import ThegentSettings
+from thegent_core.infra.fast_subprocess import run_subprocess_optimized
+from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dumps
 
 _LOG = logging.getLogger(__name__)
 
@@ -218,7 +218,7 @@ def _get_factory_api_key(provider: str) -> tuple[str | None, str]:
             continue
         try:
             data = json.loads(path.read_text())
-        except (json.JSONDecodeError, OSError):
+        except json.JSONDecodeError, OSError:
             continue
         models_key = "custom_models" if name == "config.json" else "customModels"
         entries = data.get(models_key) if isinstance(data, dict) else []
@@ -530,7 +530,7 @@ def _adapter_script_path() -> Path | None:
     In dev mode, looks in the project root.
     When installed, uses get_resource_path.
     """
-    from thegent.utils import get_resource_path
+    from thegent_core.utils import get_resource_path
 
     try:
         script = get_resource_path("scripts/start_proxy_with_adapter.py")
@@ -635,7 +635,7 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
 
     if use_adapter:
         # Start using the adapter script; no silent fallback to raw proxy.
-        from thegent.utils import get_resource_path
+        from thegent_core.utils import get_resource_path
 
         script_path = get_resource_path("scripts/start_proxy_with_adapter.py")
         if not script_path.exists():
@@ -649,7 +649,7 @@ def ensure_proxy_running(settings: ThegentSettings) -> str:
         env = os.environ.copy()
         # If we're installed, we might not need to set PYTHONPATH
         # but for dev mode it's crucial.
-        from thegent.utils import is_dev_mode
+        from thegent_core.utils import is_dev_mode
 
         if is_dev_mode():
             env["PYTHONPATH"] = str(script_path.parents[1] / "src")
@@ -798,7 +798,7 @@ def kill_proxy(settings: ThegentSettings) -> bool:
         for pid in pids:
             run_subprocess_optimized(["kill", "-9", pid], capture_output=True, timeout=2, check=False)
         return bool(pids)
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+    except subprocess.TimeoutExpired, FileNotFoundError, OSError:
         return False
 
 
@@ -1050,7 +1050,9 @@ def run_login(
             raise FileNotFoundError(_CLIPROXY_NOT_FOUND_MSG)
         config_path = _ensure_config(settings)
         flag = _LOGIN_FLAGS[provider_lower]
-        timeout_seconds = login_timeout if login_timeout is not None else int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        timeout_seconds = (
+            login_timeout if login_timeout is not None else int(os.environ.get("THGENT_LOGIN_TIMEOUT", "120"))
+        )
         requires_interactive_stdio = provider_lower == "minimax"
         if requires_interactive_stdio and not sys.stdin.isatty():
             _LOG.error(

@@ -6,15 +6,14 @@ Phase 6 / WP-16003: Extracted from cli_git.py for modular management.
 import logging
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
 from rich.console import Console
 
-from thegent.mesh.git import GitParallelismManager
-from thegent.mesh.git_parallelism import WorktreePool
-from thegent.native.git_native import GitNative
+from thegent_gitops.git import GitParallelismManager
+from thegent_gitops.worktree import WorktreePool
+from thegent.cli.commands.cli_git_worktree_governance import register_worktree_governance_commands
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -51,6 +50,7 @@ worktree_app = typer.Typer(help="Manage agent worktree pool lifecycle for multi-
 def register_worktree_commands(parent_app: typer.Typer) -> None:
     """Register worktree subcommands to parent app."""
     parent_app.add_typer(worktree_app, name="worktree", help="Worktree pool management for coordinated agents.")
+    register_worktree_governance_commands(worktree_app)
 
 
 @worktree_app.command("status")
@@ -206,7 +206,7 @@ def lock_cleanup_main(
     """Remove stale .git/index.lock files."""
     if ctx.invoked_subcommand is not None:
         return
-    from thegent.git_lock_manage import run_lock_cleanup
+    from thegent_gitops.lock_cleanup import run_lock_cleanup
 
     paths = [p for p in (path or []) if p.exists()] if path else None
     removed, skipped = run_lock_cleanup(paths=paths, max_age=max_age, dry_run=dry_run)
@@ -221,7 +221,7 @@ def lock_cleanup_service(
     action: str = typer.Argument(..., help="Action: install, start, stop, status, uninstall"),
 ):
     """Install or manage lock-cleanup daemon."""
-    from thegent.git_lock_manage import (
+    from thegent_gitops.lock_cleanup import (
         lock_cleanup_install,
         lock_cleanup_start,
         lock_cleanup_status,

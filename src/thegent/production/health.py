@@ -19,6 +19,7 @@ class HealthStatus(Enum):
 @dataclass
 class HealthCheckResult:
     """Result of a health check."""
+
     name: str
     status: HealthStatus
     message: str
@@ -43,11 +44,7 @@ class HealthChecker:
         check_fn = self._checks.get(name)
         if not check_fn:
             return HealthCheckResult(
-                name=name,
-                status=HealthStatus.UNHEALTHY,
-                message="Check not found",
-                timestamp=time.time(),
-                duration=0
+                name=name, status=HealthStatus.UNHEALTHY, message="Check not found", timestamp=time.time(), duration=0
             )
 
         start = time.time()
@@ -61,12 +58,7 @@ class HealthChecker:
 
         duration = time.time() - start
         result = HealthCheckResult(
-            name=name,
-            status=status,
-            message=message,
-            timestamp=time.time(),
-            duration=duration,
-            details=details
+            name=name, status=status, message=message, timestamp=time.time(), duration=duration, details=details
         )
 
         self._results[name] = result
@@ -97,13 +89,9 @@ class HealthChecker:
         return {
             "status": self.status.value,
             "checks": {
-                name: {
-                    "status": result.status.value,
-                    "message": result.message,
-                    "duration": result.duration
-                }
+                name: {"status": result.status.value, "message": result.message, "duration": result.duration}
                 for name, result in self._results.items()
-            }
+            },
         }
 
     # Built-in checks
@@ -111,6 +99,7 @@ class HealthChecker:
         """Check memory usage."""
         try:
             import psutil
+
             mem = psutil.virtual_memory()
             healthy = mem.percent < 90
             return healthy, f"Memory at {mem.percent}%", {"percent": mem.percent}
@@ -121,6 +110,7 @@ class HealthChecker:
         """Check disk usage."""
         try:
             import psutil
+
             disk = psutil.disk_usage(path)
             healthy = disk.percent < 90
             return healthy, f"Disk at {disk.percent}%", {"percent": disk.percent}
@@ -131,6 +121,7 @@ class HealthChecker:
         """Check CPU usage."""
         try:
             import psutil
+
             cpu = psutil.cpu_percent(interval=0.1)
             healthy = cpu < 90
             return healthy, f"CPU at {cpu}%", {"percent": cpu}

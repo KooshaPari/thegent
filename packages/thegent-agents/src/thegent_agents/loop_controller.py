@@ -1,6 +1,27 @@
-"""Lifecycle Loop Controller with Checker Agent oversight."""
+"""Lifecycle Loop Controller with Checker Agent oversight.
+
+Circular-dependency note
+------------------------
+This module previously imported run_impl and dag_status_impl directly from
+thegent_cli.cli.commands.impl, creating a CLI ↔ Agents cycle.  It now accepts
+optional RunnerPort / DagStatusPort callables (defined in
+thegent_core.ports.driving.runner) that are injected by the CLI layer.
+
+For backward compatibility a module-level setter is provided:
+    set_run_impl(run_impl)
+    set_dag_status_impl(dag_status_impl)
+
+Both default to NullRunnerPort which returns a synthetic failure result.
+"""
 
 import logging
+
+try:
+    import structlog as _structlog
+
+    _log = _structlog.get_logger(__name__)
+except ImportError:
+    _log = logging.getLogger(__name__)  # type: ignore[assignment]
 import time
 from collections.abc import Callable
 from enum import StrEnum
@@ -16,10 +37,24 @@ from thegent_agents.base import RunResult  # noqa: E402
 from thegent_agents.checker import CheckerAgent, CheckerDecision, CheckerResult  # noqa: E402
 from thegent_agents.presets import get_preset, match_preset  # noqa: E402
 from thegent_agents.resilience import TransientAgentError, with_retry  # noqa: E402
-from thegent.cli.commands.impl import run_impl  # noqa: E402
-from thegent.config import ThegentSettings  # noqa: E402
+from thegent_core.config import ThegentSettings  # noqa: E402
+from thegent_core.ports.driving.runner import NullRunnerPort  # noqa: E402
 
-_log = logging.getLogger(__name__)
+# Module-level port slots — populated at startup by the CLI layer.
+_run_impl: Any = NullRunnerPort()
+_dag_status_impl: Any = NullRunnerPort()
+
+
+def set_run_impl(impl: Any) -> None:
+    """Register the concrete run_impl callable (from thegent_cli)."""
+    global _run_impl
+    _run_impl = impl
+
+
+def set_dag_status_impl(impl: Any) -> None:
+    """Register the concrete dag_status_impl callable (from thegent_cli)."""
+    global _dag_status_impl
+    _dag_status_impl = impl
 
 
 class LoopMode(StrEnum):
@@ -72,7 +107,7 @@ class LifecycleController:
     @with_retry(max_attempts=3, min_wait=2.0, max_wait=60.0)
     def _run_worker_with_retry(self, current_prompt: str) -> dict[str, Any]:
         """Run worker agent; raises TransientAgentError on retryable failure."""
-        result = run_impl(
+        result = _run_impl(
             agent=None if self.worker_model else self.worker_agent_name,
             prompt=current_prompt,
             cd=self.settings.cwd,
@@ -165,7 +200,7 @@ class LifecycleController:
 
                 # 2. Governance Pre-check (WP-3001)
                 try:
-                    from thegent.execution import PolicyEngine, RunMeta
+                    from thegent_execution.execution import PolicyEngine, RunMeta
 
                     pe = PolicyEngine(self.settings)
                     temp_run = RunMeta(
@@ -194,7 +229,7 @@ class LifecycleController:
                 if effect == "deny":
                     self.state.stopped = True
                     self.state.stop_reason = f"Policy denied: {reason}"
-                    from thegent.governance.escalation import EscalationQueue
+                    from thegent_audit.governance.escalation import EscalationQueue
 
                     eq = EscalationQueue(self.settings)
                     eq.add(run_id=self.state.session_id, reason=f"Policy denial: {reason}", priority=3)
@@ -255,9 +290,7 @@ class LifecycleController:
 
                 # 6. Invoke Checker Agent (WP-1201 Phase 2/3 - LLM Fallback)
                 try:
-                    from thegent.cli.commands.impl import dag_status_impl
-
-                    wbs_status = dag_status_impl(self.settings.cwd)
+                    wbs_status = _dag_status_impl(self.settings.cwd)
 
                     if on_progress:
                         on_progress(
@@ -289,7 +322,7 @@ class LifecycleController:
                     if any(
                         kw in (decision_result.reason or "").lower() for kw in ["security", "cost", "risk", "policy"]
                     ):
-                        from thegent.governance.escalation import EscalationPriority, EscalationQueue
+                        from thegent_audit.governance.escalation import EscalationPriority, EscalationQueue
 
                         eq = EscalationQueue(self.settings)
                         eq.escalate(

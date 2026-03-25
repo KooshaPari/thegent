@@ -5,10 +5,10 @@ Centralized type definitions to improve code consistency.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable, Generator, Iterable
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal, TypeVar, Union
+from typing import Any, Literal, TypeVar
 
 # Paths
 PathLike = str | Path

@@ -5,6 +5,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::env;
+use std::fmt;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::os::unix::process::ExitStatusExt;
@@ -25,26 +26,10 @@ use crate::cmd::cmd_init;
 use crate::eval::json_dotted_number;
 use crate::out::{print_help, print_version};
 use crate::scan::{compute_blake3_hash, compute_file_hash, read_input};
-use thegent_hooks::{
-    AffectedTestsAnalyzer, ChangeStatus, ChangedFile, ChangedFilesDetector, ChangedFilesError,
-    ConfigLoader, CostCalculator, DependencyGraph, DetectionStrategy, FilterOptions, HookConfig,
-    HookReport, ImpactType, PolicyEngine, PrewarmManager, QualityEvaluator, ReportManager,
-};
 
 const VERSION: &str = "0.1.0";
 const CACHE_DIR: &str = "/tmp/thegent-hooks-cache";
 const DEFAULT_TTL_SECS: u64 = 600;
-
-#[derive(Debug, Serialize, Deserialize)]
-struct HookInput {
-    pub hook_name: Option<String>,
-    pub project_dir: Option<String>,
-    pub cwd: Option<String>,
-    pub session_id: Option<String>,
-    pub head_sha: Option<String>,
-    pub changed_files: Option<Vec<String>>,
-    pub stop_active: Option<bool>,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct BreakerState {
@@ -76,8 +61,6 @@ struct FileManifest {
 enum Error {
     Io(io::Error),
     Json(serde_json::Error),
-    Cache(String),
-    LockTimeout,
 }
 
 impl From<io::Error> for Error {
@@ -89,6 +72,15 @@ impl From<io::Error> for Error {
 impl From<serde_json::Error> for Error {
     fn from(e: serde_json::Error) -> Self {
         Error::Json(e)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Io(err) => write!(f, "io error: {err}"),
+            Error::Json(err) => write!(f, "json error: {err}"),
+        }
     }
 }
 
@@ -328,37 +320,35 @@ fn cmd_quality_gate() {
         let mut all_ok = true;
         let mut checks: Vec<Value> = Vec::new();
 
-        for res in results {
-            if let Ok((name, maybe_output)) = res {
-                match maybe_output {
-                    Some(output) => {
-                        if !output.status.success() {
-                            all_ok = false;
-                            checks.push(json!({
-                                "name": name,
-                                "status": "failed"
-                            }));
-                            println!("[FAILED] {}", name);
-                            // Only print first 40 lines to keep output bounded
-                            let stdout_str = String::from_utf8_lossy(&output.stdout);
-                            for line in stdout_str.lines().take(40) {
-                                println!("  {}", line);
-                            }
-                        } else {
-                            checks.push(json!({
-                                "name": name,
-                                "status": "passed"
-                            }));
-                            println!("[OK] {}", name);
-                        }
-                    }
-                    None => {
+        for (name, maybe_output) in results.into_iter().flatten() {
+            match maybe_output {
+                Some(output) => {
+                    if !output.status.success() {
+                        all_ok = false;
                         checks.push(json!({
                             "name": name,
-                            "status": "skipped"
+                            "status": "failed"
                         }));
-                        println!("[SKIP] {} (timeout or not found)", name);
+                        println!("[FAILED] {}", name);
+                        // Only print first 40 lines to keep output bounded
+                        let stdout_str = String::from_utf8_lossy(&output.stdout);
+                        for line in stdout_str.lines().take(40) {
+                            println!("  {}", line);
+                        }
+                    } else {
+                        checks.push(json!({
+                            "name": name,
+                            "status": "passed"
+                        }));
+                        println!("[OK] {}", name);
                     }
+                }
+                None => {
+                    checks.push(json!({
+                        "name": name,
+                        "status": "skipped"
+                    }));
+                    println!("[SKIP] {} (timeout or not found)", name);
                 }
             }
         }
@@ -530,19 +520,17 @@ fn cmd_dispatch() {
         let results = join_all(futures).await;
         let mut max_rc = 0;
 
-        for res in results {
-            if let Ok((_name, output)) = res {
-                let rc = output.status.code().unwrap_or(1);
-                if rc > max_rc {
-                    max_rc = rc;
-                }
+        for (_name, output) in results.into_iter().flatten() {
+            let rc = output.status.code().unwrap_or(1);
+            if rc > max_rc {
+                max_rc = rc;
+            }
 
-                if !output.stdout.is_empty() {
-                    let _ = io::stdout().write_all(&output.stdout);
-                }
-                if !output.stderr.is_empty() {
-                    let _ = io::stderr().write_all(&output.stderr);
-                }
+            if !output.stdout.is_empty() {
+                let _ = io::stdout().write_all(&output.stdout);
+            }
+            if !output.stderr.is_empty() {
+                let _ = io::stderr().write_all(&output.stderr);
             }
         }
 
@@ -594,20 +582,18 @@ fn cmd_security_pipeline() {
                 .git_ignore(true)
                 .build();
 
-            for result in walker {
-                if let Ok(entry) = result {
-                    if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
-                        let path = entry.path();
-                        if let Ok(content) = fs::read_to_string(path) {
-                            for re in &compiled_regs {
-                                if re.is_match(&content) {
-                                    findings.push(format!(
-                                        "[HIGH] secrets: Possible secret in {}",
-                                        path.display()
-                                    ));
-                                    count += 1;
-                                    break;
-                                }
+            for entry in walker.flatten() {
+                if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
+                    let path = entry.path();
+                    if let Ok(content) = fs::read_to_string(path) {
+                        for re in &compiled_regs {
+                            if re.is_match(&content) {
+                                findings.push(format!(
+                                    "[HIGH] secrets: Possible secret in {}",
+                                    path.display()
+                                ));
+                                count += 1;
+                                break;
                             }
                         }
                     }
@@ -646,27 +632,25 @@ fn cmd_security_pipeline() {
         let mut total_findings = 0;
         let mut checks: Vec<Value> = Vec::new();
 
-        for res in results {
-            if let Ok((name, count, findings)) = res {
-                total_findings += count;
-                if count > 0 {
-                    checks.push(json!({
-                        "name": name,
-                        "status": "warn",
-                        "findings": count
-                    }));
-                    println!("{}: WARN ({} findings)", name, count);
-                    for f in findings {
-                        println!("  {}", f);
-                    }
-                } else {
-                    checks.push(json!({
-                        "name": name,
-                        "status": "passed",
-                        "findings": count
-                    }));
-                    println!("{}: PASS", name);
+        for (name, count, findings) in results.into_iter().flatten() {
+            total_findings += count;
+            if count > 0 {
+                checks.push(json!({
+                    "name": name,
+                    "status": "warn",
+                    "findings": count
+                }));
+                println!("{}: WARN ({} findings)", name, count);
+                for f in findings {
+                    println!("  {}", f);
                 }
+            } else {
+                checks.push(json!({
+                    "name": name,
+                    "status": "passed",
+                    "findings": count
+                }));
+                println!("{}: PASS", name);
             }
         }
 
@@ -717,21 +701,19 @@ fn cmd_complexity_ratchet() {
     let mut max_cyc = 0;
     let mut max_file = String::new();
 
-    for result in walker {
-        if let Ok(entry) = result {
-            if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
-                let path = entry.path();
-                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                if matches!(
-                    ext,
-                    "py" | "js" | "ts" | "jsx" | "tsx" | "rs" | "go" | "java" | "kt"
-                ) {
-                    if let Ok(metrics) = thegent_hooks::QualityEvaluator::measure_complexity(path) {
-                        total_files += 1;
-                        if metrics.cyclomatic_complexity > max_cyc {
-                            max_cyc = metrics.cyclomatic_complexity;
-                            max_file = path.display().to_string();
-                        }
+    for entry in walker.flatten() {
+        if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
+            let path = entry.path();
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if matches!(
+                ext,
+                "py" | "js" | "ts" | "jsx" | "tsx" | "rs" | "go" | "java" | "kt"
+            ) {
+                if let Ok(metrics) = thegent_hooks::QualityEvaluator::measure_complexity(path) {
+                    total_files += 1;
+                    if metrics.cyclomatic_complexity > max_cyc {
+                        max_cyc = metrics.cyclomatic_complexity;
+                        max_file = path.display().to_string();
                     }
                 }
             }
@@ -904,7 +886,7 @@ fn cmd_git_overhauled(git_args: Vec<String>) {
 }
 
 fn cmd_changed_files() {
-    let output = Command::new("thegent-git").args(&["status"]).output();
+    let output = Command::new("thegent-git").args(["status"]).output();
 
     match output {
         Ok(out) => {
@@ -1368,7 +1350,7 @@ if mgr.update_status(session_id, status, summary=summary):
         session_id, status, summary
     );
 
-    let _ = Command::new("python3").args(&["-c", &script]).output();
+    let _ = Command::new("python3").args(["-c", &script]).output();
     exit(0);
 }
 
@@ -1441,12 +1423,11 @@ fn cmd_agileplus_cycle() {
     }
 
     let agileplus_state_file = PathBuf::from(&home).join(".claude/agileplus-state.json");
-    let mut last_velocity = 0;
     let mut avg_velocity = 0;
     if agileplus_state_file.exists() {
         if let Ok(content) = fs::read_to_string(&agileplus_state_file) {
             if let Ok(state_json) = serde_json::from_str::<Value>(&content) {
-                last_velocity = state_json
+                let last_velocity = state_json
                     .get("last_velocity")
                     .and_then(|v| v.as_u64())
                     .unwrap_or(0);
@@ -1569,7 +1550,7 @@ fn cmd_friction_detect() {
         }
 
         let output = Command::new("python3")
-            .args(&[
+            .args([
                 friction_detector.to_str().unwrap(),
                 "--command",
                 command,
@@ -1612,7 +1593,7 @@ fn cmd_friction_detect() {
             exit(0);
         }
         let output = Command::new("python3")
-            .args(&[
+            .args([
                 friction_detector.to_str().unwrap(),
                 "--file",
                 file_path_str,
@@ -1631,7 +1612,7 @@ fn cmd_friction_detect() {
                     println!("FRICTION DETECTED in {}:", basename);
                     for f in arr {
                         let loc = f.get("location").and_then(|v| v.as_str()).unwrap_or("0");
-                        let line = loc.split(':').last().unwrap_or("0");
+                        let line = loc.split(':').next_back().unwrap_or("0");
                         println!(
                             "  [{}] {}: {} - {} (line {})",
                             f.get("priority").and_then(|v| v.as_str()).unwrap_or("?"),
@@ -1752,20 +1733,6 @@ fn cmd_task_completed() {
     exit(0);
 }
 
-fn cmd_governance_gates() {
-    println!("=== GOVERNANCE GATES ===");
-    // Simplified: just call the existing sub-gates via thegent-hooks or handle here
-    // In a real implementation, we'd loop through all 27 gates from governance-gates.sh
-    println!("=== GOVERNANCE GATES SUMMARY ===");
-    println!("  Pass: 0\n  N/A:  0\n  Fail: 0 (fail-closed: 0)");
-    exit(0);
-}
-
-fn cmd_prune_orphans() {
-    println!("THEGENT PRUNE: Auto-prune hook DISABLED (was killing terminals). Set THGENT_AUTO_PRUNE=1 to re-enable after fixes.");
-    exit(0);
-}
-
 fn cmd_harvest() {
     let mut input_buffer = Vec::new();
     let _ = io::stdin().read_to_end(&mut input_buffer);
@@ -1838,9 +1805,7 @@ fn cmd_teammate_idle() {
         exit(0);
     }
 
-    let script = format!(
-        "from thegent.team.coordination import TeamCoordinator; from pathlib import Path; import sys; tc = TeamCoordinator(Path('.')); print('true' if tc.detect_idle(sys.stdin.read()) else 'false')"
-    );
+    let script = "from thegent.team.coordination import TeamCoordinator; from pathlib import Path; import sys; tc = TeamCoordinator(Path('.')); print('true' if tc.detect_idle(sys.stdin.read()) else 'false')".to_string();
     let mut child = Command::new("python3")
         .arg("-c")
         .arg(script)
@@ -2364,10 +2329,9 @@ fn cmd_antipattern_detect() {
             && !content.contains("typer")
             && !content.contains("click")
             && !content.contains("rich")
+            && print_re.find_iter(&content).count() >= 2
         {
-            if print_re.find_iter(&content).count() >= 2 {
-                warnings.push("ANTIPATTERN: Multiple print() calls in non-CLI code. Use structured logging (structlog/rich) instead.");
-            }
+            warnings.push("ANTIPATTERN: Multiple print() calls in non-CLI code. Use structured logging (structlog/rich) instead.");
         }
     }
 
@@ -2544,7 +2508,7 @@ fn cmd_doc_location_guard() {
     );
     let path = PathBuf::from(file_path);
     let rel = path.strip_prefix(&project_dir).unwrap_or(&path);
-    if rel == &path {
+    if rel == path {
         exit(0);
     }
     let allowed = [
@@ -4064,9 +4028,10 @@ fn cmd_elicitation_closure_eval() {
                     if adr.is_empty() {
                         continue;
                     }
-                    if !adr.starts_with("ADR-") {
-                        violations += 1;
-                    } else if adr_content.is_empty() || !adr_content.contains(adr) {
+                    if !adr.starts_with("ADR-")
+                        || adr_content.is_empty()
+                        || !adr_content.contains(adr)
+                    {
                         violations += 1;
                     }
                 }
@@ -4632,17 +4597,13 @@ fn cmd_playbook_contract_eval() {
     let mut errors: u64 = 0;
     let mut missing: Vec<String> = Vec::new();
 
-    if model == "brownfield" || model == "hybrid" {
-        if !brownfield.is_file() {
-            errors += 1;
-            missing.push("brownfield.playbook.json".to_string());
-        }
+    if (model == "brownfield" || model == "hybrid") && !brownfield.is_file() {
+        errors += 1;
+        missing.push("brownfield.playbook.json".to_string());
     }
-    if model == "greenfield" || model == "hybrid" {
-        if !greenfield.is_file() {
-            errors += 1;
-            missing.push("greenfield.playbook.json".to_string());
-        }
+    if (model == "greenfield" || model == "hybrid") && !greenfield.is_file() {
+        errors += 1;
+        missing.push("greenfield.playbook.json".to_string());
     }
     if model == "auto" && !brownfield.is_file() && !greenfield.is_file() {
         errors += 1;
@@ -5118,17 +5079,15 @@ fn cmd_test_maturity() {
         .hidden(false)
         .git_ignore(true)
         .build();
-    for res in walker {
-        if let Ok(e) = res {
-            if e.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
-                let name = e.file_name().to_string_lossy();
-                if name.starts_with("test_")
-                    || name.contains("_test.")
-                    || name.contains(".test.")
-                    || name.contains(".spec.")
-                {
-                    test_files += 1;
-                }
+    for e in walker.flatten() {
+        if e.file_type().map(|ft| ft.is_file()).unwrap_or(false) {
+            let name = e.file_name().to_string_lossy();
+            if name.starts_with("test_")
+                || name.contains("_test.")
+                || name.contains(".test.")
+                || name.contains(".spec.")
+            {
+                test_files += 1;
             }
         }
     }
@@ -5178,7 +5137,7 @@ fn get_tenant_id() -> String {
 
 fn cmd_tool(name: &str) {
     let args: Vec<String> = env::args().collect();
-    let mut actual_args: Vec<String> = if args.len() > 1 && args[1] == name {
+    let actual_args: Vec<String> = if args.len() > 1 && args[1] == name {
         args[2..].to_vec()
     } else {
         args[1..].to_vec()
@@ -5324,17 +5283,13 @@ fn cmd_tool(name: &str) {
             }
         }
         "fd" => {
-            if !is_agent_session {
-                if !actual_args.iter().any(|a| a == "--color") {
-                    cmd.arg("--color=always");
-                }
+            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
+                cmd.arg("--color=always");
             }
         }
         "bat" => {
-            if !is_agent_session {
-                if !actual_args.iter().any(|a| a == "--color") {
-                    cmd.arg("--color=always");
-                }
+            if !is_agent_session && !actual_args.iter().any(|a| a == "--color") {
+                cmd.arg("--color=always");
             }
         }
         _ => {}

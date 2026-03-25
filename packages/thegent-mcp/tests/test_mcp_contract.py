@@ -1,7 +1,6 @@
 """Contract tests for thegent-mcp package."""
 
 
-
 class TestMcpContract:
     """Test thegent-mcp package contract."""
 
@@ -14,6 +13,5 @@ class TestMcpContract:
 
     def test_backward_compat_thegent_mcp(self) -> None:
         """Test backward compatibility: thegent.mcp should still work."""
-        import thegent.mcp
 
         assert thegent.mcp is not None

@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from thegent_cli.apps.project import setup_project_app
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 console = Console()
 app = typer.Typer(help="System configuration, MCP servers, and daemon ops.")
@@ -46,7 +46,7 @@ def sys_mcp(
     shadow_age_hours: int = typer.Option(24, "--shadow-age-hours", help="Prune .shadow-* older than N hours"),
     log_age_days: int = typer.Option(7, "--log-age-days", help="Prune .quality/logs older than N days"),
 ):
-    from thegent.mcp.manage import (
+    from thegent_protocols.mcp.manage import (
         _get_mcp_url,
         install_to_client,
         migrate_to_unimount,
@@ -54,7 +54,7 @@ def sys_mcp(
         FAILING_MCP_SERVERS,
         service_status,
     )
-    from thegent.orchestration.pruning.prune import mcp_prune
+    from thegent_execution.orchestration.pruning.prune import mcp_prune
 
     settings = ThegentSettings()
     normalized = action.strip().lower()
@@ -189,7 +189,7 @@ def sys_shadow(
         cleanup - Remove orphaned shadow directories
         stats   - Detailed statistics about shadows
     """
-    from thegent.orchestration.shadow import cleanup_shadows, get_shadow_stats
+    from thegent_execution.orchestration.shadow import cleanup_shadows, get_shadow_stats
 
     repo_path = Path(path).resolve()
 

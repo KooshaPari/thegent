@@ -17,7 +17,7 @@ from rich.table import Table
 
 from rich.console import Console
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 from thegent_cli.commands.dag_impl import (
     _atomic_write,
     _check_dag_cycles,
@@ -66,7 +66,7 @@ def dag_validate_cmd(cd: Path | None = None) -> None:
 
     # WP-4005: State freshness check
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     ckpt_registry = CheckpointRegistry(settings.session_dir)
     ckpts = ckpt_registry.list_checkpoints(limit=1)
@@ -475,7 +475,7 @@ def dag_checkpoint_cmd(cd: Path | None = None, reason: str = "Manual checkpoint"
         raise typer.Exit(1)
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -496,7 +496,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
     dag_path = cwd / ".factory" / "dag-session.md"
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -518,7 +518,7 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
 def dag_checkpoints_cmd(limit: int = 20) -> None:
     """List recent DAG checkpoints."""
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 
@@ -570,7 +570,7 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
     assert dag_path is not None
 
     settings = ThegentSettings()
-    from thegent.execution import CheckpointRegistry
+    from thegent_execution.execution import CheckpointRegistry
 
     registry = CheckpointRegistry(settings.session_dir)
 

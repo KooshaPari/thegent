@@ -8,7 +8,7 @@ from pathlib import Path
 import os
 from typing import Any, Callable
 
-from thegent.config import ThegentSettings
+from thegent_core.config import ThegentSettings
 
 
 def hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:

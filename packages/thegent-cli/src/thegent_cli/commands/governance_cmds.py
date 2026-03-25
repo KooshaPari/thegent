@@ -121,7 +121,7 @@ def compliance_report_cmd(
 def audit_verify_cmd(format: str | None = None) -> None:
     """Verify the integrity of the execution run registry."""
     settings = ThegentSettings()
-    from thegent.execution import Auditor
+    from thegent_execution.execution import Auditor
 
     registry = RunRegistry(settings.session_dir)
     auditor = Auditor(registry.registry_path)
@@ -288,7 +288,7 @@ def govern_approve_cmd(run_id: str, reason: str | None = None) -> None:
     """
     from thegent_cli.commands.impl import govern_approve_impl
     from thegent_cli.services.governance import govern_get_pending_approval_impl
-    from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
+    from thegent_audit.governance.diff_renderer import DiffPayload, DiffRenderer
 
     pending = govern_get_pending_approval_impl(run_id=run_id)
     unified_diff = str(pending.get("unified_diff") or "")
@@ -324,7 +324,7 @@ def govern_reject_cmd(run_id: str, reason: str | None = None) -> None:
 def govern_list_pending_cmd(format: str | None = None) -> None:
     """WL-019-B: List all pending HITL approval requests (G-GP-05)."""
     from thegent_cli.commands.impl import govern_list_pending_impl
-    from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
+    from thegent_audit.governance.diff_renderer import DiffPayload, DiffRenderer
 
     items = govern_list_pending_impl()
     fmt = _normalize_output_format(format)
@@ -377,8 +377,8 @@ def govern_configure_cmd(cd: Path | None = None, force: bool = False) -> None:
 
 def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """Show current health score (composite 0-100, band, per-dimension breakdown)."""
-    from thegent.governance.health_score import HealthScoreComputer, get_band
-    from thegent.governance.scanner import CodebaseScanner
+    from thegent_audit.governance.health_score import HealthScoreComputer, get_band
+    from thegent_audit.governance.scanner import CodebaseScanner
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -387,7 +387,9 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
     except FileNotFoundError:
         fmt = _normalize_output_format(format)
         if fmt == "json":
-            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}).decode().decode() + "\n")
+            sys.stdout.write(
+                json.dumps({"configured": False, "hint": "thegent govern configure"}).decode().decode() + "\n"
+            )
         else:
             console.print("[yellow]Govern not configured.[/yellow]")
             console.print("[dim]Run: thegent govern configure[/dim]")
@@ -425,8 +427,8 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
 
 def govern_go_status_cmd(cd: Path | None = None) -> None:
     """Show current governance status (state, cycle_id, shutdown_requested)."""
-    from thegent.config import ThegentSettings
-    from thegent.governance.agileplus import AgilePlusLoop
+    from thegent_core.config import ThegentSettings
+    from thegent_audit.governance.agileplus import AgilePlusLoop
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -459,9 +461,9 @@ def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str
     """Run a single governance cycle."""
     from datetime import UTC, datetime
 
-    from thegent.config import ThegentSettings
-    from thegent.governance.health_score import HealthScoreComputer, get_band
-    from thegent.governance.scanner import CodebaseScanner
+    from thegent_core.config import ThegentSettings
+    from thegent_audit.governance.health_score import HealthScoreComputer, get_band
+    from thegent_audit.governance.scanner import CodebaseScanner
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -526,9 +528,9 @@ def govern_go_watch_cmd(
     import time
     from datetime import UTC, datetime
 
-    from thegent.config import ThegentSettings
-    from thegent.governance.health_score import HealthScoreComputer, get_band
-    from thegent.governance.scanner import CodebaseScanner
+    from thegent_core.config import ThegentSettings
+    from thegent_audit.governance.health_score import HealthScoreComputer, get_band
+    from thegent_audit.governance.scanner import CodebaseScanner
 
     settings = ThegentSettings()
     project_dir = _resolve_cwd(cd) or Path.cwd()
@@ -606,7 +608,7 @@ def policy_show_cmd() -> None:
 def policy_purge_cmd(dry_run: bool = True) -> None:
     """Purge expired history based on tiered retention (WP-3006)."""
     settings = ThegentSettings()
-    from thegent.execution import RunRegistry
+    from thegent_execution.execution import RunRegistry
 
     registry = RunRegistry(settings.session_dir)
     res = registry.purge_expired(
@@ -625,7 +627,7 @@ def contracts_registry_cmd(format: str | None = None) -> None:
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.contracts.registry import get_registry
+    from thegent_core.contracts.registry import get_registry
 
     registry = get_registry()
     versions = registry.list_versions()
@@ -664,7 +666,7 @@ def migration_cmd(contract_id: str, version: str, format: str | None = None) -> 
     """Evaluate migration status for a contract version."""
     from rich.console import Console
 
-    from thegent.contracts.migration import MigrationController
+    from thegent_core.contracts.migration import MigrationController
 
     console = Console()
     mc = MigrationController()
@@ -698,7 +700,7 @@ def drift_cmd(
     """Detect significant drift in contract performance and check alert budgets (G-RV-07)."""
     from rich.console import Console
 
-    from thegent.contracts.telemetry import ContractTelemetry
+    from thegent_core.contracts.telemetry import ContractTelemetry
 
     settings = ThegentSettings()
     console = Console()
@@ -746,7 +748,7 @@ def contracts_conformance_cmd(
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.contracts.conformance import run_conformance_suite
+    from thegent_core.contracts.conformance import run_conformance_suite
 
     session_dir = ThegentSettings().session_dir if check_drift else None
     report = run_conformance_suite(session_dir=session_dir, drift_window=drift_window)
@@ -792,7 +794,7 @@ def contracts_conformance_cmd(
 def trust_status_cmd(format: str | None = None) -> None:
     """Show last environment and trust boundary status (WP-3007)."""
     settings = ThegentSettings()
-    from thegent.execution import TrustBoundaryValidator
+    from thegent_execution.execution import TrustBoundaryValidator
 
     trust_boundary = TrustBoundaryValidator(settings.session_dir)
     last_env = trust_boundary.get_last_environment()
@@ -920,7 +922,7 @@ def signatures_verify_cmd(run_id: str) -> None:
 
 def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
     """Test SIEM event egress (WP-15001)."""
-    from thegent.observability.egress import EgressEvent, SIEMEgress
+    from thegent_observability.observability.egress import EgressEvent, SIEMEgress
 
     egress = SIEMEgress(endpoint_url="http://simulated-siem.internal")
     event = EgressEvent(
@@ -941,7 +943,7 @@ def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
 
 def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
     """Verify a plugin contract (WP-15003)."""
-    from thegent.contracts.marketplace import PluginContract, PluginVerifier
+    from thegent_core.contracts.marketplace import PluginContract, PluginVerifier
 
     verifier = PluginVerifier()
     contract = PluginContract(
@@ -960,7 +962,7 @@ def compliance_plugin_check_cmd(plugin_id: str, signature: str) -> None:
 
 def compliance_redact_cmd(text: str) -> None:
     """Test PII/Secret redaction (WP-15005)."""
-    from thegent.governance.support import SupportRedactor
+    from thegent_audit.governance.support import SupportRedactor
 
     redactor = SupportRedactor()
     redacted = redactor.redact_text(text)
@@ -974,7 +976,7 @@ def compliance_redact_cmd(text: str) -> None:
 def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None = None) -> None:
     """Show daily cost aggregation (FR-GOV-002)."""
     settings = ThegentSettings()
-    from thegent.cost.aggregator import CostAggregator
+    from thegent_routing.cost.aggregator import CostAggregator
 
     agg = CostAggregator(settings.session_dir)
     total = agg.daily_total(owner=owner, days=days)
@@ -999,7 +1001,7 @@ def govern_cost_cmd(owner: str | None = None, days: int = 1, format: str | None 
 
 def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
     """Check a prompt against active guardrails (FR-GOV-003..006)."""
-    from thegent.governance.input_guardrails import InputGuardrails
+    from thegent_audit.governance.input_guardrails import InputGuardrails
 
     rails = InputGuardrails()
     result = rails.check(prompt, agent=agent or "", model=model)
@@ -1016,7 +1018,7 @@ def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | Non
 
 def guardrails_show_cmd() -> None:
     """Show active guardrail configuration (FR-GOV-007)."""
-    from thegent.governance.input_guardrails import InputGuardrails
+    from thegent_audit.governance.input_guardrails import InputGuardrails
 
     rails = InputGuardrails()
 
@@ -1038,7 +1040,7 @@ def guardrails_show_cmd() -> None:
 def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard", confidence: float = 1.0) -> None:
     """Evaluate a hypothetical run against governance policies (WP-3001)."""
     settings = ThegentSettings()
-    from thegent.execution import PolicyEngine, RunMeta, RunRegistry
+    from thegent_execution.execution import PolicyEngine, RunMeta, RunRegistry
 
     engine = PolicyEngine(settings)
     registry = RunRegistry(settings.session_dir)
@@ -1078,7 +1080,7 @@ def discovery_register_cmd(
     """Register or update a discovered external agent (WP-4008)."""
     import json
 
-    from thegent.discovery import register_discovered_agent
+    from thegent_agents.discovery import register_discovered_agent
 
     token_usage = None
     if token_usage_json:
@@ -1111,8 +1113,8 @@ def discovery_parse_cmd(
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.discovery import register_discovered_agent
-    from thegent.parser import parse_cli_output
+    from thegent_agents.discovery import register_discovered_agent
+    from thegent_core.parser import parse_cli_output
 
     console = Console()
     if text is None:
@@ -1168,7 +1170,7 @@ def discovery_scan_cmd(
     from rich.console import Console
     from rich.table import Table
 
-    from thegent.discovery import list_discovered_agents, scan_agent_processes
+    from thegent_agents.discovery import list_discovered_agents, scan_agent_processes
 
     console = Console()
     registered = scan_agent_processes()

@@ -5,8 +5,11 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
+from thegent.cli.plan.plan_entity_cmds import app as entity_app
+
 console = Console()
 app = typer.Typer(help="Manage DAG tasks, work streams, and roadmap initiatives.")
+app.add_typer(entity_app, name="entity", help="Canonical entity CRUD, batch import/export, and sync.")
 
 
 @app.command("next", help="Identify next ready tasks from the DAG.")

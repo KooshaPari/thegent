@@ -2,14 +2,11 @@ from __future__ import annotations
 
 import os
 import signal
-import sys
 import time
-from pathlib import Path
-from typing import Any
 
-import orjson as json
 import typer
 from rich.console import Console
+from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
     EXIT_TIMEOUT,
@@ -20,8 +17,10 @@ from thegent.cli.commands._cli_shared import (
     _resolve_session_id,
     _session_paths,
 )
+from thegent.execution import RunRegistry
 
 console = Console()
+
 
 def wait_cmd(session_id: str | None = None, timeout: int = 0) -> None:
     sid = _resolve_session_id(session_id)
@@ -259,26 +258,11 @@ def deferral_resume_cmd(run_id: str) -> None:
 __all__ = [
     "deferral_list_cmd",
     "deferral_resume_cmd",
-    "events_cmd",
-    "feedback_cmd",
-    "history_cmd",
-    "inbox_list_cmd",
-    "inbox_wait_cmd",
-    "inspect_cmd",
-    "logs_cmd",
     "pause_cmd",
-    "ps_cmd",
     "resume_cmd",
     "session_cmd",
-    "session_contract_health_gate_cmd",
-    "session_contract_health_report_cmd",
-    "session_contract_health_trend_cmd",
-    "session_contract_negotiate_cmd",
-    "session_contract_trend_analysis_cmd",
-    "session_contracts_cmd",
     "session_fork_cmd",
     "session_rollback_cmd",
-    "status_cmd",
     "stop_cmd",
     "wait_cmd",
 ]

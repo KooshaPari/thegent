@@ -1,9 +1,10 @@
 """Configuration management."""
 
-import orjson as json
 import logging
 from pathlib import Path
 from typing import Any
+
+import orjson
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +41,8 @@ class ConfigManager:
         """
         if self.config_path.exists():
             try:
-                data = json.loads(self.config_path.read_text())
-            except json.JSONDecodeError as exc:
+                data = orjson.loads(self.config_path.read_bytes())
+            except orjson.JSONDecodeError as exc:
                 self.last_load_error = ConfigLoadError(self.config_path, "invalid_json", cause=exc)
                 logger.error("config_load_failed_invalid_json path=%s error=%s", self.config_path, exc)
                 return {}
@@ -83,4 +84,5 @@ class ConfigManager:
 
     def _save_config(self) -> None:
         """Save config to file."""
-        self.config_path.write_text(json.dumps(self.config, indent=2))
+        payload = orjson.dumps(self.config, option=orjson.OPT_INDENT_2)
+        self.config_path.write_bytes(payload)
