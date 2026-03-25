@@ -98,6 +98,7 @@ from .registry import RunRegistry
 from .resilience import CircuitBreakerRegistry
 from .state import MAIFArtifact
 
+
 class PolicyEngine:
     """Evaluates execution requests against governance policies."""
 

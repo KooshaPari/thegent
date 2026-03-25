@@ -116,7 +116,7 @@ def _find_lock_files(paths: list[Path]) -> Iterator[Path]:
                         if lock.exists() and lock not in seen:
                             seen.add(lock)
                             yield lock
-                except (OSError, PermissionError):
+                except OSError, PermissionError:
                     pass
 
         else:

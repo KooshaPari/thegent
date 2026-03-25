@@ -15,10 +15,12 @@ import os
 # Conditional imports for agent identity system
 try:
     from agent_identity_system import GlobalAgentRegistry
+
     AGENT_IDENTITY_AVAILABLE = True
 except ImportError:
     try:
         from scripts.agent_identity_system import GlobalAgentRegistry
+
         AGENT_IDENTITY_AVAILABLE = True
     except ImportError:
         GlobalAgentRegistry = None
@@ -27,28 +29,29 @@ except ImportError:
 
 class MemoryType(Enum):
     """Types of memories an agent can store."""
-    EXECUTION = "execution"      # Task completion
-    LEARNING = "learning"        # Pattern learned
-    DECISION = "decision"        # Decision made
-    ERROR = "error"              # Error encountered
+
+    EXECUTION = "execution"  # Task completion
+    LEARNING = "learning"  # Pattern learned
+    DECISION = "decision"  # Decision made
+    ERROR = "error"  # Error encountered
     INTERACTION = "interaction"  # Agent communication
-    MILESTONE = "milestone"      # Achievement
+    MILESTONE = "milestone"  # Achievement
 
 
 @dataclass
 class AgentMemory:
     """Record of agent execution, learning, or decision."""
 
-    memory_id: str                              # Unique ID
-    agent_id: str                               # Agent that owns this memory
-    memory_type: MemoryType                     # Type of memory
-    timestamp: float                            # When it occurred
+    memory_id: str  # Unique ID
+    agent_id: str  # Agent that owns this memory
+    memory_type: MemoryType  # Type of memory
+    timestamp: float  # When it occurred
     content: dict[str, Any] = field(default_factory=dict)  # Main data
 
     # Metadata
     context: dict[str, str] = field(default_factory=dict)  # Tags, session_id, project
-    importance: float = 0.5                     # 0.0-1.0 (for prioritization)
-    verified: bool = False                      # Validated by human or peer?
+    importance: float = 0.5  # 0.0-1.0 (for prioritization)
+    verified: bool = False  # Validated by human or peer?
 
 
 class MemoryService:
@@ -117,11 +120,11 @@ class MemoryService:
             memory_file = self._get_memory_file(memory.agent_id)
 
             # Append to JSONL file
-            with open(memory_file, 'a') as f:
+            with open(memory_file, "a") as f:
                 memory_dict = asdict(memory)
-                memory_dict['memory_type'] = memory.memory_type.value
+                memory_dict["memory_type"] = memory.memory_type.value
                 json.dump(memory_dict, f)
-                f.write('\n')
+                f.write("\n")
 
             # Update in-memory cache
             if memory.agent_id not in self.memory_cache:
@@ -161,15 +164,15 @@ class MemoryService:
                         try:
                             data = json.loads(line)
                             # Convert memory_type value (e.g., "execution") to enum
-                            memory_type_value = data['memory_type']
+                            memory_type_value = data["memory_type"]
                             # Find the enum member by value
                             for member in MemoryType:
                                 if member.value == memory_type_value:
-                                    data['memory_type'] = member
+                                    data["memory_type"] = member
                                     break
                             memory = AgentMemory(**data)
                             memories.append(memory)
-                        except (json.JSONDecodeError, KeyError, ValueError):
+                        except json.JSONDecodeError, KeyError, ValueError:
                             pass  # Skip malformed lines
 
             self.memory_cache[agent_id] = memories
@@ -312,7 +315,7 @@ class MemoryService:
         """
         try:
             stats_file = self._get_stats_file(stats["agent_id"])
-            with open(stats_file, 'w') as f:
+            with open(stats_file, "w") as f:
                 json.dump(stats, f, indent=2)
         except Exception:
             pass
@@ -420,12 +423,12 @@ class MemoryService:
         if deleted_count > 0:
             try:
                 memory_file = self._get_memory_file(agent_id)
-                with open(memory_file, 'w') as f:
+                with open(memory_file, "w") as f:
                     for memory in keep_memories:
                         memory_dict = asdict(memory)
-                        memory_dict['memory_type'] = memory.memory_type.value
+                        memory_dict["memory_type"] = memory.memory_type.value
                         json.dump(memory_dict, f)
-                        f.write('\n')
+                        f.write("\n")
 
                 # Update cache
                 self.memory_cache[agent_id] = keep_memories

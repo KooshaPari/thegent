@@ -155,7 +155,7 @@ def find_e2e_tests(command_paths: set[str] | None = None) -> dict[str, list[str]
             cmd_args_raw = match.group(1)
             try:
                 cmd_args = ast.literal_eval(cmd_args_raw)
-            except (ValueError, SyntaxError):
+            except ValueError, SyntaxError:
                 continue
 
             if not isinstance(cmd_args, list):

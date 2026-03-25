@@ -18,6 +18,7 @@ from thegent.cli.commands._cli_shared import (
     console,
 )
 
+
 def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
     """Decision replay and rationale snapshots (WP-4007)."""
     settings = ThegentSettings()
@@ -44,6 +45,7 @@ def replay_cmd(run_id: str, what_if_env: str | None = None) -> None:
         # dummy sim
         console.print(f"   [green]PRE-FLIGHT PASS:[/green] Run would be ALLOWED in {what_if_env}.")
 
+
 def trace_replay_cmd(run_id: str) -> None:
     """WP-16001: Replay an execution trace in sandbox mode."""
     from thegent.planning.simulation import SimulationEngine
@@ -63,6 +65,7 @@ def trace_replay_cmd(run_id: str) -> None:
     console.print(f"Allowed: {result.get('allowed')}")
     console.print(f"Reason: {result.get('reason')}")
     console.print(f"Applied Constraints: {result.get('constraints_applied')}")
+
 
 def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
     """Automatically route a prompt to an active terminal session if matching."""
@@ -92,6 +95,7 @@ def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
         console.print(f"[yellow]No active terminal found for {target_path}.[/yellow]")
         console.print("Falling back to standard 'thegent run'...")
         run_cmd(prompt=prompt, agent="interactive_agent", cd=cd)
+
 
 def deep_research_cmd(
     query: str = typer.Argument(..., help="Research query"),
@@ -138,6 +142,7 @@ def deep_research_cmd(
             table.add_row("GitHub", res["title"][:50] + "...", res["url"])
 
         console.print(table)
+
 
 def takeover_cmd(session_id: str) -> None:
     """Take over an active terminal session via tmux (WP-4008)."""
@@ -225,6 +230,7 @@ def takeover_cmd(session_id: str) -> None:
     except Exception as e:
         console.print(f"[red]Failed to attach: {e}[/red]")
 
+
 def run_diff_cmd(run_a: str, run_b: str) -> None:
     """Compare two execution runs (WP-16001)."""
     settings = ThegentSettings()
@@ -265,6 +271,8 @@ def run_diff_cmd(run_a: str, run_b: str) -> None:
                 console.print(f"[red]{line}[/red]")
             else:
                 console.print(line)
+
+
 __all__ = [
     "deep_research_cmd",
     "replay_cmd",

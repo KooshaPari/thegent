@@ -60,7 +60,7 @@ def _capture_via_zmx(session: str, n: int) -> CaptureResult | None:
     """
     try:
         zmx_mod = importlib.import_module("thegent.session.zmx_backend")
-    except (ImportError, ModuleNotFoundError):
+    except ImportError, ModuleNotFoundError:
         return None
     backend = zmx_mod.ZmxBackend()
     if not backend.available:

@@ -54,7 +54,7 @@ def pre_work_gate_thresholds(project_dir: Path) -> tuple[dict[str, Any], str]:
             continue
         try:
             value = int(raw_value)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             continue
         thresholds[key] = max(0, value)
 

@@ -10,7 +10,7 @@ def as_float(value: Any, default: float) -> float:
             return float(value)
         if isinstance(value, (int | float | str)):
             return float(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         pass
     return default
 
@@ -22,7 +22,7 @@ def as_int(value: Any, default: int) -> int:
             return int(value)
         if isinstance(value, (int | float | str)):
             return int(value)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         pass
     return default
 

@@ -118,7 +118,7 @@ def configure_mergiraf_driver(
     try:
         shim_run(git_config_args_name, check=True, capture_output=True, cwd=cwd)
         shim_run(git_config_args_driver, check=True, capture_output=True, cwd=cwd)
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         return False
 
     # ------------------------------------------------------------------ #
@@ -300,7 +300,7 @@ def _merge_with_git_merge_file(
         output.write_bytes(tmp_path.read_bytes())
         return result.returncode == 0
 
-    except (FileNotFoundError, OSError):
+    except FileNotFoundError, OSError:
         # git not available - last resort: just copy ours.
         with contextlib.suppress(OSError):
             output.write_bytes(ours.read_bytes())
@@ -448,7 +448,7 @@ class SmartMerger:
                     timeout=self._config.timeout_s,
                 )
                 used_mergiraf = True
-            except (subprocess.TimeoutExpired, FileNotFoundError):
+            except subprocess.TimeoutExpired, FileNotFoundError:
                 pass
 
         # Perform the merge

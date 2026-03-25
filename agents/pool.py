@@ -1,6 +1,7 @@
 # Agent Pool
 # Part of thegent-agents sub-project
 
+
 class AgentPool:
     """Manages agent pool for task execution."""
 

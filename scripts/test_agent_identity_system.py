@@ -31,7 +31,7 @@ class TestAgentIdentity(TestCase):
             role=AgentRole.COORDINATOR,
         )
         expected = "thegent:abc123:L1:coordinator"
-        self.assertEqual(identity.agent_id, expected)
+        assert identity.agent_id == expected
 
     def test_to_dict_conversion(self):
         """Test conversion to dictionary."""
@@ -42,9 +42,9 @@ class TestAgentIdentity(TestCase):
             role=AgentRole.BUILDER,
         )
         data = identity.to_dict()
-        self.assertEqual(data["project"], "thegent")
-        self.assertEqual(data["level"], "L2")
-        self.assertEqual(data["role"], "builder")
+        assert data["project"] == "thegent"
+        assert data["level"] == "L2"
+        assert data["role"] == "builder"
 
     def test_from_dict_conversion(self):
         """Test creation from dictionary."""
@@ -66,9 +66,9 @@ class TestAgentIdentity(TestCase):
             "mcp_endpoint": None,
         }
         identity = AgentIdentity.from_dict(data)
-        self.assertEqual(identity.project, "thegent")
-        self.assertEqual(identity.level, AgentLevel.L1_STRATEGIC)
-        self.assertEqual(identity.role, AgentRole.COORDINATOR)
+        assert identity.project == "thegent"
+        assert identity.level == AgentLevel.L1_STRATEGIC
+        assert identity.role == AgentRole.COORDINATOR
 
     def test_roundtrip_conversion(self):
         """Test to_dict -> from_dict roundtrip."""
@@ -81,9 +81,9 @@ class TestAgentIdentity(TestCase):
         )
         data = identity1.to_dict()
         identity2 = AgentIdentity.from_dict(data)
-        self.assertEqual(identity1.agent_id, identity2.agent_id)
-        self.assertEqual(identity1.project, identity2.project)
-        self.assertEqual(identity1.capabilities, identity2.capabilities)
+        assert identity1.agent_id == identity2.agent_id
+        assert identity1.project == identity2.project
+        assert identity1.capabilities == identity2.capabilities
 
 
 class TestGlobalAgentRegistry(TestCase):
@@ -98,6 +98,7 @@ class TestGlobalAgentRegistry(TestCase):
     def tearDown(self):
         """Clean up."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_register_agent(self):
@@ -109,8 +110,8 @@ class TestGlobalAgentRegistry(TestCase):
             role=AgentRole.COORDINATOR,
         )
         agent_id = self.registry.register_agent(identity)
-        self.assertIsNotNone(agent_id)
-        self.assertEqual(agent_id, identity.agent_id)
+        assert agent_id is not None
+        assert agent_id == identity.agent_id
 
     def test_get_agent(self):
         """Test retrieving agent."""
@@ -122,8 +123,8 @@ class TestGlobalAgentRegistry(TestCase):
         )
         self.registry.register_agent(identity)
         retrieved = self.registry.get_agent(identity.agent_id)
-        self.assertIsNotNone(retrieved)
-        self.assertEqual(retrieved.project, "test")
+        assert retrieved is not None
+        assert retrieved.project == "test"
 
     def test_unregister_agent(self):
         """Test agent unregistration."""
@@ -135,9 +136,9 @@ class TestGlobalAgentRegistry(TestCase):
         )
         self.registry.register_agent(identity)
         result = self.registry.unregister_agent(identity.agent_id)
-        self.assertTrue(result)
+        assert result
         retrieved = self.registry.get_agent(identity.agent_id)
-        self.assertIsNone(retrieved)
+        assert retrieved is None
 
     def test_get_agents_by_project(self):
         """Test filtering agents by project."""
@@ -162,8 +163,8 @@ class TestGlobalAgentRegistry(TestCase):
         project1_agents = self.registry.get_agents_by_project("project1")
         project2_agents = self.registry.get_agents_by_project("project2")
 
-        self.assertEqual(len(project1_agents), 3)
-        self.assertEqual(len(project2_agents), 2)
+        assert len(project1_agents) == 3
+        assert len(project2_agents) == 2
 
     def test_get_agents_by_level(self):
         """Test filtering agents by level."""
@@ -185,8 +186,8 @@ class TestGlobalAgentRegistry(TestCase):
         l1_agents = self.registry.get_agents_by_level(AgentLevel.L1_STRATEGIC)
         l2_agents = self.registry.get_agents_by_level(AgentLevel.L2_WORKER)
 
-        self.assertEqual(len(l1_agents), 1)
-        self.assertEqual(len(l2_agents), 1)
+        assert len(l1_agents) == 1
+        assert len(l2_agents) == 1
 
     def test_set_relationship(self):
         """Test setting parent-child relationships."""
@@ -206,14 +207,14 @@ class TestGlobalAgentRegistry(TestCase):
         self.registry.register_agent(child)
 
         result = self.registry.set_relationship(parent.agent_id, child.agent_id)
-        self.assertTrue(result)
+        assert result
 
         # Verify relationship
         updated_parent = self.registry.get_agent(parent.agent_id)
         updated_child = self.registry.get_agent(child.agent_id)
 
-        self.assertIn(child.agent_id, updated_parent.child_agent_ids)
-        self.assertEqual(updated_child.parent_agent_id, parent.agent_id)
+        assert child.agent_id in updated_parent.child_agent_ids
+        assert updated_child.parent_agent_id == parent.agent_id
 
     def test_get_hierarchy(self):
         """Test hierarchy retrieval."""
@@ -245,9 +246,9 @@ class TestGlobalAgentRegistry(TestCase):
         self.registry.set_relationship(child1.agent_id, child2.agent_id)
 
         hierarchy = self.registry.get_hierarchy(parent.agent_id)
-        self.assertEqual(hierarchy["agent_id"], parent.agent_id)
-        self.assertEqual(len(hierarchy["children"]), 1)
-        self.assertEqual(len(hierarchy["children"][0]["children"]), 1)
+        assert hierarchy["agent_id"] == parent.agent_id
+        assert len(hierarchy["children"]) == 1
+        assert len(hierarchy["children"][0]["children"]) == 1
 
     def test_persistence_to_disk(self):
         """Test registry persistence to disk."""
@@ -260,14 +261,14 @@ class TestGlobalAgentRegistry(TestCase):
         self.registry.register_agent(identity)
 
         # Verify file was created
-        self.assertTrue(self.registry_path.exists())
+        assert self.registry_path.exists()
 
         # Load registry from same path
         registry2 = GlobalAgentRegistry(str(self.registry_path))
         retrieved = registry2.get_agent(identity.agent_id)
 
-        self.assertIsNotNone(retrieved)
-        self.assertEqual(retrieved.project, "test")
+        assert retrieved is not None
+        assert retrieved.project == "test"
 
     def test_get_stats(self):
         """Test registry statistics."""
@@ -287,10 +288,10 @@ class TestGlobalAgentRegistry(TestCase):
             self.registry.register_agent(identity)
 
         stats = self.registry.get_stats()
-        self.assertEqual(stats["total_agents"], 4)
-        self.assertEqual(stats["by_level"]["L1"], 1)
-        self.assertEqual(stats["by_level"]["L2"], 2)
-        self.assertEqual(stats["by_level"]["L3"], 1)
+        assert stats["total_agents"] == 4
+        assert stats["by_level"]["L1"] == 1
+        assert stats["by_level"]["L2"] == 2
+        assert stats["by_level"]["L3"] == 1
 
 
 class TestAgentIdentityFactory(TestCase):
@@ -306,29 +307,30 @@ class TestAgentIdentityFactory(TestCase):
     def tearDown(self):
         """Clean up."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_create_l1_agent(self):
         """Test L1 agent creation."""
         agent = self.factory.create_l1_agent("test")
-        self.assertEqual(agent.level, AgentLevel.L1_STRATEGIC)
-        self.assertEqual(agent.project, "test")
+        assert agent.level == AgentLevel.L1_STRATEGIC
+        assert agent.project == "test"
 
         # Verify it's registered
         retrieved = self.registry.get_agent(agent.agent_id)
-        self.assertIsNotNone(retrieved)
+        assert retrieved is not None
 
     def test_create_l2_agent(self):
         """Test L2 agent creation with parent."""
         l1 = self.factory.create_l1_agent("test")
         l2 = self.factory.create_l2_agent("test", AgentRole.BUILDER, l1.agent_id)
 
-        self.assertEqual(l2.level, AgentLevel.L2_WORKER)
-        self.assertEqual(l2.parent_agent_id, l1.agent_id)
+        assert l2.level == AgentLevel.L2_WORKER
+        assert l2.parent_agent_id == l1.agent_id
 
         # Verify relationship is set
         parent = self.registry.get_agent(l1.agent_id)
-        self.assertIn(l2.agent_id, parent.child_agent_ids)
+        assert l2.agent_id in parent.child_agent_ids
 
     def test_create_l3_agent(self):
         """Test L3 agent creation with parent."""
@@ -336,29 +338,28 @@ class TestAgentIdentityFactory(TestCase):
         l2 = self.factory.create_l2_agent("test", AgentRole.BUILDER, l1.agent_id)
         l3 = self.factory.create_l3_agent("test", l2.agent_id)
 
-        self.assertEqual(l3.level, AgentLevel.L3_EXECUTOR)
-        self.assertEqual(l3.parent_agent_id, l2.agent_id)
+        assert l3.level == AgentLevel.L3_EXECUTOR
+        assert l3.parent_agent_id == l2.agent_id
 
         # Verify relationship is set
         parent = self.registry.get_agent(l2.agent_id)
-        self.assertIn(l3.agent_id, parent.child_agent_ids)
+        assert l3.agent_id in parent.child_agent_ids
 
     def test_create_full_hierarchy(self):
         """Test creating a complete hierarchy."""
         l1 = self.factory.create_l1_agent("test")
-        l2_builder = self.factory.create_l2_agent(
-            "test", AgentRole.BUILDER, l1.agent_id
-        )
+        l2_builder = self.factory.create_l2_agent("test", AgentRole.BUILDER, l1.agent_id)
         self.factory.create_l2_agent("test", AgentRole.RESEARCHER, l1.agent_id)
         self.factory.create_l3_agent("test", l2_builder.agent_id)
 
         stats = self.registry.get_stats()
-        self.assertEqual(stats["total_agents"], 4)
-        self.assertEqual(stats["by_level"]["L1"], 1)
-        self.assertEqual(stats["by_level"]["L2"], 2)
-        self.assertEqual(stats["by_level"]["L3"], 1)
+        assert stats["total_agents"] == 4
+        assert stats["by_level"]["L1"] == 1
+        assert stats["by_level"]["L2"] == 2
+        assert stats["by_level"]["L3"] == 1
 
 
 if __name__ == "__main__":
     import unittest
+
     unittest.main()

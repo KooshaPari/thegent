@@ -121,7 +121,9 @@ def test_wl9837_side_effects_resolution_phase_fails_loudly_on_invalid_shape() ->
 def test_wl9838_response_resolution_phase_preserves_typed_response_contract() -> None:
     # @trace WL-9838
     turn = {"id": "turn-1"}
-    response_phase = server._build_turn_submit_response_phase(True, "req", turn, {"id": "approval-1", "status": "requested"})
+    response_phase = server._build_turn_submit_response_phase(
+        True, "req", turn, {"id": "approval-1", "status": "requested"}
+    )
     request_has_id, request_id, resolved_turn, approval_payload = server._build_turn_submit_response_resolution_phase(
         response_phase
     )
@@ -139,7 +141,14 @@ def test_wl9839_handler_preserves_parse_failure_short_circuit_without_side_effec
     turns_before = len(SERVER_STATE.turns)
     approvals_before = len(SERVER_STATE.approvals)
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": 123}}).decode()
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": "submit",
+                "method": "turn/submit",
+                "params": {"session_id": session_id, "input": 123},
+            }
+        ).decode()
     )
     assert response is not None
     assert response["error"]["data"]["reason"] == "input_must_be_string"

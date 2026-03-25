@@ -188,9 +188,9 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
                 "scope_top_blocked",
                 _safe_dict(result.get("scope_key")).get("top_blocked", ""),
             ),
-            result.get("scope_key_json", json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS)),
-            result.get("delta_summary_json", json.dumps(result.get('delta_summary', {}), option=json.OPT_SORT_KEYS)),
-            json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS),
+            result.get("scope_key_json", json.dumps(result.get("scope_key", {}), option=json.OPT_SORT_KEYS)),
+            result.get("delta_summary_json", json.dumps(result.get("delta_summary", {}), option=json.OPT_SORT_KEYS)),
+            json.dumps(result.get("scope_key", {}), option=json.OPT_SORT_KEYS),
             result.get(
                 "blocked_ratio_delta",
                 result.get("delta_summary", {}).get("blocked_ratio_delta", None),
@@ -269,9 +269,11 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
                     "scope_top_blocked",
                     _safe_dict(result.get("scope_key")).get("top_blocked", ""),
                 ),
-                result.get("scope_key_json", json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS)),
-                result.get("delta_summary_json", json.dumps(result.get('delta_summary', {}), option=json.OPT_SORT_KEYS)),
-                json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS),
+                result.get("scope_key_json", json.dumps(result.get("scope_key", {}), option=json.OPT_SORT_KEYS)),
+                result.get(
+                    "delta_summary_json", json.dumps(result.get("delta_summary", {}), option=json.OPT_SORT_KEYS)
+                ),
+                json.dumps(result.get("scope_key", {}), option=json.OPT_SORT_KEYS),
                 result.get(
                     "blocked_ratio_delta",
                     result.get("delta_summary", {}).get("blocked_ratio_delta", None),

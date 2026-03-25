@@ -110,7 +110,7 @@ class AuthExpiryDetector:
                     if dt.tzinfo is None:
                         return dt.replace(tzinfo=UTC)
                     return dt
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     return None
 
         # Unix timestamp
@@ -118,7 +118,7 @@ class AuthExpiryDetector:
             try:
                 timestamp = int(token_info["expiry_timestamp"])
                 return datetime.fromtimestamp(timestamp, tz=UTC)
-            except (ValueError, TypeError, OSError):
+            except ValueError, TypeError, OSError:
                 return None
 
         # TTL (time to live in seconds)
@@ -127,7 +127,7 @@ class AuthExpiryDetector:
                 ttl_seconds = int(token_info["ttl"])
                 now = datetime.now(UTC)
                 return now + timedelta(seconds=ttl_seconds)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return None
 
         # expires_in (seconds until expiry)
@@ -136,7 +136,7 @@ class AuthExpiryDetector:
                 expires_in = int(token_info["expires_in"])
                 now = datetime.now(UTC)
                 return now + timedelta(seconds=expires_in)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return None
 
         return None

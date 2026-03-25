@@ -453,7 +453,7 @@ def shell_jobs() -> None:
                     try:
                         os.kill(int(pid), 0)
                         status = "Running"
-                    except (OSError, ValueError):
+                    except OSError, ValueError:
                         status = "Completed"
                     jobs.append((name, pid, status))
     except Exception as e:

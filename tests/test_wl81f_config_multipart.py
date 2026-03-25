@@ -1,7 +1,7 @@
 """Tests for Wave 81 Lane F: Config path validation and multipart content.
 
 Related to:
-- CLIProxyAPI#948 - Multi-part Gemini response loses content  
+- CLIProxyAPI#948 - Multi-part Gemini response loses content
 - CLIProxyAPIPlus#81 - Config path is directory not file
 """
 
@@ -17,11 +17,11 @@ class TestConfigPathValidation:
 
     def test_config_path_file_not_directory(self) -> None:
         """Config path should be a file, not a directory.
-        
+
         Issue: CLIProxyAPIPlus#81 - Config path is directory
         """
         config_path = Path("/CLIProxyAPI/config.yaml")
-        
+
         # Should fail if it's a directory
         with pytest.raises(ValueError, match="config.*directory"):
             if config_path.is_dir():
@@ -42,7 +42,7 @@ class TestMultipartContentPreservation:
 
     def test_gemini_multipart_preserved(self) -> None:
         """Gemini multipart content should not lose parts during translation.
-        
+
         Issue: CLIProxyAPI#948 - Multi-part response loses content
         """
         # Simulate multipart response
@@ -51,7 +51,7 @@ class TestMultipartContentPreservation:
             {"type": "image", "source": {"type": "base64", "data": "abc123"}},
             {"type": "text", "text": "Part 3: "},
         ]
-        
+
         # All parts should be preserved
         assert len(parts) == 3
         assert parts[0]["type"] == "text"
@@ -62,6 +62,6 @@ class TestMultipartContentPreservation:
         """Translation should not silently drop content."""
         original = {"parts": ["a", "b", "c"]}
         translated = {"parts": ["a", "b", "c"]}
-        
+
         # No parts should be dropped
         assert len(original["parts"]) == len(translated["parts"])

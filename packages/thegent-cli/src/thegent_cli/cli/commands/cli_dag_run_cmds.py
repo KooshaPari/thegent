@@ -5,37 +5,24 @@ Advanced DAG operations: execution, synchronization, recovery, checkpointing.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import typer
 
 from rich.console import Console
-from rich.table import Table
 
 from thegent_core.config import ThegentSettings
 from thegent_cli.cli.commands.dag_impl import (
     _atomic_write,
-    _check_dag_cycles,
-    _dag_path,
-    _dag_update_task,
-    _ensure_dag_file,
     _parse_dag_full,
-    _parse_depends_on,
     _serialize_dag,
     _session_status_for,
-    _validate_agent,
-    dag_ready_impl,
-    dag_recover_impl,
     dag_run_impl,
     dag_sync_impl,
 )
-from thegent_cli.cli.commands._cli_shared import _resolve_checkpoint_id
 from thegent_cli.cli.services.run_session_helpers import (
-    default_owner_tag as _default_owner_tag,
     resolve_cwd as _resolve_cwd,
 )
-import orjson as json
 
 console = Console()
 

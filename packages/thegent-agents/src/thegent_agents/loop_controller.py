@@ -18,6 +18,7 @@ import logging
 
 try:
     import structlog as _structlog
+
     _log = _structlog.get_logger(__name__)
 except ImportError:
     _log = logging.getLogger(__name__)  # type: ignore[assignment]
@@ -54,7 +55,6 @@ def set_dag_status_impl(impl: Any) -> None:
     """Register the concrete dag_status_impl callable (from thegent_cli)."""
     global _dag_status_impl
     _dag_status_impl = impl
-
 
 
 class LoopMode(StrEnum):

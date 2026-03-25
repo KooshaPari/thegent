@@ -142,7 +142,7 @@ def _ensure_project(owner: str, title: str, dry_run: bool) -> int:
         number = int(data["number"])
         print(f"Created project #{number}: {title}")
         return number
-    except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError, ValueError):
+    except subprocess.CalledProcessError, json.JSONDecodeError, KeyError, ValueError:
         pass
     owner_data = json.loads(
         _run(

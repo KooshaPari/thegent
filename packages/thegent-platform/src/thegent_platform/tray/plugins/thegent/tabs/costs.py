@@ -48,9 +48,7 @@ ALERT_TYPES = [
 class CostAlertDialog(QDialog):
     """Dialog for configuring cost alerts."""
 
-    def __init__(
-        self, parent: QtQWidget | None = None, alert_data: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, parent: QtQWidget | None = None, alert_data: dict[str, Any] | None = None) -> None:
         """Initialize the cost alert dialog.
 
         Args:
@@ -134,15 +132,11 @@ class CostAlertDialog(QDialog):
 
         # Notification checkboxes
         self._system_notification_check = QCheckBox("System Notification")
-        self._system_notification_check.setChecked(
-            self._alert_data.get("notify_system", True)
-        )
+        self._system_notification_check.setChecked(self._alert_data.get("notify_system", True))
         notification_layout.addWidget(self._system_notification_check)
 
         self._email_notification_check = QCheckBox("Email")
-        self._email_notification_check.setChecked(
-            self._alert_data.get("notify_email", False)
-        )
+        self._email_notification_check.setChecked(self._alert_data.get("notify_email", False))
         notification_layout.addWidget(self._email_notification_check)
 
         self._auto_pause_check = QCheckBox("Auto-pause Agents")
@@ -167,9 +161,7 @@ class CostAlertDialog(QDialog):
         layout.addWidget(project_group)
 
         # Dialog buttons
-        self._buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save
-        )
+        self._buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save)
         self._buttons.rejected.connect(self.reject)
         self._buttons.accepted.connect(self.accept)
         layout.addWidget(self._buttons)
@@ -365,7 +357,7 @@ class CostsTab(QWidget):
 
         for i in range(7):
             # Day label
-            day_label = QLabel(f"Day {i+1}")
+            day_label = QLabel(f"Day {i + 1}")
             day_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self._trend_layout.addWidget(day_label)
             self._trend_labels.append(day_label)

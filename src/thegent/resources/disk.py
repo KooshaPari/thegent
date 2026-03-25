@@ -217,7 +217,7 @@ class DiskMonitor:
 
         try:
             usage = psutil.disk_usage(path)
-        except (OSError, ValueError):
+        except OSError, ValueError:
             return {}
 
         return {

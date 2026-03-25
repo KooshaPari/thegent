@@ -115,13 +115,13 @@ def get_resource_path(relative_path: str) -> Path:
             try:
                 with pkg_resources.path(package, resource) as p:
                     return Path(p)
-            except (ImportError, ModuleNotFoundError):
+            except ImportError, ModuleNotFoundError:
                 pass
 
         # Default to main package
         with pkg_resources.path("thegent", relative_path) as p:
             return Path(p)
-    except (FileNotFoundError, ImportError, ModuleNotFoundError, OSError, RuntimeError, ValueError):
+    except FileNotFoundError, ImportError, ModuleNotFoundError, OSError, RuntimeError, ValueError:
         # Final fallback: assume it might be relative to current module
         return Path(__file__).parent.parent / relative_path
 

@@ -367,9 +367,7 @@ class TestParetoPurityCheckSkipOnUnavailable:
             pytest.skip("CLIProxy not running on localhost:8317")
 
         # If we reach here, CLIProxy is available; proceed with test
-        candidates = [
-            RouteCandidate(model="test", provider="test", cost_per_1k=0.1, quality_score=0.8)
-        ]
+        candidates = [RouteCandidate(model="test", provider="test", cost_per_1k=0.1, quality_score=0.8)]
         cliproxy_result = client.select_model([_candidate_to_cliproxy_format(c) for c in candidates])
         assert cliproxy_result is not None
 
@@ -380,11 +378,11 @@ class TestParetoPurityAllScenariosCovered:
     def test_all_scenarios_present(self) -> None:
         """Verify test file covers required scenarios."""
         scenarios = [
-            "TestParetoParitySingleCandidate",      # 1. Single
-            "TestParetoParityDominance",             # 2. Dominance
-            "TestParetoParityTieCost",               # 3. Tie on cost
-            "TestParetoParityTieQuality",            # 4. Tie on quality
-            "TestParetoParityMultiFrontier",         # 5. Multi-frontier
+            "TestParetoParitySingleCandidate",  # 1. Single
+            "TestParetoParityDominance",  # 2. Dominance
+            "TestParetoParityTieCost",  # 3. Tie on cost
+            "TestParetoParityTieQuality",  # 4. Tie on quality
+            "TestParetoParityMultiFrontier",  # 5. Multi-frontier
         ]
         # This test itself documents coverage; pytest collects all above classes
         assert len(scenarios) >= 5, f"At least 5 scenarios required, got {len(scenarios)}"

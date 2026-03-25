@@ -39,14 +39,13 @@ class PersonaRecord(SerializableMixin):
     persona_file: Path
     last_seen: datetime
 
-
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PersonaRecord:
         """Deserialize from a plain dict (as loaded from JSON)."""
         raw_ts = data.get("last_seen", "")
         try:
             ts = datetime.fromisoformat(raw_ts)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             ts = datetime.now(tz=UTC)
 
         return cls(

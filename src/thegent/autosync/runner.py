@@ -103,7 +103,9 @@ class WorkstreamAutosyncRunner:
         self._failure_queue = SyncFailureQueue(config.failure_queue_retention_seconds)
         _load_failure_queue(config, self._failure_queue)
         self._checkpoint = _load_checkpoint(config)
-        idempotency_path = (config.status_file_path or Path("docs/reference/autosync_status.json")).parent / "idempotency_cache.json"
+        idempotency_path = (
+            config.status_file_path or Path("docs/reference/autosync_status.json")
+        ).parent / "idempotency_cache.json"
         self._idempotency_cache = IdempotencyCache(idempotency_path)
         self._mapping_cache = ConnectorMappingCache(config.connector_mapping_cache_path)
         self._reflection_event_log = ReflectionEventLog(config.reflection_event_log_path)
@@ -149,9 +151,7 @@ class WorkstreamAutosyncRunner:
             "last_operation": self.last_operation.to_dict() if self.last_operation else None,
             "ignored_wl_ids": self.config.normalized_wl_ignore_list,
             "no_op_summary": self._no_op_summary,
-            "connector_diff_workflow": {
-                "dry_run_diff_artifact_path": "artifacts/workstream_autosync_dry_run_diff.txt"
-            },
+            "connector_diff_workflow": {"dry_run_diff_artifact_path": "artifacts/workstream_autosync_dry_run_diff.txt"},
         }
 
     @property
@@ -170,9 +170,7 @@ class WorkstreamAutosyncRunner:
             "metadata_state": metadata_state,
             "last_error": self.last_error,
             "slo_alerts": self._evaluate_slo_state(),
-            "connector_diff_workflow": {
-                "dry_run_diff_artifact_path": "artifacts/workstream_autosync_dry_run_diff.txt"
-            },
+            "connector_diff_workflow": {"dry_run_diff_artifact_path": "artifacts/workstream_autosync_dry_run_diff.txt"},
         }
 
     def _finalize_incident_snapshot(self, items_count: int, metadata_state: dict[str, Any]) -> None:
@@ -281,9 +279,7 @@ class WorkstreamAutosyncRunner:
         raw = orjson.dumps(payload)
         secret = hashlib.sha256(key.encode("utf-8")).digest()
         encrypted = bytes(byte ^ secret[index % len(secret)] for index, byte in enumerate(raw))
-        return orjson.dumps({"encrypted": True, "payload": base64.b64encode(encrypted).decode("ascii")}).decode(
-            "utf-8"
-        )
+        return orjson.dumps({"encrypted": True, "payload": base64.b64encode(encrypted).decode("ascii")}).decode("utf-8")
 
     def _deserialize_artifact_payload(self, serialized: str) -> dict[str, Any]:
         payload = orjson.loads(serialized)
@@ -315,11 +311,35 @@ class WorkstreamAutosyncRunner:
     @staticmethod
     def simulate_connector_chaos(connector: str, scenario: str, items_count: int) -> dict[str, Any]:
         if scenario == "timeout":
-            return {"connector": connector, "scenario": scenario, "items_attempted": items_count, "items_acked": 0, "retry_count": 3, "outcome": "outage", "escalate": True}
+            return {
+                "connector": connector,
+                "scenario": scenario,
+                "items_attempted": items_count,
+                "items_acked": 0,
+                "retry_count": 3,
+                "outcome": "outage",
+                "escalate": True,
+            }
         if scenario == "partial_ack":
-            return {"connector": connector, "scenario": scenario, "items_attempted": items_count, "items_acked": max(items_count - 1, 0), "retry_count": 0, "outcome": "partial", "escalate": True}
+            return {
+                "connector": connector,
+                "scenario": scenario,
+                "items_attempted": items_count,
+                "items_acked": max(items_count - 1, 0),
+                "retry_count": 0,
+                "outcome": "partial",
+                "escalate": True,
+            }
         if scenario == "http_5xx":
-            return {"connector": connector, "scenario": scenario, "items_attempted": items_count, "items_acked": 0, "retry_count": 0, "outcome": "server_error", "escalate": True}
+            return {
+                "connector": connector,
+                "scenario": scenario,
+                "items_attempted": items_count,
+                "items_acked": 0,
+                "retry_count": 0,
+                "outcome": "server_error",
+                "escalate": True,
+            }
         raise ValueError("Unsupported chaos scenario")
 
 

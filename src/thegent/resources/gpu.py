@@ -171,7 +171,7 @@ class GpuMonitor:
                 timeout=5,
             )
             return result.returncode == 0
-        except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        except FileNotFoundError, subprocess.TimeoutExpired, OSError:
             return False
 
     def _get_gpus_nvidia_smi(self) -> list[GpuInfo]:
@@ -236,6 +236,6 @@ class GpuMonitor:
                         temperature_c=temp,
                     )
                 )
-            except (ValueError, IndexError):
+            except ValueError, IndexError:
                 continue
         return gpus

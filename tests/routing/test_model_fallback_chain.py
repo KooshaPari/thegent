@@ -386,11 +386,16 @@ class TestMultiModelUsesDynamicRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(
-            _make_responses_body(
-                model="gpt-4o",
-                models=["gpt-4o", "claude-sonnet-4.6", "deepseek-v3.2"],
-            )).decode().encode()
+        body = (
+            json.dumps(
+                _make_responses_body(
+                    model="gpt-4o",
+                    models=["gpt-4o", "claude-sonnet-4.6", "deepseek-v3.2"],
+                )
+            )
+            .decode()
+            .encode()
+        )
 
         captured_models: list[list[str]] = []
 
@@ -438,11 +443,16 @@ class TestMultiModelUsesDynamicRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(
-            _make_responses_body(
-                model="gpt-4o",
-                models=["gpt-4o", "claude-sonnet-4.6"],
-            )).decode().encode()
+        body = (
+            json.dumps(
+                _make_responses_body(
+                    model="gpt-4o",
+                    models=["gpt-4o", "claude-sonnet-4.6"],
+                )
+            )
+            .decode()
+            .encode()
+        )
 
         with (
             patch(

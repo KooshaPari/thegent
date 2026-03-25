@@ -39,7 +39,7 @@ def _run_git_command(repo_path: str, *args: str) -> str | None:
             check=False,
         )
         return result.stdout.strip() if result.returncode == 0 else None
-    except (subprocess.SubprocessError, FileNotFoundError):
+    except subprocess.SubprocessError, FileNotFoundError:
         return None
 
 
@@ -131,7 +131,7 @@ class GitNative:
                     elif "deletion" in part:
                         deletions = int(part.split()[0])
                 return {"files_changed": files_changed, "insertions": insertions, "deletions": deletions}
-        except (ValueError, IndexError):
+        except ValueError, IndexError:
             pass
 
         return {"files_changed": 0, "insertions": 0, "deletions": 0}
@@ -169,6 +169,7 @@ class GitNative:
         """
         if _native_available:
             import thegent_git
+
             if hasattr(thegent_git, "list_remotes"):
                 return thegent_git.list_remotes(self.repo_path)
 

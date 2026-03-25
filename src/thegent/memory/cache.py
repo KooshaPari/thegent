@@ -13,6 +13,7 @@ from typing import Any, cast
 
 from cachetools import TTLCache
 
+
 class _DiskCacheProtocol:
     """Minimal cache interface used by the L2 cache wrapper."""
 

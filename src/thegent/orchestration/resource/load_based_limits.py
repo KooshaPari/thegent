@@ -114,7 +114,7 @@ def _get_memory_mb_macos_vm_stat() -> float:
             )
             if ps_out.returncode == 0 and ps_out.stdout.strip().isdigit():
                 page_size = int(ps_out.stdout.strip())
-        except (OSError, subprocess.TimeoutExpired, ValueError):
+        except OSError, subprocess.TimeoutExpired, ValueError:
             pass  # Keep the 4096 default
 
         out = shim_run(
@@ -187,7 +187,7 @@ def _get_memory_mb() -> tuple[float, float]:
     try:
         proc = psutil.Process()
         rss_mb = proc.memory_info().rss / (1024 * 1024)
-    except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError, OSError):
+    except psutil.NoSuchProcess, psutil.AccessDenied, AttributeError, OSError:
         # Fallback for RSS on macOS if psutil fails
         if platform.system() == "Darwin":
             try:
@@ -201,12 +201,12 @@ def _get_memory_mb() -> tuple[float, float]:
                 )
                 if out.returncode == 0 and out.stdout.strip().isdigit():
                     rss_mb = int(out.stdout.strip()) / 1024.0
-            except (OSError, subprocess.SubprocessError, ValueError):
+            except OSError, subprocess.SubprocessError, ValueError:
                 pass
     try:
         vmem = psutil.virtual_memory()
         available_mb = vmem.available / (1024 * 1024)
-    except (AttributeError, OSError):
+    except AttributeError, OSError:
         # psutil unavailable or failed — use OS-native fallback
         system = platform.system()
         if system == "Darwin":
@@ -219,7 +219,7 @@ def _get_memory_mb() -> tuple[float, float]:
                             kb = int(line.split()[1])
                             available_mb = kb / 1024.0
                             break
-            except (OSError, ValueError, IndexError):
+            except OSError, ValueError, IndexError:
                 pass  # Keep sentinel 1024.0
     return rss_mb, available_mb
 
@@ -228,7 +228,7 @@ def _get_load_avg() -> tuple[float, float, float]:
     """Return (1m, 5m, 15m) load average. Uses psutil for cross-platform support."""
     try:
         return psutil.getloadavg()
-    except (AttributeError, OSError):
+    except AttributeError, OSError:
         return 0.0, 0.0, 0.0
 
 
@@ -384,13 +384,13 @@ class LimitGateConfig:
         def _as_float(value: Any, default: float) -> float:
             try:
                 return float(value)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return default
 
         def _as_int(value: Any, default: int) -> int:
             try:
                 return int(value)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return default
 
         return cls(

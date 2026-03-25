@@ -116,7 +116,9 @@ def entity_search(
 def entity_upsert(
     entity_type: str = typer.Argument(..., help="Entity table name"),
     entity_id: str | None = typer.Option(None, "--entity-id", "-i", help="Primary key value"),
-    property_value: list[str] | None = typer.Option(None, "--property", "-p", help="Property override in KEY=VALUE form"),
+    property_value: list[str] | None = typer.Option(
+        None, "--property", "-p", help="Property override in KEY=VALUE form"
+    ),
     properties_file: Path | None = typer.Option(None, "--properties-file", help="JSON file with properties"),
     format: str = typer.Option("rich", "--format", "-f", help="Output format: rich|json"),
 ) -> None:

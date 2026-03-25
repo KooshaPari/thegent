@@ -156,7 +156,9 @@ def register_main_shortcuts(app: typer.Typer, console: Console) -> None:
             "--from-turn",
             help="1-based turn cutoff to copy into the fork (defaults to full history)",
         ),
-        new_session_id: str | None = typer.Option(None, "--new-session-id", help="Optional explicit ID for forked session"),
+        new_session_id: str | None = typer.Option(
+            None, "--new-session-id", help="Optional explicit ID for forked session"
+        ),
     ) -> None:
         if from_turn is not None and from_turn < 1:
             raise typer.BadParameter("from_turn must be 1 or greater", param_hint="--from-turn")

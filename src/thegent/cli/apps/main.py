@@ -26,6 +26,7 @@ def _version_callback(value: bool) -> None:
     console.print(__version__)
     raise typer.Exit()
 
+
 # Modular Stream Registrations
 from thegent.cli.apps.root import register_root_apps
 
@@ -54,7 +55,9 @@ except ImportError as exc:
 register_root_apps(app, git_app)
 
 from thegent.cli.apps.main_shortcuts import register_main_shortcuts
+
 register_main_shortcuts(app, console)
+
 
 @app.command("session-contract-health-gate", help="Evaluate session contract health gate.")
 def session_health_gate_wrapper(

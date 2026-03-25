@@ -32,8 +32,15 @@ def test_redis_backend_missing_env():
 
 def test_redis_backend_success():
     """Test Redis backend success."""
-    with patch.dict(os.environ, {"LMCACHE_ENABLED": "1", "LMCACHE_BACKEND": "redis",
-                                  "LMCACHE_REDIS_HOST": "localhost", "LMCACHE_REDIS_PORT": "6379"}):
+    with patch.dict(
+        os.environ,
+        {
+            "LMCACHE_ENABLED": "1",
+            "LMCACHE_BACKEND": "redis",
+            "LMCACHE_REDIS_HOST": "localhost",
+            "LMCACHE_REDIS_PORT": "6379",
+        },
+    ):
         with patch("redis.Redis") as mock_redis:
             mock_instance = MagicMock()
             mock_instance.ping.return_value = True
@@ -66,6 +73,7 @@ def test_backend_not_installed():
 
         # Temporarily remove redis from modules
         import sys
+
         redis_backup = sys.modules.pop("redis", None)
 
         try:

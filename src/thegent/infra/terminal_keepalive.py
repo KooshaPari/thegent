@@ -58,7 +58,7 @@ def _get_parent_terminal_info() -> dict[str, Any] | None:
     # Method 1: Check stdin TTY
     try:
         info["stdin_tty"] = sys.stdin.isatty() if sys.stdin else False
-    except (AttributeError, OSError):
+    except AttributeError, OSError:
         info["stdin_tty"] = False
 
     # Method 2: Environment variable detection (fastest, most reliable)
@@ -89,7 +89,7 @@ def _get_parent_terminal_info() -> dict[str, Any] | None:
         try:
             name = parent.name().lower()
             info["name"] = name
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+        except psutil.AccessDenied, psutil.NoSuchProcess:
             name = None
 
         # Check if it's Cursor or similar IDE terminal
@@ -106,7 +106,7 @@ def _get_parent_terminal_info() -> dict[str, Any] | None:
                     if hasattr(conn, "laddr") and conn.laddr:
                         info["tty"] = str(conn.laddr)
                         break
-        except (psutil.AccessDenied, AttributeError, psutil.NoSuchProcess):
+        except psutil.AccessDenied, AttributeError, psutil.NoSuchProcess:
             pass
 
         # Method 4: Check process tree for IDE processes
@@ -126,7 +126,7 @@ def _get_parent_terminal_info() -> dict[str, Any] | None:
                         current = current.parent()
                         if not current or current.pid == 1:
                             break
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    except psutil.NoSuchProcess, psutil.AccessDenied:
                         break
             except Exception as e:
                 logger.debug(f"Error traversing process tree: {e}")
@@ -159,7 +159,7 @@ def _send_keepalive_to_stdin() -> bool:
     try:
         if not sys.stdin.isatty():
             return False
-    except (OSError, AttributeError):
+    except OSError, AttributeError:
         return False
 
     # Method 2: Try direct write to stdin
@@ -178,7 +178,7 @@ def _send_keepalive_to_stdin() -> bool:
                 tty.write("\n")
                 tty.flush()
             return True
-        except (OSError, PermissionError, FileNotFoundError):
+        except OSError, PermissionError, FileNotFoundError:
             pass
 
     return False
@@ -301,7 +301,7 @@ class TerminalKeepalive:
             if not sys.stdin or not sys.stdin.isatty():
                 logger.debug("Keepalive disabled: not in interactive terminal")
                 return False
-        except (OSError, AttributeError):
+        except OSError, AttributeError:
             logger.debug("Keepalive disabled: cannot check stdin")
             return False
 

@@ -52,6 +52,6 @@ def _make_error_body(status_code: int, raw_body: bytes) -> dict[str, Any]:
                 if status_code in _ERROR_MESSAGES and not err.get("message"):
                     err["message"] = _ERROR_MESSAGES[status_code]
         return obj
-    except (json.JSONDecodeError, UnicodeDecodeError):
+    except json.JSONDecodeError, UnicodeDecodeError:
         msg = _ERROR_MESSAGES.get(status_code, f"Backend returned {status_code}")
         return {"error": {"message": msg, "code": status_code}}

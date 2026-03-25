@@ -92,7 +92,7 @@ class OSUserManager:
 
             pwd.getpwnam(username)
             return True
-        except (KeyError, ImportError):
+        except KeyError, ImportError:
             return False
 
     def _get_user_info(self, username: str) -> OSUser:

@@ -74,7 +74,7 @@ class ResourceManager:
                 from thegent_shm import record_resource_usage
 
                 record_resource_usage(pid, cpu_percent, mem_info.rss // 1024)
-            except (ImportError, RuntimeError):
+            except ImportError, RuntimeError:
                 pass
 
             return {
@@ -85,7 +85,7 @@ class ResourceManager:
                 "child_count": len(children),
                 "status": proc.status(),
             }
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             return {"error": "Process not accessible"}
 
 

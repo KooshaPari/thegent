@@ -541,6 +541,8 @@ def _make_load_classifier(settings: "ThegentSettings") -> Any:
 
 def _new_session_id(agent: str, owner: str | None = None) -> str:
     return run_session_helpers.new_session_id(agent=agent, owner=owner or _default_owner_tag())
+
+
 _is_pid_running = process_helpers.is_pid_running
 _parse_dag_full = run_dag_helpers.parse_dag_full
 _serialize_dag = run_dag_helpers.serialize_dag
@@ -685,8 +687,6 @@ def _update_teammate_status(task_id: str | None, status: str, summary: str | Non
         mgr.update_status(task_id, status, summary=summary)
     except Exception as e:
         _log.debug("Failed to update teammate delegation status: %s", e)
-
-
 
 
 def list_droids_impl(cd: Any = None) -> list[str]:

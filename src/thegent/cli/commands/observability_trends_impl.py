@@ -103,7 +103,7 @@ def _parse_observe_summary_env_float(name: str, default: float) -> float:
         return float(default)
     try:
         value = float(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return float(default)
     return value
 
@@ -114,7 +114,7 @@ def _parse_observe_summary_env_int(name: str, default: int) -> int:
         return int(default)
     try:
         value = int(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return int(default)
     return value
 
@@ -220,9 +220,7 @@ def _classify_observe_summary_trend_health(
             "THGENT_OBSERVE_SUMMARY_TREND_HEALTH_MISSING_BASELINE_PENALTY", 45
         ),
     }
-    policy_signature = hashlib.sha256(
-        json.dumps(policy, option=json.OPT_SORT_KEYS)
-    ).hexdigest()
+    policy_signature = hashlib.sha256(json.dumps(policy, option=json.OPT_SORT_KEYS)).hexdigest()
 
     if not enabled:
         recommendations = [
@@ -391,4 +389,3 @@ def observe_summary_impl(
         "limit": limit,
         "drift_window": drift_window,
     }
-

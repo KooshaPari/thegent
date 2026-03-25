@@ -61,7 +61,7 @@ def status_impl(
             try:
                 raw = rc_path.read_text(encoding="utf-8").strip()
                 return int(raw) if raw else None
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 return None
         return None
 

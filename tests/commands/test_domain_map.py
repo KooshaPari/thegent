@@ -75,4 +75,5 @@ def test_domain_map_legacy_shim_command() -> None:
     )
     assert result.exit_code == 0
 
+
 pytestmark = pytest.mark.skip(reason="tests need more work")

@@ -23,12 +23,14 @@ from civilization_memory_storage import (
 # Conditional imports for components that may still be in progress
 try:
     from civilization_memory_analytics import MemoryAnalytics
+
     ANALYTICS_AVAILABLE = True
 except ImportError:
     ANALYTICS_AVAILABLE = False
 
 try:
     from civilization_memory_sharing import MemorySharingService
+
     SHARING_AVAILABLE = True
 except ImportError:
     SHARING_AVAILABLE = False
@@ -89,25 +91,25 @@ class TestStorageAndDashboardIntegration(unittest.TestCase):
                 importance=0.5 + (i * 0.1),
             )
             result = self.storage.store(memory)
-            self.assertTrue(result, f"Failed to store memory {i}")
+            assert result, f"Failed to store memory {i}"
 
         # Get stats and verify they match what was stored
         stats = self.storage.get_stats("dashboard-agent")
-        self.assertEqual(stats["total_memories"], 5)
-        self.assertEqual(stats["learning_count"], 2)
-        self.assertEqual(stats["error_count"], 1)
-        self.assertEqual(stats["memory_types"]["execution"], 2)
-        self.assertEqual(stats["memory_types"]["learning"], 2)
-        self.assertEqual(stats["memory_types"]["error"], 1)
+        assert stats["total_memories"] == 5
+        assert stats["learning_count"] == 2
+        assert stats["error_count"] == 1
+        assert stats["memory_types"]["execution"] == 2
+        assert stats["memory_types"]["learning"] == 2
+        assert stats["memory_types"]["error"] == 1
 
         # Verify query with type filter works
         results = self.storage.query(
             "dashboard-agent",
             memory_type=MockMemoryType("learning"),
         )
-        self.assertEqual(len(results), 2)
+        assert len(results) == 2
         for mem in results:
-            self.assertEqual(mem.memory_type.value if hasattr(mem.memory_type, 'value') else str(mem.memory_type), "learning")
+            assert (mem.memory_type.value if hasattr(mem.memory_type, "value") else str(mem.memory_type)) == "learning"
 
 
 class TestFullMemoryLifecycle(unittest.TestCase):
@@ -140,17 +142,17 @@ class TestFullMemoryLifecycle(unittest.TestCase):
 
         # Search by keyword present in first memory
         results = self.storage.search("lifecycle-agent", "database")
-        self.assertGreater(len(results), 0, "Search for 'database' should return results")
+        assert len(results) > 0, "Search for 'database' should return results"
 
         # Verify the found memory contains the keyword
         found_ids = [m.memory_id for m in results]
-        self.assertIn("lc-mem-0", found_ids)
+        assert "lc-mem-0" in found_ids
 
         # Search by keyword present in third memory
         results = self.storage.search("lifecycle-agent", "network")
-        self.assertGreater(len(results), 0, "Search for 'network' should return results")
+        assert len(results) > 0, "Search for 'network' should return results"
         found_ids = [m.memory_id for m in results]
-        self.assertIn("lc-mem-2", found_ids)
+        assert "lc-mem-2" in found_ids
 
 
 class TestAllBackendsInterchangeable(unittest.TestCase):
@@ -158,12 +160,8 @@ class TestAllBackendsInterchangeable(unittest.TestCase):
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
-        self.sqlite_storage = SQLiteMemoryStorage(
-            Path(self.temp_dir) / "interop.db"
-        )
-        self.jsonl_storage = JSONLMemoryStorage(
-            Path(self.temp_dir) / "interop_jsonl"
-        )
+        self.sqlite_storage = SQLiteMemoryStorage(Path(self.temp_dir) / "interop.db")
+        self.jsonl_storage = JSONLMemoryStorage(Path(self.temp_dir) / "interop_jsonl")
         self.now = time.time()
 
     def test_all_backends_interchangeable(self):
@@ -185,8 +183,8 @@ class TestAllBackendsInterchangeable(unittest.TestCase):
         for memory in memories:
             sqlite_ok = self.sqlite_storage.store(memory)
             jsonl_ok = self.jsonl_storage.store(memory)
-            self.assertTrue(sqlite_ok)
-            self.assertTrue(jsonl_ok)
+            assert sqlite_ok
+            assert jsonl_ok
 
         # Query both and compare memory IDs
         sqlite_results = self.sqlite_storage.query("interop-agent")
@@ -194,27 +192,15 @@ class TestAllBackendsInterchangeable(unittest.TestCase):
 
         sqlite_ids = sorted(m.memory_id for m in sqlite_results)
         jsonl_ids = sorted(m.memory_id for m in jsonl_results)
-        self.assertEqual(sqlite_ids, jsonl_ids, "Both backends should return same memory IDs")
+        assert sqlite_ids == jsonl_ids, "Both backends should return same memory IDs"
 
         # Compare stats
         sqlite_stats = self.sqlite_storage.get_stats("interop-agent")
         jsonl_stats = self.jsonl_storage.get_stats("interop-agent")
 
-        self.assertEqual(
-            sqlite_stats["total_memories"],
-            jsonl_stats["total_memories"],
-            "Total memory counts should match",
-        )
-        self.assertEqual(
-            sqlite_stats["learning_count"],
-            jsonl_stats["learning_count"],
-            "Learning counts should match",
-        )
-        self.assertEqual(
-            sqlite_stats["error_count"],
-            jsonl_stats["error_count"],
-            "Error counts should match",
-        )
+        assert sqlite_stats["total_memories"] == jsonl_stats["total_memories"], "Total memory counts should match"
+        assert sqlite_stats["learning_count"] == jsonl_stats["learning_count"], "Learning counts should match"
+        assert sqlite_stats["error_count"] == jsonl_stats["error_count"], "Error counts should match"
 
 
 class TestStorageAndAnalyticsPipeline(unittest.TestCase):
@@ -244,30 +230,32 @@ class TestStorageAndAnalyticsPipeline(unittest.TestCase):
 
         # Query memories and convert to dict format for MemoryAnalytics
         stored_memories = storage.query("analytics-agent")
-        self.assertEqual(len(stored_memories), 10)
+        assert len(stored_memories) == 10
 
         memory_dicts = []
         for m in stored_memories:
-            mem_type_str = m.memory_type.value if hasattr(m.memory_type, 'value') else str(m.memory_type)
-            memory_dicts.append({
-                "memory_id": m.memory_id,
-                "agent_id": m.agent_id,
-                "memory_type": mem_type_str,
-                "timestamp": m.timestamp,
-                "content": m.content,
-                "importance": m.importance,
-            })
+            mem_type_str = m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type)
+            memory_dicts.append(
+                {
+                    "memory_id": m.memory_id,
+                    "agent_id": m.agent_id,
+                    "memory_type": mem_type_str,
+                    "timestamp": m.timestamp,
+                    "content": m.content,
+                    "importance": m.importance,
+                }
+            )
 
         # Run analytics
         analytics = MemoryAnalytics()
         summary = analytics.get_agent_summary(memory_dicts)
 
-        self.assertEqual(summary["total_memories"], 10)
-        self.assertIn("learning", summary["memory_types"])
-        self.assertIn("error", summary["memory_types"])
-        self.assertEqual(summary["memory_types"]["learning"], 5)
-        self.assertEqual(summary["memory_types"]["error"], 5)
-        self.assertGreater(summary["avg_importance"], 0.0)
+        assert summary["total_memories"] == 10
+        assert "learning" in summary["memory_types"]
+        assert "error" in summary["memory_types"]
+        assert summary["memory_types"]["learning"] == 5
+        assert summary["memory_types"]["error"] == 5
+        assert summary["avg_importance"] > 0.0
 
 
 class TestSharingAndStoragePipeline(unittest.TestCase):
@@ -282,12 +270,18 @@ class TestSharingAndStoragePipeline(unittest.TestCase):
 
         # Store memories for source agent
         service.store_memory(
-            "share-mem-1", "agent-alpha", "learning",
-            {"skill": "pattern recognition"}, importance=0.9,
+            "share-mem-1",
+            "agent-alpha",
+            "learning",
+            {"skill": "pattern recognition"},
+            importance=0.9,
         )
         service.store_memory(
-            "share-mem-2", "agent-alpha", "learning",
-            {"skill": "anomaly detection"}, importance=0.8,
+            "share-mem-2",
+            "agent-alpha",
+            "learning",
+            {"skill": "anomaly detection"},
+            importance=0.8,
         )
 
         # Record a learning transfer from alpha to beta
@@ -298,13 +292,13 @@ class TestSharingAndStoragePipeline(unittest.TestCase):
             effectiveness=0.85,
             feedback="successfully applied",
         )
-        self.assertTrue(transfer_ok)
+        assert transfer_ok
 
         # Get transfer history for source agent
         history = service.get_transfer_history("agent-alpha", as_source=True)
-        self.assertGreater(len(history), 0, "Transfer history should not be empty")
-        self.assertEqual(history[0]["source_agent_id"], "agent-alpha")
-        self.assertEqual(history[0]["target_agent_id"], "agent-beta")
+        assert len(history) > 0, "Transfer history should not be empty"
+        assert history[0]["source_agent_id"] == "agent-alpha"
+        assert history[0]["target_agent_id"] == "agent-beta"
         self.assertAlmostEqual(history[0]["effectiveness"], 0.85)
 
 
@@ -336,9 +330,7 @@ class TestExistingTestsStillPass(unittest.TestCase):
             stderr = result.stderr or ""
             # Allow performance test failures (environment-dependent timing)
             is_only_perf_failure = (
-                "performance" in stderr.lower()
-                or "assertLess" in stderr
-                or "not less than" in stderr
+                "performance" in stderr.lower() or "assertLess" in stderr or "not less than" in stderr
             )
             if not is_only_perf_failure:
                 self.fail(

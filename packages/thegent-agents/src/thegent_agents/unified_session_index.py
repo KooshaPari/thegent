@@ -12,6 +12,7 @@ import logging
 
 try:
     import structlog as _structlog
+
     _log = _structlog.get_logger(__name__)
 except ImportError:
     _log = logging.getLogger(__name__)  # type: ignore[assignment]
@@ -25,7 +26,6 @@ from pathlib import Path
 from typing import Any, Callable, ClassVar, cast
 
 from thegent_core.infra.fast_file_watcher import FastFileWatcher
-
 
 
 class HarnessType(Enum):
@@ -156,7 +156,7 @@ class UnifiedSessionIndex:
 
                             os.kill(s.pid, 0)
                             is_alive = True
-                        except (OSError, ProcessLookupError):
+                        except OSError, ProcessLookupError:
                             is_alive = False
 
                     session = AgentSession(

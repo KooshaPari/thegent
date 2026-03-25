@@ -491,7 +491,9 @@ class TestCostAggregatorBlankAndCorruptedLines:
             f.write("\n")
             f.write("\n")
             f.write(
-                json.dumps({"event": "finish", "run_id": "r1", "cost_usd": 1.0, "ended_at_utc": f"{today}T10:00:00Z"}).decode()
+                json.dumps(
+                    {"event": "finish", "run_id": "r1", "cost_usd": 1.0, "ended_at_utc": f"{today}T10:00:00Z"}
+                ).decode()
                 + "\n"
             )
             f.write("\n")
@@ -509,7 +511,9 @@ class TestCostAggregatorBlankAndCorruptedLines:
             f.write("this is not json\n")
             f.write("{broken json\n")
             f.write(
-                json.dumps({"event": "finish", "run_id": "r1", "cost_usd": 2.0, "ended_at_utc": f"{today}T10:00:00Z"}).decode()
+                json.dumps(
+                    {"event": "finish", "run_id": "r1", "cost_usd": 2.0, "ended_at_utc": f"{today}T10:00:00Z"}
+                ).decode()
                 + "\n"
             )
         agg = CostAggregator(session_dir=tmp_path)

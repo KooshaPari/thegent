@@ -146,7 +146,7 @@ class TerminalKeepalive:
         """Return *True* when stdout is an interactive terminal."""
         try:
             return bool(sys.stdout.isatty())
-        except (AttributeError, OSError):
+        except AttributeError, OSError:
             return False
 
     @staticmethod
@@ -155,7 +155,7 @@ class TerminalKeepalive:
         try:
             sys.stdout.write("\n")
             sys.stdout.flush()
-        except (OSError, AttributeError):
+        except OSError, AttributeError:
             pass
 
     def _run(self) -> None:
@@ -174,7 +174,7 @@ class TerminalKeepalive:
         try:
             sys.stdout.write(self._config.message)
             sys.stdout.flush()
-        except (OSError, AttributeError):
+        except OSError, AttributeError:
             return
 
         if self._config.newline_every > 0 and tick % self._config.newline_every == 0:

@@ -116,6 +116,7 @@ __all__ = [
 # Lazy-load flat module for backward compatibility only
 _flat = None
 
+
 def _get_flat():
     global _flat
     if _flat is None:
@@ -185,5 +186,5 @@ def __getattr__(name: str) -> Any:
     # Fall back to flat module (lazy load)
     try:
         return getattr(_get_flat(), name)
-    except (AttributeError, ImportError):
+    except AttributeError, ImportError:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None

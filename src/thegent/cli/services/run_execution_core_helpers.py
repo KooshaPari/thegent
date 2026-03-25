@@ -500,7 +500,7 @@ def run_impl_core(
     escalation_sla_minutes = 30
     try:
         escalation_sla_minutes = int(settings.escalation_sla_minutes)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         escalation_sla_minutes = 30
 
     # WP-3007: Trust Boundary Checks
@@ -1350,7 +1350,7 @@ def bg_impl_core(
     escalation_sla_minutes = 30
     try:
         escalation_sla_minutes = int(settings.escalation_sla_minutes)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         escalation_sla_minutes = 30
 
     # WP-3007: Trust Boundary Checks

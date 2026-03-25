@@ -49,7 +49,7 @@ class FileLeaseRegistry:
                 else:
                     logger.warning(f"File {path} is currently leased by {data[0]}")
                     return None
-            except (IndexError, ValueError):
+            except IndexError, ValueError:
                 pass
 
         # Create lease

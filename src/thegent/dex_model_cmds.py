@@ -11,7 +11,6 @@ from pathlib import Path
 import typer
 
 
-
 def create_dex_model_command(
     app: typer.Typer,
     name: str,
@@ -19,14 +18,14 @@ def create_dex_model_command(
     help_text: str,
 ):
     """Create a dex model command and register it with the app.
-    
+
     Args:
         app: Typer app to register command with
         name: Command name
         model_alias: Model alias to pass to runner
         help_text: Help text for command
     """
-    
+
     @app.command(name)
     def model_cmd(
         resume: str | None = typer.Option(None, "--resume", "-r", help="Resume session by ID"),
@@ -40,13 +39,13 @@ def create_dex_model_command(
     ) -> None:
         """Model shortcut command."""
         from thegent.dex_main import _run_model_cmd
-        
+
         _run_model_cmd(
             model_alias,
             prompt or "",
             cd=cd,
         )
-    
+
     model_cmd.__doc__ = help_text
     return model_cmd
 
@@ -70,7 +69,7 @@ DEX_MODEL_COMMANDS = [
 
 def register_dex_model_commands(app: typer.Typer) -> None:
     """Register all dex model commands with the app.
-    
+
     Args:
         app: Typer app to register commands with
     """

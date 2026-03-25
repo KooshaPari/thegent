@@ -69,7 +69,7 @@ class TeammateManager:
                 data = json.loads(self.storage_path.read_text())
                 for did, ddata in data.items():
                     self._delegations[did] = DelegationRequest(**ddata)
-            except (json.JSONDecodeError, KeyError):
+            except json.JSONDecodeError, KeyError:
                 pass
 
     def _save(self) -> None:

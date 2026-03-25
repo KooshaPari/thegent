@@ -14,15 +14,10 @@ import typer
 
 from rich.table import Table
 
-from thegent_cli.cli.commands.plan_output_helpers import (
-    render_plan_next_items,
-    resolve_output_format,
-)
 
 from thegent_cli.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
-    _default_owner_tag,
     _parse_dag_full,
     _resolve_cwd,
     console,
@@ -30,15 +25,13 @@ from thegent_cli.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent_cli.cli.commands.run_cmds import bg_cmd
-from thegent_cli.cli.commands.session_cmds import history_cmd
-
 
 """Workstream and planning-related CLI commands.
 
 Commands for work stream orchestration, planning, and analysis.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def plan_analyze_cmd(
     cd: Path | None = None,
@@ -227,8 +220,6 @@ def workstream_query_cmd(query: str) -> None:
             console.print(f"[dim]... and {len(results) - 100} more rows[/dim]")
     except Exception as e:
         console.print(f"[red]Error executing query: {e}[/red]")
-
-
 
 
 __all__ = [

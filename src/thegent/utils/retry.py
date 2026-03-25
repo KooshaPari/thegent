@@ -26,7 +26,7 @@ def retry_with_backoff(
     exceptions: tuple = (Exception,),
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Decorator that retries a function with exponential backoff.
-    
+
     Args:
         max_attempts: Maximum number of retry attempts
         base_delay: Initial delay in seconds
@@ -34,6 +34,7 @@ def retry_with_backoff(
         exponential_base: Base for exponential backoff
         exceptions: Tuple of exceptions to catch and retry
     """
+
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -46,12 +47,13 @@ def retry_with_backoff(
                     if attempt < max_attempts - 1:
                         delay = min(base_delay * (exponential_base**attempt), max_delay)
                         logger.warning(
-                            "Retry %d/%d for %s after %.1fs: %s",
-                            attempt + 1, max_attempts, func.__name__, delay, e
+                            "Retry %d/%d for %s after %.1fs: %s", attempt + 1, max_attempts, func.__name__, delay, e
                         )
                         time.sleep(delay)
             raise last_exception  # type: ignore
+
         return wrapper
+
     return decorator
 
 
@@ -63,7 +65,7 @@ def async_retry_with_backoff(
     exceptions: tuple = (Exception,),
 ) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Async decorator that retries a function with exponential backoff.
-    
+
     Args:
         max_attempts: Maximum number of retry attempts
         base_delay: Initial delay in seconds
@@ -71,6 +73,7 @@ def async_retry_with_backoff(
         exponential_base: Base for exponential backoff
         exceptions: Tuple of exceptions to catch and retry
     """
+
     def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
         async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
@@ -84,11 +87,17 @@ def async_retry_with_backoff(
                         delay = min(base_delay * (exponential_base**attempt), max_delay)
                         logger.warning(
                             "Async retry %d/%d for %s after %.1fs: %s",
-                            attempt + 1, max_attempts, func.__name__, delay, e
+                            attempt + 1,
+                            max_attempts,
+                            func.__name__,
+                            delay,
+                            e,
                         )
                         await asyncio.sleep(delay)
             raise last_exception  # type: ignore
+
         return wrapper
+
     return decorator
 
 
@@ -114,7 +123,7 @@ def is_retryable_error(error: Exception) -> bool:
 
 class RetryContext:
     """Context manager for retry operations."""
-    
+
     def __init__(
         self,
         max_attempts: int = 3,
@@ -126,11 +135,11 @@ class RetryContext:
         self.on_retry = on_retry
         self.attempt = 0
         self.last_error: Exception | None = None
-    
+
     async def __aenter__(self) -> "RetryContext":
         self.attempt += 1
         return self
-    
+
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         if exc_val is not None:
             self.last_error = exc_val

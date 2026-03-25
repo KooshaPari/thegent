@@ -74,7 +74,7 @@ def _parse_ps_line(line: str) -> ProcessInfo | None:
         cpu_pct = float(parts[3].replace(",", ".") or 0)
         cpu_time = parts[4]
         cmd = parts[5]
-    except (ValueError, IndexError):
+    except ValueError, IndexError:
         return None
     rss_mb = rss_kb / 1024
     exe = _extract_exe(cmd)

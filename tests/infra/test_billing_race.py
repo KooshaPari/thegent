@@ -22,16 +22,18 @@ def billing_manager(tmp_path: Path) -> TeamBillingManager:
     """Fresh TeamBillingManager with pre-seeded quota."""
     mgr = TeamBillingManager(tmp_path)
     mgr.quotas_path.write_text(
-        json.dumps({
-            "team1": {
-                "max_runs": 100_000,
-                "used_runs": 0,
-                "max_tokens": 1_000_000,
-                "used_tokens": 0,
-                "budget_usd": 10_000.0,
-                "used_usd": 0.0,
+        json.dumps(
+            {
+                "team1": {
+                    "max_runs": 100_000,
+                    "used_runs": 0,
+                    "max_tokens": 1_000_000,
+                    "used_tokens": 0,
+                    "budget_usd": 10_000.0,
+                    "used_usd": 0.0,
+                }
             }
-        }).decode(),
+        ).decode(),
         encoding="utf-8",
     )
     return mgr
@@ -66,9 +68,7 @@ class TestBillingRaceConcurrentRecordUsage:
 
         data = json.loads(billing_manager.quotas_path.read_text(encoding="utf-8"))
         used = data["team1"]["used_runs"]
-        assert used == n_threads, (
-            f"RACE: expected {n_threads} used_runs, got {used} (lost {n_threads - used} updates)"
-        )
+        assert used == n_threads, f"RACE: expected {n_threads} used_runs, got {used} (lost {n_threads - used} updates)"
 
     @pytest.mark.requirement("FR-ORCH-002")
     def test_concurrent_token_and_usd_no_lost_updates(self, billing_manager: TeamBillingManager) -> None:
@@ -94,10 +94,9 @@ class TestBillingRaceConcurrentRecordUsage:
                 with lock:
                     errors.append(exc)
 
-        threads = (
-            [threading.Thread(target=record_tokens, args=(i,)) for i in range(n_threads)]
-            + [threading.Thread(target=record_usd, args=(i,)) for i in range(n_threads)]
-        )
+        threads = [threading.Thread(target=record_tokens, args=(i,)) for i in range(n_threads)] + [
+            threading.Thread(target=record_usd, args=(i,)) for i in range(n_threads)
+        ]
         for t in threads:
             t.start()
         for t in threads:
@@ -121,16 +120,18 @@ class TestBillingRaceConcurrentRecordUsage:
         """Stress: 1000 concurrent record_usage calls (50 threads x 20 ops), zero errors, exact count."""
         mgr = TeamBillingManager(tmp_path)
         mgr.quotas_path.write_text(
-            json.dumps({
-                "stress_team": {
-                    "max_runs": 1_000_000,
-                    "used_runs": 0,
-                    "max_tokens": 1_000_000,
-                    "used_tokens": 0,
-                    "budget_usd": 100_000.0,
-                    "used_usd": 0.0,
+            json.dumps(
+                {
+                    "stress_team": {
+                        "max_runs": 1_000_000,
+                        "used_runs": 0,
+                        "max_tokens": 1_000_000,
+                        "used_tokens": 0,
+                        "budget_usd": 100_000.0,
+                        "used_usd": 0.0,
+                    }
                 }
-            }).decode(),
+            ).decode(),
             encoding="utf-8",
         )
 

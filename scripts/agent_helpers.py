@@ -62,7 +62,7 @@ try:
     _mod = _importlib.import_module("thegent.config")
     _ThegentSettings_cls = getattr(_mod, "ThegentSettings", None)
     _SETTINGS_AVAILABLE = _ThegentSettings_cls is not None
-except (ImportError, ModuleNotFoundError, AttributeError):
+except ImportError, ModuleNotFoundError, AttributeError:
     _SETTINGS_AVAILABLE = False
     _ThegentSettings_cls = None
 
@@ -567,20 +567,17 @@ def get_next_items(
     """Parse work stream and return next items (not claimed/completed)."""
     if not work_stream_path.exists():
         return []
-    
+
     content = work_stream_path.read_text()
     items = _parse_work_stream(content)
-    
+
     # Filter by priority if specified
     if priority:
         items = [item for item in items if item.get("priority") == priority]
-    
+
     # Filter out claimed and completed items
-    items = [
-        item for item in items
-        if item.get("status", "").upper() not in ("CLAIMED", "COMPLETED")
-    ]
-    
+    items = [item for item in items if item.get("status", "").upper() not in ("CLAIMED", "COMPLETED")]
+
     return items[:limit]
 
 
@@ -592,20 +589,20 @@ def update_work_stream(
     """Update work stream item status (claim, complete, etc.)."""
     if not work_stream_path.exists():
         return False
-    
+
     valid_statuses = ("BACKLOG", "CLAIMED", "COMPLETED", "IN_PROGRESS")
     if status.upper() not in valid_statuses:
         return False
-    
+
     content = work_stream_path.read_text()
     items = _parse_work_stream(content)
-    
+
     # Find and update the item
     for item in items:
         if item.get("id") == item_id:
             item["status"] = status.upper()
             break
-    
+
     # Reconstruct file
     _write_work_stream(work_stream_path, items)
     return True
@@ -635,25 +632,27 @@ def _parse_work_stream(content: str) -> list[dict[str, Any]]:
     items = []
     lines = content.split("\n")
     in_backlog = False
-    
+
     for line in lines:
         if "## BACKLOG" in line:
             in_backlog = True
             continue
-        
+
         if in_backlog and line.startswith("|") and "-" not in line:
             # Parse table row
             parts = [p.strip() for p in line.split("|")[1:-1]]
             if len(parts) >= 5:
-                items.append({
-                    "id": parts[0],
-                    "title": parts[1],
-                    "source": parts[2],
-                    "priority": parts[3],
-                    "depends": parts[4],
-                    "status": "BACKLOG",
-                })
-    
+                items.append(
+                    {
+                        "id": parts[0],
+                        "title": parts[1],
+                        "source": parts[2],
+                        "priority": parts[3],
+                        "depends": parts[4],
+                        "status": "BACKLOG",
+                    }
+                )
+
     return items
 
 
@@ -664,14 +663,11 @@ def _write_work_stream(path: Path, items: list[dict[str, Any]]) -> None:
         "| ID | Title | Source | Priority | Depends |\n"
         "|----|----|-------|--------|----------|---------|\n"
     )
-    
+
     rows = []
     for item in items:
-        row = (
-            f"| {item['id']} | {item['title']} | {item['source']} | "
-            f"{item['priority']} | {item.get('depends', '')} |"
-        )
+        row = f"| {item['id']} | {item['title']} | {item['source']} | {item['priority']} | {item.get('depends', '')} |"
         rows.append(row)
-    
+
     content = header + "\n".join(rows)
     path.write_text(content)

@@ -30,6 +30,7 @@ def install_callback(
         # Try to import and call legacy install
         try:
             from thegent.install import run_install
+
             run_install(
                 target=target,
                 mode=mode,

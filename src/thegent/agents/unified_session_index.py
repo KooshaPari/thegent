@@ -49,7 +49,6 @@ class AgentSession(SerializableMixin):
     summary: str | None = None
 
 
-
 class UnifiedSessionIndex:
     """Unified session index with DB + live watching dual-redundancy."""
 
@@ -139,7 +138,7 @@ class UnifiedSessionIndex:
 
                             os.kill(s.pid, 0)
                             is_alive = True
-                        except (OSError, ProcessLookupError):
+                        except OSError, ProcessLookupError:
                             is_alive = False
 
                     session = AgentSession(

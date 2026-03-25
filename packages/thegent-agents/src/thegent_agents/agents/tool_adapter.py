@@ -201,6 +201,7 @@ class ToolAdapter:
 # Register with unified adapter registry
 from thegent_core.adapters.ports import AdapterRegistry
 
+
 class ToolAdapterWrapper:
     """Tool adapter wrapper for registry"""
 

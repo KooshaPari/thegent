@@ -74,7 +74,16 @@ def check_environment(project_root: Path | None = None) -> list[CheckResult]:
                                 if part in ["exec", "which"] and i + 1 < len(parts):
                                     potential_binary = parts[i + 1].strip("'\"")
                                     if "/" in potential_binary or potential_binary in [
-                                        "git", "grep", "find", "jq", "uv", "clode", "codex", "copilot", "droid", "roid"
+                                        "git",
+                                        "grep",
+                                        "find",
+                                        "jq",
+                                        "uv",
+                                        "clode",
+                                        "codex",
+                                        "copilot",
+                                        "droid",
+                                        "roid",
                                     ]:
                                         target_binary = shutil.which(potential_binary)
                                         break
@@ -83,11 +92,13 @@ def check_environment(project_root: Path | None = None) -> list[CheckResult]:
                     shim_details[shim] = {
                         "type": "script",
                         "target": target_binary,
-                        "exists": target_binary is not None and Path(target_binary).exists() if target_binary else False,
+                        "exists": target_binary is not None and Path(target_binary).exists()
+                        if target_binary
+                        else False,
                     }
                 else:
                     shim_details[shim] = {"type": "unknown", "target": None, "exists": False}
-            except (OSError, UnicodeDecodeError):
+            except OSError, UnicodeDecodeError:
                 shim_details[shim] = {"type": "unknown", "target": None, "exists": False}
 
     # Codex/Copilot path checks
@@ -147,17 +158,29 @@ def check_environment(project_root: Path | None = None) -> list[CheckResult]:
                     if shim_name == "git":
                         result = run_subprocess_optimized(["git", "--version"], capture_output=True, timeout=2)
                         if result.returncode == 0 and result.stdout:
-                            stdout = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            stdout = (
+                                result.stdout
+                                if isinstance(result.stdout, str)
+                                else result.stdout.decode("utf-8", errors="replace")
+                            )
                             version_info = stdout.strip()
                     elif shim_name == "grep":
                         result = run_subprocess_optimized(["grep", "--version"], capture_output=True, timeout=2)
                         if result.returncode == 0 and result.stdout:
-                            stdout = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            stdout = (
+                                result.stdout
+                                if isinstance(result.stdout, str)
+                                else result.stdout.decode("utf-8", errors="replace")
+                            )
                             version_info = stdout.split("\n")[0] if stdout else None
                     elif shim_name == "uv":
                         result = run_subprocess_optimized(["uv", "--version"], capture_output=True, timeout=2)
                         if result.returncode == 0 and result.stdout:
-                            stdout = result.stdout if isinstance(result.stdout, str) else result.stdout.decode("utf-8", errors="replace")
+                            stdout = (
+                                result.stdout
+                                if isinstance(result.stdout, str)
+                                else result.stdout.decode("utf-8", errors="replace")
+                            )
                             version_info = stdout.strip()
             except Exception:
                 pass

@@ -43,7 +43,8 @@ class CogneeClient:
         return config
 
     @property
-    def is_enabled(self): return self._config.enabled
+    def is_enabled(self):
+        return self._config.enabled
 
     async def add_memory(self, text: str, metadata: dict | None = None):
         if not self.is_enabled:
@@ -57,6 +58,8 @@ class CogneeClient:
 
 
 _cognee = None
+
+
 def get_cognee():
     global _cognee
     if _cognee is None:

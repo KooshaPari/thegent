@@ -2,12 +2,8 @@ from __future__ import annotations
 
 import os
 import signal
-import sys
 import time
-from pathlib import Path
-from typing import Any
 
-import orjson as json
 import typer
 from rich.console import Console
 
@@ -22,6 +18,7 @@ from thegent_cli.cli.commands._cli_shared import (
 )
 
 console = Console()
+
 
 def wait_cmd(session_id: str | None = None, timeout: int = 0) -> None:
     sid = _resolve_session_id(session_id)

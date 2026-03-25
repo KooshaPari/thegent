@@ -44,7 +44,7 @@ def _collect_oversized_functions(path: Path) -> list[dict]:
     try:
         source = path.read_text(encoding="utf-8", errors="replace")
         tree = ast.parse(source, filename=str(path))
-    except (OSError, SyntaxError):
+    except OSError, SyntaxError:
         return []
 
     oversized = []
@@ -94,7 +94,7 @@ def _try_tokei(src: Path) -> dict | None:
             "blanks": python_data.get("blanks", 0),
             "comments": python_data.get("comments", 0),
         }
-    except (json.JSONDecodeError, KeyError):
+    except json.JSONDecodeError, KeyError:
         return None
 
 

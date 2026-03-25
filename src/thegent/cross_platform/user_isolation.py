@@ -68,6 +68,7 @@ class SystemUser(UserContext):
         if self._system == "Windows":
             try:
                 import ctypes
+
                 return ctypes.windll.shell32.IsUserAnAdmin() != 0
             except Exception:
                 return False
@@ -102,7 +103,7 @@ class SystemUser(UserContext):
         """System user can access any path (if permissions allow)."""
         try:
             return path.exists() or self.is_privileged
-        except (OSError, PermissionError):
+        except OSError, PermissionError:
             return self.is_privileged
 
     def get_environment_vars(self) -> dict[str, str]:
@@ -150,6 +151,7 @@ class AgentUser(UserContext):
         except PermissionError:
             # Fallback to temp directory
             import tempfile
+
             self._agent_home = Path(tempfile.gettempdir()) / "thegent" / self._agent_id
             self._agent_home.mkdir(parents=True, exist_ok=True)
 
@@ -174,6 +176,7 @@ class AgentUser(UserContext):
         if self._system == "Windows":
             try:
                 import ctypes
+
                 return ctypes.windll.shell32.IsUserAnAdmin() != 0
             except Exception:
                 return False
@@ -200,13 +203,13 @@ class AgentUser(UserContext):
                 if str(resolved).startswith(str(agent_home_resolved)):
                     return True
 
-            except (OSError, ValueError):
+            except OSError, ValueError:
                 pass
 
             # Check read permission
             return os.access(path, os.R_OK)
 
-        except (OSError, PermissionError):
+        except OSError, PermissionError:
             return False
 
     def get_environment_vars(self) -> dict[str, str]:

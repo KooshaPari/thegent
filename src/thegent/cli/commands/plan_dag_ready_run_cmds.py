@@ -27,12 +27,12 @@ from thegent.cli.commands._cli_shared import (
 _log = logging.getLogger(__name__)
 
 
-
 """DAG-related CLI commands for plan/workflow management.
 
 Commands for DAG validation, listing, updating, running, and synchronization.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
     """List task ids that are ready (pending with all deps done|cancelled|skipped)."""
@@ -96,7 +96,6 @@ def dag_reconcile_cmd(cd: Path | None = None) -> None:
         console.print(f"[green]Reconciled {reconciled_count} stuck tasks.[/green]")
     else:
         console.print("[dim]DAG is in sync with live processes.[/dim]")
-
 
 
 __all__ = [

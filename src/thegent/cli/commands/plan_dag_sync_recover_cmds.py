@@ -23,12 +23,12 @@ from thegent.cli.commands._cli_shared import (
 )
 
 
-
 """DAG-related CLI commands for plan/workflow management.
 
 Commands for DAG validation, listing, updating, running, and synchronization.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def dag_run_cmd(
     cd: Path | None = None,
@@ -228,8 +228,6 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
             tofile="current",
         )
         console.print("".join(diff))
-
-
 
 
 __all__ = [

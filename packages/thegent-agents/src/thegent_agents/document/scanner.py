@@ -63,7 +63,7 @@ class MarkdownScanner:
                 return None
 
             return date_str
-        except (OSError, ValueError):
+        except OSError, ValueError:
             return None
 
     def should_exclude(self, filepath: Path) -> bool:

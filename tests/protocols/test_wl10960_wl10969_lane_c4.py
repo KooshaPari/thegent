@@ -54,7 +54,9 @@ def test_wl10963_resolve_turn_submit_response_target_rejects_invalid_shape() -> 
 
 def test_wl10964_build_turn_submit_response_resolution_phase_uses_structured_return() -> None:
     # @trace WL-10964
-    phase = server._build_turn_submit_response_phase(True, "req", {"id": "turn-1"}, {"id": "approval-1", "status": "requested"})
+    phase = server._build_turn_submit_response_phase(
+        True, "req", {"id": "turn-1"}, {"id": "approval-1", "status": "requested"}
+    )
     request_has_id, request_id, turn, approval = server._build_turn_submit_response_resolution_phase(phase)
     assert request_has_id is True
     assert request_id == "req"
@@ -78,7 +80,8 @@ def test_wl10965_turn_submit_notification_with_approval_keeps_approval_and_suppr
                     "unified_diff": "--- a\n+++ b\n",
                 },
             }
-        )).decode()
+        )
+    ).decode()
     assert response is None
     assert any(item["method"] == "approval/requested" for item in notifications)
     turn_id = SERVER_STATE.sessions[session_id]["turn_ids"][0]
@@ -102,7 +105,8 @@ def test_wl10966_turn_submit_request_with_approval_returns_approval_payload() ->
                     "unified_diff": "--- a\n+++ b\n",
                 },
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     assert response["result"]["approval"]["status"] == "requested"
     assert response["result"]["approval"]["diff"] == "--- a\n+++ b\n"
@@ -126,7 +130,8 @@ def test_wl10967_turn_submit_approval_diff_whitespace_is_rejected() -> None:
                     "unified_diff": "   \n  ",
                 },
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     assert response["error"]["data"]["reason"] == "diff_must_be_non_empty_string"
 
@@ -143,7 +148,8 @@ def test_wl10968_turn_submit_without_approval_returns_completed_turn() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "lane-c4"},
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     turn_id = response["result"]["turn"]["id"]
     assert response["result"]["turn"]["status"] == "completed"
@@ -154,6 +160,13 @@ def test_wl10968_turn_submit_without_approval_returns_completed_turn() -> None:
 
 def test_wl10969_build_turn_submit_success_response_preserves_result_shape_without_mutation() -> None:
     # @trace WL-10969
-    turn = {"id": "turn-1", "session_id": "session-1", "status": "completed", "input": "x", "approval_id": None, "tool_call_id": "toolcall-1"}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "status": "completed",
+        "input": "x",
+        "approval_id": None,
+        "tool_call_id": "toolcall-1",
+    }
     payload = server._build_turn_submit_result_payload(turn, None)
     assert payload == {"turn": turn}

@@ -76,7 +76,7 @@ class WorktreeManager:
             return {}
         try:
             return json.loads(self._registry_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        except json.JSONDecodeError, OSError:
             return {}
 
     def _save_registry(self, registry: dict[str, dict[str, str]]) -> None:

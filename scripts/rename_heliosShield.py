@@ -64,7 +64,7 @@ def rename_and_replace(root_dir, old_name, new_name):
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(new_content)
                 print(f"Updated content in {file_path}")
-        except (UnicodeDecodeError, PermissionError):
+        except UnicodeDecodeError, PermissionError:
             pass
 
     # 3. Rename files and directories (bottom-up)

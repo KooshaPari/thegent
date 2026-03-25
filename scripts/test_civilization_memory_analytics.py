@@ -57,8 +57,8 @@ class TestMemoryAnalytics(unittest.TestCase):
         ]
         trends = self.analytics.get_keyword_trends(memories, top_n=5)
         keywords = [kw for kw, _ in trends]
-        self.assertIn("python", keywords)
-        self.assertIn("automation", keywords)
+        assert "python" in keywords
+        assert "automation" in keywords
 
     def test_keyword_trends_stop_words_filtered(self):
         memories = [
@@ -66,12 +66,12 @@ class TestMemoryAnalytics(unittest.TestCase):
         ]
         trends = self.analytics.get_keyword_trends(memories, top_n=10)
         keywords = [kw for kw, _ in trends]
-        self.assertNotIn("the", keywords)
-        self.assertNotIn("and", keywords)
-        self.assertNotIn("this", keywords)
-        self.assertNotIn("that", keywords)
-        self.assertIn("quick", keywords)
-        self.assertIn("brown", keywords)
+        assert "the" not in keywords
+        assert "and" not in keywords
+        assert "this" not in keywords
+        assert "that" not in keywords
+        assert "quick" in keywords
+        assert "brown" in keywords
 
     def test_compare_agents_similar(self):
         memories_a = [
@@ -82,8 +82,8 @@ class TestMemoryAnalytics(unittest.TestCase):
         ]
         result = self.analytics.compare_agents(memories_a, memories_b)
         self.assertAlmostEqual(result["similarity_score"], 1.0)
-        self.assertEqual(result["agent_a_unique_keywords"], [])
-        self.assertEqual(result["agent_b_unique_keywords"], [])
+        assert result["agent_a_unique_keywords"] == []
+        assert result["agent_b_unique_keywords"] == []
 
     def test_compare_agents_different(self):
         memories_a = [
@@ -93,9 +93,9 @@ class TestMemoryAnalytics(unittest.TestCase):
             make_memory("learning", content={"data": "javascript React"}),
         ]
         result = self.analytics.compare_agents(memories_a, memories_b)
-        self.assertLess(result["similarity_score"], 0.5)
-        self.assertIn("python", result["agent_a_unique_keywords"])
-        self.assertIn("react", result["agent_b_unique_keywords"])
+        assert result["similarity_score"] < 0.5
+        assert "python" in result["agent_a_unique_keywords"]
+        assert "react" in result["agent_b_unique_keywords"]
 
     def test_get_agent_summary(self):
         memories = [
@@ -104,23 +104,23 @@ class TestMemoryAnalytics(unittest.TestCase):
             make_memory("execution", timestamp_offset_days=3, importance=0.4),
         ]
         summary = self.analytics.get_agent_summary(memories)
-        self.assertEqual(summary["total_memories"], 3)
-        self.assertEqual(summary["memory_types"]["learning"], 1)
-        self.assertEqual(summary["memory_types"]["error"], 1)
-        self.assertEqual(summary["memory_types"]["execution"], 1)
+        assert summary["total_memories"] == 3
+        assert summary["memory_types"]["learning"] == 1
+        assert summary["memory_types"]["error"] == 1
+        assert summary["memory_types"]["execution"] == 1
         self.assertAlmostEqual(summary["avg_importance"], 0.6)
-        self.assertIsInstance(summary["learning_velocity"], float)
-        self.assertIsInstance(summary["error_density"], float)
-        self.assertIsInstance(summary["top_keywords"], list)
+        assert isinstance(summary["learning_velocity"], float)
+        assert isinstance(summary["error_density"], float)
+        assert isinstance(summary["top_keywords"], list)
 
     def test_empty_memories(self):
         summary = self.analytics.get_agent_summary([])
-        self.assertEqual(summary["total_memories"], 0)
-        self.assertEqual(summary["memory_types"], {})
+        assert summary["total_memories"] == 0
+        assert summary["memory_types"] == {}
         self.assertAlmostEqual(summary["avg_importance"], 0.0)
         self.assertAlmostEqual(summary["learning_velocity"], 0.0)
         self.assertAlmostEqual(summary["error_density"], 0.0)
-        self.assertEqual(summary["top_keywords"], [])
+        assert summary["top_keywords"] == []
 
         velocity = self.analytics.calculate_learning_velocity([])
         self.assertAlmostEqual(velocity, 0.0)
@@ -129,7 +129,7 @@ class TestMemoryAnalytics(unittest.TestCase):
         self.assertAlmostEqual(density, 0.0)
 
         trends = self.analytics.get_keyword_trends([])
-        self.assertEqual(trends, [])
+        assert trends == []
 
         result = self.analytics.compare_agents([], [])
         self.assertAlmostEqual(result["similarity_score"], 0.0)

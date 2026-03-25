@@ -17,10 +17,12 @@ from typing import Dict, List, Optional, Any
 # Import memory types from Phase 5B
 try:
     from civilization_agent_memory import AgentMemory, MemoryType
+
     MEMORY_AVAILABLE = True
 except ImportError:
     try:
         from scripts.civilization_agent_memory import AgentMemory, MemoryType
+
         MEMORY_AVAILABLE = True
     except ImportError:
         AgentMemory = None
@@ -97,15 +99,9 @@ class SQLiteMemoryStorage(MemoryStorage):
         """)
 
         # Create indexes for common queries
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_agent_timestamp ON memories (agent_id, timestamp DESC)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_agent_type ON memories (agent_id, memory_type)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_timestamp ON memories (timestamp DESC)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agent_timestamp ON memories (agent_id, timestamp DESC)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agent_type ON memories (agent_id, memory_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON memories (timestamp DESC)")
 
         # Create memory index table for full-text search
         cursor.execute("""
@@ -117,9 +113,7 @@ class SQLiteMemoryStorage(MemoryStorage):
                 FOREIGN KEY(memory_id) REFERENCES memories(id)
             )
         """)
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_keyword ON memory_index (keyword)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_keyword ON memory_index (keyword)")
 
         # Create memory relationships table (Phase 6.3)
         cursor.execute("""
@@ -132,12 +126,8 @@ class SQLiteMemoryStorage(MemoryStorage):
                 created_at REAL NOT NULL
             )
         """)
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_rel_m1 ON memory_relationships(memory_id_1)"
-        )
-        cursor.execute(
-            "CREATE INDEX IF NOT EXISTS idx_rel_m2 ON memory_relationships(memory_id_2)"
-        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_rel_m1 ON memory_relationships(memory_id_1)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_rel_m2 ON memory_relationships(memory_id_2)")
 
         conn.commit()
         conn.close()
@@ -150,7 +140,9 @@ class SQLiteMemoryStorage(MemoryStorage):
 
             # Convert memory to dict
             memory_dict = asdict(memory)
-            memory_type_str = memory.memory_type.value if hasattr(memory.memory_type, "value") else str(memory.memory_type)
+            memory_type_str = (
+                memory.memory_type.value if hasattr(memory.memory_type, "value") else str(memory.memory_type)
+            )
 
             # Insert memory
             cursor.execute(
@@ -200,7 +192,7 @@ class SQLiteMemoryStorage(MemoryStorage):
         keywords = []
 
         # Extract from all string values in content
-        for key, value in content.items():
+        for value in content.values():
             if isinstance(value, str):
                 # Simple keyword extraction: split by spaces, remove punctuation
                 words = value.lower().split()
@@ -469,7 +461,6 @@ class SQLiteMemoryStorage(MemoryStorage):
             print(f"Error clearing memories: {e}")
             return False
 
-
     # Valid relationship types for link_memories
     VALID_RELATIONSHIP_TYPES = {"caused_by", "helps_with", "similar_to", "contradicts", "related"}
 
@@ -519,9 +510,7 @@ class SQLiteMemoryStorage(MemoryStorage):
             print(f"Error linking memories: {e}")
             return False
 
-    def get_related_memories(
-        self, memory_id: str, min_strength: float = 0.0
-    ) -> list[dict[str, Any]]:
+    def get_related_memories(self, memory_id: str, min_strength: float = 0.0) -> list[dict[str, Any]]:
         """Get memories related to a given memory.
 
         Args:
@@ -551,11 +540,13 @@ class SQLiteMemoryStorage(MemoryStorage):
             results = []
             for mid1, mid2, strength, rel_type in rows:
                 other_id = mid2 if mid1 == memory_id else mid1
-                results.append({
-                    "memory_id": other_id,
-                    "strength": strength,
-                    "relationship_type": rel_type,
-                })
+                results.append(
+                    {
+                        "memory_id": other_id,
+                        "strength": strength,
+                        "relationship_type": rel_type,
+                    }
+                )
             return results
         except Exception as e:
             print(f"Error getting related memories: {e}")
@@ -604,12 +595,14 @@ class SQLiteMemoryStorage(MemoryStorage):
 
             edges = []
             for mid1, mid2, strength, rel_type in rows:
-                edges.append({
-                    "from": mid1,
-                    "to": mid2,
-                    "strength": strength,
-                    "type": rel_type,
-                })
+                edges.append(
+                    {
+                        "from": mid1,
+                        "to": mid2,
+                        "strength": strength,
+                        "type": rel_type,
+                    }
+                )
 
             return {"nodes": memory_ids, "edges": edges}
         except Exception as e:
@@ -645,7 +638,9 @@ class JSONLMemoryStorage(MemoryStorage):
             memory_file = self._get_memory_file(memory.agent_id)
             with open(memory_file, "a") as f:
                 memory_dict = asdict(memory)
-                memory_type_str = memory.memory_type.value if hasattr(memory.memory_type, "value") else str(memory.memory_type)
+                memory_type_str = (
+                    memory.memory_type.value if hasattr(memory.memory_type, "value") else str(memory.memory_type)
+                )
                 memory_dict["memory_type"] = memory_type_str
                 json.dump(memory_dict, f)
                 f.write("\n")
@@ -681,7 +676,7 @@ class JSONLMemoryStorage(MemoryStorage):
                                     break
                             memory = AgentMemory(**data)
                             memories.append(memory)
-                        except (json.JSONDecodeError, KeyError, ValueError):
+                        except json.JSONDecodeError, KeyError, ValueError:
                             pass
         except Exception as e:
             print(f"Error querying memories from JSONL: {e}")
@@ -736,7 +731,9 @@ class JSONLMemoryStorage(MemoryStorage):
 
         if memories:
             for memory in memories:
-                type_name = memory.memory_type.value if hasattr(memory.memory_type, "value") else str(memory.memory_type)
+                type_name = (
+                    memory.memory_type.value if hasattr(memory.memory_type, "value") else str(memory.memory_type)
+                )
                 stats["memory_types"][type_name] = stats["memory_types"].get(type_name, 0) + 1
 
                 if memory.memory_type == MemoryType.ERROR:
@@ -776,7 +773,11 @@ class JSONLMemoryStorage(MemoryStorage):
                 with open(memory_file, "w") as f:
                     for memory in keep_memories:
                         memory_dict = asdict(memory)
-                        memory_type_str = memory.memory_type.value if hasattr(memory.memory_type, "value") else str(memory.memory_type)
+                        memory_type_str = (
+                            memory.memory_type.value
+                            if hasattr(memory.memory_type, "value")
+                            else str(memory.memory_type)
+                        )
                         memory_dict["memory_type"] = memory_type_str
                         json.dump(memory_dict, f)
                         f.write("\n")

@@ -131,7 +131,7 @@ def _safe_float(raw: object) -> float | None:
         return None
     try:
         value = float(raw)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
     if not (value >= 0.0):
         return None

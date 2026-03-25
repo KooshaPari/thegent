@@ -215,4 +215,6 @@ def test_deterministic_fixture_inputs_match_contract_schema(
         assert "cost" in weights and "latency" in weights and "quality" in weights, (
             f"Case {case['case_id']} weights must have cost, latency, quality"
         )
+
+
 # noqa: PT018

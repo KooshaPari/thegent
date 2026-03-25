@@ -202,4 +202,3 @@ def _check_shell() -> list[CheckResult]:
 
 def _check_nix() -> list[CheckResult]:
     return _check_nix_impl(check_result_cls=CheckResult, project_root=_project_root_cache or Path.cwd())
-

@@ -6,10 +6,8 @@ Signed artifacts, audit, SIEM, plugin verification, and guardrails.
 from __future__ import annotations
 
 import hashlib
-from thegent_core.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
-from pathlib import Path
 
 import typer
 

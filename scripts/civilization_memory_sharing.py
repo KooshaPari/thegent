@@ -39,15 +39,22 @@ class MemorySharingService:
                 CREATE INDEX IF NOT EXISTS idx_lt_target ON learning_transfers(target_agent_id);
             """)
 
-    def store_memory(self, memory_id: str, agent_id: str, memory_type: str,
-                     content: dict, importance: float = 0.5, timestamp: Optional[float] = None) -> bool:
+    def store_memory(
+        self,
+        memory_id: str,
+        agent_id: str,
+        memory_type: str,
+        content: dict,
+        importance: float = 0.5,
+        timestamp: Optional[float] = None,
+    ) -> bool:
         """Helper for test setup - store a memory directly."""
         try:
             ts = timestamp or time.time()
             with self._conn:
                 self._conn.execute(
                     "INSERT OR REPLACE INTO memories (id, agent_id, memory_type, timestamp, content, importance) VALUES (?, ?, ?, ?, ?, ?)",
-                    (memory_id, agent_id, memory_type, ts, json.dumps(content), importance)
+                    (memory_id, agent_id, memory_type, ts, json.dumps(content), importance),
                 )
             return True
         except Exception:
@@ -57,16 +64,29 @@ class MemorySharingService:
         """Get learnings from an agent (memory_type LIKE '%learning%'), filtered by importance."""
         cursor = self._conn.execute(
             "SELECT * FROM memories WHERE agent_id=? AND memory_type LIKE '%learning%' AND importance >= ? ORDER BY importance DESC",
-            (source_agent_id, min_importance)
+            (source_agent_id, min_importance),
         )
         rows = cursor.fetchall()
-        return [{"memory_id": r["id"], "agent_id": r["agent_id"], "memory_type": r["memory_type"],
-                 "timestamp": r["timestamp"], "content": json.loads(r["content"]), "importance": r["importance"]}
-                for r in rows]
+        return [
+            {
+                "memory_id": r["id"],
+                "agent_id": r["agent_id"],
+                "memory_type": r["memory_type"],
+                "timestamp": r["timestamp"],
+                "content": json.loads(r["content"]),
+                "importance": r["importance"],
+            }
+            for r in rows
+        ]
 
-    def record_learning_transfer(self, source_memory_id: str, source_agent_id: str,
-                                  target_agent_id: str, effectiveness: float = 0.5,
-                                  feedback: str = "") -> bool:
+    def record_learning_transfer(
+        self,
+        source_memory_id: str,
+        source_agent_id: str,
+        target_agent_id: str,
+        effectiveness: float = 0.5,
+        feedback: str = "",
+    ) -> bool:
         """Record that target_agent learned from source_agent's memory."""
         if not 0.0 <= effectiveness <= 1.0:
             raise ValueError(f"effectiveness must be 0.0-1.0, got {effectiveness}")
@@ -74,7 +94,7 @@ class MemorySharingService:
             with self._conn:
                 self._conn.execute(
                     "INSERT INTO learning_transfers (source_memory_id, source_agent_id, target_agent_id, transfer_timestamp, effectiveness, feedback) VALUES (?, ?, ?, ?, ?, ?)",
-                    (source_memory_id, source_agent_id, target_agent_id, time.time(), effectiveness, feedback)
+                    (source_memory_id, source_agent_id, target_agent_id, time.time(), effectiveness, feedback),
                 )
             return True
         except Exception:
@@ -84,15 +104,15 @@ class MemorySharingService:
         """Get transfer records. as_source=True: transfers FROM agent. as_source=False: transfers TO agent."""
         col = "source_agent_id" if as_source else "target_agent_id"
         cursor = self._conn.execute(
-            f"SELECT * FROM learning_transfers WHERE {col}=? ORDER BY transfer_timestamp DESC",
-            (agent_id,)
+            f"SELECT * FROM learning_transfers WHERE {col}=? ORDER BY transfer_timestamp DESC", (agent_id,)
         )
         rows = cursor.fetchall()
         return [dict(r) for r in rows]
 
     def get_most_shared_learnings(self, limit: int = 10) -> list:
         """Return memories ordered by how many times they've been transferred."""
-        cursor = self._conn.execute("""
+        cursor = self._conn.execute(
+            """
             SELECT m.id as memory_id, m.agent_id as source_agent_id, m.content,
                    COUNT(lt.id) as transfer_count
             FROM memories m
@@ -100,17 +120,24 @@ class MemorySharingService:
             GROUP BY m.id
             ORDER BY transfer_count DESC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
         rows = cursor.fetchall()
-        return [{"memory_id": r["memory_id"], "source_agent_id": r["source_agent_id"],
-                 "content": json.loads(r["content"]), "transfer_count": r["transfer_count"]}
-                for r in rows]
+        return [
+            {
+                "memory_id": r["memory_id"],
+                "source_agent_id": r["source_agent_id"],
+                "content": json.loads(r["content"]),
+                "transfer_count": r["transfer_count"],
+            }
+            for r in rows
+        ]
 
     def calculate_transfer_effectiveness(self, target_agent_id: str) -> float:
         """Average effectiveness of all transfers TO target_agent. Returns 0.0 if none."""
         cursor = self._conn.execute(
-            "SELECT AVG(effectiveness) as avg_eff FROM learning_transfers WHERE target_agent_id=?",
-            (target_agent_id,)
+            "SELECT AVG(effectiveness) as avg_eff FROM learning_transfers WHERE target_agent_id=?", (target_agent_id,)
         )
         result = cursor.fetchone()
         return float(result["avg_eff"]) if result and result["avg_eff"] is not None else 0.0

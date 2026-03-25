@@ -181,7 +181,7 @@ def safe_exists(path: str | Path) -> bool:
     """
     try:
         return Path(path).expanduser().exists()
-    except (PermissionError, OSError, TypeError, ValueError):
+    except PermissionError, OSError, TypeError, ValueError:
         return False
 
 
@@ -304,7 +304,7 @@ def is_same_path(path1: str | Path, path2: str | Path) -> bool:
     """
     try:
         return normalize_path(path1).samefile(normalize_path(path2))
-    except (OSError, ValueError):
+    except OSError, ValueError:
         return normalize_path(path1) == normalize_path(path2)
 
 

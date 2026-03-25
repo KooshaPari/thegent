@@ -95,7 +95,7 @@ def confirm_before_action(action_description: str) -> Callable:
             # Render description with available kwargs (best-effort)
             try:
                 description = action_description.format(**kwargs)
-            except (KeyError, IndexError):
+            except KeyError, IndexError:
                 description = action_description
 
             if ctx is not None:

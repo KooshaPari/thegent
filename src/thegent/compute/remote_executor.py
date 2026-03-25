@@ -286,5 +286,5 @@ class RemoteExecutor:
                 check=False,
             )
             return result.returncode == 0
-        except (subprocess.TimeoutExpired, OSError):
+        except subprocess.TimeoutExpired, OSError:
             return False

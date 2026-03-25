@@ -23,6 +23,7 @@ Commands for viewing and managing session contracts.
 Extracted from session_cmds.py to manage module size.
 """
 
+
 def session_contracts_cmd(
     all_sessions: bool = False,
     owner: str | None = None,
@@ -141,7 +142,6 @@ def session_contracts_cmd(
             f"error={summary['health']['error']} missing={summary['health']['missing']}"
         )
         console.print(f"strict_checks_enabled={summary['strict_checks_enabled']}")
-
 
 
 __all__ = [

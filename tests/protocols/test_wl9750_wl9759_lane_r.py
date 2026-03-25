@@ -128,4 +128,3 @@ def test_wl9759_cache_miss_branch_preserves_no_response_for_terminal_notificatio
     assert first is not None
     second = server._handle_turn_cancel_request("turn/cancel", False, "req-2", {"turn_id": turn_id})
     assert second is None
-

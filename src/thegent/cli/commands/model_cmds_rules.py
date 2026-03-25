@@ -90,7 +90,7 @@ def _list_cursor_models() -> None:
                     console.print(f"  {line}")
         else:
             console.print("[dim]cursor agent --list-models failed[/dim]")
-    except (FileNotFoundError, cursor_timeout):
+    except FileNotFoundError, cursor_timeout:
         console.print("[dim]Cursor CLI not found or timed out[/dim]")
 
 
@@ -147,7 +147,7 @@ def _list_copilot_models() -> None:
                 _list_copilot_models_fallback()
         else:
             _list_copilot_models_fallback()
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError, subprocess.TimeoutExpired:
         _list_copilot_models_fallback()
 
 
@@ -193,7 +193,7 @@ def _list_codex_models() -> None:
             )
         else:
             _list_codex_models_fallback()
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError, subprocess.TimeoutExpired:
         _list_codex_models_fallback()
 
 

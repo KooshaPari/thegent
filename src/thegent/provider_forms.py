@@ -26,6 +26,7 @@ def _get_manager_functions():
         update_provider,
         validate_provider,
     )
+
     return {
         "add_api_key": add_api_key,
         "add_provider": add_provider,
@@ -42,7 +43,7 @@ def _get_manager_functions():
 def run_provider_form() -> None:
     """Interactive form for provider management."""
     fns = _get_manager_functions()
-    
+
     console.print("\n[bold cyan]Provider Management[/bold cyan]\n")
 
     while True:
@@ -167,7 +168,7 @@ def _prompt_for_provider_selection(
     idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
     try:
         return providers[int(idx) - 1]
-    except (ValueError, IndexError):
+    except ValueError, IndexError:
         console.print("[red]Invalid selection[/red]")
         return None
 

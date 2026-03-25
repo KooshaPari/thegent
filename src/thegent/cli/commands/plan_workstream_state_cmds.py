@@ -26,6 +26,7 @@ Commands for work stream orchestration, planning, and analysis.
 Extracted from plan_cmds.py to manage module size.
 """
 
+
 def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
     """Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md. Preserves CLAIMED and COMPLETED."""
     from thegent.cli.commands.work_stream_impl import incorporate_impl
@@ -125,7 +126,6 @@ def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None
 
     if not result.get("ok", False):
         raise typer.Exit(1)
-
 
 
 __all__ = [

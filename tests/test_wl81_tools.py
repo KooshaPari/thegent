@@ -28,6 +28,7 @@ class TestToolCallValidation:
     def test_arguments_json_serializable(self) -> None:
         """Arguments should be JSON serializable."""
         import json
+
         args = {"key": "value", "number": 123}
         # Should serialize without error
         json.dumps(args)
@@ -52,6 +53,7 @@ class TestFunctionExecution:
     def test_result_serializable(self) -> None:
         """Results should be serializable."""
         import json
+
         result = {"status": "success", "data": {}}
         json.dumps(result)
         assert True
