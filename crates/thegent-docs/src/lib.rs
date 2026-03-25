@@ -107,7 +107,7 @@ pub fn has_see_also(content: &str) -> bool {
 
 /// Load and parse markdown file
 pub fn load_markdown(path: &Path) -> Result<MarkdownDoc, DocsError> {
-    let content = std::fs::read_to_string(path).map_err(|e| DocsError::ReadError(e))?;
+    let content = std::fs::read_to_string(path).map_err(DocsError::from)?;
 
     let (frontmatter, body) = parse_markdown(&content)?;
 
@@ -159,7 +159,7 @@ pub struct AuditResult {
 
 /// Audit a markdown file
 pub fn audit_markdown(path: &Path) -> Result<AuditResult, DocsError> {
-    let content = std::fs::read_to_string(path).map_err(|e| DocsError::ReadError(e))?;
+    let content = std::fs::read_to_string(path).map_err(DocsError::from)?;
 
     let (frontmatter, body) = parse_markdown(&content)?;
     let full_content = format!(
@@ -167,7 +167,7 @@ pub fn audit_markdown(path: &Path) -> Result<AuditResult, DocsError> {
         if let Some(ref fm) = frontmatter {
             format!(
                 "---\n{}\n---\n",
-                serde_yaml::to_string(fm).map_err(|e| DocsError::YamlError(e))?
+                serde_yaml::to_string(fm).map_err(DocsError::from)?
             )
         } else {
             String::new()

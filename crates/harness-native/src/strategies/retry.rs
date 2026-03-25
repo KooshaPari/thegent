@@ -1,5 +1,4 @@
 use rand::Rng;
-use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 use std::thread;

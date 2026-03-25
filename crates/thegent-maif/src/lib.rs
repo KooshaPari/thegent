@@ -7,7 +7,7 @@ use rsa::{
     RsaPrivateKey, RsaPublicKey,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 use sha2::Sha256;
 use std::collections::BTreeMap;
 use std::fs;
@@ -147,13 +147,13 @@ pub fn generate_key_pair(bits: usize) -> Result<(RsaPrivateKey, RsaPublicKey), M
 pub fn load_private_key(path: &Path) -> Result<RsaPrivateKey, MAIFError> {
     use rsa::pkcs8::DecodePrivateKey;
     let pem = fs::read_to_string(path)?;
-    Ok(RsaPrivateKey::from_pkcs8_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))?)
+    RsaPrivateKey::from_pkcs8_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))
 }
 
 pub fn load_public_key(path: &Path) -> Result<RsaPublicKey, MAIFError> {
     use rsa::pkcs8::DecodePublicKey;
     let pem = fs::read_to_string(path)?;
-    Ok(RsaPublicKey::from_public_key_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))?)
+    RsaPublicKey::from_public_key_pem(&pem).map_err(|e| MAIFError::KeyError(e.to_string()))
 }
 
 #[cfg(test)]

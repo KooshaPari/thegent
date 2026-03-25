@@ -2,8 +2,6 @@ use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 
-use crate::strategies::cache;
-
 pub fn exec_direct(cmd: &Path, args: &[&str]) -> ! {
     let err = Command::new(cmd).args(args).exec();
     eprintln!("exec {:?} failed: {}", cmd, err);
@@ -21,5 +19,5 @@ pub fn run(
     args: &[&str],
 ) -> Result<i32, String> {
     // TODO: Check cache, debounce, execute
-    exec_direct(real_cmd, args);
+    exec_direct(real_cmd, args)
 }
