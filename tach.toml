@@ -157,7 +157,3 @@ depends_on = []
 [[modules]]
 path = "thegent_mcp"
 depends_on = []
-
-[[modules]]
-path = "thegent_cli"
-depends_on = []

@@ -7,6 +7,7 @@ from thegent_agents.mesh.git_parallelism import (
     _git_available,
     _PoolStateLock,
     _project_hash,
+    _run,
     _worktrees_supported,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "_git_available",
     "_PoolStateLock",
     "_project_hash",
+    "_run",
     "_worktrees_supported",
 ]
