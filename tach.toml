@@ -45,15 +45,15 @@ depends_on = []
 
 [[modules]]
 path = "thegent.output_parser"
-depends_on = ["thegent.contracts", "thegent.config"]
+depends_on = [ "thegent.config"]
 
 [[modules]]
 path = "thegent.contracts"
-depends_on = ["thegent.output_parser", "thegent.config"]
+depends_on = [ "thegent.config"]
 
 [[modules]]
 path = "thegent.observability"
-depends_on = ["thegent.config"]
+depends_on = []
 
 # ============================================================================
 # HEXAGONAL ARCHITECTURE LAYERS
@@ -74,17 +74,17 @@ depends_on = []
 # Layer 0.5: Ports (interfaces/contracts for domain)
 [[modules]]
 path = "thegent.ports"
-depends_on = ["thegent.domain"]
+depends_on = [ "thegent.config"]
 
 # Layer 1: Use Cases (application business rules, orchestration)
 [[modules]]
 path = "thegent.use_cases"
-depends_on = ["thegent.domain", "thegent.ports"]
+depends_on = ["thegent.domain", "thegent.agents", "thegent.config"]
 
 # Layer 2: Adapters (external implementations, infrastructure)
 [[modules]]
 path = "thegent.adapters"
-depends_on = ["thegent.domain", "thegent.ports", "thegent.use_cases"]
+depends_on = []
 
 # ============================================================================
 # LAYER 1: Models & Core Infrastructure
@@ -92,7 +92,7 @@ depends_on = ["thegent.domain", "thegent.ports", "thegent.use_cases"]
 
 [[modules]]
 path = "thegent.models"
-depends_on = ["thegent.config", "thegent.agents", "thegent.routing"]
+depends_on = ["thegent.config", "thegent.agents"]
 
 # ============================================================================
 # LAYER 2: Execution & Routing
@@ -100,11 +100,11 @@ depends_on = ["thegent.config", "thegent.agents", "thegent.routing"]
 
 [[modules]]
 path = "thegent.execution"
-depends_on = [ "thegent.contracts", "thegent.cli", "thegent.config"]
+depends_on = [ "thegent.contracts", "thegent.config", "thegent.domain"]
 
 [[modules]]
 path = "thegent.routing"
-depends_on = [ "thegent.execution", "thegent.config", "thegent.contracts", "thegent.models"]
+depends_on = []
 
 # ============================================================================
 # LAYER 3: Existing monolith modules (kept during transition)
@@ -112,7 +112,7 @@ depends_on = [ "thegent.execution", "thegent.config", "thegent.contracts", "theg
 
 [[modules]]
 path = "thegent.agents"
-depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.cli", "thegent.execution", "thegent.routing"]
+depends_on = ["thegent.config", "thegent.contracts", "thegent.observability", "thegent.execution", "thegent.adapters", "thegent.domain"]
 
 [[modules]]
 path = "thegent.operations"
@@ -124,7 +124,7 @@ depends_on = []
 
 [[modules]]
 path = "thegent.planning"
-depends_on = ["thegent.routing", "thegent.models", "thegent.cli", "thegent.config", "thegent.observability", "thegent.execution"]
+depends_on = [ "thegent.models", "thegent.config", "thegent.observability", "thegent.execution"]
 
 [[modules]]
 path = "thegent.cli"
@@ -138,7 +138,6 @@ depends_on = [
     "thegent.orchestration_modes",
     "thegent.planning",
     "thegent.exit_codes",
-    "thegent.routing",
     "thegent.output_parser",
     "thegent.observability",
 ]
@@ -150,14 +149,6 @@ depends_on = []
 [[modules]]
 path = "thegent.main"
 depends_on = ["thegent.cli"]
-
-# ============================================================================
-# LAYER 4: Sub-Projects (independent, communicate via MCP)
-# ============================================================================
-
-[[modules]]
-path = "thegent_cli"
-depends_on = []
 
 [[modules]]
 path = "thegent_agents"

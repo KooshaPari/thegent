@@ -18,7 +18,7 @@ def govern_approve(
     reason: str | None = typer.Option(None, "--reason", "-r", help="Approval reason"),
 ) -> None:
     from thegent.cli.commands.impl import govern_approve_impl
-    from thegent.cli.services.governance import govern_get_pending_approval_impl
+    from thegent.cli.governance.governance import govern_get_pending_approval_impl
     from thegent.governance.diff_renderer import DiffPayload, DiffRenderer
 
     try:
@@ -67,7 +67,7 @@ def govern_vet(
     policy_id: str | None = typer.Option(None, "--policy-id", help="Federated policy id override"),
     json_output: bool = typer.Option(False, "--json", help="Output JSON result"),
 ) -> None:
-    from thegent.cli.services.governance import govern_vet_impl
+    from thegent.cli.governance.governance import govern_vet_impl
 
     try:
         result = govern_vet_impl(

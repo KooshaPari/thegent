@@ -73,7 +73,7 @@ class InstallManager:
         if self.manifest_path.exists():
             try:
                 return InstallManifest.model_validate_json(self.manifest_path.read_text())
-            except json.JSONDecodeError, ValueError:
+            except (json.JSONDecodeError, ValueError):
                 return InstallManifest()
         return InstallManifest()
 

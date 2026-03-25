@@ -28,7 +28,7 @@ from thegent.cli.apps import (
     team,
 )
 from thegent.cli.apps.project import install_app, scaffold_app, setup_project_app, update_app
-from thegent.cli.commands.cli_git_worktree_governance import worktree_governance_app
+from thegent.cli.governance.cli_git_worktree_governance import worktree_governance_app
 from thegent.mesh.main import app as mesh_app
 
 

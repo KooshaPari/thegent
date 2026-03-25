@@ -110,7 +110,7 @@ class McpStorage:
         # Values are stored as JSON strings; decode on read.
         try:
             return json.loads(cast("str", raw))
-        except json.JSONDecodeError, TypeError:
+        except (json.JSONDecodeError, TypeError):
             _log.warning("McpStorage: corrupt value for key %r; returning default", key)
             return default
 

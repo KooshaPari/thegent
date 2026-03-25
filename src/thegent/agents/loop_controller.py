@@ -71,6 +71,7 @@ class LifecycleController:
     @with_retry(max_attempts=3, min_wait=2.0, max_wait=60.0)
     def _run_worker_with_retry(self, current_prompt: str) -> dict[str, Any]:
         """Run worker agent; raises TransientAgentError on retryable failure."""
+        # tach-ignore(agents should not architecturally depend on cli)
         from thegent.cli.commands.impl import run_impl
 
         result = run_impl(
@@ -256,6 +257,7 @@ class LifecycleController:
 
                 # 6. Invoke Checker Agent (WP-1201 Phase 2/3 - LLM Fallback)
                 try:
+                    # tach-ignore(agents should not architecturally depend on cli)
                     from thegent.cli.commands.impl import dag_status_impl
 
                     wbs_status = dag_status_impl(self.settings.cwd)
