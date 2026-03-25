@@ -9,7 +9,7 @@ from pathlib import Path
 import typer
 from rich.table import Table
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent.cli.plan.plan_output_helpers import (
     render_dag_list,
     render_dag_ready,
     render_dag_status,
@@ -185,7 +185,7 @@ def dag_remove_cmd(task_id: str, cd: Path | None = None) -> None:
 
 def dag_cancel_cmd(task_id: str, cd: Path | None = None) -> None:
     """Cancel a task (set status to cancelled)."""
-    from thegent.cli.commands.plan_dag_cmds import dag_update_cmd
+    from thegent.cli.plan.plan_dag_cmds import dag_update_cmd
 
     dag_update_cmd(task_id=task_id, cd=cd, status="cancelled")
     console.print(f"[green]Cancelled task {task_id}[/green]")
