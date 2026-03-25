@@ -3,7 +3,7 @@
 Manages agent hierarchies, parent-child relationships, and team structures.
 """
 
-import orjson as json
+import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -64,7 +64,6 @@ class AgentNode(SerializableMixin):
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     status: str = "active"
 
-
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentNode":
         """Create from dictionary."""
@@ -97,6 +96,19 @@ class AgentRelationship:
     delegation_prompt: str | None = None
     handoff_context: dict[str, Any] | None = None
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to dictionary."""
+        return {
+            "relationship_id": self.relationship_id,
+            "parent_id": self.parent_id,
+            "child_id": self.child_id,
+            "relationship_type": self.relationship_type.value,
+            "created_at": self.created_at.isoformat(),
+            "status": self.status,
+            "task_id": self.task_id,
+            "delegation_prompt": self.delegation_prompt,
+            "handoff_context": self.handoff_context,
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentRelationship":
@@ -136,6 +148,21 @@ class AgentTeam:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     status: str = "active"
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to dictionary."""
+        return {
+            "team_id": self.team_id,
+            "name": self.name,
+            "description": self.description,
+            "lead_id": self.lead_id,
+            "members": self.members,
+            "team_type": self.team_type.value,
+            "coordination_mode": self.coordination_mode.value,
+            "boundaries": self.boundaries,
+            "communication_channels": self.communication_channels,
+            "created_at": self.created_at.isoformat(),
+            "status": self.status,
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentTeam":
@@ -182,7 +209,7 @@ class AgentHierarchyManager:
             try:
                 data = json.loads(agents_file.read_text())
                 self._agents = {run_id: AgentNode.from_dict(node_data) for run_id, node_data in data.items()}
-            except (json.JSONDecodeError, KeyError, ValueError):
+            except json.JSONDecodeError, KeyError, ValueError:
                 self._agents = {}
 
         # Load relationships
@@ -193,7 +220,7 @@ class AgentHierarchyManager:
                 self._relationships = {
                     rel_id: AgentRelationship.from_dict(rel_data) for rel_id, rel_data in data.items()
                 }
-            except (json.JSONDecodeError, KeyError, ValueError):
+            except json.JSONDecodeError, KeyError, ValueError:
                 self._relationships = {}
 
         # Load teams
@@ -202,7 +229,7 @@ class AgentHierarchyManager:
             try:
                 data = json.loads(teams_file.read_text())
                 self._teams = {team_id: AgentTeam.from_dict(team_data) for team_id, team_data in data.items()}
-            except (json.JSONDecodeError, KeyError, ValueError):
+            except json.JSONDecodeError, KeyError, ValueError:
                 self._teams = {}
 
     def _save(self) -> None:

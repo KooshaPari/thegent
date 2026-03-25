@@ -100,6 +100,7 @@ def test_resource_manager():
 
     # Get agent resources (current process)
     import os
+
     pid = os.getpid()
     cpu_proc, mem_proc, files = rm.get_agent_resources(pid)
     print("✓ Agent resources for current process")

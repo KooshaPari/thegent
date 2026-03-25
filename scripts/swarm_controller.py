@@ -48,6 +48,7 @@ except ImportError:
 
 class AgentStatus(Enum):
     """Agent lifecycle states."""
+
     HEALTHY = "healthy"
     PAUSED = "paused"
     UNHEALTHY = "unhealthy"
@@ -57,6 +58,7 @@ class AgentStatus(Enum):
 
 class ScalingDirection(Enum):
     """Scaling direction."""
+
     UP = "up"
     DOWN = "down"
     NONE = "none"
@@ -65,6 +67,7 @@ class ScalingDirection(Enum):
 @dataclass
 class AgentMetrics:
     """Agent performance and health metrics."""
+
     agent_id: str
     pid: Optional[int] = None
     status: AgentStatus = AgentStatus.HEALTHY
@@ -113,6 +116,7 @@ class AgentMetrics:
 @dataclass
 class Config:
     """Configuration for swarm controller."""
+
     # Health monitoring
     health_check_interval: int = 10  # seconds
     stale_threshold: int = 30  # seconds without update
@@ -183,7 +187,7 @@ class ResourceManager:
             memory = proc.memory_percent()
             open_files = len(proc.open_files())
             return cpu, memory, open_files
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             return 0.0, 0.0, 0
 
     def get_system_resources(self) -> tuple[float, float]:
@@ -286,15 +290,16 @@ class ScalingDecision:
         queue_depth = queue_stats.get("pending", 0)
 
         # Scale down if queue is empty or system under pressure
-        if (queue_depth < self.config.scale_down_queue_threshold or
-            not resource_available):
+        if queue_depth < self.config.scale_down_queue_threshold or not resource_available:
             if current_agents > self.config.min_concurrent_agents:
                 return ScalingDirection.DOWN
 
         # Scale up if queue growing
-        if (queue_depth > self.config.scale_up_queue_threshold and
-            current_agents < self.config.max_concurrent_agents and
-            resource_available):
+        if (
+            queue_depth > self.config.scale_up_queue_threshold
+            and current_agents < self.config.max_concurrent_agents
+            and resource_available
+        ):
             return ScalingDirection.UP
 
         return ScalingDirection.NONE
@@ -331,8 +336,7 @@ class AgentHealthMonitor:
         # Check if stale
         if now - metrics.last_heartbeat > self.config.stale_threshold:
             self.logger.warning(
-                f"Agent {metrics.agent_id} is stale (no update for "
-                f"{now - metrics.last_heartbeat:.1f}s)"
+                f"Agent {metrics.agent_id} is stale (no update for {now - metrics.last_heartbeat:.1f}s)"
             )
             return AgentStatus.UNHEALTHY
 
@@ -340,9 +344,7 @@ class AgentHealthMonitor:
         expected_time = metrics.task_progress * 10  # Rough estimate
         if now - metrics.last_activity > expected_time * self.config.slo_time_multiplier:
             metrics.slo_breaches += 1
-            self.logger.warning(
-                f"Agent {metrics.agent_id} SLO breach (activity timeout)"
-            )
+            self.logger.warning(f"Agent {metrics.agent_id} SLO breach (activity timeout)")
             return AgentStatus.UNHEALTHY
 
         # Check errors
@@ -363,9 +365,7 @@ class AgentHealthMonitor:
 
             if health != metrics.status:
                 metrics.status = health
-                self.logger.info(
-                    f"Agent {agent_id} status change: {old_status.value} -> {health.value}"
-                )
+                self.logger.info(f"Agent {agent_id} status change: {old_status.value} -> {health.value}")
 
             # Update resources
             cpu, mem, files = self.resource_manager.get_agent_resources(metrics.pid)
@@ -399,8 +399,7 @@ class SwarmController:
         self.cycle_count = 0
         self.cleanup_interval = 10  # Every ~50 seconds (10 cycles @ 5s each)
 
-        if (AGENT_IDENTITY_AVAILABLE and GlobalAgentRegistry is not None and
-            AgentIdentityFactory is not None):
+        if AGENT_IDENTITY_AVAILABLE and GlobalAgentRegistry is not None and AgentIdentityFactory is not None:
             try:
                 self.agent_registry = GlobalAgentRegistry()
                 self.agent_factory = AgentIdentityFactory(self.agent_registry)
@@ -504,16 +503,11 @@ class SwarmController:
 
         delay = self.restart_policy.get_restart_delay(metrics.restart_count)
         if delay is None:
-            self.logger.error(
-                f"Agent {agent_id} exceeded max restart attempts ({self.config.max_restart_attempts})"
-            )
+            self.logger.error(f"Agent {agent_id} exceeded max restart attempts ({self.config.max_restart_attempts})")
             metrics.status = AgentStatus.DEAD
             return False
 
-        self.logger.info(
-            f"Restarting agent {agent_id} (attempt {metrics.restart_count + 1}, "
-            f"delay {delay}s)"
-        )
+        self.logger.info(f"Restarting agent {agent_id} (attempt {metrics.restart_count + 1}, delay {delay}s)")
         metrics.status = AgentStatus.RESTARTING
         metrics.restart_count += 1
         metrics.restart_timestamps.append(time.time())
@@ -527,9 +521,7 @@ class SwarmController:
             return
 
         cpu, memory = self.resource_manager.get_system_resources()
-        self.logger.warning(
-            f"Resource pressure detected: CPU {cpu:.1f}%, Memory {memory:.1f}%"
-        )
+        self.logger.warning(f"Resource pressure detected: CPU {cpu:.1f}%, Memory {memory:.1f}%")
 
         # Pause lowest priority agents
         for agent_id, metrics in self.metrics.items():
@@ -544,10 +536,7 @@ class SwarmController:
                 if self.restart_policy.should_restart(metrics):
                     self.restart_agent(agent_id)
                 else:
-                    self.logger.error(
-                        f"Agent {agent_id} unhealthy and cannot restart. "
-                        "Escalating to L1."
-                    )
+                    self.logger.error(f"Agent {agent_id} unhealthy and cannot restart. Escalating to L1.")
 
     def handle_scaling(self) -> None:
         """Handle dynamic scaling based on queue depth."""
@@ -558,17 +547,11 @@ class SwarmController:
         direction = self.scaling_decision.should_scale(queue_stats, current_agents, resource_available)
 
         if direction == ScalingDirection.UP:
-            self.logger.info(
-                f"Scaling UP: queue_depth={queue_stats.get('pending', 0)}, "
-                f"agents={current_agents}"
-            )
+            self.logger.info(f"Scaling UP: queue_depth={queue_stats.get('pending', 0)}, agents={current_agents}")
             # TODO: Spawn new agent
 
         elif direction == ScalingDirection.DOWN:
-            self.logger.info(
-                f"Scaling DOWN: queue_depth={queue_stats.get('pending', 0)}, "
-                f"agents={current_agents}"
-            )
+            self.logger.info(f"Scaling DOWN: queue_depth={queue_stats.get('pending', 0)}, agents={current_agents}")
             # Pause an agent or wind down
             for agent_id, metrics in self.metrics.items():
                 if metrics.status == AgentStatus.HEALTHY:
@@ -616,12 +599,10 @@ class SwarmController:
                     self.project_name,
                     parent_l2_id=parent_l2_id,
                     capabilities=["micro_task_execution"],
-                    scope_tags={"type": "executor", "local_id": agent_id}
+                    scope_tags={"type": "executor", "local_id": agent_id},
                 )
                 self.agent_id_map[agent_id] = l3_identity.agent_id
-                self.logger.info(
-                    f"Phase 3B: Registered L3 executor {agent_id} -> {l3_identity.agent_id}"
-                )
+                self.logger.info(f"Phase 3B: Registered L3 executor {agent_id} -> {l3_identity.agent_id}")
             else:
                 # Register as L2 worker under L1
                 l2_identity = self.agent_factory.create_l2_agent(
@@ -629,14 +610,12 @@ class SwarmController:
                     role=role,
                     parent_l1_id=self.l1_agent_id,
                     capabilities=["task_execution", "sub_delegation"],
-                    scope_tags={"swarm_controller_pid": str(metrics.pid), "local_id": agent_id}
+                    scope_tags={"swarm_controller_pid": str(metrics.pid), "local_id": agent_id},
                 )
 
                 # Track mapping
                 self.agent_id_map[agent_id] = l2_identity.agent_id
-                self.logger.info(
-                    f"Phase 2: Registered L2 agent {agent_id} -> {l2_identity.agent_id}"
-                )
+                self.logger.info(f"Phase 2: Registered L2 agent {agent_id} -> {l2_identity.agent_id}")
         except Exception as e:
             self.logger.debug(f"Phase 2/3B: Failed to register agent {agent_id}: {e}")
 
@@ -769,11 +748,12 @@ class SwarmController:
             try:
                 # Import AgentRole locally to avoid type issues
                 from agent_identity_system import AgentRole as _AgentRole
+
                 l1_identity = self.agent_factory.create_l1_agent(
                     self.project_name,
                     role=_AgentRole.COORDINATOR,
                     capabilities=["health_monitoring", "agent_scaling", "dynamic_restart"],
-                    scope_tags={"swarm_controller": "true"}
+                    scope_tags={"swarm_controller": "true"},
                 )
                 self.l1_agent_id = l1_identity.agent_id
                 self.logger.info(f"Phase 1: Registered L1 agent: {self.l1_agent_id}")
@@ -815,9 +795,7 @@ class SwarmController:
     def health_report(self) -> str:
         """Generate a health report."""
         status = self.get_status()
-        healthy_count = sum(
-            1 for a in status["agents"].values() if a["status"] == "healthy"
-        )
+        healthy_count = sum(1 for a in status["agents"].values() if a["status"] == "healthy")
         total_count = len(status["agents"])
 
         lines = [
@@ -827,8 +805,7 @@ class SwarmController:
             f"Queue: {status['queue']['pending']} pending, "
             f"{status['queue']['claimed']} claimed, "
             f"{status['queue']['completed']} completed",
-            f"System: CPU {status['system']['cpu_percent']:.1f}%, "
-            f"Memory {status['system']['memory_percent']:.1f}%",
+            f"System: CPU {status['system']['cpu_percent']:.1f}%, Memory {status['system']['memory_percent']:.1f}%",
             "",
             "Agent Details:",
         ]
@@ -855,7 +832,7 @@ class SwarmController:
 
             # Build project summary
             projects = {}
-            for agent_id in stats.get('agents_by_project', {}).keys():
+            for agent_id in stats.get("agents_by_project", {}):
                 project = agent_id if isinstance(agent_id, str) else agent_id.project
                 if project not in projects:
                     projects[project] = {
@@ -866,26 +843,26 @@ class SwarmController:
                     }
 
             # Count agents by level and check staleness
-            for agent_dict in stats.get('agents', {}).values():
+            for agent_dict in stats.get("agents", {}).values():
                 if isinstance(agent_dict, dict):
-                    project = agent_dict.get('project')
-                    level = agent_dict.get('level')
-                    agent_id = agent_dict.get('agent_id')
+                    project = agent_dict.get("project")
+                    level = agent_dict.get("level")
+                    agent_id = agent_dict.get("agent_id")
 
                     if project and project in projects:
-                        if level == 'L1':
-                            projects[project]['l1_count'] += 1
-                        elif level == 'L2':
-                            projects[project]['l2_count'] += 1
-                        elif level == 'L3':
-                            projects[project]['l3_count'] += 1
+                        if level == "L1":
+                            projects[project]["l1_count"] += 1
+                        elif level == "L2":
+                            projects[project]["l2_count"] += 1
+                        elif level == "L3":
+                            projects[project]["l3_count"] += 1
 
                         if agent_id in stale:
-                            projects[project]['stale_count'] += 1
+                            projects[project]["stale_count"] += 1
 
             return {
-                "total_agents": stats.get('total_agents', 0),
-                "active_agents": stats.get('total_agents', 0) - len(stale),
+                "total_agents": stats.get("total_agents", 0),
+                "active_agents": stats.get("total_agents", 0) - len(stale),
                 "stale_agents": len(stale),
                 "projects": projects,
                 "timestamp": time.time(),
@@ -901,6 +878,7 @@ class SwarmController:
 
         try:
             from agent_identity_system import AgentLevel
+
             level_map = {"L1": AgentLevel.L1, "L2": AgentLevel.L2, "L3": AgentLevel.L3}
 
             if level not in level_map:
@@ -942,9 +920,7 @@ class SwarmController:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Self-Healing Swarm Controller for agent execution system"
-    )
+    parser = argparse.ArgumentParser(description="Self-Healing Swarm Controller for agent execution system")
     parser.add_argument(
         "--monitor",
         action="store_true",
@@ -988,7 +964,8 @@ def main():
         help="Update agent metrics (format: agent_id key=value ...)",
     )
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging",
     )

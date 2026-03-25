@@ -197,7 +197,7 @@ class MaildirQueue:
 
             try:
                 data = json.loads(entry.read_text(encoding="utf-8"))
-            except (FileNotFoundError, json.JSONDecodeError):
+            except FileNotFoundError, json.JSONDecodeError:
                 continue
 
             if data.get("owner") != owner:

@@ -16,7 +16,6 @@ def _utc_dt(year: int, month: int, day: int, hour: int, minute: int) -> datetime
     return datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
 
 
-
 @pytest.mark.requirement("WL-222")
 class TestBlackoutCalendar:
     """WL-222: Blackout calendar for operational scheduling."""

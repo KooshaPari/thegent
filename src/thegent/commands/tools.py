@@ -49,7 +49,7 @@ def tools_list(
             raise typer.Exit(1)
 
     if output_json:
-        sys.stdout.write(json.dumps([t.to_dict().decode() for t in tools], indent=2) + "\n")
+        sys.stdout.write(json.dumps([t.to_dict() for t in tools], option=json.OPT_INDENT_2).decode() + "\n")
         raise typer.Exit(0)
 
     console = Console()
@@ -202,7 +202,7 @@ def tools_show(
         raise typer.Exit(1)
 
     if output_json:
-        sys.stdout.write(json.dumps(manifest.to_dict().decode(), indent=2) + "\n")
+        sys.stdout.write(json.dumps(manifest.to_dict(), option=json.OPT_INDENT_2).decode() + "\n")
         raise typer.Exit(0)
 
     console = Console()

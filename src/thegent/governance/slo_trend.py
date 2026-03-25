@@ -11,7 +11,7 @@ No fallbacks, no silent errors, no legacy compatibility shims.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path

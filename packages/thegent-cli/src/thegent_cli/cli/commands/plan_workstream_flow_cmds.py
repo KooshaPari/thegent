@@ -7,12 +7,9 @@ import orjson as json
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime
-from typing import Any, cast
 
 import typer
 
-from rich.table import Table
 
 from thegent_cli.cli.commands.plan_output_helpers import (
     render_plan_next_items,
@@ -20,10 +17,8 @@ from thegent_cli.cli.commands.plan_output_helpers import (
 )
 
 from thegent_cli.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _default_owner_tag,
-    _parse_dag_full,
     _resolve_cwd,
     console,
 )
@@ -39,6 +34,7 @@ from thegent_cli.cli.commands.session_cmds import history_cmd
 Commands for work stream orchestration, planning, and analysis.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def plan_wait_next_cmd(
     cd: Path | None = None,
@@ -190,7 +186,6 @@ def plan_loop_cmd(
 def plan_progress_cmd(limit: int = 10, format: str | None = None) -> None:
     """Show recent runs (work-package progress). Alias for history --limit N."""
     history_cmd(limit=limit, format=format)
-
 
 
 __all__ = [

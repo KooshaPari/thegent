@@ -4,10 +4,7 @@ import typer
 from typing import Any, Optional
 
 from thegent.project.migrate import project_migrate as _project_migrate
-from thegent.project.scaffold import (
-    scaffold_greenfield,
-    scaffold_brownfield,
-)
+from thegent.project.scaffold import scaffold_greenfield
 
 # CLI app containers
 setup_project_app = typer.Typer(help="Project management commands.")
@@ -33,6 +30,7 @@ def install_callback(
         # Try to import and call legacy install
         try:
             from thegent.install import run_install
+
             run_install(
                 target=target,
                 mode=mode,

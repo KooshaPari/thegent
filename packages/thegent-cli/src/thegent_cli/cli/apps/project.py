@@ -6,7 +6,6 @@ from typing import Any, Optional
 from thegent_cli.project.migrate import project_migrate as _project_migrate
 from thegent_cli.project.scaffold import (
     scaffold_greenfield,
-    scaffold_brownfield,
 )
 
 # CLI app containers
@@ -33,6 +32,7 @@ def install_callback(
         # Try to import and call legacy install
         try:
             from thegent_cli.install import run_install
+
             run_install(
                 target=target,
                 mode=mode,

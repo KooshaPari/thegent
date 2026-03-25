@@ -10,6 +10,7 @@ import time
 
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -18,6 +19,7 @@ except ImportError:
 @dataclass
 class ResourceSample:
     """Resource sample at a point in time."""
+
     timestamp: float
     cpu_percent: float
     memory_percent: float
@@ -45,7 +47,8 @@ class ResourceMonitor:
         if HAS_PSUTIL:
             cpu = psutil.cpu_percent()
             memory = psutil.virtual_memory().percent
-            load = psutil.getloadavg()[0] / psutil.cpu_count() if psutil.cpu_count() else 0
+            cpu_count = psutil.cpu_count() or 0
+            load = psutil.getloadavg()[0] / cpu_count if cpu_count > 0 else 0.0
             try:
                 fd_count = len(psutil.Process().open_files())
             except:
@@ -56,13 +59,7 @@ class ResourceMonitor:
             load = 0.5
             fd_count = None
 
-        sample = ResourceSample(
-            timestamp=now,
-            cpu_percent=cpu,
-            memory_percent=memory,
-            load_avg=load,
-            fd_count=fd_count
-        )
+        sample = ResourceSample(timestamp=now, cpu_percent=cpu, memory_percent=memory, load_avg=load, fd_count=fd_count)
 
         self._samples.append(sample)
         if len(self._samples) > self._max_samples:

@@ -25,6 +25,7 @@ def _version_callback(value: bool) -> None:
     console.print(__version__)
     raise typer.Exit()
 
+
 # Modular Stream Registrations
 from thegent_cli.apps import (  # noqa: E402
     audit,

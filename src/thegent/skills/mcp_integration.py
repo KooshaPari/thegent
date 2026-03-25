@@ -3,7 +3,7 @@
 This module provides MCP tools for listing, getting, and running skills.
 """
 
-import orjson as json
+import json
 import logging
 from typing import Any
 

@@ -416,7 +416,6 @@ impl Default for PrewarmReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::File;
 
     #[test]
     fn test_prewarm_metadata() {

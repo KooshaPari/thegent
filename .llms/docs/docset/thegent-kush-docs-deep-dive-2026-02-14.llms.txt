@@ -25,7 +25,7 @@ Scope: Zen MCP docs + other Kush project docs for transferable architecture patt
 
 - `../task-tool/docs/xml_contract.md`
 - `../crun/docs/HEXAGONAL_ARCHITECTURE.md`
-- `../pheno-sdk/openspec/ARCHITECTURE_TOOLS_SPEC.md`
+- `../pheno-sdk/agileplus/ARCHITECTURE_TOOLS_SPEC.md`
 - `../kagentop/03_develop/MultiAgentOrchestration.md`
 
 ## 2. Zen deep findings

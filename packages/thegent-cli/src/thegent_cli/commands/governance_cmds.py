@@ -387,7 +387,9 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
     except FileNotFoundError:
         fmt = _normalize_output_format(format)
         if fmt == "json":
-            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}).decode().decode() + "\n")
+            sys.stdout.write(
+                json.dumps({"configured": False, "hint": "thegent govern configure"}).decode().decode() + "\n"
+            )
         else:
             console.print("[yellow]Govern not configured.[/yellow]")
             console.print("[dim]Run: thegent govern configure[/dim]")

@@ -5,11 +5,12 @@
 
 from __future__ import annotations
 
-import orjson as json
 from difflib import HtmlDiff
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+import orjson
 
 from thegent.integrations.base import SerializableMixin
 from thegent.integrations.sync_provenance import (
@@ -126,7 +127,7 @@ class SyncAuditor:
             JSON representation of audit result.
         """
         audit = self.audit()
-        return json.dumps(asdict(audit).decode(), indent=2)
+        return orjson.dumps(asdict(audit), option=orjson.OPT_INDENT_2).decode()
 
     def audit_as_dict(self) -> dict[str, Any]:
         """Get audit result as dictionary.
@@ -173,8 +174,9 @@ class SyncAuditor:
         local_snapshot: dict[str, Any], remote_snapshot: dict[str, Any], out_path: Path
     ) -> Path:
         """Generate deterministic side-by-side HTML diff artifact."""
-        local_lines = json.dumps(local_snapshot, indent=2, sort_keys=True).decode().splitlines()
-        remote_lines = json.dumps(remote_snapshot, indent=2, sort_keys=True).decode().splitlines()
+        json_options = orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS
+        local_lines = orjson.dumps(local_snapshot, option=json_options).decode().splitlines()
+        remote_lines = orjson.dumps(remote_snapshot, option=json_options).decode().splitlines()
         html = HtmlDiff(tabsize=2, wrapcolumn=120).make_file(
             fromlines=local_lines,
             tolines=remote_lines,

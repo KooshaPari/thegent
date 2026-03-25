@@ -57,7 +57,7 @@ class P2PDiscovery:
                 "load_score": 0.2,  # Added for WP-13002
                 "trust_score": 0.9,  # Added for WP-13002
             }
-        ).encode()
+        )
 
         while not self._stop_event.is_set():
             try:
@@ -75,7 +75,7 @@ class P2PDiscovery:
         while not self._stop_event.is_set():
             try:
                 data, addr = sock.recvfrom(1024)
-                peer_data = json.loads(data.decode())
+                peer_data = json.loads(data)
                 if peer_data.get("agent_id") == self.agent_id:
                     continue
 

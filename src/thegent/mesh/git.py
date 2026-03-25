@@ -1,4 +1,4 @@
-"""High-performance parallel git operations for the agent mesh."""
+"""Compatibility wrapper for Git parallelism ops domain module."""
 
 import logging
 import hashlib

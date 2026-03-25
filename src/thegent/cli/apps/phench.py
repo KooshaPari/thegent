@@ -5,10 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from pathlib import Path
 
-import orjson as json
 import typer
-from rich.console import Console
-from rich.prompt import IntPrompt
 
 from thegent.phench import (
     add_repo,
@@ -32,9 +29,21 @@ from thegent.phench import (
 console = Console()
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
 target_app = typer.Typer(help="Manage project runtime targets.")
+repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
 env_app = typer.Typer(help="Environment preflight commands for targets.")
+snapshot_app = typer.Typer(help="Capture and inspect target snapshots.")
+modules_app = typer.Typer(help="Manage cross-repo module manifests and shared-module discovery.")
+projects_app = typer.Typer(help="Guided target selection and execution workflows.")
 app.add_typer(target_app, name="target")
+app.add_typer(repos_app, name="repos")
 app.add_typer(env_app, name="env")
+app.add_typer(snapshot_app, name="snapshot")
+app.add_typer(modules_app, name="modules")
+app.add_typer(projects_app, name="projects")
+
+
+def _phench_attr(name: str) -> Any:
+    return getattr(import_module("thegent.phench"), name)
 
 
 @target_app.command("init", help="Create a new target in Phenotype/projects.")
@@ -58,7 +67,7 @@ def target_add_repo_cmd(
     repo_id: str | None = typer.Option(None, "--repo-id", help="Optional stable repo identifier."),
     worktree: str | None = typer.Option(None, "--worktree", help="Optional source worktree path hint."),
 ) -> None:
-    lock = add_repo(name, repo, ref, repo_id=repo_id, worktree_path=worktree)
+    lock = _phench_attr("add_repo")(name, repo, ref, repo_id=repo_id, worktree_path=worktree)
     console.print_json(
         json.dumps(
             {
@@ -97,7 +106,7 @@ def target_add_module_cmd(
 
 @target_app.command("lock", help="Resolve selected refs to immutable SHAs.")
 def target_lock_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    lock = lock_target(name)
+    lock = _phench_attr("lock_target")(name)
     console.print_json(
         json.dumps(
             {
@@ -118,7 +127,7 @@ def target_lock_cmd(name: str = typer.Argument(..., help="Target name.")) -> Non
 
 @target_app.command("materialize", help="Materialize deterministic checkouts under Phenotype/projects/<target>/repos.")
 def target_materialize_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    runtime = materialize_target(name)
+    runtime = _phench_attr("materialize_target")(name)
     console.print_json(
         json.dumps(
             {
@@ -136,7 +145,7 @@ def timeline_cmd(
     repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
     limit: int = typer.Option(30, "--limit", help="Number of recent commits."),
 ) -> None:
-    data = target_timeline(name, repo_id=repo_id, limit=limit)
+    data = _phench_attr("target_timeline")(name, repo_id=repo_id, limit=limit)
     console.print_json(json.dumps(data).decode())
 
 
@@ -150,21 +159,41 @@ def run_cmd(
     execution_mode: str = typer.Option("serial", "--mode", help="Execution mode for --all-repos: serial|parallel."),
     env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
 ) -> None:
-    exit_code = run_target(
+    exit_code = _phench_attr("run_target")(
         name,
         repo_id=repo_id,
-        runner=runner,
-        command_name=command,
-        all_repos=all_repos,
-        execution_mode=execution_mode,
-        env_profile=env_profile,
-    )
-    raise typer.Exit(exit_code)
+        selected_ref=selected_ref,
+        family=family,
+    ),
+    lock_target_fn=lambda name, family=None: lock_target(name, family=family),
+    materialize_target_fn=lambda name, family=None: materialize_target(name, family=family),
+)
 
+register_timeline_commands(app, target_timeline_fn=_timeline_dispatch)
+register_run_commands(app, run_target_fn=_run_dispatch)
+register_env_commands(
+    env_app,
+    run_env_doctor_for_target_fn=_run_env_doctor_dispatch,
+    set_env_profile_fn=_set_env_profile_dispatch,
+    get_env_profile_fn=_get_env_profile_dispatch,
+)
+register_sync_commands(app, sync_target_fn=_sync_target_dispatch)
+register_snapshot_commands(
+    snapshot_app,
+    create_target_snapshot_fn=_snapshot_create_dispatch,
+    list_target_snapshots_fn=_snapshot_list_dispatch,
+    show_target_snapshot_fn=_snapshot_show_dispatch,
+)
+register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
+register_modules_commands(
+    modules_app,
+    sync_project_modules_from_repos_fn=_sync_project_modules_from_repos_dispatch,
+    audit_shared_modules_across_repos_fn=_audit_shared_modules_across_repos_dispatch,
+)
 
 @env_app.command("doctor", help="Run fail-fast environment doctor for a materialized target.")
 def env_doctor_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    report = run_env_doctor_for_target(name)
+    report = _phench_attr("run_env_doctor_for_target")(name)
     console.print_json(json.dumps(report).decode())
     if report["doctor_status"] != "pass":
         raise typer.Exit(2)
@@ -184,7 +213,7 @@ def env_profile_set_cmd(
         if not key:
             raise typer.BadParameter("Environment variable key cannot be empty")
         values[key] = value
-    state = set_env_profile(name, profile, values)
+    state = _phench_attr("set_env_profile")(name, profile, values)
     console.print_json(json.dumps(state).decode())
 
 
@@ -193,7 +222,11 @@ def env_profile_show_cmd(
     name: str = typer.Argument(..., help="Target name."),
     profile: str | None = typer.Option(None, "--profile", help="Optional profile name."),
 ) -> None:
-    payload = {"target": name, "profile": profile or "active", "env": get_env_profile(name, profile=profile)}
+    payload = {
+        "target": name,
+        "profile": profile or "active",
+        "env": _phench_attr("get_env_profile")(name, profile=profile),
+    }
     console.print_json(json.dumps(payload).decode())
 
 
@@ -202,19 +235,19 @@ def sync_cmd(
     name: str = typer.Argument(..., help="Target name."),
     prefer: str | None = typer.Option(None, "--prefer", help="Drift resolution source: projects|home."),
 ) -> None:
-    result = sync_target(name, prefer=prefer)
+    result = _phench_attr("sync_target")(name, prefer=prefer)
     console.print_json(json.dumps(result).decode())
 
 
 @app.command("status", help="Show lock/runtime/env status for a target.")
 def status_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = target_status(name)
+    state = _phench_attr("target_status")(name)
     console.print_json(json.dumps(state).decode())
 
 
 @app.command("audit-shared", help="Audit shared Python modules across repos in a target lock.")
 def audit_shared_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:
-    state = audit_shared_modules(name)
+    state = _phench_attr("audit_shared_modules")(name)
     console.print_json(json.dumps(state).decode())
 
 
@@ -342,7 +375,7 @@ def materialize_module_manifest_cmd(
 
 @app.command("tui", help="Interactive selector: target -> timeline -> run.")
 def tui_cmd() -> None:
-    targets = list_targets()
+    targets = _phench_attr("list_targets")()
     if not targets:
         raise typer.BadParameter("No targets found under Phenotype/projects. Initialize one with `phench target init`.")
 
@@ -354,10 +387,10 @@ def tui_cmd() -> None:
         raise typer.BadParameter("Target selection out of range.")
     selected_target = targets[target_index - 1]
 
-    timeline = target_timeline(selected_target, limit=20)
+    timeline = _phench_attr("target_timeline")(selected_target, limit=20)
     console.print(f"Timeline for [bold]{selected_target}[/bold] ({timeline['repo_id']}):")
     for line in timeline.get("recent", []):
         console.print(f"  {line}")
 
-    code = run_target(selected_target)
+    code = _phench_attr("run_target")(selected_target)
     raise typer.Exit(code)

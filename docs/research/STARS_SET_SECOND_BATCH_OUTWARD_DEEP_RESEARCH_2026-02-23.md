@@ -18,12 +18,12 @@ Second-pass deep outward research over the provided starred items batch, with fo
 - `semantic-router` + `Portkey gateway` (routing/gateway)
 - `mcpm.sh` + `mcptools` + `mcp-language-server` (MCP ops baseline)
 3. High-signal but high-risk items should remain pilot-only until governance gates pass:
-- `OpenSpec`, `claude-task-master`, `cua`, `Agent-S`, `PageIndex`, `bifrost` claims, and various small MCP aggregators.
+- `AgilePlus`, `claude-task-master`, `cua`, `Agent-S`, `PageIndex`, `bifrost` claims, and various small MCP aggregators.
 
 ## Section A: Agent/Orchestration Group
 
 Analyzed:
-- `Fission-AI/OpenSpec`
+- `Fission-AI/AgilePlus`
 - `eyaltoledano/claude-task-master`
 - `humanlayer/humanlayer`
 - `browser-use/browser-use`
@@ -37,7 +37,7 @@ Analyzed:
 
 ### Practical ranking
 - Highest practical readiness: `browser-use`, `stagehand`, `goose`.
-- Strong but governance-dependent: `OpenSpec`, `claude-task-master`, `humanlayer`, `cua`.
+- Strong but governance-dependent: `AgilePlus`, `claude-task-master`, `humanlayer`, `cua`.
 - Research-heavy / higher uncertainty: `Agent-S`, `OmniParser`, `self-operating-computer`.
 
 ### Common risks
@@ -47,7 +47,7 @@ Analyzed:
 - flaky desktop/browser behavior under scale.
 
 Key links:
-- https://github.com/Fission-AI/OpenSpec
+- https://github.com/Fission-AI/AgilePlus
 - https://github.com/eyaltoledano/claude-task-master
 - https://github.com/humanlayer/humanlayer
 - https://github.com/browser-use/browser-use
@@ -179,7 +179,7 @@ Key links:
 - MCP ops: `mcpm.sh` + `mcptools` + `mcp-language-server`.
 
 ### Pilot-only stream
-- `OpenSpec`, `claude-task-master`, `cua`, `Agent-S`, `PageIndex`, `bifrost`, `magg`, `muster`, niche MCP servers.
+- `AgilePlus`, `claude-task-master`, `cua`, `Agent-S`, `PageIndex`, `bifrost`, `magg`, `muster`, niche MCP servers.
 
 ## Hard Gates Before Production
 1. Reproducible benchmarks on your hardware/workloads.

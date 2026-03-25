@@ -22,7 +22,7 @@ def _write_hyperfine(path: Path, command: str, mean: float, minimum: float, maxi
         ]
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
+    path.write_text(json.dumps(payload).decode(), encoding="utf-8")
 
 
 def _run_reporter(tmp_path: Path, baseline_dir: Path, current_dir: Path) -> tuple[Path, Path]:

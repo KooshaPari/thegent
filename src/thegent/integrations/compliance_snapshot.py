@@ -8,10 +8,11 @@ FR traceability: WL-302 (Compliance Evidence Snapshot Scheduler)
 
 from __future__ import annotations
 
-import orjson as json
 import logging
 from datetime import datetime, UTC
 from pathlib import Path
+
+import orjson
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +78,7 @@ class ComplianceSnapshotScheduler:
             "artifact_count": len(artifacts),
         }
 
-        with filepath.open("w", encoding="utf-8") as f:
-            json.dump(snapshot_data, f, indent=2)
+        filepath.write_bytes(orjson.dumps(snapshot_data, option=orjson.OPT_INDENT_2))
 
         logger.info(f"Took snapshot with {len(artifacts)} artifacts: {filepath}")
         return filepath

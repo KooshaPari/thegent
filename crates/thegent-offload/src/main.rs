@@ -3,7 +3,7 @@ use axum::{
     extract::{Request, State},
     http::StatusCode,
     middleware::{self, Next},
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     routing::{get, post},
     Json, Router,
 };
@@ -56,7 +56,6 @@ enum Commands {
 
 struct AppState {
     token: Option<String>,
-    allow_worktrees: bool,
     active_tasks: tokio::sync::Mutex<HashMap<Uuid, ExecutionStatus>>,
 }
 
@@ -75,7 +74,7 @@ async fn main() -> Result<()> {
             host,
             port,
             token,
-            allow_worktrees,
+            allow_worktrees: _,
         } => {
             info!("Starting thegent offload server on {}:{}", host, port);
             if let Some(ref t) = token {
@@ -89,7 +88,6 @@ async fn main() -> Result<()> {
 
             let state = Arc::new(AppState {
                 token,
-                allow_worktrees,
                 active_tasks: tokio::sync::Mutex::new(HashMap::new()),
             });
 

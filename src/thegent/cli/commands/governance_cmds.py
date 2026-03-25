@@ -43,9 +43,6 @@ from thegent.cli.commands.governance_policy_health_cmds import (
     govern_go_status_cmd,
     govern_go_cycle_cmd,
     govern_go_watch_cmd,
-    govern_cost_cmd,
-    guardrails_check_cmd,
-    guardrails_show_cmd,
     policy_show_cmd,
     policy_purge_cmd,
     policy_check_cmd,
@@ -54,11 +51,6 @@ from thegent.cli.commands.governance_policy_health_cmds import (
     drift_cmd,
     contracts_conformance_cmd,
     trust_status_cmd,
-    signatures_list_cmd,
-    signatures_verify_cmd,
-    compliance_siem_test_cmd,
-    compliance_plugin_check_cmd,
-    compliance_redact_cmd,
 )
 
 # Re-export discovery & guardrails commands
@@ -66,8 +58,6 @@ from thegent.cli.commands.governance_discovery_guardrails_cmds import (
     discovery_parse_cmd,
     discovery_register_cmd,
     discovery_scan_cmd,
-    guardrails_check_cmd,
-    guardrails_show_cmd,
 )
 
 __all__ = [

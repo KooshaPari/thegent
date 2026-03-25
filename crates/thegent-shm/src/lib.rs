@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::prelude::*;
 
 // Constants for SHM layout
@@ -30,6 +30,7 @@ const ROUTER_METRICS_OFFSET: usize = CMD_CACHE_OFFSET + (CMD_CACHE_COUNT * CMD_C
 const SHM_SIZE: usize = ROUTER_METRICS_OFFSET + 4096;
 
 static GLOBAL_SHM: Lazy<Mutex<Option<SHMInterface>>> = Lazy::new(|| Mutex::new(None));
+static PROVIDER_WRITE_LOCK: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
@@ -104,7 +105,7 @@ pub struct RouterMetricsState {
 // Core SHM Interface struct (used by both Rust callers and PyO3)
 // ---------------------------------------------------------------------------
 
-#[cfg_attr(feature = "python", pyclass)]
+#[cfg_attr(all(feature = "python", not(test), not(debug_assertions)), pyclass)]
 pub struct SHMInterface {
     mmap: MmapMut,
 }
@@ -130,6 +131,9 @@ impl SHMInterface {
         success_count: u64,
         latency_ms: u32,
     ) -> std::io::Result<()> {
+        let _guard = PROVIDER_WRITE_LOCK
+            .lock()
+            .map_err(|_| std::io::Error::other("provider write lock poisoned"))?;
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -735,7 +739,7 @@ pub fn update_router_metrics(
 // PyO3 Python extension module (only compiled with --features python)
 // ---------------------------------------------------------------------------
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pymethods]
 impl SHMInterface {
     #[new]
@@ -839,7 +843,7 @@ impl SHMInterface {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 #[pyo3(signature = (path=None))]
 fn py_init_shm(path: Option<String>) -> PyResult<()> {
@@ -847,7 +851,7 @@ fn py_init_shm(path: Option<String>) -> PyResult<()> {
     init_global_shm(&path).map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_update_provider(
     name: String,
@@ -867,7 +871,7 @@ fn py_update_provider(
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_get_provider_metrics(py: Python<'_>, name: String) -> PyResult<Option<PyObject>> {
     let global = GLOBAL_SHM.lock().unwrap();
@@ -899,7 +903,7 @@ fn py_get_provider_metrics(py: Python<'_>, name: String) -> PyResult<Option<PyOb
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_record_failure(target: String, category: i32) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
@@ -914,7 +918,7 @@ fn py_record_failure(target: String, category: i32) -> PyResult<()> {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_award_xp(amount: u64) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
@@ -929,7 +933,7 @@ fn py_award_xp(amount: u64) -> PyResult<()> {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_get_xp_state(py: Python<'_>) -> PyResult<Option<PyObject>> {
     let global = GLOBAL_SHM.lock().unwrap();
@@ -946,7 +950,7 @@ fn py_get_xp_state(py: Python<'_>) -> PyResult<Option<PyObject>> {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_set_health_score(score: f64) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
@@ -961,7 +965,7 @@ fn py_set_health_score(score: f64) -> PyResult<()> {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_get_health_score() -> PyResult<f64> {
     let global = GLOBAL_SHM.lock().unwrap();
@@ -974,7 +978,7 @@ fn py_get_health_score() -> PyResult<f64> {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_record_resource_usage(pid: u32, cpu_usage: f32, memory_kb: u64) -> PyResult<()> {
     let mut global = GLOBAL_SHM.lock().unwrap();
@@ -989,7 +993,7 @@ fn py_record_resource_usage(pid: u32, cpu_usage: f32, memory_kb: u64) -> PyResul
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_update_router_metrics(
     lifecycle_inc: u64,
@@ -1001,7 +1005,7 @@ fn py_update_router_metrics(
         .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(e.to_string()))
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyfunction]
 fn py_get_router_metrics(py: Python<'_>) -> PyResult<PyObject> {
     let global = GLOBAL_SHM.lock().unwrap();
@@ -1024,7 +1028,7 @@ fn py_get_router_metrics(py: Python<'_>) -> PyResult<PyObject> {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pymodule]
 fn thegent_shm(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SHMInterface>()?;
@@ -1702,7 +1706,7 @@ mod tests {
         // Health score should be one of the written values
         let shm = SHMInterface::open(&mmap_path).expect("open shm");
         let final_score = shm.do_get_health_score();
-        assert!(final_score >= 0.5 && final_score <= 0.65);
+        assert!((0.5..=0.65).contains(&final_score));
     }
 
     // ========================================================================

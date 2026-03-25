@@ -65,18 +65,18 @@ class XMLOutputAdapter:
         normalized_tags = {str(k).upper().replace("-", "_"): v for k, v in tags.items()}
 
         parse_errors = []
-        
+
         # Check for truncation using partial state detection FIRST
         # This catches cases like <SUMMARY>running<DETAILS>work where tags extraction returns {}
         parser = IncrementalXMLParser()
         partial = parser.get_partial_state(text)
-        
+
         # Determine parse errors - check truncation BEFORE checking empty tags
         if partial.get("is_truncated"):
             parse_errors.append("parse_truncated")
         elif not normalized_tags:
             parse_errors.append("no_xml_tags_detected")
-        
+
         # Early return for empty/invalid cases
         if not normalized_tags:
             return AdapterResult(

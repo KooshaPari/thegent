@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import orjson as json
+import json
 import re
 from typing import Any
 
@@ -35,5 +35,5 @@ def expected_trend_health_signature() -> tuple[dict[str, object], str]:
         "gap_penalty": 10.0,
         "missing_baseline_penalty": 45.0,
     }
-    signature = hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(",", ":").decode().decode()).encode("utf-8")).hexdigest()
+    signature = hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     return policy, signature

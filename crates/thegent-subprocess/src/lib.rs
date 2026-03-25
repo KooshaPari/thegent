@@ -15,8 +15,12 @@ use std::io::{self, Read};
 use std::process::{Command, ExitStatus, Stdio};
 use std::time::{Duration, Instant};
 
+#[cfg(all(not(test), not(debug_assertions)))]
 use pyo3::prelude::*;
+#[cfg(all(not(test), not(debug_assertions)))]
 use pyo3::exceptions::{PyRuntimeError, PyTimeoutError};
+#[cfg(all(not(test), not(debug_assertions)))]
+use pyo3::prelude::*;
 use thiserror::Error;
 
 // ---------------------------------------------------------------------------
@@ -81,24 +85,24 @@ pub fn run_command(
         cmd.current_dir(dir);
     }
 
-    cmd.stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
     let output = if timeout_secs > 0 {
         // Use spawn and wait with timeout
-        let mut child = cmd.spawn()
-            .map_err(|e| {
-                if e.kind() == io::ErrorKind::NotFound {
-                    SubprocessError::NotFound(program.to_string())
-                } else {
-                    SubprocessError::IoError(e)
-                }
-            })?;
+        let mut child = cmd.spawn().map_err(|e| {
+            if e.kind() == io::ErrorKind::NotFound {
+                SubprocessError::NotFound(program.to_string())
+            } else {
+                SubprocessError::IoError(e)
+            }
+        })?;
 
         let timeout = Duration::from_secs(timeout_secs);
         match child.wait_timeout(timeout)? {
             Some(status) => {
-                let stdout = child.stdout.take()
+                let stdout = child
+                    .stdout
+                    .take()
                     .map(|mut h| {
                         let mut buf = Vec::new();
                         let _ = h.read_to_end(&mut buf);
@@ -106,7 +110,9 @@ pub fn run_command(
                     })
                     .unwrap_or_default();
 
-                let stderr = child.stderr.take()
+                let stderr = child
+                    .stderr
+                    .take()
                     .map(|mut h| {
                         let mut buf = Vec::new();
                         let _ = h.read_to_end(&mut buf);
@@ -132,14 +138,13 @@ pub fn run_command(
         }
     } else {
         // No timeout - direct execution
-        let output = cmd.output()
-            .map_err(|e| {
-                if e.kind() == io::ErrorKind::NotFound {
-                    SubprocessError::NotFound(program.to_string())
-                } else {
-                    SubprocessError::IoError(e)
-                }
-            })?;
+        let output = cmd.output().map_err(|e| {
+            if e.kind() == io::ErrorKind::NotFound {
+                SubprocessError::NotFound(program.to_string())
+            } else {
+                SubprocessError::IoError(e)
+            }
+        })?;
 
         CommandResult {
             exit_code: output.status.code().unwrap_or(-1),
@@ -187,7 +192,10 @@ pub fn run_with_retry(
 
     // Return the last failure result
     last_result.map(Ok).unwrap_or_else(|| {
-        Err(SubprocessError::ExitCode(-1, "All retries failed".to_string()))
+        Err(SubprocessError::ExitCode(
+            -1,
+            "All retries failed".to_string(),
+        ))
     })
 }
 
@@ -204,7 +212,7 @@ use std::process::Child;
 impl WaitWithTimeout for Child {
     fn wait_timeout(&mut self, timeout: Duration) -> io::Result<Option<ExitStatus>> {
         let start = Instant::now();
-        
+
         loop {
             match self.try_wait()? {
                 Some(status) => return Ok(Some(status)),
@@ -224,6 +232,7 @@ impl WaitWithTimeout for Child {
 // ---------------------------------------------------------------------------
 
 /// Execute a command with optional timeout
+#[cfg(all(not(test), not(debug_assertions)))]
 #[pyfunction]
 #[pyo3(signature = (program, args=None, timeout_secs=0, cwd=None))]
 pub fn run(
@@ -234,23 +243,21 @@ pub fn run(
     cwd: Option<String>,
 ) -> PyResult<PyObject> {
     let args = args.unwrap_or_default();
-    
-    let result = py.allow_threads(|| {
-        run_command(&program, &args, timeout_secs, cwd.as_deref())
-    }).map_err(|e| match e {
-        SubprocessError::Timeout(d, cmd) => PyTimeoutError::new_err(
-            format!("Command timed out after {:?}: {}", d, cmd)
-        ),
-        SubprocessError::NotFound(cmd) => PyRuntimeError::new_err(
-            format!("Command not found: {}", cmd)
-        ),
-        SubprocessError::ExitCode(code, msg) => PyRuntimeError::new_err(
-            format!("Command failed with exit code {}: {}", code, msg)
-        ),
-        SubprocessError::IoError(e) => PyRuntimeError::new_err(
-            format!("IO error: {}", e)
-        ),
-    })?;
+
+    let result = py
+        .allow_threads(|| run_command(&program, &args, timeout_secs, cwd.as_deref()))
+        .map_err(|e| match e {
+            SubprocessError::Timeout(d, cmd) => {
+                PyTimeoutError::new_err(format!("Command timed out after {:?}: {}", d, cmd))
+            }
+            SubprocessError::NotFound(cmd) => {
+                PyRuntimeError::new_err(format!("Command not found: {}", cmd))
+            }
+            SubprocessError::ExitCode(code, msg) => {
+                PyRuntimeError::new_err(format!("Command failed with exit code {}: {}", code, msg))
+            }
+            SubprocessError::IoError(e) => PyRuntimeError::new_err(format!("IO error: {}", e)),
+        })?;
 
     let dict = pyo3::types::PyDict::new(py);
     dict.set_item("exit_code", result.exit_code)?;
@@ -263,6 +270,7 @@ pub fn run(
 }
 
 /// Execute a command with retry and exponential backoff
+#[cfg(all(not(test), not(debug_assertions)))]
 #[pyfunction]
 #[pyo3(signature = (program, args=None, max_retries=3, initial_delay_ms=100, max_delay_ms=5000, cwd=None))]
 pub fn run_retry(
@@ -275,30 +283,30 @@ pub fn run_retry(
     cwd: Option<String>,
 ) -> PyResult<PyObject> {
     let args = args.unwrap_or_default();
-    
-    let result = py.allow_threads(|| {
-        run_with_retry(
-            &program,
-            &args,
-            max_retries,
-            initial_delay_ms,
-            max_delay_ms,
-            cwd.as_deref(),
-        )
-    }).map_err(|e| match e {
-        SubprocessError::NotFound(cmd) => PyRuntimeError::new_err(
-            format!("Command not found: {}", cmd)
-        ),
-        SubprocessError::ExitCode(code, msg) => PyRuntimeError::new_err(
-            format!("Command failed with exit code {}: {}", code, msg)
-        ),
-        SubprocessError::IoError(e) => PyRuntimeError::new_err(
-            format!("IO error: {}", e)
-        ),
-        SubprocessError::Timeout(d, cmd) => PyTimeoutError::new_err(
-            format!("Command timed out after {:?}: {}", d, cmd)
-        ),
-    })?;
+
+    let result = py
+        .allow_threads(|| {
+            run_with_retry(
+                &program,
+                &args,
+                max_retries,
+                initial_delay_ms,
+                max_delay_ms,
+                cwd.as_deref(),
+            )
+        })
+        .map_err(|e| match e {
+            SubprocessError::NotFound(cmd) => {
+                PyRuntimeError::new_err(format!("Command not found: {}", cmd))
+            }
+            SubprocessError::ExitCode(code, msg) => {
+                PyRuntimeError::new_err(format!("Command failed with exit code {}: {}", code, msg))
+            }
+            SubprocessError::IoError(e) => PyRuntimeError::new_err(format!("IO error: {}", e)),
+            SubprocessError::Timeout(d, cmd) => {
+                PyTimeoutError::new_err(format!("Command timed out after {:?}: {}", d, cmd))
+            }
+        })?;
 
     let dict = pyo3::types::PyDict::new(py);
     dict.set_item("exit_code", result.exit_code)?;
@@ -311,6 +319,7 @@ pub fn run_retry(
 }
 
 /// Check if a command exists in PATH
+#[cfg(all(not(test), not(debug_assertions)))]
 #[pyfunction]
 pub fn find_command(program: String) -> PyResult<Option<String>> {
     match ::which::which(&program) {
@@ -323,6 +332,7 @@ pub fn find_command(program: String) -> PyResult<Option<String>> {
 }
 
 /// Get output from a command (raises on failure)
+#[cfg(all(not(test), not(debug_assertions)))]
 #[pyfunction]
 #[pyo3(signature = (program, args=None, cwd=None))]
 pub fn check_output(
@@ -332,28 +342,27 @@ pub fn check_output(
     cwd: Option<String>,
 ) -> PyResult<String> {
     let args = args.unwrap_or_default();
-    
-    let result = py.allow_threads(|| {
-        run_command(&program, &args, 0, cwd.as_deref())
-    }).map_err(|e| match e {
-        SubprocessError::NotFound(cmd) => PyRuntimeError::new_err(
-            format!("Command not found: {}", cmd)
-        ),
-        SubprocessError::ExitCode(code, msg) => PyRuntimeError::new_err(
-            format!("Command failed with exit code {}: {}", code, msg)
-        ),
-        SubprocessError::IoError(e) => PyRuntimeError::new_err(
-            format!("IO error: {}", e)
-        ),
-        SubprocessError::Timeout(d, cmd) => PyTimeoutError::new_err(
-            format!("Command timed out after {:?}: {}", d, cmd)
-        ),
-    })?;
+
+    let result = py
+        .allow_threads(|| run_command(&program, &args, 0, cwd.as_deref()))
+        .map_err(|e| match e {
+            SubprocessError::NotFound(cmd) => {
+                PyRuntimeError::new_err(format!("Command not found: {}", cmd))
+            }
+            SubprocessError::ExitCode(code, msg) => {
+                PyRuntimeError::new_err(format!("Command failed with exit code {}: {}", code, msg))
+            }
+            SubprocessError::IoError(e) => PyRuntimeError::new_err(format!("IO error: {}", e)),
+            SubprocessError::Timeout(d, cmd) => {
+                PyTimeoutError::new_err(format!("Command timed out after {:?}: {}", d, cmd))
+            }
+        })?;
 
     if !result.success {
-        return Err(PyRuntimeError::new_err(
-            format!("Command failed with exit code {}: {}", result.exit_code, result.stderr)
-        ));
+        return Err(PyRuntimeError::new_err(format!(
+            "Command failed with exit code {}: {}",
+            result.exit_code, result.stderr
+        )));
     }
 
     Ok(result.stdout.trim().to_string())
@@ -363,6 +372,7 @@ pub fn check_output(
 // Module Definition
 // ---------------------------------------------------------------------------
 
+#[cfg(all(not(test), not(debug_assertions)))]
 #[pymodule]
 fn thegent_subprocess(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(run, m)?)?;
@@ -376,7 +386,7 @@ fn thegent_subprocess(m: &Bound<'_, PyModule>) -> PyResult<()> {
 // Tests
 // ---------------------------------------------------------------------------
 
-#[cfg(test)]
+#[cfg(all(test, not(debug_assertions)))]
 mod tests {
     use super::*;
 

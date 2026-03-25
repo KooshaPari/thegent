@@ -5,7 +5,7 @@ Saves and restores session state including layouts, history, and settings.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path

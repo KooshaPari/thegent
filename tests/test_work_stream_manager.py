@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import threading
 from pathlib import Path
 
@@ -256,6 +257,16 @@ def test_claim_success_uses_all_not_any(tmp_path: Path, monkeypatch) -> None:
     # Even though WBS_AGENT_PROGRESS.md write succeeds, the overall claim
     # must fail because WORK_STREAM.md write failed.
     assert result["success"] is False, "claim() must return success=False when any file write fails (all() semantics)"
+
+
+def test_occ_hash_consistency_read_text_vs_read_bytes(tmp_path: Path) -> None:
+    file_path = tmp_path / "occ.txt"
+    file_path.write_bytes(b"line-1\r\nline-2\r\n")
+
+    bytes_hash = hashlib.sha256(file_path.read_bytes()).hexdigest()
+    text_hash = hashlib.sha256(file_path.read_text(encoding="utf-8").encode("utf-8")).hexdigest()
+
+    assert bytes_hash != text_hash
 
 
 def test_claim_blocks_when_dependencies_unmet(tmp_path: Path) -> None:

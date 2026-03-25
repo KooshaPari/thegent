@@ -8,10 +8,12 @@ from pathlib import Path
 
 try:
     from civilization_agent_memory import MemoryService, AgentMemory, MemoryType
+
     MEMORY_SERVICE_AVAILABLE = True
 except ImportError:
     try:
         from scripts.civilization_agent_memory import MemoryService, AgentMemory, MemoryType
+
         MEMORY_SERVICE_AVAILABLE = True
     except ImportError:
         MEMORY_SERVICE_AVAILABLE = False
@@ -32,6 +34,7 @@ class TestMemoryStorage(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests."""
         import shutil
+
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
@@ -47,11 +50,11 @@ class TestMemoryStorage(unittest.TestCase):
         )
 
         result = self.service.store_memory(memory)
-        self.assertTrue(result)
+        assert result
 
         # Verify file created
         memory_file = self.service._get_memory_file("agent-1")
-        self.assertTrue(memory_file.exists())
+        assert memory_file.exists()
 
     def test_store_learning_memory(self):
         """Test storing learning memories."""
@@ -65,7 +68,7 @@ class TestMemoryStorage(unittest.TestCase):
         )
 
         result = self.service.store_memory(memory)
-        self.assertTrue(result)
+        assert result
 
     def test_store_decision_memory(self):
         """Test storing decision memories."""
@@ -79,7 +82,7 @@ class TestMemoryStorage(unittest.TestCase):
         )
 
         result = self.service.store_memory(memory)
-        self.assertTrue(result)
+        assert result
 
     def test_store_error_memory(self):
         """Test storing error memories."""
@@ -93,7 +96,7 @@ class TestMemoryStorage(unittest.TestCase):
         )
 
         result = self.service.store_memory(memory)
-        self.assertTrue(result)
+        assert result
 
     def test_store_multiple_memories(self):
         """Test storing multiple memories for same agent."""
@@ -109,7 +112,7 @@ class TestMemoryStorage(unittest.TestCase):
 
         # Verify all stored
         memories = self.service._load_agent_memories("agent-1")
-        self.assertEqual(len(memories), 5)
+        assert len(memories) == 5
 
 
 @unittest.skipUnless(MEMORY_SERVICE_AVAILABLE, "Memory service required")
@@ -160,24 +163,25 @@ class TestMemoryQuerying(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests."""
         import shutil
+
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
     def test_query_all_memories(self):
         """Test querying all memories."""
         memories = self.service.query_memory(self.agent_id)
-        self.assertEqual(len(memories), 6)
+        assert len(memories) == 6
 
     def test_query_by_type(self):
         """Test querying by memory type."""
         executions = self.service.query_memory(self.agent_id, MemoryType.EXECUTION)
-        self.assertEqual(len(executions), 3)
+        assert len(executions) == 3
 
         learnings = self.service.query_memory(self.agent_id, MemoryType.LEARNING)
-        self.assertEqual(len(learnings), 2)
+        assert len(learnings) == 2
 
         errors = self.service.query_memory(self.agent_id, MemoryType.ERROR)
-        self.assertEqual(len(errors), 1)
+        assert len(errors) == 1
 
     def test_query_by_time_range(self):
         """Test querying by time range."""
@@ -191,20 +195,20 @@ class TestMemoryQuerying(unittest.TestCase):
         )
 
         # Should include memories between timestamps
-        self.assertGreater(len(memories), 0)
+        assert len(memories) > 0
         for memory in memories:
-            self.assertGreaterEqual(memory.timestamp, start_time)
-            self.assertLessEqual(memory.timestamp, end_time)
+            assert memory.timestamp >= start_time
+            assert memory.timestamp <= end_time
 
     def test_query_with_limit(self):
         """Test querying with result limit."""
         memories = self.service.query_memory(self.agent_id, limit=3)
-        self.assertEqual(len(memories), 3)
+        assert len(memories) == 3
 
     def test_query_nonexistent_agent(self):
         """Test querying for agent with no memories."""
         memories = self.service.query_memory("nonexistent-agent")
-        self.assertEqual(len(memories), 0)
+        assert len(memories) == 0
 
 
 @unittest.skipUnless(MEMORY_SERVICE_AVAILABLE, "Memory service required")
@@ -259,6 +263,7 @@ class TestMemoryStats(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests."""
         import shutil
+
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
@@ -266,12 +271,12 @@ class TestMemoryStats(unittest.TestCase):
         """Test retrieving agent statistics."""
         stats = self.service.get_agent_stats(self.agent_id)
 
-        self.assertEqual(stats["total_memories"], 15)
-        self.assertEqual(stats["error_count"], 2)
-        self.assertEqual(stats["learning_count"], 3)
-        self.assertEqual(stats["memory_types"]["execution"], 10)
-        self.assertEqual(stats["memory_types"]["error"], 2)
-        self.assertEqual(stats["memory_types"]["learning"], 3)
+        assert stats["total_memories"] == 15
+        assert stats["error_count"] == 2
+        assert stats["learning_count"] == 3
+        assert stats["memory_types"]["execution"] == 10
+        assert stats["memory_types"]["error"] == 2
+        assert stats["memory_types"]["learning"] == 3
 
     def test_success_rate_calculation(self):
         """Test success rate calculation."""
@@ -280,7 +285,7 @@ class TestMemoryStats(unittest.TestCase):
         # 10 successful executions, 2 errors out of 12 total
         # Success rate: 10/12 = 0.83
         expected_rate = 10 / 12
-        self.assertAlmostEqual(stats["success_rate"], round(expected_rate, 2), places=1)
+        self.assertAlmostEqual(stats["success_rate"], round(expected_rate, 2), places=1)  # noqa: PT009
 
     def test_average_importance(self):
         """Test average importance calculation."""
@@ -288,15 +293,15 @@ class TestMemoryStats(unittest.TestCase):
 
         # Average of 10*0.7 + 2*0.3 + 3*0.9 = 7 + 0.6 + 2.7 = 10.3 / 15 = 0.69
         expected_avg = (10 * 0.7 + 2 * 0.3 + 3 * 0.9) / 15
-        self.assertAlmostEqual(stats["average_importance"], round(expected_avg, 2), places=1)
+        self.assertAlmostEqual(stats["average_importance"], round(expected_avg, 2), places=1)  # noqa: PT009
 
     def test_timestamps_in_stats(self):
         """Test that first and last timestamps are recorded."""
         stats = self.service.get_agent_stats(self.agent_id)
 
-        self.assertIsNotNone(stats["first_memory"])
-        self.assertIsNotNone(stats["last_memory"])
-        self.assertLess(stats["first_memory"], stats["last_memory"])
+        assert stats["first_memory"] is not None
+        assert stats["last_memory"] is not None
+        assert stats["first_memory"] < stats["last_memory"]
 
 
 @unittest.skipUnless(MEMORY_SERVICE_AVAILABLE, "Memory service required")
@@ -312,6 +317,7 @@ class TestMemoryOperations(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests."""
         import shutil
+
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
@@ -337,9 +343,9 @@ class TestMemoryOperations(unittest.TestCase):
             limit=5,
         )
 
-        self.assertEqual(len(important), 3)  # 0.7, 0.8, 0.9
+        assert len(important) == 3  # 0.7, 0.8, 0.9
         for memory in important:
-            self.assertGreaterEqual(memory.importance, 0.7)
+            assert memory.importance >= 0.7
 
     def test_purge_old_memories(self):
         """Test purging memories older than TTL."""
@@ -369,11 +375,11 @@ class TestMemoryOperations(unittest.TestCase):
         ttl_seconds = 30 * 60
         deleted = self.service.purge_old_memories(self.agent_id, ttl_seconds)
 
-        self.assertEqual(deleted, 5)  # Old memories deleted
+        assert deleted == 5  # Old memories deleted
 
         # Verify only recent remain
         remaining = self.service.query_memory(self.agent_id)
-        self.assertEqual(len(remaining), 5)
+        assert len(remaining) == 5
 
     def test_get_learning_summary(self):
         """Test getting learning summary."""
@@ -393,11 +399,11 @@ class TestMemoryOperations(unittest.TestCase):
 
         summary = self.service.get_learning_summary(self.agent_id, limit=2)
 
-        self.assertEqual(len(summary), 2)
+        assert len(summary) == 2
         for item in summary:
-            self.assertIn("learning", item)
-            self.assertIn("importance", item)
-            self.assertIn("timestamp", item)
+            assert "learning" in item
+            assert "importance" in item
+            assert "timestamp" in item
 
     def test_clear_agent_memory(self):
         """Test clearing all memories for an agent."""
@@ -415,15 +421,15 @@ class TestMemoryOperations(unittest.TestCase):
 
         # Verify they exist
         memories = self.service.query_memory(self.agent_id)
-        self.assertEqual(len(memories), 10)
+        assert len(memories) == 10
 
         # Clear all
         result = self.service.clear_agent_memory(self.agent_id)
-        self.assertTrue(result)
+        assert result
 
         # Verify cleared
         memories = self.service.query_memory(self.agent_id)
-        self.assertEqual(len(memories), 0)
+        assert len(memories) == 0
 
 
 @unittest.skipUnless(MEMORY_SERVICE_AVAILABLE, "Memory service required")
@@ -437,6 +443,7 @@ class TestMemoryPersistence(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests."""
         import shutil
+
         if Path(self.temp_dir).exists():
             shutil.rmtree(self.temp_dir)
 
@@ -462,7 +469,7 @@ class TestMemoryPersistence(unittest.TestCase):
 
         # Verify memories loaded
         memories = service2.query_memory(agent_id)
-        self.assertEqual(len(memories), 5)
+        assert len(memories) == 5
 
     def test_stats_persist_across_restarts(self):
         """Test that stats files persist."""
@@ -487,9 +494,9 @@ class TestMemoryPersistence(unittest.TestCase):
         stats2 = service2.get_agent_stats(agent_id)
 
         # Stats should match
-        self.assertEqual(stats1["total_memories"], stats2["total_memories"])
-        self.assertEqual(stats1["memory_types"], stats2["memory_types"])
+        assert stats1["total_memories"] == stats2["total_memories"]
+        assert stats1["memory_types"] == stats2["memory_types"]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

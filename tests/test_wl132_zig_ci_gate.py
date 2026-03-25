@@ -39,12 +39,10 @@ def test_ci_yml_zig_job_references_zmx_interop() -> None:
     assert "thegent-zmx-interop" in text, "ci.yml zig-readiness job must reference 'thegent-zmx-interop'"
 
 
-def test_ci_yml_zig_job_is_non_blocking() -> None:
-    """zig-readiness job must set continue-on-error: true (P2/experimental)."""
+def test_ci_yml_zig_job_is_blocking_required_gate() -> None:
+    """zig-readiness job must be blocking after promotion to required gate."""
     text = _read_ci_yml()
-    assert "continue-on-error: true" in text, (
-        "zig-readiness job must have 'continue-on-error: true' (Zig is P2/experimental, must not block CI)"
-    )
+    assert "continue-on-error: true" not in text, "zig-readiness must not be non-blocking"
 
 
 def test_ci_yml_zig_job_has_wl132_comment() -> None:
@@ -61,15 +59,24 @@ def test_ci_yml_zig_job_has_wl132_comment() -> None:
 def test_ci_yml_zig_job_has_cargo_build() -> None:
     """zig-readiness job must include a cargo build step for zmx-interop."""
     text = _read_ci_yml()
-    assert "cargo build -p thegent-zmx-interop" in text, (
-        "zig-readiness job must run 'cargo build -p thegent-zmx-interop'"
+    assert "cargo build --locked -p thegent-zmx-interop" in text, (
+        "zig-readiness job must run 'cargo build --locked -p thegent-zmx-interop'"
     )
 
 
 def test_ci_yml_zig_job_has_cargo_test() -> None:
     """zig-readiness job must include a cargo test step for zmx-interop."""
     text = _read_ci_yml()
-    assert "cargo test -p thegent-zmx-interop" in text, "zig-readiness job must run 'cargo test -p thegent-zmx-interop'"
+    assert "cargo test --locked -p thegent-zmx-interop" in text, (
+        "zig-readiness job must run 'cargo test --locked -p thegent-zmx-interop'"
+    )
+
+
+def test_ci_yml_zig_job_has_explicit_criteria_step() -> None:
+    """zig-readiness job must verify explicit criteria inputs before build/test."""
+    text = _read_ci_yml()
+    assert "Verify Zig gate criteria inputs" in text
+    assert 'name = "thegent-zmx-interop"' in text
 
 
 # ---------------------------------------------------------------------------

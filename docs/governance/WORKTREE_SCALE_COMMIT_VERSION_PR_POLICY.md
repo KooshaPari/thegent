@@ -14,10 +14,12 @@ Define a single policy model for how work is placed, committed, versioned, and m
 ## Enforced Worktree Layout
 
 1. Non-primary worktrees must live under `${THGENT_WORKTREE_ROOT:-<repo>/.worktrees}`.
-2. Non-primary worktree names must match `<repo-name>--<branch-slug>`.
-3. Create worktrees via `./scripts/worktree_governance.sh new <branch> [start-point]`.
-4. Validate layout via `./scripts/worktree_governance.sh check`.
-5. Legacy worktrees are blocked by default. Temporary migration override:
+2. Non-primary worktree paths must match `<domain>/<scale>/<change-anchor>/<state>/`.
+3. Create worktrees via `./scripts/worktree_governance.sh new <domain> <scale> <change-anchor> [start-point]`.
+4. Manage lifecycle state via `./scripts/worktree_governance.sh state <change-anchor> <new-state>`.
+5. Validate layout via `./scripts/worktree_governance.sh check`.
+6. List or prune worktrees via `./scripts/worktree_governance.sh list` and `./scripts/worktree_governance.sh prune [--dry-run]`.
+7. Legacy worktrees are blocked by default. Temporary migration override:
    `THGENT_WORKTREE_ALLOW_LEGACY=1`.
 
 ## Task Scale Taxonomy
@@ -64,6 +66,8 @@ Define a single policy model for how work is placed, committed, versioned, and m
 2. `pkg/<domain>-<seq>`
 3. `int/<wave>-merge-train`
 4. `hotfix/<id>`
+
+Long-lived canary or package-tracking worktrees must be refreshed. See `UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md` for the canonical command surface and rule details. The named `task quality:governance:canary-refresh` entrypoint wraps the same policy for local and CI use. This policy stays focused on commit strategy, versioning, and PR topology.
 
 ## Merge Policy
 

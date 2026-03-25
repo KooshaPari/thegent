@@ -1,6 +1,7 @@
 """Logical stream: Benchmark suites and result persistence."""
 
 from collections import OrderedDict
+from importlib import import_module
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,10 @@ from rich.table import Table
 
 console = Console()
 app = typer.Typer(help="Run benchmark suites and persist result rows.")
+
+
+def _bench_attr(name: str) -> Any:
+    return getattr(import_module("thegent.bench"), name)
 
 
 def _normalize_output_format(raw: str) -> str:
@@ -34,8 +39,6 @@ def bench_run(
     results_path: Path | None = typer.Option(None, "--results-path", help="Override path for benchmark JSONL output"),
     output_format: str = typer.Option("rich", "--output-format", "-o", help="Output format: rich|json"),
 ) -> None:
-    from thegent.bench import append_bench_record, run_suite
-
     try:
         normalized_output = _normalize_output_format(output_format)
     except ValueError as exc:
@@ -43,12 +46,12 @@ def bench_run(
         raise typer.Exit(1) from exc
 
     try:
-        record = run_suite(suite=suite, harness=harness, run_id=run_id, test_id=test_id)
+        record = _bench_attr("run_suite")(suite=suite, harness=harness, run_id=run_id, test_id=test_id)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
 
-    persisted = append_bench_record(record, path=results_path)
+    persisted = _bench_attr("append_bench_record")(record, path=results_path)
     payload = record.to_dict()
     payload["results_path"] = str(persisted)
 
@@ -71,15 +74,13 @@ def bench_compare(
     results_path: Path | None = typer.Option(None, "--results-path", help="Override path for benchmark JSONL output"),
     output_format: str = typer.Option("rich", "--output-format", "-o", help="Output format: rich|json"),
 ) -> None:
-    from thegent.bench import load_bench_records
-
     try:
         normalized_output = _normalize_output_format(output_format)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(1) from exc
 
-    records = load_bench_records(path=results_path)
+    records = _bench_attr("load_bench_records")(path=results_path)
     normalized_suite = (suite or "").strip().lower()
     filtered = [row for row in records if row.suite == normalized_suite]
     if test_id:

@@ -1,4 +1,4 @@
-https://github.com/Fission-AI/OpenSpec
+https://github.com/Fission-AI/AgilePlus
 https://github.com/ruvnet/ruvnet
 https://github.com/mcp-router/mcp-router
 https://github.com/OpenLinkSoftware/mcp-sqlalchemy-server

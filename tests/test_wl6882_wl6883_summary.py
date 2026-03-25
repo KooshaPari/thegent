@@ -76,9 +76,9 @@ def test_wl6883_read_log_file_tracks_mixed_valid_and_malformed_lines(tmp_path: P
     path.write_text(
         "\n".join(
             [
-                json.dumps(valid).decode().decode(),
+                json.dumps(valid).decode(),
                 "not-json",
-                json.dumps(valid).decode().decode(),
+                json.dumps(valid).decode(),
                 "also-bad-json",
             ]
         )

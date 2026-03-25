@@ -4,7 +4,7 @@ Ensures that even if self-evolution occurs, fundamental alignment principles can
 """
 
 import hashlib
-import orjson as json
+import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path

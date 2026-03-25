@@ -26,7 +26,9 @@ class TestGetLitellmRouterCaching:
         self._clear_cache()
         sentinel = MagicMock(name="router_sentinel")
 
-        with patch("thegent.utils.routing_impl.litellm_router._build_litellm_router", return_value=sentinel) as mock_build:
+        with patch(
+            "thegent.utils.routing_impl.litellm_router._build_litellm_router", return_value=sentinel
+        ) as mock_build:
             from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
             r1 = get_litellm_router("cost-based-routing")
@@ -40,7 +42,9 @@ class TestGetLitellmRouterCaching:
         self._clear_cache()
         sentinel = MagicMock(name="router_once")
 
-        with patch("thegent.utils.routing_impl.litellm_router._build_litellm_router", return_value=sentinel) as mock_build:
+        with patch(
+            "thegent.utils.routing_impl.litellm_router._build_litellm_router", return_value=sentinel
+        ) as mock_build:
             from thegent.utils.routing_impl.litellm_router import get_litellm_router
 
             for _ in range(10):
@@ -81,7 +85,9 @@ class TestGetLitellmRouterCaching:
         second = MagicMock(name="router_v2")
         responses = [first, second]
 
-        with patch("thegent.utils.routing_impl.litellm_router._build_litellm_router", side_effect=responses) as mock_build:
+        with patch(
+            "thegent.utils.routing_impl.litellm_router._build_litellm_router", side_effect=responses
+        ) as mock_build:
             from thegent.utils.routing_impl.litellm_router import _router_cache, get_litellm_router
 
             r1 = get_litellm_router("cost-based-routing")

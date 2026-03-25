@@ -15,6 +15,7 @@ import threading
 @dataclass
 class Message:
     """Message between agents."""
+
     sender: str
     receiver: str  # or "broadcast"
     message_type: str
@@ -27,9 +28,7 @@ class SwarmChannel:
     """Fast communication channel for agents."""
 
     def __init__(self, max_queue_size: int = 1000):
-        self._queues: dict[str, queue.Queue] = defaultdict(
-            lambda: queue.Queue(maxsize=max_queue_size)
-        )
+        self._queues: dict[str, queue.Queue] = defaultdict(lambda: queue.Queue(maxsize=max_queue_size))
         self._subscribers: dict[str, list[Callable]] = defaultdict(list)
         self._lock = threading.Lock()
         self._message_count = 0
@@ -85,7 +84,5 @@ class SwarmChannel:
         return {
             "message_count": self._message_count,
             "average_latency_ms": self.average_latency(),
-            "queue_sizes": {
-                k: q.qsize() for k, q in self._queues.items()
-            }
+            "queue_sizes": {k: q.qsize() for k, q in self._queues.items()},
         }

@@ -1,4 +1,5 @@
 """TheGent integrations package."""
+
 import warnings
 
 # Base integration components

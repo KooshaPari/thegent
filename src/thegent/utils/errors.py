@@ -53,7 +53,7 @@ def handle_error(
     log_level: str = "error",
 ) -> None:
     """Handle an error with consistent logging.
-    
+
     Args:
         error: The exception that occurred
         context: Additional context about where the error occurred
@@ -63,7 +63,7 @@ def handle_error(
     msg = f"{context}: {error}" if context else str(error)
     getattr(logger, log_level.lower())(msg)
     logger.debug(traceback.format_exc())
-    
+
     if reraise:
         raise error
 
@@ -74,16 +74,16 @@ def safe_execute(
     default: T | None = None,
     log_errors: bool = True,
     **kwargs: Any,
-) -> T:
+) -> T | None:
     """Execute a function safely, returning default on error.
-    
+
     Args:
         func: Function to execute
         *args: Positional arguments for func
         default: Default value to return on error
         log_errors: Whether to log errors
         **kwargs: Keyword arguments for func
-    
+
     Returns:
         Result of func or default on error
     """
@@ -97,49 +97,55 @@ def safe_execute(
 
 def suppress_errors(default: T | None = None) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator that suppresses errors and returns default.
-    
+
     Args:
         default: Default value to return on error
-    
+
     Example:
         @suppress_errors(default=[])
         def get_items():
             raise ValueError("test")
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         def wrapper(*args: Any, **kwargs: Any) -> T:
             try:
                 return func(*args, **kwargs)
             except Exception:
                 return default  # type: ignore
+
         return wrapper
+
     return decorator
 
 
 def wrap_errors(new_exception: type[Exception]) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """Decorator that wraps errors in a new exception type.
-    
+
     Args:
         new_exception: Exception type to wrap with
-    
+
     Example:
         @wrap_errors(NetworkError)
         def fetch_url(url: str) -> str:
             raise ValueError("invalid")
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         def wrapper(*args: Any, **kwargs: Any) -> T:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
                 raise new_exception(str(e)) from e
+
         return wrapper
+
     return decorator
 
 
 class ErrorContext:
     """Context manager for error handling."""
-    
+
     def __init__(
         self,
         context: str,
@@ -150,10 +156,10 @@ class ErrorContext:
         self.reraise = reraise
         self.log_level = log_level
         self.error: Exception | None = None
-    
+
     def __enter__(self) -> "ErrorContext":
         return self
-    
+
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         if exc_val is not None:
             self.error = exc_val

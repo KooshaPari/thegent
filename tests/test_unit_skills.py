@@ -174,7 +174,7 @@ class TestSkillDiscovery:
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text("# Has content", encoding="utf-8")
         (skill_dir / "skill.json").write_text(
-            json.dumps({"name": "   ", "description": "bad", "version": "1.0.0", "entrypoint": "x"}).decode().decode(),
+            json.dumps({"name": "   ", "description": "bad", "version": "1.0.0", "entrypoint": "x"}).decode(),
             encoding="utf-8",
         )
 

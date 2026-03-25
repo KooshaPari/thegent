@@ -56,7 +56,7 @@ def _make_state(
     if owner is not None:
         payload["owner"] = owner
     sp = d / "state.json"
-    sp.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
+    sp.write_text(json.dumps(payload).decode(), encoding="utf-8")
     return sp
 
 
@@ -167,7 +167,9 @@ def test_resume_impl_fails_when_run_id_missing_from_state(tmp_path: Path, monkey
     monkeypatch.setattr("thegent.cli.commands.impl.ThegentSettings", lambda: _mock_settings(tmp_path))
     d = tmp_path / "sess-bad"
     d.mkdir()
-    (d / "state.json").write_text(json.dumps({"session_id": "sess-bad", "status": "running"}).decode().decode(), encoding="utf-8")
+    (d / "state.json").write_text(
+        json.dumps({"session_id": "sess-bad", "status": "running"}).decode(), encoding="utf-8"
+    )
     result = resume_impl(session_id="sess-bad")
     assert result["exit_code"] == 1
     assert "missing run_id" in result["error"]

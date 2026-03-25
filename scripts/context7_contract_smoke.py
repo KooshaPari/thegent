@@ -34,7 +34,11 @@ def main() -> int:
     if status != 200:
         raise RuntimeError(f"Context7 health check returned non-200 status: {status}")
 
-    print(json.dumps({"ok": True, "target": "context7", "url": url, "status": status, "body": body[:120]}).decode().decode())
+    print(
+        json.dumps({"ok": True, "target": "context7", "url": url, "status": status, "body": body[:120]})
+        .decode()
+        .decode()
+    )
     return 0
 
 

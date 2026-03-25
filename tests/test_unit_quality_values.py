@@ -25,7 +25,7 @@ def _write_benchmarks(path):
             },
         },
     }
-    path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
+    path.write_text(json.dumps(payload).decode(), encoding="utf-8")
 
 
 def test_quality_index_uses_task_type_benchmarks_when_legacy_keys_missing(tmp_path):

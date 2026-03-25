@@ -9,9 +9,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
-from thegent.execution_coercion_helpers import as_int as _as_int_impl
 from thegent.execution_event_builders import (
     build_feedback_event,
     build_finish_event,
@@ -20,8 +17,15 @@ from thegent.execution_event_builders import (
     build_schema_marker_event,
 )
 from thegent.execution_hash_helpers import calculate_stable_record_hash
-from thegent.execution_jsonl_parsers import parse_checkpoint_line, parse_checkpoint_by_id
+from thegent.execution_jsonl_parsers import parse_checkpoint_by_id, parse_checkpoint_line
+from thegent.execution_run_scan_helpers import extract_domain_tag as _extract_domain_tag
+from thegent.execution_run_scan_helpers import extract_run_id as _extract_run_id
+from thegent.execution_run_scan_helpers import extract_session_id as _extract_session_id
+from thegent.execution_run_scan_helpers import filter_expired_record as _filter_expired_record
+from thegent.execution_run_scan_helpers import process_calibration_entry as _process_calibration_entry
 from thegent.execution_run_scan_helpers import process_run_entry as _process_run_entry
+from thegent.execution_run_scan_helpers import process_token_match as _process_token_match
+from thegent.execution_run_scan_helpers import update_run_state as _update_run_state
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -86,32 +90,6 @@ def reset_execution_diagnostics() -> None:
     }
 
 
-def _as_float(value: Any, default: float) -> float:
-    """Coerce arbitrary values to float with a safe default."""
-    return _as_float_impl(value, default)
-
-
-def _as_int(value: Any, default: int) -> int:
-    """Coerce arbitrary values to int with a safe default."""
-    return _as_int_impl(value, default)
-
-
-def _as_bool(value: Any, default: bool) -> bool:
-    """Coerce arbitrary values to bool with a safe default."""
-    return _as_bool_impl(value, default)
-
-
-def _process_run_entry(line: str, runs: dict[str, dict[str, Any]]) -> None:
-    """Process a single line from the registry file into a run entry."""
-    try:
-        entry = json.loads(line)
-        run_id = entry.get("run_id") or entry.get("id")
-        if run_id:
-            runs[run_id] = entry
-    except Exception:
-        pass
-
-
 def _check_session_id(line: str, session_id: str) -> bool:
     """Check if a line contains the given session_id."""
     try:
@@ -121,7 +99,8 @@ def _check_session_id(line: str, session_id: str) -> bool:
         return False
 
 
-from .state import RunState, RunMeta, CheckpointMeta, CalibrationRegistry
+from .state import CalibrationRegistry, CheckpointMeta, RunMeta, RunState
+
 
 class RunRegistry:
     """Manages persistence and retrieval of execution runs.
@@ -328,7 +307,7 @@ class RunRegistry:
         state: RunState | None = None
         with self.registry_path.open("r", encoding="utf-8") as f:
             for line in f:
-                state = _update_run_state(line, run_id, state)
+                state = _update_run_state(line, run_id, state, RunState)
         return state
 
     def list_runs(self, limit: int = 50) -> list[dict[str, Any]]:
@@ -532,6 +511,34 @@ class MessageRegistry:
             f.write(json.dumps(update).decode() + "\n")
 
 
+def _parse_chat_line(line: str) -> ChatEntry | None:
+    """Parse a chat history line into a validated entry."""
+    try:
+        data = json.loads(line)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    try:
+        return ChatEntry.model_validate(data)
+    except Exception:
+        return None
+
+
+def _parse_message_line(line: str) -> MessageEntry | None:
+    """Parse a message queue line into a validated entry."""
+    try:
+        data = json.loads(line)
+    except Exception:
+        return None
+    if not isinstance(data, dict) or data.get("event") == "update":
+        return None
+    try:
+        return MessageEntry.model_validate(data)
+    except Exception:
+        return None
+
+
 class AuditEntry(BaseModel):
     """Audit trail entry for session actions (WP-9005)."""
 
@@ -681,5 +688,3 @@ def poll_session_messages(
 def get_last_poll_session_messages_meta() -> dict[str, Any]:
     """Return diagnostics metadata for the latest poll_session_messages call."""
     return dict(_LAST_POLL_MESSAGES_META)
-
-

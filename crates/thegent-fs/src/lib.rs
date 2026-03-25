@@ -33,41 +33,39 @@ use walkdir::WalkDir;
 // PyO3 Bindings
 // ---------------------------------------------------------------------------
 
-#[cfg(feature = "pyo3")]
+#[cfg(all(feature = "pyo3", not(test), not(debug_assertions)))]
 mod pyo3_bindings {
     use super::*;
     use pyo3::prelude::*;
-    use pyo3::types::PyList;
 
     #[pyfunction]
     pub fn fs_copy_file(src: &str, dst: &str, preserve_metadata: bool) -> PyResult<u64> {
-        Ok(copy_file(Path::new(src), Path::new(dst), preserve_metadata)
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?)
+        copy_file(Path::new(src), Path::new(dst), preserve_metadata)
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))
     }
 
     #[pyfunction]
     pub fn fs_copy_tree(src: &str, dst: &str, _ignore: Option<Vec<String>>) -> PyResult<u64> {
         // TODO: implement ignore patterns - currently passing None
-        Ok(copy_tree(Path::new(src), Path::new(dst), None)
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?)
+        copy_tree(Path::new(src), Path::new(dst), None)
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))
     }
 
     #[pyfunction]
     pub fn fs_move(src: &str, dst: &str) -> PyResult<()> {
-        Ok(move_path(Path::new(src), Path::new(dst))
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?)
+        move_path(Path::new(src), Path::new(dst))
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))
     }
 
     #[pyfunction]
     pub fn fs_remove(path: &str, recursive: bool) -> PyResult<()> {
-        Ok(remove_path(Path::new(path), recursive)
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?)
+        remove_path(Path::new(path), recursive)
+            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))
     }
 
     #[pyfunction]
     pub fn fs_size(path: &str) -> PyResult<u64> {
-        Ok(get_size(Path::new(path))
-            .map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))?)
+        get_size(Path::new(path)).map_err(|e| pyo3::exceptions::PyIOError::new_err(e.to_string()))
     }
 
     #[pyfunction]
@@ -332,7 +330,7 @@ mod tests {
     fn test_glob_files() {
         let matches = glob_files("src/**/*.rs").unwrap();
         // Should find some Rust files
-        assert!(matches.len() > 0);
+        assert!(!matches.is_empty());
     }
 
     #[test]

@@ -62,12 +62,12 @@ def parse_json_lines(text: str) -> list[dict[str, Any]]:
 
 def safe_get(data: dict[str, Any], *keys: str, default: Any = None) -> Any:
     """Safely get nested dictionary values.
-    
+
     Args:
         data: Dictionary to search
         *keys: Sequence of keys to traverse
         default: Default value if key not found
-    
+
     Example:
         safe_get(config, "database", "host", default="localhost")
     """
@@ -81,7 +81,7 @@ def safe_get(data: dict[str, Any], *keys: str, default: Any = None) -> Any:
             return default
     return current if current is not None else default
 
+
 # Aliases for backward compatibility
 json_loads = json.loads
 json_dumps = json.dumps
-

@@ -47,6 +47,7 @@ from pathlib import Path
 
 from thegent.cli.commands.impl import ps_impl
 from thegent.config import ThegentSettings
+from thegent.infra.shim_subprocess import run as shim_run
 from thegent.skills.terminal import capture_tmux_pane, list_tmux_panes, send_to_tmux_pane
 
 logger = logging.getLogger(__name__)
@@ -148,7 +149,7 @@ class SmartPruner:
                 }
                 for sid, snap in self.snapshots.items()
             }
-            self.state_file.write_text(json.dumps(data, indent=2))
+            self.state_file.write_text(json.dumps(data, option=json.OPT_INDENT_2).decode())
         except Exception as e:
             logger.warning(f"Failed to save smart prune state: {e}")
 

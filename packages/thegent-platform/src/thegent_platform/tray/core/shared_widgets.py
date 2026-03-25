@@ -69,7 +69,7 @@ def create_status_badge(status: str) -> QLabel:
     colors = {
         "success": QColor("#22c55e"),  # Green
         "warning": QColor("#eab308"),  # Yellow
-        "error": QColor("#ef4444"),    # Red
+        "error": QColor("#ef4444"),  # Red
     }
 
     bg_color = colors.get(status.lower(), QColor("#6b7280"))  # Gray for unknown

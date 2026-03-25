@@ -148,7 +148,9 @@ def _write_state_with_conflict_branch(path: Path, payload: dict[str, Any], *, br
                 stem = path.stem
                 prev_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.prev.json"
                 next_path = path.parent / f"{stem}.conflict.{ts}.{branch_label}.next.json"
-                prev_path.write_text(json.dumps(existing, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+                prev_path.write_text(
+                    json.dumps(existing, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8"
+                )
                 next_path.write_text(payload_text, encoding="utf-8")
 
     path.parent.mkdir(parents=True, exist_ok=True)

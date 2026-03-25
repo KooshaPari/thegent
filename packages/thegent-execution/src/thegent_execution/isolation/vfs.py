@@ -71,9 +71,7 @@ class VfsAdapter:
                 shutil.copytree(src, dst, dirs_exist_ok=True)
             else:
                 # Linux: try cp --reflink=auto
-                shim_run(
-                    ["cp", "-a", "--reflink=auto", str(src) + "/.", str(dst)], check=True, capture_output=True
-                )
+                shim_run(["cp", "-a", "--reflink=auto", str(src) + "/.", str(dst)], check=True, capture_output=True)
         except Exception as e:
             logger.debug(f"Reflink copy failed: {e}. Falling back to simple copy.")
             shutil.copytree(src, dst, dirs_exist_ok=True)

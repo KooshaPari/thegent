@@ -65,7 +65,9 @@ def test_wl10772_sync_reliability_separates_scan_records_and_mutation_apply_meta
         "lane-a13",
     )
 
-    invalid_phase = build_sync_diff_phase([{"file": "src/thegent/integrations/gh_project_sync.py"}], "apply sync", "lane-a13")
+    invalid_phase = build_sync_diff_phase(
+        [{"file": "src/thegent/integrations/gh_project_sync.py"}], "apply sync", "lane-a13"
+    )
     invalid_phase["diff_records"] = ["bad"]
     with pytest.raises(ValueError, match="invalid diff record"):
         resolve_sync_commit_plan_target(invalid_phase)
@@ -120,9 +122,7 @@ def test_wl10776_cli_behavior_separates_schema_parse_and_handler_selection() -> 
     )
 
     with pytest.raises(ValueError, match="invalid parsed token"):
-        resolve_cli_handler_selection_target(
-            build_cli_command_parse_phase("run lane-a13", ["run", ""], "run_handler")
-        )
+        resolve_cli_handler_selection_target(build_cli_command_parse_phase("run lane-a13", ["run", ""], "run_handler"))
 
 
 def test_wl10777_orchestration_determinism_separates_plan_and_execution_boundaries() -> None:

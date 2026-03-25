@@ -46,6 +46,7 @@ async def sync_to_github(runner, items: list) -> dict[str, Any]:
             owner=runner.config.github_owner,
             number=runner.config.effective_github_project_number(),
             direction=runner.config.github_direction.value,
+            standalone_mode=runner.config.standalone_mode,
         )
 
         result = await asyncio.to_thread(gh_sync_to, config, enriched)
@@ -56,7 +57,7 @@ async def sync_to_github(runner, items: list) -> dict[str, Any]:
         return {"error": str(e)}
 
 
-async def sync_from_github(runner, items: list, path: Path) -> list:
+async def sync_from_github(runner, items: list, path: Path) -> list[dict[str, Any]]:
     """Sync items from GitHub."""
     if not runner.config.github_enabled:
         return []
@@ -66,8 +67,12 @@ async def sync_from_github(runner, items: list, path: Path) -> list:
             enabled=True,
             owner=runner.config.github_owner,
             number=runner.config.effective_github_project_number(),
+            direction=runner.config.github_direction.value,
+            standalone_mode=runner.config.standalone_mode,
         )
-        return await asyncio.to_thread(gh_sync_from, config)
+        result = await asyncio.to_thread(gh_sync_from, config)
+        imported = result.get("items", [])
+        return imported if isinstance(imported, list) else []
     except Exception as e:
         logger.error(f"GitHub sync error: {e}")
         return []

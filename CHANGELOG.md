@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Governance lane bootstrap: merge tmp/split-thegent-governance-preserve with -X ours (#666, resolves #656)
+- Unblock Rust CI (cache, TUI tests, rustfmt) (#590)
+- Wave D Rust lane handoff and known issues update (#589)
+- Modernize Python tooling to 2026 bleeding-edge standards
+- Remove package-lock.json (use bun/pnpm strictly)
+- `docs/reference/FULL_TURN_DELIVERY.md` — stable pointer for **full-turn** expectations (merge to `main`/`release/*`, `gh` PR URLs, changelog, version, docs); `AGENTS.md` cross-link under Worktree Governance.
+- Session documentation pack for Phenotype local worktree forest governance: blocker matrix, waves A–G (24-item queues), **full-turn delivery** policy (PR/merge to `main`/`release/*`, changelog, `gh` evidence), and PR #549 CI snapshot (`docs/sessions/20260324-phenotype-local-worktree-forest-blocker-matrix/`).
+
+### Changed
+
+- `FULL_TURN_DELIVERY.md`: snapshot expanded with PR #550, `mergeStateStatus`, `main` branch CI signal, and **GitHub Actions billing** note (jobs not started until billing/spend limit fixed).
+
 ## [0.1.0] - 2026-02-23
 
 ### Added
@@ -25,22 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - FR_TRACKER.md expanded to cover all 95 FRs
   - User Stories (US-E1 through US-E5) added to PRD.md
   - Contract items for all ADRs, FRs, and User Stories
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
----
-
-## [Unreleased]
-
-### Added
 
 ### Changed
 

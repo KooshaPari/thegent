@@ -12,6 +12,7 @@ from collections import defaultdict
 @dataclass
 class AgentLoad:
     """Load information for an agent."""
+
     agent_id: str
     specialization: str
     current_tasks: int
@@ -39,19 +40,10 @@ class LoadBalancer:
         self._specialization_index: dict[str, list[str]] = defaultdict(list)
         self._task_history: dict[str, list[float]] = defaultdict(list)
 
-    def register(
-        self,
-        agent_id: str,
-        specialization: str,
-        max_tasks: int = 5
-    ) -> None:
+    def register(self, agent_id: str, specialization: str, max_tasks: int = 5) -> None:
         """Register an agent."""
         self._agents[agent_id] = AgentLoad(
-            agent_id=agent_id,
-            specialization=specialization,
-            current_tasks=0,
-            max_tasks=max_tasks,
-            avg_task_time=1.0
+            agent_id=agent_id, specialization=specialization, current_tasks=0, max_tasks=max_tasks, avg_task_time=1.0
         )
         self._specialization_index[specialization].append(agent_id)
 
@@ -68,10 +60,7 @@ class LoadBalancer:
             return None
 
         # Select least loaded
-        best = min(
-            candidates,
-            key=lambda aid: self._agents[aid].utilization
-        )
+        best = min(candidates, key=lambda aid: self._agents[aid].utilization)
 
         return best
 
@@ -108,7 +97,7 @@ class LoadBalancer:
                     "specialization": a.specialization,
                     "utilization": a.utilization,
                     "current_tasks": a.current_tasks,
-                    "avg_task_time": a.avg_task_time
+                    "avg_task_time": a.avg_task_time,
                 }
                 for aid, a in self._agents.items()
             }

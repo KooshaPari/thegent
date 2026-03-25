@@ -820,7 +820,7 @@ async def test_escalation_event_payload_shape_is_json_serializable_for_audit_log
     assert escalation_event["status"] == "pending"
     assert escalation_event["escalation_lane"] == "critical"
     assert isinstance(escalation_event["reason"], str)
-    json.dumps(escalation_event).decode().decode()
+    json.dumps(escalation_event).decode()
 
 
 @pytest.mark.asyncio

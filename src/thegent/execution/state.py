@@ -48,13 +48,6 @@ _execution_diagnostics: dict[str, Any] = {
 }
 
 
-def _warn_bounded(message: str, *args: object) -> None:
-    global _execution_warning_count
-    _execution_warning_count += 1
-    if _execution_warning_count <= _EXECUTION_WARNING_LIMIT:
-        _log.warning(message, *args)
-
-
 def get_execution_diagnostics() -> dict[str, Any]:
     """Return diagnostics snapshot for execution-path degradation."""
     return {
@@ -135,7 +128,7 @@ class CalibrationRegistry:
             "updated_at_utc": datetime.now(UTC).isoformat(),
         }
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self.path.write_text(json.dumps(data, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
 
 
 # Export public API for backward compatibility

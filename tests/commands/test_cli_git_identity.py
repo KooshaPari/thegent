@@ -14,9 +14,7 @@ def test_infer_actor_profile_prefers_human_tokens() -> None:
 
 
 def test_resolve_author_env_supports_identity_map(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    profile_map = (
-        '{"codex": {"name": "Claude Bot", "email": "claude-bot@example.com"}, "agent": "Agent Fallback"}'
-    )
+    profile_map = '{"codex": {"name": "Claude Bot", "email": "claude-bot@example.com"}, "agent": "Agent Fallback"}'
     monkeypatch.setattr(
         identity,
         "_git_config_get",
@@ -49,7 +47,9 @@ def test_resolve_author_env_uses_non_human_suffix(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(
         identity,
         "_git_config_get",
-        lambda _project_root, key: {"user.name": "Koosha Paridehpour", "user.email": "koosh+thegent@example.com"}.get(key, ""),
+        lambda _project_root, key: {"user.name": "Koosha Paridehpour", "user.email": "koosh+thegent@example.com"}.get(
+            key, ""
+        ),
     )
     monkeypatch.setenv("GIT_AUTHOR_NAME", "Koosha Parikh")
     monkeypatch.setenv("GIT_AUTHOR_EMAIL", "koosh+thegent@example.com")

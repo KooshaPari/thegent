@@ -374,10 +374,12 @@ class TestGenerateReport:
     def test_generate_report_skips_unknown_dimensions(self, config_file: Path) -> None:
         """generate_report skips measurements for unknown dimensions."""
         scorer = HealthScorer(config_file)
-        report = scorer.generate_report({
-            "test_coverage": 75,
-            "unknown_dimension": 100,
-        })
+        report = scorer.generate_report(
+            {
+                "test_coverage": 75,
+                "unknown_dimension": 100,
+            }
+        )
         assert len(report["dimensions"]) == 1
         assert report["dimensions"][0]["dimension"] == "test_coverage"
 

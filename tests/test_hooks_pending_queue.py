@@ -30,7 +30,7 @@ def _run_prompt_guard(
         env["PROJECT_DIR"] = str(project_dir)
     if env_override:
         env.update(env_override)
-    stdin = json.dumps({"tool_input": {"prompt": prompt}, "cwd": str(project_dir or ".").decode().decode()})
+    stdin = json.dumps({"tool_input": {"prompt": prompt}, "cwd": str(project_dir or ".").decode()})
     return subprocess.run(
         [str(script)],
         input=stdin,

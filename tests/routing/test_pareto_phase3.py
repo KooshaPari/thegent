@@ -223,7 +223,7 @@ class TestReadRoutingAudit:
             "prev_hash": prev_hash,
         }
         # Compute hash (ADR-015 pattern: sort_keys, exclude hash field)
-        canonical = json.dumps(record, sort_keys=True, separators=(",", ":").decode().decode())
+        canonical = json.dumps(record, sort_keys=True, separators=(",", ":").decode())
         record["hash"] = hashlib.sha256(canonical.encode()).hexdigest()
         return record
 
@@ -238,7 +238,7 @@ class TestReadRoutingAudit:
 
         rec = self._make_audit_record("id-001")
         audit_file = tmp_path / "routing_audit.jsonl"
-        audit_file.write_text(json.dumps(rec).decode().decode() + "\n", encoding="utf-8")
+        audit_file.write_text(json.dumps(rec).decode() + "\n", encoding="utf-8")
 
         records = read_routing_audit(audit_file, limit=10)
         assert len(records) == 1
@@ -253,7 +253,7 @@ class TestReadRoutingAudit:
         for i in range(5):
             rec = self._make_audit_record(f"id-{i:03}", prev_hash=prev)
             prev = rec["hash"]
-            lines.append(json.dumps(rec).decode().decode())
+            lines.append(json.dumps(rec).decode())
 
         audit_file = tmp_path / "routing_audit.jsonl"
         audit_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -269,7 +269,7 @@ class TestReadRoutingAudit:
         for i in range(10):
             rec = self._make_audit_record(f"id-{i:03}", prev_hash=prev)
             prev = rec["hash"]
-            lines.append(json.dumps(rec).decode().decode())
+            lines.append(json.dumps(rec).decode())
 
         audit_file = tmp_path / "routing_audit.jsonl"
         audit_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -289,7 +289,7 @@ class TestReadRoutingAudit:
         for i in range(4):
             rec = self._make_audit_record(f"chain-{i}", prev_hash=prev)
             prev = rec["hash"]
-            lines.append(json.dumps(rec).decode().decode())
+            lines.append(json.dumps(rec).decode())
 
         audit_file = tmp_path / "routing_audit.jsonl"
         audit_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -300,7 +300,7 @@ class TestReadRoutingAudit:
         prev_hash = ""
         for i, record in enumerate(records):
             d = {k: v for k, v in record.items() if k != "hash"}
-            canonical = json.dumps(d, sort_keys=True, separators=(",", ":").decode().decode())
+            canonical = json.dumps(d, sort_keys=True, separators=(",", ":").decode())
             expected = hashlib.sha256(canonical.encode()).hexdigest()
             assert record["hash"] == expected, f"Hash mismatch at record {i}"
             assert record["prev_hash"] == prev_hash, f"Chain broken at record {i}"

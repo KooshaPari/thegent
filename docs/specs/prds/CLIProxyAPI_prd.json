@@ -539,7 +539,7 @@
     {
       "id": "CLIProxyAPI-feat-64",
       "title": "Project Context",
-      "description": "`openspec/project.md`",
+      "description": "`agileplus/project.md`",
       "priority": "medium",
       "acceptance_criteria": [],
       "dependencies": []
@@ -827,7 +827,7 @@
     {
       "id": "CLIProxyAPI-feat-100",
       "title": "Project Onboarding",
-      "description": "Reference `openspec/project.md` for new contributors",
+      "description": "Reference `agileplus/project.md` for new contributors",
       "priority": "medium",
       "acceptance_criteria": [],
       "dependencies": []
@@ -1466,7 +1466,7 @@
     },
     {
       "id": "CLIProxyAPI-feat-180",
-      "title": "Create OpenSpec proposal",
+      "title": "Create AgilePlus proposal",
       "description": "Formalize MCP server feature",
       "priority": "medium",
       "acceptance_criteria": [],
@@ -1603,7 +1603,7 @@
     {
       "id": "CLIProxyAPI-feat-197",
       "title": "Short term",
-      "description": "(1-2 weeks): Create OpenSpec proposal",
+      "description": "(1-2 weeks): Create AgilePlus proposal",
       "priority": "medium",
       "acceptance_criteria": [],
       "dependencies": []
@@ -1971,7 +1971,7 @@
     {
       "id": "CLIProxyAPI-feat-243",
       "title": "Create change proposal",
-      "description": "Use OpenSpec to formalize MCP server feature",
+      "description": "Use AgilePlus to formalize MCP server feature",
       "priority": "medium",
       "acceptance_criteria": [],
       "dependencies": []
@@ -10366,7 +10366,7 @@
     {
       "id": "CLIProxyAPI-feat-64",
       "title": "Project Context",
-      "description": "`openspec/project.md`",
+      "description": "`agileplus/project.md`",
       "priority": "medium",
       "acceptance_criteria": [],
       "tags": []
@@ -10654,7 +10654,7 @@
     {
       "id": "CLIProxyAPI-feat-100",
       "title": "Project Onboarding",
-      "description": "Reference `openspec/project.md` for new contributors",
+      "description": "Reference `agileplus/project.md` for new contributors",
       "priority": "medium",
       "acceptance_criteria": [],
       "tags": []
@@ -11293,7 +11293,7 @@
     },
     {
       "id": "CLIProxyAPI-feat-180",
-      "title": "Create OpenSpec proposal",
+      "title": "Create AgilePlus proposal",
       "description": "Formalize MCP server feature",
       "priority": "medium",
       "acceptance_criteria": [],
@@ -11430,7 +11430,7 @@
     {
       "id": "CLIProxyAPI-feat-197",
       "title": "Short term",
-      "description": "(1-2 weeks): Create OpenSpec proposal",
+      "description": "(1-2 weeks): Create AgilePlus proposal",
       "priority": "medium",
       "acceptance_criteria": [],
       "tags": []
@@ -11798,7 +11798,7 @@
     {
       "id": "CLIProxyAPI-feat-243",
       "title": "Create change proposal",
-      "description": "Use OpenSpec to formalize MCP server feature",
+      "description": "Use AgilePlus to formalize MCP server feature",
       "priority": "medium",
       "acceptance_criteria": [],
       "tags": []

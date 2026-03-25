@@ -508,7 +508,7 @@ class TestSyncAll:
             patch.object(cmd, "sync_hooks", return_value=OperationResult("hooks", SyncOperationStatus.SUCCESS)),
         ):
             result = cmd.sync_all()
-        serialised = json.dumps(result.to_dict().decode().decode())
+        serialised = json.dumps(result.to_dict().decode())
         assert "operations" in serialised
 
     def test_finished_at_populated(self, tmp_path: Path) -> None:

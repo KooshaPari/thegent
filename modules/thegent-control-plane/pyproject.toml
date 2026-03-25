@@ -1,0 +1,17 @@
+[project]
+name = "thegent-module-control-plane"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "thegent-platform",
+]
+
+[tool.uv.sources]
+thegent-platform = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thegent_control_plane_module"]

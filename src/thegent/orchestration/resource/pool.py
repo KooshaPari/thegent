@@ -51,8 +51,7 @@ class ResourcePool:
         with self._lock:
             if self._allocated + amount > self._capacity:
                 raise ResourceAllocationError(
-                    f"Insufficient capacity: requested {amount}, "
-                    f"available {self._capacity - self._allocated}"
+                    f"Insufficient capacity: requested {amount}, available {self._capacity - self._allocated}"
                 )
             self._allocated += amount
             return {"agent_id": agent_id, "amount": amount}

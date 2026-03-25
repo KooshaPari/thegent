@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 from thegent_sync.integrations.base import SerializableMixin
 
 
@@ -53,7 +52,6 @@ class TUIConfig(SerializableMixin):
     # Custom CSS
     custom_css: str = ""
 
-
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TUIConfig:
         return cls(
@@ -86,7 +84,6 @@ class KeyBinding:
     key: str
     action: str
     description: str = ""
-
 
 
 class ConfigManager:

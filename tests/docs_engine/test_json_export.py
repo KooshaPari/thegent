@@ -21,8 +21,10 @@ def test_export_audit_log(tmp_path):
     out = tmp_path / "data" / "audit-log.json"
     assert out.exists()
     data = json.loads(out.read_text())
-    assert len(data) == 1
-    assert data[0]["title"] == "Fix thing"
+    assert data["payload_type"] == "audit-log"
+    assert data["schema_version"] == exporter.schema_version
+    assert len(data["records"]) == 1
+    assert data["records"][0]["title"] == "Fix thing"
 
 
 def test_export_kb_graph(tmp_path):
@@ -38,7 +40,8 @@ def test_export_kb_graph(tmp_path):
     out = tmp_path / "data" / "kb-graph.json"
     assert out.exists()
     data = json.loads(out.read_text())
-    assert any(n["title"] == "Key finding" for n in data["nodes"])
+    assert data["payload_type"] == "kb-graph"
+    assert any(n["title"] == "Key finding" for n in data["records"]["nodes"])
 
 
 def test_export_sprint_board(tmp_path):
@@ -54,7 +57,8 @@ def test_export_sprint_board(tmp_path):
     out = tmp_path / "data" / "sprint-board.json"
     assert out.exists()
     data = json.loads(out.read_text())
-    assert any(s["title"] == "Sprint 1" for s in data)
+    assert data["payload_type"] == "sprint-board"
+    assert any(s["title"] == "Sprint 1" for s in data["records"])
 
 
 def test_export_all(tmp_path):

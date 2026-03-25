@@ -115,10 +115,8 @@ fn main() -> ExitCode {
     let test_files = find_test_files(&test_path);
 
     let mut covered_count = 0;
-    let mut test_count = 0;
 
     for test_file in &test_files {
-        test_count += 1;
         if let Ok(content) = fs::read_to_string(test_file) {
             let frs = extract_fr_references(&content);
             if !frs.is_empty() {

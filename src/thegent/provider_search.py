@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -20,12 +20,15 @@ def _load_json(path: Path) -> dict[str, Any]:
         return {}
     try:
         import orjson as json
+
         return json.loads(path.read_text())
     except Exception:
         return {}
 
 
-def list_model_indices(sort_by: str = "name", provider: str | None = None, reverse: bool = False) -> list[dict[str, Any]]:
+def list_model_indices(
+    sort_by: str = "name", provider: str | None = None, reverse: bool = False
+) -> list[dict[str, Any]]:
     """List all model indices with optional sorting."""
     indices = _load_json(_MODEL_INDICES_PATH)
     result = []
@@ -47,7 +50,9 @@ def list_model_indices(sort_by: str = "name", provider: str | None = None, rever
     return result
 
 
-def search_models_by_capability(capability: str, min_context: int | None = None, max_cost_per_1m: float | None = None) -> list[dict[str, Any]]:
+def search_models_by_capability(
+    capability: str, min_context: int | None = None, max_cost_per_1m: float | None = None
+) -> list[dict[str, Any]]:
     """Search models by capability."""
     all_models = list_model_indices(sort_by="cost")
     result = []

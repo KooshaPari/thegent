@@ -119,7 +119,7 @@ def configure_mergiraf_driver(
     try:
         shim_run(git_config_args_name, check=True, capture_output=True, cwd=cwd)
         shim_run(git_config_args_driver, check=True, capture_output=True, cwd=cwd)
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         return False
 
     # ------------------------------------------------------------------ #
@@ -501,7 +501,7 @@ class SmartMerger:
                     timeout=self._config.timeout_s,
                 )
                 used_mergiraf = True
-            except (subprocess.TimeoutExpired, FileNotFoundError):
+            except subprocess.TimeoutExpired, FileNotFoundError:
                 pass
 
         # Perform the merge
