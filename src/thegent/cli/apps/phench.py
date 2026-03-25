@@ -74,6 +74,31 @@ def target_add_repo_cmd(
                 "target": lock.target_name,
                 "repos": [repo.repo_id for repo in lock.repos],
                 "lock_hash": lock.lock_hash,
+        }
+    ).decode()
+)
+
+
+@target_app.command("add-module", help="Add module-selected repos to a target.")
+def target_add_module_cmd(
+    name: str = typer.Argument(..., help="Target name."),
+    module: str = typer.Option(..., "--module", "--mod", help="Module name under Phenotype/projects/modules."),
+    selected_ref: str | None = typer.Option(None, "--ref", help="Override selected ref for all module repos."),
+    exclude: list[str] = typer.Option([], "--exclude", help="Exact repo IDs to exclude (no glob patterns)."),
+) -> None:
+    lock = add_module_to_target(
+        name,
+        module_name=module,
+        selected_ref=selected_ref,
+        exclude_repos={value.strip() for value in exclude if value.strip()},
+    )
+    console.print_json(
+        json.dumps(
+            {
+                "target": lock.target_name,
+                "module": module,
+                "repos": [entry.repo_id for entry in lock.repos if entry.module_name == module],
+                "lock_hash": lock.lock_hash,
             }
         ).decode()
     )
