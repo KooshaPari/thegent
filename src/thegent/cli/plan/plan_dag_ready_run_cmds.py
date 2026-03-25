@@ -8,7 +8,7 @@ from pathlib import Path
 
 import typer
 
-from thegent.cli.commands.plan_output_helpers import (
+from thegent.cli.plan.plan_output_helpers import (
     render_dag_ready,
     resolve_output_format,
 )
