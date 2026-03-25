@@ -18,7 +18,6 @@ fn is_inside_git_worktree(git_bin: &std::path::Path) -> bool {
         .output()
     {
         Ok(output) => output.status.success() && output.stdout == b"true\n",
-        Ok(_) => false,
         Err(_) => false,
     }
 }
