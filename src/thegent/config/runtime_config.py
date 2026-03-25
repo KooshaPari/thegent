@@ -4,6 +4,7 @@ Settings related to sandboxing, budgets, retention, and execution behavior.
 """
 
 from typing import Literal
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -149,6 +150,23 @@ class RuntimeConfig(BaseSettings):
     mac_keep_awake_agents: list[str] = Field(
         default_factory=default_mac_keep_awake_agents,
         description="Agents to keep awake on macOS (THGENT_MAC_KEEP_AWAKE_AGENTS)",
+    )
+
+    # Native and watcher SHM controls
+    use_native_shm: bool = Field(
+        default=True,
+        description=(
+            "Enable native shared-memory state/circuit-breaker path when available; "
+            "set THGENT_USE_NATIVE_SHM=0 to force pure-Python fallback"
+        ),
+    )
+    watcher_use_shm: bool = Field(
+        default=True,
+        description=("Enable watcher CircuitBreakerShm integration; set THGENT_WATCHER_USE_SHM=0 to disable"),
+    )
+    watcher_shm_path: Path | None = Field(
+        default=None,
+        description="Optional watcher SHM file path override (THGENT_WATCHER_SHM_PATH)",
     )
 
     # Validation and retention parsing

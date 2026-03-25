@@ -88,11 +88,11 @@ def test_otel_config_defaults() -> None:
 
 @pytest.mark.requirement("FR-OBS-037")
 def test_configure_otel_sets_config() -> None:
-    """configure_otel stores the supplied OtelConfig in the singleton."""
+    """configure_otel fails loudly when enabled but OTEL deps are unavailable."""
     cfg = OtelConfig(endpoint="http://collector:4317", service_name="my-service")
-    # Patch out otel availability so no real SDK calls are made
     with patch.object(otel_mod, "_OTEL_AVAILABLE", False):
-        configure_otel(cfg)
+        with pytest.raises(RuntimeError, match="OTel bootstrap failed"):
+            configure_otel(cfg)
 
     stored = get_otel_config()
     assert stored.endpoint == "http://collector:4317"
@@ -184,7 +184,8 @@ def test_otel_config_custom_endpoint() -> None:
     assert cfg.endpoint == "http://my-collector.internal:4317"
 
     with patch.object(otel_mod, "_OTEL_AVAILABLE", False):
-        configure_otel(cfg)
+        with pytest.raises(RuntimeError, match="OTel bootstrap failed"):
+            configure_otel(cfg)
 
     stored = get_otel_config()
     assert stored.endpoint == "http://my-collector.internal:4317"
