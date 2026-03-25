@@ -29,7 +29,9 @@ impl PolicyManager {
     }
 
     pub fn get_policy_str(&self, key: &str) -> Option<String> {
-        self.policies.get(key).and_then(|v| v.as_str().map(String::from))
+        self.policies
+            .get(key)
+            .and_then(|v| v.as_str().map(String::from))
     }
 }
 

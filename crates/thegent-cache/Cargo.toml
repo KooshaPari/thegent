@@ -2,7 +2,7 @@
 name = "thegent-cache-rs"
 version = "0.1.0"
 edition = "2021"
-description = "Advanced two-tier caching layer with LRU + DashMap"
+description = "Advanced two-tier caching layer backed by phenotype-cache-adapter"
 
 [lib]
 name = "thegent_cache"
@@ -21,6 +21,4 @@ pyo3 = { version = "0.24.1", optional = true, features = ["abi3-py312", "extensi
 
 [features]
 default = []
-moka = ["dep:moka"]
-scc = ["dep:scc"]
 python = ["pyo3"]

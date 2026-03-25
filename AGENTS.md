@@ -31,6 +31,10 @@ Canonical policy docs for this model:
 - `docs/governance/DELEGATION_ARCHITECTURE_LN.md`
 - `docs/governance/TASK_CLASSIFIER_SCHEMA.yaml`
 
+### Full-turn delivery (shipping)
+
+End each turn that changes **this repo** (or a product repo you own in the same turn) with **at least one merged PR** to **`main`** or **`release/*`**—**multiple merges per turn** are fine. Record **full PR URLs** (`gh pr view` / `https://github.com/.../pull/...`), update **`CHANGELOG.md`** [Unreleased] and **version** per policy, and **docs** when behavior changes. If merge is impossible, log an **exception** in session **`05_KNOWN_ISSUES.md`**. Canonical detail: **`docs/reference/FULL_TURN_DELIVERY.md`**.
+
 Execution model constraint:
 
 - Do not assume `1 agent = 1 worktree`.

@@ -168,6 +168,8 @@ def _remote_status_map(remote_items: list[dict[str, Any]]) -> dict[str, str]:
     return {
         str(item["item_id"]): str(item["status"]) for item in remote_items if item.get("item_id") and item.get("status")
     }
+    _write_json(status_path, payload)
+    _write_json(status_path.parent / f"autosync_snapshot_{self.total_cycles:04d}.json", payload)
 
 
 def _completion_transition(local_items: list[WorkstreamItem], remote_item: dict[str, Any]) -> bool:

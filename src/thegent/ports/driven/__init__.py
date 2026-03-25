@@ -7,4 +7,6 @@ __all__ = [
     "storage",
     "telemetry",
     "model_routing",
+    "policy_gate",
+    "workflow_runner",
 ]

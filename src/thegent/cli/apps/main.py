@@ -58,6 +58,8 @@ from thegent.cli.apps.main_shortcuts import register_main_shortcuts
 
 register_main_shortcuts(app, console)
 
+from thegent.cli.apps.main_shortcuts import register_main_shortcuts
+register_main_shortcuts(app, console)
 
 @app.command("session-contract-health-gate", help="Evaluate session contract health gate.")
 def session_health_gate_wrapper(
