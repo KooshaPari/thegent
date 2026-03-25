@@ -83,7 +83,7 @@ def _has_open_holder(lock_path: Path) -> Optional[bool]:
     except FileNotFoundError:
         return None
     except subprocess.TimeoutExpired:
-        return None
+        return False
 
 
 def _find_lock_files(paths: list[Path]) -> Iterator[Path]:
