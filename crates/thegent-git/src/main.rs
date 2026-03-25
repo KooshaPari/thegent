@@ -61,9 +61,7 @@ fn head_sha(path: &str) -> Result<Option<String>, String> {
         .output()
         .map_err(|e| e.to_string())?;
     if out.status.success() {
-        Ok(Some(
-            String::from_utf8_lossy(&out.stdout).trim().to_string(),
-        ))
+        Ok(Some(String::from_utf8_lossy(&out.stdout).trim().to_string()))
     } else {
         Ok(None)
     }

@@ -1,6 +1,6 @@
-use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
+use std::os::unix::process::CommandExt;
 
 pub fn exec_direct(cmd: &Path, args: &[&str]) -> ! {
     let err = Command::new(cmd).args(args).exec();
