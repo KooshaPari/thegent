@@ -333,6 +333,7 @@ impl ThemeRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     // Reset registry current to "dark" after each test that changes it so
     // tests are isolated despite the global singleton.
@@ -405,6 +406,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_registry_builtin_themes_exist() {
         let names = ThemeRegistry::names();
         assert!(names.contains(&"dark".to_string()));
@@ -413,18 +415,21 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_registry_get_dark() {
         let t = ThemeRegistry::get("dark");
         assert_eq!(t.bg, Theme::dark().bg);
     }
 
     #[test]
+    #[serial]
     fn test_registry_current_default_is_dark() {
         reset_current();
         assert_eq!(ThemeRegistry::current_name(), "dark");
     }
 
     #[test]
+    #[serial]
     fn test_registry_set_and_get_current() {
         ThemeRegistry::set_current("light");
         assert_eq!(ThemeRegistry::current_name(), "light");
@@ -434,6 +439,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_registry_register_custom() {
         let custom = Theme {
             bg: ThemeColor::from_rgb(10, 20, 30),
