@@ -9,7 +9,7 @@ Main re-export facade; implementation split across cli_git_log_ops and cli_git_c
 import typer
 from rich.console import Console
 
-from thegent_agint.cli.commands.cli_git_commit_ops import (
+from thegent.cli.commands.cli_git_commit_ops import (
     add,
     commit,
     lock_status,
@@ -17,7 +17,7 @@ from thegent_agint.cli.commands.cli_git_commit_ops import (
     run_system_git,
     status,
 )
-from thegent_agint.cli.commands.cli_git_log_ops import (
+from thegent.cli.commands.cli_git_log_ops import (
     diff,
     lock_cleanup_app,
     log,
