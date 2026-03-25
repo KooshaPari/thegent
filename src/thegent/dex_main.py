@@ -1,4 +1,12 @@
-"""Codex-backed interactive agent CLI (dex). Model-only routing (no provider filter)."""
+"""Codex-backed interactive agent CLI (dex). Model-only routing (no provider filter).
+
+HEXAGONAL PHASE 2B: This file is now a thin shim delegating to:
+- src/thegent/adapters/harness_base.py — Common harness logic
+- src/thegent/adapters/codex_harness.py — Codex-specific implementation
+- src/thegent/use_cases/run_harness.py — Use case orchestration
+
+Legacy code and imports preserved for backward compatibility.
+"""
 
 import os
 from typing import Any
@@ -20,6 +28,9 @@ from thegent.dex_cli_helpers import (
 )
 from thegent.infra.power import wrap_with_caffeinate
 
+# Import harness for new decomposed pattern (Phase 2B)
+from thegent.adapters.codex_harness import CodexHarness
+
 
 class LazyConsole:
     def __getattr__(self, name: str) -> Any:
@@ -32,6 +43,11 @@ class LazyConsole:
 
 console = LazyConsole()
 app = typer.Typer(help="Codex-backed interactive agent CLI. Model-only routing (no provider filter).")
+
+# Phase 2B: Harness delegation layer (optional modern path)
+def _use_harness() -> CodexHarness:
+    """Get Codex harness instance for delegated operations."""
+    return CodexHarness()
 
 # Global flag for force YOLO mode (-f)
 _force_yolo: bool = False

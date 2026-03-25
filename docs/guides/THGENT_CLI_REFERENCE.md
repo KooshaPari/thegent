@@ -17,9 +17,10 @@
 5. [DAG Commands](#dag-commands)
 6. [Planning Commands](#planning-commands)
 7. [Configuration & Setup](#configuration--setup)
-8. [Provider Authentication](#provider-authentication)
-9. [MCP Integration](#mcp-integration)
-10. [Command Examples](#command-examples)
+8. [Phench Runtime Control Plane](#phench-runtime-control-plane)
+9. [Provider Authentication](#provider-authentication)
+10. [MCP Integration](#mcp-integration)
+11. [Command Examples](#command-examples)
 
 ---
 
@@ -728,6 +729,180 @@ thegent doctor [OPTIONS]
 
 **Options**:
 - `--fix`: Try to fix common issues automatically
+
+---
+
+## Phench Runtime Control Plane
+
+`phench` manages deterministic execution across local repositories using
+`~/CodeProjects/Phenotype/projects/<target>/repos` (or `THGENT_PHENOTYPE_ROOT` override).
+
+### `thegent phench target bootstrap` - Seed a target from sibling repos
+
+Create a target lock and optionally lock it in one step.
+
+**Syntax**:
+```bash
+thegent phench target bootstrap <target> --source-root <dir> --ref <ref> --include <glob> --exclude <glob>
+```
+
+**Notes**:
+- Omit `--source-root` to default to the sibling `repos/` root.
+- `--ref` sets the initial selection for each discovered repo.
+- Use `--no-auto-lock` if you need to adjust entries before locking.
+
+## Module manifest schema
+
+Manifest path:
+- `~/CodeProjects/Phenotype/projects/modules/<module-name>/manifest.json`
+
+```json
+{
+  "schema_version": 1,
+  "repo_ids": ["thegent-api", "thegent-control-plane"],
+  "repo_patterns": ["*mcp*"],
+  "repo_ref_overrides": {"thegent-api": "main"},
+  "repo_runner_overrides": {"thegent-api": "task"},
+  "repo_command_overrides": {"thegent-api": "hello"},
+  "repo_env_profile_overrides": {"thegent-api": "ci"}
+}
+```
+
+Notes:
+- `schema_version` defaults to `1` when omitted in existing manifests.
+- `repo_ids` and `repo_patterns` are optional; at least one must be present.
+- `repo_patterns` expands against repos in the selected target lock.
+- Only repos in the selected target are runnable. Unknown repo keys in override maps fail fast.
+- `repo_env_profile_overrides` accepts per-repo profile names and overrides `--env-profile`.
+
+### `thegent phench modules audit` - Find shared modules across sibling repos
+
+Scan repository checkouts and surface modules that appear across multiple repos.
+
+**Syntax**:
+```bash
+thegent phench modules audit [OPTIONS]
+```
+
+**Options**:
+- `--source-root <dir>`: Root containing repo checkouts (defaults to `THGENT_PHENOTYPE_REPOS_ROOT`).
+- `--include-repo <glob>`: Limit to repositories matching a glob pattern (repeatable).
+- `--exclude-repo <glob>`: Exclude repositories matching a glob pattern (repeatable).
+- `--skip-repo <repo-id>`: Explicit repository IDs to skip (repeatable).
+- `--min-repo-count <n>`: Minimum repo ownership count for shared module reporting (default `2`).
+- `--include-module <name>`: Restrict scan to specific module names (repeatable).
+- `--exclude-module <name>`: Exclude module names from scan (repeatable).
+- `--include-repo-modules-root/--no-include-repo-modules-root`: Include or ignore `<repo>/modules/<module>/manifest.json` as ownership signal.
+
+**Notes**:
+- Modules are discovered from:
+  - `src/<module>/__init__.py` package markers.
+  - `<repo>/modules/<module>/manifest.json` when enabled.
+- Default exclusions include: `4sgm`, `trace`, `parpour`, `civ`.
+
+```bash
+thegent phench modules audit --source-root ../repos --min-repo-count 2
+thegent phench modules audit --include-module thegent-app --exclude-module legacy
+```
+
+### `thegent phench modules sync` - Sync module manifests into `projects/modules`
+
+Collect repo-local module manifests and mirror them into
+`~/CodeProjects/Phenotype/projects/modules/<module>/manifest.json`.
+
+**Syntax**:
+```bash
+thegent phench modules sync [OPTIONS]
+```
+
+**Options**:
+- `--source-root <dir>`: Root containing repos to scan.
+- `--destination-root <dir>`: Destination module root for sync output.
+- `--include-repo <glob>` / `--exclude-repo <glob>`: Repository include/exclude filter.
+- `--include-module <name>` / `--exclude-module <name>`: Restrict which modules are copied.
+- `--overwrite`: Replace existing manifests.
+- `--dry-run` / `-n`: Preview copy plan only.
+
+```bash
+thegent phench modules sync --dry-run --source-root ../repos --include-module thegent-app
+thegent phench modules sync --source-root ../repos --destination-root ../projects/modules --overwrite
+```
+
+### `thegent phench projects run` - Orchestrate target runs
+
+Execute a command against selected repo(s) in a target.
+
+**Syntax**:
+```bash
+thegent phench projects run --target <target> --runner <runner> --command <command>
+```
+
+**Options**:
+- `--repo-id`: Single repo target.
+- `--repo-ref <repo-id>@<ref>`: Explicit per-repo branch/tag/SHA mapping (repeatable).
+- `--ref` / `--branch`: Shared ref for selected repo or all repos.
+- `--include-repo <glob>` / `--exclude-repo <glob>`: Limit repo scope by glob before selection.
+- `--module <module-name>`: Resolve module manifest from
+  `~/CodeProjects/Phenotype/projects/modules/<module-name>/manifest.json` and run that repo subset.
+- `--all-repos`: Execute across all repos in the target.
+- `--mode serial|parallel`: Multi-repo execution mode.
+- `--env-profile <name>`: Apply profile globally, then per-repo overrides from manifest.
+- `--snapshot-id <id>`: Run using a previously captured snapshot state from `phench snapshot create`.
+- `--timeline-limit N`: Refs shown during interactive selection.
+- `--no-prepare`: Skip automatic `lock` and `materialize` before run.
+
+**Module override precedence** (highest to lowest):
+- CLI `--repo-ref` overrides manifest `repo_ref_overrides` for matching repos.
+- CLI `--runner` / `--command` overrides both manifest runner/command overrides.
+- `repo_runner_overrides`, `repo_command_overrides`, `repo_env_profile_overrides` from manifest
+  apply to matching repos unless overridden by CLI arguments.
+
+**Examples**:
+```bash
+# Run per-repo refs from feature branches in one command
+thegent phench projects run \
+  --target thegent-app \
+  --runner task \
+  --command hello \
+  --repo-ref thegent-api@feature-gui \
+  --repo-ref thegent-control-plane@feat/scheduler
+
+# Run by module manifest subset with module-level env profile override
+thegent phench projects run \
+  --target thegent-app \
+  --module thegent-mcp \
+  --runner task \
+  --command hello \
+  --env-profile default \
+  --no-interactive
+
+# Run from a snapshot (stable point-in-time materialization)
+thegent phench projects run \
+  --target thegent-app \
+  --snapshot-id snap-20260302T120000Z \
+  --runner task \
+  --command hello
+```
+
+### `thegent phench projects status` - Show target state
+
+Show lock/runtime/env snapshot for a target.
+
+**Syntax**:
+```bash
+thegent phench projects status --target <target>
+```
+
+### `thegent phench tui` - Interactive selector then run
+
+Open interactive target/repo/ref selection and run immediately.
+
+**Syntax**:
+```bash
+thegent phench tui --runner <runner> --command <command> [--target <target>]
+```
+
+If you omit `--target` and multiple targets exist, the CLI prompts for target.
 
 ---
 

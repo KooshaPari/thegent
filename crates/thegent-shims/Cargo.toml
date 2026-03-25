@@ -26,6 +26,10 @@ path = "src/shims/find.rs"
 name = "thegent-agent"
 path = "src/shims/agent.rs"
 
+[[bin]]
+name = "thegent-git-checkout"
+path = "src/shims/git_checkout.rs"
+
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 which = "7"
