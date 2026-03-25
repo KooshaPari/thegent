@@ -66,7 +66,7 @@ class ConnectorMappingCache:
                     ttl_seconds=entry_dict["ttl_seconds"],
                 )
                 self._entries[key] = entry
-        except (json.JSONDecodeError, KeyError):
+        except json.JSONDecodeError, KeyError:
             # If cache file is corrupt, start fresh
             self._entries = {}
 

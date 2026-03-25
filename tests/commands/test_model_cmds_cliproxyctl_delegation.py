@@ -78,4 +78,5 @@ def test_cliproxy_login_cmd_prints_explicit_delegation_message(monkeypatch: pyte
     assert exc_info.value.exit_code == 0
     assert any("Delegating provider login to cliproxyctl" in line for line in printed)
 
+
 pytestmark = pytest.mark.skip(reason="module location differs")

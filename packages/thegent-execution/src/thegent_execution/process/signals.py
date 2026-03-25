@@ -45,6 +45,7 @@ class SignalHandler:
             except Exception as e:
                 # Signal handlers must not raise; log and continue so all callbacks run.
                 import logging
+
                 logging.getLogger(__name__).warning(
                     "signal_callback_error: callback=%r error_type=%s error=%s",
                     callback,

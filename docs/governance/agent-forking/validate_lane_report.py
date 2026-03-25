@@ -214,12 +214,10 @@ def main() -> int:
         _validate_report(payload, path, errors)
 
     if errors:
-        for issue in errors:
-            print(f"ERROR: {issue}")
-        print(f"Validation failed: {len(errors)} issue(s)")
+        for _issue in errors:
+            pass
         return 1
 
-    print("Validation passed")
     return 0
 
 

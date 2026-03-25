@@ -32,7 +32,7 @@ class SmartMerge:
                 capture_output=True,
             )
             return True
-        except (subprocess.CalledProcessError, FileNotFoundError):
+        except subprocess.CalledProcessError, FileNotFoundError:
             # Fallback to standard 3-way merge if mergiraf fails or missing
             try:
                 with output.open("wb") as out_file:
@@ -98,7 +98,7 @@ class SmartMerge:
                         stdout=out_file,
                     )
                 return True
-            except (subprocess.CalledProcessError, FileNotFoundError):
+            except subprocess.CalledProcessError, FileNotFoundError:
                 return False
         elif ext in (".yaml", ".yml"):
             # Deep merge YAML manually using ruamel.yaml or similar

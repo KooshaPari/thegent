@@ -70,6 +70,7 @@ def _process_sse_line(line: str) -> Optional[dict[str, Any]]:
     if data == "[DONE]":
         return {"done": True}
     import json
+
     try:
         return json.loads(data)
     except json.JSONDecodeError:
@@ -110,9 +111,16 @@ def extract_websocket_forward_headers(headers: dict[str, str]) -> dict[str, str]
 def filter_inbound_response_headers(headers: dict[str, str]) -> dict[str, str]:
     """Filter response headers for outbound forwarding."""
     # Remove hop-by-hop headers
-    remove = {"connection", "keep-alive", "proxy-authenticate", 
-              "proxy-authorization", "te", "trailers", 
-              "transfer-encoding", "upgrade"}
+    remove = {
+        "connection",
+        "keep-alive",
+        "proxy-authenticate",
+        "proxy-authorization",
+        "te",
+        "trailers",
+        "transfer-encoding",
+        "upgrade",
+    }
     return {k: v for k, v in headers.items() if k.lower() not in remove}
 
 

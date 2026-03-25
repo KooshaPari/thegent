@@ -10,6 +10,7 @@ from unittest.mock import patch
 def _require_nats_servers() -> None:
     """Helper to require NATS_SERVERS."""
     import nats_contract_smoke as smoke
+
     smoke._require_env("NATS_SERVERS")
 
 

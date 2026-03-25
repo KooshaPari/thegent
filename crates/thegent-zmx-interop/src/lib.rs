@@ -173,7 +173,7 @@ pub fn create_session(name: &str, cmd: &str) -> Result<(), ZmxError> {
 
 #[cfg(feature = "zmx-native")]
 mod native {
-    use super::{ffi, ZmxError};
+    use super::{ffi, parse_session_list, ZmxError};
     use std::ffi::CString;
 
     const LIST_BUF_SIZE: usize = 65_536; // 64 KiB — sufficient for many sessions

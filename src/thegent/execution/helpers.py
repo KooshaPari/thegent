@@ -83,6 +83,3 @@ def as_int(value: Any, default: int) -> int:
 def as_bool(value: Any, default: bool) -> bool:
     """Coerce arbitrary values to bool with a safe default."""
     return _as_bool_impl(value, default)
-
-
-

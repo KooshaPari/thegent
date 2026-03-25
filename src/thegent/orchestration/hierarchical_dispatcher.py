@@ -153,11 +153,7 @@ class SessionAgentRegistry:
 
     def active_count(self) -> int:
         """Count active (non-pruned) agents."""
-        return sum(
-            1
-            for a in self.agents.values()
-            if a.state not in (AgentLifecycleState.PRUNED,)
-        )
+        return sum(1 for a in self.agents.values() if a.state != AgentLifecycleState.PRUNED)
 
     def running_count(self) -> int:
         """Count currently running agents."""
@@ -239,11 +235,7 @@ class HierarchicalAgentRegistry:
 
     def total_active_count(self) -> int:
         """Count total active agents across all sessions."""
-        return sum(
-            1
-            for a in self._agents.values()
-            if a.state not in (AgentLifecycleState.PRUNED,)
-        )
+        return sum(1 for a in self._agents.values() if a.state != AgentLifecycleState.PRUNED)
 
     def can_spawn_system_wide(self) -> bool:
         """Check if system can accept more agents."""
@@ -259,10 +251,7 @@ class HierarchicalAgentRegistry:
     def get_or_create_session(self, session_id: str) -> SessionAgentRegistry:
         """Get or create a session registry."""
         if session_id not in self._sessions:
-            self._sessions[session_id] = SessionAgentRegistry(
-                session_id=session_id, 
-                session_cap=self._session_cap
-            )
+            self._sessions[session_id] = SessionAgentRegistry(session_id=session_id, session_cap=self._session_cap)
         return self._sessions[session_id]
 
     def register_agent(self, agent: HierarchicalAgent) -> None:
@@ -273,8 +262,7 @@ class HierarchicalAgentRegistry:
         """
         if not self.can_spawn_system_wide():
             raise AgentCapExceededError(
-                f"System agent cap ({self._system_cap}) exceeded. "
-                f"Current: {self.total_active_count()}"
+                f"System agent cap ({self._system_cap}) exceeded. Current: {self.total_active_count()}"
             )
 
         session = self.get_or_create_session(agent.session_id)
@@ -391,10 +379,7 @@ class HierarchicalAgentRegistry:
             "active_count": session.active_count(),
             "running_count": session.running_count(),
             "total_registered": len(session.agents),
-            "by_depth": {
-                depth: len(session.get_by_depth(depth))
-                for depth in range(MAX_HIERARCHY_DEPTH + 1)
-            },
+            "by_depth": {depth: len(session.get_by_depth(depth)) for depth in range(MAX_HIERARCHY_DEPTH + 1)},
         }
 
     def get_system_stats(self) -> dict[str, Any]:
@@ -519,8 +504,7 @@ class HierarchicalDispatcher:
             # Check depth limit
             if depth > MAX_HIERARCHY_DEPTH:
                 raise MaxDepthExceededError(
-                    f"Max hierarchy depth ({MAX_HIERARCHY_DEPTH}) exceeded. "
-                    f"Requested depth: {depth}"
+                    f"Max hierarchy depth ({MAX_HIERARCHY_DEPTH}) exceeded. Requested depth: {depth}"
                 )
 
         # Check caps
@@ -535,8 +519,7 @@ class HierarchicalDispatcher:
 
         if not self._registry.can_spawn_session(request.session_id):
             raise AgentCapExceededError(
-                f"Session agent cap ({self._registry.session_cap}) exceeded "
-                f"for session {request.session_id}"
+                f"Session agent cap ({self._registry.session_cap}) exceeded for session {request.session_id}"
             )
 
         # Create agent record
@@ -656,9 +639,7 @@ class HierarchicalDispatcher:
             raise ValueError(f"Parent agent {parent_agent_id} not found")
 
         if parent.depth >= MAX_HIERARCHY_DEPTH:
-            raise MaxDepthExceededError(
-                f"Parent at max depth ({parent.depth}), cannot spawn children"
-            )
+            raise MaxDepthExceededError(f"Parent at max depth ({parent.depth}), cannot spawn children")
 
         return HierarchicalDispatchRequest(
             prompt=child_prompt,
@@ -684,10 +665,7 @@ class HierarchicalDispatcher:
         if agent.depth >= MAX_HIERARCHY_DEPTH:
             return False
 
-        return (
-            self._registry.can_spawn_system_wide()
-            and self._registry.can_spawn_session(agent.session_id)
-        )
+        return self._registry.can_spawn_system_wide() and self._registry.can_spawn_session(agent.session_id)
 
     def prune_finished_stale(self) -> int:
         """Prune all finished and stale agents."""

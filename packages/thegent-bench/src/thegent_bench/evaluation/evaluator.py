@@ -13,6 +13,7 @@ import time
 @dataclass
 class EvaluationResult:
     """Result of agent evaluation."""
+
     agent_id: str
     task_type: str
     success: bool
@@ -30,13 +31,7 @@ class AgentEvaluator:
         self.metrics = metrics or MetricsCollector()
         self._results: list[EvaluationResult] = []
 
-    def evaluate(
-        self,
-        agent_id: str,
-        task_type: str,
-        task_fn: callable,
-        timeout: float = 300.0
-    ) -> EvaluationResult:
+    def evaluate(self, agent_id: str, task_type: str, task_fn: callable, timeout: float = 300.0) -> EvaluationResult:
         """Evaluate agent on a task."""
         start_time = time.time()
         success = False
@@ -72,7 +67,7 @@ class AgentEvaluator:
             duration=duration,
             tokens_used=tokens_used,
             error=error,
-            details=details
+            details=details,
         )
 
         self._results.append(result)
@@ -87,11 +82,7 @@ class AgentEvaluator:
         self.metrics.record("evaluation.duration", result.duration)
         self.metrics.record("evaluation.tokens", result.tokens_used)
 
-    def benchmark(
-        self,
-        agent_id: str,
-        tasks: list[dict]
-    ) -> dict:
+    def benchmark(self, agent_id: str, tasks: list[dict]) -> dict:
         """Run benchmark suite."""
         results = []
 
@@ -122,14 +113,9 @@ class AgentEvaluator:
             "average_duration": avg_duration,
             "total_tokens": total_tokens,
             "results": [
-                {
-                    "task_type": r.task_type,
-                    "success": r.success,
-                    "score": r.score,
-                    "duration": r.duration
-                }
+                {"task_type": r.task_type, "success": r.success, "score": r.score, "duration": r.duration}
                 for r in results
-            ]
+            ],
         }
 
     def compare(self, agent_ids: list[str], tasks: list[dict]) -> dict:

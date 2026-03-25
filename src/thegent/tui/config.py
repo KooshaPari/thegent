@@ -53,7 +53,6 @@ class TUIConfig(SerializableMixin):
     # Custom CSS
     custom_css: str = ""
 
-
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TUIConfig:
         return cls(
@@ -86,7 +85,6 @@ class KeyBinding:
     key: str
     action: str
     description: str = ""
-
 
 
 class ConfigManager:

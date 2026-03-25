@@ -22,7 +22,6 @@ from thegent.cli.commands._cli_shared import (
 )
 
 
-
 def trust_status_cmd(format: str | None = None) -> None:
     """Show last environment and trust boundary status (WP-3007)."""
     settings = ThegentSettings()
@@ -150,7 +149,6 @@ def signatures_verify_cmd(run_id: str) -> None:
     except Exception as e:
         console.print(f"[red]Failed to verify artifact: {e}[/red]")
         raise typer.Exit(1)
-
 
 
 __all__ = [

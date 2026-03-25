@@ -13,105 +13,105 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 MODULE_TO_PKG: list[tuple[str, str]] = [
     # thegent_core
-    ("domain",              "thegent_core"),
-    ("ports",               "thegent_core"),
-    ("config",              "thegent_core"),
-    ("constants",           "thegent_core"),
-    ("contracts",           "thegent_core"),
-    ("models",              "thegent_core"),
+    ("domain", "thegent_core"),
+    ("ports", "thegent_core"),
+    ("config", "thegent_core"),
+    ("constants", "thegent_core"),
+    ("contracts", "thegent_core"),
+    ("models", "thegent_core"),
     # thegent_execution
-    ("execution",           "thegent_execution"),
-    ("process",             "thegent_execution"),
-    ("isolation",           "thegent_execution"),
-    ("shell",               "thegent_execution"),
-    ("muxless",             "thegent_execution"),
-    ("session",             "thegent_execution"),
+    ("execution", "thegent_execution"),
+    ("process", "thegent_execution"),
+    ("isolation", "thegent_execution"),
+    ("shell", "thegent_execution"),
+    ("muxless", "thegent_execution"),
+    ("session", "thegent_execution"),
     # thegent_agents
-    ("agents",              "thegent_agents"),
-    ("swarm",               "thegent_agents"),
-    ("team",                "thegent_agents"),
-    ("teammates",           "thegent_agents"),
-    ("mesh",                "thegent_agents"),
-    ("coordination",        "thegent_agents"),
+    ("agents", "thegent_agents"),
+    ("swarm", "thegent_agents"),
+    ("team", "thegent_agents"),
+    ("teammates", "thegent_agents"),
+    ("mesh", "thegent_agents"),
+    ("coordination", "thegent_agents"),
     # thegent_protocols
-    ("protocols",           "thegent_protocols"),
-    ("acp",                 "thegent_protocols"),
-    ("mcp",                 "thegent_protocols"),
-    ("sdk",                 "thegent_protocols"),
-    ("ipc",                 "thegent_protocols"),
-    ("api_client",          "thegent_protocols"),
+    ("protocols", "thegent_protocols"),
+    ("acp", "thegent_protocols"),
+    ("mcp", "thegent_protocols"),
+    ("sdk", "thegent_protocols"),
+    ("ipc", "thegent_protocols"),
+    ("api_client", "thegent_protocols"),
     # thegent_skills
-    ("skills",              "thegent_skills"),
-    ("tools",               "thegent_skills"),
-    ("hooks",               "thegent_skills"),
-    ("rules",               "thegent_skills"),
+    ("skills", "thegent_skills"),
+    ("tools", "thegent_skills"),
+    ("hooks", "thegent_skills"),
+    ("rules", "thegent_skills"),
     # thegent_observability
-    ("telemetry",           "thegent_observability"),
-    ("metrics",             "thegent_observability"),
-    ("monitoring",          "thegent_observability"),
-    ("observability",       "thegent_observability"),
-    ("trace",               "thegent_observability"),
-    ("logging_utils",       "thegent_observability"),
+    ("telemetry", "thegent_observability"),
+    ("metrics", "thegent_observability"),
+    ("monitoring", "thegent_observability"),
+    ("observability", "thegent_observability"),
+    ("trace", "thegent_observability"),
+    ("logging_utils", "thegent_observability"),
     # thegent_planning
-    ("planning",            "thegent_planning"),
-    ("phases",              "thegent_planning"),
-    ("work_packages",       "thegent_planning"),
-    ("design",              "thegent_planning"),
-    ("research",            "thegent_planning"),
+    ("planning", "thegent_planning"),
+    ("phases", "thegent_planning"),
+    ("work_packages", "thegent_planning"),
+    ("design", "thegent_planning"),
+    ("research", "thegent_planning"),
     # thegent_bench
-    ("bench",               "thegent_bench"),
-    ("evals",               "thegent_bench"),
-    ("evaluation",          "thegent_bench"),
-    ("phench",              "thegent_bench"),
+    ("bench", "thegent_bench"),
+    ("evals", "thegent_bench"),
+    ("evaluation", "thegent_bench"),
+    ("phench", "thegent_bench"),
     # thegent_audit
-    ("audit_v2",            "thegent_audit"),
-    ("audit",               "thegent_audit"),
-    ("forensics",           "thegent_audit"),
-    ("governance",          "thegent_audit"),
-    ("govern",              "thegent_audit"),
-    ("security_utils",      "thegent_audit"),
-    ("security",            "thegent_audit"),
-    ("verification",        "thegent_audit"),
+    ("audit_v2", "thegent_audit"),
+    ("audit", "thegent_audit"),
+    ("forensics", "thegent_audit"),
+    ("governance", "thegent_audit"),
+    ("govern", "thegent_audit"),
+    ("security_utils", "thegent_audit"),
+    ("security", "thegent_audit"),
+    ("verification", "thegent_audit"),
     # thegent_sync
-    ("sync",                "thegent_sync"),
-    ("autosync",            "thegent_sync"),
-    ("integrations",        "thegent_sync"),
-    ("integration",         "thegent_sync"),
+    ("sync", "thegent_sync"),
+    ("autosync", "thegent_sync"),
+    ("integrations", "thegent_sync"),
+    ("integration", "thegent_sync"),
     # thegent_routing  (provider_* top-level names)
-    ("cost",                "thegent_routing"),
-    ("economy",             "thegent_routing"),
-    ("provider",            "thegent_routing"),
-    ("providers",           "thegent_routing"),
-    ("routing",             "thegent_routing"),
-    ("provider_model_manager_cliproxy",  "thegent_routing"),
-    ("provider_model_manager_io",        "thegent_routing"),
-    ("provider_model_manager_sorting",   "thegent_routing"),
-    ("provider_model_manager",           "thegent_routing"),
-    ("provider_model_scoring",           "thegent_routing"),
-    ("provider_crud",       "thegent_routing"),
-    ("provider_forms",      "thegent_routing"),
-    ("provider_search",     "thegent_routing"),
+    ("cost", "thegent_routing"),
+    ("economy", "thegent_routing"),
+    ("provider", "thegent_routing"),
+    ("providers", "thegent_routing"),
+    ("routing", "thegent_routing"),
+    ("provider_model_manager_cliproxy", "thegent_routing"),
+    ("provider_model_manager_io", "thegent_routing"),
+    ("provider_model_manager_sorting", "thegent_routing"),
+    ("provider_model_manager", "thegent_routing"),
+    ("provider_model_scoring", "thegent_routing"),
+    ("provider_crud", "thegent_routing"),
+    ("provider_forms", "thegent_routing"),
+    ("provider_search", "thegent_routing"),
     # thegent_platform
-    ("desktop",             "thegent_platform"),
-    ("gpu",                 "thegent_platform"),
-    ("native",              "thegent_platform"),
-    ("tray",                "thegent_platform"),
-    ("platform_paths",      "thegent_platform"),
+    ("desktop", "thegent_platform"),
+    ("gpu", "thegent_platform"),
+    ("native", "thegent_platform"),
+    ("tray", "thegent_platform"),
+    ("platform_paths", "thegent_platform"),
     # thegent_cli
-    ("cli",                 "thegent_cli"),
-    ("commands",            "thegent_cli"),
-    ("tui",                 "thegent_cli"),
-    ("ui",                  "thegent_cli"),
-    ("ux",                  "thegent_cli"),
+    ("cli", "thegent_cli"),
+    ("commands", "thegent_cli"),
+    ("tui", "thegent_cli"),
+    ("ui", "thegent_cli"),
+    ("ux", "thegent_cli"),
     # use_cases (not in mapping; treat as thegent_core for now)
-    ("use_cases",           "thegent_core"),
+    ("use_cases", "thegent_core"),
     # core infra/utility modules
-    ("config_defaults",     "thegent_core"),
-    ("config_parsers",      "thegent_core"),
-    ("output_parser",       "thegent_core"),
-    ("utils",               "thegent_core"),
-    ("infra",               "thegent_core"),
-    ("cache",               "thegent_core"),
+    ("config_defaults", "thegent_core"),
+    ("config_parsers", "thegent_core"),
+    ("output_parser", "thegent_core"),
+    ("utils", "thegent_core"),
+    ("infra", "thegent_core"),
+    ("cache", "thegent_core"),
 ]
 
 # Build a dict for O(1) lookup: first_segment -> new_pkg
@@ -125,18 +125,18 @@ for seg, pkg in MODULE_TO_PKG:
 # Group 2: "thegent."
 # Group 3: rest of dotted module path (e.g. "config.settings")
 _IMPORT_RE = re.compile(
-    r'^(\s*(?:from|import)\s+)'   # leading whitespace + from/import keyword
-    r'(thegent)'                   # the old top-level package
-    r'(\.[A-Za-z0-9_.]+)',         # .module.submodule...
+    r"^(\s*(?:from|import)\s+)"  # leading whitespace + from/import keyword
+    r"(thegent)"  # the old top-level package
+    r"(\.[A-Za-z0-9_.]+)",  # .module.submodule...
     re.MULTILINE,
 )
 
 
 def rewrite_line(m: re.Match) -> str:
     """Return the rewritten import string."""
-    prefix = m.group(1)      # e.g. "from " or "import "
+    prefix = m.group(1)  # e.g. "from " or "import "
     # m.group(2) == "thegent"
-    rest = m.group(3)        # e.g. ".config.settings"
+    rest = m.group(3)  # e.g. ".config.settings"
 
     # First segment after 'thegent.'
     parts = rest.lstrip(".").split(".")
@@ -145,7 +145,6 @@ def rewrite_line(m: re.Match) -> str:
     new_pkg = _SEG_TO_PKG.get(first)
     if new_pkg is None:
         # Unknown segment — leave unchanged and warn
-        print(f"  WARNING: unknown segment '{first}' in '{m.group(0).strip()}'", file=sys.stderr)
         return m.group(0)
 
     # Determine which package the *file being rewritten* belongs to, so we
@@ -167,8 +166,12 @@ def rewrite_file(path: Path) -> int:
     if rewritten == original:
         return 0
     path.write_text(rewritten, encoding="utf-8")
-    return original.count("\n") - rewritten.count("\n") + len(
-        [l for l in rewritten.splitlines() if l != original.splitlines()[original.splitlines().index(l)] if False]
+    return (
+        original.count("\n")
+        - rewritten.count("\n")
+        + len(
+            [l for l in rewritten.splitlines() if l != original.splitlines()[original.splitlines().index(l)] if False]
+        )
     )
 
 
@@ -190,8 +193,6 @@ def process_directory(root: Path) -> None:
             total_changes += changes
             total_files += 1
             f.write_text(rewritten, encoding="utf-8")
-            print(f"  {f.relative_to(root.parents[4])}  ({changes} import lines rewritten)")
-    print(f"  => {total_files} files modified, {total_changes} import lines rewritten\n")
 
 
 BASE = Path("/Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/workspace/packages")
@@ -203,7 +204,4 @@ PACKAGES = [
 ]
 
 for pkg_dir in PACKAGES:
-    print(f"Processing {pkg_dir.name} ...")
     process_directory(pkg_dir)
-
-print("Done.")

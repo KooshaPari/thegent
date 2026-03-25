@@ -11,6 +11,7 @@ from pathlib import Path
 from dataclasses import dataclass
 
 from civilization_memory_storage import SQLiteMemoryStorage
+import pytest
 
 
 @dataclass
@@ -58,13 +59,13 @@ class TestMemoryRelationships(unittest.TestCase):
         self.storage.store(self._make_memory("m2"))
 
         result = self.storage.link_memories("m1", "m2", strength=0.7, relationship_type="related")
-        self.assertTrue(result)
+        assert result
 
     def test_link_memories_invalid_strength(self):
         """Strength outside 0.0-1.0 raises ValueError."""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.storage.link_memories("m1", "m2", strength=1.5)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.storage.link_memories("m1", "m2", strength=-0.1)
 
     def test_get_related_memories(self):
@@ -74,10 +75,10 @@ class TestMemoryRelationships(unittest.TestCase):
         self.storage.link_memories("a", "b", strength=0.8, relationship_type="helps_with")
 
         related = self.storage.get_related_memories("a")
-        self.assertEqual(len(related), 1)
-        self.assertEqual(related[0]["memory_id"], "b")
-        self.assertAlmostEqual(related[0]["strength"], 0.8)
-        self.assertEqual(related[0]["relationship_type"], "helps_with")
+        assert len(related) == 1
+        assert related[0]["memory_id"] == "b"
+        self.assertAlmostEqual(related[0]["strength"], 0.8)  # noqa: PT009
+        assert related[0]["relationship_type"] == "helps_with"
 
     def test_get_related_memories_min_strength(self):
         """Filter by min_strength=0.8 excludes weaker links."""
@@ -89,8 +90,8 @@ class TestMemoryRelationships(unittest.TestCase):
         self.storage.link_memories("a", "c", strength=0.3, relationship_type="related")
 
         related = self.storage.get_related_memories("a", min_strength=0.8)
-        self.assertEqual(len(related), 1)
-        self.assertEqual(related[0]["memory_id"], "b")
+        assert len(related) == 1
+        assert related[0]["memory_id"] == "b"
 
     def test_get_related_bidirectional(self):
         """Link A->B, querying B also returns A."""
@@ -99,18 +100,16 @@ class TestMemoryRelationships(unittest.TestCase):
         self.storage.link_memories("a", "b", strength=0.6, relationship_type="similar_to")
 
         related = self.storage.get_related_memories("b")
-        self.assertEqual(len(related), 1)
-        self.assertEqual(related[0]["memory_id"], "a")
-        self.assertEqual(related[0]["relationship_type"], "similar_to")
+        assert len(related) == 1
+        assert related[0]["memory_id"] == "a"
+        assert related[0]["relationship_type"] == "similar_to"
 
     def test_relationship_types(self):
         """Test all valid relationship types can be used."""
         valid_types = ["caused_by", "helps_with", "similar_to", "contradicts", "related"]
         for i, rel_type in enumerate(valid_types):
-            result = self.storage.link_memories(
-                f"x{i}", f"y{i}", strength=0.5, relationship_type=rel_type
-            )
-            self.assertTrue(result, f"Failed to link with type '{rel_type}'")
+            result = self.storage.link_memories(f"x{i}", f"y{i}", strength=0.5, relationship_type=rel_type)
+            assert result, f"Failed to link with type '{rel_type}'"
 
     def test_get_relationship_graph(self):
         """Store 2 memories for same agent, link them, get graph."""
@@ -120,26 +119,26 @@ class TestMemoryRelationships(unittest.TestCase):
 
         graph = self.storage.get_relationship_graph("agent-g")
 
-        self.assertIn("g1", graph["nodes"])
-        self.assertIn("g2", graph["nodes"])
-        self.assertEqual(len(graph["edges"]), 1)
+        assert "g1" in graph["nodes"]
+        assert "g2" in graph["nodes"]
+        assert len(graph["edges"]) == 1
 
         edge = graph["edges"][0]
-        self.assertEqual(edge["from"], "g1")
-        self.assertEqual(edge["to"], "g2")
-        self.assertAlmostEqual(edge["strength"], 0.75)
-        self.assertEqual(edge["type"], "caused_by")
+        assert edge["from"] == "g1"
+        assert edge["to"] == "g2"
+        self.assertAlmostEqual(edge["strength"], 0.75)  # noqa: PT009
+        assert edge["type"] == "caused_by"
 
     def test_link_invalid_type(self):
         """Invalid relationship_type raises ValueError."""
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.storage.link_memories("m1", "m2", strength=0.5, relationship_type="invalid_type")
 
     def test_get_relationship_graph_empty(self):
         """Graph for agent with no memories returns empty nodes and edges."""
         graph = self.storage.get_relationship_graph("nonexistent-agent")
-        self.assertEqual(graph["nodes"], [])
-        self.assertEqual(graph["edges"], [])
+        assert graph["nodes"] == []
+        assert graph["edges"] == []
 
     def test_get_related_memories_ordered_by_strength(self):
         """Related memories are returned ordered by strength descending."""
@@ -151,9 +150,9 @@ class TestMemoryRelationships(unittest.TestCase):
         self.storage.link_memories("center", "strong", strength=0.9, relationship_type="related")
 
         related = self.storage.get_related_memories("center")
-        self.assertEqual(len(related), 2)
-        self.assertEqual(related[0]["memory_id"], "strong")
-        self.assertEqual(related[1]["memory_id"], "weak")
+        assert len(related) == 2
+        assert related[0]["memory_id"] == "strong"
+        assert related[1]["memory_id"] == "weak"
 
 
 if __name__ == "__main__":

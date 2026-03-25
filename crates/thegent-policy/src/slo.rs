@@ -26,7 +26,10 @@ impl SloRegulator {
     }
 
     pub fn record_execution(&mut self, latency_ms: f64, success: bool) {
-        self.metrics.push(ExecutionMetric { latency_ms, success });
+        self.metrics.push(ExecutionMetric {
+            latency_ms,
+            success,
+        });
     }
 
     pub fn is_compliant(&self) -> bool {
@@ -36,10 +39,10 @@ impl SloRegulator {
 
         // Check last 100 metrics
         let recent: Vec<_> = self.metrics.iter().rev().take(100).collect();
-        
+
         let total_latency: f64 = recent.iter().map(|m| m.latency_ms).sum();
         let avg_latency = total_latency / recent.len() as f64;
-        
+
         let error_count = recent.iter().filter(|m| !m.success).count() as f64;
         let error_rate = error_count / recent.len() as f64;
 

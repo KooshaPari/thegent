@@ -27,6 +27,7 @@ from civilization_dashboard_service import (
 @dataclass
 class MockAgent:
     """Mock agent for testing."""
+
     uuid: str
     project: str
     level: str
@@ -44,6 +45,7 @@ class MockAgent:
 @dataclass
 class MockMemory:
     """Mock memory record."""
+
     timestamp: float
     memory_type: any
     content: dict
@@ -52,12 +54,14 @@ class MockMemory:
 @dataclass
 class MockMemoryType:
     """Mock memory type enum value."""
+
     value: str
 
 
 @dataclass
 class MockConflict:
     """Mock conflict record."""
+
     conflict_type: MockMemoryType
     agents: list[MockAgent]
     detected_at: float
@@ -151,11 +155,11 @@ class TestOverviewDashboard(unittest.TestCase):
         """Test overview with no agents."""
         overview = self.service.get_overview_dashboard()
 
-        self.assertEqual(overview.total_agents, 0)
-        self.assertEqual(overview.active_count, 0)
-        self.assertEqual(overview.stale_count, 0)
-        self.assertEqual(overview.by_level, {})
-        self.assertEqual(overview.by_project, {})
+        assert overview.total_agents == 0
+        assert overview.active_count == 0
+        assert overview.stale_count == 0
+        assert overview.by_level == {}
+        assert overview.by_project == {}
 
     def test_overview_all_active_agents(self):
         """Test overview with all active agents."""
@@ -175,13 +179,13 @@ class TestOverviewDashboard(unittest.TestCase):
 
         overview = self.service.get_overview_dashboard()
 
-        self.assertEqual(overview.total_agents, 10)
-        self.assertEqual(overview.active_count, 10)
-        self.assertEqual(overview.stale_count, 0)
-        self.assertIn("L1", overview.by_level)
-        self.assertIn("L2", overview.by_level)
-        self.assertIn("L3", overview.by_level)
-        self.assertIn("test-project", overview.by_project)
+        assert overview.total_agents == 10
+        assert overview.active_count == 10
+        assert overview.stale_count == 0
+        assert "L1" in overview.by_level
+        assert "L2" in overview.by_level
+        assert "L3" in overview.by_level
+        assert "test-project" in overview.by_project
 
     def test_overview_mixed_active_and_stale(self):
         """Test overview with mix of active and stale agents."""
@@ -213,9 +217,9 @@ class TestOverviewDashboard(unittest.TestCase):
 
         overview = self.service.get_overview_dashboard()
 
-        self.assertEqual(overview.total_agents, 8)
-        self.assertEqual(overview.active_count, 5)
-        self.assertEqual(overview.stale_count, 3)
+        assert overview.total_agents == 8
+        assert overview.active_count == 5
+        assert overview.stale_count == 3
 
     def test_overview_by_project_grouping(self):
         """Test overview correctly groups agents by project."""
@@ -246,9 +250,9 @@ class TestOverviewDashboard(unittest.TestCase):
 
         overview = self.service.get_overview_dashboard()
 
-        self.assertEqual(overview.total_agents, 8)
-        self.assertEqual(overview.by_project["project-alpha"]["total"], 5)
-        self.assertEqual(overview.by_project["project-beta"]["total"], 3)
+        assert overview.total_agents == 8
+        assert overview.by_project["project-alpha"]["total"] == 5
+        assert overview.by_project["project-beta"]["total"] == 3
 
 
 class TestProjectDashboard(unittest.TestCase):
@@ -268,11 +272,11 @@ class TestProjectDashboard(unittest.TestCase):
         """Test project dashboard with no agents."""
         dashboard = self.service.get_project_dashboard("nonexistent-project")
 
-        self.assertEqual(dashboard.project, "nonexistent-project")
-        self.assertEqual(dashboard.agent_count, 0)
+        assert dashboard.project == "nonexistent-project"
+        assert dashboard.agent_count == 0
         # Empty hierarchy still has L1, L2, L3 keys with empty lists
-        self.assertIn("L1", dashboard.hierarchy)
-        self.assertEqual(len(dashboard.hierarchy["L1"]), 0)
+        assert "L1" in dashboard.hierarchy
+        assert len(dashboard.hierarchy["L1"]) == 0
 
     def test_project_dashboard_hierarchy(self):
         """Test project dashboard builds correct hierarchy."""
@@ -304,11 +308,11 @@ class TestProjectDashboard(unittest.TestCase):
 
         dashboard = self.service.get_project_dashboard("test-project")
 
-        self.assertEqual(dashboard.agent_count, 3)
-        self.assertIn("L1", dashboard.hierarchy)
-        self.assertIn("L2", dashboard.hierarchy)
-        self.assertEqual(len(dashboard.hierarchy["L1"]), 1)
-        self.assertEqual(len(dashboard.hierarchy["L2"]), 2)
+        assert dashboard.agent_count == 3
+        assert "L1" in dashboard.hierarchy
+        assert "L2" in dashboard.hierarchy
+        assert len(dashboard.hierarchy["L1"]) == 1
+        assert len(dashboard.hierarchy["L2"]) == 2
 
     def test_project_dashboard_stale_agent_marking(self):
         """Test project dashboard marks stale agents."""
@@ -340,8 +344,8 @@ class TestProjectDashboard(unittest.TestCase):
 
         # Check hierarchy contains status info
         statuses = [a["status"] for agents in dashboard.hierarchy.values() for a in agents]
-        self.assertIn("active", statuses)
-        self.assertIn("stale", statuses)
+        assert "active" in statuses
+        assert "stale" in statuses
 
 
 class TestAgentDashboard(unittest.TestCase):
@@ -361,7 +365,7 @@ class TestAgentDashboard(unittest.TestCase):
     def test_agent_dashboard_not_found(self):
         """Test agent dashboard when agent doesn't exist."""
         dashboard = self.service.get_agent_dashboard("nonexistent")
-        self.assertIsNone(dashboard)
+        assert dashboard is None
 
     def test_agent_dashboard_active(self):
         """Test agent dashboard for active agent."""
@@ -386,12 +390,12 @@ class TestAgentDashboard(unittest.TestCase):
 
         dashboard = self.service.get_agent_dashboard("active-agent")
 
-        self.assertIsNotNone(dashboard)
-        self.assertEqual(dashboard.agent_id, "active-agent")
-        self.assertEqual(dashboard.status, "active")
-        self.assertEqual(dashboard.level, "L2")
-        self.assertIsNotNone(dashboard.last_heartbeat_seconds_ago)
-        self.assertLess(dashboard.last_heartbeat_seconds_ago, 70)
+        assert dashboard is not None
+        assert dashboard.agent_id == "active-agent"
+        assert dashboard.status == "active"
+        assert dashboard.level == "L2"
+        assert dashboard.last_heartbeat_seconds_ago is not None
+        assert dashboard.last_heartbeat_seconds_ago < 70
 
     def test_agent_dashboard_stale(self):
         """Test agent dashboard for stale agent."""
@@ -407,9 +411,9 @@ class TestAgentDashboard(unittest.TestCase):
 
         dashboard = self.service.get_agent_dashboard("stale-agent")
 
-        self.assertIsNotNone(dashboard)
-        self.assertEqual(dashboard.status, "stale")
-        self.assertGreater(dashboard.last_heartbeat_seconds_ago, 300)
+        assert dashboard is not None
+        assert dashboard.status == "stale"
+        assert dashboard.last_heartbeat_seconds_ago > 300
 
     def test_agent_dashboard_metrics(self):
         """Test agent dashboard includes metrics."""
@@ -430,10 +434,10 @@ class TestAgentDashboard(unittest.TestCase):
 
         dashboard = self.service.get_agent_dashboard("metrics-agent")
 
-        self.assertIsNotNone(dashboard)
-        self.assertIsNotNone(dashboard.metrics)
-        self.assertGreaterEqual(dashboard.metrics.success_rate, 0.0)
-        self.assertLessEqual(dashboard.metrics.success_rate, 1.0)
+        assert dashboard is not None
+        assert dashboard.metrics is not None
+        assert dashboard.metrics.success_rate >= 0.0
+        assert dashboard.metrics.success_rate <= 1.0
 
     def test_agent_dashboard_relationships(self):
         """Test agent dashboard includes relationship information."""
@@ -475,10 +479,10 @@ class TestAgentDashboard(unittest.TestCase):
 
         dashboard = self.service.get_agent_dashboard("child-worker")
 
-        self.assertIsNotNone(dashboard)
-        self.assertIsNotNone(dashboard.relationships)
-        self.assertEqual(dashboard.relationships["parent"], "parent")
-        self.assertEqual(len(dashboard.relationships["children"]), 2)
+        assert dashboard is not None
+        assert dashboard.relationships is not None
+        assert dashboard.relationships["parent"] == "parent"
+        assert len(dashboard.relationships["children"]) == 2
 
 
 class TestMetricsAggregation(unittest.TestCase):
@@ -499,9 +503,9 @@ class TestMetricsAggregation(unittest.TestCase):
         service = DashboardService(registry=self.registry, memory_service=None)
         metrics = service._get_agent_metrics("some-agent")
 
-        self.assertEqual(metrics.task_count, 0)
-        self.assertEqual(metrics.error_count, 0)
-        self.assertEqual(metrics.success_rate, 0.0)
+        assert metrics.task_count == 0
+        assert metrics.error_count == 0
+        assert metrics.success_rate == 0.0
 
     def test_metrics_snapshot_with_memory_data(self):
         """Test metrics with memory service data."""
@@ -512,9 +516,9 @@ class TestMetricsAggregation(unittest.TestCase):
 
         metrics = self.service._get_agent_metrics(agent_id)
 
-        self.assertGreater(metrics.task_count, 0)
-        self.assertGreaterEqual(metrics.success_rate, 0.0)
-        self.assertLessEqual(metrics.success_rate, 1.0)
+        assert metrics.task_count > 0
+        assert metrics.success_rate >= 0.0
+        assert metrics.success_rate <= 1.0
 
 
 class TestSerialization(unittest.TestCase):
@@ -537,9 +541,9 @@ class TestSerialization(unittest.TestCase):
 
         result = self.service.overview_to_dict(overview)
 
-        self.assertEqual(result["total_agents"], 10)
-        self.assertEqual(result["active_count"], 9)
-        self.assertIn("timestamp", result)
+        assert result["total_agents"] == 10
+        assert result["active_count"] == 9
+        assert "timestamp" in result
 
     def test_project_to_dict(self):
         """Test converting project dashboard to dict."""
@@ -554,8 +558,8 @@ class TestSerialization(unittest.TestCase):
 
         result = self.service.project_to_dict(project_dash)
 
-        self.assertEqual(result["project"], "test-project")
-        self.assertEqual(result["agent_count"], 5)
+        assert result["project"] == "test-project"
+        assert result["agent_count"] == 5
 
     def test_agent_to_dict(self):
         """Test converting agent dashboard to dict."""
@@ -573,9 +577,9 @@ class TestSerialization(unittest.TestCase):
 
         result = self.service.agent_to_dict(agent_dash)
 
-        self.assertEqual(result["agent_id"], "test-agent")
-        self.assertEqual(result["status"], "active")
-        self.assertEqual(result["level"], "L2")
+        assert result["agent_id"] == "test-agent"
+        assert result["status"] == "active"
+        assert result["level"] == "L2"
 
 
 class TestErrorHandling(unittest.TestCase):
@@ -590,17 +594,17 @@ class TestErrorHandling(unittest.TestCase):
         service.conflict_resolver = None
 
         overview = service.get_overview_dashboard()
-        self.assertEqual(overview.total_agents, 0)
+        assert overview.total_agents == 0
 
         project = service.get_project_dashboard("test")
-        self.assertEqual(project.agent_count, 0)
+        assert project.agent_count == 0
 
     def test_agent_dashboard_with_none_registry(self):
         """Test agent dashboard with None registry returns None."""
         service = DashboardService(registry=None)
 
         dashboard = service.get_agent_dashboard("some-agent")
-        self.assertIsNone(dashboard)
+        assert dashboard is None
 
     def test_metrics_with_invalid_agent(self):
         """Test metrics with non-existent agent."""
@@ -611,7 +615,7 @@ class TestErrorHandling(unittest.TestCase):
         metrics = service._get_agent_metrics("invalid-agent")
 
         # Should return empty metrics, not crash
-        self.assertEqual(metrics.task_count, 0)
+        assert metrics.task_count == 0
 
 
 class TestBackwardCompatibility(unittest.TestCase):
@@ -638,8 +642,8 @@ class TestBackwardCompatibility(unittest.TestCase):
         overview = service.get_overview_dashboard()
 
         # Should not crash and should show agent
-        self.assertEqual(overview.total_agents, 1)
-        self.assertEqual(overview.active_count, 1)
+        assert overview.total_agents == 1
+        assert overview.active_count == 1
 
     def test_dashboard_service_with_phase5b_memory_service(self):
         """Test dashboard service works with Phase 5B memory service."""
@@ -650,8 +654,8 @@ class TestBackwardCompatibility(unittest.TestCase):
         metrics = service._get_agent_metrics("test-agent")
 
         # Should not crash and return metrics
-        self.assertIsNotNone(metrics)
-        self.assertIsInstance(metrics, MetricsSnapshot)
+        assert metrics is not None
+        assert isinstance(metrics, MetricsSnapshot)
 
 
 class TestDashboardAnalyticsIntegration(unittest.TestCase):
@@ -692,14 +696,14 @@ class TestDashboardAnalyticsIntegration(unittest.TestCase):
 
         dashboard = self.service.get_agent_dashboard("analytics-agent")
 
-        self.assertIsNotNone(dashboard)
-        self.assertTrue(hasattr(dashboard, 'analytics'))
-        self.assertIsInstance(dashboard.analytics, dict)
+        assert dashboard is not None
+        assert hasattr(dashboard, "analytics")
+        assert isinstance(dashboard.analytics, dict)
 
         # Verify it serializes correctly
         result = self.service.agent_to_dict(dashboard)
-        self.assertIn("analytics", result)
-        self.assertIsInstance(result["analytics"], dict)
+        assert "analytics" in result
+        assert isinstance(result["analytics"], dict)
 
     def test_agent_dashboard_analytics_empty_on_no_memories(self):
         """Analytics is {} when no memories exist for the agent."""
@@ -716,8 +720,8 @@ class TestDashboardAnalyticsIntegration(unittest.TestCase):
         # No memories added for this agent
         dashboard = self.service.get_agent_dashboard("no-mem-agent")
 
-        self.assertIsNotNone(dashboard)
-        self.assertEqual(dashboard.analytics, {})
+        assert dashboard is not None
+        assert dashboard.analytics == {}
 
     def test_agent_dashboard_analytics_graceful_no_import(self):
         """Analytics works even if MemoryAnalytics is not importable."""
@@ -749,8 +753,8 @@ class TestDashboardAnalyticsIntegration(unittest.TestCase):
 
             dashboard = self.service.get_agent_dashboard("no-import-agent")
 
-            self.assertIsNotNone(dashboard)
-            self.assertEqual(dashboard.analytics, {})
+            assert dashboard is not None
+            assert dashboard.analytics == {}
         finally:
             cds._ANALYTICS_AVAILABLE = original
 

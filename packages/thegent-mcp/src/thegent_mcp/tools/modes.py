@@ -321,7 +321,9 @@ def register_modes(mcp: "FastMCP") -> None:
 
         if path is None:
             return ToolResult(
-                content=json.dumps({"error": "Protocol not found or empty", "mode": mode, "name": name}).decode().decode(),
+                content=json.dumps({"error": "Protocol not found or empty", "mode": mode, "name": name})
+                .decode()
+                .decode(),
                 structured_content={"error": "Protocol not found or empty", "mode": mode, "name": name},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -710,7 +712,9 @@ def register_modes(mcp: "FastMCP") -> None:
         session_path.write_text(json.dumps(session, indent=2).decode().decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"session_id": session_id, "question_count": len(session["questions"]).decode().decode()}),
+            content=json.dumps(
+                {"session_id": session_id, "question_count": len(session["questions"]).decode().decode()}
+            ),
             structured_content={"session_id": session_id, "question_count": len(session["questions"])},
             meta={"execution_time_ms": elapsed},
         )

@@ -59,6 +59,7 @@ class ProcessCleanup:
 
             # Wait briefly then force kill
             import time
+
             time.sleep(0.5)
 
             try:

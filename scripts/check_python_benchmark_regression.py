@@ -184,7 +184,8 @@ def main() -> int:
                 "throughput_gate": gate["throughput_gate"],
             },
             indent=2,
-        )).decode()
+        )
+    ).decode()
     return 0
 
 

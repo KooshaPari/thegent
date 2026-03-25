@@ -40,7 +40,10 @@ def test_help_git_examples_are_registered() -> None:
         "thegent git worktree governance refresh <change-anchor> --remote origin --strategy merge"
         in COMMAND_EXAMPLES["git"]
     )
-    assert "thegent git worktree governance migrate-legacy /tmp/legacy-cache infra m migrate-cache" in COMMAND_EXAMPLES["git"]
+    assert (
+        "thegent git worktree governance migrate-legacy /tmp/legacy-cache infra m migrate-cache"
+        in COMMAND_EXAMPLES["git"]
+    )
 
     runner = CliRunner()
     result = runner.invoke(main_app, ["help", "git"])

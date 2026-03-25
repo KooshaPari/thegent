@@ -60,7 +60,7 @@ class ControlPlaneConfigProvider:
 
         try:
             return _call_cp()
-        except (httpx.HTTPError, httpx.TimeoutException, ConnectionError, pybreaker.CircuitBreakerError):
+        except httpx.HTTPError, httpx.TimeoutException, ConnectionError, pybreaker.CircuitBreakerError:
             # Phase 3: Fallback to local EnvConfigProvider on failure (circuit breaker open or request failed)
             from thegent.config_provider import EnvConfigProvider
 

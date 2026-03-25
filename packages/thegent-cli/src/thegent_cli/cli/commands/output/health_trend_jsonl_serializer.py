@@ -129,7 +129,7 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
     )
     summary["scope_key_json"] = result.get(
         "scope_key_json",
-        json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS).decode(),
+        json.dumps(result.get("scope_key", {}), option=json.OPT_SORT_KEYS).decode(),
     )
     summary["payload_signature_algorithm"] = _safe_dict(result.get("payload_signature")).get("algorithm", "sha256")
     summary["payload_signature_value"] = _safe_dict(result.get("payload_signature")).get("value", "")
@@ -156,11 +156,11 @@ def serialize_health_trend_jsonl(result: dict[str, Any]) -> str:
         row["scope_key"] = result.get("scope_key", {})
         row["scope_key_json"] = result.get(
             "scope_key_json",
-            json.dumps(result.get('scope_key', {}), option=json.OPT_SORT_KEYS).decode(),
+            json.dumps(result.get("scope_key", {}), option=json.OPT_SORT_KEYS).decode(),
         )
         row["delta_summary_json"] = result.get(
             "delta_summary_json",
-            json.dumps(result.get('delta_summary', {}), option=json.OPT_SORT_KEYS).decode(),
+            json.dumps(result.get("delta_summary", {}), option=json.OPT_SORT_KEYS).decode(),
         )
         row["delta_summary"] = result.get("delta_summary", {})
         row["blocked_ratio_delta"] = result.get(

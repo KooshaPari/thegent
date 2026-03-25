@@ -276,5 +276,3 @@ def session_contract_health_report_impl(
     payload["payload_signature"] = _hash_health_payload(payload)
     _append_health_snapshot(payload, scope_key)
     return payload
-
-

@@ -37,13 +37,10 @@ Each automation session should:
 |------|-------------------------------------|-------|
 | 2026-03-24 | Wave A (07) — **partial close** | See **Wave A status** below. |
 | 2026-03-24 | Wave B (08) — **verification** | See **Wave B status** below; `01_RESEARCH.md` / `05_KNOWN_ISSUES.md` updated. |
-| 2026-03-24 | **Full-turn policy** + Wave C **Ship gates** | `FULL_TURN_DELIVERY.md` added; `04_QUEUE_CADENCE.md` + `09_NEXT_WAVE_C.md` updated. **`thegent` PR #549** — **merged** (`main`). |
+| 2026-03-24 | **Full-turn policy** + Wave C **Ship gates** | `FULL_TURN_DELIVERY.md` added; `04_QUEUE_CADENCE.md` + `09_NEXT_WAVE_C.md` updated. **`thegent` PR #549** mergeable but **CI red** — no merge until green. |
 | 2026-03-24 | **5-agent parallel audit** (C + D + E×2) | **Tier 1** parallel read-only; consolidated in **`16_PARALLEL_AGENT_AUDIT.md`** (DAG + Tier 2 order). |
 | 2026-03-24 | **Tier 2 — 5-agent implementation** | heliosApp CI/CHANGELOG/troubleshooting; colab/helMo/helios-cli contributing+ignore; **`repos/README.md`** hub. See **`16_PARALLEL_AGENT_AUDIT.md`** Tier 2 executed. |
 | 2026-03-24 | **PR staging checklist** | **`17_PR_STAGING_CHECKLIST.md`** (per-repo `git add` + `gh` notes); **`docs/reference/phenotype_repos_hub.md`** (versioned hub index; sync to `repos/README.md`). |
-| 2026-03-24 | **Wave C next slice** | **`docs/reference/composite-actions.md`**; **`repos/README.md`** + hub doc link; **thegent#552** (dirty colab/helMo roots; colab issues off). |
-| 2026-03-24 | **Billing-bound CI** | **`FULL_TURN_DELIVERY.md`**: *Billing / Actions quota*; **`gh pr merge --admin`** path; **`05_KNOWN_ISSUES.md`**. |
-| 2026-03-24 | **Session docs recovery PR** | Single branch **`docs/session-docs-recovery`** (rebase onto `main` post-#549) supersedes conflicted **#551/#553/#554** stacks — merge one PR, close duplicates. |
 
 ## Wave B status (2026-03-24) — `08_NEXT_WAVE_B.md`
 
@@ -90,6 +87,10 @@ Each item now has an explicit **Ship** line (PR **→** `main` / `release/*`, **
 
 ## Related
 
+- `19_NEXT_50_WORK_ITEMS.md` — **ordered 50** (D + E + preamble).
 - `04_QUEUE_CADENCE.md` — carry-forward rules, verification commands, **full-turn** definition.
 - `FULL_TURN_DELIVERY.md` — `gh` routine, merge gates, snapshot.
 - `00_SESSION_OVERVIEW.md` — session goal and document map.
+2026-03-24 | Wave E (11) - Execution/Verification (Latency OK, Redaction FAIL) | Wave D merges failed due to conflicts. Cleanup in progress.
+2026-03-24 | Wave F (12) - Execution/Verification | Roadmap re-ranked; DOD audit complete. Next 24 identified.
+2026-03-24 | Finalization | Wave G (13) pending. Session partial close. Merges failed due to conflicts. Cleanup in progress.

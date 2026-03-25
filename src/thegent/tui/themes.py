@@ -46,7 +46,6 @@ class ThemeColors(SerializableMixin):
     border: str = "#444444"
     border_focus: str = "#00ff00"
 
-
     @classmethod
     def from_dict(cls, data: dict[str, str]) -> ThemeColors:
         return cls(
@@ -98,7 +97,6 @@ class ThemeDefinition(SerializableMixin):
             panel=c.panel,
             dark=self.dark,
         )
-
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ThemeDefinition:

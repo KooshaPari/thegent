@@ -43,7 +43,11 @@ def main() -> int:
     if status != 200:
         raise RuntimeError(f"Graphiti health check returned non-200 status: {status}")
 
-    print(json.dumps({"ok": True, "target": "graphiti", "url": url, "status": status, "body": body[:120]}).decode().decode())
+    print(
+        json.dumps({"ok": True, "target": "graphiti", "url": url, "status": status, "body": body[:120]})
+        .decode()
+        .decode()
+    )
     return 0
 
 

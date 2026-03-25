@@ -83,12 +83,16 @@ _PROVIDER_RETRY_CONFIG: dict[str, dict] = {
 
 def _get_provider_retry_config(provider: str) -> dict:
     """Get retry configuration for a specific provider."""
-    return _PROVIDER_RETRY_CONFIG.get(provider, {
-        "max_attempts": 3,
-        "min_wait": 1.0,
-        "max_wait": 30.0,
-        "backoff_multiplier": 1.5,
-    })
+    return _PROVIDER_RETRY_CONFIG.get(
+        provider,
+        {
+            "max_attempts": 3,
+            "min_wait": 1.0,
+            "max_wait": 30.0,
+            "backoff_multiplier": 1.5,
+        },
+    )
+
 
 # Instance tracking for concurrent execution monitoring
 _instance_counter = 0
@@ -1244,6 +1248,7 @@ class CodexProxyRunner(AgentRunner):
 
 # Register with unified adapter registry
 from thegent.adapters.ports import AdapterRegistry
+
 
 class CodexProxyAdapter:
     """Codex proxy adapter for agent execution"""

@@ -83,4 +83,6 @@ def test_each_flag_promotion_gate_references_test_file() -> None:
         assert "test" in gate.lower() or "tests" in gate.lower(), (
             f"Flag '{flag.get('name', '?')}' promotion_gate '{gate}' should reference a test file"
         )
+
+
 # noqa: PT018

@@ -31,6 +31,10 @@ Canonical policy docs for this model:
 - `docs/governance/DELEGATION_ARCHITECTURE_LN.md`
 - `docs/governance/TASK_CLASSIFIER_SCHEMA.yaml`
 
+### Full-turn delivery (shipping)
+
+End each turn that changes **this repo** (or a product repo you own in the same turn) with **at least one merged PR** to **`main`** or **`release/*`**—**multiple merges per turn** are fine. Record **full PR URLs** (`gh pr view` / `https://github.com/.../pull/...`), update **`CHANGELOG.md`** [Unreleased] and **version** per policy, and **docs** when behavior changes. If merge is impossible, log an **exception** in session **`05_KNOWN_ISSUES.md`**. Canonical detail: **`docs/reference/FULL_TURN_DELIVERY.md`**.
+
 Execution model constraint:
 
 - Do not assume `1 agent = 1 worktree`.
@@ -1175,3 +1179,10 @@ Use this block as an always-on policy for agentic code edits.
   - After two consecutive rate-limit responses for the same bot/PR, stop auto-retries and post queued status with next attempt time.
 - Tracking marker required in PR comments for each trigger:
   - `bot-review-trigger: <bot> <iso8601-time> <reason>`
+
+## Child-Agent and Delegation Policy
+- Use child agents for scoped discovery, audits, multi-repo scans, and implementation planning before direct parent-agent edits.
+- Delegate high-context or high-churn tasks to subagents and keep parent-agent writes narrowly focused on integration.
+- Reserve parent-agent direct writes for the final decision layer.
+- Favor clean, auditable handoffs and explicit integration checkpoints.
+

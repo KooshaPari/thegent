@@ -209,10 +209,12 @@ class ReusableHelpers:
     def load_config(path: Path) -> dict:
         """Load config from JSON or YAML file."""
         import json
+
         try:
             content = path.read_text()
-            if path.suffix in ('.yaml', '.yml'):
+            if path.suffix in (".yaml", ".yml"):
                 import yaml
+
                 return yaml.safe_load(content) or {}
             return json.loads(content)
         except FileNotFoundError:

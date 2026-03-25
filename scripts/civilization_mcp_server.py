@@ -22,10 +22,12 @@ from pathlib import Path
 
 try:
     from agent_identity_system import GlobalAgentRegistry, AgentIdentity, AgentRole
+
     AGENT_IDENTITY_AVAILABLE = True
 except ImportError:
     try:
         from scripts.agent_identity_system import GlobalAgentRegistry, AgentIdentity, AgentRole
+
         AGENT_IDENTITY_AVAILABLE = True
     except ImportError:
         AGENT_IDENTITY_AVAILABLE = False
@@ -34,6 +36,7 @@ except ImportError:
 # ============================================================================
 # PHASE 4A: MCP Server Setup
 # ============================================================================
+
 
 class MCP_Resource:
     """MCP Resource definition."""
@@ -44,11 +47,7 @@ class MCP_Resource:
         self.description = description
 
     def to_dict(self) -> dict[str, str]:
-        return {
-            "uri": self.uri,
-            "name": self.name,
-            "description": self.description
-        }
+        return {"uri": self.uri, "name": self.name, "description": self.description}
 
 
 class MCP_Tool:
@@ -60,11 +59,7 @@ class MCP_Tool:
         self.input_schema = input_schema
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "name": self.name,
-            "description": self.description,
-            "inputSchema": self.input_schema
-        }
+        return {"name": self.name, "description": self.description, "inputSchema": self.input_schema}
 
 
 class CivilizationMCPServer:
@@ -77,15 +72,15 @@ class CivilizationMCPServer:
     - Agent message broker (Phase 4C)
     """
 
-    def __init__(self, registry: Optional['GlobalAgentRegistry'] = None):
+    def __init__(self, registry: Optional["GlobalAgentRegistry"] = None):
         """Initialize MCP server."""
         if not AGENT_IDENTITY_AVAILABLE:
-            self.registry: Optional['GlobalAgentRegistry'] = None
+            self.registry: Optional["GlobalAgentRegistry"] = None
             self.enabled = False
             return
 
         if registry is not None:
-            self.registry: Optional['GlobalAgentRegistry'] = registry
+            self.registry: Optional["GlobalAgentRegistry"] = registry
         else:
             self.registry = GlobalAgentRegistry()
         self.enabled = True
@@ -110,34 +105,28 @@ class CivilizationMCPServer:
         """Initialize MCP resources."""
         return {
             "agents": MCP_Resource(
-                uri="civilization://agents/{agent_id}",
-                name="Agent",
-                description="Get metadata for a specific agent"
+                uri="civilization://agents/{agent_id}", name="Agent", description="Get metadata for a specific agent"
             ),
             "projects": MCP_Resource(
                 uri="civilization://projects/{project}",
                 name="Project Agents",
-                description="List all agents in a project"
+                description="List all agents in a project",
             ),
             "statistics": MCP_Resource(
                 uri="civilization://statistics",
                 name="Registry Statistics",
-                description="Get registry statistics (count, projects, levels)"
+                description="Get registry statistics (count, projects, levels)",
             ),
             "hierarchy": MCP_Resource(
                 uri="civilization://hierarchy/{parent_id}",
                 name="Agent Hierarchy",
-                description="Get children of an agent"
+                description="Get children of an agent",
             ),
             "active": MCP_Resource(
-                uri="civilization://active",
-                name="Active Agents",
-                description="List all active agents (not stale)"
+                uri="civilization://active", name="Active Agents", description="List all active agents (not stale)"
             ),
             "stale": MCP_Resource(
-                uri="civilization://stale",
-                name="Stale Agents",
-                description="List stale agents (no heartbeat >5 min)"
+                uri="civilization://stale", name="Stale Agents", description="List stale agents (no heartbeat >5 min)"
             ),
         }
 
@@ -161,7 +150,7 @@ class CivilizationMCPServer:
             return {
                 "project": project,
                 "agents": [asdict(a) if AGENT_IDENTITY_AVAILABLE else a.__dict__ for a in agents],
-                "count": len(agents)
+                "count": len(agents),
             }
 
         # civilization://statistics
@@ -172,7 +161,7 @@ class CivilizationMCPServer:
                 "active_agents": stats.get("active_agents", 0),
                 "stale_agents": stats.get("stale_agents", 0),
                 "projects": stats.get("projects", []),
-                "by_level": stats.get("by_level", {})
+                "by_level": stats.get("by_level", {}),
             }
 
         # civilization://hierarchy/{parent_id}
@@ -184,12 +173,12 @@ class CivilizationMCPServer:
 
             # Get children - they have parent_agent_id set
             all_agents = list(self.registry.agents.values()) if self.registry else []
-            children = [a for a in all_agents if hasattr(a, 'parent_agent_id') and a.parent_agent_id == parent_id]
+            children = [a for a in all_agents if hasattr(a, "parent_agent_id") and a.parent_agent_id == parent_id]
 
             return {
                 "parent_id": parent_id,
                 "children": [asdict(c) if AGENT_IDENTITY_AVAILABLE else c.__dict__ for c in children],
-                "count": len(children)
+                "count": len(children),
             }
 
         # civilization://active
@@ -197,7 +186,7 @@ class CivilizationMCPServer:
             agents = self.registry.get_active_agents() if self.registry else []
             return {
                 "active_agents": [asdict(a) if AGENT_IDENTITY_AVAILABLE else a.__dict__ for a in agents],
-                "count": len(agents)
+                "count": len(agents),
             }
 
         # civilization://stale
@@ -205,7 +194,7 @@ class CivilizationMCPServer:
             agents = self.registry.get_stale_agents() if self.registry else []
             return {
                 "stale_agents": [asdict(a) if AGENT_IDENTITY_AVAILABLE else a.__dict__ for a in agents],
-                "count": len(agents)
+                "count": len(agents),
             }
 
         return {"error": f"Unknown resource: {uri}"}
@@ -222,11 +211,9 @@ class CivilizationMCPServer:
                 description="Update an agent's heartbeat timestamp",
                 input_schema={
                     "type": "object",
-                    "properties": {
-                        "agent_id": {"type": "string", "description": "Agent ID"}
-                    },
-                    "required": ["agent_id"]
-                }
+                    "properties": {"agent_id": {"type": "string", "description": "Agent ID"}},
+                    "required": ["agent_id"],
+                },
             ),
             "register_agent": MCP_Tool(
                 name="register_agent",
@@ -238,40 +225,33 @@ class CivilizationMCPServer:
                         "level": {"type": "string", "enum": ["L1", "L2", "L3"]},
                         "role": {"type": "string"},
                         "project": {"type": "string"},
-                        "parent_id": {"type": "string"}
+                        "parent_id": {"type": "string"},
                     },
-                    "required": ["name", "level", "role", "project"]
-                }
+                    "required": ["name", "level", "role", "project"],
+                },
             ),
             "unregister_agent": MCP_Tool(
                 name="unregister_agent",
                 description="Unregister an agent",
                 input_schema={
                     "type": "object",
-                    "properties": {
-                        "agent_id": {"type": "string", "description": "Agent ID to unregister"}
-                    },
-                    "required": ["agent_id"]
-                }
+                    "properties": {"agent_id": {"type": "string", "description": "Agent ID to unregister"}},
+                    "required": ["agent_id"],
+                },
             ),
             "recover_stale": MCP_Tool(
                 name="recover_stale",
                 description="Attempt to recover a stale agent",
                 input_schema={
                     "type": "object",
-                    "properties": {
-                        "agent_id": {"type": "string", "description": "Stale agent ID"}
-                    },
-                    "required": ["agent_id"]
-                }
+                    "properties": {"agent_id": {"type": "string", "description": "Stale agent ID"}},
+                    "required": ["agent_id"],
+                },
             ),
             "get_civilization_status": MCP_Tool(
                 name="get_civilization_status",
                 description="Get civilization-wide status (dashboard)",
-                input_schema={
-                    "type": "object",
-                    "properties": {}
-                }
+                input_schema={"type": "object", "properties": {}},
             ),
             "query_agents": MCP_Tool(
                 name="query_agents",
@@ -285,11 +265,11 @@ class CivilizationMCPServer:
                                 "level": {"type": "string"},
                                 "project": {"type": "string"},
                                 "role": {"type": "string"},
-                                "status": {"type": "string", "enum": ["active", "stale"]}
-                            }
+                                "status": {"type": "string", "enum": ["active", "stale"]},
+                            },
                         }
-                    }
-                }
+                    },
+                },
             ),
             "memory_search": MCP_Tool(
                 name="memory_search",
@@ -299,10 +279,10 @@ class CivilizationMCPServer:
                     "properties": {
                         "agent_id": {"type": "string", "description": "Agent ID to search memories for"},
                         "query": {"type": "string", "description": "Search query (keywords)"},
-                        "limit": {"type": "integer", "description": "Max results", "default": 10}
+                        "limit": {"type": "integer", "description": "Max results", "default": 10},
                     },
-                    "required": ["agent_id", "query"]
-                }
+                    "required": ["agent_id", "query"],
+                },
             ),
             "memory_analytics_summary": MCP_Tool(
                 name="memory_analytics_summary",
@@ -311,10 +291,10 @@ class CivilizationMCPServer:
                     "type": "object",
                     "properties": {
                         "agent_id": {"type": "string", "description": "Agent ID to analyze"},
-                        "days": {"type": "integer", "description": "Number of days to analyze", "default": 30}
+                        "days": {"type": "integer", "description": "Number of days to analyze", "default": 30},
                     },
-                    "required": ["agent_id"]
-                }
+                    "required": ["agent_id"],
+                },
             ),
         }
 
@@ -327,11 +307,7 @@ class CivilizationMCPServer:
             agent_id = args.get("agent_id")
             if agent_id and isinstance(agent_id, str):
                 self.registry.update_heartbeat(agent_id)
-            return {
-                "success": True,
-                "agent_id": agent_id,
-                "timestamp": time.time()
-            }
+            return {"success": True, "agent_id": agent_id, "timestamp": time.time()}
 
         if tool_name == "register_agent":
             # This would be more complex - skip for MVP
@@ -341,19 +317,12 @@ class CivilizationMCPServer:
             agent_id = args.get("agent_id")
             if agent_id and isinstance(agent_id, str):
                 self.registry.unregister_agent(agent_id)
-            return {
-                "success": True,
-                "agent_id": agent_id
-            }
+            return {"success": True, "agent_id": agent_id}
 
         if tool_name == "recover_stale":
             agent_id = args.get("agent_id")
             # Placeholder - actual recovery logic in SwarmController
-            return {
-                "success": True,
-                "agent_id": agent_id,
-                "message": "Recovery signal sent"
-            }
+            return {"success": True, "agent_id": agent_id, "message": "Recovery signal sent"}
 
         if tool_name == "get_civilization_status":
             return self.get_civilization_status()
@@ -366,7 +335,7 @@ class CivilizationMCPServer:
             status = filters.get("status")
 
             # Start with all agents from registry
-            if self.registry and hasattr(self.registry, 'agents'):
+            if self.registry and hasattr(self.registry, "agents"):
                 agents = list(self.registry.agents.values())
             else:
                 agents = []
@@ -385,7 +354,7 @@ class CivilizationMCPServer:
             return {
                 "agents": [asdict(a) if AGENT_IDENTITY_AVAILABLE else a.__dict__ for a in agents],
                 "count": len(agents),
-                "filters_applied": {"level": level, "project": project, "role": role, "status": status}
+                "filters_applied": {"level": level, "project": project, "role": role, "status": status},
             }
 
         if tool_name == "memory_search":
@@ -422,14 +391,16 @@ class CivilizationMCPServer:
             memories = storage.search(agent_id, query, limit=limit)
             results = []
             for m in memories:
-                results.append({
-                    "memory_id": m.memory_id,
-                    "agent_id": m.agent_id,
-                    "memory_type": m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type),
-                    "timestamp": m.timestamp,
-                    "content": m.content,
-                    "importance": m.importance,
-                })
+                results.append(
+                    {
+                        "memory_id": m.memory_id,
+                        "agent_id": m.agent_id,
+                        "memory_type": m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type),
+                        "timestamp": m.timestamp,
+                        "content": m.content,
+                        "importance": m.importance,
+                    }
+                )
             return {"results": results, "count": len(results)}
         except Exception as e:
             return {"error": str(e), "results": []}
@@ -463,14 +434,16 @@ class CivilizationMCPServer:
             memories = storage.query(agent_id)
             memory_dicts = []
             for m in memories:
-                memory_dicts.append({
-                    "memory_id": m.memory_id,
-                    "agent_id": m.agent_id,
-                    "memory_type": m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type),
-                    "timestamp": m.timestamp,
-                    "content": m.content,
-                    "importance": m.importance,
-                })
+                memory_dicts.append(
+                    {
+                        "memory_id": m.memory_id,
+                        "agent_id": m.agent_id,
+                        "memory_type": m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type),
+                        "timestamp": m.timestamp,
+                        "content": m.content,
+                        "importance": m.importance,
+                    }
+                )
             analytics = MemoryAnalytics()
             summary = analytics.get_agent_summary(memory_dicts)
             summary["agent_id"] = agent_id
@@ -494,7 +467,7 @@ class CivilizationMCPServer:
         try:
             while self.heartbeat_stream_running:
                 # Get active agents
-                all_agents = list(self.registry.agents.values()) if hasattr(self.registry, 'agents') else []
+                all_agents = list(self.registry.agents.values()) if hasattr(self.registry, "agents") else []
                 active_agents = [a for a in all_agents if a.is_active]
 
                 # Prepare heartbeat message
@@ -508,10 +481,10 @@ class CivilizationMCPServer:
                             "project": a.project,
                             "level": str(a.level),
                             "role": str(a.role),
-                            "last_heartbeat": a.last_heartbeat
+                            "last_heartbeat": a.last_heartbeat,
                         }
                         for a in active_agents
-                    ]
+                    ],
                 }
 
                 # Broadcast to subscribers
@@ -546,19 +519,15 @@ class CivilizationMCPServer:
     # PHASE 4C: Message Broker Integration
     # ========================================================================
 
-    async def send_agent_message(self, from_agent: str, to_agent: str,
-                                  message_type: str, payload: dict[str, Any]) -> bool:
+    async def send_agent_message(
+        self, from_agent: str, to_agent: str, message_type: str, payload: dict[str, Any]
+    ) -> bool:
         """Send a message between agents."""
-        return await self.message_broker.send_message(
-            from_agent, to_agent, message_type, payload
-        )
+        return await self.message_broker.send_message(from_agent, to_agent, message_type, payload)
 
-    async def broadcast_agent_message(self, from_agent: str,
-                                      message_type: str, payload: dict[str, Any]) -> bool:
+    async def broadcast_agent_message(self, from_agent: str, message_type: str, payload: dict[str, Any]) -> bool:
         """Broadcast message to all agents in project."""
-        return await self.message_broker.broadcast_message(
-            from_agent, message_type, payload
-        )
+        return await self.message_broker.broadcast_message(from_agent, message_type, payload)
 
     # ========================================================================
     # Status/Stats Methods
@@ -570,7 +539,7 @@ class CivilizationMCPServer:
             return {"error": "MCP server not enabled"}
 
         stats = self.registry.get_stats()
-        all_agents = list(self.registry.agents.values()) if hasattr(self.registry, 'agents') else []
+        all_agents = list(self.registry.agents.values()) if hasattr(self.registry, "agents") else []
 
         return {
             "timestamp": time.time(),
@@ -585,8 +554,8 @@ class CivilizationMCPServer:
             },
             "heartbeat_stream": {
                 "running": self.heartbeat_stream_running,
-                "subscribers": len(self.heartbeat_subscribers)
-            }
+                "subscribers": len(self.heartbeat_subscribers),
+            },
         }
 
     def get_all_resources(self) -> list[dict[str, Any]]:
@@ -602,9 +571,11 @@ class CivilizationMCPServer:
 # PHASE 4C: Agent Message Broker
 # ============================================================================
 
+
 @dataclass
 class AgentMessage:
     """Message between agents."""
+
     id: str
     from_agent: str
     to_agent: str
@@ -621,15 +592,15 @@ class AgentMessage:
 class AgentMessageBroker:
     """Broker for inter-agent messages (Phase 4C)."""
 
-    def __init__(self, registry: Optional['GlobalAgentRegistry'] = None):
+    def __init__(self, registry: Optional["GlobalAgentRegistry"] = None):
         """Initialize message broker."""
         if not AGENT_IDENTITY_AVAILABLE:
-            self.registry: Optional['GlobalAgentRegistry'] = None
+            self.registry: Optional["GlobalAgentRegistry"] = None
             self.enabled = False
             return
 
         if registry is not None:
-            self.registry: Optional['GlobalAgentRegistry'] = registry
+            self.registry: Optional["GlobalAgentRegistry"] = registry
         else:
             self.registry = GlobalAgentRegistry()
         self.enabled = True
@@ -640,8 +611,7 @@ class AgentMessageBroker:
         self.routes: dict[str, Callable[[AgentMessage], Awaitable[None]]] = {}
         self.message_history: list[AgentMessage] = []  # For debugging
 
-    async def send_message(self, from_agent: str, to_agent: str,
-                          message_type: str, payload: dict[str, Any]) -> bool:
+    async def send_message(self, from_agent: str, to_agent: str, message_type: str, payload: dict[str, Any]) -> bool:
         """Send message to specific agent."""
         if not self.enabled or not self.registry:
             return False
@@ -652,7 +622,7 @@ class AgentMessageBroker:
             to_agent=to_agent,
             type=message_type,
             payload=payload,
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         self.message_history.append(msg)
@@ -678,8 +648,7 @@ class AgentMessageBroker:
         finally:
             self.pending_acks.pop(msg.id, None)
 
-    async def broadcast_message(self, from_agent: str,
-                               message_type: str, payload: dict[str, Any]) -> bool:
+    async def broadcast_message(self, from_agent: str, message_type: str, payload: dict[str, Any]) -> bool:
         """Broadcast message to all agents in project."""
         if not self.enabled or not self.registry:
             return False
@@ -693,7 +662,7 @@ class AgentMessageBroker:
                 if await self.send_message(from_agent, agent.agent_id, message_type, payload):
                     success_count += 1
 
-        self.logger.info(f"Broadcast message sent to {success_count}/{len(agents)-1} agents")
+        self.logger.info(f"Broadcast message sent to {success_count}/{len(agents) - 1} agents")
         return success_count > 0
 
     async def acknowledge_message(self, message_id: str) -> None:
@@ -704,8 +673,7 @@ class AgentMessageBroker:
                 future.set_result(True)
             self.logger.debug(f"Message acknowledged: {message_id}")
 
-    def register_handler(self, message_type: str,
-                        handler: Callable[[AgentMessage], Awaitable[None]]) -> None:
+    def register_handler(self, message_type: str, handler: Callable[[AgentMessage], Awaitable[None]]) -> None:
         """Register handler for message type."""
         self.routes[message_type] = handler
         self.logger.debug(f"Handler registered for: {message_type}")
@@ -735,9 +703,7 @@ class AgentMessageBroker:
             "total_messages": len(self.message_history),
             "queue_size": self.message_queue.qsize(),
             "pending_acks": len(self.pending_acks),
-            "recent_messages": [
-                m.to_dict() for m in self.message_history[-10:]
-            ]
+            "recent_messages": [m.to_dict() for m in self.message_history[-10:]],
         }
 
 
@@ -745,16 +711,14 @@ class AgentMessageBroker:
 # Server initialization and utilities
 # ============================================================================
 
-def create_mcp_server(registry: Optional['GlobalAgentRegistry'] = None) -> CivilizationMCPServer:
+
+def create_mcp_server(registry: Optional["GlobalAgentRegistry"] = None) -> CivilizationMCPServer:
     """Factory function to create MCP server."""
     return CivilizationMCPServer(registry)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    )
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 
     if AGENT_IDENTITY_AVAILABLE:
         registry = GlobalAgentRegistry()

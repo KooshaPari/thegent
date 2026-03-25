@@ -6,7 +6,6 @@ Shared utilities to reduce code duplication across CLI commands.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -40,6 +39,7 @@ def print_warning(message: str) -> None:
 def confirm_action(prompt: str, default: bool = False) -> bool:
     """Ask user to confirm an action."""
     from rich.prompt import Confirm
+
     return Confirm.ask(prompt, default=default)
 
 

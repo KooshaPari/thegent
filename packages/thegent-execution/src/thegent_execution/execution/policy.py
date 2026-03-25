@@ -97,6 +97,7 @@ def _as_bool(value: Any, default: bool) -> bool:
 from .state import RunMeta
 from .registry import RunRegistry
 
+
 class PolicyEngine:
     """Evaluates execution requests against governance policies."""
 
@@ -686,5 +687,3 @@ class Auditor:
             "chain_broken": chain_broken,
             "issues": issues,
         }
-
-

@@ -45,7 +45,8 @@ def crew_create_cmd(
                     "tasks": [],
                 },
                 indent=2,
-            )).decode()
+            )
+        ).decode()
         console.print(f"[green]✓[/green] Created crew: {crew.name} ({crew.id})")
         console.print(f"[dim]Saved to: {output_path}[/dim]")
     else:

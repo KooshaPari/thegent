@@ -70,7 +70,7 @@ class OverrideManager:
 
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
-            override = cast(PolicyOverride, PolicyOverride.from_dict(data))
+            override = cast("PolicyOverride", PolicyOverride.from_dict(data))
 
             if override.is_active():
                 return override
@@ -100,7 +100,7 @@ class OverrideManager:
         """Helper to check and cleanup a single override file."""
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
-            override = cast(PolicyOverride, PolicyOverride.from_dict(data))
+            override = cast("PolicyOverride", PolicyOverride.from_dict(data))
             if not override.is_active():
                 f.unlink()
                 return True

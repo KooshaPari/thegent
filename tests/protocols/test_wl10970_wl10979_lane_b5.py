@@ -68,7 +68,14 @@ def test_wl10974_commit_turn_submit_plan_mutates_session_and_turns() -> None:
     _reset_state()
     _start_session()
     session = next(iter(SERVER_STATE.sessions.values()))
-    turn = {"id": "turn-1", "session_id": session["id"], "status": "in_progress", "input": "x", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": session["id"],
+        "status": "in_progress",
+        "input": "x",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     assert SERVER_STATE.turns == {}
     server._commit_turn_submit_plan("turn-1", turn, session)
     assert SERVER_STATE.turns["turn-1"] is turn
@@ -94,7 +101,8 @@ def test_wl10976_handle_turn_submit_request_rejects_non_string_input() -> None:
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": 123},
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "input_must_be_string"
@@ -102,7 +110,9 @@ def test_wl10976_handle_turn_submit_request_rejects_non_string_input() -> None:
 
 def test_wl10977_resolve_turn_submit_approval_fields_extracts_tuple() -> None:
     # @trace WL-10977
-    fields = server._resolve_turn_submit_response_approval_fields({"id": "approval-1", "status": "requested", "diff": "---"})
+    fields = server._resolve_turn_submit_response_approval_fields(
+        {"id": "approval-1", "status": "requested", "diff": "---"}
+    )
     assert fields == ("approval-1", "requested", "---")
 
 

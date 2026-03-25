@@ -17,9 +17,15 @@ class MetricsAdapter:
     def __init__(self, config: Any):
         self.config = config
         self._metrics = get_metrics_collector()
-        self._cycle_metrics_path = config.cycle_metrics_path or Path("docs/reference/workstream_autosync_cycle_metrics.jsonl")
-        self._change_digest_path = config.change_digest_path or Path("artifacts/workstream_autosync_change_digest.jsonl")
-        self._prometheus_export_path = config.autosync_prometheus_export_path or Path("docs/reference/workstream_autosync_metrics.prom")
+        self._cycle_metrics_path = config.cycle_metrics_path or Path(
+            "docs/reference/workstream_autosync_cycle_metrics.jsonl"
+        )
+        self._change_digest_path = config.change_digest_path or Path(
+            "artifacts/workstream_autosync_change_digest.jsonl"
+        )
+        self._prometheus_export_path = config.autosync_prometheus_export_path or Path(
+            "docs/reference/workstream_autosync_metrics.prom"
+        )
 
     def flush_prometheus_metrics(self) -> None:
         """Export Prometheus metrics to file."""

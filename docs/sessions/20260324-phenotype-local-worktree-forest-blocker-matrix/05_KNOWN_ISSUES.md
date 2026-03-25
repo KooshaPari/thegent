@@ -9,9 +9,7 @@
 
 ## GitHub / CI (release merges)
 
-- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** — **merged** (`feat/migrate-cache` → `main`). Track post-merge CI on **`main`**; if billing blocked checks during merge, note date + **`FULL_TURN_DELIVERY.md`** billing section.
-- **Actions billing / quota:** When checks cannot complete because **jobs do not start** (not because tests fail), use the **Billing / Actions quota** procedure in `FULL_TURN_DELIVERY.md` — **`gh pr merge --admin`** only after confirming infrastructure cause and local verification.
-- **Hub tracking:** [thegent#552](https://github.com/KooshaPari/thegent/issues/552) — dirty **colab** / **helMo** canonical roots.
+- **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** (`feat/migrate-cache` → `main`): **mergeable** in GitHub sense but **required CI red** (Lint & Test, Policy Gate, Build wheels, etc.) — **do not merge** until fix-forward; tracked in `FULL_TURN_DELIVERY.md`.
 
 ## Blocked Forest Registry
 

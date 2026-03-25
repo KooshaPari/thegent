@@ -7,7 +7,7 @@ Provides a unified interface for benchmark data that:
 
 Usage:
     from thegent.utils.benchmark_store import BenchmarkStore
-    
+
     store = BenchmarkStore()
     quality = store.get_quality("gpt-4o")  # Returns 0.85
     cost = store.get_cost("gpt-4o")  # Returns 0.005
@@ -108,10 +108,10 @@ LATENCY_MS_PROXY: dict[str, int] = {
 
 class BenchmarkStore:
     """Unified benchmark store with tokenledger integration.
-    
+
     Tries tokenledger first, then falls back to hardcoded values.
     """
-    
+
     def __init__(
         self,
         tokenledger_config: Optional[TokenledgerConfig] = None,
@@ -119,21 +119,21 @@ class BenchmarkStore:
     ):
         self._use_tokenledger = use_tokenledger
         self._tokenledger: Optional[TokenledgerAdapter] = None
-        
+
         if use_tokenledger:
             self._tokenledger = TokenledgerAdapter(tokenledger_config)
-    
+
     @property
     def tokenledger(self) -> Optional[TokenledgerAdapter]:
         """Get the tokenledger adapter."""
         return self._tokenledger
-    
+
     def get_quality(self, model_id: str) -> Optional[float]:
         """Get quality score for a model.
-        
+
         Args:
             model_id: Model identifier
-            
+
         Returns:
             Quality score (0-1) or None if not found
         """
@@ -144,16 +144,16 @@ class BenchmarkStore:
                 quality = data.get_quality_score()
                 if quality is not None:
                     return quality
-        
+
         # Fallback to hardcoded
         return QUALITY_PROXY.get(model_id)
-    
+
     def get_cost(self, model_id: str) -> Optional[float]:
         """Get cost per 1K tokens for a model.
-        
+
         Args:
             model_id: Model identifier
-            
+
         Returns:
             Cost per 1K tokens in USD or None if not found
         """
@@ -164,16 +164,16 @@ class BenchmarkStore:
                 cost = data.get_cost_per_1k()
                 if cost is not None:
                     return cost
-        
+
         # Fallback to hardcoded
         return COST_PER_1K_PROXY.get(model_id)
-    
+
     def get_latency(self, model_id: str) -> Optional[int]:
         """Get latency in ms for a model.
-        
+
         Args:
             model_id: Model identifier
-            
+
         Returns:
             Latency in milliseconds or None if not found
         """
@@ -184,16 +184,16 @@ class BenchmarkStore:
                 latency = data.get_latency_ms()
                 if latency is not None:
                     return latency
-        
+
         # Fallback to hardcoded
         return LATENCY_MS_PROXY.get(model_id)
-    
+
     def get_benchmark(self, model_id: str) -> Optional[BenchmarkData]:
         """Get full benchmark data for a model.
-        
+
         Args:
             model_id: Model identifier
-            
+
         Returns:
             BenchmarkData or None if not found
         """
@@ -202,12 +202,12 @@ class BenchmarkStore:
             data = self._tokenledger.get_benchmark(model_id)
             if data:
                 return data
-        
+
         # Build from hardcoded values
         quality = QUALITY_PROXY.get(model_id)
         cost = COST_PER_1K_PROXY.get(model_id)
         latency = LATENCY_MS_PROXY.get(model_id)
-        
+
         if quality is not None or cost is not None:
             return BenchmarkData(
                 model_id=model_id,
@@ -217,24 +217,24 @@ class BenchmarkStore:
                 confidence=0.5,
                 source="fallback",
             )
-        
+
         return None
-    
+
     def refresh(self) -> bool:
         """Refresh benchmark data from tokenledger."""
         if self._tokenledger:
             return self._tokenledger.refresh()
         return True
-    
+
     def get_all_models(self) -> list[str]:
         """Get all known model IDs."""
         # Combine hardcoded and tokenledger models
         models = set(QUALITY_PROXY.keys())
-        
+
         if self._tokenledger:
             for data in self._tokenledger.get_all_benchmarks():
                 models.add(data.model_id)
-        
+
         return list(models)
 
 

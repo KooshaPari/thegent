@@ -46,9 +46,7 @@ RUN_STATUSES = [
 class RunDetailDialog(QDialog):
     """Dialog for displaying run details."""
 
-    def __init__(
-        self, parent: QtQWidget | None = None, run_data: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, parent: QtQWidget | None = None, run_data: dict[str, Any] | None = None) -> None:
         """Initialize the run detail dialog.
 
         Args:
@@ -159,9 +157,7 @@ class RunDetailDialog(QDialog):
         layout.addWidget(log_group)
 
         # Dialog buttons
-        self._buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Close
-        )
+        self._buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         self._buttons.rejected.connect(self.reject)
 
         # Add Re-run button
@@ -266,9 +262,7 @@ class RunsTab(QWidget):
         # Runs table
         self._table = QTableWidget()
         self._table.setColumnCount(8)
-        self._table.setHorizontalHeaderLabels(
-            ["ID", "Project", "Duration", "Cost", "Date", "Agent", "XP", "Actions"]
-        )
+        self._table.setHorizontalHeaderLabels(["ID", "Project", "Duration", "Cost", "Date", "Agent", "XP", "Actions"])
         self._table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self._table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self._table.horizontalHeader().setStretchLastSection(True)
@@ -288,10 +282,12 @@ class RunsTab(QWidget):
             # Get projects from API
             api_projects = self._api_client.get_projects()
             for proj in api_projects:
-                self._projects.append({
-                    "id": proj.id,
-                    "name": proj.name,
-                })
+                self._projects.append(
+                    {
+                        "id": proj.id,
+                        "name": proj.name,
+                    }
+                )
             self._update_project_filter()
         except Exception as e:
             # Handle error - could show a message or log
@@ -329,47 +325,51 @@ class RunsTab(QWidget):
                     # Look up agent name (would need get_agent API, using ID for now)
                     agent_name = run.agent_id
 
-                    self._runs.append({
-                        "id": run.id,
-                        "project_id": run.project_id,
-                        "project": project_name,
-                        "agent_id": run.agent_id,
-                        "agent": agent_name,
-                        "status": run.status,
-                        "duration": run.duration,
-                        "cost": run.cost,
-                        "xp": run.xp,
-                        "started_at": run.started_at,
-                        "ended_at": run.ended_at,
-                        # Additional fields that might be available from extended API
-                        "files_changed": 0,
-                        "tests_added": 0,
-                        "docs_updated": 0,
-                        "output_log": "",
-                    })
+                    self._runs.append(
+                        {
+                            "id": run.id,
+                            "project_id": run.project_id,
+                            "project": project_name,
+                            "agent_id": run.agent_id,
+                            "agent": agent_name,
+                            "status": run.status,
+                            "duration": run.duration,
+                            "cost": run.cost,
+                            "xp": run.xp,
+                            "started_at": run.started_at,
+                            "ended_at": run.ended_at,
+                            # Additional fields that might be available from extended API
+                            "files_changed": 0,
+                            "tests_added": 0,
+                            "docs_updated": 0,
+                            "output_log": "",
+                        }
+                    )
             else:
                 # No project selected - get runs for all projects
                 for proj in self._projects:
                     try:
                         api_runs = self._api_client.get_runs(proj["id"], status)
                         for run in api_runs:
-                            self._runs.append({
-                                "id": run.id,
-                                "project_id": run.project_id,
-                                "project": proj["name"],
-                                "agent_id": run.agent_id,
-                                "agent": run.agent_id,
-                                "status": run.status,
-                                "duration": run.duration,
-                                "cost": run.cost,
-                                "xp": run.xp,
-                                "started_at": run.started_at,
-                                "ended_at": run.ended_at,
-                                "files_changed": 0,
-                                "tests_added": 0,
-                                "docs_updated": 0,
-                                "output_log": "",
-                            })
+                            self._runs.append(
+                                {
+                                    "id": run.id,
+                                    "project_id": run.project_id,
+                                    "project": proj["name"],
+                                    "agent_id": run.agent_id,
+                                    "agent": run.agent_id,
+                                    "status": run.status,
+                                    "duration": run.duration,
+                                    "cost": run.cost,
+                                    "xp": run.xp,
+                                    "started_at": run.started_at,
+                                    "ended_at": run.ended_at,
+                                    "files_changed": 0,
+                                    "tests_added": 0,
+                                    "docs_updated": 0,
+                                    "output_log": "",
+                                }
+                            )
                     except Exception:
                         pass  # Skip projects that fail
 

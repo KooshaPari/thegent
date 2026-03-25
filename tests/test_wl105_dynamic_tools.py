@@ -442,7 +442,9 @@ class TestSessionSendImplDynamicTools:
 
     def test_register_returns_success(self):
         # @trace WL-105
-        payload = json.dumps({"name": "calc", "description": "a calculator", "input_schema": {"type": "object"}}).decode()
+        payload = json.dumps(
+            {"name": "calc", "description": "a calculator", "input_schema": {"type": "object"}}
+        ).decode()
         result = self._send("sess-1", payload, "dynamic_tool_register")
         assert result["success"] is True
         assert result["registered"]["name"] == "calc"

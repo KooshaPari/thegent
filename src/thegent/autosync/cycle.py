@@ -165,7 +165,11 @@ def _release_writer_lock(self: Any) -> None:
 
 
 def _remote_status_map(remote_items: list[dict[str, Any]]) -> dict[str, str]:
-    return {str(item["item_id"]): str(item["status"]) for item in remote_items if item.get("item_id") and item.get("status")}
+    return {
+        str(item["item_id"]): str(item["status"]) for item in remote_items if item.get("item_id") and item.get("status")
+    }
+    _write_json(status_path, payload)
+    _write_json(status_path.parent / f"autosync_snapshot_{self.total_cycles:04d}.json", payload)
 
 
 def _completion_transition(local_items: list[WorkstreamItem], remote_item: dict[str, Any]) -> bool:
@@ -194,7 +198,10 @@ async def _perform_sync_cycle(self: Any) -> dict[str, Any]:
     items: list[WorkstreamItem] = []
     status = "success"
     outputs: dict[str, Any] = {"connector_diff_workflow": CONNECTOR_DIFF_WORKFLOW}
-    decisions: dict[str, Any] = {"github_enabled": self.config.github_enabled, "linear_enabled": self.config.linear_enabled}
+    decisions: dict[str, Any] = {
+        "github_enabled": self.config.github_enabled,
+        "linear_enabled": self.config.linear_enabled,
+    }
     try:
         if not _acquire_writer_lock(self):
             raise WorkstreamAutosyncError("single-writer lock unavailable")
@@ -217,9 +224,17 @@ async def _perform_sync_cycle(self: Any) -> dict[str, Any]:
                 await self._sync_in_partitions("github", "write", items, self._sync_to_github)
             if self.config.linear_can_write() and not self.config.is_maintenance_active("linear"):
                 await self._sync_in_partitions("linear", "write", items, self._sync_to_linear)
-            if self.config.github_can_read() and self.config.work_stream_path and not self.config.is_maintenance_active("github"):
+            if (
+                self.config.github_can_read()
+                and self.config.work_stream_path
+                and not self.config.is_maintenance_active("github")
+            ):
                 await self._sync_from_github(items, self.config.work_stream_path)
-            if self.config.linear_can_read() and self.config.work_stream_path and not self.config.is_maintenance_active("linear"):
+            if (
+                self.config.linear_can_read()
+                and self.config.work_stream_path
+                and not self.config.is_maintenance_active("linear")
+            ):
                 await self._sync_from_linear(items, self.config.work_stream_path)
             self._last_cycle_fingerprint = fingerprint
         self._error_budget.record_success()
@@ -234,7 +249,14 @@ async def _perform_sync_cycle(self: Any) -> dict[str, Any]:
         self._cycle_duration_count += 1
         outputs.setdefault("last_operation", self.last_operation.to_dict() if self.last_operation else None)
         self._append_cycle_manifest(status, started_at, items, decisions, outputs)
-        self._emit_cycle_metrics(started_at, completed_at, len(items), status, bool(self._no_op_summary), None if not self._no_op_summary else self._no_op_summary.get("reason"))
+        self._emit_cycle_metrics(
+            started_at,
+            completed_at,
+            len(items),
+            status,
+            bool(self._no_op_summary),
+            None if not self._no_op_summary else self._no_op_summary.get("reason"),
+        )
         _write_status(self, status, items)
         _write_prometheus_export(self, status)
         self._finalize_incident_snapshot(len(items), _metadata_state(self))
@@ -255,11 +277,14 @@ async def _sync_in_partitions(
     breaker = self._connector_config.get_connector_breaker(connector)
     backoff = self._connector_config.create_rate_limiter()
     for index, partition in enumerate(partitions):
-        self._checkpoint = SyncCheckpoint(connector, direction, index, len(partitions), self.config.effective_partition_size, datetime.now(UTC))
+        self._checkpoint = SyncCheckpoint(
+            connector, direction, index, len(partitions), self.config.effective_partition_size, datetime.now(UTC)
+        )
         _persist_checkpoint(self)
         attempt = 0
         while True:
             try:
+
                 async def _invoke(partition_items: list[WorkstreamItem] = partition) -> None:
                     await asyncio.wait_for(sync_fn(partition_items), timeout=timeout)
 
@@ -319,8 +344,14 @@ async def _sync_to_github(self: Any, items: list[WorkstreamItem]) -> None:
             signing_key=self.config.actor_signing_key,
         )
     operation_id = _operation_id(self, "github", "write", items)
-    pending = [item for item in payload if not self._idempotency_cache.check_content("github", item["item_id"], _payload_hash(item))]
-    operation = SyncOperation(operation_id, "github", "write", len(items), len(pending), 0, correlation_id=self._current_run_correlation_id)
+    pending = [
+        item
+        for item in payload
+        if not self._idempotency_cache.check_content("github", item["item_id"], _payload_hash(item))
+    ]
+    operation = SyncOperation(
+        operation_id, "github", "write", len(items), len(pending), 0, correlation_id=self._current_run_correlation_id
+    )
     if not self.config.shadow_mode and pending:
         result = public_api.gh_sync_to_github(self.config, pending)
         operation.errors = list(result.get("errors", [])) if isinstance(result, dict) else []
@@ -354,8 +385,18 @@ async def _sync_from_github(self: Any, items: list[WorkstreamItem], work_stream_
             if _completion_transition(items, remote_item):
                 refs = public_api.extract_github_issue_refs(remote_item)
                 if refs:
-                    public_api.close_or_comment_github_issue_refs(refs, close_comment=self.config.github_auto_close_comment)
-    operation = SyncOperation(_operation_id(self, "github", "read", items), "github", "read", len(remote_items), len(remote_items), 0, correlation_id=self._current_run_correlation_id)
+                    public_api.close_or_comment_github_issue_refs(
+                        refs, close_comment=self.config.github_auto_close_comment
+                    )
+    operation = SyncOperation(
+        _operation_id(self, "github", "read", items),
+        "github",
+        "read",
+        len(remote_items),
+        len(remote_items),
+        0,
+        correlation_id=self._current_run_correlation_id,
+    )
     operation.completed_at = datetime.now(UTC)
     operation.duration_seconds = max(0.0, (operation.completed_at - operation.started_at).total_seconds())
     self.last_operation = operation
@@ -369,12 +410,18 @@ async def _sync_to_linear(self: Any, items: list[WorkstreamItem]) -> None:
     public_api = _public_api()
     payload = [_build_payload_item(item, "linear") for item in items]
     operation_id = _operation_id(self, "linear", "write", items)
-    pending = [item for item in payload if not self._idempotency_cache.check_content("linear", item["item_id"], _payload_hash(item))]
+    pending = [
+        item
+        for item in payload
+        if not self._idempotency_cache.check_content("linear", item["item_id"], _payload_hash(item))
+    ]
     if not self.config.shadow_mode and pending:
         public_api.linear_sync_to(self.config, pending)
     for item in pending:
         self._idempotency_cache.record(operation_id, item["item_id"], "linear", _payload_hash(item))
-    operation = SyncOperation(operation_id, "linear", "write", len(items), len(pending), 0, correlation_id=self._current_run_correlation_id)
+    operation = SyncOperation(
+        operation_id, "linear", "write", len(items), len(pending), 0, correlation_id=self._current_run_correlation_id
+    )
     operation.completed_at = datetime.now(UTC)
     operation.duration_seconds = max(0.0, (operation.completed_at - operation.started_at).total_seconds())
     self.last_operation = operation
@@ -391,7 +438,15 @@ async def _sync_from_linear(self: Any, items: list[WorkstreamItem], work_stream_
     updates = self._build_remote_reflection_status_updates(items, _remote_status_map(remote_items))
     text = work_stream_path.read_text(encoding="utf-8")
     work_stream_path.write_text(WorkstreamParser.sync_status_annotations(text, statuses=updates), encoding="utf-8")
-    operation = SyncOperation(_operation_id(self, "linear", "read", items), "linear", "read", len(remote_items), len(remote_items), 0, correlation_id=self._current_run_correlation_id)
+    operation = SyncOperation(
+        _operation_id(self, "linear", "read", items),
+        "linear",
+        "read",
+        len(remote_items),
+        len(remote_items),
+        0,
+        correlation_id=self._current_run_correlation_id,
+    )
     operation.completed_at = datetime.now(UTC)
     operation.duration_seconds = max(0.0, (operation.completed_at - operation.started_at).total_seconds())
     self.last_operation = operation
@@ -425,7 +480,11 @@ def _append_cycle_manifest(
         cycle_number=self.total_cycles,
         started_at=started_at.isoformat(),
         status=status,
-        inputs={"run_id": self._current_run_correlation_id, "item_ids": [item.item_id for item in items], "item_count": len(items)},
+        inputs={
+            "run_id": self._current_run_correlation_id,
+            "item_ids": [item.item_id for item in items],
+            "item_count": len(items),
+        },
         decisions=decisions,
         outputs={**outputs, "connector_diff_workflow": CONNECTOR_DIFF_WORKFLOW},
         previous_manifest_hash=self._manifest_prev_hash,

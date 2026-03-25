@@ -7,31 +7,21 @@ import orjson as json
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime
-from typing import Any, cast
 
 import typer
 
-from rich.table import Table
 
 from thegent_cli.cli.commands.plan_output_helpers import (
-    render_plan_next_items,
     resolve_output_format,
 )
 
 from thegent_cli.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
-    _default_owner_tag,
-    _parse_dag_full,
     _resolve_cwd,
     console,
 )
 
 _log = logging.getLogger(__name__)
-
-from thegent_cli.cli.commands.run_cmds import bg_cmd
-from thegent_cli.cli.commands.session_cmds import history_cmd
 
 
 """Workstream and planning-related CLI commands.
@@ -39,6 +29,7 @@ from thegent_cli.cli.commands.session_cmds import history_cmd
 Commands for work stream orchestration, planning, and analysis.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def plan_incorporate_cmd(cd: Path | None = None, dry_run: bool = False) -> None:
     """Merge fragments from 02-UNIFIED-WBS into WORK_STREAM.md. Preserves CLAIMED and COMPLETED."""
@@ -139,7 +130,6 @@ def plan_verify_workstream_cmd(cd: Path | None = None, format: str | None = None
 
     if not result.get("ok", False):
         raise typer.Exit(1)
-
 
 
 __all__ = [

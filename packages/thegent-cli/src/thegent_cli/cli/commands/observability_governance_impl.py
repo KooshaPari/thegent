@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from thegent_cli.cli.services import governance as governance_service

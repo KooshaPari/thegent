@@ -1,4 +1,5 @@
 """Thegent implementation layer: functions that return dict/str instead of printing."""
+
 import orjson as json
 import logging
 import subprocess
@@ -392,6 +393,8 @@ _parse_observe_summary_timestamp = run_observe_helpers.parse_observe_summary_tim
 _parse_observe_summary_env_float = run_observe_helpers.parse_observe_summary_env_float
 _parse_observe_summary_env_int = run_observe_helpers.parse_observe_summary_env_int
 _observe_summary_freshness_bucket = run_observe_helpers.observe_summary_freshness_bucket
+
+
 def _load_observe_summary_snapshots(
     scope_signature: str,
     scope_key_json: str,
@@ -426,6 +429,8 @@ def _load_observe_summary_snapshots(
         if requested_limit and len(snapshots) >= requested_limit:
             break
     return snapshots
+
+
 _classify_observe_summary_trend_health = run_observe_helpers.classify_observe_summary_trend_health
 _append_observe_summary_snapshot = run_observe_helpers.append_observe_summary_snapshot
 
@@ -515,6 +520,8 @@ def _make_load_classifier(settings: "ThegentSettings") -> Any:
 
 def _new_session_id(agent: str, owner: str | None = None) -> str:
     return run_session_helpers.new_session_id(agent=agent, owner=owner)
+
+
 _is_pid_running = process_helpers.is_pid_running
 _parse_dag_full = run_dag_helpers.parse_dag_full
 _serialize_dag = run_dag_helpers.serialize_dag

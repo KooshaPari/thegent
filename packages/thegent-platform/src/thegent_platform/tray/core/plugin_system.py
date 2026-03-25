@@ -14,8 +14,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass
 
 try:
     from PySide6.QtWidgets import QWidget

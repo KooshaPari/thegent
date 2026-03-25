@@ -25,7 +25,6 @@ from thegent.cli.commands._cli_shared import (
 )
 
 
-
 def policy_show_cmd() -> None:
     """Show active governance policies and thresholds."""
     settings = ThegentSettings()
@@ -508,8 +507,6 @@ def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard
     color = "green" if result == "allow" else "yellow" if result == "warn" else "red"
     console.print(f"Policy Result: [{color}]{result.upper()}[/{color}]")
     console.print(f"Reason: {reason}")
-
-
 
 
 __all__ = [

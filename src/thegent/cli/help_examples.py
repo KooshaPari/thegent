@@ -36,6 +36,7 @@ def _migration_examples(command_prefix: str) -> list[str]:
         f"{command_prefix} migrate-legacy /tmp/legacy-cache infra m migrate-cache blocked",
     ]
 
+
 # ---------------------------------------------------------------------------
 # Example registry
 # ---------------------------------------------------------------------------

@@ -27,6 +27,7 @@ class _DiskCacheModuleProtocol:
 
     Cache: type[_DiskCacheProtocol]
 
+
 try:
     _DISKCACHE_MODULE = cast("_DiskCacheModuleProtocol", import_module("diskcache"))
     HAS_DISKCACHE = True
@@ -97,5 +98,5 @@ class L2DiskCache:
             "available": HAS_DISKCACHE,
             "hits": self._hits,
             "misses": self._misses,
-            "hit_rate": self._hits / total if total > 0 else 0
+            "hit_rate": self._hits / total if total > 0 else 0,
         }

@@ -147,7 +147,8 @@ def replay_run(
                         "event_type": event.event_type,
                         "data": event.data,
                     }
-                )).decode()
+                )
+            ).decode()
         else:
             console.print(f"[dim]{event.timestamp:.3f}[/dim] [bold cyan]{event.event_type}[/bold cyan]: {event.data}")
 

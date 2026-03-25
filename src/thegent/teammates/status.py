@@ -12,6 +12,7 @@ import time
 
 class TaskStatus(Enum):
     """Task status enumeration."""
+
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -24,6 +25,7 @@ class TaskStatus(Enum):
 @dataclass
 class TaskResult:
     """Result of a delegated task."""
+
     id: str
     status: TaskStatus
     teammate_id: str
@@ -43,9 +45,4 @@ class TaskResult:
 
     def is_complete(self) -> bool:
         """Check if task is in a terminal state."""
-        return self.status in (
-            TaskStatus.COMPLETED,
-            TaskStatus.FAILED,
-            TaskStatus.CANCELLED,
-            TaskStatus.TIMEOUT
-        )
+        return self.status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED, TaskStatus.TIMEOUT)
