@@ -81,7 +81,7 @@ class QueueManager:
                 with open(self.state_file) as f:
                     data = json.load(f)
                     self.state = QueueState.from_dict(data)
-            except json.JSONDecodeError, KeyError:
+            except (json.JSONDecodeError, KeyError):
                 self.state = QueueState()
         else:
             self.state = QueueState()

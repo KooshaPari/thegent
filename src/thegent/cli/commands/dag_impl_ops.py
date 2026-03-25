@@ -76,7 +76,7 @@ def _session_status_for(session_id: str, settings: ThegentSettings) -> str:
         running = _is_pid_running(pid)
         rc = p["rc"].read_text(encoding="utf-8").strip() if p["rc"].exists() else ""
         return "running" if running else ("exited:" + rc if rc else "exited")
-    except typer.BadParameter, Exception:
+    except (typer.BadParameter, Exception):
         return "not_found"
 
 

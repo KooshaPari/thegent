@@ -35,7 +35,7 @@ def _get_tool_version(cmd: str) -> tuple[int, ...] | None:
         match = re.search(r"(\d+)\.(\d+)(?:\.(\d+))?", result.stdout + result.stderr)
         if match:
             return tuple(int(x) for x in match.groups() if x)
-    except OSError, subprocess.TimeoutExpired:
+    except (OSError, subprocess.TimeoutExpired):
         pass
     return None
 

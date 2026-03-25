@@ -42,6 +42,7 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse, PlainTextResponse
 from starlette.routing import Route
 
+# tach-ignore(adapters uses agents registry at runtime)
 from thegent.agents.registry import AGENT_NAMES, get_runner
 from thegent.session import resolve_session_backend
 

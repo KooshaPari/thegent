@@ -65,7 +65,7 @@ def audit_plan():
 
 @app.command("security", help="Audit data protection, privacy, and compliance.")
 def audit_security(format: str = typer.Option("rich", "--format", "-F")):
-    from thegent.cli.commands.governance_data_protection_cmds import data_protection_cmd
+    from thegent.cli.governance.governance_data_protection_cmds import data_protection_cmd
 
     data_protection_cmd(format=format)
     _compliance_report_cmd(format=format)

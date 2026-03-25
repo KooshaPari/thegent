@@ -332,6 +332,10 @@ class ThegentSettings(BaseSettings):
         default_factory=default_cost_budget_by_category,
         description="Per-category MTD budgets in USD",
     )
+    otel_console: bool = Field(
+        default=False,
+        description="Enable console OpenTelemetry exporter",
+    )
     sandbox_level: str = Field(
         default="none",
         description="macOS sandbox level",
