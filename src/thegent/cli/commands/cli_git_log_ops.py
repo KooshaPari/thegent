@@ -13,7 +13,7 @@ from rich.console import Console
 
 from thegent_gitops.git import GitParallelismManager
 from thegent_gitops.worktree import WorktreePool
-from thegent.cli.commands.cli_git_worktree_governance import register_worktree_governance_commands
+from thegent.cli.governance.cli_git_worktree_governance import register_worktree_governance_commands
 
 console = Console()
 logger = logging.getLogger(__name__)
