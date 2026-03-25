@@ -17,6 +17,25 @@ Each **full** automation turn **must** close with **at least one** of the follow
 
 **Multiple merges per turn** are encouraged when CI allows: e.g. **docs PR** + **fix PR** in different repos, or stacked PRs in one repo.
 
+## Billing / Actions quota — when required checks never run
+
+Sometimes **GitHub Actions does not start jobs** (billing exhausted, org plan limits, or account-level blocks). Required checks then stay **queued** or **pending** forever. That is **infrastructure**, not a failing test.
+
+**Allowed merge path** (exception to the usual “green CI” gate):
+
+1. **Confirm** the problem is **capacity/billing**, not a red workflow: open the **Actions** tab and look for billing errors, “not enough minutes,” or jobs that never leave **Queued** with no runner.
+2. **Run** whatever you can **locally** (for example `task quality`, `cargo test`, `uv run pytest`) and note the commands in the PR or session log.
+3. **Log** a one-line exception in **`05_KNOWN_ISSUES.md`**: repo, PR number, date, `reason: Actions billing / quota`, and what was verified locally.
+4. **Merge** with administrator bypass (requires repo **admin**):  
+   `gh pr merge <n> --repo <owner>/<repo> --squash --admin`  
+   Use **`--merge`** or **`--rebase`** instead of **`--squash`** if the repo policy forbids squash.
+
+**Do not** use **`--admin`** when CI is **actually failing** (red logs, failing tests). Fix-forward or revert in that case.
+
+**Optional (repo settings):** Under **Settings → Rules → Rulesets**, you can add **bypass actors** for trusted roles so merges are not permanently blocked when billing recurs. Only change rulesets with org approval.
+
+**Cleanup:** When billing is restored, remove the billing-exception line from **`05_KNOWN_ISSUES.md`** and let **`main`** go green on Actions again.
+
 ## GitHub CLI routine (every turn)
 
 ```bash
