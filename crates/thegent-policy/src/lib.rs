@@ -13,8 +13,6 @@ mod policy;
 pub mod python;
 mod slo;
 mod trust;
-#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
-pub mod python;
 
 pub use compliance::ComplianceChecker;
 pub use cost_enforcer::CostEnforcer;
