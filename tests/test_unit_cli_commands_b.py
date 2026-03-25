@@ -813,7 +813,9 @@ class TestDagCheckpointsCmdImpl:
 class TestDagRecoverCmdImpl:
     """Tests for dag_recover_cmd implementation."""
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False})
+    @patch(
+        "thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False}
+    )
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-341
@@ -849,7 +851,9 @@ class TestDagRecoverCmdImpl:
         dag_recover_cmd(cd=None, action="reset-retries")
         assert any("Reset" in str(c) for c in mock_console.print.call_args_list)
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": False, "error": "Unknown action"})
+    @patch(
+        "thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"changed": False, "error": "Unknown action"}
+    )
     @patch("thegent.cli.console")
     def test_unknown_action(self, mock_console, mock_impl) -> None:
         # @trace FR-CLI-345
@@ -857,11 +861,15 @@ class TestDagRecoverCmdImpl:
 
         with pytest.raises(_EXIT):
             dag_recover_cmd(cd=None, action="unknown-action")
+
+
 @pytest.mark.skip(reason="WL-124 refactoring - patches needed")
 class TestDagProbeCmdImpl:
     """Tests for dag_probe_cmd implementation."""
 
-    @patch("thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False})
+    @patch(
+        "thegent.cli.commands._cli_shared.dag_recover_impl", return_value={"error": "DAG not found", "changed": False}
+    )
     @patch("thegent.cli.console")
     def test_dag_not_found(self, mock_console, mock_dag_path) -> None:
         # @trace FR-CLI-346

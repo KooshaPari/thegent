@@ -73,7 +73,7 @@ This document provides a unified index of all documentation across **40+ project
 - `STAGE2_SUMMARY.md` - Stage 2 summary
 - `MASTER_INDEX.md` - Master documentation index
 - `PROJECT_CONTEXT_SUMMARY.md` - Project context
-- `openspec/project.md` - OpenSpec project definition
+- `agileplus/project.md` - AgilePlus project definition
 
 ---
 
@@ -189,7 +189,7 @@ This document provides a unified index of all documentation across **40+ project
 - `mcp_server_discovery.py` - MCP server discovery
 - `mcp_registry.py` - MCP registry
 - `vector_graph_db.py` - Vector graph database
-- `OPENSPEC_PHASE2_PROPOSALS.md` - OpenSpec proposals
+- `agileplus/changes/` - AgilePlus proposals
 - `EXECUTION_RESULTS_FINAL.md` - Execution results
 
 ---

@@ -1,9 +1,8 @@
-import os
 import sys
 from pathlib import Path
 
 # Add src to sys.path
-sys.path.append(os.path.abspath("src"))
+sys.path.append(str(Path("src").resolve()))
 
 from thegent.infra.sandbox import WasmSandbox
 from thegent.routing.tool_router import ToolDefinition, ToolRouter
@@ -22,8 +21,9 @@ def test_tool_router():
     injection = router.get_tool_prompt_injection(prompt)
 
     # Clean up
-    if os.path.exists("test_tools_registry.json"):
-        os.remove("test_tools_registry.json")
+    registry_path = Path("test_tools_registry.json")
+    if registry_path.exists():
+        registry_path.unlink()
 
 
 def test_wasm_sandbox():

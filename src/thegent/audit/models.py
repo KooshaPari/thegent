@@ -21,7 +21,7 @@ def now_iso() -> str:
 
 class AuditEntry(BaseModel):
     """Audit log entry."""
-    
+
     id: str = Field(default_factory=new_id)
     timestamp: str = Field(default_factory=now_iso)
     operation: str

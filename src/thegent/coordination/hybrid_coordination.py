@@ -18,6 +18,7 @@ Routing:
 from __future__ import annotations
 
 import logging
+import os
 import random
 from dataclasses import dataclass
 from enum import Enum
@@ -33,10 +34,17 @@ _DEFAULT_HIER_THRESHOLD = 5
 
 def _hier_threshold() -> int:
     """Return swarm-size threshold from settings."""
-    from thegent.config import ThegentSettings
+    env_value = os.getenv("THGENT_HIER_THRESHOLD")
+    if env_value is not None:
+        try:
+            threshold = int(env_value)
+        except ValueError:
+            return _DEFAULT_HIER_THRESHOLD
+        if threshold >= 1:
+            return threshold
+        return _DEFAULT_HIER_THRESHOLD
 
-    settings = ThegentSettings()
-    return settings.hier_threshold
+    return _DEFAULT_HIER_THRESHOLD
 
 
 # ---------------------------------------------------------------------------

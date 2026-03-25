@@ -126,6 +126,7 @@ class ToolAdapter:
         cmd = shlex.split(tool.command)
         for key in sorted(kwargs):
             cmd.extend([f"--{key.replace('_', '-')}", str(kwargs[key])])
+
         # Use asyncio.to_thread so the blocking subprocess.run does not stall
         # the event loop.  subprocess.run is kept (rather than
         # asyncio.create_subprocess_exec) because the existing call-site

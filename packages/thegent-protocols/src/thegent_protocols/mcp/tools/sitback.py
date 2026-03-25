@@ -16,6 +16,7 @@ def sitback_dashboard_impl(*args, **kwargs):  # type: ignore[override]
     """Lazy shim — delegates to _cli.sitback_dashboard_impl on first call."""
     return _cli.sitback_dashboard_impl(*args, **kwargs)
 
+
 if TYPE_CHECKING:
     from fastmcp import FastMCP
 

@@ -74,4 +74,3 @@ def test_wl10719_retry_loop_rejects_negative_attempt_count() -> None:
     # @trace WL-10719
     with pytest.raises(ValueError, match="invalid attempt_count"):
         resolve_terminal_outcome_target(build_retry_loop_phase(-2, 3, "error"))
-

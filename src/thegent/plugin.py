@@ -5,13 +5,11 @@ Allows lazy-loading of extensions, commands, and integrations.
 
 from __future__ import annotations
 
-import importlib
 import importlib.util
 import logging
-import os
 import sys
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Callable, Protocol
 
 logger = logging.getLogger(__name__)
 

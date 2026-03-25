@@ -37,6 +37,7 @@ Commands for viewing and managing session contracts.
 Extracted from session_cmds.py to manage module size.
 """
 
+
 def session_contracts_cmd(
     all_sessions: bool = False,
     owner: str | None = None,
@@ -406,5 +407,3 @@ def session_contract_health_trend_cmd(
                 f"latest captured_at_utc={latest.get('captured_at_utc', '')} "
                 f"issue_types_count={result.get('latest_issue_types_count', len(_coerce_issue_types(_safe_dict(latest).get('issue_types', []))))}"
             )
-
-

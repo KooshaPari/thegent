@@ -9,7 +9,7 @@ FR Traceability: FR-AGT-020 (cross-project persona discovery and search)
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -38,7 +38,6 @@ class PersonaRecord(SerializableMixin):
     capabilities: list[str]
     persona_file: Path
     last_seen: datetime
-
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PersonaRecord:

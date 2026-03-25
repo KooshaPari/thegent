@@ -20,7 +20,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -32,7 +32,7 @@ def _submit_turn(session_id: str, *, requires_approval: bool = False) -> str:
         params["requires_approval"] = True
         params["unified_diff"] = "--- a/x\n+++ b/x\n@@\n-old\n+new\n"
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params}).decode()
     )
     assert response is not None
     return response["result"]["turn"]["id"]
@@ -145,4 +145,3 @@ def test_wl9749_full_handler_preserves_happy_and_failure_paths() -> None:
     assert ok_response is not None
     assert ok_response["result"]["turn"]["status"] == "cancelled"
     assert ok_notifications == []
-

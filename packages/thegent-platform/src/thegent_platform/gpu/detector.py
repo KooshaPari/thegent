@@ -19,6 +19,7 @@ class GPUVendor(Enum):
 @dataclass
 class GPUInfo:
     """Information about a GPU."""
+
     index: int
     vendor: GPUVendor
     name: str
@@ -28,7 +29,7 @@ class GPUInfo:
 
     @property
     def memory_gb(self) -> float:
-        return self.memory_total / (1024 ** 3)
+        return self.memory_total / (1024**3)
 
 
 class GPUDetector:
@@ -59,18 +60,21 @@ class GPUDetector:
         """Detect NVIDIA CUDA GPUs."""
         try:
             import torch
+
             if torch.cuda.is_available():
                 self._cuda_available = True
                 for i in range(torch.cuda.device_count()):
                     props = torch.cuda.get_device_properties(i)
-                    self._gpus.append(GPUInfo(
-                        index=i,
-                        vendor=GPUVendor.NVIDIA,
-                        name=props.name,
-                        memory_total=props.total_memory,
-                        memory_free=torch.cuda.memory_reserved(i),
-                        compute_capability=f"{props.major}.{props.minor}"
-                    ))
+                    self._gpus.append(
+                        GPUInfo(
+                            index=i,
+                            vendor=GPUVendor.NVIDIA,
+                            name=props.name,
+                            memory_total=props.total_memory,
+                            memory_free=torch.cuda.memory_reserved(i),
+                            compute_capability=f"{props.major}.{props.minor}",
+                        )
+                    )
         except ImportError:
             pass
 
@@ -78,15 +82,18 @@ class GPUDetector:
         """Detect Apple Metal GPUs."""
         try:
             import torch
-            if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+
+            if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 self._metal_available = True
-                self._gpus.append(GPUInfo(
-                    index=0,
-                    vendor=GPUVendor.APPLE,
-                    name="Apple Metal",
-                    memory_total=0,  # Shared memory
-                    memory_free=0
-                ))
+                self._gpus.append(
+                    GPUInfo(
+                        index=0,
+                        vendor=GPUVendor.APPLE,
+                        name="Apple Metal",
+                        memory_total=0,  # Shared memory
+                        memory_free=0,
+                    )
+                )
         except ImportError:
             pass
 
@@ -94,17 +101,20 @@ class GPUDetector:
         """Detect AMD ROCm GPUs."""
         try:
             import torch
-            if hasattr(torch.version, 'hip') and torch.version.hip:
+
+            if hasattr(torch.version, "hip") and torch.version.hip:
                 self._rocm_available = True
                 for i in range(torch.cuda.device_count()):  # ROCm uses CUDA API
                     props = torch.cuda.get_device_properties(i)
-                    self._gpus.append(GPUInfo(
-                        index=i,
-                        vendor=GPUVendor.AMD,
-                        name=props.name,
-                        memory_total=props.total_memory,
-                        memory_free=torch.cuda.memory_reserved(i)
-                    ))
+                    self._gpus.append(
+                        GPUInfo(
+                            index=i,
+                            vendor=GPUVendor.AMD,
+                            name=props.name,
+                            memory_total=props.total_memory,
+                            memory_free=torch.cuda.memory_reserved(i),
+                        )
+                    )
         except ImportError:
             pass
 
@@ -125,8 +135,5 @@ class GPUDetector:
             "metal": self._metal_available,
             "rocm": self._rocm_available,
             "gpu_count": len(self._gpus),
-            "gpus": [
-                {"name": g.name, "memory_gb": g.memory_gb, "vendor": g.vendor.value}
-                for g in self._gpus
-            ]
+            "gpus": [{"name": g.name, "memory_gb": g.memory_gb, "vendor": g.vendor.value} for g in self._gpus],
         }

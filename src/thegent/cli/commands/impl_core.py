@@ -209,9 +209,8 @@ def resume_impl(
     )
     from thegent.cli.services import run_post_surface_helpers
 
-    def _session_send_wrapper(sid: str, message: str) -> dict[str, Any]:
-        success, response = session_send_impl(sid, message, msg_type="reprompt")
-        return {"success": success, "response": response}
+    def _session_send_wrapper(sid: str, message: str) -> tuple[bool, str]:
+        return session_send_impl(sid, message, msg_type="reprompt")
 
     return run_post_surface_helpers.resume_impl(
         session_id=session_id,
@@ -255,4 +254,5 @@ def loop_impl(
 # Re-export from session_impl for resume_impl
 def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
     from thegent.cli.commands.session_control_impl import session_send_impl as _session_send_impl
+
     return _session_send_impl(session_id, message, msg_type=msg_type)

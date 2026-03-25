@@ -1,7 +1,7 @@
 """File coordination and optimistic concurrency control for the agent mesh."""
 
 import hashlib
-import orjson as json
+import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path

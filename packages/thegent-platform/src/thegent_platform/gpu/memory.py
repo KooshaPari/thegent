@@ -12,6 +12,7 @@ import time
 @dataclass
 class MemoryStats:
     """GPU memory statistics."""
+
     total: int
     used: int
     free: int
@@ -33,6 +34,7 @@ class GPUMemoryManager:
 
         try:
             import torch
+
             self._torch = torch
         except ImportError:
             pass
@@ -47,8 +49,9 @@ class GPUMemoryManager:
         return MemoryStats(
             total=self._torch.cuda.get_device_properties(self.device_index).total_memory,
             used=self._torch.cuda.memory_allocated(self.device_index),
-            free=self._torch.cuda.memory_reserved(self.device_index) - self._torch.cuda.memory_allocated(self.device_index),
-            reserved=self._torch.cuda.memory_reserved(self.device_index)
+            free=self._torch.cuda.memory_reserved(self.device_index)
+            - self._torch.cuda.memory_allocated(self.device_index),
+            reserved=self._torch.cuda.memory_reserved(self.device_index),
         )
 
     def clear_cache(self) -> None:
@@ -76,7 +79,7 @@ class GPUMemoryManager:
         return {
             "before_utilization": before.utilization,
             "after_utilization": after.utilization,
-            "freed_bytes": before.reserved - after.reserved
+            "freed_bytes": before.reserved - after.reserved,
         }
 
     def with_memory_tracking(self, func: callable) -> tuple:
@@ -96,5 +99,5 @@ class GPUMemoryManager:
             "memory_start": start_stats.used,
             "memory_end": end_stats.used,
             "memory_peak": peak,
-            "memory_delta": end_stats.used - start_stats.used
+            "memory_delta": end_stats.used - start_stats.used,
         }

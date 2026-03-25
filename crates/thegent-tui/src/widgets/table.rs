@@ -147,8 +147,7 @@ impl<T: TableRow> TableWidget<T> {
         if self.view.is_empty() {
             1
         } else {
-            let page_size = self.page_size.max(1);
-            self.view.len().div_ceil(page_size)
+            self.view.len().div_ceil(self.page_size)
         }
     }
 

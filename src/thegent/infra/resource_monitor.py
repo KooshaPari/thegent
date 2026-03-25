@@ -155,7 +155,7 @@ class ResourceMonitor:
             else:
                 # Fallback: count open files and connections
                 fd_count = len(process.open_files()) + len(process.net_connections())
-        except (psutil.AccessDenied, AttributeError, psutil.NoSuchProcess):
+        except psutil.AccessDenied, AttributeError, psutil.NoSuchProcess:
             fd_count = 0
 
         # FD limit using resource module
@@ -172,13 +172,13 @@ class ResourceMonitor:
         # Memory using psutil (RSS)
         try:
             memory_mb = process.memory_info().rss / 1024 / 1024
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+        except psutil.AccessDenied, psutil.NoSuchProcess:
             memory_mb = 0
 
         # CPU using psutil
         try:
             cpu_percent = process.cpu_percent(interval=0.1)
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+        except psutil.AccessDenied, psutil.NoSuchProcess:
             cpu_percent = 0
 
         return ResourceStats(
@@ -218,7 +218,7 @@ class ResourceMonitor:
                 info["num_fds"] = proc.num_fds()
 
             return info
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             return None
 
     def get_history(self) -> list[ResourceStats]:

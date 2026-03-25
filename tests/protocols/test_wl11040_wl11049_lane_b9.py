@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -41,7 +41,9 @@ def test_wl11041_extract_turn_submit_approval_payload_id_rejects_empty_value() -
 
 def test_wl11042_extract_turn_submit_approval_payload_status_returns_value() -> None:
     # @trace WL-11042
-    assert server._extract_turn_submit_approval_payload_status({"id": "approval-1", "status": "requested"}) == "requested"
+    assert (
+        server._extract_turn_submit_approval_payload_status({"id": "approval-1", "status": "requested"}) == "requested"
+    )
 
 
 def test_wl11043_extract_turn_submit_approval_payload_status_rejects_non_string() -> None:
@@ -58,13 +60,17 @@ def test_wl11044_resolve_turn_submit_response_approval_fields_rejects_empty_payl
 
 def test_wl11045_resolve_turn_submit_response_approval_fields_accepts_none_diff() -> None:
     # @trace WL-11045
-    payload = server._resolve_turn_submit_response_approval_fields({"id": "approval-1", "status": "requested", "diff": None})
+    payload = server._resolve_turn_submit_response_approval_fields(
+        {"id": "approval-1", "status": "requested", "diff": None}
+    )
     assert payload == ("approval-1", "requested", None)
 
 
 def test_wl11046_build_turn_submit_response_phase_preserves_request_path_without_id() -> None:
     # @trace WL-11046
-    phase = server._build_turn_submit_response_phase(False, None, {"id": "turn-1"}, {"id": "approval-1", "status": "requested"})
+    phase = server._build_turn_submit_response_phase(
+        False, None, {"id": "turn-1"}, {"id": "approval-1", "status": "requested"}
+    )
     assert phase == {
         "request_has_id": False,
         "request_id": None,
@@ -78,7 +84,7 @@ def test_wl11047_handle_turn_submit_request_with_no_request_id_suppresses_result
     _reset_state()
     session_id = _start_session()
     request = {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id}}
-    response, notifications = process_jsonrpc_line_full(json.dumps(request).decode().decode())
+    response, notifications = process_jsonrpc_line_full(json.dumps(request).decode())
     assert response is None
     assert len(notifications) >= 4
     assert notifications[0]["method"] == "turn/started"
@@ -88,7 +94,7 @@ def test_wl11048_handle_turn_submit_request_with_parse_error_returns_error_respo
     # @trace WL-11048
     _reset_state()
     request = {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": "does-not-exist"}}
-    response, notifications = process_jsonrpc_line_full(json.dumps(request).decode().decode())
+    response, notifications = process_jsonrpc_line_full(json.dumps(request).decode())
     assert response is not None
     assert response["error"]["code"] == -32001
     assert response["error"]["message"] == "Session not found"

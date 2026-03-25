@@ -32,7 +32,9 @@ def serialize_health_report_md(result: dict[str, Any]) -> str:
     lines.append(f"schema_version: {result['schema_version']}")
     lines.append(f"schema_compat_mode: {result.get('schema_compat_mode', 'compat')}")
     lines.append(f"compat_mode: {_safe_dict(result.get('compat')).get('mode', 'compat')}")
-    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode().decode()).get('aliases', {}), sort_keys=True)}")
+    lines.append(
+        f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode().decode()).get('aliases', {}), sort_keys=True)}"
+    )
     lines.append(f"payload_type: {result['payload_type']}")
     if result.get("payload_signature"):
         signature = result["payload_signature"]
@@ -182,7 +184,9 @@ def serialize_health_trend_md(result: dict[str, Any]) -> str:
     lines.append(f"schema_version: {result['schema_version']}")
     lines.append(f"schema_compat_mode: {result.get('schema_compat_mode', 'compat')}")
     lines.append(f"compat_mode: {_safe_dict(result.get('compat')).get('mode', 'compat')}")
-    lines.append(f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode().decode()).get('aliases', {}), sort_keys=True)}")
+    lines.append(
+        f"compat_aliases: {json.dumps(_safe_dict(result.get('compat').decode().decode()).get('aliases', {}), sort_keys=True)}"
+    )
     lines.append(f"compat_aliases_count: {compat_aliases_count}")
     lines.append(f"payload_type: {result['payload_type']}")
     lines.append(f"trend_payload_type: {result['trend_payload_type']}")

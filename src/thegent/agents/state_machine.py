@@ -5,7 +5,7 @@ enforcing fallback policies and semantic validation gates.
 """
 
 import hashlib
-import orjson as json
+import json
 import logging
 import time
 import uuid

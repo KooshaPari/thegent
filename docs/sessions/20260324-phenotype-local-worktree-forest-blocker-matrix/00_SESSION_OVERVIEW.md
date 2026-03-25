@@ -25,10 +25,7 @@ Consolidate the local worktree-forest scan into a blocker matrix that orders cle
 | `11_NEXT_WAVE_E.md` | Wave E — next 24 (ops, compliance, perf, testing depth, handoff, closure) |
 | `12_NEXT_WAVE_F.md` | Wave F — next 24 (roadmap, knowledge, DR, DoD, observability, queue meta) |
 | `13_NEXT_WAVE_G.md` | Wave G — next 24 (GitHub policy, reproducibility, SBOM, flags, people, halt/pivot) |
-| `18_WAVE_C_SLICES_4_6.md` | Wave C slices **4–6** — cliproxy umbrella **#559**, reuse **#560**, portage/trace notes, `bash -n` gate |
-| `19_NEXT_50_WORK_ITEMS.md` | **Next 50** — preamble + **Wave D** + **Wave E** (ordered **1–50**); cross-links **`09`** / **`18`** |
-| `20_NEXT_50_EXECUTION.md` | **Next 50 execution** — item **1–50** status, Taskfile/CI notes, verification log |
-| `README.md` | **Folder index** — links **`07`–`13`**, **`18`–`20`** |
+| `16_PARALLEL_AGENT_AUDIT.md` | **5-agent Tier-1** DAG + consolidated Wave C–E audit (50 items) |
 
 ## Related session packs
 - `../20260324-phenotype-local-worktree-forest-inventory/` — forest counts and high-risk family list
@@ -64,4 +61,3 @@ Consolidate the local worktree-forest scan into a blocker matrix that orders cle
 - `12_NEXT_WAVE_F.md` — wave F **next 24** (after wave E)
 - `13_NEXT_WAVE_G.md` — wave G **next 24** (after wave F)
 - `19_NEXT_50_WORK_ITEMS.md` — **Next 50** queue (preamble + waves D + E)
-- `20_NEXT_50_EXECUTION.md` — **Next 50** execution status + local verification log

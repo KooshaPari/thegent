@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "repo_ids": [
+    "thegent",
+    "cliproxyapi-plusplus",
+    "heliosApp"
+  ],
+  "owners": [
+    "thegent-runtime"
+  ],
+  "refresh_cadence": "weekly",
+  "repo_ref_overrides": {},
+  "repo_runner_overrides": {},
+  "repo_command_overrides": {},
+  "repo_env_profile_overrides": {}
+}

@@ -12,6 +12,8 @@ Merge only when both mandatory harness contract gates pass.
 - The `quality` workflow job is fail-closed for harness gates.
 - CI always executes both mandatory gates, captures each exit code, and fails the job if either gate fails.
 - The quality lane remains limited to these mandatory harness gates; no extra governance lanes are required there.
+- Long-lived canary and high-extreme package branches must follow the canonical structured refresh policy in `UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md` before merge; the CI workflow enforces that policy via `task quality:governance:canary-refresh`, and the local pre-push contract uses `task quality:pre-push:strict-governance`.
+- legacy worktrees are reported separately through `task quality:governance:legacy-remediation-report`; clean legacy lanes are then migrated through `thegent worktree migrate-legacy`, and strict governance still fails until the remaining dirty lanes are migrated or pruned.
 
 ## Mandatory Harness Contract Gates
 
@@ -97,4 +99,3 @@ For promotion criteria, see `docs/governance/POLYGLOT_RUNTIME_COVERAGE_AND_CONVE
 - Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
 - Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
 - Document architectural and protocol decisions before broad rollout changes.
-

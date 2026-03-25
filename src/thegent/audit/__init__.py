@@ -7,10 +7,10 @@ from thegent.audit.system_audit import AuditReport, AuditResult, AuditStatus, Sy
 
 __all__ = [
     "DEFAULT_DB_PATH",
-    "AuditEntry", 
+    "AuditEntry",
     "scrub_secrets",
     "AuditReport",
-    "AuditResult", 
+    "AuditResult",
     "AuditStatus",
     "SystemAuditor",
 ]

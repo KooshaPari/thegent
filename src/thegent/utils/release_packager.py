@@ -4,7 +4,7 @@ Compiles PRD, WBS, and test artifacts into a deterministic release package.
 """
 
 import hashlib
-import orjson as json
+import json
 from pathlib import Path
 from typing import Any
 
@@ -45,7 +45,7 @@ class ReleasePackager:
                 manifest["artifacts"].append({"path": path_str, "status": "missing"})
 
         # Deterministic checksum for the entire package
-        manifest_json = json.dumps(manifest, sort_keys=True).decode()
+        manifest_json = json.dumps(manifest, sort_keys=True)
         manifest["package_checksum"] = hashlib.sha256(manifest_json.encode()).hexdigest()
 
         return manifest

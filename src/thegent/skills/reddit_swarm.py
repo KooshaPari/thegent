@@ -1,4 +1,4 @@
-import orjson as json
+import json
 import logging
 import re
 from pathlib import Path
@@ -66,6 +66,6 @@ def process_reddit_swathe(links: list[str], additional_subreddits: list[str] | N
 
 def save_swathe_results(results: dict[str, Any], output_path: Path):
     """Save the results of the reddit swathe processing."""
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
     return output_path

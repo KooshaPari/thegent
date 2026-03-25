@@ -35,22 +35,22 @@ MEDIUM_PRIORITY_FILES = [
     ("src/thegent/governance/compliance.py", 10),
 ]
 
+
 def check_orjson_installed():
     """Check if orjson is installed."""
     try:
         import orjson
+
         return True
     except ImportError:
         return False
 
+
 def get_files_needing_migration():
     """Find all files importing json."""
-    result = subprocess.run(
-        ["rg", "import json", "--type", "py", "src/thegent", "-l"],
-        capture_output=True,
-        text=True
-    )
+    result = subprocess.run(["rg", "import json", "--type", "py", "src/thegent", "-l"], capture_output=True, text=True)
     return result.stdout.strip().split("\n")
+
 
 def main():
     if not check_orjson_installed():
@@ -86,6 +86,7 @@ def main():
     print("4. Replace json.load(f) / json.dump(d, f):")
     print("   - Need wrapper: load(f) -> orjson.loads(f.read())")
     print()
+
 
 if __name__ == "__main__":
     main()

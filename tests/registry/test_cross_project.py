@@ -430,7 +430,7 @@ class TestSaveLoad:
         """A JSON file containing a dict (not a list) raises ValueError."""
         # @trace FR-AGT-020
         reg_file = tmp_path / "wrong.json"
-        reg_file.write_text(json.dumps({"key": "value"}).decode().decode(), encoding="utf-8")
+        reg_file.write_text(json.dumps({"key": "value"}).decode(), encoding="utf-8")
 
         reg = CrossProjectRegistry(registry_file=reg_file)
         with pytest.raises(ValueError, match="Expected JSON list"):

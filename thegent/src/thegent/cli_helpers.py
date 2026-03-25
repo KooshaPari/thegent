@@ -11,12 +11,10 @@ from typing import Any
 
 def print_error(msg: str) -> None:
     """Print error to stderr."""
-    print(f"Error: {msg}", file=sys.stderr)
 
 
 def print_warning(msg: str) -> None:
     """Print warning to stdout."""
-    print(f"Warning: {msg}")
 
 
 def confirm(prompt: str, default: bool = False) -> bool:

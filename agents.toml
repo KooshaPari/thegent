@@ -1,0 +1,5 @@
+# dotagents configuration
+# See https://dotagents.sentry.dev/
+
+[agents]
+targets = ["claude"]

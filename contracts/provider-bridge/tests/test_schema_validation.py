@@ -40,7 +40,9 @@ def _resolver_store() -> dict:
 def test_valid_fixtures(schema_file: str, fixture_file: str) -> None:
     schema = _load_json(SCHEMA_DIR / schema_file)
     instance = _load_json(FIXTURE_DIR / fixture_file)
-    validator = jsonschema.Draft202012Validator(schema=schema, resolver=jsonschema.RefResolver.from_schema(schema, store=_resolver_store()))
+    validator = jsonschema.Draft202012Validator(
+        schema=schema, resolver=jsonschema.RefResolver.from_schema(schema, store=_resolver_store())
+    )
     validator.validate(instance)
 
 
@@ -60,4 +62,3 @@ def test_response_requires_error_when_status_error() -> None:
     validator = jsonschema.Draft202012Validator(schema=schema)
     with pytest.raises(jsonschema.ValidationError):
         validator.validate(instance)
-

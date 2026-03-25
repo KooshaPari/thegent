@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use which::{which, which_in};
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 use pyo3::prelude::*;
 
 /// Fast PATH resolution with skip directory support
@@ -118,7 +118,7 @@ pub fn resolve_binary(name: &str) -> Option<String> {
     PathResolver::new().resolve(name)
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pyfunction]
 fn resolve_binary(name: &str, skip_dirs: Option<Vec<String>>) -> PyResult<Option<String>> {
     let resolver = if let Some(skip) = skip_dirs {
@@ -129,7 +129,7 @@ fn resolve_binary(name: &str, skip_dirs: Option<Vec<String>>) -> PyResult<Option
     Ok(resolver.resolve(name))
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pymodule]
 fn thegent_path_resolve(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(resolve_binary, m)?)?;

@@ -189,7 +189,9 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
                 _safe_dict(result.get("scope_key")).get("top_blocked", ""),
             ),
             result.get("scope_key_json", json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True)),
-            result.get("delta_summary_json", json.dumps(result.get("delta_summary", {}).decode().decode(), sort_keys=True)),
+            result.get(
+                "delta_summary_json", json.dumps(result.get("delta_summary", {}).decode().decode(), sort_keys=True)
+            ),
             json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True),
             result.get(
                 "blocked_ratio_delta",
@@ -270,7 +272,9 @@ def serialize_health_trend_csv(result: dict[str, Any]) -> str:
                     _safe_dict(result.get("scope_key")).get("top_blocked", ""),
                 ),
                 result.get("scope_key_json", json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True)),
-                result.get("delta_summary_json", json.dumps(result.get("delta_summary", {}).decode().decode(), sort_keys=True)),
+                result.get(
+                    "delta_summary_json", json.dumps(result.get("delta_summary", {}).decode().decode(), sort_keys=True)
+                ),
                 json.dumps(result.get("scope_key", {}).decode().decode(), sort_keys=True),
                 result.get(
                     "blocked_ratio_delta",

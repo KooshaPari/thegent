@@ -5,7 +5,7 @@ Allows external agents to discover and borrow thegent tools.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any

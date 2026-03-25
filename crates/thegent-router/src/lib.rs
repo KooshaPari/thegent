@@ -16,7 +16,7 @@ pub mod orchestrator;
 pub mod risk;
 pub mod router;
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 pub mod python;
 
 pub use audit::{AuditLogger, AuditRecord};

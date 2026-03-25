@@ -45,7 +45,7 @@ https://github.com/BloopAI/vibe-kanban,repo,batch1,pilot,0.80,Good workflow augm
 https://github.com/VectifyAI/PageIndex,repo,batch1,pilot,0.74,Requires benchmark validation,VectifyAI,16330,2026-02-23T10:38:13Z,MIT,false,86
 https://github.com/chunkhound/chunkhound,repo,batch1,pilot,0.81,Local code intelligence candidate,chunkhound,1053,2026-02-23T07:26:56Z,MIT,false,84
 https://github.com/bgauryy/octocode-mcp,repo,batch1,pilot,0.83,Strong MCP code context candidate,bgauryy,732,2026-02-23T09:34:44Z,MIT,false,82
-https://github.com/Fission-AI/OpenSpec,repo,batch1,reference,0.86,High conceptual overlap; avoid lock-in,Fission-AI,25187,2026-02-23T10:44:30Z,MIT,false,63
+https://github.com/Fission-AI/AgilePlus,repo,batch1,reference,0.86,High conceptual overlap; avoid lock-in,Fission-AI,25187,2026-02-23T10:44:30Z,MIT,false,63
 https://github.com/ComposioHQ/awesome-claude-skills,list,batch1,reference,0.70,Discovery source only,ComposioHQ,36839,2026-02-23T10:43:51Z,,false,61
 https://github.com/testthedocs/awesome-docs,list,batch1,reference,0.73,Discovery source only,testthedocs,844,2026-02-23T10:14:01Z,NOASSERTION,false,56
 https://github.com/awesome-selfhosted/awesome-selfhosted,list,batch1,reference,0.74,Discovery source only,awesome-selfhosted,274678,2026-02-23T10:28:18Z,NOASSERTION,false,64

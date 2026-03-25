@@ -6,39 +6,17 @@ This module handles policy configuration, contract management, drift detection, 
 # @trace WL-124
 from __future__ import annotations
 
-import hashlib
 import json
-from thegent_core.utils.json_utils import json_loads, json_dumps
 import sys
-import uuid
-from pathlib import Path
 
-import typer
 
 from rich.panel import Panel
 from rich.table import Table
 
 from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
-    _bootstrap_metric_contracts,
-    _get_health_targets_path,
-    _HEALTH_TARGETS_TEMPLATE,
-    _load_artifact,
-    _normalize_output_format,
-    _resolve_cwd,
     console,
 )
-from thegent_cli.cli.commands.governance_health_helpers import (
-    build_cycle_json_output,
-    build_cycle_result_table,
-    build_health_dimensions_table,
-    build_health_json_output,
-    build_health_summary_table,
-    count_findings,
-    extract_dimension_values,
-    resolve_band_value,
-)
-
 
 
 def policy_show_cmd() -> None:
@@ -248,7 +226,6 @@ def contracts_conformance_cmd(
         import typer
 
         raise typer.Exit(1)
-
 
 
 __all__ = [

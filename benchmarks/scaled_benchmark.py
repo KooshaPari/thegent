@@ -28,12 +28,14 @@ from typing import Any
 # Optional imports - benchmarks gracefully skip if unavailable
 try:
     import httpx
+
     HAS_HTTPX = True
 except ImportError:
     HAS_HTTPX = False
 
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError:
     HAS_PSUTIL = False
@@ -190,6 +192,7 @@ def benchmark_connection_pooling() -> dict[str, float]:
     # Check certifi
     try:
         import certifi
+
         certifi.where()
     except Exception:
         results["error"] = "certifi not properly installed"
@@ -315,7 +318,7 @@ def benchmark_circuit_breaker_activation() -> dict[str, float]:
     cb = CircuitBreaker(failure_threshold=3, recovery_timeout=60.0)
 
     start = time.perf_counter()
-    for i in range(5):
+    for _i in range(5):
         cb.record_failure()
     activation_time = (time.perf_counter() - start) * 1000
 
@@ -338,6 +341,7 @@ def benchmark_plugin_loading() -> dict[str, float]:
     start = time.perf_counter()
     try:
         import thegent.hooks.hook_dispatcher
+
         import_time = (time.perf_counter() - start) * 1000
         results["hook_dispatcher_import_ms"] = import_time
 
@@ -388,7 +392,6 @@ def run_all_benchmarks() -> dict[str, Any]:
     suite = BenchmarkSuite()
 
     # 1. Agent Spawning
-    print("Running agent spawning benchmarks...")
     cold_time = asyncio.run(benchmark_agent_cold_spawn(Path("/tmp")))
     suite.add("agent.cold_spawn_ms", cold_time, "ms", category="spawn")
 
@@ -400,7 +403,6 @@ def run_all_benchmarks() -> dict[str, Any]:
         suite.add(f"agent.concurrent_{n}_ms", latency, "ms", category="scaling")
 
     # 2. Network
-    print("Running network benchmarks...")
     api_latency = benchmark_api_latency()
     for k, v in api_latency.items():
         suite.add(f"network.{k}", v, "ms" if "ms" in k else "count")
@@ -410,7 +412,6 @@ def run_all_benchmarks() -> dict[str, Any]:
         suite.add(f"network.{k}", v, "ms")
 
     # 3. Compute
-    print("Running compute benchmarks...")
     memory = benchmark_memory_footprint()
     for k, v in memory.items():
         suite.add(f"compute.{k}", v, "mb" if "mb" in k else "count")
@@ -420,7 +421,6 @@ def run_all_benchmarks() -> dict[str, Any]:
         suite.add(f"compute.{k}", v, "tokens/s" if "tokens" in k else "chars/s")
 
     # 4. QoL
-    print("Running QoL benchmarks...")
     error_stats = benchmark_error_recovery()
     for k, v in error_stats.items():
         suite.add(f"qol.{k}", v, "us" if "us" in k else "count")
@@ -430,7 +430,6 @@ def run_all_benchmarks() -> dict[str, Any]:
         suite.add(f"qol.circuit_breaker_{k}", v, "ms" if "ms" in k else "count")
 
     # 5. Extensibility
-    print("Running extensibility benchmarks...")
     plugin_stats = benchmark_plugin_loading()
     for k, v in plugin_stats.items():
         suite.add(f"extensibility.{k}", v, "ms" if "ms" in k else "bytes")
@@ -444,4 +443,3 @@ def run_all_benchmarks() -> dict[str, Any]:
 
 if __name__ == "__main__":
     results = run_all_benchmarks()
-    print(json.dumps(results, indent=2))

@@ -61,12 +61,13 @@ __all__ = ["SyncAdapter"]
 # Register with unified adapter registry
 from thegent.adapters.ports import AdapterRegistry
 
+
 class SyncAdapterWrapper:
     """Sync adapter wrapper for registry"""
-    
+
     def __init__(self):
         self._adapter = SyncAdapter(config=None)
-    
+
     def call(self, **kwargs) -> dict:
         return {"status": "sync_adapter_ready"}
 

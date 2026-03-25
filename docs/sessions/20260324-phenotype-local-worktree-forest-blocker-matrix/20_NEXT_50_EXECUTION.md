@@ -19,7 +19,7 @@
 
 | # | Status | Notes |
 |---|--------|--------|
-| **3** | **Blocked (local)** | Ran **`task check`** on **`main`**: fails at **`quality:rust:ci`** (`cargo clippy --workspace --all-targets --all-features -- -D warnings`). Representative failures include **`thegent-maif`**, **`thegent-tui`**, **`thegent-offload`** (clippy `-D warnings`). Treat as **repo debt**; fix in a dedicated Rust-quality PR — see **`05_KNOWN_ISSUES.md`**. Hooks: **`task hooks:run:pre-push`** can no-op when no staged files. |
+| **3** | **Ready for PR / merge** | **Unblock:** duplicate **`is_empty`** removed in **`crates/thegent-cache/src/lib.rs`**; **`thegent-tui`** theme registry tests serialized with **`serial_test`**. **Verify** full lane: `cargo clippy … --all-features -- -D warnings` + `cargo test … --all-features`. **Next:** branch in **`repos/worktrees/thegent/...`**, one PR, squash-merge after review + green CI — see **PR checklist** below. |
 | **4** | **Documented** | **Taskfile ↔ CI (high level):** `task ci:preflight` aligns with GitHub **“CI Preflight”** (`.github/workflows/ci.yml`). `task check` / `task quality` align with **“Quality Checks”** / **“Unified Quality Control Plane”** jobs. **`task quality:pre-push`** = `hooks:run:pre-push` + `ci:local-gha:pre-push` (see `Taskfile.yml`). PR **`lint-test`** workflow delegates to **`phenotypeActions`** `lint-test`. Full ordering matches `ci.yml` job graph (`preflight` → `test` → …). |
 | **5** | **N/A this pass** | No flaky-test retries observed in the short local run; registry stays **`05_KNOWN_ISSUES.md`**. |
 | **6** | **Deferred** | **heliosApp** secrets/PTY coverage is tracked in Wave A/B notes; not re-run here. |
@@ -77,7 +77,18 @@
 |---------|--------|
 | `bash -n scripts/worktree_governance.sh` | **OK** |
 | `gitleaks detect` (session docs path, `--no-git`) | **No leaks** |
-| `task check` | **FAIL** — see item **3** above |
+| `task check` | Re-run after PR merge; **`quality:rust:ci`** should pass once item **3** changes are on **`main`**. |
+
+---
+
+## PR review and merge (item 3 closure)
+
+1. **Branch:** Author from a **worktree** (not `main`); keep canonical checkout on **`main`** for pull/merge only (`AGENTS.md`).
+2. **Scope:** One PR — `thegent-cache` duplicate method fix + `thegent-tui` `serial_test` + lockfile; no unrelated edits.
+3. **Local gate:** `cargo clippy --workspace --manifest-path crates/Cargo.toml --all-targets --all-features -- -D warnings` and `cargo test --workspace --manifest-path crates/Cargo.toml --all-targets --all-features`.
+4. **Review:** Resolve threads; retrigger bot review if policy requires (rate-limit per org rules).
+5. **Merge:** Prefer **squash** when allowed; **`gh pr merge --squash`** after required checks green. If Actions billing blocks CI, follow **`FULL_TURN_DELIVERY.md`** billing section (do not merge red without documented exception).
+6. **After merge:** On **`main`**, run **`task quality:rust:ci`** (or **`task check`**) once; update **`05_KNOWN_ISSUES.md`** to remove the Rust-lane bullet when green.
 
 ---
 

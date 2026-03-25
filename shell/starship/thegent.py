@@ -53,7 +53,7 @@ def get_thegent_status() -> str:
                 return "running"
 
         return "idle"
-    except (subprocess.TimeoutExpired, FileNotFoundError):
+    except subprocess.TimeoutExpired, FileNotFoundError:
         return "idle"
     except Exception:
         return "idle"

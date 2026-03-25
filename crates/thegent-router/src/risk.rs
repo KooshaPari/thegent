@@ -162,7 +162,7 @@ mod tests {
         let calc = RiskCalculator::new();
         let factors = RiskFactors::new(ComplexityLevel::Simple);
         let risk = calc.calculate(&factors);
-        assert!(risk >= 0.0 && risk <= 1.0);
+        assert!((0.0..=1.0).contains(&risk));
         assert!(risk < 0.2); // Simple should be very low
     }
 

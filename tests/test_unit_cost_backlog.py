@@ -52,7 +52,7 @@ def targets_path(tmp_path: Path) -> Path:
     Traces to: FR-GOV-002
     """
     p = tmp_path / "health-targets.json"
-    p.write_text(json.dumps(_TARGETS_DATA).decode().decode())
+    p.write_text(json.dumps(_TARGETS_DATA).decode())
     return p
 
 

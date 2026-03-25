@@ -8,12 +8,13 @@ FR traceability: WL-312 (Policy Checksum Drift Detection)
 
 from __future__ import annotations
 
-import hashlib
-import orjson as json
 import logging
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime, UTC
 from typing import Any
+
+import orjson
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +52,8 @@ class PolicyChecksumDriftDetector:
         Returns:
             SHA256 hex digest of the sorted JSON serialization.
         """
-        # Use separators and sort_keys for deterministic serialization
-        json_str = json.dumps(policy_data, sort_keys=True, separators=(",", ":").decode())
-        return hashlib.sha256(json_str.encode("utf-8")).hexdigest()
+        serialized = orjson.dumps(policy_data, option=orjson.OPT_SORT_KEYS)
+        return hashlib.sha256(serialized).hexdigest()
 
     def record_baseline(self, policy_id: str, policy_data: dict, cycle_id: str) -> PolicyChecksum:
         """Record a baseline checksum for a policy.
@@ -128,8 +128,8 @@ class PolicyChecksumDriftDetector:
 
 def compute_payload_checksum(payload: Any) -> str:
     """Compute a deterministic SHA256 checksum for a JSON-compatible payload."""
-    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":").decode())
-    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    serialized = orjson.dumps(payload, option=orjson.OPT_SORT_KEYS)
+    return hashlib.sha256(serialized).hexdigest()
 
 
 def verify_payload_checksum(payload: Any, expected_checksum: str) -> None:

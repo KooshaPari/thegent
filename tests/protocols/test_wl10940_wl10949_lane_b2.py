@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -96,7 +96,8 @@ def test_wl10949_turn_submit_notification_requires_approval_emits_side_effects_w
                     "unified_diff": "--- a\n+++ b\n@@\n-old\n+new\n",
                 },
             }
-        )).decode()
+        )
+    ).decode()
     assert response is None
     assert notifications[0]["method"] == "turn/started"
     assert notifications[-1]["method"] == "approval/requested"

@@ -71,4 +71,3 @@ def test_invalid_report_format_raises_value_error() -> None:
     reporter = ComplianceReporter()
     with pytest.raises(ValueError, match="Unsupported compliance report format"):
         reporter.generate_report({"ok": True}, format="xml")
-

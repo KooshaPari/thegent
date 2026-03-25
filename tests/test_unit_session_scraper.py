@@ -152,8 +152,8 @@ def test_list_snapshots_filters_by_trigger_and_tag(monkeypatch, tmp_path: Path) 
 
     path_a = snapshots_dir / "snapshot-a.json"
     path_b = snapshots_dir / "snapshot-b.json"
-    path_a.write_text(json.dumps(payload_a).decode().decode(), encoding="utf-8")
-    path_b.write_text(json.dumps(payload_b).decode().decode(), encoding="utf-8")
+    path_a.write_text(json.dumps(payload_a).decode(), encoding="utf-8")
+    path_b.write_text(json.dumps(payload_b).decode(), encoding="utf-8")
 
     tool_use = scraper.list_snapshots(trigger="tool_use", root_dir=snapshots_dir)
     assert len(tool_use) == 1
@@ -183,7 +183,7 @@ def test_latest_snapshot_and_markdown_export(tmp_path: Path) -> None:
         "sources": ["tmux:%1"],
     }
     json_path = snapshots_dir / "snapshot-z.json"
-    json_path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
+    json_path.write_text(json.dumps(payload).decode(), encoding="utf-8")
 
     loaded = scraper.latest_snapshot(root_dir=snapshots_dir)
     assert loaded is not None
@@ -228,8 +228,8 @@ def test_summarize_snapshots_and_index_exports(tmp_path: Path) -> None:
         "tags": ["wl156"],
         "sources": [],
     }
-    (snapshots_dir / "snapshot-1.json").write_text(json.dumps(payload_a).decode().decode(), encoding="utf-8")
-    (snapshots_dir / "snapshot-2.json").write_text(json.dumps(payload_b).decode().decode(), encoding="utf-8")
+    (snapshots_dir / "snapshot-1.json").write_text(json.dumps(payload_a).decode(), encoding="utf-8")
+    (snapshots_dir / "snapshot-2.json").write_text(json.dumps(payload_b).decode(), encoding="utf-8")
 
     summary = scraper.summarize_snapshots(root_dir=snapshots_dir)
     assert summary["total_snapshots"] == 2
@@ -353,4 +353,6 @@ def test_trigger_normalization_applied_to_persisted_snapshot(monkeypatch, tmp_pa
         snapshot = scraper.load_snapshot(path)
         assert snapshot is not None
         assert snapshot.trigger == trigger, f"Expected {trigger}, got {snapshot.trigger}"
+
+
 # noqa: PT018

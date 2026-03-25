@@ -114,6 +114,18 @@ The Rust governance library (`crates/thegent-hooks/`) has PolicyEngine, QualityE
 
 ## HIGH / P1 — Core Features Users Need Daily
 
+### [WL-008] AgilePlus Dark-Mode Header Color Regression
+**Status:** COMPLETED (2026-03-18)
+**Priority:** P1 (high)
+**Area:** docs-ui
+**Effort:** S (1-3h)
+**Blocked by:** none
+**Source:** user-reported UI regression, 2026-03-14
+
+Fix the AgilePlus VitePress header/nav color styling in dark mode. The current header uses the wrong color treatment in dark theme, making the top navigation look visually incorrect. Scope includes the top nav/header surface shown in the shared DOM snippet: title, menu links, search shell, appearance controls, and surrounding header background/border tokens. Verify both desktop and mobile dark mode after the fix.
+
+---
+
 ### [WL-010] Multi-Project Tenancy: `thegent sys setup project` and `thegent install project`
 **Status:** COMPLETED
 **Priority:** P1 (high)
@@ -6179,7 +6191,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 |-------|------------------|
 | worker | thegent run codex/claude |
 | orchestrator-core | Lead in agent team |
-| openspec-orchestrator | Specialized workflow |
+| agileplus-orchestrator | Specialized workflow |
 | Feature | Augment | Description | thegent Parity |
 |---------|---------|-------------|----------------|
 | **auggie CLI** | `auggie` | Terminal agent | thegent run -M augment |
@@ -9311,7 +9323,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **thegent** | Cross-platform, governance, FastMCP | Active | ✅ |
 | **heliosShield** | LLM gates, chaos engineering | Active | ✅ |
 | **smolgents** | Cost optimization, routing | Complete | ✅ |
-| **trace** | MCP integration, BMM/OpenSpec | Planning | ✅ |
+| **trace** | MCP integration, BMM/AgilePlus | Planning | ✅ |
 | **dphi** | MCP composition, workflow integration | Active | ✅ |
 | Feature | Source | Target Projects | Impact |
 |---------|--------|-----------------|--------|

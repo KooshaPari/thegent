@@ -46,9 +46,7 @@ class DualShellStrategy:
                 )
             else:
                 # POSIX shell execution (bash/zsh)
-                result = shim_run(
-                    ["/bin/sh", "-c", command], capture_output=capture_output, text=True, check=False
-                )
+                result = shim_run(["/bin/sh", "-c", command], capture_output=capture_output, text=True, check=False)
 
             return {
                 "shell": self.shell,

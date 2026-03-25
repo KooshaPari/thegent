@@ -11,7 +11,7 @@ import asyncio
 import contextlib
 import importlib
 import inspect
-import orjson as json
+import json
 import logging
 import os
 import platform
@@ -106,8 +106,8 @@ fn main():
 
 def build_python_dispatch_kernel_script(module: str, function: str) -> str:
     """Build a Mojo script that dispatches to a Python module/function target."""
-    module_json = json.dumps(module).decode()
-    function_json = json.dumps(function).decode()
+    module_json = json.dumps(module)
+    function_json = json.dumps(function)
     return f"""
 from python import Python
 
@@ -232,7 +232,7 @@ class MojoBridge:
                 )
                 # If modular is set up, mojo should be available
                 return True
-            except (subprocess.TimeoutExpired, FileNotFoundError):
+            except subprocess.TimeoutExpired, FileNotFoundError:
                 pass
 
         # Check common installation paths on macOS
@@ -280,7 +280,7 @@ class MojoBridge:
             stdout, _stderr = await asyncio.wait_for(process.communicate(), timeout=10.0)
             if process.returncode == 0:
                 return stdout.decode().strip()
-        except (TimeoutError, FileNotFoundError, subprocess.SubprocessError):
+        except TimeoutError, FileNotFoundError, subprocess.SubprocessError:
             pass
 
         return None
@@ -320,7 +320,7 @@ class MojoBridge:
 
             # Pass args as JSON environment variable
             env = os.environ.copy()
-            env["THEGENT_MOJO_ARGS"] = json.dumps(args).decode()
+            env["THEGENT_MOJO_ARGS"] = json.dumps(args)
 
             process = await asyncio.create_subprocess_exec(
                 cmd,
@@ -454,7 +454,7 @@ Visit https://docs.modular.com/mojo/manual/install/ for platform-specific instru
         # Future: use C-ABI when stable
 
         # Check cache first
-        cache_key = f"mojo_task:{task.module}:{task.function}:{json.dumps(task.args, sort_keys=True).decode()}"
+        cache_key = f"mojo_task:{task.module}:{task.function}:{json.dumps(task.args, sort_keys=True)}"
         cached = await self._cache.get(cache_key)
         if cached:
             return cached

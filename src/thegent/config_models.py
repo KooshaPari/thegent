@@ -14,7 +14,7 @@ from pydantic_settings import BaseSettings
 
 class PathSettings(BaseSettings):
     """Path and directory configuration."""
-    
+
     factory_skills_dir: Path = Field(
         default=Path("~/.thegent/skills").expanduser(),
         description="Directory for factory skills",
@@ -63,7 +63,7 @@ class PathSettings(BaseSettings):
 
 class ModelDefaultsSettings(BaseSettings):
     """Default model configuration."""
-    
+
     cursor_agent_cmd: str = Field(
         default="cursor-agent",
         description="Cursor agent command",
@@ -104,7 +104,7 @@ class ModelDefaultsSettings(BaseSettings):
 
 class TimeoutSettings(BaseSettings):
     """Timeout configuration."""
-    
+
     default_timeout: int = Field(
         default=300,
         description="Default timeout in seconds",
@@ -129,7 +129,7 @@ class TimeoutSettings(BaseSettings):
 
 class SessionSettings(BaseSettings):
     """Session and backend configuration."""
-    
+
     session_backend: Literal["auto", "zmx", "tmux", "none"] = Field(
         default="auto",
         description="Session backend to use",
@@ -150,7 +150,7 @@ class SessionSettings(BaseSettings):
 
 class RetentionSettings(BaseSettings):
     """Retention policy configuration."""
-    
+
     models_cache_ttl_sec: int = Field(
         default=86400,
         description="Models cache TTL in seconds",
@@ -191,7 +191,7 @@ class RetentionSettings(BaseSettings):
 
 class BudgetSettings(BaseSettings):
     """Budget and cost tracking configuration."""
-    
+
     budget_hourly_limit: float = Field(
         default=10.0,
         description="Hourly budget limit in USD",
@@ -228,7 +228,7 @@ class BudgetSettings(BaseSettings):
 
 class RoutingSettings(BaseSettings):
     """Routing configuration."""
-    
+
     default_routing: str = Field(
         default="pareto",
         description="Default routing strategy",
@@ -281,7 +281,7 @@ class RoutingSettings(BaseSettings):
 
 class GovernanceSettings(BaseSettings):
     """Governance and normalization configuration."""
-    
+
     normalization_policy_allow_fallback: bool = Field(
         default=True,
         description="Allow fallback in normalization",
@@ -310,7 +310,7 @@ class GovernanceSettings(BaseSettings):
 
 class OwnerSettings(BaseSettings):
     """Owner and scope configuration."""
-    
+
     owner_tag: str | None = Field(
         default=None,
         description="Owner tag for resources",
@@ -323,7 +323,7 @@ class OwnerSettings(BaseSettings):
 
 class OutputSettings(BaseSettings):
     """Output configuration."""
-    
+
     output_format: str | None = Field(
         default=None,
         description="Output format",
@@ -340,7 +340,7 @@ class OutputSettings(BaseSettings):
 
 class MCPSettings(BaseSettings):
     """MCP and control plane configuration."""
-    
+
     mcp_host: str = Field(
         default="127.0.0.1",
         description="MCP server host",
@@ -361,7 +361,7 @@ class MCPSettings(BaseSettings):
 
 class SecuritySettings(BaseSettings):
     """Security configuration."""
-    
+
     terminal_management_enabled: bool = Field(
         default=True,
         description="Enable terminal management",
@@ -382,7 +382,7 @@ class SecuritySettings(BaseSettings):
 
 class BinarySettings(BaseSettings):
     """Binary paths configuration."""
-    
+
     mergiraf_binary: str | None = Field(
         default=None,
         description="Path to mergiraf binary",

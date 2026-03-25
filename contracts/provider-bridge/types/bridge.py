@@ -200,4 +200,3 @@ class EventEnvelope:
     ts: datetime
     route_id: str | None = None
     tool_call_id: str | None = None
-

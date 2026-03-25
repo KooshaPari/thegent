@@ -9,7 +9,7 @@ LLMPlangentPlanner -> PlangentExecutor -> SubAgentDispatcher pipeline.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 
 import typer
 from rich.console import Console

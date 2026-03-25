@@ -158,19 +158,21 @@ fn get_rule(etc_dir: &Path, cmd: &str, subcmd: &str) -> (String, String) {
 }
 
 fn parse_opts(opts_str: &str) -> RuleOpts {
-    let mut opts = RuleOpts::default();
-    opts.ttl = 10;
-    opts.error_ttl = 10;
-    opts.max_concurrent = 1;
-    opts.priority = "normal".to_string();
-    opts.cache_key = "time".to_string();
-    opts.breaker_threshold = 0;
-    opts.breaker_window = 60;
-    opts.breaker_cooldown = 30;
-    opts.retry_max = 3;
-    opts.retry_backoff_ms = 100;
-    opts.retry_jitter = 0.1;
-    opts.jobserver_borrow = true;
+    let mut opts = RuleOpts {
+        ttl: 10,
+        error_ttl: 10,
+        max_concurrent: 1,
+        priority: "normal".to_string(),
+        cache_key: "time".to_string(),
+        breaker_threshold: 0,
+        breaker_window: 60,
+        breaker_cooldown: 30,
+        retry_max: 3,
+        retry_backoff_ms: 100,
+        retry_jitter: 0.1,
+        jobserver_borrow: true,
+        ..RuleOpts::default()
+    };
 
     for part in opts_str.split_whitespace() {
         if let Some((k, v)) = part.split_once('=') {
@@ -375,17 +377,17 @@ fn main() {
 
     let agent_name = get_agent_name(&harness_home.join("var"));
 
-    match strategies::execute(
-        &strategy,
-        &harness_home,
-        &real,
-        &invoked,
-        &subcmd,
-        &cache_key,
-        &opts,
-        &args,
-        &agent_name,
-    ) {
+    match strategies::execute(strategies::ExecRequest {
+        strategy: &strategy,
+        harness_home: &harness_home,
+        real_cmd: &real,
+        cmd_name: &invoked,
+        subcmd: &subcmd,
+        cache_key: &cache_key,
+        opts: &opts,
+        args: &args,
+        agent_name: &agent_name,
+    }) {
         Ok(code) => std::process::exit(code),
         Err(_) => exec_bash_harness(&harness_home, &invoked, &args),
     }

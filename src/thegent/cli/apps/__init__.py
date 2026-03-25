@@ -1,4 +1,5 @@
 """CLI apps - modular command registrations."""
+
 from thegent.cli.apps import (
     audit,
     bench,
@@ -20,6 +21,7 @@ from thegent.cli.apps import (
     routing,
     rules,
     run,
+    phench,
     session,
     skills,
     sync,
@@ -44,6 +46,7 @@ __all__ = [
     "plan",
     "project",
     "queue",
+    "phench",
     "registry",
     "review",
     "routing",

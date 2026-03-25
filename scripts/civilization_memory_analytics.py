@@ -8,10 +8,23 @@ import time
 
 
 class MemoryAnalytics:
-    STOP_WORDS = {
-        "the", "and", "for", "this", "that", "with", "from",
-        "have", "been", "will", "are", "was", "not", "but",
-        "can", "has",
+    STOP_WORDS = {  # noqa: RUF012
+        "the",
+        "and",
+        "for",
+        "this",
+        "that",
+        "with",
+        "from",
+        "have",
+        "been",
+        "will",
+        "are",
+        "was",
+        "not",
+        "but",
+        "can",
+        "has",
     }
 
     def _extract_keywords(self, content: dict) -> list:
@@ -19,10 +32,7 @@ class MemoryAnalytics:
         filter len>3 and not in STOP_WORDS, lowercase."""
         words = []
         self._flatten_strings(content, words)
-        return [
-            w for w in words
-            if len(w) > 3 and w not in self.STOP_WORDS
-        ]
+        return [w for w in words if len(w) > 3 and w not in self.STOP_WORDS]
 
     def _flatten_strings(self, obj, acc: list):
         """Recursively extract lowercase words from nested dicts/lists/strings."""
@@ -39,22 +49,14 @@ class MemoryAnalytics:
         """Count memories whose memory_type contains 'learning' in the last N days.
         Return count / days."""
         cutoff = time.time() - (days * 86400)
-        count = sum(
-            1 for m in memories
-            if "learning" in m.get("memory_type", "")
-            and m.get("timestamp", 0) >= cutoff
-        )
+        count = sum(1 for m in memories if "learning" in m.get("memory_type", "") and m.get("timestamp", 0) >= cutoff)
         return count / days
 
     def calculate_error_density(self, memories: list, days: int = 7) -> float:
         """Count memories whose memory_type contains 'error' in the last N days.
         Return count / days."""
         cutoff = time.time() - (days * 86400)
-        count = sum(
-            1 for m in memories
-            if "error" in m.get("memory_type", "")
-            and m.get("timestamp", 0) >= cutoff
-        )
+        count = sum(1 for m in memories if "error" in m.get("memory_type", "") and m.get("timestamp", 0) >= cutoff)
         return count / days
 
     def get_keyword_trends(self, memories: list, top_n: int = 10) -> list:

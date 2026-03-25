@@ -236,6 +236,7 @@ def cmd_install(args: argparse.Namespace) -> int:
     do_backup = args.backup and not args.no_backup
     if do_backup:
         from datetime import datetime
+
         backup_dir = Path.home() / ".thegent" / "backups" / datetime.now().strftime("%Y%m%d_%H%M%S")
         if not args.dry_run:
             backup_dir.mkdir(parents=True, exist_ok=True)
@@ -275,11 +276,9 @@ def cmd_verify(args: argparse.Namespace) -> int:
     else:
         targets = detect_installed_targets(manifest)
 
-
     all_ok = True
     for target in targets:
         result = verify_target(target, manifest)
-        status_icon = "✓" if result["status"] == "ok" else "✗"
         if args.verbose:
             for _detail in result["details"]:
                 pass
@@ -298,7 +297,6 @@ def cmd_status(args: argparse.Namespace) -> int:
     for _target in sorted(installed):
         pass
 
-    all_targets = []
     for category in ["harnesses", "shells", "tools"]:
         for name in manifest.get("targets", {}).get(category, {}):
             full_target = f"{category}.{name}"
@@ -321,8 +319,12 @@ def main() -> int:
     install_parser.add_argument("--target", type=str, help="Install a specific target (e.g., shells.zsh)")
     install_parser.add_argument("--auto", action="store_true", help="Auto-detect and install")
     install_parser.add_argument("--dry-run", action="store_true", help="Show what would be installed")
-    install_parser.add_argument("--symlink", action="store_true", help="Use symlinks instead of copying (more Nix-like)")
-    install_parser.add_argument("--backup", action="store_true", default=True, help="Backup existing configs before installing (default: True)")
+    install_parser.add_argument(
+        "--symlink", action="store_true", help="Use symlinks instead of copying (more Nix-like)"
+    )
+    install_parser.add_argument(
+        "--backup", action="store_true", default=True, help="Backup existing configs before installing (default: True)"
+    )
     install_parser.add_argument("--no-backup", action="store_true", help="Skip backing up existing configs")
     install_parser.add_argument("-v", "--verbose", action="store_true")
     install_parser.set_defaults(func=cmd_install)

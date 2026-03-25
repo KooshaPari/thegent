@@ -60,15 +60,20 @@ try:
         """
         return loads(fp.read())
 
-    JSON = type("JSONModule", (), {
-        "dumps": staticmethod(dumps),
-        "loads": staticmethod(loads),
-        "dump": staticmethod(dump),
-        "load": staticmethod(load),
-    })()
+    JSON = type(
+        "JSONModule",
+        (),
+        {
+            "dumps": staticmethod(dumps),
+            "loads": staticmethod(loads),
+            "dump": staticmethod(dump),
+            "load": staticmethod(load),
+        },
+    )()
 
 except ImportError:
     import json
+
     JSON = json
     dumps = json.dumps
     loads = json.loads

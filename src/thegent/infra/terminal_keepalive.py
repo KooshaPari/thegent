@@ -18,6 +18,8 @@ import sys
 import threading
 import time
 
+from thegent.infra.shim_subprocess import run as shim_run
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -87,7 +89,7 @@ def _get_parent_terminal_info() -> dict[str, Any] | None:
         try:
             name = parent.name().lower()
             info["name"] = name
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+        except psutil.AccessDenied, psutil.NoSuchProcess:
             name = None
 
         # Check if it's Cursor or similar IDE terminal
@@ -104,7 +106,7 @@ def _get_parent_terminal_info() -> dict[str, Any] | None:
                     if hasattr(conn, "laddr") and conn.laddr:
                         info["tty"] = str(conn.laddr)
                         break
-        except (psutil.AccessDenied, AttributeError, psutil.NoSuchProcess):
+        except psutil.AccessDenied, AttributeError, psutil.NoSuchProcess:
             pass
 
         # Method 4: Check process tree for IDE processes
@@ -124,7 +126,7 @@ def _get_parent_terminal_info() -> dict[str, Any] | None:
                         current = current.parent()
                         if not current or current.pid == 1:
                             break
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    except psutil.NoSuchProcess, psutil.AccessDenied:
                         break
             except Exception as e:
                 logger.debug(f"Error traversing process tree: {e}")

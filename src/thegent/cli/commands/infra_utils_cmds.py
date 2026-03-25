@@ -33,7 +33,7 @@ def config_check_cmd(format: str | None = None) -> None:
             loc = ".".join(str(x) for x in err.get("loc", []))
             issues.append(f"Config error: {loc} — {err.get('msg', 'invalid')}")
         if format == "json":
-            sys.stdout.write(json.dumps({"ok": False, "issues": issues}).decode() + "\n")
+            sys.stdout.write(json.dumps({"ok": False, "issues": issues}) + "\n")
             raise typer.Exit(1)
         for i in issues:
             console.print(f"[red]{i}[/red]")
@@ -47,14 +47,14 @@ def config_check_cmd(format: str | None = None) -> None:
 
     if issues:
         if format == "json":
-            sys.stdout.write(json.dumps({"ok": False, "issues": issues}).decode() + "\n")
+            sys.stdout.write(json.dumps({"ok": False, "issues": issues}) + "\n")
             raise typer.Exit(1)
         for i in issues:
             console.print(f"[yellow]{i}[/yellow]")
         raise typer.Exit(1)
 
     if format == "json":
-        sys.stdout.write(json.dumps({"ok": True, "issues": []}).decode() + "\n")
+        sys.stdout.write(json.dumps({"ok": True, "issues": []}) + "\n")
         return
     console.print("[green]Config OK.[/green]")
 
@@ -76,7 +76,7 @@ def interruption_list_cmd(limit: int = 20, format: str | None = None) -> None:
     items = load_recent_interruptions(it.path, limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(items).decode() + "\n")
+        sys.stdout.write(json.dumps(items) + "\n")
         return
     if not items:
         console.print("[dim]No interruptions in window.[/dim]")

@@ -126,7 +126,13 @@ def test_wl9747_execute_path_cancels_requested_approval() -> None:
     # @trace WL-9747
     _reset_state()
     session_id = _seed_session()
-    turn = {"id": "turn-0001", "session_id": session_id, "status": "in_progress", "input": "x", "approval_id": "approval-1"}
+    turn = {
+        "id": "turn-0001",
+        "session_id": session_id,
+        "status": "in_progress",
+        "input": "x",
+        "approval_id": "approval-1",
+    }
     SERVER_STATE.approvals["approval-1"] = {
         "id": "approval-1",
         "turn_id": "turn-0001",
@@ -142,7 +148,13 @@ def test_wl9748_execute_path_preserves_non_requested_approval_status() -> None:
     # @trace WL-9748
     _reset_state()
     session_id = _seed_session()
-    turn = {"id": "turn-0001", "session_id": session_id, "status": "in_progress", "input": "x", "approval_id": "approval-1"}
+    turn = {
+        "id": "turn-0001",
+        "session_id": session_id,
+        "status": "in_progress",
+        "input": "x",
+        "approval_id": "approval-1",
+    }
     SERVER_STATE.approvals["approval-1"] = {
         "id": "approval-1",
         "turn_id": "turn-0001",
@@ -158,7 +170,7 @@ def test_wl9749_notification_turn_cancel_has_side_effect_without_response() -> N
     # @trace WL-9749
     _reset_state()
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode()
     )
     assert response is not None
     session_id = response["result"]["session"]["id"]
@@ -171,12 +183,13 @@ def test_wl9749_notification_turn_cancel_has_side_effect_without_response() -> N
                 "method": "turn/submit",
                 "params": {"session_id": session_id, "input": "lane-o", "requires_approval": True, "unified_diff": "x"},
             }
-        )).decode()
+        )
+    ).decode()
     assert submit is not None
     turn_id = submit["result"]["turn"]["id"]
 
     cancel_response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "turn/cancel", "params": {"turn_id": turn_id}}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "method": "turn/cancel", "params": {"turn_id": turn_id}}).decode()
     )
     assert cancel_response is None
     assert notifications == []

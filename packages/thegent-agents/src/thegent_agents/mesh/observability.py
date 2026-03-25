@@ -133,6 +133,7 @@ class MetricsAggregator:
 def mesh_status_cmd(mesh_root: Path) -> None:
     """CLI 'mesh status' (SCLI-P13.3)."""
     import yaml
+
     console = Console(width=1000, soft_wrap=False)
     agents = list((mesh_root / "agents").glob("*.yaml"))
     if not agents:

@@ -66,7 +66,7 @@ class TestSQLiteMemoryStorage(unittest.TestCase):
         )
 
         result = self.storage.store(memory)
-        self.assertTrue(result)
+        assert result
 
     def test_query_memory(self):
         """Test querying memories from SQLite."""
@@ -83,11 +83,11 @@ class TestSQLiteMemoryStorage(unittest.TestCase):
 
         # Query all
         results = self.storage.query("agent-1")
-        self.assertEqual(len(results), 5)
+        assert len(results) == 5
 
         # Query with limit
         results = self.storage.query("agent-1", limit=2)
-        self.assertEqual(len(results), 2)
+        assert len(results) == 2
 
     def test_search_memories(self):
         """Test full-text search in SQLite."""
@@ -104,7 +104,7 @@ class TestSQLiteMemoryStorage(unittest.TestCase):
 
         # Search for keyword
         results = self.storage.search("agent-1", "database")
-        self.assertGreater(len(results), 0)
+        assert len(results) > 0
 
     def test_get_stats(self):
         """Test statistics calculation from SQLite."""
@@ -123,10 +123,10 @@ class TestSQLiteMemoryStorage(unittest.TestCase):
 
         stats = self.storage.get_stats("agent-1")
 
-        self.assertEqual(stats["total_memories"], 5)
-        self.assertEqual(stats["error_count"], 1)
-        self.assertEqual(stats["learning_count"], 1)
-        self.assertGreater(stats["average_importance"], 0.5)
+        assert stats["total_memories"] == 5
+        assert stats["error_count"] == 1
+        assert stats["learning_count"] == 1
+        assert stats["average_importance"] > 0.5
 
     def test_purge_old_memories(self):
         """Test deleting old memories from SQLite."""
@@ -155,12 +155,12 @@ class TestSQLiteMemoryStorage(unittest.TestCase):
         # Purge memories older than 30 days
         deleted = self.storage.purge_old("agent-1", ttl_seconds=86400 * 30)
 
-        self.assertEqual(deleted, 1)
+        assert deleted == 1
 
         # Verify old memory is gone
         results = self.storage.query("agent-1")
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].memory_id, "recent")
+        assert len(results) == 1
+        assert results[0].memory_id == "recent"
 
     def test_clear_agent_memories(self):
         """Test clearing all memories for an agent in SQLite."""
@@ -177,11 +177,11 @@ class TestSQLiteMemoryStorage(unittest.TestCase):
 
         # Clear
         result = self.storage.clear("agent-1")
-        self.assertTrue(result)
+        assert result
 
         # Verify empty
         results = self.storage.query("agent-1")
-        self.assertEqual(len(results), 0)
+        assert len(results) == 0
 
 
 class TestJSONLMemoryStorage(unittest.TestCase):
@@ -205,11 +205,11 @@ class TestJSONLMemoryStorage(unittest.TestCase):
         )
 
         result = self.storage.store(memory)
-        self.assertTrue(result)
+        assert result
 
         # Verify file created
         memory_file = self.base_path / "agent-1" / "memory.jsonl"
-        self.assertTrue(memory_file.exists())
+        assert memory_file.exists()
 
     def test_query_memory_jsonl(self):
         """Test querying memories from JSONL."""
@@ -226,7 +226,7 @@ class TestJSONLMemoryStorage(unittest.TestCase):
 
         # Query
         results = self.storage.query("agent-1")
-        self.assertEqual(len(results), 3)
+        assert len(results) == 3
 
     def test_search_memories_jsonl(self):
         """Test content search in JSONL."""
@@ -241,7 +241,7 @@ class TestJSONLMemoryStorage(unittest.TestCase):
 
         # Search
         results = self.storage.search("agent-1", "caching")
-        self.assertEqual(len(results), 1)
+        assert len(results) == 1
 
     def test_get_stats_jsonl(self):
         """Test statistics from JSONL."""
@@ -257,8 +257,8 @@ class TestJSONLMemoryStorage(unittest.TestCase):
 
         stats = self.storage.get_stats("agent-1")
 
-        self.assertEqual(stats["total_memories"], 3)
-        self.assertEqual(stats["memory_types"]["execution"], 3)
+        assert stats["total_memories"] == 3
+        assert stats["memory_types"]["execution"] == 3
 
     def test_clear_jsonl(self):
         """Test clearing memories in JSONL."""
@@ -273,11 +273,11 @@ class TestJSONLMemoryStorage(unittest.TestCase):
 
         # Clear
         result = self.storage.clear("agent-1")
-        self.assertTrue(result)
+        assert result
 
         # Verify file deleted
         memory_file = self.base_path / "agent-1" / "memory.jsonl"
-        self.assertFalse(memory_file.exists())
+        assert not memory_file.exists()
 
 
 class TestStorageAbstraction(unittest.TestCase):
@@ -286,9 +286,7 @@ class TestStorageAbstraction(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.temp_dir = tempfile.mkdtemp()
-        self.sqlite_storage = SQLiteMemoryStorage(
-            Path(self.temp_dir) / "sqlite.db"
-        )
+        self.sqlite_storage = SQLiteMemoryStorage(Path(self.temp_dir) / "sqlite.db")
         self.jsonl_storage = JSONLMemoryStorage(Path(self.temp_dir) / "jsonl")
         self.now = time.time()
 
@@ -305,8 +303,8 @@ class TestStorageAbstraction(unittest.TestCase):
         sqlite_result = self.sqlite_storage.store(memory)
         jsonl_result = self.jsonl_storage.store(memory)
 
-        self.assertTrue(sqlite_result)
-        self.assertTrue(jsonl_result)
+        assert sqlite_result
+        assert jsonl_result
 
     def test_both_backends_query(self):
         """Test both backends can query memories."""
@@ -326,8 +324,8 @@ class TestStorageAbstraction(unittest.TestCase):
         sqlite_results = self.sqlite_storage.query("agent-1")
         jsonl_results = self.jsonl_storage.query("agent-1")
 
-        self.assertEqual(len(sqlite_results), 3)
-        self.assertEqual(len(jsonl_results), 3)
+        assert len(sqlite_results) == 3
+        assert len(jsonl_results) == 3
 
     def test_both_backends_search(self):
         """Test both backends can search."""
@@ -345,8 +343,8 @@ class TestStorageAbstraction(unittest.TestCase):
         sqlite_results = self.sqlite_storage.search("agent-1", "optimization")
         jsonl_results = self.jsonl_storage.search("agent-1", "optimization")
 
-        self.assertGreater(len(sqlite_results), 0)
-        self.assertGreater(len(jsonl_results), 0)
+        assert len(sqlite_results) > 0
+        assert len(jsonl_results) > 0
 
 
 class TestPerformance(unittest.TestCase):
@@ -355,9 +353,7 @@ class TestPerformance(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.temp_dir = tempfile.mkdtemp()
-        self.sqlite_storage = SQLiteMemoryStorage(
-            Path(self.temp_dir) / "perf_sqlite.db"
-        )
+        self.sqlite_storage = SQLiteMemoryStorage(Path(self.temp_dir) / "perf_sqlite.db")
         self.jsonl_storage = JSONLMemoryStorage(Path(self.temp_dir) / "perf_jsonl")
         self.now = time.time()
 
@@ -398,8 +394,8 @@ class TestPerformance(unittest.TestCase):
         # SQLite has higher write overhead: schema init grows with more tables (relationships added in 6.3).
         # Threshold is generous (5.0s) to accommodate concurrent agent load and schema growth.
         # The important metric is query speed — see test_sqlite_vs_jsonl_query_performance.
-        self.assertLess(sqlite_time, 5.0)
-        self.assertLess(jsonl_time, 1.0)
+        assert sqlite_time < 5.0
+        assert jsonl_time < 1.0
 
     def test_sqlite_vs_jsonl_query_performance(self):
         """Compare query performance between backends."""
@@ -432,8 +428,8 @@ class TestPerformance(unittest.TestCase):
 
         # SQLite should be noticeably faster for queries
         # (but JSONL acceptable for small datasets)
-        self.assertLess(sqlite_time, 0.5)
-        self.assertLess(jsonl_time, 1.0)
+        assert sqlite_time < 0.5
+        assert jsonl_time < 1.0
 
 
 if __name__ == "__main__":

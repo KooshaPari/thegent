@@ -35,7 +35,7 @@ def _write_snapshot(
         "tags": tags,
         "sources": [],
     }
-    path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
+    path.write_text(json.dumps(payload).decode(), encoding="utf-8")
     return path
 
 

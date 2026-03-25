@@ -6,17 +6,39 @@ L2: Diskcache (persistent, process-safe, SQLite-backed)
 
 from __future__ import annotations
 
+from importlib import import_module
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from cachetools import TTLCache
 
-try:
-    import diskcache
 
+class _DiskCacheProtocol:
+    """Minimal cache interface used by the L2 cache wrapper."""
+
+    def __init__(self, directory: str) -> None: ...
+    def get(self, key: str, default: Any = None) -> Any: ...
+    def set(self, key: str, value: Any, expire: float | None = None) -> bool: ...
+    def clear(self) -> int: ...
+    def close(self) -> None: ...
+    def __len__(self) -> int: ...
+
+
+class _DiskCacheModuleProtocol:
+    """Runtime import surface for the diskcache module."""
+
+    Cache: type[_DiskCacheProtocol]
+
+
+try:
+    _DISKCACHE_MODULE = cast(
+        "_DiskCacheModuleProtocol",
+        import_module("diskcache"),
+    )
     DISKCACHE_AVAILABLE = True
 except ImportError:
+    _DISKCACHE_MODULE = None
     DISKCACHE_AVAILABLE = False
 
 _log = logging.getLogger(__name__)
@@ -78,10 +100,10 @@ class L2Cache:
         self.hit_count = 0
         self.miss_count = 0
 
-        self._cache: diskcache.Cache | None = None
+        self._cache: _DiskCacheProtocol | None = None
         if DISKCACHE_AVAILABLE:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
-            self._cache = diskcache.Cache(str(self.cache_dir))
+            self._cache = _DISKCACHE_MODULE.Cache(str(self.cache_dir))
         else:
             _log.warning("diskcache not installed; L2 cache disabled.")
 

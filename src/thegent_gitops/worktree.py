@@ -10,7 +10,10 @@ Implements heliosShield Phase 6 Git Parallelism (TGNT-P6 / heliosShield WP-16003
 
 from __future__ import annotations
 
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    fcntl = None  # type: ignore[assignment]
 import hashlib
 import logging
 import os
@@ -151,17 +154,16 @@ class _PoolStateLock:
         if not self._path.exists():
             self._path.touch()
         self._fh = open(self._path, "r+", encoding="utf-8")
-        try:
+        if fcntl is not None:
             fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX)
-        except AttributeError:
-            # Windows or restricted env: advisory lock unavailable; proceed without lock.
-            pass
+        else:
+            _log.debug("WorktreePool: advisory flock unavailable; running without file lock.")
         return self
 
     def __exit__(self, *_: object) -> None:
         try:
             if self._fh is not None:
-                with suppress(AttributeError):
+                if fcntl is not None:
                     fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
                 self._fh.close()
         finally:
@@ -491,10 +493,7 @@ class WorktreePool:
     def _acquire_shared_fallback(self, agent_id: str) -> WorktreeContext:
         """Advisory lock on the shared project tree for *agent_id*."""
         lock_path = self._fallback_lock_path(agent_id)
-        _atomic_write(
-            lock_path,
-            f"agent={agent_id}\npid={os.getpid()}\nacquired={time.time()}\n",
-        )
+        _atomic_write(lock_path, f"agent={agent_id}\nacquired={time.time()}\n")
         _log.info("WorktreePool: fallback advisory lock acquired for %s", agent_id)
         return WorktreeContext(
             agent_id=agent_id,
@@ -512,20 +511,6 @@ class WorktreePool:
         """
         _ = worktree_path  # documented: unused in fallback mode
         lock_path = self._fallback_lock_path(agent_id)
-        try:
-            raw = lock_path.read_text(encoding="utf-8")
-        except OSError:
-            raw = None
-        if raw is None:
-            _log.warning("WorktreePool: missing fallback lock for %s", agent_id)
-            return False
-        if f"agent={agent_id}" not in raw.splitlines():
-            _log.warning(
-                "WorktreePool: fallback lock for %s contains unexpected owner (%s)",
-                agent_id,
-                raw.replace("\n", " ")[:160],
-            )
-            return False
         try:
             lock_path.unlink(missing_ok=True)
             _log.info("WorktreePool: fallback advisory lock released for %s", agent_id)

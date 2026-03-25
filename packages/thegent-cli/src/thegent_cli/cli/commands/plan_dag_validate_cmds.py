@@ -8,11 +8,9 @@ from pathlib import Path
 
 import typer
 
-from rich.table import Table
 
 from thegent_cli.cli.commands.plan_output_helpers import (
     render_dag_list,
-    render_dag_ready,
     render_dag_status,
     resolve_output_format,
 )
@@ -23,28 +21,20 @@ from thegent_cli.cli.commands._cli_shared import (
     _check_dag_cycles,
     _dag_path,
     _dag_update_task,
-    _default_owner_tag,
     _ensure_contract_version_header,
     _ensure_dag_file,
     _parse_dag_full,
     _parse_dag_session,
     _parse_depends_on,
-    _resolve_checkpoint_id,
     _resolve_cwd,
     _serialize_dag,
-    _session_status_for,
     _validate_agent,
     _validate_dag,
     _validate_task_id,
     console,
-    dag_ready_impl,
-    dag_recover_impl,
-    dag_run_impl,
-    dag_sync_impl,
 )
 
 _log = logging.getLogger(__name__)
-
 
 
 """DAG-related CLI commands for plan/workflow management.
@@ -52,6 +42,7 @@ _log = logging.getLogger(__name__)
 Commands for DAG validation, listing, updating, running, and synchronization.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def dag_validate_cmd(cd: Path | None = None) -> None:
     """Validate DAG session from .factory/dag-session.md. Exit 2 on validation errors."""
@@ -264,7 +255,6 @@ def dag_update_cmd(
             raise typer.Exit(2)
     content = _serialize_dag(doc)
     _atomic_write(dag_path, content)
-
 
 
 __all__ = [

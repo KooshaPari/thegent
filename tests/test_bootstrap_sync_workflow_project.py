@@ -127,4 +127,6 @@ def test_bootstrap_main_dry_run_executes_printing_commands(module: object) -> No
     assert summary["project_number"] == 0
     assert len(calls) >= 3
     assert calls and calls[0][0] == "gh"
+
+
 # noqa: PT018

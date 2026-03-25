@@ -51,6 +51,67 @@ test.describe('thegent docsite', () => {
     await expect(nav.locator('a', { hasText: 'GitHub' })).toBeVisible()
   })
 
+  test('dark mode header uses dark nav palette', async ({ page }) => {
+    await page.goto('/')
+    await page.evaluate(() => document.documentElement.classList.add('dark'))
+
+    const navBar = page.locator('.VPNavBar')
+    await expect(navBar).toBeVisible()
+
+    const navStyles = await navBar.evaluate((node) => {
+      const styles = getComputedStyle(node)
+      return {
+        backgroundColor: styles.backgroundColor,
+        borderBottomColor: styles.borderBottomColor,
+        color: styles.color,
+      }
+    })
+
+    expect(navStyles.backgroundColor).not.toBe('rgb(255, 255, 255)')
+    expect(navStyles.borderBottomColor).not.toBe('rgb(255, 255, 255)')
+    expect(navStyles.color).not.toBe('rgba(0, 0, 0, 0)')
+
+    const title = navBar.locator('.title, .VPNavBarTitle')
+    if (await title.count() > 0) {
+      const titleColor = await title.first().evaluate((node) => {
+        return getComputedStyle(node as Element).color
+      })
+      expect(titleColor).not.toBe('rgba(0, 0, 0, 0)')
+    }
+
+    const searchButton = navBar.locator('.VPNavBarSearch button, .DocSearch')
+    await expect(searchButton.first()).toBeVisible()
+    const searchColor = await searchButton.first().evaluate((node) => {
+      return getComputedStyle(node as Element).color
+    })
+    expect(searchColor).not.toBe('rgb(255, 255, 255)')
+  })
+
+  test('dark mode header remains valid on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.evaluate(() => document.documentElement.classList.add('dark'))
+
+    const navBar = page.locator('.VPNavBar')
+    await expect(navBar).toBeVisible()
+
+    const appearanceButton = navBar.locator('.VPNavBarAppearance button')
+    await expect(appearanceButton).toBeVisible()
+    const appearanceColor = await appearanceButton.evaluate((node) => {
+      return getComputedStyle(node as Element).color
+    })
+    expect(appearanceColor).not.toBe('rgb(255, 255, 255)')
+
+    const menuToggle = navBar.locator('.VPNavBarHamburger, .VPNavBarMenuIcon')
+    if (await menuToggle.count() > 0) {
+      await expect(menuToggle.first()).toBeVisible()
+      const menuColor = await menuToggle.first().evaluate((node) => {
+        return getComputedStyle(node as Element).color
+      })
+      expect(menuColor).not.toBe('rgb(255, 255, 255)')
+    }
+  })
+
   test('providers page renders examples', async ({ page }) => {
     await page.goto('/guide/providers')
     await expect(page.locator('h1', { hasText: 'Providers' })).toBeVisible()

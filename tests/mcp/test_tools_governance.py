@@ -81,4 +81,6 @@ def test_thegent_govern_vet_impl_wraps_service_result() -> None:
     assert result.structured_content == {"run_id": "run_123", "policy": "default", "verdict": "approved", "checks": []}
     assert _extract_json_content(result.content) == result.structured_content
     assert result.meta and result.meta["execution_time_ms"] >= 0
+
+
 # noqa: PT018

@@ -11,6 +11,7 @@ WL-012 Phase 3.2
 from __future__ import annotations
 
 import orjson as json
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -21,6 +22,26 @@ if TYPE_CHECKING:
     from thegent.utils.routing_impl.route_executor import RouterStatus
 
 app = typer.Typer(help="Pareto router management commands (Phase 3, WL-012).")
+
+
+def _router_audit_path(settings: "ThegentSettings") -> Path:
+    configured = os.getenv("THGENT_ROUTER_AUDIT_PATH", "").strip()
+    if configured:
+        return Path(configured).expanduser()
+    return Path(settings.session_dir) / "routing_audit.jsonl"
+
+
+def _router_dwell_time(settings: "ThegentSettings") -> int:
+    return settings.router_hysteresis_dwell
+
+
+def _router_max_dwell(settings: "ThegentSettings") -> int:
+    return settings.router_hysteresis_max_dwell
+
+
+def _router_override_threshold() -> float:
+    raw = os.getenv("THGENT_ROUTER_OVERRIDE_THRESHOLD", "").strip()
+    return float(raw) if raw else 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -59,10 +80,7 @@ def router_status(
 
     # Resolve audit log path.
     if audit_path is None:
-        if settings.router_audit_path:
-            resolved_audit = Path(settings.router_audit_path)
-        else:
-            resolved_audit = Path(settings.session_dir) / "routing_audit.jsonl"
+        resolved_audit = _router_audit_path(settings)
     else:
         resolved_audit = audit_path
 
@@ -102,21 +120,25 @@ def router_config(
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
+    dwell_time = _router_dwell_time(settings)
+    max_dwell = _router_max_dwell(settings)
+    override_threshold = _router_override_threshold()
+    resolved_audit_path = _router_audit_path(settings)
     cfg = {
         "router_band_width": settings.router_band_width,
-        "router_dwell_time": settings.router_dwell_time,
-        "router_max_dwell": settings.router_max_dwell,
-        "router_override_threshold": settings.router_override_threshold,
-        "router_audit_path": settings.router_audit_path or "<session_dir>/routing_audit.jsonl",
+        "router_dwell_time": dwell_time,
+        "router_max_dwell": max_dwell,
+        "router_override_threshold": override_threshold,
+        "router_audit_path": str(resolved_audit_path),
         "env_vars": {
             "THGENT_ROUTER_BAND_WIDTH": settings.router_band_width,
-            "THGENT_ROUTER_DWELL_TIME": settings.router_dwell_time,
-            "THGENT_ROUTER_MAX_DWELL": settings.router_max_dwell,
-            "THGENT_ROUTER_OVERRIDE_THRESHOLD": settings.router_override_threshold,
+            "THGENT_ROUTER_DWELL_TIME": dwell_time,
+            "THGENT_ROUTER_MAX_DWELL": max_dwell,
+            "THGENT_ROUTER_OVERRIDE_THRESHOLD": override_threshold,
         },
     }
     if output_json:
-        typer.echo(json.dumps(cfg, indent=2))
+        typer.echo(json.dumps(cfg, option=json.OPT_INDENT_2).decode())
     else:
         typer.echo("Pareto Router Configuration (Phase 3)")
         typer.echo("--------------------------------------")
@@ -150,10 +172,7 @@ def router_verify(
     settings = ThegentSettings()
 
     if audit_path is None:
-        if settings.router_audit_path:
-            resolved_audit = Path(settings.router_audit_path)
-        else:
-            resolved_audit = Path(settings.session_dir) / "routing_audit.jsonl"
+        resolved_audit = _router_audit_path(settings)
     else:
         resolved_audit = audit_path
 
@@ -173,7 +192,7 @@ def router_verify(
     for i, record in enumerate(records):
         # Recompute hash (ADR-015 pattern: sort_keys, exclude hash field).
         d = {k: v for k, v in record.items() if k != "hash"}
-        canonical = json.dumps(d, sort_keys=True, separators=(",", ":").decode())
+        canonical = json.dumps(d, option=json.OPT_SORT_KEYS).decode()
         expected_hash = hashlib.sha256(canonical.encode()).hexdigest()
 
         if record.get("hash") != expected_hash:
@@ -255,11 +274,14 @@ def _build_status_from_audit(
 
 def _echo_config(settings: "ThegentSettings") -> None:
     """Print hysteresis config summary."""
+    dwell_time = _router_dwell_time(settings)
+    max_dwell = _router_max_dwell(settings)
+    override_threshold = _router_override_threshold()
     typer.echo("Hysteresis Configuration:")
     typer.echo(f"  Band width:          {settings.router_band_width} (THGENT_ROUTER_BAND_WIDTH)")
-    typer.echo(f"  Dwell time:          {settings.router_dwell_time}s (THGENT_ROUTER_DWELL_TIME)")
-    typer.echo(f"  Max dwell:           {settings.router_max_dwell}s (THGENT_ROUTER_MAX_DWELL)")
-    typer.echo(f"  Override threshold:  {settings.router_override_threshold} (THGENT_ROUTER_OVERRIDE_THRESHOLD)")
+    typer.echo(f"  Dwell time:          {dwell_time}s (THGENT_ROUTER_DWELL_TIME)")
+    typer.echo(f"  Max dwell:           {max_dwell}s (THGENT_ROUTER_MAX_DWELL)")
+    typer.echo(f"  Override threshold:  {override_threshold} (THGENT_ROUTER_OVERRIDE_THRESHOLD)")
 
 
 def _echo_audit_table(records: list[dict]) -> None:
