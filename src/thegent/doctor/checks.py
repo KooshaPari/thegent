@@ -511,7 +511,7 @@ def _check_process_health_v2(
             )
             if num_fds > 100:  # > 100 FDs
                 high_fd_processes.append((info.pid, info.name, num_fds, info.cmdline[:80]))
-        except psutil.AccessDenied, AttributeError:
+        except (psutil.AccessDenied, AttributeError):
             pass
 
         # Check for orphaned processes (parent is init/systemd)
@@ -524,10 +524,10 @@ def _check_process_health_v2(
                     cmdline_lower = info.cmdline.lower()
                     if any(keyword in cmdline_lower for keyword in ["thegent", "claude", "codex", "droid", "cliproxy"]):
                         orphaned_processes.append((info.pid, info.name, runtime / 3600, info.cmdline[:80]))
-        except psutil.NoSuchProcess, psutil.AccessDenied:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
 
-    except psutil.NoSuchProcess, psutil.AccessDenied:
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
         pass
     return 0
 
@@ -799,7 +799,7 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
                     if runtime > 86400:  # > 24 hours
                         memory_mb = proc.memory_info().rss / 1024 / 1024
                         long_running.append((handle.pid, runtime / 3600, memory_mb))
-                except psutil.AccessDenied, psutil.NoSuchProcess:
+                except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
 
                 # Check resource usage
@@ -808,10 +808,10 @@ def _check_runtime_infrastructure() -> list[CheckResult]:
                     cpu_percent = proc.cpu_percent(interval=0.1)
                     if memory_mb > 1000 or cpu_percent > 50:
                         high_resource.append((handle.pid, memory_mb, cpu_percent))
-                except psutil.AccessDenied, psutil.NoSuchProcess:
+                except (psutil.AccessDenied, psutil.NoSuchProcess):
                     pass
 
-            except psutil.NoSuchProcess, psutil.AccessDenied:
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
                 dead_pids.append(handle.pid)
 
         # Build report

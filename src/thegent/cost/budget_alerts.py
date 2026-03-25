@@ -119,7 +119,7 @@ class BudgetAlertSystem:
                             ts = datetime.fromisoformat(ts_str)
                             if ts >= one_hour_ago:
                                 total += data.get("total_cost", 0.0)
-                    except ValueError, json.JSONDecodeError:
+                    except (ValueError, json.JSONDecodeError):
                         continue
         except Exception as exc:
             logger.debug("Error reading aggregate.jsonl: %s", exc)
@@ -151,7 +151,7 @@ class BudgetAlertSystem:
                             ts = datetime.fromisoformat(ts_str)
                             if ts >= today_start:
                                 total += data.get("total_cost", 0.0)
-                    except ValueError, json.JSONDecodeError:
+                    except (ValueError, json.JSONDecodeError):
                         continue
         except Exception as exc:
             logger.debug("Error reading aggregate.jsonl: %s", exc)

@@ -15,7 +15,7 @@ def parse_retention_by_domain(value: object) -> dict[str, int]:
             if isinstance(parsed, dict):
                 return {str(k): int(val) if isinstance(val, (int | float | str)) else 0 for k, val in parsed.items()}
             return {}
-        except json.JSONDecodeError, ValueError, TypeError:
+        except (json.JSONDecodeError, ValueError, TypeError):
             return {}
     if isinstance(value, dict):
         return {str(k): int(val) if isinstance(val, (int | float | str)) else 0 for k, val in value.items()}
