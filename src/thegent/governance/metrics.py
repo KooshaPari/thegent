@@ -8,7 +8,7 @@ See: docs/changes/research-economic-governance/design.md § 2.1
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 import time
 from collections import deque

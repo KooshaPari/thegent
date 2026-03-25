@@ -3,7 +3,7 @@
 # @trace WL-124
 from __future__ import annotations
 
-import orjson as json
+import json
 import sys
 
 import typer
@@ -109,7 +109,7 @@ def handoff_list_cmd(limit: int = 10, format: str | None = None) -> None:
     snapshots = hm.list_pending_snapshots(limit=limit)
     fmt = _normalize_output_format(format)
     if fmt == "json":
-        sys.stdout.write(json.dumps(snapshots).decode() + "\n")
+        sys.stdout.write(json.dumps(snapshots) + "\n")
         return
     if not snapshots:
         console.print("[dim]No pending handoffs.[/dim]")

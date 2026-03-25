@@ -192,6 +192,11 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+
       - name: Install Task runner
         uses: arduino/setup-task@v2
 
@@ -206,6 +211,10 @@ jobs:
       - name: Sanity check Python runtime
         run: |
           uv run python -V
+
+      - name: Assert canary refresh governance policy
+        run: |
+          task quality:governance:canary-refresh
 
       - name: Assert canonical max-lines CI path (WL-122)
         run: |
@@ -222,6 +231,9 @@ jobs:
       - name: Enforce worktree governance policy
         run: |
           ./scripts/governance_policy_check.sh
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
 
       - name: Run rust quality CI lane (fmt/clippy/test)
         run: |
@@ -478,7 +490,7 @@ jobs:
 
       - name: Verify psleak installation
         run: |
-          uv run python -c "import psleak; print('psleak available')" || echo "psleak check completed"
+          uv run python -c "import psleak; print('psleak available')"
 
       - name: Run psleak-based leak detection tests
         run: |
@@ -489,14 +501,14 @@ jobs:
 
       - name: Run tracemalloc-based memory leak tests
         run: |
-          uv run pytest tests/test_resource_leaks.py::TestMemoryLeaksTracemalloc -v --tb=short || echo "tracemalloc tests completed"
+          uv run pytest tests/test_resource_leaks.py::TestMemoryLeaksTracemalloc -v --tb=short
         env:
           PYTHONPATH: ${{ github.workspace }}
           CHECK_LEAKS: "1"
 
       - name: Run CPython-style reference leak tests
         run: |
-          uv run pytest tests/test_resource_leaks.py::TestReferenceLeaks -v --tb=short || echo "reference leak tests completed"
+          uv run pytest tests/test_resource_leaks.py::TestReferenceLeaks -v --tb=short
         env:
           PYTHONPATH: ${{ github.workspace }}
           CHECK_LEAKS: "1"
@@ -584,6 +596,10 @@ jobs:
 
       - name: Run integration tests
         run: |
-          uv run pytest tests/ -v -m "integration" || echo "No integration tests found"
+          if uv run pytest tests/ --collect-only -q -m "integration" | grep -q "collected 0 items"; then
+            echo "No integration tests found for marker 'integration'"
+            exit 0
+          fi
+          uv run pytest tests/ -v -m "integration"
         env:
           PYTHONPATH: ${{ github.workspace }}

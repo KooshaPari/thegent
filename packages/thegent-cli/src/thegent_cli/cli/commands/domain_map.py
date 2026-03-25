@@ -39,20 +39,21 @@ def domain_map_cmd(
     """Guide domain mapping setup (advisor mode) for Cloudflare Tunnel + DNS."""
     from rich.console import Console
     import typer
-    
+
     console = Console()
-    
+
     # Parse and validate domain
     mapping = parse_domain_mapping(domain)
     errors = validate_domain_mapping(mapping)
-    
+
     if errors:
         for error in errors:
             console.print(f"[red]Error: {error}[/red]")
         raise typer.Exit(1)
-    
+
     if format == "json":
         import json
+
         output = {
             "domain": mapping["domain"],
             "target": target,
@@ -64,12 +65,12 @@ def domain_map_cmd(
                 f"Install Cloudflare tunnel: cloudflared tunnel create {tunnel_name}",
                 "Configure DNS: Add CNAME record pointing to tunnel",
                 f"Update tunnel config to route {domain} -> {target}",
-                f"Start tunnel: cloudflared tunnel run {tunnel_name}"
-            ]
+                f"Start tunnel: cloudflared tunnel run {tunnel_name}",
+            ],
         }
         console.print(json.dumps(output))
         return
-        
+
     if mode == "advisor":
         console.print("[bold cyan]Domain Mapping Advisor[/bold cyan]")
         console.print(f"Domain: [green]{mapping['domain']}[/green]")
@@ -81,7 +82,7 @@ def domain_map_cmd(
         console.print("2. Configure DNS: Add CNAME record pointing to tunnel")
         console.print(f"3. Update tunnel config to route {domain} -> {target}")
         console.print(f"4. Start tunnel: cloudflared tunnel run {tunnel_name}")
-        
+
     elif mode == "apply":
         console.print("[yellow]Apply mode not yet implemented.[/yellow]")
         console.print("Run in advisor mode for setup instructions.")

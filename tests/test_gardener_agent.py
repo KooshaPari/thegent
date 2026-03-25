@@ -45,9 +45,9 @@ def tmp_memory_dir(tmp_path: Path) -> Path:
     mem_dir.mkdir(parents=True)
     log_file = mem_dir / "session_001.jsonl"
     log_file.write_text(
-        json.dumps({"type": "note", "content": "WL-060 COMPLETED"}).decode().decode()
+        json.dumps({"type": "note", "content": "WL-060 COMPLETED"}).decode()
         + "\n"
-        + json.dumps({"type": "rule", "content": "Use structlog"}).decode().decode()
+        + json.dumps({"type": "rule", "content": "Use structlog"}).decode()
         + "\n"
     )
     return mem_dir

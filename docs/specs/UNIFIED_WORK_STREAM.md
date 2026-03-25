@@ -14931,7 +14931,7 @@ performance
 **Projects:** kush, pheno-sdk, pheno-sdk
 **Priority:** medium
 
-### OpenSpec Integration
+### AgilePlus Integration
 
 **Projects:** kush, kush
 **Priority:** medium
@@ -14971,7 +14971,7 @@ performance
 **Projects:** kush, kush
 **Priority:** medium
 
-### openspec_init
+### agileplus_init
 
 **Projects:** kush, kush
 **Priority:** medium
@@ -17640,4 +17640,3 @@ performance
 
 - **spr26** (shared_domain, strength: 1.00)
 - **spr26** (shared_technology, strength: 0.20)
-

@@ -131,7 +131,7 @@ class TestEvidenceStore:
         lines = store_path.read_text().splitlines()
         first = json.loads(lines[0])
         first["actor"] = "TAMPERED"
-        lines[0] = json.dumps(first).decode().decode()
+        lines[0] = json.dumps(first).decode()
         store_path.write_text("\n".join(lines) + "\n")
 
         store2 = EvidenceStore(store_path)

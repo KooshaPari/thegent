@@ -3,26 +3,20 @@
 # @trace WL-124
 from __future__ import annotations
 
-import orjson as json
 from pathlib import Path
-from typing import Annotated, Literal, cast
+from typing import Literal, cast
 
 import typer
 from typer.models import OptionInfo
 
-from rich.panel import Panel
-from rich.table import Table
 
 from thegent_cli.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _format_context_usage_line,
     _format_grounding_sources_lines,
     _format_transcript_summary_line,
-    _get_run_subprocess_optimized,
     _inject_skill_instructions,
     _normalize_output_format,
-    _resolve_session_id,
     console,
 )
 
@@ -163,7 +157,6 @@ def run_cmd(
         raise typer.Exit(1)
 
     # WP-X2/X5/X6/X7: Unified execution via run_impl (FSM + Policy + Telemetry)
-    from thegent_core.config_provider import get_config_provider
 
     effective_prompt = _inject_skill_instructions(prompt, skills)
     res = run_impl(

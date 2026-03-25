@@ -9,7 +9,7 @@ import datetime
 import re
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_dump
 
 from docs_engine.db.indexer import DocIndexer
 from docs_engine.schema.base import DocFrontmatter, DocStatus, DocType
@@ -84,7 +84,10 @@ def _slugify(text: str) -> str:
 def _render_frontmatter(fm: DocFrontmatter) -> str:
     fm_dict = fm.model_dump(mode="json")
     fm_dict = {k: v for k, v in fm_dict.items() if v not in ("", [], None)}
-    return yaml.dump(fm_dict, default_flow_style=False, allow_unicode=True)
+    rendered = yaml_dump(fm_dict, default_flow_style=False, allow_unicode=True)
+    if rendered is None:
+        raise ValueError("yaml_dump returned None without a stream target")
+    return rendered
 
 
 def _render_body(fm: DocFrontmatter, title: str) -> str:

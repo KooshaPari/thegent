@@ -43,7 +43,8 @@ class ChunkHoundClient:
         return config
 
     @property
-    def is_enabled(self): return self._config.enabled
+    def is_enabled(self):
+        return self._config.enabled
 
     def index(self, path: str):
         if not self.is_enabled:
@@ -57,6 +58,8 @@ class ChunkHoundClient:
 
 
 _chunkhound = None
+
+
 def get_chunkhound():
     global _chunkhound
     if _chunkhound is None:

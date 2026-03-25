@@ -184,6 +184,7 @@ def _live_status(manager: MeshManager, root: Path) -> None:
         except Exception as e:
             # Agent info file unreadable or malformed — skip this entry in the dashboard.
             import logging
+
             logging.getLogger(__name__).debug(
                 "agent_info_read_failed pid=%s error_type=%s error=%s", pid, type(e).__name__, e
             )
@@ -233,7 +234,7 @@ def _load_mesh_manifest(table: Table, manifest: Path) -> None:
                 p = psutil.Process(int(pid))
                 if not p.is_running():
                     status = "[red]exited[/red]"
-            except (psutil.NoSuchProcess, ValueError):
+            except psutil.NoSuchProcess, ValueError:
                 status = "[red]not found[/red]"
 
             table.add_row(str(pid), agent_type, status, workdir)

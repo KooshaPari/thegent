@@ -9,8 +9,31 @@ from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 
+from . import checks as doctor_checks
+from . import fixes as doctor_fixes
+from .checks import (
+    _check_configuration,
+    _check_connectivity,
+    _check_dependencies,
+    _check_environment,
+    _check_headless,
+    _check_isolation,
+    _check_mcp_tools,
+    _check_ollama,
+    _check_performance,
+    _check_process_leaks,
+    _check_project_hints,
+    _check_providers,
+    _check_runtime_infrastructure,
+    _check_sessions,
+    _check_shim_binaries,
+)
+from .fixes import _apply_fixes, _display_fix_report
+from .helpers import _display_results
 from thegent.doctor_models import CheckResult
 from thegent.doctor_project_root import detect_project_root
+from thegent.doctor_shell_nix import check_nix as _check_nix_impl
+from thegent.doctor_shell_nix import check_shell as _check_shell_impl
 
 import psutil
 
@@ -62,6 +85,8 @@ def run_doctor(
     # Store project_root for use in other functions
     global _project_root_cache
     _project_root_cache = project_root
+    doctor_checks._project_root_cache = project_root
+    doctor_fixes._project_root_cache = project_root
 
     results: list[CheckResult] = []
 
@@ -171,3 +196,9 @@ def run_doctor(
     return success
 
 
+def _check_shell() -> list[CheckResult]:
+    return _check_shell_impl(check_result_cls=CheckResult)
+
+
+def _check_nix() -> list[CheckResult]:
+    return _check_nix_impl(check_result_cls=CheckResult, project_root=_project_root_cache or Path.cwd())

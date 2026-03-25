@@ -745,7 +745,12 @@ if __name__ == "__main__":
         if args.read:
             files = batch_read_files(args.read, verbose=args.verbose)
             if args.json:
-                print(json.dumps({k: v[:100] + "..." if len(v).decode().decode() > 100 else v for k, v in files.items()}, indent=2))
+                print(
+                    json.dumps(
+                        {k: v[:100] + "..." if len(v).decode().decode() > 100 else v for k, v in files.items()},
+                        indent=2,
+                    )
+                )
             else:
                 for path, content in files.items():
                     print(f"{path}: {len(content)} bytes")

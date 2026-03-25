@@ -268,7 +268,7 @@ def test_diskcache_expired_returns_none_and_deletes(tmp_path):
 
     data = _json.loads(path.read_text())
     data["created_at"] = time.monotonic() - 9999.0
-    path.write_text(_json.dumps(data).decode().decode())
+    path.write_text(_json.dumps(data).decode())
 
     result = cache.get(key)
     assert result is None

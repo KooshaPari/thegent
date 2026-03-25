@@ -1,0 +1,32 @@
+# Legacy Worktree Remediation Report
+
+- total legacy worktrees: `25`
+- dirty legacy worktrees: `25`
+- prunable legacy worktrees: `0`
+- canonical base branch: `main`
+
+- INSPECT /Users/kooshapari/CodeProjects/Phenotype/repos/.worktrees/thegent--lane-split-modules-bootstrap-v2 ((detached)) :: dirty=16 ahead=- behind=- :: path outside repository root; detached branch; 16 dirty path(s)
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-composite-actions (chore/composite-actions) :: dirty=277 ahead=1 behind=32 :: path outside repository root; 277 dirty path(s); ahead 1; behind 32
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/cliproxyctl-fix (fix/cliproxyctl-err-msg-v7) :: dirty=169 ahead=851 behind=37 :: path outside repository root; 169 dirty path(s); ahead 851; behind 37
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/code-reduction (feat/code-reduction-thegent) :: dirty=169 ahead=6 behind=25 :: path outside repository root; 169 dirty path(s); ahead 6; behind 25
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/coderabbit-rate-limit-bridge (codex/coderabbit-rate-limit-bridge) :: dirty=169 ahead=850 behind=37 :: path outside repository root; 169 dirty path(s); ahead 850; behind 37
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-pytest-skip-debt (codex/thegent-pytest-skip-debt) :: dirty=169 ahead=3 behind=23 :: path outside repository root; 169 dirty path(s); ahead 3; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-thegent-zig-gate-fix1 (codex/thegent-zig-gate-fix1) :: dirty=169 ahead=0 behind=15 :: path outside repository root; 169 dirty path(s); ahead 0; behind 15
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-zig-command-debt (codex/zig-command-debt) :: dirty=29615 ahead=0 behind=23 :: path outside repository root; 29615 dirty path(s); ahead 0; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-zig-command-debt-clean (codex/zig-command-debt-clean) :: dirty=169 ahead=2 behind=23 :: path outside repository root; 169 dirty path(s); ahead 2; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/codex-zig-gate (codex/thegent-zig-gate) :: dirty=169 ahead=0 behind=16 :: path outside repository root; 169 dirty path(s); ahead 0; behind 16
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/g108-pedagogy-docs (docs/g108-pedagogy-scaffold) :: dirty=169 ahead=19 behind=23 :: path outside repository root; 169 dirty path(s); ahead 19; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/g110-tracker-fix (fix/g110-tracker-staleness) :: dirty=169 ahead=1 behind=22 :: path outside repository root; 169 dirty path(s); ahead 1; behind 22
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/garden-release-framework (garden/release-framework) :: dirty=169 ahead=850 behind=37 :: path outside repository root; 169 dirty path(s); ahead 850; behind 37
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/garden-secret-remediation (garden/secret-remediation) :: dirty=172 ahead=851 behind=37 :: path outside repository root; 172 dirty path(s); ahead 851; behind 37
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/hexagonal (hexagonal/phase1) :: dirty=169 ahead=9 behind=33 :: path outside repository root; 169 dirty path(s); ahead 9; behind 33
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/modular-arch (feat/modular-arch-wp09) :: dirty=170 ahead=5 behind=25 :: path outside repository root; 170 dirty path(s); ahead 5; behind 25
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/monolith-cleanup (refactor/monolith-cleanup) :: dirty=169 ahead=1 behind=26 :: path outside repository root; 169 dirty path(s); ahead 1; behind 26
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/monolith-removal (refactor/monolith-removal) :: dirty=169 ahead=1 behind=25 :: path outside repository root; 169 dirty path(s); ahead 1; behind 25
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/pi-008-occ-fix (pi-008-occ-fix) :: dirty=169 ahead=19 behind=23 :: path outside repository root; 169 dirty path(s); ahead 19; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/pr-478-fix (codex/pr478-runtime-fix-v2) :: dirty=169 ahead=851 behind=37 :: path outside repository root; 169 dirty path(s); ahead 851; behind 37
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/sync-hardening-queue-intent (int/sync-hardening-queue-task) :: dirty=29553 ahead=18 behind=23 :: path outside repository root; 29553 dirty path(s); ahead 18; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/sync-hardening-queue-intent2 (int/sync-hardening-queue-task2) :: dirty=29675 ahead=18 behind=23 :: path outside repository root; 29675 dirty path(s); ahead 18; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/sync-hardening-queue-intent3 (int/sync-hardening-queue-task3) :: dirty=171 ahead=18 behind=23 :: path outside repository root; 171 dirty path(s); ahead 18; behind 23
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/thegent-wtrees/workspace (refactor/perf-robustness) :: dirty=175 ahead=6 behind=29 :: path outside repository root; 175 dirty path(s); ahead 6; behind 29
+- MIGRATE /Users/kooshapari/CodeProjects/Phenotype/repos/worktrees/thegent/finalize-main (tmp/finalize-main-gate) :: dirty=167 ahead=0 behind=0 :: path outside repository root; 167 dirty path(s); ahead 0; behind 0

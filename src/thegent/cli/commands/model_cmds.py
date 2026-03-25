@@ -1,27 +1,12 @@
-"""Thegent CLI model/agent commands facade - re-exports from submodules."""
+"""Thegent CLI model/agent commands — backwards-compat wrapper for extracted models subpackage.
 
-# @trace WL-124
-from __future__ import annotations
+This file provides backwards compatibility for code that imports from the old
+location. All implementations have been moved to the models/ subpackage.
 
-# List and metrics commands
-from thegent.cli.commands.model_cmds_list import (
-    list_agents_cmd,
-    list_droids_cmd,
-    list_models_cmd,
-    speed_index_cmd,
-    quality_index_cmd,
-    metrics_cmd,
-    cost_values_cmd,
-    resolve_model_route_cmd,
-)
+@trace WL-124: CLI god package decomposition - MODELS domain
+"""
 
-# Catalog and config commands
-from thegent.cli.commands.model_cmds_config import (
-    list_model_contract_schema_cmd,
-    cliproxy_login_cmd,
-    setup_cmd,
-    rules_sync_cmd,
-)
+from thegent.cli.commands.models import *  # noqa: F401, F403 -- WL-124 re-export
 
 __all__ = [
     "list_agents_cmd",

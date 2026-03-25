@@ -14,9 +14,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
 from cachetools import TTLCache
 from thegent.integrations.base import SerializableMixin
+from thegent.infra.fast_yaml_parser import yaml_load
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,6 @@ class AgentRecommendation(SerializableMixin):
     description: str
     capabilities: list[str]
     runner: str | None = None
-
 
 
 @dataclass
@@ -85,7 +84,7 @@ def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     fm_text = content[3:end].strip()
     body = content[end + 4 :].strip()
 
-    parsed = yaml.safe_load(fm_text)
+    parsed = yaml_load(fm_text)
     if parsed is None:
         return {}, body
     if not isinstance(parsed, dict):

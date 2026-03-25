@@ -5,10 +5,10 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 
 
 class SidebarGenerator:
@@ -32,7 +32,7 @@ class SidebarGenerator:
         """Return TypeScript source for sidebar-auto.ts."""
         groups = self.generate()
         items_json = json.dumps(
-            {key: [{"text": e["text"], "link": e["link"]} for e in entries] for key, entries in groups.items().decode()},
+            {key: [{"text": e["text"], "link": e["link"]} for e in entries] for key, entries in groups.items()},
             indent=2,
         )
         return f"export const sidebar = {items_json};\n"
@@ -47,7 +47,7 @@ class SidebarGenerator:
         if text.startswith("---"):
             parts = text.split("---", 2)
             if len(parts) >= 3:
-                fm = yaml.safe_load(parts[1]) or {}
+                fm = yaml_load(parts[1]) or {}
         doc_type = str(fm.get("type", md.parent.name))
         title = str(fm.get("title", md.stem))
         return {"type": doc_type, "title": title}

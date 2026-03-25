@@ -94,6 +94,7 @@ class ThegentPlugin(TrayPlugin):
         # Check if QApplication exists - required for Qt widgets
         try:
             from PySide6.QtWidgets import QApplication
+
             if QApplication.instance() is None:
                 return None
         except Exception:

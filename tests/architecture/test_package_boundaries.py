@@ -28,26 +28,27 @@ class TestMCPPackageBoundary:
         """thegent-mcp should only import from thegent.mcp, not internals."""
         # This should succeed - public API
         from thegent_mcp import BorrowedMCPTools, server_load_module
+
         assert BorrowedMCPTools is not None
         assert server_load_module is not None
 
     def test_mcp_no_direct_execution_imports(self):
         """thegent-mcp should not import thegent.execution internals."""
         import thegent_mcp
+
         mcp_source = Path(thegent_mcp.__file__).parent
 
         # Read __init__.py and verify no "thegent.execution" imports
         init_file = mcp_source / "__init__.py"
         if init_file.exists():
             content = init_file.read_text()
-            assert "from thegent.execution" not in content, \
-                "thegent-mcp should not import thegent.execution internals"
-            assert "from thegent.cli" not in content, \
-                "thegent-mcp should not import thegent.cli internals"
+            assert "from thegent.execution" not in content, "thegent-mcp should not import thegent.execution internals"
+            assert "from thegent.cli" not in content, "thegent-mcp should not import thegent.cli internals"
 
     def test_mcp_public_api_stable(self):
         """thegent-mcp public API should match expected exports."""
         from thegent_mcp import __all__
+
         expected_exports = {
             "BorrowedMCPTools",
             "server_cache_elicitation_response",
@@ -62,8 +63,7 @@ class TestMCPPackageBoundary:
             "server_resolve_owner_elicitation",
             "server_stable_json",
         }
-        assert set(__all__) == expected_exports, \
-            "thegent-mcp public API should match expected exports"
+        assert set(__all__) == expected_exports, "thegent-mcp public API should match expected exports"
 
 
 class TestAgentsPackageBoundary:
@@ -72,21 +72,21 @@ class TestAgentsPackageBoundary:
     def test_agents_package_exists(self):
         """thegent-agents package should be importable."""
         import thegent_agents
+
         assert thegent_agents.__version__ == "0.1.0"
 
     def test_agents_depends_only_on_core(self):
         """thegent-agents should only depend on thegent-core, not thegent-cli."""
         import thegent_agents
+
         agents_source = Path(thegent_agents.__file__).parent
         init_file = agents_source / "__init__.py"
 
         if init_file.exists():
             content = init_file.read_text()
             # Agents should not import CLI or execution internals
-            assert "from thegent.cli" not in content, \
-                "thegent-agents should not import thegent.cli"
-            assert "from thegent.execution" not in content, \
-                "thegent-agents should not import thegent.execution"
+            assert "from thegent.cli" not in content, "thegent-agents should not import thegent.cli"
+            assert "from thegent.execution" not in content, "thegent-agents should not import thegent.execution"
 
 
 class TestCorePackageBoundary:
@@ -95,18 +95,16 @@ class TestCorePackageBoundary:
     def test_sdk_no_transitive_dependencies(self):
         """thegent-sdk should only depend on httpx, no agent/MCP deps."""
         import thegent_sdk
+
         sdk_source = Path(thegent_sdk.__file__).parent
         init_file = sdk_source / "__init__.py"
 
         if init_file.exists():
             content = init_file.read_text()
             # SDK should not import agent or MCP modules
-            assert "from thegent_agents" not in content, \
-                "thegent-sdk should not import agents"
-            assert "from thegent_mcp" not in content, \
-                "thegent-sdk should not import MCP"
-            assert "from thegent.mcp" not in content, \
-                "thegent-sdk should not import monolith MCP"
+            assert "from thegent_agents" not in content, "thegent-sdk should not import agents"
+            assert "from thegent_mcp" not in content, "thegent-sdk should not import MCP"
+            assert "from thegent.mcp" not in content, "thegent-sdk should not import monolith MCP"
 
 
 class TestPackageDependencyGraph:
@@ -137,6 +135,7 @@ class TestPackageDependencyGraph:
         try:
             # Core first
             import thegent_sdk  # noqa: F401
+
             # MCP and Agents (both depend on core, not each other)
             import thegent_mcp  # noqa: F401
             import thegent_agents  # noqa: F401

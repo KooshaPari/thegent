@@ -346,7 +346,7 @@ class TestBatchOperationResult:
         result_dict = result.to_dict()
 
         # Should not raise
-        json_str = json.dumps(result_dict).decode().decode()
+        json_str = json.dumps(result_dict).decode()
         assert len(json_str) > 0
 
 

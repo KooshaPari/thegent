@@ -9,6 +9,7 @@ import typer
 from thegent.cli.apps.main import app
 from thegent.cli.apps.sync import app as sync_app
 from thegent.clode_main import sitback_cmd
+from thegent.infra.shim_subprocess import run as shim_run
 from thegent.ux.compositor import run_compositor_tui
 
 __all__ = ["_install_agent_accelerators", "app", "sync_app"]

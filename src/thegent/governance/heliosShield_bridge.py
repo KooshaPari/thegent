@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from thegent.config import ThegentSettings
+from thegent.infra.shim_subprocess import run as shim_run
 from thegent.mesh import MeshManager
 
 

@@ -11,8 +11,6 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
-
 
 
 # Flag for bypassing restrictions
@@ -26,20 +24,20 @@ def _is_triggered_by_agent_process() -> bool:
 
 def wrap_with_caffeinate(cmd: list[str], label: str) -> list[str]:
     """Wrap command with caffeinate on macOS to prevent sleep.
-    
+
     Args:
         cmd: Command to wrap
         label: Label for debugging
-        
+
     Returns:
         Wrapped command or original if not macOS
     """
     if sys.platform != "darwin":
         return cmd
-    
+
     if not shutil.which("caffeinate"):
         return cmd
-    
+
     return ["caffeinate", "-i", *cmd]
 
 
@@ -51,13 +49,13 @@ def _run_sitback_claude(
 ) -> None:
     """Run Claude with startup prompt in current terminal or tmux."""
     from thegent.infra.shim_subprocess import run as shim_run
-    
+
     model = env.get("ANTHROPIC_MODEL", "MiniMax-M2.5")
     cmd = [claude_path, "--model", model]
-    
+
     if not _is_triggered_by_agent_process():
         cmd.insert(1, _CLODE_BYPASS_FLAG)
-    
+
     if startup_path:
         prompt = Path(startup_path).read_text()
         cmd.append(prompt)
@@ -89,10 +87,10 @@ def _run_sitback_codex(
 ) -> None:
     """Run Codex with startup prompt in current terminal or tmux."""
     from thegent.infra.shim_subprocess import run as shim_run
-    
+
     model = env.get("OPENAI_MODEL", "gpt-4o")
     cmd = [codex_path, "--model", model]
-    
+
     if startup_path:
         prompt = Path(startup_path).read_text()
         cmd.extend(["--prompt", prompt])
@@ -124,10 +122,10 @@ def _run_sitback_droid(
 ) -> None:
     """Run droid (Gemini) with startup prompt."""
     from thegent.infra.shim_subprocess import run as shim_run
-    
+
     model = env.get("GEMINI_MODEL", "gemini-2.0-flash")
     cmd = [droid_path, "--model", model]
-    
+
     if startup_path:
         prompt = Path(startup_path).read_text()
         cmd.append(prompt)

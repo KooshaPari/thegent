@@ -17,6 +17,7 @@ from thegent_cli.cli.commands._cli_shared import (
     console,
 )
 
+
 def guardrails_check_cmd(prompt: str, agent: str | None = None, model: str | None = None) -> None:
     """Check a prompt against active guardrails (FR-GOV-003..006)."""
     from thegent_audit.governance.input_guardrails import InputGuardrails

@@ -4,7 +4,7 @@ Implements TGNT-P15.1 (worktree creation), TGNT-P15.2 (branch coordination),
 and TGNT-P15.3 (worktree cleanup with orphan detection).
 """
 
-import orjson as json
+import json
 import logging
 import shutil
 import subprocess
@@ -76,7 +76,7 @@ class WorktreeManager:
             return {}
         try:
             return json.loads(self._registry_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
+        except json.JSONDecodeError, OSError:
             return {}
 
     def _save_registry(self, registry: dict[str, dict[str, str]]) -> None:

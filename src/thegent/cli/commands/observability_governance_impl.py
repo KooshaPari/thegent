@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from thegent.cli.services import governance as governance_service
@@ -46,7 +45,7 @@ def get_server_meta_impl() -> dict[str, Any]:
         OBSERVE_SUMMARY_SCHEMA_VERSION,
     )
 
-    from thegent.cli.commands.governance_policy_health_cmds import HEALTH_POLICY_PROFILES  # pyright: ignore[reportMissingImports]
+    from thegent.cli.commands.observability_health_impl import HEALTH_POLICY_PROFILES
 
     from thegent.cli.services import observability as observability_service
 

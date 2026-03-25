@@ -114,7 +114,7 @@ class TestSkillDiscovery:
         dir_b = tmp_path / "b"
         dir_b.mkdir()
         (dir_b / "skill.json").write_text(
-            json.dumps({"name": "Beta", "instructions": "Beta instructions"}).decode().decode(),
+            json.dumps({"name": "Beta", "instructions": "Beta instructions"}).decode(),
             encoding="utf-8",
         )
 
@@ -214,7 +214,7 @@ class TestSkillActivator:
         skills_dir = tmp_path / "skills"
         skills_dir.mkdir()
         (skills_dir / "skill.json").write_text(
-            json.dumps({"name": "empty", "instructions": ""}).decode().decode(),
+            json.dumps({"name": "empty", "instructions": ""}).decode(),
             encoding="utf-8",
         )
         sd = SkillDiscovery(search_dirs=[skills_dir])

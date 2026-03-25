@@ -10,7 +10,7 @@ approach that is safe for single-process use.
 from __future__ import annotations
 
 import contextlib
-import orjson as json
+import json
 import os
 import time
 import uuid
@@ -281,7 +281,7 @@ class DistributedResourceCoordinator:
     def _write(self, leases: dict) -> None:
         """Persist lease store atomically (write-then-rename)."""
         payload = json.dumps(
-            [lease.to_dict().decode() for lease in leases.values()],
+            [lease.to_dict() for lease in leases.values()],
             indent=2,
         )
         tmp = self._lease_file.with_suffix(".tmp")

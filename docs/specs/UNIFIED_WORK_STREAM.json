@@ -29538,7 +29538,7 @@
       "priority": "medium"
     },
     "unified-feat-2981": {
-      "title": "OpenSpec Integration",
+      "title": "AgilePlus Integration",
       "projects": [
         "kush",
         "kush"
@@ -29602,7 +29602,7 @@
       "priority": "medium"
     },
     "unified-feat-2989": {
-      "title": "openspec_init",
+      "title": "agileplus_init",
       "projects": [
         "kush",
         "kush"

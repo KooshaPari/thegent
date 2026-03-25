@@ -20,7 +20,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -32,7 +32,7 @@ def _submit_turn(session_id: str, *, requires_approval: bool = False) -> str:
         params["requires_approval"] = True
         params["unified_diff"] = "--- a/x\n+++ b/x\n@@\n-old\n+new\n"
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": params}).decode()
     )
     assert response is not None
     return response["result"]["turn"]["id"]
@@ -128,4 +128,3 @@ def test_wl9759_cache_miss_branch_preserves_no_response_for_terminal_notificatio
     assert first is not None
     second = server._handle_turn_cancel_request("turn/cancel", False, "req-2", {"turn_id": turn_id})
     assert second is None
-

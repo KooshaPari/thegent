@@ -17,6 +17,7 @@ def _reload_and_require_env() -> None:
     """Helper to reload module and require env var."""
     import importlib
     import graphiti_contract_smoke as smoke
+
     importlib.reload(smoke)
     smoke._require_env("GRAPHITI_SERVER_URL")
 
@@ -55,6 +56,7 @@ def test_successful_health_check():
 def _call_main() -> None:
     """Helper to call smoke.main()."""
     import graphiti_contract_smoke as smoke
+
     smoke.main()
 
 

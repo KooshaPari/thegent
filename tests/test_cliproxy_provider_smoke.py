@@ -202,4 +202,6 @@ def test_run_matrix_retries_anthropic_with_messages_payload(monkeypatch) -> None
     result = mod._run_matrix("http://127.0.0.1:8317/v1", "sk-test", "ok")
     assert result["failed"] == 0
     assert any("messages" in call for call in post_calls)
+
+
 # noqa: PT018

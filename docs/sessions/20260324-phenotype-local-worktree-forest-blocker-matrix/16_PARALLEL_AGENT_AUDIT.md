@@ -53,7 +53,7 @@ Legend: **R** = research/gap identified, **B** = blocked on human/process/CI, **
 | 4 | helMo | `helMo/.gitignore`, `helMo/CONTRIBUTING.md` (new) |
 | 5 | helios-cli + repos hub | `helios-cli/docs/contributing.md` (scratch section), `helios-cli/.gitignore` — `.tmp/`; `repos/README.md` (new hub index + cliproxy note) |
 
-**Follow-up — done (2026-03-24 next wave):** **`docs/reference/composite-actions.md`**; **`repos/README.md`** synced + versioned hub link; **`phenotype_repos_hub.md`** link to composite-actions. **Tracking:** [thegent#552](https://github.com/KooshaPari/thegent/issues/552) (colab issues disabled on repo; umbrella in **thegent**). **helMo:** no `origin` in local `.git/config` — noted in #552.
+**Follow-up (not in this batch):** `gh issue` for dirty colab/helMo roots; composite-actions reference doc.
 
 **Parity fix (post-batch):** `heliosApp/.github/workflows/vitepress-pages.yml` `bun-version` aligned to **`1.2.20`** (was `latest`) to match `ci.yml` and `package.json`.
 

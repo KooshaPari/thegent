@@ -5,7 +5,7 @@ a unified interface for routing decisions.
 
 Usage:
     from thegent.utils.tokenledger_adapter import TokenledgerAdapter
-    
+
     adapter = TokenledgerAdapter()
     benchmark = adapter.get_benchmark("gpt-4o")
     quality = benchmark.intelligence_index / 100.0 if benchmark else fallback
@@ -17,8 +17,7 @@ import json
 import logging
 import shutil
 import subprocess
-from dataclasses import dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Optional
 
 _log = logging.getLogger(__name__)
@@ -33,41 +32,41 @@ CACHE_TTL_SECONDS = 3600  # 1 hour
 @dataclass
 class BenchmarkData:
     """Benchmark data for a model from tokenledger."""
-    
+
     model_id: str
     provider: Optional[str] = None
-    
+
     # Quality metrics
     intelligence_index: Optional[float] = None
     coding_index: Optional[float] = None
-    
+
     # Performance metrics
     speed_tps: Optional[float] = None  # Tokens per second
     latency_ttft_ms: Optional[float] = None  # Time to first token
-    
+
     # Cost metrics
     price_input_per_1m: Optional[float] = None  # USD per 1M input tokens
     price_output_per_1m: Optional[float] = None  # USD per 1M output tokens
-    
+
     # Context
     context_window_tokens: Optional[int] = None
-    
+
     # Metadata
     confidence: float = 0.0
     source: str = "unknown"
-    
+
     def get_quality_score(self) -> Optional[float]:
         """Get normalized quality score (0-1)."""
         if self.intelligence_index is not None:
             return self.intelligence_index / 100.0
         return None
-    
+
     def get_cost_per_1k(self) -> Optional[float]:
         """Get cost per 1K tokens."""
         if self.price_input_per_1m is not None:
             return self.price_input_per_1m
         return None
-    
+
     def get_latency_ms(self) -> Optional[int]:
         """Get latency in milliseconds."""
         if self.latency_ttft_ms is not None:
@@ -78,92 +77,92 @@ class BenchmarkData:
 @dataclass
 class TokenledgerConfig:
     """Configuration for tokenledger adapter."""
-    
+
     # Path to tokenledger CLI
     cli_path: str = DEFAULT_TOKENLEDGER_PATH
-    
+
     # Enable/disable tokenledger integration
     enabled: bool = True
-    
+
     # Cache TTL in seconds
     cache_ttl: int = CACHE_TTL_SECONDS
-    
+
     # Fallback to hardcoded values on error
     fallback_on_error: bool = True
 
 
 class TokenledgerAdapter:
     """Adapter for fetching benchmark data from tokenledger.
-    
+
     This adapter:
     1. Calls tokenledger CLI to get benchmark data
     2. Caches results for performance
     3. Falls back to hardcoded values on error
     """
-    
+
     def __init__(self, config: Optional[TokenledgerConfig] = None):
         self.config = config or TokenledgerConfig()
         self._cache: dict[str, BenchmarkData] = {}
         self._available: Optional[bool] = None
-        
+
     def is_available(self) -> bool:
         """Check if tokenledger CLI is available."""
         if self._available is not None:
             return self._available
-            
+
         # Check if CLI exists
         if shutil.which(self.config.cli_path):
             self._available = True
             return True
-            
+
         self._available = False
         return False
-    
+
     def get_benchmark(self, model_id: str) -> Optional[BenchmarkData]:
         """Get benchmark data for a model.
-        
+
         Args:
             model_id: Model identifier (e.g., "gpt-4o", "claude-3-5-sonnet")
-            
+
         Returns:
             BenchmarkData if available, None otherwise
         """
         if not self.config.enabled:
             return None
-            
+
         # Check cache
         if model_id in self._cache:
             return self._cache[model_id]
-        
+
         # Try to fetch from tokenledger
         if self.is_available():
             data = self._fetch_from_cli(model_id)
             if data:
                 self._cache[model_id] = data
                 return data
-        
+
         return None
-    
+
     def get_all_benchmarks(self) -> list[BenchmarkData]:
         """Get all available benchmarks."""
         if not self.is_available():
             return []
-        
+
         # Would call tokenledger to get all benchmarks
         # For now, return empty list
         return []
-    
+
     def refresh(self) -> bool:
         """Refresh benchmark data cache."""
         self._cache.clear()
         return True
-    
+
     def _fetch_from_cli(self, model_id: str) -> Optional[BenchmarkData]:
         """Fetch benchmark data from tokenledger CLI.
-        
+
         Args:
             model_id: Model identifier
-            
+
         Returns:
             BenchmarkData if successful, None otherwise
         """
@@ -174,14 +173,14 @@ class TokenledgerAdapter:
                 text=True,
                 timeout=30,
             )
-            
+
             if result.returncode != 0:
                 _log.debug(f"Tokenledger CLI error: {result.stderr}")
                 return None
-            
+
             data = json.loads(result.stdout)
             return self._parse_benchmark_data(data)
-            
+
         except subprocess.TimeoutExpired:
             _log.warning(f"Tokenledger CLI timeout for {model_id}")
             return None
@@ -191,7 +190,7 @@ class TokenledgerAdapter:
         except Exception as e:
             _log.warning(f"Tokenledger CLI error: {e}")
             return None
-    
+
     def _parse_benchmark_data(self, data: dict) -> BenchmarkData:
         """Parse benchmark data from JSON response."""
         return BenchmarkData(
@@ -207,14 +206,14 @@ class TokenledgerAdapter:
             confidence=data.get("confidence", 0.0),
             source=data.get("source", "tokenledger"),
         )
-    
+
     def get_quality_score(self, model_id: str, fallback: float = 0.5) -> float:
         """Get quality score for a model with fallback.
-        
+
         Args:
             model_id: Model identifier
             fallback: Fallback value if not found
-            
+
         Returns:
             Quality score (0-1)
         """
@@ -224,14 +223,14 @@ class TokenledgerAdapter:
             if quality is not None:
                 return quality
         return fallback
-    
+
     def get_cost_per_1k(self, model_id: str, fallback: float = 0.01) -> float:
         """Get cost per 1K tokens for a model with fallback.
-        
+
         Args:
             model_id: Model identifier
             fallback: Fallback value if not found
-            
+
         Returns:
             Cost per 1K tokens in USD
         """
@@ -241,14 +240,14 @@ class TokenledgerAdapter:
             if cost is not None:
                 return cost
         return fallback
-    
+
     def get_latency_ms(self, model_id: str, fallback: int = 2000) -> int:
         """Get latency in ms for a model with fallback.
-        
+
         Args:
             model_id: Model identifier
             fallback: Fallback value if not found
-            
+
         Returns:
             Latency in milliseconds
         """

@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "thegent-cli"
 dynamic = ["version"]
 description = "thegent CLI surface layer — command dispatch and output formatting"
-requires-python = ">=3.11 and (implementation_name == 'pypy' or (implementation_name == 'cpython' and platform_machine == 'arm64' and python_version >= '3.14'))"
+requires-python = ">=3.11"
 dependencies = [
     "typer>=0.16.0",
     "rich>=13.9.4",

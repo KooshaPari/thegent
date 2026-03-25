@@ -83,7 +83,7 @@ class ProcessHandle:
                 info["num_fds"] = proc.num_fds()
 
             return info
-        except (psutil.AccessDenied, AttributeError, psutil.NoSuchProcess):
+        except psutil.AccessDenied, AttributeError, psutil.NoSuchProcess:
             return None
 
 
@@ -248,7 +248,7 @@ class ProcessRegistry:
                 proc.terminate()
                 proc.wait(timeout=timeout)
                 cleaned += 1
-            except (psutil.NoSuchProcess, psutil.TimeoutExpired):
+            except psutil.NoSuchProcess, psutil.TimeoutExpired:
                 try:
                     proc.kill()
                     proc.wait(timeout=2.0)

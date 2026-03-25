@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 from pathlib import Path
 
@@ -37,8 +37,8 @@ def swarm_usage(
     # it shares state with any other in-process controller instances.
     ConcurrencyController(
         session_dir=session_path,
-        max_concurrency=settings.max_concurrency,
-        use_load_based=settings.concurrency_load_based,
+        max_concurrency=getattr(settings, "max_concurrency", 8),
+        use_load_based=getattr(settings, "concurrency_load_based", False),
     )
 
     tracker = get_usage_tracker()

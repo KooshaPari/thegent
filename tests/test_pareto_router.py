@@ -205,8 +205,8 @@ class TestParetoRouterSelectByStrategy:
     def test_strategy_balanced_returns_best_ratio(self) -> None:
         """Balanced (unknown) strategy falls back to best quality/cost ratio."""
         router = ParetoRouter()
-        a = _candidate("a", cost=2.0, quality=0.9)   # ratio = 0.45
-        b = _candidate("b", cost=0.5, quality=0.6)   # ratio = 1.20
+        a = _candidate("a", cost=2.0, quality=0.9)  # ratio = 0.45
+        b = _candidate("b", cost=0.5, quality=0.6)  # ratio = 1.20
         result = router.select_by_strategy("balanced", [a, b])
         assert result is b
 
@@ -214,7 +214,7 @@ class TestParetoRouterSelectByStrategy:
         """Unknown strategy also falls through to balanced selection."""
         router = ParetoRouter()
         a = _candidate("a", cost=1.0, quality=0.8)
-        b = _candidate("b", cost=0.1, quality=0.5)   # ratio = 5.0 vs 0.8
+        b = _candidate("b", cost=0.1, quality=0.5)  # ratio = 5.0 vs 0.8
         result = router.select_by_strategy("unknown_strategy", [a, b])
         assert result is b
 
@@ -287,7 +287,7 @@ class TestResolveRoleParams:
         effective_min, _, _ = _resolve_role_params(
             role=None,
             complexity_tier="simple",
-            min_quality=0.9,   # user-specified > tier min (0.5)
+            min_quality=0.9,  # user-specified > tier min (0.5)
             opt_order=("quality", "cost", "speed"),
         )
         assert effective_min == 0.9

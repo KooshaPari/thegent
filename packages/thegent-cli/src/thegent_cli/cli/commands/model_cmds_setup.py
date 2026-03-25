@@ -8,10 +8,9 @@ hooks, skills, harness, and services.
 from __future__ import annotations
 
 import os
-import shutil
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import typer
 
@@ -30,6 +29,7 @@ from thegent_cli.cli.commands.model_cmds_setup_helpers import (
     configure_providers,
     set_env_line,
 )
+
 
 def setup_cmd(
     api_key: str = typer.Option(None, "--api-key", "-k", help="NVIDIA NIM API key"),
@@ -186,9 +186,7 @@ def setup_cmd(
         console=console,
     )
     should_delegate_setup = (
-        wizard
-        and os.environ.get("THGENT_SETUP_USE_CLIPROXY", "1") == "1"
-        and not any(v for v in overrides.values())
+        wizard and os.environ.get("THGENT_SETUP_USE_CLIPROXY", "1") == "1" and not any(v for v in overrides.values())
     )
     if should_delegate_setup:
         delegation_args: list[str] = []
@@ -347,7 +345,6 @@ def rules_sync_cmd(
     else:
         for target in result["synced"]:
             console.print(f"[green]Synced: {target}[/green]")
-
 
 
 __all__ = [

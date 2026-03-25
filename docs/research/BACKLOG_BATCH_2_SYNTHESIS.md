@@ -32,7 +32,7 @@
 
 ### **C. Project Level (Methodology & Guardrails)**
 *   **Spec-Driven Development (SDD Evolution)**:
-    *   **Spec-Kit vs. OpenSpec vs. BMAD**: Comparison of SDD methodologies. BMAD is powerful for multi-agent builds, while OpenSpec/Spec-Kit are lighter.
+    *   **AgilePlus vs. BMAD**: Comparison of SDD methodologies. BMAD is powerful for multi-agent builds, while AgilePlus is the lighter current workflow.
     *   **agents.md**: Emerging standard for LLM-readable project specs.
 *   **Model Performance & Economics**:
     *   **Manus AI Economics**: High-compute agentic workflows costing ~$2/task.
@@ -46,10 +46,9 @@
     *   **Zsh Hooks**: Overriding commands to prevent agents from bypassing project build systems.
     *   **PM2 for Backend Observability**: Autonomous log monitoring for agents.
 *   **Strategic Scaffolding (SDD Evolution)**:
-    *   **Spec-Kit vs. OpenSpec vs. BMAD**: The community is comparing three main approaches for **Spec-Driven Development (SDD)**:
+    *   **AgilePlus vs. BMAD**: The community is comparing current approaches for **Spec-Driven Development (SDD)**:
         *   **BMAD Method**:Documentation-heavy, multi-agent, end-to-end. Powerful but can be "heavyweight" for smaller tasks.
-        *   **GitHub’s Spec-Kit**: Repos/PR integrated, lighter than BMAD.
-        *   **OpenSpec**: Lightweight and conversational (Fission-AI).
+        *   **AgilePlus**: Repos/PR integrated and lightweight for current workflow use.
         *   **ai-dev-tasks**: An even more lightweight task-based methodology that works well with Cursor Plan Mode.
     *   **agents.md**: A new emerging standard for organizing spec documentation that LLMs can natively follow to stay in context.
     *   **MCP for Project Management**: Instead of just markdown files, developers are using **YouTrack** and other PM tools via MCP servers to control context (e.g., "get in-progress stories"). This allows for better control of context drift and synchronization with task plans.

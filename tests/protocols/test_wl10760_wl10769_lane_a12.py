@@ -124,7 +124,9 @@ def test_wl10768_cli_behavior_separates_schema_token_parse_from_handler_resoluti
     assert resolve_cli_handler_selection_target(phase) == ("queue push", ["queue", "push"], "queue_handler")
 
     with pytest.raises(ValueError, match="invalid parsed token"):
-        resolve_cli_handler_selection_target(build_cli_command_parse_phase("queue push", ["queue", ""], "queue_handler"))
+        resolve_cli_handler_selection_target(
+            build_cli_command_parse_phase("queue push", ["queue", ""], "queue_handler")
+        )
 
 
 def test_wl10769_orchestration_determinism_separates_plan_guards_from_execution_step() -> None:

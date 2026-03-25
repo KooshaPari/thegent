@@ -63,7 +63,6 @@ def queue_list_cmd(watch: bool = False) -> None:
 
 def team_create_cmd(name: str, leader: str | None = None, teammates: str | None = None) -> None:
     """Backward-compatible wrapper for extracted team command group."""
-    from thegent_cli.cli.commands._cli_shared import console
     from thegent_cli.cli.commands.team_commands import team_create_cmd as _team_create_cmd_impl
 
     _team_create_cmd_impl(name=name, leader=leader, teammates=teammates, console=console)
@@ -71,7 +70,6 @@ def team_create_cmd(name: str, leader: str | None = None, teammates: str | None 
 
 def team_task_add_cmd(team_id: str, title: str, description: str) -> None:
     """Backward-compatible wrapper for extracted team command group."""
-    from thegent_cli.cli.commands._cli_shared import console
     from thegent_cli.cli.commands.team_commands import team_task_add_cmd as _team_task_add_cmd_impl
 
     _team_task_add_cmd_impl(team_id=team_id, title=title, description=description, console=console)
@@ -79,7 +77,6 @@ def team_task_add_cmd(team_id: str, title: str, description: str) -> None:
 
 def team_task_list_cmd(team_id: str) -> None:
     """Backward-compatible wrapper for extracted team command group."""
-    from thegent_cli.cli.commands._cli_shared import console
     from thegent_cli.cli.commands.team_commands import team_task_list_cmd as _team_task_list_cmd_impl
 
     _team_task_list_cmd_impl(team_id=team_id, console=console)
@@ -87,7 +84,6 @@ def team_task_list_cmd(team_id: str) -> None:
 
 def recover_status_cmd() -> None:
     """Backward-compatible wrapper for extracted recovery command group."""
-    from thegent_cli.cli.commands._cli_shared import console
     from thegent_cli.cli.commands.recovery_commands import recover_status_cmd as _recover_status_cmd_impl
 
     _recover_status_cmd_impl(console=console)
@@ -97,7 +93,6 @@ def project_register_cmd(path, name: str | None = None) -> None:  # noqa: ANN001
     """Backward-compatible wrapper for extracted project command group."""
     from pathlib import Path
 
-    from thegent_cli.cli.commands._cli_shared import console
     from thegent_cli.cli.commands.project_commands import project_register_cmd as _project_register_cmd_impl
 
     _project_register_cmd_impl(path=path if isinstance(path, Path) else Path(path), name=name, console=console)
@@ -107,7 +102,6 @@ def project_list_cmd(
     format: str | None = None,
 ) -> None:
     """Backward-compatible wrapper for extracted project command group."""
-    from thegent_cli.cli.commands._cli_shared import console
     from thegent_cli.cli.commands.project_commands import project_list_cmd as _project_list_cmd_impl
 
     _project_list_cmd_impl(format=format, console=console)

@@ -76,7 +76,7 @@ def _git_available(project_root: Path) -> bool:
     try:
         _run(["git", "rev-parse", "--git-dir"], project_root)
         return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         return False
 
 
@@ -85,7 +85,7 @@ def _worktrees_supported(project_root: Path) -> bool:
     try:
         result = _run(["git", "worktree", "list"], project_root)
         return result.returncode == 0
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         return False
 
 

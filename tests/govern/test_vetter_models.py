@@ -236,7 +236,7 @@ def test_ruff_check_implements_protocol():
 async def test_schema_check_passes_valid_json():
     # @trace WL-090
     check = SchemaCheck(schema={"type": "object", "properties": {"key": {"type": "string"}}})
-    result = await check.check("run-1", json.dumps({"key": "value"}).decode().decode(), {})
+    result = await check.check("run-1", json.dumps({"key": "value"}).decode(), {})
     assert result.passed is True
     assert result.check_name == "schema"
 
@@ -254,7 +254,7 @@ async def test_schema_check_fails_invalid_json():
 async def test_schema_check_fails_schema_violation():
     # @trace WL-090
     check = SchemaCheck(schema={"type": "object", "required": ["name"]})
-    result = await check.check("run-1", json.dumps({"other": 1}).decode().decode(), {})
+    result = await check.check("run-1", json.dumps({"other": 1}).decode(), {})
     assert result.passed is False
     assert "Schema validation failed" in result.message
 
@@ -456,7 +456,7 @@ async def test_quality_score_check_raises_on_malformed_json():
 async def test_quality_score_check_raises_on_invalid_payload_shape():
     # @trace WL-095
     mock_response = MagicMock()
-    mock_response.choices[0].message.content = json.dumps({"scores": {"correctness": 0.8}}).decode().decode()
+    mock_response.choices[0].message.content = json.dumps({"scores": {"correctness": 0.8}}).decode()
     with patch("litellm.acompletion", new_callable=AsyncMock, return_value=mock_response):
         check = QualityScoreVetterCheck()
         with pytest.raises(VetterConfigError, match="judge response failed schema validation"):

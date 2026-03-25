@@ -87,9 +87,7 @@ def test_wl10743_orchestration_parse_target_preserves_execution_inputs() -> None
     assert resolve_parse_target(parse_phase) == ("session-10743", "route plan", "req-10743", True)
 
     with pytest.raises(ValueError, match="invalid session_id"):
-        resolve_parse_target(
-            build_parse_phase("", "route plan", request_id=None, request_has_id=False)
-        )
+        resolve_parse_target(build_parse_phase("", "route plan", request_id=None, request_has_id=False))
 
 
 def test_wl10744_queue_scheduling_contract_keeps_intake_inputs_and_window() -> None:
@@ -111,9 +109,7 @@ def test_wl10745_observability_phase_retains_event_payload_and_encoding() -> Non
     )
 
     with pytest.raises(ValueError, match="invalid serialization_format"):
-        resolve_observability_serialization_target(
-            build_observability_event_phase("queue.flush", {"count": 10}, "")
-        )
+        resolve_observability_serialization_target(build_observability_event_phase("queue.flush", {"count": 10}, ""))
 
 
 def test_wl10746_provider_selection_path_accepts_scores_and_selected_provider() -> None:
@@ -141,9 +137,7 @@ def test_wl10747_policy_enforcement_plan_requires_rules_and_action() -> None:
     )
 
     with pytest.raises(ValueError, match="invalid matched_rules"):
-        resolve_policy_enforcement_plan_target(
-            build_policy_match_phase("policy-10747", [], "block-none")
-        )
+        resolve_policy_enforcement_plan_target(build_policy_match_phase("policy-10747", [], "block-none"))
 
 
 def test_wl10748_sync_plan_keeps_scan_and_commit_metadata_separate() -> None:

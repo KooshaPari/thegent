@@ -6,7 +6,6 @@
 #[cfg(test)]
 mod affected_tests_integration_tests {
     use std::fs;
-    use std::path::Path;
     use tempfile::TempDir;
 
     /// Helper to create a temporary project structure
@@ -65,10 +64,10 @@ mod affected_tests_integration_tests {
     #[test]
     fn test_pattern_detection_python() {
         let tmp = setup_project();
-        let project = tmp.path();
+        let _project = tmp.path();
 
         // Test that changing src/config.py suggests tests/test_config.py
-        let changed_files = vec!["src/config.py".to_string()];
+        let changed_files = ["src/config.py".to_string()];
 
         // This would use the real analyzer, but we're testing patterns
         assert!(changed_files[0].ends_with(".py"));
@@ -77,10 +76,10 @@ mod affected_tests_integration_tests {
     #[test]
     fn test_pattern_detection_rust() {
         let tmp = setup_project();
-        let project = tmp.path();
+        let _project = tmp.path();
 
         // Test that changing src/lib.rs suggests tests/integration_tests.rs
-        let changed_files = vec!["src/lib.rs".to_string()];
+        let changed_files = ["src/lib.rs".to_string()];
         assert!(changed_files[0].ends_with(".rs"));
     }
 
@@ -90,7 +89,7 @@ mod affected_tests_integration_tests {
         let _project = tmp.path();
 
         // Test multiple changed files
-        let changed_files = vec!["src/config.py".to_string(), "src/utils.py".to_string()];
+        let changed_files = ["src/config.py".to_string(), "src/utils.py".to_string()];
 
         assert_eq!(changed_files.len(), 2);
         assert!(changed_files.iter().all(|f| f.ends_with(".py")));
@@ -102,7 +101,7 @@ mod affected_tests_integration_tests {
         let _project = tmp.path();
 
         // Test mixed Python and Rust files
-        let changed_files = vec!["src/config.py".to_string(), "src/lib.rs".to_string()];
+        let changed_files = ["src/config.py".to_string(), "src/lib.rs".to_string()];
 
         let py_files: Vec<_> = changed_files
             .iter()
@@ -130,7 +129,7 @@ mod affected_tests_integration_tests {
         .expect("Failed to write");
 
         // Both config and utils should be affected
-        let changed_files = vec!["src/utils.py".to_string()];
+        let changed_files = ["src/utils.py".to_string()];
         assert_eq!(changed_files.len(), 1);
     }
 
@@ -147,7 +146,7 @@ mod affected_tests_integration_tests {
     #[test]
     fn test_nonexistent_changed_file() {
         // Should handle gracefully
-        let changed_files = vec!["src/nonexistent.py".to_string()];
+        let changed_files = ["src/nonexistent.py".to_string()];
         assert_eq!(changed_files.len(), 1);
         assert!(changed_files[0].contains("nonexistent"));
     }

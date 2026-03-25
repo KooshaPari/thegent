@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 import typer
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 from yaml import YAMLError
 
 from docs_engine.capture.writer import DocWriter
@@ -89,8 +89,12 @@ def index_cmd(action: str = typer.Argument("rebuild", help="Action: rebuild")) -
             continue
 
         try:
-            fm = yaml.safe_load(parts[1])
-        except YAMLError as exc:
+            fm = yaml_load(parts[1])
+        except (YAMLError, ValueError, TypeError) as exc:
+            skipped += 1
+            skip_reasons.append(f"{md_file}: frontmatter parse error ({type(exc).__name__}): {exc}")
+            continue
+        except Exception as exc:
             skipped += 1
             skip_reasons.append(f"{md_file}: frontmatter parse error ({type(exc).__name__}): {exc}")
             continue

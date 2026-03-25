@@ -13644,8 +13644,8 @@
     },
     {
       "id": "kush-feat-597",
-      "title": "OpenSpec Integration",
-      "description": "Initialize and manage OpenSpec project structure",
+      "title": "AgilePlus Integration",
+      "description": "Initialize and manage AgilePlus project structure",
       "priority": "medium",
       "acceptance_criteria": [],
       "dependencies": []
@@ -13732,7 +13732,7 @@
     },
     {
       "id": "kush-feat-608",
-      "title": "openspec_init",
+      "title": "agileplus_init",
       "description": "",
       "priority": "medium",
       "acceptance_criteria": [],
@@ -62844,8 +62844,8 @@
     },
     {
       "id": "kush-feat-2506",
-      "title": "OpenSpec Integration",
-      "description": "Initialize and manage OpenSpec project structure",
+      "title": "AgilePlus Integration",
+      "description": "Initialize and manage AgilePlus project structure",
       "priority": "medium",
       "acceptance_criteria": [],
       "dependencies": []
@@ -62932,7 +62932,7 @@
     },
     {
       "id": "kush-feat-2517",
-      "title": "openspec_init",
+      "title": "agileplus_init",
       "description": "",
       "priority": "medium",
       "acceptance_criteria": [],
@@ -77836,8 +77836,8 @@
     },
     {
       "id": "kush-feat-597",
-      "title": "OpenSpec Integration",
-      "description": "Initialize and manage OpenSpec project structure",
+      "title": "AgilePlus Integration",
+      "description": "Initialize and manage AgilePlus project structure",
       "priority": "medium",
       "acceptance_criteria": [],
       "tags": []
@@ -77924,7 +77924,7 @@
     },
     {
       "id": "kush-feat-608",
-      "title": "openspec_init",
+      "title": "agileplus_init",
       "description": "",
       "priority": "medium",
       "acceptance_criteria": [],
@@ -127072,8 +127072,8 @@
     },
     {
       "id": "kush-feat-2506",
-      "title": "OpenSpec Integration",
-      "description": "Initialize and manage OpenSpec project structure",
+      "title": "AgilePlus Integration",
+      "description": "Initialize and manage AgilePlus project structure",
       "priority": "medium",
       "acceptance_criteria": [],
       "tags": []
@@ -127160,7 +127160,7 @@
     },
     {
       "id": "kush-feat-2517",
-      "title": "openspec_init",
+      "title": "agileplus_init",
       "description": "",
       "priority": "medium",
       "acceptance_criteria": [],
@@ -130806,7 +130806,7 @@
     "Use Context Manager",
     "Hexagonal Architecture Layers",
     "Domain Services",
-    "OpenSpec Integration",
+    "AgilePlus Integration",
     "Running the Server",
     "Claude Desktop Integration",
     "Other MCP Clients",
@@ -130814,7 +130814,7 @@
     "generate_wbs_plan",
     "run_monte_carlo",
     "create_specification",
-    "openspec_init",
+    "agileplus_init",
     "generate_slash_commands",
     "allocate_resources",
     "detect_conflicts",

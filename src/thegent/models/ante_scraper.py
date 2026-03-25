@@ -13,6 +13,10 @@ from typing import Any
 _log = logging.getLogger(__name__)
 
 
+def _read_json_file(path: Path) -> Any:
+    return json.loads(path.read_bytes())
+
+
 def scrape_ante_models() -> list[str]:
     """Scrape available Ante models from settings.json."""
     settings_path = Path.home() / ".ante" / "settings.json"
@@ -21,16 +25,17 @@ def scrape_ante_models() -> list[str]:
         return ["claude-haiku-4-5"]  # fallback default
 
     try:
-        with open(settings_path) as f:
-            settings = json.load(f)
-            model_name = settings.get("model", {})
-            if isinstance(model_name, dict):
-                name = model_name.get("name")
-            else:
-                name = model_name
+        settings = _read_json_file(settings_path)
+        if not isinstance(settings, dict):
+            return ["claude-haiku-4-5"]
+        model_name = settings.get("model", {})
+        if isinstance(model_name, dict):
+            name = model_name.get("name")
+        else:
+            name = model_name
 
-            if name and isinstance(name, str):
-                return [name]
+        if name and isinstance(name, str):
+            return [name]
     except Exception as e:
         _log.debug(f"Failed to scrape Ante models from settings.json: {e}")
 
@@ -52,8 +57,7 @@ def parse_ante_session(session_file: Path) -> dict[str, Any] | None:
         - project_dir: working directory
     """
     try:
-        with open(session_file) as f:
-            data = json.load(f)
+        data = _read_json_file(session_file)
 
         if not isinstance(data, dict):
             return None

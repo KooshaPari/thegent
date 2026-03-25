@@ -57,7 +57,7 @@ def test_load_task_classifier_schema_rejects_bad_schema_contract(tmp_path: Path)
 def test_load_task_classifier_schema_rejects_missing_output_type_flag(tmp_path: Path) -> None:
     schema_path = tmp_path / "schema.yaml"
     schema_path.write_text(
-            """
+        """
         version: 1
         fields:
           task_id:

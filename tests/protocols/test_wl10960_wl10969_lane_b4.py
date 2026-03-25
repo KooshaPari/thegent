@@ -20,7 +20,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -41,9 +41,7 @@ def test_wl10960_turn_submit_phase_plan_defaults_input_to_empty_string() -> None
 def test_wl10961_extract_required_approval_diff_prefers_unified_diff_over_diff() -> None:
     # @trace WL-10961
     _reset_state()
-    approval_diff, parse_error = server._extract_required_approval_diff(
-        "req", {"unified_diff": "x", "diff": "y"}
-    )
+    approval_diff, parse_error = server._extract_required_approval_diff("req", {"unified_diff": "x", "diff": "y"})
     assert parse_error is None
     assert approval_diff == "x"
 
@@ -78,12 +76,15 @@ def test_wl10965_turn_submit_phase_plan_rejects_non_string_approval_diff() -> No
     # @trace WL-10965
     _reset_state()
     session_id = _start_session()
-    plan = server._build_turn_submit_phase_plan("req", {
-        "session_id": session_id,
-        "input": "b4",
-        "requires_approval": True,
-        "unified_diff": 123,
-    })
+    plan = server._build_turn_submit_phase_plan(
+        "req",
+        {
+            "session_id": session_id,
+            "input": "b4",
+            "requires_approval": True,
+            "unified_diff": 123,
+        },
+    )
     assert plan["parse_error"]["error"]["data"]["reason"] == "diff_must_be_string"
 
 
@@ -109,7 +110,14 @@ def test_wl10967_turn_submit_response_resolution_phase_routes_request_id_policy(
 def test_wl10968_apply_turn_submit_side_effects_fires_started_notifications_before_payload() -> None:
     # @trace WL-10968
     notifications: list[dict[str, object]] = []
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     payload = server._apply_turn_submit_side_effects("session-1", "turn-1", turn, "b4", True, "diff", notifications)
     assert payload is not None
     assert notifications[0]["method"] == "turn/started"
@@ -128,7 +136,8 @@ def test_wl10969_handle_turn_submit_request_with_invalid_session_id_returns_pars
                 "method": "turn/submit",
                 "params": {"session_id": "missing", "input": "b4"},
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     assert response["error"]["code"] == -32001
     assert response["error"]["message"] == "Session not found"

@@ -11,7 +11,6 @@ from fastmcp.server.elicitation import AcceptedElicitation, CancelledElicitation
 from fastmcp.server.lifespan import lifespan
 from fastmcp.server.transforms import PromptsAsTools, ResourcesAsTools
 from fastmcp.tools.tool import ToolResult
-from thegent.mcp import server_optional_tools as _server_optional_tools
 from thegent.cli.commands.impl import (
     ELICIT_CWD_MSG,
     ELICIT_OWNER_MSG,
@@ -620,7 +619,7 @@ def thegent_observe_summary(
 (thegent_ddg_search, thegent_reddit_search, thegent_scrape_url, thegent_deep_research, thegent_suggest_prompt) = (
     _server_research_tools.register_research_tools(mcp=mcp, server_tools_research=_server_tools_research, logger=_log)
 )
-(thegent_web, thegent_queue, thegent_session, thegent_workstream) = (
+(thegent_web, thegent_queue, thegent_session, thegent_workstream, thegent_entity, thegent_worktree) = (
     _server_consolidated_tools.register_consolidated_tools(mcp=mcp, logger=_log)
 )
 (thegent_handoff_list, thegent_handoff_show, thegent_handoff_confirm, thegent_queue_list, thegent_queue_claim) = (

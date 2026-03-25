@@ -88,7 +88,7 @@ def test_legacy_records_load_with_default_retry_metadata(tmp_path) -> None:
         "resolved_at": None,
     }
     queue_path = tmp_path / "legacy.jsonl"
-    queue_path.write_text(json.dumps(payload).decode().decode() + "\n", encoding="utf-8")
+    queue_path.write_text(json.dumps(payload).decode() + "\n", encoding="utf-8")
 
     queue = RemoteWriteDeadLetterQueue(queue_path)
     entries = queue.load()

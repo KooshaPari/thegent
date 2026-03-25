@@ -64,4 +64,6 @@ def test_workstream_sync_plan_incorporate_forwards_cd_and_dry_run() -> None:
     }
     assert _extract_json_content(result.content) == result.structured_content
     assert result.meta and result.meta["execution_time_ms"] >= 0
+
+
 # noqa: PT018

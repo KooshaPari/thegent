@@ -36,6 +36,7 @@ from .resilience import (
     FreshnessValidator,
     HandoffManager,
     InterruptionTracker,
+    OverrideRegistry,
     ReplayManager,
 )
 from .concurrency import (
@@ -48,7 +49,6 @@ from .policy import (
     Auditor,
     EvidenceLinter,
     KPIManager,
-    OverrideRegistry,
     PolicyEngine,
     ProviderScorer,
     TrustBoundaryValidator,
@@ -115,6 +115,7 @@ __all__ = [
 
 # Lazy-load flat module for backward compatibility only
 _flat = None
+
 
 def _get_flat():
     global _flat

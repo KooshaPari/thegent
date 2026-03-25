@@ -58,10 +58,10 @@ def test_wl6811_sync_loop_collects_real_state_and_validates_payload(tmp_path: Pa
     loop = SyncLoop(registry=_Registry(), sync_dir=tmp_path / "sync")
     (tmp_path / ".thegent").mkdir()
     (tmp_path / ".thegent" / "team_registry.json").write_text(
-        json.dumps({"teams": [{"id": "a", "active": True}, {"id": "b", "active": False}]}).decode().decode(), encoding="utf-8"
+        json.dumps({"teams": [{"id": "a", "active": True}, {"id": "b", "active": False}]}).decode(), encoding="utf-8"
     )
     (tmp_path / ".thegent" / "handoff_registry.jsonl").write_text(
-        json.dumps({"snapshot_id": "s1"}).decode().decode() + "\n", encoding="utf-8"
+        json.dumps({"snapshot_id": "s1"}).decode() + "\n", encoding="utf-8"
     )
 
     state = loop._collect_local_state(tmp_path)

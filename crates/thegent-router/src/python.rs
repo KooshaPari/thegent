@@ -8,7 +8,7 @@
 //! - RouterMetrics: Metrics from routing decisions
 
 use crate::risk::{ComplexityLevel, RiskCalculator, RiskFactors};
-use crate::router::{ParetoRouter, RouterConfig, RouterMetrics, RoutingDecision, RoutingMode};
+use crate::router::{ParetoRouter, RouterConfig, RoutingMode};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
@@ -284,10 +284,10 @@ impl PyParetoRouter {
                 "low_threshold must be less than high_threshold",
             ));
         }
-        if low_threshold < 0.0 || low_threshold > 1.0 {
+        if !(0.0..=1.0).contains(&low_threshold) {
             return Err(PyValueError::new_err("low_threshold must be in [0.0, 1.0]"));
         }
-        if high_threshold < 0.0 || high_threshold > 1.0 {
+        if !(0.0..=1.0).contains(&high_threshold) {
             return Err(PyValueError::new_err(
                 "high_threshold must be in [0.0, 1.0]",
             ));
@@ -315,10 +315,10 @@ impl PyParetoRouter {
                 "low_threshold must be less than high_threshold",
             ));
         }
-        if low_threshold < 0.0 || low_threshold > 1.0 {
+        if !(0.0..=1.0).contains(&low_threshold) {
             return Err(PyValueError::new_err("low_threshold must be in [0.0, 1.0]"));
         }
-        if high_threshold < 0.0 || high_threshold > 1.0 {
+        if !(0.0..=1.0).contains(&high_threshold) {
             return Err(PyValueError::new_err(
                 "high_threshold must be in [0.0, 1.0]",
             ));

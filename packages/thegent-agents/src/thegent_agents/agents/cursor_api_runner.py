@@ -63,6 +63,7 @@ def _check_cursor_api_reachable(
     except Exception as e:
         # Network/connection errors are expected during probing; treat as unreachable.
         import logging
+
         logging.getLogger(__name__).debug(
             "cursor_api_probe_failed url=%s error_type=%s error=%s", url, type(e).__name__, e
         )
@@ -80,9 +81,7 @@ def _is_cursor_api_reachable(base_url: str, token: str, timeout: float = 3.0) ->
     cached = _reachability_cache.get(cache_key)
     if cached is not None:
         return cached
-    result, is_connection_error, status_code = _check_cursor_api_reachable(
-        base_url, token, timeout
-    )
+    result, is_connection_error, status_code = _check_cursor_api_reachable(base_url, token, timeout)
     # Reset cache entry on connection failure to allow retry
     if is_connection_error:
         _reachability_cache.pop(cache_key, None)
@@ -165,13 +164,10 @@ class CursorApiRunner(AgentRunner):
         if not _is_cursor_api_reachable(base_url, token):
             status_code = _reachability_status_cache.get(cache_key)
             if status_code in (401, 403):
-                message = (
-                    "cursor-api auth failed (HTTP 401/403). Verify THGENT_CURSOR_API_TOKEN and token scope."
-                )
+                message = "cursor-api auth failed (HTTP 401/403). Verify THGENT_CURSOR_API_TOKEN and token scope."
             elif status_code:
                 message = (
-                    f"cursor-api returned HTTP {status_code}. Check endpoint at "
-                    f"{base_url} and THGENT_CURSOR_API_TOKEN."
+                    f"cursor-api returned HTTP {status_code}. Check endpoint at {base_url} and THGENT_CURSOR_API_TOKEN."
                 )
             else:
                 message = (

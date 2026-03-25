@@ -52,7 +52,7 @@ def _make_plan(goal: str = "test goal") -> OrchestrationPlan:
 def _make_jsonl_usage(prompt: int, completion: int, extra_text: str = "") -> str:
     """Build a JSONL stdout string with an OpenAI-style usage object."""
     obj = {"usage": {"prompt_tokens": prompt, "completion_tokens": completion}}
-    lines = [json.dumps(obj).decode().decode()]
+    lines = [json.dumps(obj).decode()]
     if extra_text:
         lines.append(extra_text)
     return "\n".join(lines)
@@ -61,7 +61,7 @@ def _make_jsonl_usage(prompt: int, completion: int, extra_text: str = "") -> str
 def _make_jsonl_total(total: int) -> str:
     """Build a JSONL stdout string with a total_tokens usage object."""
     obj = {"usage": {"total_tokens": total}}
-    return json.dumps(obj).decode().decode()
+    return json.dumps(obj).decode()
 
 
 # ---------------------------------------------------------------------------
@@ -294,37 +294,37 @@ class TestParseTokensFromResult:
 
     def test_parse_no_usage_key_returns_zero(self) -> None:
         """JSON without 'usage' key must return 0. # @trace WL-086"""
-        stdout = json.dumps({"model": "gpt-5", "choices": []}).decode().decode()
+        stdout = json.dumps({"model": "gpt-5", "choices": []}).decode()
         assert BudgetTracker.parse_tokens_from_result(stdout) == 0
 
     def test_parse_multiple_usage_lines_summed(self) -> None:
         """Multiple usage lines must be summed together. # @trace WL-086"""
-        line1 = json.dumps({"usage": {"prompt_tokens": 80, "completion_tokens": 20}}).decode().decode()
-        line2 = json.dumps({"usage": {"prompt_tokens": 40, "completion_tokens": 10}}).decode().decode()
+        line1 = json.dumps({"usage": {"prompt_tokens": 80, "completion_tokens": 20}}).decode()
+        line2 = json.dumps({"usage": {"prompt_tokens": 40, "completion_tokens": 10}}).decode()
         stdout = f"{line1}\n{line2}"
         assert BudgetTracker.parse_tokens_from_result(stdout) == 150
 
     def test_parse_mixed_json_and_plain_text(self) -> None:
         """Plain text lines interspersed with JSON must not cause errors. # @trace WL-086"""
-        usage_line = json.dumps({"usage": {"prompt_tokens": 70, "completion_tokens": 30}}).decode().decode()
+        usage_line = json.dumps({"usage": {"prompt_tokens": 70, "completion_tokens": 30}}).decode()
         stdout = f"Starting agent...\n{usage_line}\nDone."
         assert BudgetTracker.parse_tokens_from_result(stdout) == 100
 
     def test_parse_malformed_json_skipped(self) -> None:
         """Malformed JSON lines must be silently skipped. # @trace WL-086"""
         bad_line = "{this is not valid json}"
-        good_line = json.dumps({"usage": {"prompt_tokens": 50, "completion_tokens": 25}}).decode().decode()
+        good_line = json.dumps({"usage": {"prompt_tokens": 50, "completion_tokens": 25}}).decode()
         stdout = f"{bad_line}\n{good_line}"
         assert BudgetTracker.parse_tokens_from_result(stdout) == 75
 
     def test_parse_usage_not_dict_returns_zero(self) -> None:
         """When 'usage' is not a dict, it must be skipped. # @trace WL-086"""
-        stdout = json.dumps({"usage": 42}).decode().decode()
+        stdout = json.dumps({"usage": 42}).decode()
         assert BudgetTracker.parse_tokens_from_result(stdout) == 0
 
     def test_parse_zero_tokens_in_usage(self) -> None:
         """Usage object with all-zero tokens must return 0. # @trace WL-086"""
-        stdout = json.dumps({"usage": {"prompt_tokens": 0, "completion_tokens": 0}}).decode().decode()
+        stdout = json.dumps({"usage": {"prompt_tokens": 0, "completion_tokens": 0}}).decode()
         assert BudgetTracker.parse_tokens_from_result(stdout) == 0
 
 

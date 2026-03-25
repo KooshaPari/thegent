@@ -27,10 +27,6 @@ def _get_health_payload_schema_version() -> str:
     return _health_report_impl().HEALTH_PAYLOAD_SCHEMA_VERSION
 
 
-def _get_health_payload_types() -> list[str]:
-    return _health_report_impl().HEALTH_PAYLOAD_TYPES
-
-
 def _resolve_health_policy(policy_profile: str | None, strict: bool, min_healthy_ratio: float) -> dict[str, Any]:
     return _health_report_impl()._resolve_health_policy(
         policy_profile=policy_profile, strict=strict, min_healthy_ratio=min_healthy_ratio
@@ -53,16 +49,8 @@ def _append_health_snapshot(payload: dict[str, Any], scope_key: dict[str, Any]) 
     return _health_report_impl()._append_health_snapshot(payload, scope_key)
 
 
-def _hash_health_payload(payload: dict[str, Any]) -> str:
+def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     return _health_report_impl()._hash_health_payload(payload)
-
-
-def _health_snapshot_log_path():
-    return _health_report_impl()._health_snapshot_log_path()
-
-
-def _health_snapshot_max_lines() -> int:
-    return _health_report_impl()._health_snapshot_max_lines()
 
 
 def session_contract_health_report_impl(
@@ -276,5 +264,3 @@ def session_contract_health_report_impl(
     payload["payload_signature"] = _hash_health_payload(payload)
     _append_health_snapshot(payload, scope_key)
     return payload
-
-

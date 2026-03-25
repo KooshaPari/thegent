@@ -41,7 +41,7 @@ def test_migrates_jsonl_registry_into_sqlite(tmp_path: Path) -> None:
             "last_active": "2026-02-20T00:10:00+00:00",
         },
     ]
-    jsonl_path.write_text("\n".join(json.dumps(r).decode().decode() for r in rows) + "\n", encoding="utf-8")
+    jsonl_path.write_text("\n".join(json.dumps(r).decode() for r in rows) + "\n", encoding="utf-8")
 
     registry = ProjectRegistry(global_config_dir=tmp_path)
     projects = registry.list_projects()

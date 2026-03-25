@@ -687,7 +687,9 @@ class AuditExporter:
 
         return export
 
-    def reconcile_export(self, *, expected_count: int, since_days: int | None = None, kind_filter: list | None = None) -> dict:
+    def reconcile_export(
+        self, *, expected_count: int, since_days: int | None = None, kind_filter: list | None = None
+    ) -> dict:
         """Validate exported record count against an expected value."""
         exported = self.export_json(since_days=since_days, kind_filter=kind_filter)
         actual = int(exported["record_count"])

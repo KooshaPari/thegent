@@ -54,6 +54,7 @@ def main() -> int:
         raise RuntimeError(f"THEGENT_EVENT_BUS is not 'nats', got: {event_bus}")
 
     import asyncio
+
     result = asyncio.run(_check_nats())
 
     print(json.dumps(result).decode().decode())

@@ -23,9 +23,6 @@ import sys
 from enum import StrEnum
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    pass
-
 
 class Platform(StrEnum):
     """Enumeration of supported host platforms."""

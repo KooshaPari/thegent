@@ -3,11 +3,7 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn run(
-    _harness_home: &Path,
     real_cmd: &Path,
-    _cmd_name: &str,
-    _priority: &str,
-    _causal_domain: &str,
     args: &[&str],
 ) -> Result<i32, String> {
     // TODO: Causal ordering

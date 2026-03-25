@@ -77,7 +77,7 @@ class IPCMesh:
                     except PermissionError:
                         return False
                 return False
-            except (OSError, ValueError, json.JSONDecodeError, KeyError):
+            except OSError, ValueError, json.JSONDecodeError, KeyError:
                 self.release_atomic_lock(lock_name)
                 return self.acquire_atomic_lock(lock_name, ttl)
             return False
@@ -288,7 +288,7 @@ class IntentBroadcaster:
                 payload = json.loads(entry.read_text(encoding="utf-8"))
                 if agent_id is None or payload.get("agent_id") == agent_id:
                     results.append(payload)
-            except (OSError, json.JSONDecodeError):
+            except OSError, json.JSONDecodeError:
                 continue
         return results
 

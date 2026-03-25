@@ -53,7 +53,7 @@ def test_gate_fails_on_fail_status(tmp_path: Path) -> None:
     policy = tmp_path / "policy.json"
     _write_policy(policy)
     summary.write_text(
-        json.dumps({"overall_status": "fail", "components": []}).decode().decode(),
+        json.dumps({"overall_status": "fail", "components": []}).decode(),
         encoding="utf-8",
     )
     proc = _run(summary, policy=policy, mode="pr")
@@ -65,7 +65,7 @@ def test_gate_warn_policy_differs_between_modes(tmp_path: Path) -> None:
     policy = tmp_path / "policy.json"
     _write_policy(policy)
     summary.write_text(
-        json.dumps({"overall_status": "warn", "components": [{"name": "a"}]}).decode().decode(),
+        json.dumps({"overall_status": "warn", "components": [{"name": "a"}]}).decode(),
         encoding="utf-8",
     )
     proc_pr = _run(summary, policy=policy, mode="pr")

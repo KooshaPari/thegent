@@ -6,45 +6,22 @@ This module handles policy configuration, contract management, drift detection, 
 # @trace WL-124
 from __future__ import annotations
 
-import hashlib
 import json
-from thegent.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
 from pathlib import Path
 
-import typer
-
-from rich.panel import Panel
 from rich.table import Table
-
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
-    _bootstrap_metric_contracts,
-    _get_health_targets_path,
-    _HEALTH_TARGETS_TEMPLATE,
-    _load_artifact,
     _normalize_output_format,
-    _resolve_cwd,
     console,
 )
-from thegent.cli.commands.governance_health_helpers import (
-    build_cycle_json_output,
-    build_cycle_result_table,
-    build_health_dimensions_table,
-    build_health_json_output,
-    build_health_summary_table,
-    count_findings,
-    extract_dimension_values,
-    resolve_band_value,
-)
-
+from thegent.observability.egress import EgressEvent, SIEMEgress
 
 
 def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
     """Test SIEM event egress (WP-15001)."""
-    from thegent.observability.egress import EgressEvent, SIEMEgress
-
     egress = SIEMEgress(endpoint_url="http://simulated-siem.internal")
     event = EgressEvent(
         id=str(uuid.uuid4()),
@@ -185,33 +162,6 @@ def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard
     color = "green" if result == "allow" else "yellow" if result == "warn" else "red"
     console.print(f"Policy Result: [{color}]{result.upper()}[/{color}]")
     console.print(f"Reason: {reason}")
-
-
-
-
-__all__ = [
-    "compliance_plugin_check_cmd",
-    "compliance_redact_cmd",
-    "compliance_siem_test_cmd",
-    "contracts_conformance_cmd",
-    "contracts_registry_cmd",
-    "drift_cmd",
-    "govern_configure_cmd",
-    "govern_cost_cmd",
-    "govern_go_cycle_cmd",
-    "govern_go_health_cmd",
-    "govern_go_status_cmd",
-    "govern_go_watch_cmd",
-    "guardrails_check_cmd",
-    "guardrails_show_cmd",
-    "migration_cmd",
-    "policy_check_cmd",
-    "policy_purge_cmd",
-    "policy_show_cmd",
-    "signatures_list_cmd",
-    "signatures_verify_cmd",
-    "trust_status_cmd",
-]
 
 
 __all__ = [

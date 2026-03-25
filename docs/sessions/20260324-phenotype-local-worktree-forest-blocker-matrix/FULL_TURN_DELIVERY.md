@@ -52,13 +52,11 @@ gh pr list --repo <owner>/<repo> --state merged --limit 5
 
 ## Snapshot — `KooshaPari/thegent` (2026-03-24)
 
-| PR | Title | Base | Status |
-|----|--------|------|--------|
-| [#549](https://github.com/KooshaPari/thegent/pull/549) | Migrate thegent-cache to phenotype-infrakit cache-adapter | `main` | **Merged** to `main` — follow-up: keep **`main`** green when Actions billing allows. |
+| PR | Title | Base | Mergeable | CI |
+|----|--------|------|------------|-----|
+| [#549](https://github.com/KooshaPari/thegent/pull/549) | Migrate thegent-cache to phenotype-infrakit cache-adapter | `main` | MERGEABLE | **Red** — multiple failing workflows (Build wheels, Lint & Test, Policy Gate, etc.) |
 
-**Open docs PRs (rebased recovery):** [#551](https://github.com/KooshaPari/thegent/pull/551), [#553](https://github.com/KooshaPari/thegent/pull/553), [#554](https://github.com/KooshaPari/thegent/pull/554) — if GitHub shows conflicts, prefer branch **`docs/session-docs-recovery`** (single squashed session pack) or merge after rebase.
-
-**Action:** If CI is **red with real failures**, **do not merge** until fixed (org **CI completeness** policy). If jobs **never start** due to **billing/quota**, see **Billing / Actions quota** above — log an exception in **`05_KNOWN_ISSUES.md`**, verify locally, then merge with **`gh pr merge --admin`** only for that infrastructure case.
+**Action:** **Do not merge** until CI is green and review threads resolved (org **CI completeness** policy). Next turn should **fix-forward** on `feat/migrate-cache` or rebase and re-run checks.
 
 ## Blockers — local canonical trees
 

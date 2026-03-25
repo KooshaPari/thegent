@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import contextlib
 import orjson as json
+from importlib import import_module
 import logging
 import time
 import uuid
@@ -21,10 +22,32 @@ from pathlib import Path
 from threading import Lock
 from typing import TYPE_CHECKING, Any, cast
 
-import diskcache
-
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+
+class _DiskCacheProtocol:
+    """Minimal cache interface used by McpStorage."""
+
+    def __init__(self, directory: str) -> None: ...
+    def get(self, key: str, default: Any = None) -> Any: ...
+    def set(self, key: str, value: Any, expire: float | None = None) -> bool: ...
+    def delete(self, key: str) -> bool: ...
+    def iterkeys(self) -> Any: ...
+    def clear(self) -> int: ...
+    def close(self) -> None: ...
+
+
+class _DiskCacheModuleProtocol:
+    """Runtime import surface for the diskcache module."""
+
+    Cache: type[_DiskCacheProtocol]
+
+
+def _load_diskcache() -> _DiskCacheModuleProtocol:
+    """Import diskcache at runtime and fail loudly if it is unavailable."""
+    return cast("_DiskCacheModuleProtocol", import_module("diskcache"))
+
 
 _log = logging.getLogger(__name__)
 
@@ -70,7 +93,8 @@ class McpStorage:
         # diskcache.Cache is used purely as a durable key-expiry store.
         # Values are pre-serialised to JSON strings, so diskcache only stores
         # plain str objects — no unsafe serialisation of user-supplied data occurs.
-        self._cache: diskcache.Cache = diskcache.Cache(str(base))
+        diskcache_module = _load_diskcache()
+        self._cache: _DiskCacheProtocol = diskcache_module.Cache(str(base))
 
     # ------------------------------------------------------------------
     # Public API
@@ -86,7 +110,7 @@ class McpStorage:
         # Values are stored as JSON strings; decode on read.
         try:
             return json.loads(cast("str", raw))
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             _log.warning("McpStorage: corrupt value for key %r; returning default", key)
             return default
 
@@ -310,9 +334,13 @@ def get_mcp_event_store() -> McpEventStore:
     """Return the process-level McpEventStore singleton (thread-safe)."""
     return _registry.get_event_store()
 
+
 def _reset_singletons_for_testing(
     storage: McpStorage | None = None,
     event_store: McpEventStore | None = None,
 ) -> None:
     """Reset singletons for testing — replaces global instances."""
     _registry.reset(storage=storage, event_store=event_store)
+
+
+_TEST_ONLY_EXPORTS = (_reset_singletons_for_testing,)

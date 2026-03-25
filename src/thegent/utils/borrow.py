@@ -9,7 +9,7 @@ thegent MCP server instance.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -503,7 +503,7 @@ class ToolBorrower:
         existing.setdefault("mcpServers", {})
         existing["mcpServers"].update(server_config)
 
-        target.write_text(json.dumps(existing, indent=2, sort_keys=True).decode(), encoding="utf-8")
+        target.write_text(json.dumps(existing, indent=2, sort_keys=True), encoding="utf-8")
         _log.info("Wrote mcp.json to %s", target)
         return target
 

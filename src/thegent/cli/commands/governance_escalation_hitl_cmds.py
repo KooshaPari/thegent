@@ -8,7 +8,6 @@ approval workflows for policy enforcement.
 from __future__ import annotations
 
 import sys
-from typing import Any
 
 import orjson as json
 import typer

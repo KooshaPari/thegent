@@ -63,6 +63,7 @@ async def _check_http() -> dict:
 
     try:
         import urllib.request
+
         request = urllib.request.Request(url)
         with urllib.request.urlopen(request, timeout=5) as response:
             status = response.getcode()
@@ -76,6 +77,7 @@ async def _check_http() -> dict:
 
 def main() -> int:
     import asyncio
+
     result = asyncio.run(_check_lmcache())
 
     print(json.dumps(result).decode().decode())

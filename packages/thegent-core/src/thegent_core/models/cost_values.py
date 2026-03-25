@@ -46,10 +46,12 @@ def _get_proxy_metrics_port() -> ProxyMetricsPort:
             from thegent_agents.agents.cliproxy_manager import (  # type: ignore[import-not-found]
                 ClipProxyMetricsPort,
             )
+
             _proxy_metrics_port = ClipProxyMetricsPort()
         except Exception:
             pass  # Keep using NullProxyMetricsPort
     return _proxy_metrics_port
+
 
 # Fallback $/1k (input, output) when proxy unreachable. From _GLM_OFFER_COST and catalog.
 _PROVIDER_FALLBACK: dict[str, tuple[float, float]] = {

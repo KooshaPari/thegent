@@ -5,7 +5,7 @@ Manages the processing queue, tracks progress, and provides queue operations
 for iterating through documents by month and location.
 """
 
-import orjson as json
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -81,7 +81,7 @@ class QueueManager:
                 with open(self.state_file) as f:
                     data = json.load(f)
                     self.state = QueueState.from_dict(data)
-            except (json.JSONDecodeError, KeyError):
+            except json.JSONDecodeError, KeyError:
                 self.state = QueueState()
         else:
             self.state = QueueState()

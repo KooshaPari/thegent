@@ -73,7 +73,7 @@ def sweep_impl(
     queue = EscalationQueue(session_dir)
     past_sla_items = queue.list_pending(past_sla_only=True, limit=100)
 
-    if past_sla_items and settings.escalation_sla_breach_alert:
+    if past_sla_items and bool(getattr(settings, "escalation_sla_breach_alert", False)):
         import logging
 
         _sweep_log = logging.getLogger(__name__)

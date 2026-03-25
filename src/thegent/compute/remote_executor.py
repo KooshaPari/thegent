@@ -67,19 +67,14 @@ def _load_nodes_from_settings() -> list[str]:
         Non-empty stripped tokens from the comma-separated setting, or an
         empty list when unset or blank.
     """
-    from thegent.config import ThegentSettings
-
-    settings = ThegentSettings()
-    raw = settings.remote_nodes or ""
+    raw = os.environ.get("THGENT_REMOTE_NODES", "")
     return [n.strip() for n in raw.split(",") if n.strip()]
 
 
 def _load_ssh_user_from_settings() -> str | None:
     """Return remote SSH user from settings or None if unset."""
-    from thegent.config import ThegentSettings
-
-    settings = ThegentSettings()
-    return settings.remote_ssh_user
+    raw = os.environ.get("THGENT_REMOTE_SSH_USER", "").strip()
+    return raw or None
 
 
 # Aliases expected by tests
@@ -291,5 +286,5 @@ class RemoteExecutor:
                 check=False,
             )
             return result.returncode == 0
-        except (subprocess.TimeoutExpired, OSError):
+        except subprocess.TimeoutExpired, OSError:
             return False

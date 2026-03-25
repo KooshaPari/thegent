@@ -33,7 +33,7 @@ jobs:
         run: cargo clippy -p thegent-hooks -- -D warnings
         
       - name: Run cargo audit
-        run: cargo audit -p thegent-hooks || true
+        run: cargo audit -p thegent-hooks
 
   test-macos:
     name: Test Hooks (macOS)
