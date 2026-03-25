@@ -3,12 +3,30 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from importlib import import_module
 from pathlib import Path
-from typing import Any
 
 import typer
 
+from thegent.phench import (
+    add_repo,
+    add_module_to_target,
+    audit_shared_modules,
+    scan_shared_modules_across_repos,
+    get_env_profile,
+    init_target,
+    materialize_module_candidate_manifest,
+    list_targets,
+    lock_target,
+    materialize_target,
+    run_env_doctor_for_target,
+    run_target,
+    set_env_profile,
+    sync_target,
+    target_status,
+    target_timeline,
+)
+
+console = Console()
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
 target_app = typer.Typer(help="Manage project runtime targets.")
 repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
@@ -35,7 +53,7 @@ def target_init_cmd(
 ) -> None:
     if mode not in {"repo", "stack"}:
         raise typer.BadParameter("mode must be one of: repo, stack")
-    lock = _phench_attr("init_target")(name, mode=mode)
+    lock = init_target(name, mode=mode)  # type: ignore[arg-type]
     console.print_json(
         json.dumps({"target": lock.target_name, "mode": lock.mode, "lock_hash": lock.lock_hash}).decode()
     )
@@ -68,7 +86,7 @@ def target_add_module_cmd(
     selected_ref: str | None = typer.Option(None, "--ref", help="Override selected ref for all module repos."),
     exclude: list[str] = typer.Option([], "--exclude", help="Exact repo IDs to exclude (no glob patterns)."),
 ) -> None:
-    lock = _phench_attr("add_module_to_target")(
+    lock = add_module_to_target(
         name,
         module_name=module,
         selected_ref=selected_ref,
@@ -260,6 +278,11 @@ def scan_shared_repos_cmd(
         "--candidate-name-regex",
         help="Optional regex filter for module candidates (applies when candidates are included).",
     ),
+    candidates: bool = typer.Option(
+        False,
+        "--candidates",
+        help="Include module_candidates in output (alias to enable explicit candidate materialization suggestions).",
+    ),
     omit_candidates: bool = typer.Option(
         False,
         "--omit-candidates",
@@ -270,14 +293,17 @@ def scan_shared_repos_cmd(
         raise typer.BadParameter("min-repos must be >= 2")
     if repos_root_mode not in {"repos", "worktrees"}:
         raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
+    if candidates and omit_candidates:
+        raise typer.BadParameter("cannot set both --candidates and --omit-candidates")
 
     try:
-        state = _phench_attr("scan_shared_modules_across_repos")(
+        state = scan_shared_modules_across_repos(
             repos_root=None if repos_root is None else Path(repos_root),
             exclude_repos={value.strip() for value in exclude},
             min_repo_count=min_repo_count,
             repos_root_mode=repos_root_mode,
             candidate_name_regex=candidate_name_regex,
+            candidates=candidates,
             omit_candidates=omit_candidates,
         )
     except ValueError as exc:
@@ -327,7 +353,7 @@ def materialize_module_manifest_cmd(
         raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
 
     try:
-        payload = _phench_attr("materialize_module_candidate_manifest")(
+        payload = materialize_module_candidate_manifest(
             module,
             repos_root=None if repos_root is None else Path(repos_root),
             repos_root_mode=repos_root_mode,

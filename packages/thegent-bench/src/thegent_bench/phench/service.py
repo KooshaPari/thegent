@@ -237,6 +237,7 @@ def _read_index_payload(path: Path) -> list[dict[str, Any]]:
 
 
 def _write_json_lines(path: Path, payload: dict[str, Any]) -> None:
+    _ensure_non_symlink_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(payload) + "\n")
@@ -276,9 +277,8 @@ def _iter_repo_python_files(repo_path: Path) -> list[Path]:
     return files
 
 
-def _extract_imports_from_python(code: str) -> tuple[set[str], set[str]]:
+def _extract_imports_from_python(code: str) -> set[str]:
     imports: set[str] = set()
-    relative_imports: set[str] = set()
     try:
         tree = ast.parse(code)
     except SyntaxError as exc:
@@ -295,7 +295,15 @@ def _extract_imports_from_python(code: str) -> tuple[set[str], set[str]]:
                 continue
             if node.module:
                 imports.add(node.module)
-    return imports, relative_imports
+    return imports
+
+
+def _ensure_non_symlink_path(path: Path) -> None:
+    current = path
+    while current != current.parent:
+        if current.exists() and current.is_symlink():
+            raise ValueError(f"path component is a symlink: {current}")
+        current = current.parent
 
 
 def _resolve_candidate_dependency(
@@ -326,7 +334,7 @@ def _find_repo_module_dependencies(
 
     for py_file in _iter_repo_python_files(repo_path):
         try:
-            imports, _relative_imports = _extract_imports_from_python(py_file.read_text(encoding="utf-8"))
+            imports = _extract_imports_from_python(py_file.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             warnings.append(
                 {
@@ -421,6 +429,7 @@ def _read_json_dict(path: Path) -> dict[str, Any]:
 
 
 def _write_manifest(path: Path, payload: dict[str, Any]) -> None:
+    _ensure_non_symlink_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -438,6 +447,8 @@ def materialize_scan_candidate_manifest(
         raise ValueError("candidate module_name cannot be empty")
     if not isinstance(repo_ids, list):
         raise ValueError("candidate repo_ids must be a list")
+    if not isinstance(module_name, str) or "/" in module_name or "\\" in module_name or ".." in module_name:
+        raise ValueError(f"invalid module_name: {module_name}")
 
     manifest_path = _candidate_manifest_path(output_dir, module_name)
     manifest_before: dict[str, Any] | None = None
@@ -482,6 +493,10 @@ def materialize_scan_candidate_manifest(
     index_summary_payload = _build_candidate_manifest_index_summary(next_index if update_index else existing_index)
 
     audit_path = output_dir / SCAN_SHARED_REPOS_MANIFEST_AUDIT_FILENAME
+    _ensure_non_symlink_path(manifest_path)
+    _ensure_non_symlink_path(index_path)
+    _ensure_non_symlink_path(index_summary_path)
+    _ensure_non_symlink_path(audit_path)
     audit_entry = {
         "event": "manifest-materialization",
         "timestamp": utc_now_iso(),
@@ -514,6 +529,16 @@ def materialize_scan_candidate_manifest(
     }
 
     return result
+
+
+def _resolve_candidate_inclusion(
+    *,
+    candidates: bool,
+    omit_candidates: bool,
+) -> bool:
+    if candidates and omit_candidates:
+        raise ValueError("cannot set both --candidates and --omit-candidates")
+    return bool(candidates) and not omit_candidates
 
 
 def _repo_id_from_path(repo_path: Path) -> str:
@@ -684,6 +709,7 @@ def scan_shared_modules_across_repos(
     min_repo_count: int = 2,
     repos_root_mode: str | None = None,
     candidate_name_regex: str | None = None,
+    candidates: bool = False,
     omit_candidates: bool = False,
 ) -> dict[str, Any]:
     if min_repo_count < 2:
@@ -740,11 +766,15 @@ def scan_shared_modules_across_repos(
             _append_warning(warnings, f"{dep_warning['repo_file']}: {dep_warning['reason']}")
 
     shared_modules = _collect_shared_modules(repo_modules, min_repo_count=min_repo_count)
+    include_candidates = _resolve_candidate_inclusion(
+        candidates=candidates,
+        omit_candidates=omit_candidates,
+    )
     candidates = (
-        [] if omit_candidates else build_scan_candidates(shared_modules, depends_on_by_module=repo_dependencies)
+        [] if not include_candidates else build_scan_candidates(shared_modules, depends_on_by_module=repo_dependencies)
     )
     if compiled_name_regex is not None:
-        if omit_candidates:
+        if not include_candidates:
             _append_warning(warnings, "candidate-name-regex ignored when candidates are omitted")
         else:
             candidates = [item for item in candidates if compiled_name_regex.search(str(item.get("module", "")))]
@@ -1129,7 +1159,7 @@ def _repo_run_overrides(
     command_name: str | None,
     runner: str | None,
     env_profile: str | None,
-) -> tuple[str | None, str | None, dict[str, str]]:
+) -> tuple[str | None, str | None, dict[str, str] | None]:
     repo_id = runtime_item.get("repo_id")
     if not isinstance(repo_id, str) or not repo_id.strip():
         raise ValueError("invalid runtime materialization entry: missing repo_id")

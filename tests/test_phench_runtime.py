@@ -1666,6 +1666,7 @@ def test_scan_shared_modules_across_repos_keeps_recommendations_when_omit_candid
         repos_root=repos_root,
         min_repo_count=2,
         candidate_name_regex="^alp.*",
+        candidates=True,
         omit_candidates=False,
     )
     assert [item["module"] for item in filtered["module_candidates"]] == ["alpha"]
@@ -1824,16 +1825,7 @@ def test_scan_shared_repos_cli_candidates_now_sorted_by_overlap_and_schema(tmp_p
         "excluded_repos": ["4sgm", "parpour"],
         "examined_repos": ["repo-a", "repo-b", "repo-c", "repo-d"],
         "min_repo_count": 2,
-    }
-    monkeypatch.setattr(
-        phench_cli,
-        "scan_shared_modules_across_repos",
-        lambda **kwargs: payload,
-    )
-    monkeypatch.setattr(
-        phench_cli,
-        "build_scan_candidates",
-        lambda shared_modules, module_prefix="shared-module": [
+        "module_candidates": [
             {
                 "module": "beta",
                 "module_name": "shared-module-beta-3",
@@ -1856,6 +1848,11 @@ def test_scan_shared_repos_cli_candidates_now_sorted_by_overlap_and_schema(tmp_p
                 "manifest_template": {},
             },
         ],
+    }
+    monkeypatch.setattr(
+        phench_cli,
+        "scan_shared_modules_across_repos",
+        lambda **kwargs: payload,
     )
     result = CliRunner().invoke(
         phench_cli.app,
@@ -1886,6 +1883,15 @@ def test_scan_shared_modules_cli_command(tmp_path: Path, monkeypatch) -> None:
             "excluded_repos": ["4sgm", "parpour"],
             "examined_repos": ["repo-a", "repo-b"],
             "min_repo_count": 2,
+            "module_candidates": [
+                {
+                    "module": "sharedpkg",
+                    "module_name": "shared-module-sharedpkg-2",
+                    "repo_ids": ["repo-a", "repo-b"],
+                    "repo_count": 2,
+                    "manifest_template": {},
+                },
+            ],
         },
     )
 
@@ -2009,13 +2015,13 @@ def test_phench_cli_scan_shared_repos_accepts_regex_and_omit_candidates(
             "--omit-candidates",
             "--candidate-name-regex",
             "^alpha$",
-            "--candidates",
         ],
     )
     assert result.exit_code == 0
     output = json.loads(result.output)
     assert output["module_candidates"] == []
     assert captured["omit_candidates"] is True
+    assert captured["candidates"] is False
     assert captured["candidate_name_regex"] == "^alpha$"
 
 

@@ -9,6 +9,7 @@ Also provides the SmartMerger class-based API for integration with WorktreePool
 
 from __future__ import annotations
 
+import os
 import contextlib
 import shutil
 import subprocess
@@ -411,7 +412,7 @@ class SmartMerger:
 
         @trace FR-MESH-007
         """
-        # Determine the current branch in the worktree
+        # Determine the current branch in the worktree.
         try:
             branch_result = shim_run(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
@@ -421,11 +422,67 @@ class SmartMerger:
                 check=False,
                 timeout=self._config.timeout_s,
             )
+            if branch_result.returncode != 0:
+                return MergeResult(success=False, output="Failed to resolve worktree branch")
             worktree_branch = branch_result.stdout.strip()
-        except ((subprocess.TimeoutExpired, FileNotFoundError) as exc):
+            if not worktree_branch:
+                return MergeResult(success=False, output="Worktree branch is empty")
+
+            git_dir_result = shim_run(
+                ["git", "rev-parse", "--git-dir"],
+                cwd=str(worktree_path),
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=self._config.timeout_s,
+            )
+            if git_dir_result.returncode != 0 or not git_dir_result.stdout.strip():
+                return MergeResult(success=False, output="Failed to resolve git dir for worktree")
+
+            git_dir = Path(git_dir_result.stdout.strip())
+            if not git_dir.is_absolute():
+                git_dir = (worktree_path / git_dir).resolve()
+
+            # Worktree git dirs are typically <repo>/.git/worktrees/<agent-id>.
+            if git_dir.parent.name == "worktrees" and git_dir.parent.parent.parent is not None:
+                project_root = git_dir.parent.parent.parent
+            else:
+                project_root = git_dir.parent
+
+            head_result = shim_run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=str(project_root),
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=self._config.timeout_s,
+            )
+            if head_result.returncode != 0:
+                return MergeResult(success=False, output="Failed to resolve project root branch")
+            original_branch = head_result.stdout.strip()
+        except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
             return MergeResult(success=False, output=str(exc))
 
-        project_root = worktree_path
+        # Ensure merge executes against the resolved target branch.
+        checkout_success = False
+        try:
+            if original_branch != target_branch:
+                checkout_target = shim_run(
+                    ["git", "checkout", target_branch],
+                    cwd=str(project_root),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=self._config.timeout_s,
+                )
+                if checkout_target.returncode != 0:
+                    return MergeResult(
+                        success=False,
+                        output=f"Failed to checkout target branch {target_branch}: {checkout_target.stderr.strip()}",
+                    )
+                checkout_success = True
+        except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
+            return MergeResult(success=False, output=str(exc))
 
         # Set the mergiraf driver in git config if available
         used_mergiraf = False
@@ -479,6 +536,7 @@ class SmartMerger:
                 check=False,
                 timeout=self._config.timeout_s,
             )
+            merged = result.returncode == 0
         except subprocess.TimeoutExpired:
             return MergeResult(
                 success=False,
@@ -487,9 +545,20 @@ class SmartMerger:
             )
         except FileNotFoundError as exc:
             return MergeResult(success=False, output=str(exc), used_mergiraf=used_mergiraf)
+        finally:
+            if checkout_success:
+                with contextlib.suppress(subprocess.TimeoutExpired, FileNotFoundError):
+                    shim_run(
+                        ["git", "checkout", original_branch],
+                        cwd=str(project_root),
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                        timeout=self._config.timeout_s,
+                    )
 
         combined_output = (result.stdout or "") + (result.stderr or "")
-        success = result.returncode == 0
+        success = merged
 
         # Collect conflict file paths from output
         conflicts: list[str] = []
@@ -519,7 +588,9 @@ class SmartMerger:
         from thegent.config import ThegentSettings
 
         settings = ThegentSettings()
-        env_bin = settings.mergiraf_binary
+        env_bin = getattr(settings, "mergiraf_binary", None)
+        if not env_bin:
+            env_bin = os.getenv("THGENT_MERGIRAF_BINARY")
         if env_bin:
             return env_bin
         return shutil.which("mergiraf")
