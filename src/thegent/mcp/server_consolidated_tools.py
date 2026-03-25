@@ -298,7 +298,7 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
         ctx: Any = CurrentContext(),
     ) -> ToolResult:
         """Unified structured worktree governance with script-backed execution."""
-        from thegent.cli.commands.cli_git_worktree_governance import run_worktree_governance_script
+        from thegent.cli.governance.cli_git_worktree_governance import run_worktree_governance_script
 
         _ = ctx
         project_root = Path(root) if root else Path.cwd()
