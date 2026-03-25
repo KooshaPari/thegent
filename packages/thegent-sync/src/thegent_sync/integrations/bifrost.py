@@ -70,10 +70,7 @@ class ClaimsValidator:
 
         # Clean old entries
         if identifier in self._rate_limit_cache:
-            self._rate_limit_cache[identifier] = [
-                t for t in self._rate_limit_cache[identifier]
-                if now - t < window
-            ]
+            self._rate_limit_cache[identifier] = [t for t in self._rate_limit_cache[identifier] if now - t < window]
         else:
             self._rate_limit_cache[identifier] = []
 

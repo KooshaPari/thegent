@@ -55,9 +55,7 @@ class TmuxInjector:
         """Check if session is at a prompt (idle)."""
         try:
             # Capture last few lines of the pane
-            result = shim_run(
-                ["tmux", "capture-pane", "-pt", session_id], capture_output=True, text=True, check=False
-            )
+            result = shim_run(["tmux", "capture-pane", "-pt", session_id], capture_output=True, text=True, check=False)
             output = result.stdout.strip()
             if not output:
                 return False
@@ -86,5 +84,5 @@ class AgentReadinessDetector:
             if proc.status() == psutil.STATUS_RUNNING:
                 return "busy"
             return "unknown"
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             return "error"

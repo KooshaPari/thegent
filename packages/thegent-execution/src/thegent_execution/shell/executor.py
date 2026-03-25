@@ -16,6 +16,7 @@ import os
 @dataclass
 class ShellResult:
     """Result of shell command execution."""
+
     command: str
     exit_code: int
     stdout: str
@@ -38,11 +39,7 @@ class ShellExecutor:
         self._process = None
 
     def run(
-        self,
-        command: str,
-        timeout: Optional[float] = None,
-        cwd: Optional[str] = None,
-        env: Optional[dict] = None
+        self, command: str, timeout: Optional[float] = None, cwd: Optional[str] = None, env: Optional[dict] = None
     ) -> ShellResult:
         """Execute command with retry logic."""
         actual_timeout = self.config.get_timeout(timeout)
@@ -72,13 +69,7 @@ class ShellExecutor:
             last_result.error_message = self._generate_error_message(last_result)
         return last_result
 
-    def _execute_once(
-        self,
-        command: str,
-        timeout: float,
-        cwd: Optional[str],
-        env: Optional[dict]
-    ) -> ShellResult:
+    def _execute_once(self, command: str, timeout: float, cwd: Optional[str], env: Optional[dict]) -> ShellResult:
         """Execute command once."""
         start_time = time.time()
         timed_out = False
@@ -99,13 +90,11 @@ class ShellExecutor:
                 env=merged_env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                preexec_fn=os.setsid  # Create process group for cleanup
+                preexec_fn=os.setsid,  # Create process group for cleanup
             )
 
             try:
-                stdout_bytes, stderr_bytes = self._process.communicate(
-                    timeout=timeout
-                )
+                stdout_bytes, stderr_bytes = self._process.communicate(timeout=timeout)
                 stdout = stdout_bytes.decode("utf-8", errors="replace")
                 stderr = stderr_bytes.decode("utf-8", errors="replace")
                 exit_code = self._process.returncode
@@ -125,12 +114,7 @@ class ShellExecutor:
         duration = time.time() - start_time
 
         return ShellResult(
-            command=command,
-            exit_code=exit_code,
-            stdout=stdout,
-            stderr=stderr,
-            duration=duration,
-            timed_out=timed_out
+            command=command, exit_code=exit_code, stdout=stdout, stderr=stderr, duration=duration, timed_out=timed_out
         )
 
     def _kill_process_group(self) -> None:

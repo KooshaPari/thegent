@@ -49,7 +49,6 @@ class AgentSession(SerializableMixin):
     summary: str | None = None
 
 
-
 class UnifiedSessionIndex:
     """Unified session index with DB + live watching dual-redundancy."""
 

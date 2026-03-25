@@ -169,7 +169,9 @@ class TestHealthPolicyAndTrend:
         assert trend["latest_blocked_ratio"] == (trend.get("latest") or {}).get("blocked_ratio", None)
         assert trend["latest_blocked_count"] == (trend.get("latest") or {}).get("blocked_count", None)
         assert trend["latest_issue_types_count"] == len((trend.get("latest") or {}).get("issue_types", []) or [])
-        assert trend["latest_issue_types_json"] == json.dumps((trend.get("latest").decode() or {}).get("issue_types", []) or [])
+        assert trend["latest_issue_types_json"] == json.dumps(
+            (trend.get("latest").decode() or {}).get("issue_types", []) or []
+        )
         assert (
             trend["latest_issue_types_hash"]
             == hashlib.sha256(trend["latest_issue_types_json"].encode("utf-8")).hexdigest()
@@ -349,7 +351,9 @@ class TestHealthPolicyAndTrend:
             "issue_types": {"left": 1, "right": 1},
             "issue_counts": {"left": 3, "right": 3},
         }
-        snapshot_path.write_text("\n".join([json.dumps(oldest).decode(), json.dumps(latest).decode()]) + "\n", encoding="utf-8")
+        snapshot_path.write_text(
+            "\n".join([json.dumps(oldest).decode(), json.dumps(latest).decode()]) + "\n", encoding="utf-8"
+        )
 
         trend = cli_impl.session_contract_health_trend_impl(
             payload_type="session_contract_health_report",

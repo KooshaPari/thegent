@@ -12,6 +12,7 @@ import logging
 
 try:
     import structlog as _structlog
+
     _log = _structlog.get_logger(__name__)
 except ImportError:
     _log = logging.getLogger(__name__)  # type: ignore[assignment]
@@ -26,7 +27,6 @@ from typing import Any, Callable, ClassVar, cast
 
 from thegent_core.infra.fast_file_watcher import FastFileWatcher
 from thegent_sync.integrations.base import SerializableMixin
-
 
 
 class HarnessType(Enum):
@@ -52,7 +52,6 @@ class AgentSession(SerializableMixin):
     messages: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
     summary: str | None = None
-
 
 
 class UnifiedSessionIndex:

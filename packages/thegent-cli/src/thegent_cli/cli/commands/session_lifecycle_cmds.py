@@ -39,6 +39,7 @@ Commands for session status, inspection, logs, control (stop/pause/resume), and 
 Extracted from session_cmds.py to manage module size.
 """
 
+
 def status_cmd(session_id: str | None = None, format: str | None = None, include_contract: bool = False) -> None:
     settings = ThegentSettings()
     sid = _resolve_session_id(session_id)

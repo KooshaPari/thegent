@@ -33,7 +33,9 @@ def main() -> int:
     if status != 200:
         raise RuntimeError(f"beads health check returned non-200 status: {status}")
 
-    print(json.dumps({"ok": True, "target": "beads", "url": url, "status": status, "body": body[:120]}).decode().decode())
+    print(
+        json.dumps({"ok": True, "target": "beads", "url": url, "status": status, "body": body[:120]}).decode().decode()
+    )
     return 0
 
 

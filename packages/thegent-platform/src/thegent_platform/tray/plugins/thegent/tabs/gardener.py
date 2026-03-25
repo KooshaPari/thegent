@@ -220,9 +220,7 @@ class GardenerConfigDialog(QDialog):
         layout.addWidget(notifications_group)
 
         # Dialog buttons
-        self._buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save
-        )
+        self._buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save)
         self._buttons.rejected.connect(self.reject)
         self._buttons.accepted.connect(self.accept)
         layout.addWidget(self._buttons)
@@ -460,9 +458,7 @@ class GardenerTab(QWidget):
         # Update garden state
         self._total_xp_label.setText(f"{self._status.get('total_xp', 0):,}")
         self._level_label.setText(str(self._status.get("level", 1)))
-        self._active_agents_label.setText(
-            f"{self._status.get('active_agents', 0)}/{self._status.get('max_agents', 0)}"
-        )
+        self._active_agents_label.setText(f"{self._status.get('active_agents', 0)}/{self._status.get('max_agents', 0)}")
 
         # Format uptime
         uptime_seconds = self._status.get("uptime_seconds", 0)
@@ -487,11 +483,13 @@ class GardenerTab(QWidget):
             else:
                 display_value = value
 
-            self._hunger_states.append({
-                "type": issue_type,
-                "value": display_value,
-                "severity": severity,
-            })
+            self._hunger_states.append(
+                {
+                    "type": issue_type,
+                    "value": display_value,
+                    "severity": severity,
+                }
+            )
 
             # Create list item
             item = QListWidgetItem(f"{issue_type}: {display_value}")

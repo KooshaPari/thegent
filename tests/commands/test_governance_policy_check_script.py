@@ -75,7 +75,7 @@ def _write_governance_fixture(repo_root: Path) -> None:
         "    cmds:\n"
         "      - |\n"
         "        if ! uv run python scripts/worktree_governance_inventory.py --repo-root . --output-dir docs/governance; then\n"
-        "          echo \"[WARN] worktree inventory contains nonconformant entries; inspect docs/governance/worktree-governance-inventory.md\"\n"
+        '          echo "[WARN] worktree inventory contains nonconformant entries; inspect docs/governance/worktree-governance-inventory.md"\n'
         "        fi\n"
         "  quality:governance:worktree-inventory:strict:\n"
         "    cmds:\n"

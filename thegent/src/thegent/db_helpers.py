@@ -12,14 +12,14 @@ from typing import Any
 
 class Database:
     """Simple SQLite wrapper."""
-    
+
     def __init__(self, path: str = ":memory:"):
         self.path = path
         self.conn: sqlite3.Connection | None = None
-    
+
     def connect(self) -> None:
         self.conn = sqlite3.connect(self.path)
-    
+
     def execute(self, query: str, params: tuple = ()) -> list[dict[str, Any]]:
         if not self.conn:
             self.connect()
@@ -30,7 +30,7 @@ class Database:
             return [dict(row) for row in rows]
         self.conn.commit()
         return []
-    
+
     def close(self) -> None:
         if self.conn:
             self.conn.close()

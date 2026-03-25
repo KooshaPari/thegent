@@ -19,7 +19,6 @@ from thegent_cli.cli.commands.dag_impl import (
     _check_dag_cycles,
     _dag_path,
     _dag_update_task,
-    _ensure_dag_file,
     _parse_dag_full,
     _parse_depends_on,
     _serialize_dag,
@@ -53,7 +52,6 @@ def dag_update_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Update a task in the DAG. XA4: contract_version in task metadata."""
-    from thegent_cli.cli.commands.dag_impl import _validate_task_id
 
     VALID_STATUSES = {"pending", "running", "done", "failed", "blocked", "cancelled", "skipped"}
     cwd = _resolve_cwd(cd)

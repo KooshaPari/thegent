@@ -113,7 +113,9 @@ def _get_thegent_root() -> Path:
     return Path.cwd()
 
 
-def resolve_bundles(thegent_root: Path, target: str = "home", bundle: str = "default", mode: str = "smart") -> list[dict]:
+def resolve_bundles(
+    thegent_root: Path, target: str = "home", bundle: str = "default", mode: str = "smart"
+) -> list[dict]:
     """Resolve bundles for installation."""
     resolved = _resolve_bundles_impl(
         bundle_names=[bundle],
@@ -132,6 +134,7 @@ def resolve_bundles(thegent_root: Path, target: str = "home", bundle: str = "def
 def should_exclude(path: Path | str) -> bool:
     """Check if path should be excluded."""
     from thegent.install_constants import EXCLUDE_DIRS
+
     return any(exc in str(path) for exc in EXCLUDE_DIRS)
 
 
@@ -149,6 +152,7 @@ def create_symlink(source: Path, target: Path, dry_run: bool = False) -> str:
 def smart_copy_file(source: Path, target: Path, dry_run: bool = False) -> str:
     """Smart copy a file."""
     import shutil
+
     if dry_run:
         return f"Would copy {source} -> {target}"
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -180,23 +184,73 @@ def get_backup_dir() -> Path:
 
 
 __all__ = [
-    "setup_hooks", "setup_rust_dispatcher", "setup_harness", "setup_skills",
-    "_setup_git_hook", "_sync_base_dir_skills", "_sync_cursor_rules",
-    "install_homebrew", "install_mise", "verify_mise_installation",
-    "uninstall_mise_hooks", "uninstall_system_dependencies", "clone_git_repo", "install_system_dependencies",
-    "run_wizard", "run_install_project", "run_install_system", "run_install",
-    "_get_mcp_config", "_update_compatible_mcp_servers", "configure_mcp_for_client",
-    "_coerce_path", "_coerce_bundle_items", "get_bundle_manifest_path", "get_default_bundle_manifest_path",
-    "list_bundle_names", "load_bundle_manifest", "_resolve_bundle_mode", "_resolve_bundle_source",
-    "_resolve_bundle_target", "_source_requires_pin_and_checksum", "validate_bundle_manifest",
-    "CLAUDE_MAPPING", "FACTORY_MAPPING", "ROOT_FILES", "POWERSHELL_MISE_HOOK",
-    "CLAUDE_CODE_FILES", "CURSOR_FILES", "EXCLUDE_DIRS", "FACTORY_FILES", "SHELL_FILES",
-    "SHELL_LOCAL_TEMPLATE", "THEGENT_TOOLS", "VALID_TARGETS", "get_targets_for_install",
-    "BundleItem", "BundleManifest", "ConfigManifest", "FileAction", "FileManifest", "InstallManifest", "InstallMode",
-    "_backup_shell_config", "cleanup_old_backups", "list_backups", "restore_shell_config",
-    "_POWERSHELL_HOOK_SENTINEL", "detect_powershell_profile", "_is_powershell_environment",
+    "setup_hooks",
+    "setup_rust_dispatcher",
+    "setup_harness",
+    "setup_skills",
+    "_setup_git_hook",
+    "_sync_base_dir_skills",
+    "_sync_cursor_rules",
+    "install_homebrew",
+    "install_mise",
+    "verify_mise_installation",
+    "uninstall_mise_hooks",
+    "uninstall_system_dependencies",
+    "clone_git_repo",
+    "install_system_dependencies",
+    "run_wizard",
+    "run_install_project",
+    "run_install_system",
+    "run_install",
+    "_get_mcp_config",
+    "_update_compatible_mcp_servers",
+    "configure_mcp_for_client",
+    "_coerce_path",
+    "_coerce_bundle_items",
+    "get_bundle_manifest_path",
+    "get_default_bundle_manifest_path",
+    "list_bundle_names",
+    "load_bundle_manifest",
+    "_resolve_bundle_mode",
+    "_resolve_bundle_source",
+    "_resolve_bundle_target",
+    "_source_requires_pin_and_checksum",
+    "validate_bundle_manifest",
+    "CLAUDE_MAPPING",
+    "FACTORY_MAPPING",
+    "ROOT_FILES",
+    "POWERSHELL_MISE_HOOK",
+    "CLAUDE_CODE_FILES",
+    "CURSOR_FILES",
+    "EXCLUDE_DIRS",
+    "FACTORY_FILES",
+    "SHELL_FILES",
+    "SHELL_LOCAL_TEMPLATE",
+    "THEGENT_TOOLS",
+    "VALID_TARGETS",
+    "get_targets_for_install",
+    "BundleItem",
+    "BundleManifest",
+    "ConfigManifest",
+    "FileAction",
+    "FileManifest",
+    "InstallManifest",
+    "InstallMode",
+    "_backup_shell_config",
+    "cleanup_old_backups",
+    "list_backups",
+    "restore_shell_config",
+    "_POWERSHELL_HOOK_SENTINEL",
+    "detect_powershell_profile",
+    "_is_powershell_environment",
     "write_powershell_mise_hook",
-    "_get_thegent_root", "resolve_bundles", "should_exclude",
-    "create_symlink", "smart_copy_file", "get_source_dest_mapping",
-    "get_home_dir", "get_manifest_path", "get_backup_dir",
+    "_get_thegent_root",
+    "resolve_bundles",
+    "should_exclude",
+    "create_symlink",
+    "smart_copy_file",
+    "get_source_dest_mapping",
+    "get_home_dir",
+    "get_manifest_path",
+    "get_backup_dir",
 ]

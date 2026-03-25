@@ -107,6 +107,7 @@ fn test_git_cache_with_default_ttl() {
 
     // Both should produce identical output
     assert_eq!(output1.stdout, output2.stdout);
+
 }
 
 #[test]
@@ -174,10 +175,7 @@ fn test_git_lock_detection() {
         .current_dir(&dir)
         .output()
         .expect("thegent-hooks git --detect-lock");
-    assert!(
-        !output.status.success(),
-        "Unsupported legacy flag should fail"
-    );
+    assert!(!output.status.success(), "Unsupported legacy flag should fail");
 
     // Clean up lock
     fs::remove_file(&lock_file).expect("remove lock file");
@@ -189,10 +187,7 @@ fn test_git_lock_detection() {
         .current_dir(&dir)
         .output()
         .expect("thegent-hooks git status");
-    assert!(
-        output2.status.success(),
-        "Should succeed without legacy flag"
-    );
+    assert!(output2.status.success(), "Should succeed without legacy flag");
 }
 
 #[test]
@@ -326,6 +321,7 @@ fn test_git_different_operations_different_cache_keys() {
 
     // Outputs should be different (they're different commands)
     assert_ne!(status_output.stdout, branch_output.stdout);
+
 }
 
 #[test]

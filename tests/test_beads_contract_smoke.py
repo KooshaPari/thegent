@@ -45,4 +45,3 @@ def test_main_returns_success_on_200(monkeypatch: pytest.MonkeyPatch, capsys: py
     assert '"ok": true' in captured
     assert '"target": "beads"' in captured
     assert '"status": 200' in captured
-

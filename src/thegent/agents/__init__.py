@@ -30,6 +30,7 @@ def __getattr__(name: str) -> Any:
     if _agents_module is None:
         try:
             import thegent_agents as agents
+
             _agents_module = agents
         except ImportError:
             # Fall back to direct import if package not installed

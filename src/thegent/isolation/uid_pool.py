@@ -60,9 +60,7 @@ class UidPool:
 
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            self.state_file.write_bytes(
-                json.dumps({"allocations": self._allocations}, option=json.OPT_INDENT_2)
-            )
+            self.state_file.write_bytes(json.dumps({"allocations": self._allocations}, option=json.OPT_INDENT_2))
         except Exception as e:
             logger.error(f"Failed to save UID pool state: {e}")
 

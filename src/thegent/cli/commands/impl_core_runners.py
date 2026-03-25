@@ -35,6 +35,7 @@ _CONTINUATION_STDERR_CHARS = 2000
 _CONTINUATION_MULTI_HOP_TOTAL_CAP = 12000
 _LOG_FOLLOW_POLL_SECONDS = 0.5
 
+
 def _apply_pareto_routing(
     agent: str | None,
     model: str | None,

@@ -100,7 +100,9 @@ def test_wl6911_parse_log_entry_valid_payload() -> None:
     end = datetime(2026, 1, 31, tzinfo=UTC)
     stats = summary.LogParseStats()
 
-    row = json.dumps({"type": "assistant", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "ok"}}).decode()
+    row = json.dumps(
+        {"type": "assistant", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "ok"}}
+    ).decode()
     parsed = summary._parse_log_entry(row, start, end, stats)
 
     assert parsed is not None
@@ -135,7 +137,8 @@ def test_wl6912_read_log_file_readable(tmp_path: Path) -> None:
     end = datetime(2026, 1, 31, tzinfo=UTC)
     log_file = tmp_path / "ok.jsonl"
     log_file.write_text(
-        json.dumps({"type": "user", "timestamp": "2026-01-12T09:00:00+00:00", "message": {"content": "hello"}}).decode() + "\n",
+        json.dumps({"type": "user", "timestamp": "2026-01-12T09:00:00+00:00", "message": {"content": "hello"}}).decode()
+        + "\n",
         encoding="utf-8",
     )
 
@@ -160,7 +163,9 @@ def test_wl6912_read_log_file_with_malformed_and_valid_records(tmp_path: Path) -
                 json.dumps(
                     {"type": "system", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "skip"}}
                 ),
-                json.dumps({"type": "user", "timestamp": "2026-01-10T10:01:00+00:00", "message": {"content": "valid"}}).decode(),
+                json.dumps(
+                    {"type": "user", "timestamp": "2026-01-10T10:01:00+00:00", "message": {"content": "valid"}}
+                ).decode(),
             ]
         ),
         encoding="utf-8",

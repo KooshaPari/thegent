@@ -41,7 +41,7 @@ def _get_native_client() -> "Any | None":
     _native_checked = True
     try:
         discovery_native = import_module("thegent.native.discovery_native")
-        DiscoveryClient = getattr(discovery_native, "DiscoveryClient")
+        DiscoveryClient = discovery_native.DiscoveryClient
 
         _native_client = DiscoveryClient()
         if _native_client.is_native:
@@ -261,7 +261,7 @@ def _check_parent_agent(parent: psutil.Process | None, agent_names: set[str]) ->
                 return True, None
 
         return False, parent.parent()
-    except (psutil.NoSuchProcess, psutil.AccessDenied):
+    except psutil.NoSuchProcess, psutil.AccessDenied:
         return False, None
 
 

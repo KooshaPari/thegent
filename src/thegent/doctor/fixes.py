@@ -16,7 +16,6 @@ console = Console()
 _project_root_cache: Path | None = None
 
 
-
 def _apply_fixes(results: list[CheckResult], dry_run: bool = False) -> list[dict]:
     """Attempt to automatically fix issues based on fix_hint strings.
 

@@ -39,7 +39,6 @@ class PersonaRecord(SerializableMixin):
     persona_file: Path
     last_seen: datetime
 
-
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> PersonaRecord:
         """Deserialize from a plain dict (as loaded from JSON)."""

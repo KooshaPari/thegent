@@ -145,4 +145,3 @@ def test_wl9749_full_handler_preserves_happy_and_failure_paths() -> None:
     assert ok_response is not None
     assert ok_response["result"]["turn"]["status"] == "cancelled"
     assert ok_notifications == []
-

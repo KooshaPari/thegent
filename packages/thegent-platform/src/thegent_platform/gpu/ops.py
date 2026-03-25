@@ -18,10 +18,11 @@ class GPUOperations:
 
         try:
             import torch
+
             self._torch = torch
             if torch.cuda.is_available():
                 self._device = torch.device(f"cuda:{device_index}")
-            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 self._device = torch.device("mps")
         except ImportError:
             pass
@@ -32,13 +33,13 @@ class GPUOperations:
 
     def to_gpu(self, tensor: Any) -> Any:
         """Move tensor to GPU."""
-        if self._device and hasattr(tensor, 'to'):
+        if self._device and hasattr(tensor, "to"):
             return tensor.to(self._device)
         return tensor
 
     def to_cpu(self, tensor: Any) -> Any:
         """Move tensor to CPU."""
-        if hasattr(tensor, 'cpu'):
+        if hasattr(tensor, "cpu"):
             return tensor.cpu()
         return tensor
 
@@ -65,16 +66,17 @@ class GPUOperations:
             return None
 
         # Move model to GPU
-        if self._device and hasattr(model, 'to'):
+        if self._device and hasattr(model, "to"):
             model = model.to(self._device)
 
         # Compute embeddings
         with self._torch.no_grad():
-            if hasattr(model, 'encode'):
+            if hasattr(model, "encode"):
                 embeddings = model.encode(texts)
             else:
                 # Assume transformers-style model
                 import transformers
+
                 tokenizer = transformers.AutoTokenizer.from_pretrained(model)
                 model_obj = transformers.AutoModel.from_pretrained(model)
 
@@ -126,5 +128,5 @@ class GPUOperations:
             "matrix_size": size,
             "cpu_time": cpu_time,
             "gpu_time": gpu_time,
-            "speedup": cpu_time / gpu_time if gpu_time > 0 else 0
+            "speedup": cpu_time / gpu_time if gpu_time > 0 else 0,
         }

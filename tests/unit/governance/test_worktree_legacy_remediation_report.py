@@ -35,13 +35,41 @@ def test_generate_report_classifies_dirty_legacy_and_prunable_entries(tmp_path: 
             return "M file.txt\n"
         if cmd[:5] == ["git", "-C", str(root.parent / "detached"), "status", "--porcelain"]:
             return ""
-        if cmd[:7] == ["git", "-C", str(root.parent / "legacy-clean"), "rev-list", "--count", "main..feat/clean-legacy"]:
+        if cmd[:7] == [
+            "git",
+            "-C",
+            str(root.parent / "legacy-clean"),
+            "rev-list",
+            "--count",
+            "main..feat/clean-legacy",
+        ]:
             return "2\n"
-        if cmd[:7] == ["git", "-C", str(root.parent / "legacy-clean"), "rev-list", "--count", "feat/clean-legacy..main"]:
+        if cmd[:7] == [
+            "git",
+            "-C",
+            str(root.parent / "legacy-clean"),
+            "rev-list",
+            "--count",
+            "feat/clean-legacy..main",
+        ]:
             return "4\n"
-        if cmd[:7] == ["git", "-C", str(root.parent / "legacy-dirty"), "rev-list", "--count", "main..refactor/dirty-legacy"]:
+        if cmd[:7] == [
+            "git",
+            "-C",
+            str(root.parent / "legacy-dirty"),
+            "rev-list",
+            "--count",
+            "main..refactor/dirty-legacy",
+        ]:
             return "1\n"
-        if cmd[:7] == ["git", "-C", str(root.parent / "legacy-dirty"), "rev-list", "--count", "refactor/dirty-legacy..main"]:
+        if cmd[:7] == [
+            "git",
+            "-C",
+            str(root.parent / "legacy-dirty"),
+            "rev-list",
+            "--count",
+            "refactor/dirty-legacy..main",
+        ]:
             return "3\n"
         raise AssertionError(f"unexpected command: {cmd}")
 

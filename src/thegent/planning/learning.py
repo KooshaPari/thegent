@@ -49,7 +49,7 @@ class LearningRegistry:
                 for mid, mdata in data.items():
                     mdata["metrics"] = CanaryMetrics(**mdata["metrics"])
                     self._models[mid] = LearningModel(**mdata)
-            except (json.JSONDecodeError, KeyError):
+            except json.JSONDecodeError, KeyError:
                 pass
 
     def _save(self) -> None:

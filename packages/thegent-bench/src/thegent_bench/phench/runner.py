@@ -108,7 +108,9 @@ def build_runner_catalog(target: str, repo_checkout: Path) -> RunnerCatalog:
             commands.append(RunnerCommand(runner, name, cmd, str(package_json)))
 
     default = commands[0].description if commands else ""
-    return RunnerCatalog(target_name=target, runners_detected=sorted(set(runners)), commands=commands, default_command=default)
+    return RunnerCatalog(
+        target_name=target, runners_detected=sorted(set(runners)), commands=commands, default_command=default
+    )
 
 
 def pick_command_interactive(catalog: RunnerCatalog) -> RunnerCommand:

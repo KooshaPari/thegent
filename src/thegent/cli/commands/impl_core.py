@@ -254,4 +254,5 @@ def loop_impl(
 # Re-export from session_impl for resume_impl
 def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt") -> tuple[bool, str]:
     from thegent.cli.commands.session_control_impl import session_send_impl as _session_send_impl
+
     return _session_send_impl(session_id, message, msg_type=msg_type)

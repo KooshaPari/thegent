@@ -225,13 +225,17 @@ class TestParseLlmResponseErrors:
 
     def test_raises_on_blank_node_task(self) -> None:
         """_parse_llm_response raises ValueError for a blank 'task' field."""
-        raw = json.dumps({"nodes": [{"id": "t1", "task": "", "agent_hint": None, "deps": [], "budget_tokens": None}]}).decode()
+        raw = json.dumps(
+            {"nodes": [{"id": "t1", "task": "", "agent_hint": None, "deps": [], "budget_tokens": None}]}
+        ).decode()
         with pytest.raises(ValueError, match="non-empty string"):
             _parse_llm_response(raw)
 
     def test_raises_on_non_str_agent_hint(self) -> None:
         """_parse_llm_response raises ValueError when agent_hint is non-string non-null."""
-        raw = json.dumps({"nodes": [{"id": "t1", "task": "do", "agent_hint": 42, "deps": [], "budget_tokens": None}]}).decode()
+        raw = json.dumps(
+            {"nodes": [{"id": "t1", "task": "do", "agent_hint": 42, "deps": [], "budget_tokens": None}]}
+        ).decode()
         with pytest.raises(ValueError, match="agent_hint must be a string or null"):
             _parse_llm_response(raw)
 
@@ -253,7 +257,9 @@ class TestParseLlmResponseErrors:
 
     def test_raises_on_float_budget_tokens(self) -> None:
         """_parse_llm_response raises ValueError when budget_tokens is a float."""
-        raw = json.dumps({"nodes": [{"id": "t1", "task": "do", "agent_hint": None, "deps": [], "budget_tokens": 1.5}]}).decode()
+        raw = json.dumps(
+            {"nodes": [{"id": "t1", "task": "do", "agent_hint": None, "deps": [], "budget_tokens": 1.5}]}
+        ).decode()
         with pytest.raises(ValueError, match="budget_tokens must be an int or null"):
             _parse_llm_response(raw)
 

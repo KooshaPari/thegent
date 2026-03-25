@@ -147,7 +147,7 @@ def _list_copilot_models() -> None:
                 _list_copilot_models_fallback()
         else:
             _list_copilot_models_fallback()
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError, subprocess.TimeoutExpired:
         _list_copilot_models_fallback()
 
 
@@ -193,7 +193,7 @@ def _list_codex_models() -> None:
             )
         else:
             _list_codex_models_fallback()
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError, subprocess.TimeoutExpired:
         _list_codex_models_fallback()
 
 

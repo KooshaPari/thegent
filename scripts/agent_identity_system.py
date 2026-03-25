@@ -22,6 +22,7 @@ import time
 
 class AgentLevel(Enum):
     """Agent level in hierarchy."""
+
     L1_STRATEGIC = "L1"  # Strategic lead, orchestrator
     L2_WORKER = "L2"  # Named teammate, component owner
     L3_EXECUTOR = "L3"  # Free tier executor, sub-task worker
@@ -29,6 +30,7 @@ class AgentLevel(Enum):
 
 class AgentRole(Enum):
     """Agent role type."""
+
     RESEARCHER = "researcher"
     BUILDER = "builder"
     INTEGRATOR = "integrator"
@@ -104,7 +106,7 @@ class AgentIdentity:
         return f"{self.project}:{self.uuid}:{self.level.value}:{self.role.value}"
 
     @property
-    def is_stale(self, ttl_seconds: int = 300) -> bool:
+    def is_stale(self, ttl_seconds: int = 300) -> bool:  # noqa: PLR0206
         """Check if agent heartbeat is stale (default 5 minutes)."""
         return (time.time() - self.last_heartbeat) > ttl_seconds
 
@@ -123,7 +125,7 @@ class GlobalAgentRegistry:
             registry_path: Path to registry file. Defaults to ~/.claude/civilization/registry.json
         """
         if registry_path is None:
-            registry_path = os.path.expanduser("~/.claude/civilization/registry.json")
+            registry_path = Path("~/.claude/civilization/registry.json").expanduser()
 
         self.registry_path = Path(registry_path)
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)
@@ -140,8 +142,7 @@ class GlobalAgentRegistry:
                 with open(self.registry_path) as f:
                     data = json.load(f)
                     self.agents = {
-                        agent_id: AgentIdentity.from_dict(agent_data)
-                        for agent_id, agent_data in data.items()
+                        agent_id: AgentIdentity.from_dict(agent_data) for agent_id, agent_data in data.items()
                     }
                 self.logger.info(f"Loaded {len(self.agents)} agents from registry")
             except Exception as e:
@@ -151,11 +152,8 @@ class GlobalAgentRegistry:
     def _save_to_disk(self) -> None:
         """Save registry to disk."""
         try:
-            data = {
-                agent_id: agent.to_dict()
-                for agent_id, agent in self.agents.items()
-            }
-            with open(self.registry_path, 'w') as f:
+            data = {agent_id: agent.to_dict() for agent_id, agent in self.agents.items()}
+            with open(self.registry_path, "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
             self.logger.error(f"Failed to save registry: {e}")

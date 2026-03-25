@@ -44,7 +44,9 @@ def test_wl11022_build_turn_submit_parse_phase_rejects_missing_approval_diff_onl
     # @trace WL-11022
     _reset_state()
     session_id = _start_session()
-    plan = server._build_turn_submit_phase_plan("req", {"session_id": session_id, "input": "x", "requires_approval": False})
+    plan = server._build_turn_submit_phase_plan(
+        "req", {"session_id": session_id, "input": "x", "requires_approval": False}
+    )
     parse_phase = server._build_turn_submit_parse_phase(plan)
     assert parse_phase["requires_approval"] is False
     assert parse_phase["approval_diff"] is None
@@ -57,7 +59,9 @@ def test_wl11023_build_turn_submit_execution_phase_returns_execution_target() ->
     session_id = _start_session()
     plan = server._build_turn_submit_phase_plan("req", {"session_id": session_id, "input": "x"})
     parse_phase = server._build_turn_submit_parse_phase(plan)
-    session_id_out, session_out, user_input_out, requires_approval_out, approval_diff_out = server._build_turn_submit_execution_phase(parse_phase)
+    session_id_out, session_out, user_input_out, requires_approval_out, approval_diff_out = (
+        server._build_turn_submit_execution_phase(parse_phase)
+    )
     assert session_id_out == session_id
     assert session_out["id"] == session_id
     assert user_input_out == "x"
@@ -99,7 +103,14 @@ def test_wl11026_resolve_turn_submit_commit_target_rejects_invalid_fields() -> N
 
 def test_wl11027_build_turn_submit_side_effects_phase_keeps_optional_fields() -> None:
     # @trace WL-11027
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     side_effects_phase = server._build_turn_submit_side_effects_phase("session-1", "turn-1", turn, "x", False, None)
     assert side_effects_phase["approval_diff"] is None
     assert side_effects_phase["requires_approval"] is False

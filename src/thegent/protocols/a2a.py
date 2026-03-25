@@ -173,5 +173,6 @@ class A2ARouter:
         with self._lock:
             return sorted(self._handlers.keys())
 
+
 # Alias for protocol-level interface
 A2AProtocol = A2ARouter

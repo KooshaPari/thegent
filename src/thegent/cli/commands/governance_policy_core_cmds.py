@@ -18,7 +18,6 @@ from thegent.cli.commands._cli_shared import (
 )
 
 
-
 def policy_show_cmd() -> None:
     """Show active governance policies and thresholds."""
     settings = ThegentSettings()
@@ -226,7 +225,6 @@ def contracts_conformance_cmd(
         import typer
 
         raise typer.Exit(1)
-
 
 
 __all__ = [

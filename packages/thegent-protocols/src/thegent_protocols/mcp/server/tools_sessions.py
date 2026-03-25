@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json as json
+import json
 from typing import Any, Callable
 
 from thegent_protocols.mcp.dynamic_tools import DynamicToolRegistry, DynamicToolSpec
@@ -89,7 +89,6 @@ def session_send_impl(
                     "input_schema": registered.input_schema,
                 },
             },
-            
         )
 
     if msg_type == "dynamic_tool_list":
@@ -102,7 +101,6 @@ def session_send_impl(
                     for tool in tools
                 ],
             },
-            
         )
 
     if msg_type == "dynamic_tool_invoke":
@@ -169,7 +167,6 @@ def session_attach_hint_impl(
                 "raw_command": f"tmux attach-session -t {pane}",
                 "hint": "Attach via tmux",
             },
-            
         )
 
     if interactivity == "headless-holdpty":
@@ -179,7 +176,6 @@ def session_attach_hint_impl(
                 "command": f"thegent session attach {session_id}",
                 "hint": "Attach via holdpty wrapper",
             },
-            
         )
 
     return json.dumps(
@@ -187,5 +183,4 @@ def session_attach_hint_impl(
             "mode": "none",
             "hint": "Session does not support interactive attachment. Use 'thegent session logs --follow' instead.",
         },
-        
     )

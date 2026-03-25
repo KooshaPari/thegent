@@ -106,4 +106,3 @@ def test_wl9799_build_turn_cancel_projection_wraps_result_helper() -> None:
     payload = server._build_turn_cancel_projection_payload(turn)
     assert payload["turn"]["id"] == "turn-9"
     assert payload["turn"]["status"] == "cancelled"
-

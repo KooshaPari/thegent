@@ -33,10 +33,7 @@ def main() -> int:
 
         async def check():
             async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{public_url}/health/alive",
-                    timeout=5
-                )
+                response = await client.get(f"{public_url}/health/alive", timeout=5)
                 return response.status_code
 
         status = asyncio.run(check())
@@ -47,6 +44,7 @@ def main() -> int:
     except ImportError:
         # Try urllib fallback
         import urllib.request
+
         url = f"{public_url}/health/alive"
         with urllib.request.urlopen(url, timeout=5) as response:
             status = response.getcode()

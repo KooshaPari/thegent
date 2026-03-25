@@ -60,9 +60,7 @@ class TestParetoFrontierProperties:
         for i, a in enumerate(frontier):
             for j, b in enumerate(frontier):
                 if i != j:
-                    assert not self.router._is_dominated(a, b), (
-                        f"Frontier member {a} is dominated by {b}"
-                    )
+                    assert not self.router._is_dominated(a, b), f"Frontier member {a} is dominated by {b}"
 
     @given(candidates=candidate_list_st)
     @settings(max_examples=200, deadline=None)
@@ -72,15 +70,16 @@ class TestParetoFrontierProperties:
         frontier_set = {id(f) for f in frontier}
         for c in candidates:
             if id(c) not in frontier_set:
-                assert any(
-                    self.router._is_dominated(c, f) for f in frontier
-                ), f"Non-frontier {c} is not dominated by any frontier member"
+                assert any(self.router._is_dominated(c, f) for f in frontier), (
+                    f"Non-frontier {c} is not dominated by any frontier member"
+                )
 
     @given(candidates=candidate_list_st)
     @settings(max_examples=100, deadline=None)
     def test_frontier_stable_under_permutation(self, candidates: list[RouteCandidate]) -> None:
         """Frontier should contain the same candidates regardless of input order."""
         import random
+
         frontier1 = self.router._pareto_frontier(candidates)
         shuffled = list(candidates)
         random.shuffle(shuffled)
@@ -180,6 +179,8 @@ class TestSelectByStrategy:
     def test_strategy_always_returns_candidate(self, candidates: list[RouteCandidate], strategy: str) -> None:
         """Any valid strategy returns a candidate from the input."""
         selected = self.router.select_by_strategy(strategy, candidates)
+
         def key(c: RouteCandidate) -> tuple:
             return (c.model, c.provider, c.cost_per_1k, c.quality_score)
+
         assert key(selected) in [key(c) for c in candidates]

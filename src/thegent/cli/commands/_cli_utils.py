@@ -39,6 +39,7 @@ def print_warning(message: str) -> None:
 def confirm_action(prompt: str, default: bool = False) -> bool:
     """Ask user to confirm an action."""
     from rich.prompt import Confirm
+
     return Confirm.ask(prompt, default=default)
 
 

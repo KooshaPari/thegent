@@ -11,7 +11,6 @@ from pathlib import Path
 import typer
 
 
-
 def _provider_opt() -> str | None:
     """Default provider option."""
     return typer.Option(
@@ -29,14 +28,14 @@ def create_model_command(
     help_text: str,
 ):
     """Create a model command and register it with the app.
-    
+
     Args:
         app: Typer app to register command with
         name: Command name
         model_alias: Model alias to pass to runner
         help_text: Help text for command
     """
-    
+
     @app.command(name)
     def model_cmd(
         provider: str | None = _provider_opt(),
@@ -53,7 +52,7 @@ def create_model_command(
     ) -> None:
         """Model shortcut command."""
         from thegent.clode_main import _run_model_interactive
-        
+
         _run_model_interactive(
             model_alias,
             provider=provider,
@@ -66,7 +65,7 @@ def create_model_command(
             output_format=output_format,
             continue_session=continue_session,
         )
-    
+
     model_cmd.__doc__ = help_text
     return model_cmd
 
@@ -92,7 +91,7 @@ MODEL_COMMANDS = [
 
 def register_model_commands(app: typer.Typer) -> None:
     """Register all model commands with the app.
-    
+
     Args:
         app: Typer app to register commands with
     """

@@ -235,9 +235,7 @@ def _ensure_claude_installed(suggest_dex: bool = False, require_native: bool = F
     bun = shutil.which("bun")
     if bun:
         console.print("[dim]Installing Claude Code via Bun...[/dim]")
-        r = shim_run(
-            [bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False
-        )
+        r = shim_run([bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False)
         if r.returncode == 0:
             p = _find_claude(require_native=require_native)
             if p:

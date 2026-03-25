@@ -56,7 +56,9 @@ def thegent_session_contracts_impl(
         strict=strict,
     )
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(content=json.dumps(payload).decode(), structured_content=payload, meta={"execution_time_ms": elapsed_ms})
+    return ToolResult(
+        content=json.dumps(payload).decode(), structured_content=payload, meta={"execution_time_ms": elapsed_ms}
+    )
 
 
 def thegent_session_contract_health_trend_impl(

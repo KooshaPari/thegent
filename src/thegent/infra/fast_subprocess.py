@@ -292,9 +292,7 @@ class FastSubprocess:
             pass
 
         start_time = time.time()
-        result = shim_run(
-            cmd, cwd=str(cwd) if cwd else None, env=process_env, timeout=timeout, check=check, **kwargs
-        )
+        result = shim_run(cmd, cwd=str(cwd) if cwd else None, env=process_env, timeout=timeout, check=check, **kwargs)
         duration = time.time() - start_time
 
         # WP-22001: Record in context-aware history
