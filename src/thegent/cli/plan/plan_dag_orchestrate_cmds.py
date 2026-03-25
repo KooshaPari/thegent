@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from thegent.cli.plan.plan_dag_ready_run_cmds import (
+from thegent.cli.commands.run.plan_dag_ready_run_cmds import (
     dag_ready_cmd,
     dag_reconcile_cmd,
 )
