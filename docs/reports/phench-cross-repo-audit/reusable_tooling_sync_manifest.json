@@ -1,0 +1,1772 @@
+{
+  "security-guard.yml": [
+    {
+      "path": ".github/workflows/security-guard.yml",
+      "count": 46,
+      "sha": [
+        "5095624099e0fd0d2d7720a1cfff2fb7b23c4749adb712a9ae1b1adbfed5f9a2",
+        "557907df33f9d0206d6455934ce571d3b8b22bda2b0224c91009a05ac3406c84",
+        "790700acab438674327a231c653263bdc846b2808a0d70c275613e3373503ac7"
+      ],
+      "owners": [
+        "AgilePlus",
+        "agent-devops-setups",
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "bifrost-extensions",
+        "bifrost-extensions-composite-actions",
+        "bifrost-extensions-governance",
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "colab",
+        "helMo",
+        "helios-cli",
+        "heliosApp",
+        "heliosApp-colab",
+        "heliosApp-composite-actions",
+        "heliosApp-governance",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream",
+        "phench",
+        "phenodocs",
+        "phenotype-config",
+        "phenotype-design",
+        "phenotypeActions",
+        "portage",
+        "portage-composite-actions",
+        "portage-governance",
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops",
+        "thegent",
+        "thegent-composite-actions",
+        "tokenledger",
+        "trash-cli"
+      ]
+    }
+  ],
+  "security-guard.sh": [
+    {
+      "path": ".github/scripts/security-guard.sh",
+      "count": 42,
+      "sha": [
+        "060212a71c860f07a07395c480474c554bfa2d03cebaacf36e5f733904f8e0ca",
+        "61055cb237d06d217904141ae1b3711c984d46678c04b760dfa51d494fdd6203",
+        "b124914f36073d369060073690285e7cfb20207baa88f0ecda89cf94907d219e",
+        "f76986372ad6fe882ef5a8ff31f821c2c2dd48f5b60f78ea28ed182b40f02c7c"
+      ],
+      "owners": [
+        "AgilePlus",
+        "agent-devops-setups",
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "bifrost-extensions",
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "colab",
+        "helMo",
+        "helios-cli",
+        "heliosApp",
+        "heliosApp-colab",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream",
+        "phench",
+        "phenodocs",
+        "phenotype-config",
+        "phenotype-design",
+        "phenotypeActions",
+        "portage",
+        "portage-composite-actions",
+        "portage-governance",
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops",
+        "thegent",
+        "thegent-composite-actions",
+        "tokenledger",
+        "trash-cli"
+      ]
+    }
+  ],
+  "policy-gate.yml": [
+    {
+      "path": ".github/workflows/policy-gate.yml",
+      "count": 35,
+      "sha": [
+        "17ed53756be3b54f217914d181cdb90041fc6ddb7291ad5b7dcb926ea3fbd788",
+        "323bde1e521967ee517f7329793c311fd9afcdfb42c4b2555f8931278db2e42a",
+        "50460af899be4126cbf54a56c0601a10fb4a23021ad9116eacd0f278551aab0b",
+        "63f815b0eac9a2c67e88d8e18c81c26452b15c27e3d00df2a28cb8bef4da85da",
+        "7565ddd135e15189cfbcf6f8d0aeed27dea58cfaef5885b374a90fdda03867a4",
+        "75890224b0ac7e2459b30f137cb09103f40eccb4e6616be40238d628fb0f7d2e",
+        "84f6304e5af9341bb4213578d0f40b6ba9ba554c128cc491c93b53435123e50a",
+        "87d1d514871138d7678ffde1f7f9d7cea6b57b3aa9a2a59ce4b558dd76a52a07",
+        "8beace053cab58a0e55e0f18d0d6192b3540d51e95aad02a14596878cbf27a18",
+        "ad965472afc0e6766db1a1990ddb7e2729827282e7c9a351827d96e7f03241ae",
+        "b33f32dc61ea783e5b21ee6a82b4283a004f9501e85ee168669eeb6049be7f0f",
+        "c482f77b66281df305ce5753f33b3350e1bfcbdff50556956d84e5a27e9e83da",
+        "d69b83a54acedcff4ef3c0b513db6e60ff818e0cdb28790da36ac8ec79665e84",
+        "f6dba74c6329c2011ebe3fd142169a39815d1861dfdc396bf01f1eaab6e20132"
+      ],
+      "owners": [
+        "AgilePlus",
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "bifrost-extensions",
+        "bifrost-extensions-composite-actions",
+        "bifrost-extensions-governance",
+        "helios-cli",
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "phenodocs",
+        "phenotypeActions",
+        "portage",
+        "portage-composite-actions",
+        "portage-governance",
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops",
+        "thegent",
+        "thegent-composite-actions",
+        "tokenledger",
+        "trash-cli"
+      ]
+    }
+  ],
+  "Taskfile.yml": [
+    {
+      "path": "Taskfile.yml",
+      "count": 29,
+      "sha": [
+        "01b49cdd91fdbd812887b1ae39c7d0c56632293592464a18e6ce6bfb6e6ae912",
+        "07baaff62bf5bdce2e569bc92869343b66dbcb85ace72301c4bb8a5401f507b7",
+        "29281537acf5b5018c9277a1918a475e46aae3f19e4ba8593bede3c5cde277de",
+        "2d8beb95dc83dcd50b14e1d487cd9fbcad4fedfa5c68267d51306b0dbbe4445b",
+        "2db92fc1aa9d9d65793e1664020e479f2dc196da9e7f07e952cf7ff85d0d6268",
+        "51aa62afe92bca80fcbf736d55967c35106bf9397f22539e87282ab7af916cbc",
+        "8eec5ff4a5adc9e8b7f0d13c5ca05cbeb93543a5f01d88972690d1482a5ba1a9",
+        "a62c7ffc161236577b525df80461ff8dc5b6372045bc01ed144f7feccd390de6",
+        "b86d3dd4ac3ce331bd64d5712d3af07fda5a490680eeed07b1d198c8df60a6ee",
+        "cd4702353684dbfa62e9e07279cd0486f1d2dac685f444bb167ea40b65e14f8f",
+        "eb63a684d585f13f5705921620f96e996a96a1a042cc1e49ea602595386dbcd1"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "colab",
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance",
+        "portage",
+        "portage-composite-actions",
+        "portage-governance",
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops",
+        "thegent",
+        "thegent-composite-actions",
+        "tokenledger"
+      ]
+    }
+  ],
+  "taskfile.yml": [
+    {
+      "path": "taskfile.yml",
+      "count": 29,
+      "sha": [
+        "01b49cdd91fdbd812887b1ae39c7d0c56632293592464a18e6ce6bfb6e6ae912",
+        "07baaff62bf5bdce2e569bc92869343b66dbcb85ace72301c4bb8a5401f507b7",
+        "29281537acf5b5018c9277a1918a475e46aae3f19e4ba8593bede3c5cde277de",
+        "2d8beb95dc83dcd50b14e1d487cd9fbcad4fedfa5c68267d51306b0dbbe4445b",
+        "2db92fc1aa9d9d65793e1664020e479f2dc196da9e7f07e952cf7ff85d0d6268",
+        "51aa62afe92bca80fcbf736d55967c35106bf9397f22539e87282ab7af916cbc",
+        "8eec5ff4a5adc9e8b7f0d13c5ca05cbeb93543a5f01d88972690d1482a5ba1a9",
+        "a62c7ffc161236577b525df80461ff8dc5b6372045bc01ed144f7feccd390de6",
+        "b86d3dd4ac3ce331bd64d5712d3af07fda5a490680eeed07b1d198c8df60a6ee",
+        "cd4702353684dbfa62e9e07279cd0486f1d2dac685f444bb167ea40b65e14f8f",
+        "eb63a684d585f13f5705921620f96e996a96a1a042cc1e49ea602595386dbcd1"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "colab",
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance",
+        "portage",
+        "portage-composite-actions",
+        "portage-governance",
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops",
+        "thegent",
+        "thegent-composite-actions",
+        "tokenledger"
+      ]
+    }
+  ],
+  "ci.yml": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "count": 24,
+      "sha": [
+        "003c2f58d36f4f6ae9c806eff4a503b80698f2d7a4bf784b43da118e982540d1",
+        "095186e8824844ac33025b4302f4e498a6ccf9474d4cd00567a7c167e8a02375",
+        "0a50f7577ed3d816e08eeba889e8c995ed19f1df77a96654224d098f15db8c91",
+        "0dd91dfd1f85b1f51dd1577be710146830bef1b0ac1e59732f33d43ba2bfcd48",
+        "23cfd430bda62a3a9665f146af84b2031bc63547440ca25aa56effca1709264f",
+        "7c80d44c9fb234c448c9a4d0a622c7e31f75253bd9d0f3096bf5267a36868fa4",
+        "7f6ea0a5ed78269ca7e20c7c812112170ced04c88420281a892c06c5ef05da2f",
+        "d85a09c5f4ecf5f40f364d83deb4ffea68976f145481d6a920c1c935bd59938a",
+        "f19d0070ba3ff28ee838a53017e0a9acbb1cb32156b3e184ccea1d898d6c2d39"
+      ],
+      "owners": [
+        "AgilePlus",
+        "helios-cli",
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream",
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops",
+        "thegent",
+        "thegent-composite-actions",
+        "tokenledger"
+      ]
+    }
+  ],
+  "alert-sync-issues.yml": [
+    {
+      "path": ".github/workflows/alert-sync-issues.yml",
+      "count": 18,
+      "sha": [
+        "acee3a23c7458bcc19cba7f138b7e21965ddc5e5dd5672fc103fa1fb56db926b"
+      ],
+      "owners": [
+        "AgilePlus",
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "bifrost-extensions",
+        "bifrost-extensions-composite-actions",
+        "bifrost-extensions-governance",
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "colab",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "phenodocs",
+        "portage",
+        "portage-composite-actions",
+        "portage-governance",
+        "thegent",
+        "thegent-composite-actions"
+      ]
+    }
+  ],
+  "branch-protection-audit.yml": [
+    {
+      "path": ".github/workflows/branch-protection-audit.yml",
+      "count": 13,
+      "sha": [
+        "fb16590ac465267343a80e8d6ff7768a8a068f3e8cf3321f67b4c1244af7dcaf"
+      ],
+      "owners": [
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops"
+      ]
+    }
+  ],
+  "scaffold-smoke.sh": [
+    {
+      "path": "scripts/scaffold-smoke.sh",
+      "count": 13,
+      "sha": [
+        "001343275a5baf212d43e0e1fe92dd9e67677f482398aeaa99bc751315276b50",
+        "02a1e31f69b18d5203fb75b195a44fb39d9df2cf32f5193e10d7ffec44e14954",
+        "32932c6d8a1d91076ed3614a90d2e7d2073b66dc55ce5340a47ad668c6d4e6e5",
+        "4c50b3d7fae57cd5f052291d6e9672d50c14f3bde03831539576c5a0703d10fe",
+        "99c46c061994e2849c8d2ddacfb8c405384c84df473689ee20b01326e702f261",
+        "a8f7f98e93ea86b3d67df26a75e3089ea6901ce51b04cafa51b411c0b60df88d",
+        "ac232fb6a422bbb5ff92c4fa3088e3fd37b0e2c950adfdb42dee66b6ae3bec27",
+        "b679c7d8854ead8285b47826db1a3d022a410e597cda4d4e377a549b24ec091e",
+        "b81a27d37f36d67fcf3af974262a5615fb8e17a3f946d4cc12e985eafdb975f9",
+        "f0e3f7f9a51a34aba254106ea4de28a6ffec44676d89c407a448184f051759a5"
+      ],
+      "owners": [
+        "template-commons",
+        "template-domain-service-api",
+        "template-domain-webapp",
+        "template-lang-elixir-hex",
+        "template-lang-go",
+        "template-lang-kotlin",
+        "template-lang-mojo",
+        "template-lang-python",
+        "template-lang-rust",
+        "template-lang-swift",
+        "template-lang-typescript",
+        "template-lang-zig",
+        "template-program-ops"
+      ]
+    }
+  ],
+  "coderabbit-rate-limit-retry.yml": [
+    {
+      "path": ".github/workflows/coderabbit-rate-limit-retry.yml",
+      "count": 8,
+      "sha": [
+        "6b4cef0719673dc97734d2c24df60bf5db58a28b2e9670b5740066422ec7191e",
+        "c1dc9675893261cca8f75074b4b3e54a81e3f8ef39d9bd56a03e9e6596484cd3"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "thegent",
+        "thegent-composite-actions"
+      ]
+    }
+  ],
+  "stage-gates.yml": [
+    {
+      "path": ".github/workflows/stage-gates.yml",
+      "count": 8,
+      "sha": [
+        "0e30c10b9ecc8ac3159f97ae6dac70f612e5925768894efc7a487c1a9afb9b25",
+        "6a10c738b894a20ff0199e8d5e04d05c89c4271bb0a4d61fa4c89930e4d9da47",
+        "a5a1c476365c7fa5862d4edd6ca1512ce2ca240e14f56dd79d91626013e4ded4",
+        "c229781d2172bdc25ffcdb13b483fa5212e64153bd9d12b97770cb44e3a10421"
+      ],
+      "owners": [
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "generate-sdks.yaml": [
+    {
+      "path": ".github/workflows/generate-sdks.yaml",
+      "count": 6,
+      "sha": [
+        "110140b9cc9fb8f133a4d07e228395fa10acec56323c21f8e27140c66567a214",
+        "7c1ff76b6ef3601072ffd9cdb3608ac293a750a53c437fa56efce98a9741e887"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "docs.yml": [
+    {
+      "path": ".github/workflows/docs.yml",
+      "count": 6,
+      "sha": [
+        "01001fdaba5adb215f986032922be71476ca047560c584d972508f4ca1fdb428",
+        "1c00798eebe09977cb8800ddf86a6a777e88f96505c121ff9b4fbe0bf4fd18d3",
+        "2433c7b506a1aa16b79b88ada2d6d9c3a4537305e9473ef396f5bc491db85402",
+        "cda6d25302306b4e634552133e2accfa8df5e2bfeb39b1746aa554be9043c6bc"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "thegent",
+        "thegent-composite-actions",
+        "tokenledger"
+      ]
+    }
+  ],
+  "required-check-names-guard.yml": [
+    {
+      "path": ".github/workflows/required-check-names-guard.yml",
+      "count": 6,
+      "sha": [
+        "191c6cc6047b3d2d85bdb192868b8f21d5531fd915ea28e519118dfb8de2ab2e"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance"
+      ]
+    }
+  ],
+  "release.yml": [
+    {
+      "path": ".github/workflows/release.yml",
+      "count": 5,
+      "sha": [
+        "330e4cc816d837d9882cd1128c8fa8ff817f161ec1673fb6edb8bde918b99c64",
+        "4cf981d3795cdbd0622a21c364e877c31df2e9000baf53e54bf6c87e014849a8"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance",
+        "thegent",
+        "thegent-composite-actions"
+      ]
+    }
+  ],
+  "codeql.yml": [
+    {
+      "path": ".github/workflows/codeql.yml",
+      "count": 5,
+      "sha": [
+        "00879fbf64608b407857b42529d77e238ced2b6c93f1ad4bd94abfaf6a4a64ec",
+        "e223d0d7ea8066c59f3749d241191b8dd438bd5acacdde15a9a7a3144724ce60",
+        "e68d02bbdadcd0fd9129d4539e4d38dcae92cb495c72fb9b2c56a859443ca1e3",
+        "fd3b29dceb58599241f7e00ae0ecaaab1969b1ad3ce5a5d33ff3dddb1aa00b67"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "phenodocs",
+        "tokenledger"
+      ]
+    }
+  ],
+  "provider-smoke-matrix-cheapest.sh": [
+    {
+      "path": "scripts/provider-smoke-matrix-cheapest.sh",
+      "count": 5,
+      "sha": [
+        "121ed69ee28e0812675442a52efaf73c038859ea97772f71c0ebc14810159efc",
+        "bd3b92978a6a77ee3f59255d107e303183afaab3f03ab4b28a29aff126b22171"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus",
+        "thegent",
+        "thegent-composite-actions"
+      ]
+    }
+  ],
+  "vitepress-pages.yml": [
+    {
+      "path": ".github/workflows/vitepress-pages.yml",
+      "count": 4,
+      "sha": [
+        "95b93ad7deaa2eaa7cdd24422dff6af8d82a84e5cac11db3defd43f41d06ee57",
+        "c906f49aeb9b74924d59a0b224a60449f2a5760e6b56cf7b7923054dfbae1e23"
+      ],
+      "owners": [
+        "cliproxyapi-plusplus",
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance"
+      ]
+    }
+  ],
+  "install-musl-build-tools.sh": [
+    {
+      "path": ".github/scripts/install-musl-build-tools.sh",
+      "count": 4,
+      "sha": [
+        "fd0180e972403ef65a252c4b68c57bb9c4d40719c0ad4730b7f3383cc3cb9317"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "Dockerfile.bazel": [
+    {
+      "path": ".github/workflows/Dockerfile.bazel",
+      "count": 4,
+      "sha": [
+        "05eeaf79feca31c216ddbe588672f04332a596814de12a480d457f742074282f"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "bazel.yml": [
+    {
+      "path": ".github/workflows/bazel.yml",
+      "count": 4,
+      "sha": [
+        "093daa712073f15bebf0165a1b61ad3f1d02f6c57f4070a24c65cf41d5acac9f",
+        "8a8ec8afc25f05abcf3fd1b43b6874e1dc1463b6abb92062dd42d0f9a08c0be3",
+        "e2376693598b6ea32dcb580094626bb0c15a4afe1ca426c2dc8ec78c27e3b51f"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "cargo-deny.yml": [
+    {
+      "path": ".github/workflows/cargo-deny.yml",
+      "count": 4,
+      "sha": [
+        "59ffb3d6092dd3a3e9010601b0ef7aca458573614bcb3bcf36d691c17d5e36a3"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "ci.bazelrc": [
+    {
+      "path": ".github/workflows/ci.bazelrc",
+      "count": 4,
+      "sha": [
+        "27a5a070bed76509c27660106f067e7b8b648d22d6444b95f05513dae4d0e8c9"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "cla.yml": [
+    {
+      "path": ".github/workflows/cla.yml",
+      "count": 4,
+      "sha": [
+        "335587a9bf703394e61d86da78e0fa09b0a4e1f00a0366588b2d6273b3865eb5"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "close-stale-contributor-prs.yml": [
+    {
+      "path": ".github/workflows/close-stale-contributor-prs.yml",
+      "count": 4,
+      "sha": [
+        "95e7821a121b980bcd65881731ff1a05c352d65e10e28f479c6371d9d8c4df7d"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "codespell.yml": [
+    {
+      "path": ".github/workflows/codespell.yml",
+      "count": 4,
+      "sha": [
+        "311dc7337b77ed78487f87c796cb0e71a4d1c9c6a491cad5a0de00ed87a0f091"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "issue-deduplicator.yml": [
+    {
+      "path": ".github/workflows/issue-deduplicator.yml",
+      "count": 4,
+      "sha": [
+        "8305587573e9de11cdae028ebaf6da86aa09962cfec7bdabd739d4f54b18e5f5",
+        "e0183135bcef37fd245bd5326eefb49711497e1b292a2ac84b05fc9eee9defc9"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "issue-labeler.yml": [
+    {
+      "path": ".github/workflows/issue-labeler.yml",
+      "count": 4,
+      "sha": [
+        "2048886473496a28f0ebe41fb42eed6b37f988fffb672feea4d5676665e2d4bb",
+        "5af4ee1c39dd414eab3c0cda8a6ac45feeed4ef26c0538e02301e99d5cc755b6"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "rust-ci.yml": [
+    {
+      "path": ".github/workflows/rust-ci.yml",
+      "count": 4,
+      "sha": [
+        "11824899c2e09ff625e47b0b13763c92ffef26fe1d1cf15c3044a084f4dc14e8",
+        "8602fe02258bc4059e627c3bcd04e286ec90fe6ab4b07ff321d9ef69d58a327d",
+        "c4349aece6a1943b750007245395af3f8414971819d227221e07334926baacc8"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "rust-release-prepare.yml": [
+    {
+      "path": ".github/workflows/rust-release-prepare.yml",
+      "count": 4,
+      "sha": [
+        "c92669dbbbb5d82b5729e768b42cf6e4278865d9b3d4925840a21da8c0fe1500"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "rust-release-windows.yml": [
+    {
+      "path": ".github/workflows/rust-release-windows.yml",
+      "count": 4,
+      "sha": [
+        "850573d1e19ac6033b5eae7a8ad3b767ecdaeb8c4c0ee2e348ed15a0e9ad6cc7"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "rust-release.yml": [
+    {
+      "path": ".github/workflows/rust-release.yml",
+      "count": 4,
+      "sha": [
+        "08e97a1c68d99898d332431203ac2ae06f427a10ba5fda765960bbbe5a91583d",
+        "6a6199942e7182b9c3cd1b8328ed8174430fbf4540a7fefbac49c802ff142188"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "sdk.yml": [
+    {
+      "path": ".github/workflows/sdk.yml",
+      "count": 4,
+      "sha": [
+        "b8d924863a253c5bd1a8e5c102b31148d693eb8b47269b5c8876304b205698c3"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "shell-tool-mcp-ci.yml": [
+    {
+      "path": ".github/workflows/shell-tool-mcp-ci.yml",
+      "count": 4,
+      "sha": [
+        "b471c2e1e876eab6c236092b1a250f8841f1a0dd77c6f70818a106b6fdd3fe16"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "shell-tool-mcp.yml": [
+    {
+      "path": ".github/workflows/shell-tool-mcp.yml",
+      "count": 4,
+      "sha": [
+        "f1ad45a9ad06dcb7508191e4f2c9ef4fa8e847c6efeb2c644f1acd3af0630a38"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "zstd": [
+    {
+      "path": ".github/workflows/zstd",
+      "count": 4,
+      "sha": [
+        "db7895878fd8536b3164a518ccf530d3e1ce06e51dcf976170ad3c489ea4d30d"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "asciicheck.py": [
+    {
+      "path": "scripts/asciicheck.py",
+      "count": 4,
+      "sha": [
+        "5bf0bf3b147d14d38a5494db467a60487618aa188bffa655e5e37adc9e4ee9ef"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "check-module-bazel-lock.sh": [
+    {
+      "path": "scripts/check-module-bazel-lock.sh",
+      "count": 4,
+      "sha": [
+        "9a3f3949e183c3e22aaac220b3f9fe29a171868c90900ec92b2286c7b84721da"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "debug-codex.sh": [
+    {
+      "path": "scripts/debug-codex.sh",
+      "count": 4,
+      "sha": [
+        "1d00f14cd5a1b9dab72494c783a1c19277b484a95b6806e7ab2cb69f0b71c2f9",
+        "8a0af2b27b23189f13b926948d029f77a52ff70ff148bddd8766a819e5ea0f32"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "mock_responses_websocket_server.py": [
+    {
+      "path": "scripts/mock_responses_websocket_server.py",
+      "count": 4,
+      "sha": [
+        "c28540e27248b84de020e40fb9f68eee3909c98d15a1e6f0e5a1cd461ddc5a5d"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "readme_toc.py": [
+    {
+      "path": "scripts/readme_toc.py",
+      "count": 4,
+      "sha": [
+        "5c866752be5b7bd477548bb09805a41d85d2598881237ce185411e6a649d3e55"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "stage_npm_packages.py": [
+    {
+      "path": "scripts/stage_npm_packages.py",
+      "count": 4,
+      "sha": [
+        "6dde9d775cc5bac5fc935a2933eae5a475192d9beeb54c593129fb4901f9384e",
+        "c41a974434a45f2e44cba32e30a8bb9d10a904b450103311d50f92c562b83283"
+      ],
+      "owners": [
+        "helios-cli",
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "docs-site.yml": [
+    {
+      "path": ".github/workflows/docs-site.yml",
+      "count": 3,
+      "sha": [
+        "7f42427b6a93c4f030a5687efb05068034f39ac5949aa9c4b5b8f930c733e580"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance"
+      ]
+    }
+  ],
+  "go-test.yml": [
+    {
+      "path": ".github/workflows/go-test.yml",
+      "count": 3,
+      "sha": [
+        "68a9a0147db8029a42b9bebc8849c3762e8d7021d9d12ec7773f2715b1678d95"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance"
+      ]
+    }
+  ],
+  "pr-preview-build.yml": [
+    {
+      "path": ".github/workflows/pr-preview-build.yml",
+      "count": 3,
+      "sha": [
+        "f1db0cd54e56a866cdf9416dad772e69bbfa994fa95c3114d4b3c08496ed0614"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance"
+      ]
+    }
+  ],
+  "pr-preview-cleanup.yml": [
+    {
+      "path": ".github/workflows/pr-preview-cleanup.yml",
+      "count": 3,
+      "sha": [
+        "3dcc6c78eb3bc96d1cb6b4512a7e3de84ee654a07da0dc8459a4a7969274c326"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance"
+      ]
+    }
+  ],
+  "pr-preview-release.yml": [
+    {
+      "path": ".github/workflows/pr-preview-release.yml",
+      "count": 3,
+      "sha": [
+        "039b3101f22e2b0c47af484a31875a8a1c4a12cedf8dd07aee53b6468ba82e92"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance"
+      ]
+    }
+  ],
+  "validate_openapi_agent_client_module.sh": [
+    {
+      "path": "scripts/validate_openapi_agent_client_module.sh",
+      "count": 3,
+      "sha": [
+        "8a314e5dce1772147d4ab3c012efe30c6c03ad97be0280d013700888bc125f3e"
+      ],
+      "owners": [
+        "agentapi-plusplus",
+        "agentapi-plusplus-composite-actions",
+        "agentapi-plusplus-governance"
+      ]
+    }
+  ],
+  "check-approved-external-endpoints.sh": [
+    {
+      "path": ".github/scripts/check-approved-external-endpoints.sh",
+      "count": 3,
+      "sha": [
+        "501cdd430ffe3333a91c142733a89f79b9464c4832f020ea94676c027fdfe2b8"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-distributed-critical-paths.sh": [
+    {
+      "path": ".github/scripts/check-distributed-critical-paths.sh",
+      "count": 3,
+      "sha": [
+        "fb87723b1c6dc5a61e6f44f73f6c6c41a308d81981a2d104c5a0735cd8beef81"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-docs-secret-samples.sh": [
+    {
+      "path": ".github/scripts/check-docs-secret-samples.sh",
+      "count": 3,
+      "sha": [
+        "bcf56f7177914bc3f263f2474b11313e959bd1d72bd9dda55604c6cc3b8563e7"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-open-items-fragmented-parity.sh": [
+    {
+      "path": ".github/scripts/check-open-items-fragmented-parity.sh",
+      "count": 3,
+      "sha": [
+        "70eafee54f7c3fdca7de905ee4a433e254e5bef66c27873749af80d18080e3ed"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-phase-doc-placeholder-tokens.sh": [
+    {
+      "path": ".github/scripts/check-phase-doc-placeholder-tokens.sh",
+      "count": 3,
+      "sha": [
+        "9c3d3662b5b01ac66fe20d4fc03eb816894cb2ebaa65cd8387074de428e9b982"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-workflow-token-permissions.sh": [
+    {
+      "path": ".github/scripts/check-workflow-token-permissions.sh",
+      "count": 3,
+      "sha": [
+        "796bddb6aadd8c50184a4777944649cd8b2ab339f1d8984b37e92d84f13229fb"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "release-lint.sh": [
+    {
+      "path": ".github/scripts/release-lint.sh",
+      "count": 3,
+      "sha": [
+        "9ad0c8e0c059d5be25bfd8af9bb656ab80f667a36f30d3299cd3439104f0bdbe"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-lane-f2-cpb-0691-0700.sh": [
+    {
+      "path": ".github/scripts/tests/check-lane-f2-cpb-0691-0700.sh",
+      "count": 3,
+      "sha": [
+        "b79f282023c305325ce7219e846233a27b0e69f3c37cd00c8b54ebd9b17a2ca4"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-open-items-fragmented-parity-test.sh": [
+    {
+      "path": ".github/scripts/tests/check-open-items-fragmented-parity-test.sh",
+      "count": 3,
+      "sha": [
+        "67df6fb4bed76b67e927557b82a6d02b0c3e38e66fc0a8f35c9ff02364f994e1"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-wave80-lane-d-cpb-0556-0610.sh": [
+    {
+      "path": ".github/scripts/tests/check-wave80-lane-d-cpb-0556-0610.sh",
+      "count": 3,
+      "sha": [
+        "1257b2828e93ed1b687410a89caf9efeafff182a1f4ff77b8a22c2ccbd023fa5"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-wave80-lane-e-cpb-0581-0590.sh": [
+    {
+      "path": ".github/scripts/tests/check-wave80-lane-e-cpb-0581-0590.sh",
+      "count": 3,
+      "sha": [
+        "f1c1e25cbda101eff94fe1c2311f0c3a71cfa3c4364ebde1377759198ba4fa2c"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "check-wave80-lane-f-cpb-0546-0555.sh": [
+    {
+      "path": ".github/scripts/tests/check-wave80-lane-f-cpb-0546-0555.sh",
+      "count": 3,
+      "sha": [
+        "b8c5e0ef17d623f3039d6b16197c8e4407600a7d5333d387a730553a9f4b1cbe"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "fail-missing-status.md": [
+    {
+      "path": ".github/scripts/tests/fixtures/open-items-parity/fail-missing-status.md",
+      "count": 3,
+      "sha": [
+        "0dc61b81074d143168c2882b25356f12958ad27a463ec57c53761485946f5d3f"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "fail-status-partial.md": [
+    {
+      "path": ".github/scripts/tests/fixtures/open-items-parity/fail-status-partial.md",
+      "count": 3,
+      "sha": [
+        "a2eed63fbb7107e1cd2380029db153213228a684412bb603c38c85cf904683bf"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "pass-hash-status-done.md": [
+    {
+      "path": ".github/scripts/tests/fixtures/open-items-parity/pass-hash-status-done.md",
+      "count": 3,
+      "sha": [
+        "10c5b6bc79224c5ca17e9cc4f2a6918c8d21fa3c6fe5b56d3593abd240bcf177"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "pass-status-implemented.md": [
+    {
+      "path": ".github/scripts/tests/fixtures/open-items-parity/pass-status-implemented.md",
+      "count": 3,
+      "sha": [
+        "64795a8df397bb0bad237ef47f441bffaa7e9b27b510fea5a76711ed69ef491c"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "auto-merge.yml": [
+    {
+      "path": ".github/workflows/auto-merge.yml",
+      "count": 3,
+      "sha": [
+        "80253dc795b8f8504bd457e93e35c6a7867a22dd84d6d96d6c7d1bad74c7141c"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "ci-rerun-flaky.yml": [
+    {
+      "path": ".github/workflows/ci-rerun-flaky.yml",
+      "count": 3,
+      "sha": [
+        "bfd0ff64b9be87a69f05a0b7cbd1df00a9447be847ccf1dcdac9c69016cf0bcf"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "docker-image.yml": [
+    {
+      "path": ".github/workflows/docker-image.yml",
+      "count": 3,
+      "sha": [
+        "8b1e613d7ebd07959f0adb47fac9da28c2e7c2b09718f864c2e0634c90722ec5",
+        "b6f6d7d28bea4a736e44b6f85f4aa65821cc02f2d1787224104c30088c08e059"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "pr-path-guard.yml": [
+    {
+      "path": ".github/workflows/pr-path-guard.yml",
+      "count": 3,
+      "sha": [
+        "401a179b18de62383faa77a7774cda98b35cdbaff73edca46735fe0938d13717",
+        "d62b86e7a766ec45b1b37de4545760d469c514eda53447b9b9815e2cf106d001"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "pr-test-build.yml": [
+    {
+      "path": ".github/workflows/pr-test-build.yml",
+      "count": 3,
+      "sha": [
+        "629c9d1e51ece9201327514a7c133f18d383d5856ca0abbb329192aee6238860",
+        "c99c2158b5ce87a00414b39eaf427340ccbfb9c1560364ee82c694c700018659"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "release-batch.yaml": [
+    {
+      "path": ".github/workflows/release-batch.yaml",
+      "count": 3,
+      "sha": [
+        "2009c7815fbda93b3e318c76313addc950fbd5ec3b28b3bc4cf64f6fd2881ccf"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "release.yaml": [
+    {
+      "path": ".github/workflows/release.yaml",
+      "count": 3,
+      "sha": [
+        "5ced9f76a58db9ebb40d9b12a7863654e36623dacbe5cf1185a46ac75ba86830",
+        "c827ca75a99176aa74ec70a001f6fc19f19fd69da90abe1c59501cb8e978b12a"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "generate_llms_docs.py": [
+    {
+      "path": "scripts/generate_llms_docs.py",
+      "count": 3,
+      "sha": [
+        "c883fd273f52bfcdedd482937802428cce4478c6a1477e14ae405d41e1a18aad"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "provider-smoke-matrix-test.sh": [
+    {
+      "path": "scripts/provider-smoke-matrix-test.sh",
+      "count": 3,
+      "sha": [
+        "6ca9ff3fd3b82756097301f1ca869260cf28cd3cc24f14b60e32c54290bcc3af"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "provider-smoke-matrix.sh": [
+    {
+      "path": "scripts/provider-smoke-matrix.sh",
+      "count": 3,
+      "sha": [
+        "feed3104345b8a238beee7b25382b24a8ac3fb0a4ee9559bd84107cc4504082e"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "release_batch.sh": [
+    {
+      "path": "scripts/release_batch.sh",
+      "count": 3,
+      "sha": [
+        "22b7685bbc3f0b35a7ecdcbc822b4ba990de7098d902384f3005464a8cef0bc5"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "service": [
+    {
+      "path": "scripts/service",
+      "count": 3,
+      "sha": [
+        "9f05b3039f974854ac4df449cc7153e02aebcf7fe097ee1af4fc3335ca2c750c"
+      ],
+      "owners": [
+        "cliproxyapi++",
+        "cliproxyapi++-composite-actions",
+        "cliproxyapi-plusplus"
+      ]
+    }
+  ],
+  "agent-dir-guard.yml": [
+    {
+      "path": ".github/workflows/agent-dir-guard.yml",
+      "count": 3,
+      "sha": [
+        "c6d60183f3085effe0987a68c5b363c70875a74f76834074713d3288fd0f2cb3",
+        "cd9cc67289bdaab98aec862f5ac807aca327eba0911a50a301e974abd3b04157"
+      ],
+      "owners": [
+        "heliosApp",
+        "heliosApp-composite-actions",
+        "heliosApp-governance"
+      ]
+    }
+  ],
+  "review-wave-orchestrator.yml": [
+    {
+      "path": ".github/workflows/review-wave-orchestrator.yml",
+      "count": 3,
+      "sha": [
+        "c75390fd0c53464e1c5108d56674058be36e521225d4977c52f588661904eb86",
+        "ed255e86820732cc720f3b6be358f8ed71ed8a2a67f3d804fc0437c54d1afcf1"
+      ],
+      "owners": [
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "phenotypeActions"
+      ]
+    }
+  ],
+  "preflight.mjs": [
+    {
+      "path": "scripts/dev/preflight.mjs",
+      "count": 3,
+      "sha": [
+        "6fb6a31783644aa87d5698f032235554f6ab3ae1ce0872f28bb833b6ee54c35f"
+      ],
+      "owners": [
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "install.sh": [
+    {
+      "path": "scripts/install/install.sh",
+      "count": 3,
+      "sha": [
+        "4838a4641ec011ce31358cba1bc2c4e25fb432be150bc5b9e21207ab89260c91"
+      ],
+      "owners": [
+        "heliosCLI",
+        "heliosCLI-composite-actions",
+        "heliosCLI-upstream"
+      ]
+    }
+  ],
+  "claude-code-review.yml": [
+    {
+      "path": ".github/workflows/claude-code-review.yml",
+      "count": 3,
+      "sha": [
+        "1f4501d6033e79831338c17795b7e93bc4b2a82f0d8703a29893b8d16c2de7cc"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "claude.yml": [
+    {
+      "path": ".github/workflows/claude.yml",
+      "count": 3,
+      "sha": [
+        "47eb1decf3882e3257c7ece711b432f91780b1ebb7f29069f63eeecd6dda2510"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "pytest.yml": [
+    {
+      "path": ".github/workflows/pytest.yml",
+      "count": 3,
+      "sha": [
+        "2e8047fdd7de2d8c78c7cebf5f6ad60c52784c3181218a7e017ea999e1589ad5"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "ruff-format.yml": [
+    {
+      "path": ".github/workflows/ruff-format.yml",
+      "count": 3,
+      "sha": [
+        "42a6e9eff4b8341ec9d0d0778c1efbd93b666fc915f43663e49367d4f4d145c4"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "sync-registry.yml": [
+    {
+      "path": ".github/workflows/sync-registry.yml",
+      "count": 3,
+      "sha": [
+        "4385f693d245b83c49ece2052620ab6af05bc94e818cfba9a4f7e2a95e321409"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "ty.yml": [
+    {
+      "path": ".github/workflows/ty.yml",
+      "count": 3,
+      "sha": [
+        "e3d28d913fbc96983c48abe62c39872cd6e70d207205c23ff018eba213d20f92"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "arm64_pipeline.py": [
+    {
+      "path": "scripts/arm64_pipeline.py",
+      "count": 3,
+      "sha": [
+        "8b063acd17727f8bcc7846e7e1d51442a1e8468f43b535d8ebd684aec1c92fe1"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "arm64_pipeline_optimized.py": [
+    {
+      "path": "scripts/arm64_pipeline_optimized.py",
+      "count": 3,
+      "sha": [
+        "aa359fe06dea51d21c53cd30a9c6f90873bc6bffa3c1c1b24a88fddbaf490ebc"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "build_arm64.py": [
+    {
+      "path": "scripts/build_arm64.py",
+      "count": 3,
+      "sha": [
+        "55450844fe0f2292524d1b60611a6d11f035ae1f68bf0f3249afcdcc844d3f8e"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "build_arm64.sh": [
+    {
+      "path": "scripts/build_arm64.sh",
+      "count": 3,
+      "sha": [
+        "9ccf3b17f3ef1c5e20d724e7d42adfc039bd8848713981518c3a0c20da54fb40"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "factory.py": [
+    {
+      "path": "scripts/factory.py",
+      "count": 3,
+      "sha": [
+        "4b3bc8e0f32de96a6aed6ee5cba9b095a185b84231d556aab089fe1eb5f29841"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "generate_auth_types.sh": [
+    {
+      "path": "scripts/generate_auth_types.sh",
+      "count": 3,
+      "sha": [
+        "d4bb05e456b54cea3eaf2146b5a9a30660201510a91edad3fc7ccc55b28b597f"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "lima_runner.sh": [
+    {
+      "path": "scripts/lima_runner.sh",
+      "count": 3,
+      "sha": [
+        "9f2338982a5eecdb9c0e3cfbbd13156a43b43cab25c6d2a9210352743202034e"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "minimal_runner.py": [
+    {
+      "path": "scripts/minimal_runner.py",
+      "count": 3,
+      "sha": [
+        "d366f28d2ef3558184bb0ec4c4a2328bc3b3d804da15e4e14b564d4623121411"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "nats_cache.py": [
+    {
+      "path": "scripts/nats_cache.py",
+      "count": 3,
+      "sha": [
+        "151ea7df8333741acac1baf0fb8c43071e8145ccc65739fa828938bf7f4ed35d"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "publish.sh": [
+    {
+      "path": "scripts/publish.sh",
+      "count": 3,
+      "sha": [
+        "951b03bc254e894b31ead590d9f7c106ca657bcc86948d2a353e0329b579a63b"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "remote_runner.py": [
+    {
+      "path": "scripts/remote_runner.py",
+      "count": 3,
+      "sha": [
+        "fc5960186f8652f8488ea80a50076ab8ef8abd3ec2c4cfd5eb31a76fecbcad5d"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "sync_registry_to_supabase.py": [
+    {
+      "path": "scripts/sync_registry_to_supabase.py",
+      "count": 3,
+      "sha": [
+        "922528aa484adbc1b0cededea9f6a1ca22298efd3f28f831aad407a09edaeb8e"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "test_tinker_llm.py": [
+    {
+      "path": "scripts/test_tinker_llm.py",
+      "count": 3,
+      "sha": [
+        "dfb04f7075a79d11e3261d1b7d301ada294e1da07ab1c183d0b2f1f9f27d8b62"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "validate_queue_orchestrator_module.sh": [
+    {
+      "path": "scripts/validate_queue_orchestrator_module.sh",
+      "count": 3,
+      "sha": [
+        "f7c33981158b445e8b057d9f74b262c38cbda3e6a283ebddd1079e66e002b078"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ],
+  "windows_runner.py": [
+    {
+      "path": "scripts/windows_runner.py",
+      "count": 3,
+      "sha": [
+        "ab1ef9ee4a2fd59507966c99d0c7605fac41af2a8a227d97999c08b87ca74dea"
+      ],
+      "owners": [
+        "portage",
+        "portage-composite-actions",
+        "portage-governance"
+      ]
+    }
+  ]
+}

@@ -4,8 +4,9 @@ Handles persistence of layout and session configuration to disk.
 """
 
 from pathlib import Path
+from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_dump, yaml_load
 
 
 class SessionState:
@@ -28,7 +29,7 @@ class SessionState:
         self.session_file = self.session_dir / f"{session_name}.yaml"
         self.layout_data: dict | None = None
 
-    def save_session(self, layout: dict) -> bool:
+    def save_session(self, layout: dict[str, Any]) -> bool:
         """Save session state to disk.
 
         Args:
@@ -44,8 +45,8 @@ class SessionState:
                 "theme": "dark",  # Default theme
             }
 
-            with open(self.session_file, "w") as f:
-                yaml.dump(session_data, f, default_flow_style=False)
+            with self.session_file.open("w", encoding="utf-8") as file_handle:
+                yaml_dump(session_data, file_handle, default_flow_style=False)
 
             self.layout_data = layout
             return True
@@ -62,8 +63,8 @@ class SessionState:
             return None
 
         try:
-            with open(self.session_file) as f:
-                data = yaml.safe_load(f)
+            with self.session_file.open(encoding="utf-8") as file_handle:
+                data = yaml_load(file_handle)
 
             if data is None:
                 return None

@@ -10,7 +10,7 @@ from thegent.mcp.tools.elicitation import (
 
 __all__ = [
     "elicit_choice",
-    "elicit_confirmation", 
+    "elicit_confirmation",
     "elicit_structured",
     "elicit_text",
     "register_elicitation_tools",

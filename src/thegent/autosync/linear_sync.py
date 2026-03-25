@@ -25,7 +25,7 @@ async def sync_to_linear(runner, items: list) -> dict[str, Any]:
     try:
         config = LinearGraphQLConfig(
             api_key=runner.config.linear_api_key,
-            team_id=runner.config.linear_team_id,
+            team_key=runner.config.linear_team_key,
         )
 
         if runner.config.shadow_mode:
@@ -36,7 +36,7 @@ async def sync_to_linear(runner, items: list) -> dict[str, Any]:
             logger.info(f"Dry-run: skip Linear write ({len(items)} items)")
             return {"success": True, "dry_run": True}
 
-        result = await asyncio.to_thread(linear_sync_to, items, config)
+        result = await asyncio.to_thread(linear_sync_to, config, items)
         return {"success": True, "result": result}
 
     except Exception as e:
@@ -44,7 +44,7 @@ async def sync_to_linear(runner, items: list) -> dict[str, Any]:
         return {"error": str(e)}
 
 
-async def sync_from_linear(runner, items: list, path: Path) -> list:
+async def sync_from_linear(runner, items: list, path: Path) -> list[dict[str, Any]]:
     """Sync items from Linear."""
     if not runner.config.linear_enabled:
         return []
@@ -52,9 +52,11 @@ async def sync_from_linear(runner, items: list, path: Path) -> list:
     try:
         config = LinearGraphQLConfig(
             api_key=runner.config.linear_api_key,
-            team_id=runner.config.linear_team_id,
+            team_key=runner.config.linear_team_key,
         )
-        return await asyncio.to_thread(linear_sync_from, config)
+        result = await asyncio.to_thread(linear_sync_from, config)
+        imported = result.get("items", [])
+        return imported if isinstance(imported, list) else []
     except Exception as e:
         logger.error(f"Linear sync error: {e}")
         return []

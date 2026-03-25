@@ -51,7 +51,7 @@ class TestCacheIntegration:
 
         cache = TieredCache()
         cache.set("key1", "value1")
-        
+
         # Should get from L1
         result = cache.get("key1")
         assert result == "value1"
@@ -61,17 +61,17 @@ class TestCacheIntegration:
         from thegent.cache import TieredCache
 
         cache = TieredCache()
-        
+
         # Set directly in L2 (simulating previous run)
         cache.l2.set("key2", "value2")
-        
+
         # Clear L1
         cache.l1.clear()
-        
+
         # Get should promote from L2 to L1
         result = cache.get("key2")
         assert result == "value2"
-        
+
         # Now should be in L1
         assert cache.l1.get("key2") == "value2"
 
@@ -94,7 +94,7 @@ class TestScalingIntegration:
         from thegent.scaling import DynamicLimiter
 
         limiter = DynamicLimiter(min_limit=1, max_limit=10, initial_limit=5)
-        
+
         # Should have initial limit
         assert 1 <= limiter.current_limit <= 10
 
@@ -115,11 +115,11 @@ class TestShellIntegration:
         from thegent.shell import ShellConfig
 
         config = ShellConfig()
-        
+
         delay0 = config.get_retry_delay(0)
         delay1 = config.get_retry_delay(1)
         delay2 = config.get_retry_delay(2)
-        
+
         assert delay1 > delay0
         assert delay2 > delay1
 
@@ -132,6 +132,7 @@ class TestProcessIntegration:
         from thegent.process import register_cleanup
 
         import os
+
         register_cleanup(os.getpid())  # Register current process
 
     def test_signal_handler_install(self):

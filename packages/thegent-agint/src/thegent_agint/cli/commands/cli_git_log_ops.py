@@ -6,7 +6,6 @@ Phase 6 / WP-16003: Extracted from cli_git.py for modular management.
 import logging
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
@@ -14,7 +13,6 @@ from rich.console import Console
 
 from thegent_gitops.git import GitParallelismManager
 from thegent_gitops.worktree import WorktreePool
-from thegent_gitops.native import GitNative
 
 console = Console()
 logger = logging.getLogger(__name__)

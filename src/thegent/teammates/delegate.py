@@ -4,11 +4,10 @@ Task Delegation
 Async delegation with status tracking, priority, and timeout handling.
 """
 
-from .registry import Teammate, TeammateRegistry
+from .registry import TeammateRegistry
 from .status import TaskStatus, TaskResult
 from dataclasses import dataclass
 from typing import Optional
-import asyncio
 import time
 import xml.etree.ElementTree as ET
 
@@ -16,6 +15,7 @@ import xml.etree.ElementTree as ET
 @dataclass
 class DelegationRequest:
     """Request to delegate a task."""
+
     teammate_id: str
     task: str
     priority: str = "NORMAL"
@@ -47,12 +47,7 @@ class Delegate:
                 raise ValueError(f"Teammate not found: {request.teammate_id}")
 
         task_id = self._generate_id()
-        result = TaskResult(
-            id=task_id,
-            status=TaskStatus.PENDING,
-            teammate_id=request.teammate_id,
-            task=request.task
-        )
+        result = TaskResult(id=task_id, status=TaskStatus.PENDING, teammate_id=request.teammate_id, task=request.task)
         self._tasks[task_id] = result
 
         # Create handoff XML
@@ -101,6 +96,5 @@ class Delegate:
     def list_active(self) -> list[TaskResult]:
         """List all active tasks."""
         return [
-            t for t in self._tasks.values()
-            if t.status in (TaskStatus.PENDING, TaskStatus.QUEUED, TaskStatus.RUNNING)
+            t for t in self._tasks.values() if t.status in (TaskStatus.PENDING, TaskStatus.QUEUED, TaskStatus.RUNNING)
         ]

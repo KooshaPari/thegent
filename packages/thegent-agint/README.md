@@ -1,3 +1,3 @@
 # thegent-agint
 
-`thegent-agint` is the extracted git coordination component for thegent.
+`thegent-agint` is a package split used by Thegent CLI/Git command surfaces.

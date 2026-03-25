@@ -2,6 +2,7 @@
 
 import hashlib
 import logging
+from importlib import import_module, util
 from pathlib import Path
 from typing import Any
 
@@ -38,13 +39,13 @@ def use_diskcache(cache_dir: Path) -> Any:
     Returns:
         Cache instance
     """
-    try:
-        import diskcache
-
-        return diskcache.Cache(str(cache_dir))
-    except ImportError:
+    if util.find_spec("diskcache") is None:
         logger.warning("diskcache not available")
         return None
+
+    diskcache = import_module("diskcache")
+
+    return diskcache.Cache(str(cache_dir))
 
 
 def use_psutil_monitoring() -> dict[str, Any]:

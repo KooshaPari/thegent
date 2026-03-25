@@ -3,7 +3,7 @@ Provides high-level, human-aligned rules (constitution) for all agent operations
 Inspired by Constitutional AI principles (Anthropic).
 """
 
-import orjson as json
+import json
 import logging
 from dataclasses import dataclass, field
 from enum import StrEnum

@@ -234,3 +234,38 @@ class TestGitNativeInit:
 
         gn = GitNative(REPO_ROOT)
         assert gn.repo_path == str(REPO_ROOT)
+
+
+@pytest.mark.unit
+class TestGitNativeFetch:
+    """@trace FR-GIT-001"""
+
+    def test_fetch_returns_false_when_command_fails(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import thegent_gitops.native as git_native
+
+        # Force fallback path by disabling native fetch.
+        monkeypatch.setattr(git_native, "_native_available", False, raising=False)
+
+        result: list[str] | None = None
+
+        def _run_git_command(_: str, *args: str) -> str | None:
+            return result
+
+        monkeypatch.setattr(git_native, "_run_git_command", _run_git_command)
+
+        gn = git_native.GitNative(REPO_PATH)
+        assert gn.fetch() is False
+
+    def test_fetch_returns_true_only_on_success_output_or_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import thegent_gitops.native as git_native
+
+        monkeypatch.setattr(git_native, "_native_available", False, raising=False)
+
+        def _run_git_command(_: str, *args: str) -> str | None:
+            return ""
+
+        # Non-empty output should be true by virtue of successful command execution.
+        monkeypatch.setattr(git_native, "_run_git_command", _run_git_command)
+
+        gn = git_native.GitNative(REPO_PATH)
+        assert gn.fetch(remote="origin", prune=True) is True

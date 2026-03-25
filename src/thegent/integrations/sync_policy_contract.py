@@ -13,7 +13,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +202,7 @@ def load_sync_policy_contract(
     if not path.exists():
         raise FileNotFoundError(f"Sync policy file not found: {path}")
 
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    raw = yaml_load(path) or {}
     if not isinstance(raw, dict):
         raise ValueError("sync-policy.yaml must contain a mapping")
 

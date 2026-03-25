@@ -16,10 +16,7 @@ class TestRequestBuilding:
 
     def test_builds_valid_request(self) -> None:
         """Should build valid request."""
-        request = {
-            "model": "gpt-4",
-            "messages": [{"role": "user", "content": "Hi"}]
-        }
+        request = {"model": "gpt-4", "messages": [{"role": "user", "content": "Hi"}]}
         assert "model" in request
         assert "messages" in request
 

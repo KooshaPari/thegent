@@ -8,6 +8,8 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from thegent.infra.shim_subprocess import run as shim_run
+
 _log = logging.getLogger(__name__)
 
 
@@ -46,7 +48,6 @@ class AgentCage:
         # 1. chroot or namespaces (Linux)
         # 2. Docker/Wasm sandbox
         # 3. Environment variable scrubbing (PATH, etc)
-
 
         try:
             result = shim_run(

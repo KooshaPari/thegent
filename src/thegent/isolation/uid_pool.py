@@ -42,13 +42,13 @@ class UidPool:
             return
 
         try:
-            with open(self.state_file) as f:
-                data = json.load(f)
-                self._allocations = data.get("allocations", {})
-                for tenant_id, uid in self._allocations.items():
-                    self._reverse_allocations[uid] = tenant_id
-                    if uid in self._available_uids:
-                        self._available_uids.remove(uid)
+            data = json.loads(self.state_file.read_bytes())
+            allocations = data.get("allocations", {})
+            self._allocations = {str(tenant_id): int(uid) for tenant_id, uid in allocations.items()}
+            for tenant_id, uid in self._allocations.items():
+                self._reverse_allocations[uid] = tenant_id
+                if uid in self._available_uids:
+                    self._available_uids.remove(uid)
             logger.info(f"Loaded {len(self._allocations)} UID allocations from {self.state_file}")
         except Exception as e:
             logger.error(f"Failed to load UID pool state: {e}")
@@ -60,8 +60,7 @@ class UidPool:
 
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.state_file, "w") as f:
-                json.dump({"allocations": self._allocations}, f, indent=2)
+            self.state_file.write_bytes(json.dumps({"allocations": self._allocations}, option=json.OPT_INDENT_2))
         except Exception as e:
             logger.error(f"Failed to save UID pool state: {e}")
 

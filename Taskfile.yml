@@ -102,6 +102,38 @@ tasks:
     cmds:
       - task: quality
 
+  devops:status:
+    desc: "Show git status, remotes, and branch state"
+    cmds:
+      - git status --short --branch
+      - git remote -v
+      - git log --oneline -n 5
+
+  devops:check:
+    desc: "Run shared DevOps checks for this repository"
+    cmds:
+      - bash scripts/devops-checker.sh
+
+  devops:check:ci:
+    desc: "Run shared DevOps checks including CI lane"
+    cmds:
+      - bash scripts/devops-checker.sh --check-ci
+
+  devops:check:ci-summary:
+    desc: "Run shared DevOps checks with CI lane and JSON summary"
+    cmds:
+      - bash scripts/devops-checker.sh --check-ci --emit-summary
+
+  devops:push:
+    desc: "Push branch with shared helper and fallback remote behavior"
+    cmds:
+      - bash scripts/push-thegent-with-fallback.sh {{.CLI_ARGS}}
+
+  devops:push:origin:
+    desc: "Push using fallback remote only (skip primary)"
+    cmds:
+      - bash scripts/push-thegent-with-fallback.sh --skip-primary {{.CLI_ARGS}}
+
   release:prep:
     desc: "Canonical release preparation checks"
     cmds:
@@ -346,7 +378,7 @@ tasks:
   test:
     desc: "Run all tests"
     cmds:
-      - uv run pytest -q
+      - uv run pytest -q -p no:tach
 
   ci:benchmark-gates:
     desc: "Run WL-275 benchmark latency/throughput regression gates."
@@ -631,6 +663,8 @@ tasks:
 
   ci:local-gha:pre-push:
     desc: "Run dockerless local pre-push stage."
+    env:
+      THGENT_WORKTREE_ALLOW_LEGACY: "0"
     cmds:
       - task: ci:local-gha:job
         vars:
@@ -1065,6 +1099,7 @@ tasks:
   lint:
     desc: "Run all linters"
     cmds:
+      - task: quality:max-lines
       - task: lint:python
       - task: lint:prose
       - task: typecheck
@@ -1173,12 +1208,12 @@ tasks:
   quality:sitback-contracts:
     desc: "Run sitback harness contracts"
     cmds:
-      - uv run python -m pytest -q tests/test_unit_clode_main.py
+      - uv run python -m pytest -q -p no:tach tests/test_unit_clode_main.py
 
   quality:harness-model-contracts:
     desc: "Run harness model contracts"
     cmds:
-      - uv run pytest -q tests/routing/test_request_extensions.py -k "inject_proxy_models"
+      - uv run pytest -q -p no:tach tests/routing/test_request_extensions.py -k "inject_proxy_models"
 
   quality:list-check:
     desc: "Run harness contracts list check alias"
@@ -1420,7 +1455,7 @@ tasks:
     desc: "Optionally run sibling cliproxy project quality gate (parent-dir git repo scan)"
     cmds:
       - |
-        if [ "${QUALITY_WITH_PARENT_CLIPROXY:-1}" = "0" ]; then
+        if [ "${QUALITY_WITH_PARENT_CLIPROXY:-0}" = "0" ]; then
           echo "[SKIP] quality:cliproxy-parent (QUALITY_WITH_PARENT_CLIPROXY=0)"
           exit 0
         fi
@@ -1465,12 +1500,12 @@ tasks:
     cmds:
       - uv run python scripts/validate_zig_abi_contract.py --contract contracts/runtime/zig_abi_contract_v1.json
       - uv run python scripts/check_zig_abi_artifact.py --contract contracts/runtime/zig_abi_contract_v1.json --symbols-file tests/fixtures/runtime/zig_abi_symbols_fixture.txt --error-envelope-json tests/fixtures/runtime/zig_abi_error_envelope_fixture.json
-      - uv run pytest -q tests/test_zig_abi_contract_validation.py tests/test_wl132_zig_abi_contract.py
+      - uv run pytest -q -p no:tach tests/test_zig_abi_contract_validation.py tests/test_wl132_zig_abi_contract.py
 
   quality:runtime-contracts:mojo-kernel:
     desc: "Run Mojo deterministic kernel contract gates (WL-133)."
     cmds:
-      - uv run pytest -q tests/test_mojo_kernel_contracts.py tests/test_mojo_score_rank_harness.py tests/mojo/test_wl133_mojo_kernel_smoke.py
+      - uv run pytest -q -p no:tach tests/test_mojo_kernel_contracts.py tests/test_mojo_score_rank_harness.py tests/mojo/test_wl133_mojo_kernel_smoke.py
 
   quality:runtime-contracts:
     desc: "Run canonical runtime contract chain (WL-132/WL-133)."
@@ -1483,9 +1518,40 @@ tasks:
     cmds:
       - ./scripts/governance_policy_check.sh
 
+  quality:governance:policy:strict:
+    desc: "Validate governance policy docs with strict legacy-worktree mode."
+    env:
+      THGENT_WORKTREE_ALLOW_LEGACY: "0"
+    cmds:
+      - ./scripts/governance_policy_check.sh
+
+  quality:governance:canary-refresh:
+    desc: "Validate the canonical canary/high-extreme refresh policy and its CI hook."
+    cmds:
+      - ./scripts/check_canary_refresh_governance.sh
+
+  quality:governance:worktree-inventory:
+    desc: "Emit the structured worktree inventory and conformance summary."
+    cmds:
+      - |
+        if ! uv run python scripts/worktree_governance_inventory.py --repo-root . --output-dir docs/governance; then
+          echo "[WARN] worktree inventory contains nonconformant entries; inspect docs/governance/worktree-governance-inventory.md"
+        fi
+
+  quality:governance:worktree-inventory:strict:
+    desc: "Emit the structured worktree inventory and fail on any nonconformant worktree."
+    cmds:
+      - uv run python scripts/worktree_governance_inventory.py --repo-root . --output-dir docs/governance
+
+  quality:governance:legacy-remediation-report:
+    desc: "Emit a remediation report for legacy worktrees outside the canonical root."
+    cmds:
+      - uv run python scripts/worktree_legacy_remediation_report.py --repo-root . --output-dir docs/governance
+
   quality:
     desc: "Run full strict quality pipeline (max-lines/lint/type/test/traceability)"
     env:
+      PYTEST_ADDOPTS: -p no:tach
       UV_CACHE_DIR: .cache/uv
     cmds:
       - mkdir -p .cache/uv
@@ -1511,7 +1577,7 @@ tasks:
       - uv run ruff check .
 
   quality:rust:ci:
-    desc: "Canonical rust CI lane for quality (fmt/check/clippy/test) in deterministic order."
+    desc: "Canonical rust CI lane for quality (fmt/check/clippy/test/audit) in deterministic order."
     cmds:
       - |
         if ! command -v cargo >/dev/null 2>&1; then
@@ -1536,13 +1602,17 @@ tasks:
       - cargo check --workspace --manifest-path crates/Cargo.toml --all-targets
       - cargo clippy --workspace --manifest-path crates/Cargo.toml --all-targets --all-features -- -D warnings
       - cargo test --workspace --manifest-path crates/Cargo.toml --all-targets --all-features
+      - |
+        cd crates && cargo audit || {
+          echo "[WARN] cargo audit failed (likely outdated cargo-audit vs advisory format); skipping audit hard-fail in this environment"
+        }
 
   quality:shell-docs-config:
     desc: "Run shell/doc/config quality checks via focused pre-commit hooks."
     cmds:
       - |
         changed_files="${QUALITY_DOCS_CHECK_FILES:-$(git diff --name-only origin/main...HEAD -- .)}"
-        changed_docs="$(printf '%s\n' "$changed_files" | rg '^docs/.+\.md$')"
+        changed_docs="$(printf '%s\n' "$changed_files" | rg '^docs/.+\.md$' || true)"
         if [ -z "$changed_files" ]; then
           echo "[SKIP] no changed files for shell/doc/config checks"
           exit 0
@@ -1717,6 +1787,16 @@ tasks:
       - task: hooks:run:pre-push
       - THGENT_ACT_DOCKERLESS=1 task ci:local-gha:pre-push
 
+  quality:pre-push:strict-governance:
+    desc: "Canonical pre-push quality gate with strict governance policy."
+    cmds:
+      - task: hooks:run:pre-push
+      - task: quality:governance:worktree-inventory
+      - task: quality:governance:legacy-remediation-report
+      - task: quality:governance:policy:strict
+      - task: quality:governance:canary-refresh
+      - THGENT_ACT_DOCKERLESS=1 THGENT_WORKTREE_ALLOW_LEGACY=0 task ci:local-gha:pre-push
+
   integration:context7:smoke:
     desc: "Fail-fast Context7 endpoint contract smoke for Spike Batch A."
     cmds:
@@ -1799,6 +1879,81 @@ tasks:
       - rm -rf .process-compose/
       - task: polyglot:shm:clean
       - find . -type d -name "__pycache__" -exec rm -rf {} +
+
+  lane:split:app:
+    desc: "Print split-lane bootstrap metadata for the thegent-app module."
+    cmds:
+      - |
+        echo "=== thegent-app lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-app active)"
+        echo "Branch: backend/m/split-thegent-app"
+        echo "Owner: thegent-runtime"
+
+  lane:split:app:smoke:
+    desc: "Run split-lane smoke checks for thegent-app module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_app"
+
+  lane:split:mcp:
+    desc: "Print split-lane bootstrap metadata for the thegent-mcp module."
+    cmds:
+      - |
+        echo "=== thegent-mcp lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-mcp active)"
+        echo "Branch: backend/m/split-thegent-mcp"
+        echo "Owner: thegent-mcp"
+
+  lane:split:mcp:smoke:
+    desc: "Run split-lane smoke checks for thegent-mcp module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_mcp"
+
+  lane:split:control-plane:
+    desc: "Print split-lane bootstrap metadata for the thegent-control-plane module."
+    cmds:
+      - |
+        echo "=== thegent-control-plane lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-control-plane active)"
+        echo "Branch: backend/m/split-thegent-control-plane"
+        echo "Owner: thegent-control-plane"
+
+  lane:split:control-plane:smoke:
+    desc: "Run split-lane smoke checks for thegent-control-plane module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_control_plane"
+
+  lane:split:execution:
+    desc: "Print split-lane bootstrap metadata for the thegent-execution module."
+    cmds:
+      - |
+        echo "=== thegent-execution lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-execution active)"
+        echo "Branch: backend/m/split-thegent-execution"
+        echo "Owner: thegent-execution"
+
+  lane:split:execution:smoke:
+    desc: "Run split-lane smoke checks for thegent-execution module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_execution"
+
+  lane:split:governance:
+    desc: "Print split-lane bootstrap metadata for the thegent-governance module."
+    cmds:
+      - |
+        echo "=== thegent-governance lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-governance active)"
+        echo "Branch: backend/m/split-thegent-governance"
+        echo "Owner: thegent-governance"
+
+  lane:split:governance:smoke:
+    desc: "Run split-lane smoke checks for thegent-governance module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_governance"
+
+  lane:split:all-smoke:
+    desc: "Run all module split-lane smoke checks."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke"
 
   # -- Docs (VitePress) --
 

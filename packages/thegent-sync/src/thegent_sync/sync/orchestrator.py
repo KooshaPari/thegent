@@ -30,7 +30,6 @@ class SyncResult(SerializableMixin):
     timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
-
 class SyncComponent(ABC):
     def __init__(self, name: str, description: str, depends_on: list[str] | None = None) -> None:
         self.name = name

@@ -14,6 +14,7 @@ import json
 @dataclass
 class Metric:
     """A single metric measurement."""
+
     name: str
     value: float
     timestamp: float
@@ -29,12 +30,7 @@ class MetricsCollector:
 
     def record(self, name: str, value: float, tags: dict | None = None) -> None:
         """Record a metric."""
-        metric = Metric(
-            name=name,
-            value=value,
-            timestamp=time.time(),
-            tags=tags or {}
-        )
+        metric = Metric(name=name, value=value, timestamp=time.time(), tags=tags or {})
         self._metrics[name].append(metric)
 
     def timing(self, name: str, duration: float, tags: dict | None = None) -> None:
@@ -66,7 +62,7 @@ class MetricsCollector:
             "min": min(values),
             "max": max(values),
             "mean": sum(values) / len(values),
-            "last": values[-1]
+            "last": values[-1],
         }
 
     def percentile(self, name: str, p: float) -> Optional[float]:
@@ -81,13 +77,7 @@ class MetricsCollector:
 
     def summary(self) -> dict:
         """Get summary of all metrics."""
-        return {
-            "uptime": time.time() - self._start_time,
-            "metrics": {
-                name: self.stats(name)
-                for name in self._metrics
-            }
-        }
+        return {"uptime": time.time() - self._start_time, "metrics": {name: self.stats(name) for name in self._metrics}}
 
     def export(self, format: str = "json") -> str:
         """Export metrics."""

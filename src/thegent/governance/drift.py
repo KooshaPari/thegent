@@ -1,6 +1,6 @@
 """WP-3005: Policy drift detection and sweep."""
 
-import orjson as json
+import json
 import logging
 import time
 from datetime import UTC, datetime
@@ -72,7 +72,9 @@ class DriftDetector:
             }
             for name, base_content in baseline_contracts.items():
                 if name not in current_contracts:
-                    report["policy_mismatches"].append({"contract": name, "type": "removed", "diff": f"baseline/{name}"})
+                    report["policy_mismatches"].append(
+                        {"contract": name, "type": "removed", "diff": f"baseline/{name}"}
+                    )
                     report["drift_detected"] = True
                     continue
                 cur_content = current_contracts[name]
@@ -104,7 +106,7 @@ class DriftDetector:
         """Append drift report to log."""
         self.settings.session_dir.mkdir(parents=True, exist_ok=True)
         with self.drift_log.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(report).decode() + "\n")
+            f.write(json.dumps(report) + "\n")
 
     def _check_override_file(self, f: Path, report: dict[str, Any]) -> None:
         """Helper to check a single override file for drift."""

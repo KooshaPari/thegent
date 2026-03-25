@@ -85,4 +85,4 @@ def format_acp_response(
     }
     if error:
         payload["error"] = error
-    return json.dumps(payload)
+    return json.dumps(payload).decode("utf-8")

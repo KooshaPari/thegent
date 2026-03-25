@@ -1,0 +1,46 @@
+---
+title: Thegent Module Split Lane Bootstraps
+date: 2026-03-03
+author: automation
+status: in_progress
+owner: thegent-platform
+tags: [shared-modules, module-split, worktree, lane]
+---
+
+# Proposal: Module Split Lane Bootstraps
+
+## Scope
+
+Create operational bootstrap and ownership artifacts for the following split module lanes:
+
+- `thegent-app`
+- `thegent-mcp`
+- `thegent-control-plane`
+- `thegent-execution`
+- `thegent-governance`
+
+Each lane uses the repository-local `Phenotype/projects/modules/<module-name>/manifest.json` and
+must remain runnable through `phench projects run` using `--module` plus filter flags.
+
+## Non-goals
+
+- Full source code migration across repos.
+- Ownership transfer of all module-owned files in this step.
+- Changing existing `--module` schema semantics.
+
+## Bootstrap Command Pattern
+
+Each lane is governed by an ordered worktree sequence. New worktrees are created with
+
+```bash
+./scripts/worktree_governance.sh new <domain> <scale> <change-anchor>
+```
+
+with command metadata captured in the per-lane task docs.
+
+## Deliverables
+
+1. Lane bootstrap manifests and ownership records.
+2. Per-module API boundary definitions.
+3. Lane-specific Taskfile targets for module smoke checks.
+4. Module-level `phench projects` smoke coverage for include/exclude behavior.

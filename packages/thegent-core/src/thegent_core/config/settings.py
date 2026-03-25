@@ -174,6 +174,22 @@ class ThegentSettings(BaseSettings):
         le=10.0,
         description="Maximum cost weight for Pareto selection",
     )
+    otel_console: bool = Field(
+        default=False,
+        description="Enable console OpenTelemetry span export for local observability imports",
+    )
+    watcher_use_shm: bool = Field(
+        default=False,
+        description="Enable shared-memory health tracking for the native watcher daemon",
+    )
+    watcher_shm_path: str = Field(
+        default="",
+        description="Optional shared-memory path override for the native watcher daemon",
+    )
+    use_native_shm: bool = Field(
+        default=False,
+        description="Enable native shared-memory state backends when available",
+    )
 
     # Path-related settings (from PathConfig)
     factory_skills_dir: Path = Field(

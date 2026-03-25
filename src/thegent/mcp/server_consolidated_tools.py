@@ -2,6 +2,7 @@
 
 import orjson as json
 import logging
+from pathlib import Path
 from typing import Any, Literal
 
 from fastmcp import FastMCP
@@ -240,9 +241,108 @@ def register_consolidated_tools(*, mcp: FastMCP, logger: logging.Logger) -> tupl
             return ToolResult(content="Use 'thegent plan progress' CLI command")
         return ToolResult(content=f"Unknown action: {action}")
 
+    # -------------------------------------------------------------------------
+    # thegent_entity: Canonical entity CRUD/import/export/sync
+    # -------------------------------------------------------------------------
+    @mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": False})
+    async def thegent_entity(
+        operation: Literal["list", "read", "search", "upsert", "delete", "import", "export", "sync"] = "list",
+        entity_type: str = "workstream_items",
+        entity_id: str = "",
+        query: str = "",
+        source: str = "all",
+        limit: int = 50,
+        offset: int = 0,
+        properties: dict[str, Any] | None = None,
+        records: list[dict[str, Any]] | None = None,
+        cd: str = "",
+        ctx: Any = CurrentContext(),
+    ) -> ToolResult:
+        """Canonical entity operations for workstream-db backed records."""
+        from pathlib import Path
+
+        from thegent.planning.workstream_entities import entity_operation
+
+        cwd = Path(cd) if cd else None
+        result = entity_operation(
+            operation,
+            entity_type,
+            entity_id=entity_id or None,
+            properties=properties,
+            records=records,
+            query=query or None,
+            limit=limit,
+            offset=offset,
+            source=source,
+            cd=cwd,
+        )
+        return ToolResult(content=json.dumps(result).decode(), structured_content=result)
+
+    # -------------------------------------------------------------------------
+    # thegent_worktree: Unified structured worktree governance operations
+    # -------------------------------------------------------------------------
+    @mcp.tool(annotations={"readOnlyHint": False, "idempotentHint": False})
+    async def thegent_worktree(
+        action: Literal["path", "new", "state", "list", "prune", "check", "refresh", "migrate-legacy"] = "list",
+        domain: str = "",
+        scale: str = "",
+        change_anchor: str = "",
+        legacy_path: str = "",
+        state: str = "",
+        start_point: str = "main",
+        remote: str = "origin",
+        upstream_ref: str = "",
+        strategy: Literal["rebase", "merge"] = "rebase",
+        dry_run: bool = False,
+        root: str = "",
+        ctx: Any = CurrentContext(),
+    ) -> ToolResult:
+        """Unified structured worktree governance with script-backed execution."""
+        from thegent.cli.commands.cli_git_worktree_governance import run_worktree_governance_script
+
+        _ = ctx
+        project_root = Path(root) if root else Path.cwd()
+
+        if action == "path":
+            args = ["path", domain, scale, change_anchor, state]
+        elif action == "new":
+            args = ["new", domain, scale, change_anchor, start_point]
+        elif action == "state":
+            args = ["state", change_anchor, state]
+        elif action == "list":
+            args = ["list"]
+        elif action == "prune":
+            args = ["prune"] + (["--dry-run"] if dry_run else [])
+        elif action == "check":
+            args = ["check"]
+        elif action == "refresh":
+            args = ["refresh", change_anchor, "--remote", remote, "--strategy", strategy]
+            if upstream_ref:
+                args.extend(["--ref", upstream_ref])
+        elif action == "migrate-legacy":
+            args = ["migrate-legacy", legacy_path, domain, scale, change_anchor, state]
+        else:
+            return ToolResult(content=f"Unknown action: {action}")
+
+        proc = run_worktree_governance_script(project_root, *args)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or proc.stdout.strip() or f"worktree governance {action} failed")
+
+        return ToolResult(
+            content=proc.stdout,
+            structured_content={
+                "action": action,
+                "args": args,
+                "project_root": str(project_root),
+                "returncode": proc.returncode,
+            },
+        )
+
     return (
         thegent_web,
         thegent_queue,
         thegent_session,
         thegent_workstream,
+        thegent_entity,
+        thegent_worktree,
     )

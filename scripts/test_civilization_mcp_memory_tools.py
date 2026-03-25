@@ -48,35 +48,35 @@ class TestMemoryToolRegistration(unittest.TestCase):
         """memory_search tool appears in the tool list."""
         tools = self.server.get_all_tools()
         tool_names = [t["name"] for t in tools]
-        self.assertIn("memory_search", tool_names)
+        assert "memory_search" in tool_names
 
     def test_memory_analytics_summary_tool_registered(self):
         """memory_analytics_summary tool appears in the tool list."""
         tools = self.server.get_all_tools()
         tool_names = [t["name"] for t in tools]
-        self.assertIn("memory_analytics_summary", tool_names)
+        assert "memory_analytics_summary" in tool_names
 
     def test_memory_search_schema(self):
         """memory_search tool has correct input schema."""
         tool = self.server.tools["memory_search"]
         schema = tool.input_schema
-        self.assertIn("agent_id", schema["properties"])
-        self.assertIn("query", schema["properties"])
-        self.assertIn("limit", schema["properties"])
-        self.assertEqual(schema["required"], ["agent_id", "query"])
+        assert "agent_id" in schema["properties"]
+        assert "query" in schema["properties"]
+        assert "limit" in schema["properties"]
+        assert schema["required"] == ["agent_id", "query"]
 
     def test_memory_analytics_summary_schema(self):
         """memory_analytics_summary tool has correct input schema."""
         tool = self.server.tools["memory_analytics_summary"]
         schema = tool.input_schema
-        self.assertIn("agent_id", schema["properties"])
-        self.assertIn("days", schema["properties"])
-        self.assertEqual(schema["required"], ["agent_id"])
+        assert "agent_id" in schema["properties"]
+        assert "days" in schema["properties"]
+        assert schema["required"] == ["agent_id"]
 
     def test_total_tool_count(self):
         """Server now has 8 tools (6 original + 2 memory tools)."""
         tools = self.server.get_all_tools()
-        self.assertEqual(len(tools), 8)
+        assert len(tools) == 8
 
 
 class TestMemorySearchHandler(unittest.TestCase):
@@ -90,20 +90,20 @@ class TestMemorySearchHandler(unittest.TestCase):
     def test_memory_search_missing_agent_id(self):
         """Missing agent_id returns error."""
         result = self.server.call_tool("memory_search", {"query": "test"})
-        self.assertIn("error", result)
-        self.assertEqual(result["results"], [])
+        assert "error" in result
+        assert result["results"] == []
 
     def test_memory_search_missing_query(self):
         """Missing query returns error."""
         result = self.server.call_tool("memory_search", {"agent_id": "agent-1"})
-        self.assertIn("error", result)
-        self.assertEqual(result["results"], [])
+        assert "error" in result
+        assert result["results"] == []
 
     def test_memory_search_empty_params(self):
         """Empty params returns error."""
         result = self.server.call_tool("memory_search", {})
-        self.assertIn("error", result)
-        self.assertEqual(result["results"], [])
+        assert "error" in result
+        assert result["results"] == []
 
     @unittest.skipIf(not MEMORY_IMPORTS_AVAILABLE, "Memory storage not available")
     def test_memory_search_returns_results_structure(self):
@@ -133,36 +133,43 @@ class TestMemorySearchHandler(unittest.TestCase):
                 memories = storage.search(agent_id, query, limit=limit)
                 results = []
                 for m in memories:
-                    results.append({
-                        "memory_id": m.memory_id,
-                        "agent_id": m.agent_id,
-                        "memory_type": m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type),
-                        "timestamp": m.timestamp,
-                        "content": m.content,
-                        "importance": m.importance,
-                    })
+                    results.append(
+                        {
+                            "memory_id": m.memory_id,
+                            "agent_id": m.agent_id,
+                            "memory_type": m.memory_type.value
+                            if hasattr(m.memory_type, "value")
+                            else str(m.memory_type),
+                            "timestamp": m.timestamp,
+                            "content": m.content,
+                            "importance": m.importance,
+                        }
+                    )
                 return {"results": results, "count": len(results)}
 
             original = self.server._handle_memory_search
             self.server._handle_memory_search = patched_handler
             try:
-                result = self.server.call_tool("memory_search", {
-                    "agent_id": "test-agent",
-                    "query": "database indexing",
-                })
-                self.assertIn("results", result)
-                self.assertIn("count", result)
-                self.assertIsInstance(result["results"], list)
-                self.assertGreaterEqual(result["count"], 1)
+                result = self.server.call_tool(
+                    "memory_search",
+                    {
+                        "agent_id": "test-agent",
+                        "query": "database indexing",
+                    },
+                )
+                assert "results" in result
+                assert "count" in result
+                assert isinstance(result["results"], list)
+                assert result["count"] >= 1
 
                 # Verify result dict shape
                 first = result["results"][0]
-                self.assertIn("memory_id", first)
-                self.assertIn("agent_id", first)
-                self.assertIn("memory_type", first)
-                self.assertIn("timestamp", first)
-                self.assertIn("content", first)
-                self.assertIn("importance", first)
+                assert "memory_id" in first
+                assert "agent_id" in first
+                assert "memory_type" in first
+                assert "timestamp" in first
+                assert "content" in first
+                assert "importance" in first
             finally:
                 self.server._handle_memory_search = original
 
@@ -180,25 +187,32 @@ class TestMemorySearchHandler(unittest.TestCase):
                 memories = storage.search(agent_id, query, limit=limit)
                 results = []
                 for m in memories:
-                    results.append({
-                        "memory_id": m.memory_id,
-                        "agent_id": m.agent_id,
-                        "memory_type": m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type),
-                        "timestamp": m.timestamp,
-                        "content": m.content,
-                        "importance": m.importance,
-                    })
+                    results.append(
+                        {
+                            "memory_id": m.memory_id,
+                            "agent_id": m.agent_id,
+                            "memory_type": m.memory_type.value
+                            if hasattr(m.memory_type, "value")
+                            else str(m.memory_type),
+                            "timestamp": m.timestamp,
+                            "content": m.content,
+                            "importance": m.importance,
+                        }
+                    )
                 return {"results": results, "count": len(results)}
 
             original = self.server._handle_memory_search
             self.server._handle_memory_search = patched_handler
             try:
-                result = self.server.call_tool("memory_search", {
-                    "agent_id": "nonexistent-agent",
-                    "query": "nothing here",
-                })
-                self.assertEqual(result["results"], [])
-                self.assertEqual(result["count"], 0)
+                result = self.server.call_tool(
+                    "memory_search",
+                    {
+                        "agent_id": "nonexistent-agent",
+                        "query": "nothing here",
+                    },
+                )
+                assert result["results"] == []
+                assert result["count"] == 0
             finally:
                 self.server._handle_memory_search = original
 
@@ -214,11 +228,12 @@ class TestMemoryAnalyticsSummaryHandler(unittest.TestCase):
     def test_analytics_missing_agent_id(self):
         """Missing agent_id returns error."""
         result = self.server.call_tool("memory_analytics_summary", {})
-        self.assertIn("error", result)
+        assert "error" in result
 
     def test_analytics_fallback_on_import_error(self):
         """When analytics module is not importable, handler returns error dict."""
         import sys
+
         # Save originals
         saved_analytics = sys.modules.get("civilization_memory_analytics")
         saved_scripts_analytics = sys.modules.get("scripts.civilization_memory_analytics")
@@ -228,7 +243,7 @@ class TestMemoryAnalyticsSummaryHandler(unittest.TestCase):
         sys.modules["scripts.civilization_memory_analytics"] = None
         try:
             result = self.server._handle_memory_analytics_summary({"agent_id": "test-agent"})
-            self.assertIn("agent_id", result)
+            assert "agent_id" in result
             # It should either have an error key or a valid summary
             # (depends on whether storage import also fails)
         finally:
@@ -274,14 +289,18 @@ class TestMemoryAnalyticsSummaryHandler(unittest.TestCase):
                 memories = storage.query(agent_id)
                 memory_dicts = []
                 for m in memories:
-                    memory_dicts.append({
-                        "memory_id": m.memory_id,
-                        "agent_id": m.agent_id,
-                        "memory_type": m.memory_type.value if hasattr(m.memory_type, "value") else str(m.memory_type),
-                        "timestamp": m.timestamp,
-                        "content": m.content,
-                        "importance": m.importance,
-                    })
+                    memory_dicts.append(
+                        {
+                            "memory_id": m.memory_id,
+                            "agent_id": m.agent_id,
+                            "memory_type": m.memory_type.value
+                            if hasattr(m.memory_type, "value")
+                            else str(m.memory_type),
+                            "timestamp": m.timestamp,
+                            "content": m.content,
+                            "importance": m.importance,
+                        }
+                    )
                 analytics = MemoryAnalytics()
                 summary = analytics.get_agent_summary(memory_dicts)
                 summary["agent_id"] = agent_id
@@ -291,17 +310,20 @@ class TestMemoryAnalyticsSummaryHandler(unittest.TestCase):
             original = self.server._handle_memory_analytics_summary
             self.server._handle_memory_analytics_summary = patched_handler
             try:
-                result = self.server.call_tool("memory_analytics_summary", {
-                    "agent_id": "test-agent",
-                    "days": 30,
-                })
-                self.assertIn("total_memories", result)
-                self.assertIn("learning_velocity", result)
-                self.assertIn("error_density", result)
-                self.assertIn("top_keywords", result)
-                self.assertIn("agent_id", result)
-                self.assertEqual(result["agent_id"], "test-agent")
-                self.assertEqual(result["total_memories"], 5)
+                result = self.server.call_tool(
+                    "memory_analytics_summary",
+                    {
+                        "agent_id": "test-agent",
+                        "days": 30,
+                    },
+                )
+                assert "total_memories" in result
+                assert "learning_velocity" in result
+                assert "error_density" in result
+                assert "top_keywords" in result
+                assert "agent_id" in result
+                assert result["agent_id"] == "test-agent"
+                assert result["total_memories"] == 5
             finally:
                 self.server._handle_memory_analytics_summary = original
 
@@ -315,21 +337,27 @@ class TestMemoryToolsDisabledServer(unittest.TestCase):
         # Disable the server by setting enabled=False directly
         server = create_mcp_server()
         server.enabled = False
-        result = server.call_tool("memory_search", {
-            "agent_id": "test",
-            "query": "test",
-        })
-        self.assertIn("error", result)
+        result = server.call_tool(
+            "memory_search",
+            {
+                "agent_id": "test",
+                "query": "test",
+            },
+        )
+        assert "error" in result
 
     @unittest.skipIf(not IMPORTS_AVAILABLE, "MCP server dependencies not available")
     def test_memory_analytics_on_disabled_server(self):
         """memory_analytics_summary on disabled server returns error from call_tool guard."""
         server = create_mcp_server()
         server.enabled = False
-        result = server.call_tool("memory_analytics_summary", {
-            "agent_id": "test",
-        })
-        self.assertIn("error", result)
+        result = server.call_tool(
+            "memory_analytics_summary",
+            {
+                "agent_id": "test",
+            },
+        )
+        assert "error" in result
 
 
 if __name__ == "__main__":

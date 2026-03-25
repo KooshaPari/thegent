@@ -78,15 +78,11 @@ class QuotaEnforcer:
 
             if (
                 self.quota.max_tokens_per_day > 0
-                and self.usage.tokens_used + estimated_tokens
-                > self.quota.max_tokens_per_day
+                and self.usage.tokens_used + estimated_tokens > self.quota.max_tokens_per_day
             ):
                 return False
 
-            if (
-                self.quota.max_cost_per_day > 0
-                and self.usage.cost_used + estimated_cost > self.quota.max_cost_per_day
-            ):
+            if self.quota.max_cost_per_day > 0 and self.usage.cost_used + estimated_cost > self.quota.max_cost_per_day:
                 return False
 
             return True
@@ -195,7 +191,8 @@ class TestQuotaEnforcerBasic:
     def test_partial_unlimited_quota(self) -> None:
         """Test mixed limited/unlimited (0 = no limit)."""
         quota = QuotaLimit(
-            max_tokens_per_day=100.0, max_cost_per_day=0.0  # cost unlimited
+            max_tokens_per_day=100.0,
+            max_cost_per_day=0.0,  # cost unlimited
         )
         enforcer = QuotaEnforcer(quota)
 
@@ -298,9 +295,7 @@ class TestQuotaEnforcerThreadSafety:
         def record_usage_repeatedly() -> None:
             try:
                 for _ in range(100):
-                    enforcer.record_usage(
-                        UsageRecord(tokens_used=10.0, cost_used=1.0)
-                    )
+                    enforcer.record_usage(UsageRecord(tokens_used=10.0, cost_used=1.0))
                     time.sleep(0.0001)
             except Exception as e:
                 errors.append(e)

@@ -21,7 +21,7 @@ class TestReadJson:
     def test_read_valid_json(self, tmp_path: Path) -> None:
         """Read a valid JSON file and return dict."""
         f = tmp_path / "data.json"
-        f.write_text(json.dumps({"key": "value"}).decode().decode())
+        f.write_text(json.dumps({"key": "value"}).decode())
 
         from thegent.utils.helpers import read_json
 
@@ -71,7 +71,7 @@ class TestWriteJson:
     def test_write_overwrites_existing(self, tmp_path: Path) -> None:
         """Overwrites an existing JSON file."""
         f = tmp_path / "overwrite.json"
-        f.write_text(json.dumps({"old": True}).decode().decode())
+        f.write_text(json.dumps({"old": True}).decode())
 
         from thegent.utils.helpers import write_json
 

@@ -83,6 +83,7 @@ class WorkstreamAutosyncRunner:
 
         # Delegate to cycle module
         from thegent_sync.autosync.cycle import run_sync_cycle
+
         result = await run_sync_cycle(self)
 
         if result.get("error"):
@@ -101,7 +102,7 @@ class WorkstreamAutosyncRunner:
     # Property accessors for backward compatibility
     @property
     def last_operation(self):
-        return getattr(self, '_last_operation', None)
+        return getattr(self, "_last_operation", None)
 
     @last_operation.setter
     def last_operation(self, value):

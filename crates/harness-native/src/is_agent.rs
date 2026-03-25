@@ -4,7 +4,7 @@ use std::env;
 use std::process;
 
 fn main() {
-    let ppid = env::var("PPID").unwrap_or_else(|_| "1".to_string());
+    let _ppid = env::var("PPID").unwrap_or_else(|_| "1".to_string());
     // TODO: Check agent detection logic
     // For now, exit with code 1 (not agent)
     process::exit(1);

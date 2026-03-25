@@ -61,4 +61,3 @@ def test_tgnt_p14_1_setup_tool_context_fails_without_source(tmp_path: Path) -> N
 
     with pytest.raises(FileNotFoundError, match="Missing required context source file"):
         injector.setup_tool_context(agent_dir, "claude")
-

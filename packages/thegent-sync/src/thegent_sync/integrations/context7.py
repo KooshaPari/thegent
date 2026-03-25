@@ -1,6 +1,7 @@
 """
 Context7 MCP Provider Integration - Documentation context lookup.
 """
+
 import logging
 import os
 import re
@@ -11,19 +12,22 @@ from thegent_sync.integrations.base import DataclassConfig
 
 logger = logging.getLogger(__name__)
 
+
 class Context7Status(Enum):
     DISABLED = "disabled"
     ENABLED = "enabled"
+
 
 @dataclass
 class Context7Config(DataclassConfig):
     api_endpoint: str = "https://api.context7.io/v1"
     api_key: str = ""
 
+
 class Context7Provider:
     SECRET_PATTERNS = [  # noqa: RUF012
-        r'(?i)(api[_-]?key|secret)=[\w-]+',
-        r'ghp_[a-zA-Z0-9]{36}',
+        r"(?i)(api[_-]?key|secret)=[\w-]+",
+        r"ghp_[a-zA-Z0-9]{36}",
     ]
 
     def __init__(self, config: Context7Config = None):
@@ -38,7 +42,8 @@ class Context7Provider:
         return config
 
     @property
-    def is_enabled(self): return self._config.enabled
+    def is_enabled(self):
+        return self._config.enabled
 
     def validate_query(self, query: str) -> bool:
         return all(not re.search(p, query) for p in self.SECRET_PATTERNS)
@@ -50,7 +55,10 @@ class Context7Provider:
             return {"success": False, "error": "security"}
         return {"success": True, "content": f"[Context7: {query}]"}
 
+
 _context7 = None
+
+
 def get_context7_provider():
     global _context7
     if _context7 is None:

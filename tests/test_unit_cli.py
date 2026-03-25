@@ -243,7 +243,7 @@ class TestSessionCommands:
             "owner": "ppid:1",
             "pid": 99999999,
         }
-        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode(), encoding="utf-8")
         (scoped / f"{sid}.rc").write_text("0\n", encoding="utf-8")
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
             result = runner.invoke(app, ["status", sid])
@@ -262,7 +262,7 @@ class TestSessionCommands:
             "owner": "owner",
             "pid": 12345,
         }
-        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode(), encoding="utf-8")
 
         calls = {"n": 0}
 
@@ -288,7 +288,7 @@ class TestSessionCommands:
             "owner": "owner",
             "pid": 54321,
         }
-        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode(), encoding="utf-8")
 
         with patch.dict("os.environ", {"THGENT_SESSION_DIR": str(session_dir)}):
             with patch("thegent.cli.commands.cli._is_pid_running", return_value=True):
@@ -311,7 +311,7 @@ class TestSessionCommands:
             "owner": "owner",
             "pid": 55555,
         }
-        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        (scoped / f"{sid}.json").write_text(json.dumps(meta).decode(), encoding="utf-8")
         (scoped / f"{sid}.stdout.log").write_text("ready\n", encoding="utf-8")
 
         t = {"now": 0.0}

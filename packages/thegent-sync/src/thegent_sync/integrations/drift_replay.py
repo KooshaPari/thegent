@@ -22,6 +22,7 @@ class DriftManifest(SerializableMixin):
     drifts: list[dict]
     captured_at: datetime
 
+
 class DriftReplayEngine:
     """Engine for archiving and replaying drift manifests."""
 

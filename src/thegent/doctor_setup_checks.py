@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 from rich.console import Console
 
 from thegent.config import ThegentSettings
@@ -52,7 +52,7 @@ def check_configuration(*, check_result_cls: type[Any]) -> list[Any]:
     if config_path.exists():
         try:
             with open(config_path) as f:
-                cfg = yaml.safe_load(f)
+                cfg = yaml_load(f.read())
             if isinstance(cfg, dict):
                 r.status = "ok"
                 r.message = f"Config found at {config_path}"

@@ -4,12 +4,14 @@ Shared MCP Server Manager (System-Wide First)
 Manages system-wide shared MCP servers, scoping down to per-project only when needed.
 """
 
-import orjson as json
+import json
 import logging
 import os
 import time
 from errno import ESRCH
 from pathlib import Path
+
+from thegent.infra.shim_subprocess import run as shim_run
 
 _LOG = logging.getLogger(__name__)
 
@@ -65,7 +67,7 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
     # Check if server already running
     if lockfile.exists():
         try:
-            with open(lockfile) as f:
+            with open(lockfile, encoding="utf-8") as f:
                 data = json.load(f)
                 pid = data.get("pid")
                 port = data.get("port", 3847)
@@ -128,9 +130,7 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
 
         try:
             # Find process-compose process managing MCP
-            result = shim_run(
-                ["pgrep", "-f", "process-compose.*mcp"], capture_output=True, text=True, check=False
-            )
+            result = shim_run(["pgrep", "-f", "process-compose.*mcp"], capture_output=True, text=True, check=False)
             pid = int(result.stdout.strip().split("\n")[0]) if result.stdout.strip() else None
         except Exception:
             pid = None
@@ -139,14 +139,15 @@ def ensure_shared_mcp_server(project_root: Path | None = None) -> tuple[bool, st
         lockfile.write_text(
             json.dumps(
                 {
-                    "pid": pid or os.getpid().decode(),
+                    "pid": pid or os.getpid(),
                     "port": port,
                     "url": mcp_url,
                     "scope": scope_type,
                     "project_root": str(project_root) if project_root else None,
                     "started_at": time.time(),
                 }
-            )
+            ),
+            encoding="utf-8",
         )
 
         return True, mcp_url
@@ -177,7 +178,7 @@ def check_mcp_health(project_root: Path | None = None) -> tuple[bool, str]:
         return False, "No lockfile found - server not started"
 
     try:
-        with open(lockfile) as f:
+        with open(lockfile, encoding="utf-8") as f:
             data = json.load(f)
             pid = data.get("pid")
             url = data.get("url", f"http://127.0.0.1:{data.get('port', 3847)}/mcp")

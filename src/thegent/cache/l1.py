@@ -12,6 +12,7 @@ import time
 @dataclass
 class CacheEntry:
     """Cache entry with TTL."""
+
     value: Any
     expires_at: float
     created_at: float
@@ -53,11 +54,7 @@ class L1MemoryCache:
 
         now = time.time()
         entry_ttl = ttl if ttl is not None else self.ttl
-        self._cache[key] = CacheEntry(
-            value=value,
-            expires_at=now + entry_ttl,
-            created_at=now
-        )
+        self._cache[key] = CacheEntry(value=value, expires_at=now + entry_ttl, created_at=now)
 
     def delete(self, key: str) -> bool:
         """Delete value from cache."""
@@ -88,5 +85,5 @@ class L1MemoryCache:
             "max_size": self.max_size,
             "hits": self._hits,
             "misses": self._misses,
-            "hit_rate": self._hits / total if total > 0 else 0
+            "hit_rate": self._hits / total if total > 0 else 0,
         }

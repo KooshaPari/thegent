@@ -17,6 +17,7 @@ def mock_app():
 def get_client(mock_app):
     """Get a synchronous test client."""
     from starlette.testclient import TestClient
+
     return TestClient(mock_app)
 
 

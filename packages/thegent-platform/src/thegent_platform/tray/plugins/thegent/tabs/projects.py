@@ -179,9 +179,7 @@ class ProjectEditDialog(QDialog):
         layout.addWidget(gardener_group)
 
         # Dialog buttons
-        self._buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save
-        )
+        self._buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save)
         self._buttons.rejected.connect(self.reject)
         self._buttons.accepted.connect(self.accept)
         layout.addWidget(self._buttons)
@@ -273,13 +271,15 @@ class ProjectsTab(QWidget):
             # Get projects from API
             api_projects = self._api_client.get_projects()
             for proj in api_projects:
-                self._projects.append({
-                    "id": proj.id,
-                    "name": proj.name,
-                    "language": proj.language,
-                    "coverage": proj.coverage,
-                    "last_run": proj.last_run,
-                })
+                self._projects.append(
+                    {
+                        "id": proj.id,
+                        "name": proj.name,
+                        "language": proj.language,
+                        "coverage": proj.coverage,
+                        "last_run": proj.last_run,
+                    }
+                )
             self._update_table()
         except Exception as e:
             # Handle error - could show a message or log

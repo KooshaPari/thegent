@@ -52,11 +52,9 @@ def _require_rust_parser(reason: str) -> Any:
     if parser is None:
         if PARSER_PARITY_STRICT:
             pytest.fail(
-
-                    "Parser-touching CI profile requires the `thegent_parser` extension, but it could not be imported. "
-                    "Run `uv pip install crates/thegent-parser` or "
-                    "`cd crates/thegent-parser && maturin develop --release --features python` before rerunning parity tests."
-
+                "Parser-touching CI profile requires the `thegent_parser` extension, but it could not be imported. "
+                "Run `uv pip install crates/thegent-parser` or "
+                "`cd crates/thegent-parser && maturin develop --release --features python` before rerunning parity tests."
             )
         pytest.skip(reason)
     return parser

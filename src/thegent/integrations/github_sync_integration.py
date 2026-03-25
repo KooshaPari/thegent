@@ -1,3 +1,11 @@
-"""Legacy facade for package-backed GitHub sync integration helpers."""
+"""Stub module for thegent.integrations.github_sync_integration."""
 
-from thegent_sync.integrations.github_sync_integration import *  # noqa: F403
+__all__ = ["GitHubSyncIntegrationSuite", "SyncTestResult"]
+
+
+class GitHubSyncIntegrationSuite:
+    """Stub class."""
+
+
+class SyncTestResult:
+    """Stub class."""

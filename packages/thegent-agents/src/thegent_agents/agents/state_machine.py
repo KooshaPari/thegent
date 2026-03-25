@@ -11,6 +11,7 @@ import time
 
 try:
     import structlog as _structlog
+
     _log = _structlog.get_logger(__name__)
 except ImportError:
     _log = logging.getLogger(__name__)  # type: ignore[assignment]
@@ -228,7 +229,9 @@ class FallbackStateMachine:
                 # SLO Latency Check (WP-X6)
                 elapsed_ms = (time.time() - self.state.start_time) * 1000
                 if elapsed_ms > self.policy.max_latency_ms:
-                    _log.warning("slo_latency_exceeded", elapsed_ms=elapsed_ms, max_latency_ms=self.policy.max_latency_ms)
+                    _log.warning(
+                        "slo_latency_exceeded", elapsed_ms=elapsed_ms, max_latency_ms=self.policy.max_latency_ms
+                    )
                     self.state.errors.append(f"SLO Timeout ({current_agent})")
                     break
 

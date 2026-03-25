@@ -75,9 +75,7 @@ BOUNDED_CONTEXTS = [
 class AgentEditDialog(QDialog):
     """Dialog for editing/creating an agent."""
 
-    def __init__(
-        self, parent: QtQWidget | None = None, agent_data: dict[str, Any] | None = None
-    ) -> None:
+    def __init__(self, parent: QtQWidget | None = None, agent_data: dict[str, Any] | None = None) -> None:
         """Initialize the agent edit dialog.
 
         Args:
@@ -172,9 +170,7 @@ class AgentEditDialog(QDialog):
         layout.addWidget(spawn_group)
 
         # Dialog buttons
-        self._buttons = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save
-        )
+        self._buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save)
         self._buttons.rejected.connect(self.reject)
         self._buttons.accepted.connect(self.accept)
         layout.addWidget(self._buttons)
@@ -186,11 +182,7 @@ class AgentEditDialog(QDialog):
             Dictionary containing agent settings.
         """
         # Collect selected bounded contexts
-        selected_contexts = [
-            context
-            for context, checkbox in self._context_checkboxes.items()
-            if checkbox.isChecked()
-        ]
+        selected_contexts = [context for context, checkbox in self._context_checkboxes.items() if checkbox.isChecked()]
 
         return {
             # Agent fields
@@ -270,16 +262,18 @@ class AgentsTab(QWidget):
             # Get agents from API
             api_agents = self._api_client.get_agents()
             for agent in api_agents:
-                self._agents.append({
-                    "id": agent.id,
-                    "name": agent.name,
-                    "model": agent.model,
-                    "context_limit": agent.context_limit,
-                    "rate_input": agent.rate_input,
-                    "rate_output": agent.rate_output,
-                    "status": agent.status,
-                    "bounded_contexts": agent.bounded_contexts,
-                })
+                self._agents.append(
+                    {
+                        "id": agent.id,
+                        "name": agent.name,
+                        "model": agent.model,
+                        "context_limit": agent.context_limit,
+                        "rate_input": agent.rate_input,
+                        "rate_output": agent.rate_output,
+                        "status": agent.status,
+                        "bounded_contexts": agent.bounded_contexts,
+                    }
+                )
             self._update_table()
         except Exception as e:
             # Handle error - could show a message or log

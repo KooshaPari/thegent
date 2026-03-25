@@ -139,7 +139,7 @@ class DecisionJournal:
                         replayable=data["replayable"],
                     )
                     entries.append(entry)
-                except (json.JSONDecodeError, KeyError):
+                except json.JSONDecodeError, KeyError:
                     # Skip invalid entries
                     continue
 

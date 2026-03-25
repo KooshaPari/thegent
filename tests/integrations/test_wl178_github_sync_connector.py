@@ -38,10 +38,10 @@ def test_wl178_push_upsert_path(monkeypatch: pytest.MonkeyPatch, wl178_config: G
         _ = capture
         calls.append(args)
         if args[:3] == ["project", "view", "42"]:
-            return 0, json.dumps({"id": "PVT_1", "title": "Ops", "url": "https://example", "items": []}).decode().decode(), ""
+            return 0, json.dumps({"id": "PVT_1", "title": "Ops", "url": "https://example", "items": []}).decode(), ""
         if args[:3] == ["project", "item-list", "42"]:
             payload = [{"id": "ITM_1", "content": {"title": "[WL-1780] Existing item"}}]
-            return 0, json.dumps(payload).decode().decode(), ""
+            return 0, json.dumps(payload).decode(), ""
         if args[:3] == ["project", "field-list", "42"]:
             payload = [
                 {
@@ -63,9 +63,9 @@ def test_wl178_push_upsert_path(monkeypatch: pytest.MonkeyPatch, wl178_config: G
                     ],
                 },
             ]
-            return 0, json.dumps(payload).decode().decode(), ""
+            return 0, json.dumps(payload).decode(), ""
         if args[:2] == ["project", "item-create"]:
-            return 0, json.dumps({"id": "ITM_2"}).decode().decode(), ""
+            return 0, json.dumps({"id": "ITM_2"}).decode(), ""
         if args[:2] == ["project", "item-edit"]:
             return 0, "{}", ""
         raise AssertionError(f"unexpected gh args: {args}")
@@ -108,7 +108,7 @@ def test_wl178_pull_normalizes_status(monkeypatch: pytest.MonkeyPatch, wl178_con
     def fake_run(args: list[str], capture: bool = True) -> tuple[int, str, str]:
         _ = capture
         if args[:3] == ["project", "item-list", "42"]:
-            return 0, json.dumps(payload).decode().decode(), ""
+            return 0, json.dumps(payload).decode(), ""
         raise AssertionError(f"unexpected gh args: {args}")
 
     monkeypatch.setattr("thegent.integrations.gh_project_sync._run_gh_command", fake_run)
@@ -139,9 +139,9 @@ def test_wl178_sync_to_github_fails_fast_on_missing_status_field(
         calls.append(args)
         _ = capture
         if args[:3] == ["project", "view", "42"]:
-            return 0, json.dumps({"id": "PVT_1", "items": []}).decode().decode(), ""
+            return 0, json.dumps({"id": "PVT_1", "items": []}).decode(), ""
         if args[:3] == ["project", "item-list", "42"]:
-            return 0, json.dumps([]).decode().decode(), ""
+            return 0, json.dumps([]).decode(), ""
         if args[:3] == ["project", "field-list", "42"]:
             return (
                 0,

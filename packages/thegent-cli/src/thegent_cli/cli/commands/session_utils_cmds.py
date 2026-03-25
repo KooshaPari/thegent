@@ -31,6 +31,7 @@ Commands for viewing session history, events, monitoring status.
 Extracted from session_cmds.py to manage module size.
 """
 
+
 def history_cmd(limit: int = 50, format: str | None = None) -> None:
     """List execution run history (sync and background)."""
     from thegent_cli.cli.commands.impl import history_impl
@@ -267,5 +268,3 @@ def ps_cmd(
     else:
         render_ps_rich_table(console=console, rows=rows, include_contract=include_contract)
         print_high_session_count_tip(console=console, rows=rows)
-
-

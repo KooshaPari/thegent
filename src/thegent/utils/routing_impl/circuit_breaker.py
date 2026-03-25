@@ -151,7 +151,7 @@ class ProviderCircuitBreaker:
             # the circuit is already open (checked above) see CircuitOpenError.
             try:
                 self._breaker.call(_raise_exc, exc)
-            except (pybreaker.CircuitBreakerError, Exception):
+            except pybreaker.CircuitBreakerError, Exception:
                 pass
             if self._breaker.current_state == pybreaker.STATE_OPEN:
                 _log.warning(
@@ -174,7 +174,7 @@ class ProviderCircuitBreaker:
         """Manually record a failure (increments counter, may trip to OPEN)."""
         try:
             self._breaker.call(_raise_exc, RuntimeError("manual failure record"))
-        except (RuntimeError, pybreaker.CircuitBreakerError):
+        except RuntimeError, pybreaker.CircuitBreakerError:
             pass
 
     def reset(self) -> None:

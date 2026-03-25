@@ -13,6 +13,7 @@ import json
 @dataclass
 class ReportConfig:
     """Report configuration."""
+
     include_details: bool = True
     include_metrics: bool = True
     format: str = "json"  # json, markdown, html
@@ -27,10 +28,7 @@ class EvaluationReport:
 
     def add_section(self, title: str, content: dict) -> None:
         """Add a section to the report."""
-        self._sections.append({
-            "title": title,
-            "content": content
-        })
+        self._sections.append({"title": title, "content": content})
 
     def add_summary(self, results: list) -> None:
         """Add results summary."""
@@ -41,12 +39,15 @@ class EvaluationReport:
         avg_score = sum(r.score for r in results) / len(results)
         avg_duration = sum(r.duration for r in results) / len(results)
 
-        self.add_section("Summary", {
-            "total_tasks": len(results),
-            "success_rate": f"{success_rate:.1%}",
-            "average_score": f"{avg_score:.2f}",
-            "average_duration": f"{avg_duration:.2f}s"
-        })
+        self.add_section(
+            "Summary",
+            {
+                "total_tasks": len(results),
+                "success_rate": f"{success_rate:.1%}",
+                "average_score": f"{avg_score:.2f}",
+                "average_duration": f"{avg_duration:.2f}s",
+            },
+        )
 
     def add_breakdown(self, results: list) -> None:
         """Add breakdown by task type."""
@@ -67,7 +68,7 @@ class EvaluationReport:
             summary[task_type] = {
                 "count": stats["count"],
                 "success_rate": stats["success"] / stats["count"],
-                "avg_score": stats["total_score"] / stats["count"]
+                "avg_score": stats["total_score"] / stats["count"],
             }
 
         self.add_section("Breakdown by Task Type", summary)
@@ -81,10 +82,7 @@ class EvaluationReport:
 
     def generate(self) -> dict:
         """Generate the report."""
-        return {
-            "generated_at": datetime.now().isoformat(),
-            "sections": self._sections
-        }
+        return {"generated_at": datetime.now().isoformat(), "sections": self._sections}
 
     def to_json(self) -> str:
         """Export as JSON."""

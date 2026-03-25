@@ -46,12 +46,12 @@ from thegent_cli.cli.commands._cli_shared import (
 _log = logging.getLogger(__name__)
 
 
-
 """DAG-related CLI commands for plan/workflow management.
 
 Commands for DAG validation, listing, updating, running, and synchronization.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def dag_validate_cmd(cd: Path | None = None) -> None:
     """Validate DAG session from .factory/dag-session.md. Exit 2 on validation errors."""
@@ -190,6 +190,7 @@ def dag_remove_cmd(task_id: str, cd: Path | None = None) -> None:
 def dag_cancel_cmd(task_id: str, cd: Path | None = None) -> None:
     """Cancel a task (set status to cancelled)."""
     from thegent_cli.cli.commands.plan_dag_cmds import dag_update_cmd
+
     dag_update_cmd(task_id=task_id, cd=cd, status="cancelled")
     console.print(f"[green]Cancelled task {task_id}[/green]")
 
@@ -345,7 +346,6 @@ def dag_run_cmd(
     contract_version: str | None = None,
 ) -> None:
     """Spawn thegent bg for each ready task; update status=running and session_id."""
-    from thegent_cli.cli.commands._cli_shared import dag_run_impl
     res = dag_run_impl(
         cd=cd,
         dry_run=dry_run,
@@ -379,7 +379,6 @@ def dag_run_cmd(
 def dag_sync_cmd(cd: Path | None = None, auto_run_next: bool = False) -> None:
     """For tasks with session_id and status=running, if pid not running set status=done or failed from rc.
     If --auto-run-next, spawn next ready tasks after sync."""
-    from thegent_cli.cli.commands._cli_shared import dag_sync_impl
     res = dag_sync_impl(cd=cd, auto_run_next=auto_run_next)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")
@@ -477,7 +476,6 @@ def dag_rollback_cmd(checkpoint_id: str | None = None, cd: Path | None = None) -
 
 def dag_recover_cmd(cd: Path | None = None, action: str = "retry-failed") -> None:
     """Perform recovery playbook actions on the DAG."""
-    from thegent_cli.cli.commands._cli_shared import dag_recover_impl
     res = dag_recover_impl(cd=cd, action=action)
     if "error" in res:
         console.print(f"[red]{res['error']}[/red]")
@@ -536,5 +534,3 @@ def dag_probe_cmd(cd: Path | None = None, baseline_id: str | None = None) -> Non
             tofile="current",
         )
         console.print("".join(diff))
-
-

@@ -21,7 +21,7 @@ Date: February 23, 2026
 
 ## Wave 3 `adopt` Candidates
 - `https://github.com/zed-industries/zed`
-- `https://github.com/Fission-AI/OpenSpec`
+- `https://github.com/Fission-AI/AgilePlus`
 - `https://github.com/jehna/humanify`
 - `https://github.com/Nordlys-Labs/nordlys`
 - `https://github.com/sitbon/magg`

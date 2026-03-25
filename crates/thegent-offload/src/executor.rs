@@ -1,12 +1,9 @@
-use crate::{ExecutionRequest, ExecutionResponse, ExecutionStatus, IsolationLevel, SyncState};
+use crate::{ExecutionRequest, ExecutionResponse, ExecutionStatus, IsolationLevel};
 use anyhow::{Context, Result};
-use chrono::Utc;
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use tokio::process::Command;
 use tracing::{error, info};
-use uuid::Uuid;
 
 pub struct Executor {
     base_dir: PathBuf,

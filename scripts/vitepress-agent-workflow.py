@@ -39,7 +39,7 @@ def get_changed_files() -> set[Path]:
             if line:
                 changed.add(Path(line))
         return changed
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError, FileNotFoundError:
         return set()
 
 

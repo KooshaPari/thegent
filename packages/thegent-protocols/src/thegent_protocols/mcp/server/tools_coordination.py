@@ -49,7 +49,9 @@ def thegent_wait_impl(
             meta={"execution_time_ms": elapsed_ms, "auto_timeout": True, "action": "retry"},
         )
 
-    return ToolResult(content=json.dumps(result).decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+    return ToolResult(
+        content=json.dumps(result).decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms}
+    )
 
 
 def thegent_inbox_list_impl(
@@ -169,7 +171,9 @@ def thegent_stop_impl(
     start_time = time.perf_counter()
     result = stop_impl(session_id=session_id, force=force)
     elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-    return ToolResult(content=json.dumps(result).decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+    return ToolResult(
+        content=json.dumps(result).decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms}
+    )
 
 
 def thegent_pause_impl(

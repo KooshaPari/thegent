@@ -4,22 +4,23 @@ Process Cleanup
 Tracks and cleans up child processes on interrupt.
 """
 
-from typing import Set, Optional
+from typing import Any, Optional
 import os
 import signal
 import atexit
-import weakref
 
 
 class ProcessCleanup:
     """Tracks and cleans up child processes."""
 
     _instance: Optional["ProcessCleanup"] = None
+    _processes: set[int]
+    _registered: bool
 
-    def __new__(cls):
+    def __new__(cls) -> "ProcessCleanup":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._processes: set[int] = set()
+            cls._instance._processes = set()
             cls._instance._registered = False
         return cls._instance
 
@@ -58,6 +59,7 @@ class ProcessCleanup:
 
             # Wait briefly then force kill
             import time
+
             time.sleep(0.5)
 
             try:
@@ -75,7 +77,7 @@ class ProcessCleanup:
             except (ProcessLookupError, PermissionError):
                 pass
 
-    def cleanup_on_signal(self, signum: int, frame) -> None:
+    def cleanup_on_signal(self, signum: int, frame: Any) -> None:
         """Signal handler for cleanup."""
         self.cleanup_all()
         # Re-raise signal

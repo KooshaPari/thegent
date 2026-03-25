@@ -14,12 +14,25 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _get_run_spend(alert_system: object) -> float:
+    """Return current run spend when the budget system exposes it."""
+    get_run_spend = getattr(alert_system, "get_run_spend", None)
+    if callable(get_run_spend):
+        value = get_run_spend()
+        if isinstance(value, (int, float, str)):
+            try:
+                return float(value)
+            except ValueError:
+                return 0.0
+    return 0.0
+
+
 def check_budget_limits(settings: "ThegentSettings") -> tuple[bool, str | None]:
     """Check if budget limits have been exceeded.
-    
+
     Args:
         settings: Thegent settings with budget configuration
-        
+
     Returns:
         Tuple of (blocked, error_message)
     """
@@ -40,7 +53,7 @@ def check_budget_limits(settings: "ThegentSettings") -> tuple[bool, str | None]:
         return True, f"Daily budget EXCEEDED: ${daily_spend:.2f} >= ${settings.budget_daily_limit:.2f}"
 
     # Check run budget
-    run_spend = alert_system.get_run_spend()
+    run_spend = _get_run_spend(alert_system)
     _alert, block = alert_system.check_budget(run_spend, context="run")
     if block:
         return True, f"Run budget EXCEEDED: ${run_spend:.2f} >= ${settings.budget_run_limit:.2f}"
@@ -50,10 +63,10 @@ def check_budget_limits(settings: "ThegentSettings") -> tuple[bool, str | None]:
 
 def check_budget_warning(settings: "ThegentSettings") -> tuple[bool, str | None]:
     """Check if budget is approaching limits (warning).
-    
+
     Args:
         settings: Thegent settings with budget configuration
-        
+
     Returns:
         Tuple of (warning, warning_message)
     """

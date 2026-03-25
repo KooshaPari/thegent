@@ -23769,7 +23769,7 @@
     "comments": [
       {
         "author": "sogo00",
-        "body": "I think it depends on your goal. For things that can be done with a single prompt, there is no need to break it down further.\n\nThen there are more complex tasks, which require you to touch several parts of the code and infra (think db-backend-frontend), which would not fit into a single prompt, including a discussion on what database/how to use it, etc...\n\nHaving said this, the lightweight spec-driven tools (kiro, openspec, traycer, etc...) feel a bit like they are overcomplicating easy stuff an"
+        "body": "I think it depends on your goal. For things that can be done with a single prompt, there is no need to break it down further.\n\nThen there are more complex tasks, which require you to touch several parts of the code and infra (think db-backend-frontend), which would not fit into a single prompt, including a discussion on what database/how to use it, etc...\n\nHaving said this, the lightweight spec-driven tools (kiro, agileplus, traycer, etc...) feel a bit like they are overcomplicating easy stuff an"
       },
       {
         "author": "gameguy56",
@@ -23785,7 +23785,7 @@
       },
       {
         "author": "vinylhandler",
-        "body": "Try openspec, much less verbose so doesn\u2019t waste as many tokens but creates great context for your chosen coding agent"
+        "body": "Try agileplus, much less verbose so doesn\u2019t waste as many tokens but creates great context for your chosen coding agent"
       }
     ]
   },

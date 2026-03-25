@@ -1,55 +1,26 @@
-use dashmap::DashMap;
+//! Two-tier cache with L1 (LRU) for hot data and L2 (DashMap) for warm data.
+
 use lru::LruCache;
-use serde::{Deserialize, Serialize};
+use dashmap::DashMap;
+use std::hash::Hash;
+use std::time::{Duration, Instant};
 use std::num::NonZeroUsize;
-use std::sync::{Arc, RwLock};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use parking_lot::Mutex;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct CacheEntry<T> {
-    value: T,
-    expires_at: u64,
-    created_at: u64,
-    access_count: u64,
-}
-
-impl<T> CacheEntry<T> {
-    fn new(value: T, ttl: Duration) -> Self {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-        Self {
-            value,
-            expires_at: now + ttl.as_secs(),
-            created_at: now,
-            access_count: 0,
-        }
-    }
-
-    fn is_expired(&self) -> bool {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-        now >= self.expires_at
-    }
-}
-
-/// Two-tier cache with L1 (LRU) for hot data and L2 (DashMap) for warm data
+/// Two-tier cache with L1 (LRU) for hot data and L2 (DashMap) for warm data.
 pub struct Cache<K, V>
 where
-    K: std::hash::Hash + Eq + Clone + Send + Sync + 'static,
+    K: Hash + Eq + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
-    l1: Arc<RwLock<LruCache<K, CacheEntry<V>>>>,
-    l2: Arc<DashMap<K, CacheEntry<V>>>,
+    l1: Mutex<LruCache<K, (V, Instant)>>,
+    l2: DashMap<K, (V, Instant)>,
     default_ttl: Duration,
 }
 
 impl<K, V> Cache<K, V>
 where
-    K: std::hash::Hash + Eq + Clone + Send + Sync + 'static,
+    K: Hash + Eq + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
     pub fn new(ttl_seconds: u64) -> Self {
@@ -58,85 +29,62 @@ where
 
     pub fn with_capacity_and_ttl(l1_capacity: usize, default_ttl: Duration) -> Self {
         Self {
-            l1: Arc::new(RwLock::new(LruCache::new(
-                NonZeroUsize::new(l1_capacity.max(1)).unwrap(),
-            ))),
-            l2: Arc::new(DashMap::new()),
+            l1: Mutex::new(LruCache::new(NonZeroUsize::new(l1_capacity).unwrap())),
+            l2: DashMap::new(),
             default_ttl,
         }
     }
 
     pub fn get(&self, key: &K) -> Option<V> {
-        // Try L1 first (hottest data)
-        {
-            let mut l1 = self.l1.write().unwrap();
-            if let Some(entry) = l1.get_mut(key) {
-                if !entry.is_expired() {
-                    entry.access_count += 1;
-                    return Some(entry.value.clone());
-                } else {
-                    l1.pop(key);
-                }
+        let now = Instant::now();
+        // Check L1
+        if let Some(entry) = self.l1.lock().get(key) {
+            if entry.1 + self.default_ttl > now {
+                return Some(entry.0.clone());
             }
         }
-
-        // Try L2 (warm data) - clone entry first to avoid borrow conflicts
-        if let Some(entry_ref) = self.l2.get(key) {
-            if !entry_ref.is_expired() {
-                // Clone the entire entry first
-                let entry_cloned = (*entry_ref).clone();
-
-                // Promote to L1 using the cloned entry
-                {
-                    let mut l1 = self.l1.write().unwrap();
-                    l1.put(key.clone(), entry_cloned.clone());
-                }
-                // Return the value from cloned entry
-                return Some(entry_cloned.value);
+        // Check L2
+        if let Some(entry) = self.l2.get(key) {
+            if entry.1 + self.default_ttl > now {
+                return Some(entry.0.clone());
             }
+            self.l2.remove(key);
         }
-
         None
     }
 
     pub fn set(&self, key: K, value: V) {
-        self.set_with_ttl(key, value, self.default_ttl);
+        let now = Instant::now();
+        self.l1.lock().put(key.clone(), (value.clone(), now));
+        self.l2.insert(key, (value, now));
     }
 
     pub fn set_with_ttl(&self, key: K, value: V, ttl: Duration) {
-        let entry = CacheEntry::new(value.clone(), ttl);
-        let entry_for_l2 = CacheEntry::new(value, ttl);
-
-        // Insert into L1
-        {
-            let mut l1 = self.l1.write().unwrap();
-            l1.put(key.clone(), entry);
-        }
-
-        // Also store in L2
-        self.l2.insert(key, entry_for_l2);
+        let expiry = Instant::now() + ttl;
+        self.l1.lock().put(key.clone(), (value.clone(), expiry));
+        self.l2.insert(key, (value, expiry));
     }
 
     pub fn remove(&self, key: &K) {
-        let mut l1 = self.l1.write().unwrap();
-        l1.pop(key);
+        self.l1.lock().pop(key);
         self.l2.remove(key);
     }
 
     pub fn clear(&self) {
-        let mut l1 = self.l1.write().unwrap();
-        l1.clear();
+        self.l1.lock().clear();
         self.l2.clear();
     }
 
     pub fn len(&self) -> usize {
-        let l1_len = self.l1.read().unwrap().len();
-        let l2_len = self.l2.len();
-        l1_len + l2_len
+        self.l1.lock().len() + self.l2.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.l1.lock().is_empty() && self.l2.is_empty()
     }
 
     pub fn len_l1(&self) -> usize {
-        self.l1.read().unwrap().len()
+        self.l1.lock().len()
     }
 
     pub fn len_l2(&self) -> usize {
@@ -144,19 +92,13 @@ where
     }
 
     pub fn contains_key(&self, key: &K) -> bool {
-        {
-            let l1 = self.l1.read().unwrap();
-            if l1.contains(key) {
-                return true;
-            }
-        }
-        self.l2.contains_key(key)
+        self.l1.lock().contains(key) || self.l2.contains_key(key)
     }
 }
 
 impl<K, V> Default for Cache<K, V>
 where
-    K: std::hash::Hash + Eq + Clone + Send + Sync + 'static,
+    K: Hash + Eq + Clone + Send + Sync + 'static,
     V: Clone + Send + Sync + 'static,
 {
     fn default() -> Self {
@@ -170,14 +112,14 @@ mod tests {
 
     #[test]
     fn test_cache_basic() {
-        let cache = Cache::new(3600);
+        let cache: Cache<String, String> = Cache::new(3600);
         cache.set("key1".to_string(), "value1".to_string());
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
     }
 
     #[test]
     fn test_cache_expiration() {
-        let cache = Cache::with_capacity_and_ttl(100, Duration::from_secs(1));
+        let cache: Cache<String, String> = Cache::with_capacity_and_ttl(100, Duration::from_secs(1));
         cache.set("key1".to_string(), "value1".to_string());
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
         std::thread::sleep(Duration::from_secs(2));
@@ -186,12 +128,12 @@ mod tests {
 
     #[test]
     fn test_l1_l2_tier() {
-        let cache = Cache::with_capacity_and_ttl(2, Duration::from_secs(60));
+        let cache: Cache<String, String> = Cache::with_capacity_and_ttl(2, Duration::from_secs(60));
         cache.set("key1".to_string(), "value1".to_string());
         cache.set("key2".to_string(), "value2".to_string());
         cache.set("key3".to_string(), "value3".to_string());
 
-        // key1 should be evicted from L1
+        // key1 should be evicted from L1 but still in L2
         assert_eq!(cache.get(&"key1".to_string()), Some("value1".to_string()));
 
         // All should be in L2
@@ -199,18 +141,18 @@ mod tests {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 use pyo3::prelude::*;
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 use pyo3::types::PyModule;
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pyclass]
 struct PythonCache {
     cache: Cache<String, String>,
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pymethods]
 impl PythonCache {
     #[new]
@@ -261,7 +203,7 @@ impl PythonCache {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pymodule]
 fn thegent_cache(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PythonCache>()?;

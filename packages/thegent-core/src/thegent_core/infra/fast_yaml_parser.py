@@ -1,5 +1,5 @@
-"""Compatibility wrapper for YAML parsing helpers."""
+"""Compatibility bridge for legacy thegent_core YAML parser imports."""
 
-from thegent.infra.fast_yaml_parser import yaml_dump, yaml_dumps, yaml_load, yaml_loads
+from thegent.infra.fast_yaml_parser import yaml_dump, yaml_load
 
-__all__ = ["yaml_dump", "yaml_dumps", "yaml_load", "yaml_loads"]
+__all__ = ["yaml_dump", "yaml_load"]

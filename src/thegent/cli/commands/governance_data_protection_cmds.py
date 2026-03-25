@@ -2,11 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from thegent.cli.console import console
-
 
 def data_protection_cmd(format: str | None = None) -> None:
     """Show data protection status."""
@@ -18,6 +13,7 @@ def data_protection_cmd(format: str | None = None) -> None:
         import orjson as json
 
         from thegent.cli import console
+
         console.print(json.dumps(status))
     else:
         from thegent.cli import console

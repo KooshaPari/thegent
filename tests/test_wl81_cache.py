@@ -41,6 +41,7 @@ class TestCacheInvalidation:
         """TTL should expire entries."""
         # Simplified TTL check
         import time
+
         entry = {"value": "test", "expires_at": time.time() - 1}
         expired = time.time() > entry["expires_at"]
         assert expired

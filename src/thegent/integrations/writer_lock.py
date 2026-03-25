@@ -12,11 +12,12 @@ This is a lightweight alternative to distributed locks (etcd, Zookeeper) and
 is suitable for single-machine, single-repository environments.
 """
 
-import orjson as json
 import logging
 import os
 from datetime import datetime, UTC
 from pathlib import Path
+
+import orjson
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,7 @@ class SingleWriterLock:
             flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
             fd = os.open(self.lock_path, flags, 0o644)
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write(json.dumps(lock_data, indent=2))
+                handle.write(orjson.dumps(lock_data, option=orjson.OPT_INDENT_2).decode("utf-8"))
             logger.debug("Lock acquired by %s at %s", owner_id, self.lock_path)
             return True
         except FileExistsError:
@@ -149,7 +150,7 @@ class SingleWriterLock:
             return None
 
         try:
-            data = json.loads(self.lock_path.read_text(encoding="utf-8"))
+            data = orjson.loads(self.lock_path.read_text(encoding="utf-8"))
             return data.get("owner")
         except Exception as e:
             logger.error("Failed to read lock file: %s", e)

@@ -21,12 +21,7 @@ def main() -> int:
 
     # Try to run browser-use --version to verify it's installed
     try:
-        result = subprocess.run(
-            ["uvx", "browser-use", "--version"],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        result = subprocess.run(["uvx", "browser-use", "--version"], capture_output=True, text=True, timeout=30)
 
         if result.returncode != 0:
             raise RuntimeError(f"browser-use --version failed: {result.stderr}")
@@ -38,12 +33,7 @@ def main() -> int:
     except subprocess.TimeoutExpired:
         raise RuntimeError("browser-use --version timed out")
 
-    print(json.dumps({
-        "ok": True,
-        "target": "browser-use",
-        "version": version,
-        "status": "available"
-    })).decode()
+    print(json.dumps({"ok": True, "target": "browser-use", "version": version, "status": "available"})).decode()
     return 0
 
 

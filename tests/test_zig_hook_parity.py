@@ -167,11 +167,13 @@ class TestGateParity:
         - Pre-tool preconditions are met
         """
         # Sample PreToolUse payload
-        payload = json.dumps({
-            "tool_name": "file_write",
-            "tool_args": {"path": "/tmp/test.txt", "content": "test"},
-            "session_id": "test-session-001",
-        }).decode()
+        payload = json.dumps(
+            {
+                "tool_name": "file_write",
+                "tool_args": {"path": "/tmp/test.txt", "content": "test"},
+                "session_id": "test-session-001",
+            }
+        ).decode()
 
         # Zig should accept and process this
         result = subprocess.run(
@@ -191,11 +193,13 @@ class TestGateParity:
         - Tool output is well-formed
         - Post-tool validations pass
         """
-        payload = json.dumps({
-            "tool_name": "file_write",
-            "tool_result": {"status": "success", "bytes_written": 42},
-            "session_id": "test-session-001",
-        }).decode()
+        payload = json.dumps(
+            {
+                "tool_name": "file_write",
+                "tool_result": {"status": "success", "bytes_written": 42},
+                "session_id": "test-session-001",
+            }
+        ).decode()
 
         result = subprocess.run(
             [zig_dispatcher_bin, "validate", "PostToolUse"],

@@ -571,7 +571,9 @@ async def test_dispatch_many_parallel_execution():
         def make_coro(i):
             async def coro(config):
                 return await _slow_flash(config, task_idx=i)
+
             return coro
+
         flash_coros = [make_coro(i) for i in range(3)]
         call_idx = 0
 

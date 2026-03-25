@@ -12,6 +12,7 @@ import time
 @dataclass
 class RateLimitConfig:
     """Rate limit configuration."""
+
     requests_per_second: float = 10.0
     burst_size: int = 20
     wait_timeout: float = 5.0
@@ -81,7 +82,7 @@ class RateLimiter:
             "requests_per_second": self.config.requests_per_second,
             "total_requests": self._total_requests,
             "rejected": self._rejected,
-            "rejection_rate": self._rejected / self._total_requests if self._total_requests > 0 else 0
+            "rejection_rate": self._rejected / self._total_requests if self._total_requests > 0 else 0,
         }
 
 
@@ -103,7 +104,4 @@ class MultiRateLimiter:
 
     def stats(self) -> dict:
         """Get statistics for all limiters."""
-        return {
-            key: limiter.stats()
-            for key, limiter in self._limiters.items()
-        }
+        return {key: limiter.stats() for key, limiter in self._limiters.items()}

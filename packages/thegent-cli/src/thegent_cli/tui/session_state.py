@@ -10,8 +10,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
-
 
 @dataclass
 class SessionMetadata:

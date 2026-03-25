@@ -13,6 +13,25 @@ from thegent.config import ThegentSettings
 _log = logging.getLogger(__name__)
 
 
+def _settings_bool(settings: ThegentSettings, name: str, default: bool = False) -> bool:
+    value = getattr(settings, name, default)
+    return value if isinstance(value, bool) else default
+
+
+def _settings_int(settings: ThegentSettings, name: str, default: int) -> int:
+    value = getattr(settings, name, default)
+    return value if isinstance(value, int) and not isinstance(value, bool) else default
+
+
+def _settings_float(settings: ThegentSettings, name: str, default: float) -> float:
+    value = getattr(settings, name, default)
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, int | float):
+        return float(value)
+    return default
+
+
 def lock_resource_impl(resource_path: str, agent_id: str, ttl: int = 60, cd: Path | None = None) -> dict[str, Any]:
     """Claim a lease on a resource (file or directory)."""
     from thegent.cli.commands.impl import _resolve_cwd
@@ -87,32 +106,32 @@ def concurrency_show_impl() -> None:
 
     table.add_row(
         "Max Concurrency (Ceiling)",
-        str(settings.max_concurrency),
+        str(_settings_int(settings, "max_concurrency", 1)),
         "THGENT_MAX_CONCURRENCY",
     )
     table.add_row(
         "Load-Based Limits",
-        "Enabled" if settings.concurrency_load_based else "Disabled",
+        "Enabled" if _settings_bool(settings, "concurrency_load_based") else "Disabled",
         "THGENT_CONCURRENCY_LOAD_BASED",
     )
 
-    if settings.concurrency_load_based:
+    if _settings_bool(settings, "concurrency_load_based"):
         _snapshot = sample_resources()
         capacity, _ = compute_dynamic_limit(_snapshot)
         table.add_row("Current Available Capacity", str(capacity), "Dynamic")
         table.add_row(
             "Min Slots",
-            str(settings.concurrency_min_slots),
+            str(_settings_int(settings, "concurrency_min_slots", 1)),
             "THGENT_CONCURRENCY_MIN_SLOTS",
         )
         table.add_row(
             "Max FD Utilization",
-            f"{settings.concurrency_fd_utilization_max * 100}%",
+            f"{_settings_float(settings, 'concurrency_fd_utilization_max', 0.95) * 100}%",
             "THGENT_CONCURRENCY_FD_UTILIZATION_MAX",
         )
         table.add_row(
             "Max Load per CPU",
-            str(settings.concurrency_load_per_cpu_max),
+            str(_settings_float(settings, "concurrency_load_per_cpu_max", 0.95)),
             "THGENT_CONCURRENCY_LOAD_PER_CPU_MAX",
         )
 
