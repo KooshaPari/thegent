@@ -116,8 +116,7 @@ fn first_available(candidates: &[&str]) -> Option<PathBuf> {
             candidate,
             Some(SAFE_PATH),
             env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
-        )
-        {
+        ) {
             return Some(path);
         }
     }
@@ -848,8 +847,7 @@ fn run_flock(args: &[String]) -> ExitCode {
 
         let mut cmd_idx = 0;
         while cmd_idx < args.len()
-            && (args[cmd_idx].starts_with("-")
-                || args[cmd_idx].chars().all(|c| c.is_ascii_digit()))
+            && (args[cmd_idx].starts_with("-") || args[cmd_idx].chars().all(|c| c.is_ascii_digit()))
         {
             cmd_idx += 1;
         }
