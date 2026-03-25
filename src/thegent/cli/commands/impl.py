@@ -560,7 +560,7 @@ _get_ready_task_ids = run_dag_helpers.get_ready_task_ids
 dag_ready_impl = run_dag_helpers.dag_ready_impl
 
 
-from thegent.cli.commands.impl_core_runners import (  # noqa: E402
+from thegent.cli.commands.run.impl_core_runners import (  # noqa: E402
     _apply_pareto_routing,
     _validate_explicit_ollama_provider,
     bg_impl,

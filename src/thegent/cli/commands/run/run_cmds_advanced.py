@@ -69,7 +69,7 @@ def trace_replay_cmd(run_id: str) -> None:
 
 def terminal_route_cmd(prompt: str, cd: Path | None = None) -> None:
     """Automatically route a prompt to an active terminal session if matching."""
-    from thegent.cli.commands.run_cmds import run_cmd
+    from thegent.cli.commands.run.run_cmds import run_cmd
     from rich.console import Console
 
     from thegent.config import ThegentSettings

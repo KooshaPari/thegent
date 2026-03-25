@@ -29,7 +29,7 @@ from thegent.cli.commands._cli_shared import (
 
 _log = logging.getLogger(__name__)
 
-from thegent.cli.commands.run_cmds import bg_cmd
+from thegent.cli.commands.run import bg_cmd
 from thegent.cli.commands.session_cmds import history_cmd
 
 

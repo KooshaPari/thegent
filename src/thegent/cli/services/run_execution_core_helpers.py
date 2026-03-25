@@ -90,7 +90,7 @@ def _apply_pareto_routing_local(
     route_contract: dict[str, Any] | None,
     route_request: dict[str, Any] | None,
 ) -> tuple[str | None, str | None, dict[str, Any] | None, dict[str, Any] | None]:
-    from thegent.cli.commands.impl_core_runners import _apply_pareto_routing
+    from thegent.cli.commands.run.impl_core_runners import _apply_pareto_routing
 
     return _apply_pareto_routing(agent, model, routing, include_contract, route_contract, route_request)
 
