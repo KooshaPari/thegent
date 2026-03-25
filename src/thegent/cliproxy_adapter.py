@@ -1,6 +1,12 @@
 # MIGRATION NOTE: Migrate to cliproxyapi-plusplus Go SDK
 """CLIProxy adapter: exposes /v1/responses (HTTP + WebSocket) for Codex compatibility.
 
+DEPRECATED: This module is now a thin shim for backward compatibility.
+New code should use the decomposed modules:
+- thegent.adapters.driven.cliproxy_http — HTTP client adapter
+- thegent.use_cases.manage_cliproxy — Business logic
+- thegent.ports.driven.cliproxy — Port interfaces
+
 cliproxyapi++ (kooshapari fork) may not implement /v1/responses. This adapter:
 - Proxies all /v1/* to the backend
 - For POST /v1/responses: tries backend first; on 404, translates to /v1/chat/completions
@@ -55,6 +61,13 @@ from thegent.cliproxy_request_transform import (
 )
 from thegent.cliproxy_stream_state import ResponsesStreamState
 from thegent.utils.routing_impl.cost_calculator import calculate_cost_from_response, format_cost_header_value
+
+# Import decomposed adapter module
+from thegent.adapters.driven.cliproxy_http import (
+    CliproxyHTTPClient,
+    CliproxyResponseTransformer,
+    CliproxyHeaderManager,
+)
 
 _log = logging.getLogger(__name__)
 
