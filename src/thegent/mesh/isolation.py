@@ -73,7 +73,7 @@ class ResourceIsolation:
             current_process = psutil.Process(os.getpid())
             children = current_process.children(recursive=True)
             return [os.getpid()] + [p.pid for p in children]
-        except psutil.NoSuchProcess, ImportError:
+        except (psutil.NoSuchProcess, ImportError):
             return [os.getpid()]
 
     def cleanup(self) -> None:

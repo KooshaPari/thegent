@@ -261,7 +261,7 @@ def _check_parent_agent(parent: psutil.Process | None, agent_names: set[str]) ->
                 return True, None
 
         return False, parent.parent()
-    except psutil.NoSuchProcess, psutil.AccessDenied:
+    except (psutil.NoSuchProcess, psutil.AccessDenied):
         return False, None
 
 

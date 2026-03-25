@@ -44,7 +44,7 @@ class BeadsWrapper:
             result = shim_run([binary, "version"], capture_output=True, timeout=5)
             if result.returncode == 0:
                 self._status = BeadsStatus.AVAILABLE
-        except subprocess.SubprocessError, OSError:
+        except (subprocess.SubprocessError, OSError):
             pass
 
     @property

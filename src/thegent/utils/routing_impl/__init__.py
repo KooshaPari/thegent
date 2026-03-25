@@ -13,11 +13,13 @@ Key components:
 
 from thegent.utils.routing_impl.cliproxy_client import CLIProxyRoutingClient, RoutingResponse
 from thegent.utils.routing_impl.models import RoutingConstraint, TaskCategory, TaskMetadata
+from thegent.utils.routing_impl.pareto_router import ParetoRouter, RouteCandidate
 from thegent.utils.routing_impl.task_router import ConstraintValidator, TaskClassifier, TaskRouter
 
 __all__ = [
     "CLIProxyRoutingClient",
     "ConstraintValidator",
+    "ParetoRouter",
     "RoutingConstraint",
     "RoutingResponse",
     "RouteCandidate",
