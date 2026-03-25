@@ -1,0 +1,41 @@
+[package]
+name = "thegent-code-stats"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "High-performance code statistics and LOC counting for thegent"
+repository = "https://github.com/KooshaPari/thegent"
+
+[dependencies]
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+anyhow = "1.0"
+thiserror = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Performance
+rayon = "1.10"           # Parallel iteration
+walkdir = "2.5"          # Directory walking
+memmap2 = "0.9"          # Memory-mapped file reading
+regex = "1.11"           # Pattern matching
+ignore = "0.4"           # Fast gitignore matching
+
+# Output
+indicatif = "0.17"      # Progress bars
+console = "0.15"         # Terminal styling
+humansize = "4.0"        # Human-readable sizes
+
+# Hashing for deduplication
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3.12"
+
+[[bin]]
+name = "thegent-code-stats"
+path = "src/main.rs"
+
+[lib]
+name = "thegent_code_stats"
+path = "src/lib.rs"
