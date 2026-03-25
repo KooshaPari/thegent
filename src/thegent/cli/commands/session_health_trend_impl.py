@@ -132,7 +132,7 @@ def session_contract_health_trend_impl(
             latest_ts = datetime.fromisoformat(str(latest_ts_raw))
             oldest_ts = datetime.fromisoformat(str(oldest_ts_raw))
             snapshot_window_seconds = int((latest_ts - oldest_ts).total_seconds())
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             snapshot_window_seconds = None
     snapshot_interval_seconds_avg = None
     parsed_ts: list[datetime] = []
@@ -142,7 +142,7 @@ def session_contract_health_trend_impl(
             continue
         try:
             parsed_ts.append(datetime.fromisoformat(str(ts_raw)))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             continue
     if len(parsed_ts) > 1:
         parsed_ts.sort()
@@ -161,7 +161,7 @@ def session_contract_health_trend_impl(
         try:
             latest_ts = datetime.fromisoformat(str(latest_ts_raw))
             snapshot_freshness_seconds = int((generated_at - latest_ts).total_seconds())
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             snapshot_freshness_seconds = None
     snapshot_density_per_hour = None
     if snapshot_window_seconds is not None and snapshot_window_seconds > 0 and len(snapshots) > 0:

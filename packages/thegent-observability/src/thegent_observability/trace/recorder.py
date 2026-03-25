@@ -323,7 +323,7 @@ class TraceRecorder:
                         truncated[f"{key}_truncated_original_size"] = original_size
 
                 return truncated
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             # If serialization fails, return as-is
             pass
 

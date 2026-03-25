@@ -146,7 +146,7 @@ def _add_model_alias() -> None:
     idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
     try:
         provider = providers[int(idx) - 1]
-    except ValueError, IndexError:
+    except (ValueError, IndexError):
         console.print("[red]Invalid selection.[/red]")
         return
 
@@ -208,7 +208,7 @@ def _configure_harness() -> None:
     idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
     try:
         provider = api_key_providers[int(idx) - 1]
-    except ValueError, IndexError:
+    except (ValueError, IndexError):
         console.print("[red]Invalid selection.[/red]")
         return
 
@@ -284,7 +284,7 @@ def _validate_provider() -> None:
     idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
     try:
         provider = providers[int(idx) - 1]
-    except ValueError, IndexError:
+    except (ValueError, IndexError):
         console.print("[red]Invalid selection.[/red]")
         return
 

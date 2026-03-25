@@ -138,7 +138,7 @@ class UnifiedSessionIndex:
 
                             os.kill(s.pid, 0)
                             is_alive = True
-                        except OSError, ProcessLookupError:
+                        except (OSError, ProcessLookupError):
                             is_alive = False
 
                     session = AgentSession(

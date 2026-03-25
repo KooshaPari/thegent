@@ -44,7 +44,7 @@ def _collect_oversized_functions(path: Path) -> list[dict]:
     try:
         source = path.read_text(encoding="utf-8", errors="replace")
         tree = ast.parse(source, filename=str(path))
-    except OSError, SyntaxError:
+    except (OSError, SyntaxError):
         return []
 
     oversized = []

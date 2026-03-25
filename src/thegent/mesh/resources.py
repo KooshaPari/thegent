@@ -49,5 +49,5 @@ class ResourceManager:
             # Current process PID
             with open(path / "tasks", "w") as f:
                 f.write(str(os.getpid()))
-        except PermissionError, OSError:
+        except (PermissionError, OSError):
             pass  # Requires sudo or specific cgroup setup

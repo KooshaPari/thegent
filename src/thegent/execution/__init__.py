@@ -186,5 +186,5 @@ def __getattr__(name: str) -> Any:
     # Fall back to flat module (lazy load)
     try:
         return getattr(_get_flat(), name)
-    except AttributeError, ImportError:
+    except (AttributeError, ImportError):
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}") from None

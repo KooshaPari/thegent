@@ -324,7 +324,7 @@ def _ensure_provider_configured(provider: str) -> None:
                         console.print(f"[dim]Run manually: thegent cliproxy login {provider}[/dim]\n")
                 else:
                     console.print(f"[dim]Run manually: thegent cliproxy login {provider}[/dim]\n")
-            except EOFError, KeyboardInterrupt:
+            except (EOFError, KeyboardInterrupt):
                 console.print(f"[dim]Run manually: thegent cliproxy login {provider}[/dim]\n")
         else:
             console.print(f"[dim]Run: thegent cliproxy login {provider}[/dim]\n")

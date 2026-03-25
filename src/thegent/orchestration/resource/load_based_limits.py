@@ -206,7 +206,7 @@ def _get_memory_mb() -> tuple[float, float]:
     try:
         vmem = psutil.virtual_memory()
         available_mb = vmem.available / (1024 * 1024)
-    except AttributeError, OSError:
+    except (AttributeError, OSError):
         # psutil unavailable or failed — use OS-native fallback
         system = platform.system()
         if system == "Darwin":
@@ -219,7 +219,7 @@ def _get_memory_mb() -> tuple[float, float]:
                             kb = int(line.split()[1])
                             available_mb = kb / 1024.0
                             break
-            except OSError, ValueError, IndexError:
+            except (OSError, ValueError, IndexError):
                 pass  # Keep sentinel 1024.0
     return rss_mb, available_mb
 
@@ -228,7 +228,7 @@ def _get_load_avg() -> tuple[float, float, float]:
     """Return (1m, 5m, 15m) load average. Uses psutil for cross-platform support."""
     try:
         return psutil.getloadavg()
-    except AttributeError, OSError:
+    except (AttributeError, OSError):
         return 0.0, 0.0, 0.0
 
 
@@ -384,13 +384,13 @@ class LimitGateConfig:
         def _as_float(value: Any, default: float) -> float:
             try:
                 return float(value)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 return default
 
         def _as_int(value: Any, default: int) -> int:
             try:
                 return int(value)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 return default
 
         return cls(

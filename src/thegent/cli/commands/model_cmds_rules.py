@@ -90,7 +90,7 @@ def _list_cursor_models() -> None:
                     console.print(f"  {line}")
         else:
             console.print("[dim]cursor agent --list-models failed[/dim]")
-    except FileNotFoundError, cursor_timeout:
+    except (FileNotFoundError, cursor_timeout):
         console.print("[dim]Cursor CLI not found or timed out[/dim]")
 
 

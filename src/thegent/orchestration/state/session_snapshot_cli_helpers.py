@@ -69,7 +69,7 @@ def _load_snapshot_like(scraper: Any, path: Any) -> Any | None:
 
     try:
         data = json.loads(Path(path).read_text(encoding="utf-8"))
-    except OSError, ValueError, TypeError:
+    except (OSError, ValueError, TypeError):
         return None
     return type("SnapshotLike", (), data)()
 
@@ -324,7 +324,7 @@ def snapshot_export_payload(scraper: Any, snapshot_path: str, out_path: str | No
     source = Path(snapshot_path)
     try:
         output = scraper.export_snapshot_markdown(source, Path(out_path) if out_path else None)
-    except FileNotFoundError, ValueError, OSError:
+    except (FileNotFoundError, ValueError, OSError):
         return {"source": str(source), "output": None}
     return {"source": str(source), "output": str(output)}
 

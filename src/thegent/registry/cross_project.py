@@ -45,7 +45,7 @@ class PersonaRecord(SerializableMixin):
         raw_ts = data.get("last_seen", "")
         try:
             ts = datetime.fromisoformat(raw_ts)
-        except ValueError, TypeError:
+        except (ValueError, TypeError):
             ts = datetime.now(tz=UTC)
 
         return cls(

@@ -158,18 +158,18 @@ def session_contract_health_gate_impl(
             cur_ratio = float(str(blocked_ratio_val))
         if blocked_count_val is not None:
             cur_count = int(str(blocked_count_val))
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         cur_ratio = 0.0
         cur_count = 0
 
     if previous is not None:
         try:
             previous_ratio = float(str(previous.get("blocked_ratio", cur_ratio)))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             previous_ratio = cur_ratio
         try:
             previous_count = int(str(previous.get("blocked_count", cur_count)))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             previous_count = cur_count
     else:
         previous_ratio = cur_ratio

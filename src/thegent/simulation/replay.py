@@ -473,7 +473,7 @@ def _parse_iso_to_float(iso: str) -> float:
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=UTC)
         return dt.timestamp()
-    except ValueError, AttributeError:
+    except (ValueError, AttributeError):
         return 0.0
 
 

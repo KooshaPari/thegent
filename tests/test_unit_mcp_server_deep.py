@@ -645,7 +645,7 @@ class TestThegentDagListDeep:
             from fastmcp.server.context import DeclinedElicitation
 
             declined = DeclinedElicitation()
-        except ImportError, TypeError:
+        except (ImportError, TypeError):
             declined = MagicMock()
             if hasattr(_mcp_mod, "DeclinedElicitation"):
                 declined.__class__ = _mcp_mod.DeclinedElicitation
@@ -669,7 +669,7 @@ class TestThegentDagListDeep:
             from fastmcp.server.context import CancelledElicitation
 
             cancelled = CancelledElicitation()
-        except ImportError, TypeError:
+        except (ImportError, TypeError):
             cancelled = MagicMock()
             if hasattr(_mcp_mod, "CancelledElicitation"):
                 cancelled.__class__ = _mcp_mod.CancelledElicitation

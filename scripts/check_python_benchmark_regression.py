@@ -115,7 +115,7 @@ def evaluate_benchmark_gates(
             try:
                 elapsed_value = float(elapsed)
                 iterations_value = int(iterations)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 continue
             if elapsed_value <= 0 or iterations_value <= 0:
                 continue

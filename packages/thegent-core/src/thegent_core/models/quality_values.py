@@ -167,7 +167,7 @@ def _quality_index_from_task_categories(
                 continue
             try:
                 raw_score = float(raw_value)
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 continue
 
             all_scores: list[float] = []
@@ -176,7 +176,7 @@ def _quality_index_from_task_categories(
                     continue
                 try:
                     all_scores.append(float(value))
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     continue
 
             normalized_scores.append(_normalize_sparse_benchmark_score(raw_score, all_scores))

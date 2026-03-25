@@ -250,7 +250,7 @@ class SerializableMixin:  # noqa: PLW1641
                                 return val
                             try:
                                 return candidate_type(val)
-                            except ValueError, KeyError:
+                            except (ValueError, KeyError):
                                 continue
                     # Use the first non-None type for other cases
                     target_type = non_none_types[0]

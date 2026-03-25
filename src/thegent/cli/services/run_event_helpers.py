@@ -44,7 +44,7 @@ def _normalize_context_usage_ratio(value: float | None) -> float | None:
         return None
     try:
         ratio = float(value)
-    except TypeError, ValueError, OverflowError:
+    except (TypeError, ValueError, OverflowError):
         return None
     if not isfinite(ratio):
         return None

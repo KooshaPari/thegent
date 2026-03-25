@@ -24,14 +24,14 @@ def _parse_timestamp(value: str | None) -> datetime | None:
         return None
     try:
         return datetime.fromisoformat(value)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return None
 
 
 def _parse_int(value: Any, default: int) -> int:
     try:
         parsed = int(value)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return default
     return parsed
 
@@ -39,7 +39,7 @@ def _parse_int(value: Any, default: int) -> int:
 def _parse_float(value: Any, default: float) -> float:
     try:
         parsed = float(value)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return default
     return parsed
 

@@ -141,7 +141,7 @@ class CrossProcessSingleflight:
                     logger.warning(f"Stale lock found for {key}, breaking.")
                     lock_file.unlink()
                     return self.do(key, func, ttl)
-            except IndexError, ValueError, OSError:
+            except (IndexError, ValueError, OSError):
                 pass
 
             # Wait for result

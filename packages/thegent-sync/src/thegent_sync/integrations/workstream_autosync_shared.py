@@ -1024,7 +1024,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                             project=project,
                         )
                     )
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     logger.debug("Skipping malformed maintenance window item: %s", item)
             return maintenance_windows
 
@@ -1063,7 +1063,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                 try:
                     start_utc = datetime.fromisoformat(start_raw.replace("Z", "+00:00"))
                     end_utc = datetime.fromisoformat(end_raw.replace("Z", "+00:00"))
-                except TypeError, ValueError:
+                except (TypeError, ValueError):
                     return None
                 return start_utc, end_utc, metadata
 
@@ -1089,7 +1089,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                         project=project,
                     )
                 )
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 logger.debug("Skipping malformed maintenance window token: %s", raw_entry)
         return maintenance_windows
 
@@ -1181,7 +1181,7 @@ def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
                     p95_latency_ms=p95_latency_value,
                     max_failure_rate=max_failure_value,
                 )
-            except TypeError, ValueError:
+            except (TypeError, ValueError):
                 logger.debug("Skipping malformed connector SLA threshold for %s: %s", connector, value)
                 continue
         return normalized

@@ -208,7 +208,7 @@ def build_observe_summary_trend(
     """Build trend summary and snapshot scope metadata for observe-summary payloads."""
     try:
         trend_samples_requested = int(trend_samples)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         trend_samples_requested = 0
     trend_samples_requested = max(trend_samples_requested, 0)
 
@@ -297,7 +297,7 @@ def build_observe_summary_trend(
             return None
         try:
             return float(current) - float(baseline_value)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
 
     baseline_kpis: dict[str, Any] = {}

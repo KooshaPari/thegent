@@ -147,7 +147,7 @@ class TestRetentionByDomain:
                 s = ThegentSettings()
                 # If it doesn't raise, it should be empty
                 assert s.retention_by_domain == {}
-            except SettingsError, ValueError:
+            except (SettingsError, ValueError):
                 # pydantic_settings may raise before field_validator runs
                 pass
 

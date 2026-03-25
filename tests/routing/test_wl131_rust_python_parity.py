@@ -84,7 +84,7 @@ def _python_extract_xml_tags(text: str) -> dict[str, str]:
         from thegent.contracts.parser import extract_tags
 
         return extract_tags(text)
-    except ImportError, AttributeError:
+    except (ImportError, AttributeError):
         # Fallback: minimal reference implementation
         import re
 

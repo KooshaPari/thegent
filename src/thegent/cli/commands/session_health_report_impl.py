@@ -223,11 +223,11 @@ def session_contract_health_report_impl(
     if previous is not None:
         try:
             previous_ratio = float(str(previous.get("blocked_ratio", cur_ratio)))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             previous_ratio = cur_ratio
         try:
             previous_count = int(str(previous.get("blocked_count", cur_count)))
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             previous_count = cur_count
     else:
         previous_ratio = cur_ratio

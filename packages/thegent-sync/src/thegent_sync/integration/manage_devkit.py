@@ -58,7 +58,7 @@ class ManageDevkitIntegration:
 
         try:
             self.manage_config = yaml_load(self.manage_config_path) or {}
-        except OSError, Exception:
+        except (OSError, Exception):
             self.manage_config = {}
 
     def integrate_paths(self) -> None:

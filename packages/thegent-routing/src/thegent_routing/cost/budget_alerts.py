@@ -52,7 +52,7 @@ class BudgetAlertSystem:
             config.daily_limit_usd = float(config.daily_limit_usd)
             config.run_limit_usd = float(config.run_limit_usd)
             config.warning_threshold = float(config.warning_threshold)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             # Fallback for mocks
             config = BudgetConfig()
 

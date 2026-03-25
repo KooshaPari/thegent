@@ -253,9 +253,9 @@ class FastFileOps:
                         filepath = Path(dirpath) / filename
                         try:
                             total += filepath.stat().st_size
-                        except OSError, FileNotFoundError:
+                        except (OSError, FileNotFoundError):
                             continue
-            except OSError, PermissionError:
+            except (OSError, PermissionError):
                 pass
             return total
         return 0

@@ -66,7 +66,7 @@ class UnifiedConfigManager:
                         continue
 
                     self.unified_config[system_name] = config
-                except OSError, Exception:
+                except (OSError, Exception):
                     # Load failed, skip this source
                     continue
 

@@ -42,7 +42,7 @@ def main() -> int:
         # Normalize to project-relative
         try:
             rel = Path(filepath).resolve().relative_to(root)
-        except ValueError, OSError:
+        except (ValueError, OSError):
             continue
         rel_str = str(rel).replace("\\", "/")
         if not rel_str.startswith("src/"):

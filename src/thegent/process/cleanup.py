@@ -74,7 +74,7 @@ class ProcessCleanup:
             # Try direct kill
             try:
                 os.kill(pid, signal.SIGTERM)
-            except ProcessLookupError, PermissionError:
+            except (ProcessLookupError, PermissionError):
                 pass
 
     def cleanup_on_signal(self, signum: int, frame: Any) -> None:

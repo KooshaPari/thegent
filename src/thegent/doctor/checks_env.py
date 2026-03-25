@@ -98,7 +98,7 @@ def check_environment(project_root: Path | None = None) -> list[CheckResult]:
                     }
                 else:
                     shim_details[shim] = {"type": "unknown", "target": None, "exists": False}
-            except OSError, UnicodeDecodeError:
+            except (OSError, UnicodeDecodeError):
                 shim_details[shim] = {"type": "unknown", "target": None, "exists": False}
 
     # Codex/Copilot path checks

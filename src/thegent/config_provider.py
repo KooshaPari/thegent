@@ -42,7 +42,7 @@ def _attach_provider_metadata(provider: ConfigProvider, metadata: dict[str, Any]
     try:
         provider_any: Any = provider
         provider_any.provider_metadata = dict(metadata)
-    except AttributeError, TypeError:
+    except (AttributeError, TypeError):
         logger.debug("Failed to attach provider metadata to %s", type(provider).__name__, exc_info=True)
     return provider
 

@@ -98,5 +98,5 @@ def extract_llm_response_content(response: dict) -> str:
     """
     try:
         return response["choices"][0]["message"]["content"] or ""
-    except KeyError, IndexError, TypeError:
+    except (KeyError, IndexError, TypeError):
         return ""

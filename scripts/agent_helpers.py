@@ -62,7 +62,7 @@ try:
     _mod = _importlib.import_module("thegent.config")
     _ThegentSettings_cls = getattr(_mod, "ThegentSettings", None)
     _SETTINGS_AVAILABLE = _ThegentSettings_cls is not None
-except ImportError, ModuleNotFoundError, AttributeError:
+except (ImportError, ModuleNotFoundError, AttributeError):
     _SETTINGS_AVAILABLE = False
     _ThegentSettings_cls = None
 

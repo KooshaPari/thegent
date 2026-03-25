@@ -136,7 +136,7 @@ def _make_elicitation(elicit_type: str, data: str | None = None) -> Any:
             return DeclinedElicitation()
         if elicit_type == "cancelled":
             return CancelledElicitation()
-    except ImportError, TypeError:
+    except (ImportError, TypeError):
         pass
     # Fallback to mock
     mock = MagicMock()

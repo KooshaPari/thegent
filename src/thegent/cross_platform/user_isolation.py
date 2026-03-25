@@ -103,7 +103,7 @@ class SystemUser(UserContext):
         """System user can access any path (if permissions allow)."""
         try:
             return path.exists() or self.is_privileged
-        except OSError, PermissionError:
+        except (OSError, PermissionError):
             return self.is_privileged
 
     def get_environment_vars(self) -> dict[str, str]:
@@ -203,13 +203,13 @@ class AgentUser(UserContext):
                 if str(resolved).startswith(str(agent_home_resolved)):
                     return True
 
-            except OSError, ValueError:
+            except (OSError, ValueError):
                 pass
 
             # Check read permission
             return os.access(path, os.R_OK)
 
-        except OSError, PermissionError:
+        except (OSError, PermissionError):
             return False
 
     def get_environment_vars(self) -> dict[str, str]:

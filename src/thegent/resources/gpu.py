@@ -236,6 +236,6 @@ class GpuMonitor:
                         temperature_c=temp,
                     )
                 )
-            except ValueError, IndexError:
+            except (ValueError, IndexError):
                 continue
         return gpus

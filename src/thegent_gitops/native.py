@@ -137,7 +137,7 @@ class GitNative:
                     elif "deletion" in part:
                         deletions = int(part.split()[0])
                 return {"files_changed": files_changed, "insertions": insertions, "deletions": deletions}
-        except ValueError, IndexError:
+        except (ValueError, IndexError):
             pass
 
         return {"files_changed": 0, "insertions": 0, "deletions": 0}

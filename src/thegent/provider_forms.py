@@ -168,7 +168,7 @@ def _prompt_for_provider_selection(
     idx = Prompt.ask("[bold]Provider number[/bold]", default="1")
     try:
         return providers[int(idx) - 1]
-    except ValueError, IndexError:
+    except (ValueError, IndexError):
         console.print("[red]Invalid selection[/red]")
         return None
 

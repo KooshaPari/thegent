@@ -74,7 +74,7 @@ class ResourceManager:
                 from thegent_shm import record_resource_usage
 
                 record_resource_usage(pid, cpu_percent, mem_info.rss // 1024)
-            except ImportError, RuntimeError:
+            except (ImportError, RuntimeError):
                 pass
 
             return {

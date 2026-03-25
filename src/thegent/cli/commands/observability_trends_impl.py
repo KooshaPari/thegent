@@ -103,7 +103,7 @@ def _parse_observe_summary_env_float(name: str, default: float) -> float:
         return float(default)
     try:
         value = float(raw)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return float(default)
     return value
 
@@ -114,7 +114,7 @@ def _parse_observe_summary_env_int(name: str, default: int) -> int:
         return int(default)
     try:
         value = int(raw)
-    except TypeError, ValueError:
+    except (TypeError, ValueError):
         return int(default)
     return value
 
