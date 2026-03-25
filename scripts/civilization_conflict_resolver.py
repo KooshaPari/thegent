@@ -74,7 +74,7 @@ class ConflictResolver:
             self.registry = GlobalAgentRegistry()
 
         # Conflict log storage
-        self.conflict_log_path = Path(os.path.expanduser("~/.claude/civilization/conflicts.json"))
+        self.conflict_log_path = Path("~/.claude/civilization/conflicts.json").expanduser()
         self.conflict_log_path.parent.mkdir(parents=True, exist_ok=True)
         self.conflicts: list[ConflictRecord] = self._load_conflict_log()
 

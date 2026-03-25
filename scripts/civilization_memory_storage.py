@@ -462,7 +462,7 @@ class SQLiteMemoryStorage(MemoryStorage):
             return False
 
     # Valid relationship types for link_memories
-    VALID_RELATIONSHIP_TYPES = {"caused_by", "helps_with", "similar_to", "contradicts", "related"}
+    VALID_RELATIONSHIP_TYPES = {"caused_by", "helps_with", "similar_to", "contradicts", "related"}  # noqa: RUF012
 
     def link_memories(
         self,

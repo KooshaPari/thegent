@@ -5,10 +5,10 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase
 import sys
-import os
+from pathlib import Path
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from agent_identity_system import (
     AgentIdentity,

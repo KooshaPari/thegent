@@ -48,7 +48,7 @@ class TestFunctionExecution:
         try:
             raise ValueError("test error")
         except ValueError as e:
-            assert str(e) == "test error"
+            assert str(e) == "test error"  # noqa: PT017
 
     def test_result_serializable(self) -> None:
         """Results should be serializable."""

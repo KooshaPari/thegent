@@ -33,7 +33,7 @@ class TestDeveloperRoleSupport:
         test_payload = {"messages": [{"role": "developer", "content": "You are a helpful assistant"}]}
 
         # If the provider doesn't support developer role, should fail explicitly
-        with pytest.raises(ValueError, match="developer.*not supported"):
+        with pytest.raises(ValueError, match=r"developer.*not supported"):
             mock_transform(test_payload, provider="unsupported_provider")
 
     @patch("thegent.cliproxy_adapter._transform_request")

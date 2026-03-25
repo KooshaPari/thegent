@@ -84,7 +84,7 @@ class FeatureFlag:
 class FeatureRegistry:
     """Registry for all feature flags."""
 
-    _flags: dict[str, FeatureFlag] = {}
+    _flags: dict[str, FeatureFlag] = {}  # noqa: RUF012
 
     @classmethod
     def register(cls, flag: FeatureFlag) -> None:
@@ -111,7 +111,7 @@ def feature(name: str, default: bool = False) -> FeatureFlag:
 # ---------------------------------------------------------------------------
 
 
-class SerializableMixin:
+class SerializableMixin:  # noqa: PLW1641
     """Mixin providing to_dict/from_dict for dataclasses.
 
     Automatically handles:

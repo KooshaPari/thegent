@@ -65,7 +65,7 @@ class MemoryService:
                       If None, uses ~/.claude/civilization/agents/
         """
         if base_path is None:
-            self.base_path = Path(os.path.expanduser("~/.claude/civilization/agents"))
+            self.base_path = Path("~/.claude/civilization/agents").expanduser()
         else:
             self.base_path = base_path
 

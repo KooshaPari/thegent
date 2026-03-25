@@ -22,7 +22,7 @@ class TestRateLimiting:
 
         # Should track and limit
         for i in range(limit + 1):
-            requests.append(i)
+            requests.append(i)  # noqa: PERF402
 
         assert len(requests) > limit
 

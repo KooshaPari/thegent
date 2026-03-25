@@ -106,7 +106,7 @@ class AgentIdentity:
         return f"{self.project}:{self.uuid}:{self.level.value}:{self.role.value}"
 
     @property
-    def is_stale(self, ttl_seconds: int = 300) -> bool:
+    def is_stale(self, ttl_seconds: int = 300) -> bool:  # noqa: PLR0206
         """Check if agent heartbeat is stale (default 5 minutes)."""
         return (time.time() - self.last_heartbeat) > ttl_seconds
 
@@ -125,7 +125,7 @@ class GlobalAgentRegistry:
             registry_path: Path to registry file. Defaults to ~/.claude/civilization/registry.json
         """
         if registry_path is None:
-            registry_path = os.path.expanduser("~/.claude/civilization/registry.json")
+            registry_path = Path("~/.claude/civilization/registry.json").expanduser()
 
         self.registry_path = Path(registry_path)
         self.registry_path.parent.mkdir(parents=True, exist_ok=True)

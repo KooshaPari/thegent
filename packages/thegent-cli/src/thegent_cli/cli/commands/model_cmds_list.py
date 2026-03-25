@@ -76,7 +76,7 @@ def _resolve_cliproxyctl_binary() -> str:
     gopath = _resolve_go_env("GOPATH")
     if gopath:
         go_paths.append(Path(gopath) / "bin")
-    go_paths.append(Path(os.path.expanduser("~/go/bin")))
+    go_paths.append(Path("~/go/bin").expanduser())
 
     # Common Go install locations if PATH is not yet wired.
     go_fallback_candidates = ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server")
@@ -182,11 +182,11 @@ def _install_cliproxyctl() -> str:
         return _build_cliproxyctl_from_local_repo()
 
     go_paths = []
-    for path in (os.environ.get("GOBIN", "").strip(), _resolve_go_env("GOPATH"), os.path.expanduser("~/go")):
+    for path in (os.environ.get("GOBIN", "").strip(), _resolve_go_env("GOPATH"), Path("~/go").expanduser()):
         if path:
             go_paths.append(Path(path) / "bin")
     if not go_paths:
-        go_paths.append(Path(os.path.expanduser("~/go/bin")))
+        go_paths.append(Path("~/go/bin").expanduser())
 
     for base in go_paths:
         for name in ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server"):

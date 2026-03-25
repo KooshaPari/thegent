@@ -23,7 +23,7 @@ class TestConfigPathValidation:
         config_path = Path("/CLIProxyAPI/config.yaml")
 
         # Should fail if it's a directory
-        with pytest.raises(ValueError, match="config.*directory"):
+        with pytest.raises(ValueError, match=r"config.*directory"):  # noqa: PT012
             if config_path.is_dir():
                 raise ValueError("Config path cannot be a directory")
 

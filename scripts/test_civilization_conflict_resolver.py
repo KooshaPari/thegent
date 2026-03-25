@@ -54,7 +54,7 @@ class TestConflictDetection(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests."""
         # Clear the persistent registry
-        registry_path = Path(os.path.expanduser("~/.claude/civilization/registry.json"))
+        registry_path = Path("~/.claude/civilization/registry.json").expanduser()
         if registry_path.exists():
             # Don't delete to preserve state for other tests
             pass

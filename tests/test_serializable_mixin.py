@@ -217,7 +217,7 @@ class TestRoundTrip:
             name="Alice",
             age=30,
             status=Status.ACTIVE,
-            created_at=datetime(2024, 1, 15, 10, 30, 0),
+            created_at=datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             home_path=Path("/home/alice"),
             metadata={"key": "value"},
             tags=["tag1"],

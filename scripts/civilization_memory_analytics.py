@@ -8,7 +8,7 @@ import time
 
 
 class MemoryAnalytics:
-    STOP_WORDS = {
+    STOP_WORDS = {  # noqa: RUF012
         "the",
         "and",
         "for",
