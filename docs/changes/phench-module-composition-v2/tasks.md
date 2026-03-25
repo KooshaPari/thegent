@@ -27,6 +27,7 @@
 | Validate | C | P14 | [done] | Add negative tests for missing manifest and empty module selection failure. | P13 |
 | Validate | C | P15 | [done] | Validate new command path through `thegent phench` CLI tests or smoke CLI script. | P12, P13 |
 | Validate | C | P16 | [done] | Add manifest-specific fixture test demonstrating cross-repo load from `Phenotype/repos` candidates. | P13 |
+<<<<<<< HEAD
 | Validate | C | P17 | [done] | Run `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 PYTHONPATH=src:packages/thegent-bench/src:packages/thegent-cli/src python -m pytest tests/test_phench_runtime.py -q` and collect pass/fail summary. | P15 |
 | Validate | C | P18 | [done] | Run `python cli.py lint check` on touched modules and resolve lint/type errors. | P17 |
 | Deploy | D | P19 | [in_progress] | Merge current branch state into mainline path and verify lockfile-free doc updates are scoped under `docs/`. | P18 |
@@ -64,12 +65,23 @@
 | Deploy | S6 | P46 | [done] | Add quick-runbook for generating module set for `thegent-execution` and `thegent-control-plane`. | P45 |
 | Deploy | S6 | P47 | [done] | Extend tracker docs for moduleization candidates and ADR alignment. | P46 |
 | Deploy | S6 | P48 | [done] | Run full test sweep + lint gates and package evidence bundle for module discovery wave. | P47 |
+=======
+| Validate | C | P17 | [blocked] | Run `python cli.py test run` targeted to `tests/test_phench_runtime.py` and collect pass/fail summary. | P15 |
+| Validate | C | P18 | [done] | Run `python cli.py lint check` on touched modules and resolve lint/type errors. | P17 |
+| Deploy | D | P19 | [todo] | Merge current branch state into mainline path and verify lockfile-free doc updates are scoped under `docs/`. | P18 |
+| Deploy | D | P20 | [todo] | Update `Phenotype/projects/README.md` with module-add workflow and example invocations. | P19 |
+| Deploy | D | P21 | [todo] | Provide migration notes for `--all-repos` safety and module override fallback semantics. | P20 |
+| Deploy | D | P22 | [todo] | Add changelog or completion note for module composition wave execution status. | P21 |
+| Deploy | D | P23 | [todo] | Document extension points for `thegent-execution` and `thegent-control-plane` module patterns. | P22 |
+| Deploy | D | P24 | [todo] | Finalize module manifest guidance: expected schema, override precedence, and excluded repository policy. | P23 |
+>>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
 
 ## DAG Notes
 
 - B lanes depend strictly on manifest contract readiness (A1–A6).
 - Runtime behavior verification (P9/P10) must complete before all docs and CLI smoke targets.
 - Validate/Deploy is intentionally serialized because docs and CI evidence are required before handoff.
+<<<<<<< HEAD
 
 ## P19-P24 Notes
 
@@ -105,3 +117,5 @@
 | Deploy | S12 | P70 | [todo] | Add governance gate for module adoption using tracker flags before wide rollout. | P69 |
 | Deploy | S12 | P71 | [todo] | Publish module-manifest review checklist for ADR traceability and rollout approvals. | P70 |
 | Deploy | S12 | P72 | [todo] | Publish evidence packet and close this wave as ready for handoff. | P71 |
+=======
+>>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
