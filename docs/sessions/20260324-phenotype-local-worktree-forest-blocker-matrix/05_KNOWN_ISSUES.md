@@ -9,7 +9,7 @@
 
 ## GitHub / CI (release merges)
 
-- **`thegent` local `task check` (2026-03-24):** Fails at **`quality:rust:ci`** — `cargo clippy --workspace --all-targets --all-features -- -D warnings` reports multiple crates (**e.g.** `thegent-maif`, `thegent-tui`, `thegent-offload`). Fix forward in a **Rust quality** PR; see **`20_NEXT_50_EXECUTION.md`** item **3**. Hooks may still no-op when no files in pre-push scope.
+- **`thegent` Rust CI lane (2026-03-24 → 2026-03-25):** Prior failure at **`quality:rust:ci`** was due to duplicate **`Cache::is_empty`** in **`thegent-cache-rs`** (E0592) plus flaky parallel **`ThemeRegistry`** tests. **Fix:** remove duplicate method; add **`serial_test`** + **`#[serial]`** on registry tests; commit **`crates/Cargo.lock`** when **`serial_test`** is added. Re-verify: `cargo clippy --workspace --manifest-path crates/Cargo.toml --all-targets --all-features -- -D warnings` and `cargo test --workspace --manifest-path crates/Cargo.toml --all-targets --all-features`. Merge via focused PR to **`main`** (worktree branch per **`AGENTS.md`**), then strike this bullet once **`task quality:rust:ci`** is green on **`main`**.
 
 - **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** — **merged** (`feat/migrate-cache` → `main`). Track post-merge CI on **`main`**; if billing blocked checks during merge, note date + **`FULL_TURN_DELIVERY.md`** billing section.
 - **Actions billing / quota:** When checks cannot complete because **jobs do not start** (not because tests fail), use the **Billing / Actions quota** procedure in `FULL_TURN_DELIVERY.md` — **`gh pr merge --admin`** only after confirming infrastructure cause and local verification.
