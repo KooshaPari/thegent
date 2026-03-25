@@ -39,7 +39,7 @@ def _run_git_command(repo_path: str, *args: str) -> str | None:
             check=False,
         )
         return result.stdout.strip() if result.returncode == 0 else None
-    except (subprocess.SubprocessError, FileNotFoundError):
+    except subprocess.SubprocessError, FileNotFoundError:
         return None
 
 

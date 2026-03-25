@@ -16,7 +16,7 @@ from thegent.config import ThegentSettings
 from thegent.planning.workstream_db import WorkstreamDB
 from thegent.planning.workstream_db_schema import SCHEMA_TABLE_SQL
 
-_TABLE_NAME_RE = re.compile(r"CREATE TABLE IF NOT EXISTS\s+([A-Za-z_][A-Za-z0-9_]*)", re.I)
+_TABLE_NAME_RE = re.compile(r"CREATE TABLE IF NOT EXISTS\s+([A-Za-z_][A-Za-z0-9_]*)", re.IGNORECASE)
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _JSON_PREFIXES = ("{", "[")
 
@@ -94,11 +94,7 @@ def _table_info(db: WorkstreamDB, table: str) -> list[dict[str, Any]]:
 
 def _table_spec(db: WorkstreamDB, table: str) -> EntityTableSpec:
     columns = _table_info(db, table)
-    pk_columns = tuple(
-        row["name"]
-        for row in sorted(columns, key=lambda row: row["pk"])
-        if row.get("pk", 0)
-    )
+    pk_columns = tuple(row["name"] for row in sorted(columns, key=lambda row: row["pk"]) if row.get("pk", 0))
     return EntityTableSpec(table=table, pk_columns=pk_columns)
 
 
@@ -146,26 +142,29 @@ def _entity_key_values(
         else:
             parts = [part.strip() for part in entity_id.split("|")]
             if len(parts) != len(spec.pk_columns):
-                raise ValueError(
-                    f"entity_id for {spec.table} must contain {len(spec.pk_columns)} pipe-separated parts"
-                )
+                raise ValueError(f"entity_id for {spec.table} must contain {len(spec.pk_columns)} pipe-separated parts")
             for column, part in zip(spec.pk_columns, parts, strict=True):
                 props.setdefault(column, part)
     return props
 
 
-def _read_existing(conn: sqlite3.Connection, spec: EntityTableSpec, entity_id: str | None, properties: dict[str, Any] | None) -> dict[str, Any] | None:
+def _read_existing(
+    conn: sqlite3.Connection, spec: EntityTableSpec, entity_id: str | None, properties: dict[str, Any] | None
+) -> dict[str, Any] | None:
     cursor = conn.cursor()
     if spec.pk_columns:
         criteria = _entity_key_values(spec, entity_id, properties)
         if not all(column in criteria for column in spec.pk_columns):
             return None
-        where_clause = " AND ".join(f'{_quote(column)} = ?' for column in spec.pk_columns)
-        cursor.execute(f'SELECT * FROM {_quote(spec.table)} WHERE {where_clause} LIMIT 1', [criteria[column] for column in spec.pk_columns])
+        where_clause = " AND ".join(f"{_quote(column)} = ?" for column in spec.pk_columns)
+        cursor.execute(
+            f"SELECT * FROM {_quote(spec.table)} WHERE {where_clause} LIMIT 1",  # noqa: S608
+            [criteria[column] for column in spec.pk_columns],
+        )
         row = cursor.fetchone()
         return _row_to_dict(row) if row else None
     if entity_id:
-        cursor.execute(f'SELECT * FROM {_quote(spec.table)} LIMIT 1')
+        cursor.execute(f"SELECT * FROM {_quote(spec.table)} LIMIT 1")  # noqa: S608
         row = cursor.fetchone()
         return _row_to_dict(row) if row else None
     return None
@@ -178,10 +177,7 @@ def _list_table_columns(conn: sqlite3.Connection, table: str) -> list[str]:
 
 
 def _build_like_clause(columns: list[str]) -> str:
-    return " OR ".join(
-        f"LOWER(COALESCE(CAST({_quote(column)} AS TEXT), '')) LIKE ?"
-        for column in columns
-    )
+    return " OR ".join(f"LOWER(COALESCE(CAST({_quote(column)} AS TEXT), '')) LIKE ?" for column in columns)
 
 
 def _ensure_db(db_path: Path | None = None, settings: ThegentSettings | None = None) -> WorkstreamDB:
@@ -207,12 +203,17 @@ def list_entities(
     conn = _connect(db)
     try:
         columns = _list_table_columns(conn, table)
-        order_candidates = list(spec.pk_columns) + [column for column in ("created_at", "last_synced_at", "updated_at") if column in columns]
+        order_candidates = list(spec.pk_columns) + [
+            column for column in ("created_at", "last_synced_at", "updated_at") if column in columns
+        ]
         order_clause = ", ".join(f"{_quote(column)}" for column in order_candidates) if order_candidates else '"rowid"'
-        rows = [dict(row) for row in conn.execute(
-            f'SELECT * FROM {_quote(table)} ORDER BY {order_clause} LIMIT ? OFFSET ?',
-            (limit, offset),
-        ).fetchall()]
+        rows = [
+            dict(row)
+            for row in conn.execute(  # noqa: S608
+                f"SELECT * FROM {_quote(table)} ORDER BY {order_clause} LIMIT ? OFFSET ?",  # noqa: S608
+                (limit, offset),
+            ).fetchall()
+        ]
         return {
             "entity_type": table,
             "count": len(rows),
@@ -262,10 +263,13 @@ def search_entities(
         text_columns = columns
         clause = _build_like_clause(text_columns)
         pattern = f"%{query.lower()}%"
-        rows = [dict(row) for row in conn.execute(
-            f'SELECT * FROM {_quote(table)} WHERE {clause} LIMIT ?',
-            (*([pattern] * len(text_columns)), limit),
-        ).fetchall()]
+        rows = [
+            dict(row)
+            for row in conn.execute(  # noqa: S608
+                f"SELECT * FROM {_quote(table)} WHERE {clause} LIMIT ?",  # noqa: S608
+                (*([pattern] * len(text_columns)), limit),
+            ).fetchall()
+        ]
         return {
             "entity_type": table,
             "count": len(rows),
@@ -315,15 +319,15 @@ def upsert_entity(
         if spec.pk_columns and all(merged.get(column) is not None for column in spec.pk_columns):
             update_columns = [column for column in insert_columns if column not in spec.pk_columns]
             update_clause = ", ".join(f"{_quote(column)} = excluded.{column}" for column in update_columns)
-            sql = f'INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})'
+            sql = f"INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})"  # noqa: S608
             if update_clause:
                 sql += f" ON CONFLICT({pk_clause}) DO UPDATE SET {update_clause}"
             else:
                 sql += f" ON CONFLICT({pk_clause}) DO NOTHING"
-            conn.execute(sql, values)
+            conn.execute(sql, values)  # noqa: S608
         else:
-            conn.execute(
-                f'INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})',
+            conn.execute(  # noqa: S608
+                f"INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})",  # noqa: S608
                 values,
             )
 
@@ -360,9 +364,9 @@ def delete_entity(
         criteria = _entity_key_values(spec, entity_id, None)
         if not all(criteria.get(column) for column in spec.pk_columns):
             raise ValueError(f"Unable to resolve delete key for {table}")
-        where_clause = " AND ".join(f'{_quote(column)} = ?' for column in spec.pk_columns)
-        cursor = conn.execute(
-            f'DELETE FROM {_quote(table)} WHERE {where_clause}',
+        where_clause = " AND ".join(f"{_quote(column)} = ?" for column in spec.pk_columns)
+        cursor = conn.execute(  # noqa: S608
+            f"DELETE FROM {_quote(table)} WHERE {where_clause}",  # noqa: S608
             [criteria[column] for column in spec.pk_columns],
         )
         conn.commit()

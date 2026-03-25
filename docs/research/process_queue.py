@@ -54,13 +54,10 @@ def get_month_files(queue_data: dict, month: str, location: Optional[str] = None
 
 def list_months(queue_data: dict):
     """List all months in the queue."""
-    print("Available months:")
     for month_entry in queue_data["queue"]:
         month = month_entry["month"]
         total = month_entry["total_files"]
-        locations = ", ".join([f"{loc['location']}({loc['file_count']})"
-                              for loc in month_entry["locations"]])
-        print(f"  {month}: {total} files [{locations}]")
+        locations = ", ".join([f"{loc['location']}({loc['file_count']})" for loc in month_entry["locations"]])
 
 
 def main():
@@ -89,37 +86,31 @@ def main():
 
         next_month = get_next_month(queue_data, last_processed)
         if next_month:
-            print(f"Next month to process: {next_month['month']}")
-            print(f"Total files: {next_month['total_files']}")
             if args.files:
                 for loc_entry in next_month["locations"]:
-                    print(f"\n[{loc_entry['location']}] ({loc_entry['file_count']} files):")
-                    for filepath in loc_entry["files"][:10]:  # Show first 10
-                        print(f"  {filepath}")
+                    for _filepath in loc_entry["files"][:10]:  # Show first 10
+                        pass
                     if loc_entry["file_count"] > 10:
-                        print(f"  ... and {loc_entry['file_count'] - 10} more")
+                        pass
         else:
-            print("No more months to process!")
+            pass
         return
 
     if args.month:
         files = get_month_files(queue_data, args.month, args.location)
 
         if args.count:
-            print(len(files))
+            pass
         elif args.files:
-            for filepath in files:
-                print(filepath)
+            for _filepath in files:
+                pass
         else:
-            print(f"Month: {args.month}")
             if args.location:
-                print(f"Location: {args.location}")
-            print(f"Files: {len(files)}")
-            print("\nFirst 20 files:")
-            for filepath in files[:20]:
-                print(f"  {filepath}")
+                pass
+            for _filepath in files[:20]:
+                pass
             if len(files) > 20:
-                print(f"\n... and {len(files) - 20} more files")
+                pass
     else:
         parser.print_help()
 

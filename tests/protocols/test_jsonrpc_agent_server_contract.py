@@ -462,7 +462,9 @@ def test_turn_submit_rejects_non_string_input_during_parse_stage() -> None:
     session_id = started["result"]["session"]["id"]
 
     response = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "t", "method": "turn/submit", "params": {"session_id": session_id, "input": 9}})
+        json.dumps(
+            {"jsonrpc": "2.0", "id": "t", "method": "turn/submit", "params": {"session_id": session_id, "input": 9}}
+        )
     )
     assert response is not None
     assert response["error"]["code"] == -32602
@@ -494,7 +496,9 @@ def test_approval_grant_follows_success_path_and_completes_turn() -> None:
     approval_id = gated["result"]["approval"]["id"]
 
     granted, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "grant", "method": "approval/grant", "params": {"approval_id": approval_id}})
+        json.dumps(
+            {"jsonrpc": "2.0", "id": "grant", "method": "approval/grant", "params": {"approval_id": approval_id}}
+        )
     )
     assert granted is not None
     assert granted["result"]["approval"]["status"] == "granted"
@@ -533,7 +537,9 @@ def test_approval_requires_diff_when_enabled_discovery_phase() -> None:
 
 def test_turn_cancel_requires_turn_id_validation_gate() -> None:
     # @trace WL-9506
-    response = process_jsonrpc_line(json.dumps({"jsonrpc": "2.0", "id": "cancel", "method": "turn/cancel", "params": {}}))
+    response = process_jsonrpc_line(
+        json.dumps({"jsonrpc": "2.0", "id": "cancel", "method": "turn/cancel", "params": {}})
+    )
     assert response is not None
     assert response["error"]["code"] == -32602
     assert response["error"]["data"]["reason"] == "turn_id_required"
@@ -564,7 +570,9 @@ def test_approval_reject_follows_recovery_path_and_rejects_turn() -> None:
     approval_id = gated["result"]["approval"]["id"]
 
     rejected, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "reject", "method": "approval/reject", "params": {"approval_id": approval_id}})
+        json.dumps(
+            {"jsonrpc": "2.0", "id": "reject", "method": "approval/reject", "params": {"approval_id": approval_id}}
+        )
     )
     assert rejected is not None
     assert rejected["result"]["approval"]["status"] == "rejected"
@@ -587,7 +595,9 @@ def test_session_resume_uses_existing_session_lookup_hit() -> None:
 def test_session_resume_uses_missing_session_lookup_miss() -> None:
     # @trace WL-9509
     response = process_jsonrpc_line(
-        json.dumps({"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": "session-4040"}})
+        json.dumps(
+            {"jsonrpc": "2.0", "id": "resume", "method": "session/resume", "params": {"session_id": "session-4040"}}
+        )
     )
     assert response is not None
     assert response["error"]["code"] == -32001

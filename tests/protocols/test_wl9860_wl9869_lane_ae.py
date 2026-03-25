@@ -59,7 +59,14 @@ def test_wl9862_resolve_approval_payload_requires_diff() -> None:
 def test_wl9863_resolve_completion_marks_turn_completed_and_sets_tool_call() -> None:
     # @trace WL-9863
     _reset_state()
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     notifications: list[dict[str, object]] = []
     server._resolve_turn_submit_completion("session-1", "turn-1", "x", turn, notifications)
     assert turn["status"] == "completed"
@@ -69,7 +76,14 @@ def test_wl9863_resolve_completion_marks_turn_completed_and_sets_tool_call() -> 
 def test_wl9864_side_effects_route_to_approval_when_requested() -> None:
     # @trace WL-9864
     _reset_state()
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     notifications: list[dict[str, object]] = []
     payload = server._apply_turn_submit_side_effects("session-1", "turn-1", turn, "x", True, "diff", notifications)
     assert payload is not None
@@ -80,7 +94,14 @@ def test_wl9864_side_effects_route_to_approval_when_requested() -> None:
 def test_wl9865_side_effects_route_to_completion_when_no_approval() -> None:
     # @trace WL-9865
     _reset_state()
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "in_progress", "approval_id": None, "tool_call_id": None}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "in_progress",
+        "approval_id": None,
+        "tool_call_id": None,
+    }
     notifications: list[dict[str, object]] = []
     payload = server._apply_turn_submit_side_effects("session-1", "turn-1", turn, "x", False, None, notifications)
     assert payload is None
@@ -91,9 +112,18 @@ def test_wl9865_side_effects_route_to_completion_when_no_approval() -> None:
 def test_wl9866_result_payload_contains_turn_and_optional_approval() -> None:
     # @trace WL-9866
     _reset_state()
-    turn = {"id": "turn-1", "session_id": "session-1", "input": "x", "status": "completed", "approval_id": None, "tool_call_id": "tool-call-1"}
+    turn = {
+        "id": "turn-1",
+        "session_id": "session-1",
+        "input": "x",
+        "status": "completed",
+        "approval_id": None,
+        "tool_call_id": "tool-call-1",
+    }
     without_approval = server._build_turn_submit_result_payload(turn, None)
-    with_approval = server._build_turn_submit_result_payload(turn, {"id": "approval-1", "status": "requested", "diff": "d"})
+    with_approval = server._build_turn_submit_result_payload(
+        turn, {"id": "approval-1", "status": "requested", "diff": "d"}
+    )
     assert "approval" not in without_approval
     assert with_approval["approval"]["id"] == "approval-1"
 
@@ -109,7 +139,14 @@ def test_wl9868_handler_orchestrates_plan_commit_side_effects_and_response() -> 
     _reset_state()
     session_id = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": "ae"}}).decode()
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": "submit",
+                "method": "turn/submit",
+                "params": {"session_id": session_id, "input": "ae"},
+            }
+        ).decode()
     )
     assert response is not None
     turn_id = response["result"]["turn"]["id"]
@@ -123,7 +160,9 @@ def test_wl9869_notification_mode_preserves_side_effects_without_response() -> N
     _reset_state()
     session_id = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ae"}}).decode()
+        json.dumps(
+            {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "ae"}}
+        ).decode()
     )
     assert response is None
     assert notifications

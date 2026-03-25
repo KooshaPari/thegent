@@ -101,6 +101,7 @@ def _check_session_id(line: str, session_id: str) -> bool:
 
 from .state import CalibrationRegistry, CheckpointMeta, RunMeta, RunState
 
+
 class RunRegistry:
     """Manages persistence and retrieval of execution runs.
 

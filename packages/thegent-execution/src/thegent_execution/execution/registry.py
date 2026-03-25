@@ -6,6 +6,7 @@ import uuid
 
 try:
     import structlog as _structlog
+
     _log = _structlog.get_logger(__name__)
 except ImportError:
     _log = logging.getLogger(__name__)  # type: ignore[assignment]
@@ -134,6 +135,7 @@ def _check_session_id(line: str, session_id: str) -> bool:
 
 
 from .state import RunState, RunMeta, CheckpointMeta, CalibrationRegistry
+
 
 class RunRegistry:
     """Manages persistence and retrieval of execution runs.
@@ -693,5 +695,3 @@ def poll_session_messages(
 def get_last_poll_session_messages_meta() -> dict[str, Any]:
     """Return diagnostics metadata for the latest poll_session_messages call."""
     return dict(_LAST_POLL_MESSAGES_META)
-
-

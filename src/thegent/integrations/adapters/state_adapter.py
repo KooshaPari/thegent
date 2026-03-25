@@ -16,8 +16,12 @@ class StateAdapter:
         self.config = config
         self._status_path = config.status_file_path or Path("docs/reference/autosync_status.json")
         self._trend_path = config.trend_path or Path("docs/reference/workstream_autosync_trend.jsonl")
-        self._cycle_metrics_path = config.cycle_metrics_path or Path("docs/reference/workstream_autosync_cycle_metrics.jsonl")
-        self._change_digest_path = config.change_digest_path or Path("artifacts/workstream_autosync_change_digest.jsonl")
+        self._cycle_metrics_path = config.cycle_metrics_path or Path(
+            "docs/reference/workstream_autosync_cycle_metrics.jsonl"
+        )
+        self._change_digest_path = config.change_digest_path or Path(
+            "artifacts/workstream_autosync_change_digest.jsonl"
+        )
 
     # Path methods
     def get_status_path(self) -> Path:
@@ -93,9 +97,7 @@ class StateAdapter:
         """Compact old snapshots, keeping only the most recent."""
         try:
             snapshots = sorted(
-                self._status_path.parent.glob("autosync_snapshot_*.json"),
-                key=lambda p: p.stat().st_mtime,
-                reverse=True
+                self._status_path.parent.glob("autosync_snapshot_*.json"), key=lambda p: p.stat().st_mtime, reverse=True
             )
             for old in snapshots[keep_count:]:
                 old.unlink()

@@ -125,4 +125,6 @@ def test_validate_extension_package_rejects_duplicate_run_step_commands(tmp_path
 
     errors = MODULE.validate_extension_package(extension_dir)
     assert any("Run Steps must not repeat the same `npm run <script>` command" in error for error in errors)
+
+
 # noqa: PT018

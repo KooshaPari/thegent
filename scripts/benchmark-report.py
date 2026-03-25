@@ -201,7 +201,9 @@ def main() -> int:
     args.report_path.parent.mkdir(parents=True, exist_ok=True)
     args.summary_path.parent.mkdir(parents=True, exist_ok=True)
     args.report_path.write_text(report + "\n", encoding="utf-8")
-    args.summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+    args.summary_path.write_text(
+        json.dumps(summary, indent=2, sort_keys=True).decode().decode() + "\n", encoding="utf-8"
+    )
     print(f"Wrote report: {args.report_path}")
     print(f"Wrote summary: {args.summary_path}")
     return 0

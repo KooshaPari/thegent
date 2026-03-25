@@ -12,6 +12,7 @@ from typing import Optional
 @dataclass
 class Teammate:
     """Represents a teammate agent."""
+
     id: str
     name: str
     description: str
@@ -54,6 +55,7 @@ class TeammateRegistry:
 
         if config_file.exists():
             import yaml
+
             with open(config_file) as f:
                 config = yaml.safe_load(f)
                 return Teammate(
@@ -61,15 +63,10 @@ class TeammateRegistry:
                     name=config.get("name", path.name),
                     description=config.get("description", ""),
                     priority=config.get("priority", "NORMAL"),
-                    path=path
+                    path=path,
                 )
 
-        return Teammate(
-            id=path.name,
-            name=path.name,
-            description="",
-            path=path
-        )
+        return Teammate(id=path.name, name=path.name, description="", path=path)
 
     def get(self, teammate_id: str) -> Optional[Teammate]:
         """Get teammate by ID."""

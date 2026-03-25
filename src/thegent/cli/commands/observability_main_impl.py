@@ -29,6 +29,7 @@ from thegent.cli.commands.observability_governance_impl import (
     get_compliance_report_impl,
 )
 
+
 def observe_summary_impl(
     limit: int = 500,
     drift_window: int = 50,
@@ -40,6 +41,7 @@ def observe_summary_impl(
 ) -> dict:
     """FR-X08: Unified observability summary (lazy import from trends impl)."""
     from thegent.cli.commands.observability_trends_impl import observe_summary_impl as _impl  # pyright: ignore[reportMissingImports]
+
     return _impl(
         limit=limit,
         drift_window=drift_window,
@@ -49,6 +51,7 @@ def observe_summary_impl(
         top_escalations=top_escalations,
         trend_samples=trend_samples,
     )
+
 
 __all__ = [
     "_extract_agent_from_line",

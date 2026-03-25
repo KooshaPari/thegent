@@ -12,6 +12,7 @@ from fastmcp.server.lifespan import lifespan
 from fastmcp.server.transforms import PromptsAsTools, ResourcesAsTools
 from fastmcp.tools.tool import ToolResult
 from thegent_protocols.mcp import server_optional_tools as _server_optional_tools
+
 # CLI functions are loaded lazily via cli_bridge to avoid the CLI ↔ Protocols
 # circular dependency.  The _cli proxy resolves thegent_cli on first access.
 from thegent_protocols.mcp.cli_bridge import cli as _cli
@@ -79,6 +80,8 @@ def __getattr__(name: str):  # noqa: N807 — module-level __getattr__ (PEP 562)
             return _cli.auto_init_on_startup
         return getattr(_cli, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
 from thegent_protocols.mcp import server_bootstrap as _server_bootstrap
 from thegent_protocols.mcp import server_cache_elicitation_response as _cache_elicitation_response_shared
 from thegent_protocols.mcp import server_catalog_tools as _server_tools_catalog

@@ -102,7 +102,8 @@ def test_wl11008_handle_turn_submit_request_defaults_input_to_empty_string() -> 
                 "method": "turn/submit",
                 "params": {"session_id": session_id},
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     assert response["result"]["turn"]["input"] == ""
     assert response["result"]["turn"]["status"] == "completed"

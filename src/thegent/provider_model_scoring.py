@@ -12,6 +12,7 @@ from typing import Any
 
 try:
     from rapidfuzz import fuzz, process
+
     RAPIDFUZZ_AVAILABLE = True
 except ImportError:
     RAPIDFUZZ_AVAILABLE = False
@@ -395,11 +396,13 @@ def fuzzy_search_models(
         matches = []
         for name in model_names:
             if query_lower in name.lower():
-                matches.append({
-                    "key": name,
-                    "score": 100.0 if query_lower == name.lower() else 80.0,
-                    **indices[name],
-                })
+                matches.append(
+                    {
+                        "key": name,
+                        "score": 100.0 if query_lower == name.lower() else 80.0,
+                        **indices[name],
+                    }
+                )
         return matches[:limit]
 
 
@@ -532,10 +535,9 @@ def search_by_modalities(
             # All modalities must be enabled
             if all(model_modalities.get(m, False) for m in modalities):
                 results.append({**data, "key": key})
-        else:
-            # Any modality enabled
-            if any(model_modalities.get(m, False) for m in modalities):
-                results.append({**data, "key": key})
+        # Any modality enabled
+        elif any(model_modalities.get(m, False) for m in modalities):
+            results.append({**data, "key": key})
 
     return results
 

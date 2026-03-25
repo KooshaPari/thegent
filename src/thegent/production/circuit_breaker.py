@@ -12,13 +12,14 @@ import time
 
 class CircuitState(Enum):
     CLOSED = "closed"  # Normal operation
-    OPEN = "open"      # Failing, reject requests
+    OPEN = "open"  # Failing, reject requests
     HALF_OPEN = "half_open"  # Testing recovery
 
 
 @dataclass
 class CircuitStats:
     """Circuit breaker statistics."""
+
     state: CircuitState
     failures: int
     successes: int
@@ -29,12 +30,7 @@ class CircuitStats:
 class CircuitBreaker:
     """Circuit breaker for fault tolerance."""
 
-    def __init__(
-        self,
-        failure_threshold: int = 5,
-        recovery_timeout: float = 30.0,
-        half_open_requests: int = 3
-    ):
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: float = 30.0, half_open_requests: int = 3):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.half_open_requests = half_open_requests
@@ -126,7 +122,7 @@ class CircuitBreaker:
             failures=self._failures,
             successes=self._successes,
             last_failure=self._last_failure,
-            last_success=self._last_success
+            last_success=self._last_success,
         )
 
 

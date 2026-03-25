@@ -447,7 +447,9 @@ class TestOR18NativeResponsesForwarding:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock()
 
-        fake_response_content = json.dumps({"id": "r-native", "object": "response", "status": "completed"}).decode().encode()
+        fake_response_content = (
+            json.dumps({"id": "r-native", "object": "response", "status": "completed"}).decode().encode()
+        )
 
         mock_httpx_resp = MagicMock()
         mock_httpx_resp.content = fake_response_content

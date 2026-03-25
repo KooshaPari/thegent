@@ -95,7 +95,9 @@ _coerce_issue_types = _lazy_import("thegent.cli.commands.impl", "_coerce_issue_t
 _dag_path = _lazy_import("thegent.cli.commands.dag_impl_ops", "_dag_path")
 _dag_update_task = _lazy_import("thegent.cli.commands.dag_impl_helpers", "_dag_update_task")
 _default_owner_tag = _lazy_import("thegent.cli.commands.impl", "_default_owner_tag")
-_ensure_contract_version_header = _lazy_import("thegent.cli.commands.dag_impl_helpers", "_ensure_contract_version_header")
+_ensure_contract_version_header = _lazy_import(
+    "thegent.cli.commands.dag_impl_helpers", "_ensure_contract_version_header"
+)
 _ensure_dag_file = _lazy_import("thegent.cli.commands.dag_impl_ops", "_ensure_dag_file")
 _find_session_meta = _lazy_import("thegent.cli.commands.impl", "_find_session_meta")
 _get_ready_task_ids = _lazy_import("thegent.cli.commands.dag_impl_ops", "_get_ready_task_ids")

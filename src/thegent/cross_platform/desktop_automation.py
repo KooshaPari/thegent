@@ -192,7 +192,9 @@ class DesktopAutomationProvider:
                 return False
 
         elif self.system == "Windows":
-            script = f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("{{{key}}}")'
+            script = (
+                f'Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait("{{{key}}}")'
+            )
             try:
                 shim_run(["powershell", "-Command", script], check=True)
                 return True

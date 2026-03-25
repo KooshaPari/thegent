@@ -28,6 +28,7 @@ Commands for work stream orchestration, planning, and analysis.
 Extracted from plan_cmds.py to manage module size.
 """
 
+
 def plan_analyze_cmd(
     cd: Path | None = None,
     pert: bool = False,
@@ -215,8 +216,6 @@ def workstream_query_cmd(query: str) -> None:
             console.print(f"[dim]... and {len(results) - 100} more rows[/dim]")
     except Exception as e:
         console.print(f"[red]Error executing query: {e}[/red]")
-
-
 
 
 __all__ = [

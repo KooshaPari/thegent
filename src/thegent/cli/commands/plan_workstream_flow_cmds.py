@@ -29,6 +29,7 @@ Commands for work stream orchestration, planning, and analysis.
 Extracted from plan_cmds.py to manage module size.
 """
 
+
 def plan_wait_next_cmd(
     cd: Path | None = None,
     poll: float = 2.0,
@@ -174,7 +175,6 @@ def plan_loop_cmd(
 def plan_progress_cmd(limit: int = 10, format: str | None = None) -> None:
     """Show recent runs (work-package progress). Alias for history --limit N."""
     history_cmd(limit=limit, format=format)
-
 
 
 __all__ = [

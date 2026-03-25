@@ -15,10 +15,12 @@ import json
 # Conditional imports for agent identity and memory systems
 try:
     from agent_identity_system import GlobalAgentRegistry
+
     AGENT_IDENTITY_AVAILABLE = True
 except ImportError:
     try:
         from scripts.agent_identity_system import GlobalAgentRegistry
+
         AGENT_IDENTITY_AVAILABLE = True
     except ImportError:
         GlobalAgentRegistry = None
@@ -26,10 +28,12 @@ except ImportError:
 
 try:
     from civilization_agent_memory import MemoryService
+
     MEMORY_AVAILABLE = True
 except ImportError:
     try:
         from scripts.civilization_agent_memory import MemoryService
+
         MEMORY_AVAILABLE = True
     except ImportError:
         MemoryService = None
@@ -37,10 +41,12 @@ except ImportError:
 
 try:
     from civilization_conflict_resolver import ConflictResolver
+
     CONFLICT_AVAILABLE = True
 except ImportError:
     try:
         from scripts.civilization_conflict_resolver import ConflictResolver
+
         CONFLICT_AVAILABLE = True
     except ImportError:
         ConflictResolver = None
@@ -48,10 +54,12 @@ except ImportError:
 
 try:
     from civilization_memory_analytics import MemoryAnalytics
+
     _ANALYTICS_AVAILABLE = True
 except ImportError:
     try:
         from scripts.civilization_memory_analytics import MemoryAnalytics
+
         _ANALYTICS_AVAILABLE = True
     except ImportError:
         MemoryAnalytics = None
@@ -61,6 +69,7 @@ except ImportError:
 @dataclass
 class AgentStatus:
     """Status snapshot of an agent."""
+
     agent_id: str
     level: str
     project: str
@@ -74,6 +83,7 @@ class AgentStatus:
 @dataclass
 class MetricsSnapshot:
     """Aggregated metrics for an agent."""
+
     task_count: int = 0
     error_count: int = 0
     success_rate: float = 0.0
@@ -85,6 +95,7 @@ class MetricsSnapshot:
 @dataclass
 class DashboardOverview:
     """Civilization-wide overview dashboard."""
+
     total_agents: int
     active_count: int
     stale_count: int
@@ -96,6 +107,7 @@ class DashboardOverview:
 @dataclass
 class DashboardProject:
     """Project-specific dashboard."""
+
     project: str
     agent_count: int
     hierarchy: dict[str, Any]  # Tree structure of agents
@@ -107,6 +119,7 @@ class DashboardProject:
 @dataclass
 class DashboardAgent:
     """Agent-specific detail dashboard."""
+
     agent_id: str
     status: str
     level: str
@@ -372,12 +385,14 @@ class DashboardService:
             agent_id = agent.project_scoped_id
             memories = self.memory_service.query_memory(agent_id, limit=5)
             for memory in memories:
-                recent_memories.append({
-                    "agent_id": agent_id,
-                    "timestamp": memory.timestamp,
-                    "type": memory.memory_type.value,
-                    "content": memory.content,
-                })
+                recent_memories.append(
+                    {
+                        "agent_id": agent_id,
+                        "timestamp": memory.timestamp,
+                        "type": memory.memory_type.value,
+                        "content": memory.content,
+                    }
+                )
 
         # Sort by timestamp (newest first) and limit to 10
         recent_memories.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -406,12 +421,18 @@ class DashboardService:
             if hasattr(conflict, "agents") and conflict.agents:
                 conflict_agents = conflict.agents
                 if any(agent.project == project for agent in conflict_agents):
-                    conflicts.append({
-                        "type": conflict.conflict_type.value if hasattr(conflict.conflict_type, "value") else str(conflict.conflict_type),
-                        "agents": [str(a) for a in conflict_agents],
-                        "detected_at": conflict.detected_at,
-                        "status": conflict.status.value if hasattr(conflict.status, "value") else str(conflict.status),
-                    })
+                    conflicts.append(
+                        {
+                            "type": conflict.conflict_type.value
+                            if hasattr(conflict.conflict_type, "value")
+                            else str(conflict.conflict_type),
+                            "agents": [str(a) for a in conflict_agents],
+                            "detected_at": conflict.detected_at,
+                            "status": conflict.status.value
+                            if hasattr(conflict.status, "value")
+                            else str(conflict.status),
+                        }
+                    )
 
         return conflicts
 
@@ -475,7 +496,8 @@ class DashboardService:
                     "timestamp": l.timestamp,
                     "content": l.content.get("learning", ""),
                 }
-                for l in learnings if hasattr(l, "memory_type") and l.memory_type.value == "learning"
+                for l in learnings
+                if hasattr(l, "memory_type") and l.memory_type.value == "learning"
             ]
 
             # Get recent errors (last 5)
@@ -485,7 +507,8 @@ class DashboardService:
                     "timestamp": e.timestamp,
                     "content": e.content.get("error", ""),
                 }
-                for e in errors if hasattr(e, "memory_type") and e.memory_type.value == "error"
+                for e in errors
+                if hasattr(e, "memory_type") and e.memory_type.value == "error"
             ]
         except Exception:
             pass  # Return partial summary if error
@@ -517,15 +540,13 @@ class DashboardService:
 
         # Get children
         if hasattr(agent, "children") and agent.children:
-            relationships["children"] = [c for c in agent.children]
+            relationships["children"] = list(agent.children)
 
         # Get siblings (same parent, same level)
         if agent.parent_id:
             parent = self.registry.get_agent(agent.parent_id)
             if parent and hasattr(parent, "children") and parent.children:
-                relationships["siblings"] = [
-                    c for c in parent.children if c != agent_id
-                ]
+                relationships["siblings"] = [c for c in parent.children if c != agent_id]
 
         return relationships
 
@@ -548,10 +569,10 @@ class DashboardService:
 
             mem_dicts = []
             for m in memories:
-                if hasattr(m, '__dict__'):
+                if hasattr(m, "__dict__"):
                     d = m.__dict__.copy()
-                    if hasattr(m, 'memory_type') and hasattr(m.memory_type, 'value'):
-                        d['memory_type'] = m.memory_type.value
+                    if hasattr(m, "memory_type") and hasattr(m.memory_type, "value"):
+                        d["memory_type"] = m.memory_type.value
                     mem_dicts.append(d)
                 elif isinstance(m, dict):
                     mem_dicts.append(m)

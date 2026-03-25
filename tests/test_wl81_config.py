@@ -17,21 +17,21 @@ class TestConfigLoading:
     def test_config_loads_defaults(self) -> None:
         """Config should load with defaults."""
         defaults = {"timeout": 30, "retries": 3}
-        
+
         config = defaults.copy()
-        
+
         assert config.get("timeout") == 30
 
     def test_config_overrides_work(self) -> None:
         """Config overrides should apply."""
         config = {"timeout": 60}
-        
+
         assert config["timeout"] == 60
 
     def test_config_validates_schema(self) -> None:
         """Config should validate schema."""
         config = {"timeout": "invalid"}  # Should be int
-        
+
         # Validation should catch this
         if isinstance(config["timeout"], str):
             pytest.fail("Timeout should be integer")
@@ -45,12 +45,12 @@ class TestSerialization:
         original = {"key": "value"}
         serialized = json.dumps(original)
         deserialized = json.loads(serialized)
-        
+
         assert deserialized == original
 
     def test_yaml_preserves_structure(self) -> None:
         """YAML should preserve structure."""
         # Placeholder
         data = {"nested": {"key": "value"}}
-        
+
         assert "nested" in data

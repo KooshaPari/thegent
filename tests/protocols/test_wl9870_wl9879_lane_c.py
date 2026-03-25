@@ -98,7 +98,8 @@ def test_wl9875_resume_session_request_forces_active_status() -> None:
                 "method": "session/resume",
                 "params": {"session_id": session_id},
             }
-        )).decode()
+        )
+    ).decode()
     assert notifications == []
     assert response is not None
     assert SERVER_STATE.sessions[session_id]["status"] == "active"
@@ -123,14 +124,19 @@ def test_wl9877_session_read_response_projects_turn_entries() -> None:
     session_id = _start_session()
     submit_response, _notifications = process_jsonrpc_line_full(
         json.dumps(
-            {"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": "x"}}
-        )).decode()
+            {
+                "jsonrpc": "2.0",
+                "id": "submit",
+                "method": "turn/submit",
+                "params": {"session_id": session_id, "input": "x"},
+            }
+        )
+    ).decode()
     assert submit_response is not None
     turn_id = submit_response["result"]["turn"]["id"]
     read_response, notifications = process_jsonrpc_line_full(
-        json.dumps(
-            {"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": session_id}}
-        )).decode()
+        json.dumps({"jsonrpc": "2.0", "id": "read", "method": "session/read", "params": {"session_id": session_id}})
+    ).decode()
     assert read_response is not None
     assert any(item["id"] == turn_id for item in read_response["result"]["turns"])
     assert notifications == []
@@ -147,7 +153,8 @@ def test_wl9878_resume_missing_session_returns_not_found_error() -> None:
                 "method": "session/resume",
                 "params": {"session_id": "session-404"},
             }
-        )).decode()
+        )
+    ).decode()
     assert notifications == []
     assert response is not None
     assert response["error"]["code"] == -32001
@@ -158,7 +165,9 @@ def test_wl9879_turn_submit_notification_keeps_side_effects_without_response() -
     _reset_state()
     session_id = _start_session()
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "lane-c"}}).decode()
+        json.dumps(
+            {"jsonrpc": "2.0", "method": "turn/submit", "params": {"session_id": session_id, "input": "lane-c"}}
+        ).decode()
     )
     assert response is None
     assert notifications

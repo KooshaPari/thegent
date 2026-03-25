@@ -30,12 +30,15 @@ def test_worktree_governance_migrate_legacy_moves_clean_legacy_worktree(tmp_path
     target_path = repo_root / ".worktrees" / "infra" / "m" / "migrate-cache" / "blocked"
     assert target_path.exists()
     assert not legacy_path.exists()
-    assert subprocess.run(
-        ["git", "-C", str(target_path), "branch", "--show-current"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip() == "infra/m/migrate-cache"
+    assert (
+        subprocess.run(
+            ["git", "-C", str(target_path), "branch", "--show-current"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        == "infra/m/migrate-cache"
+    )
 
     final_check = run_script(repo_root, "check")
     assert final_check.returncode == 0, final_check.stderr

@@ -31,9 +31,7 @@ logger = logging.getLogger(__name__)
 class AchievementsDialog(QDialog):
     """Dialog for displaying all achievements with filtering."""
 
-    def __init__(
-        self, parent: QtQWidget | None = None, achievements: list[dict[str, Any]] | None = None
-    ) -> None:
+    def __init__(self, parent: QtQWidget | None = None, achievements: list[dict[str, Any]] | None = None) -> None:
         """Initialize the achievements dialog.
 
         Args:
@@ -515,13 +513,8 @@ class GamificationTab(QWidget):
         self._recent_achievements_list.clear()
 
         # Sort achievements by earned date (most recent first)
-        earned_achievements = [
-            a for a in self._achievements if a.get("earned", False)
-        ]
-        earned_achievements.sort(
-            key=lambda a: a.get("earned_at", ""),
-            reverse=True
-        )
+        earned_achievements = [a for a in self._achievements if a.get("earned", False)]
+        earned_achievements.sort(key=lambda a: a.get("earned_at", ""), reverse=True)
 
         # Show up to 3 recent
         for achievement in earned_achievements[:3]:
@@ -536,9 +529,7 @@ class GamificationTab(QWidget):
             placeholder = QLabel("No achievements yet. Start earning!")
             placeholder.setStyleSheet("color: #666; font-style: italic;")
             placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self._recent_achievements_list.addItem(
-                QListWidgetItem("No achievements yet. Start earning!")
-            )
+            self._recent_achievements_list.addItem(QListWidgetItem("No achievements yet. Start earning!"))
 
     def _create_recent_achievement_item(self, achievement: dict[str, Any]) -> QWidget:
         """Create a widget for a recent achievement.

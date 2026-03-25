@@ -173,7 +173,6 @@ def dag_ready_cmd(cd: Path | None = None, format: str | None = None) -> None:
         console.print(tbl)
 
 
-
 __all__ = [
     "dag_update_cmd",
     "dag_cancel_cmd",

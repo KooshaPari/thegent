@@ -15,10 +15,12 @@ import os
 # Conditional imports for agent identity system
 try:
     from agent_identity_system import GlobalAgentRegistry
+
     AGENT_IDENTITY_AVAILABLE = True
 except ImportError:
     try:
         from scripts.agent_identity_system import GlobalAgentRegistry
+
         AGENT_IDENTITY_AVAILABLE = True
     except ImportError:
         GlobalAgentRegistry = None
@@ -27,6 +29,7 @@ except ImportError:
 
 class ConflictType(Enum):
     """Types of conflicts that can occur in the civilization framework."""
+
     DUPLICATE_REGISTRATION = "duplicate_registration"  # Same agent ID registered twice
     PARENT_REFERENCE_CONFLICT = "parent_reference_conflict"  # Inconsistent parent links
     CIRCULAR_DEPENDENCY = "circular_dependency"  # Circular parent-child relationships
@@ -36,6 +39,7 @@ class ConflictType(Enum):
 
 class ResolutionStrategy(Enum):
     """Strategies for resolving conflicts."""
+
     LAST_WRITE_WINS = "last_write_wins"  # Keep agent with latest heartbeat
     VOTING = "voting"  # Let other agents vote on winner
     MERGE = "merge"  # Combine agents' capabilities and children
@@ -44,6 +48,7 @@ class ResolutionStrategy(Enum):
 @dataclass
 class ConflictRecord:
     """Record of a detected and resolved conflict."""
+
     conflict_id: str
     conflict_type: ConflictType
     detected_at: float
@@ -69,7 +74,7 @@ class ConflictResolver:
             self.registry = GlobalAgentRegistry()
 
         # Conflict log storage
-        self.conflict_log_path = Path(os.path.expanduser("~/.claude/civilization/conflicts.json"))
+        self.conflict_log_path = Path("~/.claude/civilization/conflicts.json").expanduser()
         self.conflict_log_path.parent.mkdir(parents=True, exist_ok=True)
         self.conflicts: list[ConflictRecord] = self._load_conflict_log()
 
@@ -82,15 +87,15 @@ class ConflictResolver:
             with open(self.conflict_log_path) as f:
                 data = json.load(f)
                 return [self._deserialize_conflict_record(item) for item in data]
-        except (json.JSONDecodeError, KeyError):
+        except json.JSONDecodeError, KeyError:
             return []
 
     def _deserialize_conflict_record(self, data: dict) -> ConflictRecord:
         """Deserialize conflict record from JSON."""
         data_copy = data.copy()
-        data_copy['conflict_type'] = ConflictType[data_copy['conflict_type']]
-        if data_copy.get('resolution_strategy'):
-            data_copy['resolution_strategy'] = ResolutionStrategy[data_copy['resolution_strategy']]
+        data_copy["conflict_type"] = ConflictType[data_copy["conflict_type"]]
+        if data_copy.get("resolution_strategy"):
+            data_copy["resolution_strategy"] = ResolutionStrategy[data_copy["resolution_strategy"]]
         return ConflictRecord(**data_copy)
 
     def _save_conflict_log(self) -> None:
@@ -98,12 +103,12 @@ class ConflictResolver:
         conflict_dicts = []
         for conflict in self.conflicts:
             conflict_dict = asdict(conflict)
-            conflict_dict['conflict_type'] = conflict.conflict_type.name
+            conflict_dict["conflict_type"] = conflict.conflict_type.name
             if conflict.resolution_strategy:
-                conflict_dict['resolution_strategy'] = conflict.resolution_strategy.name
+                conflict_dict["resolution_strategy"] = conflict.resolution_strategy.name
             conflict_dicts.append(conflict_dict)
 
-        with open(self.conflict_log_path, 'w') as f:
+        with open(self.conflict_log_path, "w") as f:
             json.dump(conflict_dicts, f, indent=2)
 
     def detect_conflicts(self) -> list[ConflictRecord]:
@@ -112,7 +117,7 @@ class ConflictResolver:
         Returns:
             List of newly detected conflicts.
         """
-        if not self.registry or not hasattr(self.registry, 'agents'):
+        if not self.registry or not hasattr(self.registry, "agents"):
             return []
 
         new_conflicts = []
@@ -164,19 +169,21 @@ class ConflictResolver:
             List of (agent_id1, agent_id2) pairs with duplicates.
         """
         duplicates = []
-        if not self.registry or not hasattr(self.registry, 'agents'):
+        if not self.registry or not hasattr(self.registry, "agents"):
             return duplicates
 
         agents = list(self.registry.agents.values())
         for i, agent1 in enumerate(agents):
-            for agent2 in agents[i + 1:]:
+            for agent2 in agents[i + 1 :]:
                 # Check if they're the same agent (same project, uuid, level, role)
                 # but have different agent_ids (shouldn't happen in normal operation)
-                if (agent1.project == agent2.project and
-                    agent1.uuid == agent2.uuid and
-                    agent1.level == agent2.level and
-                    agent1.role == agent2.role and
-                    agent1.agent_id != agent2.agent_id):
+                if (
+                    agent1.project == agent2.project
+                    and agent1.uuid == agent2.uuid
+                    and agent1.level == agent2.level
+                    and agent1.role == agent2.role
+                    and agent1.agent_id != agent2.agent_id
+                ):
                     duplicates.append((agent1.agent_id, agent2.agent_id))
 
         return duplicates
@@ -188,13 +195,13 @@ class ConflictResolver:
             List of (agent_id, issue_description) tuples.
         """
         conflicts = []
-        if not self.registry or not hasattr(self.registry, 'agents'):
+        if not self.registry or not hasattr(self.registry, "agents"):
             return conflicts
 
         agents_dict = self.registry.agents
         for agent_id, agent in agents_dict.items():
             # Check if parent exists (if not root)
-            if hasattr(agent, 'parent_agent_id') and agent.parent_agent_id:
+            if hasattr(agent, "parent_agent_id") and agent.parent_agent_id:
                 if agent.parent_agent_id not in agents_dict:
                     conflicts.append((agent_id, f"Parent {agent.parent_agent_id} does not exist"))
 
@@ -207,7 +214,7 @@ class ConflictResolver:
             List of sets of agent_ids forming cycles.
         """
         cycles = []
-        if not self.registry or not hasattr(self.registry, 'agents'):
+        if not self.registry or not hasattr(self.registry, "agents"):
             return cycles
 
         agents_dict = self.registry.agents
@@ -224,7 +231,7 @@ class ConflictResolver:
                 return None
 
             # Check all children
-            if hasattr(agent, 'child_agent_ids') and agent.child_agent_ids:
+            if hasattr(agent, "child_agent_ids") and agent.child_agent_ids:
                 for child_id in agent.child_agent_ids:
                     if child_id not in visited:
                         cycle = has_cycle(child_id, path.copy())
@@ -279,12 +286,12 @@ class ConflictResolver:
                 conflict.resolution_winner = winner
                 conflict.resolved = True
                 conflict.resolved_at = time.time()
-                conflict.resolution_details['strategy'] = strategy.value
+                conflict.resolution_details["strategy"] = strategy.value
                 self._save_conflict_log()
                 return conflict
 
         except Exception as e:
-            conflict.resolution_details['error'] = str(e)
+            conflict.resolution_details["error"] = str(e)
 
         return None
 
@@ -319,7 +326,7 @@ class ConflictResolver:
         if not conflict.involved_agents or len(conflict.involved_agents) < 2:
             return None
 
-        if not self.registry or not hasattr(self.registry, 'agents'):
+        if not self.registry or not hasattr(self.registry, "agents"):
             return None
 
         agents_dict = self.registry.agents
@@ -327,7 +334,7 @@ class ConflictResolver:
 
         for agent_id in conflict.involved_agents:
             agent = agents_dict.get(agent_id)
-            if agent and hasattr(agent, 'last_heartbeat'):
+            if agent and hasattr(agent, "last_heartbeat"):
                 candidate_agents.append((agent_id, agent.last_heartbeat))
 
         if not candidate_agents:
@@ -377,7 +384,7 @@ class ConflictResolver:
         if not conflict.involved_agents or len(conflict.involved_agents) < 2:
             return None
 
-        if not self.registry or not hasattr(self.registry, 'agents'):
+        if not self.registry or not hasattr(self.registry, "agents"):
             return None
 
         agents_dict = self.registry.agents
@@ -395,11 +402,11 @@ class ConflictResolver:
         for agent_id in conflict.involved_agents[1:]:
             other_agent = agents_dict.get(agent_id)
             if other_agent:
-                if hasattr(other_agent, 'child_agent_ids') and other_agent.child_agent_ids:
+                if hasattr(other_agent, "child_agent_ids") and other_agent.child_agent_ids:
                     all_children.update(other_agent.child_agent_ids)
-                if hasattr(other_agent, 'capabilities') and other_agent.capabilities:
+                if hasattr(other_agent, "capabilities") and other_agent.capabilities:
                     all_capabilities.update(other_agent.capabilities)
-                if hasattr(other_agent, 'scope_tags') and other_agent.scope_tags:
+                if hasattr(other_agent, "scope_tags") and other_agent.scope_tags:
                     all_scope_tags.update(other_agent.scope_tags)
 
                 # Unregister the merged agent

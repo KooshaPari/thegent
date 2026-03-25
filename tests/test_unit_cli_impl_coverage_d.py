@@ -305,7 +305,9 @@ class TestLoadPreviousHealthSnapshotEdges:
         from thegent.cli.commands.impl import _load_previous_health_snapshot
 
         log_path = tmp_path / "health-snapshots.jsonl"
-        content = "\n\nnot-json\n" + json.dumps({"record_type": "health_snapshot", "scope_key": {"k": "v"}}).decode() + "\n"
+        content = (
+            "\n\nnot-json\n" + json.dumps({"record_type": "health_snapshot", "scope_key": {"k": "v"}}).decode() + "\n"
+        )
         log_path.write_text(content, encoding="utf-8")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_previous_health_snapshot({"k": "v"})

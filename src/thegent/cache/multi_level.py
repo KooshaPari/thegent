@@ -30,6 +30,7 @@ from typing import Any, cast
 
 from cachetools import TTLCache
 
+
 class _DiskCacheProtocol:
     """Minimal cache interface used by MultiLevelCache."""
 
@@ -49,6 +50,7 @@ class _DiskCacheModuleProtocol:
     """Runtime import surface for the diskcache module."""
 
     Cache: type[_DiskCacheProtocol]
+
 
 try:
     _DISKCACHE_MODULE = cast("_DiskCacheModuleProtocol", import_module("diskcache"))

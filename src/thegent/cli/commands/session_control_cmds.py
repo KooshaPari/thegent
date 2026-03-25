@@ -21,6 +21,7 @@ from thegent.execution import RunRegistry
 
 console = Console()
 
+
 def wait_cmd(session_id: str | None = None, timeout: int = 0) -> None:
     sid = _resolve_session_id(session_id)
     settings = ThegentSettings()

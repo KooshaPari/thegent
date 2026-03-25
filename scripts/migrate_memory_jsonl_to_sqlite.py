@@ -67,9 +67,7 @@ def init_sqlite_db(db_path: Path) -> sqlite3.Connection:
     return conn
 
 
-def migrate_file(
-    jsonl_path: Path, conn: sqlite3.Connection, dry_run: bool = False
-) -> dict:
+def migrate_file(jsonl_path: Path, conn: sqlite3.Connection, dry_run: bool = False) -> dict:
     """Migrate one JSONL file to SQLite. Returns stats dict."""
     memories = read_jsonl_memories(jsonl_path)
     agent_id = jsonl_path.parent.name  # directory name is agent_id
@@ -122,9 +120,7 @@ def migrate_file(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Migrate JSONL memories to SQLite"
-    )
+    parser = argparse.ArgumentParser(description="Migrate JSONL memories to SQLite")
     parser.add_argument(
         "--dry-run",
         action="store_true",

@@ -51,7 +51,6 @@ class AgentRecommendation(SerializableMixin):
     runner: str | None = None
 
 
-
 @dataclass
 class DoctorResult:
     """Health check result for a single agent."""

@@ -33,12 +33,12 @@ from thegent.cli.commands._cli_shared import (
 )
 
 
-
 """DAG-related CLI commands for plan/workflow management.
 
 Commands for DAG validation, listing, updating, running, and synchronization.
 Extracted from plan_cmds.py to manage module size.
 """
+
 
 def dag_validate_cmd(cd: Path | None = None) -> None:
     """Validate DAG session from .factory/dag-session.md. Exit 2 on validation errors."""
@@ -251,7 +251,6 @@ def dag_update_cmd(
             raise typer.Exit(2)
     content = _serialize_dag(doc)
     _atomic_write(dag_path, content)
-
 
 
 __all__ = [

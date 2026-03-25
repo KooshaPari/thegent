@@ -35,8 +35,7 @@ __all__ = [
 
 # Issue deprecation warning on import
 warnings.warn(
-    "Importing from thegent.task.types is deprecated. "
-    "Please import from thegent.domain.entities.task instead.",
+    "Importing from thegent.task.types is deprecated. Please import from thegent.domain.entities.task instead.",
     DeprecationWarning,
     stacklevel=2,
 )

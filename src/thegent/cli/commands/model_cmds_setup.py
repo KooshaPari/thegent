@@ -53,6 +53,7 @@ def _run_cliproxyctl_machine_command(command: str, args: list[str] | None = None
         raise ValueError("cliproxyctl returned a non-object JSON payload")
     return payload
 
+
 def setup_cmd(
     api_key: str = typer.Option(None, "--api-key", "-k", help="NVIDIA NIM API key"),
     model: str = typer.Option(None, "--model", "-m", help="NVIDIA NIM model (default: z-ai/glm-5)"),
@@ -208,9 +209,7 @@ def setup_cmd(
         console=console,
     )
     should_delegate_setup = (
-        wizard
-        and os.environ.get("THGENT_SETUP_USE_CLIPROXY", "1") == "1"
-        and not any(v for v in overrides.values())
+        wizard and os.environ.get("THGENT_SETUP_USE_CLIPROXY", "1") == "1" and not any(v for v in overrides.values())
     )
     if should_delegate_setup:
         delegation_args: list[str] = []
@@ -369,7 +368,6 @@ def rules_sync_cmd(
     else:
         for target in result["synced"]:
             console.print(f"[green]Synced: {target}[/green]")
-
 
 
 __all__ = [

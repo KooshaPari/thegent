@@ -67,10 +67,7 @@ def materialize_repo_checkout(source_repo: Path, checkout_path: Path, resolved_s
         check=False,
     )
     if proc.returncode != 0:
-        raise RuntimeError(
-            "git worktree add failed for "
-            f"{source_repo} @ {resolved_sha}: {proc.stderr.strip()}"
-        )
+        raise RuntimeError(f"git worktree add failed for {source_repo} @ {resolved_sha}: {proc.stderr.strip()}")
 
 
 def detect_head_branch(checkout_path: Path) -> str | None:

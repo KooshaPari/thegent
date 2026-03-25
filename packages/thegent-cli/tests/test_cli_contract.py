@@ -1,7 +1,6 @@
 """Contract tests for thegent-cli package."""
 
 
-
 class TestCliContract:
     """Test thegent-cli package contract."""
 

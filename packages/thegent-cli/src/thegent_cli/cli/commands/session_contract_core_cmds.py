@@ -5,9 +5,7 @@ from __future__ import annotations
 
 import orjson as json
 import sys
-from pathlib import Path
 
-import typer
 
 from rich.table import Table
 
@@ -16,18 +14,7 @@ from thegent_cli.cli.commands._cli_shared import (
     _coerce_issue_types,
     _default_owner_tag,
     _normalize_output_format,
-    _safe_dict,
-    _serialize_health_gate_md,
-    _serialize_health_report_md,
-    _serialize_health_trend_md,
-    _write_health_gate_export,
-    _write_health_trend_export,
-    _write_report_export,
     console,
-    EXIT_HEALTH_GATE_FAILED,
-)
-from thegent_cli.cli.commands.session_cmds_helpers import (
-    resolve_export_format_with_notice,
 )
 
 
@@ -36,6 +23,7 @@ from thegent_cli.cli.commands.session_cmds_helpers import (
 Commands for viewing and managing session contracts.
 Extracted from session_cmds.py to manage module size.
 """
+
 
 def session_contracts_cmd(
     all_sessions: bool = False,
@@ -155,7 +143,6 @@ def session_contracts_cmd(
             f"error={summary['health']['error']} missing={summary['health']['missing']}"
         )
         console.print(f"strict_checks_enabled={summary['strict_checks_enabled']}")
-
 
 
 __all__ = [

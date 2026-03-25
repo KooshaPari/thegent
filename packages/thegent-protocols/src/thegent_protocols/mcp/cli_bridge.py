@@ -38,9 +38,7 @@ class _CLIBridge:
 
     def _get_impl(self) -> Any:
         if self._impl is None:
-            self.__class__._impl = importlib.import_module(
-                "thegent_cli.cli.commands.impl"
-            )
+            self.__class__._impl = importlib.import_module("thegent_cli.cli.commands.impl")
         return self._impl
 
     def __getattr__(self, name: str) -> Any:
@@ -49,9 +47,7 @@ class _CLIBridge:
         try:
             return getattr(impl, name)
         except AttributeError as exc:
-            raise AttributeError(
-                f"thegent_cli.cli.commands.impl has no attribute {name!r}"
-            ) from exc
+            raise AttributeError(f"thegent_cli.cli.commands.impl has no attribute {name!r}") from exc
 
     # ------------------------------------------------------------------ #
     # Convenience accessors for sub-modules
@@ -69,27 +65,21 @@ class _CLIBridge:
     def ps_impl(self) -> Any:
         """Alias for cli.ps_impl (from session_ops module)."""
         if self._session_ops is None:
-            self.__class__._session_ops = importlib.import_module(
-                "thegent_cli.cli.commands.session_ops_impl"
-            )
+            self.__class__._session_ops = importlib.import_module("thegent_cli.cli.commands.session_ops_impl")
         return self._session_ops.ps_impl
 
     @property
     def logs_impl(self) -> Any:
         """Alias for cli.logs_impl (from session_ops module)."""
         if self._session_ops is None:
-            self.__class__._session_ops = importlib.import_module(
-                "thegent_cli.cli.commands.session_ops_impl"
-            )
+            self.__class__._session_ops = importlib.import_module("thegent_cli.cli.commands.session_ops_impl")
         return self._session_ops.logs_impl
 
     @property
     def session_send_impl_raw(self) -> Any:
         """Alias for raw session_send_impl (from session_control module)."""
         if self._session_ctrl is None:
-            self.__class__._session_ctrl = importlib.import_module(
-                "thegent_cli.cli.commands.session_control_impl"
-            )
+            self.__class__._session_ctrl = importlib.import_module("thegent_cli.cli.commands.session_control_impl")
         return self._session_ctrl.session_send_impl
 
 
