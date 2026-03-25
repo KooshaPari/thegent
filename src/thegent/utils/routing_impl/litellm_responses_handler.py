@@ -193,7 +193,7 @@ def _error_response(exc: Exception) -> Response:
                 upstream_err = parsed.get("error", {}) if isinstance(parsed, dict) else {}
                 if isinstance(upstream_err, dict) and upstream_err.get("metadata"):
                     error_obj["metadata"] = upstream_err["metadata"]
-            except json.JSONDecodeError, ValueError:
+            except (json.JSONDecodeError, ValueError):
                 pass
     body = json.dumps({"error": error_obj}).decode()
     return Response(

@@ -74,7 +74,7 @@ def _load_benchmarks(path: Path | None = None) -> dict:
     try:
         data = json.loads(p.read_text())
         return data if isinstance(data, dict) else {}
-    except json.JSONDecodeError, OSError:
+    except (json.JSONDecodeError, OSError):
         return {}
 
 
