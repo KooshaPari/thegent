@@ -1,39 +1,22 @@
-"""Compatibility wrapper for git actor identity resolution."""
+"""Backward compatibility wrapper for cli_git_identity.
 
-from thegent_gitops.identity import (
-    _parse_profile_map,
+Phase 9: GIT domain extraction. This module re-exports from the git subpackage
+to maintain backward compatibility with existing imports.
+
+New code should use: from thegent.cli.commands.git.cli_git_identity import ...
+Legacy code can continue: from thegent.cli.commands.cli_git_identity import ...
+
+Marked for deprecation in Phase 10.
+"""
+
+from .git.cli_git_identity import (
     _build_actor_email,
     _git_config_get,
+    _parse_profile_map,
     infer_actor_profile,
     normalize_actor_profile,
     resolve_author_env,
 )
-
-from pathlib import Path
-
-import thegent_gitops.identity as _identity
-
-_parse_profile_map = _identity._parse_profile_map
-_build_actor_email = _identity._build_actor_email
-_git_config_get = _identity._git_config_get
-infer_actor_profile = _identity.infer_actor_profile
-normalize_actor_profile = _identity.normalize_actor_profile
-
-
-def resolve_author_env(
-    *,
-    project_root: Path,
-    actor_profile: str | None,
-    agent_id: str,
-) -> dict[str, str]:
-    """Resolve git identity env through the compatibility wrapper namespace."""
-    _identity._git_config_get = _git_config_get
-    return _identity.resolve_author_env(
-        project_root=project_root,
-        actor_profile=actor_profile,
-        agent_id=agent_id,
-    )
-
 
 __all__ = [
     "_parse_profile_map",
