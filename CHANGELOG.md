@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stabilize Python 3 compatibility by converting Python 2 exception syntax (#593)
+- Add PolicyGate and WorkflowRunner port interfaces (#592)
 - Unblock Rust CI (cache, TUI tests, rustfmt) (#590)
 - Wave D Rust lane handoff and known issues update (#589)
 - Modernize Python tooling to 2026 bleeding-edge standards

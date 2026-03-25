@@ -35,7 +35,7 @@ def _get_tool_version(cmd: str) -> tuple[int, ...] | None:
         match = re.search(r"(\d+)\.(\d+)(?:\.(\d+))?", result.stdout + result.stderr)
         if match:
             return tuple(int(x) for x in match.groups() if x)
-    except OSError, subprocess.TimeoutExpired:
+    except (OSError, subprocess.TimeoutExpired):
         pass
     return None
 
@@ -66,7 +66,7 @@ def _check_tool_versions() -> None:
 # Check tool versions on import (non-blocking)
 _check_tool_versions()
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 class _CompatEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
