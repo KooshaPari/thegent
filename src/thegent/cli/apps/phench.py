@@ -9,7 +9,6 @@ from typing import Any
 
 import typer
 
-console = Console()
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
 target_app = typer.Typer(help="Manage project runtime targets.")
 repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
