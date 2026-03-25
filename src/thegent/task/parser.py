@@ -1,6 +1,6 @@
 """Task parsing implementation."""
 
-import orjson as json
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -40,12 +40,13 @@ def parse_yaml_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     markdown_body = match.group(2)
 
     try:
+        # Use safe_load to prevent YAML injection
         frontmatter = yaml_load(yaml_content)
         if not isinstance(frontmatter, dict):
             raise ValueError("Frontmatter must be a dictionary")
         return frontmatter, markdown_body
-    except Exception as e:
-        raise ValueError(f"Invalid YAML frontmatter: {e}")
+    except Exception as exc:
+        raise ValueError(f"Invalid YAML frontmatter: {exc}") from exc
 
 
 def detect_task_format(content: str) -> str:

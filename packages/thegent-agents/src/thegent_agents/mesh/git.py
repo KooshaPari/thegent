@@ -2,7 +2,7 @@
 
 import logging
 import hashlib
-import orjson as json
+import json
 import os
 import random
 import shutil
@@ -47,15 +47,15 @@ class GitParallelismManager:
         check: bool = False,
         env: dict[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        env = os.environ.copy()
+        process_env = os.environ.copy()
         if use_index:
-            env["GIT_INDEX_FILE"] = str(self.agent_index)
+            process_env["GIT_INDEX_FILE"] = str(self.agent_index)
         if env:
-            env.update(env)
+            process_env.update(env)
         return shim_run(
             ["git", *args],
             cwd=self.project_root,
-            env=env,
+            env=process_env,
             input=input_text,
             capture_output=True,
             text=True,
@@ -333,7 +333,7 @@ class GitParallelismManager:
             "new_hash": new_hash or "",
         }
         with queue_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(entry).decode() + "\n")
+            fh.write(json.dumps(entry) + "\n")
         return queue_path
 
     def try_auto_merge_commit(

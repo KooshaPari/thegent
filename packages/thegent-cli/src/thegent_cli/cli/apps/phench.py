@@ -245,6 +245,11 @@ def scan_shared_repos_cmd(
         "--candidate-name-regex",
         help="Optional regex filter for module candidates (applies when candidates are included).",
     ),
+    candidates: bool = typer.Option(
+        False,
+        "--candidates",
+        help="Include module_candidates in output (alias to enable explicit candidate materialization suggestions).",
+    ),
     omit_candidates: bool = typer.Option(
         False,
         "--omit-candidates",
@@ -255,6 +260,8 @@ def scan_shared_repos_cmd(
         raise typer.BadParameter("min-repos must be >= 2")
     if repos_root_mode not in {"repos", "worktrees"}:
         raise typer.BadParameter("repos-root-mode must be one of: repos, worktrees")
+    if candidates and omit_candidates:
+        raise typer.BadParameter("cannot set both --candidates and --omit-candidates")
 
     try:
         state = scan_shared_modules_across_repos(
@@ -263,6 +270,7 @@ def scan_shared_repos_cmd(
             min_repo_count=min_repo_count,
             repos_root_mode=repos_root_mode,
             candidate_name_regex=candidate_name_regex,
+            candidates=candidates,
             omit_candidates=omit_candidates,
         )
     except ValueError as exc:

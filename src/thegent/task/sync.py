@@ -1,13 +1,10 @@
 """WORK_STREAM.md bidirectional sync with task files."""
 
-import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from thegent.task.parser import parse_task_file
-
-_log = logging.getLogger(__name__)
 
 
 class WorkStreamSync:
@@ -41,12 +38,27 @@ class WorkStreamSync:
         # Parse all task files
         task_files = sorted(self.tasks_dir.glob("*.md"))
         tasks = []
+        parse_errors: list[str] = []
+        task_ids: set[str] = set()
         for task_file in task_files:
             try:
                 task = parse_task_file(task_file)
+                task_id = str(task.get("id", "")).strip()
+                if task_id in task_ids:
+                    parse_errors.append(
+                        f"duplicate task id {task_id} in {task_file.name}"
+                    )
+                task_ids.add(task_id)
                 tasks.append(task)
-            except Exception:  # noqa: PERF203 - intentional per-item error handling
-                continue
+            except Exception as exc:
+                parse_errors.append(f"{task_file.name}: {exc}")
+
+        if parse_errors:
+            return {
+                "error": "One or more task files failed to parse",
+                "task_parse_errors": parse_errors,
+                "tasks_synced": 0,
+            }
 
         # Build BACKLOG table rows
         backlog_rows = []
@@ -123,6 +135,14 @@ class WorkStreamSync:
         if task_file.exists():
             try:
                 task = parse_task_file(task_file)
+                parsed_task_id = str(task.get("id", "")).strip()
+                if parsed_task_id and parsed_task_id != task_id:
+                    return {
+                        "error": (
+                            f"Task file id mismatch for {task_id}: "
+                            f"expected {task_id}, found {parsed_task_id}"
+                        )
+                    }
                 depends = task.get("depends", [])
                 if depends:
                     dep_check = self.check_dependencies_satisfied(task_id, depends)
@@ -133,8 +153,7 @@ class WorkStreamSync:
                             "dependency_status": dep_check,
                         }
             except Exception as e:
-                _log.warning(f"Failed to check dependencies for {task_id}: {e}")
-                # Continue anyway - don't block on dependency check errors
+                return {"error": f"Failed dependency validation for {task_id}: {e}"}
 
         lines = self.work_stream_path.read_text(encoding="utf-8").splitlines()
         backlog_bounds = self._find_section_bounds(lines, ("BACKLOG", "PENDING"))
@@ -301,6 +320,14 @@ class WorkStreamSync:
         if not parts:
             return None
         cell0 = parts[0]
+        if cell0.startswith("~~") and cell0.endswith("~~"):
+            cell0 = cell0[2:-2].strip()
+        if not cell0:
+            return None
+        if cell0.startswith("**") and cell0.endswith("**") and len(cell0) > 4:
+            cell0 = cell0[2:-2].strip()
+        if cell0.startswith("[") and "](" in cell0 and cell0.endswith(")"):
+            cell0 = cell0.split("]", 1)[0].lstrip("[").strip()
         if not cell0 or cell0.lower() == "id" or cell0.startswith("*("):
             return None
         if all(ch == "-" for ch in cell0):
