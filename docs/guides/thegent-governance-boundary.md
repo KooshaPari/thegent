@@ -1,0 +1,31 @@
+# Thegent Governance Boundary
+
+## Module Contract
+
+`thegent-governance` owns policy signals, quality guardrails, and run-time governance integration across modules.
+
+### Owns
+
+- Runtime policy checks for CLI command and repo governance.
+- Governance policy artifact mapping and quality gate enforcement contracts.
+- Security, audit, and policy exception handling.
+
+### Must Not Own
+
+- Generic CLI workflow wiring (`thegent-app`).
+- MCP transport implementation (`thegent-mcp`).
+- Execution control-loop runtime behavior (`thegent-execution`).
+- Global control-plane sequencing (`thegent-control-plane`).
+
+### Boundary Rule
+
+Governance modules must keep policy code composable and consume stable outputs from control-plane and execution modules.
+
+### Split Execution Bootstrap
+
+- Module manifests: `Phenotype/projects/modules/thegent-governance/manifest.json`
+- Typical workflow command:
+
+```bash
+./scripts/worktree_governance.sh new backend m split-thegent-governance
+```

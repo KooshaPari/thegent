@@ -304,7 +304,7 @@ def test_mcp_list_sessions_parses_text_json_content() -> None:
                 "jsonrpc": "2.0",
                 "id": body["id"],
                 "result": {
-                    "content": [{"type": "text", "text": json.dumps(payload).decode().decode()}],
+                    "content": [{"type": "text", "text": json.dumps(payload).decode()}],
                 },
             },
         )

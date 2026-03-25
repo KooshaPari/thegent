@@ -1,0 +1,66 @@
+# Next 24-Task WBS (P6.x continuation)
+
+## Phase A: Handoff and sequencing [handoff]
+
+- [done] P6.31 - Publish `handoff-report.md` with module owners, blockers, and merge order.
+- [in_progress] P6.32 - Add PR anchor mapping (5x `lane/<module>-split-bootstrap`) to handoff.
+- [done] P6.33 - Align lane owner responsibilities with worktree governance schema and state transitions.
+- [in_progress] P6.34 - Add dependency notes for open PR merge order and verification owner.
+
+## Phase B: Evidence capture [evidence]
+
+- [done] P6.35 - Archive runtime smoke outputs (app) with pass/fail and timestamp.
+- [done] P6.36 - Archive runtime smoke outputs (mcp) with pass/fail and timestamp.
+- [done] P6.37 - Archive runtime smoke outputs (control-plane, execution, governance).
+- [done] P6.38 - Publish runtime smoke matrix summary and store in `runtime-smoke-matrix.md`.
+
+## Phase C: Lane PR mechanics [delivery]
+
+- [blocked] P6.39 - Create/open 5 lane PRs from worktree branches.
+- [blocked] P6.40 - Validate each PR includes only owned files for that module slice.
+- [blocked] P6.41 - Run lane smoke and matrix before requesting reviews.
+- [blocked] P6.42 - Attach evidence artifacts to each PR description.
+
+## Phase D: Merge train operations [merge]
+
+- [blocked] P6.43 - Establish merge train branch `int/mod-split-stage-1`.
+- [blocked] P6.44 - Merge app/mcp/control-plane/execution/governance PRs in dependency-safe order.
+- [blocked] P6.45 - Verify merge checks and rerun `lane:split:all-smoke` after each merged lane.
+- [blocked] P6.46 - Record merge queue outcomes and blockers.
+
+## Phase E: Residual checks and closeout [closeout]
+
+- [in_progress] P6.47 - Update `acceptance-matrix.md` with per-module merge and smoke status.
+- [in_progress] P6.48 - Sweep remaining open risks and close all known blockers.
+- [todo] P6.49 - Finalize handoff archive by moving evidence to archive state and updating WBS.
+- [todo] P6.50 - Mark P6.26, P6.27, P6.28, P6.29, P6.30 as done in `03_DAG_WBS.md`.
+
+## Operational artifacts
+
+- `lane-pr-anchor-map.md`
+- `merge-sequencing-checklist.md`
+
+## Dependencies (DAG)
+
+- P6.31 -> P6.35, P6.39
+- P6.35 -> P6.38 -> P6.47
+- P6.39 -> P6.40 -> P6.41 -> P6.42 -> P6.46
+- P6.42 -> P6.49
+- P6.43 -> P6.44 -> P6.45
+- P6.45 -> P6.46 -> P6.50
+- P6.47 -> P6.48 -> P6.50
+- P6.33 -> P6.34 -> P6.39
+
+## Active blockers
+
+- P6.39 and P6.43 are blocked by lane worktree branch readiness and PR channel availability.
+- P6.47 is partially complete: pre-migration acceptance criteria are documented, but module residual closeout conditions are unresolved.
+
+## Workstream split recommendation
+
+- **Child agent assignment (4 tasks each):**
+  - Agent-1: P6.31-P6.34
+  - Agent-2: P6.35-P6.38
+  - Agent-3: P6.39-P6.42
+  - Agent-4: P6.43-P6.46
+  - Agent-5: P6.47-P6.50
