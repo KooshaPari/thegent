@@ -1,5 +1,11 @@
 """CLIProxyAPIPlus lifecycle: config generation and proxy process management.
 
+DEPRECATED: This module is now a thin shim for backward compatibility.
+New code should use the decomposed modules:
+- thegent.use_cases.manage_cliproxy — Business logic (provider config, credentials)
+- thegent.ports.driven.cliproxy — Port interfaces
+- thegent.adapters.driven.cliproxy_http — HTTP client adapter
+
 Unified login flow: open URL + prompt for API key for all providers. Preflight check for
 existing credentials. Setup uses the same flow.
 Provider/model definitions from internal JSON (no factory config dependency).
@@ -23,6 +29,13 @@ from thegent.config import ThegentSettings
 from thegent.domain.provider_config import OAUTH_ONLY_PROVIDERS
 from thegent.infra.fast_subprocess import run_subprocess_optimized
 from thegent.infra.fast_yaml_parser import yaml_load, yaml_dumps
+
+# Import decomposed modules
+from thegent.use_cases.manage_cliproxy import (
+    ProviderConfigManager,
+    CredentialsResolver,
+    ProxyHealthChecker,
+)
 
 _LOG = logging.getLogger(__name__)
 

@@ -16,6 +16,8 @@ use std::process::{Command, ExitStatus, Stdio};
 use std::time::{Duration, Instant};
 
 #[cfg(all(not(test), not(debug_assertions)))]
+use pyo3::prelude::*;
+#[cfg(all(not(test), not(debug_assertions)))]
 use pyo3::exceptions::{PyRuntimeError, PyTimeoutError};
 #[cfg(all(not(test), not(debug_assertions)))]
 use pyo3::prelude::*;

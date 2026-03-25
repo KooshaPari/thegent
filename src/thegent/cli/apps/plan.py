@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from thegent.cli.commands.plan_entity_cmds import app as entity_app
+from thegent.cli.plan.plan_entity_cmds import app as entity_app
 
 console = Console()
 app = typer.Typer(help="Manage DAG tasks, work streams, and roadmap initiatives.")

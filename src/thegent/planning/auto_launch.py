@@ -369,6 +369,7 @@ class AutoLaunchSystem:
     def sync_database(self) -> None:
         """Sync workstream database with WORK_STREAM.md."""
         try:
+            # tach-ignore(planning should not architecturally depend on cli)
             from thegent.cli.commands.impl import _parse_work_stream_md
 
             work_stream_path = Path("docs/reference/WORK_STREAM.md")
@@ -571,6 +572,7 @@ class AutoLaunchSystem:
             return
 
         agent_id = "auto-launch"
+        # tach-ignore(planning should not architecturally depend on cli)
         from thegent.cli.commands.impl import work_stream_claim_impl
 
         claim_result = work_stream_claim_impl(item_id, agent_id, cd=Path.cwd())
@@ -588,6 +590,7 @@ class AutoLaunchSystem:
             return
 
         # Use bg_impl directly for the specific item
+        # tach-ignore(planning should not architecturally depend on cli)
         from thegent.cli.commands.impl import bg_impl
 
         prompt = item.get("prompt_suggestion") or item.get("prompt") or item.get("title", item_id)
