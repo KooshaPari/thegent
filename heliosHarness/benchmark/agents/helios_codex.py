@@ -15,36 +15,28 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 
+
 class HeliosCodexAdapter:
     """Adapter for Helios codex binary"""
-    
-    def __init__(self, binary_path: str = None):
-        self.binary = binary_path or os.environ.get('HELIOS_CODEX_BINARY', 'codex')
-    
+
+    def __init__(self, binary_path: str | None = None):
+        self.binary = binary_path or os.environ.get("HELIOS_CODEX_BINARY", "codex")
+
     @property
     def name(self) -> str:
         return "helios-codex"
-    
+
     @property
     def version(self) -> str:
         try:
-            result = subprocess.run(
-                [self.binary, "--version"],
-                capture_output=True,
-                timeout=5
-            )
+            result = subprocess.run([self.binary, "--version"], capture_output=True, timeout=5)
             return result.stdout.decode() or "unknown"
         except:
             return "unknown"
-    
+
     async def run(self, instruction: str, env, context, **kwargs):
         """Run the codex binary with instruction"""
-        cmd = [
-            self.binary, 
-            "exec",
-            "--skip-git-repo-check",
-            instruction
-        ]
-        
+        cmd = [self.binary, "exec", "--skip-git-repo-check", instruction]
+
         result = subprocess.run(cmd, capture_output=True, timeout=30)
         return result.stdout.decode()

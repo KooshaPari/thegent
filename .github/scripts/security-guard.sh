@@ -22,9 +22,6 @@ else
   exit 1
 fi
 
-  exit 1
-fi
-
 echo "[security-guard] Running ggshield secret scan for $STAGE"
 if [ "$STAGE" = "pre-push" ]; then
   "${GGSHIELD[@]}" secret scan pre-push --from-ref "$PRE_COMMIT_FROM_REF" --to-ref "$PRE_COMMIT_TO_REF"

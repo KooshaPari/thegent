@@ -11,7 +11,7 @@ from typing import Any
 
 def format_timestamp(ts: datetime | float | int, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
     """Format a timestamp to string.
-    
+
     Args:
         ts: datetime object or Unix timestamp
         fmt: strftime format string
@@ -23,7 +23,7 @@ def format_timestamp(ts: datetime | float | int, fmt: str = "%Y-%m-%d %H:%M:%S")
 
 def format_duration(seconds: float) -> str:
     """Format seconds to human-readable duration.
-    
+
     Args:
         seconds: Duration in seconds
     """
@@ -42,20 +42,21 @@ def format_duration(seconds: float) -> str:
 
 def format_bytes(size: int) -> str:
     """Format bytes to human-readable size.
-    
+
     Args:
         size: Size in bytes
     """
+    size_value = float(size)
     for unit in ["B", "KB", "MB", "GB", "TB"]:
-        if size < 1024:
-            return f"{size:.1f}{unit}"
-        size /= 1024
-    return f"{size:.1f}PB"
+        if size_value < 1024:
+            return f"{size_value:.1f}{unit}"
+        size_value /= 1024
+    return f"{size_value:.1f}PB"
 
 
 def format_number(n: int) -> str:
     """Format number with thousands separator.
-    
+
     Args:
         n: Number to format
     """
@@ -64,7 +65,7 @@ def format_number(n: int) -> str:
 
 def format_percent(value: float, decimals: int = 1) -> str:
     """Format float as percentage.
-    
+
     Args:
         value: Value between 0 and 1 (or 0 and 100)
         decimals: Number of decimal places
@@ -76,7 +77,7 @@ def format_percent(value: float, decimals: int = 1) -> str:
 
 def format_list(items: list[Any], max_items: int = 5, sep: str = ", ") -> str:
     """Format list with ellipsis if too long.
-    
+
     Args:
         items: List of items
         max_items: Maximum items to show
@@ -91,7 +92,7 @@ def format_list(items: list[Any], max_items: int = 5, sep: str = ", ") -> str:
 
 def truncate(s: str, max_len: int = 50, suffix: str = "...") -> str:
     """Truncate string to max length.
-    
+
     Args:
         s: String to truncate
         max_len: Maximum length
@@ -104,7 +105,7 @@ def truncate(s: str, max_len: int = 50, suffix: str = "...") -> str:
 
 def format_bool(value: bool, true: str = "Yes", false: str = "No") -> str:
     """Format boolean as string.
-    
+
     Args:
         value: Boolean value
         true: String for True
@@ -115,7 +116,7 @@ def format_bool(value: bool, true: str = "Yes", false: str = "No") -> str:
 
 def format_table_row(columns: list[str], widths: list[int]) -> str:
     """Format a table row with fixed column widths.
-    
+
     Args:
         columns: Column values
         widths: Column widths

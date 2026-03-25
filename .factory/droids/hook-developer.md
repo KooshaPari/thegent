@@ -264,7 +264,7 @@ sys.exit(0)
 
 **Compliance**:
 - Documentation standards
-- OpenSpec workflow
+- AgilePlus workflow
 - File organization
 
 **Observability**:

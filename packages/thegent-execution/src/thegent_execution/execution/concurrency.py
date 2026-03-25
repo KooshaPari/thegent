@@ -8,6 +8,7 @@ from typing import Any
 
 try:
     import structlog
+
     _log = structlog.get_logger(__name__)
 except ImportError:
     _log = logging.getLogger(__name__)
@@ -432,7 +433,14 @@ class ConcurrencyController:
             limit=float(slot_limit),
         )
         if admitted:
-            _log.info("run_admitted", slots_used=running_count, slots_limit=slot_limit, run_id=run_id, owner=owner, mode="fixed")
+            _log.info(
+                "run_admitted",
+                slots_used=running_count,
+                slots_limit=slot_limit,
+                run_id=run_id,
+                owner=owner,
+                mode="fixed",
+            )
             self._usage_tracker.record_start(owner, run_id)
             if soft_deadline_s is not None and soft_deadline_s > 0:
                 from thegent_execution.orchestration.resource.load_based_limits import get_deadline_monitor
@@ -645,5 +653,3 @@ class LaneController:
             return False
 
         return True
-
-

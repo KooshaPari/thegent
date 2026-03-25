@@ -40,7 +40,7 @@ def load_bundle_manifest(path: Path | str | None = None) -> dict[str, list[dict[
 
     try:
         data = json.loads(manifest_path.read_text())
-    except (json.JSONDecodeError, OSError, ValueError):
+    except json.JSONDecodeError, OSError, ValueError:
         return {}
 
     raw_bundles = data.get("bundles") if isinstance(data, dict) else None

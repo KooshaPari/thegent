@@ -21,7 +21,7 @@ def from_json(text: str) -> Any:
 
 def to_json_file(obj: Any, path: str, **kwargs: Any) -> None:
     """Write object to JSON file."""
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(obj, f, default=str, **kwargs)
 
 

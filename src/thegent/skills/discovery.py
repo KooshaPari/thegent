@@ -4,14 +4,14 @@ This module provides functionality to discover, load, and validate skills
 from both `.thegent/skills/` and `~/.thegent/skills/` directories.
 """
 
-import orjson as json
+import json
 import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -98,7 +98,7 @@ def _load_skill_manifest(skill_dir: Path, skill_json_path: Path) -> dict[str, An
             "entrypoint": "",
         }
 
-    with open(skill_json_path) as f:
+    with open(skill_json_path, encoding="utf-8") as f:
         data = json.load(f)
     return {
         "name": data.get("name", skill_dir.name),
@@ -253,7 +253,7 @@ def validate_skill(skill_path: Path | str) -> dict[str, Any]:
         result["warnings"].append("Missing skill.json (using SKILL.md-only compatibility mode)")
     else:
         try:
-            with open(skill_json_path) as f:
+            with open(skill_json_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Check required fields
@@ -360,8 +360,9 @@ def _parse_skill_json(path: Path) -> SkillManifest:
 
 def _parse_skill_yaml(path: Path) -> SkillManifest:
     """Parse a skill.yaml file into a SkillManifest."""
-    with path.open(encoding="utf-8") as f:
-        data = yaml.safe_load(f)
+    data = yaml_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid YAML skill manifest at {path}")
     return SkillManifest(
         name=data["name"],
         description=data.get("description", ""),

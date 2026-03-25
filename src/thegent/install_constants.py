@@ -119,6 +119,7 @@ def get_targets_for_install(
 
     return [target]
 
+
 SHELL_FILES = {
     ".zshenv": ".zshenv",
     ".zsh_bundle.zsh": ".zsh_bundle.zsh",

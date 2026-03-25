@@ -9116,7 +9116,7 @@ Source: docs/reference/WORK_STREAM.md
 |-------|------------------|
 | worker | thegent run codex/claude |
 | orchestrator-core | Lead in agent team |
-| openspec-orchestrator | Specialized workflow |
+| agileplus-orchestrator | Specialized workflow |
 | Feature | Augment | Description | thegent Parity |
 |---------|---------|-------------|----------------|
 | **auggie CLI** | `auggie` | Terminal agent | thegent run -M augment |

@@ -34,7 +34,7 @@
 
 ### **C. Project Level (Methodology & Guardrails)**
 *   **Spec-Driven Development (SDD)**:
-    *   **Methodology Comparison**: BMAD (heavyweight/multi-agent), OpenSpec (lightweight), Spec-Kit (GitHub/PR integrated), and `ai-dev-tasks` (minimalist for Cursor Plan Mode).
+    *   **Methodology Comparison**: BMAD (heavyweight/multi-agent), AgilePlus (lightweight/current), and `ai-dev-tasks` (minimalist for Cursor Plan Mode).
     *   **agents.md**: Verified standard for cross-IDE spec documentation.
     *   **PRD Workflow (`cursor-ai-prd-workflow`)**: Structured prompt collection for generating PRDs/RFCs for AI assistants.
 *   **Model Performance & Safety**:

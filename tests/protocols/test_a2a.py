@@ -138,7 +138,7 @@ class TestA2AMessage:
         )
         data = a2a_message_to_dict(msg)
         # Must not raise
-        serialized = json.dumps(data).decode().decode()
+        serialized = json.dumps(data).decode()
         assert len(serialized) > 0
 
 

@@ -52,4 +52,5 @@ class HookRegistrar:
         )
 
         data["hooks"] = hooks
-        self._path.write_text(yaml_dump(data))
+        rendered = yaml_dump(data)
+        self._path.write_text(rendered or "")

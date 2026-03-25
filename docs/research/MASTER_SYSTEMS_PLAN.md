@@ -290,7 +290,7 @@ Generic commands auto-match/find or are empty until populated.
 ### 3.6 Reference Implementations
 
 Look at for complex flows:
-- **OpenSpec** - Specification-driven development
+- **AgilePlus** - Specification-driven development
 - **GSD** - Getting Stuff Done framework
 - **BMAD** - Behavior-Driven AI Development
 - **SDD** - Specification-Driven Development

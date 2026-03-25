@@ -116745,7 +116745,7 @@ Real-world examples for automation and development
 
 ### FR-65: Project Context
 
-`openspec/project.md`
+`agileplus/project.md`
 
 
 ### FR-66: Cursor Agent Research
@@ -116925,7 +116925,7 @@ Real-world examples for automation and development
 
 ### FR-101: Project Onboarding
 
-Reference `openspec/project.md` for new contributors
+Reference `agileplus/project.md` for new contributors
 
 
 ### FR-102: Feature Proposals
@@ -117323,7 +117323,7 @@ https://docs.augmentcode.com/
 Assess alignment with project roadmap
 
 
-### FR-181: Create OpenSpec proposal
+### FR-181: Create AgilePlus proposal
 
 Formalize MCP server feature
 
@@ -117410,7 +117410,7 @@ Share findings with team
 
 ### FR-198: Short term
 
-(1-2 weeks): Create OpenSpec proposal
+(1-2 weeks): Create AgilePlus proposal
 
 
 ### FR-199: Medium term
@@ -117640,7 +117640,7 @@ Assess alignment with project goals
 
 ### FR-244: Create change proposal
 
-Use OpenSpec to formalize MCP server feature
+Use AgilePlus to formalize MCP server feature
 
 
 ### FR-245: Design MCP interface
@@ -122891,7 +122891,7 @@ Real-world examples for automation and development
 
 ### 🟡 Project Context
 
-`openspec/project.md`
+`agileplus/project.md`
 
 
 ### 🟡 Cursor Agent Research
@@ -123071,7 +123071,7 @@ Real-world examples for automation and development
 
 ### 🟡 Project Onboarding
 
-Reference `openspec/project.md` for new contributors
+Reference `agileplus/project.md` for new contributors
 
 
 ### 🟡 Feature Proposals
@@ -123469,7 +123469,7 @@ https://docs.augmentcode.com/
 Assess alignment with project roadmap
 
 
-### 🟡 Create OpenSpec proposal
+### 🟡 Create AgilePlus proposal
 
 Formalize MCP server feature
 
@@ -123556,7 +123556,7 @@ Share findings with team
 
 ### 🟡 Short term
 
-(1-2 weeks): Create OpenSpec proposal
+(1-2 weeks): Create AgilePlus proposal
 
 
 ### 🟡 Medium term
@@ -123786,7 +123786,7 @@ Assess alignment with project goals
 
 ### 🟡 Create change proposal
 
-Use OpenSpec to formalize MCP server feature
+Use AgilePlus to formalize MCP server feature
 
 
 ### 🟡 Design MCP interface
@@ -609619,9 +609619,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### FR-598: OpenSpec Integration
+### FR-598: AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### FR-599: Slash Commands
@@ -609674,7 +609674,7 @@ Comprehensive project health metrics
 
 
 
-### FR-609: openspec_init
+### FR-609: agileplus_init
 
 
 
@@ -653092,9 +653092,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### FR-2507: OpenSpec Integration
+### FR-2507: AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### FR-2508: Slash Commands
@@ -653147,7 +653147,7 @@ Comprehensive project health metrics
 
 
 
-### FR-2518: openspec_init
+### FR-2518: agileplus_init
 
 
 
@@ -665816,9 +665816,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### 🟡 OpenSpec Integration
+### 🟡 AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### 🟡 Slash Commands
@@ -665871,7 +665871,7 @@ Comprehensive project health metrics
 
 
 
-### 🟡 openspec_init
+### 🟡 agileplus_init
 
 
 
@@ -709289,9 +709289,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### 🟡 OpenSpec Integration
+### 🟡 AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### 🟡 Slash Commands
@@ -709344,7 +709344,7 @@ Comprehensive project health metrics
 
 
 
-### 🟡 openspec_init
+### 🟡 agileplus_init
 
 
 
@@ -711804,7 +711804,7 @@ src/
 - Use Context Manager
 - Hexagonal Architecture Layers
 - Domain Services
-- OpenSpec Integration
+- AgilePlus Integration
 - Running the Server
 - Claude Desktop Integration
 - Other MCP Clients
@@ -711812,7 +711812,7 @@ src/
 - generate_wbs_plan
 - run_monte_carlo
 - create_specification
-- openspec_init
+- agileplus_init
 - generate_slash_commands
 - allocate_resources
 - detect_conflicts

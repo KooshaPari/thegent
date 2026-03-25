@@ -20,22 +20,22 @@ class RetryClassifier:
 
         # Auth failures - may need re-auth
         if "401" in lowered or "403" in lowered or "auth" in lowered:
-            return RetryClass.AUTH
+            return RetryClass.TRANSIENT
 
         # Server errors - retry
         if "500" in lowered or "502" in lowered or "503" in lowered or "504" in lowered:
-            return RetryClass.SERVER
+            return RetryClass.TRANSIENT
 
         # Timeout - retry
         if "timeout" in lowered or "timed out" in lowered:
-            return RetryClass.TIMEOUT
+            return RetryClass.TRANSIENT
 
         # Network - retry
         if "network" in lowered or "connection" in lowered or "econnreset" in lowered:
-            return RetryClass.NETWORK
+            return RetryClass.TRANSIENT
 
         # Default - no retry
-        return RetryClass.NO_RETRY
+        return RetryClass.PERMANENT
 
 
 __all__ = ["RetryClassifier"]

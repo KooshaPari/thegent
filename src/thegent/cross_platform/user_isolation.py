@@ -68,6 +68,7 @@ class SystemUser(UserContext):
         if self._system == "Windows":
             try:
                 import ctypes
+
                 return ctypes.windll.shell32.IsUserAnAdmin() != 0
             except Exception:
                 return False
@@ -150,6 +151,7 @@ class AgentUser(UserContext):
         except PermissionError:
             # Fallback to temp directory
             import tempfile
+
             self._agent_home = Path(tempfile.gettempdir()) / "thegent" / self._agent_id
             self._agent_home.mkdir(parents=True, exist_ok=True)
 
@@ -174,6 +176,7 @@ class AgentUser(UserContext):
         if self._system == "Windows":
             try:
                 import ctypes
+
                 return ctypes.windll.shell32.IsUserAnAdmin() != 0
             except Exception:
                 return False

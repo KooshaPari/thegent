@@ -102,6 +102,7 @@ def _as_bool(value: Any, default: bool) -> bool:
     """Coerce arbitrary values to bool with a safe default."""
     return _as_bool_impl(value, default)
 
+
 # Domain entity classes are now imported from thegent.domain.entities.run
 # They are re-exported here for backward compatibility
 

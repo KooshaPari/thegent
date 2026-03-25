@@ -1,6 +1,6 @@
 """Always write conversation dumps to docs/."""
 
-import orjson as json
+import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -35,7 +35,7 @@ class ConversationDumpWriter:
         filename = f"{prefix}_{timestamp}.json"
         file_path = self.output_dir / filename
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(conversation, f, indent=2)
 
         logger.info(f"Wrote conversation dump: {file_path}")

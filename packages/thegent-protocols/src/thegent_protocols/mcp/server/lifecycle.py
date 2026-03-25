@@ -85,6 +85,7 @@ async def run_lifespan(
 
             if settings.mcp_mount_serena:
                 import importlib as _importlib
+
                 _serena_mod = _importlib.import_module("thegent_cli.lsp.serena_integration")
                 detect_serena_backend = _serena_mod.detect_serena_backend
                 get_serena_mcp_config = _serena_mod.get_serena_mcp_config

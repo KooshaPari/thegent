@@ -1,6 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
 use chrono::{DateTime, Utc};
-use pkcs8::{DecodePrivateKey, DecodePublicKey};
 use rsa::{
     pkcs1v15::{SigningKey, VerifyingKey},
     signature::{SignatureEncoding, Signer, Verifier},
@@ -204,7 +203,7 @@ mod tests {
 
     #[test]
     fn test_invalid_signature() -> Result<(), MAIFError> {
-        let (private_key, public_key) = generate_key_pair(2048)?;
+        let (private_key, _public_key) = generate_key_pair(2048)?;
         let (_other_private, other_public) = generate_key_pair(2048)?;
 
         let mut payload = BTreeMap::new();

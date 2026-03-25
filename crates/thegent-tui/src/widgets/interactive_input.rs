@@ -28,7 +28,7 @@ pub enum ValidationState {
     Invalid(String),
 }
 
-type ValidationFn = dyn Fn(&str) -> ValidationState + Send;
+type ValidatorFn = dyn Fn(&str) -> ValidationState + Send;
 
 /// A static registry of known command completions.
 #[derive(Debug, Clone)]
@@ -104,7 +104,7 @@ pub struct InteractiveInput {
     /// Path of the on-disk history file.
     history_path: PathBuf,
     /// Optional validator function.
-    validator: Option<Box<ValidationFn>>,
+    validator: Option<Box<ValidatorFn>>,
     /// Command registry for autocomplete.
     registry: CommandRegistry,
 }

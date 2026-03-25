@@ -57,7 +57,7 @@ def replay_list(
     sessions = engine.list_sessions()
 
     if output_json:
-        typer.echo(json.dumps([str(p).decode() for p in sessions], indent=2))
+        typer.echo(json.dumps([str(p) for p in sessions], option=json.OPT_INDENT_2).decode())
         return
 
     if not sessions:
@@ -147,7 +147,8 @@ def replay_run(
                         "event_type": event.event_type,
                         "data": event.data,
                     }
-                )).decode()
+                ).decode()
+            )
         else:
             console.print(f"[dim]{event.timestamp:.3f}[/dim] [bold cyan]{event.event_type}[/bold cyan]: {event.data}")
 
@@ -199,7 +200,7 @@ def replay_diff(
     diff = engine.compare_sessions(sess_a, sess_b)
 
     if output_json:
-        typer.echo(json.dumps(diff, indent=2), indent=2)
+        typer.echo(json.dumps(diff, option=json.OPT_INDENT_2).decode())
         return
 
     console = Console()

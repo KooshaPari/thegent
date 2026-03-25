@@ -3,9 +3,8 @@
 import logging
 from pathlib import Path
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
-
 from thegent.config import ThegentSettings
+from thegent.infra.fast_yaml_parser import yaml_load
 
 _log = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ class TeammateManager:
             if "---" in content:
                 parts = content.split("---")
                 if len(parts) >= 3:
-                    frontmatter = yaml.safe_load(parts[1])
+                    frontmatter = yaml_load(parts[1])
                     if frontmatter:
                         agent_id = frontmatter.get("name", agent_file.stem)
                         description = frontmatter.get("description", "")

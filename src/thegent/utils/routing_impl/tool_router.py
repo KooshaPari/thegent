@@ -3,7 +3,7 @@ Implements the "Routed Toolset" pattern to bypass LLM tool limits (e.g., 128 too
 Semantically selects and injects only relevant tools into the active context.
 """
 
-import orjson as json
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -137,5 +137,5 @@ class ToolRouter:
         injection = "\n\n### RELEVANT TOOLS FOR THIS TASK ###\n"
         for tool in relevant_tools:
             injection += f"- **{tool.name}**: {tool.description}\n"
-            injection += f"  Params: {json.dumps(tool.parameters).decode()}\n"
+            injection += f"  Params: {json.dumps(tool.parameters)}\n"
         return injection

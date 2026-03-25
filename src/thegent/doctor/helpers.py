@@ -1,16 +1,21 @@
 """Doctor module for comprehensive health and preflight checks of thegent environment."""
 
 # Backward compatibility - import from new submodule
+from __future__ import annotations
 
 import re
 import time
 
+from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from thegent.doctor.models import ProcessInfo
 from thegent.doctor_models import CheckResult
 
 import psutil
+
+console = Console()
 
 
 def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_bytes: int = 1024) -> tuple[bool, str]:
@@ -45,7 +50,7 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
                         True,
                         f"long-running session ({runtime / 3600:.1f}h) with {len(connections)} network connections",
                     )
-            except (psutil.AccessDenied, psutil.NoSuchProcess):
+            except psutil.AccessDenied, psutil.NoSuchProcess:
                 pass
             # Long-running with no obvious activity - still assume active (user's chats run for hours)
             return True, f"long-running session ({runtime / 3600:.1f}h, assumed active)"
@@ -56,7 +61,7 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
             cpu_percent = proc.cpu_percent(interval=0.5)
             if cpu_percent > min_cpu_percent:
                 return True, f"CPU active ({cpu_percent:.1f}%)"
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+        except psutil.AccessDenied, psutil.NoSuchProcess:
             pass
 
         # Check I/O counters (io_counters is Linux/Windows only; not available on macOS)
@@ -69,7 +74,7 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
                     write_bytes = io_counters.write_bytes
                     if read_bytes > min_io_bytes or write_bytes > min_io_bytes:
                         return True, f"I/O active (R:{read_bytes} W:{write_bytes})"
-        except (psutil.AccessDenied, psutil.NoSuchProcess, AttributeError):
+        except psutil.AccessDenied, psutil.NoSuchProcess, AttributeError:
             pass
 
         # Check if process has network connections (indicates activity)
@@ -77,7 +82,7 @@ def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_
             connections = proc.net_connections()
             if connections:
                 return True, f"network active ({len(connections)} connections)"
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+        except psutil.AccessDenied, psutil.NoSuchProcess:
             pass
 
         # If process is running/sleeping but no activity detected and runtime < 1 hour
@@ -123,7 +128,7 @@ def _find_stuck_processes(command_patterns: list[str], max_age_seconds: int = 30
             is_active, reason = _is_process_actively_working(pid)
             if not is_active:
                 stuck.append((pid, cmdline[:100], reason))
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             continue
 
     return stuck
@@ -140,7 +145,7 @@ def _extract_process_info(proc: "psutil.Process") -> "ProcessInfo | None":
             create_time=info.get("create_time", 0),
             status=info.get("status", "unknown"),
         )
-    except (psutil.NoSuchProcess, psutil.AccessDenied):
+    except psutil.NoSuchProcess, psutil.AccessDenied:
         return None
 
 
@@ -241,3 +246,11 @@ def _display_results(results: list[CheckResult]) -> bool:
         console.print(Panel(matrix, title="Governance Dashboard"))
 
     return all_ok
+
+
+_HELPER_EXPORTS = (
+    _is_process_actively_working,
+    _find_stuck_processes,
+    _extract_process_info,
+    _display_results,
+)

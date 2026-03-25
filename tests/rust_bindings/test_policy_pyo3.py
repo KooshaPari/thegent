@@ -2,6 +2,7 @@
 
 # @trace FR-GOV-001
 """
+
 import pytest
 
 
@@ -13,6 +14,7 @@ def test_policy_engine_import():
     """
     try:
         import thegent_policy  # noqa: F401
+
         assert True
     except ImportError as e:
         pytest.skip(f"thegent_policy not built: {e}")

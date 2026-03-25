@@ -15,14 +15,14 @@ These rules apply to ALL projects. Project-level CLAUDE.md files supplement (and
 Preferred helper:
 
 ```bash
-./scripts/worktree_governance.sh new <branch> [start-point]
+./scripts/worktree_governance.sh new <domain> <scale> <change-anchor> [start-point]
 ```
 
 Required layout for non-primary worktrees:
 
 - Root: `${THGENT_WORKTREE_ROOT:-<repo>/.worktrees}`
-- Naming: `<repo-name>--<branch-slug>`
-- Enforcement command: `./scripts/worktree_governance.sh check`
+- Layout: `<domain>/<scale>/<change-anchor>/<state>/`
+- Enforcement commands: `./scripts/worktree_governance.sh check`, `./scripts/worktree_governance.sh list`, `./scripts/worktree_governance.sh state <change-anchor> <new-state>`, `./scripts/worktree_governance.sh prune [--dry-run]`
 
 Canonical policy docs for this model:
 
@@ -644,7 +644,7 @@ When multiple agents or actors share a dev environment:
 
 # Plugin Ecosystem Awareness
 
-Documentation and workflow frameworks (BMAD, OpenSpec, GSD, etc.) may be available as plugins or slash commands.
+Documentation and workflow frameworks (BMAD, AgilePlus, GSD, etc.) may be available as plugins or slash commands.
 
 - Check available slash commands (`/`) for documentation workflows
 - These complement the auto-detection system -- invoke explicitly for deeper workflows
@@ -1179,3 +1179,10 @@ Use this block as an always-on policy for agentic code edits.
   - After two consecutive rate-limit responses for the same bot/PR, stop auto-retries and post queued status with next attempt time.
 - Tracking marker required in PR comments for each trigger:
   - `bot-review-trigger: <bot> <iso8601-time> <reason>`
+
+## Child-Agent and Delegation Policy
+- Use child agents for scoped discovery, audits, multi-repo scans, and implementation planning before direct parent-agent edits.
+- Delegate high-context or high-churn tasks to subagents and keep parent-agent writes narrowly focused on integration.
+- Reserve parent-agent direct writes for the final decision layer.
+- Favor clean, auditable handoffs and explicit integration checkpoints.
+

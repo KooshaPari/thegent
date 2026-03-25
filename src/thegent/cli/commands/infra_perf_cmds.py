@@ -163,7 +163,7 @@ def release_pack_cmd(version: str = "2.0") -> None:
     console.print(f"\n[bold]Package Checksum:[/] {manifest['package_checksum']}")
 
     out_path = Path.cwd() / f"release_manifest_v{version}.json"
-    out_path.write_text(json.dumps(manifest, indent=2))
+    out_path.write_text(json.dumps(manifest, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
     console.print(f"[dim]Manifest written to {out_path}[/dim]")
 
 

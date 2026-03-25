@@ -378,7 +378,7 @@ class TestConvenienceFunctions:
             pytest.skip("No WebSocket library available")
 
         # Create a mock connection
-        with patch.object(FastWebSocket, 'connect_async', new_callable=AsyncMock) as mock_connect:
+        with patch.object(FastWebSocket, "connect_async", new_callable=AsyncMock) as mock_connect:
             ws = await websocket_connect_async("ws://localhost:8080")
             assert isinstance(ws, FastWebSocket)
             mock_connect.assert_called_once()
@@ -388,7 +388,7 @@ class TestConvenienceFunctions:
         if not WEBSOCKET_CLIENT_AVAILABLE:
             pytest.skip("websocket-client not available")
 
-        with patch.object(FastWebSocket, 'connect_sync') as mock_connect:
+        with patch.object(FastWebSocket, "connect_sync") as mock_connect:
             ws = websocket_connect_sync("ws://localhost:8080")
             assert isinstance(ws, FastWebSocket)
             mock_connect.assert_called_once()

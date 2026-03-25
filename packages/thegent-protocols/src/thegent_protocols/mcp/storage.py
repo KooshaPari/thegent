@@ -86,7 +86,7 @@ class McpStorage:
         # Values are stored as JSON strings; decode on read.
         try:
             return json.loads(cast("str", raw))
-        except (json.JSONDecodeError, TypeError):
+        except json.JSONDecodeError, TypeError:
             _log.warning("McpStorage: corrupt value for key %r; returning default", key)
             return default
 
@@ -309,6 +309,7 @@ def get_mcp_storage() -> McpStorage:
 def get_mcp_event_store() -> McpEventStore:
     """Return the process-level McpEventStore singleton (thread-safe)."""
     return _registry.get_event_store()
+
 
 def _reset_singletons_for_testing(
     storage: McpStorage | None = None,

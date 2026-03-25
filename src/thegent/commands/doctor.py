@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+from thegent.infra.shim_subprocess import run as shim_run
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 

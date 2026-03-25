@@ -39,7 +39,7 @@ def _write_jsonl(lines: list[dict | str], tmp_dir: Path) -> Path:
     with p.open("w", encoding="utf-8") as fh:
         for line in lines:
             if isinstance(line, dict):
-                fh.write(json.dumps(line).decode().decode() + "\n")
+                fh.write(json.dumps(line).decode() + "\n")
             else:
                 fh.write(line + "\n")  # raw/invalid line
     return p

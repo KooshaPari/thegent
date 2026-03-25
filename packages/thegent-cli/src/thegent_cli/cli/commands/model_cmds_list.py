@@ -4,13 +4,10 @@
 from __future__ import annotations
 
 import json
-from thegent_core.utils.json_utils import json_loads, json_dumps
-import re
 import os
 import shutil
-import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import typer
 
@@ -18,7 +15,6 @@ from rich.table import Table
 
 from thegent_cli.cli.commands._cli_shared import (
     ThegentSettings,
-    _bootstrap_metric_contracts,
     _get_run_subprocess_optimized,
     _normalize_output_format,
     _resolve_cwd,
@@ -29,28 +25,6 @@ from thegent_cli.cli.commands._cli_shared import (
     resolve_agent,
 )
 from thegent_cli.cli.commands.model_cmds_agents_helpers import render_agents_table, render_droids_table
-from thegent_cli.cli.commands.model_cmds_catalog_helpers import (
-    emit_by_model_view,
-    emit_contract_view,
-    provider_sequence,
-    run_provider_listings,
-)
-from thegent_cli.cli.commands.model_cmds_metrics_helpers import (
-    build_index_data,
-    collect_metrics_rows,
-    emit_cost_values_output,
-    emit_index_output,
-    emit_metrics_output,
-    flatten_cost_values,
-)
-from thegent_cli.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
-from thegent_cli.cli.commands.model_cmds_setup_helpers import (
-    build_provider_list,
-    configure_providers,
-    set_env_line,
-)
-
-
 from thegent_cli.cli.commands.model_cmds_catalog_helpers import (
     emit_by_model_view,
     emit_contract_view,
@@ -102,7 +76,7 @@ def _resolve_cliproxyctl_binary() -> str:
     gopath = _resolve_go_env("GOPATH")
     if gopath:
         go_paths.append(Path(gopath) / "bin")
-    go_paths.append(Path(os.path.expanduser("~/go/bin")))
+    go_paths.append(Path("~/go/bin").expanduser())
 
     # Common Go install locations if PATH is not yet wired.
     go_fallback_candidates = ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server")
@@ -202,17 +176,17 @@ def _install_cliproxyctl() -> str:
     if proc.returncode != 0:
         stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
         stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
-        detail = stderr_text.strip() or stdout_text.strip() or "go install failed"
+        stderr_text.strip() or stdout_text.strip() or "go install failed"
         # Older/renamed upstream module metadata can block package installs.
         # Keep automation active by building from a local checkout when available.
         return _build_cliproxyctl_from_local_repo()
 
     go_paths = []
-    for path in (os.environ.get("GOBIN", "").strip(), _resolve_go_env("GOPATH"), os.path.expanduser("~/go")):
+    for path in (os.environ.get("GOBIN", "").strip(), _resolve_go_env("GOPATH"), Path("~/go").expanduser()):
         if path:
             go_paths.append(Path(path) / "bin")
     if not go_paths:
-        go_paths.append(Path(os.path.expanduser("~/go/bin")))
+        go_paths.append(Path("~/go/bin").expanduser())
 
     for base in go_paths:
         for name in ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server"):
@@ -256,8 +230,7 @@ def _parse_cliproxyctl_envelope(stdout_text: str, *, expected_command: str, stde
         raise ValueError("Invalid cliproxyctl JSON envelope: missing schema_version")
     if schema_version != _CLIPROXYCTL_SCHEMA_VERSION:
         raise ValueError(
-            "Unsupported cliproxyctl schema_version: "
-            f"{schema_version} (expected {_CLIPROXYCTL_SCHEMA_VERSION})"
+            f"Unsupported cliproxyctl schema_version: {schema_version} (expected {_CLIPROXYCTL_SCHEMA_VERSION})"
         )
     command = payload.get("command")
     if not isinstance(command, str):
@@ -321,7 +294,6 @@ def _models_table(title: str) -> Table:
     t.add_column("Model ID", style="cyan")
     t.add_column("Display Name", style="dim")
     return t
-
 
 
 def list_agents_cmd() -> None:

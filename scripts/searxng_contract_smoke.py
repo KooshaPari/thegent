@@ -30,10 +30,7 @@ def main() -> int:
                 # Try health or search endpoint
                 for endpoint in ["/health", "/"]:
                     try:
-                        response = await client.get(
-                            f"{server_url}{endpoint}",
-                            timeout=5
-                        )
+                        response = await client.get(f"{server_url}{endpoint}", timeout=5)
                         if response.status_code == 200:
                             return 200
                     except Exception:
@@ -47,6 +44,7 @@ def main() -> int:
 
     except ImportError:
         import urllib.request
+
         url = f"{server_url}/search"
         # Just check if URL is reachable
         with urllib.request.urlopen(url, timeout=5) as response:

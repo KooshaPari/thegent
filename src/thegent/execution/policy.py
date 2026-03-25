@@ -10,7 +10,6 @@ from typing import Any
 
 import httpx
 
-from thegent.execution.resilience import OverrideRegistry
 from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
 from thegent.execution_coercion_helpers import as_float as _as_float_impl
 from thegent.execution_coercion_helpers import as_int as _as_int_impl
@@ -39,7 +38,7 @@ _execution_diagnostics: dict[str, Any] = {
 }
 
 
-def _warn_bounded(message: str, *args: object) -> None:
+def warn_bounded(message: str, *args: object) -> None:
     global _execution_warning_count
     _execution_warning_count += 1
     if _execution_warning_count <= _EXECUTION_WARNING_LIMIT:
@@ -96,6 +95,9 @@ def _as_bool(value: Any, default: bool) -> bool:
 
 from .state import RunMeta
 from .registry import RunRegistry
+from .resilience import CircuitBreakerRegistry
+from .state import MAIFArtifact
+
 
 class PolicyEngine:
     """Evaluates execution requests against governance policies."""
@@ -129,7 +131,7 @@ class PolicyEngine:
         }
         try:
             with path.open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps(event, sort_keys=True).decode())
+                fh.write(json.dumps(event, option=json.OPT_SORT_KEYS).decode())
                 fh.write("\n")
         except OSError as exc:
             _log.warning("failed to write governance await_approval event: %s", exc)
@@ -380,7 +382,7 @@ class ProviderScorer:
         scores[characteristic][provider] = (current * 0.9) + (quality_score * 0.1)
 
         self.session_dir.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(scores, indent=2), encoding="utf-8")
+        self.path.write_text(json.dumps(scores, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
         return {"status": "updated", "new_score": scores[characteristic][provider]}
 
 
@@ -517,7 +519,7 @@ class TrustBoundaryValidator:
         """Record current environment after successful run."""
         self.session_dir.mkdir(parents=True, exist_ok=True)
         data = {"last_environment": env, "updated_at": datetime.now(UTC).isoformat()}
-        self.state_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        self.state_path.write_text(json.dumps(data, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
 
     def validate_transition(self, from_env: str | None, to_env: str) -> tuple[bool, str]:
         """
@@ -610,9 +612,9 @@ class Auditor:
         path = artifacts_dir / f"{run_id}.maif.json"
 
         if isinstance(artifact, dict):
-            path.write_text(json.dumps(artifact, indent=2), encoding="utf-8")
+            path.write_text(json.dumps(artifact, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
         else:
-            path.write_text(artifact.model_dump_json(indent=2), encoding="utf-8")
+            path.write_text(json.dumps(artifact.model_dump(), option=json.OPT_INDENT_2).decode(), encoding="utf-8")
         return path
 
     def verify_registry(self) -> dict[str, Any]:
@@ -686,5 +688,3 @@ class Auditor:
             "chain_broken": chain_broken,
             "issues": issues,
         }
-
-

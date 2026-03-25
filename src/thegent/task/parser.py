@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 
 
 class TaskParseError(Exception):
@@ -40,12 +40,11 @@ def parse_yaml_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     markdown_body = match.group(2)
 
     try:
-        # Use safe_load to prevent YAML injection
-        frontmatter = yaml.safe_load(yaml_content)
+        frontmatter = yaml_load(yaml_content)
         if not isinstance(frontmatter, dict):
             raise ValueError("Frontmatter must be a dictionary")
         return frontmatter, markdown_body
-    except yaml.YAMLError as e:
+    except Exception as e:
         raise ValueError(f"Invalid YAML frontmatter: {e}")
 
 

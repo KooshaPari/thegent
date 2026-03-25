@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 class RunState(StrEnum):
     """Execution run states."""
+
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -18,6 +19,7 @@ class RunState(StrEnum):
 
 class MAIFArtifact(BaseModel):
     """Multi-Agent Interaction Framework artifact."""
+
     run_id: str
     artifact_id: str
     artifact_type: str
@@ -27,6 +29,7 @@ class MAIFArtifact(BaseModel):
 
 class AgentSource(StrEnum):
     """Agent source types."""
+
     CODEX = "codex"
     CLAUDE = "claude"
     GPT = "gpt"
@@ -37,6 +40,7 @@ class AgentSource(StrEnum):
 
 class InteractivityMode(StrEnum):
     """Interactivity modes."""
+
     AUTO = "auto"
     HITL = "hitl"
     FULL_AUTO = "full_auto"
@@ -44,6 +48,7 @@ class InteractivityMode(StrEnum):
 
 class RunMeta(BaseModel):
     """Run metadata."""
+
     run_id: str
     session_id: str | None = None
     state: RunState = RunState.PENDING
@@ -53,6 +58,7 @@ class RunMeta(BaseModel):
 
 class CheckpointMeta(BaseModel):
     """Checkpoint metadata."""
+
     checkpoint_id: str
     run_id: str
     step: int = 0
@@ -61,6 +67,7 @@ class CheckpointMeta(BaseModel):
 
 class CalibrationRegistry(BaseModel):
     """Calibration settings registry."""
+
     calibrations: dict[str, Any] = Field(default_factory=dict)
 
 

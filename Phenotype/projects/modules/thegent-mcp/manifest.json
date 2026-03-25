@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "repo_ids": [
+    "thegent-mcp"
+  ],
+  "owners": [
+    "thegent-mcp"
+  ],
+  "refresh_cadence": "weekly",
+  "repo_ref_overrides": {},
+  "repo_runner_overrides": {},
+  "repo_command_overrides": {},
+  "repo_env_profile_overrides": {}
+}

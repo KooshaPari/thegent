@@ -390,7 +390,7 @@ def test_parse_binary_output_empty_violations() -> None:
 
     Traces to: FR-GOV-006
     """
-    payload = json.dumps({"violation_count": 0, "violations": []}).decode().decode()
+    payload = json.dumps({"violation_count": 0, "violations": []}).decode()
     assert _parse_binary_output(payload) == []
 
 

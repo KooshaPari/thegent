@@ -6,7 +6,7 @@
 #[cfg(test)]
 mod prewarm_integration_tests {
     use std::fs;
-    use std::path::Path;
+    
     use tempfile::TempDir;
 
     /// Helper to create a temporary project
@@ -68,13 +68,11 @@ mod prewarm_integration_tests {
         // Find Python files
         let mut py_files = Vec::new();
         if let Ok(entries) = fs::read_dir(project.join("src")) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if let Some(ext) = path.extension() {
-                        if ext == "py" {
-                            py_files.push(path);
-                        }
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(ext) = path.extension() {
+                    if ext == "py" {
+                        py_files.push(path);
                     }
                 }
             }
@@ -91,21 +89,19 @@ mod prewarm_integration_tests {
         // Find test files
         let mut test_files = Vec::new();
         if let Ok(entries) = fs::read_dir(project.join("tests")) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if let Some(name) = path.file_name() {
-                        if let Some(name_str) = name.to_str() {
-                            if name_str.contains("test") {
-                                test_files.push(path);
-                            }
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if let Some(name) = path.file_name() {
+                    if let Some(name_str) = name.to_str() {
+                        if name_str.contains("test") {
+                            test_files.push(path);
                         }
                     }
                 }
             }
         }
 
-        assert!(test_files.len() > 0);
+        assert!(!test_files.is_empty());
     }
 
     #[test]
@@ -166,7 +162,7 @@ mod prewarm_integration_tests {
     #[test]
     fn test_cache_freshness_check() {
         // TTL validation: cache is fresh if age < ttl
-        let now = std::time::SystemTime::now();
+        let _now = std::time::SystemTime::now();
         let ttl_secs = 3600u64;
 
         // Simulated: file is 100 seconds old, ttl is 3600

@@ -9,8 +9,6 @@ from pathlib import Path
 
 import typer
 
-from rich.table import Table
-
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
     _coerce_issue_types,
@@ -36,6 +34,7 @@ from thegent.cli.commands.session_cmds_helpers import (
 Commands for viewing and managing session contracts.
 Extracted from session_cmds.py to manage module size.
 """
+
 
 def session_contract_health_gate_cmd(
     all_sessions: bool = False,
@@ -286,8 +285,6 @@ def session_contract_health_trend_cmd(
                 f"latest captured_at_utc={latest.get('captured_at_utc', '')} "
                 f"issue_types_count={result.get('latest_issue_types_count', len(_coerce_issue_types(_safe_dict(latest).get('issue_types', []))))}"
             )
-
-
 
 
 __all__ = [

@@ -10,14 +10,14 @@ def resource_dag_impl(
     *,
     dag_list_impl: Callable[..., Any],
 ) -> str:
-    return json.dumps(dag_list_impl(cd=None))
+    return json.dumps(dag_list_impl(cd=None)).decode()
 
 
 def resource_agents_impl(
     *,
     list_agents_impl: Callable[..., Any],
 ) -> str:
-    return json.dumps(list_agents_impl())
+    return json.dumps(list_agents_impl()).decode()
 
 
 def resource_models_impl(
@@ -26,10 +26,10 @@ def resource_models_impl(
     include_contract: bool,
     list_models_impl: Callable[..., Any],
 ) -> str:
-    return json.dumps(list_models_impl(provider=provider, include_contract=include_contract))
+    return json.dumps(list_models_impl(provider=provider, include_contract=include_contract)).decode()
 
 
 def resource_models_contract_impl() -> str:
     from thegent.models import route_contract
 
-    return json.dumps(route_contract())
+    return json.dumps(route_contract()).decode()

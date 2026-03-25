@@ -12,7 +12,7 @@ WL-012 Phase 3.1 / 3.2 / 3.4
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
@@ -117,7 +117,7 @@ class RouterStatus:
                 "thegent_pct": self.thegent_pct,
             },
             indent=2,
-        ).decode()
+        )
 
 
 # ---------------------------------------------------------------------------

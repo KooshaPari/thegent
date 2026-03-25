@@ -9,7 +9,6 @@ import os
 from pathlib import Path
 
 
-
 def get_module_ast(file_path: str) -> ast.Module:
     """Parse a Python file and return its AST."""
     with open(file_path) as f:

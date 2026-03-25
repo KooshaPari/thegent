@@ -34,9 +34,16 @@ class UniversalToolAdapter:
 
         return adapter(**kwargs)
 
+    def call(self, **kwargs: Any) -> dict[str, Any]:
+        """Protocol-compatible adapter entrypoint."""
+        command = kwargs.pop("command", "")
+        if not isinstance(command, str):
+            return {"error": "command must be a string"}
+        return self.call_tool(command, **kwargs)
+
 
 # Register with global adapter registry
-AdapterRegistry.register("universal_tool", UniversalToolAdapter)
+AdapterRegistry.register("universal_tool", UniversalToolAdapter())
 
 
 def validate_tool_schema(operation: Operation, payload: dict[str, Any]) -> list[str]:

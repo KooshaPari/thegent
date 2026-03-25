@@ -346,9 +346,9 @@ class ResourcePredictionEngine:
                     "leak_severity": leak_metrics.leak_severity,
                 }
 
-            with open(self.history_file, "a") as f:
-                json.dump(snapshot_dict, f)
-                f.write("\n")
+            with open(self.history_file, "ab") as f:
+                f.write(json.dumps(snapshot_dict))
+                f.write(b"\n")
         except Exception as e:
             _log.warning("Failed to save resource snapshot: %s", e)
 
@@ -596,7 +596,7 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
 
             # Count zombie processes
             snapshot.zombie_process_count = sum(1 for c in children if c.status() == psutil.STATUS_ZOMBIE)
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             snapshot.child_process_count = 0
 
         # Thread tracking
@@ -605,7 +605,7 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
             snapshot.active_thread_count = len(threads)
             # Estimate blocked threads (simplified - would need more detailed analysis)
             snapshot.blocked_thread_count = 0  # Placeholder
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess, psutil.AccessDenied:
             snapshot.active_thread_count = proc.num_threads()
 
         swap = psutil.swap_memory()
@@ -616,7 +616,7 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
         try:
             ctx_switches = proc.num_ctx_switches()
             snapshot.context_switches = ctx_switches.voluntary + ctx_switches.involuntary
-        except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError):
+        except psutil.NoSuchProcess, psutil.AccessDenied, AttributeError:
             snapshot.context_switches = 0
 
         try:
@@ -625,7 +625,7 @@ def sample_extended_resources() -> ExtendedResourceSnapshot:
                 snapshot.page_faults = getattr(io_counters, "read_chars", 0) + getattr(
                     io_counters, "write_chars", 0
                 )  # Approximate; Linux-only attrs
-        except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError):
+        except psutil.NoSuchProcess, psutil.AccessDenied, AttributeError:
             snapshot.page_faults = 0
 
         # GPU detection (basic - would need nvidia-ml-py or similar)

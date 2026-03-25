@@ -41,3 +41,6 @@ def validate_provider(name: str) -> tuple[bool, str, dict[str, Any]]:
 
 def _update_provider_mapping(name: str, is_openai_compat: bool = False, remove: bool = False) -> None:
     """Update provider mapping."""
+
+
+_PROVIDER_CRUD_EXPORTS = (_update_provider_mapping,)

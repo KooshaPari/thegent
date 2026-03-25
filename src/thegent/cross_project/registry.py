@@ -1,6 +1,6 @@
 """Unified persona registry across projects."""
 
-import orjson as json
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -109,4 +109,4 @@ class CrossProjectRegistry:
 
     def _save_registry(self) -> None:
         """Save registry to file."""
-        self.registry_path.write_text(json.dumps(self.registry, indent=2))
+        self.registry_path.write_text(json.dumps(self.registry, indent=2), encoding="utf-8")

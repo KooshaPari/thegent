@@ -134,7 +134,7 @@ def register_modes(mcp: "FastMCP") -> None:
         content = read_file_optimized(path)
         if content is None:
             return ToolResult(
-                content=json.dumps({"error": "Failed to read plan", "path": str(path).decode()}),
+                content=json.dumps({"error": "Failed to read plan", "path": str(path)}),
                 structured_content={"error": "Failed to read plan", "path": str(path)},
                 meta={"execution_time_ms": int((time.perf_counter() - start) * 1000)},
             )
@@ -170,7 +170,7 @@ def register_modes(mcp: "FastMCP") -> None:
         path.write_text(content, encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"path": str(path).decode(), "saved": True}),
+            content=json.dumps({"path": str(path), "saved": True}),
             structured_content={"path": str(path), "saved": True},
             meta={"execution_time_ms": elapsed},
         )
@@ -199,7 +199,7 @@ def register_modes(mcp: "FastMCP") -> None:
         marker.write_text("approved", encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"plan_id": plan_id, "approved": True, "marker": str(marker).decode()}),
+            content=json.dumps({"plan_id": plan_id, "approved": True, "marker": str(marker)}),
             structured_content={"plan_id": plan_id, "approved": True, "marker": str(marker)},
             meta={"execution_time_ms": elapsed},
         )
@@ -256,7 +256,7 @@ def register_modes(mcp: "FastMCP") -> None:
         path.write_text(template, encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"path": str(path).decode(), "plan_id": name, "created": True}),
+            content=json.dumps({"path": str(path), "plan_id": name, "created": True}),
             structured_content={"path": str(path), "plan_id": name, "created": True},
             meta={"execution_time_ms": elapsed},
         )
@@ -360,7 +360,7 @@ def register_modes(mcp: "FastMCP") -> None:
         path.write_text(brief_content, encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"path": str(path).decode(), "saved": True}),
+            content=json.dumps({"path": str(path), "saved": True}),
             structured_content={"path": str(path), "saved": True},
             meta={"execution_time_ms": elapsed},
         )
@@ -392,7 +392,7 @@ def register_modes(mcp: "FastMCP") -> None:
         path.write_text(report_content, encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"path": str(path).decode(), "saved": True}),
+            content=json.dumps({"path": str(path), "saved": True}),
             structured_content={"path": str(path), "saved": True},
             meta={"execution_time_ms": elapsed},
         )
@@ -424,7 +424,7 @@ def register_modes(mcp: "FastMCP") -> None:
         content = safe_read_file(latest) if latest else None
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"path": str(latest).decode() if latest else None, "content": content}),
+            content=json.dumps({"path": str(latest) if latest else None, "content": content}),
             structured_content={"path": str(latest) if latest else None, "content": content},
             meta={"execution_time_ms": elapsed},
         )
@@ -710,7 +710,7 @@ def register_modes(mcp: "FastMCP") -> None:
         session_path.write_text(json.dumps(session).decode(), encoding="utf-8")
         elapsed = int((time.perf_counter() - start) * 1000)
         return ToolResult(
-            content=json.dumps({"session_id": session_id, "question_count": len(session["questions"]).decode()}),
+            content=json.dumps({"session_id": session_id, "question_count": len(session["questions"])}),
             structured_content={"session_id": session_id, "question_count": len(session["questions"])},
             meta={"execution_time_ms": elapsed},
         )

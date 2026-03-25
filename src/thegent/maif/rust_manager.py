@@ -67,8 +67,8 @@ class RustMAIFManager:
             capture_output=True,
         )
 
-        with open(output_path) as f:
-            return json.load(f)
+        with open(output_path, "rb") as f:
+            return json.loads(f.read())
 
     def verify_artifact(self, artifact_path: Path) -> bool:
         """Verify a MAIF artifact using the Rust binary."""

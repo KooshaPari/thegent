@@ -198,7 +198,7 @@ class TestRunOxlint:
         assert "my-oxlintrc.json" in calls[0]
 
     def test_non_dict_items_are_skipped(self) -> None:
-        payload = json.dumps(["not-a-dict", None, 42]).decode().decode()
+        payload = json.dumps(["not-a-dict", None, 42]).decode()
         acc = LintingAccelerator()
         with patch("shutil.which", return_value="/bin/oxlint"):
             with patch("subprocess.run", return_value=_completed(payload)):

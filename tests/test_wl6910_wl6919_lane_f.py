@@ -100,7 +100,9 @@ def test_wl6911_parse_log_entry_valid_payload() -> None:
     end = datetime(2026, 1, 31, tzinfo=UTC)
     stats = summary.LogParseStats()
 
-    row = json.dumps({"type": "assistant", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "ok"}}).decode().decode()
+    row = json.dumps(
+        {"type": "assistant", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "ok"}}
+    ).decode()
     parsed = summary._parse_log_entry(row, start, end, stats)
 
     assert parsed is not None
@@ -123,7 +125,7 @@ def test_wl6911_parse_log_entry_invalid_timestamp() -> None:
     end = datetime(2026, 1, 31, tzinfo=UTC)
     stats = summary.LogParseStats()
 
-    row = json.dumps({"type": "assistant", "timestamp": "not-a-time", "message": {"content": "bad"}}).decode().decode()
+    row = json.dumps({"type": "assistant", "timestamp": "not-a-time", "message": {"content": "bad"}}).decode()
     parsed = summary._parse_log_entry(row, start, end, stats)
 
     assert parsed is None
@@ -135,7 +137,8 @@ def test_wl6912_read_log_file_readable(tmp_path: Path) -> None:
     end = datetime(2026, 1, 31, tzinfo=UTC)
     log_file = tmp_path / "ok.jsonl"
     log_file.write_text(
-        json.dumps({"type": "user", "timestamp": "2026-01-12T09:00:00+00:00", "message": {"content": "hello"}}).decode().decode() + "\n",
+        json.dumps({"type": "user", "timestamp": "2026-01-12T09:00:00+00:00", "message": {"content": "hello"}}).decode()
+        + "\n",
         encoding="utf-8",
     )
 
@@ -156,11 +159,13 @@ def test_wl6912_read_log_file_with_malformed_and_valid_records(tmp_path: Path) -
                 json.dumps(
                     {"type": "assistant", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "ok"}}
                 ),
-                json.dumps({"type": "assistant", "timestamp": "bad"}).decode().decode(),
+                json.dumps({"type": "assistant", "timestamp": "bad"}).decode(),
                 json.dumps(
                     {"type": "system", "timestamp": "2026-01-10T10:00:00+00:00", "message": {"content": "skip"}}
                 ),
-                json.dumps({"type": "user", "timestamp": "2026-01-10T10:01:00+00:00", "message": {"content": "valid"}}).decode().decode(),
+                json.dumps(
+                    {"type": "user", "timestamp": "2026-01-10T10:01:00+00:00", "message": {"content": "valid"}}
+                ).decode(),
             ]
         ),
         encoding="utf-8",
@@ -241,7 +246,7 @@ def test_wl6913_get_thegent_root_path_failure_falls_back(monkeypatch: pytest.Mon
 def test_wl6914_shared_mcp_stale_lockfile_cleanup_success(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(shared_mcp_manager.Path, "home", lambda: tmp_path)
     _scope, lockfile = shared_mcp_manager.get_server_scope()
-    lockfile.write_text(json.dumps({"pid": 424242, "port": 3847}).decode().decode(), encoding="utf-8")
+    lockfile.write_text(json.dumps({"pid": 424242, "port": 3847}).decode(), encoding="utf-8")
     monkeypatch.setattr(
         shared_mcp_manager.os, "kill", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError(ESRCH, ""))
     )

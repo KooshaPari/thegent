@@ -16,7 +16,7 @@ def hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     payload_for_hash = {
         key: value for key, value in payload.items() if key not in {"generated_at_utc", "payload_signature"}
     }
-    body = json.dumps(payload_for_hash, sort_keys=True, separators=(",", ":").decode())
+    body = json.dumps(payload_for_hash, option=json.OPT_SORT_KEYS).decode()
     return {"algorithm": "sha256", "value": hashlib.sha256(body.encode()).hexdigest()}
 
 

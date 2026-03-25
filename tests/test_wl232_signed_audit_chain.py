@@ -67,7 +67,7 @@ class TestSignedAuditArtifactChain:
         entry = chain.append("entry_001", {"action": "create"})
 
         # For first entry, prev_signature is empty
-        expected_input = f":{entry.entry_id}:{json.dumps(entry.data, sort_keys=True).decode().decode()}"
+        expected_input = f":{entry.entry_id}:{json.dumps(entry.data, sort_keys=True).decode()}"
         expected_signature = hashlib.sha256(expected_input.encode()).hexdigest()
 
         assert entry.signature == expected_signature

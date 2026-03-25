@@ -83,12 +83,16 @@ _PROVIDER_RETRY_CONFIG: dict[str, dict] = {
 
 def _get_provider_retry_config(provider: str) -> dict:
     """Get retry configuration for a specific provider."""
-    return _PROVIDER_RETRY_CONFIG.get(provider, {
-        "max_attempts": 3,
-        "min_wait": 1.0,
-        "max_wait": 30.0,
-        "backoff_multiplier": 1.5,
-    })
+    return _PROVIDER_RETRY_CONFIG.get(
+        provider,
+        {
+            "max_attempts": 3,
+            "min_wait": 1.0,
+            "max_wait": 30.0,
+            "backoff_multiplier": 1.5,
+        },
+    )
+
 
 # Instance tracking for concurrent execution monitoring
 _instance_counter = 0
@@ -712,9 +716,11 @@ class CodexProxyRunner(AgentRunner):
                 full_env["CODEX_CONFIG_DIR"] = str(temp_dir)
 
             if self.agent_name == "zen":
-                base_url = (self._settings.zen_base_url or "https://api.opencode.ai").rstrip("/")
+                zen_base_url = getattr(self._settings, "zen_base_url", "") or os.environ.get("THGENT_ZEN_BASE_URL", "")
+                base_url = (str(zen_base_url) or "https://api.opencode.ai").rstrip("/")
                 api_key_env = (
-                    self._settings.zen_api_key
+                    getattr(self._settings, "zen_api_key", "")
+                    or os.environ.get("THGENT_ZEN_API_KEY")
                     or os.environ.get("OPENCODE_API_KEY")
                     or os.environ.get("ZEN_API_KEY")
                     or ""
@@ -1242,6 +1248,7 @@ class CodexProxyRunner(AgentRunner):
 
 # Register with unified adapter registry
 from thegent.adapters.ports import AdapterRegistry
+
 
 class CodexProxyAdapter:
     """Codex proxy adapter for agent execution"""

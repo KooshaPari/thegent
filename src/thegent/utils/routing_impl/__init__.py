@@ -20,6 +20,7 @@ __all__ = [
     "ConstraintValidator",
     "RoutingConstraint",
     "RoutingResponse",
+    "RouteCandidate",
     "TaskCategory",
     "TaskClassifier",
     "TaskMetadata",

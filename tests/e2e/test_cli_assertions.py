@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-import orjson as json
+import json
 
 from tests.e2e.cli_assertions import expected_trend_health_signature, load_cli_json
 
@@ -44,6 +44,6 @@ def test_expected_trend_health_signature_is_deterministic() -> None:
 def test_expected_trend_health_signature_matches_policy_hash() -> None:
     policy, signature = expected_trend_health_signature()
 
-    expected = hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(",", ":").decode().decode()).encode("utf-8")).hexdigest()
+    expected = hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
     assert signature == expected

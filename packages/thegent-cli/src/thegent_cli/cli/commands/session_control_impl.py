@@ -110,7 +110,6 @@ def session_send_impl(session_id: str, message: str, msg_type: str = "reprompt")
     tmux_pane = attach_target.get("tmux_pane")
     if m.get("interactivity") == "tmux" or tmux_pane:
         if tmux_pane:
-
             try:
                 shim_run(["tmux", "send-keys", "-t", tmux_pane, message, "C-m"], check=False)
                 sent_via.append("tmux")

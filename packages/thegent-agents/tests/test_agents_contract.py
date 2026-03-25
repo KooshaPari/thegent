@@ -1,7 +1,6 @@
 """Contract tests for thegent-agents package."""
 
 
-
 class TestAgentsContract:
     """Test thegent-agents package contract."""
 

@@ -147,7 +147,7 @@ class ModelsTUI(App):
     def load_data(self) -> None:
         if self.custom_path.exists():
             try:
-                self.custom_data = yaml.safe_load(self.custom_path.read_text(encoding="utf-8")) or {}
+                self.custom_data = yaml_load(self.custom_path) or {}
             except Exception:
                 self.custom_data = {}
         else:
@@ -155,7 +155,10 @@ class ModelsTUI(App):
 
     def save_data(self) -> None:
         self.custom_path.parent.mkdir(parents=True, exist_ok=True)
-        self.custom_path.write_text(yaml.dump(self.custom_data), encoding="utf-8")
+        rendered = yaml_dump(self.custom_data)
+        if rendered is None:
+            raise RuntimeError("yaml_dump returned None for model catalog")
+        self.custom_path.write_text(rendered, encoding="utf-8")
 
     def compose(self) -> ComposeResult:
         yield Header()

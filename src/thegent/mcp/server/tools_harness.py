@@ -8,6 +8,10 @@ from typing import Any
 from thegent.agents.unified_session_index import HarnessActionError, HarnessTUIMapper, HarnessType
 
 
+def _json_response(payload: Any) -> str:
+    return json.dumps(payload).decode("utf-8")
+
+
 def register_harness_tools(
     mcp: Any,
     server_tools_harness: Any,
@@ -131,7 +135,7 @@ def harness_interact_impl(
     try:
         harness_type = HarnessType(harness.lower())
     except ValueError:
-        return json.dumps(
+        return _json_response(
             {
                 "success": False,
                 "error": f"Unknown harness: {harness}. Valid: {[h.value for h in HarnessType]}",
@@ -148,9 +152,9 @@ def harness_interact_impl(
             prompt=prompt or "",
             session_id=session_id or "",
         )
-        return json.dumps(result)
+        return _json_response(result)
     except HarnessActionError as e:
-        return json.dumps(
+        return _json_response(
             {
                 "success": False,
                 "error": str(e),
@@ -168,7 +172,7 @@ def harness_list_actions_impl() -> str:
     """
     mapper = HarnessTUIMapper()
     actions = mapper.list_actions()
-    return json.dumps(
+    return _json_response(
         {
             "actions": actions,
             "count": len(actions),
@@ -193,7 +197,7 @@ def harness_get_command_impl(
     try:
         harness_type = HarnessType(harness.lower())
     except ValueError:
-        return json.dumps(
+        return _json_response(
             {
                 "error": f"Unknown harness: {harness}",
             }
@@ -202,12 +206,12 @@ def harness_get_command_impl(
     mapper = HarnessTUIMapper()
     cmd = mapper.get_command(harness_type, action)
     if cmd is None:
-        return json.dumps(
+        return _json_response(
             {
                 "error": f"No command for action={action} harness={harness}",
             }
         )
-    return json.dumps(
+    return _json_response(
         {
             "harness": harness,
             "action": action,
@@ -237,7 +241,7 @@ def harness_register_host_impl(
     try:
         harness_type = HarnessType(harness.lower())
     except ValueError:
-        return json.dumps(
+        return _json_response(
             {
                 "success": False,
                 "error": f"Unknown harness: {harness}",
@@ -251,7 +255,7 @@ def harness_register_host_impl(
         command_prefix=command_prefix,
         custom_actions=custom_actions,
     )
-    return json.dumps(
+    return _json_response(
         {
             "success": True,
             "host_id": host_id,

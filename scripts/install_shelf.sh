@@ -369,12 +369,12 @@ setup_thegent() {
     log_info "Found thegent at $THEGENT_DIR"
     cd "$THEGENT_DIR"
 
-    # Install dependencies
+    # Install dependencies (bun only)
     if [[ -f "package.json" ]]; then
         if command -v bun >/dev/null 2>&1; then
             bun install || log_warn "bun install failed"
-        elif command -v npm >/dev/null 2>&1; then
-            npm install || log_warn "npm install failed"
+        else
+            log_warn "bun is required but not installed. Install from https://bun.sh/"
         fi
     fi
 

@@ -6,6 +6,7 @@ Uses mtime + lsof for safe removal (per GIT_INDEX_LOCK_OS_LEVEL_AND_AGENT_SYSTEM
 
 import platform
 import subprocess
+import shlex
 from collections.abc import Iterator
 from typing import Optional
 from pathlib import Path
@@ -83,7 +84,7 @@ def _has_open_holder(lock_path: Path) -> Optional[bool]:
     except FileNotFoundError:
         return None
     except subprocess.TimeoutExpired:
-        return None
+        return False
 
 
 def _find_lock_files(paths: list[Path]) -> Iterator[Path]:
@@ -230,7 +231,7 @@ def _lock_cleanup_install_systemd() -> tuple[bool, str]:
     systemd_user.mkdir(parents=True, exist_ok=True)
 
     cmd = _lock_cleanup_thegent_cmd()
-    exec_line = " ".join(cmd)
+    exec_line = shlex.join(cmd)
     service_content = f"""[Unit]
 Description=thegent git index.lock cleanup
 After=network.target

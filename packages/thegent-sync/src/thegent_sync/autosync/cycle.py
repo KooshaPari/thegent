@@ -111,24 +111,28 @@ async def _sync_bidirectional(runner, items: list) -> None:
 async def _sync_to_github(runner, items: list) -> dict[str, Any]:
     """Sync to GitHub - delegates to sync module."""
     from thegent_sync.autosync.github_sync import sync_to_github
+
     return await sync_to_github(runner, items)
 
 
 async def _sync_from_github(runner, items: list, path: Path) -> list:
     """Sync from GitHub - delegates to sync module."""
     from thegent_sync.autosync.github_sync import sync_from_github
+
     return await sync_from_github(runner, items, path)
 
 
 async def _sync_to_linear(runner, items: list) -> dict[str, Any]:
     """Sync to Linear - delegates to sync module."""
     from thegent_sync.autosync.linear_sync import sync_to_linear
+
     return await sync_to_linear(runner, items)
 
 
 async def _sync_from_linear(runner, items: list, path: Path) -> list:
     """Sync from Linear - delegates to sync module."""
     from thegent_sync.autosync.linear_sync import sync_from_linear
+
     return await sync_from_linear(runner, items, path)
 
 

@@ -47,9 +47,7 @@ class WorktreeManager:
         wt_path = self.mesh_worktrees_dir / f"agent-{agent_id}"
         if wt_path.exists():
             try:
-                shim_run(
-                    ["git", "worktree", "remove", "--force", str(wt_path)], cwd=self.project_root, check=True
-                )
+                shim_run(["git", "worktree", "remove", "--force", str(wt_path)], cwd=self.project_root, check=True)
                 shim_run(["git", "worktree", "prune"], cwd=self.project_root, check=True)
                 logger.info(f"Cleaned up worktree for agent {agent_id}")
             except subprocess.CalledProcessError as e:
