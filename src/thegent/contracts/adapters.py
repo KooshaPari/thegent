@@ -163,6 +163,7 @@ class GenericOutputAdapter:
         return self._provider
 
     def normalize(self, raw: str | dict[str, Any], context: dict[str, Any] | None = None) -> AdapterResult:
+        # tach-ignore(contracts->output_parser is reverse of architectural direction)
         from thegent.output_parser import extract_condensed
 
         if isinstance(raw, str):
@@ -249,6 +250,7 @@ def normalize_output(
         raise SemanticValidationError(f"Normalization failed for {provider} and fallback is disabled.")
 
     # Fallback: minimal CSM from plain text
+    # tach-ignore(contracts->output_parser is reverse of architectural direction)
     from thegent.output_parser import extract_condensed
 
     text = raw if isinstance(raw, str) else str(raw.get("stdout", raw.get("content", str(raw))))

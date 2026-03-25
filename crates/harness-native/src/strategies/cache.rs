@@ -1,5 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use fs2::FileExt;
+
 pub fn l1_path(harness_home: &Path, key: &str) -> PathBuf {
     harness_home
         .join("var")
