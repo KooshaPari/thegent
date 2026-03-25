@@ -69,7 +69,7 @@ def __getattr__(name: str) -> Any:
 
     # Forward dag_update_cmd to _cli_surface
     if name == "dag_update_cmd":
-        from thegent.cli.commands import plan_dag_cmds
+        from thegent.cli.plan import plan_dag_cmds
 
         return getattr(plan_dag_cmds, name)
 
