@@ -83,7 +83,7 @@ Each item now has an explicit **Ship** line (PR **→** `main` / `release/*`, **
 | 5 | portage / governance | backup runbook; tmp cleanup schedule; `.worktrees` policy; script lint — **merge** |
 | 6 | trace / trash / ralph / org | tests; naming doc; ralph decision; reuse issue — **ship** per item |
 
-**Immediate upstream target:** fix **`thegent` [PR #549](https://github.com/KooshaPari/thegent/pull/549)** CI failures, then merge to `main` with **CHANGELOG [Unreleased]** / release notes per `docs/guides/CHANGELOG_PROCESS.md`.
+**Immediate upstream target:** Merge **session docs** (`docs/session-docs-recovery` — superseded **#551/#553/#554** stacks); then work **#552** (colab / helMo roots). Keep **`main`** CI green per `CHANGELOG_PROCESS` when Actions run.
 
 ## Related
 
