@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from thegent.cli.commands.cli_dag_run_cmds import (
+from thegent.cli.commands.run.cli_dag_run_cmds import (
     dag_reconcile_cmd,
     dag_run_cmd,
 )
 
-from thegent.cli.commands.cli_dag_run_sync_recover import (
+from thegent.cli.commands.run.cli_dag_run_sync_recover import (
     dag_sync_cmd,
     dag_checkpoint_cmd,
     dag_rollback_cmd,

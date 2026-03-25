@@ -162,8 +162,7 @@ def run_agent(
     When no --agent is specified, the capability index is consulted to pick the
     best-matching agent for the prompt (WL-034). Use --no-auto-agent to skip this.
     """
-    from thegent.cli.commands.run_cmds import run_cmd
-    from thegent.cli.commands.run_cmds_loop import loop_cmd
+    from thegent.cli.commands.run import run_cmd, loop_cmd
 
     prompt = str(_unwrap_typer_default(prompt))
     agent = _unwrap_typer_default(agent)
@@ -289,7 +288,7 @@ def run_free(
     pick the best-matching agent (WL-034). Falls back to 'copilot' (gpt-5-mini)
     when no indexed agent matches.
     """
-    from thegent.cli.commands.run_cmds import run_cmd
+    from thegent.cli.commands.run import run_cmd
 
     effective_agent: str | None = None
     effective_model: str | None = model

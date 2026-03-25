@@ -328,8 +328,8 @@ def retry_cmd(
 
 
 # Re-export from submodules for backward compatibility
-from thegent.cli.commands.run_cmds_loop import *  # noqa: F401, F403
-from thegent.cli.commands.run_cmds_advanced import *  # noqa: F401, F403
+from thegent.cli.commands.run.run_cmds_loop import *  # noqa: F401, F403
+from thegent.cli.commands.run.run_cmds_advanced import *  # noqa: F401, F403
 
 __all__ = [
     "bg_cmd",
