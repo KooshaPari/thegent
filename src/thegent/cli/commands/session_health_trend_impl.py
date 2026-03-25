@@ -215,9 +215,7 @@ def session_contract_health_trend_impl(
         "latest_blocked_ratio": (latest or {}).get("blocked_ratio", None),
         "latest_blocked_count": (latest or {}).get("blocked_count", None),
         "latest_issue_types_count": len(_coerce_issue_types((latest or {}).get("issue_types", []))),
-        "latest_issue_types_json": json.dumps(
-            _coerce_issue_types((latest or {}).get("issue_types", []))
-        ).decode(),
+        "latest_issue_types_json": json.dumps(_coerce_issue_types((latest or {}).get("issue_types", []))).decode(),
         "latest_issue_types_csv": ", ".join(str(v) for v in _coerce_issue_types((latest or {}).get("issue_types", []))),
         "latest_issue_types_hash": hashlib.sha256(
             json.dumps(_coerce_issue_types((latest or {}).get("issue_types", [])))

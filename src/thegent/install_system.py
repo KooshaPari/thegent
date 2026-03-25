@@ -38,7 +38,7 @@ def _run_command(
     run_env = os.environ.copy()
     if env:
         run_env.update(env)
-    
+
     result = subprocess.run(
         cmd,
         capture_output=capture_output,
@@ -46,15 +46,13 @@ def _run_command(
         cwd=cwd,
         env=run_env,
     )
-    
+
     stdout = result.stdout or ""
     stderr = result.stderr or ""
-    
+
     if check and result.returncode != 0:
-        raise subprocess.CalledProcessError(
-            result.returncode, cmd, stdout, stderr
-        )
-    
+        raise subprocess.CalledProcessError(result.returncode, cmd, stdout, stderr)
+
     return result.returncode, stdout, stderr
 
 
@@ -63,11 +61,11 @@ def install_homebrew(
     dry_run: bool = False,
 ) -> tuple[bool, str]:
     """Install Homebrew if not present.
-    
+
     Args:
         console: Rich console for output
         dry_run: If True, don't make changes
-        
+
     Returns:
         Tuple of (success, message)
     """
@@ -100,18 +98,19 @@ def install_mise(
     settings: "ThegentSettings | None" = None,
 ) -> tuple[bool, str]:
     """Install mise (formerly rtx) via Homebrew or Nix.
-    
+
     Args:
         console: Rich console for output
         dry_run: If True, don't make changes
         use_nix: If True, use Nix instead of Homebrew
         settings: Thegent settings
-        
+
     Returns:
         Tuple of (success, message)
     """
     if settings is None:
         from thegent.config import ThegentSettings
+
         settings = ThegentSettings()
 
     if _command_exists("mise"):
@@ -122,7 +121,7 @@ def install_mise(
 
     if use_nix:
         return _install_mise_nix(console)
-    
+
     return _install_mise_homebrew(console, settings)
 
 
@@ -130,14 +129,12 @@ def _install_mise_nix(console: Console | None) -> tuple[bool, str]:
     """Install mise via Nix."""
     if not _command_exists("nix"):
         return False, "Nix not found. Install Nix first or use Homebrew."
-    
+
     if console:
         console.print("[cyan]Installing mise via Nix...[/cyan]")
-    
-    rc, stdout, stderr = _run_command(
-        ["nix", "profile", "install", "nixpkgs#mise"]
-    )
-    
+
+    rc, stdout, stderr = _run_command(["nix", "profile", "install", "nixpkgs#mise"])
+
     if rc == 0:
         return True, "mise installed via Nix"
     return False, f"mise Nix installation failed: {stderr or stdout}"
@@ -155,15 +152,15 @@ def _install_mise_homebrew(
 
     if console:
         console.print("[cyan]Installing mise via Homebrew...[/cyan]")
-    
+
     rc, stdout, stderr = _run_command(["brew", "install", "mise"])
-    
+
     if rc != 0:
         return False, f"mise installation failed: {stderr or stdout}"
-    
+
     # Setup shell hooks
     _setup_mise_shell_hooks(settings)
-    
+
     return True, "mise installed via Homebrew"
 
 
@@ -202,7 +199,7 @@ def _add_hook_to_config(config_file: Path, hook_cmd: str) -> None:
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(f"# mise activation\n{hook_cmd}\n")
         return
-    
+
     content = config_file.read_text()
     if "mise activate" not in content:
         with open(config_file, "a") as f:
@@ -211,10 +208,10 @@ def _add_hook_to_config(config_file: Path, hook_cmd: str) -> None:
 
 def verify_mise_installation(console: Console | None = None) -> bool:
     """Verify mise is properly installed and configured.
-    
+
     Args:
         console: Rich console for output
-        
+
     Returns:
         True if mise is properly configured
     """
@@ -222,30 +219,30 @@ def verify_mise_installation(console: Console | None = None) -> bool:
         if console:
             console.print("[red]mise not found in PATH[/red]")
         return False
-    
+
     # Check mise version
     rc, stdout, stderr = _run_command(
         ["mise", "version"],
         check=False,
     )
-    
+
     if rc != 0:
         if console:
             console.print(f"[red]mise version check failed: {stderr}[/red]")
         return False
-    
+
     if console:
         console.print(f"[green]mise version: {stdout.strip()}[/green]")
-    
+
     return True
 
 
 def uninstall_mise_hooks(console: Console | None = None) -> bool:
     """Remove mise hooks from shell config files.
-    
+
     Args:
         console: Rich console for output
-        
+
     Returns:
         True if hooks were removed successfully
     """
@@ -256,23 +253,19 @@ def uninstall_mise_hooks(console: Console | None = None) -> bool:
         Path.home() / ".bash_profile",
         Path.home() / ".config" / "fish" / "config.fish",
     ]
-    
+
     removed = False
     for config_file in config_files:
         if config_file.exists():
             content = config_file.read_text()
             if "mise activate" in content:
                 lines = content.split("\n")
-                new_lines = [
-                    line for line in lines
-                    if "mise activate" not in line
-                    and "# mise activation" not in line
-                ]
+                new_lines = [line for line in lines if "mise activate" not in line and "# mise activation" not in line]
                 config_file.write_text("\n".join(new_lines))
                 if console:
                     console.print(f"[yellow]Removed mise hooks from {config_file}[/yellow]")
                 removed = True
-    
+
     return removed
 
 
@@ -281,24 +274,24 @@ def uninstall_system_dependencies(
     dry_run: bool = False,
 ) -> tuple[bool, str]:
     """Uninstall system dependencies installed by thegent.
-    
+
     Args:
         console: Rich console for output
         dry_run: If True, don't make changes
-        
+
     Returns:
         Tuple of (success, message)
     """
     if dry_run:
         return True, "Would uninstall system dependencies"
-    
+
     # Remove mise hooks
     uninstall_mise_hooks(console)
-    
+
     # Note: We don't uninstall Homebrew or mise itself as they may be used by other tools
     if console:
         console.print("[green]System dependencies uninstalled[/green]")
-    
+
     return True, "System dependencies uninstalled"
 
 
@@ -311,35 +304,35 @@ def clone_git_repo(
     console: Console | None = None,
 ) -> tuple[bool, str]:
     """Clone a git repository.
-    
+
     Args:
         url: Repository URL
         target: Target directory
         depth: Clone depth (default: 1 for shallow clone)
         branch: Specific branch to clone
         console: Rich console for output
-        
+
     Returns:
         Tuple of (success, message)
     """
     if target.exists():
         return True, f"Directory already exists: {target}"
-    
+
     cmd = ["git", "clone", "--depth", str(depth)]
-    
+
     if branch:
         cmd.extend(["--branch", branch])
-    
+
     cmd.extend([url, str(target)])
-    
+
     if console:
         console.print(f"[cyan]Cloning {url}...[/cyan]")
-    
+
     rc, stdout, stderr = _run_command(cmd, check=False)
-    
+
     if rc != 0:
         return False, f"Clone failed: {stderr or stdout}"
-    
+
     return True, f"Cloned to {target}"
 
 
@@ -349,30 +342,30 @@ def install_system_dependencies(
     settings: "ThegentSettings | None" = None,
 ) -> tuple[bool, str]:
     """Install all system dependencies.
-    
+
     Args:
         console: Rich console for output
         dry_run: If True, don't make changes
         settings: Thegent settings
-        
+
     Returns:
         Tuple of (success, message)
     """
     messages = []
-    
+
     # Install Homebrew
     if not _command_exists("brew"):
         success, msg = install_homebrew(console, dry_run)
         messages.append(msg)
         if not success:
             return False, "\n".join(messages)
-    
+
     # Install mise
     success, msg = install_mise(console, dry_run, settings=settings)
     messages.append(msg)
     if not success:
         return False, "\n".join(messages)
-    
+
     return True, "\n".join(messages)
 
 

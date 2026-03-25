@@ -109,7 +109,9 @@ class TestApplyParetoRouting:
     def test_no_op_when_agent_set(self):
         """ParetoRouter.select() must NOT be called when agent is already specified."""
         # @trace FR-ROU-001
-        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch(
+            "thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE
+        ) as mock_select:
             agent, _model, _, _ = self._call(agent="existing-agent")
         assert not mock_select.called
         assert agent == "existing-agent"
@@ -119,7 +121,9 @@ class TestApplyParetoRouting:
     def test_no_op_when_model_set(self):
         """ParetoRouter.select() must NOT be called when model is already specified."""
         # @trace FR-ROU-001
-        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch(
+            "thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE
+        ) as mock_select:
             _agent, model, _, _ = self._call(model="some-model")
         assert not mock_select.called
         assert model == "some-model"
@@ -129,7 +133,9 @@ class TestApplyParetoRouting:
     def test_no_op_when_routing_not_pareto(self):
         """ParetoRouter.select() must NOT be called when routing != 'pareto'."""
         # @trace FR-ROU-001
-        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch(
+            "thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE
+        ) as mock_select:
             agent, model, _, _ = self._call(routing="prefer_direct")
         assert not mock_select.called
         assert agent is None  # unchanged
@@ -168,7 +174,9 @@ class TestApplyParetoRouting:
     def test_none_routing_is_no_op(self):
         """routing=None leaves agent and model unchanged."""
         # @trace FR-ROU-001
-        with patch("thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE) as mock_select:
+        with patch(
+            "thegent.utils.routing_impl.pareto_router.ParetoRouter.select", return_value=_FAKE_CANDIDATE
+        ) as mock_select:
             agent, model, _, _ = self._call(routing=None)
         assert not mock_select.called
         assert agent is None

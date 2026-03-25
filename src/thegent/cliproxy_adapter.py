@@ -1,6 +1,12 @@
 # MIGRATION NOTE: Migrate to cliproxyapi-plusplus Go SDK
 """CLIProxy adapter: exposes /v1/responses (HTTP + WebSocket) for Codex compatibility.
 
+DEPRECATED: This module is now a thin shim for backward compatibility.
+New code should use the decomposed modules:
+- thegent.adapters.driven.cliproxy_http — HTTP client adapter
+- thegent.use_cases.manage_cliproxy — Business logic
+- thegent.ports.driven.cliproxy — Port interfaces
+
 cliproxyapi++ (kooshapari fork) may not implement /v1/responses. This adapter:
 - Proxies all /v1/* to the backend
 - For POST /v1/responses: tries backend first; on 404, translates to /v1/chat/completions
@@ -56,6 +62,13 @@ from thegent.cliproxy_request_transform import (
 from thegent.cliproxy_stream_state import ResponsesStreamState
 from thegent.utils.routing_impl.cost_calculator import calculate_cost_from_response, format_cost_header_value
 
+# Import decomposed adapter module
+from thegent.adapters.driven.cliproxy_http import (
+    CliproxyHTTPClient,
+    CliproxyResponseTransformer,
+    CliproxyHeaderManager,
+)
+
 _log = logging.getLogger(__name__)
 
 
@@ -97,7 +110,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
         compact_models = [{"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")]
         compact_body = json.dumps({"models": compact_models}).decode().encode()
         return _LegacyModelsTransformResult(compact_body, full_body, etag)
-    except (TypeError, json.JSONDecodeError):
+    except TypeError, json.JSONDecodeError:
         return None
 
 
@@ -814,7 +827,7 @@ async def _proxy_stream(
 
         async def stream_response(self, send: Send) -> None:  # noqa: PLR0912 -- stream startup state machine
             try:
-                iterator = cast(AsyncIterator[bytes | memoryview | str], self.body_iterator)
+                iterator = cast("AsyncIterator[bytes | memoryview | str]", self.body_iterator)
                 first_chunk = await iterator.__anext__()
             except StopAsyncIteration:
                 await send(
@@ -850,7 +863,7 @@ async def _proxy_stream(
             model = data.get("model", model)
             transformed = _responses_to_chat_completions(data)
             body = json.dumps(transformed).decode().encode()
-        except (json.JSONDecodeError, KeyError):
+        except json.JSONDecodeError, KeyError:
             pass
         url = f"{backend_url.rstrip('/')}/chat/completions"
     else:
@@ -909,7 +922,7 @@ async def _proxy_stream(
                                 break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
-                            except (json.JSONDecodeError, UnicodeDecodeError):
+                            except json.JSONDecodeError, UnicodeDecodeError:
                                 continue
                             # GW-09 / OR-12: capture actual routed model from SSE chunk
                             chunk_model = obj.get("model")
@@ -1178,7 +1191,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
                                 break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
-                            except (json.JSONDecodeError, UnicodeDecodeError):
+                            except json.JSONDecodeError, UnicodeDecodeError:
                                 continue
                             # GW-09: capture actual routed model from SSE chunk
                             chunk_model = obj.get("model")

@@ -1,8 +1,8 @@
 """High-performance parallel git operations for the agent mesh."""
 
-import hashlib
-import json
 import logging
+import hashlib
+import orjson as json
 import os
 import random
 import shutil
@@ -47,15 +47,15 @@ class GitParallelismManager:
         check: bool = False,
         env: dict[str, str] | None = None,
     ) -> subprocess.CompletedProcess[str]:
-        env_vars = os.environ.copy()
+        run_env = os.environ.copy()
         if use_index:
-            env_vars["GIT_INDEX_FILE"] = str(self.agent_index)
-        if env is not None:
-            env_vars.update(env)
+            run_env["GIT_INDEX_FILE"] = str(self.agent_index)
+        if env:
+            run_env.update(env)
         return shim_run(
             ["git", *args],
             cwd=self.project_root,
-            env=env_vars,
+            env=run_env,
             input=input_text,
             capture_output=True,
             text=True,
@@ -154,8 +154,9 @@ class GitParallelismManager:
     def _save_staging_map(self, mapping: dict[str, list[str]]) -> None:
         serializable = {key: sorted(set(value)) for key, value in mapping.items()}
         self.staging_map.parent.mkdir(parents=True, exist_ok=True, mode=0o1777)
-        with self.staging_map.open("w", encoding="utf-8") as fh:
-            json.dump(serializable, fh, sort_keys=True)
+        payload = json.dumps(serializable, option=json.OPT_SORT_KEYS)
+        with self.staging_map.open("wb") as fh:
+            fh.write(payload)
 
     def _normalise_files(self, files: list[str]) -> list[str]:
         normalized: set[str] = set()
@@ -333,7 +334,7 @@ class GitParallelismManager:
             "new_hash": new_hash or "",
         }
         with queue_path.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(entry) + "\n")
+            fh.write(json.dumps(entry).decode() + "\n")
         return queue_path
 
     def try_auto_merge_commit(

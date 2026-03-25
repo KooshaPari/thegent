@@ -185,13 +185,13 @@ class IncrementalXMLParser:
                             open_tag = tag_name
                             # Get content after the LAST closing >, not after the tag name
                             if last_gt != -1 and last_gt + 1 < len(buf):
-                                partial_content = buf[last_gt + 1:]
+                                partial_content = buf[last_gt + 1 :]
 
         return {
             "open_tag": open_tag,
             "partial_content": partial_content,
             "is_truncated": is_truncated,
-            "incomplete_tag": incomplete_tag
+            "incomplete_tag": incomplete_tag,
         }
 
     def _extract_committed(self) -> dict[str, str]:

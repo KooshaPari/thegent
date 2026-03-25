@@ -911,10 +911,10 @@ def validate_env_profile_drift(
     return len(drift) == 0, drift
 
 
-
 # ---------------------------------------------------------------------------
 # Configuration Loader
 # ---------------------------------------------------------------------------
+
 
 def load_autosync_config_from_env() -> WorkstreamAutosyncConfig:
     """Load autosync configuration from environment variables.

@@ -424,8 +424,10 @@ class TestPerformanceModule:
     def test_register_stores_implementation(self):
         """Test register stores an implementation."""
         pm = PerformanceModule("test_module")
+
         def impl(x):
             return x
+
         pm.register("python", impl)
         assert pm._implementations["python"] is impl
 
@@ -448,11 +450,13 @@ class TestPerformanceModule:
         """Test get_impl selects native on CPython when available."""
         # Create a fresh module to avoid cache
         pm = PerformanceModule("test_module")
+
         def native_impl():
             return "native"
 
         def python_impl():
             return "python"
+
         pm.register("native", native_impl)
         pm.register("python", python_impl)
 
@@ -464,11 +468,13 @@ class TestPerformanceModule:
     def test_get_impl_selects_pypy_on_pypy(self):
         """Test get_impl selects pypy on PyPy when available."""
         pm = PerformanceModule("test_module")
+
         def pypy_impl():
             return "pypy"
 
         def python_impl():
             return "python"
+
         pm.register("pypy", pypy_impl)
         pm.register("python", python_impl)
 
@@ -480,8 +486,10 @@ class TestPerformanceModule:
     def test_get_impl_falls_back_to_python(self):
         """Test get_impl falls back to python implementation."""
         pm = PerformanceModule("test_module")
+
         def python_impl():
             return "python"
+
         pm.register("python", python_impl)
 
         result = pm.get_impl()
@@ -497,8 +505,10 @@ class TestPerformanceModule:
     def test_get_impl_caches_selection(self):
         """Test get_impl caches the selected implementation."""
         pm = PerformanceModule("test_module")
+
         def python_impl():
             return "python"
+
         pm.register("python", python_impl)
 
         result1 = pm.get_impl()
@@ -734,7 +744,7 @@ class TestTomlDispatcherEdgeCases:
     def test_loads_handles_arrays(self):
         """Test toml loads handles arrays."""
         loads = get_toml_loads()
-        toml_str = 'items = [1, 2, 3]\n'
+        toml_str = "items = [1, 2, 3]\n"
         result = loads(toml_str)
         assert result["items"] == [1, 2, 3]
 
@@ -755,7 +765,7 @@ class TestTomlDispatcherEdgeCases:
     def test_loads_handles_booleans(self):
         """Test toml loads handles booleans."""
         loads = get_toml_loads()
-        toml_str = 'enabled = true\ndisabled = false\n'
+        toml_str = "enabled = true\ndisabled = false\n"
         result = loads(toml_str)
         assert result["enabled"] is True
         assert result["disabled"] is False
@@ -772,6 +782,7 @@ class TestRouterDispatcher:
     def test_router_dispatcher_has_implementations(self):
         """Test router_dispatcher has implementations."""
         from thegent.infra.runtime_dispatcher import router_dispatcher
+
         assert len(router_dispatcher._implementations) > 0
 
 
@@ -781,21 +792,25 @@ class TestExtensionFlags:
     def test_has_orjson_is_boolean(self):
         """Test HAS_ORJSON is boolean."""
         from thegent.infra.runtime_dispatcher import HAS_ORJSON
+
         assert isinstance(HAS_ORJSON, bool)
 
     def test_has_ujson_is_boolean(self):
         """Test HAS_UJSON is boolean."""
         from thegent.infra.runtime_dispatcher import HAS_UJSON
+
         assert isinstance(HAS_UJSON, bool)
 
     def test_has_rtoml_is_boolean(self):
         """Test HAS_RTOML is boolean."""
         from thegent.infra.runtime_dispatcher import HAS_RTOML
+
         assert isinstance(HAS_RTOML, bool)
 
     def test_has_rust_router_is_boolean(self):
         """Test HAS_RUST_ROUTER is boolean."""
         from thegent.infra.runtime_dispatcher import HAS_RUST_ROUTER
+
         assert isinstance(HAS_RUST_ROUTER, bool)
 
 
@@ -805,6 +820,7 @@ class TestPrivateDispatcherFunctions:
     def test_pypy_json_dumps(self):
         """Test _pypy_json_dumps function."""
         from thegent.infra.runtime_dispatcher import _pypy_json_dumps
+
         result = _pypy_json_dumps({"key": "value"})
         assert isinstance(result, str)
         assert "key" in result
@@ -812,6 +828,7 @@ class TestPrivateDispatcherFunctions:
     def test_pypy_json_dumps_with_kwargs(self):
         """Test _pypy_json_dumps with kwargs."""
         from thegent.infra.runtime_dispatcher import _pypy_json_dumps
+
         result = _pypy_json_dumps([1, 2, 3])
         # The format may include spaces depending on library used
         assert "1" in result
@@ -821,6 +838,7 @@ class TestPrivateDispatcherFunctions:
     def test_cpython_json_dumps(self):
         """Test _cpython_json_dumps function."""
         from thegent.infra.runtime_dispatcher import _cpython_json_dumps
+
         result = _cpython_json_dumps({"key": "value"})
         assert isinstance(result, str)
         assert "key" in result
@@ -828,42 +846,49 @@ class TestPrivateDispatcherFunctions:
     def test_cpython_json_dumps_with_bytes_return(self):
         """Test _cpython_json_dumps returns string."""
         from thegent.infra.runtime_dispatcher import _cpython_json_dumps
+
         result = _cpython_json_dumps("test string")
         assert isinstance(result, str)
 
     def test_pypy_json_loads(self):
         """Test _pypy_json_loads function."""
         from thegent.infra.runtime_dispatcher import _pypy_json_loads
+
         result = _pypy_json_loads('{"key": "value"}')
         assert result["key"] == "value"
 
     def test_pypy_json_loads_with_bytes(self):
         """Test _pypy_json_loads with bytes."""
         from thegent.infra.runtime_dispatcher import _pypy_json_loads
+
         result = _pypy_json_loads(b'{"key": "value"}')
         assert result["key"] == "value"
 
     def test_cpython_json_loads(self):
         """Test _cpython_json_loads function."""
         from thegent.infra.runtime_dispatcher import _cpython_json_loads
+
         result = _cpython_json_loads('{"key": "value"}')
         assert result["key"] == "value"
 
     def test_cpython_json_loads_with_bytes(self):
         """Test _cpython_json_loads with bytes."""
         from thegent.infra.runtime_dispatcher import _cpython_json_loads
+
         result = _cpython_json_loads(b'{"key": "value"}')
         assert result["key"] == "value"
 
     def test_pypy_toml_loads(self):
         """Test _pypy_toml_loads function."""
         from thegent.infra.runtime_dispatcher import _pypy_toml_loads
+
         result = _pypy_toml_loads('[section]\nkey = "value"\n')
         assert isinstance(result, dict)
 
     def test_cpython_toml_loads(self):
         """Test _cpython_toml_loads function."""
         from thegent.infra.runtime_dispatcher import _cpython_toml_loads
+
         result = _cpython_toml_loads('[section]\nkey = "value"\n')
         assert isinstance(result, dict)
 

@@ -62,7 +62,14 @@ def test_wl11058_build_turn_submit_success_response_includes_approval_payload() 
     response = server._build_turn_submit_success_response(
         True,
         "req-11058",
-        {"id": "turn-1", "session_id": "session-1", "status": "completed", "input": "x", "approval_id": None, "tool_call_id": None},
+        {
+            "id": "turn-1",
+            "session_id": "session-1",
+            "status": "completed",
+            "input": "x",
+            "approval_id": None,
+            "tool_call_id": None,
+        },
         approval_payload,
     )
     assert response is not None
@@ -74,7 +81,14 @@ def test_wl11059_build_turn_submit_response_resolution_phase_preserves_turn_subm
     phase = server._build_turn_submit_response_phase(
         True,
         "req-11059",
-        {"id": "turn-1", "session_id": "session-1", "status": "completed", "input": "x", "approval_id": None, "tool_call_id": None},
+        {
+            "id": "turn-1",
+            "session_id": "session-1",
+            "status": "completed",
+            "input": "x",
+            "approval_id": None,
+            "tool_call_id": None,
+        },
         {"id": "approval-1", "status": "requested", "diff": None},
     )
     request_has_id, request_id, turn, approval_payload = server._build_turn_submit_response_resolution_phase(phase)

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from thegent_cli.cli.console import console
+    pass
 
 
 def data_protection_cmd(format: str | None = None) -> None:
@@ -18,6 +18,7 @@ def data_protection_cmd(format: str | None = None) -> None:
         import orjson as json
 
         from thegent_cli.cli import console
+
         console.print(json.dumps(status))
     else:
         from thegent_cli.cli import console

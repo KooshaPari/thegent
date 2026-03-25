@@ -4,18 +4,13 @@
 from __future__ import annotations
 
 import orjson as json
-import os
-import signal
 import sys
-import time
 from pathlib import Path
 
 import typer
 
-from rich.table import Table
 
 from thegent_cli.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
     _find_session_meta,
     _is_pid_running,
@@ -25,7 +20,6 @@ from thegent_cli.cli.commands._cli_shared import (
     _resolve_session_status,
     _session_paths,
     console,
-    EXIT_TIMEOUT,
     _LOG_FOLLOW_POLL_SECONDS,
 )
 from thegent_cli.cli.commands.session_cmds_helpers import (
@@ -38,6 +32,7 @@ from thegent_cli.cli.commands.session_cmds_helpers import (
 Commands for session status, inspection, logs, control (stop/pause/resume), and delegation.
 Extracted from session_cmds.py to manage module size.
 """
+
 
 def status_cmd(session_id: str | None = None, format: str | None = None, include_contract: bool = False) -> None:
     settings = ThegentSettings()
@@ -185,7 +180,6 @@ def logs_cmd(
         poll_seconds=_LOG_FOLLOW_POLL_SECONDS,
         console=console,
     )
-
 
 
 __all__ = [

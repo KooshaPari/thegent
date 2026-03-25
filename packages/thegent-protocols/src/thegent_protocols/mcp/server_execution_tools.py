@@ -616,7 +616,9 @@ def register_execution_tools(
                 structured_content=payload,
                 meta={"execution_time_ms": elapsed_ms},
             )
-        return ToolResult(content=json.dumps(result).decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms})
+        return ToolResult(
+            content=json.dumps(result).decode(), structured_content=result, meta={"execution_time_ms": elapsed_ms}
+        )
 
     @mcp.tool(annotations={"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False})
     async def thegent_free(

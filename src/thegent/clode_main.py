@@ -1,4 +1,12 @@
-"""Claude-backed interactive agent CLI (clode)."""
+"""Claude-backed interactive agent CLI (clode).
+
+HEXAGONAL PHASE 2B: This file is now a thin shim delegating to:
+- src/thegent/adapters/harness_base.py — Common harness logic
+- src/thegent/adapters/claude_harness.py — Claude-specific implementation
+- src/thegent/use_cases/run_harness.py — Use case orchestration
+
+Legacy imports preserved for backward compatibility.
+"""
 
 import contextlib
 import os
@@ -26,6 +34,9 @@ from thegent.clode_model_routing import (
     model_for_provider as _model_for_provider_impl,
     resolve_provider_for_model as _resolve_provider_for_model_impl,
 )
+
+# Import harness for new decomposed pattern (Phase 2B)
+from thegent.adapters.claude_harness import ClaudeHarness
 
 # Import thegent CLI commands to reuse them.
 # Lazy imports used in commands to speed up CLI startup.
@@ -57,6 +68,11 @@ class LazyConsole:
 
 console = LazyConsole()
 app = typer.Typer(help="Claude-backed interactive agent CLI (clode)")
+
+# Phase 2B: Harness delegation layer (optional modern path)
+def _use_harness() -> ClaudeHarness:
+    """Get Claude harness instance for delegated operations."""
+    return ClaudeHarness()
 
 _GLM_OFFER_SET = _clode_glm_policy.GLM_OFFER_SET
 _GLM_OFFER_COST = _clode_glm_policy.GLM_OFFER_COST
@@ -235,9 +251,7 @@ def _ensure_claude_installed(suggest_dex: bool = False, require_native: bool = F
     bun = shutil.which("bun")
     if bun:
         console.print("[dim]Installing Claude Code via Bun...[/dim]")
-        r = shim_run(
-            [bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False
-        )
+        r = shim_run([bun, "install", "-g", "@anthropic-ai/claude-code"], capture_output=True, text=True, check=False)
         if r.returncode == 0:
             p = _find_claude(require_native=require_native)
             if p:

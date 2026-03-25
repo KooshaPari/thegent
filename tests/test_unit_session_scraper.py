@@ -353,4 +353,6 @@ def test_trigger_normalization_applied_to_persisted_snapshot(monkeypatch, tmp_pa
         snapshot = scraper.load_snapshot(path)
         assert snapshot is not None
         assert snapshot.trigger == trigger, f"Expected {trigger}, got {snapshot.trigger}"
+
+
 # noqa: PT018

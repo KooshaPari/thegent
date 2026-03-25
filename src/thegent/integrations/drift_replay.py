@@ -24,6 +24,7 @@ class DriftManifest(SerializableMixin):
     drifts: list[dict]
     captured_at: datetime
 
+
 class DriftReplayEngine:
     """Engine for archiving and replaying drift manifests."""
 
@@ -69,7 +70,7 @@ class DriftReplayEngine:
 
         data = orjson.loads(manifest_path.read_bytes())
 
-        return cast(DriftManifest, DriftManifest.from_dict(data))
+        return cast("DriftManifest", DriftManifest.from_dict(data))
 
     @staticmethod
     def list_manifests(archive_dir: Path) -> list[str]:

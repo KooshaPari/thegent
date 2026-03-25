@@ -20,7 +20,6 @@ from thegent.cli.commands._cli_shared import (
 from thegent.observability.egress import EgressEvent, SIEMEgress
 
 
-
 def compliance_siem_test_cmd(message: str, severity: str = "low") -> None:
     """Test SIEM event egress (WP-15001)."""
     egress = SIEMEgress(endpoint_url="http://simulated-siem.internal")
@@ -163,8 +162,6 @@ def policy_check_cmd(agent: str, model: str | None = None, lane: str = "standard
     color = "green" if result == "allow" else "yellow" if result == "warn" else "red"
     console.print(f"Policy Result: [{color}]{result.upper()}[/{color}]")
     console.print(f"Reason: {reason}")
-
-
 
 
 __all__ = [

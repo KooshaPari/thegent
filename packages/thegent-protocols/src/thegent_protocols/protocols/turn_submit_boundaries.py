@@ -154,9 +154,7 @@ def resolve_parse_target(phase: ParsePhase) -> tuple[str, str, str | int | float
     return session_id, user_input, request_id, request_has_id
 
 
-def build_commit_phase(
-    session_id: str, session: dict[str, Any], turn_id: str, turn: dict[str, Any]
-) -> CommitPhase:
+def build_commit_phase(session_id: str, session: dict[str, Any], turn_id: str, turn: dict[str, Any]) -> CommitPhase:
     return {
         "session_id": session_id,
         "session": session,

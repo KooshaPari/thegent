@@ -522,7 +522,7 @@ class TestScrapeAnte:
         mock_settings_path = MagicMock()
         mock_settings_path.exists.return_value = True
         mock_home.return_value = MagicMock(
-            __truediv__=lambda self, x: (mock_settings_path if x == ".ante" else MagicMock())
+            __truediv__=lambda self, x: mock_settings_path if x == ".ante" else MagicMock()
         )
 
         settings_data = {
@@ -544,7 +544,7 @@ class TestScrapeAnte:
         mock_settings_path = MagicMock()
         mock_settings_path.exists.return_value = False
         mock_home.return_value = MagicMock(
-            __truediv__=lambda self, x: (mock_settings_path if x == ".ante" else MagicMock())
+            __truediv__=lambda self, x: mock_settings_path if x == ".ante" else MagicMock()
         )
 
         from thegent.models.scrapers import scrape_ante
@@ -559,7 +559,7 @@ class TestScrapeAnte:
         mock_settings_path = MagicMock()
         mock_settings_path.exists.return_value = True
         mock_home.return_value = MagicMock(
-            __truediv__=lambda self, x: (mock_settings_path if x == ".ante" else MagicMock())
+            __truediv__=lambda self, x: mock_settings_path if x == ".ante" else MagicMock()
         )
 
         with patch("builtins.open", create=True) as mock_open:

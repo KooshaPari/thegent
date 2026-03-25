@@ -82,7 +82,14 @@ def test_wl11069_build_turn_submit_success_response_omits_approval_when_absent()
     response = server._build_turn_submit_success_response(
         True,
         "req-11069",
-        {"id": "turn-1", "session_id": "session-1", "status": "completed", "input": "x", "approval_id": None, "tool_call_id": "toolcall-1"},
+        {
+            "id": "turn-1",
+            "session_id": "session-1",
+            "status": "completed",
+            "input": "x",
+            "approval_id": None,
+            "tool_call_id": "toolcall-1",
+        },
         None,
     )
     assert response is not None

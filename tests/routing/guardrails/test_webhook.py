@@ -99,7 +99,9 @@ def test_webhook_timeout_uses_on_failure():
 
     cfg = WebhookGuardrailConfig(url="https://example.com/guardrail", on_failure="allow", timeout_sec=0.001)
 
-    with patch("thegent.utils.routing_impl.guardrails.webhook.httpx.post", side_effect=_httpx.TimeoutException("timed out")):
+    with patch(
+        "thegent.utils.routing_impl.guardrails.webhook.httpx.post", side_effect=_httpx.TimeoutException("timed out")
+    ):
         result = call_webhook_guardrail(cfg, _PAYLOAD)
 
     assert result.verdict == "allow"

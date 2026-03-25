@@ -379,6 +379,7 @@ class ContinuityWatchdog:
 
     def scan_stale_sessions(self, max_idle_s: int = 3600) -> list[str]:
         """Scan for sessions with no activity for max_idle_s."""
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
@@ -410,6 +411,7 @@ class ContinuityWatchdog:
 
         Returns list of escalated sessions.
         """
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
@@ -660,9 +662,12 @@ class CircuitBreakerRegistry:
         with self.registry_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event) + "\n")
 
-    def _parse_circuit_failure(self, line: str, target: str, category: str, now: datetime) -> tuple[int, datetime | None]:
+    def _parse_circuit_failure(
+        self, line: str, target: str, category: str, now: datetime
+    ) -> tuple[int, datetime | None]:
         """Parse a circuit failure line from registry."""
         import json
+
         try:
             if not line.strip():
                 return 0, None

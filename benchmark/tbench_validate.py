@@ -17,12 +17,9 @@ def run_benchmark(compare: bool = False, swarm: bool = False) -> dict:
     """Run Terminal-Bench benchmark."""
     results = {
         "timestamp": datetime.now().isoformat(),
-        "config": {
-            "compare": compare,
-            "swarm": swarm
-        },
+        "config": {"compare": compare, "swarm": swarm},
         "tasks": [],
-        "summary": {}
+        "summary": {},
     }
 
     # Run benchmark command
@@ -33,13 +30,13 @@ def run_benchmark(compare: bool = False, swarm: bool = False) -> dict:
         cmd.append("--swarm")
 
     start_time = time.time()
-    
+
     try:
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=3600  # 1 hour max
+            timeout=3600,  # 1 hour max
         )
         results["raw_output"] = result.stdout
         results["success"] = result.returncode == 0
@@ -76,11 +73,7 @@ def compare_results(before: Path, after: Path) -> dict:
     with open(after) as f:
         after_data = json.load(f)
 
-    return {
-        "before": before_data.get("summary", {}),
-        "after": after_data.get("summary", {}),
-        "improvement": {}
-    }
+    return {"before": before_data.get("summary", {}), "after": after_data.get("summary", {}), "improvement": {}}
 
 
 def main():
@@ -90,18 +83,12 @@ def main():
     parser.add_argument("--output", default="benchmark/results", help="Output directory")
     args = parser.parse_args()
 
-    print("Running Terminal-Bench validation...")
     results = run_benchmark(compare=args.compare, swarm=args.swarm)
 
     filepath = save_results(results, args.output)
-    print(f"Results saved to: {filepath}")
 
-    if results["success"]:
-        print("✓ Benchmark completed successfully")
-    else:
-        print("✗ Benchmark failed")
-        if "error" in results:
-            print(f"  Error: {results['error']}")
+    if results["success"] or "error" in results:
+        pass
 
 
 if __name__ == "__main__":

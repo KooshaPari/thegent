@@ -50,6 +50,7 @@ def test_health_check_success():
             mock_urlopen.return_value = mock_response
 
             import kratos_contract_smoke as smoke
+
             # Should not raise
             with pytest.raises(SystemExit) as exc_info:
                 smoke.main()

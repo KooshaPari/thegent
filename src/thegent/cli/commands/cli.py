@@ -54,10 +54,10 @@ from thegent.cli.commands._cli_shared import *  # noqa: F401, F403 -- WL-120 shi
 # so explicit private import lists are no longer needed in this shim.
 
 # WL-124: Domain submodule re-exports — all command names available at this namespace.
-from thegent.cli.commands.run_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent.cli.commands.run import *  # noqa: F401, F403 -- WL-124 re-export
 from thegent.cli.commands.session_cmds import *  # noqa: F401, F403 -- WL-124 re-export
 from thegent.cli.governance.governance_cmds import *  # noqa: F401, F403 -- WL-124 re-export
-from thegent.cli.commands.plan_cmds import *  # noqa: F401, F403 -- WL-124 re-export
+from thegent.cli.plan import *  # noqa: F401, F403 -- WL-125 Phase-3 plan domain re-export
 from thegent.cli.commands.model_cmds import *  # noqa: F401, F403 -- WL-124 re-export
 from thegent.cli.commands.infra_cmds import *  # noqa: F401, F403 -- WL-124 re-export
 from thegent.cli.commands.team_cmds import *  # noqa: F401, F403 -- WL-124 re-export

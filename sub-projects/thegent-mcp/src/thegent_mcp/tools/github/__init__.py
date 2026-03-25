@@ -26,7 +26,9 @@ def register_tools(server: FastMCP) -> None:
         body: str = "",
     ) -> str:
         """Create a GitHub issue."""
-        return json.dumps({
-            "issue_url": f"https://github.com/{owner}/{repo}/issues/new",
-            "title": title,
-        })
+        return json.dumps(
+            {
+                "issue_url": f"https://github.com/{owner}/{repo}/issues/new",
+                "title": title,
+            }
+        )

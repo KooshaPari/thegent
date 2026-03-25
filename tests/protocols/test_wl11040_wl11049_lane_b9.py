@@ -41,7 +41,9 @@ def test_wl11041_extract_turn_submit_approval_payload_id_rejects_empty_value() -
 
 def test_wl11042_extract_turn_submit_approval_payload_status_returns_value() -> None:
     # @trace WL-11042
-    assert server._extract_turn_submit_approval_payload_status({"id": "approval-1", "status": "requested"}) == "requested"
+    assert (
+        server._extract_turn_submit_approval_payload_status({"id": "approval-1", "status": "requested"}) == "requested"
+    )
 
 
 def test_wl11043_extract_turn_submit_approval_payload_status_rejects_non_string() -> None:
@@ -58,13 +60,17 @@ def test_wl11044_resolve_turn_submit_response_approval_fields_rejects_empty_payl
 
 def test_wl11045_resolve_turn_submit_response_approval_fields_accepts_none_diff() -> None:
     # @trace WL-11045
-    payload = server._resolve_turn_submit_response_approval_fields({"id": "approval-1", "status": "requested", "diff": None})
+    payload = server._resolve_turn_submit_response_approval_fields(
+        {"id": "approval-1", "status": "requested", "diff": None}
+    )
     assert payload == ("approval-1", "requested", None)
 
 
 def test_wl11046_build_turn_submit_response_phase_preserves_request_path_without_id() -> None:
     # @trace WL-11046
-    phase = server._build_turn_submit_response_phase(False, None, {"id": "turn-1"}, {"id": "approval-1", "status": "requested"})
+    phase = server._build_turn_submit_response_phase(
+        False, None, {"id": "turn-1"}, {"id": "approval-1", "status": "requested"}
+    )
     assert phase == {
         "request_has_id": False,
         "request_id": None,

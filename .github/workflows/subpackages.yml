@@ -30,8 +30,8 @@ jobs:
           python-version: '3.12'
       - run: pip install uv
       - run: cd packages/thegent-sdk && uv pip install -e ".[dev]"
-      - run: cd packages/thegent-sdk && ruff check src/ tests/ || true
-      - run: cd packages/thegent-sdk && pytest tests/ -v --tb=short || true
+      - run: cd packages/thegent-sdk && ruff check src/ tests/
+      - run: cd packages/thegent-sdk && pytest tests/ -v --tb=short
 
   build-mcp:
     name: Build thegent-mcp
@@ -43,8 +43,8 @@ jobs:
           python-version: '3.12'
       - run: pip install uv
       - run: cd packages/thegent-mcp && uv pip install -e ".[dev]"
-      - run: cd packages/thegent-mcp && ruff check src/ tests/ || true
-      - run: cd packages/thegent-mcp && pytest tests/ -v --tb=short || true
+      - run: cd packages/thegent-mcp && ruff check src/ tests/
+      - run: cd packages/thegent-mcp && pytest tests/ -v --tb=short
 
   build-agents:
     name: Build thegent-agents
@@ -56,8 +56,8 @@ jobs:
           python-version: '3.12'
       - run: pip install uv
       - run: cd packages/thegent-agents && uv pip install -e ".[dev]"
-      - run: cd packages/thegent-agents && ruff check src/ tests/ || true
-      - run: cd packages/thegent-agents && pytest tests/ -v --tb=short || true
+      - run: cd packages/thegent-agents && ruff check src/ tests/
+      - run: cd packages/thegent-agents && pytest tests/ -v --tb=short
 
   boundary-check:
     name: Package Boundary Enforcement

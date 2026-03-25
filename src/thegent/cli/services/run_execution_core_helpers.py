@@ -1,5 +1,10 @@
 """Extracted execution cores for run/bg commands.
 
+DEPRECATED: This module is now a thin shim for backward compatibility.
+New code should use the decomposed modules:
+- thegent.use_cases.execute_task — Pure orchestration logic
+- thegent.adapters.execution_io — I/O and subprocess management
+
 These helpers accept an injected impl module namespace to preserve existing
 runtime wiring while avoiding circular imports from impl.py.
 """
@@ -15,6 +20,15 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 from rich.console import Console
+
+# Import decomposed modules
+from thegent.use_cases.execute_task import ExecutionOrchestrator
+from thegent.adapters.execution_io import (
+    ShadowWorkspaceManager,
+    ResourceLockManager,
+    ProcessEnvironmentBuilder,
+    ProcessSpawner,
+)
 
 from thegent.agents import get_fallback_agents, get_runner, resolve_agent
 from thegent.agents.resilience import is_usage_limit
@@ -90,7 +104,7 @@ def _apply_pareto_routing_local(
     route_contract: dict[str, Any] | None,
     route_request: dict[str, Any] | None,
 ) -> tuple[str | None, str | None, dict[str, Any] | None, dict[str, Any] | None]:
-    from thegent.cli.commands.impl_core_runners import _apply_pareto_routing
+    from thegent.cli.commands.run.impl_core_runners import _apply_pareto_routing
 
     return _apply_pareto_routing(agent, model, routing, include_contract, route_contract, route_request)
 

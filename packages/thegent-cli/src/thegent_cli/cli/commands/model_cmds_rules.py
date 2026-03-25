@@ -10,7 +10,6 @@ from __future__ import annotations
 import sys
 import re
 import subprocess
-from typing import Any
 
 import typer
 
@@ -21,7 +20,6 @@ from thegent_cli.cli.commands._cli_shared import (
 )
 from thegent_cli.cli.commands.model_cmds_list import (
     _COPILOT_ALLOWED_MODELS,
-    _assert_str,
     _run_cliproxyctl_machine_command,
 )
 

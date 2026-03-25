@@ -43,15 +43,15 @@ def test_generate_inventory_marks_primary_and_warns_nonconformant_lane(tmp_path:
     def _fake_check_output(cmd: list[str], cwd: Path, text: bool):  # noqa: ARG001
         del cmd, text
         return _fake_git_output(
-                f"worktree {tmp_path}",
-                "HEAD abc",
-                f"worktree {structured_lane}",
-                "branch refs/heads/codex/wave-a",
-                f"worktree {legacy_in_root}",
-                "branch refs/heads/legacy/cache",
-                f"worktree {tmp_path.parent / 'outside' / 'orphan'}",
-                "branch refs/heads/main",
-            )
+            f"worktree {tmp_path}",
+            "HEAD abc",
+            f"worktree {structured_lane}",
+            "branch refs/heads/codex/wave-a",
+            f"worktree {legacy_in_root}",
+            "branch refs/heads/legacy/cache",
+            f"worktree {tmp_path.parent / 'outside' / 'orphan'}",
+            "branch refs/heads/main",
+        )
 
     monkeypatch.setattr("subprocess.check_output", _fake_check_output)
     payload = generate_inventory(repo_root=tmp_path, marker=marker)

@@ -104,7 +104,8 @@ def test_wl10959_turn_submit_requires_approval_response_preserves_id_and_payload
                     "unified_diff": "--- a\n+++ b\n@@\n-old\n+new\n",
                 },
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     assert response["id"] == "submit-c3"
     approval_payload = response["result"]["approval"]

@@ -21,6 +21,9 @@ from thegent.domain.entities.run import (
     RunMeta,
     RunState,
 )
+from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
+from thegent.execution_coercion_helpers import as_float as _as_float_impl
+from thegent.execution_coercion_helpers import as_int as _as_int_impl
 
 _log = logging.getLogger(__name__)
 _EXECUTION_WARNING_LIMIT = 3
@@ -77,6 +80,20 @@ def reset_execution_diagnostics() -> None:
         "last_error_message": None,
     }
 
+
+def _as_float(value: Any, default: float) -> float:
+    """Coerce arbitrary values to float with a safe default."""
+    return _as_float_impl(value, default)
+
+
+def _as_int(value: Any, default: int) -> int:
+    """Coerce arbitrary values to int with a safe default."""
+    return _as_int_impl(value, default)
+
+
+def _as_bool(value: Any, default: bool) -> bool:
+    """Coerce arbitrary values to bool with a safe default."""
+    return _as_bool_impl(value, default)
 
 # Domain entity classes are now imported from thegent.domain.entities.run
 # They are re-exported here for backward compatibility

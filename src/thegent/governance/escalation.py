@@ -139,7 +139,7 @@ class EscalationQueue:
             return None
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
-            return cast(EscalationItem, EscalationItem.from_dict(data))
+            return cast("EscalationItem", EscalationItem.from_dict(data))
         except Exception as e:
             _log.error("Failed to load escalation item %s: %s", esc_id, e)
             return None
@@ -166,7 +166,7 @@ class EscalationQueue:
         """Helper to load and process a single escalation item."""
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
-            item = cast(EscalationItem, EscalationItem.from_dict(data))
+            item = cast("EscalationItem", EscalationItem.from_dict(data))
 
             # Auto-expire if deadline passed
             if item.status == EscalationStatus.PENDING and item.deadline and time.time() > item.deadline:

@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from thegent.config_defaults import (
     default_cost_budget_by_category,
+    default_hitl_checkpoints,
     default_mac_keep_awake_agents,
     default_sandbox_env_allowlist,
 )

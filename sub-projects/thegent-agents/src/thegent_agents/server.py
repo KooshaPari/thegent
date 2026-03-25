@@ -50,30 +50,36 @@ async def run_agent(
 ) -> str:
     """Execute an agent task."""
     # Placeholder: will be wired to actual agent runner after extraction
-    return json.dumps({
-        "type": "done",
-        "result": {"success": True, "agent_id": agent_id},
-        "timing_ms": 0,
-    })
+    return json.dumps(
+        {
+            "type": "done",
+            "result": {"success": True, "agent_id": agent_id},
+            "timing_ms": 0,
+        }
+    )
 
 
 @mcp.tool()
 async def list_agents() -> str:
     """Get available agent personas."""
-    return json.dumps({
-        "agents": ["default", "research", "code", "fix", "review", "explain"],
-    })
+    return json.dumps(
+        {
+            "agents": ["default", "research", "code", "fix", "review", "explain"],
+        }
+    )
 
 
 @mcp.tool()
 async def get_agent_state(agent_id: str) -> str:
     """Get current agent state."""
-    return json.dumps({
-        "agent_id": agent_id,
-        "status": "idle",
-        "current_task": None,
-        "elapsed_ms": 0,
-    })
+    return json.dumps(
+        {
+            "agent_id": agent_id,
+            "status": "idle",
+            "current_task": None,
+            "elapsed_ms": 0,
+        }
+    )
 
 
 @mcp.tool()

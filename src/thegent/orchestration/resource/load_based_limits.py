@@ -114,7 +114,7 @@ def _get_memory_mb_macos_vm_stat() -> float:
             )
             if ps_out.returncode == 0 and ps_out.stdout.strip().isdigit():
                 page_size = int(ps_out.stdout.strip())
-        except (OSError, subprocess.TimeoutExpired, ValueError):
+        except OSError, subprocess.TimeoutExpired, ValueError:
             pass  # Keep the 4096 default
 
         out = shim_run(
@@ -187,7 +187,7 @@ def _get_memory_mb() -> tuple[float, float]:
     try:
         proc = psutil.Process()
         rss_mb = proc.memory_info().rss / (1024 * 1024)
-    except (psutil.NoSuchProcess, psutil.AccessDenied, AttributeError, OSError):
+    except psutil.NoSuchProcess, psutil.AccessDenied, AttributeError, OSError:
         # Fallback for RSS on macOS if psutil fails
         if platform.system() == "Darwin":
             try:
@@ -201,7 +201,7 @@ def _get_memory_mb() -> tuple[float, float]:
                 )
                 if out.returncode == 0 and out.stdout.strip().isdigit():
                     rss_mb = int(out.stdout.strip()) / 1024.0
-            except (OSError, subprocess.SubprocessError, ValueError):
+            except OSError, subprocess.SubprocessError, ValueError:
                 pass
     try:
         vmem = psutil.virtual_memory()

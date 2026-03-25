@@ -1,7 +1,8 @@
 """Re-export facade for DAG implementation core."""
+
 from __future__ import annotations
 
-from thegent.cli.commands.dag_impl_list_run_cmds import (
+from thegent.cli.commands.run.dag_impl_list_run_cmds import (
     dag_list_impl,
     dag_raw_impl,
     dag_ready_impl,

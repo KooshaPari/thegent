@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from thegent_core.infra.fast_yaml_parser import yaml_load, yaml_dump
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical

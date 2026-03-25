@@ -13,6 +13,7 @@ def data_protection_cmd(format: str | None = None) -> None:
         import orjson as json
 
         from thegent.cli import console
+
         console.print(json.dumps(status))
     else:
         from thegent.cli import console

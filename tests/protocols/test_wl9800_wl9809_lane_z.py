@@ -42,7 +42,8 @@ def _submit_turn(session_id: str) -> tuple[str, str]:
                     "unified_diff": "--- a/z\n+++ b/z\n@@\n-old\n+new\n",
                 },
             }
-        )).decode()
+        )
+    ).decode()
     assert response is not None
     return response["result"]["turn"]["id"], response["result"]["approval"]["id"]
 

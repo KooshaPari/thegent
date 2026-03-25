@@ -400,9 +400,7 @@ def test_selector_records_per_gate_execution_metrics(tmp_path: Path) -> None:
     assert entries, "missing governance_gate_execution entries"
 
     regression_entries = [
-        entry
-        for entry in entries
-        if entry.get("name") in {"regression_spiral_guard", "regression-spiral-guard"}
+        entry for entry in entries if entry.get("name") in {"regression_spiral_guard", "regression-spiral-guard"}
     ]
     assert regression_entries, "missing regression_spiral_guard metric entry"
     entry = regression_entries[-1]

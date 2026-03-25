@@ -15,7 +15,6 @@ from thegent_cli.cli.commands.dag_impl_helpers import (
     _serialize_dag,
     _atomic_write,
     _parse_dag_session,
-    _validate_dag,
 )
 from thegent_core.config import ThegentSettings
 

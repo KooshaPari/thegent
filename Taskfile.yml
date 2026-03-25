@@ -102,6 +102,38 @@ tasks:
     cmds:
       - task: quality
 
+  devops:status:
+    desc: "Show git status, remotes, and branch state"
+    cmds:
+      - git status --short --branch
+      - git remote -v
+      - git log --oneline -n 5
+
+  devops:check:
+    desc: "Run shared DevOps checks for this repository"
+    cmds:
+      - bash scripts/devops-checker.sh
+
+  devops:check:ci:
+    desc: "Run shared DevOps checks including CI lane"
+    cmds:
+      - bash scripts/devops-checker.sh --check-ci
+
+  devops:check:ci-summary:
+    desc: "Run shared DevOps checks with CI lane and JSON summary"
+    cmds:
+      - bash scripts/devops-checker.sh --check-ci --emit-summary
+
+  devops:push:
+    desc: "Push branch with shared helper and fallback remote behavior"
+    cmds:
+      - bash scripts/push-thegent-with-fallback.sh {{.CLI_ARGS}}
+
+  devops:push:origin:
+    desc: "Push using fallback remote only (skip primary)"
+    cmds:
+      - bash scripts/push-thegent-with-fallback.sh --skip-primary {{.CLI_ARGS}}
+
   release:prep:
     desc: "Canonical release preparation checks"
     cmds:
@@ -1847,6 +1879,81 @@ tasks:
       - rm -rf .process-compose/
       - task: polyglot:shm:clean
       - find . -type d -name "__pycache__" -exec rm -rf {} +
+
+  lane:split:app:
+    desc: "Print split-lane bootstrap metadata for the thegent-app module."
+    cmds:
+      - |
+        echo "=== thegent-app lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-app active)"
+        echo "Branch: backend/m/split-thegent-app"
+        echo "Owner: thegent-runtime"
+
+  lane:split:app:smoke:
+    desc: "Run split-lane smoke checks for thegent-app module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_app"
+
+  lane:split:mcp:
+    desc: "Print split-lane bootstrap metadata for the thegent-mcp module."
+    cmds:
+      - |
+        echo "=== thegent-mcp lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-mcp active)"
+        echo "Branch: backend/m/split-thegent-mcp"
+        echo "Owner: thegent-mcp"
+
+  lane:split:mcp:smoke:
+    desc: "Run split-lane smoke checks for thegent-mcp module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_mcp"
+
+  lane:split:control-plane:
+    desc: "Print split-lane bootstrap metadata for the thegent-control-plane module."
+    cmds:
+      - |
+        echo "=== thegent-control-plane lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-control-plane active)"
+        echo "Branch: backend/m/split-thegent-control-plane"
+        echo "Owner: thegent-control-plane"
+
+  lane:split:control-plane:smoke:
+    desc: "Run split-lane smoke checks for thegent-control-plane module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_control_plane"
+
+  lane:split:execution:
+    desc: "Print split-lane bootstrap metadata for the thegent-execution module."
+    cmds:
+      - |
+        echo "=== thegent-execution lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-execution active)"
+        echo "Branch: backend/m/split-thegent-execution"
+        echo "Owner: thegent-execution"
+
+  lane:split:execution:smoke:
+    desc: "Run split-lane smoke checks for thegent-execution module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_execution"
+
+  lane:split:governance:
+    desc: "Print split-lane bootstrap metadata for the thegent-governance module."
+    cmds:
+      - |
+        echo "=== thegent-governance lane bootstrap ==="
+        echo "Worktree path: $(./scripts/worktree_governance.sh path backend m split-thegent-governance active)"
+        echo "Branch: backend/m/split-thegent-governance"
+        echo "Owner: thegent-governance"
+
+  lane:split:governance:smoke:
+    desc: "Run split-lane smoke checks for thegent-governance module filtering."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke_governance"
+
+  lane:split:all-smoke:
+    desc: "Run all module split-lane smoke checks."
+    cmds:
+      - uv run pytest tests/commands/test_apps_main.py -k "split_lane_smoke"
 
   # -- Docs (VitePress) --
 

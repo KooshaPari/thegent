@@ -153,17 +153,25 @@ def _validate_request_envelope(request: dict[str, Any]) -> JsonRpcError | None:
     return None
 
 
-def _require_session(request_id: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+def _require_session(
+    request_id: Any, params: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
     session_id = _normalized_non_empty_string(params.get("session_id"))
     if session_id is None:
         return None, None, _error_response(request_id, _invalid_params("session_id_required"))
     session = SERVER_STATE.sessions.get(session_id)
     if session is None:
-        return session_id, None, _error_response(request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id}))
+        return (
+            session_id,
+            None,
+            _error_response(request_id, JsonRpcError(-32001, "Session not found", {"session_id": session_id})),
+        )
     return session_id, session, None
 
 
-def _require_turn(request_id: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
+def _require_turn(
+    request_id: Any, params: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None, dict[str, Any] | None]:
     turn_id = _normalized_non_empty_string(params.get("turn_id"))
     if turn_id is None:
         return None, None, _error_response(request_id, _invalid_params("turn_id_required"))
@@ -173,7 +181,9 @@ def _require_turn(request_id: Any, params: dict[str, Any]) -> tuple[str | None, 
     return turn_id, turn, None
 
 
-def _extract_required_approval_diff(request_id: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None]:
+def _extract_required_approval_diff(
+    request_id: Any, params: dict[str, Any]
+) -> tuple[str | None, dict[str, Any] | None]:
     if "unified_diff" in params:
         raw_diff = params["unified_diff"]
     elif "diff" in params:
@@ -212,7 +222,9 @@ def _append_execution_notifications(
             },
         )
     )
-    notifications.append(_notification("turn/completed", {"session_id": session_id, "turn_id": turn_id, "status": "completed"}))
+    notifications.append(
+        _notification("turn/completed", {"session_id": session_id, "turn_id": turn_id, "status": "completed"})
+    )
 
 
 def _route_turn_cancel_method(method: str) -> str:
@@ -259,9 +271,7 @@ def _dispatch_turn_cancel_success(
     return _result_response(request_id, payload)
 
 
-def _dispatch_turn_cancel_recovery(
-    request_has_id: bool, parse_error: dict[str, Any]
-) -> dict[str, Any] | None:
+def _dispatch_turn_cancel_recovery(request_has_id: bool, parse_error: dict[str, Any]) -> dict[str, Any] | None:
     if _should_suppress_turn_cancel_recovery_response(request_has_id, parse_error):
         return None
     return parse_error
@@ -274,9 +284,7 @@ def _extract_turn_cancel_recovery_error_code(parse_error: dict[str, Any]) -> int
     return code
 
 
-def _should_suppress_turn_cancel_recovery_response(
-    request_has_id: bool, parse_error: dict[str, Any]
-) -> bool:
+def _should_suppress_turn_cancel_recovery_response(request_has_id: bool, parse_error: dict[str, Any]) -> bool:
     return not request_has_id and _extract_turn_cancel_recovery_error_code(parse_error) == -32003
 
 
@@ -500,9 +508,7 @@ def _cancel_requested_approval_for_turn(turn: dict[str, Any]) -> None:
     _cancel_turn_requested_approval(turn)
 
 
-def _build_turn_cancel_response(
-    request_has_id: bool, request_id: Any, turn: dict[str, Any]
-) -> dict[str, Any] | None:
+def _build_turn_cancel_response(request_has_id: bool, request_id: Any, turn: dict[str, Any]) -> dict[str, Any] | None:
     if not request_has_id:
         return None
     return _result_response(request_id, _build_turn_cancel_projection_payload(turn))
@@ -535,31 +541,49 @@ def _resolve_approval_resolution_context(
 
     approval = SERVER_STATE.approvals.get(approval_id)
     if approval is None:
-        return approval_id, None, None, _error_response(
-            request_id,
-            JsonRpcError(-32005, "Approval not found", {"approval_id": approval_id}),
+        return (
+            approval_id,
+            None,
+            None,
+            _error_response(
+                request_id,
+                JsonRpcError(-32005, "Approval not found", {"approval_id": approval_id}),
+            ),
         )
 
     if approval["status"] != "requested":
-        return approval_id, approval, None, _error_response(
-            request_id,
-            JsonRpcError(
-                -32006,
-                "Approval already resolved",
-                {"approval_id": approval_id, "status": approval["status"]},
+        return (
+            approval_id,
+            approval,
+            None,
+            _error_response(
+                request_id,
+                JsonRpcError(
+                    -32006,
+                    "Approval already resolved",
+                    {"approval_id": approval_id, "status": approval["status"]},
+                ),
             ),
         )
 
     turn_id = approval["turn_id"]
     turn = SERVER_STATE.turns.get(turn_id)
     if turn is None:
-        return approval_id, approval, None, _error_response(
-            request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})
+        return (
+            approval_id,
+            approval,
+            None,
+            _error_response(request_id, JsonRpcError(-32002, "Turn not found", {"turn_id": turn_id})),
         )
     if turn["status"] in TERMINAL_TURN_STATES:
-        return approval_id, approval, turn, _error_response(
-            request_id,
-            JsonRpcError(-32003, "Turn already terminal", {"turn_id": turn_id, "status": turn["status"]}),
+        return (
+            approval_id,
+            approval,
+            turn,
+            _error_response(
+                request_id,
+                JsonRpcError(-32003, "Turn already terminal", {"turn_id": turn_id, "status": turn["status"]}),
+            ),
         )
     return approval_id, approval, turn, None
 
@@ -599,7 +623,9 @@ def _execute_approval_resolution(
     raise ValueError(f"Unsupported approval resolution route: {route}")
 
 
-def _project_approval_resolution_result(approval_id: str, approval: dict[str, Any], turn: dict[str, Any]) -> dict[str, Any]:
+def _project_approval_resolution_result(
+    approval_id: str, approval: dict[str, Any], turn: dict[str, Any]
+) -> dict[str, Any]:
     if approval.get("id") != approval_id:
         raise ValueError(f"Approval id mismatch: expected={approval_id} actual={approval.get('id')}")
     return {
@@ -631,9 +657,7 @@ def _dispatch_approval_resolution_recovery(parse_error: dict[str, Any]) -> dict[
     return parse_error
 
 
-def _build_approval_resolution_phase_plan(
-    method: str, request_id: Any, params: dict[str, Any]
-) -> dict[str, Any]:
+def _build_approval_resolution_phase_plan(method: str, request_id: Any, params: dict[str, Any]) -> dict[str, Any]:
     route = _discover_approval_resolution_route(method)
     binding = _bind_approval_resolution_phases(route)
     approval_id, approval, turn, parse_error = _parse_approval_resolution_with_binding(request_id, params, binding)
@@ -746,9 +770,7 @@ def _handle_approval_resolution_request(
         binding,
         notifications,
     )
-    return _build_approval_resolution_success_response(
-        request_has_id, request_id, approval_id, approval, turn, binding
-    )
+    return _build_approval_resolution_success_response(request_has_id, request_id, approval_id, approval, turn, binding)
 
 
 def _build_turn_submit_phase_plan(request_id: Any, params: dict[str, Any]) -> dict[str, Any]:
@@ -830,9 +852,7 @@ def _build_turn_submit_execution_phase(
     return _resolve_turn_submit_execution_target(parse_phase)
 
 
-def _build_turn_submit_commit_phase(
-    session_id: str, session: dict[str, Any], user_input: str
-) -> dict[str, Any]:
+def _build_turn_submit_commit_phase(session_id: str, session: dict[str, Any], user_input: str) -> dict[str, Any]:
     turn_id, turn = _build_turn_submit_execution_plan(session_id, user_input)
     return {"turn_id": turn_id, "turn": turn, "session": session}
 
@@ -1174,8 +1194,8 @@ def _handle_turn_submit_request(
         notifications,
     )
     response_phase = _build_turn_submit_response_phase(request_has_id, request_id, side_effects_turn, approval_payload)
-    response_request_has_id, response_request_id, response_turn, response_approval_payload = _build_turn_submit_response_resolution_phase(
-        response_phase
+    response_request_has_id, response_request_id, response_turn, response_approval_payload = (
+        _build_turn_submit_response_resolution_phase(response_phase)
     )
     return _build_turn_submit_success_response(
         response_request_has_id, response_request_id, response_turn, response_approval_payload

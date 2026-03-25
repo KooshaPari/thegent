@@ -10,10 +10,12 @@ import os
 
 try:
     from agent_identity_system import GlobalAgentRegistry, AgentIdentity, AgentLevel, AgentRole
+
     AGENT_IDENTITY_AVAILABLE = True
 except ImportError:
     try:
         from scripts.agent_identity_system import GlobalAgentRegistry, AgentIdentity, AgentLevel, AgentRole
+
         AGENT_IDENTITY_AVAILABLE = True
     except ImportError:
         AGENT_IDENTITY_AVAILABLE = False
@@ -21,22 +23,26 @@ except ImportError:
         AgentIdentity = None
 
 try:
-    from civilization_conflict_resolver import (
-        ConflictResolver, ConflictRecord, ConflictType, ResolutionStrategy
-    )
+    from civilization_conflict_resolver import ConflictResolver, ConflictRecord, ConflictType, ResolutionStrategy
+
     CONFLICT_RESOLVER_AVAILABLE = True
 except ImportError:
     try:
         from scripts.civilization_conflict_resolver import (
-            ConflictResolver, ConflictRecord, ConflictType, ResolutionStrategy
+            ConflictResolver,
+            ConflictRecord,
+            ConflictType,
+            ResolutionStrategy,
         )
+
         CONFLICT_RESOLVER_AVAILABLE = True
     except ImportError:
         CONFLICT_RESOLVER_AVAILABLE = False
 
 
-@unittest.skipUnless(AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE,
-                     "Agent identity and conflict resolver required")
+@unittest.skipUnless(
+    AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE, "Agent identity and conflict resolver required"
+)
 class TestConflictDetection(unittest.TestCase):
     """Tests for conflict detection."""
 
@@ -48,7 +54,7 @@ class TestConflictDetection(unittest.TestCase):
     def tearDown(self):
         """Clean up after tests."""
         # Clear the persistent registry
-        registry_path = Path(os.path.expanduser("~/.claude/civilization/registry.json"))
+        registry_path = Path("~/.claude/civilization/registry.json").expanduser()
         if registry_path.exists():
             # Don't delete to preserve state for other tests
             pass
@@ -76,7 +82,7 @@ class TestConflictDetection(unittest.TestCase):
         # This test verifies the detection logic would catch them
         conflicts = self.resolver.detect_conflicts()
         # Verify detection function runs without error
-        self.assertIsInstance(conflicts, list)
+        assert isinstance(conflicts, list)
 
     def test_detect_parent_reference_conflicts(self):
         """Test detection of invalid parent references."""
@@ -96,7 +102,7 @@ class TestConflictDetection(unittest.TestCase):
         # Should detect parent reference conflict
         parent_conflicts = [c for c in conflicts if c.conflict_type == ConflictType.PARENT_REFERENCE_CONFLICT]
         # May or may not detect depending on registry behavior
-        self.assertIsInstance(conflicts, list)
+        assert isinstance(conflicts, list)
 
     def test_detect_circular_dependencies(self):
         """Test detection of circular parent-child relationships."""
@@ -122,7 +128,7 @@ class TestConflictDetection(unittest.TestCase):
 
         conflicts = self.resolver.detect_conflicts()
         # Verify detection runs
-        self.assertIsInstance(conflicts, list)
+        assert isinstance(conflicts, list)
 
     def test_conflict_log_persistence(self):
         """Test that conflicts are persisted to disk."""
@@ -143,16 +149,17 @@ class TestConflictDetection(unittest.TestCase):
         initial_count = len(conflicts)
 
         # Verify conflict log exists
-        self.assertTrue(self.resolver.conflict_log_path.exists())
+        assert self.resolver.conflict_log_path.exists()
 
         # Reload resolver and verify conflicts are loaded
         resolver2 = ConflictResolver(self.registry)
         # Should have at least the conflicts we just created
-        self.assertGreaterEqual(len(resolver2.conflicts), initial_count)
+        assert len(resolver2.conflicts) >= initial_count
 
 
-@unittest.skipUnless(AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE,
-                     "Agent identity and conflict resolver required")
+@unittest.skipUnless(
+    AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE, "Agent identity and conflict resolver required"
+)
 class TestConflictResolution(unittest.TestCase):
     """Tests for conflict resolution strategies."""
 
@@ -193,11 +200,11 @@ class TestConflictResolution(unittest.TestCase):
         # Resolve with LWW
         resolved = self.resolver.resolve_conflict(conflict, ResolutionStrategy.LAST_WRITE_WINS)
 
-        self.assertIsNotNone(resolved)
-        self.assertTrue(resolved.resolved)
-        self.assertEqual(resolved.resolution_strategy, ResolutionStrategy.LAST_WRITE_WINS)
+        assert resolved is not None
+        assert resolved.resolved
+        assert resolved.resolution_strategy == ResolutionStrategy.LAST_WRITE_WINS
         # Winner should be agent2 (more recent heartbeat)
-        self.assertEqual(resolved.resolution_winner, agent2.agent_id)
+        assert resolved.resolution_winner == agent2.agent_id
 
     def test_merge_strategy(self):
         """Test merge resolution strategy."""
@@ -233,9 +240,9 @@ class TestConflictResolution(unittest.TestCase):
         # Resolve with merge
         resolved = self.resolver.resolve_conflict(conflict, ResolutionStrategy.MERGE)
 
-        self.assertIsNotNone(resolved)
-        self.assertTrue(resolved.resolved)
-        self.assertEqual(resolved.resolution_strategy, ResolutionStrategy.MERGE)
+        assert resolved is not None
+        assert resolved.resolved
+        assert resolved.resolution_strategy == ResolutionStrategy.MERGE
 
     def test_auto_select_strategy(self):
         """Test automatic strategy selection based on conflict type."""
@@ -246,7 +253,7 @@ class TestConflictResolution(unittest.TestCase):
             involved_agents=[],
         )
         strategy1 = self.resolver._auto_select_strategy(conflict1)
-        self.assertEqual(strategy1, ResolutionStrategy.LAST_WRITE_WINS)
+        assert strategy1 == ResolutionStrategy.LAST_WRITE_WINS
 
         conflict2 = ConflictRecord(
             conflict_id="circular",
@@ -255,7 +262,7 @@ class TestConflictResolution(unittest.TestCase):
             involved_agents=[],
         )
         strategy2 = self.resolver._auto_select_strategy(conflict2)
-        self.assertEqual(strategy2, ResolutionStrategy.MERGE)
+        assert strategy2 == ResolutionStrategy.MERGE
 
     def test_resolved_conflict_not_re_resolved(self):
         """Test that already resolved conflicts are not re-resolved."""
@@ -272,11 +279,12 @@ class TestConflictResolution(unittest.TestCase):
         result = self.resolver.resolve_conflict(conflict)
 
         # Should return same conflict without re-processing
-        self.assertEqual(result, conflict)
+        assert result == conflict
 
 
-@unittest.skipUnless(AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE,
-                     "Agent identity and conflict resolver required")
+@unittest.skipUnless(
+    AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE, "Agent identity and conflict resolver required"
+)
 class TestConflictQueries(unittest.TestCase):
     """Tests for conflict querying and reporting."""
 
@@ -314,10 +322,10 @@ class TestConflictQueries(unittest.TestCase):
 
         results = self.resolver.get_conflicts_by_agent(agent_id)
 
-        self.assertEqual(len(results), 2)
-        self.assertIn(conflict1, results)
-        self.assertIn(conflict2, results)
-        self.assertNotIn(conflict3, results)
+        assert len(results) == 2
+        assert conflict1 in results
+        assert conflict2 in results
+        assert conflict3 not in results
 
     def test_get_unresolved_conflicts(self):
         """Test querying unresolved conflicts."""
@@ -342,8 +350,8 @@ class TestConflictQueries(unittest.TestCase):
 
         results = self.resolver.get_unresolved_conflicts()
 
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].conflict_id, "unresolved")
+        assert len(results) == 1
+        assert results[0].conflict_id == "unresolved"
 
     def test_get_conflicts_since(self):
         """Test querying conflicts by time range."""
@@ -368,8 +376,8 @@ class TestConflictQueries(unittest.TestCase):
         threshold = time.time() - 500
         results = self.resolver.get_conflicts_since(threshold)
 
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].conflict_id, "new")
+        assert len(results) == 1
+        assert results[0].conflict_id == "new"
 
     def test_get_conflict_summary(self):
         """Test conflict summary statistics."""
@@ -396,15 +404,16 @@ class TestConflictQueries(unittest.TestCase):
 
         summary = self.resolver.get_conflict_summary()
 
-        self.assertEqual(summary['total_conflicts'], 5)
-        self.assertEqual(summary['resolved_conflicts'], 2)
-        self.assertEqual(summary['unresolved_conflicts'], 3)
-        self.assertEqual(summary['conflicts_by_type'][ConflictType.DUPLICATE_REGISTRATION.value], 3)
-        self.assertEqual(summary['conflicts_by_type'][ConflictType.PARENT_REFERENCE_CONFLICT.value], 2)
+        assert summary["total_conflicts"] == 5
+        assert summary["resolved_conflicts"] == 2
+        assert summary["unresolved_conflicts"] == 3
+        assert summary["conflicts_by_type"][ConflictType.DUPLICATE_REGISTRATION.value] == 3
+        assert summary["conflicts_by_type"][ConflictType.PARENT_REFERENCE_CONFLICT.value] == 2
 
 
-@unittest.skipUnless(AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE,
-                     "Agent identity and conflict resolver required")
+@unittest.skipUnless(
+    AGENT_IDENTITY_AVAILABLE and CONFLICT_RESOLVER_AVAILABLE, "Agent identity and conflict resolver required"
+)
 class TestPhase5AIntegration(unittest.TestCase):
     """Integration tests for Phase 5A with earlier phases."""
 
@@ -448,8 +457,8 @@ class TestPhase5AIntegration(unittest.TestCase):
         self.registry.register_agent(l3)
 
         # Verify hierarchy is intact
-        self.assertEqual(l2.parent_agent_id, l1.agent_id)
-        self.assertEqual(l3.parent_agent_id, l2.agent_id)
+        assert l2.parent_agent_id == l1.agent_id
+        assert l3.parent_agent_id == l2.agent_id
 
         # Detect and resolve conflicts
         conflicts = self.resolver.detect_conflicts()
@@ -459,8 +468,8 @@ class TestPhase5AIntegration(unittest.TestCase):
                 self.resolver.resolve_conflict(conflict)
 
         # Verify hierarchy still valid
-        self.assertEqual(l2.parent_agent_id, l1.agent_id)
-        self.assertEqual(l3.parent_agent_id, l2.agent_id)
+        assert l2.parent_agent_id == l1.agent_id
+        assert l3.parent_agent_id == l2.agent_id
 
     def test_backward_compatibility_with_phase_1_3(self):
         """Test that Phase 5A doesn't break Phase 1-3 functionality."""
@@ -487,14 +496,14 @@ class TestPhase5AIntegration(unittest.TestCase):
 
         # Verify agents are still accessible
         retrieved_agent = self.registry.get_agent(agent1.agent_id)
-        self.assertIsNotNone(retrieved_agent)
-        self.assertEqual(retrieved_agent.agent_id, agent1.agent_id)
+        assert retrieved_agent is not None
+        assert retrieved_agent.agent_id == agent1.agent_id
 
         # Verify hierarchy lookup works
         hierarchy = self.registry.get_hierarchy(agent1.agent_id)
-        self.assertIsNotNone(hierarchy)
-        self.assertEqual(hierarchy.get("agent_id"), agent1.agent_id)
+        assert hierarchy is not None
+        assert hierarchy.get("agent_id") == agent1.agent_id
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

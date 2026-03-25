@@ -15,6 +15,7 @@ import uuid
 @dataclass
 class Task:
     """Task for swarm execution."""
+
     id: str
     task_type: str
     payload: Any
@@ -25,6 +26,7 @@ class Task:
 @dataclass
 class TaskResult:
     """Result of swarm task."""
+
     task_id: str
     agent_id: str
     success: bool
@@ -42,12 +44,7 @@ class SwarmOrchestrator:
         self._running: dict[str, tuple[Task, str]] = {}  # task_id -> (task, agent_id)
         self._completed: dict[str, TaskResult] = {}
 
-    def register_agent(
-        self,
-        agent_id: str,
-        specialization: str,
-        max_tasks: int = 5
-    ) -> None:
+    def register_agent(self, agent_id: str, specialization: str, max_tasks: int = 5) -> None:
         """Register an agent with the swarm."""
         self.balancer.register(agent_id, specialization, max_tasks)
 
@@ -113,13 +110,15 @@ class SwarmOrchestrator:
     def _dispatch(self, task: Task, agent_id: str) -> None:
         """Dispatch task to agent."""
         self._running[task.id] = (task, agent_id)
-        self.channel.send(Message(
-            sender="orchestrator",
-            receiver=agent_id,
-            message_type="task_assign",
-            payload=task,
-            timestamp=time.time()
-        ))
+        self.channel.send(
+            Message(
+                sender="orchestrator",
+                receiver=agent_id,
+                message_type="task_assign",
+                payload=task,
+                timestamp=time.time(),
+            )
+        )
 
     def _handle_completion(self, msg: Message) -> Optional[TaskResult]:
         """Handle task completion message."""
@@ -138,7 +137,7 @@ class SwarmOrchestrator:
             agent_id=agent_id,
             success=payload.get("success", False),
             output=payload.get("output"),
-            duration=payload.get("duration", 0)
+            duration=payload.get("duration", 0),
         )
         self._completed[task_id] = result
 
@@ -151,5 +150,5 @@ class SwarmOrchestrator:
             "running": len(self._running),
             "completed": len(self._completed),
             "channel": self.channel.stats(),
-            "balancer": self.balancer.stats()
+            "balancer": self.balancer.stats(),
         }

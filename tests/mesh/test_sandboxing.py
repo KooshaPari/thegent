@@ -50,4 +50,3 @@ def test_check_autonomy_limits(tmp_path: Path) -> None:
 
     assert sandbox.check_autonomy(AutonomyTier.WORKTREE, AutonomyTier.READ_ONLY) is True
     assert sandbox.check_autonomy(AutonomyTier.READ_ONLY, AutonomyTier.WORKTREE) is False
-
