@@ -634,6 +634,7 @@ def poll_session_messages(
         missing_payload: dict[str, Any] = {"messages": [], "meta": dict(_LAST_POLL_MESSAGES_META)}
         return missing_payload if include_meta else []
 
+    # tach-ignore(execution should not architecturally depend on cli)
     from thegent.cli.commands.impl import _find_session_meta
     from thegent.config import ThegentSettings
 

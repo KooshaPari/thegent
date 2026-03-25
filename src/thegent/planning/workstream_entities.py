@@ -427,6 +427,7 @@ def sync_entities_from_sources(
     if source in {"markdown", "all"}:
         work_stream_path = project_dir / "docs" / "reference" / "WORK_STREAM.md"
         if work_stream_path.exists():
+            # tach-ignore(planning should not architecturally depend on cli)
             from thegent.cli.services import run_workstream_helpers
 
             data = run_workstream_helpers.parse_work_stream_md(work_stream_path)

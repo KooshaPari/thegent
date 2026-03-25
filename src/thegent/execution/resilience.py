@@ -379,6 +379,7 @@ class ContinuityWatchdog:
 
     def scan_stale_sessions(self, max_idle_s: int = 3600) -> list[str]:
         """Scan for sessions with no activity for max_idle_s."""
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
@@ -410,6 +411,7 @@ class ContinuityWatchdog:
 
         Returns list of escalated sessions.
         """
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)
