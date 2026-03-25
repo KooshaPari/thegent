@@ -137,7 +137,7 @@ class SessionTUI:
                             "create_time": child.create_time(),
                         }
                     )
-                except psutil.NoSuchProcess, psutil.AccessDenied:  # noqa: PERF203 - intentional per-item error handling
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
         except (psutil.NoSuchProcess, psutil.AccessDenied) as exc:
             _record_subagent_failure(
@@ -348,7 +348,7 @@ class SessionTUI:
                     proc = psutil.Process(pid)
                     mem = proc.memory_info()
                     memory_str = f"{mem.rss / 1024 / 1024:.1f}MB"
-                except psutil.NoSuchProcess, psutil.AccessDenied:
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     memory_str = "—"
 
             session_id_str = str(session_id) if session_id else "N/A"

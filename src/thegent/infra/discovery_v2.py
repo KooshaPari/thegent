@@ -50,7 +50,7 @@ class AgentScanner:
                             }
                         )
                         break
-            except psutil.NoSuchProcess, psutil.AccessDenied:
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
         return discovered
 

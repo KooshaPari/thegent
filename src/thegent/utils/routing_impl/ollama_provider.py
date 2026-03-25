@@ -59,7 +59,7 @@ def is_ollama_available() -> bool:
     try:
         resp = httpx.get(OLLAMA_TAGS_ENDPOINT, timeout=OLLAMA_PROBE_TIMEOUT)
         return resp.status_code == 200
-    except httpx.ConnectError, httpx.TimeoutException, httpx.RequestError:
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError):
         return False
 
 
