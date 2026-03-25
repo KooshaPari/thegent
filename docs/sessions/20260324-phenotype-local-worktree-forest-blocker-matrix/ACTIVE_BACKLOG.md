@@ -48,6 +48,7 @@ Each automation session should:
 | 2026-03-24 | **Wave C slices 4–6** | **`18_WAVE_C_SLICES_4_6.md`** — runbooks + `bash -n` on **`worktree_governance.sh`**; issues **[#559](https://github.com/KooshaPari/thegent/issues/559)** (cliproxy lanes), **[#560](https://github.com/KooshaPari/thegent/issues/560)** (PTY/secrets reuse). |
 | 2026-03-24 | **Next 50** (preamble + D + E) | **`19_NEXT_50_WORK_ITEMS.md`** — items **1–50**; **`09_NEXT_WAVE_C.md`** ↔ **`18`/`19`** cross-links; execute **Wave D** then **E** per ordered table. |
 | 2026-03-24 | **Next 50 — execution pass** | **`20_NEXT_50_EXECUTION.md`** + folder **`README.md`**; local **`task check`** blocked on Rust clippy (**`05_KNOWN_ISSUES.md`**); **`gitleaks`** + **`bash -n`** on governance script **OK**. |
+| 2026-03-24 | **Full-turn reference (canonical path)** | **`docs/reference/FULL_TURN_DELIVERY.md`** + **`AGENTS.md`** cross-link; merged **`thegent#564`** (`main`). Supersedes duplicate session-docs PR stacks per recovery note where applicable. |
 
 ## Wave B status (2026-03-24) — `08_NEXT_WAVE_B.md`
 
