@@ -7,17 +7,21 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
-import orjson as json
 import typer
-from rich.console import Console
-from rich.prompt import IntPrompt
 
-console = Console()
 app = typer.Typer(help="Phench: deterministic project runtime targets and execution.")
 target_app = typer.Typer(help="Manage project runtime targets.")
+repos_app = typer.Typer(help="Discover and preview sibling repository candidates.")
 env_app = typer.Typer(help="Environment preflight commands for targets.")
+snapshot_app = typer.Typer(help="Capture and inspect target snapshots.")
+modules_app = typer.Typer(help="Manage cross-repo module manifests and shared-module discovery.")
+projects_app = typer.Typer(help="Guided target selection and execution workflows.")
 app.add_typer(target_app, name="target")
+app.add_typer(repos_app, name="repos")
 app.add_typer(env_app, name="env")
+app.add_typer(snapshot_app, name="snapshot")
+app.add_typer(modules_app, name="modules")
+app.add_typer(projects_app, name="projects")
 
 
 def _phench_attr(name: str) -> Any:
@@ -140,14 +144,34 @@ def run_cmd(
     exit_code = _phench_attr("run_target")(
         name,
         repo_id=repo_id,
-        runner=runner,
-        command_name=command,
-        all_repos=all_repos,
-        execution_mode=execution_mode,
-        env_profile=env_profile,
-    )
-    raise typer.Exit(exit_code)
+        selected_ref=selected_ref,
+        family=family,
+    ),
+    lock_target_fn=lambda name, family=None: lock_target(name, family=family),
+    materialize_target_fn=lambda name, family=None: materialize_target(name, family=family),
+)
 
+register_timeline_commands(app, target_timeline_fn=_timeline_dispatch)
+register_run_commands(app, run_target_fn=_run_dispatch)
+register_env_commands(
+    env_app,
+    run_env_doctor_for_target_fn=_run_env_doctor_dispatch,
+    set_env_profile_fn=_set_env_profile_dispatch,
+    get_env_profile_fn=_get_env_profile_dispatch,
+)
+register_sync_commands(app, sync_target_fn=_sync_target_dispatch)
+register_snapshot_commands(
+    snapshot_app,
+    create_target_snapshot_fn=_snapshot_create_dispatch,
+    list_target_snapshots_fn=_snapshot_list_dispatch,
+    show_target_snapshot_fn=_snapshot_show_dispatch,
+)
+register_repos_commands(repos_app, discover_repos_fn=_discover_repos_dispatch)
+register_modules_commands(
+    modules_app,
+    sync_project_modules_from_repos_fn=_sync_project_modules_from_repos_dispatch,
+    audit_shared_modules_across_repos_fn=_audit_shared_modules_across_repos_dispatch,
+)
 
 @env_app.command("doctor", help="Run fail-fast environment doctor for a materialized target.")
 def env_doctor_cmd(name: str = typer.Argument(..., help="Target name.")) -> None:

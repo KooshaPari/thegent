@@ -10,16 +10,4 @@ permissions:
 
 jobs:
   policy-gate:
-    name: policy-gate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: KooshaPari/phenotypeActions/actions/policy-gate@main
-        with:
-          base_branch: main
-          block_merge_commits: true
-          require_layered_fix: true
+    uses: KooshaPari/phenotypeActions/.github/workflows/policy-gate.yml@main

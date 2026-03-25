@@ -6,6 +6,7 @@ Phase 6 / WP-16003: Extracted from cli_git.py for modular management.
 import logging
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import typer
@@ -13,7 +14,7 @@ from rich.console import Console
 
 from thegent_gitops.git import GitParallelismManager
 from thegent_gitops.worktree import WorktreePool
-from thegent.cli.commands.cli_git_worktree_governance import register_worktree_governance_commands
+from thegent_gitops.native import GitNative
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -50,7 +51,6 @@ worktree_app = typer.Typer(help="Manage agent worktree pool lifecycle for multi-
 def register_worktree_commands(parent_app: typer.Typer) -> None:
     """Register worktree subcommands to parent app."""
     parent_app.add_typer(worktree_app, name="worktree", help="Worktree pool management for coordinated agents.")
-    register_worktree_governance_commands(worktree_app)
 
 
 @worktree_app.command("status")
