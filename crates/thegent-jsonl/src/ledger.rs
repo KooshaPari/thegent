@@ -1,7 +1,7 @@
 //! Ledger integrity verification module
 
 use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -46,14 +46,25 @@ impl LedgerVerifier {
         report
     }
 
-    fn process_ledger_line(&self, line: &str, i: usize, last_hash: String, report: &mut IntegrityReport) -> String {
+    fn process_ledger_line(
+        &self,
+        line: &str,
+        i: usize,
+        last_hash: String,
+        report: &mut IntegrityReport,
+    ) -> String {
         match serde_json::from_str::<serde_json::Value>(line) {
             Ok(entry) => {
-                let prev_hash = entry.get("prev_hash").and_then(|v| v.as_str()).unwrap_or("");
-                
+                let prev_hash = entry
+                    .get("prev_hash")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+
                 if prev_hash != last_hash {
                     report.valid = false;
-                    report.errors.push(format!("Hash mismatch at line {}", i + 1));
+                    report
+                        .errors
+                        .push(format!("Hash mismatch at line {}", i + 1));
                 }
 
                 // Compute rolling hash of current entry
@@ -66,7 +77,9 @@ impl LedgerVerifier {
             }
             Err(e) => {
                 report.valid = false;
-                report.errors.push(format!("Error at line {}: {}", i + 1, e));
+                report
+                    .errors
+                    .push(format!("Error at line {}: {}", i + 1, e));
                 last_hash
             }
         }
@@ -83,7 +96,7 @@ pub struct IncidentLedger {
 impl IncidentLedger {
     pub fn new(ledger_path: &Path) -> Self {
         let mut last_hash = String::new();
-        
+
         if ledger_path.exists() {
             if let Ok(content) = std::fs::read_to_string(ledger_path) {
                 for line in content.lines() {
@@ -100,7 +113,8 @@ impl IncidentLedger {
 
     fn get_last_hash_from_line(line: &str, current: &str) -> String {
         match serde_json::from_str::<serde_json::Value>(line) {
-            Ok(entry) => entry.get("rolling_hash")
+            Ok(entry) => entry
+                .get("rolling_hash")
                 .and_then(|v| v.as_str())
                 .map(String::from)
                 .unwrap_or_else(|| current.to_string()),
@@ -108,9 +122,14 @@ impl IncidentLedger {
         }
     }
 
-    pub fn record_artifact(&mut self, run_id: &str, action: &str, payload: &HashMap<String, serde_json::Value>) -> String {
+    pub fn record_artifact(
+        &mut self,
+        run_id: &str,
+        action: &str,
+        payload: &HashMap<String, serde_json::Value>,
+    ) -> String {
         let prev_hash = self.last_hash.clone();
-        
+
         let entry = serde_json::json!({
             "run_id": run_id,
             "action": action,
@@ -125,7 +144,8 @@ impl IncidentLedger {
         self.last_hash = current_hash.clone();
 
         // Write rolling_hash last
-        let line = format!("{},\"rolling_hash\":\"{}\"}}\n", 
+        let line = format!(
+            "{},\"rolling_hash\":\"{}\"}}\n",
             content.trim_end_matches('}'),
             current_hash
         );
@@ -133,7 +153,7 @@ impl IncidentLedger {
         if let Some(parent) = self.ledger_path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
-        
+
         let _ = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
@@ -145,7 +165,7 @@ impl IncidentLedger {
 
     pub fn get_run_artifacts(&self, run_id: &str) -> Vec<serde_json::Value> {
         let mut out = Vec::new();
-        
+
         if !self.ledger_path.exists() {
             return out;
         }
