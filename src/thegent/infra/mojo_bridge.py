@@ -232,7 +232,7 @@ class MojoBridge:
                 )
                 # If modular is set up, mojo should be available
                 return True
-            except subprocess.TimeoutExpired, FileNotFoundError:
+            except (subprocess.TimeoutExpired, FileNotFoundError):
                 pass
 
         # Check common installation paths on macOS
