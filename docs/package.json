@@ -7,6 +7,13 @@
     "docs:build": "vitepress build .",
     "docs:preview": "vitepress preview ."
   },
+  "dependencies": {
+    "@phenotype/docs": "file:../vendor/phenodocs/packages/docs",
+    "markdown-it-emoji": "^3.0.0",
+    "markdown-it-mathjax3": "^5.2.0",
+    "vite-imagetools": "^10.0.0",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  },
   "devDependencies": {
     "vitepress": "^1.6.4"
   }
