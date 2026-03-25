@@ -1,0 +1,90 @@
+# Hexagonal Architecture in thegent
+
+**Status**: Implemented
+
+## Overview
+
+thegent follows Hexagonal Architecture (Ports & Adapters) pattern.
+
+## Architecture Diagram
+
+```
+                    ┌─────────────────┐
+                    │   Driving/      │
+                    │   Primary       │
+                    │   Adapters      │
+                    │                 │
+                    │  - CLI (cli.py) │
+                    │  - MCP (mcp.py) │
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │   Driving      │
+                    │   Ports        │
+                    │                 │
+                    │ ┌─────────────┐ │
+                    │ │   Domain    │ │
+                    │ │   Core      │ │
+                    │ │             │ │
+                    │ │  - agents/  │ │
+                    │ │  - audit/   │ │
+                    │ │  - cache/   │ │
+                    │ │  - sessions/│ │
+                    │ └─────────────┘ │
+                    │                 │
+                    │   Driven       │
+                    │   Ports        │
+                    └────────┬────────┘
+                             │
+                    ┌────────▼────────┐
+                    │   Driven       │
+                    │   Adapters     │
+                    │                 │
+                    │ - agent_exec   │
+                    │ - cliproxy     │
+                    │ - provider     │
+                    │ - storage      │
+                    │ - telemetry    │
+                    └─────────────────┘
+```
+
+## Port Types
+
+### Driving Ports (Inbound)
+- `ports/driving/cli.py` - CLI interface
+- `ports/driving/mcp.py` - MCP (Model Context Protocol) interface
+
+### Driven Ports (Outbound)
+- `ports/driven/agent_executor.py` - Agent execution
+- `ports/driven/cliproxy.py` - CLI proxy
+- `ports/driven/model_routing.py` - AI model routing
+- `ports/driven/provider.py` - Provider management
+- `ports/driven/session_querier.py` - Session queries
+- `ports/driven/storage.py` - Persistence
+- `ports/driven/telemetry.py` - Telemetry
+- `ports/driven/workflow_runner.py` - Workflow execution
+
+## Adapter Implementations
+
+### Driving Adapters
+- `adapters/acp_client.py` - ACP protocol client
+- `adapters/acp_server.py` - ACP protocol server
+- `adapters/claude_harness.py` - Claude AI harness
+- `adapters/codex_harness.py` - Codex harness
+
+### Driven Adapters
+- `adapters/driven/` - Secondary adapters
+
+## Benefits
+
+1. **Testability** - Core logic tested without external dependencies
+2. **Flexibility** - Easy to swap adapters (e.g., different AI providers)
+3. **Isolation** - Domain logic isolated from infrastructure
+4. **Maintainability** - Clear separation of concerns
+
+## Compliance
+
+✓ Domain has no infrastructure imports
+✓ Ports define interfaces, not implementations
+✓ Adapters implement port interfaces
+✓ Core business logic in `src/thegent/` domain
