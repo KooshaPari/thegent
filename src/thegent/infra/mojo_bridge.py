@@ -232,7 +232,7 @@ class MojoBridge:
                 )
                 # If modular is set up, mojo should be available
                 return True
-            except subprocess.TimeoutExpired, FileNotFoundError:
+            except (subprocess.TimeoutExpired, FileNotFoundError):
                 pass
 
         # Check common installation paths on macOS
@@ -280,7 +280,7 @@ class MojoBridge:
             stdout, _stderr = await asyncio.wait_for(process.communicate(), timeout=10.0)
             if process.returncode == 0:
                 return stdout.decode().strip()
-        except TimeoutError, FileNotFoundError, subprocess.SubprocessError:
+        except (TimeoutError, FileNotFoundError, subprocess.SubprocessError):
             pass
 
         return None

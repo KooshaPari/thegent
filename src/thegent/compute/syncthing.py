@@ -165,7 +165,7 @@ class SyncthingManager:
             resp.raise_for_status()
             data = resp.json()
             return str(data.get("status", "")).lower() == "ok"
-        except httpx.HTTPStatusError, httpx.RequestError, ValueError:
+        except (httpx.HTTPStatusError, httpx.RequestError, ValueError):
             return False
 
     async def get_devices(self) -> list[SyncthingDevice]:

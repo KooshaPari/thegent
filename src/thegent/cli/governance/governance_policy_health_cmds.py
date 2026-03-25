@@ -1,46 +1,51 @@
-"""Governance health and status commands facade (WL-124).
+"""Governance policy and health commands facade - re-exports from submodules."""
 
-Re-exports split modules:
-- governance_health_core_cmds: health/status/cycle/watch
-- governance_policy_cmds: policy, contracts, migration, drift
-- governance_audit_compliance_cmds: audit, compliance, guardrails
-"""
+# @trace WL-124
+from __future__ import annotations
 
-from thegent.cli.commands.governance_health_core_cmds import (
+# Health and governance commands
+from thegent.cli.governance.governance_health_cmds import (
     govern_configure_cmd,
     govern_go_health_cmd,
     govern_go_status_cmd,
     govern_go_cycle_cmd,
     govern_go_watch_cmd,
-)
-from thegent.cli.commands.governance_policy_cmds import (
-    policy_show_cmd,
-    policy_purge_cmd,
-    contracts_registry_cmd,
-    migration_cmd,
-    drift_cmd,
-    contracts_conformance_cmd,
-    trust_status_cmd,
-)
-from thegent.cli.commands.governance_audit_compliance_cmds import (
-    signatures_list_cmd,
-    signatures_verify_cmd,
-    compliance_siem_test_cmd,
-    compliance_plugin_check_cmd,
-    compliance_redact_cmd,
     govern_cost_cmd,
     guardrails_check_cmd,
     guardrails_show_cmd,
 )
 
+# Policy and compliance commands
+from thegent.cli.governance.governance_policy_cmds import (
+    policy_show_cmd,
+    policy_purge_cmd,
+    policy_check_cmd,
+    contracts_registry_cmd,
+    migration_cmd,
+    drift_cmd,
+    contracts_conformance_cmd,
+    trust_status_cmd,
+    signatures_list_cmd,
+    signatures_verify_cmd,
+    compliance_siem_test_cmd,
+    compliance_plugin_check_cmd,
+    compliance_redact_cmd,
+)
+
 __all__ = [
+    # Health and governance
     "govern_configure_cmd",
     "govern_go_health_cmd",
     "govern_go_status_cmd",
     "govern_go_cycle_cmd",
     "govern_go_watch_cmd",
+    "govern_cost_cmd",
+    "guardrails_check_cmd",
+    "guardrails_show_cmd",
+    # Policy and compliance
     "policy_show_cmd",
     "policy_purge_cmd",
+    "policy_check_cmd",
     "contracts_registry_cmd",
     "migration_cmd",
     "drift_cmd",
@@ -51,7 +56,4 @@ __all__ = [
     "compliance_siem_test_cmd",
     "compliance_plugin_check_cmd",
     "compliance_redact_cmd",
-    "govern_cost_cmd",
-    "guardrails_check_cmd",
-    "guardrails_show_cmd",
 ]

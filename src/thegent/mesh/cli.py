@@ -226,7 +226,7 @@ def _load_mesh_manifest(table: Table, manifest: Path) -> None:
                 p = psutil.Process(int(pid))
                 if not p.is_running():
                     status = "[red]exited[/red]"
-            except psutil.NoSuchProcess, ValueError:
+            except (psutil.NoSuchProcess, ValueError):
                 status = "[red]not found[/red]"
 
             table.add_row(str(pid), agent_type, status, workdir)

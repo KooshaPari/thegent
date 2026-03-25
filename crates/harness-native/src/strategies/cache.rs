@@ -23,9 +23,9 @@ pub fn lock_shared(path: &Path, _timeout_secs: u64) -> Option<std::fs::File> {
         .read(true)
         .write(true)
         .create(true)
-        .truncate(false)
+        .truncate(true)
         .open(path)
         .ok()?;
-    FileExt::lock_shared(&file).ok()?;
+    fs2::FileExt::lock_shared(&file).ok()?;
     Some(file)
 }
