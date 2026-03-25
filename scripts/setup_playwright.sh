@@ -12,16 +12,17 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# Check if npm is installed
-if ! command -v npm &> /dev/null; then
-    echo "Error: npm is required but not installed."
+# Check if bun is installed (bun includes Node.js)
+if ! command -v bun &> /dev/null; then
+    echo "Error: bun is required but not installed."
+    echo "Install bun from https://bun.sh/"
     exit 1
 fi
 
 # Install Playwright if not already installed
 if [ ! -d "node_modules/@playwright" ]; then
     echo "Installing Playwright..."
-    npm install -D @playwright/test playwright
+    bun add -d @playwright/test playwright
 fi
 
 # Install Playwright browsers
