@@ -6,10 +6,6 @@
 import sys
 from typing import Any
 
-# Lazy load from thegent_agents if available, otherwise fall back to local imports
-_agents_module = None
-
-
 def __getattr__(name: str) -> Any:
     """Lazy load attributes from thegent_agents package."""
     global _agents_module

@@ -423,9 +423,12 @@ Prefer native services over Docker for local dev. Prefer local, OSS, and free to
 
 ---
 
-# Plugin Ecosystem Awareness
+AgilePlus Governance
 
-BMAD, AgilePlus, GSD plugins may be available as slash commands. Check `/` for documentation workflows. If BMAD agents installed (`.claude/commands/bmad/`), activate via slash commands. Start new conversation to switch agent personas.
+- This repo uses AgilePlus for spec-driven development
+- Feature specs live in `agileplus-specs/` (AgilePlus native format)
+- Spec docs (PRD.md, ADR.md, FUNCTIONAL_REQUIREMENTS.md, PLAN.md) are maintained at repo root
+- See the AgilePlus documentation for governance workflows
 
 ---
 
