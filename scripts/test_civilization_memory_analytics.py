@@ -29,7 +29,7 @@ class TestMemoryAnalytics(unittest.TestCase):
             make_memory("error", timestamp_offset_days=2),
         ]
         velocity = self.analytics.calculate_learning_velocity(memories, days=30)
-        self.assertAlmostEqual(velocity, 3 / 30)
+        self.assertAlmostEqual(velocity, 3 / 30)  # noqa: PT009
 
     def test_learning_velocity_old_filtered(self):
         memories = [
@@ -38,7 +38,7 @@ class TestMemoryAnalytics(unittest.TestCase):
             make_memory("learning", timestamp_offset_days=40),
         ]
         velocity = self.analytics.calculate_learning_velocity(memories, days=30)
-        self.assertAlmostEqual(velocity, 1 / 30)
+        self.assertAlmostEqual(velocity, 1 / 30)  # noqa: PT009
 
     def test_error_density_basic(self):
         memories = [
@@ -47,7 +47,7 @@ class TestMemoryAnalytics(unittest.TestCase):
             make_memory("learning", timestamp_offset_days=2),
         ]
         density = self.analytics.calculate_error_density(memories, days=7)
-        self.assertAlmostEqual(density, 2 / 7)
+        self.assertAlmostEqual(density, 2 / 7)  # noqa: PT009
 
     def test_keyword_trends_basic(self):
         memories = [
@@ -81,7 +81,7 @@ class TestMemoryAnalytics(unittest.TestCase):
             make_memory("learning", content={"data": "python automation testing deploy"}),
         ]
         result = self.analytics.compare_agents(memories_a, memories_b)
-        self.assertAlmostEqual(result["similarity_score"], 1.0)
+        self.assertAlmostEqual(result["similarity_score"], 1.0)  # noqa: PT009
         assert result["agent_a_unique_keywords"] == []
         assert result["agent_b_unique_keywords"] == []
 
@@ -108,7 +108,7 @@ class TestMemoryAnalytics(unittest.TestCase):
         assert summary["memory_types"]["learning"] == 1
         assert summary["memory_types"]["error"] == 1
         assert summary["memory_types"]["execution"] == 1
-        self.assertAlmostEqual(summary["avg_importance"], 0.6)
+        self.assertAlmostEqual(summary["avg_importance"], 0.6)  # noqa: PT009
         assert isinstance(summary["learning_velocity"], float)
         assert isinstance(summary["error_density"], float)
         assert isinstance(summary["top_keywords"], list)
@@ -117,22 +117,22 @@ class TestMemoryAnalytics(unittest.TestCase):
         summary = self.analytics.get_agent_summary([])
         assert summary["total_memories"] == 0
         assert summary["memory_types"] == {}
-        self.assertAlmostEqual(summary["avg_importance"], 0.0)
-        self.assertAlmostEqual(summary["learning_velocity"], 0.0)
-        self.assertAlmostEqual(summary["error_density"], 0.0)
+        self.assertAlmostEqual(summary["avg_importance"], 0.0)  # noqa: PT009
+        self.assertAlmostEqual(summary["learning_velocity"], 0.0)  # noqa: PT009
+        self.assertAlmostEqual(summary["error_density"], 0.0)  # noqa: PT009
         assert summary["top_keywords"] == []
 
         velocity = self.analytics.calculate_learning_velocity([])
-        self.assertAlmostEqual(velocity, 0.0)
+        self.assertAlmostEqual(velocity, 0.0)  # noqa: PT009
 
         density = self.analytics.calculate_error_density([])
-        self.assertAlmostEqual(density, 0.0)
+        self.assertAlmostEqual(density, 0.0)  # noqa: PT009
 
         trends = self.analytics.get_keyword_trends([])
         assert trends == []
 
         result = self.analytics.compare_agents([], [])
-        self.assertAlmostEqual(result["similarity_score"], 0.0)
+        self.assertAlmostEqual(result["similarity_score"], 0.0)  # noqa: PT009
 
 
 if __name__ == "__main__":

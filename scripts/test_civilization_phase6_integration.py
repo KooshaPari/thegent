@@ -299,7 +299,7 @@ class TestSharingAndStoragePipeline(unittest.TestCase):
         assert len(history) > 0, "Transfer history should not be empty"
         assert history[0]["source_agent_id"] == "agent-alpha"
         assert history[0]["target_agent_id"] == "agent-beta"
-        self.assertAlmostEqual(history[0]["effectiveness"], 0.85)
+        self.assertAlmostEqual(history[0]["effectiveness"], 0.85)  # noqa: PT009
 
 
 class TestExistingTestsStillPass(unittest.TestCase):

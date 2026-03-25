@@ -14,7 +14,7 @@ class TestMemorySharingService(unittest.TestCase):
         assert len(results) == 1
         assert results[0]["memory_id"] == "mem1"
         assert results[0]["content"]["skill"] == "navigation"
-        self.assertAlmostEqual(results[0]["importance"], 0.8)
+        self.assertAlmostEqual(results[0]["importance"], 0.8)  # noqa: PT009
 
     def test_get_learnings_min_importance(self):
         """Low importance memories are filtered out."""
@@ -44,7 +44,7 @@ class TestMemorySharingService(unittest.TestCase):
 
     def test_record_transfer_invalid_effectiveness(self):
         """effectiveness=1.5 raises ValueError."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.service.record_learning_transfer("mem1", "agent_a", "agent_b", effectiveness=1.5)
 
     def test_get_transfer_history_as_source(self):
@@ -86,7 +86,7 @@ class TestMemorySharingService(unittest.TestCase):
         self.service.record_learning_transfer("mem1", "agent_a", "agent_b", effectiveness=0.6)
         self.service.record_learning_transfer("mem2", "agent_c", "agent_b", effectiveness=0.8)
         avg = self.service.calculate_transfer_effectiveness("agent_b")
-        self.assertAlmostEqual(avg, 0.7, places=5)
+        self.assertAlmostEqual(avg, 0.7, places=5)  # noqa: PT009
 
     def test_calculate_effectiveness_no_transfers(self):
         """Returns 0.0 when no transfers exist."""

@@ -285,7 +285,7 @@ class TestMemoryStats(unittest.TestCase):
         # 10 successful executions, 2 errors out of 12 total
         # Success rate: 10/12 = 0.83
         expected_rate = 10 / 12
-        self.assertAlmostEqual(stats["success_rate"], round(expected_rate, 2), places=1)
+        self.assertAlmostEqual(stats["success_rate"], round(expected_rate, 2), places=1)  # noqa: PT009
 
     def test_average_importance(self):
         """Test average importance calculation."""
@@ -293,7 +293,7 @@ class TestMemoryStats(unittest.TestCase):
 
         # Average of 10*0.7 + 2*0.3 + 3*0.9 = 7 + 0.6 + 2.7 = 10.3 / 15 = 0.69
         expected_avg = (10 * 0.7 + 2 * 0.3 + 3 * 0.9) / 15
-        self.assertAlmostEqual(stats["average_importance"], round(expected_avg, 2), places=1)
+        self.assertAlmostEqual(stats["average_importance"], round(expected_avg, 2), places=1)  # noqa: PT009
 
     def test_timestamps_in_stats(self):
         """Test that first and last timestamps are recorded."""

@@ -63,9 +63,9 @@ class TestMemoryRelationships(unittest.TestCase):
 
     def test_link_memories_invalid_strength(self):
         """Strength outside 0.0-1.0 raises ValueError."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.storage.link_memories("m1", "m2", strength=1.5)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.storage.link_memories("m1", "m2", strength=-0.1)
 
     def test_get_related_memories(self):
@@ -77,7 +77,7 @@ class TestMemoryRelationships(unittest.TestCase):
         related = self.storage.get_related_memories("a")
         assert len(related) == 1
         assert related[0]["memory_id"] == "b"
-        self.assertAlmostEqual(related[0]["strength"], 0.8)
+        self.assertAlmostEqual(related[0]["strength"], 0.8)  # noqa: PT009
         assert related[0]["relationship_type"] == "helps_with"
 
     def test_get_related_memories_min_strength(self):
@@ -126,12 +126,12 @@ class TestMemoryRelationships(unittest.TestCase):
         edge = graph["edges"][0]
         assert edge["from"] == "g1"
         assert edge["to"] == "g2"
-        self.assertAlmostEqual(edge["strength"], 0.75)
+        self.assertAlmostEqual(edge["strength"], 0.75)  # noqa: PT009
         assert edge["type"] == "caused_by"
 
     def test_link_invalid_type(self):
         """Invalid relationship_type raises ValueError."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.storage.link_memories("m1", "m2", strength=0.5, relationship_type="invalid_type")
 
     def test_get_relationship_graph_empty(self):

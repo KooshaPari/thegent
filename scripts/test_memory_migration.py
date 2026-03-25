@@ -271,7 +271,7 @@ class TestMigrateFile(unittest.TestCase):
             conn2.close()
             assert row[0] == "agent-x"  # falls back to dir name
             assert row[1] == "unknown"
-            self.assertAlmostEqual(row[2], 0.5)
+            self.assertAlmostEqual(row[2], 0.5)  # noqa: PT009
             assert row[3] == 0
             assert row[4] == "{}"
 

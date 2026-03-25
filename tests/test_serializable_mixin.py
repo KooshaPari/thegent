@@ -58,7 +58,7 @@ class TestToDict:
             name="Alice",
             age=30,
             status=Status.ACTIVE,
-            created_at=datetime(2024, 1, 15, 10, 30, 0),
+            created_at=datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
             home_path=Path("/home/alice"),
         )
         result = person.to_dict()
@@ -75,7 +75,7 @@ class TestToDict:
             name="Bob",
             age=25,
             status=Status.DONE,
-            created_at=datetime(2024, 1, 1),
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
             home_path=Path("/tmp"),
         )
         result = person.to_dict()
@@ -103,7 +103,7 @@ class TestToDict:
             name="Diana",
             age=28,
             status=Status.ACTIVE,
-            created_at=datetime(2024, 1, 1),
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
             home_path=Path("/tmp"),
             metadata={"key": "value", "nested": {"inner": 123}},
         )
@@ -118,7 +118,7 @@ class TestToDict:
             name="Eve",
             age=22,
             status=Status.PENDING,
-            created_at=datetime(2024, 1, 1),
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
             home_path=Path("/tmp"),
             tags=["tag1", "tag2", "tag3"],
         )
@@ -133,7 +133,7 @@ class TestToDict:
             name="Frank",
             age=40,
             status=Status.ACTIVE,
-            created_at=datetime(2024, 1, 1),
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
             home_path=Path("/tmp"),
             address=address,
         )
@@ -149,7 +149,7 @@ class TestToDict:
             name="Grace",
             age=50,
             status=Status.DONE,
-            created_at=datetime(2024, 1, 1),
+            created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
             home_path=Path("/tmp"),
             address=None,
         )
