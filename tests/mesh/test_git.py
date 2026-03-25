@@ -7,6 +7,8 @@ import os
 import subprocess
 import time
 from pathlib import Path
+from subprocess import CompletedProcess
+from unittest.mock import Mock
 
 import pytest
 from thegent.mesh.git import GitParallelismManager
@@ -28,6 +30,29 @@ def test_related_overlap_sorted() -> None:
         ["z.py", "a.py", "b.py"],
     )
     assert overlap == ["a.py", "b.py"]
+
+
+def test_run_git_merges_env_with_index_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _init_git_repo(tmp_path)
+
+    manager = GitParallelismManager(tmp_path, "agent-env")
+    fake_run = Mock(
+        return_value=CompletedProcess(
+            args=["git", "rev-parse", "HEAD"],
+            returncode=0,
+            stdout="x",
+            stderr="",
+        )
+    )
+    monkeypatch.setattr("thegent_gitops.git.shim_run", fake_run)
+
+    manager._run_git(["rev-parse", "HEAD"], env={"TEST_MODE": "1"})
+    assert fake_run.call_count == 1
+    _, call_kwargs = fake_run.call_args
+    run_env = call_kwargs["env"]
+    expected_index = str(manager.agent_index)
+    assert run_env["GIT_INDEX_FILE"] == expected_index
+    assert run_env["TEST_MODE"] == "1"
 
 
 def test_queue_commit_conflict_writes_jsonl(tmp_path: Path) -> None:

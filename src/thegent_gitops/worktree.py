@@ -10,7 +10,10 @@ Implements heliosShield Phase 6 Git Parallelism (TGNT-P6 / heliosShield WP-16003
 
 from __future__ import annotations
 
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    fcntl = None  # type: ignore[assignment]
 import hashlib
 import logging
 import os
@@ -151,17 +154,16 @@ class _PoolStateLock:
         if not self._path.exists():
             self._path.touch()
         self._fh = open(self._path, "r+", encoding="utf-8")
-        try:
+        if fcntl is not None:
             fcntl.flock(self._fh.fileno(), fcntl.LOCK_EX)
-        except AttributeError:
-            # Windows or restricted env: advisory lock unavailable; proceed without lock.
-            pass
+        else:
+            _log.debug("WorktreePool: advisory flock unavailable; running without file lock.")
         return self
 
     def __exit__(self, *_: object) -> None:
         try:
             if self._fh is not None:
-                with suppress(AttributeError):
+                if fcntl is not None:
                     fcntl.flock(self._fh.fileno(), fcntl.LOCK_UN)
                 self._fh.close()
         finally:
