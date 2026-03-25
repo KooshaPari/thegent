@@ -313,11 +313,11 @@ pub fn list_branches(path: Option<String>, all_remotes: bool) -> PyResult<Vec<St
 
     let mut cmd = Command::new("git");
     cmd.arg("-C").arg(&p).arg("branch");
-    
+
     if all_remotes {
         cmd.arg("-a");
     }
-    
+
     cmd.arg("--format=%(refname:short)");
 
     match cmd.output() {
@@ -380,7 +380,7 @@ pub fn get_log(path: Option<String>, max_count: i32, oneline: bool) -> PyResult<
     let mut cmd = Command::new("git");
     cmd.arg("-C").arg(&p).arg("log");
     cmd.arg(format!("--max-count={}", max_count));
-    
+
     if oneline {
         cmd.arg("--oneline");
     }
@@ -408,11 +408,11 @@ pub fn fetch(path: Option<String>, remote: Option<String>, prune: bool) -> PyRes
 
     let mut cmd = Command::new("git");
     cmd.arg("-C").arg(&p).arg("fetch");
-    
+
     if let Some(r) = remote {
         cmd.arg(&r);
     }
-    
+
     if prune {
         cmd.arg("--prune");
     }
