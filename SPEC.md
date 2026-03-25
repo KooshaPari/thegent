@@ -78,6 +78,7 @@ pub struct Execution {
 
 ```bash
 agent/
+agent/
 ├── core/
 │   ├── src/
 │   │   ├── lib.rs
@@ -93,56 +94,22 @@ agent/
 │       └── integration_tests.rs
 ├── harness/                   # Test harness
 │   ├── scenarios/             # BDD scenarios
-│   │   ├── feature: *.feature
+│   │   ├── *.feature
 │   │   └── steps/
 │   └── test_cases/
 └── cli/
-    └── src/
-        ├── main.rs
-        └── commands.rs
-```
-
-## xDD Methodologies Checklist
-
-### TDD (Test-Driven Development)
-
-- [ ] Red-Green-Refactor cycles
-- [ ] Unit tests first
-- [ ] Test coverage > 80%
-- [ ] Property-based tests
-- [ ] Mutation coverage
-
-### BDD (Behavior-Driven Development)
-
-- [ ] Feature files `*.feature`
-- [ ] Gherkin scenarios
-- [ ] Step definitions
-- [ ] Scenario outlines
-- [ ] Background contexts
-- [ ] Example tables
-
-### ATDD (Acceptance TDD)
-
-- [ ] Acceptance criteria first
-- [ ] Customer-readable specs
-- [ ] Executable specs
-- [ ] Living documentation
-
-### Agentic Practices
-
-- [ ] Intent specification
-- [ ] Tool definition
-- [ ] Execution trace
-- [ ] Self-reflection tests
-- [ ] Code review agent traces
+    ├── src/
+    │   ├── main.rs
+    └── commands.rs
 
 ### Architecture Tests
 
 ```rust
-// tests/architecture/agent_has_no_loop_dependencies.rs
+// tests/architecture/agent_core_no_outer_ring.rs
 #[test]
-fn core_has_no_framework_dependencies() {
-    assert!(!has_dependency("tokio"));}
+fn core_no_outer_ring_dependencies() {
+    assert!(!has_dependency("tokio"));
+}
 ```
 
 ## Quality Gates
