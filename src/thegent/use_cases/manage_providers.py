@@ -9,7 +9,6 @@ from thegent.config import ThegentSettings
 from thegent.domain.provider_config import OAUTH_ONLY_PROVIDERS
 from thegent.agents.cliproxy_manager import _ensure_config
 from thegent.provider_model_manager_cliproxy import (
-    get_api_key_from_compat,
     remove_openai_compat_entry,
     upsert_openai_compat_entry,
 )

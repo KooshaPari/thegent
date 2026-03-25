@@ -85,7 +85,7 @@ class ConsensusProtocol:
         try:
             with open(path) as f:
                 return json.load(f)
-        except OSError, json.JSONDecodeError:
+        except (OSError, json.JSONDecodeError):
             return None
 
     def _load_proposal(self, proposal_id: str) -> dict[str, Any] | None:
@@ -293,7 +293,7 @@ class EscalationWorkflow:
         try:
             with open(path) as f:
                 return json.load(f)
-        except OSError, json.JSONDecodeError:
+        except (OSError, json.JSONDecodeError):
             return None
 
     def _next_tier(self, current_tier: int) -> int:

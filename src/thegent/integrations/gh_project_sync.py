@@ -133,8 +133,16 @@ def _coerce_gh_result(result: Any) -> tuple[int, str, str]:
     """Normalize gh command output when tests patch `_run_gh_command` loosely."""
     if isinstance(result, tuple) and len(result) == 3:
         code = result[0] if isinstance(result[0], int) else 0
-        stdout = result[1] if isinstance(result[1], str) else ""
-        stderr = result[2] if isinstance(result[2], str) else ""
+        stdout = result[1]
+        stderr = result[2]
+        if isinstance(stdout, (bytes, bytearray)):
+            stdout = bytes(stdout).decode("utf-8")
+        if not isinstance(stdout, str):
+            stdout = ""
+        if isinstance(stderr, (bytes, bytearray)):
+            stderr = bytes(stderr).decode("utf-8")
+        if not isinstance(stderr, str):
+            stderr = ""
         return code, stdout, stderr
     return 0, "", ""
 

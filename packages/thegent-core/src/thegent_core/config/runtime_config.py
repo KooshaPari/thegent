@@ -132,6 +132,12 @@ class RuntimeConfig(BaseSettings):
         description="Per-category MTD budgets in USD (THGENT_COST_BUDGET_BY_CATEGORY JSON)",
     )
 
+    # Observability
+    otel_console: bool = Field(
+        default=False,
+        description="Enable console OpenTelemetry exporter (THGENT_OTEL_CONSOLE)",
+    )
+
     # Sandbox configuration
     sandbox_level: str = Field(
         default="none",

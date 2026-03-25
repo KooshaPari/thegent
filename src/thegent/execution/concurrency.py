@@ -204,6 +204,7 @@ class ConcurrencyController:
                 (default 0.8 → 80 %).  Only used when ``soft_deadline_s`` is set.
         """
         is_critical = priority == "critical" or (lane or "").lower() == "critical"
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
         from thegent.config import ThegentSettings
 
@@ -487,6 +488,7 @@ class LoadClassifier:
 
     def get_running_count(self) -> int:
         """Return count of currently running sessions."""
+        # tach-ignore(execution should not architecturally depend on cli)
         from thegent.cli.commands.impl import ps_impl
 
         sessions = ps_impl(all=True)

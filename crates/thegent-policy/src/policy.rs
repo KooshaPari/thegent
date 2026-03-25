@@ -97,7 +97,13 @@ pub mod python {
                         if let Ok(s) = v.extract::<String>() {
                             policies.insert(k, serde_json::Value::String(s));
                         } else if let Ok(n) = v.extract::<f64>() {
-                            policies.insert(k, serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap_or(serde_json::Number::from(0))));
+                            policies.insert(
+                                k,
+                                serde_json::Value::Number(
+                                    serde_json::Number::from_f64(n)
+                                        .unwrap_or(serde_json::Number::from(0)),
+                                ),
+                            );
                         } else if let Ok(b) = v.extract::<bool>() {
                             policies.insert(k, serde_json::Value::Bool(b));
                         }
@@ -117,7 +123,13 @@ pub mod python {
                     if let Ok(s) = v.extract::<String>() {
                         converted.insert(k, serde_json::Value::String(s));
                     } else if let Ok(n) = v.extract::<f64>() {
-                        converted.insert(k, serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap_or(serde_json::Number::from(0))));
+                        converted.insert(
+                            k,
+                            serde_json::Value::Number(
+                                serde_json::Number::from_f64(n)
+                                    .unwrap_or(serde_json::Number::from(0)),
+                            ),
+                        );
                     } else if let Ok(b) = v.extract::<bool>() {
                         converted.insert(k, serde_json::Value::Bool(b));
                     }

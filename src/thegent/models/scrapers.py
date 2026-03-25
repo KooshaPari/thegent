@@ -296,7 +296,7 @@ def scrape_cursor() -> list[str]:
         if proc.returncode == 0 and proc.stdout:
             stdout_text = proc.stdout if isinstance(proc.stdout, str) else proc.stdout.decode("utf-8", errors="replace")
             return [l.strip() for l in stdout_text.splitlines() if l.strip() and not l.strip().startswith("Tip:")]
-    except FileNotFoundError, subprocess.TimeoutExpired:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
     return []
 
@@ -349,7 +349,7 @@ def scrape_copilot() -> list[str]:
                         seen.add(c)
                         out.append(c)
                 return out
-    except FileNotFoundError, subprocess.TimeoutExpired:
+    except (FileNotFoundError, subprocess.TimeoutExpired):
         pass
     return ["claude-haiku-4.5", "gpt-5.3-codex", "gemini-3-flash"]
 
@@ -372,7 +372,7 @@ def scrape_gemini() -> list[str]:
                 matches = re.findall(r"gemini-[a-zA-Z0-9.-]+", stdout_text)
                 if matches:
                     return list(dict.fromkeys(matches))
-        except FileNotFoundError, subprocess.TimeoutExpired:  # noqa: PERF203 - intentional per-item error handling
+        except (FileNotFoundError, subprocess.TimeoutExpired):
             continue
     return fallback
 
@@ -399,7 +399,7 @@ def scrape_claude() -> list[str]:
                         out.append(m)
                 if len(out) > 3:
                     return out
-        except FileNotFoundError, subprocess.TimeoutExpired:  # noqa: PERF203 - intentional per-item error handling
+        except (FileNotFoundError, subprocess.TimeoutExpired):
             continue
     return fallback
 
