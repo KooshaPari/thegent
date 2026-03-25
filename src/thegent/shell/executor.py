@@ -70,7 +70,17 @@ class ShellExecutor:
         # All retries exhausted
         if last_result:
             last_result.error_message = self._generate_error_message(last_result)
-        return last_result
+            return last_result
+        return ShellResult(
+            command=command,
+            exit_code=-1,
+            stdout="",
+            stderr="command execution failed before producing a result",
+            duration=0.0,
+            timed_out=False,
+            attempts=0,
+            error_message="command execution failed before producing a result",
+        )
 
     def _execute_once(
         self,

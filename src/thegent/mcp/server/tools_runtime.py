@@ -31,7 +31,7 @@ def config_resolve_impl(
 
     provider = get_config_provider()
     config = provider.resolve(tenant_id=tenant_id, session_id=session_id, request_overrides=overrides, keys=keys)
-    return json.dumps(_sanitize_config_value(config))
+    return json.dumps(_sanitize_config_value(config)).decode("utf-8")
 
 
 def negotiate_contract_impl(
@@ -41,7 +41,7 @@ def negotiate_contract_impl(
     session_contract_negotiate_impl: Callable[[str, list[str]], dict[str, Any]],
 ) -> str:
     res = session_contract_negotiate_impl(contract_id, supported_versions)
-    return json.dumps(res)
+    return json.dumps(res).decode("utf-8")
 
 
 def ps_tool_impl(

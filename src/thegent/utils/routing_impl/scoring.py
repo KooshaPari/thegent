@@ -1,6 +1,6 @@
 """WP-Y8-rel: Provider scoring with learning."""
 
-import orjson as json
+import json
 import logging
 
 from thegent.config import ThegentSettings

@@ -8,7 +8,7 @@ from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
-from thegent.observability.prometheus import get_metrics_collector
+from thegent.governance.metrics import get_metrics_collector
 
 
 class MetricsAdapter:
@@ -24,7 +24,20 @@ class MetricsAdapter:
     def flush_prometheus_metrics(self) -> None:
         """Export Prometheus metrics to file."""
         try:
-            metrics_output = self._metrics.export()
+            metrics_output = "\n".join(
+                json.dumps(
+                    {
+                        "provider_id": metrics.provider_id,
+                        "reliability": metrics.reliability,
+                        "latency_p99": metrics.latency_p99,
+                        "latency_mean": metrics.latency_mean,
+                        "success_count": metrics.success_count,
+                        "total_count": metrics.total_count,
+                        "total_tokens": metrics.total_tokens,
+                    }
+                ).decode()
+                for metrics in self._metrics.get_all_metrics().values()
+            )
             self._prometheus_export_path.parent.mkdir(parents=True, exist_ok=True)
             self._prometheus_export_path.write_text(metrics_output)
         except Exception:

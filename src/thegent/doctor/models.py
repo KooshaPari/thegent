@@ -28,6 +28,8 @@ class ProcessInfo:
     """Information about a process."""
     pid: int
     name: str
+    cmdline: str = ""
+    create_time: float = 0.0
     cpu_percent: float = 0.0
     memory_mb: float = 0.0
     io_read_bytes: int = 0

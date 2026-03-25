@@ -331,7 +331,7 @@ PROCESSING ORDER (by month, newest first):
    309. temp-PRODVERCEL/485/kush/thegent/.factory/droids/knowledge-base-curator.md
    310. temp-PRODVERCEL/485/kush/thegent/.factory/droids/legacy-convergence-architect.md
    311. temp-PRODVERCEL/485/kush/thegent/.factory/droids/observability-sentinel.md
-   312. temp-PRODVERCEL/485/kush/thegent/.factory/droids/openspec-orchestrator.md
+   312. temp-PRODVERCEL/485/kush/thegent/.factory/droids/agileplus-orchestrator.md
    313. temp-PRODVERCEL/485/kush/thegent/.factory/droids/ops-concierge.md
    314. temp-PRODVERCEL/485/kush/thegent/.factory/droids/orchestrator-core.md
    315. temp-PRODVERCEL/485/kush/thegent/.factory/droids/outcome-evaluator.md
@@ -440,7 +440,7 @@ PROCESSING ORDER (by month, newest first):
    418. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/knowledge-base-curator.md
    419. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/legacy-convergence-architect.md
    420. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/observability-sentinel.md
-   421. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/openspec-orchestrator.md
+   421. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/agileplus-orchestrator.md
    422. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/ops-concierge.md
    423. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/orchestrator-core.md
    424. temp-PRODVERCEL/485/kush/thegent/.worktrees/tray-app/.factory/droids/outcome-evaluator.md
@@ -4087,26 +4087,26 @@ PROCESSING ORDER (by month, newest first):
    492. temp-PRODVERCEL/485/API/argisagent/packaging/keys/README.md
    493. temp-PRODVERCEL/485/API/argisagent/packaging/scripts/setup-github-secrets.md
    494. temp-PRODVERCEL/485/API/argisagent/src/.build/checkouts/Inject/README.md
-   495. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.amazonq/prompts/openspec-apply.md
-   496. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.amazonq/prompts/openspec-archive.md
-   497. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.amazonq/prompts/openspec-proposal.md
-   498. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.augment/commands/openspec-apply.md
-   499. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.augment/commands/openspec-archive.md
-   500. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.augment/commands/openspec-proposal.md
-   501. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.claude/commands/openspec/apply.md
-   502. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.claude/commands/openspec/archive.md
-   503. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.claude/commands/openspec/proposal.md
-   504. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.factory/commands/openspec-apply.md
-   505. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.factory/commands/openspec-archive.md
-   506. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.factory/commands/openspec-proposal.md
+   495. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.amazonq/prompts/agileplus-apply.md
+   496. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.amazonq/prompts/agileplus-archive.md
+   497. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.amazonq/prompts/agileplus-proposal.md
+   498. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.augment/commands/agileplus-apply.md
+   499. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.augment/commands/agileplus-archive.md
+   500. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.augment/commands/agileplus-proposal.md
+   501. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.claude/commands/agileplus/apply.md
+   502. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.claude/commands/agileplus/archive.md
+   503. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.claude/commands/agileplus/proposal.md
+   504. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.factory/commands/agileplus-apply.md
+   505. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.factory/commands/agileplus-archive.md
+   506. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/.factory/commands/agileplus-proposal.md
    507. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/CONSOLIDATION_SUMMARY.md
    508. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/SDK_GENERATION_COMPLETE.md
    509. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/docs/ARCHITECTURE.md
    510. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/docs/DOCKER.md
    511. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/docs/README.md
    512. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/middleware/README.md
-   513. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/openspec/AGENTS_ROOT.md
-   514. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/openspec/project.md
+   513. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/agileplus/AGENTS_ROOT.md
+   514. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/agileplus/project.md
    515. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/runtime/VALIDATION_SUMMARY.md
    516. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/tests/100_PERCENT_COVERAGE_PLAN.md
    517. temp-PRODVERCEL/485/API/argisagent/third_party/amcp/tests/ASYNC_FIX_COMPLETE.md
@@ -4199,18 +4199,18 @@ PROCESSING ORDER (by month, newest first):
    604. temp-PRODVERCEL/485/API/argiscode/docs/TEST_INDEX.md
    605. temp-PRODVERCEL/485/API/argiscode/docs/TEST_REPORT.md
    606. temp-PRODVERCEL/485/API/argiscores/README.md
-   607. temp-PRODVERCEL/485/API/argisexec/.amazonq/prompts/openspec-apply.md
-   608. temp-PRODVERCEL/485/API/argisexec/.amazonq/prompts/openspec-archive.md
-   609. temp-PRODVERCEL/485/API/argisexec/.amazonq/prompts/openspec-proposal.md
-   610. temp-PRODVERCEL/485/API/argisexec/.augment/commands/openspec-apply.md
-   611. temp-PRODVERCEL/485/API/argisexec/.augment/commands/openspec-archive.md
-   612. temp-PRODVERCEL/485/API/argisexec/.augment/commands/openspec-proposal.md
-   613. temp-PRODVERCEL/485/API/argisexec/.claude/commands/openspec/apply.md
-   614. temp-PRODVERCEL/485/API/argisexec/.claude/commands/openspec/archive.md
-   615. temp-PRODVERCEL/485/API/argisexec/.claude/commands/openspec/proposal.md
-   616. temp-PRODVERCEL/485/API/argisexec/.factory/commands/openspec-apply.md
-   617. temp-PRODVERCEL/485/API/argisexec/.factory/commands/openspec-archive.md
-   618. temp-PRODVERCEL/485/API/argisexec/.factory/commands/openspec-proposal.md
+   607. temp-PRODVERCEL/485/API/argisexec/.amazonq/prompts/agileplus-apply.md
+   608. temp-PRODVERCEL/485/API/argisexec/.amazonq/prompts/agileplus-archive.md
+   609. temp-PRODVERCEL/485/API/argisexec/.amazonq/prompts/agileplus-proposal.md
+   610. temp-PRODVERCEL/485/API/argisexec/.augment/commands/agileplus-apply.md
+   611. temp-PRODVERCEL/485/API/argisexec/.augment/commands/agileplus-archive.md
+   612. temp-PRODVERCEL/485/API/argisexec/.augment/commands/agileplus-proposal.md
+   613. temp-PRODVERCEL/485/API/argisexec/.claude/commands/agileplus/apply.md
+   614. temp-PRODVERCEL/485/API/argisexec/.claude/commands/agileplus/archive.md
+   615. temp-PRODVERCEL/485/API/argisexec/.claude/commands/agileplus/proposal.md
+   616. temp-PRODVERCEL/485/API/argisexec/.factory/commands/agileplus-apply.md
+   617. temp-PRODVERCEL/485/API/argisexec/.factory/commands/agileplus-archive.md
+   618. temp-PRODVERCEL/485/API/argisexec/.factory/commands/agileplus-proposal.md
    619. temp-PRODVERCEL/485/API/argisexec/.pytest_cache/README.md
    620. temp-PRODVERCEL/485/API/argisexec/CLAUDE.md
    621. temp-PRODVERCEL/485/API/argisexec/README.md
@@ -4240,8 +4240,8 @@ PROCESSING ORDER (by month, newest first):
    645. temp-PRODVERCEL/485/API/argisexec/docs/VERIFICATION_COMMANDS.md
    646. temp-PRODVERCEL/485/API/argisexec/docs/guides/AGENT_ORCHESTRATION_SNIPPET.md
    647. temp-PRODVERCEL/485/API/argisexec/docs/guides/EXTERNAL_AGENTS.md
-   648. temp-PRODVERCEL/485/API/argisexec/openspec/AGENTS_ROOT.md
-   649. temp-PRODVERCEL/485/API/argisexec/openspec/project.md
+   648. temp-PRODVERCEL/485/API/argisexec/agileplus/AGENTS_ROOT.md
+   649. temp-PRODVERCEL/485/API/argisexec/agileplus/project.md
    650. temp-PRODVERCEL/485/API/argisexec/tests/.pytest_cache/README.md
    651. temp-PRODVERCEL/485/API/argisexec/tests/100_PERCENT_COVERAGE_PLAN.md
    652. temp-PRODVERCEL/485/API/argisexec/tests/ASYNC_FIXED.md
@@ -18592,12 +18592,12 @@ PROCESSING ORDER (by month, newest first):
    847. temp-PRODVERCEL/485/API/docs/sessions/20250131-argis-cli-architecture/research/AUGMENT_INTEGRATION_CLARIFICATION.md
    848. temp-PRODVERCEL/485/API/docs/sessions/20250131-argis-cli-architecture/research/AUGMENT_PROVIDER_PROPOSAL_SUMMARY.md
    849. temp-PRODVERCEL/485/API/docs/sessions/20250131-argis-cli-architecture/research/HOW_TO_REVIEW_AUGMENT_PROPOSAL.md
-   850. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.augment/commands/openspec-apply.md
-   851. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.augment/commands/openspec-archive.md
-   852. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.augment/commands/openspec-proposal.md
-   853. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.factory/commands/openspec-apply.md
-   854. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.factory/commands/openspec-archive.md
-   855. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.factory/commands/openspec-proposal.md
+   850. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.augment/commands/agileplus-apply.md
+   851. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.augment/commands/agileplus-archive.md
+   852. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.augment/commands/agileplus-proposal.md
+   853. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.factory/commands/agileplus-apply.md
+   854. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.factory/commands/agileplus-archive.md
+   855. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.factory/commands/agileplus-proposal.md
    856. temp-PRODVERCEL/485/API/research/CLIProxyAPI/.github/ISSUE_TEMPLATE/bug_report.md
    857. temp-PRODVERCEL/485/API/research/CLIProxyAPI/AGENTS.md
    858. temp-PRODVERCEL/485/API/research/CLIProxyAPI/CLAUDE.md
@@ -18711,24 +18711,24 @@ PROCESSING ORDER (by month, newest first):
    966. temp-PRODVERCEL/485/API/research/CLIProxyAPI/docs/sdk-watcher.md
    967. temp-PRODVERCEL/485/API/research/CLIProxyAPI/docs/sdk-watcher_CN.md
    968. temp-PRODVERCEL/485/API/research/CLIProxyAPI/examples/automated-auth/README.md
-   969. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-auggie-executor/design.md
-   970. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-auggie-executor/proposal.md
-   971. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-auggie-executor/tasks.md
-   972. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/README.md
-   973. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/design.md
-   974. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/proposal.md
-   975. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/specs/cursor-agent-executor/spec.md
-   976. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/tasks.md
-   977. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/design.md
-   978. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/proposal.md
-   979. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/benchmark-integration/spec.md
-   980. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/fallback-rules/spec.md
-   981. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/learning-system/spec.md
-   982. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/litellm-integration/spec.md
-   983. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/model-registry/spec.md
-   984. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/routing-engine/spec.md
-   985. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/changes/add-intelligent-model-router/tasks.md
-   986. temp-PRODVERCEL/485/API/research/CLIProxyAPI/openspec/project.md
+   969. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-auggie-executor/design.md
+   970. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-auggie-executor/proposal.md
+   971. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-auggie-executor/tasks.md
+   972. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/README.md
+   973. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/design.md
+   974. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/proposal.md
+   975. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/specs/cursor-agent-executor/spec.md
+   976. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/tasks.md
+   977. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/design.md
+   978. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/proposal.md
+   979. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/benchmark-integration/spec.md
+   980. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/fallback-rules/spec.md
+   981. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/learning-system/spec.md
+   982. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/litellm-integration/spec.md
+   983. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/model-registry/spec.md
+   984. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/routing-engine/spec.md
+   985. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/tasks.md
+   986. temp-PRODVERCEL/485/API/research/CLIProxyAPI/agileplus/project.md
    987. temp-PRODVERCEL/485/API/research/CLIProxyAPI/scripts/README.md
    988. temp-PRODVERCEL/485/API/research/agentapi/AGENTS.md
    989. temp-PRODVERCEL/485/API/research/agentapi/CHANGELOG.md
@@ -18996,12 +18996,12 @@ PROCESSING ORDER (by month, newest first):
   1251. temp-PRODVERCEL/485/API/research/goose/ui/desktop/README.md
   1252. temp-PRODVERCEL/485/API/research/goose/ui/desktop/scripts/README.md
   1253. temp-PRODVERCEL/485/API/research/goose/ui/desktop/src/platform/windows/bin/README.md
-  1254. temp-PRODVERCEL/485/CLIProxyAPI/.augment/commands/openspec-apply.md
-  1255. temp-PRODVERCEL/485/CLIProxyAPI/.augment/commands/openspec-archive.md
-  1256. temp-PRODVERCEL/485/CLIProxyAPI/.augment/commands/openspec-proposal.md
-  1257. temp-PRODVERCEL/485/CLIProxyAPI/.factory/commands/openspec-apply.md
-  1258. temp-PRODVERCEL/485/CLIProxyAPI/.factory/commands/openspec-archive.md
-  1259. temp-PRODVERCEL/485/CLIProxyAPI/.factory/commands/openspec-proposal.md
+  1254. temp-PRODVERCEL/485/CLIProxyAPI/.augment/commands/agileplus-apply.md
+  1255. temp-PRODVERCEL/485/CLIProxyAPI/.augment/commands/agileplus-archive.md
+  1256. temp-PRODVERCEL/485/CLIProxyAPI/.augment/commands/agileplus-proposal.md
+  1257. temp-PRODVERCEL/485/CLIProxyAPI/.factory/commands/agileplus-apply.md
+  1258. temp-PRODVERCEL/485/CLIProxyAPI/.factory/commands/agileplus-archive.md
+  1259. temp-PRODVERCEL/485/CLIProxyAPI/.factory/commands/agileplus-proposal.md
   1260. temp-PRODVERCEL/485/CLIProxyAPI/.github/ISSUE_TEMPLATE/bug_report.md
   1261. temp-PRODVERCEL/485/CLIProxyAPI/AGENTS.md
   1262. temp-PRODVERCEL/485/CLIProxyAPI/AUDIT_AND_FIXES_REPORT.md
@@ -19116,25 +19116,25 @@ PROCESSING ORDER (by month, newest first):
   1371. temp-PRODVERCEL/485/CLIProxyAPI/docs/sdk-watcher.md
   1372. temp-PRODVERCEL/485/CLIProxyAPI/docs/sdk-watcher_CN.md
   1373. temp-PRODVERCEL/485/CLIProxyAPI/examples/automated-auth/README.md
-  1374. temp-PRODVERCEL/485/CLIProxyAPI/openspec/AGENTS.md
-  1375. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-auggie-executor/design.md
-  1376. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-auggie-executor/proposal.md
-  1377. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-auggie-executor/tasks.md
-  1378. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/README.md
-  1379. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/design.md
-  1380. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/proposal.md
-  1381. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/specs/cursor-agent-executor/spec.md
-  1382. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-cursor-agent-executor/tasks.md
-  1383. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/design.md
-  1384. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/proposal.md
-  1385. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/benchmark-integration/spec.md
-  1386. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/fallback-rules/spec.md
-  1387. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/learning-system/spec.md
-  1388. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/litellm-integration/spec.md
-  1389. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/model-registry/spec.md
-  1390. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/specs/routing-engine/spec.md
-  1391. temp-PRODVERCEL/485/CLIProxyAPI/openspec/changes/add-intelligent-model-router/tasks.md
-  1392. temp-PRODVERCEL/485/CLIProxyAPI/openspec/project.md
+  1374. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/AGENTS.md
+  1375. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-auggie-executor/design.md
+  1376. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-auggie-executor/proposal.md
+  1377. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-auggie-executor/tasks.md
+  1378. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/README.md
+  1379. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/design.md
+  1380. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/proposal.md
+  1381. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/specs/cursor-agent-executor/spec.md
+  1382. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-cursor-agent-executor/tasks.md
+  1383. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/design.md
+  1384. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/proposal.md
+  1385. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/benchmark-integration/spec.md
+  1386. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/fallback-rules/spec.md
+  1387. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/learning-system/spec.md
+  1388. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/litellm-integration/spec.md
+  1389. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/model-registry/spec.md
+  1390. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/specs/routing-engine/spec.md
+  1391. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/changes/add-intelligent-model-router/tasks.md
+  1392. temp-PRODVERCEL/485/CLIProxyAPI/agileplus/project.md
   1393. temp-PRODVERCEL/485/CLIProxyAPI/scripts/README.md
   1394. temp-PRODVERCEL/485/COMPLETE_8WEEK_ROADMAP.md
   1395. temp-PRODVERCEL/485/COMPLETE_DELIVERABLES_INDEX.md
@@ -19164,35 +19164,35 @@ PROCESSING ORDER (by month, newest first):
   1419. temp-PRODVERCEL/485/clean/ATOMS_TECH_FRONTEND_ARCHITECTURE.md
   1420. temp-PRODVERCEL/485/clean/ATOMS_TECH_GOALS_EPICS_SERVICES.md
   1421. temp-PRODVERCEL/485/clean/README_DOCUMENTATION.md
-  1422. temp-PRODVERCEL/485/clean/atoms.tech/.augment/commands/openspec-apply.md
-  1423. temp-PRODVERCEL/485/clean/atoms.tech/.augment/commands/openspec-archive.md
-  1424. temp-PRODVERCEL/485/clean/atoms.tech/.augment/commands/openspec-proposal.md
-  1425. temp-PRODVERCEL/485/clean/atoms.tech/.claude/commands/openspec/apply.md
-  1426. temp-PRODVERCEL/485/clean/atoms.tech/.claude/commands/openspec/archive.md
-  1427. temp-PRODVERCEL/485/clean/atoms.tech/.claude/commands/openspec/proposal.md
-  1428. temp-PRODVERCEL/485/clean/atoms.tech/.clinerules/openspec-apply.md
-  1429. temp-PRODVERCEL/485/clean/atoms.tech/.clinerules/openspec-archive.md
-  1430. temp-PRODVERCEL/485/clean/atoms.tech/.clinerules/openspec-proposal.md
-  1431. temp-PRODVERCEL/485/clean/atoms.tech/.crush/commands/openspec/apply.md
-  1432. temp-PRODVERCEL/485/clean/atoms.tech/.crush/commands/openspec/archive.md
-  1433. temp-PRODVERCEL/485/clean/atoms.tech/.crush/commands/openspec/proposal.md
-  1434. temp-PRODVERCEL/485/clean/atoms.tech/.cursor/commands/openspec-apply.md
-  1435. temp-PRODVERCEL/485/clean/atoms.tech/.cursor/commands/openspec-archive.md
-  1436. temp-PRODVERCEL/485/clean/atoms.tech/.cursor/commands/openspec-proposal.md
-  1437. temp-PRODVERCEL/485/clean/atoms.tech/.factory/commands/openspec-apply.md
-  1438. temp-PRODVERCEL/485/clean/atoms.tech/.factory/commands/openspec-archive.md
-  1439. temp-PRODVERCEL/485/clean/atoms.tech/.factory/commands/openspec-proposal.md
-  1440. temp-PRODVERCEL/485/clean/atoms.tech/.opencode/command/openspec-apply.md
-  1441. temp-PRODVERCEL/485/clean/atoms.tech/.opencode/command/openspec-archive.md
-  1442. temp-PRODVERCEL/485/clean/atoms.tech/.opencode/command/openspec-proposal.md
+  1422. temp-PRODVERCEL/485/clean/atoms.tech/.augment/commands/agileplus-apply.md
+  1423. temp-PRODVERCEL/485/clean/atoms.tech/.augment/commands/agileplus-archive.md
+  1424. temp-PRODVERCEL/485/clean/atoms.tech/.augment/commands/agileplus-proposal.md
+  1425. temp-PRODVERCEL/485/clean/atoms.tech/.claude/commands/agileplus/apply.md
+  1426. temp-PRODVERCEL/485/clean/atoms.tech/.claude/commands/agileplus/archive.md
+  1427. temp-PRODVERCEL/485/clean/atoms.tech/.claude/commands/agileplus/proposal.md
+  1428. temp-PRODVERCEL/485/clean/atoms.tech/.clinerules/agileplus-apply.md
+  1429. temp-PRODVERCEL/485/clean/atoms.tech/.clinerules/agileplus-archive.md
+  1430. temp-PRODVERCEL/485/clean/atoms.tech/.clinerules/agileplus-proposal.md
+  1431. temp-PRODVERCEL/485/clean/atoms.tech/.crush/commands/agileplus/apply.md
+  1432. temp-PRODVERCEL/485/clean/atoms.tech/.crush/commands/agileplus/archive.md
+  1433. temp-PRODVERCEL/485/clean/atoms.tech/.crush/commands/agileplus/proposal.md
+  1434. temp-PRODVERCEL/485/clean/atoms.tech/.cursor/commands/agileplus-apply.md
+  1435. temp-PRODVERCEL/485/clean/atoms.tech/.cursor/commands/agileplus-archive.md
+  1436. temp-PRODVERCEL/485/clean/atoms.tech/.cursor/commands/agileplus-proposal.md
+  1437. temp-PRODVERCEL/485/clean/atoms.tech/.factory/commands/agileplus-apply.md
+  1438. temp-PRODVERCEL/485/clean/atoms.tech/.factory/commands/agileplus-archive.md
+  1439. temp-PRODVERCEL/485/clean/atoms.tech/.factory/commands/agileplus-proposal.md
+  1440. temp-PRODVERCEL/485/clean/atoms.tech/.opencode/command/agileplus-apply.md
+  1441. temp-PRODVERCEL/485/clean/atoms.tech/.opencode/command/agileplus-archive.md
+  1442. temp-PRODVERCEL/485/clean/atoms.tech/.opencode/command/agileplus-proposal.md
   1443. temp-PRODVERCEL/485/clean/atoms.tech/AGENTS.md
   1444. temp-PRODVERCEL/485/clean/atoms.tech/ATOMS_TECH_DOCUMENTATION.md
   1445. temp-PRODVERCEL/485/clean/atoms.tech/CLAUDE.md
   1446. temp-PRODVERCEL/485/clean/atoms.tech/CLINE.md
   1447. temp-PRODVERCEL/485/clean/atoms.tech/COVERAGE_95_PERCENT_MASTER_PLAN.md
   1448. temp-PRODVERCEL/485/clean/atoms.tech/MANUAL_REQUIREMENT_LINKING_IMPLEMENTATION.md
-  1449. temp-PRODVERCEL/485/clean/atoms.tech/openspec/AGENTS.md
-  1450. temp-PRODVERCEL/485/clean/atoms.tech/openspec/project.md
+  1449. temp-PRODVERCEL/485/clean/atoms.tech/agileplus/AGENTS.md
+  1450. temp-PRODVERCEL/485/clean/atoms.tech/agileplus/project.md
   1451. temp-PRODVERCEL/485/clean/atoms.tech/src/app/(protected)/org/[orgId]/traceability/how_traceability_built.md
   1452. temp-PRODVERCEL/485/clean/deploy/ATOMSAGENT_EXISTING_FEATURES.md
   1453. temp-PRODVERCEL/485/clean/deploy/DEPLOYMENT_DOCUMENT_PART1.md
@@ -19205,9 +19205,9 @@ PROCESSING ORDER (by month, newest first):
   1460. temp-PRODVERCEL/485/clean/deploy/TEST_REPORT.md
   1461. temp-PRODVERCEL/485/clean/deploy/VERCEL_SANDBOX_INTEGRATION_COMPLETE.md
   1462. temp-PRODVERCEL/485/clean/deploy/VERCEL_SANDBOX_INTEGRATION_STATUS.md
-  1463. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.augment/commands/openspec-apply.md
-  1464. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.augment/commands/openspec-archive.md
-  1465. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.augment/commands/openspec-proposal.md
+  1463. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.augment/commands/agileplus-apply.md
+  1464. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.augment/commands/agileplus-archive.md
+  1465. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.augment/commands/agileplus-proposal.md
   1466. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.backups/vitest-migration/README.md
   1467. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.backups/vitest-migration/integration/MIGRATE_TO_SERVICE_ROLE_PATTERN.md
   1468. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.backups/vitest-migration/integration/README.md
@@ -19217,25 +19217,25 @@ PROCESSING ORDER (by month, newest first):
   1472. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/agents/playwright-test-generator.md
   1473. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/agents/playwright-test-healer.md
   1474. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/agents/playwright-test-planner.md
-  1475. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/commands/openspec/apply.md
-  1476. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/commands/openspec/archive.md
-  1477. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/commands/openspec/proposal.md
-  1478. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.clinerules/openspec-apply.md
-  1479. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.clinerules/openspec-archive.md
-  1480. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.clinerules/openspec-proposal.md
-  1481. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.cursor/commands/openspec-apply.md
-  1482. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.cursor/commands/openspec-archive.md
-  1483. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.cursor/commands/openspec-proposal.md
+  1475. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/commands/agileplus/apply.md
+  1476. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/commands/agileplus/archive.md
+  1477. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.claude/commands/agileplus/proposal.md
+  1478. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.clinerules/agileplus-apply.md
+  1479. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.clinerules/agileplus-archive.md
+  1480. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.clinerules/agileplus-proposal.md
+  1481. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.cursor/commands/agileplus-apply.md
+  1482. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.cursor/commands/agileplus-archive.md
+  1483. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.cursor/commands/agileplus-proposal.md
   1484. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/full-check.md
-  1485. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/openspec-apply.md
-  1486. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/openspec-archive.md
-  1487. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/openspec-proposal.md
+  1485. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/agileplus-apply.md
+  1486. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/agileplus-archive.md
+  1487. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/agileplus-proposal.md
   1488. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/commands/quick-check.md
   1489. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/droids/atoms-developer.md
   1490. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.factory/droids/atoms-security-reviewer.md
-  1491. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.opencode/command/openspec-apply.md
-  1492. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.opencode/command/openspec-archive.md
-  1493. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.opencode/command/openspec-proposal.md
+  1491. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.opencode/command/agileplus-apply.md
+  1492. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.opencode/command/agileplus-archive.md
+  1493. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.opencode/command/agileplus-proposal.md
   1494. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.pytest_cache/README.md
   1495. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.test-metrics/test-mapping-71-stories.md
   1496. temp-PRODVERCEL/485/clean/deploy/atoms.tech/.test-metrics/test-mapping.md
@@ -20837,64 +20837,64 @@ PROCESSING ORDER (by month, newest first):
   3092. temp-PRODVERCEL/485/clean/deploy/atoms.tech/docs/sessions/2025-11-16-root-cleanup/USER_STORY_TEST_MAPPING_150.md
   3093. temp-PRODVERCEL/485/clean/deploy/atoms.tech/docs/sessions/2025-11-16-root-cleanup/USER_STORY_TEST_MAPPING_265.md
   3094. temp-PRODVERCEL/485/clean/deploy/atoms.tech/docs/sessions/2025-11-16-root-cleanup/errors.md
-  3095. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/AGENTS.md
-  3096. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/README.md
-  3097. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/USER_STORIES_EXPANSION_OPTION_C.md
-  3098. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/DECOMPOSITION_PLAN.md
-  3099. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/add-org-id-to-requirements/proposal.md
-  3100. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/add-org-id-to-requirements/tasks.md
-  3101. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/comments-and-discussions/proposal.md
-  3102. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/comments-and-discussions/specs/comments.md
-  3103. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/comments-and-discussions/tasks.md
-  3104. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/email-verification-workflow/proposal.md
-  3105. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/email-verification-workflow/specs/auth/spec.md
-  3106. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/email-verification-workflow/tasks.md
-  3107. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/factory-droid-hooks/proposal.md
-  3108. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/fix-agent-chat-append-hook/design.md
-  3109. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/fix-agent-chat-append-hook/proposal.md
-  3110. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/fix-agent-chat-append-hook/specs/agent-chat/spec.md
-  3111. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/fix-agent-chat-append-hook/tasks.md
-  3112. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/design.md
-  3113. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/proposal.md
-  3114. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/specs/ai-powered-features/spec.md
-  3115. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/specs/bidirectional-navigation/spec.md
-  3116. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/specs/graph-visualization/spec.md
-  3117. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/specs/natural-language-query/spec.md
-  3118. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/specs/unified-schema/spec.md
-  3119. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/implement-traceability-redesign-phase10/tasks.md
-  3120. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase-7-1-cycle-detection/proposal.md
-  3121. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase-7-1-cycle-detection/tasks.md
-  3122. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase-7-2-cascade-operations/proposal.md
-  3123. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase-7-2-cascade-operations/tasks.md
-  3124. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase-8a-magic-document-ingestion/proposal.md
-  3125. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase-8a-magic-document-ingestion/tasks.md
-  3126. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase10-enhanced-traceability/proposal.md
-  3127. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase10-enhanced-traceability/specs/traceability/spec.md
-  3128. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase10-enhanced-traceability/tasks.md
-  3129. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase11-reqif-import-export/proposal.md
-  3130. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase11-reqif-import-export/specs/standards.md
-  3131. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/phase11-reqif-import-export/tasks.md
-  3132. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-icon-emoji-to-lucide/proposal.md
-  3133. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-icon-emoji-to-lucide/specs/icon-system/spec.md
-  3134. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-icon-emoji-to-lucide/tasks.md
-  3135. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-security-message-formatting/proposal.md
-  3136. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-security-message-formatting/specs/security-logging/spec.md
-  3137. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-security-message-formatting/tasks.md
-  3138. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-type-safety-improvements/proposal.md
-  3139. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-type-safety-improvements/specs/type-safety/spec.md
-  3140. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-type-safety-improvements/tasks.md
-  3141. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-ui-sidebar-styling/proposal.md
-  3142. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-ui-sidebar-styling/specs/ui-consistency/spec.md
-  3143. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/refactor-ui-sidebar-styling/tasks.md
-  3144. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/replace-mcp-with-sdks/design.md
-  3145. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/replace-mcp-with-sdks/proposal.md
-  3146. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/replace-mcp-with-sdks/specs/mcp-sdk-integration/spec.md
-  3147. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/replace-mcp-with-sdks/tasks.md
-  3148. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/webhook-system/proposal.md
-  3149. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/webhook-system/specs/webhooks.md
-  3150. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/changes/webhook-system/tasks.md
-  3151. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/project.md
-  3152. temp-PRODVERCEL/485/clean/deploy/atoms.tech/openspec/tasks.md
+  3095. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/AGENTS.md
+  3096. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/README.md
+  3097. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/USER_STORIES_EXPANSION_OPTION_C.md
+  3098. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/DECOMPOSITION_PLAN.md
+  3099. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/add-org-id-to-requirements/proposal.md
+  3100. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/add-org-id-to-requirements/tasks.md
+  3101. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/comments-and-discussions/proposal.md
+  3102. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/comments-and-discussions/specs/comments.md
+  3103. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/comments-and-discussions/tasks.md
+  3104. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/email-verification-workflow/proposal.md
+  3105. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/email-verification-workflow/specs/auth/spec.md
+  3106. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/email-verification-workflow/tasks.md
+  3107. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/factory-droid-hooks/proposal.md
+  3108. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/fix-agent-chat-append-hook/design.md
+  3109. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/fix-agent-chat-append-hook/proposal.md
+  3110. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/fix-agent-chat-append-hook/specs/agent-chat/spec.md
+  3111. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/fix-agent-chat-append-hook/tasks.md
+  3112. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/design.md
+  3113. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/proposal.md
+  3114. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/specs/ai-powered-features/spec.md
+  3115. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/specs/bidirectional-navigation/spec.md
+  3116. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/specs/graph-visualization/spec.md
+  3117. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/specs/natural-language-query/spec.md
+  3118. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/specs/unified-schema/spec.md
+  3119. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/implement-traceability-redesign-phase10/tasks.md
+  3120. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase-7-1-cycle-detection/proposal.md
+  3121. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase-7-1-cycle-detection/tasks.md
+  3122. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase-7-2-cascade-operations/proposal.md
+  3123. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase-7-2-cascade-operations/tasks.md
+  3124. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase-8a-magic-document-ingestion/proposal.md
+  3125. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase-8a-magic-document-ingestion/tasks.md
+  3126. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase10-enhanced-traceability/proposal.md
+  3127. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase10-enhanced-traceability/specs/traceability/spec.md
+  3128. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase10-enhanced-traceability/tasks.md
+  3129. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase11-reqif-import-export/proposal.md
+  3130. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase11-reqif-import-export/specs/standards.md
+  3131. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/phase11-reqif-import-export/tasks.md
+  3132. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-icon-emoji-to-lucide/proposal.md
+  3133. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-icon-emoji-to-lucide/specs/icon-system/spec.md
+  3134. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-icon-emoji-to-lucide/tasks.md
+  3135. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-security-message-formatting/proposal.md
+  3136. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-security-message-formatting/specs/security-logging/spec.md
+  3137. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-security-message-formatting/tasks.md
+  3138. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-type-safety-improvements/proposal.md
+  3139. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-type-safety-improvements/specs/type-safety/spec.md
+  3140. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-type-safety-improvements/tasks.md
+  3141. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-ui-sidebar-styling/proposal.md
+  3142. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-ui-sidebar-styling/specs/ui-consistency/spec.md
+  3143. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/refactor-ui-sidebar-styling/tasks.md
+  3144. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/replace-mcp-with-sdks/design.md
+  3145. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/replace-mcp-with-sdks/proposal.md
+  3146. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/replace-mcp-with-sdks/specs/mcp-sdk-integration/spec.md
+  3147. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/replace-mcp-with-sdks/tasks.md
+  3148. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/webhook-system/proposal.md
+  3149. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/webhook-system/specs/webhooks.md
+  3150. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/changes/webhook-system/tasks.md
+  3151. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/project.md
+  3152. temp-PRODVERCEL/485/clean/deploy/atoms.tech/agileplus/tasks.md
   3153. temp-PRODVERCEL/485/clean/deploy/atoms.tech/plan.md
   3154. temp-PRODVERCEL/485/clean/deploy/atoms.tech/scripts/README-remove-seeded-accounts.md
   3155. temp-PRODVERCEL/485/clean/deploy/atoms.tech/specs/chat-messaging.md
@@ -21115,21 +21115,21 @@ PROCESSING ORDER (by month, newest first):
   3370. temp-PRODVERCEL/485/kush/QUICK_ALIGNMENT_REFERENCE.md
   3371. temp-PRODVERCEL/485/kush/README_ALIGNMENT_ANALYSIS.md
   3372. temp-PRODVERCEL/485/kush/RESOURCE_UTILIZATION_ANALYSIS.md
-  3373. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.augment/commands/openspec-apply.md
-  3374. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.augment/commands/openspec-archive.md
-  3375. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.augment/commands/openspec-proposal.md
-  3376. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.claude/commands/openspec/apply.md
-  3377. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.claude/commands/openspec/archive.md
-  3378. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.claude/commands/openspec/proposal.md
-  3379. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.clinerules/openspec-apply.md
-  3380. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.clinerules/openspec-archive.md
-  3381. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.clinerules/openspec-proposal.md
-  3382. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.cursor/commands/openspec-apply.md
-  3383. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.cursor/commands/openspec-archive.md
-  3384. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.cursor/commands/openspec-proposal.md
-  3385. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.opencode/command/openspec-apply.md
-  3386. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.opencode/command/openspec-archive.md
-  3387. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.opencode/command/openspec-proposal.md
+  3373. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.augment/commands/agileplus-apply.md
+  3374. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.augment/commands/agileplus-archive.md
+  3375. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.augment/commands/agileplus-proposal.md
+  3376. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.claude/commands/agileplus/apply.md
+  3377. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.claude/commands/agileplus/archive.md
+  3378. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.claude/commands/agileplus/proposal.md
+  3379. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.clinerules/agileplus-apply.md
+  3380. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.clinerules/agileplus-archive.md
+  3381. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.clinerules/agileplus-proposal.md
+  3382. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.cursor/commands/agileplus-apply.md
+  3383. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.cursor/commands/agileplus-archive.md
+  3384. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.cursor/commands/agileplus-proposal.md
+  3385. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.opencode/command/agileplus-apply.md
+  3386. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.opencode/command/agileplus-archive.md
+  3387. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/.opencode/command/agileplus-proposal.md
   3388. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/AGENTS.md
   3389. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/CHANGELOG.md
   3390. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/CLAUDE.md
@@ -21632,24 +21632,24 @@ PROCESSING ORDER (by month, newest first):
   3887. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/docs/sessions/2025-11-28-remove-legacy-compat-initial-batch/SPEC.md
   3888. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/docs/sessions/2025-11-28-remove-legacy-compat-initial-batch/STATE.md
   3889. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/infrastructure/README.md
-  3890. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/AGENTS.md
-  3891. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/fastmcp-oauth-migration/design.md
-  3892. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/fastmcp-oauth-migration/proposal.md
-  3893. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/fastmcp-oauth-migration/specs/services/fastmcp_oauth.md
-  3894. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/fastmcp-oauth-migration/tasks.md
-  3895. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/introduce-atoms-cli/design.md
-  3896. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/introduce-atoms-cli/proposal.md
-  3897. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/introduce-atoms-cli/specs/cli/spec.md
-  3898. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/introduce-atoms-cli/tasks.md
-  3899. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/refresh-mkdocs-agent-projection/proposal.md
-  3900. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/refresh-mkdocs-agent-projection/specs/docs/spec.md
-  3901. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/refresh-mkdocs-agent-projection/tasks.md
-  3902. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/remove-legacy-compat-initial-batch/design.md
-  3903. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/remove-legacy-compat-initial-batch/proposal.md
-  3904. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/remove-legacy-compat-initial-batch/specs/api/openai.md
-  3905. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/remove-legacy-compat-initial-batch/specs/services/sandbox.md
-  3906. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/changes/remove-legacy-compat-initial-batch/tasks.md
-  3907. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/openspec/project.md
+  3890. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/AGENTS.md
+  3891. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/fastmcp-oauth-migration/design.md
+  3892. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/fastmcp-oauth-migration/proposal.md
+  3893. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/fastmcp-oauth-migration/specs/services/fastmcp_oauth.md
+  3894. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/fastmcp-oauth-migration/tasks.md
+  3895. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/introduce-atoms-cli/design.md
+  3896. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/introduce-atoms-cli/proposal.md
+  3897. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/introduce-atoms-cli/specs/cli/spec.md
+  3898. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/introduce-atoms-cli/tasks.md
+  3899. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/refresh-mkdocs-agent-projection/proposal.md
+  3900. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/refresh-mkdocs-agent-projection/specs/docs/spec.md
+  3901. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/refresh-mkdocs-agent-projection/tasks.md
+  3902. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/remove-legacy-compat-initial-batch/design.md
+  3903. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/remove-legacy-compat-initial-batch/proposal.md
+  3904. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/remove-legacy-compat-initial-batch/specs/api/openai.md
+  3905. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/remove-legacy-compat-initial-batch/specs/services/sandbox.md
+  3906. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/changes/remove-legacy-compat-initial-batch/tasks.md
+  3907. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/agileplus/project.md
   3908. temp-PRODVERCEL/485/kush/agentapi/atomsAgent/tests/README.md
   3909. temp-PRODVERCEL/485/kush/agentapi/venv/lib/python3.14/site-packages/backrefs-6.1.dist-info/licenses/LICENSE.md
   3910. temp-PRODVERCEL/485/kush/agentapi/venv/lib/python3.14/site-packages/bracex-2.6.dist-info/licenses/LICENSE.md
@@ -21667,24 +21667,24 @@ PROCESSING ORDER (by month, newest first):
   3922. temp-PRODVERCEL/485/kush/agentapi/venv/lib/python3.14/site-packages/soupsieve-2.8.dist-info/licenses/LICENSE.md
   3923. temp-PRODVERCEL/485/kush/agentapi/venv/lib/python3.14/site-packages/wcmatch-10.1.dist-info/licenses/LICENSE.md
   3924. temp-PRODVERCEL/485/kush/archive/UTILITY_FOLDER_MOVE_PLAN.md
-  3925. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.augment/commands/openspec-apply.md
-  3926. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.augment/commands/openspec-archive.md
-  3927. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.augment/commands/openspec-proposal.md
-  3928. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.claude/commands/openspec/apply.md
-  3929. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.claude/commands/openspec/archive.md
-  3930. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.claude/commands/openspec/proposal.md
-  3931. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.clinerules/openspec-apply.md
-  3932. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.clinerules/openspec-archive.md
-  3933. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.clinerules/openspec-proposal.md
-  3934. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.cursor/commands/openspec-apply.md
-  3935. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.cursor/commands/openspec-archive.md
-  3936. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.cursor/commands/openspec-proposal.md
-  3937. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.factory/commands/openspec-apply.md
-  3938. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.factory/commands/openspec-archive.md
-  3939. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.factory/commands/openspec-proposal.md
-  3940. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.opencode/command/openspec-apply.md
-  3941. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.opencode/command/openspec-archive.md
-  3942. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.opencode/command/openspec-proposal.md
+  3925. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.augment/commands/agileplus-apply.md
+  3926. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.augment/commands/agileplus-archive.md
+  3927. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.augment/commands/agileplus-proposal.md
+  3928. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.claude/commands/agileplus/apply.md
+  3929. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.claude/commands/agileplus/archive.md
+  3930. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.claude/commands/agileplus/proposal.md
+  3931. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.clinerules/agileplus-apply.md
+  3932. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.clinerules/agileplus-archive.md
+  3933. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.clinerules/agileplus-proposal.md
+  3934. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.cursor/commands/agileplus-apply.md
+  3935. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.cursor/commands/agileplus-archive.md
+  3936. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.cursor/commands/agileplus-proposal.md
+  3937. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.factory/commands/agileplus-apply.md
+  3938. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.factory/commands/agileplus-archive.md
+  3939. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.factory/commands/agileplus-proposal.md
+  3940. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.opencode/command/agileplus-apply.md
+  3941. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.opencode/command/agileplus-archive.md
+  3942. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.opencode/command/agileplus-proposal.md
   3943. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.pytest_cache/README.md
   3944. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.vercel/cache/app/.vercel/python/py3/_vendor/docstring_parser-0.17.0.dist-info/licenses/LICENSE.md
   3945. temp-PRODVERCEL/485/kush/atoms-mcp-prod/.vercel/cache/app/.vercel/python/py3/_vendor/fastmcp/contrib/README.md
@@ -22277,14 +22277,14 @@ PROCESSING ORDER (by month, newest first):
   4532. temp-PRODVERCEL/485/kush/atoms-mcp-prod/docs/sessions/archive/testing/TEST_PATTERNS.md
   4533. temp-PRODVERCEL/485/kush/atoms-mcp-prod/docs/sessions/archive/testing/entity-tests-fix-final-summary.md
   4534. temp-PRODVERCEL/485/kush/atoms-mcp-prod/docs/sessions/archive/testing/test-fixes-summary.md
-  4535. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/AGENTS.md
-  4536. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/changes/archive/2025-11-22-comprehensive-e2e-integration-tests/proposal.md
-  4537. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/changes/archive/2025-11-22-comprehensive-e2e-integration-tests/specs/testing/spec.md
-  4538. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/changes/archive/2025-11-22-comprehensive-e2e-integration-tests/tasks.md
-  4539. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/changes/complete-crud-operations/proposal.md
-  4540. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/changes/complete-crud-operations/tasks.md
-  4541. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/project.md
-  4542. temp-PRODVERCEL/485/kush/atoms-mcp-prod/openspec/specs/testing/spec.md
+  4535. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/AGENTS.md
+  4536. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/changes/archive/2025-11-22-comprehensive-e2e-integration-tests/proposal.md
+  4537. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/changes/archive/2025-11-22-comprehensive-e2e-integration-tests/specs/testing/spec.md
+  4538. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/changes/archive/2025-11-22-comprehensive-e2e-integration-tests/tasks.md
+  4539. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/changes/complete-crud-operations/proposal.md
+  4540. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/changes/complete-crud-operations/tasks.md
+  4541. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/project.md
+  4542. temp-PRODVERCEL/485/kush/atoms-mcp-prod/agileplus/specs/testing/spec.md
   4543. temp-PRODVERCEL/485/kush/atoms-mcp-prod/src/atoms_mcp/auth/README.md
   4544. temp-PRODVERCEL/485/kush/atoms-mcp-prod/src/atoms_mcp/infrastructure/README.md
   4545. temp-PRODVERCEL/485/kush/atoms-mcp-prod/src/atoms_mcp/schemas/README.md
@@ -22296,18 +22296,18 @@ PROCESSING ORDER (by month, newest first):
   4551. temp-PRODVERCEL/485/kush/bloc/NEW_FLAGS_SUMMARY.md
   4552. temp-PRODVERCEL/485/kush/crun/MIGRATION_SUMMARY.md
   4553. temp-PRODVERCEL/485/kush/crun/crun/cli/monitor/README.md
-  4554. temp-PRODVERCEL/485/kush/dphi/.augment/commands/openspec-apply.md
-  4555. temp-PRODVERCEL/485/kush/dphi/.augment/commands/openspec-archive.md
-  4556. temp-PRODVERCEL/485/kush/dphi/.augment/commands/openspec-proposal.md
-  4557. temp-PRODVERCEL/485/kush/dphi/.claude/commands/openspec/apply.md
-  4558. temp-PRODVERCEL/485/kush/dphi/.claude/commands/openspec/archive.md
-  4559. temp-PRODVERCEL/485/kush/dphi/.claude/commands/openspec/proposal.md
-  4560. temp-PRODVERCEL/485/kush/dphi/.cursor/commands/openspec-apply.md
-  4561. temp-PRODVERCEL/485/kush/dphi/.cursor/commands/openspec-archive.md
-  4562. temp-PRODVERCEL/485/kush/dphi/.cursor/commands/openspec-proposal.md
-  4563. temp-PRODVERCEL/485/kush/dphi/.factory/commands/openspec-apply.md
-  4564. temp-PRODVERCEL/485/kush/dphi/.factory/commands/openspec-archive.md
-  4565. temp-PRODVERCEL/485/kush/dphi/.factory/commands/openspec-proposal.md
+  4554. temp-PRODVERCEL/485/kush/dphi/.augment/commands/agileplus-apply.md
+  4555. temp-PRODVERCEL/485/kush/dphi/.augment/commands/agileplus-archive.md
+  4556. temp-PRODVERCEL/485/kush/dphi/.augment/commands/agileplus-proposal.md
+  4557. temp-PRODVERCEL/485/kush/dphi/.claude/commands/agileplus/apply.md
+  4558. temp-PRODVERCEL/485/kush/dphi/.claude/commands/agileplus/archive.md
+  4559. temp-PRODVERCEL/485/kush/dphi/.claude/commands/agileplus/proposal.md
+  4560. temp-PRODVERCEL/485/kush/dphi/.cursor/commands/agileplus-apply.md
+  4561. temp-PRODVERCEL/485/kush/dphi/.cursor/commands/agileplus-archive.md
+  4562. temp-PRODVERCEL/485/kush/dphi/.cursor/commands/agileplus-proposal.md
+  4563. temp-PRODVERCEL/485/kush/dphi/.factory/commands/agileplus-apply.md
+  4564. temp-PRODVERCEL/485/kush/dphi/.factory/commands/agileplus-archive.md
+  4565. temp-PRODVERCEL/485/kush/dphi/.factory/commands/agileplus-proposal.md
   4566. temp-PRODVERCEL/485/kush/dphi/AGENTS.md
   4567. temp-PRODVERCEL/485/kush/dphi/CLAUDE.md
   4568. temp-PRODVERCEL/485/kush/dphi/CONSOLIDATED_STRUCTURE.md
@@ -22319,27 +22319,27 @@ PROCESSING ORDER (by month, newest first):
   4574. temp-PRODVERCEL/485/kush/dphi/README_UPDATED.md
   4575. temp-PRODVERCEL/485/kush/dphi/TEST_REPORT.md
   4576. temp-PRODVERCEL/485/kush/dphi/VALIDATION_COMPLETE.md
-  4577. temp-PRODVERCEL/485/kush/dphi/openspec/AGENTS.md
-  4578. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-multi-language-support/FR_Specification.md
-  4579. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-multi-language-support/User_Stories.md
-  4580. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-multi-language-support/design.md
-  4581. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-multi-language-support/proposal.md
-  4582. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-multi-language-support/specs/package-discovery/spec.md
-  4583. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-multi-language-support/tasks.md
-  4584. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-terminal-cli-and-mcp-server/FR_Specification.md
-  4585. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-terminal-cli-and-mcp-server/User_Stories.md
-  4586. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-terminal-cli-and-mcp-server/design.md
-  4587. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-terminal-cli-and-mcp-server/proposal.md
-  4588. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-terminal-cli-and-mcp-server/specs/mcp-server/spec.md
-  4589. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-terminal-cli-and-mcp-server/specs/terminal-cli/spec.md
-  4590. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-terminal-cli-and-mcp-server/tasks.md
-  4591. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-unified-mcp-composition-server/FR_Specification.md
-  4592. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-unified-mcp-composition-server/User_Stories.md
-  4593. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-unified-mcp-composition-server/design.md
-  4594. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-unified-mcp-composition-server/proposal.md
-  4595. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-unified-mcp-composition-server/specs/unified-mcp-composition/spec.md
-  4596. temp-PRODVERCEL/485/kush/dphi/openspec/changes/add-unified-mcp-composition-server/tasks.md
-  4597. temp-PRODVERCEL/485/kush/dphi/openspec/project.md
+  4577. temp-PRODVERCEL/485/kush/dphi/agileplus/AGENTS.md
+  4578. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-multi-language-support/FR_Specification.md
+  4579. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-multi-language-support/User_Stories.md
+  4580. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-multi-language-support/design.md
+  4581. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-multi-language-support/proposal.md
+  4582. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-multi-language-support/specs/package-discovery/spec.md
+  4583. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-multi-language-support/tasks.md
+  4584. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-terminal-cli-and-mcp-server/FR_Specification.md
+  4585. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-terminal-cli-and-mcp-server/User_Stories.md
+  4586. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-terminal-cli-and-mcp-server/design.md
+  4587. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-terminal-cli-and-mcp-server/proposal.md
+  4588. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-terminal-cli-and-mcp-server/specs/mcp-server/spec.md
+  4589. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-terminal-cli-and-mcp-server/specs/terminal-cli/spec.md
+  4590. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-terminal-cli-and-mcp-server/tasks.md
+  4591. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-unified-mcp-composition-server/FR_Specification.md
+  4592. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-unified-mcp-composition-server/User_Stories.md
+  4593. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-unified-mcp-composition-server/design.md
+  4594. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-unified-mcp-composition-server/proposal.md
+  4595. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-unified-mcp-composition-server/specs/unified-mcp-composition/spec.md
+  4596. temp-PRODVERCEL/485/kush/dphi/agileplus/changes/add-unified-mcp-composition-server/tasks.md
+  4597. temp-PRODVERCEL/485/kush/dphi/agileplus/project.md
   4598. temp-PRODVERCEL/485/kush/kagentop/01_discover/CompetitiveAnalysis.md
   4599. temp-PRODVERCEL/485/kush/kagentop/01_discover/OpenSourceBaseAnalysis.md
   4600. temp-PRODVERCEL/485/kush/kagentop/01_discover/ResearchPlan.md
@@ -22891,15 +22891,15 @@ PROCESSING ORDER (by month, newest first):
   5146. temp-PRODVERCEL/485/kush/kagentop/clients/windows/README.md
   5147. temp-PRODVERCEL/485/kush/kagentop/clients/windows/RPC_PROVIDERS_README.md
   5148. temp-PRODVERCEL/485/kush/kagentop/retros/IterationNotes.md
-  5149. temp-PRODVERCEL/485/kush/knowledgebase/.augment/commands/openspec-apply.md
-  5150. temp-PRODVERCEL/485/kush/knowledgebase/.augment/commands/openspec-archive.md
-  5151. temp-PRODVERCEL/485/kush/knowledgebase/.augment/commands/openspec-proposal.md
-  5152. temp-PRODVERCEL/485/kush/knowledgebase/.claude/commands/openspec/apply.md
-  5153. temp-PRODVERCEL/485/kush/knowledgebase/.claude/commands/openspec/archive.md
-  5154. temp-PRODVERCEL/485/kush/knowledgebase/.claude/commands/openspec/proposal.md
-  5155. temp-PRODVERCEL/485/kush/knowledgebase/.factory/commands/openspec-apply.md
-  5156. temp-PRODVERCEL/485/kush/knowledgebase/.factory/commands/openspec-archive.md
-  5157. temp-PRODVERCEL/485/kush/knowledgebase/.factory/commands/openspec-proposal.md
+  5149. temp-PRODVERCEL/485/kush/knowledgebase/.augment/commands/agileplus-apply.md
+  5150. temp-PRODVERCEL/485/kush/knowledgebase/.augment/commands/agileplus-archive.md
+  5151. temp-PRODVERCEL/485/kush/knowledgebase/.augment/commands/agileplus-proposal.md
+  5152. temp-PRODVERCEL/485/kush/knowledgebase/.claude/commands/agileplus/apply.md
+  5153. temp-PRODVERCEL/485/kush/knowledgebase/.claude/commands/agileplus/archive.md
+  5154. temp-PRODVERCEL/485/kush/knowledgebase/.claude/commands/agileplus/proposal.md
+  5155. temp-PRODVERCEL/485/kush/knowledgebase/.factory/commands/agileplus-apply.md
+  5156. temp-PRODVERCEL/485/kush/knowledgebase/.factory/commands/agileplus-archive.md
+  5157. temp-PRODVERCEL/485/kush/knowledgebase/.factory/commands/agileplus-proposal.md
   5158. temp-PRODVERCEL/485/kush/knowledgebase/.pytest_cache/README.md
   5159. temp-PRODVERCEL/485/kush/knowledgebase/AGENTS.md
   5160. temp-PRODVERCEL/485/kush/knowledgebase/CLAUDE.md
@@ -22920,28 +22920,28 @@ PROCESSING ORDER (by month, newest first):
   5175. temp-PRODVERCEL/485/kush/knowledgebase/QUICK-REFERENCE.md
   5176. temp-PRODVERCEL/485/kush/knowledgebase/WARP.md
   5177. temp-PRODVERCEL/485/kush/knowledgebase/kb/projects/test-project/features/kb-001.md
-  5178. temp-PRODVERCEL/485/kush/knowledgebase/openspec/AGENTS.md
-  5179. temp-PRODVERCEL/485/kush/knowledgebase/openspec/COMPLETE-PLAN-SUMMARY.md
-  5180. temp-PRODVERCEL/485/kush/knowledgebase/openspec/DEVELOPER-QUICK-START.md
-  5181. temp-PRODVERCEL/485/kush/knowledgebase/openspec/MASTER-IMPLEMENTATION-CHECKLIST.md
-  5182. temp-PRODVERCEL/485/kush/knowledgebase/openspec/PHASE-1-IMPLEMENTATION-PLAN.md
-  5183. temp-PRODVERCEL/485/kush/knowledgebase/openspec/PHASES-2-6-ROADMAP.md
-  5184. temp-PRODVERCEL/485/kush/knowledgebase/openspec/README.md
-  5185. temp-PRODVERCEL/485/kush/knowledgebase/openspec/RESEARCH-EXISTING-SOLUTIONS.md
-  5186. temp-PRODVERCEL/485/kush/knowledgebase/openspec/TEST-STRATEGY.md
-  5187. temp-PRODVERCEL/485/kush/knowledgebase/openspec/VISUAL-OVERVIEW.md
-  5188. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/APPROVAL-GATE.md
-  5189. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/GOVERNANCE.md
-  5190. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/PHASE-1-QUICKSTART.md
-  5191. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/README.md
-  5192. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/REQUIREMENTS-ENHANCED.md
-  5193. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/RESEARCH-FINDINGS.md
-  5194. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/SUMMARY.md
-  5195. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/design.md
-  5196. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/proposal.md
-  5197. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/specs/kb-organization/spec.md
-  5198. temp-PRODVERCEL/485/kush/knowledgebase/openspec/changes/kb-system-initialization/tasks.md
-  5199. temp-PRODVERCEL/485/kush/knowledgebase/openspec/project.md
+  5178. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/AGENTS.md
+  5179. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/COMPLETE-PLAN-SUMMARY.md
+  5180. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/DEVELOPER-QUICK-START.md
+  5181. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/MASTER-IMPLEMENTATION-CHECKLIST.md
+  5182. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/PHASE-1-IMPLEMENTATION-PLAN.md
+  5183. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/PHASES-2-6-ROADMAP.md
+  5184. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/README.md
+  5185. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/RESEARCH-EXISTING-SOLUTIONS.md
+  5186. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/TEST-STRATEGY.md
+  5187. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/VISUAL-OVERVIEW.md
+  5188. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/APPROVAL-GATE.md
+  5189. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/GOVERNANCE.md
+  5190. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/PHASE-1-QUICKSTART.md
+  5191. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/README.md
+  5192. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/REQUIREMENTS-ENHANCED.md
+  5193. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/RESEARCH-FINDINGS.md
+  5194. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/SUMMARY.md
+  5195. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/design.md
+  5196. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/proposal.md
+  5197. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/specs/kb-organization/spec.md
+  5198. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/changes/kb-system-initialization/tasks.md
+  5199. temp-PRODVERCEL/485/kush/knowledgebase/agileplus/project.md
   5200. temp-PRODVERCEL/485/kush/knowledgebase/tests/fixtures/kb/agents/retrieval-agent/vector-search-guide.md
   5201. temp-PRODVERCEL/485/kush/knowledgebase/tests/fixtures/kb/projects/auth-service/jwt-design.md
   5202. temp-PRODVERCEL/485/kush/knowledgebase/tests/fixtures/kb/projects/auth-service/oauth2-research.md
@@ -23008,9 +23008,9 @@ PROCESSING ORDER (by month, newest first):
   5263. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/bmad/workflows/cis-storytelling.md
   5264. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/bmad/workflows/core-brainstorming.md
   5265. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/bmad/workflows/core-party-mode.md
-  5266. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/openspec-apply.md
-  5267. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/openspec-archive.md
-  5268. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/openspec-proposal.md
+  5266. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/agileplus-apply.md
+  5267. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/agileplus-archive.md
+  5268. temp-PRODVERCEL/485/kush/pheno-sdk/.augment/commands/agileplus-proposal.md
   5269. temp-PRODVERCEL/485/kush/pheno-sdk/.bmad/bmb/README.md
   5270. temp-PRODVERCEL/485/kush/pheno-sdk/.bmad/bmb/agents/bmad-builder.md
   5271. temp-PRODVERCEL/485/kush/pheno-sdk/.bmad/bmb/docs/agent-compilation.md
@@ -23303,9 +23303,9 @@ PROCESSING ORDER (by month, newest first):
   5558. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/bmad/core/tools/shard-doc.md
   5559. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/bmad/core/workflows/brainstorming.md
   5560. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/bmad/core/workflows/party-mode.md
-  5561. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/openspec/apply.md
-  5562. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/openspec/archive.md
-  5563. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/openspec/proposal.md
+  5561. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/agileplus/apply.md
+  5562. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/agileplus/archive.md
+  5563. temp-PRODVERCEL/485/kush/pheno-sdk/.claude/commands/agileplus/proposal.md
   5564. temp-PRODVERCEL/485/kush/pheno-sdk/.codex/prompts/bmad-bmb-agents-bmad-builder.md
   5565. temp-PRODVERCEL/485/kush/pheno-sdk/.codex/prompts/bmad-bmb-workflows-README.md
   5566. temp-PRODVERCEL/485/kush/pheno-sdk/.codex/prompts/bmad-bmb-workflows-audit-workflow.md
@@ -23369,16 +23369,16 @@ PROCESSING ORDER (by month, newest first):
   5624. temp-PRODVERCEL/485/kush/pheno-sdk/.codex/prompts/bmad-core-workflows-README.md
   5625. temp-PRODVERCEL/485/kush/pheno-sdk/.codex/prompts/bmad-core-workflows-brainstorming.md
   5626. temp-PRODVERCEL/485/kush/pheno-sdk/.codex/prompts/bmad-core-workflows-party-mode.md
-  5627. temp-PRODVERCEL/485/kush/pheno-sdk/.cursor/commands/openspec-apply.md
-  5628. temp-PRODVERCEL/485/kush/pheno-sdk/.cursor/commands/openspec-archive.md
-  5629. temp-PRODVERCEL/485/kush/pheno-sdk/.cursor/commands/openspec-proposal.md
-  5630. temp-PRODVERCEL/485/kush/pheno-sdk/.factory/commands/openspec-apply.md
-  5631. temp-PRODVERCEL/485/kush/pheno-sdk/.factory/commands/openspec-archive.md
-  5632. temp-PRODVERCEL/485/kush/pheno-sdk/.factory/commands/openspec-proposal.md
+  5627. temp-PRODVERCEL/485/kush/pheno-sdk/.cursor/commands/agileplus-apply.md
+  5628. temp-PRODVERCEL/485/kush/pheno-sdk/.cursor/commands/agileplus-archive.md
+  5629. temp-PRODVERCEL/485/kush/pheno-sdk/.cursor/commands/agileplus-proposal.md
+  5630. temp-PRODVERCEL/485/kush/pheno-sdk/.factory/commands/agileplus-apply.md
+  5631. temp-PRODVERCEL/485/kush/pheno-sdk/.factory/commands/agileplus-archive.md
+  5632. temp-PRODVERCEL/485/kush/pheno-sdk/.factory/commands/agileplus-proposal.md
   5633. temp-PRODVERCEL/485/kush/pheno-sdk/.github/VALIDATION_QUICKSTART.md
-  5634. temp-PRODVERCEL/485/kush/pheno-sdk/.opencode/command/openspec-apply.md
-  5635. temp-PRODVERCEL/485/kush/pheno-sdk/.opencode/command/openspec-archive.md
-  5636. temp-PRODVERCEL/485/kush/pheno-sdk/.opencode/command/openspec-proposal.md
+  5634. temp-PRODVERCEL/485/kush/pheno-sdk/.opencode/command/agileplus-apply.md
+  5635. temp-PRODVERCEL/485/kush/pheno-sdk/.opencode/command/agileplus-archive.md
+  5636. temp-PRODVERCEL/485/kush/pheno-sdk/.opencode/command/agileplus-proposal.md
   5637. temp-PRODVERCEL/485/kush/pheno-sdk/ADVANCED_EFFECTS_DELIVERY.md
   5638. temp-PRODVERCEL/485/kush/pheno-sdk/ADVANCED_FEATURES_DELIVERY.md
   5639. temp-PRODVERCEL/485/kush/pheno-sdk/AGENTS.md
@@ -24374,71 +24374,71 @@ PROCESSING ORDER (by month, newest first):
   6629. temp-PRODVERCEL/485/kush/pheno-sdk/docs/tutorials/integration.md
   6630. temp-PRODVERCEL/485/kush/pheno-sdk/examples/README.md
   6631. temp-PRODVERCEL/485/kush/pheno-sdk/examples/llm_advanced/README.md
-  6632. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/AGENTS.md
-  6633. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/ARCHITECTURE_TOOLS_SPEC.md
-  6634. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/PROJECT_CONTEXT_SUMMARY.md
-  6635. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/SPEC_DRIVEN_PRODUCT_FRAMEWORK.md
-  6636. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-agent-devops-sdk/design.md
-  6637. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-agent-devops-sdk/proposal.md
-  6638. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-agent-devops-sdk/specs/agent_devops/spec.md
-  6639. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-agent-devops-sdk/tasks.md
-  6640. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/design.md
-  6641. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/proposal.md
-  6642. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/DEPENDENCY_GROUPS.md
-  6643. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/FACTORY_PATTERNS.md
-  6644. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/GPU_COMPUTE_INFRASTRUCTURE.md
-  6645. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/POSTGRES_EXTENSIONS.md
-  6646. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/RAG_AI_PIPELINE.md
-  6647. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/RESOURCE_TYPE_ADDITIONS.md
-  6648. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/SAAS_SERVICES.md
-  6649. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/specs/WORKFLOW_ORCHESTRATION.md
-  6650. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/add-extensive-resource-support/tasks.md
-  6651. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/archive/2025-01-15-sst-python-sdk-integration/ARCHIVE.md
-  6652. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/archive/2025-01-15-sst-python-sdk-integration/design.md
-  6653. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/archive/2025-01-15-sst-python-sdk-integration/proposal.md
-  6654. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/archive/2025-01-15-sst-python-sdk-integration/tasks.md
-  6655. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/SUMMARY.md
-  6656. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/design.md
-  6657. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/proposal.md
-  6658. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/specs/e2e-testing/spec.md
-  6659. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/specs/integration-testing/spec.md
-  6660. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/specs/unit-testing/spec.md
-  6661. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/specs/validation-framework/spec.md
-  6662. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/establish-comprehensive-test-suite/tasks.md
-  6663. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/generify-sst-ion-multicloud/SUMMARY.md
-  6664. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/generify-sst-ion-multicloud/design.md
-  6665. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/generify-sst-ion-multicloud/proposal.md
-  6666. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/generify-sst-ion-multicloud/specs/deployment/delta.md
-  6667. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/generify-sst-ion-multicloud/tasks.md
-  6668. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/refactor-hexagonal-domain-commands/design.md
-  6669. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/refactor-hexagonal-domain-commands/proposal.md
-  6670. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/refactor-hexagonal-domain-commands/specs/cli-commands/spec.md
-  6671. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/changes/refactor-hexagonal-domain-commands/tasks.md
-  6672. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/project.md
-  6673. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/AGENT_EXECUTORS_SPEC.md
-  6674. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/XAAS_IAC_ABSTRACTION_ARCHITECTURE.md
-  6675. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/XAAS_IAC_IMPLEMENTATION_SPEC.md
-  6676. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/ADVANCED_FEATURES.md
-  6677. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/AGENT_DEVOPS_SDK_SPEC.md
-  6678. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/ARCHITECTURE.md
-  6679. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/DETAILED_API_CONTRACTS.md
-  6680. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/EXPANDED_SPECIFICATION_INDEX.md
-  6681. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/IMPLEMENTATION_GUIDE.md
-  6682. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/INTEGRATION_ECOSYSTEM.md
-  6683. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/MULTI_CLOUD_DEPLOYMENT.md
-  6684. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/OPERATIONS_RUNBOOKS.md
-  6685. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/ORCHESTRATION_OPTIONS.md
-  6686. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/PERFORMANCE_OPTIMIZATION.md
-  6687. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/SDK_API_DESIGN.md
-  6688. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/SECURITY_COMPLIANCE.md
-  6689. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/agent_devops/TESTING_QA.md
-  6690. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/api/spec.md
-  6691. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/authentication/spec.md
-  6692. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/database/spec.md
-  6693. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/deployment/spec.md
-  6694. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/observability/spec.md
-  6695. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/storage/spec.md
-  6696. temp-PRODVERCEL/485/kush/pheno-sdk/openspec/specs/testing/spec.md
+  6632. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/AGENTS.md
+  6633. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/ARCHITECTURE_TOOLS_SPEC.md
+  6634. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/PROJECT_CONTEXT_SUMMARY.md
+  6635. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/SPEC_DRIVEN_PRODUCT_FRAMEWORK.md
+  6636. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-agent-devops-sdk/design.md
+  6637. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-agent-devops-sdk/proposal.md
+  6638. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-agent-devops-sdk/specs/agent_devops/spec.md
+  6639. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-agent-devops-sdk/tasks.md
+  6640. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/design.md
+  6641. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/proposal.md
+  6642. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/DEPENDENCY_GROUPS.md
+  6643. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/FACTORY_PATTERNS.md
+  6644. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/GPU_COMPUTE_INFRASTRUCTURE.md
+  6645. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/POSTGRES_EXTENSIONS.md
+  6646. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/RAG_AI_PIPELINE.md
+  6647. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/RESOURCE_TYPE_ADDITIONS.md
+  6648. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/SAAS_SERVICES.md
+  6649. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/specs/WORKFLOW_ORCHESTRATION.md
+  6650. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/add-extensive-resource-support/tasks.md
+  6651. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/archive/2025-01-15-sst-python-sdk-integration/ARCHIVE.md
+  6652. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/archive/2025-01-15-sst-python-sdk-integration/design.md
+  6653. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/archive/2025-01-15-sst-python-sdk-integration/proposal.md
+  6654. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/archive/2025-01-15-sst-python-sdk-integration/tasks.md
+  6655. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/SUMMARY.md
+  6656. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/design.md
+  6657. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/proposal.md
+  6658. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/specs/e2e-testing/spec.md
+  6659. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/specs/integration-testing/spec.md
+  6660. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/specs/unit-testing/spec.md
+  6661. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/specs/validation-framework/spec.md
+  6662. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/establish-comprehensive-test-suite/tasks.md
+  6663. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/generify-sst-ion-multicloud/SUMMARY.md
+  6664. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/generify-sst-ion-multicloud/design.md
+  6665. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/generify-sst-ion-multicloud/proposal.md
+  6666. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/generify-sst-ion-multicloud/specs/deployment/delta.md
+  6667. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/generify-sst-ion-multicloud/tasks.md
+  6668. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/refactor-hexagonal-domain-commands/design.md
+  6669. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/refactor-hexagonal-domain-commands/proposal.md
+  6670. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/refactor-hexagonal-domain-commands/specs/cli-commands/spec.md
+  6671. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/changes/refactor-hexagonal-domain-commands/tasks.md
+  6672. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/project.md
+  6673. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/AGENT_EXECUTORS_SPEC.md
+  6674. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/XAAS_IAC_ABSTRACTION_ARCHITECTURE.md
+  6675. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/XAAS_IAC_IMPLEMENTATION_SPEC.md
+  6676. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/ADVANCED_FEATURES.md
+  6677. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/AGENT_DEVOPS_SDK_SPEC.md
+  6678. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/ARCHITECTURE.md
+  6679. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/DETAILED_API_CONTRACTS.md
+  6680. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/EXPANDED_SPECIFICATION_INDEX.md
+  6681. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/IMPLEMENTATION_GUIDE.md
+  6682. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/INTEGRATION_ECOSYSTEM.md
+  6683. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/MULTI_CLOUD_DEPLOYMENT.md
+  6684. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/OPERATIONS_RUNBOOKS.md
+  6685. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/ORCHESTRATION_OPTIONS.md
+  6686. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/PERFORMANCE_OPTIMIZATION.md
+  6687. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/SDK_API_DESIGN.md
+  6688. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/SECURITY_COMPLIANCE.md
+  6689. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/agent_devops/TESTING_QA.md
+  6690. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/api/spec.md
+  6691. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/authentication/spec.md
+  6692. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/database/spec.md
+  6693. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/deployment/spec.md
+  6694. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/observability/spec.md
+  6695. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/storage/spec.md
+  6696. temp-PRODVERCEL/485/kush/pheno-sdk/agileplus/specs/testing/spec.md
   6697. temp-PRODVERCEL/485/kush/pheno-sdk/src/pheno/README.md
   6698. temp-PRODVERCEL/485/kush/pheno-sdk/src/pheno/adapters/agents/README.md
   6699. temp-PRODVERCEL/485/kush/pheno-sdk/src/pheno/analysis/README.md
@@ -24491,18 +24491,18 @@ PROCESSING ORDER (by month, newest first):
   6746. temp-PRODVERCEL/485/kush/pheno-sdk/src/pheno/workflow/README.md
   6747. temp-PRODVERCEL/485/kush/pheno-sdk/src/pheno_sdk/README.md
   6748. temp-PRODVERCEL/485/kush/pheno-sdk/tests/README.md
-  6749. temp-PRODVERCEL/485/kush/plangent/.augment/commands/openspec-apply.md
-  6750. temp-PRODVERCEL/485/kush/plangent/.augment/commands/openspec-archive.md
-  6751. temp-PRODVERCEL/485/kush/plangent/.augment/commands/openspec-proposal.md
-  6752. temp-PRODVERCEL/485/kush/plangent/.claude/commands/openspec/apply.md
-  6753. temp-PRODVERCEL/485/kush/plangent/.claude/commands/openspec/archive.md
-  6754. temp-PRODVERCEL/485/kush/plangent/.claude/commands/openspec/proposal.md
-  6755. temp-PRODVERCEL/485/kush/plangent/.cursor/commands/openspec-apply.md
-  6756. temp-PRODVERCEL/485/kush/plangent/.cursor/commands/openspec-archive.md
-  6757. temp-PRODVERCEL/485/kush/plangent/.cursor/commands/openspec-proposal.md
-  6758. temp-PRODVERCEL/485/kush/plangent/.factory/commands/openspec-apply.md
-  6759. temp-PRODVERCEL/485/kush/plangent/.factory/commands/openspec-archive.md
-  6760. temp-PRODVERCEL/485/kush/plangent/.factory/commands/openspec-proposal.md
+  6749. temp-PRODVERCEL/485/kush/plangent/.augment/commands/agileplus-apply.md
+  6750. temp-PRODVERCEL/485/kush/plangent/.augment/commands/agileplus-archive.md
+  6751. temp-PRODVERCEL/485/kush/plangent/.augment/commands/agileplus-proposal.md
+  6752. temp-PRODVERCEL/485/kush/plangent/.claude/commands/agileplus/apply.md
+  6753. temp-PRODVERCEL/485/kush/plangent/.claude/commands/agileplus/archive.md
+  6754. temp-PRODVERCEL/485/kush/plangent/.claude/commands/agileplus/proposal.md
+  6755. temp-PRODVERCEL/485/kush/plangent/.cursor/commands/agileplus-apply.md
+  6756. temp-PRODVERCEL/485/kush/plangent/.cursor/commands/agileplus-archive.md
+  6757. temp-PRODVERCEL/485/kush/plangent/.cursor/commands/agileplus-proposal.md
+  6758. temp-PRODVERCEL/485/kush/plangent/.factory/commands/agileplus-apply.md
+  6759. temp-PRODVERCEL/485/kush/plangent/.factory/commands/agileplus-archive.md
+  6760. temp-PRODVERCEL/485/kush/plangent/.factory/commands/agileplus-proposal.md
   6761. temp-PRODVERCEL/485/kush/plangent/CODEBASE_SUMMARY.md
   6762. temp-PRODVERCEL/485/kush/plangent/README.md
   6763. temp-PRODVERCEL/485/kush/plangent/TECH_STACK_SUMMARY.md
@@ -24548,26 +24548,26 @@ PROCESSING ORDER (by month, newest first):
   6803. temp-PRODVERCEL/485/kush/plangent/docs/reference/PROJECT_MANIFEST.md
   6804. temp-PRODVERCEL/485/kush/plangent/docs/reference/PROJECT_SUMMARY.md
   6805. temp-PRODVERCEL/485/kush/plangent/docs/reference/README.md
-  6806. temp-PRODVERCEL/485/kush/plangent/openspec/AGENTS.md
-  6807. temp-PRODVERCEL/485/kush/plangent/openspec/changes/add-generic-adapters/design.md
-  6808. temp-PRODVERCEL/485/kush/plangent/openspec/changes/add-generic-adapters/proposal.md
-  6809. temp-PRODVERCEL/485/kush/plangent/openspec/changes/add-generic-adapters/specs/agent-adapters/spec.md
-  6810. temp-PRODVERCEL/485/kush/plangent/openspec/changes/add-generic-adapters/specs/orchestration/spec.md
-  6811. temp-PRODVERCEL/485/kush/plangent/openspec/changes/add-generic-adapters/specs/state-management/spec.md
-  6812. temp-PRODVERCEL/485/kush/plangent/openspec/changes/add-generic-adapters/tasks.md
-  6813. temp-PRODVERCEL/485/kush/plangent/openspec/project.md
-  6814. temp-PRODVERCEL/485/kush/smartcp/.amazonq/prompts/openspec-apply.md
-  6815. temp-PRODVERCEL/485/kush/smartcp/.amazonq/prompts/openspec-archive.md
-  6816. temp-PRODVERCEL/485/kush/smartcp/.amazonq/prompts/openspec-proposal.md
-  6817. temp-PRODVERCEL/485/kush/smartcp/.augment/commands/openspec-apply.md
-  6818. temp-PRODVERCEL/485/kush/smartcp/.augment/commands/openspec-archive.md
-  6819. temp-PRODVERCEL/485/kush/smartcp/.augment/commands/openspec-proposal.md
-  6820. temp-PRODVERCEL/485/kush/smartcp/.claude/commands/openspec/apply.md
-  6821. temp-PRODVERCEL/485/kush/smartcp/.claude/commands/openspec/archive.md
-  6822. temp-PRODVERCEL/485/kush/smartcp/.claude/commands/openspec/proposal.md
-  6823. temp-PRODVERCEL/485/kush/smartcp/.factory/commands/openspec-apply.md
-  6824. temp-PRODVERCEL/485/kush/smartcp/.factory/commands/openspec-archive.md
-  6825. temp-PRODVERCEL/485/kush/smartcp/.factory/commands/openspec-proposal.md
+  6806. temp-PRODVERCEL/485/kush/plangent/agileplus/AGENTS.md
+  6807. temp-PRODVERCEL/485/kush/plangent/agileplus/changes/add-generic-adapters/design.md
+  6808. temp-PRODVERCEL/485/kush/plangent/agileplus/changes/add-generic-adapters/proposal.md
+  6809. temp-PRODVERCEL/485/kush/plangent/agileplus/changes/add-generic-adapters/specs/agent-adapters/spec.md
+  6810. temp-PRODVERCEL/485/kush/plangent/agileplus/changes/add-generic-adapters/specs/orchestration/spec.md
+  6811. temp-PRODVERCEL/485/kush/plangent/agileplus/changes/add-generic-adapters/specs/state-management/spec.md
+  6812. temp-PRODVERCEL/485/kush/plangent/agileplus/changes/add-generic-adapters/tasks.md
+  6813. temp-PRODVERCEL/485/kush/plangent/agileplus/project.md
+  6814. temp-PRODVERCEL/485/kush/smartcp/.amazonq/prompts/agileplus-apply.md
+  6815. temp-PRODVERCEL/485/kush/smartcp/.amazonq/prompts/agileplus-archive.md
+  6816. temp-PRODVERCEL/485/kush/smartcp/.amazonq/prompts/agileplus-proposal.md
+  6817. temp-PRODVERCEL/485/kush/smartcp/.augment/commands/agileplus-apply.md
+  6818. temp-PRODVERCEL/485/kush/smartcp/.augment/commands/agileplus-archive.md
+  6819. temp-PRODVERCEL/485/kush/smartcp/.augment/commands/agileplus-proposal.md
+  6820. temp-PRODVERCEL/485/kush/smartcp/.claude/commands/agileplus/apply.md
+  6821. temp-PRODVERCEL/485/kush/smartcp/.claude/commands/agileplus/archive.md
+  6822. temp-PRODVERCEL/485/kush/smartcp/.claude/commands/agileplus/proposal.md
+  6823. temp-PRODVERCEL/485/kush/smartcp/.factory/commands/agileplus-apply.md
+  6824. temp-PRODVERCEL/485/kush/smartcp/.factory/commands/agileplus-archive.md
+  6825. temp-PRODVERCEL/485/kush/smartcp/.factory/commands/agileplus-proposal.md
   6826. temp-PRODVERCEL/485/kush/smartcp/.pytest_cache/README.md
   6827. temp-PRODVERCEL/485/kush/smartcp/AGENTS.md
   6828. temp-PRODVERCEL/485/kush/smartcp/CLAUDE.md
@@ -24638,10 +24638,10 @@ PROCESSING ORDER (by month, newest first):
   6893. temp-PRODVERCEL/485/kush/smartcp/docs/research/TOOL_TYPING_STORAGE_INDEX.md
   6894. temp-PRODVERCEL/485/kush/smartcp/docs/research/TOOL_TYPING_STORAGE_RESEARCH_COMPLETE.md
   6895. temp-PRODVERCEL/485/kush/smartcp/docs/research/TOOL_TYPING_STORAGE_SUMMARY.md
-  6896. temp-PRODVERCEL/485/kush/smartcp/openspec/AGENTS.md
-  6897. temp-PRODVERCEL/485/kush/smartcp/openspec/AGENTS_ROOT.md
-  6898. temp-PRODVERCEL/485/kush/smartcp/openspec/CLAUDE.md
-  6899. temp-PRODVERCEL/485/kush/smartcp/openspec/project.md
+  6896. temp-PRODVERCEL/485/kush/smartcp/agileplus/AGENTS.md
+  6897. temp-PRODVERCEL/485/kush/smartcp/agileplus/AGENTS_ROOT.md
+  6898. temp-PRODVERCEL/485/kush/smartcp/agileplus/CLAUDE.md
+  6899. temp-PRODVERCEL/485/kush/smartcp/agileplus/project.md
   6900. temp-PRODVERCEL/485/kush/smartcp/python-proto-ref/ARCHITECTURE.md
   6901. temp-PRODVERCEL/485/kush/smartcp/python-proto-ref/GUIDE.md
   6902. temp-PRODVERCEL/485/kush/smartcp/python-proto-ref/HISTORY.md
@@ -24650,15 +24650,15 @@ PROCESSING ORDER (by month, newest first):
   6905. temp-PRODVERCEL/485/kush/smolagents/AGENTS.md
   6906. temp-PRODVERCEL/485/kush/smolagents/CLAUDE.md
   6907. temp-PRODVERCEL/485/kush/smolagents/WARP.md
-  6908. temp-PRODVERCEL/485/kush/smolgents/.augment/commands/openspec-apply.md
-  6909. temp-PRODVERCEL/485/kush/smolgents/.augment/commands/openspec-archive.md
-  6910. temp-PRODVERCEL/485/kush/smolgents/.augment/commands/openspec-proposal.md
-  6911. temp-PRODVERCEL/485/kush/smolgents/.claude/commands/openspec/apply.md
-  6912. temp-PRODVERCEL/485/kush/smolgents/.claude/commands/openspec/archive.md
-  6913. temp-PRODVERCEL/485/kush/smolgents/.claude/commands/openspec/proposal.md
-  6914. temp-PRODVERCEL/485/kush/smolgents/.factory/commands/openspec-apply.md
-  6915. temp-PRODVERCEL/485/kush/smolgents/.factory/commands/openspec-archive.md
-  6916. temp-PRODVERCEL/485/kush/smolgents/.factory/commands/openspec-proposal.md
+  6908. temp-PRODVERCEL/485/kush/smolgents/.augment/commands/agileplus-apply.md
+  6909. temp-PRODVERCEL/485/kush/smolgents/.augment/commands/agileplus-archive.md
+  6910. temp-PRODVERCEL/485/kush/smolgents/.augment/commands/agileplus-proposal.md
+  6911. temp-PRODVERCEL/485/kush/smolgents/.claude/commands/agileplus/apply.md
+  6912. temp-PRODVERCEL/485/kush/smolgents/.claude/commands/agileplus/archive.md
+  6913. temp-PRODVERCEL/485/kush/smolgents/.claude/commands/agileplus/proposal.md
+  6914. temp-PRODVERCEL/485/kush/smolgents/.factory/commands/agileplus-apply.md
+  6915. temp-PRODVERCEL/485/kush/smolgents/.factory/commands/agileplus-archive.md
+  6916. temp-PRODVERCEL/485/kush/smolgents/.factory/commands/agileplus-proposal.md
   6917. temp-PRODVERCEL/485/kush/smolgents/.pytest_cache/README.md
   6918. temp-PRODVERCEL/485/kush/smolgents/AGENTS.md
   6919. temp-PRODVERCEL/485/kush/smolgents/CLAUDE.md
@@ -24723,8 +24723,8 @@ PROCESSING ORDER (by month, newest first):
   6978. temp-PRODVERCEL/485/kush/smolgents/docs/ARCHITECTURE.md
   6979. temp-PRODVERCEL/485/kush/smolgents/docs/DEPLOYMENT.md
   6980. temp-PRODVERCEL/485/kush/smolgents/docs/USAGE.md
-  6981. temp-PRODVERCEL/485/kush/smolgents/openspec/AGENTS.md
-  6982. temp-PRODVERCEL/485/kush/smolgents/openspec/project.md
+  6981. temp-PRODVERCEL/485/kush/smolgents/agileplus/AGENTS.md
+  6982. temp-PRODVERCEL/485/kush/smolgents/agileplus/project.md
   6983. temp-PRODVERCEL/485/kush/task2/.pytest_cache/README.md
   6984. temp-PRODVERCEL/485/kush/task2/00_START_HERE.md
   6985. temp-PRODVERCEL/485/kush/task2/AGENTS.md
@@ -26501,18 +26501,18 @@ PROCESSING ORDER (by month, newest first):
    673. temp-PRODVERCEL/485/kush/archive/docs/legacy/task_reuse/TASK_REUSE_QUICK_REFERENCE.md
    674. temp-PRODVERCEL/485/kush/archive/docs/legacy/xaas/XAAS_EMULATION_WALKTHROUGH.md
    675. temp-PRODVERCEL/485/kush/archive/docs/legacy/xaas/XAAS_QUICK_REFERENCE.md
-   676. temp-PRODVERCEL/485/kush/bloc/.augment/commands/openspec-apply.md
-   677. temp-PRODVERCEL/485/kush/bloc/.augment/commands/openspec-archive.md
-   678. temp-PRODVERCEL/485/kush/bloc/.augment/commands/openspec-proposal.md
-   679. temp-PRODVERCEL/485/kush/bloc/.claude/commands/openspec/apply.md
-   680. temp-PRODVERCEL/485/kush/bloc/.claude/commands/openspec/archive.md
-   681. temp-PRODVERCEL/485/kush/bloc/.claude/commands/openspec/proposal.md
-   682. temp-PRODVERCEL/485/kush/bloc/.cursor/commands/openspec-apply.md
-   683. temp-PRODVERCEL/485/kush/bloc/.cursor/commands/openspec-archive.md
-   684. temp-PRODVERCEL/485/kush/bloc/.cursor/commands/openspec-proposal.md
-   685. temp-PRODVERCEL/485/kush/bloc/.factory/commands/openspec-apply.md
-   686. temp-PRODVERCEL/485/kush/bloc/.factory/commands/openspec-archive.md
-   687. temp-PRODVERCEL/485/kush/bloc/.factory/commands/openspec-proposal.md
+   676. temp-PRODVERCEL/485/kush/bloc/.augment/commands/agileplus-apply.md
+   677. temp-PRODVERCEL/485/kush/bloc/.augment/commands/agileplus-archive.md
+   678. temp-PRODVERCEL/485/kush/bloc/.augment/commands/agileplus-proposal.md
+   679. temp-PRODVERCEL/485/kush/bloc/.claude/commands/agileplus/apply.md
+   680. temp-PRODVERCEL/485/kush/bloc/.claude/commands/agileplus/archive.md
+   681. temp-PRODVERCEL/485/kush/bloc/.claude/commands/agileplus/proposal.md
+   682. temp-PRODVERCEL/485/kush/bloc/.cursor/commands/agileplus-apply.md
+   683. temp-PRODVERCEL/485/kush/bloc/.cursor/commands/agileplus-archive.md
+   684. temp-PRODVERCEL/485/kush/bloc/.cursor/commands/agileplus-proposal.md
+   685. temp-PRODVERCEL/485/kush/bloc/.factory/commands/agileplus-apply.md
+   686. temp-PRODVERCEL/485/kush/bloc/.factory/commands/agileplus-archive.md
+   687. temp-PRODVERCEL/485/kush/bloc/.factory/commands/agileplus-proposal.md
    688. temp-PRODVERCEL/485/kush/bloc/.pytest_cache/README.md
    689. temp-PRODVERCEL/485/kush/bloc/AGENTS.md
    690. temp-PRODVERCEL/485/kush/bloc/ALL_PLUGINS_MIGRATION_COMPLETE.md
@@ -26526,24 +26526,24 @@ PROCESSING ORDER (by month, newest first):
    698. temp-PRODVERCEL/485/kush/bloc/PLUGIN_MIGRATION_COMPLETE.md
    699. temp-PRODVERCEL/485/kush/bloc/QUICK_COCOMO_REFERENCE.md
    700. temp-PRODVERCEL/485/kush/bloc/README.md
-   701. temp-PRODVERCEL/485/kush/bloc/openspec/AGENTS.md
-   702. temp-PRODVERCEL/485/kush/bloc/openspec/changes/add-check-command-progress/proposal.md
-   703. temp-PRODVERCEL/485/kush/bloc/openspec/changes/add-check-command-progress/specs/check-command/spec.md
-   704. temp-PRODVERCEL/485/kush/bloc/openspec/changes/add-check-command-progress/specs/count-progress/spec.md
-   705. temp-PRODVERCEL/485/kush/bloc/openspec/changes/add-check-command-progress/tasks.md
-   706. temp-PRODVERCEL/485/kush/bloc/openspec/changes/archive/2025-10-29-add-health-check/design.md
-   707. temp-PRODVERCEL/485/kush/bloc/openspec/changes/archive/2025-10-29-add-health-check/proposal.md
-   708. temp-PRODVERCEL/485/kush/bloc/openspec/changes/archive/2025-10-29-add-health-check/specs/health-check/spec.md
-   709. temp-PRODVERCEL/485/kush/bloc/openspec/changes/archive/2025-10-29-add-health-check/tasks.md
-   710. temp-PRODVERCEL/485/kush/bloc/openspec/changes/archive/2025-10-29-integrate-health-into-tree/proposal.md
-   711. temp-PRODVERCEL/485/kush/bloc/openspec/changes/archive/2025-10-29-integrate-health-into-tree/specs/tree-health-integration/spec.md
-   712. temp-PRODVERCEL/485/kush/bloc/openspec/changes/archive/2025-10-29-integrate-health-into-tree/tasks.md
-   713. temp-PRODVERCEL/485/kush/bloc/openspec/changes/provider-error-categorization/proposal.md
-   714. temp-PRODVERCEL/485/kush/bloc/openspec/changes/provider-error-categorization/specs/provider-error-categorization/spec.md
-   715. temp-PRODVERCEL/485/kush/bloc/openspec/changes/provider-error-categorization/tasks.md
-   716. temp-PRODVERCEL/485/kush/bloc/openspec/project.md
-   717. temp-PRODVERCEL/485/kush/bloc/openspec/specs/health-check/spec.md
-   718. temp-PRODVERCEL/485/kush/bloc/openspec/specs/tree-health-integration/spec.md
+   701. temp-PRODVERCEL/485/kush/bloc/agileplus/AGENTS.md
+   702. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/add-check-command-progress/proposal.md
+   703. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/add-check-command-progress/specs/check-command/spec.md
+   704. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/add-check-command-progress/specs/count-progress/spec.md
+   705. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/add-check-command-progress/tasks.md
+   706. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/archive/2025-10-29-add-health-check/design.md
+   707. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/archive/2025-10-29-add-health-check/proposal.md
+   708. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/archive/2025-10-29-add-health-check/specs/health-check/spec.md
+   709. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/archive/2025-10-29-add-health-check/tasks.md
+   710. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/archive/2025-10-29-integrate-health-into-tree/proposal.md
+   711. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/archive/2025-10-29-integrate-health-into-tree/specs/tree-health-integration/spec.md
+   712. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/archive/2025-10-29-integrate-health-into-tree/tasks.md
+   713. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/provider-error-categorization/proposal.md
+   714. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/provider-error-categorization/specs/provider-error-categorization/spec.md
+   715. temp-PRODVERCEL/485/kush/bloc/agileplus/changes/provider-error-categorization/tasks.md
+   716. temp-PRODVERCEL/485/kush/bloc/agileplus/project.md
+   717. temp-PRODVERCEL/485/kush/bloc/agileplus/specs/health-check/spec.md
+   718. temp-PRODVERCEL/485/kush/bloc/agileplus/specs/tree-health-integration/spec.md
    719. temp-PRODVERCEL/485/kush/changes/ATOMS_AGENT_INFRASTRUCTURE_MODERNIZATION.md
    720. temp-PRODVERCEL/485/kush/changes/ATOMS_MCP_PROD_INFRASTRUCTURE_MODERNIZATION.md
    721. temp-PRODVERCEL/485/kush/changes/BLOC_INFRASTRUCTURE_MODERNIZATION.md
@@ -26667,18 +26667,18 @@ PROCESSING ORDER (by month, newest first):
    839. temp-PRODVERCEL/485/kush/claude-squad/tests/README.md
    840. temp-PRODVERCEL/485/kush/claude-squad/tests/SUMMARY.md
    841. temp-PRODVERCEL/485/kush/claude-squad/web/README.md
-   842. temp-PRODVERCEL/485/kush/crun/.augment/commands/openspec-apply.md
-   843. temp-PRODVERCEL/485/kush/crun/.augment/commands/openspec-archive.md
-   844. temp-PRODVERCEL/485/kush/crun/.augment/commands/openspec-proposal.md
-   845. temp-PRODVERCEL/485/kush/crun/.claude/commands/openspec/apply.md
-   846. temp-PRODVERCEL/485/kush/crun/.claude/commands/openspec/archive.md
-   847. temp-PRODVERCEL/485/kush/crun/.claude/commands/openspec/proposal.md
-   848. temp-PRODVERCEL/485/kush/crun/.cursor/commands/openspec-apply.md
-   849. temp-PRODVERCEL/485/kush/crun/.cursor/commands/openspec-archive.md
-   850. temp-PRODVERCEL/485/kush/crun/.cursor/commands/openspec-proposal.md
-   851. temp-PRODVERCEL/485/kush/crun/.factory/commands/openspec-apply.md
-   852. temp-PRODVERCEL/485/kush/crun/.factory/commands/openspec-archive.md
-   853. temp-PRODVERCEL/485/kush/crun/.factory/commands/openspec-proposal.md
+   842. temp-PRODVERCEL/485/kush/crun/.augment/commands/agileplus-apply.md
+   843. temp-PRODVERCEL/485/kush/crun/.augment/commands/agileplus-archive.md
+   844. temp-PRODVERCEL/485/kush/crun/.augment/commands/agileplus-proposal.md
+   845. temp-PRODVERCEL/485/kush/crun/.claude/commands/agileplus/apply.md
+   846. temp-PRODVERCEL/485/kush/crun/.claude/commands/agileplus/archive.md
+   847. temp-PRODVERCEL/485/kush/crun/.claude/commands/agileplus/proposal.md
+   848. temp-PRODVERCEL/485/kush/crun/.cursor/commands/agileplus-apply.md
+   849. temp-PRODVERCEL/485/kush/crun/.cursor/commands/agileplus-archive.md
+   850. temp-PRODVERCEL/485/kush/crun/.cursor/commands/agileplus-proposal.md
+   851. temp-PRODVERCEL/485/kush/crun/.factory/commands/agileplus-apply.md
+   852. temp-PRODVERCEL/485/kush/crun/.factory/commands/agileplus-archive.md
+   853. temp-PRODVERCEL/485/kush/crun/.factory/commands/agileplus-proposal.md
    854. temp-PRODVERCEL/485/kush/crun/.planning/agent-plans/pheno-sdk-infrastructure-completion-plan.md
    855. temp-PRODVERCEL/485/kush/crun/.planning/agent-plans/test-project-plan.md
    856. temp-PRODVERCEL/485/kush/crun/.pytest_cache/README.md
@@ -26874,55 +26874,55 @@ PROCESSING ORDER (by month, newest first):
   1046. temp-PRODVERCEL/485/kush/crun/crun/execution/LEADER_ELECTION.md
   1047. temp-PRODVERCEL/485/kush/crun/crun/execution/LEADER_ELECTION_QUICK_START.md
   1048. temp-PRODVERCEL/485/kush/crun/crun/execution/README.md
-  1049. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/consolidate-execution-benchmarks-react/design.md
-  1050. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/consolidate-execution-benchmarks-react/proposal.md
-  1051. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/consolidate-execution-benchmarks-react/specs/execution-benchmarking/spec.md
-  1052. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/consolidate-execution-benchmarks-react/specs/execution-react-integration/spec.md
-  1053. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/consolidate-execution-benchmarks-react/tasks.md
-  1054. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-planning-templates-reports/design.md
-  1055. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-planning-templates-reports/proposal.md
-  1056. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-planning-templates-reports/specs/planning-git-sync/spec.md
-  1057. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-planning-templates-reports/specs/planning-reporting/spec.md
-  1058. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-planning-templates-reports/specs/planning-templates/spec.md
-  1059. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-planning-templates-reports/tasks.md
-  1060. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-prefect-agent-executor/design.md
-  1061. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-prefect-agent-executor/proposal.md
-  1062. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-prefect-agent-executor/specs/execution-prefect-agent-executor/spec.md
-  1063. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/modularize-prefect-agent-executor/tasks.md
-  1064. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-coordination/design.md
-  1065. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-coordination/proposal.md
-  1066. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-coordination/specs/execution-coordination/spec.md
-  1067. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-coordination/tasks.md
-  1068. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-resource-core/design.md
-  1069. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-resource-core/imports.md
-  1070. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-resource-core/proposal.md
-  1071. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-resource-core/specs/execution-resource-core/spec.md
-  1072. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-execution-resource-core/tasks.md
-  1073. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-planning-services-layer/design.md
-  1074. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-planning-services-layer/migration-notes.md
-  1075. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-planning-services-layer/phase0-inventory.md
-  1076. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-planning-services-layer/proposal.md
-  1077. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-planning-services-layer/specs/planning-services/spec.md
-  1078. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/refactor-planning-services-layer/tasks.md
-  1079. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/unify-planning-generation-core/design.md
-  1080. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/unify-planning-generation-core/proposal.md
-  1081. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/unify-planning-generation-core/specs/planning-generation/spec.md
-  1082. temp-PRODVERCEL/485/kush/crun/crun/execution/openspec/changes/unify-planning-generation-core/tasks.md
+  1049. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/consolidate-execution-benchmarks-react/design.md
+  1050. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/consolidate-execution-benchmarks-react/proposal.md
+  1051. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/consolidate-execution-benchmarks-react/specs/execution-benchmarking/spec.md
+  1052. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/consolidate-execution-benchmarks-react/specs/execution-react-integration/spec.md
+  1053. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/consolidate-execution-benchmarks-react/tasks.md
+  1054. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-planning-templates-reports/design.md
+  1055. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-planning-templates-reports/proposal.md
+  1056. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-planning-templates-reports/specs/planning-git-sync/spec.md
+  1057. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-planning-templates-reports/specs/planning-reporting/spec.md
+  1058. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-planning-templates-reports/specs/planning-templates/spec.md
+  1059. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-planning-templates-reports/tasks.md
+  1060. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-prefect-agent-executor/design.md
+  1061. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-prefect-agent-executor/proposal.md
+  1062. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-prefect-agent-executor/specs/execution-prefect-agent-executor/spec.md
+  1063. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/modularize-prefect-agent-executor/tasks.md
+  1064. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-coordination/design.md
+  1065. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-coordination/proposal.md
+  1066. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-coordination/specs/execution-coordination/spec.md
+  1067. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-coordination/tasks.md
+  1068. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-resource-core/design.md
+  1069. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-resource-core/imports.md
+  1070. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-resource-core/proposal.md
+  1071. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-resource-core/specs/execution-resource-core/spec.md
+  1072. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-execution-resource-core/tasks.md
+  1073. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-planning-services-layer/design.md
+  1074. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-planning-services-layer/migration-notes.md
+  1075. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-planning-services-layer/phase0-inventory.md
+  1076. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-planning-services-layer/proposal.md
+  1077. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-planning-services-layer/specs/planning-services/spec.md
+  1078. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/refactor-planning-services-layer/tasks.md
+  1079. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/unify-planning-generation-core/design.md
+  1080. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/unify-planning-generation-core/proposal.md
+  1081. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/unify-planning-generation-core/specs/planning-generation/spec.md
+  1082. temp-PRODVERCEL/485/kush/crun/crun/execution/agileplus/changes/unify-planning-generation-core/tasks.md
   1083. temp-PRODVERCEL/485/kush/crun/crun/mcp_server/README.md
-  1084. temp-PRODVERCEL/485/kush/crun/crun/openspec/AGENTS.md
-  1085. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-agent-models/CONSOLIDATION_SUMMARY.md
-  1086. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-agent-models/proposal.md
-  1087. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-agent-models/specs/agents/spec.md
-  1088. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-agent-models/tasks.md
-  1089. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-domain-layer/proposal.md
-  1090. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-domain-layer/specs/agents/spec.md
-  1091. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-domain-layer/specs/execution/spec.md
-  1092. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-domain-layer/specs/planning/spec.md
-  1093. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/consolidate-domain-layer/tasks.md
-  1094. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/unify-configuration-systems/proposal.md
-  1095. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/unify-configuration-systems/specs/configuration/spec.md
-  1096. temp-PRODVERCEL/485/kush/crun/crun/openspec/changes/unify-configuration-systems/tasks.md
-  1097. temp-PRODVERCEL/485/kush/crun/crun/openspec/project.md
+  1084. temp-PRODVERCEL/485/kush/crun/crun/agileplus/AGENTS.md
+  1085. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-agent-models/CONSOLIDATION_SUMMARY.md
+  1086. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-agent-models/proposal.md
+  1087. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-agent-models/specs/agents/spec.md
+  1088. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-agent-models/tasks.md
+  1089. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-domain-layer/proposal.md
+  1090. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-domain-layer/specs/agents/spec.md
+  1091. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-domain-layer/specs/execution/spec.md
+  1092. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-domain-layer/specs/planning/spec.md
+  1093. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/consolidate-domain-layer/tasks.md
+  1094. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/unify-configuration-systems/proposal.md
+  1095. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/unify-configuration-systems/specs/configuration/spec.md
+  1096. temp-PRODVERCEL/485/kush/crun/crun/agileplus/changes/unify-configuration-systems/tasks.md
+  1097. temp-PRODVERCEL/485/kush/crun/crun/agileplus/project.md
   1098. temp-PRODVERCEL/485/kush/crun/crun/planning/INTERACTIVE_BUILDER_QUICK_REFERENCE.md
   1099. temp-PRODVERCEL/485/kush/crun/crun/planning/INTERACTIVE_BUILDER_README.md
   1100. temp-PRODVERCEL/485/kush/crun/crun/planning/agents/README.md
@@ -26982,7 +26982,7 @@ PROCESSING ORDER (by month, newest first):
   1154. temp-PRODVERCEL/485/kush/crun/docs/api/adapters_cli_commands_monitoring_module.md
   1155. temp-PRODVERCEL/485/kush/crun/docs/api/adapters_cli_commands_reports_module.md
   1156. temp-PRODVERCEL/485/kush/crun/docs/api/adapters_cli_commands_workflow_module.md
-  1157. temp-PRODVERCEL/485/kush/crun/docs/api/adapters_cli_openspec_commands_module.md
+  1157. temp-PRODVERCEL/485/kush/crun/docs/api/adapters_cli_agileplus_commands_module.md
   1158. temp-PRODVERCEL/485/kush/crun/docs/api/agents/models_module.md
   1159. temp-PRODVERCEL/485/kush/crun/docs/api/agents_parser_module.md
   1160. temp-PRODVERCEL/485/kush/crun/docs/api/analytics/fast_analytics_function__generate_svg_chart.md
@@ -27039,8 +27039,8 @@ PROCESSING ORDER (by month, newest first):
   1211. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/entities_class_Requirement.md
   1212. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/entities_class_Specification.md
   1213. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/services/__init___module.md
-  1214. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/services/openspec_service_function__create_agents_doc.md
-  1215. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/services/openspec_service_function__create_sample_spec.md
+  1214. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/services/agileplus_service_function__create_agents_doc.md
+  1215. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/services/agileplus_service_function__create_sample_spec.md
   1216. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/services/workflow_orchestrator_module.md
   1217. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/step_tracker_class_StepTracker.md
   1218. temp-PRODVERCEL/485/kush/crun/docs/api/domain/specifications/step_tracker_module.md
@@ -27117,9 +27117,9 @@ PROCESSING ORDER (by month, newest first):
   1289. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_ports_translate_to_format.md
   1290. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_ports_validate_template.md
   1291. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_ports_validate_tokens.md
-  1292. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_openspec_service_OpenSpecService.md
-  1293. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_openspec_service_archive_changes.md
-  1294. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_openspec_service_module.md
+  1292. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_agileplus_service_AgilePlusService.md
+  1293. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_agileplus_service_archive_changes.md
+  1294. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_agileplus_service_module.md
   1295. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_workflow_orchestrator_PhaseProgress.md
   1296. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_workflow_orchestrator_WorkflowState.md
   1297. temp-PRODVERCEL/485/kush/crun/docs/api/domain_specifications_services_workflow_orchestrator_get_next_phase.md
@@ -27358,7 +27358,7 @@ PROCESSING ORDER (by month, newest first):
   1530. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_create_specification.md
   1531. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_generate_slash_commands.md
   1532. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_list_available_tools.md
-  1533. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_openspec_init.md
+  1533. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_agileplus_init.md
   1534. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_planning_data_resource.md
   1535. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_quality_results_resource.md
   1536. temp-PRODVERCEL/485/kush/crun/docs/api/mcp_server_server_specifications_resource.md
@@ -27675,38 +27675,38 @@ PROCESSING ORDER (by month, newest first):
   1847. temp-PRODVERCEL/485/kush/crun/docs/legacy/CRUN_GUI_STATE_MANAGEMENT_ANALYSIS.md
   1848. temp-PRODVERCEL/485/kush/crun/docs/legacy/CRUN_PROGRESS_BAR_QUICK_FIX.md
   1849. temp-PRODVERCEL/485/kush/crun/docs/modules/planning.md
-  1850. temp-PRODVERCEL/485/kush/crun/openspec/AGENTS.md
-  1851. temp-PRODVERCEL/485/kush/crun/openspec/changes/add-python-version-isolation/design.md
-  1852. temp-PRODVERCEL/485/kush/crun/openspec/changes/add-python-version-isolation/proposal.md
-  1853. temp-PRODVERCEL/485/kush/crun/openspec/changes/add-python-version-isolation/specs/core/spec.md
-  1854. temp-PRODVERCEL/485/kush/crun/openspec/changes/add-python-version-isolation/specs/execution/spec.md
-  1855. temp-PRODVERCEL/485/kush/crun/openspec/changes/add-python-version-isolation/specs/ui/spec.md
-  1856. temp-PRODVERCEL/485/kush/crun/openspec/changes/add-python-version-isolation/tasks.md
-  1857. temp-PRODVERCEL/485/kush/crun/openspec/changes/code-quality-consolidation/proposal.md
-  1858. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/COMPREHENSIVE_REVIEW.md
-  1859. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/FINAL_UPDATE.md
-  1860. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/PROGRESS_TRACKER.md
-  1861. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/STATUS_SUMMARY.md
-  1862. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/VALIDATION_REPORT.md
-  1863. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/WBS_SUMMARY.md
-  1864. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/design.md
-  1865. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/master-wbs.md
-  1866. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/phase1-foundation-wbs.md
-  1867. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/phase2-core-modernization-wbs.md
-  1868. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/phase3-research-innovations-wbs.md
-  1869. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/phase4-polish-production-wbs.md
-  1870. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/proposal-v2-expanded.md
-  1871. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/proposal-v3-research.md
-  1872. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/proposal.md
-  1873. temp-PRODVERCEL/485/kush/crun/openspec/changes/library-modernization-2025/tasks.md
-  1874. temp-PRODVERCEL/485/kush/crun/openspec/changes/migrate-to-typer-rich-click/design.md
-  1875. temp-PRODVERCEL/485/kush/crun/openspec/changes/migrate-to-typer-rich-click/proposal.md
-  1876. temp-PRODVERCEL/485/kush/crun/openspec/changes/migrate-to-typer-rich-click/specs/cli-interface/spec.md
-  1877. temp-PRODVERCEL/485/kush/crun/openspec/changes/migrate-to-typer-rich-click/tasks.md
-  1878. temp-PRODVERCEL/485/kush/crun/openspec/changes/migrate-to-typer-rich-click/tasks_completed.md
-  1879. temp-PRODVERCEL/485/kush/crun/openspec/project.md
-  1880. temp-PRODVERCEL/485/kush/crun/tests/fixtures/specifications/openspec_repo/openspec/project.md
-  1881. temp-PRODVERCEL/485/kush/crun/tests/fixtures/specifications/openspec_repo/openspec/specs/sample/spec.md
+  1850. temp-PRODVERCEL/485/kush/crun/agileplus/AGENTS.md
+  1851. temp-PRODVERCEL/485/kush/crun/agileplus/changes/add-python-version-isolation/design.md
+  1852. temp-PRODVERCEL/485/kush/crun/agileplus/changes/add-python-version-isolation/proposal.md
+  1853. temp-PRODVERCEL/485/kush/crun/agileplus/changes/add-python-version-isolation/specs/core/spec.md
+  1854. temp-PRODVERCEL/485/kush/crun/agileplus/changes/add-python-version-isolation/specs/execution/spec.md
+  1855. temp-PRODVERCEL/485/kush/crun/agileplus/changes/add-python-version-isolation/specs/ui/spec.md
+  1856. temp-PRODVERCEL/485/kush/crun/agileplus/changes/add-python-version-isolation/tasks.md
+  1857. temp-PRODVERCEL/485/kush/crun/agileplus/changes/code-quality-consolidation/proposal.md
+  1858. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/COMPREHENSIVE_REVIEW.md
+  1859. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/FINAL_UPDATE.md
+  1860. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/PROGRESS_TRACKER.md
+  1861. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/STATUS_SUMMARY.md
+  1862. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/VALIDATION_REPORT.md
+  1863. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/WBS_SUMMARY.md
+  1864. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/design.md
+  1865. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/master-wbs.md
+  1866. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/phase1-foundation-wbs.md
+  1867. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/phase2-core-modernization-wbs.md
+  1868. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/phase3-research-innovations-wbs.md
+  1869. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/phase4-polish-production-wbs.md
+  1870. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/proposal-v2-expanded.md
+  1871. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/proposal-v3-research.md
+  1872. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/proposal.md
+  1873. temp-PRODVERCEL/485/kush/crun/agileplus/changes/library-modernization-2025/tasks.md
+  1874. temp-PRODVERCEL/485/kush/crun/agileplus/changes/migrate-to-typer-rich-click/design.md
+  1875. temp-PRODVERCEL/485/kush/crun/agileplus/changes/migrate-to-typer-rich-click/proposal.md
+  1876. temp-PRODVERCEL/485/kush/crun/agileplus/changes/migrate-to-typer-rich-click/specs/cli-interface/spec.md
+  1877. temp-PRODVERCEL/485/kush/crun/agileplus/changes/migrate-to-typer-rich-click/tasks.md
+  1878. temp-PRODVERCEL/485/kush/crun/agileplus/changes/migrate-to-typer-rich-click/tasks_completed.md
+  1879. temp-PRODVERCEL/485/kush/crun/agileplus/project.md
+  1880. temp-PRODVERCEL/485/kush/crun/tests/fixtures/specifications/agileplus_repo/agileplus/project.md
+  1881. temp-PRODVERCEL/485/kush/crun/tests/fixtures/specifications/agileplus_repo/agileplus/specs/sample/spec.md
   1882. temp-PRODVERCEL/485/kush/crun/tests/fixtures/specifications/spec_kit_markdown/spec.md
   1883. temp-PRODVERCEL/485/kush/dphi/templates/README.md
   1884. temp-PRODVERCEL/485/kush/kimaki/ADD-REALTIME-VOICE-SYSTEM.md
@@ -28588,18 +28588,18 @@ PROCESSING ORDER (by month, newest first):
   2760. temp-PRODVERCEL/485/kush/trace/docs/08-reference/QUICK_REFERENCE.md
   2761. temp-PRODVERCEL/485/kush/trace/docs/GUIDES-ROOT/README_WHAT_REMAINS.md
   2762. temp-PRODVERCEL/485/kush/trace/docs/GUIDES-ROOT/WHAT_REMAINS_DETAILED.md
-  2763. temp-PRODVERCEL/485/kush/usage/.augment/commands/openspec-apply.md
-  2764. temp-PRODVERCEL/485/kush/usage/.augment/commands/openspec-archive.md
-  2765. temp-PRODVERCEL/485/kush/usage/.augment/commands/openspec-proposal.md
-  2766. temp-PRODVERCEL/485/kush/usage/.claude/commands/openspec/apply.md
-  2767. temp-PRODVERCEL/485/kush/usage/.claude/commands/openspec/archive.md
-  2768. temp-PRODVERCEL/485/kush/usage/.claude/commands/openspec/proposal.md
-  2769. temp-PRODVERCEL/485/kush/usage/.cursor/commands/openspec-apply.md
-  2770. temp-PRODVERCEL/485/kush/usage/.cursor/commands/openspec-archive.md
-  2771. temp-PRODVERCEL/485/kush/usage/.cursor/commands/openspec-proposal.md
-  2772. temp-PRODVERCEL/485/kush/usage/.factory/commands/openspec-apply.md
-  2773. temp-PRODVERCEL/485/kush/usage/.factory/commands/openspec-archive.md
-  2774. temp-PRODVERCEL/485/kush/usage/.factory/commands/openspec-proposal.md
+  2763. temp-PRODVERCEL/485/kush/usage/.augment/commands/agileplus-apply.md
+  2764. temp-PRODVERCEL/485/kush/usage/.augment/commands/agileplus-archive.md
+  2765. temp-PRODVERCEL/485/kush/usage/.augment/commands/agileplus-proposal.md
+  2766. temp-PRODVERCEL/485/kush/usage/.claude/commands/agileplus/apply.md
+  2767. temp-PRODVERCEL/485/kush/usage/.claude/commands/agileplus/archive.md
+  2768. temp-PRODVERCEL/485/kush/usage/.claude/commands/agileplus/proposal.md
+  2769. temp-PRODVERCEL/485/kush/usage/.cursor/commands/agileplus-apply.md
+  2770. temp-PRODVERCEL/485/kush/usage/.cursor/commands/agileplus-archive.md
+  2771. temp-PRODVERCEL/485/kush/usage/.cursor/commands/agileplus-proposal.md
+  2772. temp-PRODVERCEL/485/kush/usage/.factory/commands/agileplus-apply.md
+  2773. temp-PRODVERCEL/485/kush/usage/.factory/commands/agileplus-archive.md
+  2774. temp-PRODVERCEL/485/kush/usage/.factory/commands/agileplus-proposal.md
   2775. temp-PRODVERCEL/485/kush/usage/.pytest_cache/README.md
   2776. temp-PRODVERCEL/485/kush/usage/AGENTS.md
   2777. temp-PRODVERCEL/485/kush/usage/APPS_MIGRATION_NOTE.md
@@ -28615,14 +28615,14 @@ PROCESSING ORDER (by month, newest first):
   2787. temp-PRODVERCEL/485/kush/usage/PYTHON_PROVIDER_MIGRATION_NOTE.md
   2788. temp-PRODVERCEL/485/kush/usage/README.md
   2789. temp-PRODVERCEL/485/kush/usage/README_KUSAGE.md
-  2790. temp-PRODVERCEL/485/kush/usage/openspec/AGENTS.md
-  2791. temp-PRODVERCEL/485/kush/usage/openspec/changes/migrate-to-python-full/design.md
-  2792. temp-PRODVERCEL/485/kush/usage/openspec/changes/migrate-to-python-full/proposal.md
-  2793. temp-PRODVERCEL/485/kush/usage/openspec/changes/migrate-to-python-full/specs/cli-interface/spec.md
-  2794. temp-PRODVERCEL/485/kush/usage/openspec/changes/migrate-to-python-full/specs/native-ui-widgets/spec.md
-  2795. temp-PRODVERCEL/485/kush/usage/openspec/changes/migrate-to-python-full/specs/provider-collection/spec.md
-  2796. temp-PRODVERCEL/485/kush/usage/openspec/changes/migrate-to-python-full/tasks.md
-  2797. temp-PRODVERCEL/485/kush/usage/openspec/project.md
+  2790. temp-PRODVERCEL/485/kush/usage/agileplus/AGENTS.md
+  2791. temp-PRODVERCEL/485/kush/usage/agileplus/changes/migrate-to-python-full/design.md
+  2792. temp-PRODVERCEL/485/kush/usage/agileplus/changes/migrate-to-python-full/proposal.md
+  2793. temp-PRODVERCEL/485/kush/usage/agileplus/changes/migrate-to-python-full/specs/cli-interface/spec.md
+  2794. temp-PRODVERCEL/485/kush/usage/agileplus/changes/migrate-to-python-full/specs/native-ui-widgets/spec.md
+  2795. temp-PRODVERCEL/485/kush/usage/agileplus/changes/migrate-to-python-full/specs/provider-collection/spec.md
+  2796. temp-PRODVERCEL/485/kush/usage/agileplus/changes/migrate-to-python-full/tasks.md
+  2797. temp-PRODVERCEL/485/kush/usage/agileplus/project.md
   2798. temp-PRODVERCEL/485/kush/usage/todo.md
   2799. temp-PRODVERCEL/485/kush/usage/usage-main/.claude/commands/analyze-code.md
   2800. temp-PRODVERCEL/485/kush/usage/usage-main/.claude/commands/lsmcp-onboarding.md

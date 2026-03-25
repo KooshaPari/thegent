@@ -8,7 +8,7 @@ This module provides functions for:
 """
 
 import logging
-from typing import Any, cast
+from typing import Any
 
 try:
     from rapidfuzz import fuzz, process

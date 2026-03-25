@@ -1,5 +1,4 @@
 use rand::Rng;
-use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
 use std::thread;
@@ -21,7 +20,7 @@ pub fn run(
                 thread::sleep(std::time::Duration::from_millis(delay as u64));
             }
             Ok(s) => return Ok(s.code().unwrap_or(1)),
-            Err(e) if attempt < retry_max => {
+            Err(_e) if attempt < retry_max => {
                 let jitter = rand::thread_rng().gen_range(0.0..retry_jitter);
                 let delay = retry_backoff_ms as f64 * (1.0 + jitter);
                 thread::sleep(std::time::Duration::from_millis(delay as u64));

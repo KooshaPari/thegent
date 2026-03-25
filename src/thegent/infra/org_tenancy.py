@@ -9,7 +9,7 @@ Implements:
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -198,7 +198,7 @@ class OrgRegistry:
     def _save(self, payload: OrgRegistryPayload) -> None:
         self._registry_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self._registry_path.with_suffix(".json.tmp")
-        content = json.dumps(payload.model_dump(mode="json").decode(), indent=2, sort_keys=True)
+        content = json.dumps(payload.model_dump(mode="json"), indent=2, sort_keys=True)
         tmp.write_text(f"{content}\n", encoding="utf-8")
         tmp.replace(self._registry_path)
 

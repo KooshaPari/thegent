@@ -74,7 +74,7 @@ def safe_execute(
     default: T | None = None,
     log_errors: bool = True,
     **kwargs: Any,
-) -> T:
+) -> T | None:
     """Execute a function safely, returning default on error.
     
     Args:

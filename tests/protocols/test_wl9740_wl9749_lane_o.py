@@ -158,7 +158,7 @@ def test_wl9749_notification_turn_cancel_has_side_effect_without_response() -> N
     # @trace WL-9749
     _reset_state()
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "s", "method": "session/start"}).decode()
     )
     assert response is not None
     session_id = response["result"]["session"]["id"]
@@ -176,7 +176,7 @@ def test_wl9749_notification_turn_cancel_has_side_effect_without_response() -> N
     turn_id = submit["result"]["turn"]["id"]
 
     cancel_response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "turn/cancel", "params": {"turn_id": turn_id}}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "method": "turn/cancel", "params": {"turn_id": turn_id}}).decode()
     )
     assert cancel_response is None
     assert notifications == []

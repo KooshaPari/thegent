@@ -84,7 +84,7 @@ def test_schema_vetter_check_target_combined():
 def test_schema_vetter_check_passes_valid_stdout():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item)
-    payload = json.dumps({"name": "widget", "value": 42}).decode().decode()
+    payload = json.dumps({"name": "widget", "value": 42}).decode()
     result = asyncio.run(check.check("run-1", payload, {"stdout": payload, "stderr": ""}))
     assert result.passed is True
     assert result.check_name == "schema_vetter"
@@ -103,7 +103,7 @@ def test_schema_vetter_check_fails_schema_mismatch_stdout():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item)
     # value is a string, not int
-    payload = json.dumps({"name": "widget", "value": "not-an-int"}).decode().decode()
+    payload = json.dumps({"name": "widget", "value": "not-an-int"}).decode()
     result = asyncio.run(check.check("run-1", payload, {"stdout": payload, "stderr": ""}))
     assert result.passed is False
     assert "Schema validation failed" in result.message
@@ -112,7 +112,7 @@ def test_schema_vetter_check_fails_schema_mismatch_stdout():
 def test_schema_vetter_check_fails_missing_required_field():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item)
-    payload = json.dumps({"name": "widget"}).decode().decode()  # missing 'value'
+    payload = json.dumps({"name": "widget"}).decode()  # missing 'value'
     result = asyncio.run(check.check("run-1", payload, {"stdout": payload, "stderr": ""}))
     assert result.passed is False
     assert "Schema validation failed" in result.message
@@ -126,7 +126,7 @@ def test_schema_vetter_check_fails_missing_required_field():
 def test_schema_vetter_check_reads_stderr_when_target_is_stderr():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item, target="stderr")
-    stderr_payload = json.dumps({"name": "err-item", "value": 7}).decode().decode()
+    stderr_payload = json.dumps({"name": "err-item", "value": 7}).decode()
     result = asyncio.run(check.check("run-2", "irrelevant-output", {"stdout": "irrelevant", "stderr": stderr_payload}))
     assert result.passed is True
 
@@ -148,7 +148,7 @@ def test_schema_vetter_check_combined_concatenates_stdout_stderr():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item, target="combined")
     # combined should concat stdout + stderr; the full JSON is in combined
-    payload = json.dumps({"name": "combo", "value": 99}).decode().decode()
+    payload = json.dumps({"name": "combo", "value": 99}).decode()
     result = asyncio.run(check.check("run-3", "ignored", {"stdout": payload, "stderr": ""}))
     assert result.passed is True
 
@@ -164,7 +164,7 @@ def test_schema_vetter_check_combined_fails_invalid_combined():
 def test_schema_vetter_check_nested_model_passes():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Nested)
-    payload = json.dumps({"items": [{"name": "a", "value": 1}], "count": 1}).decode().decode()
+    payload = json.dumps({"items": [{"name": "a", "value": 1}], "count": 1}).decode()
     result = asyncio.run(check.check("run-4", payload, {"stdout": payload, "stderr": ""}))
     assert result.passed is True
 
@@ -172,7 +172,7 @@ def test_schema_vetter_check_nested_model_passes():
 def test_schema_vetter_check_nested_model_fails_wrong_type():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Nested)
-    payload = json.dumps({"items": "not-a-list", "count": 1}).decode().decode()
+    payload = json.dumps({"items": "not-a-list", "count": 1}).decode()
     result = asyncio.run(check.check("run-4", payload, {"stdout": payload, "stderr": ""}))
     assert result.passed is False
     assert "Schema validation failed" in result.message
@@ -181,7 +181,7 @@ def test_schema_vetter_check_nested_model_fails_wrong_type():
 def test_schema_vetter_check_result_is_vetter_check_result():
     # @trace WL-091
     check = SchemaVetterCheck(schema_model=_Item)
-    payload = json.dumps({"name": "x", "value": 0}).decode().decode()
+    payload = json.dumps({"name": "x", "value": 0}).decode()
     result = asyncio.run(check.check("run-5", payload, {"stdout": payload, "stderr": ""}))
     assert isinstance(result, VetterCheckResult)
 

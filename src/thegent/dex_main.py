@@ -108,10 +108,6 @@ def _dex_global_callback(
     global _force_yolo, _native_mode
     _force_yolo = force
     _native_mode = native
-    if force:
-        # Update settings instance
-        settings = _get_settings()
-        settings.dex_force_yolo = True
     if native:
         passthrough = [
             arg

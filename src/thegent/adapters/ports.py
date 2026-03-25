@@ -45,7 +45,10 @@ class AdapterRegistry:
     @classmethod
     def get(cls, name: str) -> AdapterPort:
         """Get adapter by name"""
-        return cls._adapters.get(name)
+        adapter = cls._adapters.get(name)
+        if adapter is None:
+            raise KeyError(f"Adapter not registered: {name}")
+        return adapter
 
     @classmethod
     def all(cls) -> dict[str, AdapterPort]:

@@ -4,15 +4,34 @@ L2 Disk Cache
 SQLite-backed disk cache for persistent storage.
 """
 
-from typing import Optional, Any
+from __future__ import annotations
+
+from importlib import import_module
 import json
-import time
 import hashlib
+from typing import Any, Optional, cast
+
+
+class _DiskCacheProtocol:
+    """Minimal cache interface used by L2DiskCache."""
+
+    def __init__(self, directory: str) -> None: ...
+    def get(self, key: str, default: Any = None) -> Any: ...
+    def set(self, key: str, value: Any, expire: float | None = None) -> bool: ...
+    def delete(self, key: str) -> bool: ...
+    def clear(self) -> int: ...
+
+
+class _DiskCacheModuleProtocol:
+    """Runtime import surface for the diskcache module."""
+
+    Cache: type[_DiskCacheProtocol]
 
 try:
-    import diskcache
+    _DISKCACHE_MODULE = cast("_DiskCacheModuleProtocol", import_module("diskcache"))
     HAS_DISKCACHE = True
 except ImportError:
+    _DISKCACHE_MODULE = None
     HAS_DISKCACHE = False
 
 
@@ -22,12 +41,12 @@ class L2DiskCache:
     def __init__(self, cache_dir: str = ".cache/l2", ttl: float = 3600.0):
         self.cache_dir = cache_dir
         self.ttl = ttl
-        self._cache = None
+        self._cache: _DiskCacheProtocol | None = None
         self._hits = 0
         self._misses = 0
 
         if HAS_DISKCACHE:
-            self._cache = diskcache.Cache(cache_dir)
+            self._cache = _DISKCACHE_MODULE.Cache(cache_dir)
 
     def _hash_key(self, key: str) -> str:
         """Hash key for storage."""

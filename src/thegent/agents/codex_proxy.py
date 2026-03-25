@@ -712,9 +712,11 @@ class CodexProxyRunner(AgentRunner):
                 full_env["CODEX_CONFIG_DIR"] = str(temp_dir)
 
             if self.agent_name == "zen":
-                base_url = (self._settings.zen_base_url or "https://api.opencode.ai").rstrip("/")
+                zen_base_url = getattr(self._settings, "zen_base_url", "") or os.environ.get("THGENT_ZEN_BASE_URL", "")
+                base_url = (str(zen_base_url) or "https://api.opencode.ai").rstrip("/")
                 api_key_env = (
-                    self._settings.zen_api_key
+                    getattr(self._settings, "zen_api_key", "")
+                    or os.environ.get("THGENT_ZEN_API_KEY")
                     or os.environ.get("OPENCODE_API_KEY")
                     or os.environ.get("ZEN_API_KEY")
                     or ""

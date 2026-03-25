@@ -11,7 +11,6 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 
 

@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_load
 
 
 _SCHEMA_PATH = Path(__file__).resolve().parents[3] / "docs" / "governance" / "TASK_CLASSIFIER_SCHEMA.yaml"
@@ -98,7 +98,7 @@ def _normalize_validation_depth(values: object) -> list[str]:
 
 def _load_yaml(path: Path) -> dict[str, Any]:
     try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+        payload = yaml_load(path)
     except Exception as exc:  # explicit error is required behavior
         raise TaskClassifierError(f"failed to parse YAML from {path}: {exc}") from exc
 
@@ -230,7 +230,7 @@ def _pick_default_tier_and_workers(task: TaskMetadata) -> tuple[str, int]:
     return scale_default[task.scale]
 
 
-def _parse_rule_condition(condition: str) -> tuple[str, str, list[str] | int]:
+def _parse_rule_condition(condition: str) -> tuple[str, str, list[str] | int | str]:
     normalized = condition.strip()
     set_match = re.fullmatch(r"^(\w+)\s+in\s*\[(.*)\]$", normalized)
     if set_match:

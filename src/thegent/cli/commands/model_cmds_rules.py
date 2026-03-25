@@ -10,7 +10,6 @@ from __future__ import annotations
 import sys
 import re
 import subprocess
-from typing import Any
 
 import typer
 
@@ -19,11 +18,32 @@ from thegent.cli.commands._cli_shared import (
     _get_run_subprocess_optimized,
     console,
 )
-from thegent.cli.commands.model_cmds_list import (
-    _COPILOT_ALLOWED_MODELS,
-    _assert_str,
-    _run_cliproxyctl_machine_command,
+
+# Copilot: only gpt-5-mini and haiku (no gemini-3.1-pro).
+_COPILOT_ALLOWED_MODELS: tuple[str, ...] = (
+    "claude-haiku-4.5",
+    "gpt-5-mini",
 )
+
+
+def _run_cliproxyctl_machine_command(command: str, args: list[str] | None = None) -> dict[str, object]:
+    """Run cliproxyctl's machine-readable surface and return a JSON object."""
+    import orjson
+
+    run_subprocess_optimized = _get_run_subprocess_optimized()
+    cmd = ["cliproxyctl", command, "--json", *(args or [])]
+    proc = run_subprocess_optimized(cmd, check=False, capture_output=True, timeout=30, text=True)
+    stdout_text = proc.stdout if isinstance(proc.stdout, str) else ""
+    stderr_text = proc.stderr if isinstance(proc.stderr, str) else ""
+    if proc.returncode != 0:
+        detail = stderr_text.strip() or stdout_text.strip() or f"cliproxyctl {command} failed"
+        raise RuntimeError(detail)
+    if not stdout_text.strip():
+        return {}
+    payload = orjson.loads(stdout_text)
+    if not isinstance(payload, dict):
+        raise ValueError("cliproxyctl returned a non-object JSON payload")
+    return payload
 
 
 def list_model_contract_schema_cmd() -> None:

@@ -11,12 +11,18 @@ import shutil
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
 from rich.prompt import Prompt
 
 from thegent.infra import copy_file, copy_tree
-from thegent.install_models import ConfigManifest, FileManifest, InstallManifest, InstallMode
+from thegent.install_models import (
+    ConfigManifest,
+    FileAction,
+    FileManifest,
+    InstallManifest,
+    InstallMode,
+)
 
 
 
@@ -217,7 +223,7 @@ class InstallManager:
         Returns:
             FileAction indicating what was done
         """
-        backup_path = None
+        backup_path: Path | None = None
         
         if not self.dry_run:
             # Backup and remove existing
@@ -257,7 +263,7 @@ class InstallManager:
                 mode_str = "symlink" if mode == InstallMode.EDITABLE else "copy"
                 sys.stdout.write(f"  Would {mode_str}: {target}\n")
 
-        return cast("FileAction", action)
+        return action
 
     def update_config(
         self,

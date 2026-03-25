@@ -1,6 +1,6 @@
 """Checker Agent (Head LLM) for Lifecycle loops."""
 
-import orjson as json
+import json
 import logging
 from enum import StrEnum
 from typing import Any

@@ -4,7 +4,8 @@ Tiered Cache
 Combines multiple cache layers with fallback.
 """
 
-from typing import Optional, Any
+from collections.abc import Callable
+from typing import Any, Optional
 from .l1 import L1MemoryCache
 from .l2 import L2DiskCache
 
@@ -70,7 +71,7 @@ class TieredCache:
     def get_or_set(
         self,
         key: str,
-        factory: callable,
+        factory: Callable[[], Any],
         l1_ttl: Optional[float] = None,
         l2_ttl: Optional[float] = None
     ) -> Any:

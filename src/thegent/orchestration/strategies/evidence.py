@@ -16,6 +16,10 @@ if TYPE_CHECKING:
     from thegent.contracts.policy import FallbackPolicy
 
 
+def _json_text(payload: Any) -> str:
+    return json.dumps(payload, option=json.OPT_SORT_KEYS).decode("utf-8")
+
+
 class PromotionGate:
     """WP-1005: Evidence capture and validation before state promotion."""
 
@@ -26,8 +30,8 @@ class PromotionGate:
 
     def capture_evidence(self, run_id: str, csm: Any) -> str:
         """Capture CSM state as evidence; return SHA-256 hash. Appends to audit trail."""
-        evidence_data = json.dumps(csm.to_dict().decode(), sort_keys=True)
-        evidence_hash = hashlib.sha256(evidence_data.encode()).hexdigest()
+        evidence_data = _json_text(csm.to_dict())
+        evidence_hash = hashlib.sha256(evidence_data.encode("utf-8")).hexdigest()
 
         self.evidence_dir.mkdir(parents=True, exist_ok=True)
         phase_val = getattr(csm.phase, "value", str(csm.phase))
@@ -43,7 +47,7 @@ class PromotionGate:
             "evidence_path": str(evidence_path),
         }
         with self.audit_path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(audit_entry).decode() + "\n")
+            f.write(_json_text(audit_entry) + "\n")
 
         return evidence_hash
 
@@ -62,5 +66,5 @@ class PromotionGate:
         if not evidence_path.exists():
             return False
         evidence_data = evidence_path.read_text(encoding="utf-8")
-        computed = hashlib.sha256(evidence_data.encode()).hexdigest()
+        computed = hashlib.sha256(evidence_data.encode("utf-8")).hexdigest()
         return computed == expected_hash

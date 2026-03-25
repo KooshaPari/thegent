@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use tempfile::TempDir;
 
-use crate::{IncidentLedger, LedgerVerifier, IntegrityReport};
+use crate::{IncidentLedger, LedgerVerifier};
 
 #[test]
 fn test_ledger_verifier_new() {

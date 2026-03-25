@@ -3,7 +3,7 @@ use serde_json::Value;
 use crate::scan::read_input;
 
 pub(crate) fn cmd_init() {
-    let input = read_input().unwrap_or_else(|_| Value::Null);
+    let input = read_input().unwrap_or(Value::Null);
 
     let project_dir = input
         .get("project_dir")

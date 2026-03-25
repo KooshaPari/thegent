@@ -305,7 +305,7 @@ class TestLoadPreviousHealthSnapshotEdges:
         from thegent.cli.commands.impl import _load_previous_health_snapshot
 
         log_path = tmp_path / "health-snapshots.jsonl"
-        content = "\n\nnot-json\n" + json.dumps({"record_type": "health_snapshot", "scope_key": {"k": "v"}}).decode().decode() + "\n"
+        content = "\n\nnot-json\n" + json.dumps({"record_type": "health_snapshot", "scope_key": {"k": "v"}}).decode() + "\n"
         log_path.write_text(content, encoding="utf-8")
         with patch("thegent.cli.commands.impl._health_snapshot_log_path", return_value=log_path):
             result = _load_previous_health_snapshot({"k": "v"})
@@ -1034,7 +1034,7 @@ class TestSessionContractHealthTrendImplSnapshotParsing:
                 "blocked_ratio": 0.1 * i,
                 "blocked_count": i,
             }
-            records.append(json.dumps(rec, sort_keys=True).decode().decode())
+            records.append(json.dumps(rec, sort_keys=True).decode())
 
         log_path = tmp_path / "health-snapshots.jsonl"
         log_path.write_text("\n".join(records) + "\n", encoding="utf-8")
@@ -1079,7 +1079,7 @@ class TestSessionContractHealthTrendImplSnapshotParsing:
             "blocked_count": 1,
         }
         log_path = tmp_path / "health-snapshots.jsonl"
-        log_path.write_text(json.dumps(rec, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+        log_path.write_text(json.dumps(rec, sort_keys=True).decode() + "\n", encoding="utf-8")
         mock_path.return_value = log_path
 
         result = session_contract_health_trend_impl(limit=5)
@@ -1097,7 +1097,7 @@ class TestSessionContractHealthTrendImplSnapshotParsing:
             "captured_at_utc": datetime.now(UTC).isoformat(),
         }
         log_path = tmp_path / "health-snapshots.jsonl"
-        log_path.write_text(json.dumps(rec, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+        log_path.write_text(json.dumps(rec, sort_keys=True).decode() + "\n", encoding="utf-8")
         mock_path.return_value = log_path
 
         result = session_contract_health_trend_impl(limit=5)
@@ -1115,7 +1115,7 @@ class TestSessionContractHealthTrendImplSnapshotParsing:
             "captured_at_utc": datetime.now(UTC).isoformat(),
         }
         log_path = tmp_path / "health-snapshots.jsonl"
-        log_path.write_text(json.dumps(rec, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+        log_path.write_text(json.dumps(rec, sort_keys=True).decode() + "\n", encoding="utf-8")
         mock_path.return_value = log_path
 
         result = session_contract_health_trend_impl(limit=5)
@@ -1140,7 +1140,7 @@ class TestStatusImplResolveExitCode:
 
         meta = {"pid": 123, "status": "exited", "exit_code": 42}
         meta_path = tmp_path / "sess1.json"
-        meta_path.write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta).decode(), encoding="utf-8")
 
         with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta_path):
             result = status_impl(session_id="sess1")
@@ -1159,7 +1159,7 @@ class TestStatusImplResolveExitCode:
 
         meta = {"pid": 123, "status": "exited"}
         meta_path = tmp_path / "sess2.json"
-        meta_path.write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta).decode(), encoding="utf-8")
         rc_path = tmp_path / "sess2.rc"
         rc_path.write_text("7\n", encoding="utf-8")
 
@@ -1191,7 +1191,7 @@ class TestStatusImplResolveExitCode:
 
         meta = {"pid": 123, "status": "exited", "exit_code": "99"}
         meta_path = tmp_path / "sess1b.json"
-        meta_path.write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta).decode(), encoding="utf-8")
 
         with patch("thegent.cli.commands.impl._find_session_meta", return_value=meta_path):
             result = status_impl(session_id="sess1b")
@@ -1210,7 +1210,7 @@ class TestStatusImplResolveExitCode:
 
         meta = {"pid": 123, "status": "exited"}
         meta_path = tmp_path / "sess3.json"
-        meta_path.write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta).decode(), encoding="utf-8")
 
         with (
             patch("thegent.cli.commands.impl._find_session_meta", return_value=meta_path),
@@ -1240,7 +1240,7 @@ class TestStatusImplResolveExitCode:
 
         meta = {"pid": 123, "status": "exited"}
         meta_path = tmp_path / "sess3b.json"
-        meta_path.write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta).decode(), encoding="utf-8")
         rc_path = tmp_path / "sess3b.rc"
         rc_path.write_text("bad\n", encoding="utf-8")  # non-numeric -> ValueError
 
@@ -1272,7 +1272,7 @@ class TestStatusImplResolveExitCode:
 
         meta = {"pid": 123, "status": "running"}
         meta_path = tmp_path / "sess4.json"
-        meta_path.write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta).decode(), encoding="utf-8")
 
         with (
             patch("thegent.cli.commands.impl._find_session_meta", return_value=meta_path),
@@ -2422,7 +2422,7 @@ class TestSessionContractHealthTrendBlockedRatio:
                 "blocked_ratio": "not-a-float" if i == 1 else 0.1 * i,
                 "blocked_count": i,
             }
-            records.append(json.dumps(rec, sort_keys=True).decode().decode())
+            records.append(json.dumps(rec, sort_keys=True).decode())
 
         log_path = tmp_path / "health-snapshots.jsonl"
         log_path.write_text("\n".join(records) + "\n", encoding="utf-8")
@@ -2461,7 +2461,7 @@ class TestSessionContractHealthTrendEmptyTimestamp:
             "blocked_count": 1,
         }
         log_path = tmp_path / "health-snapshots.jsonl"
-        log_path.write_text(json.dumps(rec, sort_keys=True).decode().decode() + "\n", encoding="utf-8")
+        log_path.write_text(json.dumps(rec, sort_keys=True).decode() + "\n", encoding="utf-8")
         mock_path.return_value = log_path
 
         result = session_contract_health_trend_impl(limit=5)

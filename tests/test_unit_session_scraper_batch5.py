@@ -25,7 +25,7 @@ def _snapshot_payload(
 
 
 def _write_snapshot_json(path: Path, payload: dict, mtime: int) -> None:
-    path.write_text(json.dumps(payload).decode().decode(), encoding="utf-8")
+    path.write_text(json.dumps(payload).decode(), encoding="utf-8")
     path.touch()
     path.chmod(0o644)
     import os

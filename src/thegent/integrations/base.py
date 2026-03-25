@@ -9,16 +9,21 @@ Provides standard patterns for:
 
 from __future__ import annotations
 
-from thegent.utils.json_utils import json_loads, json_dumps
+import json
 import logging
 import os
 from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass, fields
+from dataclasses import Field, dataclass, fields
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, TypeVar
+from typing import Any, cast
 
 _log = logging.getLogger(__name__)
+
+
+def _dataclass_field_list(instance_or_cls: object) -> list[Field[Any]]:
+    """Return dataclass fields with a concrete typed list for pyright."""
+    return list(fields(cast(Any, instance_or_cls)))
 
 
 class IntegrationStatus(StrEnum):
@@ -148,9 +153,9 @@ class SerializableMixin:
                 return [_serialize(v) for v in val]
             return val
         
-        if hasattr(self, '__dataclass_fields__'):
+        if hasattr(self, "__dataclass_fields__"):
             result = {}
-            for f in fields(self):
+            for f in _dataclass_field_list(self):
                 val = getattr(self, f.name, None)
                 result[f.name] = _serialize(val)
             return result
@@ -170,21 +175,16 @@ class SerializableMixin:
         - Values → Enum (when field type is Enum)
         - Dicts → nested SerializableMixin (when field type is SerializableMixin subclass)
         """
-        from datetime import datetime
-        from enum import Enum
-        from pathlib import Path
-        from typing import get_origin, get_args
         import inspect
         
-        if not hasattr(cls, '__dataclass_fields__'):
+        if not hasattr(cls, "__dataclass_fields__"):
             # Non-dataclass fallback
-            return cls(**data)
+            return cast("SerializableMixin", cls(**data))
         
         # Get field types
-        converted = {}
-        field_names = {f.name for f in fields(cls)}
+        converted: dict[str, Any] = {}
         
-        for f in fields(cls):
+        for f in _dataclass_field_list(cls):
             field_name = f.name
             if field_name not in data:
                 continue
@@ -281,7 +281,9 @@ class SerializableMixin:
             except ValueError:
                 # Try by name
                 try:
-                    return target_type[val]
+                    if isinstance(val, str):
+                        return target_type[val]
+                    return val
                 except KeyError:
                     return val
         
@@ -339,8 +341,8 @@ class SerializableMixin:
         data = self.to_dict()
         
         # Show first 3 fields in repr for readability
-        if hasattr(self, '__dataclass_fields__'):
-            field_list = list(fields(self))
+        if hasattr(self, "__dataclass_fields__"):
+            field_list = _dataclass_field_list(self)
             shown_fields = []
             for f in field_list[:3]:  # Show first 3 fields
                 if f.name in data:
@@ -501,7 +503,6 @@ class SerializableMixin:
         Example:
             person = Person.from_json('{"name": "Alice", "age": 30}')
         """
-        import json
         data = json.loads(json_str)
         return cls.from_dict(data)
     
@@ -512,7 +513,6 @@ class SerializableMixin:
             path: File path to write
             indent: JSON indentation level (default: 2 for readability)
         """
-        import json
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(self.to_json(indent=indent))
@@ -568,7 +568,7 @@ def hashable_dataclass(cls: type) -> type:
             # Restore the hash method from SerializableMixin
             cls.__hash__ = SerializableMixin.__serializable_hash__
         # Also restore the custom __repr__ for cleaner output
-        cls.__repr__ = SerializableMixin.__repr__
+        setattr(cls, "__repr__", SerializableMixin.__repr__)
     return cls
 
 

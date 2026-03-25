@@ -5,7 +5,7 @@ Provides multi-pane layout management with save/restore functionality.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any

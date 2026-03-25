@@ -164,7 +164,7 @@ class TestBoardArtifactIntegrator:
     def test_find_board_artifacts_json(self, board_dir: Path) -> None:
         """Test finding board artifacts (JSON takes priority)."""
         json_file = board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
-        json_file.write_text(json.dumps([{"id": "J-001", "title": "JSON task"}]).decode().decode())
+        json_file.write_text(json.dumps([{"id": "J-001", "title": "JSON task"}]).decode())
 
         integrator = BoardArtifactIntegrator(board_artifacts_dir=board_dir)
         artifacts = integrator.find_board_artifacts()
@@ -196,7 +196,7 @@ class TestBoardArtifactIntegrator:
         """Test that JSON takes precedence over CSV."""
         # Create JSON with different content
         json_file = board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
-        json_file.write_text(json.dumps([{"id": "JSON-001", "title": "JSON task", "status": "BACKLOG"}]).decode().decode())
+        json_file.write_text(json.dumps([{"id": "JSON-001", "title": "JSON task", "status": "BACKLOG"}]).decode())
 
         integrator = BoardArtifactIntegrator(board_artifacts_dir=board_dir)
         items = integrator.ingest_artifacts()
@@ -306,7 +306,7 @@ class TestWL158Integration:
 
         json_file = board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
         json_file.write_text(
-            json.dumps([{"id": "JAB-001", "title": "JSON artifact task", "status": "BACKLOG", "priority": "P1"}]).decode().decode()
+            json.dumps([{"id": "JAB-001", "title": "JSON artifact task", "status": "BACKLOG", "priority": "P1"}]).decode()
         )
 
         md_file = board_dir / "CLIPPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.md"
@@ -353,7 +353,7 @@ class TestWL158Integration:
 
         # Test JSON parsing
         json_file = tmp_path / "test.json"
-        json_file.write_text(json.dumps([{"id": "J-1", "title": "Task"}]).decode().decode())
+        json_file.write_text(json.dumps([{"id": "J-1", "title": "Task"}]).decode())
         json_items = parser.parse_json(json_file)
         assert len(json_items) == 1
 

@@ -3,15 +3,7 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn run(
-    _harness_home: &Path,
     real_cmd: &Path,
-    _cache_key: &str,
-    _ttl: u64,
-    _debounce_ms: u64,
-    _error_ttl: u64,
-    _breaker_threshold: u32,
-    _breaker_window: u64,
-    _breaker_cooldown: u64,
     args: &[&str],
 ) -> Result<i32, String> {
     // TODO: Circuit breaker logic

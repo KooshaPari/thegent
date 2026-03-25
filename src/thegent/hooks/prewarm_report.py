@@ -56,6 +56,6 @@ class PrewarmReportSubcommands:
             "cached_items": len(list(self.cache_dir.glob("*.cache"))),
         }
 
-        output_file.write_text(json.dumps(report, indent=2))
+        output_file.write_text(json.dumps(report, option=json.OPT_INDENT_2).decode("utf-8"))
         logger.info(f"Generated report: {output_file}")
         return output_file

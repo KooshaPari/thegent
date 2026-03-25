@@ -186,9 +186,8 @@ impl Theme {
 
         // TERM_PROGRAM can give hints about common terminals that default light.
         if let Ok(prog) = env::var("TERM_PROGRAM") {
-            match prog.as_str() {
-                "Apple_Terminal" => return Self::light(),
-                _ => {}
+            if prog.as_str() == "Apple_Terminal" {
+                return Self::light();
             }
         }
 

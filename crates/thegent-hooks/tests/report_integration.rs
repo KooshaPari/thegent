@@ -97,7 +97,7 @@ mod report_integration_tests {
 
     #[test]
     fn test_issue_severity_levels() {
-        let severities = vec!["info", "warning", "error", "critical"];
+        let severities = ["info", "warning", "error", "critical"];
 
         // Verify severity ordering
         assert!(
@@ -133,7 +133,7 @@ mod report_integration_tests {
 
         // Verify reasonable values
         let cache_hit: f64 = metrics["cache_hit_rate"].as_f64().unwrap();
-        assert!(cache_hit >= 0.0 && cache_hit <= 1.0);
+        assert!((0.0..=1.0).contains(&cache_hit));
     }
 
     #[test]

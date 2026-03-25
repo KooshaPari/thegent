@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
-import orjson as json
+import json
 import typer
 from rich.table import Table
 
@@ -33,7 +34,7 @@ def govern_go_health_cmd(cd: Path | None = None, format: str | None = None) -> N
     except FileNotFoundError:
         fmt = _normalize_output_format(format)
         if fmt == "json":
-            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}).decode() + "\n")
+            sys.stdout.write(json.dumps({"configured": False, "hint": "thegent govern configure"}) + "\n")
         else:
             console.print("[yellow]Govern not configured.[/yellow]")
             console.print("[dim]Run: thegent govern configure[/dim]")
@@ -113,15 +114,16 @@ def govern_go_status_cmd(cd: Path | None = None) -> None:
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
+    settings_any: Any = settings
     project_dir = _resolve_cwd(cd) or Path.cwd()
     health_targets_path = _get_health_targets_path(project_dir)
 
     loop = AgilePlusLoop(
         project_dir=project_dir,
         health_targets_path=health_targets_path,
-        health_threshold=settings.agileplus_health_threshold,
-        max_tasks_per_cycle=settings.agileplus_max_tasks_per_cycle,
-        max_rerolls=settings.agileplus_max_rerolls,
+        health_threshold=settings_any.agileplus_health_threshold,
+        max_tasks_per_cycle=settings_any.agileplus_max_tasks_per_cycle,
+        max_rerolls=settings_any.agileplus_max_rerolls,
     )
 
     table = Table(title="AgilePlus Status")
@@ -146,6 +148,7 @@ def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str
     from thegent.config import ThegentSettings
 
     settings = ThegentSettings()
+    settings_any: Any = settings
     project_dir = _resolve_cwd(cd) or Path.cwd()
     health_targets_path = _get_health_targets_path(project_dir)
 
@@ -165,7 +168,7 @@ def govern_go_cycle_cmd(cd: Path | None = None, force: bool = False, format: str
     health = health_computer.compute(dimension_values)
     completed_at = datetime.now(UTC).isoformat()
 
-    should_run = force or health.score < settings.agileplus_health_threshold
+    should_run = force or health.score < settings_any.agileplus_health_threshold
 
     fmt = _normalize_output_format(format)
 

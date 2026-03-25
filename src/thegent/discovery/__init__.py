@@ -6,6 +6,7 @@ available, falling back to the original psutil-based scan otherwise.
 """
 
 import contextlib
+from importlib import import_module
 import orjson as json
 import logging
 from datetime import UTC, datetime
@@ -39,7 +40,8 @@ def _get_native_client() -> "Any | None":
         return _native_client
     _native_checked = True
     try:
-        from thegent.native.discovery_native import DiscoveryClient
+        discovery_native = import_module("thegent.native.discovery_native")
+        DiscoveryClient = getattr(discovery_native, "DiscoveryClient")
 
         _native_client = DiscoveryClient()
         if _native_client.is_native:
@@ -165,7 +167,7 @@ def register_discovered_agent(
             agent_data["tmux_pane"] = p.pane_id
             break
 
-    file_path.write_text(json.dumps(agent_data, indent=2), encoding="utf-8")
+    file_path.write_bytes(json.dumps(agent_data, option=json.OPT_INDENT_2))
     return file_path
 
 

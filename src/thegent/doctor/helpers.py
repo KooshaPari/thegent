@@ -1,16 +1,21 @@
 """Doctor module for comprehensive health and preflight checks of thegent environment."""
 
 # Backward compatibility - import from new submodule
+from __future__ import annotations
 
 import re
 import time
 
+from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from thegent.doctor.models import ProcessInfo
 from thegent.doctor_models import CheckResult
 
 import psutil
+
+console = Console()
 
 
 def _is_process_actively_working(pid: int, min_cpu_percent: float = 0.1, min_io_bytes: int = 1024) -> tuple[bool, str]:
@@ -241,3 +246,11 @@ def _display_results(results: list[CheckResult]) -> bool:
         console.print(Panel(matrix, title="Governance Dashboard"))
 
     return all_ok
+
+
+_HELPER_EXPORTS = (
+    _is_process_actively_working,
+    _find_stuck_processes,
+    _extract_process_info,
+    _display_results,
+)

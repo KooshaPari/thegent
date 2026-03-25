@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import orjson as json
 import sys
+from dataclasses import asdict
 from typing import TYPE_CHECKING, Annotated
 
 import typer
@@ -111,7 +112,7 @@ def audit_cmd(
 
     # Machine-readable JSON to stdout
     if output_json:
-        sys.stdout.write(json.dumps(report.to_dict().decode(), indent=2, default=str) + "\n")
+        sys.stdout.write(json.dumps(asdict(report), option=json.OPT_INDENT_2).decode() + "\n")
         raise typer.Exit(0 if not report.has_drift else 1)
 
     # Human-readable rich output

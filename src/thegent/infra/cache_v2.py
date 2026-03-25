@@ -164,7 +164,7 @@ class CrossProcessSingleflight:
         # 3. We have the lock, execute func
         try:
             result = func()
-            result_file.write_text(json.dumps({"result": result, "timestamp": time.time().decode()}))
+            result_file.write_text(json.dumps({"result": result, "timestamp": time.time()}))
             return result
         finally:
             if lock_file.exists():
@@ -340,7 +340,8 @@ class MultiTierCache:
     def _len_l3(self) -> int:
         """Get L3 cache size (PersistDict)."""
         try:
-            return len(self.l3)
+            l3 = self.l3
+            return len(l3) if l3 is not None else 0
         except Exception:
             return 0
 

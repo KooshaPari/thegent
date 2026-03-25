@@ -8,12 +8,14 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Awaitable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, ParamSpec, TypeVar
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
 
 def retry_with_backoff(
@@ -22,7 +24,7 @@ def retry_with_backoff(
     max_delay: float = 60.0,
     exponential_base: float = 2.0,
     exceptions: tuple = (Exception,),
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Decorator that retries a function with exponential backoff.
     
     Args:
@@ -32,9 +34,9 @@ def retry_with_backoff(
         exponential_base: Base for exponential backoff
         exceptions: Tuple of exceptions to catch and retry
     """
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> T:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             last_exception: Exception | None = None
             for attempt in range(max_attempts):
                 try:
@@ -59,7 +61,7 @@ def async_retry_with_backoff(
     max_delay: float = 60.0,
     exponential_base: float = 2.0,
     exceptions: tuple = (Exception,),
-) -> Callable[[Callable[..., T]], Callable[..., T]]:
+) -> Callable[[Callable[P, Awaitable[T]]], Callable[P, Awaitable[T]]]:
     """Async decorator that retries a function with exponential backoff.
     
     Args:
@@ -69,9 +71,9 @@ def async_retry_with_backoff(
         exponential_base: Base for exponential backoff
         exceptions: Tuple of exceptions to catch and retry
     """
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+    def decorator(func: Callable[P, Awaitable[T]]) -> Callable[P, Awaitable[T]]:
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> T:
+        async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             last_exception: Exception | None = None
             for attempt in range(max_attempts):
                 try:

@@ -7,7 +7,6 @@ Extracted from dex_main.py for maintainability.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import typer
 
@@ -44,14 +43,8 @@ def create_dex_model_command(
         
         _run_model_cmd(
             model_alias,
-            resume=resume,
-            prompt=prompt,
+            prompt or "",
             cd=cd,
-            print_mode=print_mode,
-            full=full,
-            debug=debug,
-            add_dir=add_dir or None,
-            native=native,
         )
     
     model_cmd.__doc__ = help_text

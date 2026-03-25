@@ -8,7 +8,7 @@ structured output constraints across all agent harnesses.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from pathlib import Path
 from typing import Any
 

@@ -283,7 +283,7 @@ def snapshot_daily_export_payload(
 
     json_path.parent.mkdir(parents=True, exist_ok=True)
     md_path.parent.mkdir(parents=True, exist_ok=True)
-    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    json_path.write_text(json.dumps(payload, option=json.OPT_INDENT_2).decode(), encoding="utf-8")
 
     lines = [
         "# Snapshot Daily Index",

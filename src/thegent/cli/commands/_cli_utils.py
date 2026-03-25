@@ -6,7 +6,6 @@ Shared utilities to reduce code duplication across CLI commands.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from rich.console import Console
 from rich.table import Table

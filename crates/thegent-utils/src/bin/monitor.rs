@@ -70,40 +70,40 @@ fn monitor_once() -> Result<()> {
 
     if proc_count > 500 {
         println!(
-            "  {} {}",
+            "  {} ({})",
             "🔴 CRITICAL: Process count is very high".red(),
-            format!("({})", proc_count)
+            proc_count
         );
         println!("     Recommendation: Restart shell, apply fast-path fixes");
     } else if proc_count > 200 {
         println!(
-            "  {} {}",
+            "  {} ({})",
             "🟡 WARNING: Process count is elevated".yellow(),
-            format!("({})", proc_count)
+            proc_count
         );
         println!("     Recommendation: Monitor and consider applying fixes");
     } else {
         println!(
-            "  {} {}",
+            "  {} ({})",
             "✅ Process count is normal".green(),
-            format!("({})", proc_count)
+            proc_count
         );
     }
 
     if thegent_procs > 50 {
         println!(
-            "  {} {}",
+            "  {} ({})",
             "🟡 WARNING: Many thegent processes".yellow(),
-            format!("({})", thegent_procs)
+            thegent_procs
         );
         println!("     Recommendation: Check for process leaks");
     }
 
     if fork_failures > 0 {
         println!(
-            "  {} {}",
+            "  {} ({})",
             "🔴 CRITICAL: Fork failures detected".red(),
-            format!("({})", fork_failures)
+            fork_failures
         );
         println!("     Recommendation: Increase process limit, restart shell");
     }

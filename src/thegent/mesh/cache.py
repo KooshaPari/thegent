@@ -1,7 +1,7 @@
 """Caching and request deduplication for the agent mesh."""
 
 import hashlib
-import orjson as json
+import json
 import threading
 from collections.abc import Callable
 from pathlib import Path

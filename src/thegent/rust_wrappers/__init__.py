@@ -4,6 +4,7 @@ These are standalone stubs that don't import the main thegent package
 to avoid version requirements. They delegate to shell commands.
 """
 
+import os
 import subprocess
 import sys
 
@@ -14,7 +15,7 @@ def _run_thegent(subcommand: str):
     result = subprocess.run(
         ["thegent"] + subcommand.split(),
         capture_output=False,
-        env={**subprocess.os.environ, "PYTHONPATH": "src"}
+        env={**os.environ, "PYTHONPATH": "src"},
     )
     sys.exit(result.returncode)
 

@@ -6,6 +6,7 @@ import os
 import re
 from dataclasses import dataclass
 from enum import Enum
+from typing import cast
 
 from thegent.integrations.base import DataclassConfig
 
@@ -26,14 +27,14 @@ class Context7Provider:
         r'ghp_[a-zA-Z0-9]{36}',
     ]
 
-    def __init__(self, config: Context7Config = None):
+    def __init__(self, config: Context7Config | None = None):
         self._config = config or self._load_config()
         self._status = Context7Status.DISABLED
         if self._config.enabled:
             self._status = Context7Status.ENABLED
 
-    def _load_config(self):
-        config = Context7Config.from_env("CONTEXT7_")
+    def _load_config(self) -> Context7Config:
+        config = cast(Context7Config, Context7Config.from_env("CONTEXT7_"))
         config.enabled = os.environ.get("THEGENT_ENABLE_CONTEXT7", "").lower() in ("1", "true", "yes")
         return config
 

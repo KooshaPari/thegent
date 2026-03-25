@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -34,8 +34,9 @@ def _load_json(path: Path) -> dict[str, Any]:
 def _save_json(path: Path, data: dict[str, Any]) -> None:
     """Save JSON file safely."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    import orjson as json
-    path.write_text(json.dumps(data, indent=2))
+    import json
+
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def list_providers(include_credentials: bool = False) -> list[dict[str, Any]]:

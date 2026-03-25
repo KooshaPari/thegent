@@ -1,15 +1,16 @@
 """Shared models, parser, and config loading for workstream autosync."""
 
-import hashlib
-import orjson as json
 import logging
 import os
 import re
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+import orjson as json
 
 from thegent.config_defaults import autosync_phase1_enabled
 from thegent.integrations.capability_alerts import ConnectorSLAThresholds
@@ -544,7 +545,7 @@ class SyncCycleManifest:
             "outputs": self.outputs,
             "previous_manifest_hash": self.previous_manifest_hash,
         }
-        digest = hashlib.sha256(json.dumps(payload, sort_keys=True).decode().encode("utf-8")).hexdigest()
+        digest = hashlib.sha256(json.dumps(payload, option=json.OPT_SORT_KEYS)).hexdigest()
         return SyncCycleManifest(
             cycle_number=self.cycle_number,
             started_at=self.started_at,

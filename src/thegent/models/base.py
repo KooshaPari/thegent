@@ -7,8 +7,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
-from pydantic import BaseModel, Field
+from typing import Any, TypeVar
+
+from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Field
 
 
 class Status(str, Enum):
@@ -20,7 +22,7 @@ class Status(str, Enum):
     CANCELLED = "cancelled"
     
 
-class BaseResponse(BaseModel):
+class BaseResponse(PydanticBaseModel):
     """Base response model."""
     
     success: bool = Field(default=True, description="Whether the operation succeeded")
@@ -31,7 +33,7 @@ class BaseResponse(BaseModel):
     )
 
 
-class BaseRequest(BaseModel):
+class BaseRequest(PydanticBaseModel):
     """Base request model."""
     
     request_id: str | None = Field(default=None, description="Request ID for tracing")
@@ -66,7 +68,10 @@ class ErrorResponse(BaseResponse):
     details: dict[str, Any] | None = Field(default=None, description="Additional error details")
 
 
-class BaseModel(BaseModel):
+ModelT = TypeVar("ModelT", bound="BaseModel")
+
+
+class BaseModel(PydanticBaseModel):
     """Enhanced base model with common functionality."""
     
     id: str | None = Field(default=None, description="Unique identifier")
@@ -88,7 +93,7 @@ class BaseModel(BaseModel):
         return self.model_dump_json()
     
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> BaseModel:
+    def from_dict(cls: type[ModelT], data: dict[str, Any]) -> ModelT:
         """Create from dictionary."""
         return cls(**data)
 

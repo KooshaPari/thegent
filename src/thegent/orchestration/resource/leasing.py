@@ -13,6 +13,14 @@ _LEASE_MANAGER: Optional["EditLeaseManager"] = None
 _LEASE_MANAGER_LOCK = threading.Lock()
 
 
+def _read_json_file(path: Path) -> object:
+    return json.loads(path.read_bytes())
+
+
+def _write_json_file(path: Path, payload: object) -> None:
+    path.write_bytes(json.dumps(payload, option=json.OPT_INDENT_2))
+
+
 def get_lease_manager(state_dir: Path) -> "EditLeaseManager":
     """Return shared in-memory EditLeaseManager. MTSP-14: zero-latency lock coordination."""
     global _LEASE_MANAGER
@@ -47,9 +55,11 @@ class EditLeaseManager:
     def _load(self):
         if self.state_file.exists():
             try:
-                with open(self.state_file) as f:
-                    data = json.load(f)
+                data = _read_json_file(self.state_file)
+                if isinstance(data, dict):
                     for path, lease_data in data.items():
+                        if not isinstance(lease_data, dict):
+                            continue
                         lease = EditLease(
                             path=lease_data["path"],
                             agent_id=lease_data["agent_id"],
@@ -74,8 +84,7 @@ class EditLeaseManager:
                 for path, lease in self.leases.items()
                 if not lease.is_expired()
             }
-            with open(self.state_file, "w") as f:
-                json.dump(data, f, indent=2)
+            _write_json_file(self.state_file, data)
         except Exception as e:
             logger.error(f"Failed to save edit leases: {e}")
 

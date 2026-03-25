@@ -474,7 +474,7 @@ class TestHandleResponsesRequest:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -532,7 +532,7 @@ class TestHandleResponsesRequest:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(side_effect=Exception("rate limit exceeded"))
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -559,7 +559,7 @@ class TestHandleResponsesRequest:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(side_effect=RuntimeError("unexpected server crash"))
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -630,7 +630,7 @@ class TestHandleResponsesRequest:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", temperature=0.3).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", temperature=0.3).decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -661,7 +661,7 @@ class TestHandleResponsesRequest:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -701,7 +701,7 @@ class TestHandleResponsesStream:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenFromChunks(chunks)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -740,7 +740,7 @@ class TestHandleResponsesStream:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenRaise(RuntimeError("upstream broke"))
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -773,7 +773,7 @@ class TestHandleResponsesStream:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenRaise(bad_exc)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",
@@ -800,7 +800,7 @@ class TestHandleResponsesStream:
         mock_router = MagicMock()
         mock_router.acompletion = lambda **kwargs: _AsyncGenFromChunks([])
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", stream=True).decode()).encode()
 
         with patch(
             "thegent.utils.routing_impl.litellm_responses_handler.get_litellm_router",

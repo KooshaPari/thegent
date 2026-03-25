@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -139,7 +139,7 @@ def test_wl9839_handler_preserves_parse_failure_short_circuit_without_side_effec
     turns_before = len(SERVER_STATE.turns)
     approvals_before = len(SERVER_STATE.approvals)
     response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": 123}}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "submit", "method": "turn/submit", "params": {"session_id": session_id, "input": 123}}).decode()
     )
     assert response is not None
     assert response["error"]["data"]["reason"] == "input_must_be_string"

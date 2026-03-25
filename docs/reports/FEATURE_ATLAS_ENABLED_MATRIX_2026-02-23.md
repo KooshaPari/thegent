@@ -66,7 +66,7 @@
 | Nordlys | `THEGENT_ENABLE_NORDLYS` | `integrations/nordlys` | ✅ Ready |
 | Humanify | `THEGENT_ENABLE_HUMANIFY` | `integrations/humanify` | ✅ Ready |
 | MAGG | `THEGENT_ENABLE_MAGG` | `integrations/magg` | ✅ Ready |
-| OpenSpec | `THEGENT_ENABLE_OPENSPEC` | `integrations/openspec` | ✅ Ready |
+| AgilePlus | `THGENT_AGILEPLUS_ENABLED` | `integrations/agileplus` | ✅ Ready |
 
 ---
 

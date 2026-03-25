@@ -192,6 +192,11 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+
       - name: Install Task runner
         uses: arduino/setup-task@v2
 
@@ -206,6 +211,10 @@ jobs:
       - name: Sanity check Python runtime
         run: |
           uv run python -V
+
+      - name: Assert canary refresh governance policy
+        run: |
+          task quality:governance:canary-refresh
 
       - name: Assert canonical max-lines CI path (WL-122)
         run: |
@@ -222,6 +231,9 @@ jobs:
       - name: Enforce worktree governance policy
         run: |
           ./scripts/governance_policy_check.sh
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
 
       - name: Run rust quality CI lane (fmt/clippy/test)
         run: |

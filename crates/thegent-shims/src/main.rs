@@ -104,9 +104,7 @@ fn resolve_binary(name: &str) -> Option<PathBuf> {
     which::which_in(
         name,
         Some(SAFE_PATH),
-        env::current_dir()
-            .ok()
-            .unwrap_or_else(|| PathBuf::from(".")),
+        env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
     )
     .ok()
 }
@@ -114,14 +112,11 @@ fn resolve_binary(name: &str) -> Option<PathBuf> {
 /// Find the first available tool from a list of candidates
 fn first_available(candidates: &[&str]) -> Option<PathBuf> {
     for candidate in candidates {
-        if let Some(path) = which::which_in(
+        if let Ok(path) = which::which_in(
             candidate,
             Some(SAFE_PATH),
-            env::current_dir()
-                .ok()
-                .unwrap_or_else(|| PathBuf::from(".")),
+            env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
         )
-        .ok()
         {
             return Some(path);
         }
@@ -290,9 +285,7 @@ fn resolve_nonshim_binary(name: &str) -> Option<PathBuf> {
     if let Ok(path) = which::which_in(
         name,
         Some(SAFE_PATH),
-        env::current_dir()
-            .ok()
-            .unwrap_or_else(|| PathBuf::from(".")),
+        env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
     ) {
         if !is_self_or_shim_wrapper(&path) {
             return Some(path);
@@ -855,7 +848,8 @@ fn run_flock(args: &[String]) -> ExitCode {
 
         let mut cmd_idx = 0;
         while cmd_idx < args.len()
-            && (args[cmd_idx].starts_with("-") || args[cmd_idx].chars().all(|c| c.is_digit(10)))
+            && (args[cmd_idx].starts_with("-")
+                || args[cmd_idx].chars().all(|c| c.is_ascii_digit()))
         {
             cmd_idx += 1;
         }
@@ -894,23 +888,23 @@ fn main() -> ExitCode {
         || program_name == "cline"
         || program_name == "roocode"
     {
-        return run_agent(program_name, &args[1..].to_vec());
+        return run_agent(program_name, &args[1..]);
     } else if program_name == "thegent-git" {
-        return run_git(&args[1..].to_vec());
+        return run_git(&args[1..]);
     } else if program_name == "thegent-grep" {
-        return run_grep(&args[1..].to_vec());
+        return run_grep(&args[1..]);
     } else if program_name == "thegent-find" {
-        return run_find(&args[1..].to_vec());
+        return run_find(&args[1..]);
     } else if program_name == "thegent-jq" {
-        return run_jq(&args[1..].to_vec());
+        return run_jq(&args[1..]);
     } else if program_name == "thegent-pgrep" {
-        return run_pgrep(&args[1..].to_vec());
+        return run_pgrep(&args[1..]);
     } else if program_name == "thegent-wc" {
-        return run_wc(&args[1..].to_vec());
+        return run_wc(&args[1..]);
     } else if program_name == "thegent-date" {
-        return run_date(&args[1..].to_vec());
+        return run_date(&args[1..]);
     } else if program_name == "thegent-tr" {
-        return run_tr(&args[1..].to_vec());
+        return run_tr(&args[1..]);
     } else if program_name.starts_with("thegent-")
         && program_name != "thegent-shims"
         && program_name != "thegent-agent"
@@ -931,38 +925,36 @@ fn main() -> ExitCode {
                 | "cline"
                 | "roocode"
         ) {
-            return run_agent(agent, &args[1..].to_vec());
+            return run_agent(agent, &args[1..]);
         }
-    } else if program_name == "thegent-agent" {
-        if args.len() > 1 {
-            let agent_name = &args[1];
-            return run_agent(agent_name, &args[2..].to_vec());
-        }
+    } else if program_name == "thegent-agent" && args.len() > 1 {
+        let agent_name = &args[1];
+        return run_agent(agent_name, &args[2..]);
     }
 
     // Try to detect if we're calling via thegent-shims <subcommand>
     // If so, we manually handle the dispatch to bypass clap's hyphen issues
     if program_name == "thegent-shims" && args.len() > 1 {
         let cmd = &args[1];
-        let cmd_args = args[2..].to_vec();
+        let cmd_args = &args[2..];
         match cmd.as_str() {
             "agent" => {
                 if args.len() > 2 {
                     let agent_name = &args[2];
-                    return run_agent(agent_name, &args[3..].to_vec());
+                    return run_agent(agent_name, &args[3..]);
                 }
                 eprintln!("thegent-shims: missing agent name");
                 return ExitCode::from(2);
             }
-            "git" => return run_git(&cmd_args),
-            "grep" => return run_grep(&cmd_args),
-            "find" => return run_find(&cmd_args),
-            "jq" => return run_jq(&cmd_args),
-            "pgrep" => return run_pgrep(&cmd_args),
-            "wc" => return run_wc(&cmd_args),
-            "date" => return run_date(&cmd_args),
-            "tr" => return run_tr(&cmd_args),
-            "flock" => return run_flock(&cmd_args),
+            "git" => return run_git(cmd_args),
+            "grep" => return run_grep(cmd_args),
+            "find" => return run_find(cmd_args),
+            "jq" => return run_jq(cmd_args),
+            "pgrep" => return run_pgrep(cmd_args),
+            "wc" => return run_wc(cmd_args),
+            "date" => return run_date(cmd_args),
+            "tr" => return run_tr(cmd_args),
+            "flock" => return run_flock(cmd_args),
             "--version" | "-V" => {
                 println!("thegent-shims {}", env!("CARGO_PKG_VERSION"));
                 return ExitCode::SUCCESS;
@@ -997,6 +989,7 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use std::env;
+    use std::sync::{Mutex, OnceLock};
 
     use super::{
         dedupe_exact_flags, dex_proxy_env_defaults, inject_force_alias, inject_harness_defaults,
@@ -1007,6 +1000,11 @@ mod tests {
 
     fn v(args: &[&str]) -> Vec<String> {
         args.iter().map(|s| s.to_string()).collect()
+    }
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
     }
 
     #[test]
@@ -1265,6 +1263,7 @@ mod tests {
 
     #[test]
     fn dex_proxy_env_defaults_are_populated_when_unset() {
+        let _guard = env_lock().lock().expect("env lock poisoned");
         unsafe {
             env::remove_var("OPENAI_BASE_URL");
             env::remove_var("OPENAI_API_KEY");
@@ -1276,6 +1275,7 @@ mod tests {
 
     #[test]
     fn dex_proxy_env_defaults_respect_existing_env() {
+        let _guard = env_lock().lock().expect("env lock poisoned");
         unsafe {
             env::set_var("OPENAI_BASE_URL", "https://api.openai.com/v1");
             env::set_var("OPENAI_API_KEY", "sk-live");
@@ -1291,6 +1291,7 @@ mod tests {
 
     #[test]
     fn dex_proxy_env_defaults_overrides_mcp_port_base_url() {
+        let _guard = env_lock().lock().expect("env lock poisoned");
         unsafe {
             env::set_var("OPENAI_BASE_URL", "http://127.0.0.1:3847/mcp");
             env::set_var("OPENAI_API_KEY", "sk-live");

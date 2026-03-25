@@ -105,10 +105,16 @@ class GitNative:
             ``{"files_changed": N, "insertions": N, "deletions": N}``
         """
         if _native_available and hasattr(thegent_git, "diff_stat"):
-            return thegent_git.diff_stat("HEAD", self.repo_path)
+            native_result = thegent_git.diff_stat("HEAD", self.repo_path)
+            if isinstance(native_result, dict):
+                return native_result
+            if isinstance(native_result, str):
+                diff = native_result
+            else:
+                return {"files_changed": 0, "insertions": 0, "deletions": 0}
+        else:
+            diff = _run_git_command(self.repo_path, "diff", "--stat")
 
-        # Fallback to subprocess
-        diff = _run_git_command(self.repo_path, "diff", "--stat")
         if not diff:
             return {"files_changed": 0, "insertions": 0, "deletions": 0}
 
@@ -149,8 +155,11 @@ class GitNative:
         Returns:
             List of branch names
         """
-        if _native_available and hasattr(thegent_git, "list_branches"):
-            return thegent_git.list_branches(self.repo_path, all_remotes)
+        native_list_branches = getattr(thegent_git, "list_branches", None) if _native_available else None
+        if callable(native_list_branches):
+            result = native_list_branches(self.repo_path, all_remotes)
+            if isinstance(result, list) and all(isinstance(branch, str) for branch in result):
+                return result
 
         # Fallback to subprocess
         args = ["branch"]
@@ -167,10 +176,13 @@ class GitNative:
         Returns:
             Dict mapping remote name to URL
         """
-        if _native_available:
-            import thegent_git
-            if hasattr(thegent_git, "list_remotes"):
-                return thegent_git.list_remotes(self.repo_path)
+        native_list_remotes = getattr(thegent_git, "list_remotes", None) if _native_available else None
+        if callable(native_list_remotes):
+            native_result = native_list_remotes(self.repo_path)
+            if isinstance(native_result, dict) and all(
+                isinstance(name, str) and isinstance(url, str) for name, url in native_result.items()
+            ):
+                return native_result
 
         # Fallback to subprocess
         result: dict[str, str] = {}
@@ -192,8 +204,11 @@ class GitNative:
         Returns:
             List of commit messages
         """
-        if _native_available and hasattr(thegent_git, "get_log"):
-            return thegent_git.get_log(self.repo_path, max_count, oneline)
+        native_get_log = getattr(thegent_git, "get_log", None) if _native_available else None
+        if callable(native_get_log):
+            result = native_get_log(self.repo_path, max_count, oneline)
+            if isinstance(result, list) and all(isinstance(entry, str) for entry in result):
+                return result
 
         # Fallback to subprocess
         args = ["log", f"--max-count={max_count}"]
@@ -213,8 +228,11 @@ class GitNative:
         Returns:
             True if successful
         """
-        if _native_available and hasattr(thegent_git, "fetch"):
-            return thegent_git.fetch(self.repo_path, remote, prune)
+        native_fetch = getattr(thegent_git, "fetch", None) if _native_available else None
+        if callable(native_fetch):
+            result = native_fetch(self.repo_path, remote, prune)
+            if isinstance(result, bool):
+                return result
 
         # Fallback to subprocess
         args = ["fetch"]
@@ -232,8 +250,11 @@ class GitNative:
         Returns:
             True if there are changes
         """
-        if _native_available and hasattr(thegent_git, "has_changes"):
-            return thegent_git.has_changes(self.repo_path)
+        native_has_changes = getattr(thegent_git, "has_changes", None) if _native_available else None
+        if callable(native_has_changes):
+            result = native_has_changes(self.repo_path)
+            if isinstance(result, bool):
+                return result
 
         # Fallback to subprocess
         result = _run_git_command(self.repo_path, "status", "--porcelain")
@@ -254,6 +275,21 @@ def get_status(repo_path: str = ".") -> dict[str, Any]:
 def list_branches(repo_path: str = ".", all_remotes: bool = False) -> list[str]:
     """List branches for repo."""
     return GitNative(repo_path).list_branches(all_remotes)
+
+
+def list_remotes(repo_path: str = ".") -> dict[str, str]:
+    """List remotes for repo."""
+    return GitNative(repo_path).list_remotes()
+
+
+def get_log(repo_path: str = ".", max_count: int = 10, oneline: bool = True) -> list[str]:
+    """Get commit log for repo."""
+    return GitNative(repo_path).log(max_count=max_count, oneline=oneline)
+
+
+def fetch(repo_path: str = ".", remote: str | None = None, prune: bool = False) -> bool:
+    """Fetch refs for repo."""
+    return GitNative(repo_path).fetch(remote=remote, prune=prune)
 
 
 def has_changes(repo_path: str = ".") -> bool:

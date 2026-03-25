@@ -1,10 +1,12 @@
 """Thegent - Unified agent orchestration CLI."""
 
+import asyncio
 import os
 import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 # Python version requirements: CPython 3.10+ or PyPy 3.10+
 _min_cpython = (3, 10)
@@ -62,6 +64,58 @@ _check_tool_versions()
 
 __version__ = "0.1.0"
 
+
+class _CompatEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
+    """Preserve pre-3.14 implicit loop creation for synchronous callers."""
+
+    def get_event_loop(self) -> asyncio.AbstractEventLoop:
+        try:
+            return super().get_event_loop()
+        except RuntimeError as exc:
+            if "There is no current event loop" not in str(exc):
+                raise
+            loop = self.new_event_loop()
+            self.set_event_loop(loop)
+            return loop
+
+
+def _install_event_loop_compat() -> None:
+    """Restore implicit main-thread event loop creation for legacy call sites."""
+    policy = asyncio.get_event_loop_policy()
+    if isinstance(policy, _CompatEventLoopPolicy):
+        return
+    asyncio.set_event_loop_policy(_CompatEventLoopPolicy())
+
+
+_install_event_loop_compat()
+
+
+def _register_workspace_src_roots() -> None:
+    """Expose local workspace package source roots for compatibility imports."""
+    repo_root = Path(__file__).resolve().parents[2]
+    candidate_roots = [
+        repo_root / "packages" / "thegent-observability" / "src",
+        repo_root / "packages" / "thegent-bench" / "src",
+        repo_root / "packages" / "thegent-platform" / "src",
+        repo_root / "packages" / "thegent-agents" / "src",
+        repo_root / "packages" / "thegent-core" / "src",
+        repo_root / "packages" / "thegent-execution" / "src",
+        repo_root / "packages" / "thegent-routing" / "src",
+        repo_root / "packages" / "thegent-planning" / "src",
+        repo_root / "packages" / "thegent-sync" / "src",
+        repo_root / "packages" / "thegent-skills" / "src",
+        repo_root / "packages" / "thegent-protocols" / "src",
+        repo_root / "packages" / "thegent-mcp" / "src",
+        repo_root / "packages" / "thegent-audit" / "src",
+    ]
+    for root in candidate_roots:
+        root_str = str(root)
+        if root.is_dir() and root_str not in sys.path:
+            sys.path.insert(0, root_str)
+
+
+_register_workspace_src_roots()
+
 # ---------------------------------------------------------------------------
 # Compatibility shim — re-exports from uv workspace packages
 #
@@ -72,6 +126,8 @@ __version__ = "0.1.0"
 
 def __getattr__(name: str):  # noqa: ANN001, ANN202
     """Lazy re-export from workspace sub-packages (PEP 562)."""
+    import importlib
+
     _workspace_map = {
         # thegent-core
         "models": "thegent_core.models",
@@ -105,8 +161,12 @@ def __getattr__(name: str):  # noqa: ANN001, ANN202
         "tray": "thegent_platform.tray",
     }
     if name in _workspace_map:
-        import importlib
         return importlib.import_module(_workspace_map[name])
+    try:
+        return importlib.import_module(f"{__name__}.{name}")
+    except ModuleNotFoundError as exc:
+        if exc.name != f"{__name__}.{name}":
+            raise
     raise AttributeError(f"module 'thegent' has no attribute {name!r}")
 
 
@@ -157,8 +217,9 @@ def _register_subpackage_aliases() -> None:
                         suffix = key[len(prefix):]
                         child_alias = alias + "." + suffix
                         sys.modules.setdefault(child_alias, child)
-            except ImportError:
-                # Workspace package not installed in this environment — skip.
+            except Exception:
+                # Workspace package not importable in this environment or has
+                # import-time side effects that rely on optional settings.
                 pass
 
 

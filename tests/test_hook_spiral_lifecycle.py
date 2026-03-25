@@ -72,7 +72,7 @@ def _write_attestation(path: Path) -> None:
         },
         "security": {"signed_attestation_present": True, "slsa_provenance_present": True},
     }
-    path.write_text(json.dumps(attestation).decode().decode() + "\n", encoding="utf-8")
+    path.write_text(json.dumps(attestation).decode() + "\n", encoding="utf-8")
 
 
 def _run_once(
@@ -100,7 +100,7 @@ def _run_once(
     if async_results_payload is None:
         async_path.unlink(missing_ok=True)
     else:
-        async_path.write_text(json.dumps(async_results_payload).decode().decode() + "\n", encoding="utf-8")
+        async_path.write_text(json.dumps(async_results_payload).decode() + "\n", encoding="utf-8")
 
     if qa_state_present:
         qa_state_path.write_text("{}", encoding="utf-8")
@@ -236,7 +236,7 @@ def test_spiral_lifecycle_green_yellow_red_then_cooldown_recovery(tmp_path: Path
     state3["cooldown_until"] = int(time.time()) - 1
     state3["band_retry_counts"]["yellow"] = 5
     state3["band_retry_counts"]["red"] = 4
-    (verify_dir / "regression-spiral-state.json").write_text(json.dumps(state3).decode().decode() + "\n", encoding="utf-8")
+    (verify_dir / "regression-spiral-state.json").write_text(json.dumps(state3).decode() + "\n", encoding="utf-8")
 
     run4 = _run_once(
         paths,

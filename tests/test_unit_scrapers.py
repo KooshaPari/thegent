@@ -376,7 +376,7 @@ class TestScrapeProxy:
     @patch(f"{MODULE}.urllib.request.Request")
     def test_scrape_proxy_models_parses_response(self, mock_req_cls: MagicMock, mock_urlopen: MagicMock) -> None:
         # @trace FR-MOD-026
-        body = json.dumps({"data": [{"id": "gemini-3-flash"}, {"id": "claude-sonnet-4.5"}]}).decode().decode()
+        body = json.dumps({"data": [{"id": "gemini-3-flash"}, {"id": "claude-sonnet-4.5"}]}).decode()
         mock_resp = MagicMock()
         mock_resp.read.return_value = body.encode()
         mock_resp.__enter__ = MagicMock(return_value=mock_resp)
@@ -445,7 +445,7 @@ class TestScrapeCursorApi:
     @patch(f"{MODULE}.urllib.request.Request")
     def test_fetches_models_with_token(self, mock_req_cls: MagicMock, mock_urlopen: MagicMock) -> None:
         # @trace FR-MOD-030
-        body = json.dumps({"data": [{"id": "claude-4.5-opus-high-thinking"}, {"id": "gpt-5.1-codex"}]}).decode().decode()
+        body = json.dumps({"data": [{"id": "claude-4.5-opus-high-thinking"}, {"id": "gpt-5.1-codex"}]}).decode()
         mock_resp = MagicMock()
         mock_resp.read.return_value = body.encode()
         mock_resp.__enter__ = MagicMock(return_value=mock_resp)
@@ -461,7 +461,7 @@ class TestScrapeCursorApi:
     @patch(f"{MODULE}.urllib.request.Request")
     def test_skips_non_string_ids(self, mock_req_cls: MagicMock, mock_urlopen: MagicMock) -> None:
         # @trace FR-MOD-001
-        body = json.dumps({"data": [{"id": 123}, {"id": None}, {"id": "valid-model"}]}).decode().decode()
+        body = json.dumps({"data": [{"id": 123}, {"id": None}, {"id": "valid-model"}]}).decode()
         mock_resp = MagicMock()
         mock_resp.read.return_value = body.encode()
         mock_resp.__enter__ = MagicMock(return_value=mock_resp)
@@ -531,7 +531,7 @@ class TestScrapeAnte:
         }
 
         with patch("builtins.open", create=True) as mock_open:
-            mock_open.return_value.__enter__.return_value.read.return_value = json.dumps(settings_data).decode().decode()
+            mock_open.return_value.__enter__.return_value.read.return_value = json.dumps(settings_data).decode()
             from thegent.models.scrapers import scrape_ante
 
             result = scrape_ante()

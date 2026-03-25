@@ -53,7 +53,7 @@ def test_ec002_ledger_hash_chain(ledger):
     # Tamper with first line payload
     entry = json.loads(lines[0])
     entry["payload"]["data"] = 999
-    lines[0] = json.dumps(entry).decode().decode() + "\n"
+    lines[0] = json.dumps(entry).decode() + "\n"
 
     with open(ledger.ledger_path, "w") as f:
         f.writelines(lines)

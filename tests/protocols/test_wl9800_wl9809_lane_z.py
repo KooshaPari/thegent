@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]
@@ -156,7 +156,7 @@ def test_wl9809_notification_grant_executes_side_effects_without_response() -> N
     session_id = _start_session()
     turn_id, approval_id = _submit_turn(session_id)
     grant_response, notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "method": "approval/grant", "params": {"approval_id": approval_id}}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "method": "approval/grant", "params": {"approval_id": approval_id}}).decode()
     )
     assert grant_response is None
     assert len(notifications) >= 3

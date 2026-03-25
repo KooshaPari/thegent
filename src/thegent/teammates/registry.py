@@ -7,7 +7,6 @@ Auto-discovers and manages available teammates from agents/ directory.
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import os
 
 
 @dataclass

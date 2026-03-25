@@ -47,7 +47,19 @@ When layers conflict, higher precedence wins. Project docs should extend global 
 Bootstrap + shell dotfile management installs helper tooling:
 
 ```bash
-thg_new_worktree <branch> [start-point] [worktree-path]
+thg_new_worktree <domain> <scale> <change-anchor> [start-point]
+```
+
+For CLI-driven workflows, prefer:
+
+```bash
+thegent worktree new <domain> <scale> <change-anchor> [start-point]
+thegent worktree state <change-anchor> <new-state>
+thegent worktree list
+thegent worktree prune [--dry-run]
+thegent worktree check
+thegent help worktree
+thegent help git
 ```
 
 ---
@@ -239,11 +251,11 @@ See: `docs/research/PROACTIVE_GOVERNANCE_EVOLUTION_PLAN.md`
 | Heavy Web Research | DuckDuckGo (`ddgr`) |
 | Find code patterns | `Explore` agent |
 | Design approach | `Plan` agent |
-| Multi-step implementation | `thegent free` or `thegent bg` |
-| Work stream integration | `thegent free --do-next` |
-| Continuous autonomous work | `thegent plan loop` |
-| Background execution | `thegent bg` |
-| Idle waiting | `thegent plan wait-next` |
+| Multi-step implementation | `thegent run free` or `thegent run agent` |
+| Work stream integration | `thegent plan next` |
+| Continuous autonomous work | `thegent run agent "Task" --loop` |
+| Background execution | `thegent run agent "Task" --bg` |
+| Idle waiting | `thegent plan next` |
 
 ## Anti-Patterns
 
@@ -259,11 +271,11 @@ See: `docs/research/PROACTIVE_GOVERNANCE_EVOLUTION_PLAN.md`
 
 ## Idle / Session Continuity
 
-**CRITICAL**: When idle, ALWAYS check backlog with `thegent plan do-next` and work on items DIRECTLY. Never terminate the session while work exists.
+**CRITICAL**: When idle, ALWAYS check backlog with `thegent plan next` and work on items DIRECTLY. Never terminate the session while work exists.
 
 ```bash
-thegent plan wait-next --timeout 0 --poll 10  # Block until work arrives
-thegent plan loop --max 1000 --sleep 30        # Continuous work loop
+thegent plan next                              # Claim the next work item
+thegent run agent "Task" --loop                # Continuous work loop
 thegent wait <session_id> --timeout 300        # Wait for specific agent
 ```
 
@@ -291,15 +303,14 @@ See: `~/.claude/docs/friction-reduction.md` for full helpers, detection patterns
 
 | Task | Command |
 |------|---------|
-| Default agent task | `thegent free "Task"` |
-| Work stream next item | `thegent free --do-next` |
-| Run N items sequentially | `thegent free --do-next --repeat N` |
-| Background execution | `thegent free "Task" --bg` |
-| Continuous loop | `thegent plan loop` |
-| Idle wait | `thegent plan wait-next` |
-| Model-specific | `thegent run "Task" -M claude-sonnet-4.5` |
-| Cost-optimized | `thegent run "Task" -M gemini-3-flash -R cheapest` |
-| Continue prior session | `thegent bg "Task" -C <session_id>` |
+| Default agent task | `thegent run free "Task"` |
+| Agent task | `thegent run agent "Task"` |
+| Work stream next item | `thegent plan next` |
+| Background execution | `thegent run agent "Task" --bg` |
+| Continuous loop | `thegent run agent "Task" --loop` |
+| Model-specific | `thegent run free "Task" --model claude-sonnet-4.5` |
+| Cost-optimized | `thegent run free "Task" --model gemini-3-flash --routing cheapest` |
+| Continue prior session | `thegent status <session_id>` / `thegent wait <session_id>` |
 | Session mgmt | `thegent ps` / `thegent status <id>` / `thegent wait <id>` |
 | Role-based | `thegent research/review/fix/code/explain/summarize "..."` |
 
@@ -321,9 +332,9 @@ See: `~/.claude/docs/friction-reduction.md` for full helpers, detection patterns
 
 ## Anti-Patterns
 
-- **Don't** use busy loops → use `plan wait-next` or `wait <id>`
-- **Don't** use bash wrappers for loops → use native `--repeat`, `--do-next`, `plan loop`
-- **Don't** hardcode agents → use `free` as default, override when needed
+- **Don't** use busy loops → use `plan next` or `wait <id>`
+- **Don't** use bash wrappers for loops → use native `--loop` or `plan next`
+- **Don't** hardcode agents → use `run free` as default, override when needed
 - **Don't** `ls -l` in project root → use `fd` or subdirectories
 
 ---
@@ -414,7 +425,7 @@ Prefer native services over Docker for local dev. Prefer local, OSS, and free to
 
 # Plugin Ecosystem Awareness
 
-BMAD, OpenSpec, GSD plugins may be available as slash commands. Check `/` for documentation workflows. If BMAD agents installed (`.claude/commands/bmad/`), activate via slash commands. Start new conversation to switch agent personas.
+BMAD, AgilePlus, GSD plugins may be available as slash commands. Check `/` for documentation workflows. If BMAD agents installed (`.claude/commands/bmad/`), activate via slash commands. Start new conversation to switch agent personas.
 
 ---
 
@@ -599,12 +610,11 @@ Canonical: `docs/reference/WORK_STREAM.md`. Claim before starting → mark COMPL
 
 | Command | Purpose |
 |---------|---------|
-| `thegent plan loop` | Continuous work loop (RECOMMENDED) |
+| `thegent run agent "Task" --loop` | Continuous work loop (RECOMMENDED) |
 | `thegent orchestrate loop "prompt" "todo"` | Worker + checker lifecycle loop |
-| `thegent bg "Task" -C <session_id>` | Continue from prior session |
 | `thegent_loop_takeover` (MCP) | Agent injects prompt into running loop |
 
-**Ports:** MCP 3847, proxy 8317. Debug: `thegent run --debug` sets `THGENT_DEBUG=1`.
+**Ports:** MCP 3847, proxy 8317. Debug: set `THGENT_DEBUG=1` before invoking thegent commands.
 
 ---
 
@@ -785,3 +795,47 @@ Search within `docs/context/INDEX.md` and linked docs; use Ctrl+F to navigate.
 - Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
 - Document architectural and protocol decisions before broad rollout changes.
 
+## CI Completeness Policy
+
+- Always evaluate and fix ALL CI check failures on a PR, including pre-existing failures inherited from main.
+- Never dismiss a CI failure as "pre-existing" or "unrelated to our changes" — if it fails on the PR, fix it in the PR.
+- This includes: build, lint, test, docs build, security scanning (CodeQL), code review gates (CodeRabbit), workflow guard checks, and any other CI jobs.
+- When a failure is caused by infrastructure outside the branch (e.g., rate limits, external service outages), implement or improve automated retry/bypass mechanisms in CI workflows.
+- After fixing CI failures, verify locally where possible (build, vet, tests) before pushing.
+
+## Phenotype Git and Delivery Workflow Protocol <!-- PHENOTYPE_GIT_DELIVERY_PROTOCOL -->
+
+- Use branch-based delivery with pull requests; do not rely on direct default-branch writes where rulesets apply.
+- Prefer stacked PRs for multi-part changes so each PR is small, reviewable, and independently mergeable.
+- Keep PRs linear and scoped: one concern per PR, explicit dependency order for stacks, and clear migration steps.
+- Enforce CI and required checks strictly: do not merge until all required checks and policy gates are green.
+- Resolve all review threads and substantive PR comments before merge; do not leave unresolved reviewer feedback.
+- Follow repository coding standards and best practices (typing, tests, lint, docs, security) before requesting merge.
+- Rebase or restack to keep branches current with target branch and to avoid stale/conflicting stacks.
+- When a ruleset or merge policy blocks progress, surface the blocker explicitly and adapt the plan (for example: open PR path, restack, or split changes).
+
+## Phenotype Org Cross-Project Reuse Protocol <!-- PHENOTYPE_SHARED_REUSE_PROTOCOL -->
+
+- Treat this repository as part of the broader Phenotype organization project collection, not an isolated codebase.
+- During research and implementation, actively identify code that is sharable, modularizable, splittable, or decomposable for reuse across repositories.
+- When reusable logic is found, prefer extraction into existing shared modules/projects first; if none fit, propose creating a new shared module/project.
+- Include a `Cross-Project Reuse Opportunities` section in plans with candidate code, target shared location, impacted repos, and migration order.
+- For cross-repo moves or ownership-impacting extractions, ask the user for confirmation on destination and rollout, then bake that into the execution plan.
+- Execute forward-only migrations: extract shared code, update all callers, and remove duplicated local implementations.
+
+## Phenotype Long-Term Stability and Non-Destructive Change Protocol <!-- PHENOTYPE_LONGTERM_STABILITY_PROTOCOL -->
+
+- Optimize for long-term platform value over short-term convenience; choose durable solutions even when implementation complexity is higher.
+- Classify proposed changes as `quick_fix` or `stable_solution`; prefer `stable_solution` unless an incident response explicitly requires a temporary fix.
+- Do not use deletions/reversions as the default strategy; prefer targeted edits, forward fixes, and incremental hardening.
+- Prefer moving obsolete or superseded material into `.archive/` over destructive removal when retention is operationally useful.
+- Prefer clean manual merges, explicit conflict resolution, and auditable history over forceful rewrites, force merges, or history-destructive workflows.
+- Prefer completing unused stubs into production-quality implementations when they represent intended product direction; avoid leaving stubs ignored indefinitely.
+- Do not merge any PR while any check is failing, including non-required checks, unless the user gives explicit exception approval.
+- When proposing a quick fix, include a scheduled follow-up path to a stable solution in the same plan.
+
+## Worktree Discipline
+
+- Feature work goes in `.worktrees/<topic>/`
+- Legacy `PROJECT-wtrees/` and `repo-wtrees/` roots are for migration only and must not receive new work.
+- Canonical repository remains on `main` for final integration and verification.

@@ -36,6 +36,7 @@ from .resilience import (
     FreshnessValidator,
     HandoffManager,
     InterruptionTracker,
+    OverrideRegistry,
     ReplayManager,
 )
 from .concurrency import (
@@ -48,7 +49,6 @@ from .policy import (
     Auditor,
     EvidenceLinter,
     KPIManager,
-    OverrideRegistry,
     PolicyEngine,
     ProviderScorer,
     TrustBoundaryValidator,

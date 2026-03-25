@@ -346,9 +346,9 @@ class ResourcePredictionEngine:
                     "leak_severity": leak_metrics.leak_severity,
                 }
 
-            with open(self.history_file, "a") as f:
-                json.dump(snapshot_dict, f)
-                f.write("\n")
+            with open(self.history_file, "ab") as f:
+                f.write(json.dumps(snapshot_dict))
+                f.write(b"\n")
         except Exception as e:
             _log.warning("Failed to save resource snapshot: %s", e)
 

@@ -1,14 +1,19 @@
 """Doctor module for comprehensive health and preflight checks of thegent environment."""
 
 # Backward compatibility - import from new submodule
+from __future__ import annotations
 
 import re
 import subprocess
 from pathlib import Path
 
+from rich.console import Console
 
 from thegent.doctor_models import CheckResult
 from thegent.infra import run_subprocess_optimized
+
+console = Console()
+_project_root_cache: Path | None = None
 
 
 
@@ -282,3 +287,7 @@ def _display_fix_report(fix_report: list[dict], dry_run: bool = False) -> None:
         console.print(f"[bold]Summary:[/bold] {', '.join(summary_parts)}")
 
 
+_FIX_EXPORTS = (
+    _apply_fixes,
+    _display_fix_report,
+)

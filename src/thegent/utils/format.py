@@ -46,11 +46,12 @@ def format_bytes(size: int) -> str:
     Args:
         size: Size in bytes
     """
+    size_value = float(size)
     for unit in ["B", "KB", "MB", "GB", "TB"]:
-        if size < 1024:
-            return f"{size:.1f}{unit}"
-        size /= 1024
-    return f"{size:.1f}PB"
+        if size_value < 1024:
+            return f"{size_value:.1f}{unit}"
+        size_value /= 1024
+    return f"{size_value:.1f}PB"
 
 
 def format_number(n: int) -> str:

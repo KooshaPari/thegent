@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::process::Command;
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::prelude::*;
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 use pyo3::types::PyModule;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "python", pyclass)]
+#[cfg_attr(all(feature = "python", not(test), not(debug_assertions)), pyclass)]
 pub struct DiscoveredAgent {
     pub pid: u32,
     pub ppid: u32,
@@ -21,7 +21,7 @@ pub struct DiscoveredAgent {
     pub cpu_usage: f32,
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pymethods]
 impl DiscoveredAgent {
     #[getter]
@@ -82,7 +82,7 @@ impl DiscoveryManager {
 
         // Get all process info from ps in one call
         let ps_output = Command::new("ps")
-            .args(&["ax", "-o", "pid,ppid,comm,command,rss,cputime"])
+            .args(["ax", "-o", "pid,ppid,comm,command,rss,cputime"])
             .output()
             .expect("Failed to run ps");
 
@@ -177,7 +177,7 @@ impl DiscoveryManager {
 
     fn get_cwd_for_pid(pid: u32) -> Option<String> {
         let lsof_output = Command::new("lsof")
-            .args(&["-p", &pid.to_string(), "-d", "cwd", "-t"])
+            .args(["-p", &pid.to_string(), "-d", "cwd", "-t"])
             .output();
 
         if let Ok(output) = lsof_output {
@@ -196,7 +196,7 @@ impl DiscoveryManager {
 
         // Get CPU count
         let sysctl_output = Command::new("sysctl")
-            .args(&["hw.ncpu", "hw.memsize"])
+            .args(["hw.ncpu", "hw.memsize"])
             .output();
 
         if let Ok(output) = sysctl_output {
@@ -227,13 +227,19 @@ impl DiscoveryManager {
     }
 }
 
-#[cfg(feature = "python")]
+impl Default for DiscoveryManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pyclass]
 struct PyDiscoveryManager {
     manager: DiscoveryManager,
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pymethods]
 impl PyDiscoveryManager {
     #[new]
@@ -252,7 +258,7 @@ impl PyDiscoveryManager {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 #[pymodule]
 fn thegent_discovery(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyDiscoveryManager>()?;

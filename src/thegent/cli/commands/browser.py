@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import os
 from thegent.infra.shim_subprocess import run as shim_run
 from datetime import UTC, datetime
@@ -59,7 +59,7 @@ def _load_journeys() -> list[dict[str, Any]]:
 def _save_journeys(journeys: list[dict[str, Any]]) -> None:
     path = _journeys_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(journeys, indent=2, option=json.OPT_SORT_KEYS).decode() + "\n", encoding="utf-8")
+    path.write_text(json.dumps(journeys, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def _launcher_script_content() -> str:

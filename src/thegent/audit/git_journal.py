@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ class GitJournal:
         
         # Write to file
         entry_file = self._entries_dir / f"{entry.id}.json"
-        import orjson as json
+        import json
         entry_file.write_text(json.dumps(entry.to_dict(), indent=2))
         
         return entry
