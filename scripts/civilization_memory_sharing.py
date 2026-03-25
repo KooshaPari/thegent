@@ -103,7 +103,7 @@ class MemorySharingService:
     def get_transfer_history(self, agent_id: str, as_source: bool = True) -> list:
         """Get transfer records. as_source=True: transfers FROM agent. as_source=False: transfers TO agent."""
         col = "source_agent_id" if as_source else "target_agent_id"
-        cursor = self._conn.execute(
+        cursor = self._conn.execute(  # noqa: S608
             f"SELECT * FROM learning_transfers WHERE {col}=? ORDER BY transfer_timestamp DESC", (agent_id,)
         )
         rows = cursor.fetchall()

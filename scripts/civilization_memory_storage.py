@@ -289,7 +289,7 @@ class SQLiteMemoryStorage(MemoryStorage):
                 return []
 
             placeholders = ",".join("?" * len(keywords))
-            cursor.execute(
+            cursor.execute(  # noqa: S608
                 f"""
                 SELECT DISTINCT memory_id FROM memory_index
                 WHERE keyword IN ({placeholders})
@@ -305,7 +305,7 @@ class SQLiteMemoryStorage(MemoryStorage):
                 return []
 
             placeholders = ",".join("?" * len(memory_ids))
-            cursor.execute(
+            cursor.execute(  # noqa: S608
                 f"""
                 SELECT * FROM memories
                 WHERE id IN ({placeholders})
@@ -423,7 +423,7 @@ class SQLiteMemoryStorage(MemoryStorage):
 
             if memory_ids:
                 placeholders = ",".join("?" * len(memory_ids))
-                cursor.execute(f"DELETE FROM memory_index WHERE memory_id IN ({placeholders})", memory_ids)
+                cursor.execute(f"DELETE FROM memory_index WHERE memory_id IN ({placeholders})", memory_ids)  # noqa: S608
                 cursor.execute(
                     "DELETE FROM memories WHERE agent_id = ? AND timestamp < ?",
                     (agent_id, cutoff_time),
@@ -451,7 +451,7 @@ class SQLiteMemoryStorage(MemoryStorage):
 
             if memory_ids:
                 placeholders = ",".join("?" * len(memory_ids))
-                cursor.execute(f"DELETE FROM memory_index WHERE memory_id IN ({placeholders})", memory_ids)
+                cursor.execute(f"DELETE FROM memory_index WHERE memory_id IN ({placeholders})", memory_ids)  # noqa: S608
                 cursor.execute("DELETE FROM memories WHERE agent_id = ?", (agent_id,))
 
             conn.commit()
@@ -581,7 +581,7 @@ class SQLiteMemoryStorage(MemoryStorage):
 
             # Get all relationships where both ends belong to this agent
             placeholders = ",".join("?" * len(memory_ids))
-            cursor.execute(
+            cursor.execute(  # noqa: S608
                 f"""
                 SELECT memory_id_1, memory_id_2, strength, relationship_type
                 FROM memory_relationships

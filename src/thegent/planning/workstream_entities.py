@@ -157,14 +157,14 @@ def _read_existing(
         if not all(column in criteria for column in spec.pk_columns):
             return None
         where_clause = " AND ".join(f"{_quote(column)} = ?" for column in spec.pk_columns)
-        cursor.execute(
+        cursor.execute(  # noqa: S608
             f"SELECT * FROM {_quote(spec.table)} WHERE {where_clause} LIMIT 1",
             [criteria[column] for column in spec.pk_columns],
         )
         row = cursor.fetchone()
         return _row_to_dict(row) if row else None
     if entity_id:
-        cursor.execute(f"SELECT * FROM {_quote(spec.table)} LIMIT 1")
+        cursor.execute(f"SELECT * FROM {_quote(spec.table)} LIMIT 1")  # noqa: S608
         row = cursor.fetchone()
         return _row_to_dict(row) if row else None
     return None
@@ -209,7 +209,7 @@ def list_entities(
         order_clause = ", ".join(f"{_quote(column)}" for column in order_candidates) if order_candidates else '"rowid"'
         rows = [
             dict(row)
-            for row in conn.execute(
+            for row in conn.execute(  # noqa: S608
                 f"SELECT * FROM {_quote(table)} ORDER BY {order_clause} LIMIT ? OFFSET ?",
                 (limit, offset),
             ).fetchall()
@@ -265,7 +265,7 @@ def search_entities(
         pattern = f"%{query.lower()}%"
         rows = [
             dict(row)
-            for row in conn.execute(
+            for row in conn.execute(  # noqa: S608
                 f"SELECT * FROM {_quote(table)} WHERE {clause} LIMIT ?",
                 (*([pattern] * len(text_columns)), limit),
             ).fetchall()
@@ -319,14 +319,14 @@ def upsert_entity(
         if spec.pk_columns and all(merged.get(column) is not None for column in spec.pk_columns):
             update_columns = [column for column in insert_columns if column not in spec.pk_columns]
             update_clause = ", ".join(f"{_quote(column)} = excluded.{column}" for column in update_columns)
-            sql = f"INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})"
+            sql = f"INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})"  # noqa: S608
             if update_clause:
                 sql += f" ON CONFLICT({pk_clause}) DO UPDATE SET {update_clause}"
             else:
                 sql += f" ON CONFLICT({pk_clause}) DO NOTHING"
-            conn.execute(sql, values)
+            conn.execute(sql, values)  # noqa: S608
         else:
-            conn.execute(
+            conn.execute(  # noqa: S608
                 f"INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})",
                 values,
             )
@@ -365,7 +365,7 @@ def delete_entity(
         if not all(criteria.get(column) for column in spec.pk_columns):
             raise ValueError(f"Unable to resolve delete key for {table}")
         where_clause = " AND ".join(f"{_quote(column)} = ?" for column in spec.pk_columns)
-        cursor = conn.execute(
+        cursor = conn.execute(  # noqa: S608
             f"DELETE FROM {_quote(table)} WHERE {where_clause}",
             [criteria[column] for column in spec.pk_columns],
         )
