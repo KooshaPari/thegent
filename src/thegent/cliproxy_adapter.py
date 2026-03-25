@@ -97,7 +97,7 @@ def _transform_models_response(content: bytes | memoryview, *, inject_openrouter
         compact_models = [{"id": model.get("id")} for model in models if isinstance(model, dict) and model.get("id")]
         compact_body = json.dumps({"models": compact_models}).decode().encode()
         return _LegacyModelsTransformResult(compact_body, full_body, etag)
-    except TypeError, json.JSONDecodeError:
+    except (TypeError, json.JSONDecodeError):
         return None
 
 
@@ -850,7 +850,7 @@ async def _proxy_stream(
             model = data.get("model", model)
             transformed = _responses_to_chat_completions(data)
             body = json.dumps(transformed).decode().encode()
-        except json.JSONDecodeError, KeyError:
+        except (json.JSONDecodeError, KeyError):
             pass
         url = f"{backend_url.rstrip('/')}/chat/completions"
     else:
@@ -909,7 +909,7 @@ async def _proxy_stream(
                                 break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
-                            except json.JSONDecodeError, UnicodeDecodeError:
+                            except (json.JSONDecodeError, UnicodeDecodeError):
                                 continue
                             # GW-09 / OR-12: capture actual routed model from SSE chunk
                             chunk_model = obj.get("model")
@@ -1178,7 +1178,7 @@ async def websocket_responses_handler(websocket: Any) -> None:
                                 break
                             try:
                                 obj = json.loads(data_part.decode(errors="replace"))
-                            except json.JSONDecodeError, UnicodeDecodeError:
+                            except (json.JSONDecodeError, UnicodeDecodeError):
                                 continue
                             # GW-09: capture actual routed model from SSE chunk
                             chunk_model = obj.get("model")

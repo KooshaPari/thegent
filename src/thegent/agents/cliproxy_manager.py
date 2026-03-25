@@ -210,7 +210,7 @@ def _get_factory_api_key(provider: str) -> tuple[str | None, str]:
             continue
         try:
             data = json.loads(path.read_text())
-        except json.JSONDecodeError, OSError:
+        except (json.JSONDecodeError, OSError):
             continue
         models_key = "custom_models" if name == "config.json" else "customModels"
         entries = data.get(models_key) if isinstance(data, dict) else []
@@ -824,7 +824,7 @@ def kill_proxy(settings: ThegentSettings) -> bool:
         for pid in pids:
             run_subprocess_optimized(["kill", "-9", pid], capture_output=True, timeout=2, check=False)
         return bool(pids)
-    except subprocess.TimeoutExpired, FileNotFoundError, OSError:
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         return False
 
 

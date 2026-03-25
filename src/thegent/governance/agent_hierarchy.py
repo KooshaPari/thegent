@@ -209,7 +209,7 @@ class AgentHierarchyManager:
             try:
                 data = json.loads(agents_file.read_text())
                 self._agents = {run_id: AgentNode.from_dict(node_data) for run_id, node_data in data.items()}
-            except json.JSONDecodeError, KeyError, ValueError:
+            except (json.JSONDecodeError, KeyError, ValueError):
                 self._agents = {}
 
         # Load relationships
@@ -220,7 +220,7 @@ class AgentHierarchyManager:
                 self._relationships = {
                     rel_id: AgentRelationship.from_dict(rel_data) for rel_id, rel_data in data.items()
                 }
-            except json.JSONDecodeError, KeyError, ValueError:
+            except (json.JSONDecodeError, KeyError, ValueError):
                 self._relationships = {}
 
         # Load teams
@@ -229,7 +229,7 @@ class AgentHierarchyManager:
             try:
                 data = json.loads(teams_file.read_text())
                 self._teams = {team_id: AgentTeam.from_dict(team_data) for team_id, team_data in data.items()}
-            except json.JSONDecodeError, KeyError, ValueError:
+            except (json.JSONDecodeError, KeyError, ValueError):
                 self._teams = {}
 
     def _save(self) -> None:
