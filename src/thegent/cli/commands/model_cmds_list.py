@@ -3,23 +3,13 @@
 # @trace WL-124
 from __future__ import annotations
 
-import json
-from thegent.utils.json_utils import json_loads, json_dumps
-import re
-import os
-import shutil
-import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import typer
 
-from rich.table import Table
-
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
-    _bootstrap_metric_contracts,
-    _get_run_subprocess_optimized,
     _normalize_output_format,
     _resolve_cwd,
     _resolve_droids_dir,
@@ -43,285 +33,18 @@ from thegent.cli.commands.model_cmds_metrics_helpers import (
     emit_metrics_output,
     flatten_cost_values,
 )
-from thegent.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
-from thegent.cli.commands.model_cmds_setup_helpers import (
-    build_provider_list,
-    configure_providers,
-    set_env_line,
-)
-
-
-from thegent.cli.commands.model_cmds_catalog_helpers import (
-    emit_by_model_view,
-    emit_contract_view,
-    provider_sequence,
-    run_provider_listings,
-)
-from thegent.cli.commands.model_cmds_metrics_helpers import (
-    build_index_data,
-    collect_metrics_rows,
-    emit_cost_values_output,
-    emit_index_output,
-    emit_metrics_output,
-    flatten_cost_values,
+from thegent.cli.commands.model_cmds_rules import (
+    _list_antigravity_models,
+    _list_claude_models,
+    _list_codex_models,
+    _list_copilot_models,
+    _list_cursor_api_models,
+    _list_gemini_models,
+    _list_glm_models,
+    _list_kiro_models,
+    _list_minimax_models,
 )
 from thegent.cli.commands.model_cmds_route_helpers import build_available_routes, build_resolved_route
-
-
-def _assert_str(value: str | None) -> str:
-    """Assert yaml.dump returned str (always true when stream=None)."""
-    assert value is not None, "yaml.dump returned None unexpectedly"
-    return value
-
-
-_CLIPROXYCTL_SCHEMA_VERSION = "cliproxyctl.machine.v1"
-_HELIOS_CLIPROXYCTL_REPO = "github.com/kooshapari/cliproxyapi-plusplus"
-_HELIOS_CLIPROXYCTL_PACKAGE = f"{_HELIOS_CLIPROXYCTL_REPO}/v6/cmd/server@latest"
-_HELIOS_CLIPROXYCTL_LOCAL_REPO = "cliproxyapi-plusplus"
-_HELIOS_CLIPROXYCTL_LOCAL_BINARY = "cli-proxy-api-plus"
-_CLIPROXYCTL_NOT_FOUND_MSG = (
-    "cliproxyctl not found. Auto-install via go is attempted when possible. "
-    "Install Go or set THGENT_CLIPROXYCTL_BINARY=/path/to/cliproxyctl if needed. "
-    f"Expected package: `go install {_HELIOS_CLIPROXYCTL_PACKAGE}`"
-)
-
-
-def _resolve_cliproxyctl_binary() -> str:
-    """Resolve cliproxyctl binary path from env, PATH, or Go install locations."""
-    configured = os.environ.get("THGENT_CLIPROXYCTL_BINARY", "cliproxyctl").strip() or "cliproxyctl"
-    if "/" in configured or "~" in configured:
-        return str(Path(configured).expanduser())
-    found = shutil.which(configured)
-    if found:
-        return found
-
-    go_paths = []
-    go_bin = _resolve_go_env("GOBIN")
-    if go_bin:
-        go_paths.append(Path(go_bin))
-    gopath = _resolve_go_env("GOPATH")
-    if gopath:
-        go_paths.append(Path(gopath) / "bin")
-    go_paths.append(Path(os.path.expanduser("~/go/bin")))
-
-    # Common Go install locations if PATH is not yet wired.
-    go_fallback_candidates = ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server")
-    for base in go_paths:
-        if not base:
-            continue
-        for name in go_fallback_candidates:
-            candidate = base / name
-            if candidate.exists():
-                return str(candidate)
-    return configured
-
-
-def _resolve_cliproxyctl_local_paths() -> list[Path]:
-    """Return likely local checkout paths for cliproxyctl."""
-    configured = os.environ.get("THGENT_CLIPROXYCTL_REPO_PATH", "").strip()
-    candidates: list[Path] = []
-    if configured:
-        candidates.append(Path(configured).expanduser())
-
-    script_dir = Path(__file__).resolve().parent
-    for ancestor in script_dir.parents:
-        if ancestor.name == "repos":
-            candidates.append(ancestor / _HELIOS_CLIPROXYCTL_LOCAL_REPO)
-            break
-    candidates.extend(
-        (
-            Path.cwd(),
-            Path.cwd().parent,
-            Path.cwd() / _HELIOS_CLIPROXYCTL_LOCAL_REPO,
-            Path.home() / "CodeProjects" / "Phenotype" / "repos" / _HELIOS_CLIPROXYCTL_LOCAL_REPO,
-        )
-    )
-    return [path.expanduser() for path in candidates if str(path).strip()]
-
-
-def _build_cliproxyctl_from_local_repo() -> str:
-    """Build cliproxyctl from a local source checkout and return output binary path."""
-    run_subprocess_optimized = _get_run_subprocess_optimized()
-    seen: set[Path] = set()
-    for repo_path in _resolve_cliproxyctl_local_paths():
-        repo_path = repo_path.expanduser()
-        cmd_dir = repo_path / "cmd" / "server"
-        if not cmd_dir.is_dir():
-            continue
-        if repo_path in seen:
-            continue
-        seen.add(repo_path)
-        binary_path = repo_path / _HELIOS_CLIPROXYCTL_LOCAL_BINARY
-        proc = run_subprocess_optimized(
-            [shutil.which("go") or "go", "build", "-o", str(binary_path), "./cmd/server"],
-            check=False,
-            capture_output=True,
-            text=True,
-            cwd=repo_path,
-        )
-        if proc.returncode != 0:
-            stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
-            stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
-            detail = stderr_text.strip() or stdout_text.strip() or "go build failed"
-            raise RuntimeError(f"Auto-install cliproxyctl failed from local checkout {repo_path}: {detail}")
-        if binary_path.exists():
-            return str(binary_path)
-    raise FileNotFoundError("Could not find local cliproxyctl source tree to build")
-
-
-def _resolve_go_env(name: str) -> str:
-    """Return `go env <name>` output if available."""
-    run_subprocess_optimized = _get_run_subprocess_optimized()
-    proc = run_subprocess_optimized(["go", "env", name], check=False, capture_output=True, text=True)
-    if proc.returncode != 0:
-        return ""
-    return _coerce_subprocess_output(getattr(proc, "stdout", "")).strip()
-
-
-def _install_cliproxyctl() -> str:
-    """Install cliproxyctl with go install and return discovered binary path."""
-    configured = os.environ.get("THGENT_CLIPROXYCTL_BINARY", "").strip()
-    if configured and ("/" in configured or "~" in configured):
-        return configured
-
-    go_bin = shutil.which("go")
-    if not go_bin:
-        raise FileNotFoundError("go not found. Install Go or set THGENT_CLIPROXYCTL_BINARY=/path/to/cliproxyctl")
-
-    try:
-        run_subprocess_optimized = _get_run_subprocess_optimized()
-        proc = run_subprocess_optimized(
-            [go_bin, "install", _HELIOS_CLIPROXYCTL_PACKAGE],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except OSError as exc:
-        raise RuntimeError(f"Auto-install cliproxyctl failed to run go install: {exc}") from exc
-
-    if proc.returncode != 0:
-        stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
-        stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
-        detail = stderr_text.strip() or stdout_text.strip() or "go install failed"
-        # Older/renamed upstream module metadata can block package installs.
-        # Keep automation active by building from a local checkout when available.
-        return _build_cliproxyctl_from_local_repo()
-
-    go_paths = []
-    for path in (os.environ.get("GOBIN", "").strip(), _resolve_go_env("GOPATH"), os.path.expanduser("~/go")):
-        if path:
-            go_paths.append(Path(path) / "bin")
-    if not go_paths:
-        go_paths.append(Path(os.path.expanduser("~/go/bin")))
-
-    for base in go_paths:
-        for name in ("cliproxyctl", "cli-proxy-api", "cli-proxy-api-plus", "server"):
-            candidate = base / name
-            if base and candidate.exists():
-                path = str(candidate)
-                os.environ["THGENT_CLIPROXYCTL_BINARY"] = path
-                return path
-    maybe = _resolve_cliproxyctl_binary()
-    if _binary_exists(maybe):
-        return maybe
-    raise RuntimeError(
-        "Auto-installed cliproxyctl but could not locate binary. "
-        "Set THGENT_CLIPROXYCTL_BINARY to the installed location."
-    )
-
-
-def _binary_exists(binary: str) -> bool:
-    return Path(binary).exists() or shutil.which(binary) is not None
-
-
-def _coerce_subprocess_output(value: Any) -> str:
-    if isinstance(value, str):
-        return value
-    if isinstance(value, bytes):
-        return value.decode("utf-8", errors="replace")
-    return "" if value is None else str(value)
-
-
-def _parse_cliproxyctl_envelope(stdout_text: str, *, expected_command: str, stderr_text: str = "") -> dict[str, Any]:
-    """Parse and validate cliproxyctl machine JSON envelope."""
-    try:
-        payload = json.loads(stdout_text)
-    except json.JSONDecodeError as exc:  # pragma: no cover - explicit error branch in tests
-        stderr_info = f" stderr: {stderr_text.strip()}" if stderr_text.strip() else ""
-        raise ValueError(f"Invalid cliproxyctl JSON envelope: {exc}{stderr_info}") from exc
-    if not isinstance(payload, dict):
-        raise ValueError("Invalid cliproxyctl JSON envelope: expected top-level object")
-    schema_version = payload.get("schema_version")
-    if not isinstance(schema_version, str):
-        raise ValueError("Invalid cliproxyctl JSON envelope: missing schema_version")
-    if schema_version != _CLIPROXYCTL_SCHEMA_VERSION:
-        raise ValueError(
-            "Unsupported cliproxyctl schema_version: "
-            f"{schema_version} (expected {_CLIPROXYCTL_SCHEMA_VERSION})"
-        )
-    command = payload.get("command")
-    if not isinstance(command, str):
-        raise ValueError("Invalid cliproxyctl JSON envelope: missing command")
-    if command != expected_command:
-        raise ValueError(f"cliproxyctl command mismatch: expected '{expected_command}', got '{command}'")
-    ok = payload.get("ok")
-    if not isinstance(ok, bool):
-        raise ValueError("Invalid cliproxyctl JSON envelope: missing boolean 'ok'")
-    return payload
-
-
-def _run_cliproxyctl_machine_command(command: str, *, args: list[str] | None = None) -> dict[str, Any]:
-    """Run cliproxyctl command with --json and enforce envelope validation."""
-    binary = _resolve_cliproxyctl_binary()
-    if not _binary_exists(binary):
-        console.print("[yellow]cliproxyctl not found. Attempting auto-install via Go...[/yellow]")
-        binary = _install_cliproxyctl()
-    if not _binary_exists(binary):
-        raise FileNotFoundError(_CLIPROXYCTL_NOT_FOUND_MSG)
-    argv = [binary, command, *(args or []), "--json"]
-    run_subprocess_optimized = _get_run_subprocess_optimized()
-    proc = run_subprocess_optimized(argv, check=False, capture_output=True, text=True)
-    stdout_text = _coerce_subprocess_output(getattr(proc, "stdout", ""))
-    stderr_text = _coerce_subprocess_output(getattr(proc, "stderr", ""))
-    # Handle empty stdout - include stderr for debugging
-    if not stdout_text.strip():
-        raise RuntimeError(
-            f"cliproxyctl {command} returned empty response. "
-            f"stderr: {stderr_text.strip() if stderr_text.strip() else '(empty)'}"
-        )
-    envelope = _parse_cliproxyctl_envelope(stdout_text, expected_command=command, stderr_text=stderr_text)
-    if proc.returncode != 0:
-        error = envelope.get("error")
-        error_message = ""
-        if isinstance(error, dict):
-            code = error.get("code")
-            message = error.get("message")
-            error_message = f"{code}: {message}" if code or message else str(error)
-        if not error_message:
-            error_message = stderr_text.strip() or envelope.get("message", "")
-        raise RuntimeError(f"cliproxyctl {command} failed with exit code {proc.returncode}: {error_message}".strip())
-    if not envelope["ok"]:
-        error = envelope.get("error")
-        detail = error if isinstance(error, str) else json.dumps(error) if error is not None else ""
-        message = str(envelope.get("message", "")).strip()
-        combined = ": ".join([part for part in [message, detail] if part]).strip()
-        raise RuntimeError(f"cliproxyctl {command} reported failure{': ' + combined if combined else ''}")
-    return envelope
-
-
-# Copilot: only gpt-5-mini and haiku (no gemini-3.1-pro).
-_COPILOT_ALLOWED_MODELS: tuple[str, ...] = (
-    "claude-haiku-4.5",
-    "gpt-5-mini",
-)
-
-
-def _models_table(title: str) -> Table:
-    t = Table(title=title)
-    t.add_column("Model ID", style="cyan")
-    t.add_column("Display Name", style="dim")
-    return t
-
 
 
 def list_agents_cmd() -> None:

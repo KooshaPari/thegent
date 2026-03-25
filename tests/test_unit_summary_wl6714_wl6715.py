@@ -36,7 +36,7 @@ def test_read_log_file_tracks_invalid_timestamp_and_json_sample(tmp_path: Path) 
 
     valid = {"type": "user", "timestamp": "2026-01-10T12:00:00+00:00", "message": {"content": "ok"}}
     bad_ts = {"type": "assistant", "timestamp": "not-a-date", "message": {"content": "bad"}}
-    path.write_text(json.dumps(valid).decode().decode() + "\n" + "not-json\n" + json.dumps(bad_ts).decode().decode() + "\n", encoding="utf-8")
+    path.write_text(json.dumps(valid).decode() + "\n" + "not-json\n" + json.dumps(bad_ts).decode() + "\n", encoding="utf-8")
 
     payload = summary._read_log_file(path, start, end, include_diagnostics=True)
 
@@ -55,7 +55,7 @@ def test_read_log_file_tracks_mixed_valid_and_malformed_lines_with_bounded_sampl
     valid = {"type": "user", "timestamp": "2026-01-10T12:00:00+00:00", "message": {"content": "ok"}}
     path.write_text(
         "\n".join(
-            [json.dumps(valid).decode().decode(), "not-json", long_bad, json.dumps(valid).decode().decode(), "not-json-again", long_bad * 2, "also-bad"]
+            [json.dumps(valid).decode(), "not-json", long_bad, json.dumps(valid).decode(), "not-json-again", long_bad * 2, "also-bad"]
             + ["not-json"] * 20
         )
         + "\n",

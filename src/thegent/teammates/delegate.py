@@ -4,11 +4,10 @@ Task Delegation
 Async delegation with status tracking, priority, and timeout handling.
 """
 
-from .registry import Teammate, TeammateRegistry
+from .registry import TeammateRegistry
 from .status import TaskStatus, TaskResult
 from dataclasses import dataclass
 from typing import Optional
-import asyncio
 import time
 import xml.etree.ElementTree as ET
 

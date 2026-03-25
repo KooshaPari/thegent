@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from thegent.config import ThegentSettings
@@ -24,9 +24,9 @@ class ConcurrencyState:
     max_concurrent: int = 4
     resource_limit: float = 0.8
     current_load: float = 0.0
-    bottlenecks: list[str] = None
+    bottlenecks: list[str] | None = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.bottlenecks is None:
             self.bottlenecks = []
 
@@ -72,8 +72,8 @@ def get_resource_based_limit(settings: "ThegentSettings | None" = None) -> int:
     max_concurrent = min(cpu_limit, mem_limit)
     
     # Apply settings override if set
-    if settings and hasattr(settings, "max_concurrent_runs"):
-        settings_limit = settings.max_concurrent_runs
+    settings_limit = getattr(settings, "max_concurrent_runs", None) if settings else None
+    if settings_limit:
         if settings_limit:
             max_concurrent = min(max_concurrent, settings_limit)
     
@@ -145,10 +145,8 @@ def classify_burst_load(
         return False, "normal"
     
     now = time.monotonic()
-    
-    # Count requests in last 10 seconds
     recent_count = sum(1 for t in recent_requests if now - t < 10)
-    
+
     # Calculate rate
     if len(recent_requests) >= 2:
         time_span = recent_requests[-1] - recent_requests[0]
@@ -157,7 +155,7 @@ def classify_burst_load(
         else:
             rate = 0
     else:
-        rate = 0
+        rate = recent_count / 10 if recent_count else 0
     
     # Classify
     if rate > threshold * 3:

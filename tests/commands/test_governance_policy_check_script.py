@@ -18,7 +18,31 @@ REQUIRED_DOCS = [
     "docs/governance/TASK_CLASSIFIER_SCHEMA.yaml",
     "docs/governance/DOMAIN_PLAYBOOKS.md",
     "docs/governance/GOVERNANCE_ROADMAP_DAG.md",
+    "docs/governance/MCP_A2A_CONTROL_PLANE_BOUNDARY.md",
+    "docs/governance/ROLLOUT_PHASES_CHECKLIST.md",
 ]
+
+DOC_CONTENTS = {
+    "docs/governance/UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md": (
+        "# docs/governance/UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md\n"
+        "thegent worktree refresh\n"
+        "thegent worktree migrate-legacy\n"
+        "thegent_worktree\n"
+    ),
+    "docs/governance/WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md": (
+        "# docs/governance/WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md\n"
+        "Long-lived canary or package-tracking worktrees must be refreshed through the structured governance surface "
+        "(`thegent worktree refresh` or `./scripts/worktree_governance.sh refresh`) rather than ad hoc local branch edits.\n"
+    ),
+    "docs/governance/GOVERNANCE_SUMMARY.md": (
+        "# docs/governance/GOVERNANCE_SUMMARY.md\n"
+        "Long-lived canary and high-extreme package branches must follow the canonical structured refresh policy in "
+        "`UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md` before merge; the CI workflow enforces that policy via "
+        "`task quality:governance:canary-refresh` and the local pre-push contract uses "
+        "`task quality:pre-push:strict-governance`.\n"
+        "legacy worktrees are reported separately through `task quality:governance:legacy-remediation-report`\n"
+    ),
+}
 
 
 def _write_governance_fixture(repo_root: Path) -> None:
@@ -26,6 +50,9 @@ def _write_governance_fixture(repo_root: Path) -> None:
     for doc in REQUIRED_DOCS:
         (repo_root / doc).parent.mkdir(parents=True, exist_ok=True)
         (repo_root / doc).write_text(f"# {doc}\n", encoding="utf-8")
+    for doc, content in DOC_CONTENTS.items():
+        (repo_root / doc).parent.mkdir(parents=True, exist_ok=True)
+        (repo_root / doc).write_text(content, encoding="utf-8")
 
     (repo_root / "AGENTS.md").write_text(
         "Reference: docs/governance/WORKTREE_AND_DELEGATION_INDEX.md\n",
@@ -36,6 +63,29 @@ def _write_governance_fixture(repo_root: Path) -> None:
         "# thegent primary checkout policy\n"
         "Keep this repository checkout on main.\n"
         "Use dedicated worktrees for branch development.\n",
+        encoding="utf-8",
+    )
+    (repo_root / "Taskfile.yml").write_text(
+        "version: '3'\n"
+        "tasks:\n"
+        "  quality:governance:canary-refresh:\n"
+        "    cmds:\n"
+        "      - ./scripts/check_canary_refresh_governance.sh\n"
+        "  quality:governance:worktree-inventory:\n"
+        "    cmds:\n"
+        "      - |\n"
+        "        if ! uv run python scripts/worktree_governance_inventory.py --repo-root . --output-dir docs/governance; then\n"
+        "          echo \"[WARN] worktree inventory contains nonconformant entries; inspect docs/governance/worktree-governance-inventory.md\"\n"
+        "        fi\n"
+        "  quality:governance:worktree-inventory:strict:\n"
+        "    cmds:\n"
+        "      - uv run python scripts/worktree_governance_inventory.py --repo-root . --output-dir docs/governance\n"
+        "  quality:governance:legacy-remediation-report:\n"
+        "    cmds:\n"
+        "      - uv run python scripts/worktree_legacy_remediation_report.py --repo-root . --output-dir docs/governance\n"
+        "  quality:pre-push:strict-governance:\n"
+        "    cmds:\n"
+        "      - task quality:governance:canary-refresh\n",
         encoding="utf-8",
     )
 
@@ -50,9 +100,14 @@ def _init_repo(tmp_path: Path) -> Path:
         REPO_ROOT / "scripts" / "governance_policy_check.sh",
         scripts_root / "governance_policy_check.sh",
     )
+    shutil.copy2(
+        REPO_ROOT / "scripts" / "worktree_legacy_remediation_report.py",
+        scripts_root / "worktree_legacy_remediation_report.py",
+    )
     shutil.copy2(REPO_ROOT / "scripts" / "worktree_governance.sh", scripts_root / "worktree_governance.sh")
     shutil.copy2(REPO_ROOT / "scripts" / "bootstrap.sh", scripts_root / "bootstrap.sh")
     (scripts_root / "governance_policy_check.sh").chmod(0o755)
+    (scripts_root / "worktree_legacy_remediation_report.py").chmod(0o755)
     (scripts_root / "worktree_governance.sh").chmod(0o755)
     (scripts_root / "bootstrap.sh").chmod(0o755)
 
@@ -96,7 +151,6 @@ def _run_policy_check(repo_root: Path, *, branch: str | None = None) -> subproce
 
 
 @pytest.mark.unit
-@pytest.mark.skip(reason="Missing governance files and shell script syntax error")
 def test_governance_policy_check_passes_on_clean_main(tmp_path: Path) -> None:
     repo_root = _init_repo(tmp_path)
     proc = _run_policy_check(repo_root)

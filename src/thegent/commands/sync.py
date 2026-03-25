@@ -11,15 +11,13 @@ import os
 import re
 import shutil
 import time
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from thegent.observability.prometheus import get_metrics_collector
+from thegent.governance.metrics import get_metrics_collector
 from thegent.utils.workstream_ops import _atomic_write, _locked_file_access
 from thegent.sync.dead_letter_queue import (
     DEFAULT_BOARD_DEAD_LETTER_BACKOFF_MULTIPLIER,
@@ -32,6 +30,10 @@ _log = structlog.get_logger(__name__)
 
 if TYPE_CHECKING:
     from thegent.integrations.sync_policy_contract import ConnectorPolicy, SyncPolicyContract
+
+
+def _default_sync_remote() -> str:
+    return os.getenv("THGENT_SYNC_REMOTE", "").strip()
 
 
 def render_maintenance_banner(*, maintenance_active: bool, connector: str, reason: str = "") -> str:
@@ -575,10 +577,7 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "push"
 
-        from thegent.config import ThegentSettings
-
-        settings = ThegentSettings()
-        effective_target = target or settings.sync_remote
+        effective_target = target or _default_sync_remote()
 
         _log.info("sync push invoked: target=%s", effective_target)
 
@@ -681,10 +680,7 @@ class SyncCommand:
         t0 = time.monotonic()
         op = "pull"
 
-        from thegent.config import ThegentSettings
-
-        settings = ThegentSettings()
-        effective_source = source or settings.sync_remote
+        effective_source = source or _default_sync_remote()
 
         if not effective_source or effective_source == "<local-stub>":
             return OperationResult(
@@ -1184,11 +1180,13 @@ class SyncCommand:
         from thegent.config import ThegentSettings
 
         def _record_cycle_status(status: str) -> None:
-            collector.record_board_sync_cycle(
-                source=normalized_source,
-                status=status,
-                duration_seconds=time.monotonic() - t0,
-            )
+            record_cycle = getattr(collector, "record_board_sync_cycle", None)
+            if callable(record_cycle):
+                record_cycle(
+                    source=normalized_source,
+                    status=status,
+                    duration_seconds=time.monotonic() - t0,
+                )
 
         try:
             maintenance_banner = render_maintenance_banner(

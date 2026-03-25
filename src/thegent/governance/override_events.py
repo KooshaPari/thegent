@@ -6,7 +6,7 @@ enabling audit trails and downstream reactions.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 import threading
 import time
@@ -141,7 +141,7 @@ class OverrideEventEmitter:
     def _append(self, record: dict[str, object]) -> None:
         """Thread-safe append of a JSON record to the JSONL file."""
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        line = json.dumps(record, separators=(",", ":").decode()) + "\n"
+        line = json.dumps(record, separators=(",", ":")) + "\n"
         with self._lock:
             with self._path.open("a", encoding="utf-8") as fh:
                 fh.write(line)

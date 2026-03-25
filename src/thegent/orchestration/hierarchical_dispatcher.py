@@ -25,9 +25,9 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from thegent.agents.capability_index import CapabilityIndex
+    from thegent.agents.sub_agent_dispatcher import SubAgentDispatcher
     from thegent.compute.offload import ComputePoolManager
     from thegent.governance.hitl import HITLApprovalWorkflow
-    from thegent.orchestration.sub_agent_dispatcher import SubAgentDispatcher
 
 _log = logging.getLogger(__name__)
 

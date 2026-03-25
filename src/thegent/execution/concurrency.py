@@ -4,12 +4,9 @@ import hashlib
 import logging
 import os
 from pathlib import Path
-from typing import Any
-
+from typing import TYPE_CHECKING, Any
 
 from thegent.config import ThegentSettings
-from thegent.execution_coercion_helpers import as_bool as _as_bool_impl
-from thegent.execution_coercion_helpers import as_float as _as_float_impl
 from thegent.execution_coercion_helpers import as_int as _as_int_impl
 
 _log = logging.getLogger(__name__)
@@ -75,19 +72,13 @@ def reset_execution_diagnostics() -> None:
     }
 
 
-def _as_float(value: Any, default: float) -> float:
-    """Coerce arbitrary values to float with a safe default."""
-    return _as_float_impl(value, default)
-
-
 def _as_int(value: Any, default: int) -> int:
     """Coerce arbitrary values to int with a safe default."""
     return _as_int_impl(value, default)
 
 
-def _as_bool(value: Any, default: bool) -> bool:
-    """Coerce arbitrary values to bool with a safe default."""
-    return _as_bool_impl(value, default)
+if TYPE_CHECKING:
+    from .registry import RunRegistry
 
 
 class IdempotencyManager:
@@ -138,8 +129,8 @@ class ConcurrencyController:
             self.critical_lane_slots = max(0, critical_lane_slots)
         else:
             try:
-                settings = ThegentSettings()
-                configured_slots = settings.critical_lane_slots
+                ThegentSettings()
+                configured_slots = _as_int(os.environ.get("THGENT_CRITICAL_LANE_SLOTS"), 2)
             except Exception:
                 configured_slots = _as_int(os.environ.get("THGENT_CRITICAL_LANE_SLOTS"), 2)
             self.critical_lane_slots = max(0, configured_slots if configured_slots is not None else 2)
@@ -565,6 +556,8 @@ class LaneController:
     """WP-1002: Priority and urgency lane model for task management."""
 
     def __init__(self, session_dir: Path, capacity: int = 10) -> None:
+        from .registry import RunRegistry
+
         self.session_dir = session_dir
         self.capacity = capacity
         self.registry = RunRegistry(session_dir)
@@ -603,5 +596,3 @@ class LaneController:
             return False
 
         return True
-
-

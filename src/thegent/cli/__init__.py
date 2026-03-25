@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import orjson as json
 import os
 import signal
-import subprocess
 import sys
 import time
 from typing import Any
@@ -134,28 +132,8 @@ for _name in _patchable_names_list:
 
 # Export all patchable names and agent labels (static literal for ruff compliance)
 __all__ = [
-    "AGENT_LABELS",
-    "RunRegistry",
-    "ThegentSettings",
-    "_find_session_meta",
-    "_is_pid_running",
-    "_normalize_output_format",
-    "_read_session_meta",
     "_resolve_cwd",
-    "_resolve_droids_dir",
-    "_resolve_run_id",
-    "_resolve_session_status",
-    "_safe_dict",
-    "_safe_list",
-    "_session_paths",
-    "console",
-    "get_exit_message",
-    "json",
-    "list_agent_names",
-    "list_droid_names",
     "os",
-    "resolve_agent",
-    "run_login",
     "signal",
     "sys",
     "time",
@@ -168,9 +146,4 @@ __all__ = [
     "_check_dag_cycles",
     "_ensure_dag_file",
     "_dag_update_task",
-    "_atomic_write",
-    "_resolve_prompt",
-    "dag_recover_impl",
-    "dag_run_impl",
-    "dag_sync_impl",
 ]

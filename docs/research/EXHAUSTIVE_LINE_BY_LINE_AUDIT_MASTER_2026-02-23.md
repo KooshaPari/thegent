@@ -76,7 +76,7 @@ High-value `Pilot` candidates:
 - `isaacphi/mcp-language-server`
 
 `Pilot`:
-- `OpenSpec`, `claude-task-master`, `humanlayer`, `cua`, `OmniParser`, `self-operating-computer`
+- `AgilePlus`, `claude-task-master`, `humanlayer`, `cua`, `OmniParser`, `self-operating-computer`
 - `cognee`, `graphiti`, `bifrost`, `LMCache`, `octocode-mcp`, `muster`, `claude-context`
 - `exo`, `BitNet`, `Fabric`, `vanna`, `RAGMeUp`, `PageIndex`
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import logging
 import re
 import threading
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import psutil
-from thegent.infra.fast_yaml_parser import yaml_load, yaml_dump
+from thegent.infra.fast_yaml_parser import yaml_dump
 
 from thegent.mesh.task_queue import MaildirQueue
 
@@ -78,7 +78,7 @@ class MeshManager:
         """Create agent manifest in mesh."""
         manifest_path = self.agents_dir / f"{agent_id}.yaml"
         with open(manifest_path, "w") as f:
-            yaml.dump({"id": agent_id, "registered_at": time.time(), **metadata}, f)
+            yaml_dump({"id": agent_id, "registered_at": time.time(), **metadata}, f)
 
     def heartbeat(self, agent_id: str) -> None:
         """Touch heartbeat file."""

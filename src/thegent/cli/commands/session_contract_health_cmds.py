@@ -9,8 +9,6 @@ from pathlib import Path
 
 import typer
 
-from rich.table import Table
-
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
     _coerce_issue_types,

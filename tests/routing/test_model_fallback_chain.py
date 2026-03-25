@@ -277,7 +277,7 @@ class TestSingleModelUsesDefaultRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o", models=["gpt-4o"]).decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o", models=["gpt-4o"]).decode()).encode()
 
         dynamic_router_call_count = 0
 
@@ -326,7 +326,7 @@ class TestSingleModelUsesDefaultRouter:
         mock_router = MagicMock()
         mock_router.acompletion = AsyncMock(return_value=mock_response)
 
-        body = json.dumps(_make_responses_body(model="gpt-4o").decode().decode()).encode()
+        body = json.dumps(_make_responses_body(model="gpt-4o").decode()).encode()
 
         dynamic_router_call_count = 0
 

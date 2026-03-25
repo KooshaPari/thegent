@@ -8,6 +8,10 @@ from typing import Callable, Optional
 from .cleanup import ProcessCleanup
 import signal
 import os
+from types import FrameType
+
+SignalHandlerCallable = Callable[[int, FrameType | None], object]
+InstalledSignalHandler = signal._HANDLER
 
 
 class SignalHandler:
@@ -15,8 +19,8 @@ class SignalHandler:
 
     def __init__(self):
         self._cleanup = ProcessCleanup()
-        self._original_handlers: dict[int, callable] = {}
-        self._callbacks: list[Callable] = []
+        self._original_handlers: dict[int, InstalledSignalHandler] = {}
+        self._callbacks: list[Callable[[], object]] = []
         self._installed = False
 
     def install(self) -> None:
@@ -36,7 +40,7 @@ class SignalHandler:
         """Install handler for a signal."""
         self._original_handlers[signum] = signal.signal(signum, self._handler)
 
-    def _handler(self, signum: int, frame) -> None:
+    def _handler(self, signum: int, frame: FrameType | None) -> None:
         """Signal handler."""
         # Run callbacks
         for callback in self._callbacks:
@@ -50,13 +54,13 @@ class SignalHandler:
 
         # Call original handler or re-raise
         original = self._original_handlers.get(signum)
-        if original:
+        if callable(original):
             original(signum, frame)
         else:
             signal.signal(signum, signal.SIG_DFL)
             os.kill(os.getpid(), signum)
 
-    def on_shutdown(self, callback: Callable) -> None:
+    def on_shutdown(self, callback: Callable[[], object]) -> None:
         """Register callback for shutdown."""
         self._callbacks.append(callback)
 

@@ -95,7 +95,7 @@ class TaskWorkerPool:
 
             # Read and execute task
             try:
-                task_data = json.loads(claim_file.read_text())
+                task_data = json_loads(claim_file.read_text())
                 task = TaskRequest(**task_data)
                 _log.info("Worker %d executing task %s: %s", worker_id, task.id, " ".join(task.command))
 
@@ -121,7 +121,7 @@ class TaskWorkerPool:
                 # Write result atomically to a temp file, then rename
                 result_file = self.results / f"{task.id}.json"
                 temp_file = self.results / f"{task.id}.tmp"
-                temp_file.write_text(json.dumps(result.__dict__))
+                temp_file.write_text(json_dumps(result.__dict__))
                 temp_file.rename(result_file)
                 _log.info("Worker %d completed task %s with exit code %d", worker_id, task.id, result.exit_code)
 
@@ -134,7 +134,7 @@ class TaskWorkerPool:
     def submit_task(self, task: TaskRequest) -> Path:
         """Submit a task to the queue (client-side)."""
         task_file = self.inbox / f"{task.id}.json"
-        task_file.write_text(json.dumps(task.__dict__))
+        task_file.write_text(json_dumps(task.__dict__))
         return task_file
 
     def get_result(self, task_id: str, timeout: int = 60) -> TaskResult | None:
@@ -144,10 +144,10 @@ class TaskWorkerPool:
         while time.time() - start_time < timeout:
             if result_file.exists():
                 try:
-                    data = json.loads(result_file.read_text())
+                    data = json_loads(result_file.read_text())
                     result_file.unlink()
                     return TaskResult(**data)
-                except (OSError, json.JSONDecodeError):
+                except OSError:
                     pass
             time.sleep(0.5)
         return None

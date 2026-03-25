@@ -46,8 +46,7 @@ class SessionState:
             state_data["created_at"] = self.created_at.isoformat()
             state_data["last_modified"] = datetime.now().isoformat()
 
-            with open(self.session_file, "w") as f:
-                yaml.dump(state_data, f, default_flow_style=False)
+            yaml_dump(state_data, self.session_file, default_flow_style=False)
 
             self.last_modified = datetime.now()
             return True
@@ -69,8 +68,7 @@ class SessionState:
 
             logger.debug(f"Loading session state from {self.session_file}")
 
-            with open(self.session_file) as f:
-                state_data = yaml.safe_load(f)
+            state_data = yaml_load(self.session_file)
 
             if state_data:
                 self.last_modified = datetime.fromisoformat(state_data.get("last_modified", datetime.now().isoformat()))

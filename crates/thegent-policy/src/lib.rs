@@ -11,7 +11,7 @@ mod evaluator;
 mod policy;
 mod slo;
 mod trust;
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 pub mod python;
 
 pub use compliance::ComplianceChecker;

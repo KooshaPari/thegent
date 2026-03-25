@@ -31,22 +31,22 @@ def build_route_candidates(
     Returns:
         List of route candidate dicts
     """
-    from thegent.provider_model_manager import get_model_catalog
+    from thegent.models.catalog import _get_catalog
     
     candidates = []
-    catalog = get_model_catalog()
+    catalog = _get_catalog()
     
     if model:
         # Find providers that support this model
         for entry in catalog.get(model, []):
-            if provider and entry.get("provider") != provider:
+            if provider and entry.provider != provider:
                 continue
             candidates.append({
-                "provider": entry.get("provider"),
-                "model": entry.get("model_id", model),
-                "quality": entry.get("quality_score", 0.8),
-                "cost": entry.get("cost_per_1k", 0.01),
-                "latency": entry.get("latency_ms", 500),
+                "provider": entry.provider,
+                "model": entry.model_alias or model,
+                "quality": 0.8,
+                "cost": entry.cost_weight,
+                "latency": 500,
             })
     elif agent:
         # Map agent to preferred provider/model

@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use rayon::prelude::*;
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 use pyo3::prelude::*;
 
 const CACHE_TTL_SECONDS: u64 = 3600;
@@ -209,21 +209,21 @@ impl Default for ToolDetector {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pyfunction]
 fn detect_tools() -> PyResult<HashMap<String, String>> {
     let detector = ToolDetector::new();
     Ok(detector.detect_all())
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pyfunction]
 fn detect_tool(name: &str) -> PyResult<Option<String>> {
     let detector = ToolDetector::new();
     Ok(detector.detect_one(name))
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pymodule]
 fn thegent_tool_detect(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(detect_tools, m)?)?;

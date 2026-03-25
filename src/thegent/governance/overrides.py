@@ -1,11 +1,11 @@
 """WP-3003: Override path with TTL and revalidation (FR-011)."""
 
-import orjson as json
+import json
 import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from thegent.config import ThegentSettings
 from thegent.integrations.base import SerializableMixin
@@ -70,7 +70,7 @@ class OverrideManager:
 
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
-            override = PolicyOverride.from_dict(data)
+            override = cast(PolicyOverride, PolicyOverride.from_dict(data))
 
             if override.is_active():
                 return override
@@ -100,7 +100,7 @@ class OverrideManager:
         """Helper to check and cleanup a single override file."""
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
-            override = PolicyOverride.from_dict(data)
+            override = cast(PolicyOverride, PolicyOverride.from_dict(data))
             if not override.is_active():
                 f.unlink()
                 return True
@@ -111,4 +111,4 @@ class OverrideManager:
     def _save_override(self, override: PolicyOverride) -> None:
         """Save override to disk."""
         p = self.override_dir / f"{override.policy_id}.json"
-        p.write_text(json.dumps(override.to_dict().decode(), indent=2), encoding="utf-8")
+        p.write_text(json.dumps(override.to_dict(), indent=2), encoding="utf-8")

@@ -14,7 +14,7 @@ Import from here or directly from submodules:
 """
 
 from ..doctor_models import CheckResult
-from .core import ProcessInfo, run_doctor
+from .core import ProcessInfo, _check_nix, _check_shell, run_doctor
 from .checks import (
     _check_configuration,
     _check_connectivity,
@@ -25,7 +25,6 @@ from .checks import (
     _check_mcp_tools,
     _check_ollama,
     _check_performance,
-    _check_process_health_v2,
     _check_process_leaks,
     _check_project_hints,
     _check_providers,
@@ -33,15 +32,12 @@ from .checks import (
     _check_sessions,
     _check_shim_binaries,
 )
-from .helpers import (
-    _display_results,
-    _extract_process_info,
-    _find_stuck_processes,
-    _is_process_actively_working,
-)
+from .helpers import _display_results
 from .fixes import _apply_fixes, _display_fix_report
-from .checks_env import check_environment
+from .checks_env import check_environment, check_shim_binaries
 from .display import display_results, display_fix_report
+from ..doctor_project_root import detect_project_root
+from pathlib import Path
 
 # Wrapper functions for public API
 def check_dependencies(deps: bool = False):
@@ -72,7 +68,11 @@ def check_nix():
     """Check nix."""
     # Delegate to doctor_shell_nix module
     from thegent.doctor_shell_nix import check_nix as _check_nix_impl
-    return _check_nix_impl(check_result_cls=__import__('thegent.doctor_models', fromlist=['CheckResult']).CheckResult)
+    project_root = detect_project_root(Path.cwd())
+    return _check_nix_impl(
+        check_result_cls=__import__("thegent.doctor_models", fromlist=["CheckResult"]).CheckResult,
+        project_root=project_root,
+    )
 
 def check_ollama():
     """Check Ollama."""
@@ -81,10 +81,6 @@ def check_ollama():
 def check_performance():
     """Check performance."""
     return _check_performance()
-
-def check_process_health():
-    """Check process health."""
-    return _check_process_health_v2()
 
 def check_process_leaks():
     """Check for process leaks."""
@@ -133,14 +129,15 @@ __all__ = [
     "_check_headless",
     "_check_isolation",
     "_check_mcp_tools",
+    "_check_nix",
     "_check_ollama",
     "_check_performance",
-    "_check_process_health_v2",
     "_check_process_leaks",
     "_check_project_hints",
     "_check_providers",
     "_check_runtime_infrastructure",
     "_check_sessions",
+    "_check_shell",
     "_check_shim_binaries",
     "_display_fix_report",
     "_display_results",
@@ -158,7 +155,6 @@ __all__ = [
     "check_nix",
     "check_ollama",
     "check_performance",
-    "check_process_health",
     "check_process_leaks",
     "check_project_hints",
     "check_providers",

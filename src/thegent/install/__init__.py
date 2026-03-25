@@ -1,8 +1,6 @@
 """Install package for thegent."""
 
 from pathlib import Path
-from typing import Any, Optional
-from rich.console import Console
 
 # Constants for install module
 CLAUDE_MAPPING = {}

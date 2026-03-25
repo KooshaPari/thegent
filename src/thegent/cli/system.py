@@ -279,7 +279,6 @@ def cmd_verify(args: argparse.Namespace) -> int:
     all_ok = True
     for target in targets:
         result = verify_target(target, manifest)
-        status_icon = "✓" if result["status"] == "ok" else "✗"
         if args.verbose:
             for _detail in result["details"]:
                 pass
@@ -298,7 +297,6 @@ def cmd_status(args: argparse.Namespace) -> int:
     for _target in sorted(installed):
         pass
 
-    all_targets = []
     for category in ["harnesses", "shells", "tools"]:
         for name in manifest.get("targets", {}).get(category, {}):
             full_target = f"{category}.{name}"

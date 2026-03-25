@@ -53,7 +53,7 @@
  D .factory/droids/knowledge-base-curator.md
  D .factory/droids/legacy-convergence-architect.md
  D .factory/droids/observability-sentinel.md
- D .factory/droids/openspec-orchestrator.md
+ D .factory/droids/agileplus-orchestrator.md
  D .factory/droids/ops-concierge.md
  D .factory/droids/orchestrator-core.md
  D .factory/droids/outcome-evaluator.md

@@ -50,7 +50,7 @@ class IncrementalGenerator:
     def _save_manifest(self) -> None:
         """Save generation manifest."""
         self.manifest["last_generated"] = datetime.now(UTC).isoformat()
-        self.manifest_path.write_text(json.dumps(self.manifest, indent=2))
+        self.manifest_path.write_bytes(json.dumps(self.manifest, option=json.OPT_INDENT_2))
 
     def _file_hash(self, file_path: Path) -> str:
         """Calculate file hash.

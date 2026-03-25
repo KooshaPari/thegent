@@ -91,7 +91,7 @@ class IpcMessage:
 
     def to_json(self) -> str:
         """Serialise to a JSON string."""
-        return json.dumps(asdict(self).decode())
+        return json.dumps(asdict(self)).decode("utf-8")
 
     @classmethod
     def from_json(cls, text: str) -> IpcMessage:

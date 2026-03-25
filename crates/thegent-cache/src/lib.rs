@@ -62,6 +62,10 @@ where
         self.len() == 0
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn len_l1(&self) -> usize {
         self.inner.l1_len()
     }
@@ -120,18 +124,18 @@ mod tests {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 use pyo3::prelude::*;
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 use pyo3::types::PyModule;
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pyclass]
 struct PythonCache {
     cache: Cache<String, String>,
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pymethods]
 impl PythonCache {
     #[new]
@@ -182,7 +186,7 @@ impl PythonCache {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test)))]
 #[pymodule]
 fn thegent_cache(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PythonCache>()?;

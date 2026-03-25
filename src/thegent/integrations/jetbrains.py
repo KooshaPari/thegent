@@ -12,12 +12,13 @@ FR traceability: FR-IDE-001 (JetBrains MCP integration)
 
 from __future__ import annotations
 
-import orjson as json
 import logging
 import platform
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, get_args
+
+import orjson
 
 logger = logging.getLogger(__name__)
 
@@ -247,7 +248,7 @@ class JetBrainsIntegration:
         output = {**existing, "mcpServers": mcp_servers}
 
         config.mcp_config_path.write_text(
-            json.dumps(output, indent=2) + "\n",
+            orjson.dumps(output, option=orjson.OPT_INDENT_2).decode("utf-8") + "\n",
             encoding="utf-8",
         )
         logger.info("Wrote MCP config to %s", config.mcp_config_path)
@@ -268,12 +269,12 @@ class JetBrainsIntegration:
             return None
         try:
             raw = path.read_text(encoding="utf-8")
-            data = json.loads(raw)
+            data = orjson.loads(raw)
             if not isinstance(data, dict):
                 logger.warning("mcp.json at %s is not a JSON object; ignoring", path)
                 return None
             return data
-        except json.JSONDecodeError as exc:
+        except orjson.JSONDecodeError as exc:
             logger.warning("Failed to parse %s: %s", path, exc)
             return None
 

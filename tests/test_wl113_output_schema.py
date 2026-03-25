@@ -44,7 +44,7 @@ ARRAY_SCHEMA = {
 def schema_file(tmp_path: Path) -> Path:
     """Write SIMPLE_SCHEMA to a temp file and return its path."""
     p = tmp_path / "schema.json"
-    p.write_text(json.dumps(SIMPLE_SCHEMA).decode().decode(), encoding="utf-8")
+    p.write_text(json.dumps(SIMPLE_SCHEMA).decode(), encoding="utf-8")
     return p
 
 
@@ -52,7 +52,7 @@ def schema_file(tmp_path: Path) -> Path:
 def string_schema_file(tmp_path: Path) -> Path:
     """Write STRING_SCHEMA to a temp file and return its path."""
     p = tmp_path / "string_schema.json"
-    p.write_text(json.dumps(STRING_SCHEMA).decode().decode(), encoding="utf-8")
+    p.write_text(json.dumps(STRING_SCHEMA).decode(), encoding="utf-8")
     return p
 
 
@@ -60,7 +60,7 @@ def string_schema_file(tmp_path: Path) -> Path:
 def array_schema_file(tmp_path: Path) -> Path:
     """Write ARRAY_SCHEMA to a temp file and return its path."""
     p = tmp_path / "array_schema.json"
-    p.write_text(json.dumps(ARRAY_SCHEMA).decode().decode(), encoding="utf-8")
+    p.write_text(json.dumps(ARRAY_SCHEMA).decode(), encoding="utf-8")
     return p
 
 
@@ -191,7 +191,7 @@ class TestOutputSchemaValidatorSystemPromptInjection:
         """The injection string contains the schema as indented JSON."""
         validator = OutputSchemaValidator(schema_file)
         injection = validator.get_system_prompt_injection()
-        assert json.dumps(SIMPLE_SCHEMA, indent=2).decode().decode() in injection
+        assert json.dumps(SIMPLE_SCHEMA, indent=2).decode() in injection
 
     def test_injection_contains_must_respond_instruction(self, schema_file: Path) -> None:
         # @trace WL-113

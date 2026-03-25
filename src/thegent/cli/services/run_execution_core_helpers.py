@@ -82,6 +82,36 @@ def _bind_impl_namespace(impl_ns: Any) -> None:
         module_globals[key] = value
 
 
+def _apply_pareto_routing_local(
+    agent: str | None,
+    model: str | None,
+    routing: str | None,
+    include_contract: bool,
+    route_contract: dict[str, Any] | None,
+    route_request: dict[str, Any] | None,
+) -> tuple[str | None, str | None, dict[str, Any] | None, dict[str, Any] | None]:
+    from thegent.cli.commands.impl_core_runners import _apply_pareto_routing
+
+    return _apply_pareto_routing(agent, model, routing, include_contract, route_contract, route_request)
+
+
+def _inject_time_constraint_local(prompt: str, timeout: int, *, summary_mode: bool) -> str:
+    from thegent.cli.commands.impl import _inject_time_constraint
+
+    return _inject_time_constraint(prompt, timeout, summary_mode=summary_mode)
+
+
+def _resolve_agent_model_local(
+    agent_name: str,
+    model: str | None,
+    mode: str,
+    settings: ThegentSettings,
+) -> str | None:
+    from thegent.cli.commands.impl import _resolve_agent_model
+
+    return _resolve_agent_model(agent_name, model, mode, settings)
+
+
 def run_impl_core(
     agent: str | None,
     prompt: str,
@@ -165,7 +195,7 @@ def run_impl_core(
         }
 
     # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
-    agent, model, route_contract, route_request = _impl_lazy._apply_pareto_routing(
+    agent, model, route_contract, route_request = _apply_pareto_routing_local(
         agent, model, routing, include_contract, route_contract, route_request
     )
 
@@ -303,7 +333,7 @@ def run_impl_core(
         except (TypeError, ValueError) as exc:
             _log.debug("Invalid claude timeout override '%s'; using existing timeout: %s", _min_claude, exc)
 
-    prompt = _impl_lazy._inject_time_constraint(prompt, int(effective_timeout), summary_mode=not full)
+    prompt = _inject_time_constraint_local(prompt, int(effective_timeout), summary_mode=not full)
 
     cwd = _resolve_cwd(cd)
     if cwd is None:
@@ -788,7 +818,7 @@ def run_impl_core(
 
         # Wrap runner.run to inject agent_model
         original_run = runner.run
-        agent_model = _impl_lazy._resolve_agent_model(agent_name, model, mode, settings)
+        agent_model = _resolve_agent_model_local(agent_name, model, mode, settings)
 
         def wrapped_run(**kwargs) -> RunResult:
             if agent_model:
@@ -831,7 +861,7 @@ def run_impl_core(
         return RunnerProxy()
 
     # MTSP-12: Shadow Workspace Integration
-    use_shadow = shadow or settings.shadow_workspaces_enabled
+    use_shadow = bool(shadow or getattr(settings, "shadow_workspaces_enabled", False))
     shadow_ws = None
     original_cwd = cwd or Path.cwd()
     agent_cwd = original_cwd
@@ -872,7 +902,7 @@ def run_impl_core(
     _bind_impl_namespace(impl_ns)
 
     settings = ThegentSettings()
-    _keepalive_interval = settings.keepalive_interval
+    _keepalive_interval = float(getattr(settings, "keepalive_interval", 30.0))
     from thegent.ux.keepalive import keepalive as _keepalive
 
     try:
@@ -902,7 +932,7 @@ def run_impl_core(
         status = "completed"
 
         # MTSP-12: Auto-merge from shadow workspace
-        if shadow_ws and settings.shadow_workspaces_auto_merge:
+        if shadow_ws and bool(getattr(settings, "shadow_workspaces_auto_merge", False)):
             if shadow_ws.merge_back():
                 _log.info("Shadow changes merged successfully.")
             else:
@@ -1160,7 +1190,7 @@ def bg_impl_core(
     tracker.start_run(rid)
 
     # Pareto routing: routing="pareto" → build RouteCandidate list from catalog and select via ParetoRouter
-    agent, model, route_contract, route_request = _impl_lazy._apply_pareto_routing(
+    agent, model, route_contract, route_request = _apply_pareto_routing_local(
         agent, model, routing, include_contract, route_contract, route_request
     )
 
@@ -1569,7 +1599,10 @@ def bg_impl_core(
             _log.warning("Failed to create FIFO: %s", e)
 
     try:
-        proc = _impl_lazy._spawn_with_eagain_retry(
+        spawn_with_eagain_retry = _impl_lazy._spawn_with_eagain_retry
+        if spawn_with_eagain_retry is None:
+            raise RuntimeError("spawn helper is unavailable")
+        proc = spawn_with_eagain_retry(
             cmd,
             cwd=str(cwd),
             env=env,

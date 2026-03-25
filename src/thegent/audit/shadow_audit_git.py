@@ -18,7 +18,6 @@ import hashlib
 import logging
 import orjson as json
 import os
-import re
 import sqlite3
 import subprocess
 import uuid
@@ -27,12 +26,11 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
 from thegent.audit.constants import DEFAULT_DB_PATH
-from thegent.audit.secret_scrubbing import SECRET_PATTERNS, scrub_secrets as _scrub_secrets
+from thegent.audit.secret_scrubbing import scrub_secrets as _scrub_secrets
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +107,7 @@ class ShadowAuditGit:
 
         if db_path is None:
             env_path = os.environ.get("THGENT_REGISTRY_DB")
-            self._db_path = Path(env_path) if env_path else _DEFAULT_DB_PATH
+            self._db_path = Path(env_path) if env_path else DEFAULT_DB_PATH
         else:
             self._db_path = Path(db_path)
 

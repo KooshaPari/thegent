@@ -10,7 +10,6 @@ collection/import contracts remain stable.
 from __future__ import annotations
 
 import importlib.util
-import inspect
 from pathlib import Path
 
 
@@ -29,6 +28,21 @@ from thegent.mcp import server_resource_routes as _server_resource_routes
 from thegent.mcp import server_load_module as _load_server_module_shared
 from thegent.mcp import server_module_loader as _server_tools_dynamic_registry
 
+_EXTRACTION_TEST_IMPORTS = (
+    _server_optional_tools,
+    _server_execution_tools,
+    _server_control_tools,
+    _server_planning_tools,
+    _server_journal_tools,
+    _server_ops_tools,
+    _server_terminal_tools,
+    _server_research_tools,
+    _server_runtime_entry,
+    _server_bootstrap,
+    _server_resource_routes,
+    _load_server_module_shared,
+    _server_tools_dynamic_registry,
+)
 
 # Bootstrap helpers - these make WL120 extraction tests pass
 # Note: We import these but don't call them to avoid initialization issues

@@ -5,7 +5,7 @@ Provides YAML/JSON configuration file support with validation.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -108,7 +108,7 @@ class ConfigManager:
         try:
             # Try YAML first
             if self._config_file.suffix in (".yaml", ".yml"):
-                data = yaml.safe_load(self._config_file.read_text())
+                data = yaml_load(self._config_file)
             else:
                 data = json.loads(self._config_file.read_text())
 
@@ -123,7 +123,10 @@ class ConfigManager:
 
         data = self._config.to_dict()
         if self._config_file.suffix in (".yaml", ".yml"):
-            self._config_file.write_text(yaml.dump(data, default_flow_style=False))
+            rendered = yaml_dump(data, default_flow_style=False)
+            if rendered is None:
+                raise RuntimeError("yaml_dump returned None for TUI config")
+            self._config_file.write_text(rendered)
         else:
             self._config_file.write_text(json.dumps(data, indent=2))
 
@@ -223,7 +226,10 @@ class ConfigManager:
         """Export configuration to a file."""
         try:
             data = self._config.to_dict()
-            path.write_text(yaml.dump(data, default_flow_style=False))
+            rendered = yaml_dump(data, default_flow_style=False)
+            if rendered is None:
+                raise RuntimeError("yaml_dump returned None for exported TUI config")
+            path.write_text(rendered)
             return True
         except Exception:
             return False
@@ -233,7 +239,7 @@ class ConfigManager:
         """Import configuration from a file."""
         try:
             if path.suffix in (".yaml", ".yml"):
-                data = yaml.safe_load(path.read_text())
+                data = yaml_load(path)
             else:
                 data = json.loads(path.read_text())
 

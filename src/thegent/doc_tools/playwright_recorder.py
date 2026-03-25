@@ -111,7 +111,7 @@ class RecordingResult(SerializableMixin):
 
     def to_json(self, path: Path | None = None) -> str:
         """Convert to JSON string or save to file."""
-        json_data = json.dumps(self.to_dict().decode(), indent=2, default=str)
+        json_data = json.dumps(self.to_dict(), option=json.OPT_INDENT_2, default=str).decode()
         if path:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json_data)

@@ -5,7 +5,7 @@ Prevents cascading failures with circuit breaker pattern.
 """
 
 from dataclasses import dataclass
-from typing import Optional, Callable
+from typing import Any, Optional, Callable
 from enum import Enum
 import time
 
@@ -96,7 +96,7 @@ class CircuitBreaker:
             if self._failures >= self.failure_threshold:
                 self._state = CircuitState.OPEN
 
-    def execute(self, fn: Callable, fallback: Callable | None = None) -> any:
+    def execute(self, fn: Callable[[], Any], fallback: Callable[[], Any] | None = None) -> Any:
         """Execute function with circuit breaker protection."""
         if not self.can_execute():
             if fallback:
@@ -107,7 +107,7 @@ class CircuitBreaker:
             result = fn()
             self.record_success()
             return result
-        except Exception as e:
+        except Exception:
             self.record_failure()
             if fallback:
                 return fallback()

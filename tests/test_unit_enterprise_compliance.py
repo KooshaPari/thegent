@@ -23,7 +23,7 @@ def test_wp_15002_ledger_integrity(tmp_path):
     lines = ledger_path.read_text().splitlines()
     bad_line = json.loads(lines[0])
     bad_line["payload"]["msg"] = "tampered"
-    ledger_path.write_text(json.dumps(bad_line).decode().decode() + "\n" + lines[1] + "\n")
+    ledger_path.write_text(json.dumps(bad_line).decode() + "\n" + lines[1] + "\n")
 
     # Reload and verify failure
     new_ledger = IncidentLedger(ledger_path)

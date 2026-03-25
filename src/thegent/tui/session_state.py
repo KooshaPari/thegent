@@ -59,9 +59,8 @@ class SessionState:
             return None
 
         try:
-            with open(session_file, encoding="utf-8") as f:
-                return yaml.safe_load(f)
-        except (OSError, yaml.YAMLError):
+            return yaml_load(session_file)
+        except Exception:
             return None
 
     def save_session(self, session_id: str, layout: dict[str, Any], metadata: SessionMetadata | None = None) -> None:
@@ -92,8 +91,7 @@ class SessionState:
             }
 
         session_file = self.SESSION_DIR / f"{session_id}.yaml"
-        with open(session_file, "w", encoding="utf-8") as f:
-            yaml.dump(session_data, f, default_flow_style=False)
+        yaml_dump(session_data, session_file, default_flow_style=False)
 
     def save_layout(self, layout_name: str, layout: dict[str, Any]) -> None:
         """Save layout template.
@@ -103,8 +101,7 @@ class SessionState:
             layout: Layout data to save
         """
         layout_file = self.LAYOUTS_DIR / f"{layout_name}.yaml"
-        with open(layout_file, "w", encoding="utf-8") as f:
-            yaml.dump(layout, f, default_flow_style=False)
+        yaml_dump(layout, layout_file, default_flow_style=False)
 
     def load_layout(self, layout_name: str) -> dict[str, Any] | None:
         """Load a saved layout template.
@@ -120,9 +117,8 @@ class SessionState:
             return None
 
         try:
-            with open(layout_file, encoding="utf-8") as f:
-                return yaml.safe_load(f)
-        except (OSError, yaml.YAMLError):
+            return yaml_load(layout_file)
+        except Exception:
             return None
 
     def list_layouts(self) -> list[str]:

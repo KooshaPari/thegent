@@ -5,9 +5,6 @@ from __future__ import annotations
 
 import orjson as json
 import sys
-from pathlib import Path
-
-import typer
 
 from rich.table import Table
 
@@ -16,18 +13,7 @@ from thegent.cli.commands._cli_shared import (
     _coerce_issue_types,
     _default_owner_tag,
     _normalize_output_format,
-    _safe_dict,
-    _serialize_health_gate_md,
-    _serialize_health_report_md,
-    _serialize_health_trend_md,
-    _write_health_gate_export,
-    _write_health_trend_export,
-    _write_report_export,
     console,
-    EXIT_HEALTH_GATE_FAILED,
-)
-from thegent.cli.commands.session_cmds_helpers import (
-    resolve_export_format_with_notice,
 )
 
 

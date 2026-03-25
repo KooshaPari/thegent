@@ -7,6 +7,7 @@ and governance-relevant code patterns.
 # @trace WL-124
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import typer
@@ -188,15 +189,6 @@ def discovery_scan_cmd(
             console.print(f"\n[dim]Total discovered agents: {len(existing)}[/dim]")
     elif format == "json":
         console.print_json(data={"registered": registered, "count": len(registered)})
-
-
-__all__ = [
-    "discovery_parse_cmd",
-    "discovery_register_cmd",
-    "discovery_scan_cmd",
-    "guardrails_check_cmd",
-    "guardrails_show_cmd",
-]
 
 
 __all__ = [

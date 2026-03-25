@@ -3,7 +3,7 @@
 Manages agent hierarchies, parent-child relationships, and team structures.
 """
 
-import orjson as json
+import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -97,6 +97,19 @@ class AgentRelationship:
     delegation_prompt: str | None = None
     handoff_context: dict[str, Any] | None = None
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to dictionary."""
+        return {
+            "relationship_id": self.relationship_id,
+            "parent_id": self.parent_id,
+            "child_id": self.child_id,
+            "relationship_type": self.relationship_type.value,
+            "created_at": self.created_at.isoformat(),
+            "status": self.status,
+            "task_id": self.task_id,
+            "delegation_prompt": self.delegation_prompt,
+            "handoff_context": self.handoff_context,
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentRelationship":
@@ -136,6 +149,21 @@ class AgentTeam:
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     status: str = "active"
 
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to dictionary."""
+        return {
+            "team_id": self.team_id,
+            "name": self.name,
+            "description": self.description,
+            "lead_id": self.lead_id,
+            "members": self.members,
+            "team_type": self.team_type.value,
+            "coordination_mode": self.coordination_mode.value,
+            "boundaries": self.boundaries,
+            "communication_channels": self.communication_channels,
+            "created_at": self.created_at.isoformat(),
+            "status": self.status,
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AgentTeam":

@@ -8,6 +8,7 @@ from datetime import datetime
 
 from rich.text import Text
 from textual.containers import Container, Horizontal, ScrollableContainer, Vertical
+from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.widgets import Button, Label, RichLog, Static
 
@@ -131,25 +132,40 @@ class StatusWidget(Container):
 
     def watch_status(self, status: str) -> None:
         """Update status display."""
-        label = self.query_one("#status-line", Label)
+        label = self._get_status_label("#status-line")
+        if label is None:
+            return
         color = "green" if status == "running" else "yellow" if status == "idle" else "red"
         label.update(f"Status: [{color}]{status}[/{color}]")
 
     def watch_model(self, model: str) -> None:
         """Update model display."""
-        label = self.query_one("#model-line", Label)
+        label = self._get_status_label("#model-line")
+        if label is None:
+            return
         label.update(f"Model: {model}")
 
     def watch_tokens_used(self, tokens: int) -> None:
         """Update token count display."""
-        label = self.query_one("#tokens-line", Label)
+        label = self._get_status_label("#tokens-line")
+        if label is None:
+            return
         label.update(f"Tokens: {tokens:,}")
 
     def watch_elapsed_time(self, elapsed: float) -> None:
         """Update elapsed time display."""
-        label = self.query_one("#time-line", Label)
+        label = self._get_status_label("#time-line")
+        if label is None:
+            return
         minutes, seconds = divmod(int(elapsed), 60)
         label.update(f"Time: {minutes:02d}:{seconds:02d}")
+
+    def _get_status_label(self, selector: str) -> Label | None:
+        """Return a status label when composed, otherwise skip pre-mount updates."""
+        try:
+            return self.query_one(selector, Label)
+        except NoMatches:
+            return None
 
     def update_status(self, status: str, model: str | None = None, tokens: int | None = None) -> None:
         """Update all status fields.
@@ -264,7 +280,9 @@ class SidebarWidget(ScrollableContainer):
 
     def _update_agents_list(self) -> None:
         """Update the displayed agents list."""
-        agents_label = self.query_one("#agents-list", Static)
+        agents_label = self._get_sidebar_static("#agents-list")
+        if agents_label is None:
+            return
 
         lines = []
         for info in self.agents.values():
@@ -283,9 +301,18 @@ class SidebarWidget(ScrollableContainer):
             start_time: Start time string
             uptime: Uptime string
         """
-        session_label = self.query_one("#session-info", Static)
+        session_label = self._get_sidebar_static("#session-info")
+        if session_label is None:
+            return
         info = f"ID: {session_id[:8]}...\nStart: {start_time}\nUptime: {uptime}"
         session_label.update(info)
+
+    def _get_sidebar_static(self, selector: str) -> Static | None:
+        """Return a sidebar node when composed, otherwise skip pre-mount updates."""
+        try:
+            return self.query_one(selector, Static)
+        except NoMatches:
+            return None
 
 
 class HeaderWidget(Static):
@@ -419,10 +446,19 @@ class MetricsPanel(Container):
 
     def _render_metrics(self) -> None:
         """Render the metrics display."""
-        metrics_widget = self.query_one("#metrics-content", Static)
+        metrics_widget = self._get_metrics_widget()
+        if metrics_widget is None:
+            return
         lines = [f"{k}: {v}" for k, v in self.metrics.items()]
         content = "\n".join(lines) if lines else "(no metrics)"
         metrics_widget.update(content)
+
+    def _get_metrics_widget(self) -> Static | None:
+        """Return the metrics body when composed, otherwise skip pre-mount updates."""
+        try:
+            return self.query_one("#metrics-content", Static)
+        except NoMatches:
+            return None
 
 
 class ProgressIndicator(Static):

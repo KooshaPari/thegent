@@ -45,7 +45,7 @@ def _make_meta(tmp_path: Path, session_id: str = "sess-001", **extra) -> dict:
         },
         **extra,
     }
-    (tmp_path / f"{session_id}.json").write_text(json.dumps(meta).decode().decode(), encoding="utf-8")
+    (tmp_path / f"{session_id}.json").write_text(json.dumps(meta).decode(), encoding="utf-8")
     return meta
 
 
@@ -114,7 +114,7 @@ def test_load_session_invalid_json(tmp_path: Path) -> None:
 def test_load_session_missing_session_id(tmp_path: Path) -> None:
     """FR-REPLAY-001: load_session raises ValueError when session_id absent."""
     no_id = tmp_path / "noid.json"
-    no_id.write_text(json.dumps({"agent": "x"}).decode().decode(), encoding="utf-8")
+    no_id.write_text(json.dumps({"agent": "x"}).decode(), encoding="utf-8")
     engine = _make_engine(tmp_path)
     with pytest.raises(ValueError, match="missing 'session_id'"):
         engine.load_session(no_id)
@@ -476,7 +476,7 @@ def test_generate_test_fixture_embeds_session_id(tmp_path: Path) -> None:
 def test_list_sessions_sorted(tmp_path: Path) -> None:
     """FR-REPLAY-001: list_sessions returns a sorted list of .json paths."""
     for name in ("c.json", "a.json", "b.json"):
-        (tmp_path / name).write_text(json.dumps({"session_id": name}).decode().decode(), encoding="utf-8")
+        (tmp_path / name).write_text(json.dumps({"session_id": name}).decode(), encoding="utf-8")
     engine = _make_engine(tmp_path)
     sessions = engine.list_sessions()
     names = [p.name for p in sessions]

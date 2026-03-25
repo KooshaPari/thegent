@@ -16,7 +16,7 @@ import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 from thegent.integrations.base import DataclassConfig
 
@@ -113,7 +113,7 @@ class ClaimsValidator:
 
 
 class BifrostClient:
-    def __init__(self, config: BifrostConfig = None):
+    def __init__(self, config: BifrostConfig | None = None):
         self._config = config or self._load_config()
         self._status = BifrostStatus.DISABLED
         self._validator = None
@@ -121,8 +121,8 @@ class BifrostClient:
             self._status = BifrostStatus.ENABLED
             self._validator = ClaimsValidator(self._config)
 
-    def _load_config(self):
-        config = BifrostConfig.from_env("BIFROST_")
+    def _load_config(self) -> BifrostConfig:
+        config = cast(BifrostConfig, BifrostConfig.from_env("BIFROST_"))
         config.enabled = os.environ.get("THEGENT_ENABLE_BIFROST", "").lower() in ("1", "true", "yes")
         return config
 

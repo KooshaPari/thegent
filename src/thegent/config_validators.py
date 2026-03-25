@@ -6,9 +6,17 @@ Extracted from config.py for maintainability.
 from __future__ import annotations
 
 import os
-import re
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Protocol
+
+
+class _SettingsLike(Protocol):
+    """Subset of settings fields validated by this module."""
+
+    session_dir: Path | str | None
+    factory_skills_dir: Path | str | None
+    default_timeout_claude: int
+    default_timeout: int
 
 
 
@@ -184,7 +192,7 @@ def parse_mac_keep_awake_agents(v: object) -> list[str]:
     return ["claude", "codex", "gemini"]
 
 
-def validate_settings_setup(settings: object) -> list[str]:
+def validate_settings_setup(settings: _SettingsLike) -> list[str]:
     """Validate settings for common issues.
     
     Args:
@@ -196,24 +204,21 @@ def validate_settings_setup(settings: object) -> list[str]:
     errors = []
     
     # Check session directory is writable
-    if hasattr(settings, "session_dir"):
-        session_dir = settings.session_dir
-        if session_dir:
-            session_dir = Path(session_dir).expanduser()
-            session_dir.mkdir(parents=True, exist_ok=True)
-            if not os.access(session_dir, os.W_OK):
-                errors.append(f"Session directory not writable: {session_dir}")
+    session_dir = settings.session_dir
+    if session_dir:
+        session_dir_path = Path(session_dir).expanduser()
+        session_dir_path.mkdir(parents=True, exist_ok=True)
+        if not os.access(session_dir_path, os.W_OK):
+            errors.append(f"Session directory not writable: {session_dir_path}")
     
     # Check factory directories exist
-    if hasattr(settings, "factory_skills_dir"):
-        skills_dir = settings.factory_skills_dir
-        if skills_dir and not Path(skills_dir).expanduser().exists():
-            errors.append(f"Factory skills directory does not exist: {skills_dir}")
+    skills_dir = settings.factory_skills_dir
+    if skills_dir and not Path(skills_dir).expanduser().exists():
+        errors.append(f"Factory skills directory does not exist: {skills_dir}")
     
     # Validate timeouts
-    if hasattr(settings, "default_timeout_claude") and hasattr(settings, "default_timeout"):
-        if settings.default_timeout_claude < settings.default_timeout:
-            errors.append("default_timeout_claude must be >= default_timeout")
+    if settings.default_timeout_claude < settings.default_timeout:
+        errors.append("default_timeout_claude must be >= default_timeout")
     
     return errors
 

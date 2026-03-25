@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from thegent.infra.shim_subprocess import run as shim_run
 from thegent.lsp.jetbrains_cli import JetBrainsCLI
 
 logger = logging.getLogger(__name__)

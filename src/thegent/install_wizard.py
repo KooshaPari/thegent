@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
@@ -93,6 +92,7 @@ def run_install_project(
     Returns:
         True if successful
     """
+    from thegent.install_bundles import resolve_bundles
     from thegent.install_manager import InstallManager
     from thegent.install_models import InstallMode
     
@@ -116,23 +116,24 @@ def run_install_project(
     }
     install_mode = mode_map.get(mode.lower(), InstallMode.SMART)
     
-    # Get files to install
     thegent_root = _get_thegent_root()
-    from thegent.install_bundles import resolve_bundle_items
-    
-    items = resolve_bundle_items(bundle, thegent_root)
-    
-    for item in items:
-        source = Path(item.source)
-        target = path / item.target
-        
-        result = manager.install_file(source, target, install_mode)
+    resolved_items = resolve_bundles(
+        bundle_names=[bundle],
+        bundle_manifest=None,
+        thegent_root=thegent_root,
+        home=path,
+        cwd=path,
+        fallback_mode=install_mode,
+    )
+
+    for source, target, item_mode in resolved_items:
+        result = manager.install_file(source, target, item_mode)
         if result.name == "ERROR":
             console.print(f"[red]Failed: {target}[/red]")
     
     manager.save_manifest()
     
-    console.print(f"[green]✓ Installed {len(items)} files[/green]")
+    console.print(f"[green]✓ Installed {len(resolved_items)} files[/green]")
     return True
 
 
@@ -212,18 +213,16 @@ def _configure_mcp_wizard() -> None:
     
     from thegent.mcp.manage import service_install
     
-    # Common MCP servers
-    servers = [
-        ("filesystem", "Filesystem access"),
-        ("github", "GitHub integration"),
-        ("postgres", "PostgreSQL database"),
-    ]
-    
+    servers = [("thegent", "thegent MCP service")]
+
     for server_name, description in servers:
         if Confirm.ask(f"Configure {server_name} ({description})?", default=False):
             try:
-                service_install(server_name)
-                console.print(f"[green]✓ {server_name} configured[/green]")
+                ok, message = service_install()
+                if ok:
+                    console.print(f"[green]✓ {server_name} configured[/green]")
+                else:
+                    console.print(f"[red]✗ Failed to configure {server_name}: {message}[/red]")
             except Exception as e:
                 console.print(f"[red]✗ Failed to configure {server_name}: {e}[/red]")
 

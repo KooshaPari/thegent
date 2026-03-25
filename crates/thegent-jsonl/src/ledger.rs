@@ -46,7 +46,7 @@ impl LedgerVerifier {
         report
     }
 
-    fn process_ledger_line(&self, line: &str, i: usize, mut last_hash: String, report: &mut IntegrityReport) -> String {
+    fn process_ledger_line(&self, line: &str, i: usize, last_hash: String, report: &mut IntegrityReport) -> String {
         match serde_json::from_str::<serde_json::Value>(line) {
             Ok(entry) => {
                 let prev_hash = entry.get("prev_hash").and_then(|v| v.as_str()).unwrap_or("");
@@ -168,4 +168,3 @@ impl IncidentLedger {
         verifier.verify_integrity().valid
     }
 }
-

@@ -9,10 +9,9 @@ from thegent.cli.commands.dag_impl_list_run_cmds import (
     dag_status_impl,
     rules_sync_impl,
 )
-
-from thegent.cli.commands.dag_impl_sync_recover_cmds import (
-    dag_sync_impl,
+from thegent.cli.commands.dag_impl_ops import (
     dag_recover_impl,
+    dag_sync_impl,
 )
 
 __all__ = [

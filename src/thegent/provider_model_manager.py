@@ -171,8 +171,6 @@ def remove_common_alias(alias: str) -> tuple[bool, str]:
 
 def list_credentials() -> list[dict[str, Any]]:
     """List all configured credentials (without showing actual keys)."""
-    from thegent.provider_model_manager_io import load_json
-
     settings = ThegentSettings()
     config_path = _ensure_config(settings)
     config = load_yaml(config_path)

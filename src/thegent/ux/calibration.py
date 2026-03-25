@@ -1,6 +1,6 @@
 """WP-4008: Feedback loops and confidence calibration."""
 
-import orjson as json
+import json
 import logging
 
 from thegent.config import ThegentSettings

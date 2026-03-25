@@ -22,7 +22,6 @@ from thegent.cli.commands.plan_output_helpers import (
 from thegent.cli.commands._cli_shared import (
     RunRegistry,
     ThegentSettings,
-    _default_owner_tag,
     _parse_dag_full,
     _resolve_cwd,
     console,
@@ -269,17 +268,12 @@ def plan_loop_cmd(
         if dry_run:
             console.print("[dim](dry-run, not running)[/dim]")
         else:
-            resolved_cd = _resolve_cwd(cd)
-            owner = _default_owner_tag(resolved_cd) if resolved_cd else None
             bg_cmd(
                 prompt=prompt,
                 agent=agent,
                 cd=Path(cd) if cd else None,
-                mode="write",
                 timeout=300 if agent == "free" else 90,
-                full=False,
                 model="gpt-5-mini" if agent == "free" else None,
-                owner=owner,
             )
         iteration += 1
         if sleep_seconds > 0 and not dry_run:
@@ -485,5 +479,3 @@ def workstream_query_cmd(query: str) -> None:
             console.print(f"[dim]... and {len(results) - 100} more rows[/dim]")
     except Exception as e:
         console.print(f"[red]Error executing query: {e}[/red]")
-
-

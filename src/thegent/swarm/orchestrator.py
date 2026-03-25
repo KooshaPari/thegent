@@ -4,7 +4,7 @@ Swarm Orchestrator
 Coordinates multi-agent swarm execution.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Any
 from .communication import SwarmChannel, Message
 from .balancer import LoadBalancer
@@ -19,11 +19,7 @@ class Task:
     task_type: str
     payload: Any
     priority: int = 0
-    dependencies: list[str] = None
-
-    def __post_init__(self):
-        if self.dependencies is None:
-            self.dependencies = []
+    dependencies: list[str] = field(default_factory=list)
 
 
 @dataclass

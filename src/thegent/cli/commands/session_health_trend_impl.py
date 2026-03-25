@@ -11,6 +11,7 @@ import hashlib
 import orjson as json
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, cast
 
 import typer
@@ -31,10 +32,6 @@ def _get_health_payload_schema_version() -> str:
     return _health_report_impl().HEALTH_PAYLOAD_SCHEMA_VERSION
 
 
-def _get_health_payload_types() -> list[str]:
-    return _health_report_impl().HEALTH_PAYLOAD_TYPES
-
-
 def _resolve_health_policy(policy_profile: str | None, strict: bool, min_healthy_ratio: float) -> dict[str, Any]:
     return _health_report_impl()._resolve_health_policy(
         policy_profile=policy_profile, strict=strict, min_healthy_ratio=min_healthy_ratio
@@ -49,11 +46,11 @@ def _health_scope_key(payload: dict[str, Any]) -> dict[str, Any]:
     return _health_report_impl()._health_scope_key(payload)
 
 
-def _hash_health_payload(payload: dict[str, Any]) -> str:
+def _hash_health_payload(payload: dict[str, Any]) -> dict[str, str]:
     return _health_report_impl()._hash_health_payload(payload)
 
 
-def _health_snapshot_log_path():
+def _health_snapshot_log_path() -> Path:
     return _health_report_impl()._health_snapshot_log_path()
 
 
@@ -218,10 +215,12 @@ def session_contract_health_trend_impl(
         "latest_blocked_ratio": (latest or {}).get("blocked_ratio", None),
         "latest_blocked_count": (latest or {}).get("blocked_count", None),
         "latest_issue_types_count": len(_coerce_issue_types((latest or {}).get("issue_types", []))),
-        "latest_issue_types_json": json.dumps(_coerce_issue_types((latest or {}).decode().get("issue_types", []))),
+        "latest_issue_types_json": json.dumps(
+            _coerce_issue_types((latest or {}).get("issue_types", []))
+        ).decode(),
         "latest_issue_types_csv": ", ".join(str(v) for v in _coerce_issue_types((latest or {}).get("issue_types", []))),
         "latest_issue_types_hash": hashlib.sha256(
-            json.dumps(_coerce_issue_types((latest or {}).decode().get("issue_types", []))).encode("utf-8")
+            json.dumps(_coerce_issue_types((latest or {}).get("issue_types", [])))
         ).hexdigest(),
         "oldest": oldest,
         "delta_summary": {

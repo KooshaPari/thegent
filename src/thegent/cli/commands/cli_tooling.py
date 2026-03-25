@@ -13,7 +13,7 @@ runtime path is forbidden per the WL-136 surface boundary contract.
 
 from __future__ import annotations
 
-import orjson as json
+import json
 import sys
 from pathlib import Path
 from typing import Any
@@ -235,7 +235,7 @@ def audit_verify_cmd(format: str | None = None) -> None:
     res = auditor.verify_registry()
 
     if format == "json":
-        sys.stdout.write(json.dumps(res).decode() + "\n")
+        sys.stdout.write(json.dumps(res) + "\n")
         return
 
     if res["status"] == "passed":

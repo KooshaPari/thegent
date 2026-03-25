@@ -6,7 +6,7 @@ from thegent.cli.commands.cli_dag_run_cmds import (
     dag_run_cmd,
 )
 
-from thegent.cli.commands.cli_dag_sync_recover_cmds import (
+from thegent.cli.commands.cli_dag_run_sync_recover import (
     dag_sync_cmd,
     dag_checkpoint_cmd,
     dag_rollback_cmd,

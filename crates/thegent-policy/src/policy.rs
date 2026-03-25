@@ -72,12 +72,13 @@ impl LearningSession {
     }
 }
 
-#[cfg(feature = "python")]
+#[cfg(all(feature = "python", not(test), not(debug_assertions)))]
 pub mod python {
     use super::*;
     use pyo3::prelude::*;
 
     #[pyclass]
+    #[derive(Clone)]
     pub struct PyPolicyManager {
         inner: PolicyManager,
     }
@@ -88,16 +89,18 @@ pub mod python {
         fn new(initial_policies: Option<HashMap<String, Py<PyAny>>>) -> Self {
             let mut policies = HashMap::new();
             if let Some(initial) = initial_policies {
-                for (k, v) in initial.into_iter() {
-                    // Convert Py<PyAny> to serde_json::Value
-                    if let Ok(s) = v.extract::<String>() {
-                        policies.insert(k, serde_json::Value::String(s));
-                    } else if let Ok(n) = v.extract::<f64>() {
-                        policies.insert(k, serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap_or(serde_json::Number::from(0))));
-                    } else if let Ok(b) = v.extract::<bool>() {
-                        policies.insert(k, serde_json::Value::Bool(b));
+                Python::with_gil(|py| {
+                    for (k, v) in initial {
+                        let v = v.bind(py);
+                        if let Ok(s) = v.extract::<String>() {
+                            policies.insert(k, serde_json::Value::String(s));
+                        } else if let Ok(n) = v.extract::<f64>() {
+                            policies.insert(k, serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap_or(serde_json::Number::from(0))));
+                        } else if let Ok(b) = v.extract::<bool>() {
+                            policies.insert(k, serde_json::Value::Bool(b));
+                        }
                     }
-                }
+                });
             }
             Self {
                 inner: PolicyManager::new(Some(policies)),
@@ -106,32 +109,26 @@ pub mod python {
 
         fn update(&mut self, new_policies: HashMap<String, Py<PyAny>>) {
             let mut converted = HashMap::new();
-            for (k, v) in new_policies.into_iter() {
-                if let Ok(s) = v.extract::<String>() {
-                    converted.insert(k, serde_json::Value::String(s));
-                } else if let Ok(n) = v.extract::<f64>() {
-                    converted.insert(k, serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap_or(serde_json::Number::from(0))));
-                } else if let Ok(b) = v.extract::<bool>() {
-                    converted.insert(k, serde_json::Value::Bool(b));
+            Python::with_gil(|py| {
+                for (k, v) in new_policies {
+                    let v = v.bind(py);
+                    if let Ok(s) = v.extract::<String>() {
+                        converted.insert(k, serde_json::Value::String(s));
+                    } else if let Ok(n) = v.extract::<f64>() {
+                        converted.insert(k, serde_json::Value::Number(serde_json::Number::from_f64(n).unwrap_or(serde_json::Number::from(0))));
+                    } else if let Ok(b) = v.extract::<bool>() {
+                        converted.insert(k, serde_json::Value::Bool(b));
+                    }
                 }
-            }
+            });
             self.inner.update(converted);
         }
 
-        fn get_policy(&self, key: &str) -> Option<Py<PyAny>> {
-            self.inner.get_policy(key).map(|v| {
-                match v {
-                    serde_json::Value::String(s) => s.as_str().to_object(),
-                    serde_json::Value::Number(n) => n.as_f64().unwrap_or(0.0).to_object(),
-                    serde_json::Value::Bool(b) => b.to_object(),
-                    _ => py_none(),
-                }
-            })
+        fn get_policy(&self, key: &str) -> Option<String> {
+            self.inner
+                .get_policy(key)
+                .and_then(|v| serde_json::to_string(v).ok())
         }
-    }
-
-    fn py_none() -> Py<PyAny> {
-        Python::with_gil(|py| py.None())
     }
 
     #[pyclass]

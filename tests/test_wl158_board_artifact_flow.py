@@ -67,7 +67,7 @@ CLIPROXY-160,Automatic Workstream Reflection,Backlog,P1,workstream-agent,WL-160,
     }
 
     json_file = board_dir / "CLIPROXYAPI_2000_ITEM_EXECUTION_BOARD_2026-02-22.json"
-    json_file.write_text(json.dumps(json_data, indent=2).decode().decode())
+    json_file.write_text(json.dumps(json_data, indent=2).decode())
 
     # Create test markdown file
     md_content = """# CLIProxyAPI 2000-Item Execution Board

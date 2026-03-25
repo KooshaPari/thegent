@@ -1,6 +1,6 @@
 """WP-16001/16002: Thegent Teammates orchestration and delegation protocol."""
 
-import orjson as json
+import json
 import re
 import uuid
 from dataclasses import asdict, dataclass, field

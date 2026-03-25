@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import contextlib
 import importlib
-import orjson as json
+import json
 import os
 import sys
 from pathlib import Path

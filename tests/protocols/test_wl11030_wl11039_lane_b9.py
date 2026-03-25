@@ -22,7 +22,7 @@ def _reset_state() -> None:
 
 def _start_session() -> str:
     response, _notifications = process_jsonrpc_line_full(
-        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode().decode()
+        json.dumps({"jsonrpc": "2.0", "id": "start", "method": "session/start"}).decode()
     )
     assert response is not None
     return response["result"]["session"]["id"]

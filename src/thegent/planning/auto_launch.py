@@ -47,6 +47,7 @@ from thegent.security.rbac import Permission, RBACManager, Role
 from thegent.sync import SyncOrchestrator, SyncRegistry
 from thegent.team.coordination import TeamCoordinator
 from thegent.ux.alerts import AlertFatigueController, InterruptionKind
+from thegent.infra.shim_subprocess import run as shim_run
 
 _log = logging.getLogger(__name__)
 
@@ -221,7 +222,7 @@ class AutoLaunchSystem:
                 session_id,
                 item_id,
                 datetime.now(UTC).isoformat(),
-                json.dumps(payload).decode() if payload else None,
+                json.dumps(payload) if payload else None,
                 evidence_hash,
             ),
         )

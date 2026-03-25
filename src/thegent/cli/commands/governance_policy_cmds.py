@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from thegent.utils.json_utils import json_loads, json_dumps
 import sys
 import uuid
 from pathlib import Path
@@ -20,23 +19,9 @@ from rich.table import Table
 
 from thegent.cli.commands._cli_shared import (
     ThegentSettings,
-    _bootstrap_metric_contracts,
-    _get_health_targets_path,
-    _HEALTH_TARGETS_TEMPLATE,
     _load_artifact,
     _normalize_output_format,
-    _resolve_cwd,
     console,
-)
-from thegent.cli.commands.governance_health_helpers import (
-    build_cycle_json_output,
-    build_cycle_result_table,
-    build_health_dimensions_table,
-    build_health_json_output,
-    build_health_summary_table,
-    count_findings,
-    extract_dimension_values,
-    resolve_band_value,
 )
 
 
@@ -534,12 +519,7 @@ __all__ = [
     "contracts_conformance_cmd",
     "contracts_registry_cmd",
     "drift_cmd",
-    "govern_configure_cmd",
     "govern_cost_cmd",
-    "govern_go_cycle_cmd",
-    "govern_go_health_cmd",
-    "govern_go_status_cmd",
-    "govern_go_watch_cmd",
     "guardrails_check_cmd",
     "guardrails_show_cmd",
     "migration_cmd",

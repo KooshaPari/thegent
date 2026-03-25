@@ -152,7 +152,7 @@ bun run test:all     # All tests
 ## Workflow
 
 ### Feature Development
-1. Create OpenSpec proposal
+1. Create AgilePlus proposal
 2. Write tests first (TDD)
 3. Implement feature
 4. Run `/quick` frequently

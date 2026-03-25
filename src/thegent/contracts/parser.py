@@ -138,7 +138,7 @@ class IncrementalXMLParser:
             tags = {k.upper(): v for k, v in tags.items()}
         return tags
 
-    def get_partial_state(self, text: str) -> dict[str, any]:
+    def get_partial_state(self, text: str) -> dict[str, Any]:
         """Return partial parse state with tag name, content, and truncation status."""
         buf = text or ""
 
@@ -243,7 +243,7 @@ class StreamingXMLParser(IncrementalXMLParser):
         import hashlib
         import json
 
-        state_data = json.dumps(self._committed_tags, sort_keys=True).decode()
+        state_data = json.dumps(self._committed_tags, sort_keys=True)
         checkpoint_id = hashlib.sha256(state_data.encode()).hexdigest()[:12]
         self._checkpoints.append(self._committed_tags.copy())
         return checkpoint_id

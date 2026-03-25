@@ -22,11 +22,13 @@ import orjson as json
 import logging
 import os
 import signal
+import time
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import typer
 
+from thegent.infra.shim_subprocess import run as shim_run
 from thegent.cli.commands.session_meta_impl import (
     _find_session_meta,
     _read_session_meta,
@@ -46,7 +48,7 @@ def wait_impl(session_id: str, timeout: int | None = None) -> dict[str, Any]:
     """
     Wait for a background session to complete.
     """
-    from thegent.cli.commands.impl import _is_pid_running, _session_paths, time
+    from thegent.cli.commands.impl import _is_pid_running, _session_paths
 
     settings = _impl_settings()
     try:

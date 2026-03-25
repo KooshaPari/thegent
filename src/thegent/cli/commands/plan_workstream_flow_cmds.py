@@ -4,15 +4,10 @@
 from __future__ import annotations
 
 import orjson as json
-import logging
 import sys
 from pathlib import Path
-from datetime import datetime
-from typing import Any, cast
 
 import typer
-
-from rich.table import Table
 
 from thegent.cli.commands.plan_output_helpers import (
     render_plan_next_items,
@@ -20,15 +15,9 @@ from thegent.cli.commands.plan_output_helpers import (
 )
 
 from thegent.cli.commands._cli_shared import (
-    RunRegistry,
     ThegentSettings,
-    _default_owner_tag,
-    _parse_dag_full,
-    _resolve_cwd,
     console,
 )
-
-_log = logging.getLogger(__name__)
 
 from thegent.cli.commands.run_cmds import bg_cmd
 from thegent.cli.commands.session_cmds import history_cmd
@@ -168,17 +157,12 @@ def plan_loop_cmd(
         if dry_run:
             console.print("[dim](dry-run, not running)[/dim]")
         else:
-            resolved_cd = _resolve_cwd(cd)
-            owner = _default_owner_tag(resolved_cd) if resolved_cd else None
             bg_cmd(
                 prompt=prompt,
                 agent=agent,
                 cd=Path(cd) if cd else None,
-                mode="write",
                 timeout=300 if agent == "free" else 90,
-                full=False,
                 model="gpt-5-mini" if agent == "free" else None,
-                owner=owner,
             )
         iteration += 1
         if sleep_seconds > 0 and not dry_run:
