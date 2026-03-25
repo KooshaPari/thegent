@@ -113,7 +113,7 @@
 
 **REQUIRED**: Specify where research outputs will be stored.
 
-This location is SEPARATE from `kitty-specs/` planning artifacts.
+This location is SEPARATE from `agileplus/` planning artifacts.
 
 **Deliverables Path**: `docs/research/[###-research-name]/`
 
@@ -125,21 +125,21 @@ This path will:
 - Be merged to main when WPs complete (like code)
 
 **Do NOT use**:
-- `kitty-specs/` (reserved for sprint planning artifacts)
+- `agileplus/` (reserved for sprint planning artifacts)
 - `research/` at project root without a subdirectory (ambiguous)
 
 ### Why Two Locations?
 
 | Type | Location | Purpose |
 |------|----------|---------|
-| **Planning Artifacts** | `kitty-specs/[###]/research/` | Evidence/sources collected DURING planning (shared across WPs) |
+| **Planning Artifacts** | `agileplus/[###]/research/` | Evidence/sources collected DURING planning (shared across WPs) |
 | **Research Deliverables** | `[deliverables_path]/` | Actual research OUTPUT (created in worktrees, merged to main) |
 
 ## Project Structure
 
-### Sprint Planning Artifacts (in kitty-specs/)
+### Sprint Planning Artifacts (in agileplus/)
 ```
-kitty-specs/[###-research]/
+agileplus/[###-research]/
 ├── spec.md              # Research question and scope
 ├── plan.md              # This file - methodology
 ├── tasks.md             # Research work packages

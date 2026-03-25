@@ -1,3 +1,6 @@
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { defineConfig } from 'vitepress'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { imagetools } from 'vite-imagetools'
@@ -7,6 +10,9 @@ import { videoEmbedPlugin } from './plugins/video-embed'
 import { sidebar } from './sidebar-canonical'
 import { createRequire } from 'module'
 
+const docsDir = dirname(fileURLToPath(import.meta.url))
+const phenodocsRoot = resolve(docsDir, '../../../phenodocs')
+const phenodocsTheme = resolve(phenodocsRoot, '.vitepress/theme/index.ts')
 const require = createRequire(import.meta.url)
 const markdownItEmoji = require('markdown-it-emoji').full
 const algoliaAppId = process.env.VITEPRESS_ALGOLIA_APP_ID
@@ -122,6 +128,16 @@ const config = defineConfig({
   ignoreDeadLinks: true,
 
   vite: {
+    resolve: {
+      alias: {
+        '@phenodocs-theme': phenodocsTheme,
+      },
+    },
+    server: {
+      fs: {
+        allow: [phenodocsRoot],
+      },
+    },
     plugins: [
       // VitePress bundles its own vite; cast required to resolve dual-vite Plugin type mismatch
       imagetools({

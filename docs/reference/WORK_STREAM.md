@@ -6179,7 +6179,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 |-------|------------------|
 | worker | thegent run codex/claude |
 | orchestrator-core | Lead in agent team |
-| openspec-orchestrator | Specialized workflow |
+| agileplus-orchestrator | Specialized workflow |
 | Feature | Augment | Description | thegent Parity |
 |---------|---------|-------------|----------------|
 | **auggie CLI** | `auggie` | Terminal agent | thegent run -M augment |
@@ -9311,7 +9311,7 @@ Publish quick-start docs for unattended board reflection setup and verification 
 | **thegent** | Cross-platform, governance, FastMCP | Active | ✅ |
 | **heliosShield** | LLM gates, chaos engineering | Active | ✅ |
 | **smolgents** | Cost optimization, routing | Complete | ✅ |
-| **trace** | MCP integration, BMM/OpenSpec | Planning | ✅ |
+| **trace** | MCP integration, BMM/AgilePlus | Planning | ✅ |
 | **dphi** | MCP composition, workflow integration | Active | ✅ |
 | Feature | Source | Target Projects | Impact |
 |---------|--------|-----------------|--------|

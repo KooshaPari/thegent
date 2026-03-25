@@ -11861,9 +11861,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### FR-598: OpenSpec Integration
+### FR-598: AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### FR-599: Slash Commands
@@ -11916,7 +11916,7 @@ Comprehensive project health metrics
 
 
 
-### FR-609: openspec_init
+### FR-609: agileplus_init
 
 
 
@@ -55334,9 +55334,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### FR-2507: OpenSpec Integration
+### FR-2507: AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### FR-2508: Slash Commands
@@ -55389,7 +55389,7 @@ Comprehensive project health metrics
 
 
 
-### FR-2518: openspec_init
+### FR-2518: agileplus_init
 
 
 
@@ -68058,9 +68058,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### 🟡 OpenSpec Integration
+### 🟡 AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### 🟡 Slash Commands
@@ -68113,7 +68113,7 @@ Comprehensive project health metrics
 
 
 
-### 🟡 openspec_init
+### 🟡 agileplus_init
 
 
 
@@ -111531,9 +111531,9 @@ Probabilistic schedule risk assessment
 Resource allocation and conflict detection
 
 
-### 🟡 OpenSpec Integration
+### 🟡 AgilePlus Integration
 
-Initialize and manage OpenSpec project structure
+Initialize and manage AgilePlus project structure
 
 
 ### 🟡 Slash Commands
@@ -111586,7 +111586,7 @@ Comprehensive project health metrics
 
 
 
-### 🟡 openspec_init
+### 🟡 agileplus_init
 
 
 
@@ -114046,7 +114046,7 @@ src/
 - Use Context Manager
 - Hexagonal Architecture Layers
 - Domain Services
-- OpenSpec Integration
+- AgilePlus Integration
 - Running the Server
 - Claude Desktop Integration
 - Other MCP Clients
@@ -114054,7 +114054,7 @@ src/
 - generate_wbs_plan
 - run_monte_carlo
 - create_specification
-- openspec_init
+- agileplus_init
 - generate_slash_commands
 - allocate_resources
 - detect_conflicts

@@ -157,7 +157,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ### 1.5 smolgents (Production-Ready)
 
-**File**: `STAGE3_IMPLEMENTATION_ROADMAP.md`, `openspec/project.md`
+**File**: `STAGE3_IMPLEMENTATION_ROADMAP.md`, `agileplus/project.md`
 
 **Structure**:
 - Stage-based roadmap (Stage 1-3)
@@ -216,7 +216,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ### 1.7 dphi (Active Planning)
 
-**File**: `openspec/changes/add-unified-mcp-composition-server/tasks.md`
+**File**: `agileplus/changes/add-unified-mcp-composition-server/tasks.md`
 
 **Structure**:
 - Task-based (10 sections)

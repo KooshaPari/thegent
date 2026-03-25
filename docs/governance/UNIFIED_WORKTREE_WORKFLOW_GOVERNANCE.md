@@ -2,7 +2,7 @@
 
 **Status:** Active Policy
 **Supersedes:** `WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md` (still authoritative for commit/PR/merge rules — this doc adds the path schema and system harmonization layer)
-**Systems Harmonized:** thegent worktree policy + BMAD lifecycle phases + OpenSpec change anchors
+**Systems Harmonized:** thegent worktree policy + BMAD lifecycle phases + AgilePlus change anchors
 **Last Updated:** 2026-02-24
 
 ---
@@ -13,7 +13,7 @@ This document establishes a single, unified taxonomy for:
 
 1. **Where** worktrees live on disk (path schema)
 2. **What state** a worktree is in (lifecycle state)
-3. **How** work in a worktree maps to BMAD phases and OpenSpec change IDs
+3. **How** work in a worktree maps to BMAD phases and AgilePlus change IDs
 4. **Which tooling** enforces each layer
 
 It does not replace the commit, versioning, or PR rules in `WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md` — those remain authoritative. It extends them with a physical path convention and cross-system vocabulary.
@@ -43,7 +43,7 @@ It does not replace the commit, versioning, or PR rules in `WORKTREE_SCALE_COMMI
 | `<repo>` | Git repo name | `thegent`, `cliproxy++`, `heliosHarness`, etc. |
 | `<domain>` | Task classifier `domain` field | `backend`, `frontend`, `infra`, `data`, `docs`, `research`, `security`, `qa`, `release`, `ops` |
 | `<scale>` | Task classifier `scale` field | `xs`, `s`, `m`, `l`, `xl` |
-| `<change-anchor>` | OpenSpec change-id (verb-led, kebab-case) | e.g. `fix-mcp-timeout`, `add-dag-tests`, `refactor-config-layer` |
+| `<change-anchor>` | AgilePlus change-id (verb-led, kebab-case) | e.g. `fix-mcp-timeout`, `add-dag-tests`, `refactor-config-layer` |
 | `<state>` | Lifecycle state (see §4) | `active`, `review`, `blocked`, `integration`, `done` |
 
 ### 3.2 Full Example Paths
@@ -75,9 +75,9 @@ Legacy branch names (e.g. `thegent-mcp-fix`, `feature/wl-implementation`) are al
 
 ## 4. Lifecycle States
 
-States map to BMAD phases and OpenSpec proposal stages.
+States map to BMAD phases and AgilePlus proposal stages.
 
-| State | Dir Name | BMAD Phase Equivalent | OpenSpec Stage | Meaning |
+| State | Dir Name | BMAD Phase Equivalent | AgilePlus Stage | Meaning |
 |-------|----------|----------------------|----------------|---------|
 | `active` | `active/` | Phase 4 — Implementation | Apply | Work in progress, agent or human actively committing |
 | `review` | `review/` | Phase 4 — Review Story | Apply (pending approval) | PR open or awaiting code review |
@@ -128,30 +128,30 @@ BMAD defines 5 phases (0–4) plus a parallel testing track. Each maps to a work
 
 ---
 
-## 6. OpenSpec Change Anchor Integration
+## 6. AgilePlus Change Anchor Integration
 
-Every worktree's `<change-anchor>` segment **is** (or maps 1:1 to) an OpenSpec `change-id`.
+Every worktree's `<change-anchor>` segment **is** (or maps 1:1 to) an AgilePlus `change-id`.
 
 This means:
-- Every worktree has a corresponding `openspec/changes/<change-anchor>/` directory in the repo
+- Every worktree has a corresponding `agileplus/changes/<change-anchor>/` directory in the repo
 - `proposal.md` in that change dir is the source-of-truth for what the worktree is doing
 - `tasks.md` drives the commit sequence inside the worktree
-- When the worktree reaches `done`, run `openspec archive <change-anchor> --yes`
+- When the worktree reaches `done`, run `agileplus archive <change-anchor> --yes`
 
-### 6.1 Exceptions (no OpenSpec proposal required)
+### 6.1 Exceptions (no AgilePlus proposal required)
 
-Per OpenSpec policy, skip the proposal for:
+Per AgilePlus policy, skip the proposal for:
 - Bug fixes (typos, formatting, dependency bumps, config changes)
 - Tests for existing behavior
 
-For these, use a descriptive `<change-anchor>` that starts with `fix-` or `test-` and omit the `openspec/changes/` scaffold. The worktree path schema still applies.
+For these, use a descriptive `<change-anchor>` that starts with `fix-` or `test-` and omit the `agileplus/changes/` scaffold. The worktree path schema still applies.
 
-### 6.2 Worktree ↔ OpenSpec Mapping Example
+### 6.2 Worktree ↔ AgilePlus Mapping Example
 
 ```
 thegent/.worktrees/backend/m/fix-mcp-timeout/active/
   ↕
-thegent/openspec/changes/fix-mcp-timeout/
+thegent/agileplus/changes/fix-mcp-timeout/
   ├── proposal.md
   ├── tasks.md
   └── specs/mcp-client/spec.md
@@ -200,7 +200,7 @@ When starting BMAD Phase 4 (dev story), the first action after story approval is
 ./scripts/worktree_governance.sh new <domain> <scale> <change-anchor>
 ```
 
-If using an OpenSpec proposal, run `openspec validate <change-anchor> --strict` first.
+If using an AgilePlus proposal, run `agileplus validate <change-anchor> --strict` first.
 
 ---
 
@@ -248,7 +248,7 @@ The following worktrees are non-compliant (broken gitdir pointers from `/temp-PR
 
 ## 9. Vocabulary Cross-Reference
 
-| This System | BMAD Term | OpenSpec Term | Task Classifier Field |
+| This System | BMAD Term | AgilePlus Term | Task Classifier Field |
 |-------------|-----------|---------------|----------------------|
 | `<domain>` | Agent persona domain (backend, QA, etc.) | capability folder | `domain` |
 | `<scale>` | Story size / sprint scope | — (not used) | `scale` (XS/S/M/L/XL) |
@@ -267,10 +267,10 @@ The following worktrees are non-compliant (broken gitdir pointers from `/temp-PR
 ## 10. Governance Checklist (New Work)
 
 ### Pre-Creation (Phase 0 — Context Load)
-- [ ] `openspec list` — check active changes for conflicts
-- [ ] `openspec list --specs` — check existing capabilities
+- [ ] `agileplus list` — check active changes for conflicts
+- [ ] `agileplus list --specs` — check existing capabilities
 - [ ] `git worktree list` — check active worktrees
-- [ ] Read `openspec/project.md` and affected `specs/<capability>/` files
+- [ ] Read `agileplus/project.md` and affected `specs/<capability>/` files
 - [ ] Task classified: domain, scale, risk, coupling filled in
 
 ### Outcome Definition (Phase 1 — Goal-Backward)
@@ -279,10 +279,10 @@ The following worktrees are non-compliant (broken gitdir pointers from `/temp-PR
 - [ ] If change-anchor slug needs "and": split into two changes
 
 ### Proposal (Phase 2)
-- [ ] If M/L/XL: OpenSpec proposal scaffolded (`proposal.md`, `tasks.md`, `design.md`)
+- [ ] If M/L/XL: AgilePlus proposal scaffolded (`proposal.md`, `tasks.md`, `design.md`)
 - [ ] Each task in `tasks.md` has a `verify:` line with a runnable command (Nyquist)
 - [ ] If L/XL: `design.md` locks all naming, API, error patterns before implementation
-- [ ] `openspec validate <id> --strict` passes
+- [ ] `agileplus validate <id> --strict` passes
 - [ ] Proposal approved (worktree stays in `blocked/` until this gate clears)
 
 ### Execution Setup (Phase 3–4)
@@ -301,11 +301,11 @@ The following worktrees are non-compliant (broken gitdir pointers from `/temp-PR
 - [ ] All `verify:` commands from `tasks.md` pass
 - [ ] `task quality` passes
 - [ ] All `must_haves` observable from outside the system
-- [ ] `openspec validate <id> --strict` passes
+- [ ] `agileplus validate <id> --strict` passes
 - [ ] State transitioned to `review/`: `./scripts/worktree_governance.sh state <change-anchor> review`
 
 ### Integration and Archive (Phase 7)
-- [ ] On merge: `openspec archive <change-anchor> --yes`
+- [ ] On merge: `agileplus archive <change-anchor> --yes`
 - [ ] `git worktree prune`
 - [ ] Worktree dir moved to `done/` or removed
 
@@ -318,4 +318,3 @@ The following worktrees are non-compliant (broken gitdir pointers from `/temp-PR
 - Keep local hot paths deterministic and low-latency; place distributed workflow logic behind durable orchestration boundaries.
 - Require policy gating, auditability, and traceable correlation IDs for agent and workflow actions.
 - Document architectural and protocol decisions before broad rollout changes.
-

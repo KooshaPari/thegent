@@ -1918,7 +1918,7 @@ Research into bypassing text entirely for multi-agent workflows. By passing "int
 
 ### **C. Project Level (Methodology & Guardrails)**
 *   **Spec-Driven Development (SDD Evolution)**:
-    *   **Spec-Kit vs. OpenSpec vs. BMAD**: Comparison of SDD methodologies. BMAD is powerful for multi-agent builds, while OpenSpec/Spec-Kit are lighter.
+    *   **Spec-Kit vs. AgilePlus vs. BMAD**: Comparison of SDD methodologies. BMAD is powerful for multi-agent builds, while AgilePlus/Spec-Kit are lighter.
     *   **agents.md**: Emerging standard for LLM-readable project specs.
 *   **Model Performance & Economics**:
     *   **Manus AI Economics**: High-compute agentic workflows costing ~$2/task.
@@ -1932,10 +1932,10 @@ Research into bypassing text entirely for multi-agent workflows. By passing "int
     *   **Zsh Hooks**: Overriding commands to prevent agents from bypassing project build systems.
     *   **PM2 for Backend Observability**: Autonomous log monitoring for agents.
 *   **Strategic Scaffolding (SDD Evolution)**:
-    *   **Spec-Kit vs. OpenSpec vs. BMAD**: The community is comparing three main approaches for **Spec-Driven Development (SDD)**:
+    *   **Spec-Kit vs. AgilePlus vs. BMAD**: The community is comparing three main approaches for **Spec-Driven Development (SDD)**:
         *   **BMAD Method**:Documentation-heavy, multi-agent, end-to-end. Powerful but can be "heavyweight" for smaller tasks.
         *   **GitHub’s Spec-Kit**: Repos/PR integrated, lighter than BMAD.
-        *   **OpenSpec**: Lightweight and conversational (Fission-AI).
+        *   **AgilePlus**: Lightweight and conversational (Fission-AI).
         *   **ai-dev-tasks**: An even more lightweight task-based methodology that works well with Cursor Plan Mode.
     *   **agents.md**: A new emerging standard for organizing spec documentation that LLMs can natively follow to stay in context.
     *   **MCP for Project Management**: Instead of just markdown files, developers are using **YouTrack** and other PM tools via MCP servers to control context (e.g., "get in-progress stories"). This allows for better control of context drift and synchronization with task plans.
@@ -2022,7 +2022,7 @@ Research into bypassing text entirely for multi-agent workflows. By passing "int
 
 ### **C. Project Level (Methodology & Guardrails)**
 *   **Spec-Driven Development (SDD)**:
-    *   **Methodology Comparison**: BMAD (heavyweight/multi-agent), OpenSpec (lightweight), Spec-Kit (GitHub/PR integrated), and `ai-dev-tasks` (minimalist for Cursor Plan Mode).
+    *   **Methodology Comparison**: BMAD (heavyweight/multi-agent), AgilePlus (lightweight), Spec-Kit (GitHub/PR integrated), and `ai-dev-tasks` (minimalist for Cursor Plan Mode).
     *   **agents.md**: Verified standard for cross-IDE spec documentation.
     *   **PRD Workflow (`cursor-ai-prd-workflow`)**: Structured prompt collection for generating PRDs/RFCs for AI assistants.
 *   **Model Performance & Safety**:

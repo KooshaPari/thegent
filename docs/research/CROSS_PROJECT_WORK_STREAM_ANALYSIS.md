@@ -102,7 +102,7 @@ This document analyzes work streams, features, and research plans across **8 act
 - Phase-based planning (6 phases)
 - User stories (US-1 to US-5)
 - Adapter pattern focus
-- OpenSpec governance
+- AgilePlus governance
 
 **Key Features**:
 - ✅ Phase-based roadmap
@@ -152,7 +152,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ### 1.5 smolgents (Production-Ready)
 
-**File**: `STAGE3_IMPLEMENTATION_ROADMAP.md`, `openspec/project.md`
+**File**: `STAGE3_IMPLEMENTATION_ROADMAP.md`, `agileplus/project.md`
 
 **Structure**:
 - Stage-based roadmap (Stage 1-3)
@@ -211,7 +211,7 @@ This document analyzes work streams, features, and research plans across **8 act
 
 ### 1.7 dphi (Active Planning)
 
-**File**: `openspec/changes/add-unified-mcp-composition-server/tasks.md`
+**File**: `agileplus/changes/add-unified-mcp-composition-server/tasks.md`
 
 **Structure**:
 - Task-based (10 sections)
@@ -402,7 +402,7 @@ This document analyzes work streams, features, and research plans across **8 act
 | **thegent** | Cross-platform, governance, FastMCP | Active | ✅ |
 | **heliosShield** | LLM gates, chaos engineering | Active | ✅ |
 | **smolgents** | Cost optimization, routing | Complete | ✅ |
-| **trace** | MCP integration, BMM/OpenSpec | Planning | ✅ |
+| **trace** | MCP integration, BMM/AgilePlus | Planning | ✅ |
 | **dphi** | MCP composition, workflow integration | Active | ✅ |
 
 ---
@@ -426,7 +426,7 @@ This document analyzes work streams, features, and research plans across **8 act
 - FastMCP patterns
 
 **From trace**:
-- BMM/OpenSpec integration
+- BMM/AgilePlus integration
 - Completion validation research
 - Progress tracking patterns
 

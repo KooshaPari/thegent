@@ -89,7 +89,7 @@ def _import_shared() -> ModuleType:
 
     raise ImportError(
         "Cannot locate task_helpers_shared module. "
-        "Ensure spec-kitty-cli is installed (pip install spec-kitty-cli) "
+        "Ensure agileplus-cli is installed (pip install agileplus-cli) "
         "or that the source tree is intact."
     )
 

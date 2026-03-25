@@ -6,8 +6,8 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 
 | File | Purpose |
 |------|---------|
-| `METHODOLOGY_SYNTHESIS_GSD_BMAD_OPENSPEC.md` | **Read first.** Unified process principles from GSD + BMAD + OpenSpec integrated into thegent workflow |
-| `UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md` | Path schema, lifecycle states, BMAD/OpenSpec harmonization, legacy migration plan |
+| `METHODOLOGY_SYNTHESIS_GSD_BMAD_AGILEPLUS.md` | **Read first.** Unified process principles from GSD + BMAD + AgilePlus integrated into thegent workflow |
+| `UNIFIED_WORKTREE_WORKFLOW_GOVERNANCE.md` | Path schema, lifecycle states, BMAD/AgilePlus harmonization, legacy migration plan |
 | `WORKTREE_SCALE_COMMIT_VERSION_PR_POLICY.md` | Commit strategy, versioning, PR topology, merge policy (still authoritative) |
 | `DELEGATION_ARCHITECTURE_LN.md` | L1→Ln role layers, universal delegation decision engine |
 | `TASK_CLASSIFIER_SCHEMA.yaml` | Canonical YAML classifier: domain, scale, risk, worktree mode |
@@ -39,5 +39,5 @@ Use this index as the entrypoint for multi-agent worktree/commit/delegation gove
 1. Primary checkout stays on `main`. Retain `.thegent-primary-main`.
 2. All non-primary worktrees under `<repo>/.worktrees/<domain>/<scale>/<change-anchor>/<state>/`.
 3. No legacy bypass — `THGENT_WORKTREE_ALLOW_LEGACY=1` is blocked by strict gates.
-4. Every M/L/XL worktree has a corresponding OpenSpec proposal (`openspec validate --strict` before creation).
-5. On merge: `openspec archive <change-anchor> --yes` then `git worktree prune`.
+4. Every M/L/XL worktree has a corresponding AgilePlus proposal (`agileplus validate --strict` before creation).
+5. On merge: `agileplus archive <change-anchor> --yes` then `git worktree prune`.

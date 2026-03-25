@@ -82,6 +82,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
+          cache: 'pip'
+        with:
           python-version: '3.12'
           cache: 'pip'
 
@@ -125,6 +127,8 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
+        with:
+          cache: 'pip'
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -170,6 +174,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
+          cache: 'pip'
+        with:
           python-version: '3.12'
           cache: 'pip'
 
@@ -213,6 +219,8 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
+        with:
+          cache: 'pip'
         with:
           python-version: '3.12'
           cache: 'pip'
@@ -345,6 +353,8 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
+        with:
+          cache: 'pip'
         with:
           python-version: '3.12'
           cache: 'pip'
