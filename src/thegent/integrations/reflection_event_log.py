@@ -72,7 +72,7 @@ class ReflectionEventLog:
                         event_dict.pop("annotation", None)
                         event = ReflectionDecision(**event_dict)
                         self._events.append(event)
-        except json.JSONDecodeError, KeyError:
+        except (json.JSONDecodeError, KeyError):
             # Silently ignore malformed entries
             pass
 

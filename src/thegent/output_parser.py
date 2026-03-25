@@ -548,6 +548,7 @@ def extract_condensed_validated(stdout: str) -> ParseResult:
     partial_state: dict[str, Any] | None = None
     if "<" in condensed and ">" in condensed:
         try:
+            # tach-ignore(output_parser->contracts is reverse of architectural direction)
             from thegent.contracts.parser import IncrementalXMLParser
 
             parser = IncrementalXMLParser()

@@ -84,5 +84,5 @@ class AgentReadinessDetector:
             if proc.status() == psutil.STATUS_RUNNING:
                 return "busy"
             return "unknown"
-        except psutil.NoSuchProcess, psutil.AccessDenied:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             return "error"
