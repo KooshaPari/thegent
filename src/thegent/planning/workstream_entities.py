@@ -157,8 +157,8 @@ def _read_existing(
         if not all(column in criteria for column in spec.pk_columns):
             return None
         where_clause = " AND ".join(f"{_quote(column)} = ?" for column in spec.pk_columns)
-        cursor.execute(  # noqa: S608
-            f"SELECT * FROM {_quote(spec.table)} WHERE {where_clause} LIMIT 1",
+        cursor.execute(
+            f"SELECT * FROM {_quote(spec.table)} WHERE {where_clause} LIMIT 1",  # noqa: S608
             [criteria[column] for column in spec.pk_columns],
         )
         row = cursor.fetchone()
@@ -210,7 +210,7 @@ def list_entities(
         rows = [
             dict(row)
             for row in conn.execute(  # noqa: S608
-                f"SELECT * FROM {_quote(table)} ORDER BY {order_clause} LIMIT ? OFFSET ?",
+                f"SELECT * FROM {_quote(table)} ORDER BY {order_clause} LIMIT ? OFFSET ?",  # noqa: S608
                 (limit, offset),
             ).fetchall()
         ]
@@ -266,7 +266,7 @@ def search_entities(
         rows = [
             dict(row)
             for row in conn.execute(  # noqa: S608
-                f"SELECT * FROM {_quote(table)} WHERE {clause} LIMIT ?",
+                f"SELECT * FROM {_quote(table)} WHERE {clause} LIMIT ?",  # noqa: S608
                 (*([pattern] * len(text_columns)), limit),
             ).fetchall()
         ]
@@ -327,7 +327,7 @@ def upsert_entity(
             conn.execute(sql, values)  # noqa: S608
         else:
             conn.execute(  # noqa: S608
-                f"INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})",
+                f"INSERT INTO {_quote(table)} ({quoted_columns}) VALUES ({placeholders})",  # noqa: S608
                 values,
             )
 
@@ -366,7 +366,7 @@ def delete_entity(
             raise ValueError(f"Unable to resolve delete key for {table}")
         where_clause = " AND ".join(f"{_quote(column)} = ?" for column in spec.pk_columns)
         cursor = conn.execute(  # noqa: S608
-            f"DELETE FROM {_quote(table)} WHERE {where_clause}",
+            f"DELETE FROM {_quote(table)} WHERE {where_clause}",  # noqa: S608
             [criteria[column] for column in spec.pk_columns],
         )
         conn.commit()

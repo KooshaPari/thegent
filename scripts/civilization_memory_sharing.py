@@ -104,7 +104,7 @@ class MemorySharingService:
         """Get transfer records. as_source=True: transfers FROM agent. as_source=False: transfers TO agent."""
         col = "source_agent_id" if as_source else "target_agent_id"
         cursor = self._conn.execute(  # noqa: S608
-            f"SELECT * FROM learning_transfers WHERE {col}=? ORDER BY transfer_timestamp DESC", (agent_id,)
+            f"SELECT * FROM learning_transfers WHERE {col}=? ORDER BY transfer_timestamp DESC", (agent_id,)  # noqa: S608
         )
         rows = cursor.fetchall()
         return [dict(r) for r in rows]
