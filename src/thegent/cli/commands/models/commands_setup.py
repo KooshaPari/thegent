@@ -20,7 +20,7 @@ from thegent.cli.commands._cli_shared import (
     _get_run_subprocess_optimized,
     console,
 )
-from thegent.cli.commands.model_cmds_setup_helpers import (
+from thegent.cli.commands.models.helpers_setup import (
     build_provider_list,
     configure_providers,
     set_env_line,
