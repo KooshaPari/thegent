@@ -25,6 +25,7 @@ members = [
     "thegent-tui",
     "thegent-memory",
     "thegent-subprocess",
+    "phenotype-cache-adapter",
 ]
 exclude = ["thegent-watcher"]
 
