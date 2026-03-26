@@ -62,10 +62,6 @@ where
         self.len() == 0
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
     pub fn len_l1(&self) -> usize {
         self.inner.l1_len()
     }
