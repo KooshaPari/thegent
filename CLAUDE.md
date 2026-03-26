@@ -21,5 +21,15 @@ All work MUST be tracked in AgilePlus:
 - Canonical repository tracks `main` only
 - Return to `main` for merge/integration checkpoints
 
+## Global governance (read with `~/.claude/AGENTS.md`)
+
+This file is short on purpose. **Full cross-project rules** live in:
+
+- `~/.claude/AGENTS.md` — global agent contract (delegation, QA, git, billing exceptions)
+- `/Users/kooshapari/CodeProjects/CLAUDE.md` — CodeProjects root (worktrees, reuse, **GitHub Actions billing**, local git alignment)
+- `/Users/kooshapari/CodeProjects/AGENTS.md` — CodeProjects agent safety and delivery policy
+
+Agents must treat those paths as **governance**, not optional context.
+
 ---
 
