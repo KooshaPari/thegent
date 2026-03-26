@@ -9,7 +9,7 @@ name = "thegent_cache"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-phenotype-cache-adapter = { git = "https://github.com/KooshaPari/phenotype-infrakit" }
+phenotype-cache-adapter = { git = "https://github.com/KooshaPari/phenotype-shared" }
 pyo3 = { version = "0.24.1", optional = true, features = ["abi3-py312", "extension-module"] }
 
 [features]
