@@ -22,15 +22,10 @@ from .git_ops import (
 )
 from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
 from .paths import (
-<<<<<<< HEAD
     module_manifests_root,
     module_manifest_path,
     projects_root,
     phenotype_root,
-=======
-    module_manifest_path,
-    projects_root,
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
     repository_root_candidates,
     target_repos_root,
     target_root,
@@ -44,7 +39,6 @@ ENV_FILE = "env.snapshot.json"
 RUNNER_FILE = "runner.catalog.json"
 PROFILE_FILE = "env.profile.json"
 DEFAULT_EXCLUDED_REPOS = frozenset({"4sgm", "parpour", "civ", "trace"})
-<<<<<<< HEAD
 SCAN_SHARED_REPOS_SCHEMA_VERSION = 1
 SCAN_SHARED_REPOS_ROOT_MODE_REPOS = "repos"
 SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES = "worktrees"
@@ -90,8 +84,6 @@ SCAN_SHARED_REPOS_MODULE_CANDIDATE_TEMPLATE = {
         "matched_repos": "array",
     },
 }
-=======
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
 
 
 def _parse_lock(payload: dict[str, Any]) -> TargetLock:
@@ -160,7 +152,6 @@ def _load_module_manifest(module_name: str) -> ModuleManifest:
     )
 
 
-<<<<<<< HEAD
 def _normalize_candidate_module_name(value: str) -> str:
     slug = "".join(ch.lower() if ch.isalnum() else "-" for ch in value.strip())
     while "--" in slug:
@@ -550,13 +541,10 @@ def _resolve_candidate_inclusion(
     return bool(candidates) and not omit_candidates
 
 
-=======
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
 def _repo_id_from_path(repo_path: Path) -> str:
     return sanitize_repo_id(repo_path.name)
 
 
-<<<<<<< HEAD
 def _validate_excluded_repo_ids(exclude_repos: Iterable[str]) -> set[str]:
     normalized: set[str] = set()
     for repo_name in exclude_repos:
@@ -643,8 +631,6 @@ def _repos_root_metadata(
     return explicit_root, _collect_worktree_repos(explicit_root), hint, warnings
 
 
-=======
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
 def _select_module_repos(
     manifest: ModuleManifest,
     exclude_repos: set[str] | None = None,
@@ -657,17 +643,13 @@ def _select_module_repos(
             continue
         if not any(fnmatch(repo_id, pattern) for pattern in manifest.repo_patterns):
             continue
-<<<<<<< HEAD
         # Verify directory is a git checkout
         if not (repo_path / ".git").exists():
             continue
-=======
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
         selected.append(repo_path)
     return selected
 
 
-<<<<<<< HEAD
 def _find_repo_modules(repo_path: Path) -> set[str]:
     src_root = repo_path / "src"
     if not src_root.exists() or not src_root.is_dir():
@@ -691,8 +673,6 @@ def _collect_shared_modules(
     return {module_name: sorted(repos) for module_name, repos in repo_modules.items() if len(repos) >= min_repo_count}
 
 
-=======
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
 def _append_repo_selection(
     lock: TargetLock,
     repo_path: Path,
@@ -722,7 +702,6 @@ def _append_repo_selection(
     )
 
 
-<<<<<<< HEAD
 def scan_shared_modules_across_repos(
     repos_root: Path | None = None,
     *,
@@ -870,8 +849,6 @@ def materialize_module_candidate_manifest(
     )
 
 
-=======
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
 def init_target(target: str, mode: TargetMode) -> TargetLock:
     root = target_root(target)
     root.mkdir(parents=True, exist_ok=True)
@@ -1182,11 +1159,7 @@ def _repo_run_overrides(
     command_name: str | None,
     runner: str | None,
     env_profile: str | None,
-<<<<<<< HEAD
 ) -> tuple[str | None, str | None, dict[str, str] | None]:
-=======
-) -> tuple[str | None, str | None, str | None]:
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
     repo_id = runtime_item.get("repo_id")
     if not isinstance(repo_id, str) or not repo_id.strip():
         raise ValueError("invalid runtime materialization entry: missing repo_id")
@@ -1199,18 +1172,9 @@ def _repo_run_overrides(
     selected_command = command_name if command_name is not None else selected.selected_command
     selected_profile = env_profile if env_profile is not None else selected.selected_env_profile
     if selected_profile is None:
-<<<<<<< HEAD
         profile_env = get_env_profile(target=lock.target_name)
     elif not selected_profile.strip():
         profile_env = {}
-=======
-        if env_profile is None:
-            profile_env = get_env_profile(target=lock.target_name)
-        else:
-            profile_env = None
-    elif not selected_profile.strip():
-        profile_env = None
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
     else:
         profile_env = get_env_profile(target=lock.target_name, profile=selected_profile)
 
@@ -1260,13 +1224,7 @@ def run_target(
             env_profile=env_profile,
         )
         if all_repos and (selected_runner is None or selected_command is None):
-<<<<<<< HEAD
             raise ValueError("--all-repos requires --runner and --command or module-level overrides for each repo")
-=======
-            raise ValueError(
-                "--all-repos requires --runner and --command or module-level overrides for each repo"
-            )
->>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
         runs.append(
             (
                 item_checkout,
