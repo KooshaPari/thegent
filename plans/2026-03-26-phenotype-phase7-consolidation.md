@@ -169,8 +169,8 @@
 | Verify all builds | ✅ Complete | — | 2026-03-26 |
 | Update root docs | ✅ Complete | — | 2026-03-26 |
 | CI/CD integration | ✅ Complete | — | 2026-03-29 |
-| Archive git ops | 🔲 Pending | — | 2026-03-29 |
-| Governance docs | 🔲 Pending | — | 2026-03-30 |
+| Archive git ops | ✅ Complete | — | 2026-03-27 |
+| Governance docs | ✅ Complete | — | 2026-03-27 |
 
 ---
 
