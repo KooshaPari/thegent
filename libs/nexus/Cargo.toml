@@ -1,0 +1,15 @@
+[package]
+name = "nexus"
+version = "0.1.0"
+edition = "2021"
+description = "Service registry and discovery library"
+license = "MIT"
+repository = "https://github.com/phenotype-dev/nexus"
+readme = "README.md"
+keywords = ["registry", "discovery", "service-mesh"]
+categories = ["network-programming"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"

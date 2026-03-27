@@ -1,0 +1,12 @@
+[package]
+name = "metrics-registry"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Metrics registry with Prometheus-style export: counters, gauges, timers"
+repository = "https://github.com/phenotype-dev/metrics-registry"
+readme = "README.md"
+keywords = ["metrics", "observability", "prometheus", "telemetry"]
+categories = ["development-tools", "observability"]
+
+[dependencies]

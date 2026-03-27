@@ -1,0 +1,77 @@
+# CODEOWNERS
+# This file defines code ownership and review requirements
+
+# Default owner for everything
+* @kooshapari
+
+# Governance - Architecture Guild owns this
+/governance/ @kooshapari @architecture-guild
+
+# Packages - Domain-specific ownership
+/packages/phenotype-config/ @kooshapari
+/packages/phenotype-design/ @kooshapari
+/packages/phenotype-agent/ @kooshapari
+/packages/phenotype-task/ @kooshapari
+/packages/phenotype-research/ @kooshapari
+/packages/phenotype-docs/ @kooshapari
+/packages/phenotype-auth/ @kooshapari
+
+# Libraries - Maintainers per language
+# Hexagonal architecture patterns
+/libs/hexagonal-rs/ @kooshapari
+/libs/hexagonal-ts/ @kooshapari
+/libs/hexagonal-py/ @kooshapari
+/libs/hexagonal-go/ @kooshapari
+/libs/xdd-lib-rs/ @kooshapari
+
+# Phase 6 productized libraries
+/libs/cipher/ @kooshapari
+/libs/tracing/ @kooshapari
+/libs/logger/ @kooshapari
+/libs/metrics/ @kooshapari
+/libs/nexus/ @kooshapari
+/libs/gauge/ @kooshapari
+/libs/clikit/ @kooshapari
+/libs/auth-ts/ @kooshapari
+/libs/config-ts/ @kooshapari
+/libs/evaluation/ @kooshapari
+/libs/logging-zig/ @kooshapari
+
+# Phase 6 productized tools
+/tools/forge/ @kooshapari
+/tools/dep-guard/ @kooshapari
+
+# Infrastructure
+/infrastructure/ @kooshapari @devops
+
+# Tools
+/tools/ @kooshapari @devtools
+
+# Services
+/services/ @kooshapari
+
+# Apps
+/apps/ @kooshapari
+
+# Plans
+/plans/ @kooshapari
+
+# Documentation
+/*.md @kooshapari
+/docs/ @kooshapari
+
+# CI/CD
+/.github/ @kooshapari @devops
+
+# Review Requirements
+# These files require review from specific teams
+*.md @kooshapari
+**/*.toml @kooshapari
+**/*.json @kooshapari
+
+# Language-specific
+**/*.rs @kooshapari
+**/*.ts @kooshapari
+**/*.tsx @kooshapari
+**/*.py @kooshapari
+**/*.go @kooshapari

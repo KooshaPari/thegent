@@ -1,0 +1,24 @@
+version: 1
+modes:
+  smart:
+    create_missing: true
+    update_template_owned_if_unchanged: true
+    create_conflict_sidecar: true
+    sidecar_suffix: .template.new
+  overwrite:
+    create_missing: true
+    replace_template_owned: true
+  skip:
+    report_only: true
+ownership:
+  template_owned:
+    - scripts/**
+    - kitty-specs/**
+    - docs/**
+    - .github/**
+  protected:
+    - README.md
+    - .github/workflows/ci.yml
+    - .github/workflows/branch-protection-audit.yml
+    - .github/workflows/policy-gate.yml
+    - Taskfile.yml

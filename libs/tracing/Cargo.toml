@@ -1,0 +1,15 @@
+[package]
+name = "tracing-helpers"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Tracing utilities: TracingConfig, TraceContext, subscriber builders"
+repository = "https://github.com/phenotype-dev/tracing-helpers"
+readme = "README.md"
+keywords = ["tracing", "observability", "logging"]
+categories = ["development-tools", "logging"]
+
+[dependencies]
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+uuid = { version = "1", features = ["v4"] }

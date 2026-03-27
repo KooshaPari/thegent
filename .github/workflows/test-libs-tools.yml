@@ -1,0 +1,115 @@
+name: Test Libs & Tools
+
+on:
+  push:
+    branches: [ main, phase6/**, phase7/**, fix/** ]
+    paths:
+      - 'libs/**'
+      - 'tools/**'
+      - '.github/workflows/test-libs-tools.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'libs/**'
+      - 'tools/**'
+      - '.github/workflows/test-libs-tools.yml'
+
+jobs:
+  rust-libs:
+    name: Rust libs (${{ matrix.crate }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        crate:
+          - libs/cipher
+          - libs/tracing
+          - libs/logger
+          - libs/metrics
+          - libs/nexus
+          - libs/gauge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cargo check
+        run: cargo check --manifest-path=${{ matrix.crate }}/Cargo.toml
+      - name: Cargo test
+        run: cargo test --manifest-path=${{ matrix.crate }}/Cargo.toml
+
+  python-libs:
+    name: Python libs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test dep-guard
+        run: |
+          cd tools/dep-guard
+          pip install -e .
+          python -c "from dep_guard.cli import main; print('dep-guard OK')"
+      - name: Test evaluation
+        run: |
+          cd libs/evaluation
+          pip install -e .
+          python -c "import evaluation; print('evaluation OK')"
+
+  typescript-libs:
+    name: TypeScript libs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Test auth-ts
+        run: |
+          cd libs/auth-ts
+          npm install --silent
+          npm run build --if-present || echo "no build script"
+      - name: Test config-ts
+        run: |
+          cd libs/config-ts
+          npm install --silent
+          npm run build --if-present || echo "no build script"
+
+  go-libs:
+    name: Go libs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+      - name: Test clikit
+        run: |
+          cd libs/clikit
+          go test ./...
+
+  cli-tools:
+    name: CLI tools
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Test forge
+        run: cargo check --manifest-path=tools/forge/Cargo.toml
+
+  zig-libs:
+    name: Zig libs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Zig
+        run: |
+          wget -q https://ziglang.org/download/0.14.0/zig-linux-x86_64-0.14.0.tar.xz -O /tmp/zig.tar.xz
+          tar -xf /tmp/zig.tar.xz -C /tmp
+          echo "/tmp/zig-linux-x86_64-0.14.0" >> $GITHUB_PATH
+      - name: Test logging-zig
+        run: zig test libs/logging-zig/src/lib.zig
