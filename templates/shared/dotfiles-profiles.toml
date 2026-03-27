@@ -1,0 +1,44 @@
+# Dotfiles deployment profiles for thegent
+# Each profile maps a name to a curated list of tool configs under templates/shared/.
+# Tools must match directory or file names in templates/shared/.
+
+[profiles.work-macos]
+tools = [
+  "git", "gh", "neovim", "ripgrep", "fzf", "bat", "eza",
+  "zoxide", "starship.toml", "kitty", "lazygit", "docker",
+  "rust", "go", "uv", "mise", "direnv",
+]
+description = "Full macOS development environment"
+
+[profiles.home-linux]
+tools = [
+  "git", "gh", "ripgrep", "fzf", "bat", "eza",
+  "zoxide", "starship.toml", "lazygit", "uv", "mise", "direnv",
+]
+description = "Linux home setup"
+
+[profiles.wsl]
+tools = [
+  "git", "gh", "ripgrep", "fzf", "bat",
+  "mise", "direnv",
+]
+description = "Minimal WSL setup"
+
+[profiles.minimal]
+tools = ["git", "mise"]
+description = "Bare minimum: git + mise"
+
+[profiles.rust-dev]
+tools = [
+  "git", "gh", "rust", "rust_analyzer", "ripgrep",
+  "fzf", "bat", "eza", "direnv", "mise",
+]
+description = "Rust development toolchain"
+
+[profiles.cloud-ops]
+tools = [
+  "git", "gh", "aws", "gcloud", "azure",
+  "kubectl", "helm", "docker", "terraform",
+  "ripgrep", "fzf", "bat",
+]
+description = "Cloud and infrastructure toolchain"

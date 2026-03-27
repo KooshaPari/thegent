@@ -169,7 +169,7 @@ class PromptQueueManager:
                 try:
                     data = json.loads(line)
                     items.append(QueueItem.from_dict(data))
-                except json.JSONDecodeError, KeyError:
+                except (json.JSONDecodeError, KeyError):
                     logger.warning("PromptQueueManager: skipping malformed line")
         return items
 

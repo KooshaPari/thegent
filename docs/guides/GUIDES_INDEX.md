@@ -11,6 +11,7 @@
 | **Architecture** | [architecture-enforcement.md](./architecture-enforcement.md) | Layer boundaries, import rules |
 | **Cross-Platform** | [CROSS_PLATFORM_*.md](./CROSS_PLATFORM_QUICK_START.md) | macOS/Windows/Linux guides |
 | **Debugging** | [AGENT_DEBUGGING_AND_REMEDIATION_GUIDE.md](./AGENT_DEBUGGING_AND_REMEDIATION_GUIDE.md) | Issue resolution |
+| **Headless agents** | [FORGE_HEADLESS.md](./FORGE_HEADLESS.md) | Forge CLI defaults vs thegent |
 | **Shell** | [SHELL_*.md](./SHELL_ENVIRONMENT_MANAGEMENT.md) | Shell configuration and fixes |
 | **Testing** | [PR_TEST_IMPACT_REDUCTION.md](./PR_TEST_IMPACT_REDUCTION.md), [TESTING.md](./TESTING.md) | PR test-impact reduction and broader testing patterns |
 
@@ -35,6 +36,7 @@
 | [DOCTOR_FIXES.md](./DOCTOR_FIXES.md) | Debugging | Updated |
 | [FIX_SHELL_CORRUPTION.md](./FIX_SHELL_CORRUPTION.md) | Shell | Updated |
 | [FIX_SHELL_FORK_ERRORS.md](./FIX_SHELL_FORK_ERRORS.md) | Shell | Updated |
+| [FORGE_HEADLESS.md](./FORGE_HEADLESS.md) | Agents / CLI | New |
 | [HYBRID_ENV_QUICK_START.md](./HYBRID_ENV_QUICK_START.md) | Getting Started | Updated |
 | [index.md](./index.md) | Index | Reference |
 | [JOB_POOL_USAGE.md](./JOB_POOL_USAGE.md) | Architecture | Updated |

@@ -106,7 +106,7 @@ def check_nix_daemon_status() -> tuple[bool, str]:
                 if "determinate-nixd" in output.lower():
                     return True, "Running (determinate-nixd)"
             return False, "Not running (launchd)"
-        except subprocess.TimeoutExpired, FileNotFoundError:
+        except (subprocess.TimeoutExpired, FileNotFoundError):
             return False, "Cannot check (launchctl not available)"
     if platform.system() == "Linux":
         try:
@@ -120,7 +120,7 @@ def check_nix_daemon_status() -> tuple[bool, str]:
             if result.returncode == 0:
                 return True, "Running (systemd)"
             return False, "Not running (systemd)"
-        except subprocess.TimeoutExpired, FileNotFoundError:
+        except (subprocess.TimeoutExpired, FileNotFoundError):
             return False, "Cannot check (systemctl not available)"
     return False, "Unknown platform"
 

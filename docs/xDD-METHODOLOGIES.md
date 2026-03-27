@@ -1,0 +1,329 @@
+# xDD Methodology Encyclopedia
+
+> Comprehensive reference for 100+ software development methodologies, patterns, and best practices
+
+## Table of Contents
+
+1. [Core Development Methodologies](#core-development-methodologies)
+2. [Design Principles](#design-principles)
+3. [Architecture Patterns](#architecture-patterns)
+4. [Testing & Quality](#testing--quality)
+5. [Process & Management](#process--management)
+6. [Documentation & Communication](#documentation--communication)
+7. [Emerging Methodologies](#emerging-methodologies)
+8. [Applied Examples](#applied-examples)
+
+---
+
+## Core Development Methodologies
+
+### D - Driven Development
+
+| # | Acronym | Name | Description |
+|---|---------|------|-------------|
+| 1 | **TDD** | Test-Driven Development | Write tests before code; red-green-refactor cycle |
+| 2 | **BDD** | Behavior-Driven Development | Gherkin syntax for requirements; Given-When-Then |
+| 3 | **DDD** | Domain-Driven Design | Ubiquitous language, bounded contexts, aggregates |
+| 4 | **ATDD** | Acceptance Test-Driven Development | Tests from acceptance criteria |
+| 5 | **SDD** | Specification-Driven Development | Formal specs before implementation |
+| 6 | **FDD** | Feature-Driven Development | Agile with feature-based iterations |
+| 7 | **CDD** | Context-Driven Development | Context-aware solutions |
+| 8 | **IDD** | Interaction-Driven Development | UX-first design |
+| 9 | **MDD** | Model-Driven Development | DSL/code generation from models |
+| 10 | **ODD** | Opportunity-Driven Development | Opportunity-focused prioritization |
+| 11 | **PDD** | Panic-Driven Development | Emergency fixes (anti-pattern) |
+| 12 | **RDD** | Responsibility-Driven Development | Role-based design |
+| 13 | **EDD** | Example-Driven Development | Learning from examples |
+| 14 | **LDD** | Lake-Driven Development | Data lake analytics first |
+| 15 | **ADD** | Architecture-Driven Development | Architecture-first implementation |
+
+---
+
+## Design Principles
+
+### SOLID Principles
+
+| # | Letter | Principle | Description |
+|---|--------|----------|-------------|
+| 16 | **S** | Single Responsibility | One reason to change |
+| 17 | **O** | Open/Closed | Open for extension, closed for modification |
+| 18 | **L** | Liskov Substitution | Subtypes must be substitutable |
+| 19 | **I** | Interface Segregation | Many specific interfaces > one general |
+| 20 | **D** | Dependency Inversion | Depend on abstractions |
+
+### GRASP Patterns
+
+| # | Pattern | Description |
+|---|---------|-------------|
+| 21 | **Creator** | Who creates objects? |
+| 22 | **Information Expert** | Assign responsibility to info holder |
+| 23 | **Low Coupling** | Minimize dependencies |
+| 24 | **High Cohesion** | Related responsibilities together |
+| 25 | **Controller** | Handle system events |
+| 26 | **Polymorphism** | Behavior based on type |
+| 27 | **Pure Fabrication** |人工 construct for low coupling |
+| 28 | **Indirection** | Intermediate object for decoupling |
+| 29 | **Protected Variations** | Isolate unstable elements |
+
+### Other Design Principles
+
+| # | Acronym | Name | Description |
+|---|---------|------|-------------|
+| 30 | **DRY** | Don't Repeat Yourself | Single source of truth |
+| 31 | **KISS** | Keep It Simple, Stupid | Prefer simplicity |
+| 32 | **YAGNI** | You Aren't Gonna Need It | No speculative code |
+| 33 | **LoD** | Law of Demeter | Principle of least knowledge |
+| 34 | **SoC** | Separation of Concerns | Modularize by concern |
+| 35 | **CoC** | Convention over Configuration | Sensible defaults |
+| 36 | **PoLA** | Principle of Least Astonishment | Expected behavior |
+| 37 | **AoP** | Aspect-Oriented Programming | Cross-cutting concerns |
+| 38 | **CRC** | Class-Responsibility-Collaboration | Design by cards |
+| 39 | **Tell, Don't Ask** | Command vs query separation |
+| 40 | **Holistic Design** | System-level thinking |
+
+---
+
+## Architecture Patterns
+
+### Layered Patterns
+
+| # | Pattern | Description |
+|---|---------|-------------|
+| 41 | **Clean Architecture** | Onion layers: entities, use cases, interfaces, infra |
+| 42 | **Hexagonal Architecture** | Ports and adapters; inside-out design |
+| 43 | **Onion Architecture** | Layers radiating from core |
+| 44 | **Ports & Adapters** | Hexagonal with explicit ports |
+| 45 | **Layered Architecture** | Traditional 3-tier or n-tier |
+| 46 | **Package by Layer** | Group by technical concern |
+| 47 | **Package by Feature** | Group by business feature |
+
+### Distributed Patterns
+
+| # | Pattern | Description |
+|---|---------|-------------|
+| 48 | **Microservices** | Single responsibility services |
+| 49 | **Monolith** | Single deployable unit (not always bad) |
+| 50 | **Modular Monolith** | Monolith with clear module boundaries |
+| 51 | **Service Mesh** | Infrastructure for service communication |
+| 52 | **API Gateway** | Single entry point for microservices |
+| 53 | **Backend-for-Frontend (BFF)** | Specialized API per client |
+| 54 | **Strangler Fig** | Incrementally migrate from monolith |
+
+### Data Patterns
+
+| # | Pattern | Description |
+|---|---------|-------------|
+| 55 | **CQRS** | Command Query Responsibility Segregation |
+| 56 | **Event Sourcing** | Store events, not state |
+| 57 | **Saga Pattern** | Distributed transactions |
+| 58 | **Outbox Pattern** | Reliable event publishing |
+| 59 | **Materialized View** | Pre-computed query results |
+| 60 | **Sharding** | Horizontal data partitioning |
+| 61 | **Read Replicas** | Separate read/write databases |
+
+### Communication Patterns
+
+| # | Pattern | Description |
+|---|---------|-------------|
+| 62 | **EDA** | Event-Driven Architecture |
+| 63 | **Pub/Sub** | Publish-subscribe messaging |
+| 64 | **Message Queue** | Async communication |
+| 65 | **gRPC** | High-performance RPC |
+| 66 | **Webhooks** | HTTP callbacks |
+| 67 | **GraphQL** | Query-based API |
+| 68 | **REST** | Resource-based API |
+| 69 | **WebSocket** | Bidirectional communication |
+
+---
+
+## Testing & Quality
+
+### Testing Methodologies
+
+| # | Pattern | Description |
+|---|---------|-------------|
+| 70 | **Property-Based Testing** | Generate random inputs (proptest) |
+| 71 | **Mutation Testing** | Kill mutants to verify tests |
+| 72 | **Contract Testing** | API compatibility verification |
+| 73 | **Snapshot Testing** | UI regression detection |
+| 74 | **Fuzz Testing** | Random input generation |
+| 75 | **Chaos Engineering** | Intentional failure testing |
+| 76 | **Performance Testing** | Load and stress testing |
+| 77 | **Security Testing** | Penetration and vulnerability testing |
+| 78 | **Smoke Testing** | Quick sanity checks |
+| 79 | **Sanity Testing** | Focused verification |
+| 80 | **Regression Testing** | Ensure no regressions |
+| 81 | **Acceptance Testing** | Business requirement verification |
+
+### Quality Metrics
+
+| # | Metric | Description |
+|---|--------|-------------|
+| 82 | **Code Coverage** | Lines covered by tests |
+| 83 | **Cyclomatic Complexity** | Path complexity measure |
+| 84 | **Coupling** | Interdependence measure |
+| 85 | **Cohesion** | Related functionality measure |
+| 86 | **Tech Debt Ratio** | Debt vs code ratio |
+| 87 | **MTBF** | Mean Time Between Failures |
+| 88 | **MTTR** | Mean Time To Recovery |
+
+---
+
+## Process & Management
+
+### Development Process
+
+| # | Process | Description |
+|---|---------|-------------|
+| 89 | **DevOps** | Dev + Ops integration |
+| 90 | **CI/CD** | Continuous Integration/Deployment |
+| 91 | **Agile** | Iterative, adaptive development |
+| 92 | **Scrum** | Sprint-based framework |
+| 93 | **Kanban** | Visual flow-based |
+| 94 | **XP** | Extreme Programming |
+| 95 | **Lean** | Eliminate waste |
+| 96 | **SAFe** | Scaled Agile Framework |
+| 97 | **LeSS** | Large-Scale Scrum |
+| 98 | **Shape Up** | App-specific methodology |
+| 99 | **Continuous Delivery** | Always deployable |
+| 100 | **GitOps** | Git as single source of truth |
+
+---
+
+## Documentation & Communication
+
+| # | Practice | Description |
+|---|----------|-------------|
+| 101 | **ADRs** | Architecture Decision Records |
+| 102 | **RFC** | Request for Comments |
+| 103 | **Design Docs** | Technical specifications |
+| 104 | **Runbooks** | Operational procedures |
+| 105 | **Postmortems** | Incident analysis |
+| 106 | **READMEs** | Project documentation |
+| 107 | **API Docs** | Interface documentation |
+| 108 | **Changelogs** | Version history |
+| 109 | **Code Reviews** | Peer examination |
+| 110 | **Pair Programming** | Two developers, one screen |
+
+---
+
+## Emerging Methodologies
+
+| # | Pattern | Description |
+|---|---------|-------------|
+| 111 | **AI-DD** | AI-Assisted Development |
+| 112 | **Prompt-Driven Dev** | LLM prompt engineering |
+| 113 | **SpecDD** | Specification-Driven Dev (formal methods) |
+| 114 | **StoryDD** | User story decomposition |
+| 115 | **DataDD** | Data-driven development |
+| 116 | **TraceDD** | Traceability-driven development |
+| 117 | **Platform Engineering** | Internal developer platforms |
+| 118 | **DevEx** | Developer Experience focus |
+| 119 | **FinOps** | Financial operations for cloud |
+| 120 | **Green DevOps** | Sustainable computing |
+
+---
+
+## Applied Examples
+
+### Applied in thegent Repositories
+
+| Repository | xDD Applied |
+|------------|-------------|
+| **thegent-shm** | TDD, DDD, SOLID, Clean, Hexagonal, CQRS, EDA |
+| **thegent-cache** | TDD, Clean, Hexagonal, CQRS, Property-Based |
+| **thegent-metrics** | TDD, DDD, Clean, Hexagonal, CQRS |
+| **thegent-mesh** | BDD, EDA, CQRS, Microservices |
+
+### Implementation Checklist
+
+- [x] Hexagonal Architecture (Ports & Adapters)
+- [x] Clean Architecture (Domain/Application/Ports/Adapters)
+- [x] DDD (Entities, Value Objects, Domain Events)
+- [x] CQRS (Commands vs Queries separation)
+- [x] EDA (Event-Driven Architecture)
+- [x] SOLID (Dependency Inversion via traits)
+- [x] TDD (Unit tests written first)
+- [x] CI/CD (GitHub Actions)
+- [x] Property-Based Testing (proptest)
+- [ ] BDD (Gherkin specs) - TODO
+- [ ] Mutation Testing (cargo-mutants) - TODO
+- [ ] Contract Testing (pact) - TODO
+- [ ] Chaos Engineering (litmus) - TODO
+
+---
+
+## Top-Level Directory Organization
+
+### Recommended Structure
+
+```
+project/
+├── src/                      # Source code
+│   ├── domain/              # DDD: Core business logic
+│   │   ├── entities/       # Domain entities
+│   │   ├── value_objects/  # Value objects
+│   │   ├── events/         # Domain events
+│   │   └── services/       # Domain services
+│   ├── application/        # Application layer
+│   │   ├── commands/       # CQRS commands
+│   │   ├── queries/        # CQRS queries
+│   │   └── use_cases/      # Use cases
+│   ├── ports/             # Interfaces
+│   │   ├── driven/         # Driven (infrastructure)
+│   │   └── driving/        # Driving (UI/API)
+│   ├── adapters/          # Implementations
+│   │   ├── primary/        # Driving adapters
+│   │   └── secondary/      # Driven adapters
+│   └── lib.rs             # Library entry
+├── tests/                   # Integration tests
+├── benches/                 # Benchmarks
+├── docs/                    # Documentation
+│   ├── adrs/               # Architecture Decision Records
+│   ├── specs/             # Formal specifications
+│   └── runbooks/          # Operations guides
+├── scripts/                 # Build/dev scripts
+├── config/                  # Configuration files
+├── .github/
+│   └── workflows/         # CI/CD pipelines
+├── Cargo.toml             # Rust manifest
+├── CLAUDE.md              # Claude agent context
+├── AGENTS.md              # Agent instructions
+└── README.md              # Project overview
+```
+
+### Worktree Organization
+
+```
+repos/
+├── project/                 # Main repository
+│   ├── .worktrees/         # Primary worktrees
+│   └── worktrees/
+│       └── feature-a/      # Feature worktrees
+└── worktrees/               # External worktrees
+    └── project/
+        ├── feature-a/     # Feature branches
+        ├── fix-bug-b/     # Bug fixes
+        └── chore-c/       # Maintenance
+```
+
+---
+
+## Contributing
+
+Add new methodologies by creating PR with:
+1. Name and acronym
+2. Category
+3. Description
+4. Example usage
+5. Resources/references
+
+---
+
+## References
+
+- [SOLID Principles](https://en.wikipedia.org/wiki/SOLID)
+- [DDD Reference](https://domainlanguage.com/ddd/reference/)
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/)
+- [ microservices.io](https://microservices.io/patterns/index.html)

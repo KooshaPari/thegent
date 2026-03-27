@@ -230,14 +230,28 @@ class PersistentWorkerPool:
     processes. Workers are spawned at pool initialisation; tasks are
     dispatched to the first available idle worker.
 
+    When ``max_concurrency`` is set (default: same as ``pool_size``), the
+    pool **queues** tasks instead of spawning unbounded overflow workers.
+    This prevents runaway process growth that starves interactive apps
+    like Parsec of CPU / GPU encoder time.
+
     # @trace FR-OPT-006
     """
 
-    def __init__(self, pool_size: int = 4, idle_timeout: int = 300) -> None:
+    def __init__(
+        self,
+        pool_size: int = 4,
+        idle_timeout: int = 300,
+        max_concurrency: int | None = None,
+    ) -> None:
         self._pool_size = pool_size
         self._idle_timeout = idle_timeout
+        # Hard ceiling: defaults to pool_size so that out-of-the-box
+        # behaviour never spawns more workers than configured.
+        self._max_concurrency = max_concurrency if max_concurrency is not None else pool_size
         self._workers: list[Worker] = []
         self._lock: asyncio.Lock | None = None
+        self._semaphore: asyncio.Semaphore | None = None
         self._started = False
         self._reaper_task: asyncio.Task[None] | None = None
 
@@ -245,6 +259,12 @@ class PersistentWorkerPool:
         if self._lock is None:
             self._lock = asyncio.Lock()
         return self._lock
+
+    def _get_semaphore(self) -> asyncio.Semaphore:
+        """Return (or lazily create) the concurrency-bounding semaphore."""
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(self._max_concurrency)
+        return self._semaphore
 
     # ---------------------------------------------------------------------- #
     # Lifecycle                                                                #
@@ -280,25 +300,46 @@ class PersistentWorkerPool:
     # ---------------------------------------------------------------------- #
 
     async def acquire(self) -> Worker:
-        """Acquire an idle worker, blocking until one is available."""
+        """Acquire an idle worker, **blocking** until one is available.
+
+        Respects ``max_concurrency``: if all slots are taken the caller
+        waits on an ``asyncio.Semaphore`` instead of spawning an
+        unbounded overflow worker.  This keeps total worker count
+        bounded, protecting interactive workloads (e.g. Parsec) from
+        CPU / memory starvation.
+
+        # @trace FR-OPT-006
+        """
+        sem = self._get_semaphore()
+        await sem.acquire()  # blocks until a concurrency slot is free
+
         lock = self._get_lock()
-        while True:
-            async with lock:
-                for w in self._workers:
-                    if not w.in_use and w.is_alive():
-                        w.mark_busy()
-                        return w
-                # All workers busy — spawn a temporary overflow worker
-                overflow = await self._spawn_worker()
-                overflow.mark_busy()
-                self._workers.append(overflow)
-                _log.debug("MTSP-06: spawned overflow worker pid=%d", overflow.pid)
-                return overflow
-            await asyncio.sleep(0.010)
+        async with lock:
+            # 1. Try to grab an existing idle, alive worker.
+            for w in self._workers:
+                if not w.in_use and w.is_alive():
+                    w.mark_busy()
+                    return w
+
+            # 2. All idle workers are dead or none exist — spawn a
+            #    replacement *within* the concurrency ceiling (we
+            #    already hold a semaphore permit so we will not exceed
+            #    max_concurrency).
+            fresh = await self._spawn_worker()
+            fresh.mark_busy()
+            self._workers.append(fresh)
+            _log.debug(
+                "MTSP-06: spawned replacement worker pid=%d (pool=%d, max=%d)",
+                fresh.pid,
+                len(self._workers),
+                self._max_concurrency,
+            )
+            return fresh
 
     async def release(self, worker: Worker) -> None:
-        """Return a worker to the idle pool."""
+        """Return a worker to the idle pool and free a concurrency slot."""
         worker.mark_idle()
+        self._get_semaphore().release()
         _log.debug("MTSP-06: worker pid=%d returned to pool", worker.pid)
 
     async def submit(self, task: AgentTask) -> AgentResult:
@@ -367,9 +408,23 @@ class PersistentWorkerPool:
 _pool: PersistentWorkerPool | None = None
 
 
-def get_worker_pool(pool_size: int = 4, idle_timeout: int = 300) -> PersistentWorkerPool:
-    """Return the module-level singleton pool (not yet started)."""
+def get_worker_pool(
+    pool_size: int = 4,
+    idle_timeout: int = 300,
+    max_concurrency: int | None = None,
+) -> PersistentWorkerPool:
+    """Return the module-level singleton pool (not yet started).
+
+    ``max_concurrency`` defaults to ``pool_size`` — i.e. by default the
+    pool will never have more active workers than the initial pool size.
+    Set a higher value to allow controlled overflow, or a lower value to
+    further throttle heavy work.
+    """
     global _pool
     if _pool is None:
-        _pool = PersistentWorkerPool(pool_size=pool_size, idle_timeout=idle_timeout)
+        _pool = PersistentWorkerPool(
+            pool_size=pool_size,
+            idle_timeout=idle_timeout,
+            max_concurrency=max_concurrency,
+        )
     return _pool

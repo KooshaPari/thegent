@@ -11,10 +11,13 @@ from thegent.phench.service import (
     add_repo,
     audit_shared_modules,
     add_module_to_target,
+<<<<<<< HEAD
     build_module_manifest_payload,
     build_scan_candidates,
     scan_shared_modules_across_repos,
     materialize_module_candidate_manifest,
+=======
+>>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
     get_env_profile,
     discover_repos,
     init_target,
@@ -1465,6 +1468,7 @@ def test_audit_shared_modules(tmp_path: Path, monkeypatch) -> None:
     assert result["shared_modules"]["sharedpkg"] == ["a", "b"]
 
 
+<<<<<<< HEAD
 def test_scan_shared_modules_across_repos_respects_excludes_and_minimum_repo_count(tmp_path: Path) -> None:
     phenotype_root = tmp_path / "Phenotype"
     repos_root = phenotype_root / "repos"
@@ -2074,6 +2078,8 @@ def test_materialize_module_manifest_cli_print_target_snippet_alias(
     assert payload["shell_snippets"][0].startswith("thegent phench target init shared-module-sharedpkg-2")
 
 
+=======
+>>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
 def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:
     import importlib.util
 
@@ -2114,10 +2120,14 @@ def test_cli_target_add_module_cmd_invokes_service(monkeypatch) -> None:
         )
 
     monkeypatch.setattr(phench_cli, "add_module_to_target", _fake_add_module_to_target)
+<<<<<<< HEAD
     result = CliRunner().invoke(
         phench_cli.app,
         ["target", "add-module", "smoke", "--module", "thegent-app", "--ref", "dev", "--exclude", "skip-me"],
     )
+=======
+    result = CliRunner().invoke(phench_cli.app, ["target", "add-module", "smoke", "--module", "thegent-app", "--ref", "dev", "--exclude", "skip-me"])
+>>>>>>> 1f1db2e462 (feat: add module-driven phench target composition)
     assert result.exit_code == 0
     assert observed["name"] == "smoke"
     assert observed["module"] == "thegent-app"
