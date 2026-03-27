@@ -92,6 +92,26 @@ run_bash() {
   echo ""
 }
 
+# Prose quality checks (advisory — skipped if tools not installed)
+echo "--- Prose Quality ---"
+if command -v vale >/dev/null 2>&1; then
+  vale --config="$PROJECT_ROOT/.vale.ini" "$PROJECT_ROOT/docs" 2>/dev/null \
+    || vale --config="$PROJECT_ROOT/.vale.ini" "$PROJECT_ROOT" --glob="*.md" 2>/dev/null \
+    || echo "vale: no docs found or config missing (skipping)"
+else
+  echo "vale: not installed (skipping — install with: brew install vale)"
+fi
+if command -v markdownlint-cli2 >/dev/null 2>&1; then
+  markdownlint-cli2 "$PROJECT_ROOT/**/*.md" --config "$PROJECT_ROOT/.markdownlint.json" 2>/dev/null \
+    || echo "markdownlint: no markdown files or config missing (skipping)"
+elif command -v markdownlint >/dev/null 2>&1; then
+  markdownlint "$PROJECT_ROOT/**/*.md" 2>/dev/null || echo "markdownlint: warnings found (advisory)"
+else
+  echo "markdownlint: not installed (skipping — install with: npm i -g markdownlint-cli2)"
+fi
+echo ""
+
+
 # Secrets check (all stacks)
 echo "--- Secrets Detection ---"
 gitleaks detect --no-banner --no-git -s "$PROJECT_ROOT" \
