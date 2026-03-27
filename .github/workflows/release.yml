@@ -95,7 +95,7 @@ jobs:
           cp artifacts/quality/control-plane-readiness.md dist/
 
       - name: Package docs artifact
-        run: tar -czf dist/docs-dist.tar.gz docs-dist
+        run: tar -czf dist/docs-dist.tar.gz docs/.vitepress/dist
 
       - name: Set artifact metadata
         id: meta
