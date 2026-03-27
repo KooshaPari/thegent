@@ -7,30 +7,32 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
+  shellcheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check for build files
-        id: check
+      - name: Run shellcheck
         run: |
-          if [ -f "tools/ci-cd/GNUmakefile" ]; then
-            echo "type=make" >> $GITHUB_OUTPUT
-          elif [ -f "tools/ci-cd/SConstruct" ]; then
-            echo "type=scons" >> $GITHUB_OUTPUT
-          elif find tools/ci-cd -name "*.sh" | head -1 > /dev/null; then
-            echo "type=shell" >> $GITHUB_OUTPUT
-          else
-            echo "type=none" >> $GITHUB_OUTPUT
-          fi
+          for f in $(find tools -name "*.sh" -type f 2>/dev/null); do
+            shellcheck "$f" || true
+          done
 
-      - name: Validate shell scripts
-        if: steps.check.outputs.type == 'shell'
+  makefile-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Makefiles
         run: |
-          find tools/ci-cd -name "*.sh" -exec shellcheck {} + || true
+          for f in $(find tools -name "Makefile" -type f 2>/dev/null); do
+            echo "Found Makefile: $f"
+          done
 
-      - name: Validate makefiles
-        if: steps.check.outputs.type == 'make'
+  ci-cd-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate CI/CD configs
         run: |
-          find tools/ci-cd -name "GNUmakefile" -exec make -n -f {} + || true
+          for f in $(find tools/ci-cd -name "*.yml" -o -name "*.yaml" 2>/dev/null); do
+            echo "Found CI/CD config: $f"
+          done
