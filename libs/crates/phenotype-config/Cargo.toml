@@ -1,0 +1,43 @@
+[package]
+name = "phenotype-config"
+version = "0.1.0"
+edition = "2021"
+description = "Phenotype configuration management - Core domain for config key-value store with versioning"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/phenotype-dev/phenotype-config"
+documentation = "https://docs.phenotype.dev/phenotype-config"
+readme = "README.md"
+keywords = ["configuration", "config-management", "feature-flags", "phenotype"]
+categories = ["configuration", "application"]
+rust-version = "1.70"
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+# Internal hexagon ports
+helix-ports = { path = "../helix-ports", version = "0.1" }
+helix-errors = { path = "../helix-errors", version = "0.1" }
+
+# Serialization (required)
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+
+# Async
+tokio = { version = "1.0", features = ["sync"] }
+async-trait = "0.1"
+
+# Utilities
+uuid = { version = "1.0", features = ["v4", "serde"] }
+thiserror = "1.0"
+anyhow = "1.0"
+dashmap = "6.0"
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["rt", "macros"] }
+
+[lib]
+name = "phenotype_config"
+path = "src/lib.rs"
