@@ -1,0 +1,256 @@
+# Hierarchical Agent Dispatcher (L^N Dispatch)
+
+The `HierarchicalDispatcher` enables structured multi-level agent spawning
+with resource caps and automatic lifecycle management. It lives at
+`src/thegent/orchestration/hierarchical_dispatcher.py`.
+
+## Architecture
+
+```
+Session
+└── Root Agent (depth=0)
+    ├── Child Agent L^1 (depth=1)
+    │   ├── Grandchild Agent L^2 (depth=2)  <-- max depth
+    │   └── Grandchild Agent L^2 (depth=2)
+    └── Child Agent L^1 (depth=1)
+```
+
+### Why depth limits?
+
+Unbounded recursion causes exponential resource consumption. Limiting to
+`MAX_HIERARCHY_DEPTH=2` (L^2) caps worst-case fan-out at
+`session_cap * max_children^2 = 50 * 7^2 = 2450` agents per session — still
+bounded by the system cap of 100 active agents at any time. Pruning keeps
+the working set small in practice.
+
+### Why caps?
+
+| Cap | Default | Scope | Purpose |
+|-----|---------|-------|---------|
+| `SYSTEM_AGENT_CAP` | 100 | All sessions | Prevent runaway resource use |
+| `SESSION_AGENT_CAP` | 50 | Single chat session | Isolate sessions from each other |
+
+When a cap is hit, the dispatcher first attempts to prune finished/stale
+agents before raising `AgentCapExceededError`. This makes transient cap
+violations self-healing in many cases.
+
+### How pruning works
+
+An agent is considered **stale** if it has not sent a heartbeat in
+`STALE_THRESHOLD_SECONDS` (300s / 5 min). A **finished** agent becomes
+prunable after `FINISHED_PRUNE_DELAY_SECONDS` (60s). Pruned agents are
+marked `PRUNED` — they remain in the registry for audit purposes but do
+not count toward caps.
+
+## API Reference
+
+### `HierarchicalDispatchRequest`
+
+```python
+@dataclass
+class HierarchicalDispatchRequest:
+    prompt: str               # Task description for the agent
+    session_id: str           # Owning session/chat ID
+    parent_agent_id: str | None = None  # None = root dispatch
+    max_children: int = 7     # Max L^1 children this agent may spawn
+    spawn_depth: int = 1      # How many more levels of spawning are allowed
+    agent_hint: str | None = None       # Capability selector hint
+    context: dict[str, Any] = field(default_factory=dict)
+```
+
+### `HierarchicalDispatchResult`
+
+```python
+@dataclass
+class HierarchicalDispatchResult:
+    agent_id: str
+    session_id: str
+    depth: int
+    state: AgentLifecycleState   # PENDING | RUNNING | FINISHED | FAILED | STALE | PRUNED
+    output: str | None = None
+    error: str | None = None
+    children_spawned: list[str] = field(default_factory=list)
+```
+
+### `HierarchicalDispatcher`
+
+```python
+class HierarchicalDispatcher:
+    async def dispatch_hierarchical(
+        self, request: HierarchicalDispatchRequest
+    ) -> HierarchicalDispatchResult: ...
+    # Dispatch a single agent. Raises AgentCapExceededError or MaxDepthExceededError on violation.
+
+    async def dispatch_batch_hierarchical(
+        self, requests: list[HierarchicalDispatchRequest]
+    ) -> list[HierarchicalDispatchResult]: ...
+    # Dispatch multiple agents. Cap-exceeded requests produce FAILED results (no exception).
+
+    def spawn_child_request(
+        self,
+        parent_agent_id: str,
+        child_prompt: str,
+        session_id: str | None = None,
+        agent_hint: str | None = None,
+    ) -> HierarchicalDispatchRequest: ...
+    # Build a pre-filled request for spawning a child of an existing agent.
+
+    def can_spawn_child(self, agent_id: str) -> bool: ...
+    # True if agent exists, is RUNNING, is below max depth, and caps allow.
+
+    def prune_finished_stale(self) -> int: ...
+    # Manual prune trigger. Returns count of pruned agents.
+
+    def get_agent_tree(self, agent_id: str) -> dict[str, Any]: ...
+    # Returns nested dict of the full subtree rooted at agent_id.
+
+    def get_system_stats(self) -> dict[str, Any]: ...
+    def get_session_stats(self, session_id: str) -> dict[str, Any]: ...
+```
+
+### `HierarchicalAgentRegistry`
+
+```python
+class HierarchicalAgentRegistry:
+    def __init__(
+        self,
+        system_cap: int = SYSTEM_AGENT_CAP,
+        session_cap: int = SESSION_AGENT_CAP,
+    ): ...
+
+    def register_agent(self, agent: HierarchicalAgent) -> None: ...
+    # Raises AgentCapExceededError if either cap would be exceeded.
+
+    def update_agent_state(
+        self,
+        agent_id: str,
+        state: AgentLifecycleState,
+        result: str | None = None,
+        error: str | None = None,
+    ) -> None: ...
+
+    def prune_finished_stale(self) -> int: ...
+    def get_children(self, agent_id: str) -> list[HierarchicalAgent]: ...
+    def get_descendants(self, agent_id: str) -> list[HierarchicalAgent]: ...
+    def get_system_stats(self) -> dict[str, Any]: ...
+    def get_session_stats(self, session_id: str) -> dict[str, Any]: ...
+```
+
+### Module-level helpers
+
+```python
+def get_global_registry() -> HierarchicalAgentRegistry: ...
+# Returns the process-wide singleton registry.
+
+def reset_global_registry() -> None: ...
+# Resets the singleton. Use only in tests.
+```
+
+## Usage Examples
+
+### Dispatching a root agent
+
+```python
+from thegent.orchestration.hierarchical_dispatcher import (
+    HierarchicalDispatcher,
+    HierarchicalDispatchRequest,
+    get_global_registry,
+)
+
+registry = get_global_registry()
+dispatcher = HierarchicalDispatcher(
+    capability_index=capability_index,
+    registry=registry,
+)
+
+result = await dispatcher.dispatch_hierarchical(
+    HierarchicalDispatchRequest(
+        prompt="Analyze and summarize the codebase",
+        session_id="session-abc123",
+    )
+)
+
+print(result.agent_id, result.state, result.output)
+```
+
+### Spawning children from within an agent
+
+```python
+# Inside an agent's execution context, given parent_agent_id:
+if dispatcher.can_spawn_child(parent_agent_id):
+    child_req = dispatcher.spawn_child_request(
+        parent_agent_id=parent_agent_id,
+        child_prompt="Review src/auth/ for security issues",
+        agent_hint="security-reviewer",
+    )
+    child_result = await dispatcher.dispatch_hierarchical(child_req)
+```
+
+### Batch dispatch (parallel root agents)
+
+```python
+requests = [
+    HierarchicalDispatchRequest(prompt=f"Scan module {i}", session_id="s1")
+    for i in range(5)
+]
+results = await dispatcher.dispatch_batch_hierarchical(requests)
+# Cap-exceeded requests produce FAILED results instead of raising.
+```
+
+### Monitoring caps
+
+```python
+stats = dispatcher.get_system_stats()
+# {
+#   "total_active": 12,
+#   "system_cap": 100,
+#   "session_cap": 50,
+#   "sessions_count": 3,
+#   "by_state": {"running": 8, "finished": 4},
+#   "by_depth": {0: 3, 1: 7, 2: 2},
+#   "can_spawn": true,
+# }
+
+session_stats = dispatcher.get_session_stats("session-abc123")
+```
+
+## Configuration Constants
+
+| Constant | Default | Description |
+|----------|---------|-------------|
+| `MAX_HIERARCHY_DEPTH` | `2` | Maximum agent nesting depth (L^2) |
+| `SYSTEM_AGENT_CAP` | `100` | Max active agents across all sessions |
+| `SESSION_AGENT_CAP` | `50` | Max active agents per session |
+| `STALE_THRESHOLD_SECONDS` | `300.0` | Seconds before inactive agent is stale |
+| `FINISHED_PRUNE_DELAY_SECONDS` | `60.0` | Seconds before finished agent is prunable |
+
+## Error Types
+
+| Exception | When raised |
+|-----------|-------------|
+| `AgentCapExceededError` | System or session cap would be exceeded |
+| `MaxDepthExceededError` | Depth > `MAX_HIERARCHY_DEPTH` would be exceeded |
+
+## Integration with Sub-Agent Dispatcher
+
+`HierarchicalDispatcher` wraps `SubAgentDispatcher` from
+`thegent.agents.sub_agent_dispatcher`. Each hierarchical agent's actual
+task execution is delegated to `SubAgentDispatcher.dispatch(SubAgentTask)`.
+The hierarchical layer adds: registry tracking, cap enforcement, depth
+enforcement, and parent-child relationship recording.
+
+## Tests
+
+18 unit tests in `tests/unit/orchestration/test_hierarchical_dispatcher.py`.
+
+```
+# Run tests
+pytest tests/unit/orchestration/test_hierarchical_dispatcher.py -v
+```
+
+## Related Docs
+
+- `docs/ORCHESTRATION.md` — High-level orchestration overview
+- `docs/reference/AGENT_HIERARCHY_REFERENCE.md` — Agent hierarchy reference
+- Issue #470 — Documentation tracking
+- Traces: `WL-138` (Hierarchical Agent Dispatch), `WL-139` (Agent Lifecycle)
