@@ -30,6 +30,7 @@ from thegent.cli.apps import (
 from thegent.cli.apps.project import install_app, scaffold_app, setup_project_app, update_app
 from thegent.cli.governance.cli_git_worktree_governance import worktree_governance_app
 from thegent.cli.atlas import app as atlas_app
+from thegent.dotfiles.cli import app as dotfiles_app
 from thegent.mesh.main import app as mesh_app
 
 
@@ -78,3 +79,4 @@ def register_root_apps(app: typer.Typer, git_app: typer.Typer) -> None:
         help="Orchestrate: sub-agent goal decomposition and execution (WL-088).",
     )
     app.add_typer(atlas_app, name="atlas", help="Atlas: Codebase visualization, LOC stats, and tree generation.")
+    app.add_typer(dotfiles_app, name="dotfiles", help="Dotfiles: deploy tool configs from thegent templates to ~/.")
