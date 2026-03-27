@@ -1,3 +1,3 @@
-import PhenoDocsTheme from '@phenodocs-theme'
+import Theme from '@phenotype/docs/theme'
 
-export default PhenoDocsTheme
+export default Theme
