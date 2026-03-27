@@ -43,3 +43,22 @@ Historical work is documented in:
 - Added `scripts/scan-phenotype-dependency-refs.sh` for manifest scans.
 - Updated `docs/changes/polyrepo-productization-wave/tasks.md` with status table.
 
+### 2026-03-26 — Phase 7: libs/gauge fix
+
+- Fixed libs/gauge compilation errors:
+  - Removed `?` operators on void-returning methods in spec/mod.rs
+  - Removed unused imports (ValueTree, TestRunner, XddError)
+  - Removed unnecessary parentheses in int_strategy
+  - Prefixed unused variables with underscore (msg, line)
+- Verified: `cargo check` passes with 0 errors, 0 warnings
+- Updated Phase 7 plan: build status now 13/13 (100%)
+- Updated known issues tracker with resolution details.
+
+### 2026-03-26 — Phase 7: Root documentation update
+
+- Updated README.md: Complete monorepo overview with directory structure
+- Updated ARCHITECTURE.md: Added libs/ and tools/ structure with all packages
+- Updated libs/README.md: Comprehensive listing by language (Rust, Go, TS, Python, Zig)
+- Updated tools/README.md: Current tools and usage examples
+- All docs now consistent with Phase 6 productization results
+
