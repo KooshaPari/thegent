@@ -11,8 +11,6 @@ import { sidebar } from './sidebar-canonical'
 import { createRequire } from 'module'
 
 const docsDir = dirname(fileURLToPath(import.meta.url))
-const phenodocsRoot = resolve(docsDir, '../../../phenodocs')
-const phenodocsTheme = resolve(phenodocsRoot, '.vitepress/theme/index.ts')
 
 const require = createRequire(import.meta.url)
 const markdownItEmoji = require('markdown-it-emoji').full
@@ -132,12 +130,11 @@ const config = defineConfig({
   vite: {
     resolve: {
       alias: {
-        '@phenodocs-theme': phenodocsTheme,
       },
     },
     server: {
       fs: {
-        allow: [phenodocsRoot],
+        allow: [],
       },
     },
     plugins: [
