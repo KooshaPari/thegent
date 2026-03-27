@@ -7,6 +7,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   rust-libs:
     name: Build Rust libs
@@ -14,26 +17,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate:
-          - libs/cipher
-          - libs/tracing
-          - libs/logger
-          - libs/metrics
-          - libs/nexus
-          - libs/gauge
+        include:
+          - crate: libs/cipher
+            artifact: cipher-crate
+          - crate: libs/tracing
+            artifact: tracing-crate
+          - crate: libs/logger
+            artifact: logger-crate
+          - crate: libs/metrics
+            artifact: metrics-crate
+          - crate: libs/nexus
+            artifact: nexus-crate
+          - crate: libs/gauge
+            artifact: gauge-crate
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Build release
-        run: cargo build --release --manifest-path=${{ matrix.crate }}/Cargo.toml
-      - name: Package
         run: |
-          mkdir -p dist/${{ matrix.crate }}
-          cp -r ${{ matrix.crate }}/target/release/${{ matrix.crate }} dist/${{ matrix.crate }}/
+          cd "${{ matrix.crate }}"
+          cargo build --release
+          cargo package --allow-dirty --no-verify
+          mkdir -p "$GITHUB_WORKSPACE/dist/${{ matrix.artifact }}"
+          cp target/package/*.crate "$GITHUB_WORKSPACE/dist/${{ matrix.artifact }}/"
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.crate }}-artifact
-          path: dist/${{ matrix.crate }}/
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}/
 
   rust-cli:
     name: Build Rust CLI tools
@@ -41,17 +51,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate:
-          - tools/forge
+        include:
+          - crate: tools/forge
+            binary: forge
+            artifact: forge-binary
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Build release
-        run: cargo build --release --manifest-path=${{ matrix.crate }}/Cargo.toml
+        run: |
+          cd "${{ matrix.crate }}"
+          cargo build --release
+          mkdir -p "$GITHUB_WORKSPACE/dist/${{ matrix.artifact }}"
+          cp "target/release/${{ matrix.binary }}" "$GITHUB_WORKSPACE/dist/${{ matrix.artifact }}/"
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.crate }}-binary
-          path: ${{ matrix.crate }}/target/release/${{ matrix.crate }}
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}/
 
   python-libs:
     name: Build Python packages
@@ -59,11 +75,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pkg:
-          - tools/dep-guard
-          - libs/evaluation
+        include:
+          - pkg: tools/dep-guard
+            artifact: dep-guard-wheel
+          - pkg: libs/evaluation
+            artifact: evaluation-wheel
     steps:
       - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Build wheel
         run: |
           cd ${{ matrix.pkg }}
@@ -71,5 +93,5 @@ jobs:
           python -m build
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.pkg }}-pywheel
-          path: ${{ matrix.pkg }}/dist/*.whl
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.pkg }}/dist/*

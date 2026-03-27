@@ -29,7 +29,7 @@ This directory contains:
 
 ## Directory Structure
 
-```
+```text
 tools/
 ├── forge/               # Code generation CLI (Rust)
 ├── dep-guard/           # Dependency guard (Python)
@@ -63,13 +63,47 @@ dep-guard --help
 dep-guard check ./libs
 ```
 
-## CI/CD
+## CI/CD Scripts and Workflows
 
-GitHub Actions workflows for testing and building:
+- Local scripts
+  - `tools/scripts/build-all-libs.sh`
+  - `tools/scripts/test-all-libs.sh`
+  - `tools/scripts/verify-libs.sh`
+  - `tools/scripts/test-tools.sh`
+  - `tools/scripts/build-tools.sh`
+- GitHub workflows
+  - `.github/workflows/test-libs.yml`
+  - `.github/workflows/build-libs.yml`
+  - `.github/workflows/test-tools.yml`
+  - `.github/workflows/build-tools.yml`
+  - `.github/workflows/test-libs-tools.yml` (combined libs+tools checks)
+  - `.github/workflows/build-release.yml` (release artifacts)
+
+### Usage
 
 ```bash
-# Workflows are in tools/ci-cd/github-actions/
-# Run via: .github/workflows/*.yml (symlinked or copied to repos)
+# Run everything for libs
+bash tools/scripts/test-all-libs.sh
+bash tools/scripts/build-all-libs.sh
+bash tools/scripts/verify-libs.sh
+
+# Run everything for tools
+bash tools/scripts/test-tools.sh
+bash tools/scripts/build-tools.sh
+```
+
+Current CI workflow for libs and tools is also available via `.github/workflows/test-libs-tools.yml` for combined checks.
+
+## CI/CD
+
+CI/CD automation is defined in `.github/workflows/` and is driven by the scripts above.
+
+```bash
+# Available workflows:
+# - test-libs.yml, build-libs.yml
+# - test-tools.yml, build-tools.yml
+# - test-libs-tools.yml
+# - build-release.yml
 ```
 
 ## Dev Containers

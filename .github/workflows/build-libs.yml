@@ -1,0 +1,53 @@
+name: Build Libs
+
+on:
+  push:
+    branches:
+      - main
+      - 'phase7/**'
+      - 'phase6/**'
+      - 'release/**'
+    paths:
+      - 'libs/**'
+      - '.github/workflows/build-libs.yml'
+      - 'tools/scripts/build-all-libs.sh'
+
+concurrency:
+  group: build-libs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-libs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Prepare Go toolchain
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Prepare Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Zig
+        run: |
+          wget -q https://ziglang.org/download/0.14.0/zig-linux-x86_64-0.14.0.tar.xz -O /tmp/zig.tar.xz
+          mkdir -p /tmp/zig-toolchain
+          tar -xf /tmp/zig.tar.xz -C /tmp/zig-toolchain --strip-components=1
+          echo "/tmp/zig-toolchain" >> "$GITHUB_PATH"
+
+      - name: Build production libs
+        run: bash tools/scripts/build-all-libs.sh

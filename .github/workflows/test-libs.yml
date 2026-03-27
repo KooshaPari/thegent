@@ -1,4 +1,4 @@
-name: Test Libs & Tools
+name: Test Libs
 
 on:
   push:
@@ -9,76 +9,51 @@ on:
       - 'fix/**'
     paths:
       - 'libs/**'
-      - 'tools/**'
-      - '.github/workflows/test-libs-tools.yml'
+      - '.github/workflows/test-libs.yml'
       - 'tools/scripts/test-all-libs.sh'
-      - 'tools/scripts/test-tools.sh'
   pull_request:
     branches: [main]
     paths:
       - 'libs/**'
-      - 'tools/**'
-      - '.github/workflows/test-libs-tools.yml'
+      - '.github/workflows/test-libs.yml'
       - 'tools/scripts/test-all-libs.sh'
-      - 'tools/scripts/test-tools.sh'
 
 concurrency:
-  group: test-libs-tools-${{ github.ref }}
+  group: test-libs-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   test-libs:
-    name: Test all libraries
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Prepare Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
       - name: Prepare Go toolchain
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
           cache: true
+
       - name: Prepare Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
       - name: Install Zig
         run: |
           wget -q https://ziglang.org/download/0.14.0/zig-linux-x86_64-0.14.0.tar.xz -O /tmp/zig.tar.xz
           mkdir -p /tmp/zig-toolchain
           tar -xf /tmp/zig.tar.xz -C /tmp/zig-toolchain --strip-components=1
           echo "/tmp/zig-toolchain" >> "$GITHUB_PATH"
-      - name: Run lib and tool test script
-        run: |
-          bash tools/scripts/test-all-libs.sh
-          bash tools/scripts/test-tools.sh
 
-  verify-libs:
-    name: Verify library manifests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Prepare Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Setup Go toolchain
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-          cache: true
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Run verification script
-        run: bash tools/scripts/verify-libs.sh
+      - name: Run lib test script
+        run: bash tools/scripts/test-all-libs.sh

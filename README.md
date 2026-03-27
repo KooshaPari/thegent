@@ -38,11 +38,11 @@ repos/
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| Rust | 1.70+ | Libraries, CLI tools |
-| Go | 1.21+ | CLI tools |
-| Node.js | 18+ | TypeScript packages |
-| Python | 3.11+ | Python packages |
-| Zig | 0.11+ | Zig library |
+| Rust | stable | Libraries, CLI tools |
+| Go | 1.24+ | CLI tools |
+| Node.js | 20+ | TypeScript packages |
+| Python | 3.12+ | Python packages |
+| Zig | 0.14+ | Zig library |
 
 ### Building Libraries
 
@@ -69,6 +69,28 @@ cargo run --manifest-path tools/forge/Cargo.toml -- --help
 # Dep Guard
 cd tools/dep-guard && pip install -e . && dep-guard --help
 ```
+
+### CI and Release Entry Points
+
+```bash
+# Full library validation
+bash tools/scripts/test-all-libs.sh
+bash tools/scripts/build-all-libs.sh
+bash tools/scripts/verify-libs.sh
+
+# Tool validation
+bash tools/scripts/test-tools.sh
+bash tools/scripts/build-tools.sh
+```
+
+The corresponding GitHub Actions workflows live under `.github/workflows/`:
+
+- `test-libs.yml`
+- `build-libs.yml`
+- `test-tools.yml`
+- `build-tools.yml`
+- `test-libs-tools.yml`
+- `build-release.yml`
 
 ## Architecture
 

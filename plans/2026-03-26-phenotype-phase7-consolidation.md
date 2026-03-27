@@ -107,6 +107,15 @@
    - npm packages → npm registry (or private)
    - Go modules → go.mod (or proxy)
 
+**Implemented in this pass**:
+- Added GitHub Actions workflows for `test-libs.yml`, `test-tools.yml`, `build-libs.yml`, `build-tools.yml`, `test-libs-tools.yml`, and `build-release.yml`
+- Wired `tools/scripts/test-all-libs.sh` and `tools/scripts/test-tools.sh` into workflow triggers so script edits re-run the correct jobs
+- Updated `build-release.yml` to package Rust libraries as `.crate` artifacts and to build release artifacts for Forge and Python packages
+
+**Still pending**:
+- Registry credentials and publish policy for crates.io, PyPI, and npm
+- Any decision to move from artifact generation to automated publish-on-tag behavior
+
 ---
 
 ### Task 5: Archive Handling & Git Integration
@@ -159,7 +168,7 @@
 | Fix libs/gauge | ✅ Complete | — | 2026-03-26 |
 | Verify all builds | ✅ Complete | — | 2026-03-26 |
 | Update root docs | ✅ Complete | — | 2026-03-26 |
-| CI/CD integration | 🔲 Pending | — | 2026-03-29 |
+| CI/CD integration | ✅ Complete | — | 2026-03-29 |
 | Archive git ops | 🔲 Pending | — | 2026-03-29 |
 | Governance docs | 🔲 Pending | — | 2026-03-30 |
 

@@ -1,0 +1,40 @@
+name: Test Tools
+
+on:
+  push:
+    branches:
+      - main
+      - 'phase7/**'
+      - 'phase6/**'
+      - 'fix/**'
+    paths:
+      - 'tools/**'
+      - '.github/workflows/test-tools.yml'
+      - 'tools/scripts/test-tools.sh'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/**'
+      - '.github/workflows/test-tools.yml'
+      - 'tools/scripts/test-tools.sh'
+
+concurrency:
+  group: test-tools-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run tool tests
+        run: bash tools/scripts/test-tools.sh
