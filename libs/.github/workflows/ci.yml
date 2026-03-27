@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  detect-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect project type
+        id: detect
+        run: |
+          if [ -f "libs/gauge/Cargo.toml" ]; then
+            echo "type=rust" >> $GITHUB_OUTPUT
+          elif [ -f "libs/gauge/package.json" ]; then
+            echo "type=node" >> $GITHUB_OUTPUT
+          elif [ -f "libs/gauge/pyproject.toml" ] || [ -f "libs/gauge/setup.py" ]; then
+            echo "type=python" >> $GITHUB_OUTPUT
+          elif [ -f "libs/gauge/go.mod" ]; then
+            echo "type=go" >> $GITHUB_OUTPUT
+          else
+            echo "type=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Rust
+        if: steps.detect.outputs.type == 'rust'
+        uses: dtolnay/rust-toolchain@v1
+
+      - name: Setup Node
+        if: steps.detect.outputs.type == 'node'
+        uses: actions/setup-node@v4
+
+      - name: Setup Python
+        if: steps.detect.outputs.type == 'python'
+        uses: actions/setup-python@v5
+
+      - name: Setup Go
+        if: steps.detect.outputs.type == 'go'
+        uses: actions/setup-go@v5
+
+      - name: Run Rust tests
+        if: steps.detect.outputs.type == 'rust'
+        run: |
+          cd libs/gauge
+          cargo test --all-features
+          cargo clippy -- -D warnings
+
+      - name: Run Node tests
+        if: steps.detect.outputs.type == 'node'
+        run: |
+          cd libs/gauge
+          npm ci
+          npm test
+          npm run lint || npm run build
+
+      - name: Run Python tests
+        if: steps.detect.outputs.type == 'python'
+        run: |
+          cd libs/gauge
+          pip install -e .
+          pytest tests/
+
+      - name: Run Go tests
+        if: steps.detect.outputs.type == 'go'
+        run: |
+          cd libs/gauge
+          go test ./...
+          go build ./...

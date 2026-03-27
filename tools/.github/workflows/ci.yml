@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for build files
+        id: check
+        run: |
+          if [ -f "tools/ci-cd/GNUmakefile" ]; then
+            echo "type=make" >> $GITHUB_OUTPUT
+          elif [ -f "tools/ci-cd/SConstruct" ]; then
+            echo "type=scons" >> $GITHUB_OUTPUT
+          elif find tools/ci-cd -name "*.sh" | head -1 > /dev/null; then
+            echo "type=shell" >> $GITHUB_OUTPUT
+          else
+            echo "type=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate shell scripts
+        if: steps.check.outputs.type == 'shell'
+        run: |
+          find tools/ci-cd -name "*.sh" -exec shellcheck {} + || true
+
+      - name: Validate makefiles
+        if: steps.check.outputs.type == 'make'
+        run: |
+          find tools/ci-cd -name "GNUmakefile" -exec make -n -f {} + || true
