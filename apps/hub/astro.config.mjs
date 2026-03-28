@@ -4,6 +4,7 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  site: 'https://phenotype.dev',
   integrations: [
     starlight({
       title: 'Phenotype',
@@ -40,6 +41,10 @@ export default defineConfig({
         },
       ],
       customCss: ['./src/styles/custom.css'],
+      head: [
+        { tag: 'meta', attrs: { property: 'og:type', content: 'website' } },
+        { tag: 'meta', attrs: { property: 'og:site_name', content: 'Phenotype Ecosystem' } },
+      ],
     }),
     react(),
   ],
