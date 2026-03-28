@@ -1,0 +1,27 @@
+# Canonical Terms
+
+This document defines the canonical terminology used across the Phenotype ecosystem.
+
+## Core Concepts
+
+### Repos vs Packages
+
+- **Repos** (Repositories): Top-level git repositories containing code, configs, and documentation
+- **Packages**: Individual Go/npm/Python modules within repos
+
+## Cross-Surface Terminology
+
+| Operation | CLI | MCP | API |
+|-----------|-----|-----|-----|
+| Start server | `helios run` | `helios_mcp.start` | `POST /start` |
+| Stop server | `helios stop` | `helios_mcp.stop` | `POST /stop` |
+| List providers | `helios providers list` | `helios_mcp.list_providers` | `GET /providers` |
+| Add provider | `helios providers add` | `helios_mcp.add_provider` | `POST /providers` |
+| Get status | `helios status` | `helios_mcp.get_status` | `GET /status` |
+
+## Object Types
+
+- **Provider**: Authentication provider (OpenAI, Anthropic, Google, etc.)
+- **Auth**: Stored authentication credentials
+- **Config**: Configuration file (TOML)
+- **Token**: OAuth or API token
