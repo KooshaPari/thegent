@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import ast
 from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 from dataclasses import asdict
 from fnmatch import fnmatch
 from pathlib import Path
@@ -49,6 +51,7 @@ _REFRESH_CADENCE_RE = re.compile(
     r"^(never|manual|daily|weekly|monthly|yearly|hourly|every-\d+[smhdwy])$"
 )
 DEFAULT_SHARED_MODULE_REPO_EXCLUDE = {"4sgm", "trace", "parpour", "civ"}
+DEFAULT_EXCLUDED_REPOS = frozenset(DEFAULT_SHARED_MODULE_REPO_EXCLUDE)
 SCAN_SHARED_REPOS_SCHEMA_VERSION = 1
 SCAN_SHARED_REPOS_ROOT_MODE_REPOS = "repos"
 SCAN_SHARED_REPOS_ROOT_MODE_WORKTREES = "worktrees"
@@ -465,6 +468,44 @@ def add_repo(
             preferred_ref=preferred_ref,
         )
     )
+    lock.created_at_utc = utc_now_iso()
+    lock.lock_hash = _lock_hash(lock)
+    dual_write(target, LOCK_FILE, lock, family=family)
+    return lock
+
+
+def add_module_to_target(
+    target: str,
+    module_name: str,
+    selected_ref: str | None = None,
+    exclude_repos: set[str] | None = None,
+    family: str | None = None,
+) -> TargetLock:
+    if not module_name.strip():
+        raise ValueError("module name cannot be empty")
+    if "/" in module_name or "\\" in module_name or ".." in module_name:
+        raise ValueError(f"invalid module name: {module_name}")
+
+    manifest = _load_module_manifest(module_name)
+    lock = load_target_lock(target, family=family)
+
+    candidates = _select_module_repos(manifest, exclude_repos=exclude_repos)
+    if not candidates:
+        raise ValueError(f"module {module_name} selected no matching repos")
+
+    fallback_ref = selected_ref or manifest.default_ref
+    for candidate in candidates:
+        repo_id = _repo_id_from_path(candidate)
+        _append_repo_selection(
+            lock,
+            candidate,
+            selected_ref=manifest.repo_ref_overrides.get(repo_id, fallback_ref),
+            module_name=module_name,
+            selected_runner=manifest.repo_runner_overrides.get(repo_id),
+            selected_command=manifest.repo_command_overrides.get(repo_id),
+            selected_env_profile=manifest.repo_env_profile_overrides.get(repo_id),
+        )
+
     lock.created_at_utc = utc_now_iso()
     lock.lock_hash = _lock_hash(lock)
     dual_write(target, LOCK_FILE, lock, family=family)
@@ -2326,96 +2367,4 @@ def materialize_module_candidate_manifest(
         update_index=update_index,
     )
 
-
-def init_target(target: str, mode: TargetMode) -> TargetLock:
-    root = target_root(target)
-    root.mkdir(parents=True, exist_ok=True)
-    (root / "repos").mkdir(parents=True, exist_ok=True)
-
-    lock = TargetLock(
-        schema_version=1,
-        target_name=target,
-        mode=mode,
-        repos=[],
-        lock_hash="",
-        created_at_utc=utc_now_iso(),
-    )
-    lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
-    return lock
-
-
-def load_target_lock(target: str) -> TargetLock:
-    payload = read_dual(target, LOCK_FILE)
-    return _parse_lock(payload)
-
-
-def add_repo(
-    target: str,
-    repo_path: str,
-    selected_ref: str,
-    repo_id: str | None = None,
-    worktree_path: str | None = None,
-    module_name: str | None = None,
-    selected_runner: str | None = None,
-    selected_command: str | None = None,
-    selected_env_profile: str | None = None,
-) -> TargetLock:
-    lock = load_target_lock(target)
-    repo = Path(repo_path).expanduser().resolve()
-    if not (repo / ".git").exists() and not (repo / ".git").is_file():
-        raise ValueError(f"repo is not a git checkout: {repo}")
-
-    _append_repo_selection(
-        lock,
-        repo,
-        selected_ref=selected_ref,
-        module_name=module_name,
-        selected_runner=selected_runner,
-        selected_command=selected_command,
-        selected_env_profile=selected_env_profile,
-        repo_id=repo_id,
-        worktree_path=worktree_path,
-    )
-    lock.created_at_utc = utc_now_iso()
-    lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
-    return lock
-
-
-def add_module_to_target(
-    target: str,
-    module_name: str,
-    selected_ref: str | None = None,
-    exclude_repos: set[str] | None = None,
-) -> TargetLock:
-    if not module_name.strip():
-        raise ValueError("module name cannot be empty")
-    if "/" in module_name or "\\" in module_name or ".." in module_name:
-        raise ValueError(f"invalid module name: {module_name}")
-
-    manifest = _load_module_manifest(module_name)
-    lock = load_target_lock(target)
-
-    candidates = _select_module_repos(manifest, exclude_repos=exclude_repos)
-    if not candidates:
-        raise ValueError(f"module {module_name} selected no matching repos")
-
-    fallback_ref = selected_ref or manifest.default_ref
-    for candidate in candidates:
-        repo_id = _repo_id_from_path(candidate)
-        _append_repo_selection(
-            lock,
-            candidate,
-            selected_ref=manifest.repo_ref_overrides.get(repo_id, fallback_ref),
-            module_name=module_name,
-            selected_runner=manifest.repo_runner_overrides.get(repo_id),
-            selected_command=manifest.repo_command_overrides.get(repo_id),
-            selected_env_profile=manifest.repo_env_profile_overrides.get(repo_id),
-        )
-
-    lock.created_at_utc = utc_now_iso()
-    lock.lock_hash = _lock_hash(lock)
-    dual_write(target, LOCK_FILE, lock)
-    return lock
 
