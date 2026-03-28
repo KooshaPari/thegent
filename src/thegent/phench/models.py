@@ -12,11 +12,26 @@ class RepoSelection:
     repo_id: str
     repo_path: str
     selected_ref: str
+    module_name: str | None = None
+    selected_runner: str | None = None
+    selected_command: str | None = None
+    selected_env_profile: str | None = None
     source_worktree_path: str | None = None
     resolved_sha: str | None = None
     preferred_runner: str | None = None
     preferred_command: str | None = None
     preferred_ref: str | None = None
+
+
+@dataclass(slots=True)
+class ModuleManifest:
+    schema_version: int
+    repo_patterns: list[str] = field(default_factory=list)
+    default_ref: str = "HEAD"
+    repo_ref_overrides: dict[str, str] = field(default_factory=dict)
+    repo_runner_overrides: dict[str, str] = field(default_factory=dict)
+    repo_command_overrides: dict[str, str] = field(default_factory=dict)
+    repo_env_profile_overrides: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
