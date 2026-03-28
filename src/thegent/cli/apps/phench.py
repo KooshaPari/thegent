@@ -3,9 +3,8 @@
 from __future__ import annotations
 from pathlib import Path
 
-if __package__ is None:
-    __package__ = "thegent.cli.apps"
-    __path__ = [str(Path(__file__).resolve().parent)]
+__package__ = "thegent.cli.apps"
+__path__ = [str(Path(__file__).resolve().parent)]
 
 import typer
 from rich.console import Console
@@ -37,14 +36,14 @@ from thegent.phench import (
     target_status,
     target_timeline,
 )
-from thegent.cli.apps.phench_env import register_env_commands
-from thegent.cli.apps.phench_modules import register_modules_commands
-from thegent.cli.apps.phench_projects import register_projects_run
-from thegent.cli.apps.phench_repos import register_repos_commands
-from thegent.cli.apps.phench_run import register_run_commands
-from thegent.cli.apps.phench_snapshot import register_snapshot_commands
-from thegent.cli.apps.phench_sync import register_sync_commands
-from thegent.cli.apps.phench_timeline import register_timeline_commands
+from .phench_env import register_env_commands
+from .phench_modules import register_modules_commands
+from .phench_projects import register_projects_run
+from .phench_repos import register_repos_commands
+from .phench_run import register_run_commands
+from .phench_snapshot import register_snapshot_commands
+from .phench_sync import register_sync_commands
+from .phench_timeline import register_timeline_commands
 
 console = Console()
 

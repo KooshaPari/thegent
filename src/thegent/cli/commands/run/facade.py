@@ -9,7 +9,7 @@ from __future__ import annotations
 from thegent.cli.commands.run.run_cmds import (
     bg_cmd,
     run_cmd,
-    run_diff_cmd,
+    retry_cmd,
 )
 
 # Loop commands
@@ -22,11 +22,11 @@ from thegent.cli.commands.run.run_cmds_loop import (
 # Advanced run commands
 from thegent.cli.commands.run.run_cmds_advanced import (
     replay_cmd,
-    retry_cmd,
     deep_research_cmd,
     trace_replay_cmd,
     takeover_cmd,
     terminal_route_cmd,
+    run_diff_cmd,
 )
 
 # DAG run commands

@@ -43,6 +43,17 @@ class RepoSelection:
 
 
 @dataclass(slots=True)
+class ModuleManifest:
+    schema_version: int
+    repo_patterns: list[str] = field(default_factory=list)
+    default_ref: str = "HEAD"
+    repo_ref_overrides: dict[str, str] = field(default_factory=dict)
+    repo_runner_overrides: dict[str, str] = field(default_factory=dict)
+    repo_command_overrides: dict[str, str] = field(default_factory=dict)
+    repo_env_profile_overrides: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
 class TargetLock:
     schema_version: int
     target_name: str

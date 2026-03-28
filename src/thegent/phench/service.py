@@ -21,7 +21,15 @@ from .git_ops import (
     resolve_ref_to_sha,
     sanitize_repo_id,
 )
-from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
+from .models import (
+    ModuleManifest,
+    RepoSelection,
+    RuntimeRepo,
+    RuntimeState,
+    RunnerCatalog,
+    TargetLock,
+    TargetMode,
+)
 from .paths import (
     mirror_target_state_root,
     projects_root,
@@ -1647,9 +1655,41 @@ def _load_json_dict(path: Path) -> dict[str, Any]:
     return data
 
 
-def _load_module_manifest(module: str) -> dict[str, Any]:
+def _load_module_manifest(module: str) -> ModuleManifest:
     manifest_path = _resolve_module_manifest_path(module)
-    return _load_json_dict(manifest_path)
+    payload = _load_json_dict(manifest_path)
+    schema_version = int(payload.get("schema_version", 1))
+
+    raw_patterns = payload.get("repo_patterns")
+    if raw_patterns is None:
+        repo_patterns = ["*"]
+    elif isinstance(raw_patterns, list) and all(isinstance(item, str) for item in raw_patterns):
+        repo_patterns = raw_patterns
+    else:
+        raise ValueError(f"invalid repo_patterns in manifest: {module}")
+
+    def _load_str_dict(key: str) -> dict[str, str]:
+        raw_value = payload.get(key)
+        if raw_value is None:
+            return {}
+        if not isinstance(raw_value, dict):
+            raise ValueError(f"invalid {key} in manifest: {module}")
+        converted: dict[str, str] = {}
+        for item_key, value in raw_value.items():
+            if not isinstance(item_key, str) or not isinstance(value, str):
+                raise ValueError(f"invalid {key} entry in manifest: {module}")
+            converted[item_key] = value
+        return converted
+
+    return ModuleManifest(
+        schema_version=schema_version,
+        repo_patterns=repo_patterns,
+        default_ref=str(payload.get("default_ref", "HEAD")),
+        repo_ref_overrides=_load_str_dict("repo_ref_overrides"),
+        repo_runner_overrides=_load_str_dict("repo_runner_overrides"),
+        repo_command_overrides=_load_str_dict("repo_command_overrides"),
+        repo_env_profile_overrides=_load_str_dict("repo_env_profile_overrides"),
+    )
 
 
 def _build_scannable_candidate_name(base: str, used_names: set[str], *, max_attempts: int = 25) -> str:
