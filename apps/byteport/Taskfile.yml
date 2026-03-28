@@ -1,0 +1,50 @@
+version: '3'
+
+tasks:
+  lint:backend:
+    desc: Run golangci-lint on Go backend
+    cmd: cd backend/api && golangci-lint run ./...
+
+  lint:frontend:
+    desc: Run biome on Next.js frontend
+    cmd: cd frontend/web-next && biome check .
+
+  lint:
+    desc: Run all linters
+    deps: [lint:backend, lint:frontend]
+
+  test:backend:
+    desc: Run Go backend tests
+    cmd: cd backend/api && go test ./...
+
+  test:frontend:
+    desc: Run frontend vitest suite
+    cmd: cd frontend/web-next && pnpm vitest run
+
+  test:
+    desc: Run all tests
+    deps: [test:backend, test:frontend]
+
+  build:backend:
+    desc: Build Go backend binary
+    cmd: cd backend/api && go build ./...
+
+  build:frontend:
+    desc: Build Next.js frontend
+    cmd: cd frontend/web-next && pnpm build
+
+  build:
+    desc: Build all artifacts
+    deps: [build:backend, build:frontend]
+
+  docs:build:
+    desc: Build VitePress docsite
+    cmd: cd docs && pnpm install && pnpm build
+
+  quality:
+    desc: Run full quality gate (lint + test + build)
+    deps: [lint, test, build]
+
+  dev:
+    desc: Start dev stack (backend + frontend)
+    cmd: python byteport.py --dev
