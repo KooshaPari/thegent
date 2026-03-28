@@ -29,8 +29,8 @@ dev = [
 ]
 
 [tool.uv.sources]
-phenotype-phenotype-thegent-agents = { workspace = true }
-phenotype-phenotype-thegent-agint = { workspace = true }
+phenotype-thegent-agents = { workspace = true }
+phenotype-thegent-agint = { workspace = true }
 
 [tool.hatch.version]
 source = "vcs"
