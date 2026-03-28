@@ -75,11 +75,6 @@ impl PathResolver {
             .collect()
     }
 
-    fn build_safe_path(&self) -> String {
-        use std::env;
-        env::var("PATH").unwrap_or_default()
-    }
-
     fn is_in_skip_dirs(&self, path: &str) -> bool {
         if self.skip_dirs.is_empty() {
             return false;

@@ -2,25 +2,22 @@ package models
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
-	ID        string    `json:"id" gorm:"primaryKey"`
-	Email     string    `json:"email" gorm:"uniqueIndex"`
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 
 	// Provider credentials
-	AWSCreds      *AWSCreds      `json:"awsCreds,omitempty" gorm:"embedded;embeddedPrefix:aws_"`
-	VercelCreds   *VercelCreds   `json:"vercelCreds,omitempty" gorm:"embedded;embeddedPrefix:vercel_"`
-	NetlifyCreds  *NetlifyCreds  `json:"netlifyCreds,omitempty" gorm:"embedded;embeddedPrefix:netlify_"`
-	RailwayCreds  *RailwayCreds  `json:"railwayCreds,omitempty" gorm:"embedded;embeddedPrefix:railway_"`
-	FlyIOCreds    *FlyIOCreds    `json:"flyioCreds,omitempty" gorm:"embedded;embeddedPrefix:flyio_"`
-	SupabaseCreds *SupabaseCreds `json:"supabaseCreds,omitempty" gorm:"embedded;embeddedPrefix:supabase_"`
+	AWSCreds      *AWSCreds      `json:"awsCreds,omitempty"`
+	VercelCreds   *VercelCreds   `json:"vercelCreds,omitempty"`
+	NetlifyCreds  *NetlifyCreds  `json:"netlifyCreds,omitempty"`
+	RailwayCreds  *RailwayCreds  `json:"railwayCreds,omitempty"`
+	FlyIOCreds    *FlyIOCreds    `json:"flyioCreds,omitempty"`
+	SupabaseCreds *SupabaseCreds `json:"supabaseCreds,omitempty"`
 }
 
 type AWSCreds struct {

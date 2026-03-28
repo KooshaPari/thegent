@@ -125,7 +125,6 @@ fn main() {
             if let Some(real_bin) = resolve_real_safe(&tool, self_path) {
                 exec_real(real_bin, &tool_args);
             }
-            std::process::exit(127);
         }
     }
 }
@@ -137,7 +136,6 @@ fn handle_git(args: &[String], self_path: &str) {
         if let Some(real_bin) = resolve_real_safe("git", self_path) {
             exec_real(real_bin, args);
         }
-        return;
     }
 
     if let Some(cmd) = args.first() {
@@ -401,7 +399,6 @@ fn handle_cat(args: &[String], self_path: &str) {
         if let Some(real_bin) = resolve_real_safe("cat", self_path) {
             exec_real(real_bin, args);
         }
-        return;
     }
 
     let cmd = if which::which("bat").is_ok() {
@@ -425,7 +422,6 @@ fn handle_du(args: &[String], is_agent: bool, self_path: &str) {
         if let Some(real_bin) = resolve_real_safe("du", self_path) {
             exec_real(real_bin, args);
         }
-        return;
     }
 
     let is_heavy = args.iter().any(|a| a == "-a" || a == "--all" || a == "-h");
@@ -451,7 +447,6 @@ fn handle_node(args: &[String], self_path: &str) {
         if let Ok(bun) = which::which("bun") {
             let bun_args = args_to_bun(args);
             exec_real(bun.to_string_lossy().to_string(), &bun_args);
-            return;
         }
     }
 
@@ -464,7 +459,6 @@ fn handle_npm(args: &[String], self_path: &str) {
     if env::var("USE_BUN_TOOLS").unwrap_or_default() != "0" {
         if let Ok(bun) = which::which("bun") {
             exec_real(bun.to_string_lossy().to_string(), args);
-            return;
         }
     }
 
@@ -477,7 +471,6 @@ fn handle_npx(args: &[String], self_path: &str) {
     if env::var("USE_BUN_TOOLS").unwrap_or_default() != "0" {
         if let Ok(bunx) = which::which("bunx") {
             exec_real(bunx.to_string_lossy().to_string(), args);
-            return;
         }
     }
 
@@ -490,7 +483,6 @@ fn handle_python(args: &[String], self_path: &str) {
     if env::var("USE_FAST_PYTHON").unwrap_or_default() != "0" {
         if let Ok(pypy) = which::which("pypy3") {
             exec_real(pypy.to_string_lossy().to_string(), args);
-            return;
         }
     }
 
@@ -505,7 +497,6 @@ fn handle_pip(args: &[String], tool: &str, self_path: &str) {
             let mut pip_args = vec!["pip".to_string()];
             pip_args.extend_from_slice(args);
             exec_real(uv.to_string_lossy().to_string(), &pip_args);
-            return;
         }
     }
 
@@ -646,9 +637,7 @@ fn exec_real(path: String, args: &[String]) -> ! {
     let c_path = CString::new(path.clone()).unwrap();
     let mut c_args: Vec<CString> = vec![c_path.clone()];
     c_args.extend(args.iter().map(|a| CString::new(a.clone()).unwrap()));
-    let c_args_ptrs: Vec<*const libc::c_char> = c_args.iter().map(|a| a.as_ptr()).collect();
-
-    match execv(&c_path, &c_args_ptrs) {
+    match execv(&c_path, &c_args) {
         Ok(_) => unreachable!(),
         Err(e) => {
             eprintln!("runtime-dispatch: exec failed: {}", e);
