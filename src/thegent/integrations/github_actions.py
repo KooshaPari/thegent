@@ -23,35 +23,6 @@ _log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-def _gh(*args: str, repo: str | None = None) -> Any:
-    """Run a ``gh`` CLI command and return parsed JSON output.
-
-    Parameters
-    ----------
-    *args:
-        Arguments forwarded to ``gh``.
-    repo:
-        Optional ``owner/repo`` string; passes ``--repo`` flag when provided.
-
-    Returns
-    -------
-    Any
-        Parsed JSON response from ``gh``.
-
-    Raises
-    ------
-    RuntimeError
-        On non-zero exit code or JSON parse failure.
-    """
-    cmd: list[str] = ["gh", *args, "--json", "-"]
-    if repo:
-        cmd = ["gh", *args, "--repo", repo, "--json", "-"]
-
-    # Re-build with proper --json flag usage — gh subcommands vary.
-    # Use api mode for Actions endpoints which return structured JSON natively.
-    raise NotImplementedError("Use _gh_api or _gh_run instead")
-
-
 def _gh_api(path: str, method: str = "GET", body: dict[str, Any] | None = None) -> Any:
     """Call ``gh api`` and return parsed JSON.
 
@@ -91,24 +62,6 @@ def _gh_api(path: str, method: str = "GET", body: dict[str, Any] | None = None) 
         raise RuntimeError(
             f"gh api {method} {path} returned non-JSON output: {result.stdout[:200]}"
         ) from exc
-
-
-def _gh_run_cmd(*args: str) -> str:
-    """Run an arbitrary ``gh`` command and return raw stdout.
-
-    Raises
-    ------
-    RuntimeError
-        On non-zero exit.
-    """
-    cmd = ["gh", *args]
-    _log.debug("gh %s", " ".join(args))
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"gh {' '.join(args)} failed (exit {result.returncode}): {result.stderr.strip()}"
-        )
-    return result.stdout
 
 
 # ---------------------------------------------------------------------------

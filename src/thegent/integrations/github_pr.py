@@ -70,24 +70,6 @@ def _gh_api(path: str, method: str = "GET", body: dict[str, Any] | None = None) 
         ) from exc
 
 
-def _gh_cmd(*args: str) -> str:
-    """Run a ``gh`` CLI command and return stdout.
-
-    Raises
-    ------
-    RuntimeError
-        On non-zero exit.
-    """
-    cmd = ["gh", *args]
-    _log.debug("gh %s", " ".join(args))
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"gh {' '.join(args)} failed (exit {result.returncode}): {result.stderr.strip()}"
-        )
-    return result.stdout
-
-
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
