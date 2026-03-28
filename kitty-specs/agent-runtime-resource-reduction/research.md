@@ -1,17 +1,16 @@
-# Research: agent-runtime-resource-reduction (Post-Specify)
-**Date**: 2026-03-28 | **Mode**: feasibility
+# Research: agent-runtime-resource-reduction (Pre-Specify)
+**Date**: 2026-03-28 | **Mode**: codebase-scan
 
-## Spec Summary
-0 functional requirements, 0 non-functional
+## Repository Overview
+(directory structure not available via VCS scan)
 
-## Existing Code Analysis
-(static analysis not yet implemented — manual review recommended)
+## Detected Technologies
+(technology detection requires filesystem access — run from project root)
 
-## Feasibility Assessment
-- Scope estimate: small based on 0 FRs
-- Risk areas: Review the existing code analysis above for potential conflicts
+## Existing Specifications
+(no existing specs found)
 
-## Recommended Approach
-- Create work packages for each functional requirement group
-- Identify shared components that can be reused
-- Plan for incremental delivery of functional requirements
+## Recommended Investigation Areas
+- Review existing specifications for patterns and conventions
+- Check for related features that may share components
+- Identify integration points with current codebase

@@ -13,7 +13,6 @@ See:
 ## Package Rules
 
 - **Primary naming convention**: `phenotype-*`
-- **Current reality**: a small number of transitional package directories still exist with legacy names
 - **Publishing**: internal or product-specific distribution
 - **Coupling**: packages may depend on other packages and on reusable libraries in `libs/`
 
@@ -21,7 +20,7 @@ See:
 
 ### Core Product Packages
 
-- `pheno-session/`
+- `phenotype-session/`
 - `phenotype-agent/`
 - `phenotype-auth/`
 - `phenotype-config/`
@@ -30,7 +29,7 @@ See:
 - `phenotype-research/`
 - `phenotype-task/`
 - `phenotype-skills-clone/`
-- `phenotypeActions/`
+- `phenotype-actions/`
 
 ### Tool and Platform Packages
 
