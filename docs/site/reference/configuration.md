@@ -1,3 +1,10 @@
+---
+type: reference
+evidence_bundle: site-reference-configuration
+---
+
+<EvidenceBundle bundle="site-reference-configuration" title="Evidence Bundle: Reference Configuration" />
+
 # Configuration Reference
 
 This page documents common configuration patterns for `thegent`.

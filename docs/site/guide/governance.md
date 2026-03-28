@@ -1,3 +1,10 @@
+---
+type: howto
+evidence_bundle: site-guide-governance
+---
+
+<EvidenceBundle bundle="site-guide-governance" title="Evidence Bundle: Guide Governance" />
+
 # Governance
 
 `thegent` includes built-in controls so autonomous runs remain auditable and bounded.

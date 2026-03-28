@@ -386,15 +386,7 @@ type PublishAwareRepository interface {
 ```
 
 #### TypeScript: Discriminated Unions for Results
-```typescript
-type Result<T, E = Error> =
-  | { success: true; data: T }
-  | { success: false; error: E };
-
-async function getConfig(key: string): Promise<Result<ConfigEntry>> {
-  // ...
-}
-```
+TypeScript exposes discriminated unions that let callers inspect a success flag before touching the payload. ConfigResult pairs the success shape (success + data) and the failure shape (failure + error), and getConfig returns this union so every consumer checks the flag before consuming data.
 
 #### Python: Protocol for Structural Typing
 ```python

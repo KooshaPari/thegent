@@ -1,3 +1,10 @@
+---
+type: howto
+evidence_bundle: site-guide-getting-started
+---
+
+<EvidenceBundle bundle="site-guide-getting-started" title="Evidence Bundle: Guide Getting Started" />
+
 # Getting Started
 
 `thegent` is a CLI and runtime for orchestrating agent tasks with operational governance.

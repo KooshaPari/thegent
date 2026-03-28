@@ -112,3 +112,11 @@ def module_manifest_root(module: str) -> Path:
 
 def module_manifest_path(module: str) -> Path:
     return module_manifest_root(module) / "manifest.json"
+
+
+def repository_root_candidates() -> list[Path]:
+    """Return candidate repository roots for shared module scanning."""
+    base = phenotype_root() / "repos"
+    if not base.exists():
+        return []
+    return sorted([path for path in base.iterdir() if path.is_dir() and not path.name.startswith(".")])
