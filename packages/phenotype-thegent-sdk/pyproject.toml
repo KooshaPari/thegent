@@ -13,4 +13,4 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/thegent_sdk"]
+packages = ["src/phenotype_thegent_sdk"]

@@ -69,7 +69,7 @@ func (tm *TransferManager) CreateSnapshot(sessionID string) (*Snapshot, error) {
 	// Create basic snapshot
 	snapshot := &Snapshot{
 		ID:           session.ID,
-		Name:         session.Name,
+		Name:         session.Summary, // Use Summary as Name
 		Harness:      session.Harness,
 		Provider:     session.Provider,
 		Model:        session.Model,
@@ -84,7 +84,14 @@ func (tm *TransferManager) CreateSnapshot(sessionID string) (*Snapshot, error) {
 	if a, ok := tm.adapters[session.Harness]; ok {
 		// Try to get messages from adapter
 		if msgs, err := a.GetSessionMessages(sessionID); err == nil {
-			snapshot.Messages = msgs
+			// Convert adapter.MessageSnapshot to local MessageSnapshot
+			for _, m := range msgs {
+				snapshot.Messages = append(snapshot.Messages, MessageSnapshot{
+					Role:      m.Role,
+					Content:   m.Content,
+					Timestamp: m.Timestamp,
+				})
+			}
 		}
 	}
 
@@ -118,9 +125,9 @@ func (tm *TransferManager) Transfer(sessionID, targetHarness string, params Tran
 	}
 
 	// Create new session in store
-	newSession := &sqlite.Session{
+	newSession := sqlite.Session{
 		ID:             sessionInfo.ID,
-		Name:           snapshot.Name,
+		Summary:        snapshot.Name, // Use Name as Summary
 		Harness:        targetHarness,
 		Provider:       targetHarness,
 		Model:          snapshot.Model,
@@ -143,7 +150,7 @@ func (tm *TransferManager) Transfer(sessionID, targetHarness string, params Tran
 	}
 	_ = tm.store.CreateAuditEntry(auditEntry)
 
-	return newSession, nil
+	return &newSession, nil
 }
 
 // TransferParams contains parameters for transfer
@@ -184,9 +191,9 @@ func (tm *TransferManager) ImportSnapshot(data []byte, targetHarness string) (*s
 		return nil, fmt.Errorf("failed to start session: %w", err)
 	}
 
-	newSession := &sqlite.Session{
+	newSession := sqlite.Session{
 		ID:             sessionInfo.ID,
-		Name:           snapshot.Name,
+		Summary:        snapshot.Name,
 		Harness:        targetHarness,
 		Provider:       targetHarness,
 		Model:          snapshot.Model,
@@ -200,7 +207,7 @@ func (tm *TransferManager) ImportSnapshot(data []byte, targetHarness string) (*s
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	return newSession, nil
+	return &newSession, nil
 }
 
 // helper

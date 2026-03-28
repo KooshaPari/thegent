@@ -35,7 +35,7 @@ source = "vcs"
 fallback-version = "0.1.0"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/thegent_mcp"]
+packages = ["src/phenotype_thegent_mcp"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
