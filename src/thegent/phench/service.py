@@ -23,22 +23,25 @@ from .git_ops import (
     resolve_ref_to_sha,
     sanitize_repo_id,
 )
-from .models import RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
+from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
+from .models import ModuleManifest, RepoSelection, RuntimeRepo, RuntimeState, RunnerCatalog, TargetLock, TargetMode
 from .paths import (
+    _load_json_file,
     mirror_target_state_root,
-    projects_root,
-    projects_modules_root,
-    phenotype_root,
+    module_manifests_root,
     module_manifest_path,
+    phenotype_repos_root,
+    phenotype_root,
+    projects_modules_root,
+    projects_root,
+    repository_root_candidates,
     target_repos_root,
     target_root,
-    validate_family_name,
-    phenotype_repos_root,
     target_state_root,
+    validate_family_name,
 )
 from .runner import build_runner_catalog, pick_command_interactive, run_command
 from .store import dual_write, read_dual, sync_dual, utc_now_iso
-
 LOCK_FILE = "target.lock.json"
 RUNTIME_FILE = "runtime.json"
 ENV_FILE = "env.snapshot.json"
