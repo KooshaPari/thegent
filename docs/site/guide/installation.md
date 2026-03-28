@@ -1,3 +1,10 @@
+---
+type: howto
+evidence_bundle: site-guide-installation
+---
+
+<EvidenceBundle bundle="site-guide-installation" title="Evidence Bundle: Guide Installation" />
+
 # Installation
 
 ## Requirements

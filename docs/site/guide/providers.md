@@ -1,3 +1,10 @@
+---
+type: howto
+evidence_bundle: site-guide-providers
+---
+
+<EvidenceBundle bundle="site-guide-providers" title="Evidence Bundle: Guide Providers" />
+
 # Providers
 
 `thegent` can route work across direct APIs and proxy-backed providers.
