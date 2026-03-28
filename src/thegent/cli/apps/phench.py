@@ -164,36 +164,6 @@ def target_materialize_cmd(name: str = typer.Argument(..., help="Target name."))
     )
 
 
-@app.command("timeline", help="Show git-first timeline for a target repo.")
-def timeline_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target lock."),
-    limit: int = typer.Option(30, "--limit", help="Number of recent commits."),
-) -> None:
-    data = _phench_attr("target_timeline")(name, repo_id=repo_id, limit=limit)
-    console.print_json(json.dumps(data).decode())
-
-
-@app.command("run", help="Run a task command in a materialized target repo checkout.")
-def run_cmd(
-    name: str = typer.Argument(..., help="Target name."),
-    repo_id: str | None = typer.Option(None, "--repo-id", help="Repo ID in target runtime."),
-    runner: str | None = typer.Option(None, "--runner", help="Explicit runner override (task|just|make|pnpm|npm|bun)."),
-    command: str | None = typer.Option(None, "--command", help="Explicit command/target name for runner."),
-    all_repos: bool = typer.Option(False, "--all-repos", help="Run command selection on all repos in target."),
-    execution_mode: str = typer.Option("serial", "--mode", help="Execution mode for --all-repos: serial|parallel."),
-    env_profile: str | None = typer.Option(None, "--env-profile", help="Optional env profile name."),
-) -> None:
-    exit_code = _phench_attr("run_target")(
-        name,
-        repo_id=repo_id,
-        selected_ref=selected_ref,
-        family=family,
-    ),
-    lock_target_fn=lambda name, family=None: lock_target(name, family=family),
-    materialize_target_fn=lambda name, family=None: materialize_target(name, family=family),
-)
-
 register_timeline_commands(app, target_timeline_fn=_timeline_dispatch)
 register_run_commands(app, run_target_fn=_run_dispatch)
 register_env_commands(
